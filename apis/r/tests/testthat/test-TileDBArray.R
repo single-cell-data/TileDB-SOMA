@@ -32,8 +32,19 @@ test_that("TileDBArray helper functions", {
 
   tdba$open(mode = "READ", internal_use_only = "allowed_use")
   expect_equal(tdba$get_metadata(key = "foo"), "bar")
-  expect_equal(tdba$get_metadata(prefix = "foo"), md["foo"])
-  expect_equal(tdba$get_metadata(), md)
+  expect_equal(tdba$get_metadata(key = "baz"), "qux")
+  expect_equal(length(tdba$get_metadata()), 2)
+  tdba$close()
+
+  # The SOMA spec requires the ability to read back metadata even when the
+  # array is opened for write.
+  tdba$open(mode = "WRITE", internal_use_only = "allowed_use")
+  expect_equal(tdba$get_metadata(key = "foo"), "bar")
+  expect_equal(tdba$get_metadata(key = "baz"), "qux")
+  expect_equal(length(tdba$get_metadata()), 2)
+  tdba$close()
+
+  tdba$open(mode = "READ", internal_use_only = "allowed_use")
 
   # dimension slicing
   expect_error(

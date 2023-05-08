@@ -44,7 +44,7 @@ TileDBGroup <- R6::R6Class(
       private$update_member_cache()
       private$update_metadata_cache()
 
-      invisible(private$.tiledb_group)
+      self
     },
 
     #' @description Close the SOMA object.
@@ -309,8 +309,9 @@ TileDBGroup <- R6::R6Class(
         GROUP = TileDBGroup$new,
         stop(sprintf("Unknown member type: %s", type), call. = FALSE)
       )
-      constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx,
-                  platform_config = self$platform_config, internal_use_only = "allowed_use")
+      obj <- constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx,
+                         platform_config = self$platform_config, internal_use_only = "allowed_use")
+      obj$open(mode = "READ", internal_use_only = "allowed_use")
     },
 
     # ----------------------------------------------------------------
@@ -323,10 +324,10 @@ TileDBGroup <- R6::R6Class(
     # and metadata even when the array is opened for write, and it requires that we allow users to
     # read group members and metadata even when the group is opened for write.
     #
-    # At the TileDB implementation level, for arrays, we can read the array schema and the array
-    # metadata whether the array is opened for read or opened for write. For groups in TileDB-R, we
-    # can read the group member list or the group metadata if the group is opened for read but we
-    # cannot access them when the group is opened for write.
+    # At the TileDB implementation level, for arrays, we can read the array schema but not the array
+    # metadata if the array is opened for write. For groups in TileDB-R, we can read the group
+    # member list or the group metadata if the group is opened for read but we cannot access them
+    # when the group is opened for write.
 
     # ----------------------------------------------------------------
     # Member caching
@@ -441,7 +442,10 @@ TileDBGroup <- R6::R6Class(
     update_metadata_cache = function() {
       spdl::debug("Updating metadata cache for {} '{}'", self$class(), self$uri)
 
-      # XXX COMMENT WHY -- PASTE IN NOTES
+      # See notes above -- at the TileDB implementation level, we cannot read anything about the
+      # group while the group is open for read, but at the SOMA application level we must support
+      # this. Therefore if the group is opened for write and there is no cache populated then
+      # we must open a temporary handle for read, to fill the cache.
       group_handle <- private$.tiledb_group
       if (private$.mode == "WRITE") {
         group_handle <- tiledb::tiledb_group(self$uri, type = "READ", ctx = private$.tiledb_ctx)

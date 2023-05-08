@@ -9,6 +9,40 @@ TileDBArray <- R6::R6Class(
   inherit = TileDBObject,
   public = list(
 
+    #' @description Open the SOMA object for read or write.
+    #' @param internal_use_only Character value to signal 'permitted' call as
+    #' `new()` is considered internal and should not be called directly
+    #' @return The object, invisibly
+    open = function(mode="READ", internal_use_only = NULL) {
+      mode <- match.arg(mode, c("READ", "WRITE"))
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the open() method is discouraged. Consider using a",
+                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
+      }
+
+      spdl::debug(
+        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
+      )
+      private$.mode = mode
+      tiledb::tiledb_array_open(self$object, type = mode)
+      private$update_metadata_cache()
+      self
+    },
+
+    #' @description Close the SOMA object.
+    #' @return The object, invisibly
+    close = function() {
+      spdl::debug("Closing {} '{}'", self$class(), self$uri)
+      private$.mode = "CLOSED"
+      invisible(tiledb::tiledb_array_close(self$object))
+    },
+
+    #' @description Returns READ if the array is open for read, WRITE if it is
+    #' open for write, else CLOSED.
+    mode = function() {
+      private$.mode
+    },
+
     #' @description Print summary of the array. (lifecycle: experimental)
     print = function() {
       super$print()
@@ -32,28 +66,17 @@ TileDBArray <- R6::R6Class(
 
     #' @description Retrieve metadata from the TileDB array. (lifecycle: experimental)
     #' @param key The name of the metadata attribute to retrieve.
-    #' @param prefix Filter metadata using an optional prefix. Ignored if `key`
-    #'   is not NULL.
     #' @return A list of metadata values.
-    get_metadata = function(key = NULL, prefix = NULL) {
+    get_metadata = function(key = NULL) {
       private$check_open_for_read_or_write()
 
+      spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
+      private$fill_metadata_cache_if_null()
       if (!is.null(key)) {
-        metadata <- tiledb::tiledb_get_metadata(self$object, key)
+        private$.metadata_cache[[key]]
       } else {
-        # coerce tiledb_metadata to list
-        metadata <- unclass(tiledb::tiledb_get_all_metadata(self$object))
-        if (!is.null(prefix)) {
-          metadata <- metadata[string_starts_with(names(metadata), prefix)]
-        }
+        private$.metadata_cache
       }
-      return(metadata)
-    },
-
-    #' @description Returns READ if the array is open for read, WRITE if it is
-    #' open for write, else CLOSED.
-    mode = function() {
-      private$.mode
     },
 
     #' @description Add list of metadata to the specified TileDB array. (lifecycle: experimental)
@@ -71,6 +94,13 @@ TileDBArray <- R6::R6Class(
         key = names(metadata),
         val = metadata,
         MoreArgs = list(arr = self$object),
+        SIMPLIFY = FALSE
+      )
+
+      dev_null <- mapply(
+        FUN = private$add_cached_metadata,
+        key = names(metadata),
+        val = metadata,
         SIMPLIFY = FALSE
       )
     },
@@ -237,32 +267,6 @@ TileDBArray <- R6::R6Class(
           "tiledb_query_condition"
         )
       }
-    },
-
-    #' @description Open the SOMA object for read or write.
-    #' @param internal_use_only Character value to signal 'permitted' call as
-    #' `new()` is considered internal and should not be called directly
-    #' @return The object, invisibly
-    open = function(mode="READ", internal_use_only = NULL) {
-      mode <- match.arg(mode, c("READ", "WRITE"))
-      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the open() method is discouraged. Consider using a",
-                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
-      }
-
-      spdl::debug(
-        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
-      )
-      private$.mode = mode
-      invisible(tiledb::tiledb_array_open(self$object, type = mode))
-    },
-
-    #' @description Close the SOMA object.
-    #' @return The object, invisibly
-    close = function() {
-      spdl::debug("Closing {} '{}'", self$class(), self$uri)
-      private$.mode = "CLOSED"
-      invisible(tiledb::tiledb_array_close(self$object))
     }
 
   ),
@@ -303,6 +307,13 @@ TileDBArray <- R6::R6Class(
     # parent class.
     .tiledb_array = NULL,
 
+    # Initially NULL, once the array is created or opened, this is populated
+    # with a list that's empty or contains the array metadata. Since the SOMA
+    # spec requires that we allow readback of array metadata even when the array
+    # is open for write, but the TileDB layer underneath us does not, we must
+    # have this cache.
+    .metadata_cache = NULL,
+
     # Once the array has been created this initializes the TileDB array object
     # and stores the reference in private$.tiledb_array.
     initialize_object = function() {
@@ -332,6 +343,44 @@ TileDBArray <- R6::R6Class(
       stopifnot(
         "Array must be open for read or write." = (private$.mode == "READ" || private$.mode == "WRITE")
       )
+    },
+
+    # ----------------------------------------------------------------
+    # Metadata-caching
+
+    fill_metadata_cache_if_null = function() {
+      if (is.null(private$.metadata_cache)) {
+        private$update_metadata_cache()
+      }
+    },
+
+    update_metadata_cache = function() {
+      spdl::debug("Updating metadata cache for {} '{}'", self$class(), self$uri)
+
+      # See notes above -- at the TileDB implementation level, we cannot read array metadata
+      # while the array is open for read, but at the SOMA application level we must support
+      # this. Therefore if the array is opened for write and there is no cache populated then
+      # we must open a temporary handle for read, to fill the cache.
+      array_handle <- private$.tiledb_array
+      if (private$.mode == "WRITE") {
+        array_object <- tiledb::tiledb_array(self$uri, ctx = private$.tiledb_ctx)
+        array_handle <- tiledb::tiledb_array_open(array_object, type = "READ")
+      }
+
+      private$.metadata_cache <- tiledb::tiledb_get_all_metadata(array_handle)
+
+      if (private$.mode == "WRITE") {
+        tiledb::tiledb_array_close(array_handle)
+      }
+
+      invisible(NULL)
+    },
+
+    add_cached_metadata = function(key, value) {
+      if (is.null(private$.metadata_cache)) {
+        private$.metadata_cache <- list()
+      }
+      private$.metadata_cache[[key]] <- value
     }
 
   )

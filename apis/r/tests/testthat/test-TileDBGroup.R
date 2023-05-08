@@ -84,6 +84,8 @@ test_that("Add and remove members", {
   expect_setequal(group$names(), c("a1", "g1"))
 
   # Retrieve
+  o <- group$get("a1")
+
   expect_is(group$get("a1"), "TileDBArray")
   expect_is(group$get("g1"), "TileDBGroup")
   group$close()
@@ -131,10 +133,10 @@ test_that("Metadata", {
   md <- list(baz = "qux", foo = "bar")
   group$set_metadata(md)
 
+  # Read all metadata while the group is still open for write
   expect_equivalent(group$get_metadata("foo"), "bar")
   expect_equivalent(group$get_metadata("baz"), "qux")
 
-  # Read all metadata while the group is still open for write
   readmd <- group$get_metadata()
   expect_equivalent(readmd[["baz"]], "qux")
   expect_equivalent(readmd[["foo"]], "bar")

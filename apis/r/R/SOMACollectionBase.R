@@ -79,8 +79,8 @@ SOMACollectionBase <- R6::R6Class(
     add_new_dataframe = function(key, schema, index_column_names) {
       ## TODO: Check argument validity
       ## TODO: platform_config ?
-      ndf <- SOMADataFrame$new( file.path(self$uri, key), internal_use_only = "allowed_use" )
-      ndf$create(schema, index_column_names)
+      ndf <- SOMADataFrame$new(file.path(self$uri, key), internal_use_only = "allowed_use")
+      ndf$create(schema, index_column_names, internal_use_only = "allowed_use")
       super$set(ndf, key)
     },
 
@@ -90,8 +90,8 @@ SOMACollectionBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     add_new_dense_ndarray = function(key, type, shape) {
-      ndarr <- SOMADenseNDArray$new( file.path(self$uri, key), internal_use_only = "allowed_use" )
-      ndarr$create(type, shape)
+      ndarr <- SOMADenseNDArray$new(file.path(self$uri, key), internal_use_only = "allowed_use")
+      ndarr$create(type, shape, internal_use_only = "allowed_use")
       super$set(ndarr, key)
     },
 
@@ -101,8 +101,8 @@ SOMACollectionBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     add_new_sparse_ndarray = function(key, type, shape) {
-      ndarr <- SOMASparseNDArray$new( file.path(self$uri, key), internal_use_only = "allowed_use" )
-      ndarr$create(type, shape)
+      ndarr <- SOMASparseNDArray$new(file.path(self$uri, key), internal_use_only = "allowed_use")
+      ndarr$create(type, shape, internal_use_only = "allowed_use")
       super$set(ndarr, key)
     }
 
@@ -159,12 +159,16 @@ SOMACollectionBase <- R6::R6Class(
         platform_config = self$platform_config,
         internal_use_only = "allowed_use"
       )
+      tiledb_object$open(mode = "READ", internal_use_only = "allowed_use")
       soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
+      tiledb_object$close()
       spdl::debug(
         "[SOMACollectionBase] Instantiating {} object at: '{}'",
         soma_type %||% "Unknown",
         uri
       )
+
+      stopifnot("Discovered metadata object type is missing", !is.null(soma_type))
 
       soma_constructor <- switch(soma_type,
         SOMADataFrame = SOMADataFrame$new,

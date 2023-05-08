@@ -1,4 +1,3 @@
-
 test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
@@ -378,8 +377,6 @@ test_that("platform_config is respected", {
   sdf$close()
 })
 
-# XXX RESTORE ME PLZ
-
 test_that("platform_config defaults", {
   uri <- withr::local_tempdir("soma-dataframe")
 
@@ -411,5 +408,30 @@ test_that("platform_config defaults", {
   d1 <- dim_filters[0] # C++ indexing here
   expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
   expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
+  sdf$close()
+})
+
+test_that("Metadata", {
+  uri <- file.path(withr::local_tempdir(), "sdf-metadata")
+  asch <- create_arrow_schema()
+  sdf <- SOMADataFrameCreate(uri, asch)
+
+  md <- list(baz = "qux", foo = "bar")
+  sdf$set_metadata(md)
+
+  # Read all metadata while the sdf is still open for write
+  expect_equivalent(sdf$get_metadata("foo"), "bar")
+  expect_equivalent(sdf$get_metadata("baz"), "qux")
+
+  readmd <- sdf$get_metadata()
+  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["foo"]], "bar")
+  sdf$close()
+
+  # Read all metadata while the sdf is open for read
+  sdf <- SOMADataFrameOpen(uri)
+  readmd <- sdf$get_metadata()
+  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["foo"]], "bar")
   sdf$close()
 })
