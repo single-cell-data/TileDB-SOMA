@@ -70,6 +70,7 @@ SOMACollectionBase <- R6::R6Class(
     add_new_collection = function(object, key) {
       # TODO: Check that object is a collection
       super$set(object, key)
+      object
     },
 
     #' @description Add a new SOMA dataframe to this collection. (lifecycle: experimental)
@@ -82,6 +83,7 @@ SOMACollectionBase <- R6::R6Class(
       ndf <- SOMADataFrame$new(file.path(self$uri, key), internal_use_only = "allowed_use")
       ndf$create(schema, index_column_names, internal_use_only = "allowed_use")
       super$set(ndf, key)
+      ndf
     },
 
     #' @description Add a new SOMA DenseNdArray to this collection. (lifecycle: experimental)
@@ -93,6 +95,7 @@ SOMACollectionBase <- R6::R6Class(
       ndarr <- SOMADenseNDArray$new(file.path(self$uri, key), internal_use_only = "allowed_use")
       ndarr$create(type, shape, internal_use_only = "allowed_use")
       super$set(ndarr, key)
+      ndarr
     },
 
     #' @description Add a new SOMA SparseNdArray to this collection. (lifecycle: experimental)
@@ -104,6 +107,7 @@ SOMACollectionBase <- R6::R6Class(
       ndarr <- SOMASparseNDArray$new(file.path(self$uri, key), internal_use_only = "allowed_use")
       ndarr$create(type, shape, internal_use_only = "allowed_use")
       super$set(ndarr, key)
+      ndarr
     }
 
   ),
@@ -159,17 +163,18 @@ SOMACollectionBase <- R6::R6Class(
         platform_config = self$platform_config,
         internal_use_only = "allowed_use"
       )
+
       tiledb_object$open(mode = "READ", internal_use_only = "allowed_use")
       soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
       tiledb_object$close()
+
       spdl::debug(
         "[SOMACollectionBase] Instantiating {} object at: '{}'",
         soma_type %||% "Unknown",
         uri
       )
 
-      stopifnot("Discovered metadata object type is missing", !is.null(soma_type))
-
+      stopifnot("Discovered metadata object type is missing; cannot construct" = !is.null(soma_type))
       soma_constructor <- switch(soma_type,
         SOMADataFrame = SOMADataFrame$new,
         SOMADenseNDArray = SOMADenseNDArray$new,

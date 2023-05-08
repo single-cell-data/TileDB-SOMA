@@ -13,7 +13,13 @@ TileDBGroup <- R6::R6Class(
     #' @description Print summary of the group. (lifecycle: experimental)
     print = function() {
       super$print()
-      if (self$exists()) private$format_members()
+      if (self$exists()) {
+        if (private$.mode == "CLOSED") {
+          cat("Unopened\n")
+        } else {
+          private$format_members()
+        }
+      }
     },
 
     mode = function() {
