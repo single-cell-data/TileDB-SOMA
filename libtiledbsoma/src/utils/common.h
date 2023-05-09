@@ -39,6 +39,10 @@
 
 namespace tiledbsoma {
 
+using MetadataValue =
+    std::tuple<std::string, tiledb_datatype_t, uint32_t, const void*>;
+enum MetadataInfo { key = 0, dtype, num, value };
+
 class TileDBSOMAError : public std::runtime_error {
    public:
     explicit TileDBSOMAError(const char* m)

@@ -44,10 +44,6 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
-using MetadataValue =
-    std::tuple<std::string, tiledb_datatype_t, uint32_t, const void*>;
-enum MetadataInfo { key = 0, dtype, num, value };
-
 class SOMAArray {
    public:
     //===================================================================
@@ -132,6 +128,9 @@ class SOMAArray {
 
     /**
      * Open the SOMAArray object.
+     *
+     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param timestamp Timestamp
      */
     void open(
         tiledb_query_type_t mode,
