@@ -137,7 +137,6 @@ SOMASparseNDArray <- R6::R6Class(
       if (isFALSE(iterated)) {
          read_full <- TableReadFull$new(uri = self$uri,
                                         config = cfg,
-                                        qc = value_filter,         # idem
                                         dim_points = coords,       # idem
                                         loglevel = log_level      # idem
                                        )
@@ -145,7 +144,6 @@ SOMASparseNDArray <- R6::R6Class(
       } else {
          read_iter <- TableReadIter$new(uri = self$uri,
                                         config = cfg,
-                                        qc = value_filter,         # idem
                                         dim_points = coords,       # idem
                                         loglevel = log_level      # idem
                                        )
@@ -181,20 +179,19 @@ SOMASparseNDArray <- R6::R6Class(
                 "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
                     all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
                 "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
+      
 
       if (isFALSE(iterated)) {
-          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+          
           # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
-          # zero-based soma_dim_0 and soma_dim_1. But, because these dimensions are
+          # zero-based soma_dim_0 and soma_dim_1 (done by arrow_table_to_sparse). But, because these dimensions are
           # usually populated with soma_joinid, users will need to access the matrix
           # using the original, possibly-zero IDs. Therefore, we'll wrap the one-based
           # sparseMatrix with a shim providing basic access with zero-based indexes.
           # If needed, user can then explicitly ask the shim for the underlying
           # sparseMatrix using `as.one.based()`.
-          mat <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                                      j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                                      x = as.numeric(tbl$GetColumnByName("soma_data")),
-                                      dims = as.integer(self$shape()), repr = repr)
+          mat <-  arrow_table_to_sparse(tbl)
+          
           matrixZeroBasedView(mat)
       } else {
           ## should we error if this isn't null?

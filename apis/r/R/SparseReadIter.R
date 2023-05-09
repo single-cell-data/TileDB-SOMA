@@ -1,13 +1,12 @@
-#' TableReadIter
+#' SparseReadIter
 #'
 #' @description
-#' `TableReadIter` is a class that allows for iteration over 
+#' `SparseReadIter` is a class that allows for iteration over 
 #'  the results of a read operation from SOMA objects#' 
-#' @importFrom stats setNames
 #' @export
 
-TableReadIter <- R6::R6Class(
-  classname = "TableReadIter",
+SparseReadIter <- R6::R6Class(
+  classname = "SparseReadIter",
   inherit = ReadIter,
 
   public = list(
