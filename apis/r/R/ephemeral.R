@@ -50,6 +50,27 @@ EphemeralCollectionBase <- R6::R6Class(
       return(gen$new())
     },
 
+    #' @description Create a new, empty ephemeral collection
+    #'
+    #' @return Returns a new ephemeral collection of class \code{class(self)}
+    #'
+    create = function() {
+      gen <- getAnywhere(self$class())[['objs']][[1L]]
+      if (!R6::is.R6Class(gen)) {
+        stop(
+          "Cannot find the class generator for ",
+          sQuote(self$class()),
+          call. = FALSE
+        )
+      }
+      return (gen$new())
+    },
+
+    # Override TileDBGroup private methods
+    open = function(mode) {
+      private$.ephemeral_error('opened')
+    },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @return Invisibly returns \code{NULL}
@@ -62,11 +83,6 @@ EphemeralCollectionBase <- R6::R6Class(
         }
       )
       return(invisible(NULL))
-    },
-
-    # Override TileDBGroup private methods
-    open = function(mode) {
-      private$.ephemeral_error('opened')
     },
 
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
@@ -109,6 +125,16 @@ EphemeralCollectionBase <- R6::R6Class(
       return(NULL)
     },
 
+    length = function() {
+      length(private$.data)
+    },
+
+    #' @description Retrieve the names of members. (lifecycle: experimental)
+    #' @return A `character` vector of member names.
+    names = function() {
+      names(private$.data) %||% character(length = 0L)
+    },
+
     #' @description Add object to an ephemeral collection
     #'
     #' @param object A TileDB object (eg. \code{\link{TileDBGroup}}) to add
@@ -136,7 +162,6 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       name <- name %||% object$uri
       private$.data[[name]] <- object
-      private$update_member_cache()
       return(invisible(self))
     },
 
@@ -148,11 +173,6 @@ EphemeralCollectionBase <- R6::R6Class(
     #'
     get = function(name) {
       stopifnot(is_scalar_character(name))
-      private$update_member_cache()
-      print("WTF NAME")
-      print(name)
-      print("WTF NAMES")
-      print(self$names())
       name <- match.arg(arg = name, choices = self$names())
       return(private$.data[[name]])
     },
@@ -165,10 +185,8 @@ EphemeralCollectionBase <- R6::R6Class(
     #' \code{name} removed
     remove = function(name) {
       stopifnot(is_scalar_character(name))
-      private$update_member_cache()
       name <- match.arg(arg = name, choices = self$names())
       private$.data[[name]] <- NULL
-      private$update_member_cache()
       return(invisible(self))
     },
 
@@ -298,6 +316,7 @@ EphemeralCollectionBase <- R6::R6Class(
     check_open_for_read = function() { },
     check_open_for_write = function() { },
     check_open_for_read_or_write = function() { },
+
     fill_member_cache_if_null = function() { },
     update_member_cache = function() { },
 

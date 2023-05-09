@@ -12,6 +12,7 @@ test_that("Ephemeral Colelction mechanics", {
   # Add a dataframe to the collection
   dataframe <- create_and_populate_soma_dataframe(file.path(uri, "sdf"))
   collection$set(dataframe, name = "sdf")
+  expect_equal(collection$length(), 1)
   expect_s3_class(collection$get('sdf'), 'SOMADataFrame')
 
   # Add the collection to the collection
