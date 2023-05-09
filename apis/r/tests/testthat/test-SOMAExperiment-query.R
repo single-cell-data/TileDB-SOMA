@@ -9,6 +9,7 @@ test_that("returns all coordinates by default", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -60,6 +61,7 @@ test_that("querying by dimension coordinates", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -105,6 +107,7 @@ test_that("querying by value filters", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # TODO: simplify once tiledb-r supports membership expressions
   obs_value_filter <- paste0(
@@ -160,6 +163,7 @@ test_that("querying by both coordinates and value filters", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # obs slice / var value filter
   query <- SOMAExperimentAxisQuery$new(
@@ -231,6 +235,7 @@ test_that("queries with empty results", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # obs/var slice and value filter
   query <- SOMAExperimentAxisQuery$new(
@@ -261,6 +266,7 @@ test_that("retrieving query results in supported formats", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -293,6 +299,7 @@ test_that("query result value indexer", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -357,6 +364,7 @@ test_that("query result value indexer upcast", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
