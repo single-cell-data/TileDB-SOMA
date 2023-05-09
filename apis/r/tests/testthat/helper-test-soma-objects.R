@@ -1,3 +1,27 @@
+create_and_populate_soma_dataframe <- function(
+  uri,
+  nrows = 10L,
+  seed = 1,
+  index_column_names = "foo"
+) {
+  set.seed(seed)
+
+  arrow_schema <- create_arrow_schema()
+
+  tbl <- arrow::arrow_table(
+    foo = seq.int(nrows) + 1000L,
+    soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
+    bar = seq(nrows) + 0.1,
+    baz = as.character(seq.int(nrows) + 1000L),
+    schema = arrow_schema
+  )
+
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
+  sdf$create(arrow_schema, index_column_names = index_column_names)
+  sdf$write(tbl)
+  sdf
+}
+
 create_and_populate_obs <- function(uri, nrows = 10L, seed = 1) {
   create_and_populate_soma_dataframe(
     uri = uri,
@@ -24,6 +48,17 @@ create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
   sdf$create(tbl$schema, index_column_names = "soma_joinid")
   sdf$write(tbl)
   sdf
+}
+
+#' @param ... Arguments passed to create_sparse_matrix_with_int_dims
+create_and_populate_sparse_nd_array <- function(uri, ...) {
+
+  smat <- create_sparse_matrix_with_int_dims(...)
+
+  ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
+  ndarray$create(arrow::int32(), shape = dim(smat))
+  ndarray$write(smat)
+  ndarray
 }
 
 # Create a SOMAExperiment with a single measurement, "RNA"
