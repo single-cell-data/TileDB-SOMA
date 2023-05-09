@@ -7,7 +7,9 @@
 EphemeralCollectionBase <- R6::R6Class(
   classname = 'EphemeralCollectionBase',
   inherit = SOMACollectionBase,
+
   public = list(
+
     # Override TileDBObject methods
     #' @description Create an ephemeral collection
     #'
@@ -32,6 +34,7 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       private$.data <- list()
     },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @return Returns \code{FALSE} as ephemeral collections do not
@@ -40,6 +43,7 @@ EphemeralCollectionBase <- R6::R6Class(
     exists = function() {
       return(FALSE)
     },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @param param \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
@@ -58,6 +62,7 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       return(NULL)
     },
+
     # Override TileDBGroup methods
     #' @description Special method for printing object representation to console
     #'
@@ -69,6 +74,7 @@ EphemeralCollectionBase <- R6::R6Class(
       private$format_members()
       return(invisible(self))
     },
+
     #' @description Create a new, empty ephemeral collection
     #'
     #' @return Returns a new ephemeral collection of class \code{class(self)}
@@ -84,6 +90,7 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       return(gen$new())
     },
+
     #' @description Add object to an ephemeral collection
     #'
     #' @param object A TileDB object (eg. \code{\link{TileDBGroup}}) to add
@@ -114,6 +121,7 @@ EphemeralCollectionBase <- R6::R6Class(
       private$update_member_cache()
       return(invisible(self))
     },
+
     #' @description Get objects from an ephemeral collection
     #'
     #' @param name Name of object in the collection to get
@@ -126,6 +134,7 @@ EphemeralCollectionBase <- R6::R6Class(
       name <- match.arg(arg = name, choices = self$names())
       return(private$.data[[name]])
     },
+
     #' @description Remove objects from an ephemeral collection
     #'
     #' @param name Name of object to remove from the collection
@@ -140,6 +149,7 @@ EphemeralCollectionBase <- R6::R6Class(
       private$update_member_cache()
       return(invisible(self))
     },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @param key \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
@@ -155,6 +165,7 @@ EphemeralCollectionBase <- R6::R6Class(
       )
       return(list())
     },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @param metadata \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
@@ -164,6 +175,7 @@ EphemeralCollectionBase <- R6::R6Class(
     set_metadata = function(metadata) {
       private$.ephemeral_error('edited')
     },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @return Invisibly returns \code{NULL}
@@ -177,6 +189,7 @@ EphemeralCollectionBase <- R6::R6Class(
       )
       return(invisible(NULL))
     },
+
     # Override SOMACollectionBase methods
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
@@ -187,6 +200,7 @@ EphemeralCollectionBase <- R6::R6Class(
     add_new_collection = function(object, key) {
       private$.ephemeral_error()
     },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @param key,schema,index_column_names \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
@@ -196,6 +210,7 @@ EphemeralCollectionBase <- R6::R6Class(
     add_new_dataframe = function(key, schema, index_column_names) {
       private$.ephemeral_error()
     },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @param key,type,shape \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
@@ -205,6 +220,7 @@ EphemeralCollectionBase <- R6::R6Class(
     add_new_dense_ndarray = function(key, type, shape) {
       private$.ephemeral_error()
     },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @param key,type,shape \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
@@ -215,6 +231,7 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.ephemeral_error()
     }
   ),
+
   active = list(
     # Override TileDBObject fields
     #' @field platform_config \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
@@ -224,6 +241,7 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       private$.ephemeral_error('custom', 'and have no configuration')
     },
+
     #' @field tiledbsoma_ctx \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     tiledbsoma_ctx = function(value) {
       if (!missing(value)) {
@@ -231,6 +249,7 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       private$.ephemeral_error('custom', 'and have no context')
     },
+
     #' @field uri \dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}
     uri = function(value) {
       if (!missing(value)) {
@@ -238,6 +257,7 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       return(paste0('ephemeral-collection:', data.table::address(self)))
     },
+
     #' @field object \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     object = function(value) {
       if (!missing(value)) {
@@ -245,6 +265,7 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       private$.ephemeral_error('custom', 'and have no underlying object')
     },
+
     # Override SOMACollectionBase fields
     #' @field soma_type \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     soma_type = function(value) {
@@ -254,6 +275,7 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.ephemeral_error('custom', 'and have no SOMA type')
     }
   ),
+
   private = list(
     # Override SOMACollectionBase private fields
     tiledb_object = NULL,
@@ -261,17 +283,22 @@ EphemeralCollectionBase <- R6::R6Class(
     tiledb_platform_config = NULL,
     .tiledbsoma_ctx = NULL,
     mode = NULL,
+
     # Override TileDBGroup private fields
     member_cache = NULL,
+
     # Override SOMACollectionBase private fields
     soma_type_cache = NULL,
+
     # Override TileDBGroup private methods
     open = function(mode) {
       private$.ephemeral_error('opened')
     },
+
     initialize_object = function() {
       private$.ephemeral_error('custom', 'and cannot be initialized')
     },
+
     get_all_members = function() {
       if (!length(private$.data)) {
         return(list())
@@ -287,8 +314,10 @@ EphemeralCollectionBase <- R6::R6Class(
       }
       return(members)
     },
+
     # Ephemeral fields
     .data = NULL,
+
     # Ephemeral methods
     .ephemeral_error = function(type = 'added', msg = NULL) {
       stopifnot("'type' must be a single character value" = is_scalar_character(type))
@@ -332,6 +361,7 @@ EphemeralCollectionBase <- R6::R6Class(
 EphemeralCollection <- R6::R6Class(
   classname = 'EphemeralCollection',
   inherit = EphemeralCollectionBase,
+
   active = list(
     #' @field soma_type The SOMA object type
     soma_type = function(value) {
@@ -354,6 +384,7 @@ EphemeralCollection <- R6::R6Class(
 EphemeralMeasurement <- R6::R6Class(
   classname = 'EphemeralMeasurement',
   inherit = EphemeralCollectionBase,
+
   active = list(
     #' @field var \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("var")}
     var = function(value) {
@@ -363,6 +394,7 @@ EphemeralMeasurement <- R6::R6Class(
         expected_class = 'SOMADataFrame'
       )
     },
+
     #' @field X \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("X")}
     X = function(value) {
       private$get_or_set_soma_field(
@@ -371,6 +403,7 @@ EphemeralMeasurement <- R6::R6Class(
         expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
+
     #' @field obsm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsm")}
     obsm = function(value) {
       private$get_or_set_soma_field(
@@ -379,6 +412,7 @@ EphemeralMeasurement <- R6::R6Class(
         expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
+
     #' @field obsp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsp")}
     obsp = function(value) {
       private$get_or_set_soma_field(
@@ -387,6 +421,7 @@ EphemeralMeasurement <- R6::R6Class(
         expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
+
     #' @field varm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varm")}
     varm = function(value) {
       private$get_or_set_soma_field(
@@ -395,6 +430,7 @@ EphemeralMeasurement <- R6::R6Class(
         expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
+
     #' @field varp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varp")}
     varp = function(value) {
       private$get_or_set_soma_field(
@@ -403,6 +439,7 @@ EphemeralMeasurement <- R6::R6Class(
         expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
+
     #' @field soma_type The SOMA object type
     soma_type = function(value) {
       if (!missing(value)) {
@@ -424,6 +461,7 @@ EphemeralMeasurement <- R6::R6Class(
 EphemeralExperiment <- R6::R6Class(
   classname = 'EphemeralExperiment',
   inherit = EphemeralCollectionBase,
+
   active = list(
     #' @field obs \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obs")}
     obs = function(value) {
@@ -433,6 +471,7 @@ EphemeralExperiment <- R6::R6Class(
         expected_class = 'SOMADataFrame'
       )
     },
+
     #' @field ms \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("ms")}
     ms = function(value) {
       private$get_or_set_soma_field(
@@ -441,6 +480,7 @@ EphemeralExperiment <- R6::R6Class(
         expected_class = c('EphemeralCollection', 'SOMACollection')
       )
     },
+
     #' @field soma_type The SOMA object type
     soma_type = function(value) {
       if (!missing(value)) {
