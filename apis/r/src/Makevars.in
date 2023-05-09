@@ -3,10 +3,10 @@ CXX_STD = CXX17
 ## We need the TileDB Headers, and for macOS aka Darwin need to set minimum version 10.14 for macOS.
 ## Our build assumes C++ libtiledbsoma in /usr/local/include and /usr/local/lib. Here we explicitly
 ## add -I and -L for those, since while some compilers add these paths implicitly, others do not.
-PKG_CPPFLAGS = -Wno-deprecated-declarations -I. -I../inst/include/ -I/usr/local/include -L/usr/local/lib @tiledb_include@ @cxx17_macos@ -Iinclude
+PKG_CPPFLAGS = -Wno-deprecated-declarations -I. -I../inst/include/ -I/usr/local/include @tiledb_include@ @cxx17_macos@ -Iinclude
 
 ## We also need the TileDB library
-PKG_LIBS = @cxx17_macos@ -ltiledbsoma @tiledb_libs@ @tiledb_rpath@
+PKG_LIBS = @cxx17_macos@ -L/usr/local/lib -ltiledbsoma @tiledb_libs@ @tiledb_rpath@
 
 all: $(SHLIB)
         # If we are:
