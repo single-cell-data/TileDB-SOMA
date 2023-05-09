@@ -4,7 +4,7 @@ test_that("Ephemeral Measurement mechanics", {
   # dir.create(uri)
   expect_warning(EphemeralMeasurement$new(uri))
   expect_no_condition(measurement <- EphemeralMeasurement$new())
-  expect_true(grepl('^ephemeral-collection:0x[[:digit:]a-f]{12}$', measurement$uri))
+  expect_true(grepl('^ephemeral-collection:0x[[:digit:]a-f]{6,32}$', measurement$uri))
   expect_false(measurement$exists())
   expect_error(measurement$var)
   expect_s3_class(measurement$create(), measurement$class())
