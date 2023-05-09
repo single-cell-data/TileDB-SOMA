@@ -10,6 +10,7 @@ test_that("Ephemeral Colelction mechanics", {
   dataframe <- create_and_populate_soma_dataframe(file.path(uri, "sdf"))
   collection$set(dataframe, name = "sdf")
   expect_s3_class(collection$get('sdf'), 'SOMADataFrame')
+
   # Add the collection to the collection
   expect_error(collection$add_new_collection(collection, "collection"))
   expect_no_condition(collection$set(collection, 'collection'))
@@ -17,8 +18,10 @@ test_that("Ephemeral Colelction mechanics", {
   expect_true(collection2$soma_type == "SOMACollection")
   expect_false(collection2$exists())
   expect_s3_class(df2 <- collection2$get("sdf"), 'SOMADataFrame')
+
   ## -- uri differs by "./" so cannot compare R6 objects directly
   # expect_equal(readback_dataframe$object[], df2$object[])
+
   # Add new dataframe to the collection
   expect_error(collection$add_new_dataframe("new_df", create_arrow_schema(), "foo"))
   expect_no_condition(collection$set(
@@ -27,6 +30,7 @@ test_that("Ephemeral Colelction mechanics", {
   ))
   expect_s3_class(df3 <- collection$get("new_df"), 'SOMADataFrame')
   expect_true(df3$soma_type == "SOMADataFrame")
+
   # Add new DenseNdArray to the collection
   expect_error(collection$add_new_dense_ndarray("nd_d_arr", arrow::int32(), shape = c(10, 5)))
   expect_no_condition(collection$set(
@@ -35,6 +39,7 @@ test_that("Ephemeral Colelction mechanics", {
   ))
   expect_s3_class(arr <- collection$get("nd_d_arr"), 'SOMADenseNDArray')
   expect_true(arr$soma_type == "SOMADenseNDArray")
+
   # Add new SparseNdArray to the collection
   expect_error(collection$add_new_sparse_ndarray("nd_s_arr", arrow::int32(), shape = c(10, 5)))
   expect_no_condition(collection$set(
