@@ -78,6 +78,7 @@ def from_h5ad(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    sparse_dim_capacity: Optional[int] = None,
 ) -> str:
     """Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
 
@@ -106,6 +107,9 @@ def from_h5ad(
 
         X_kind: Which type of matrix is used to store dense X data from the
             H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+
+        sparse_dim_capacity: The maximum capacity in bytes for the dimensions ``SparseNDArray``.
+            Defaults to hardcoded value in ``SOMASparseNdArray._dim_capacity_and_extent()``.
 
     Returns:
         The URI of the newly created experiment.
@@ -141,6 +145,7 @@ def from_h5ad(
         ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
         X_kind=X_kind,
+        sparse_dim_capacity=sparse_dim_capacity,
     )
 
     logging.log_io(
@@ -160,6 +165,7 @@ def from_anndata(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    sparse_dim_capacity: Optional[int] = None,
 ) -> str:
     """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
@@ -188,6 +194,9 @@ def from_anndata(
 
         X_kind: Which type of matrix is used to store dense X data from the
             H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+
+        sparse_dim_capacity: The maximum capacity in bytes for the dimensions ``SparseNDArray``.
+            Defaults to hardcoded value in ``SOMASparseNdArray._dim_capacity_and_extent()``.
 
     Returns:
         The URI of the newly created experiment.
@@ -309,6 +318,7 @@ def from_anndata(
                     platform_config,
                     ingest_mode,
                     context,
+                    sparse_dim_capacity=sparse_dim_capacity,
                 ) as data:
                     _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
@@ -337,6 +347,7 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                                 context=context,
+                                sparse_dim_capacity=sparse_dim_capacity,
                             ) as arr:
                                 _maybe_set(
                                     obsm, key, arr, use_relative_uri=use_relative_uri
@@ -367,6 +378,7 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                                 context=context,
+                                sparse_dim_capacity=sparse_dim_capacity,
                             ) as darr:
                                 _maybe_set(
                                     varm,
@@ -395,6 +407,7 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                                 context=context,
+                                sparse_dim_capacity=sparse_dim_capacity,
                             ) as sarr:
                                 _maybe_set(
                                     obsp,
@@ -423,6 +436,7 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                                 context=context,
+                                sparse_dim_capacity=sparse_dim_capacity,
                             ) as sarr:
                                 _maybe_set(
                                     varp,
@@ -482,6 +496,7 @@ def from_anndata(
                                 platform_config,
                                 ingest_mode,
                                 context=context,
+                                sparse_dim_capacity=sparse_dim_capacity,
                             ) as rm_x_data:
                                 _maybe_set(
                                     rm_x,
@@ -643,6 +658,7 @@ def create_from_matrix(
     platform_config: Optional[PlatformConfig] = None,
     ingest_mode: IngestMode = "write",
     context: Optional[SOMATileDBContext] = None,
+    sparse_dim_capacity: Optional[int] = None,
 ) -> _NDArr:
     """
     Create and populate the ``soma_matrix`` from the contents of ``matrix``.
@@ -663,7 +679,7 @@ def create_from_matrix(
         )
     except DoesNotExistError:
         # A SparseNDArray must be appendable in soma.io.
-        shape = [None for _ in matrix.shape] if cls.is_sparse else matrix.shape
+        shape = [sparse_dim_capacity for _ in matrix.shape] if cls.is_sparse else matrix.shape
         soma_ndarray = cls.create(
             uri,
             type=pa.from_numpy_dtype(matrix.dtype),
