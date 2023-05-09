@@ -20,9 +20,9 @@ test_that("Basic mechanics", {
   expect_error(measurement$X, "No member named 'X' found")
   expect_error(measurement$X <- var, "X must be a 'SOMACollection'")
 
-  X <- SOMACollectionCreate(file.path(uri, "X"))
+  measurement$X <- SOMACollectionCreate(file.path(uri, "X"))
 
-  measurement$X <- X
+  expect_equal(measurement$X$mode(), "WRITE")
   expect_true(inherits(measurement$X, "SOMACollection"))
   expect_equal(measurement$length(), 2)
 

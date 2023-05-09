@@ -31,13 +31,13 @@ test_that("SOMACollection basics", {
   readback_collection$close()
 
   # Add a subcollection to the collection
-  subcollection <- SOMACollectionCreate(file.path(uri, "subcollection"))
-  subcollection$close()
+  subcollection <- SOMACollectionCreate(file.path(uri, "subcollection"))$close()
 
   collection <- SOMACollectionOpen(uri, mode = "WRITE")
   collection$add_new_collection(subcollection, "subcollection")
 
   subcollection <- collection$get("subcollection")
+  subcollection <- SOMACollectionOpen(subcollection$uri)
   expect_true(subcollection$soma_type == "SOMACollection")
   expect_true(subcollection$exists())
   subcollection$close()
@@ -45,17 +45,23 @@ test_that("SOMACollection basics", {
   # Add another dataframe to the collection, this time using add_new_dataframe
   collection$add_new_dataframe("new_df", create_arrow_schema(), "foo")$close()
   df3 <- collection$get("new_df")
+  df3 <- SOMADataFrameOpen(df3$uri)
   expect_true(df3$soma_type == "SOMADataFrame")
+  df3$close()
 
   # Add new DenseNDArray to the collection
   collection$add_new_dense_ndarray("nd_d_arr", arrow::int32(), shape = c(10, 5))$close()
   arr <- collection$get("nd_d_arr")
+  arr <- SOMADenseNDArrayOpen(arr$uri)
   expect_true(arr$soma_type == "SOMADenseNDArray")
+  arr$close()
 
   # Add new SparseNDArray to the collection
   collection$add_new_sparse_ndarray("nd_s_arr", arrow::int32(), shape = c(10, 5))$close()
   arr <- collection$get("nd_s_arr")
+  arr <- SOMASparseNDArrayOpen(arr$uri)
   expect_true(arr$soma_type == "SOMASparseNDArray")
+  arr$close()
 
   collection$close()
 })

@@ -19,13 +19,14 @@ test_that("Basic mechanics", {
   experiment$close()
 
   # Add ms
+  experiment <- SOMAExperimentOpen(uri, "WRITE")
   expect_error(experiment$ms <- obs, "ms must be a 'SOMACollection'")
   expect_error(
     experiment$ms <- SOMAMeasurementCreate(file.path(uri, "_ms")),
     "ms must be a 'SOMACollection'"
   )
 
-  experiment$ms <- SOMACollectionCreate(file.path(uri, "ms"))
+  experiment$ms <- SOMACollectionCreate(file.path(uri, "ms"))$close()
   experiment$close()
 
   experiment <- SOMAExperimentOpen(uri)
@@ -55,7 +56,7 @@ test_that("Configured SOMAExperiment", {
     X_layer_names = c("counts", "logcounts"),
     config = cfg
   )
-  expect_equal(experiment$tiledbsoma_ctx$get('capacity'), '8888')
-  expect_equal(experiment$tiledbsoma_ctx$get('cell_order'), 'row-major')
-  expect_equal(experiment$tiledbsoma_ctx$get('tile_order'), 'col-major')
+  expect_equal(experiment$platform_config$get('tiledb', 'create', 'capacity'), '8888')
+  expect_equal(experiment$platform_config$get('tiledb', 'create', 'cell_order'), 'row-major')
+  expect_equal(experiment$platform_config$get('tiledb', 'create', 'tile_order'), 'col-major')
 })

@@ -34,7 +34,8 @@ TileDBArray <- R6::R6Class(
     close = function() {
       spdl::debug("Closing {} '{}'", self$class(), self$uri)
       private$.mode = "CLOSED"
-      invisible(tiledb::tiledb_array_close(self$object))
+      tiledb::tiledb_array_close(self$object)
+      invisible(self)
     },
 
     #' @description Returns READ if the array is open for read, WRITE if it is

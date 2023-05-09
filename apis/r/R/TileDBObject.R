@@ -21,12 +21,14 @@ TileDBObject <- R6::R6Class(
       }
       if (missing(uri)) stop("Must specify a `uri`", call. = FALSE)
       private$tiledb_uri <- TileDBURI$new(uri)
+
       # Set platform config
       platform_config <- platform_config %||% PlatformConfig$new()
       if (!inherits(platform_config, 'PlatformConfig')) {
         stop("'platform_config' must be a PlatformConfig object", call. = FALSE)
       }
       private$tiledb_platform_config <- platform_config
+
       # Set context
       tiledbsoma_ctx <- tiledbsoma_ctx %||% SOMATileDBContext$new()
       if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {

@@ -39,8 +39,19 @@ SOMACollectionBase <- R6::R6Class(
         metadata <- list()
       }
 
+      # Key constraint on the TileDB Group API:
+      # * tiledb_group_create is synchronous: new items appear on disk once that
+      #   function has returned.
+      # * When we have an open handle for write and we do tiledb_group_put_metadata,
+      #   metadata items do _not_ appear on disk until tiledb_group_close has been
+      #   called.
+      # To avoid confusion, we pay the price of a close-then-reopen here.
+      #
+      # TODO: this feels like it could be resolved through improved caching.
       self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata(metadata)
+      self$close()
+      self$open(mode = "WRITE", internal_use_only = "allowed_use")
       self
     },
 

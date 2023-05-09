@@ -59,9 +59,10 @@ TileDBGroup <- R6::R6Class(
       private$check_open_for_read_or_write()
 
       spdl::debug("Closing {} '{}'", self$class(), self$uri)
-      invisible(tiledb::tiledb_group_close(private$.tiledb_group))
+      tiledb::tiledb_group_close(private$.tiledb_group)
       private$.mode <- "CLOSED"
       private$.tiledb_group <- NULL
+      invisible(self)
     },
 
     #' @description Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
@@ -119,7 +120,7 @@ TileDBGroup <- R6::R6Class(
         name = name
       )
 
-      private$add_cached_member(name, object$uri)
+      private$add_cached_member(name, object)
    },
 
     #' @description Retrieve a group member by name. (lifecycle: experimental)
@@ -134,7 +135,21 @@ TileDBGroup <- R6::R6Class(
       if (is.null(member)) {
         stop(sprintf("No member named '%s' found", name), call. = FALSE)
       }
-      private$construct_member(member$uri, member$type)
+
+      # Important use case:
+      # * measurement$X <- SOMACollectionCreate()
+      #   - At this point measurement$X is open for write
+      # * measurement$X$something()
+      #   - That needs to get the _actual object which is opened for write_.
+      # So here if the object (maybe opened for read or write) was stored,
+      # we return it. But if not (e.g. first access on read from storage)
+      # then we invoke the appropriate constructor. Note: child classes
+      # may override construct_member.
+      if (is.null(member$object)) {
+        private$construct_member(member$uri, member$type)
+      } else {
+        member$object
+      }
     },
 
     #' @description Remove member. (lifecycle: experimental)
@@ -317,7 +332,7 @@ TileDBGroup <- R6::R6Class(
       )
       obj <- constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx,
                          platform_config = self$platform_config, internal_use_only = "allowed_use")
-      obj$open(mode = "READ", internal_use_only = "allowed_use")
+      obj
     },
 
     # ----------------------------------------------------------------
@@ -393,7 +408,7 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
-    add_cached_member = function(name, uri) {
+    add_cached_member = function(name, object) {
       # We explicitly add the new member to member_cache in order to preserve the
       # original URI. Otherwise TileDB Cloud creation URIs are retrieved from
       # using tiledb_group_member() in the form tiledb://namespace/uuid. In this
@@ -404,9 +419,13 @@ TileDBGroup <- R6::R6Class(
       }
 
       private$.member_cache[[name]] <- list(
-        type = tiledb::tiledb_object_type(uri),
-        uri = uri,
-        name = name
+        # TODO: do we really need the type here?
+        # Calling tiledb::tiledb_object_type on remote storage has a cost;
+        # perhaps unnecessary to incur.
+        type = tiledb::tiledb_object_type(object$uri),
+        uri = object$uri,
+        name = name,
+        object = object
       )
 
       # We still need to update member_cache to pick up existing members.
