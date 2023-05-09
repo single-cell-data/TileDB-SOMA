@@ -28,12 +28,12 @@ SOMAOpen <- function(uri, mode = "READ", platform_config = NULL, tiledbsoma_ctx 
     # In case of an error try again as TileDBGroup
     if (is.null(obj)) {
         obj <- tryCatch(expr = {
-            arr <- TileDBGroup$new(uri,
+            grp <- TileDBGroup$new(uri,
                                    platform_config = platform_config,
                                    tiledbsoma_ctx = tiledbsoma_ctx,
                                    internal_use_only = "allowed_use")
             grp$open(mode="READ", internal_use_only = "allowed_use")
-            obj <- arr$get_metadata("soma_object_type")
+            obj <- grp$get_metadata("soma_object_type")
             grp$close()
             obj
         },
