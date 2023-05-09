@@ -1,4 +1,5 @@
 test_that("Ephemeral Experiment mechanics", {
+  # Create the experiment
   uri <- withr::local_tempdir("ephemeral-experiment")
   expect_warning(EphemeralExperiment$new(uri))
   expect_no_condition(experiment <- EphemeralExperiment$new())

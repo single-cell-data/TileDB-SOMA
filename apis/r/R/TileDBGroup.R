@@ -26,6 +26,17 @@ TileDBGroup <- R6::R6Class(
       private$.mode
     },
 
+    # XXX TEMP
+    is_open = function() {
+      if (is.null(private$.mode)) {
+        FALSE
+      } else if (private$.mode == "CLOSED") {
+        FALSE
+      } else {
+        TRUE
+      }
+    },
+
     #' @description Open the SOMA object for read or write.
     #' @param internal_use_only Character value to signal 'permitted' call as
     #' `new()` is considered internal and should not be called directly

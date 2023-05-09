@@ -44,6 +44,17 @@ TileDBArray <- R6::R6Class(
       private$.mode
     },
 
+    # XXX TEMP
+    is_open = function() {
+      if (is.null(private$.mode)) {
+        FALSE
+      } else if (private$.mode == "CLOSED") {
+        FALSE
+      } else {
+        TRUE
+      }
+    },
+
     #' @description Print summary of the array. (lifecycle: experimental)
     print = function() {
       super$print()

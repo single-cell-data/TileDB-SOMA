@@ -1,4 +1,5 @@
 test_that("Ephemeral Colelction mechanics", {
+  # Create a new collection
   uri <- withr::local_tempdir('ephemeral-collection')
   expect_warning(EphemeralCollection$new(uri = uri))
   expect_no_condition(collection <- EphemeralCollection$new())
@@ -7,6 +8,8 @@ test_that("Ephemeral Colelction mechanics", {
   expect_s3_class(collection$create(), collection$class())
   expect_true(collection$soma_type == "SOMACollection")
   expect_equal(collection$length(), 0)
+
+  # Add a dataframe to the collection
   dataframe <- create_and_populate_soma_dataframe(file.path(uri, "sdf"))
   collection$set(dataframe, name = "sdf")
   expect_s3_class(collection$get('sdf'), 'SOMADataFrame')
