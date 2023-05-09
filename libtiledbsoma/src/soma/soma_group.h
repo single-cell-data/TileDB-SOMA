@@ -111,7 +111,7 @@ class SOMAGroup {
     ~SOMAGroup() = default;
 
     /**
-     * Opens the SOMAGroup object.
+     * Open the SOMAGroup object.
      *
      * @param mode TILEDB_READ or TILEDB_WRITE
      * @param timestamp Timestamp
@@ -121,7 +121,7 @@ class SOMAGroup {
         std::optional<uint64_t> timestamp = std::nullopt);
 
     /**
-     * Closes the SOMAGroup object.
+     * Close the SOMAGroup object.
      */
     void close();
 
@@ -181,7 +181,7 @@ class SOMAGroup {
     void remove_member(const std::string& name);
 
     /**
-     * Returns a SOMAGroup member to URI mapping.
+     * Return a SOMAGroup member to URI mapping.
      *
      * @return std::map<std::string, std::string>
      */
@@ -208,7 +208,7 @@ class SOMAGroup {
         const void* value);
 
     /**
-     * Deletes a metadata key-value item from an open group. The group must
+     * Delete a metadata key-value item from an open group. The group must
      * be opened in WRITE mode, otherwise the function will error out.
      *
      * @param key The key of the metadata item to be deleted.
@@ -221,12 +221,25 @@ class SOMAGroup {
     void delete_metadata(const std::string& key);
 
     /**
-     * @brief Given a key, retrieve the associated value datatype, number of
+     * @brief Given a key, get the associated value datatype, number of
      * values, and value in binary form. The group must be opened in READ mode,
      * otherwise the function will error out.
      *
      * The value may consist of more than one items of the same datatype. Keys
      * that do not exist in the metadata will be return NULL for the value.
+     *
+     * **Example:**
+     * @code{.cpp}
+     * // Open the group for reading
+     * tiledbsoma::SOMAGroup soma_group = SOMAGroup::open(TILEDB_READ,
+     "s3://bucket-name/group-name");
+     * tiledbsoma::MetadataValue meta_val = soma_group->get_metadata("key");
+     * std::string key = std::get<MetadataInfo::key>(meta_val);
+     * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
+     * uint32_t num = std::get<MetadataInfo::num>(meta_val);
+     * const void* value = *((const
+     int32_t*)std::get<MetadataInfo::value>(meta_val));
+     * @endcode
      *
      * @param key The key of the metadata item to be retrieved. UTF-8 encodings
      *     are acceptable.
@@ -236,7 +249,7 @@ class SOMAGroup {
     MetadataValue get_metadata(const std::string& key) const;
 
     /**
-     * @brief Given an index, retrieve the associated value datatype, number of
+     * @brief Given an index, get the associated value datatype, number of
      * values, and value in binary form. The group must be opened in READ mode,
      * otherwise the function will error out.
      *
@@ -247,7 +260,7 @@ class SOMAGroup {
     MetadataValue get_metadata(uint64_t index) const;
 
     /**
-     * Checks if key exists in metadata from an open group. The group must
+     * Check if the key exists in metadata from an open group. The group must
      * be opened in READ mode, otherwise the function will error out.
      *
      * @param key The key of the metadata item to be checked. UTF-8 encodings
@@ -257,7 +270,7 @@ class SOMAGroup {
     bool has_metadata(const std::string& key);
 
     /**
-     * Returns then number of metadata items in an open group. The group must
+     * Return then number of metadata items in an open group. The group must
      * be opened in READ mode, otherwise the function will error out.
      */
     uint64_t metadata_num() const;

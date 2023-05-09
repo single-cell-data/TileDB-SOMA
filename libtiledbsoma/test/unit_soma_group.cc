@@ -161,31 +161,32 @@ TEST_CASE("SOMAGroup: basic") {
 
     auto [uri_sub_array, expected_nnz] = create_array("mem://sub-array", *ctx);
 
-    auto sg = SOMAGroup::open(TILEDB_WRITE, ctx, uri_main_group, "metadata", 1);
-    sg->add_member(uri_sub_group, false, "subgroup");
-    sg->add_member(uri_sub_array, false, "subarray");
-    sg->close();
+    auto soma_group = SOMAGroup::open(
+        TILEDB_WRITE, ctx, uri_main_group, "metadata", 1);
+    soma_group->add_member(uri_sub_group, false, "subgroup");
+    soma_group->add_member(uri_sub_array, false, "subarray");
+    soma_group->close();
 
-    sg->open(TILEDB_READ, 1);
-    REQUIRE(sg->ctx() == ctx);
-    REQUIRE(sg->uri() == uri_main_group);
-    REQUIRE(sg->get_length() == 2);
+    soma_group->open(TILEDB_READ, 1);
+    REQUIRE(soma_group->ctx() == ctx);
+    REQUIRE(soma_group->uri() == uri_main_group);
+    REQUIRE(soma_group->get_length() == 2);
     std::map<std::string, std::string> expected_map{
         {"subgroup", uri_sub_group}, {"subarray", uri_sub_array}};
-    REQUIRE(expected_map == sg->member_to_uri_mapping());
-    REQUIRE(sg->get_member("subgroup").type() == Object::Type::Group);
-    REQUIRE(sg->get_member("subarray").type() == Object::Type::Array);
-    sg->close();
+    REQUIRE(expected_map == soma_group->member_to_uri_mapping());
+    REQUIRE(soma_group->get_member("subgroup").type() == Object::Type::Group);
+    REQUIRE(soma_group->get_member("subarray").type() == Object::Type::Array);
+    soma_group->close();
 
-    sg->open(TILEDB_WRITE, 3);
-    sg->remove_member("subgroup");
-    sg->close();
+    soma_group->open(TILEDB_WRITE, 3);
+    soma_group->remove_member("subgroup");
+    soma_group->close();
 
-    sg->open(TILEDB_READ, 4);
-    REQUIRE(sg->get_length() == 1);
-    REQUIRE(sg->has_member("subgroup") == false);
-    REQUIRE(sg->has_member("subarray") == true);
-    sg->close();
+    soma_group->open(TILEDB_READ, 4);
+    REQUIRE(soma_group->get_length() == 1);
+    REQUIRE(soma_group->has_member("subgroup") == false);
+    REQUIRE(soma_group->has_member("subarray") == true);
+    soma_group->close();
 }
 
 TEST_CASE("SOMAGroup: metadata") {
@@ -193,34 +194,34 @@ TEST_CASE("SOMAGroup: metadata") {
 
     std::string uri = "mem://unit-test-group";
     Group::create(*ctx, uri);
-    auto sr = SOMAGroup::open(TILEDB_WRITE, ctx, uri, "metadata", 1);
+    auto soma_group = SOMAGroup::open(TILEDB_WRITE, ctx, uri, "metadata", 1);
     int32_t val = 100;
-    sr->set_metadata("md", TILEDB_INT32, 1, &val);
-    sr->close();
+    soma_group->set_metadata("md", TILEDB_INT32, 1, &val);
+    soma_group->close();
 
-    sr->open(TILEDB_READ, 1);
-    REQUIRE(sr->has_metadata("md") == true);
-    REQUIRE(sr->metadata_num() == 1);
+    soma_group->open(TILEDB_READ, 1);
+    REQUIRE(soma_group->has_metadata("md") == true);
+    REQUIRE(soma_group->metadata_num() == 1);
 
-    auto mdval = sr->get_metadata(0);
+    auto mdval = soma_group->get_metadata(0);
     REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
     REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
     REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
 
-    mdval = sr->get_metadata("md");
+    mdval = soma_group->get_metadata("md");
     REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
     REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
     REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
-    sr->close();
+    soma_group->close();
 
-    sr->open(TILEDB_WRITE, 2);
-    sr->delete_metadata("md");
-    sr->close();
+    soma_group->open(TILEDB_WRITE, 2);
+    soma_group->delete_metadata("md");
+    soma_group->close();
 
-    sr->open(TILEDB_READ, 3);
-    REQUIRE(sr->has_metadata("md") == false);
-    REQUIRE(sr->metadata_num() == 0);
-    sr->close();
+    soma_group->open(TILEDB_READ, 3);
+    REQUIRE(soma_group->has_metadata("md") == false);
+    REQUIRE(soma_group->metadata_num() == 0);
+    soma_group->close();
 }
