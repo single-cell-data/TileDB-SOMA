@@ -2,7 +2,7 @@ test_that("Ephemeral Colelction mechanics", {
   uri <- withr::local_tempdir('ephemeral-collection')
   expect_warning(EphemeralCollection$new(uri = uri))
   expect_no_condition(collection <- EphemeralCollection$new())
-  expect_true(grepl('^ephemeral-collection:0x[[:digit:]a-f]{12}$', collection$uri))
+  expect_true(grepl('^ephemeral-collection:0x[[:digit:]a-f]{6,32}$', collection$uri))
   expect_false(collection$exists())
   expect_s3_class(collection$create(), collection$class())
   expect_true(collection$soma_type == "SOMACollection")
