@@ -34,7 +34,7 @@
 #define SOMA_GROUP
 
 #include <future>
-#include <stdexcept> 
+#include <stdexcept>
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
