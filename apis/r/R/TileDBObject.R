@@ -45,6 +45,21 @@ TileDBObject <- R6::R6Class(
       class(self)[1]
     },
 
+    # The create/open/close are necessarily specific to TileDBArray/TileDBGroup.
+    # This is a bit of re-use at the TileDBObject level.
+    is_open = function() {
+      !is.null(private$.mode)
+    },
+
+    # TODO: make this an active
+    mode = function() {
+      if (is.null(private$.mode)) {
+        "CLOSED"
+      } else {
+        private$.mode
+      }
+    },
+
     #' @description Print-friendly representation of the object.
     print = function() {
       cat(glue::glue("<{self$class()}>"), sep = "\n")
@@ -91,6 +106,20 @@ TileDBObject <- R6::R6Class(
   ),
 
   private = list(
+    # Pro tip: in R6 we can't set these to anything other than NULL here, even if we want to.  If
+    # you want them defaulted to anything other than NULL, leave them NULL here and set the defaults
+    # in the constructor.
+
+    # Set by TileDBArray and TileDBGroup, as stateful handles have incompatible semantics
+    # we can't completely abstract here in this parent class
+    #
+    # Semantics:
+    # * "READ" when opened for read
+    # * "WRITE" when opened for write
+    # * NULL when never opened, or when closed.
+    # * In particular, an is-open predicate can be reliably implemented by
+    #   checking if .mode is non-null.
+    .mode = NULL,
 
     # @description Contains TileDBURI object
     tiledb_uri = NULL,
@@ -105,6 +134,49 @@ TileDBObject <- R6::R6Class(
 
     .read_only_error = function(field) {
       stop("Field ", sQuote(field), " is read-only", call. = FALSE)
+    },
+
+    is_open_for_read = function() {
+      # Pro-tip: not enough to check $pviate.mode != "READ" since logical(0) isn't
+      # the same as FALSE
+      if (is.null(private$.mode)) {
+        FALSE
+      } else if (private$.mode != "READ") {
+        FALSE
+      } else {
+        TRUE
+      }
+    },
+
+    is_open_for_write = function() {
+      if (is.null(private$.mode)) {
+        FALSE
+      } else if (private$.mode != "WRITE") {
+        FALSE
+      } else {
+        TRUE
+      }
+    },
+
+    # Per the spec, invoking user-level read requires open for read mode.
+    check_open_for_read = function() {
+      stopifnot(
+        "Item must be open for read." = private$is_open_for_read()
+      )
+    },
+
+    # Per the spec, invoking user-level write requires open for read mode.
+    check_open_for_write = function() {
+      stopifnot(
+        "Item must be open for write." = private$is_open_for_write()
+      )
+    },
+
+    # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
+    check_open_for_read_or_write = function() {
+      stopifnot(
+        "Item must be open for read or write." = self$is_open()
+      )
     }
 
   )

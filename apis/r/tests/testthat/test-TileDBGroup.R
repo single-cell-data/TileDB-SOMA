@@ -7,8 +7,8 @@ test_that("Non-exist", {
   expect_false(group$exists())
 
   # Check errors on non-existent group
-  expect_error(group$get("foo"), "Group has not been opened.")
-  expect_error(group$length(), "Group has not been opened.")
+  expect_error(group$get("foo"), "Item must be open for read or write.")
+  expect_error(group$length(), "Item must be open for read or write.")
   expect_error(group$open(internal_use_only = "allowed_use"), "Group does not exist.")
 })
 
@@ -126,7 +126,7 @@ test_that("Non-relative paths", {
 test_that("Metadata", {
   uri <- file.path(withr::local_tempdir(), "group-metadata")
   group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
-  expect_error(group$set_metadata(list(foo = "bar")), "Group has not been opened.")
+  expect_error(group$set_metadata(list(foo = "bar")), "Item must be open for write.")
 
   group$create(internal_use_only = "allowed_use")
 

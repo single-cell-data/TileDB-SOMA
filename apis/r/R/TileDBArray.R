@@ -38,23 +38,6 @@ TileDBArray <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Returns READ if the array is open for read, WRITE if it is
-    #' open for write, else CLOSED.
-    mode = function() {
-      private$.mode
-    },
-
-    # XXX TEMP
-    is_open = function() {
-      if (is.null(private$.mode)) {
-        FALSE
-      } else if (private$.mode == "CLOSED") {
-        FALSE
-      } else {
-        TRUE
-      }
-    },
-
     #' @description Print summary of the array. (lifecycle: experimental)
     print = function() {
       super$print()
@@ -301,8 +284,6 @@ TileDBArray <- R6::R6Class(
 
   private = list(
 
-    .mode = NULL,
-
     # Internal pointer to the TileDB array.
     #
     # Important implementation note:
@@ -316,7 +297,8 @@ TileDBArray <- R6::R6Class(
     # * Therefore for groups we cannot imitate the behavior for arrays.
     #
     # For this reason there is a limit to how much handle-abstraction we can do in the TileDBObject
-    # parent class.
+    # parent class. In particular, we cannot have a single .tiledb_object shared by both TileDBArray
+    # and TileDBGroup.
     .tiledb_array = NULL,
 
     # Initially NULL, once the array is created or opened, this is populated
@@ -333,27 +315,6 @@ TileDBArray <- R6::R6Class(
         uri = self$uri,
         ctx = self$tiledbsoma_ctx$context(),
         query_layout = "UNORDERED"
-      )
-    },
-
-    # Per the spec, invoking user-level read requires open for read mode.
-    check_open_for_read = function() {
-      stopifnot(
-        "Array must be open for read." = private$.mode == "READ"
-      )
-    },
-
-    # Per the spec, invoking user-level write requires open for read mode.
-    check_open_for_write = function() {
-      stopifnot(
-        "Array must be open for write." = private$.mode == "WRITE"
-      )
-    },
-
-    # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
-    check_open_for_read_or_write = function() {
-      stopifnot(
-        "Array must be open for read or write." = (private$.mode == "READ" || private$.mode == "WRITE")
       )
     },
 

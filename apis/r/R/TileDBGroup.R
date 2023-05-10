@@ -22,21 +22,6 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
-    mode = function() {
-      private$.mode
-    },
-
-    # XXX TEMP
-    is_open = function() {
-      if (is.null(private$.mode)) {
-        FALSE
-      } else if (private$.mode == "CLOSED") {
-        FALSE
-      } else {
-        TRUE
-      }
-    },
-
     #' @description Open the SOMA object for read or write.
     #' @param internal_use_only Character value to signal 'permitted' call as
     #' `new()` is considered internal and should not be called directly
@@ -71,7 +56,7 @@ TileDBGroup <- R6::R6Class(
 
       spdl::debug("Closing {} '{}'", self$class(), self$uri)
       tiledb::tiledb_group_close(private$.tiledb_group)
-      private$.mode <- "CLOSED"
+      private$.mode <- NULL
       private$.tiledb_group <- NULL
       invisible(self)
     },
@@ -134,7 +119,8 @@ TileDBGroup <- R6::R6Class(
       private$add_cached_member(name, object)
    },
 
-    #' @description Retrieve a group member by name. (lifecycle: experimental)
+    #' @description Retrieve a group member by name. If the member isn't already
+    #' open, it is opened for read. (lifecycle: experimental)
     #' @param name The name of the member.
     #' @returns A `TileDBArray` or `TileDBGroup`.
     get = function(name) {
@@ -157,10 +143,14 @@ TileDBGroup <- R6::R6Class(
       # then we invoke the appropriate constructor. Note: child classes
       # may override construct_member.
       if (is.null(member$object)) {
-        private$construct_member(member$uri, member$type)
+        obj <- private$construct_member(member$uri, member$type)
       } else {
-        member$object
+        obj <- member$object
       }
+      if (!obj$is_open()) {
+        obj$open("READ", internal_use_only = "allowed_use")
+      }
+      obj
     },
 
     #' @description Remove member. (lifecycle: experimental)
@@ -269,11 +259,6 @@ TileDBGroup <- R6::R6Class(
 
   private = list(
 
-    # Pro tip: in R6 we can't set these to anything other than NULL here, even if we want to.  If
-    # you want them defaulted to anything other than NULL, leave them NULL here and set the defaults
-    # in the constructor.
-    .mode = NULL,
-
     # @description This is a handle at the TileDB-R level
     #
     # Important implementation note:
@@ -287,7 +272,8 @@ TileDBGroup <- R6::R6Class(
     # * Therefore for groups we cannot imitate the behavior for arrays.
     #
     # For this reason there is a limit to how much handle-abstraction we can do in the TileDBObject
-    # parent class.
+    # parent class. In particular, we cannot have a single .tiledb_object shared by both TileDBArray
+    # and TileDBGroup.
     .tiledb_group = NULL,
 
     # @description List of cached group members
@@ -298,36 +284,6 @@ TileDBGroup <- R6::R6Class(
     # Initially NULL, once the group is created or opened, this is populated
     # with a list that's empty or contains the group metadata.
     .metadata_cache = NULL,
-
-    check_ever_opened = function() {
-      stopifnot(
-        "Group has not been opened." = !is.null(private$.tiledb_group)
-      )
-    },
-
-    # Per the spec, invoking user-level read requires open for read mode.
-    check_open_for_read = function() {
-      private$check_ever_opened()
-      stopifnot(
-        "Group must be open for read." = private$.mode == "READ"
-      )
-    },
-
-    # Per the spec, invoking user-level write requires open for read mode.
-    check_open_for_write = function() {
-      private$check_ever_opened()
-      stopifnot(
-        "Group must be open for write." = private$.mode == "WRITE"
-      )
-    },
-
-    # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
-    check_open_for_read_or_write = function() {
-      private$check_ever_opened()
-      stopifnot(
-        "Group must be open for read or write." = (private$.mode == "READ" || private$.mode == "WRITE")
-      )
-    },
 
     # Instantiate a group member object.
     # Responsible for calling the appropriate R6 class constructor.
