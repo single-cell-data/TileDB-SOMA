@@ -22,6 +22,23 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
+    #' @description Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
+    #' @param internal_use_only Character value to signal 'permitted' call as
+    #' `new()` is considered internal and should not be called directly
+    create = function(internal_use_only = NULL) {
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the create() method is discouraged. Consider using a",
+                   "factory method as e.g. 'SOMACollectionCreate()'."), call. = FALSE)
+      }
+
+      spdl::info("Creating new {} at '{}'", self$class(), self$uri)
+      tiledb::tiledb_group_create(uri = self$uri, ctx = private$.tiledb_ctx)
+
+      self$open("WRITE", internal_use_only = "allowed_use")
+
+      invisible(private$.tiledb_group)
+    },
+
     #' @description Open the SOMA object for read or write.
     #' @param internal_use_only Character value to signal 'permitted' call as
     #' `new()` is considered internal and should not be called directly
@@ -52,39 +69,25 @@ TileDBGroup <- R6::R6Class(
     #' @description Close the SOMA object.
     #' @return The object, invisibly
     close = function() {
-      private$check_open_for_read_or_write()
+      if (self$is_open()) {
 
-      # XXX RECURSE
-      for (member in private$.member_cache) {
-        if (!is.null(member$object)) {
-          if (member$object$is_open()) {
-            member$object$close()
+        for (member in private$.member_cache) {
+          if (!is.null(member$object)) {
+            if (member$object$is_open()) {
+              spdl::debug("Openchi {} '{}'", member$object$class(), member$object$uri)
+              member$object$close()
+            } else {
+              spdl::debug("Clsdchi {} '{}'", member$object$class(), member$object$uri)
+            }
           }
         }
-      }
 
-      spdl::debug("Closing {} '{}'", self$class(), self$uri)
-      tiledb::tiledb_group_close(private$.tiledb_group)
-      private$.mode <- NULL
-      private$.tiledb_group <- NULL
+        spdl::debug("Closing {} '{}'", self$class(), self$uri)
+        tiledb::tiledb_group_close(private$.tiledb_group)
+        private$.mode <- NULL
+        private$.tiledb_group <- NULL
+      }
       invisible(self)
-    },
-
-    #' @description Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
-    #' @param internal_use_only Character value to signal 'permitted' call as
-    #' `new()` is considered internal and should not be called directly
-    create = function(internal_use_only = NULL) {
-      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the create() method is discouraged. Consider using a",
-                   "factory method as e.g. 'SOMACollectionCreate()'."), call. = FALSE)
-      }
-
-      spdl::info("Creating new {} at '{}'", self$class(), self$uri)
-      tiledb::tiledb_group_create(uri = self$uri, ctx = private$.tiledb_ctx)
-
-      self$open("WRITE", internal_use_only = "allowed_use")
-
-      invisible(private$.tiledb_group)
     },
 
     #' @description Add new member to the group. (lifecycle: experimental)

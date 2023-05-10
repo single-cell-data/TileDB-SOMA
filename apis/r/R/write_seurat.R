@@ -237,6 +237,8 @@ write_soma.DimReduc <- function(
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
+  } else {
+    soma_parent$obsm$open("WRITE", internal_use_only = "allowed_use")
   }
   embed <- paste0('X_', key)
   spdl::info("Adding embeddings as {}", sQuote(embed))
@@ -568,6 +570,6 @@ write_soma.Seurat <- function(
       immediate. = TRUE
     )
   }
-  experiment$ms$close()
+  experiment$close()
   return(experiment$uri)
 }
