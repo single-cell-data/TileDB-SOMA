@@ -18,8 +18,7 @@ test_that("Ephemeral Measurement mechanics", {
   # Add X collection
   expect_error(measurement$X)
   expect_error(measurement$X <- var)
-  X <- SOMACollection$new(file.path(uri, "X"), internal_use_only = "allowed_use")
-  X$create()
+  X <- SOMACollectionCreate(file.path(uri, "X"))
   expect_no_condition(measurement$X <- X)
   expect_s3_class(measurement$X, 'SOMACollection')
   expect_equal(measurement$length(), 2)
@@ -29,4 +28,6 @@ test_that("Ephemeral Measurement mechanics", {
   nda <- create_and_populate_sparse_nd_array(file.path(uri, "X", "RNA"))
   expect_no_condition(measurement$X$set(nda, name = "RNA"))
   expect_equal(measurement$X$length(), 1)
+
+  X$close()
 })
