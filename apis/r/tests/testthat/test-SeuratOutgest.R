@@ -9,6 +9,7 @@ test_that("Load assay from ExperimentQuery mechanics", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA"
@@ -125,6 +126,7 @@ test_that("Load assay from sliced ExperimentQuery", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
@@ -165,6 +167,7 @@ test_that("Load assay from indexed ExperimentQuery", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
   obs_value_filter <- paste0(
     sprintf("baz == '%s'", obs_label_values),
     collapse = "||"
@@ -216,6 +219,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Add embeddings
   n_pcs <- 50L
@@ -466,6 +470,7 @@ test_that("Load reduction from sliced ExperimentQuery", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Add embeddings
   n_pcs <- 50L
@@ -652,6 +657,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Add embeddings
   n_pcs <- 50L
@@ -862,6 +868,7 @@ test_that("Load graph from ExperimentQuery mechanics", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Add graph
   obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
@@ -935,6 +942,7 @@ test_that("Load graph from sliced ExperimentQuery", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Add graph
   obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
@@ -994,6 +1002,7 @@ test_that("Load graph from indexed ExperimentQuery", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Add graph
   obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
@@ -1059,6 +1068,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Add embeddings
   n_pcs <- 50L
@@ -1273,6 +1283,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Add embeddings
   n_pcs <- 50L
@@ -1374,6 +1385,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Add embeddings
   n_pcs <- 50L

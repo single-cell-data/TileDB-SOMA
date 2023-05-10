@@ -211,6 +211,8 @@ SOMACollectionBase <- R6::R6Class(
     # @param name the name of the field to retrieve or set.
     # @param expected_class the expected class of the value to set.
     get_or_set_soma_field = function(value, name, expected_class) {
+      private$check_open_for_read_or_write()
+
       if (missing(value)) return(self$get(name))
 
       stopifnot(
