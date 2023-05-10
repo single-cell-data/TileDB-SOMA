@@ -4,8 +4,11 @@ rm -r -f \
    src/*.o src/*.so src/*.dylib */*~ *~ \
    src/Makevars \
    tiledb.tar.gz \
+   tiledbsoma.tar.gz \
    tiledb/ \
+   tiledbsoma/ \
    inst/tiledb/ \
+   inst/tiledbsoma/ \
    src/include/ \
    src/lib \
    src/cmake_log.txt \
