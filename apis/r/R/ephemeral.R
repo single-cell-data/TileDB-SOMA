@@ -47,22 +47,6 @@ EphemeralCollectionBase <- R6::R6Class(
           call. = FALSE
         )
       }
-      return(gen$new())
-    },
-
-    #' @description Create a new, empty ephemeral collection
-    #'
-    #' @return Returns a new ephemeral collection of class \code{class(self)}
-    #'
-    create = function() {
-      gen <- getAnywhere(self$class())[['objs']][[1L]]
-      if (!R6::is.R6Class(gen)) {
-        stop(
-          "Cannot find the class generator for ",
-          sQuote(self$class()),
-          call. = FALSE
-        )
-      }
       return (gen$new())
     },
 
