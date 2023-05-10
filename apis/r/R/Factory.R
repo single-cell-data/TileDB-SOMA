@@ -10,8 +10,8 @@
 SOMADataFrameCreate <- function(uri, schema, index_column_names = c("soma_joinid"),
                                 platform_config = NULL, tiledbsoma_ctx = NULL) {
     sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx, mode="WRITE", internal_use_only = "allowed_use")
-    sdf$create(schema, index_column_names=index_column_names, platform_config=platform_config,
-      internal_use_only = "allowed_use")
+    sdf$create(schema, index_column_names=index_column_names, platform_config=platform_config, internal_use_only = "allowed_use")
+
     sdf
 }
 

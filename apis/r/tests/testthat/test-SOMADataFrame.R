@@ -110,11 +110,11 @@ test_that("Basic mechanics with default index_column_names", {
 
   sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
-    sdf$create(asch, index_column_names = "qux"),
+    sdf$create(asch, index_column_names = "qux", internal_use_only = "allowed_use"),
     "The following field does not exist: qux"
   )
 
-  sdf$create(asch)
+  sdf$create(asch, internal_use_only = "allowed_use")
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
   expect_match(sdf$soma_type, "SOMADataFrame")
