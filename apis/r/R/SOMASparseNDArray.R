@@ -182,7 +182,7 @@ SOMASparseNDArray <- R6::R6Class(
       
 
       if (isFALSE(iterated)) {
-          
+          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
           # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
           # zero-based soma_dim_0 and soma_dim_1 (done by arrow_table_to_sparse). But, because these dimensions are
           # usually populated with soma_joinid, users will need to access the matrix
@@ -190,18 +190,17 @@ SOMASparseNDArray <- R6::R6Class(
           # sparseMatrix with a shim providing basic access with zero-based indexes.
           # If needed, user can then explicitly ask the shim for the underlying
           # sparseMatrix using `as.one.based()`.
-          mat <-  arrow_table_to_sparse(tbl)
+          mat <-  arrow_table_to_sparse(tbl, repr = repr)
           
           matrixZeroBasedView(mat)
       } else {
-          ## should we error if this isn't null?
-          if (!is.null(self$soma_reader_pointer)) {
-              warning("pointer not null, skipping")
-          } else {
-              private$soma_reader_setup()
-              private$sparse_repr <- repr
-          }
-          invisible(NULL)
+          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+          SparseReadIter$new(uri = self$uri,
+                             config = cfg,
+                             dim_points = coords,
+                             loglevel = log_level,
+                             repr = repr)
+
       }
     },
 
