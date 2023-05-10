@@ -5,10 +5,6 @@ test_that("Basic mechanics", {
 
   sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
-    sdf$create(asch),
-    "argument \"index_column_names\" is missing, with no default"
-  )
-  expect_error(
     sdf$create(asch, index_column_names = "qux"),
     "The following field does not exist: qux"
   )
@@ -100,6 +96,51 @@ test_that("Basic mechanics", {
   sch <- tiledb::schema(arr)
   expect_true(tiledb::is.sparse(sch))
   expect_false(tiledb::allows_dups(sch))
+})
+
+test_that("Basic mechanics with default index_column_names", {
+  uri <- withr::local_tempdir("soma-dataframe-soma-joinid")
+  asch <- create_arrow_schema(foo_first=FALSE)
+
+  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
+  expect_error(
+    sdf$create(asch, index_column_names = "qux"),
+    "The following field does not exist: qux"
+  )
+
+  sdf$create(asch)
+  expect_true(sdf$exists())
+  expect_true(dir.exists(uri))
+  expect_match(sdf$soma_type, "SOMADataFrame")
+
+  # check for missing columns
+  expect_error(
+    sdf$write(arrow::arrow_table(foo = 1L:10L)),
+    "All schema fields must be present in 'values'"
+  )
+  # check for extra columns
+  expect_error(
+    sdf$write(arrow::arrow_table(qux = 1L:10L)),
+    "All columns in 'values' must be defined in the schema"
+  )
+
+  tbl0 <- arrow::arrow_table( soma_joinid = 1L:36L,
+                             foo = 1L:36L,
+                             bar = 1.1:36.1,
+                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                                     "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
+                                     "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
+                                     "ź", "Ž", "Ż"),
+                             schema = asch)
+
+  sdf$write(tbl0)
+
+  # read back the data (ignore attributes)
+  expect_equivalent(
+    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
+    as.list(tbl0),
+    ignore_attr = TRUE
+  )
 })
 
 test_that("creation with all supported dimension data types", {
