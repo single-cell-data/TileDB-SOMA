@@ -54,6 +54,15 @@ TileDBGroup <- R6::R6Class(
     close = function() {
       private$check_open_for_read_or_write()
 
+      # XXX RECURSE
+      for (member in private$.member_cache) {
+        if (!is.null(member$object)) {
+          if (member$object$is_open()) {
+            member$object$close()
+          }
+        }
+      }
+
       spdl::debug("Closing {} '{}'", self$class(), self$uri)
       tiledb::tiledb_group_close(private$.tiledb_group)
       private$.mode <- NULL
