@@ -35,6 +35,36 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.data <- list()
     },
 
+    #' @description Create a new, empty ephemeral collection
+    #'
+    #' @return Returns a new ephemeral collection of class \code{class(self)}
+    #'
+    create = function() {
+      gen <- getAnywhere(self$class())[['objs']][[1L]]
+      if (!R6::is.R6Class(gen)) {
+        stop(
+          "Cannot find the class generator for ",
+          sQuote(self$class()),
+          call. = FALSE
+        )
+      }
+      return(gen$new())
+    },
+
+    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #'
+    #' @return Invisibly returns \code{NULL}
+    #'
+    close = function() {
+      tryCatch(
+        expr = private$.ephemeral_error("custom", "and cannot be closed"),
+        error = function(e) {
+          warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
+        }
+      )
+      return(invisible(NULL))
+    },
+
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @return Returns \code{FALSE} as ephemeral collections do not
@@ -42,6 +72,18 @@ EphemeralCollectionBase <- R6::R6Class(
     #'
     exists = function() {
       return(FALSE)
+    },
+
+    # Override TileDBGroup methods
+    #' @description Special method for printing object representation to console
+    #'
+    #' @return Prints details about the ephemeral collection and invisibly
+    #' returns itself
+    #'
+    print = function() {
+      super$print()
+      private$format_members()
+      return(invisible(self))
     },
 
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
@@ -61,34 +103,6 @@ EphemeralCollectionBase <- R6::R6Class(
         )
       }
       return(NULL)
-    },
-
-    # Override TileDBGroup methods
-    #' @description Special method for printing object representation to console
-    #'
-    #' @return Prints details about the ephemeral collection and invisibly
-    #' returns itself
-    #'
-    print = function() {
-      super$print()
-      private$format_members()
-      return(invisible(self))
-    },
-
-    #' @description Create a new, empty ephemeral collection
-    #'
-    #' @return Returns a new ephemeral collection of class \code{class(self)}
-    #'
-    create = function() {
-      gen <- getAnywhere(self$class())[['objs']][[1L]]
-      if (!R6::is.R6Class(gen)) {
-        stop(
-          "Cannot find the class generator for ",
-          sQuote(self$class()),
-          call. = FALSE
-        )
-      }
-      return(gen$new())
     },
 
     #' @description Add object to an ephemeral collection
@@ -152,6 +166,16 @@ EphemeralCollectionBase <- R6::R6Class(
 
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
+    #' @param metadata \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #'
+    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #'
+    set_metadata = function(metadata) {
+      private$.ephemeral_error('edited')
+    },
+
+    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #'
     #' @param key \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
     #' @return An empty list
@@ -164,30 +188,6 @@ EphemeralCollectionBase <- R6::R6Class(
         }
       )
       return(list())
-    },
-
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
-    #'
-    #' @param metadata \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
-    #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
-    #'
-    set_metadata = function(metadata) {
-      private$.ephemeral_error('edited')
-    },
-
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
-    #'
-    #' @return Invisibly returns \code{NULL}
-    #'
-    close = function() {
-      tryCatch(
-        expr = private$.ephemeral_error("custom", "and cannot be closed"),
-        error = function(e) {
-          warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
-        }
-      )
-      return(invisible(NULL))
     },
 
     # Override SOMACollectionBase methods
@@ -233,6 +233,24 @@ EphemeralCollectionBase <- R6::R6Class(
   ),
 
   active = list(
+
+    #' @field uri \dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}
+    uri = function(value) {
+      if (!missing(value)) {
+        private$.read_only_error('uri')
+      }
+      return(paste0('ephemeral-collection:', data.table::address(self)))
+    },
+
+    # Override SOMACollectionBase fields
+    #' @field soma_type \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
+    soma_type = function(value) {
+      if (!missing(value)) {
+        private$.read_only_error('soma_type')
+      }
+      private$.ephemeral_error('custom', 'and have no SOMA type')
+    },
+
     # Override TileDBObject fields
     #' @field platform_config \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     platform_config = function(value) {
@@ -250,29 +268,12 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.ephemeral_error('custom', 'and have no context')
     },
 
-    #' @field uri \dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}
-    uri = function(value) {
-      if (!missing(value)) {
-        private$.read_only_error('uri')
-      }
-      return(paste0('ephemeral-collection:', data.table::address(self)))
-    },
-
     #' @field object \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     object = function(value) {
       if (!missing(value)) {
         private$.read_only_error('object')
       }
       private$.ephemeral_error('custom', 'and have no underlying object')
-    },
-
-    # Override SOMACollectionBase fields
-    #' @field soma_type \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
-    soma_type = function(value) {
-      if (!missing(value)) {
-        private$.read_only_error('soma_type')
-      }
-      private$.ephemeral_error('custom', 'and have no SOMA type')
     }
   ),
 
