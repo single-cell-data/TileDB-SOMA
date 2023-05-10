@@ -20,7 +20,7 @@ SOMADataFrame <- R6::R6Class(
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
-    create = function(schema, index_column_names, platform_config=NULL) {
+    create = function(schema, index_column_names=c("soma_joinid"), platform_config=NULL) {
       schema <- private$validate_schema(schema, index_column_names)
 
       attr_column_names <- setdiff(schema$names, index_column_names)

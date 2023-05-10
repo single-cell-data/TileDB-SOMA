@@ -38,11 +38,20 @@ create_dense_matrix_with_int_dims <- function(nrows = 10, ncols = 5, seed = 1) {
   )
 }
 
-create_arrow_schema <- function() {
-  arrow::schema(
-    arrow::field("foo", arrow::int32(), nullable = FALSE),
-    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
-    arrow::field("bar", arrow::float64(), nullable = FALSE),
-    arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
-  )
+create_arrow_schema <- function(foo_first=TRUE) {
+  if (foo_first) {
+    arrow::schema(
+      arrow::field("foo", arrow::int32(), nullable = FALSE),
+      arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+      arrow::field("bar", arrow::float64(), nullable = FALSE),
+      arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
+    )
+  } else {
+    arrow::schema(
+      arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+      arrow::field("foo", arrow::int32(), nullable = FALSE),
+      arrow::field("bar", arrow::float64(), nullable = FALSE),
+      arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
+    )
+  }
 }
