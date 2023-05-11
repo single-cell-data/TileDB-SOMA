@@ -5,7 +5,6 @@ PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@ -Iinclude
 
 ## When this becomes a CRAN package we may have to remove this. For now it keeps the noise down
 PKG_CXX17FLAGS = -Wno-deprecated-declarations
-PKG_CLANGFLAGS = -Wno-deprecated-declarations
 
 ## We also need the TileDB library
 PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@
@@ -25,6 +24,3 @@ all: $(SHLIB)
 	        install_name_tool -add_rpath /usr/local/lib tiledbsoma.so; \
 	    fi; \
 	fi
-
-# TODO: the /usr/local check is a temporary heuristic which is OK for now.
-# Longer-term work is tracked on https://github.com/single-cell-data/TileDB-SOMA/issues/1365
