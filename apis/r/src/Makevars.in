@@ -20,7 +20,7 @@ all: $(SHLIB)
 	        install_name_tool -add_rpath @loader_path/../tiledb/lib tiledbsoma.so; \
 	        install_name_tool -add_rpath @loader_path/../tiledbsoma/lib tiledbsoma.so; \
 	    fi; \
-	    if [ -f /usr/local/lib/libtiledb.dylib -o -f /usr/local/lib/libtiledbsoma.dylib ] ; then \
+	    if [ -f /usr/local/lib/libtiledb.dylib -a -f /usr/local/lib/libtiledbsoma.dylib ] ; then \
 	        install_name_tool -add_rpath /usr/local/lib tiledbsoma.so; \
 	    fi; \
 	fi
