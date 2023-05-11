@@ -29,7 +29,7 @@ load_dataset(name, dir = tempdir())
 }
 
 \itemize{
-\item \code{load_dataset()} returns an SOMA object.
+\item \code{load_dataset()} returns a SOMA object.
 }
 }
 \description{

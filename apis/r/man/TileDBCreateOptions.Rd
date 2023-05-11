@@ -11,7 +11,7 @@ Provides strongly-typed access and default values for `platform_config` options 
 Intended for internal use only.
 }
 \section{Super class}{
-\code{tiledbsoma::MappingBase} -> \code{TileDBCreateOptions}
+\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{TileDBCreateOptions}
 }
 \section{Methods}{
 \subsection{Public methods}{

@@ -4,7 +4,7 @@
 \alias{sr_setup}
 \alias{sr_complete}
 \alias{sr_next}
-\title{Iterator-Style Access to SOMA Array via SOMAArrayReader}
+\title{Iterator-Style Access to SOMA Array via SOMAArray}
 \usage{
 sr_setup(
   uri,
@@ -40,14 +40,14 @@ for the given dimension. Each dimension can be one entry in the list.}
 \item{loglevel}{Character value with the desired logging level, defaults to \sQuote{auto}
 which lets prior setting prevail, any other value is set as new logging level.}
 
-\item{sr}{An external pointer to a TileDB SOMAArrayReader object}
+\item{sr}{An external pointer to a TileDB SOMAArray object}
 }
 \value{
-\code{sr_setup} returns an external pointer to a SOMAArrayReader. \code{sr_complete}
+\code{sr_setup} returns an external pointer to a SOMAArray. \code{sr_complete}
 returns a boolean, and \code{sr_next} returns an Arrow array helper object.
 }
 \description{
-The \verb{sr_*} functions provide low-level access to an instance of the SOMAArrayReader
+The \verb{sr_*} functions provide low-level access to an instance of the SOMAArray
 class so that iterative access over parts of a (large) array is possible.
 \describe{
 \item{\code{sr_setup}}{instantiates and by default also submits a query}

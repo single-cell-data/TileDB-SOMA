@@ -4,7 +4,12 @@
 \alias{SOMACollectionOpen}
 \title{Open SOMA Collection}
 \usage{
-SOMACollectionOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMACollectionOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
@@ -12,6 +17,8 @@ SOMACollectionOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{optional SOMATileDBContext}
+
+\item{XXX}{TYPE ME UP}
 }
 \description{
 Factory function to open a SOMACollection for reading, (lifecycle: experimental)
