@@ -5,6 +5,7 @@ PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@ -Iinclude
 
 ## When this becomes a CRAN package we may have to remove this. For now it keeps the noise down
 PKG_CXX17FLAGS = -Wno-deprecated-declarations
+PKG_CLANGFLAGS = -Wno-deprecated-declarations
 
 ## We also need the TileDB library
 PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@
@@ -17,7 +18,13 @@ all: $(SHLIB)
 	if [ `uname -s` = 'Darwin' ] && [ -f tiledbsoma.so ]; then \
 	    if [ -f ../inst/tiledb/lib/libtiledb.dylib ] ; then \
 	        install_name_tool -change libz.1.dylib @rpath/libz.1.dylib ../inst/tiledb/lib/libtiledb.dylib; \
-		install_name_tool -add_rpath @loader_path/../tiledb/lib tiledbsoma.so; \
-	    	install_name_tool -add_rpath @loader_path/../tiledbsoma/lib tiledbsoma.so; \
+	        install_name_tool -add_rpath @loader_path/../tiledb/lib tiledbsoma.so; \
+	        install_name_tool -add_rpath @loader_path/../tiledbsoma/lib tiledbsoma.so; \
+	    fi; \
+	    if [ -f /usr/local/lib/libtiledb.dylib -o -f /usr/local/lib/libtiledbsoma.dylib ] ; then \
+	        install_name_tool -add_rpath /usr/local/lib tiledbsoma.so; \
 	    fi; \
 	fi
+
+# TODO: the /usr/local check is a temporary heuristic which is OK for now.
+# Longer-term work is tracked on https://github.com/single-cell-data/TileDB-SOMA/issues/1365
