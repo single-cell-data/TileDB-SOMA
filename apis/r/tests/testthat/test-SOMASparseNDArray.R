@@ -272,6 +272,7 @@ test_that("platform_config defaults", {
 test_that("SOMASparseNDArray read_spam_matrix", {
   skip_if_not_installed('spam')
   library(spam)
+  library(Matrix)
   uri <- withr::local_tempdir("sparse-ndarray-spam")
   ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
   ndarray$create(arrow::int32(), shape = c(10, 20))
