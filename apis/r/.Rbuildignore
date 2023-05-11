@@ -19,6 +19,8 @@
 src/include
 src/libtiledbsoma
 tiledbsoma/libtiledbsoma.tar.gz.current
+tiledb.tar.gz
+tiledbsoma.tar.gz
 
 # vscode
 ^\.vscode$

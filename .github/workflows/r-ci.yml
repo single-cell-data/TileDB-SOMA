@@ -37,12 +37,12 @@ jobs:
       - name: MkVars
         run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
-      - name: Build and install libtiledbsoma
-        run: sudo scripts/bld --prefix=/usr/local 
+      #- name: Build and install libtiledbsoma
+      #  run: sudo scripts/bld --prefix=/usr/local 
 
-      - name: Call ldconfig
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: sudo ldconfig
+      #- name: Call ldconfig
+      #  if: ${{ matrix.os == 'ubuntu-latest' }}
+      #  run: sudo ldconfig
         
       - name: Test
         run: cd apis/r && tools/r-ci.sh run_tests
