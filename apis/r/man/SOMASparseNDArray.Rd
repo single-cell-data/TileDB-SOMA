@@ -30,7 +30,7 @@ the object are overwritten and new index values are added. (lifecycle: experimen
 \itemize{
 \item \href{#method-SOMASparseNDArray-create}{\code{SOMASparseNDArray$create()}}
 \item \href{#method-SOMASparseNDArray-read_arrow_table}{\code{SOMASparseNDArray$read_arrow_table()}}
-\item \href{#method-SOMASparseNDArray-read_sparse_matrix}{\code{SOMASparseNDArray$read_sparse_matrix()}}
+\item \href{#method-SOMASparseNDArray-read_sparse_matrix_zero_based}{\code{SOMASparseNDArray$read_sparse_matrix_zero_based()}}
 \item \href{#method-SOMASparseNDArray-write}{\code{SOMASparseNDArray$write()}}
 \item \href{#method-SOMASparseNDArray-nnz}{\code{SOMASparseNDArray$nnz()}}
 \item \href{#method-SOMASparseNDArray-clone}{\code{SOMASparseNDArray$clone()}}
@@ -61,8 +61,6 @@ the object are overwritten and new index values are added. (lifecycle: experimen
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_complete"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_complete'><code>tiledbsoma::SOMAArrayBase$read_complete()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_next"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_next'><code>tiledbsoma::SOMAArrayBase$read_next()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -124,12 +122,12 @@ An \code{\link[arrow:Table]{arrow::Table}}.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMASparseNDArray-read_sparse_matrix"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_sparse_matrix}{}}}
-\subsection{Method \code{read_sparse_matrix()}}{
+\if{html}{\out{<a id="method-SOMASparseNDArray-read_sparse_matrix_zero_based"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_sparse_matrix_zero_based}{}}}
+\subsection{Method \code{read_sparse_matrix_zero_based()}}{
 Read as a sparse matrix (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix(
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix_zero_based(
   coords = NULL,
   result_order = "auto",
   repr = c("C", "T", "R"),
@@ -161,7 +159,11 @@ read. List elements can be named when specifying a subset of dimensions.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A \code{matrix} object
+A \code{matrix}-like object accessed using zero-based indexes. It supports
+only basic access operations with zero-based indexes as well as \code{dim()},
+\code{nrow()}, and \code{ncol()}. Use \code{as.one.based()} to get a fully-featured
+sparse matrix object supporting more advanced operations (with one-based
+indexing).
 }
 }
 \if{html}{\out{<hr>}}

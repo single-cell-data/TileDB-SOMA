@@ -24,8 +24,6 @@ Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifec
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-SOMAArrayBase-read_complete}{\code{SOMAArrayBase$read_complete()}}
-\item \href{#method-SOMAArrayBase-read_next}{\code{SOMAArrayBase$read_next()}}
 \item \href{#method-SOMAArrayBase-clone}{\code{SOMAArrayBase$clone()}}
 }
 }
@@ -57,26 +55,6 @@ Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifec
 </ul>
 </details>
 }}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMAArrayBase-read_complete"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMAArrayBase-read_complete}{}}}
-\subsection{Method \code{read_complete()}}{
-Check if iterated read is complete or not. (lifecycle: experimental)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$read_complete()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMAArrayBase-read_next"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMAArrayBase-read_next}{}}}
-\subsection{Method \code{read_next()}}{
-Read the next chunk of an iterated read. (lifecycle: experimental)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$read_next()}\if{html}{\out{</div>}}
-}
-
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAArrayBase-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-clone}{}}}

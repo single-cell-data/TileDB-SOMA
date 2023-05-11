@@ -59,8 +59,8 @@ arrow_table_to_dense <- function(tbl, byrow) {
   # If needed, user can then explicitly ask the shim for the underlying
   # sparseMatrix using `as.one.based()`.
 
-  nrows <- length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))
-  ncols <- length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))
+  nrows <- length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0"))))
+  ncols <- length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1"))))
   soma_data <- as.numeric(tbl$GetColumnByName("soma_data"))
   
   mat <- matrix(soma_data, nrow = nrows, ncol = ncols, byrow = byrow)
