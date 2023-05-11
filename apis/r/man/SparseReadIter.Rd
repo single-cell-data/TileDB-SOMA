@@ -6,10 +6,10 @@
 \description{
 \code{SparseReadIter} is a class that allows for iteration over
 a reads on \link{SOMASparseNDArray}.
-Iteration chunks are retrieved as 0-based Views of \link[Matrix]{SparseMatrix}.
+Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}.
 }
 \section{Super class}{
-\code{tiledbsoma::ReadIter} -> \code{SparseReadIter}
+\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{SparseReadIter}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -71,13 +71,13 @@ which lets prior setting prevail, any other value is set as new logging level.}
 \if{html}{\out{<a id="method-SparseReadIter-concat"></a>}}
 \if{latex}{\out{\hypertarget{method-SparseReadIter-concat}{}}}
 \subsection{Method \code{concat()}}{
-Concatenate remainder of iterator
+Concatenate remainder of iterator.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SparseReadIter$concat()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\link{matrixZeroBasedView}
+\link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}
 }
 }
 \if{html}{\out{<hr>}}

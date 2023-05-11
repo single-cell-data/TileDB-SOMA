@@ -105,7 +105,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return An [`arrow::Table`].
+    #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
     read_arrow_table = function(
       coords = NULL,
       result_order = "auto",
@@ -139,7 +139,13 @@ SOMASparseNDArray <- R6::R6Class(
       }
     },
 
-    #' @description Read as a sparse matrix (lifecycle: experimental)
+    #' @description Read as a sparse matrix (lifecycle: experimental). Returns 
+    #' a `matrix`-like object accessed using zero-based indexes or an iterator 
+    #' of those. The matrix-like objects supports only basic access operations 
+    #' with zero-based indexes as well as `dim()`,`nrow()`, and `ncol()` and 
+    #' arithmetic operations as defined in \link[base]{groupGeneric}. 
+    #' Use `as.one.based()` to get a fully-featured sparse matrix object supporting 
+    #' more advanced operations (with one-based indexing).
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
@@ -148,11 +154,8 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return A `matrix`-like object accessed using zero-based indexes. It supports
-    #'         only basic access operations with zero-based indexes as well as `dim()`,
-    #'         `nrow()`, and `ncol()`. Use `as.one.based()` to get a fully-featured
-    #'         sparse matrix object supporting more advanced operations (with one-based
-    #'         indexing).
+    #' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix} or 
+    #' \link{SparseReadIter}
     read_sparse_matrix_zero_based = function(
       coords = NULL,
       result_order = "auto",

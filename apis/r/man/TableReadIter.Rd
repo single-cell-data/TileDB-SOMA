@@ -6,10 +6,10 @@
 \description{
 \code{TableReadIter} is a class that allows for iteration over
 a reads on \link{SOMASparseNDArray} and \link{SOMADataFrame}.
-Iteration chunks are retrieved as Arrow Tables
+Iteration chunks are retrieved as arrow::\link[arrow]{Table}
 }
 \section{Super class}{
-\code{tiledbsoma::ReadIter} -> \code{TableReadIter}
+\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{TableReadIter}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -31,13 +31,13 @@ Iteration chunks are retrieved as Arrow Tables
 \if{html}{\out{<a id="method-TableReadIter-concat"></a>}}
 \if{latex}{\out{\hypertarget{method-TableReadIter-concat}{}}}
 \subsection{Method \code{concat()}}{
-Concatenate remainder of iterator
+Concatenate remainder of iterator.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TableReadIter$concat()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\link[Arrow]{Table}
+arrow::\link[arrow]{Table}
 }
 }
 \if{html}{\out{<hr>}}

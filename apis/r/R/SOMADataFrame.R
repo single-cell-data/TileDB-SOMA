@@ -170,7 +170,7 @@ SOMADataFrame <- R6::R6Class(
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return An [`arrow::Table`].
+    #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
     read = function(coords = NULL,
                     column_names = NULL,
                     value_filter = NULL,

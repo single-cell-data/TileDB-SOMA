@@ -82,7 +82,7 @@ If read is complete, retunrs \code{NULL} and raises warning.
 }
 
 \subsection{Returns}{
-\code{NULL} or one of \link[Arrow]{Table}, \link{matrixZeroBasedView}
+\code{NULL} or one of arrow::\link[arrow]{Table}, \link{matrixZeroBasedView}
 }
 }
 \if{html}{\out{<hr>}}

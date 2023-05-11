@@ -23,7 +23,7 @@ the object are overwritten and new index values are added. (lifecycle: experimen
 }
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{tiledbsoma::SOMAArrayBase} -> \code{SOMASparseNDArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMASparseNDArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -118,14 +118,20 @@ read. List elements can be named when specifying a subset of dimensions.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-An \code{\link[arrow:Table]{arrow::Table}}.
+arrow::\link[arrow]{Table} or \link{TableReadIter}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMASparseNDArray-read_sparse_matrix_zero_based"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_sparse_matrix_zero_based}{}}}
 \subsection{Method \code{read_sparse_matrix_zero_based()}}{
-Read as a sparse matrix (lifecycle: experimental)
+Read as a sparse matrix (lifecycle: experimental). Returns
+a \code{matrix}-like object accessed using zero-based indexes or an iterator
+of those. The matrix-like objects supports only basic access operations
+with zero-based indexes as well as \code{dim()},\code{nrow()}, and \code{ncol()} and
+arithmetic operations as defined in \link[base]{groupGeneric}.
+Use \code{as.one.based()} to get a fully-featured sparse matrix object supporting
+more advanced operations (with one-based indexing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix_zero_based(
   coords = NULL,
@@ -159,11 +165,8 @@ read. List elements can be named when specifying a subset of dimensions.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A \code{matrix}-like object accessed using zero-based indexes. It supports
-only basic access operations with zero-based indexes as well as \code{dim()},
-\code{nrow()}, and \code{ncol()}. Use \code{as.one.based()} to get a fully-featured
-sparse matrix object supporting more advanced operations (with one-based
-indexing).
+\link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix} or
+\link{SparseReadIter}
 }
 }
 \if{html}{\out{<hr>}}

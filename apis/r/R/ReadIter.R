@@ -47,7 +47,7 @@ ReadIter <- R6::R6Class(
 
     #' @description Read the next chunk of an iterated read. (lifecycle: experimental).
     #' If read is complete, retunrs `NULL` and raises warning.
-    #' @return \code{NULL} or one of \link[Arrow]{Table}, \link{matrixZeroBasedView}
+    #' @return \code{NULL} or one of arrow::\link[arrow]{Table}, \link{matrixZeroBasedView}
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
           NULL

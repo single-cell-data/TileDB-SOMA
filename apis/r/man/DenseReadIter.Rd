@@ -9,7 +9,7 @@ a reads on \link{SOMADenseNDArray}.
 Iteration chunks are retrieved as 0-based Views of \link[base]{matrix}.
 }
 \section{Super class}{
-\code{tiledbsoma::ReadIter} -> \code{DenseReadIter}
+\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{DenseReadIter}
 }
 \section{Methods}{
 \subsection{Public methods}{

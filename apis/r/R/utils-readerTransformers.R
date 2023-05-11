@@ -1,6 +1,6 @@
 #' @description Converts the results of a \link{soma_array_reader} or \link{sr_next} to 
-#' an \link[Arrow]{Table}
-#' @return \link[Arrow]{Table}
+#' an arrow::\link[arrow]{Table}
+#' @return arrow::\link[arrow]{Table}
 soma_array_to_arrow_table <- function(x) {
     arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
 }
@@ -11,7 +11,7 @@ soma_array_to_arrow_table <- function(x) {
 #' @param repr Optional one-character code for sparse matrix representation type
 #' @param dims_one_based Numerical vectors with two elements, one for each dimension. If
 #' \code{NULL}, then the following is used \code{c(max(tbl["soma_dim_0"]), max(tbl["soma_dim_1"]))}
-#' @return \link{matrixZeroBasedView}
+#' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}
 arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), dims_one_based = NULL) {
 
   # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
@@ -48,7 +48,7 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), dims_one_based =
 #' @param repr Optional one-character code for sparse matrix representation type
 #' @param dims_one_based Numerical vectors with two elements, one for each dimension. If
 #' \code{NULL}, then the following is used \code{c(max(tbl["soma_dim_0"]), max(tbl["soma_dim_1"]))}
-#' @return \link{matrixZeroBasedView}
+#' @return \link{matrixZeroBasedView} of \link[base]{matrix}
 arrow_table_to_dense <- function(tbl, byrow) {
 
   # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the

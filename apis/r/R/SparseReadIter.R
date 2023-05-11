@@ -3,7 +3,7 @@
 #' @description
 #' \code{SparseReadIter} is a class that allows for iteration over 
 #'  a reads on \link{SOMASparseNDArray}.
-#' Iteration chunks are retrieved as 0-based Views of \link[Matrix]{SparseMatrix}.
+#' Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}.
 #' @export
 
 SparseReadIter <- R6::R6Class(
@@ -47,8 +47,8 @@ SparseReadIter <- R6::R6Class(
           private$dims_one_based <- c(max_soma_dim_0 + 1, max_soma_dim_1 + 1)
     },
    
-    #' @description  Concatenate remainder of iterator
-    #' @return \link{matrixZeroBasedView}
+    #' @description  Concatenate remainder of iterator.
+    #' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}
     concat = function(){
       
       if(self$read_complete()) {

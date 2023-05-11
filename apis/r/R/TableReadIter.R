@@ -3,7 +3,7 @@
 #' @description
 #' `TableReadIter` is a class that allows for iteration over 
 #'  a reads on \link{SOMASparseNDArray} and \link{SOMADataFrame}. 
-#' Iteration chunks are retrieved as Arrow Tables
+#' Iteration chunks are retrieved as arrow::\link[arrow]{Table}
 #' @export
 
 TableReadIter <- R6::R6Class(
@@ -12,8 +12,8 @@ TableReadIter <- R6::R6Class(
 
   public = list(
     
-    #' @description  Concatenate remainder of iterator
-    #' @return \link[Arrow]{Table}
+    #' @description  Concatenate remainder of iterator.
+    #' @return arrow::\link[arrow]{Table}
     concat = function(){
   
       if(self$read_complete()) {

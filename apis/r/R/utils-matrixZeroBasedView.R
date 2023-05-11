@@ -6,7 +6,8 @@
 # - In particular, if M0[i,j] is vector- or matrix-valued, then the returned
 #   vector/matrix is ONE-based.
 # - as.one.based(M0) returns M1.
-# - The only other supported operations are: dim(M0), nrow(M0), ncol(M0).
+# - The only other supported operations are: dim(M0), nrow(M0), ncol(M0), and arihmetic 
+# operations as defined in \link[base]{groupGeneric}
 
 #' Zero-based matrix shim
 #'
