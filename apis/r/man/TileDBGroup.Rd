@@ -136,7 +136,7 @@ default), the object's URI is assumed to be relative unless it is a
 Retrieve a group member by name. If the member isn't already
 open, it is opened for read. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$get(name)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$get(name, mode = "READ")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

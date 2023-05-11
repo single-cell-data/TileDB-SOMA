@@ -71,8 +71,8 @@ SOMACollectionBase <- R6::R6Class(
     #' @description Retrieve a SOMA object by name. (lifecycle: experimental)
     #' @param name The name of the object to retrieve.
     #' @returns SOMA object.
-    get = function(name) {
-      super$get(name)
+    get = function(name, mode = "READ") {
+      super$get(name, mode = mode)
     },
 
     #' @description Add a new SOMA collection to this collection. (lifecycle: experimental)

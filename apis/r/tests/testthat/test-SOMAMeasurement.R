@@ -21,6 +21,7 @@ test_that("Basic mechanics", {
   expect_error(measurement$X <- var, "X must be a 'SOMACollection'")
 
   measurement$X <- SOMACollectionCreate(file.path(uri, "X"))
+  expect_equal(measurement$X$mode(), "WRITE")
 
   expect_equal(measurement$X$mode(), "WRITE")
   expect_true(inherits(measurement$X, "SOMACollection"))

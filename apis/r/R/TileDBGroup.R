@@ -135,7 +135,7 @@ TileDBGroup <- R6::R6Class(
     #' open, it is opened for read. (lifecycle: experimental)
     #' @param name The name of the member.
     #' @returns A `TileDBArray` or `TileDBGroup`.
-    get = function(name) {
+    get = function(name, mode = "READ") {
       stopifnot(is_scalar_character(name))
       private$check_open_for_read_or_write()
 
@@ -159,8 +159,15 @@ TileDBGroup <- R6::R6Class(
       } else {
         obj <- member$object
       }
-      if (!obj$is_open()) {
-        obj$open("READ", internal_use_only = "allowed_use")
+
+      # XXX comment
+      if (obj$is_open()) {
+        if (mode == "WRITE" && obj$mode() != "WRITE") {
+          obj$close()
+          obj$open(mode, internal_use_only = "allowed_use")
+        }
+      } else {
+        obj$open(mode, internal_use_only = "allowed_use")
       }
       obj
     },
