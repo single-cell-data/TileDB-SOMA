@@ -65,7 +65,7 @@ test_that("SOMASparseNDArray creation", {
   expect_equal(shape(uri), c(10,10))
   ## shape with config, expected breakge as 'bad key' used
   expect_error(shape(uri, c(sm.encryption_key="Nope", sm.encryption_type="AES_256_GCM")))
-  
+
 })
 
 test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
@@ -267,4 +267,59 @@ test_that("platform_config defaults", {
   expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
   expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
 
+})
+
+test_that("SOMASparseNDArray read_spam_matrix", {
+  skip_if_not_installed('spam')
+  uri <- withr::local_tempdir("sparse-ndarray-spam")
+  ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
+  ndarray$create(arrow::int32(), shape = c(10, 20))
+
+  mat <- create_sparse_matrix_with_int_dims(10, 20)
+  ndarray$write(mat)
+
+  expect_no_condition(sp <- ndarray$read_spam_matrix())
+  expect_s4_class(sp, 'spam')
+  expect_type(sp@colindices, 'integer')
+  expect_identical(dim(sp), dim(mat))
+  expect_identical(as.matrix(sp), as.matrix(mat))
+
+  # Test transposed
+  expect_no_condition(spt <- ndarray$read_spam_matrix(transpose = TRUE))
+  expect_s4_class(spt, 'spam')
+  expect_identical(dim(spt), dim(t(mat)))
+  expect_identical(as.matrix(spt), as.matrix(t(mat)))
+
+  # Test with coords
+  coords <- list(soma_dim_0=0, soma_dim_1=0:2)
+  expect_no_condition(spc <- ndarray$read_spam_matrix(coords))
+  expect_identical(
+    dim(spc),
+    vapply(X = coords, FUN = length, FUN.VALUE = integer(1L), USE.NAMES = FALSE)
+  )
+  expect_identical(
+    as.matrix(spc),
+    as.matrix(mat[coords[[1L]] + 1, coords[[2L]] + 1, drop = FALSE])
+  )
+
+  # Test with coords -- unnamed
+  ucoords <- list(0, 0:2)
+  expect_no_condition(spu <- ndarray$read_spam_matrix(coords))
+  expect_identical(
+    dim(spu),
+    vapply(X = ucoords, FUN = length, FUN.VALUE = integer(1L), USE.NAMES = FALSE)
+  )
+  expect_identical(
+    as.matrix(spu),
+    as.matrix(mat[ucoords[[1L]] + 1, ucoords[[2L]] + 1, drop = FALSE])
+  )
+
+  # Test forced spam64
+  skip_if_not_installed('spam64')
+  withr::local_options(list(spam.force64 = TRUE))
+  expect_no_condition(sp64 <- ndarray$read_spam_matrix())
+  expect_s4_class(sp64, 'spam')
+  expect_type(sp64@colindices, 'double')
+  expect_equivalent(dim(sp64), dim(mat))
+  expect_identical(as.matrix(sp64), as.matrix(mat))
 })

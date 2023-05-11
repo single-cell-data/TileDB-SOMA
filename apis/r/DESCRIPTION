@@ -63,7 +63,9 @@ Suggests:
     testthat (>= 3.0.0),
     pbmc3k.tiledb,
     SeuratObject (>= 4.1.0),
-    datasets
+    datasets,
+    spam,
+    spam64
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix

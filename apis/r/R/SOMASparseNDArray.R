@@ -214,6 +214,81 @@ SOMASparseNDArray <- R6::R6Class(
       }
     },
 
+    #' @description Read as a spam-based sparse matrix (lifecycle: experimental)
+    #' @param coords ...
+    #' @template param-result-order
+    #' @param log_level ...
+    #'
+    read_spam_matrix = function(
+      coords = NULL,
+      result_order = "auto",
+      log_level = "warn",
+      transpose = FALSE
+    ) {
+      dims <- self$dimensions()
+      attr <- self$attributes()
+      stopifnot(
+        "'spam' is required for reading in spam matrices" =
+          requireNamespace("spam", quietly = TRUE),
+        "Array must have two dimensions" = length(dims) == 2L,
+        "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
+          identical(names(dims), c("soma_dim_0", "soma_dim_1")),
+        "Array must contain column 'soma_data'" = identical(names(attr), "soma_data"),
+        "'transpose' must be a single logical value" = is_scalar_logical(transpose)
+      )
+      if (!'package:spam' %in% search()) {
+        attachNamespace('spam')
+      }
+      shape <- if (is.null(coords)) {
+        sapply(
+          X = dims,
+          FUN = function(x) {
+            return(max(as.numeric(tiledb::domain(x))) + 1)
+          }
+        )
+      } else {
+        stopifnot(
+          "'coords' must be a list" = is.list(coords),
+          "'coords' must be a list of vectors or integer64" =
+            all(vapply_lgl(coords, is_vector_or_int64)),
+          "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
+            (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
+            (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
+        )
+        sapply(
+          X = seq_along(coords),
+          FUN = function(i) {
+            mx <- max(as.numeric(coords[[i]])) + 1
+            dim <- as.numeric(self$shape()[i])
+            return(dim - (dim - mx))
+          }
+        )
+      }
+      if (any(c(shape, self$nnz()) > .Machine$integer.max)) {
+        stopifnot(
+          "'spam64' is required for reading large spam matrices" =
+            requireNamespace('spam64', quietly = TRUE)
+        )
+      }
+      tbl <- as.list(self$read_arrow_table(
+        coords = coords,
+        result_order = result_order,
+        log_level = log_level
+      ))
+      tbl$soma_dim_0 <- tbl$soma_dim_0 + 1
+      tbl$soma_dim_1 <- tbl$soma_dim_1 + 1
+      if (isTRUE(x = transpose)) {
+        names(tbl) <- c('j', 'i', 'x')
+        nrow <- shape[2L]
+        ncol <- shape[1L]
+      } else {
+        names(tbl) <- c('i', 'j', 'x')
+        nrow <- shape[1L]
+        ncol <- shape[2L]
+      }
+      return(spam::spam(tbl, nrow = nrow, ncol = ncol))
+    },
+
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
     #'
     #' @param values Any `matrix`-like object coercible to a
