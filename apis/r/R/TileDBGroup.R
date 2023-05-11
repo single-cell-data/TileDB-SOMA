@@ -14,10 +14,10 @@ TileDBGroup <- R6::R6Class(
     print = function() {
       super$print()
       if (self$exists()) {
-        if (private$.mode == "CLOSED") {
-          cat("Unopened\n")
-        } else {
+        if (self$is_open()) {
           private$format_members()
+        } else {
+          cat("  closed\n")
         }
       }
     },
