@@ -15,8 +15,8 @@
 #' @return Shim providing elemental access to the matrix using zero-based indexes.
 #' @export
 matrixZeroBasedView <- function(one_based_matrix) {
-  if (!inherits(one_based_matrix, "matrix") && !inherits(one_based_matrix, "sparseMatrix")) {
-    stop("Matrix object must inherit class matrix or Matrix::sparseMatrix.")
+  if (!inherits(one_based_matrix, "matrix") && !inherits(one_based_matrix, "sparseMatrix") && !inherits(one_based_matrix, "denseMatrix")) {
+    stop("Matrix object must inherit class matrix or Matrix::sparseMatrix or Matrix:denseMatrix")
   }
   structure(list(one_based_matrix = one_based_matrix), class = "matrixZeroBasedView")
 }
@@ -41,6 +41,27 @@ matrixZeroBasedView <- function(one_based_matrix) {
   } else {
     x$one_based_matrix[i + 1, j + 1, drop = drop]
   }
+}
+
+#' +
+#'
+#' @param e1 left side
+#' @param e2 right sidet
+#'
+#' @return results of sum 
+#' @export
+Ops.matrixZeroBasedView <- function(e1, e2 = NULL) {
+  
+  if(inherits(e1, "matrixZeroBasedView")) {
+    e1 <- e1$one_based_matrix 
+  } 
+
+  if(inherits(e2, "matrixZeroBasedView")) {
+    e2 <- e2$one_based_matrix
+  } 
+  
+  matrixZeroBasedView(NextMethod())
+  
 }
 
 #' dim
@@ -71,6 +92,17 @@ nrow.matrixZeroBasedView <- function(x) {
 #' @export
 ncol.matrixZeroBasedView <- function(x) {
   ncol(x$one_based_matrix)
+}
+
+#' print
+#'
+#' @param x The zero-based matrix view.
+#'
+#' @return Matrix column count.
+#' @export
+print.matrixZeroBasedView <- function(x) {
+  cat("Non-mutable 0-based 'view' class for matrices.\n",
+      "To get 1-based matrix use `x$one_based_matrix` or `as.one.based(x)`\n")
 }
 
 #' Get one-based object

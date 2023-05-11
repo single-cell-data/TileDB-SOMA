@@ -1,8 +1,9 @@
 #' SparseReadIter
 #'
 #' @description
-#' `SparseReadIter` is a class that allows for iteration over 
-#'  the results of a read operation from SOMA objects#' 
+#' \code{SparseReadIter} is a class that allows for iteration over 
+#'  a reads on \link{SOMASparseNDArray}.
+#' Iteration chunks are retrieved as 0-based Views of \link[Matrix]{SparseMatrix}.
 #' @export
 
 SparseReadIter <- R6::R6Class(
@@ -12,45 +13,68 @@ SparseReadIter <- R6::R6Class(
   public = list(
                 
     #' @description Create (lifecycle: experimental)
-    initialize = function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, loglevel = "auto", repr) {
+    #' @param uri Character value with URI path to a SOMADataFrame or SOMASparseNDArray
+    #' @param config character vector containing TileDB config.
+    #' @param colnames Optional vector of character value with the name of the columns to retrieve
+    #' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
+    #' no query condition
+    #' @param dim_points Optional named list with vector of data points to select on the given
+    #' dimension(s). Each dimension can be one entry in the list.
+    #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
+    #' @param repr Optional one-character code for sparse matrix representation type
+    #' which lets prior setting prevail, any other value is set as new logging level.
+    initialize = function(uri, 
+                          config, 
+                          colnames = NULL, 
+                          qc = NULL, 
+                          dim_points = NULL, 
+                          loglevel = "auto", 
+                          repr = c("C", "T", "R")) {
+        
         # Initiate super class
           super$initialize (uri = uri, config = config, colnames = colnames, qc = qc,
                             dim_points = dim_points, loglevel = loglevel)
     
           private$repr <- repr
           
-          # Get max soma dims for indeces
+          # Get max soma dims for indeces via tiledb
           tiledb_array <- tiledb::tiledb_array(uri)
           tiledb::tiledb_array_open(tiledb_array, type = "READ")
           max_soma_dim_0 <- as.integer(max(tiledb::tiledb_array_get_non_empty_domain_from_index(tiledb_array, 1)))
           max_soma_dim_1 <- as.integer(max(tiledb::tiledb_array_get_non_empty_domain_from_index(tiledb_array, 2)))
           tiledb::tiledb_array_close(tiledb_array)
           
-          private$dims <- c(max_soma_dim_0, max_soma_dim_1)
+          private$dims_one_based <- c(max_soma_dim_0 + 1, max_soma_dim_1 + 1)
     },
-    
-    ## refined from base class
+   
+    #' @description  Concatenate remainder of iterator
+    #' @return \link{matrixZeroBasedView}
     concat = function(){
-  
-      rl <- list()
       
-      while (!self$read_complete()) {
-        rl <- c(rl, self$read_next())
+      if(self$read_complete()) {
+        warning("Iteration complete, returning NULL")
+        return(NULL)
       }
       
-      do.call(arrow::concat_tables, rl)
+      mat <- self$read_next()
+      
+      while (!self$read_complete()) {
+        mat <- mat + self$read_next()
+      }
+      
+      mat
       
     }),
   
   private = list(
                  
     repr=NULL,
-    dims=NULL,
+    dims_one_based=NULL,
     
     ## refined from base class
     soma_reader_transform = function(x) {
-      arrow_table_to_sparse(soma_array_to_arrow(x), repr = private$repr, dims = private$dims)
-    }
+      arrow_table_to_sparse(soma_array_to_arrow_table(x), repr = private$repr, dims_one_based = private$dims_one_based)
+   }
     
   )
 )

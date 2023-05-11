@@ -1,9 +1,9 @@
-#' TableReadIter
+#' SOMA Read Iterator over Arrow Table
 #'
 #' @description
 #' `TableReadIter` is a class that allows for iteration over 
-#'  the results of a read operation from SOMA objects#' 
-#' @importFrom stats setNames
+#'  a reads on \link{SOMASparseNDArray} and \link{SOMADataFrame}. 
+#' Iteration chunks are retrieved as Arrow Tables
 #' @export
 
 TableReadIter <- R6::R6Class(
@@ -12,16 +12,22 @@ TableReadIter <- R6::R6Class(
 
   public = list(
     
-    ## refined from base class
+    #' @description  Concatenate remainder of iterator
+    #' @return \link[Arrow]{Table}
     concat = function(){
   
-      rl <- list()
+      if(self$read_complete()) {
+        warning("Iteration complete, returning NULL")
+        return(NULL)
+      }
+    
+      tbl <- self$read_next()
       
       while (!self$read_complete()) {
-        rl <- c(rl, self$read_next())
+        tbl <- arrow::concat_tables(tbl, self$read_next())
       }
       
-      do.call(arrow::concat_tables, rl)
+      tbl
       
     }),
   
@@ -29,7 +35,7 @@ TableReadIter <- R6::R6Class(
                  
     ## refined from base class
     soma_reader_transform = function(x) {
-      soma_array_to_arrow(x)
+      soma_array_to_arrow_table(x)
     }
     
   )

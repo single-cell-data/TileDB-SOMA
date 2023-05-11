@@ -17,37 +17,6 @@ SOMAArrayBase <- R6::R6Class(
     }
   ),
 
-  public = list(
-
-    #' @description Check if iterated read is complete or not. (lifecycle: experimental)
-    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
-    #    all read functions, currently only implemented for SOMADataFrame
-    read_complete = function() {
-      if (is.null(private$soma_reader_pointer)) {
-          TRUE
-      } else {
-          sr_complete(private$soma_reader_pointer)
-      }
-    },
-
-    #' @description Read the next chunk of an iterated read. (lifecycle: experimental)
-    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
-    #    all read functions, currently only implemented for SOMADataFrame
-    read_next = function() {
-      if (is.null(private$soma_reader_pointer)) {
-          NULL
-      } else {
-          if (sr_complete(private$soma_reader_pointer)) {
-              invisible(NULL)
-          } else {
-              rl <- sr_next(private$soma_reader_pointer)
-              private$soma_reader_transform(rl)
-          }
-      }
-    }
-
-  ),
-
   private = list(
 
     # Cache object's SOMA_OBJECT_TYPE_METADATA_KEY
@@ -63,27 +32,28 @@ SOMAArrayBase <- R6::R6Class(
       meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
       self$set_metadata(meta)
     },
+    
+    #' @description Converts a list of vectors corresponding to coords to a 
+    #' format acceptable for sr_setup and soma_array_reader
+    convert_coords = function(coords) {
+      
+      ## ensure coords is a named list, use to select dim points
+      stopifnot("'coords' must be a list" = is.list(coords),
+                "'coords' must be a list of vectors or integer64" =
+                    all(vapply_lgl(coords, is_vector_or_int64)),
+                "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
+                    (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
+                    (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
+                )
 
-    # Internal 'external pointer' object used for iterated reads
-    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
-    #    all read functions, currently only implemented for SOMADataFrame
-    soma_reader_pointer = NULL,
+      ## if unnamed (and test for length has passed in previous statement) set names
+      if (is.null(names(coords))) names(coords) <- self$dimnames()
 
-    # Instantiate soma_reader_pointer with a soma_array_reader object
-    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
-    #    all read functions, currently only implemented for SOMADataFrame
-    soma_reader_setup = function() {
-      private$soma_reader_pointer <- sr_setup(
-        self$uri,
-        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      )
-    },
-
-    ## to be refined in derived classes
-    # SHOULD REMOVE IF iterator functionality moves to ReatIter class for 
-    #    all read functions, currently only implemented for SOMADataFrame
-    soma_reader_transform = function(x) {
-      x
+      ## convert integer to integer64 to match dimension type
+      coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+      
+      coords
+      
     }
 
   )

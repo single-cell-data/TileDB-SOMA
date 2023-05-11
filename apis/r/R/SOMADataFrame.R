@@ -181,7 +181,7 @@ SOMADataFrame <- R6::R6Class(
       result_order <- match_query_layout(result_order)
       uri <- self$uri
       arr <- self$object                 # need array (schema) to properly parse query condition
-
+      
       ## if unnamed set names
       if (!is.null(coords)) {
           if (!is.list(coords))
@@ -207,15 +207,15 @@ SOMADataFrame <- R6::R6Class(
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       if (isFALSE(iterated)) {
-         read_full <- TableReadFull$new(uri = self$uri,
-                           config = cfg,
-                           colnames = column_names,   # NULL dealt with by sr_setup()
-                           qc = value_filter,         # idem
-                           dim_points = coords,       # idem
-                           loglevel = log_level      # idem
-                           )
-      
-        return(read_full$read())
+        rl <- soma_array_reader(uri = self$uri,
+                                config = cfg,
+                                colnames = column_names,   # NULL dealt with by sr_setup()
+                                qc = value_filter,         # idem
+                                dim_points = coords,
+                                loglevel = log_level
+                               )
+
+        soma_array_to_arrow_table(rl)
       } else {
          read_iter <- TableReadIter$new(uri = self$uri,
                            config = cfg,

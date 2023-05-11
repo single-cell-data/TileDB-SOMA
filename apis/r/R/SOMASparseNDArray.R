@@ -117,37 +117,25 @@ SOMASparseNDArray <- R6::R6Class(
       result_order <- map_query_layout(match_query_layout(result_order))
 
       if (!is.null(coords)) {
-          ## ensure coords is a named list, use to select dim points
-          stopifnot("'coords' must be a list" = is.list(coords),
-                    "'coords' must be a list of vectors or integer64" =
-                        all(vapply_lgl(coords, is_vector_or_int64)),
-                    "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
-                        (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
-                        (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
-                    )
-
-          ## if unnamed (and test for length has passed in previous statement) set names
-          if (is.null(names(coords))) names(coords) <- self$dimnames()
-
-          ## convert integer to integer64 to match dimension type
-          coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+        coords <- private$convert_coords(coords)
       }
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       if (isFALSE(iterated)) {
-         read_full <- TableReadFull$new(uri = self$uri,
-                                        config = cfg,
-                                        dim_points = coords,       # idem
-                                        loglevel = log_level      # idem
-                                       )
-         return(read_full$read())
+         rl <- soma_array_reader(uri = self$uri,
+                                 config = cfg,
+                                 dim_points = coords,
+                                 loglevel = log_level
+                                )
+      
+        soma_array_to_arrow_table(rl)
       } else {
          read_iter <- TableReadIter$new(uri = self$uri,
                                         config = cfg,
-                                        dim_points = coords,       # idem
-                                        loglevel = log_level      # idem
+                                        dim_points = coords,
+                                        loglevel = log_level
                                        )
-         return(read_iter)
+         read_iter
       }
     },
 
@@ -180,27 +168,20 @@ SOMASparseNDArray <- R6::R6Class(
                     all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
                 "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
       
+      if (!is.null(coords)) {
+        coords <- private$convert_coords(coords)
+      }
 
       if (isFALSE(iterated)) {
-          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-          # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
-          # zero-based soma_dim_0 and soma_dim_1 (done by arrow_table_to_sparse). But, because these dimensions are
-          # usually populated with soma_joinid, users will need to access the matrix
-          # using the original, possibly-zero IDs. Therefore, we'll wrap the one-based
-          # sparseMatrix with a shim providing basic access with zero-based indexes.
-          # If needed, user can then explicitly ask the shim for the underlying
-          # sparseMatrix using `as.one.based()`.
-          mat <-  arrow_table_to_sparse(tbl, repr = repr)
-          
-          matrixZeroBasedView(mat)
+        tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+        arrow_table_to_sparse(tbl, repr = repr)
       } else {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-          SparseReadIter$new(uri = self$uri,
-                             config = cfg,
-                             dim_points = coords,
-                             loglevel = log_level,
-                             repr = repr)
-
+        cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+        SparseReadIter$new(uri = self$uri,
+                           config = cfg,
+                           dim_points = coords,
+                           loglevel = log_level,
+                           repr = repr)
       }
     },
 
@@ -245,20 +226,27 @@ SOMASparseNDArray <- R6::R6Class(
       arr <- self$object
       arr[] <- values
     },
+    
+    #' @description Converts a list of vectors corresponding to coords to a 
+    #' format acceptable for sr_setup and soma_array_reader
+    convert_coords = function(coords) {
+      
+      ## ensure coords is a named list, use to select dim points
+      stopifnot("'coords' must be a list" = is.list(coords),
+                "'coords' must be a list of vectors or integer64" =
+                    all(vapply_lgl(coords, is_vector_or_int64)),
+                "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
+                    (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
+                    (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
+                )
 
-    ## refined from base class
-    soma_reader_transform = function(x) {
-      tbl <- as_arrow_table(x)
-      if (private$sparse_repr == "") {
-          tbl
-      } else {
-          mat <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                                      j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                                      x = as.numeric(tbl$GetColumnByName("soma_data")),
-                                      dims = as.integer(self$shape()), repr = private$sparse_repr)
-          # see read_sparse_matrix_zero_based() abave
-          matrixZeroBasedView(mat)
-      }
+      ## if unnamed (and test for length has passed in previous statement) set names
+      if (is.null(names(coords))) names(coords) <- self$dimnames()
+
+      ## convert integer to integer64 to match dimension type
+      coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+      
+      coords
     },
 
     ## internal 'repr' state variable, by default 'unset'
