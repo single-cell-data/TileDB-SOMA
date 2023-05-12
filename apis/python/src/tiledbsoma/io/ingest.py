@@ -95,6 +95,11 @@ def from_h5ad(
 
         measurement_name: The name of the measurement to store data in.
 
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Optional dict including data of the form ``{"tiledb": {"create": create_options}}``
+        where ``create_options`` is a :class:`TileDBCreateOptions`.
+
         ingest_mode: The ingestion type to perform:
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
@@ -177,6 +182,11 @@ def from_anndata(
 
         measurement_name: The name of the measurement to store data in.
 
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Optional dict including data of the form ``{"tiledb": {"create": create_options}}``
+        where ``create_options`` is a :class:`TileDBCreateOptions`.
+
         ingest_mode: The ingestion type to perform:
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
@@ -204,6 +214,8 @@ def from_anndata(
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
+
+    _util.validate_platform_config(platform_config)
 
     context = _validate_soma_tiledb_context(context)
 
@@ -650,6 +662,8 @@ def create_from_matrix(
     Lifecycle:
         Experimental.
     """
+    _util.validate_platform_config(platform_config)
+
     # SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
