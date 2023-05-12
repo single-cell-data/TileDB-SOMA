@@ -196,8 +196,6 @@ def from_anndata(
               writing any data to the array. Useful to prepare for appending
               multiple H5AD files to a single SOMA.
 
-        XXX use_relative_uri
-
         X_kind: Which type of matrix is used to store dense X data from the
             H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
 
