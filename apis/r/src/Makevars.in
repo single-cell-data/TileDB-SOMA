@@ -4,7 +4,7 @@ CXX_STD = CXX17
 PKG_CPPFLAGS = -Wno-deprecated-declarations -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@ -Iinclude
 
 ## When this becomes a CRAN package we may have to remove this. For now it keeps the noise down
-PKG_CXX17FLAGS = -Wno-deprecated-declarations
+PKG_CXXFLAGS = -Wno-deprecated-declarations
 
 ## We also need the TileDB library
 PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@
