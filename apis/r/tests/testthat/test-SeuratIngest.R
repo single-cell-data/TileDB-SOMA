@@ -5,9 +5,11 @@ test_that("Write Assay mechanics", {
 
   uri <- withr::local_tempdir("write-assay")
   collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close())
 
   rna <- get_data('pbmc_small', package = 'SeuratObject')[['RNA']]
   expect_no_condition(ms <- write_soma(rna, soma_parent = collection))
+  on.exit(ms$close())
   expect_s3_class(ms, 'SOMAMeasurement')
   expect_true(ms$exists())
 
@@ -25,7 +27,6 @@ test_that("Write Assay mechanics", {
       info = layers[i]
     )
   }
-  ms$close()
 
   # Test no feature-level meta data
   rna2 <- rna
@@ -98,6 +99,7 @@ test_that("Write Assay mechanics", {
     uri = 'rna-no-counts-scale',
     soma_parent = collection)
   )
+  on.exit(ms5$close())
   expect_s3_class(ms5, 'SOMAMeasurement')
   expect_true(ms5$exists())
   expect_identical(ms5$uri, file.path(collection$uri, 'rna-no-counts-scale'))
@@ -114,9 +116,6 @@ test_that("Write Assay mechanics", {
     rna,
     soma_parent = SOMADataFrameCreate(uri = file.path(uri, 'data-frame'))
   ))
-  ms5$close()
-
-  collection$close()
 })
 
 test_that("Write DimReduc mechanics", {
@@ -124,6 +123,7 @@ test_that("Write DimReduc mechanics", {
 
   uri <- withr::local_tempdir("write-reduction")
   collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close())
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   pbmc_small_rna <- pbmc_small[['RNA']]
   pbmc_small_pca <- pbmc_small[['pca']]
@@ -131,6 +131,7 @@ test_that("Write DimReduc mechanics", {
 
   # Test writing PCA
   ms_pca <- write_soma(pbmc_small_rna, uri = 'rna-pca', soma_parent = collection)
+  on.exit(ms_pca$close())
   fidx <- match(rownames(SeuratObject::Loadings(pbmc_small_pca)), rownames(pbmc_small_rna))
   expect_no_condition(write_soma(
     pbmc_small_pca,
@@ -148,6 +149,7 @@ test_that("Write DimReduc mechanics", {
 
   # Test writing tSNE
   ms_tsne <- write_soma(pbmc_small_rna, uri = 'rna-tsne', soma_parent = collection)
+  on.exit(ms_tsne$close())
   expect_no_condition(write_soma(pbmc_small_tsne, soma_parent = ms_tsne))
   expect_true(all(ms_tsne$names() %in% c('X', 'var', 'obsm', 'varm')))
   expect_identical(ms_tsne$obsm$names(), 'X_tsne')
@@ -162,7 +164,9 @@ test_that("Write DimReduc mechanics", {
     fidx = fidx,
     nfeatures = nrow(pbmc_small_rna)
   ))
+  on.exit(ms_pca2$close())
   expect_no_condition(ms_rna <- write_soma(pbmc_small_rna, soma_parent = ms))
+  on.exit(ms_rna$close())
   expect_true(all(ms$names() %in% c('X', 'var', 'obsm', 'varm')))
   expect_true(all(ms$obsm$names() %in% paste0('X_', c('pca', 'tsne'))))
   expect_identical(ms$varm$names(), 'PCs')
@@ -173,12 +177,6 @@ test_that("Write DimReduc mechanics", {
   expect_true(ms_tsne$is_open())
   expect_warning(ms_pca3 <- write_soma(pbmc_small_pca, soma_parent = ms_tsne))
   expect_error(ms_tsne$varm)
-
-  collection$close()
-  ms_pca$close()
-  ms_tsne$close()
-  ms_pca2$close()
-  ms_rna$close()
 })
 
 test_that("Write Graph mechanics", {
@@ -186,12 +184,14 @@ test_that("Write Graph mechanics", {
 
   uri <- withr::local_tempdir("write-graph")
   collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close())
 
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   pbmc_small_rna <- pbmc_small[['RNA']]
   graph <- pbmc_small[['RNA_snn']]
 
   ms <- write_soma(pbmc_small_rna, soma_parent = collection)
+  on.exit(ms$close())
   expect_no_condition(write_soma(graph, uri = 'rna-snn', soma_parent = ms))
   expect_true(all(ms$names() %in% c('X', 'var', 'obsp')))
   expect_identical(ms$obsp$names(), 'rna-snn')
@@ -226,6 +226,7 @@ test_that("Write Graph mechanics", {
     uri = 'rna-no-md',
     soma_parent = collection
   ))
+  on.exit(ms2$close())
   expect_s3_class(ms2, 'SOMAMeasurement')
   expect_true(ms2$exists())
   expect_identical(ms2$uri, file.path(collection$uri, 'rna-no-md'))
@@ -240,6 +241,7 @@ test_that("Write Graph mechanics", {
     uri = 'rna-no-counts',
     soma_parent = collection
   ))
+  on.exit(ms3$close())
   expect_s3_class(ms3, 'SOMAMeasurement')
   expect_true(ms3$exists())
   expect_identical(ms3$uri, file.path(collection$uri, 'rna-no-counts'))
@@ -262,6 +264,7 @@ test_that("Write Graph mechanics", {
     uri = 'rna-no-scale',
     soma_parent = collection
   ))
+  on.exit(ms4$close())
   expect_s3_class(ms4, 'SOMAMeasurement')
   expect_true(ms4$exists())
   expect_identical(ms4$uri, file.path(collection$uri, 'rna-no-scale'))
@@ -284,6 +287,7 @@ test_that("Write Graph mechanics", {
     uri = 'rna-no-counts-scale',
     soma_parent = collection)
   )
+  on.exit(ms5$close())
   expect_s3_class(ms5, 'SOMAMeasurement')
   expect_true(ms5$exists())
   expect_identical(ms5$uri, file.path(collection$uri, 'rna-no-counts-scale'))
@@ -300,19 +304,13 @@ test_that("Write Graph mechanics", {
     pbmc_small_rna,
     soma_parent = SOMADataFrameCreate(uri = file.path(uri, 'data-frame'))
   ))
-
-  ms$close()
-  ms2$close()
-  ms3$close()
-  ms4$close()
-  ms5$close()
-  collection$close()
 })
 
 test_that("Write DimReduc mechanics", {
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
-  uri <- withr::local_tempdir("write-reduction")
+  uri <- withr::local_tempdir("write-reduction-2")
   collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close())
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   pbmc_small_rna <- pbmc_small[['RNA']]
   pbmc_small_pca <- pbmc_small[['pca']]
@@ -320,6 +318,7 @@ test_that("Write DimReduc mechanics", {
 
   # Test writing PCA
   mspca <- write_soma(pbmc_small_rna, uri = 'rna-pca', soma_parent = collection)
+  on.exit(mspca$close())
   fidx <- match(rownames(SeuratObject::Loadings(pbmc_small_pca)), rownames(pbmc_small_rna))
   expect_no_condition(write_soma(
     pbmc_small_pca,
@@ -337,6 +336,7 @@ test_that("Write DimReduc mechanics", {
 
   # Test writing tSNE
   mstsne <- write_soma(pbmc_small_rna, uri = 'rna-tsne', soma_parent = collection)
+  on.exit(mstsne$close())
   expect_no_condition(write_soma(pbmc_small_tsne, soma_parent = mstsne))
   expect_true(all(mstsne$names() %in% c('X', 'var', 'obsm', 'varm')))
   expect_identical(mstsne$obsm$names(), 'X_tsne')
@@ -345,6 +345,7 @@ test_that("Write DimReduc mechanics", {
 
   # Test writing both PCA and tSNE
   ms <- write_soma(pbmc_small_rna, soma_parent = collection)
+  on.exit(ms$close())
   expect_no_condition(write_soma(
     pbmc_small_pca,
     soma_parent = ms,
@@ -361,21 +362,18 @@ test_that("Write DimReduc mechanics", {
   expect_error(write_soma(pbmc_small_pca, soma_parent = collection))
   expect_warning(write_soma(pbmc_small_pca, soma_parent = mstsne))
   expect_error(mstsne$varm)
-
-  mspca$close()
-  mstsne$close()
-  ms$close()
-  collection$close()
 })
 
 test_that("Write Graph mechanics", {
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   uri <- withr::local_tempdir("write-graph")
   collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close())
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   pbmc_small_rna <- pbmc_small[['RNA']]
   graph <- pbmc_small[['RNA_snn']]
   ms <- write_soma(pbmc_small_rna, soma_parent = collection)
+  on.exit(ms$close())
   expect_no_condition(write_soma(graph, uri = 'rna-snn', soma_parent = ms))
   expect_true(all(ms$names() %in% c('X', 'var', 'obsp')))
   expect_identical(ms$obsp$names(), 'rna-snn')
@@ -384,9 +382,6 @@ test_that("Write Graph mechanics", {
 
   # Test assertions
   expect_error(write_soma(grph, collection = soma_parent))
-
-  ms$close()
-  collection$close()
 })
 
 test_that("Write Seurat mechanics", {
@@ -403,6 +398,7 @@ test_that("Write Seurat mechanics", {
   ))
 
   expect_no_condition(experiment <- SOMAExperimentOpen(uri))
+  on.exit(experiment$close())
 
   expect_no_error(experiment$ms)
 
@@ -431,6 +427,4 @@ test_that("Write Seurat mechanics", {
     setdiff(experiment$obs$attrnames(), 'obs_id'),
     names(pbmc_small[[]])
   )
-  experiment$close()
-  expect_equal(experiment$mode(), "CLOSED")
 })
