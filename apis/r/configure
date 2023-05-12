@@ -27,7 +27,7 @@ if [ $? -eq 0 ]; then
 
         echo "** updated src/Makevars for system library via pkg-config"
 
-        ## we can exit now as we have a working setup, re
+        ## we can exit now as we have a working setup
         exit 0
     fi
 fi
