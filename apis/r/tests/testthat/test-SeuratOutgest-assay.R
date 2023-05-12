@@ -114,8 +114,6 @@ test_that("Load assay from ExperimentQuery mechanics", {
   )))
   expect_error(query$to_seurat_assay(var_column_names = c(TRUE, FALSE)))
   expect_error(query$to_seurat_assay(var_column_names = 'tomato'))
-
-  experiment$close()
 })
 
 test_that("Load assay from sliced ExperimentQuery", {
@@ -177,6 +175,7 @@ test_that("Load assay from indexed ExperimentQuery", {
   )
   experiment <- SOMAExperimentOpen(experiment$uri)
   on.exit(experiment$close())
+
   obs_value_filter <- paste0(
     sprintf("baz == '%s'", obs_label_values),
     collapse = "||"
