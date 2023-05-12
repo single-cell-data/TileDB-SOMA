@@ -271,8 +271,7 @@ test_that("platform_config defaults", {
 
 test_that("SOMASparseNDArray read_spam_matrix", {
   skip_if_not_installed('spam')
-  library(spam)
-  library(Matrix)
+  withr::local_package("spam")
   uri <- withr::local_tempdir("sparse-ndarray-spam")
   ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
   ndarray$create(arrow::int32(), shape = c(10, 20))
@@ -289,11 +288,12 @@ test_that("SOMASparseNDArray read_spam_matrix", {
   # Test transposed
   expect_no_condition(spt <- ndarray$read_spam_matrix(transpose = TRUE))
   expect_s4_class(spt, 'spam')
-  expect_identical(dim(spt), dim(t(mat)))
-  expect_identical(as.matrix(spt), as.matrix(t(mat)))
+  mat_t <- Matrix::t(mat)
+  expect_identical(dim(spt), dim(mat_t))
+  expect_identical(as.matrix(spt), as.matrix(mat_t))
 
   # Test with coords
-  coords <- list(soma_dim_0=0, soma_dim_1=0:2)
+  coords <- list(soma_dim_0 = 0, soma_dim_1 = 0:2)
   expect_no_condition(spc <- ndarray$read_spam_matrix(coords))
   expect_identical(
     dim(spc),
