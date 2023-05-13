@@ -96,7 +96,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_equal(dim(X_pca), c(n_obs, n_pcs))
 
   expect <- dim(SeuratObject::Loadings(X_pca))
-  actual <- c(n_pcs, n_var)
+  actual <- c(n_var, n_pcs)
 
   expect_equal(expect, actual)
 
