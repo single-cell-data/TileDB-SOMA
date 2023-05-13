@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9021</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9024</span>
       </span>
     </div>
 
@@ -33,6 +33,15 @@
   </a>
   <ul class="dropdown-menu" role="menu"><li>
       <a href="../articles/UsingPlatformConfig.html">Using PlatformConfig</a>
+    </li>
+    <li>
+      <a href="../articles/soma-experiment-queries.html">Querying a SOMA experiment</a>
+    </li>
+    <li>
+      <a href="../articles/soma-objects.html">SOMA objects overview</a>
+    </li>
+    <li>
+      <a href="../articles/soma-reading.html">Reading from SOMA objects</a>
     </li>
   </ul></li>
 <li>
@@ -189,9 +198,37 @@
         </td>
         <td><p>TileDB Object Base Class</p></td>
       </tr><tr><td>
+          <p><code><a href="as.one.based.html">as.one.based()</a></code> </p>
+        </td>
+        <td><p>Get one-based object</p></td>
+      </tr><tr><td>
+          <p><code><a href="as.one.based.matrixZeroBasedView.html">as.one.based(<i>&lt;matrixZeroBasedView&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Get one-based matrix object underlying zero-based view</p></td>
+      </tr><tr><td>
+          <p><code><a href="dim.matrixZeroBasedView.html">dim(<i>&lt;matrixZeroBasedView&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>dim</p></td>
+      </tr><tr><td>
+          <p><code><a href="example-datasets.html">list_datasets()</a></code> <code><a href="example-datasets.html">extract_dataset()</a></code> <code><a href="example-datasets.html">load_dataset()</a></code> </p>
+        </td>
+        <td><p>SOMA Example Datasets</p></td>
+      </tr><tr><td>
           <p><code><a href="libtiledbsoma_version.html">libtiledbsoma_version()</a></code> </p>
         </td>
         <td><p>libtiledbsoma version information</p></td>
+      </tr><tr><td>
+          <p><code><a href="matrixZeroBasedView.html">matrixZeroBasedView()</a></code> </p>
+        </td>
+        <td><p>Zero-based matrix shim</p></td>
+      </tr><tr><td>
+          <p><code><a href="ncol.matrixZeroBasedView.html">ncol.matrixZeroBasedView()</a></code> </p>
+        </td>
+        <td><p>ncol</p></td>
+      </tr><tr><td>
+          <p><code><a href="nrow.matrixZeroBasedView.html">nrow.matrixZeroBasedView()</a></code> </p>
+        </td>
+        <td><p>nrow</p></td>
       </tr><tr><td>
           <p><code><a href="show_package_versions.html">show_package_versions()</a></code> </p>
         </td>
@@ -204,6 +241,14 @@
           <p><code><a href="sr_setup.html">sr_setup()</a></code> <code><a href="sr_setup.html">sr_complete()</a></code> <code><a href="sr_setup.html">sr_next()</a></code> </p>
         </td>
         <td><p>Iterator-Style Access to SOMA Array via SOMAArrayReader</p></td>
+      </tr><tr><td>
+          <p><code><a href="sub-.matrixZeroBasedView.html">`[`(<i>&lt;matrixZeroBasedView&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Zero-based matrix element access</p></td>
+      </tr><tr><td>
+          <p><code><a href="subset-.matrixZeroBasedView.html">`[&lt;-`(<i>&lt;matrixZeroBasedView&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Zero-based matrix element assigment</p></td>
       </tr><tr><td>
           <p><code><a href="tiledb_embedded_version.html">tiledb_embedded_version()</a></code> </p>
         </td>

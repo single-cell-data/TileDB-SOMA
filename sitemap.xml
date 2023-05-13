@@ -13,6 +13,15 @@
     <loc>/articles/index.html</loc>
   </url>
   <url>
+    <loc>/articles/soma-experiment-queries.html</loc>
+  </url>
+  <url>
+    <loc>/articles/soma-objects.html</loc>
+  </url>
+  <url>
+    <loc>/articles/soma-reading.html</loc>
+  </url>
+  <url>
     <loc>/authors.html</loc>
   </url>
   <url>
@@ -139,10 +148,31 @@
     <loc>/reference/TileDBObject.html</loc>
   </url>
   <url>
+    <loc>/reference/as.one.based.html</loc>
+  </url>
+  <url>
+    <loc>/reference/as.one.based.matrixZeroBasedView.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dim.matrixZeroBasedView.html</loc>
+  </url>
+  <url>
+    <loc>/reference/example-datasets.html</loc>
+  </url>
+  <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
     <loc>/reference/libtiledbsoma_version.html</loc>
+  </url>
+  <url>
+    <loc>/reference/matrixZeroBasedView.html</loc>
+  </url>
+  <url>
+    <loc>/reference/ncol.matrixZeroBasedView.html</loc>
+  </url>
+  <url>
+    <loc>/reference/nrow.matrixZeroBasedView.html</loc>
   </url>
   <url>
     <loc>/reference/pad_matrix.html</loc>
@@ -155,6 +185,12 @@
   </url>
   <url>
     <loc>/reference/sr_setup.html</loc>
+  </url>
+  <url>
+    <loc>/reference/sub-.matrixZeroBasedView.html</loc>
+  </url>
+  <url>
+    <loc>/reference/subset-.matrixZeroBasedView.html</loc>
   </url>
   <url>
     <loc>/reference/tiledb_embedded_version.html</loc>
