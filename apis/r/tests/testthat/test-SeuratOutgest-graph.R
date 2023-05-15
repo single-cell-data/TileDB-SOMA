@@ -7,9 +7,9 @@ test_that("Load graph from ExperimentQuery mechanics", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
-  experiment <- SOMAExperimentOpen(experiment$uri)
   on.exit(experiment$close())
 
   exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
@@ -87,9 +87,9 @@ test_that("Load graph from sliced ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
-  experiment <- SOMAExperimentOpen(experiment$uri)
   on.exit(experiment$close())
   exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
   expect_equal(exp_ms_rna$mode(), 'WRITE')
@@ -151,10 +151,10 @@ test_that("Load graph from indexed ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
   on.exit(experiment$close())
-  experiment <- SOMAExperimentOpen(experiment$uri)
   exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
   expect_equal(exp_ms_rna$mode(), 'WRITE')
 

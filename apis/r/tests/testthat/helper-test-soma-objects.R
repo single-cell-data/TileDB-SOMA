@@ -1,9 +1,10 @@
-# Returns the object created, populated, and closed
+# Returns the object created, populated, and closed (unless otherwise requested)
 create_and_populate_soma_dataframe <- function(
   uri,
   nrows = 10L,
   seed = 1,
-  index_column_names = "foo"
+  index_column_names = "foo",
+  mode = NULL
 ) {
   set.seed(seed)
 
@@ -19,12 +20,18 @@ create_and_populate_soma_dataframe <- function(
 
   sdf <- SOMADataFrameCreate(uri, arrow_schema, index_column_names = index_column_names)
   sdf$write(tbl)
-  sdf$close()
+
+  if (is.null(mode)) {
+    sdf$close()
+  } else if (mode == "READ") {
+    sdf$close()
+    sdf <- SOMADataFrameOpen(uri, mode = mode)
+  }
   sdf
 }
 
-# Returns the object created, populated, and closed
-create_and_populate_obs <- function(uri, nrows = 10L, seed = 1) {
+# Returns the object created, populated, and closed (unless otherwise requested)
+create_and_populate_obs <- function(uri, nrows = 10L, seed = 1, mode = NULL) {
   create_and_populate_soma_dataframe(
     uri = uri,
     nrows = nrows,
@@ -33,8 +40,8 @@ create_and_populate_obs <- function(uri, nrows = 10L, seed = 1) {
   )
 }
 
-# Returns the object created, populated, and closed
-create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
+# Returns the object created, populated, and closed (unless otherwise requested)
+create_and_populate_var <- function(uri, nrows = 10L, seed = 1, mode = NULL) {
 
   tbl <- arrow::arrow_table(
     soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
@@ -49,24 +56,36 @@ create_and_populate_var <- function(uri, nrows = 10L, seed = 1) {
 
   sdf <- SOMADataFrameCreate(uri, tbl$schema, index_column_names = "soma_joinid")
   sdf$write(tbl)
-  sdf$close()
+
+  if (is.null(mode)) {
+    sdf$close()
+  } else if (mode == "READ") {
+    sdf$close()
+    sdf <- SOMADataFrameOpen(uri, mode = mode)
+  }
   sdf
 }
 
 # Creates a SOMAExperiment with a single measurement, "RNA"
-# Returns the object created, populated, and closed
+# Returns the object created, populated, and closed (unless otherwise requested)
 #' @param ... Arguments passed to create_sparse_matrix_with_int_dims
-create_and_populate_sparse_nd_array <- function(uri, ...) {
+create_and_populate_sparse_nd_array <- function(uri, mode = NULL, ...) {
   smat <- create_sparse_matrix_with_int_dims(...)
 
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = dim(smat))
   ndarray$write(smat)
-  ndarray$close()
+
+  if (is.null(mode)) {
+    ndarray$close()
+  } else if (mode == "READ") {
+    ndarray$close()
+    ndarray <- SOMASparseNDArrayOpen(uri, mode = mode)
+  }
   ndarray
 }
 
 # Creates a SOMAExperiment with a single measurement, "RNA"; populates it;
-# returns it closed.
+# returns it closed (unless otherwise requested).
 #
 # Example with X_layer_names = c("counts", "logcounts"):
 #  soma-experiment-query-all1c20a1d341584 GROUP
@@ -82,7 +101,8 @@ create_and_populate_experiment <- function(
   n_obs,
   n_var,
   X_layer_names,
-  config = NULL
+  config = NULL,
+  mode = NULL
 ) {
 
   experiment <- SOMAExperimentCreate(uri, platform_config = config)
@@ -115,7 +135,12 @@ create_and_populate_experiment <- function(
 
   experiment$ms$set(ms_rna, name = "RNA")
   experiment$ms$close()
-  experiment$close()
 
+  if (is.null(mode)) {
+    experiment$close()
+  } else if (mode == "READ") {
+    experiment$close()
+    experiment <- SOMAExperimentOpen(uri, mode = mode)
+  }
   experiment
 }

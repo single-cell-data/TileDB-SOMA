@@ -8,9 +8,9 @@ test_that("Load assay from ExperimentQuery mechanics", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
-  experiment <- SOMAExperimentOpen(experiment$uri)
   on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
@@ -128,9 +128,9 @@ test_that("Load assay from sliced ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
-  experiment <- SOMAExperimentOpen(experiment$uri)
   on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
@@ -171,9 +171,9 @@ test_that("Load assay from indexed ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
-  experiment <- SOMAExperimentOpen(experiment$uri)
   on.exit(experiment$close())
 
   obs_value_filter <- paste0(

@@ -7,9 +7,9 @@ test_that("Load reduction from ExperimentQuery mechanics", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
-  experiment <- SOMAExperimentOpen(experiment$uri)
   on.exit(experiment$close())
 
   # Add embeddings
@@ -271,9 +271,9 @@ test_that("Load reduction from sliced ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
-  experiment <- SOMAExperimentOpen(experiment$uri)
   on.exit(experiment$close())
 
   exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
@@ -467,9 +467,9 @@ test_that("Load reduction from indexed ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
-  experiment <- SOMAExperimentOpen(experiment$uri)
   on.exit(experiment$close())
 
   exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
