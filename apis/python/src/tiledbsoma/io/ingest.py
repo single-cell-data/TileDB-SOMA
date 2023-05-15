@@ -1199,7 +1199,7 @@ def _ingest_uns_dict(
             # Things like uns/_scvi cannot be uploaded to TileDB Cloud since
             # "name must begin with an unaccented alphanumeric character" --
             # so turn that into "u_scvi".
-            if not re.match('^[a-zA-Z].*$', key):
+            if not re.match("^[a-zA-Z].*$", key):
                 key = "u" + key
 
             if isinstance(value, np.generic):
@@ -1231,9 +1231,7 @@ def _ingest_uns_dict(
                     context=context,
                     ingest_mode=ingest_mode,
                 ) as df:
-                    _maybe_set(
-                        coll, key, df, use_relative_uri=use_relative_uri
-                    )
+                    _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
                 continue
             if isinstance(value, list) or "numpy" in str(type(value)):
                 value = np.asarray(value)
