@@ -12,6 +12,6 @@ rm -r -f \
    src/include/ \
    src/lib \
    src/cmake_log.txt \
-   src/build \
-   src/libtiledbsoma \
-   src/bin
+   src/libtiledbsoma/build-lib \
+   src/bin \
+   tools/build_libtiledbsoma.sh
