@@ -280,8 +280,6 @@ test_that("soma_joinid validations", {
   )
 })
 
-# XXX RESTORE ME PLZ
-
 test_that("platform_config is respected", {
   uri <- withr::local_tempdir("soma-dataframe")
 

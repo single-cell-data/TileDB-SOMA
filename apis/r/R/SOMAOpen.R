@@ -1,7 +1,7 @@
 
 #' @title Open a SOMA Object
 #' @description Utility function to open the corresponding SOMA Object given a URI, (lifecycle: experimental)
-#' XXX TO DO MODE
+#' @param mode One of `"READ"` or `"WRITE"`
 #' @param uri URI for the TileDB object
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext

@@ -160,7 +160,9 @@ TileDBGroup <- R6::R6Class(
         obj <- member$object
       }
 
-      # XXX comment
+      # TODO: this seems a bit ad-hoc but is passing tests ...
+      # issue is doing foo$bar$get("baz", "WRITE") if foo$bar$get("baz")
+      # has already been implicitly opened.
       if (obj$is_open()) {
         if (mode == "WRITE" && obj$mode() != "WRITE") {
           obj$close()
