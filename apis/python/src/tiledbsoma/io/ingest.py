@@ -10,6 +10,7 @@ other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.i
 """
 
 import math
+import re
 import time
 from typing import (
     Any,
@@ -1194,25 +1195,26 @@ def _ingest_uns_dict(
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
         coll.metadata["soma_tiledbsoma_type"] = "uns"
         for key, value in dct.items():
-            sanitized_key = key
-            # uns/_scvi cannot be uploaded to TileDB Cloud since
+
+            # Things like uns/_scvi cannot be uploaded to TileDB Cloud since
             # "name must begin with an unaccented alphanumeric character" --
             # so turn that into "u_scvi".
-            if key.startswith("_"):
-                sanitized_key = "u" + key
+            if not re.match('^[a-zA-Z].*$', key):
+                key = "u" + key
+
             if isinstance(value, np.generic):
                 # This is some kind of numpy scalar value. Metadata entries
                 # only accept native Python types, so unwrap it.
                 value = value.item()
             if isinstance(value, (int, float, str)):
                 # Primitives get set on the metadata.
-                coll.metadata[sanitized_key] = value
+                coll.metadata[key] = value
                 continue
             if isinstance(value, Mapping):
                 # Mappings are represented as sub-dictionaries.
                 _ingest_uns_dict(
                     coll,
-                    sanitized_key,
+                    key,
                     value,
                     platform_config,
                     context,
@@ -1222,7 +1224,7 @@ def _ingest_uns_dict(
                 continue
             if isinstance(value, pd.DataFrame):
                 with _write_dataframe(
-                    _util.uri_joinpath(coll.uri, sanitized_key),
+                    _util.uri_joinpath(coll.uri, key),
                     value,
                     None,
                     platform_config,
@@ -1230,7 +1232,7 @@ def _ingest_uns_dict(
                     ingest_mode=ingest_mode,
                 ) as df:
                     _maybe_set(
-                        coll, sanitized_key, df, use_relative_uri=use_relative_uri
+                        coll, key, df, use_relative_uri=use_relative_uri
                     )
                 continue
             if isinstance(value, list) or "numpy" in str(type(value)):
@@ -1238,7 +1240,7 @@ def _ingest_uns_dict(
             if isinstance(value, np.ndarray):
                 if value.dtype.names is not None:
                     msg = (
-                        f"Skipped {coll.uri}[{sanitized_key!r}]"
+                        f"Skipped {coll.uri}[{key!r}]"
                         " (uns): unsupported structured array"
                     )
                     # This is a structured array, which we do not support.
@@ -1247,7 +1249,7 @@ def _ingest_uns_dict(
 
                 _ingest_uns_ndarray(
                     coll,
-                    sanitized_key,
+                    key,
                     value,
                     platform_config,
                     context=context,
@@ -1255,7 +1257,7 @@ def _ingest_uns_dict(
                 )
             else:
                 msg = (
-                    f"Skipped {coll.uri}[{sanitized_key!r}]"
+                    f"Skipped {coll.uri}[{key!r}]"
                     f" (uns object): unrecognized type {type(value)}"
                 )
                 logging.log_io(msg, msg)
