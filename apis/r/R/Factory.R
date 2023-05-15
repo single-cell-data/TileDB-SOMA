@@ -18,7 +18,7 @@ SOMADataFrameCreate <- function(uri, schema, index_column_names = c("soma_joinid
 #' @title Open SOMA DataFrame
 #' @description Factory function to open a SOMADataFrame for reading, (lifecycle: experimental)
 #' @param uri URI for the TileDB object
-#' @param XXX TYPE ME UP
+#' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @export
@@ -46,7 +46,7 @@ SOMASparseNDArrayCreate <- function(uri, type, shape,
 #' @title Open SOMA Sparse Nd Array
 #' @description Factory function to open a SOMASparseNDArray for reading, (lifecycle: experimental)
 #' @param uri URI for the TileDB object
-#' @param XXX TYPE ME UP
+#' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @export
@@ -74,7 +74,7 @@ SOMADenseNDArrayCreate <- function(uri, type, shape,
 #' @title Open SOMA Dense Nd Array
 #' @description Factory function to open a SOMADenseNDArray for reading, (lifecycle: experimental)
 #' @param uri URI for the TileDB object
-#' @param XXX TYPE ME UP
+#' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @export
@@ -99,7 +99,7 @@ SOMACollectionCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = N
 #' @title Open SOMA Collection
 #' @description Factory function to open a SOMACollection for reading, (lifecycle: experimental)
 #' @param uri URI for the TileDB object
-#' @param XXX TYPE ME UP
+#' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
 #' @export
@@ -124,7 +124,7 @@ SOMAMeasurementCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = 
 #' @title Open SOMA Measurement
 #' @description Factory function to open a SOMAMeasurement for reading, (lifecycle: experimental)
 #' @param uri URI for the TileDB object
-#' @param XXX TYPE ME UP
+#' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
 #' @export
@@ -149,7 +149,7 @@ SOMAExperimentCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = N
 #' @title Open SOMA Experiment
 #' @description Factory function to open a SOMAExperiment for reading, (lifecycle: experimental)
 #' @param uri URI for the TileDB object
-#' @param XXX TYPE ME UP
+#' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
 #' @export
