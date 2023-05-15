@@ -10,7 +10,7 @@ other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.i
 """
 
 import math
-import re
+import string
 import time
 from typing import (
     Any,
@@ -1199,7 +1199,7 @@ def _ingest_uns_dict(
             # Things like uns/_scvi cannot be uploaded to TileDB Cloud since
             # "name must begin with an unaccented alphanumeric character" --
             # so turn that into "u_scvi".
-            if not re.match("^[a-zA-Z].*$", key):
+            if key[0] not in string.ascii_letters + string.digits:
                 key = "u" + key
 
             if isinstance(value, np.generic):
