@@ -1,7 +1,7 @@
 CXX_STD = CXX17
 
 ## We need the TileDB Headers, and for macOS aka Darwin need to set minimum version 10.14 for macOS
-PKG_CPPFLAGS = -Wno-deprecated-declarations -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@ -Iinclude
+PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@ -Iinclude
 
 ## When this becomes a CRAN package we may have to remove this. For now it keeps the noise down
 PKG_CXXFLAGS = -Wno-deprecated-declarations
