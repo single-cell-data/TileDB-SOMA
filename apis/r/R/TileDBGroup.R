@@ -27,7 +27,7 @@ TileDBGroup <- R6::R6Class(
     #' as `create()` is considered internal and should not be called directly.
     create = function(internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the create() method is discouraged. Consider using a",
+        stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMACollectionCreate()'."), call. = FALSE)
       }
 
@@ -46,8 +46,8 @@ TileDBGroup <- R6::R6Class(
     open = function(mode="READ", internal_use_only = NULL) {
       mode <- match.arg(mode, c("READ", "WRITE"))
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the open() method is discouraged. Consider using a",
-                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
+        stop(paste("Use of the open() method is for internal use only. Consider using a",
+                   "factory method as e.g. 'SOMACollectionOpen()'."), call. = FALSE)
       }
       spdl::debug(
         "Opening {} '{}' in {} mode", self$class(), self$uri, mode

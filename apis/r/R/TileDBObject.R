@@ -16,7 +16,7 @@ TileDBObject <- R6::R6Class(
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
                           internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the new() method is discouraged. Consider using a",
+        stop(paste("Use of the new() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
       }
       if (missing(uri)) stop("Must specify a `uri`", call. = FALSE)

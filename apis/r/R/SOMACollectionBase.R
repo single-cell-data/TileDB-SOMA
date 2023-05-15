@@ -26,7 +26,7 @@ SOMACollectionBase <- R6::R6Class(
     #' as `create()` is considered internal and should not be called directly.
     create = function(internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the create() method is discouraged. Consider using a",
+        stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMACollectionCreate()'."), call. = FALSE)
       }
       super$create(internal_use_only=internal_use_only)
