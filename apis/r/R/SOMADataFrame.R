@@ -20,8 +20,8 @@ SOMADataFrame <- R6::R6Class(
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
-    #' @param internal_use_only Character value to signal 'permitted' call as
-    #' `new()` is considered internal and should not be called directly
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `create()` is considered internal and should not be called directly.
     create = function(schema, index_column_names = c("soma_joinid"), platform_config = NULL, internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is discouraged. Consider using a",

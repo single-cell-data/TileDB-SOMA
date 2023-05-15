@@ -11,8 +11,8 @@ TileDBObject <- R6::R6Class(
     #' @param uri URI for the TileDB object
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional SOMATileDBContext
-    #' @param internal_use_only Character value to signal 'permitted' call as
-    #' `new()` is considered internal and should not be called directly
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `new()` is considered internal and should not be called directly.
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
                           internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
@@ -137,7 +137,7 @@ TileDBObject <- R6::R6Class(
     },
 
     is_open_for_read = function() {
-      # Pro-tip: not enough to check $pviate.mode != "READ" since logical(0) isn't
+      # Pro-tip: it's not enough to check $private.mode != "READ", since logical(0) isn't
       # the same as FALSE
       if (is.null(private$.mode)) {
         FALSE
@@ -165,7 +165,7 @@ TileDBObject <- R6::R6Class(
       }
     },
 
-    # Per the spec, invoking user-level write requires open for read mode.
+    # Per the spec, invoking user-level write requires open for write mode.
     check_open_for_write = function() {
       if (!private$is_open_for_write()) {
         stop(paste("Item must be open for write.", self$uri))

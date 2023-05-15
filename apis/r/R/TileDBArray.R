@@ -10,8 +10,8 @@ TileDBArray <- R6::R6Class(
   public = list(
 
     #' @description Open the SOMA object for read or write.
-    #' @param internal_use_only Character value to signal 'permitted' call as
-    #' `new()` is considered internal and should not be called directly
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `open()` is considered internal and should not be called directly.
     #' @return The object, invisibly
     open = function(mode="READ", internal_use_only = NULL) {
       mode <- match.arg(mode, c("READ", "WRITE"))

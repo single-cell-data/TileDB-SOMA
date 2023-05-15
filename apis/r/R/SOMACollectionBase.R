@@ -13,8 +13,8 @@ SOMACollectionBase <- R6::R6Class(
     #' @param uri URI of the TileDB group
     #' @param platform_config Optional storage-engine specific configuration
     #' @param tiledbsoma_ctx optional SOMATileDBContext
-    #' @param internal_use_only Character value to signal 'permitted' call as
-    #' `new()` is considered internal and should not be called directly
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `new()` is considered internal and should not be called directly.
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
                           internal_use_only = NULL) {
       super$initialize(uri=uri, platform_config=platform_config,
@@ -22,8 +22,8 @@ SOMACollectionBase <- R6::R6Class(
     },
 
     #' @description Add a new SOMA object to the collection. (lifecycle: experimental)
-    #' @param internal_use_only Character value to signal 'permitted' call as
-    #' `new()` is considered internal and should not be called directly
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `create()` is considered internal and should not be called directly.
     create = function(internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is discouraged. Consider using a",
