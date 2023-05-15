@@ -160,24 +160,23 @@ TileDBObject <- R6::R6Class(
 
     # Per the spec, invoking user-level read requires open for read mode.
     check_open_for_read = function() {
-      stopifnot(
-        "Item must be open for read." = private$is_open_for_read()
-      )
+      if (!private$is_open_for_read()) {
+        stop(paste("Item must be open for read:", self$uri))
+      }
     },
 
     # Per the spec, invoking user-level write requires open for read mode.
     check_open_for_write = function() {
-      stopifnot(
-        "Item must be open for write." = private$is_open_for_write()
-      )
+      if (!private$is_open_for_write()) {
+        stop(paste("Item must be open for write.", self$uri))
+      }
     },
 
     # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
     check_open_for_read_or_write = function() {
-      stopifnot(
-        "Item must be open for read or write." = self$is_open()
-      )
+      if (!self$is_open()) {
+        stop(paste("Item must be open for read or write.", self$uri))
+      }
     }
-
   )
 )
