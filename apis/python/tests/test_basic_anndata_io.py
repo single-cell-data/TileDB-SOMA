@@ -27,7 +27,7 @@ def h5ad_file(request):
 @pytest.fixture
 def h5ad_file_extended(request):
     # This has more component arrays in it
-    input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
+    input_path = HERE.parent / "testdata/pbmc3k_processed_with_underscore_uns.h5ad"
     return input_path
 
 
@@ -318,6 +318,7 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended):
             "draw_graph",
             "louvain",
             "neighbors",
+            "u_neighbors",
             "pca",
             "rank_genes_groups",
         }
