@@ -40,11 +40,12 @@ TileDBGroup <- R6::R6Class(
     },
 
     #' @description Open the SOMA object for read or write.
+    #' @param mode Mode to open in; defaults to `READ`.
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `open()` is considered internal and should not be called directly.
     #' @return The object, invisibly
-    open = function(mode="READ", internal_use_only = NULL) {
-      mode <- match.arg(mode, c("READ", "WRITE"))
+    open = function(mode=c("READ", "WRITE"), internal_use_only = NULL) {
+      mode <- match.arg(mode)
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the open() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMACollectionOpen()'."), call. = FALSE)
