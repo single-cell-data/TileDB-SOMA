@@ -135,6 +135,7 @@ TileDBGroup <- R6::R6Class(
     #' @description Retrieve a group member by name. If the member isn't already
     #' open, it is opened for read. (lifecycle: experimental)
     #' @param name The name of the member.
+    #' @param mode Mode to open in
     #' @returns A `TileDBArray` or `TileDBGroup`.
     get = function(name, mode = "READ") {
       stopifnot(is_scalar_character(name))
