@@ -51,6 +51,12 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override TileDBGroup private methods
+    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #'
+    #' @param mode \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #'
+    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #'
     open = function(mode) {
       private$.ephemeral_error('opened')
     },
@@ -109,12 +115,15 @@ EphemeralCollectionBase <- R6::R6Class(
       return(NULL)
     },
 
+    #' @description Retrieve the number of items in the collection
+    #'
+    #' @return The length of the collection
     length = function() {
       length(private$.data)
     },
 
     #' @description Retrieve the names of members. (lifecycle: experimental)
-    #' @return A `character` vector of member names.
+    #' @return A \code{character} vector of member names.
     names = function() {
       names(private$.data) %||% character(length = 0L)
     },
