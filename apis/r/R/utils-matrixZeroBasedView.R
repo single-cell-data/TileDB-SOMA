@@ -100,7 +100,7 @@ as.one.based.matrixZeroBasedView <- function(x) {
 #' @param x The zero-based matrix view.
 #' @param i Row index (zero-based).
 #' @param j Column index (zero-based).
-#' @param val The to-be assigned value.
+#' @param value The to-be assigned value.
 #'
 #' @return Nothing as the method errors.
 #' @export
