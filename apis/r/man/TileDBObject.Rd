@@ -53,8 +53,8 @@ Create a new TileDB object. (lifecycle: experimental)
 
 \item{\code{tiledbsoma_ctx}}{Optional SOMATileDBContext}
 
-\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
-\code{new()} is considered internal and should not be called directly}
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{new()} is considered internal and should not be called directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -73,19 +73,28 @@ Print the name of the R6 class.
 \if{html}{\out{<a id="method-TileDBObject-is_open"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-is_open}{}}}
 \subsection{Method \code{is_open()}}{
+Determine if the object is open for reading or writing
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$is_open()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+\code{TRUE} if the object is open, otherwise \code{FALSE}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBObject-mode"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-mode}{}}}
 \subsection{Method \code{mode()}}{
+Get the mode of the object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$mode()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+If the object is closed, returns \dQuote{\code{CLOSED}};
+otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBObject-print"></a>}}

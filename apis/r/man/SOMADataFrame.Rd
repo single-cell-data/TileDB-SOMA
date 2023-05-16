@@ -76,8 +76,11 @@ Create (lifecycle: experimental)
 index columns.  All named columns must exist in the schema, and at least
 one index column name is required.}
 
-\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
-\code{new()} is considered internal and should not be called directly}
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
+
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{create()} is considered internal and should not be called directly.}
 }
 \if{html}{\out{</div>}}
 }

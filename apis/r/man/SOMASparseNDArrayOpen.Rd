@@ -14,11 +14,11 @@ SOMASparseNDArrayOpen(
 \arguments{
 \item{uri}{URI for the TileDB object}
 
+\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
+
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
-
-\item{XXX}{TYPE ME UP}
 }
 \description{
 Factory function to open a SOMASparseNDArray for reading, (lifecycle: experimental)

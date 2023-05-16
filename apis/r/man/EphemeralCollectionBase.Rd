@@ -94,10 +94,21 @@ Returns a new ephemeral collection of class \code{class(self)}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-open"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-open}{}}}
 \subsection{Method \code{open()}}{
+\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$open(mode)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mode}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-close"></a>}}
@@ -165,10 +176,14 @@ on-disk configuration
 \if{html}{\out{<a id="method-EphemeralCollectionBase-length"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-length}{}}}
 \subsection{Method \code{length()}}{
+Retrieve the number of items in the collection
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$length()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+The length of the collection
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-names"></a>}}

@@ -30,6 +30,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @description Create a SOMASparseNDArray named with the URI. (lifecycle: experimental)
     #' @param type an [Arrow type][arrow::data-type] defining the type of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
+    #' @template param-platform-config
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
     create = function(type, shape, platform_config=NULL, internal_use_only = NULL) {

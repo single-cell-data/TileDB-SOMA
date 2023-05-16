@@ -9,11 +9,12 @@ SOMAOpen(uri, mode = "READ", platform_config = NULL, tiledbsoma_ctx = NULL)
 \arguments{
 \item{uri}{URI for the TileDB object}
 
+\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
+
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 }
 \description{
 Utility function to open the corresponding SOMA Object given a URI, (lifecycle: experimental)
-XXX TO DO MODE
 }

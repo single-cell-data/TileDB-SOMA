@@ -77,8 +77,8 @@ Create a new \code{SOMACollection}. (lifecycle: experimental)
 
 \item{\code{tiledbsoma_ctx}}{optional SOMATileDBContext}
 
-\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
-\code{new()} is considered internal and should not be called directly}
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{new()} is considered internal and should not be called directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -95,8 +95,8 @@ Add a new SOMA object to the collection. (lifecycle: experimental)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
-\code{new()} is considered internal and should not be called directly}
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{create()} is considered internal and should not be called directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -139,6 +139,8 @@ Retrieve a SOMA object by name. (lifecycle: experimental)
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{name}}{The name of the object to retrieve.}
+
+\item{\code{mode}}{Mode to open in}
 }
 \if{html}{\out{</div>}}
 }

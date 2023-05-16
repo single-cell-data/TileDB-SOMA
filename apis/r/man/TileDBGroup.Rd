@@ -64,8 +64,8 @@ Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
-\code{new()} is considered internal and should not be called directly}
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{create()} is considered internal and should not be called directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -76,14 +76,16 @@ Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
 \subsection{Method \code{open()}}{
 Open the SOMA object for read or write.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$open(mode = "READ", internal_use_only = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$open(mode = c("READ", "WRITE"), internal_use_only = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
-\code{new()} is considered internal and should not be called directly}
+\item{\code{mode}}{Mode to open in; defaults to \code{READ}.}
+
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{open()} is considered internal and should not be called directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -143,6 +145,8 @@ open, it is opened for read. (lifecycle: experimental)
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{name}}{The name of the member.}
+
+\item{\code{mode}}{Mode to open in}
 }
 \if{html}{\out{</div>}}
 }
