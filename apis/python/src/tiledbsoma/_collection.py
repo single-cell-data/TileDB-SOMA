@@ -96,9 +96,8 @@ class CollectionBase(
             uri:
                 The location to create this SOMA collection at.
             platform_config:
-                Platform-specific options used to create this array,
-                provided via ``{"tiledb": {"create": ...}}`` nested keys,
-                where the ``...`` is of type ``tiledbsoma.options._tiledb_create_options.TileDBCreateOptions``.
+                Platform-specific options used to create this collection, provided in the form
+                ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}``.
             context:
                 If provided, the :class:`SOMATileDBContext` to use when creating and
                 opening this collection.

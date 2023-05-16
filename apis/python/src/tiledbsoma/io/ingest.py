@@ -97,8 +97,8 @@ def from_h5ad(
 
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
-        platform_config: Optional dict including data of the form ``{"tiledb": {"create": create_options}}``
-        where ``create_options`` is a :class:`TileDBCreateOptions`.
+        platform_config: Platform-specific options used to create this array, provided in the form
+        ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}`` nested keys.
 
         ingest_mode: The ingestion type to perform:
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
@@ -184,8 +184,9 @@ def from_anndata(
 
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
-        platform_config: Optional dict including data of the form ``{"tiledb": {"create": create_options}}``
-        where ``create_options`` is a :class:`TileDBCreateOptions`.
+        platform_config:
+            Platform-specific options used to create this array, provided in the form
+            ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}``.
 
         ingest_mode: The ingestion type to perform:
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
