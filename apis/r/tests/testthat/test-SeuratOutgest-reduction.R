@@ -51,7 +51,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   ))
   obsm$close()
 
-  exp_ms_rna <- SOMACollectionOpen(experiment$ms$get("RNA")$uri, "WRITE")
+  exp_ms_rna <- experiment$ms$get("RNA")
   exp_ms_rna$add_new_collection(obsm, 'obsm')
 
   # Add loadings
@@ -88,7 +88,6 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
-  experiment <- SOMAExperimentOpen(experiment$uri)
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA"
