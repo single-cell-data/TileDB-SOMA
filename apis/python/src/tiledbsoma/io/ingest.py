@@ -1048,7 +1048,17 @@ def _write_matrix_to_sparseNDArray(
 
         # Chunk size on the stride axis
         if isinstance(matrix, (np.ndarray, h5py.Dataset)):
-            chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[stride_axis]))
+            # These are dense, being ingested as sparse.
+            # Example:
+            # * goal_chunk_nnz = 100M
+            # * An obsm element has shape (32458, 2)
+            # * stride_axis = 0 (ingest row-wise)
+            # * We want ceiling of 100M / 2 to obtain chunk_size = 50M rows
+            # * This attains goal_chunk_nnz = 100_000_000 since we have 50M rows
+            #   with 2 elements each
+            # * Result: we divide by the shape, slotted by the non-stride axis
+            non_stride_axis = 1 - stride_axis
+            chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[non_stride_axis]))
         else:
             chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
                 matrix, i, stride_axis, goal_chunk_nnz
