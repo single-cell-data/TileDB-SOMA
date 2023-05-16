@@ -47,11 +47,20 @@ TileDBObject <- R6::R6Class(
 
     # The create/open/close are necessarily specific to TileDBArray/TileDBGroup.
     # This is a bit of re-use at the TileDBObject level.
+    #' @description Determine if the object is open for reading or writing
+    #'
+    #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
+    #'
     is_open = function() {
       !is.null(private$.mode)
     },
 
     # TODO: make this an active
+    #' @description Get the mode of the object
+    #'
+    #' @return If the object is closed, returns \dQuote{\code{CLOSED}};
+    #' otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object
+    #'
     mode = function() {
       if (is.null(private$.mode)) {
         "CLOSED"
