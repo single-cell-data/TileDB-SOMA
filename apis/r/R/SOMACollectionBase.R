@@ -70,6 +70,7 @@ SOMACollectionBase <- R6::R6Class(
 
     #' @description Retrieve a SOMA object by name. (lifecycle: experimental)
     #' @param name The name of the object to retrieve.
+    #' @param mode Mode to open in
     #' @returns SOMA object.
     get = function(name, mode = "READ") {
       super$get(name, mode = mode)
