@@ -2,7 +2,7 @@
 #'
 NULL
 
-#' Convert a \pkg{Seurat} Sub-Object to a SOMA Object
+#' Convert a \pkg{Seurat} Sub-Object to a SOMA Object, returned opened for write
 #'
 #' Various helpers to write \pkg{Seurat} sub-objects to SOMA objects.
 #'
@@ -23,7 +23,7 @@ NULL
 NULL
 
 #' @return \code{Assay} method: a \code{\link{SOMAMeasurement}} with the
-#' data from \code{x}
+#' data from \code{x}, returned opened for write
 #'
 #' @rdname write_soma_seurat_sub
 #'
@@ -178,7 +178,7 @@ write_soma.Assay <- function(
 #' (eg. \code{nrow(assay)})
 #'
 #' @return \code{DimReduc} and \code{Graph} methods: invisibly returns
-#' \code{soma_parent} with the values of \code{x} added to it
+#' \code{soma_parent}, opened for write, with the values of \code{x} added to it
 #'
 #' @rdname write_soma_seurat_sub
 #'
@@ -380,7 +380,7 @@ write_soma.Graph <- function(
   return(invisible(soma_parent))
 }
 
-#' Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
+#' Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA, returned opened for write
 #'
 #' @inheritParams write_soma
 #' @param x A \code{\link[SeuratObject]{Seurat}} object

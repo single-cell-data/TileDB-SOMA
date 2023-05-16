@@ -12,7 +12,7 @@
 #' @param tiledbsoma_ctx Optional \code{\link{SOMATileDBContext}}
 #'
 #' @return The URI to the resulting \code{\link{SOMAExperiment}} generated from
-#' the data contained in \code{x}
+#' the data contained in \code{x}, returned opened for write
 #'
 #' @section Known methods:
 #' \itemize{
@@ -39,7 +39,7 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #' relative or aboslute
 #'
 #' @return The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
-#' \link[tiledbsoma:SOMADataFrame]{data frame}
+#' \link[tiledbsoma:SOMADataFrame]{data frame}, returned opened for write
 #'
 #' @name write_soma_objects
 #' @rdname write_soma_objects
