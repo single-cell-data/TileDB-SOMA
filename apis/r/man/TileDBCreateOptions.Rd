@@ -310,7 +310,8 @@ Named list of character
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{items}}{...}
+\item{\code{items}}{A list of filters; see \code{$.build_filter()} for details
+about entries in \code{items}}
 }
 \if{html}{\out{</div>}}
 }
@@ -329,7 +330,8 @@ A list of tiledb filters.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{item}}{...}
+\item{\code{item}}{THe name of a filter or a list with the name and arguments
+for a filter (eg. \code{list(name = "ZSTD", COMPRESSION_LEVEL = -1)})}
 }
 \if{html}{\out{</div>}}
 }

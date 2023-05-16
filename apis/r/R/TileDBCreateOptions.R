@@ -266,7 +266,8 @@ TileDBCreateOptions <- R6::R6Class(
     #     "RLE",
     #     list(name = "ZSTD", COMPRESSION_LEVEL = 9)
     #   )
-    #' @param items ...
+    #' @param items A list of filters; see \code{$.build_filter()} for details
+    #' about entries in \code{items}
     #'
     #' @return A list of tiledb filters.
     #'
@@ -278,7 +279,8 @@ TileDBCreateOptions <- R6::R6Class(
     # Or, a named list with filter name and remaining arguments, like
     # list(name="ZSTD", COMPRESSION_LEVEL=-1).
     #
-    #' @param item ...
+    #' @param item THe name of a filter or a list with the name and arguments
+    #' for a filter (eg. \code{list(name = "ZSTD", COMPRESSION_LEVEL = -1)})
     #'
     #' @return A tiledb filter.
     #'
