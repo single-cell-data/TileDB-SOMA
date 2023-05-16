@@ -75,10 +75,8 @@ TileDBGroup <- R6::R6Class(
         for (member in private$.member_cache) {
           if (!is.null(member$object)) {
             if (member$object$is_open()) {
-              spdl::debug("Openchi {} '{}'", member$object$class(), member$object$uri)
               member$object$close()
             } else {
-              spdl::debug("Clsdchi {} '{}'", member$object$class(), member$object$uri)
             }
           }
         }
