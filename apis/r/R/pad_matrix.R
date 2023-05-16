@@ -73,7 +73,7 @@ pad_matrix.default <- function(x, rownames = NULL, colnames = NULL, ...) {
   x
 }
 
-#' @param sparse Return a \link[Matrix::TsparseMatrix-class]{sparse matrix}
+#' @param sparse Return a \link[Matrix:TsparseMatrix-class]{sparse matrix}
 #' @rdname pad_matrix
 #'
 #' @method pad_matrix matrix
