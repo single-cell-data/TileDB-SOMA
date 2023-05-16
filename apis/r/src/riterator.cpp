@@ -1,4 +1,7 @@
-// Work in progress
+// we currently get deprecation warnings by default which are noisy
+#ifndef TILEDB_NO_API_DEPRECATION_WARNINGS
+#define TILEDB_NO_API_DEPRECATION_WARNINGS
+#endif
 
 #include <Rcpp.h>               // for R interface to C++
 #include <nanoarrow.h>          // for C interface to Arrow

@@ -1,3 +1,8 @@
+// we currently get deprecation warnings by default which are noisy
+#ifndef TILEDB_NO_API_DEPRECATION_WARNINGS
+#define TILEDB_NO_API_DEPRECATION_WARNINGS
+#endif
+
 #include <Rcpp.h>
 #include <tiledbsoma/tiledbsoma>
 
