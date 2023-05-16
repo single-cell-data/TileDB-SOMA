@@ -4,7 +4,12 @@
 \alias{SOMASparseNDArrayOpen}
 \title{Open SOMA Sparse Nd Array}
 \usage{
-SOMASparseNDArrayOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMASparseNDArrayOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
@@ -12,6 +17,8 @@ SOMASparseNDArrayOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+
+\item{XXX}{TYPE ME UP}
 }
 \description{
 Factory function to open a SOMASparseNDArray for reading, (lifecycle: experimental)

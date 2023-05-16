@@ -4,7 +4,12 @@
 \alias{SOMADenseNDArrayOpen}
 \title{Open SOMA Dense Nd Array}
 \usage{
-SOMADenseNDArrayOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMADenseNDArrayOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
@@ -12,6 +17,8 @@ SOMADenseNDArrayOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+
+\item{XXX}{TYPE ME UP}
 }
 \description{
 Factory function to open a SOMADenseNDArray for reading, (lifecycle: experimental)

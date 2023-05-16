@@ -7,8 +7,13 @@ test_that("Load graph from ExperimentQuery mechanics", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+
+  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add graph
   obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
@@ -21,7 +26,9 @@ test_that("Load graph from ExperimentQuery mechanics", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
+
+  exp_ms_rna$close()
 
   # Create the query
   query <- SOMAExperimentAxisQuery$new(
@@ -80,8 +87,12 @@ test_that("Load graph from sliced ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add graph
   obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
@@ -94,7 +105,8 @@ test_that("Load graph from sliced ExperimentQuery", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
+  exp_ms_rna$close()
 
   # Create the query
   obs_slice <- bit64::as.integer64(seq(3, 72))
@@ -139,8 +151,12 @@ test_that("Load graph from indexed ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add graph
   obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
@@ -153,7 +169,8 @@ test_that("Load graph from indexed ExperimentQuery", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
+  exp_ms_rna$close()
 
   # Create the query
   obs_value_filter <- paste0(

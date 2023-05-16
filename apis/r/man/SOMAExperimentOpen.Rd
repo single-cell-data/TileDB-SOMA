@@ -4,7 +4,12 @@
 \alias{SOMAExperimentOpen}
 \title{Open SOMA Experiment}
 \usage{
-SOMAExperimentOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMAExperimentOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
@@ -12,6 +17,8 @@ SOMAExperimentOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{optional SOMATileDBContext}
+
+\item{XXX}{TYPE ME UP}
 }
 \description{
 Factory function to open a SOMAExperiment for reading, (lifecycle: experimental)

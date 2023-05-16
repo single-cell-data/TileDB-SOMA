@@ -4,7 +4,7 @@
 \alias{SOMAOpen}
 \title{Open a SOMA Object}
 \usage{
-SOMAOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMAOpen(uri, mode = "READ", platform_config = NULL, tiledbsoma_ctx = NULL)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
@@ -15,4 +15,5 @@ SOMAOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
 }
 \description{
 Utility function to open the corresponding SOMA Object given a URI, (lifecycle: experimental)
+XXX TO DO MODE
 }

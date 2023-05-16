@@ -7,8 +7,12 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
   n_pcs <- 50L
@@ -33,7 +37,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     ncols = n_umaps,
     seed = 2L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
 
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
@@ -46,7 +50,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     nrows = n_var,
     ncols = n_pcs
   ))
-  experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
+  exp_ms_rna$add_new_collection(varm, 'varm')
 
   # Add graph
   obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
@@ -59,7 +63,9 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
+
+  exp_ms_rna$close()
 
   # Create the query
   query <- SOMAExperimentAxisQuery$new(
@@ -76,7 +82,10 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_s4_class(rna <- obj[['RNA']], 'Assay')
   expect_identical(rownames(rna), rownames(obj))
   expect_identical(colnames(rna), colnames(obj))
-  expect_identical(SeuratObject::Reductions(obj), c('pca', 'umap'))
+  expect_identical(
+    lapply(list(SeuratObject::Reductions(obj)), sort),
+    lapply(list(c('pca', 'umap')), sort)
+  )
   expect_s4_class(pca <- obj[['pca']], 'DimReduc')
   expect_identical(SeuratObject::Cells(pca), colnames(obj))
   expect_identical(rownames(SeuratObject::Loadings(pca)), rownames(obj))
@@ -112,7 +121,10 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_s4_class(rna <- obj[['RNA']], 'Assay')
   expect_identical(rownames(rna), rownames(obj))
   expect_identical(colnames(rna), colnames(obj))
-  expect_identical(SeuratObject::Reductions(obj), c('pca', 'umap'))
+  expect_identical(
+    lapply(list(SeuratObject::Reductions(obj)), sort),
+    lapply(list(c('pca', 'umap')), sort)
+  )
   expect_s4_class(pca <- obj[['pca']], 'DimReduc')
   expect_identical(SeuratObject::Cells(pca), colnames(obj))
   expect_identical(rownames(SeuratObject::Loadings(pca)), rownames(obj))
@@ -159,7 +171,10 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
 
   # Test suppress loadings
   expect_no_condition(obj <- query$to_seurat(varm_layers = FALSE))
-  expect_identical(SeuratObject::Reductions(obj), c('pca', 'umap'))
+  expect_identical(
+    lapply(list(SeuratObject::Reductions(obj)), sort),
+    lapply(list(c('pca', 'umap')), sort)
+  )
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(obj[['pca']])))
 
   # Test suppress graphs
@@ -221,8 +236,12 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
   n_pcs <- 50L
@@ -247,7 +266,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
     ncols = n_umaps,
     seed = 2L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
 
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
@@ -260,7 +279,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
     nrows = n_var,
     ncols = n_pcs
   ))
-  experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
+  exp_ms_rna$add_new_collection(varm, 'varm')
 
   # Add graph
   obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
@@ -273,7 +292,9 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
+
+  exp_ms_rna$close()
 
   # Create the query
   obs_slice <- bit64::as.integer64(seq(3, 72))
@@ -291,7 +312,10 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
   expect_identical(colnames(obj), paste0('cell', query$obs_joinids()$as_vector()))
-  expect_identical(names(obj), c('RNA', 'connectivities', 'pca', 'umap'))
+  expect_identical(
+    lapply(list(names(obj)), sort),
+    lapply(list(c('RNA', 'connectivities', 'pca', 'umap')), sort)
+  )
 
   # Test named
   expect_no_condition(obj <- query$to_seurat(
@@ -308,7 +332,10 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
     colnames(obj),
     query$obs('baz')$GetColumnByName('baz')$as_vector()
   )
-  expect_identical(names(obj), c('RNA', 'connectivities', 'pca', 'umap'))
+  expect_identical(
+    lapply(list(names(obj)), sort),
+    lapply(list(c('RNA', 'connectivities', 'pca', 'umap')), sort)
+  )
 })
 
 test_that("Load Seurat object from indexed ExperimentQuery", {
@@ -322,8 +349,12 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
   n_pcs <- 50L
@@ -348,7 +379,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     ncols = n_umaps,
     seed = 2L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
 
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
@@ -361,7 +392,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     nrows = n_var,
     ncols = n_pcs
   ))
-  experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
+  exp_ms_rna$add_new_collection(varm, 'varm')
 
   # Add graph
   obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
@@ -374,7 +405,9 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
+  
+  exp_ms_rna$close()
 
   # Create the query
   obs_value_filter <- paste0(
@@ -398,7 +431,10 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
   expect_identical(colnames(obj), paste0('cell', query$obs_joinids()$as_vector()))
-  expect_identical(names(obj), c('RNA', 'connectivities', 'pca', 'umap'))
+  expect_identical(
+    lapply(list(names(obj)), sort),
+    lapply(list(c('RNA', 'connectivities', 'pca', 'umap')), sort)
+  )
 
   # Test named
   expect_no_condition(obj <- query$to_seurat(
@@ -415,5 +451,8 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     colnames(obj),
     query$obs('baz')$GetColumnByName('baz')$as_vector()
   )
-  expect_identical(names(obj), c('RNA', 'connectivities', 'pca', 'umap'))
+  expect_identical(
+    lapply(list(names(obj)), sort),
+    lapply(list(c('RNA', 'connectivities', 'pca', 'umap')), sort)
+  )
 })

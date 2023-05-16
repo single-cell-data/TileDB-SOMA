@@ -46,7 +46,6 @@
 #' Intended for internal use only.
 #'
 #' @noMd
-#'
 TileDBCreateOptions <- R6::R6Class(
   classname = 'TileDBCreateOptions',
   inherit = MappingBase,

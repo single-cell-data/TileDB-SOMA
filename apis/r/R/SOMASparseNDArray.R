@@ -30,7 +30,14 @@ SOMASparseNDArray <- R6::R6Class(
     #' @description Create a SOMASparseNDArray named with the URI. (lifecycle: experimental)
     #' @param type an [Arrow type][arrow::data-type] defining the type of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
-    create = function(type, shape, platform_config=NULL) {
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `create()` is considered internal and should not be called directly.
+    create = function(type, shape, platform_config=NULL, internal_use_only = NULL) {
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the create() method is for internal use only. Consider using a",
+                   "factory method as e.g. 'SOMASparseNDArrayCreate()'."), call. = FALSE)
+      }
+
       stopifnot(
         "'type' must be a valid Arrow type" =
           is_arrow_data_type(type),
@@ -93,6 +100,7 @@ SOMASparseNDArray <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()
       self
     },
@@ -112,6 +120,8 @@ SOMASparseNDArray <- R6::R6Class(
       iterated = FALSE,
       log_level = "warn"
     ) {
+      private$check_open_for_read()
+
       uri <- self$uri
 
       result_order <- map_query_layout(match_query_layout(result_order))
@@ -180,6 +190,8 @@ SOMASparseNDArray <- R6::R6Class(
       iterated = FALSE,
       log_level = "warn"
     ) {
+      private$check_open_for_read()
+
       repr <- match.arg(repr)
       dims <- self$dimensions()
       attr <- self$attributes()
@@ -248,10 +260,10 @@ SOMASparseNDArray <- R6::R6Class(
     # @description Ingest COO-formatted dataframe into the TileDB array. (lifecycle: experimental)
     # @param x A [`data.frame`].
     write_coo_dataframe = function(values) {
+      private$check_open_for_write()
+
       stopifnot(is.data.frame(values))
       # private$log_array_ingestion()
-      on.exit(self$close())
-      private$open("WRITE")
       arr <- self$object
       arr[] <- values
     },

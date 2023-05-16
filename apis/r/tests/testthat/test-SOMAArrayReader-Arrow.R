@@ -48,10 +48,10 @@ test_that("Arrow Interface from SOMAArrayReader", {
 
 
     uri <- tempfile()
-    ndarray <- SOMADenseNDArray$new(uri, internal_use_only = "allowed_use")
-    ndarray$create(arrow::int32(), shape = c(4, 4))
+    ndarray <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(4, 4))
     M <- matrix(1:16, 4, 4)
     ndarray$write(M)
+    ndarray$close()
 
     M1 <- soma_array_reader(uri = uri, result_order = "auto") |>
         as_arrow_table() |>

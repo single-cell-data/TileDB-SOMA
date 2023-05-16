@@ -133,6 +133,7 @@ write_soma.Assay <- function(
       }
     )
   }
+  ms$X$close()
 
   # Write feature-level meta data
   var_df <- .df_index(
@@ -236,6 +237,8 @@ write_soma.DimReduc <- function(
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
+  } else {
+    soma_parent$obsm$open("WRITE", internal_use_only = "allowed_use")
   }
   embed <- paste0('X_', key)
   spdl::info("Adding embeddings as {}", sQuote(embed))
@@ -253,6 +256,7 @@ write_soma.DimReduc <- function(
     ),
     name = embed
   )
+  soma_parent$obsm$close()
 
   # Add feature loadings
   loadings <- SeuratObject::Loadings(x)
@@ -319,6 +323,7 @@ write_soma.DimReduc <- function(
       ),
       name = ldgs
     )
+    soma_parent$varm$close()
   }
   return(invisible(soma_parent))
 }
@@ -371,6 +376,7 @@ write_soma.Graph <- function(
     ),
     name = uri
   )
+  soma_parent$obsp$close()
   return(invisible(soma_parent))
 }
 
@@ -564,6 +570,6 @@ write_soma.Seurat <- function(
       immediate. = TRUE
     )
   }
-  try(experiment$close(), silent = TRUE)
+  experiment$close()
   return(experiment$uri)
 }

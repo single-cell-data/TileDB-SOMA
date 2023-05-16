@@ -1,18 +1,15 @@
-
 test_that("Basic mechanics", {
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
-  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
-    sdf$create(asch, index_column_names = "qux"),
+    SOMADataFrameCreate(uri, asch, index_column_names = "qux"),
     "The following field does not exist: qux"
   )
 
-  sdf$create(asch, index_column_names = "foo")
+  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
-  expect_match(sdf$soma_type, "SOMADataFrame")
 
   # check for missing columns
   expect_error(
@@ -35,8 +32,12 @@ test_that("Basic mechanics", {
                              schema = asch)
 
   sdf$write(tbl0)
+  sdf$close()
 
-  # read back the data (ignore attributes)
+  # Read back the data (ignore attributes)
+  sdf <- SOMADataFrameOpen(uri)
+  expect_match(sdf$soma_type, "SOMADataFrame")
+
   expect_equivalent(
     tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
     as.list(tbl0),
@@ -46,8 +47,10 @@ test_that("Basic mechanics", {
   # Read result should recreate the original Table
   tbl1 <- sdf$read()
   expect_true(tbl1$Equals(tbl0))
+  sdf$close()
 
   # Same as above but now for RecordBatch
+  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")
   rb0 <- arrow::record_batch(foo = 1L:36L,
                              soma_joinid = 1L:36L,
                              bar = 1.1:36.1,
@@ -58,8 +61,10 @@ test_that("Basic mechanics", {
                              schema = asch)
 
   sdf$write(rb0)
+  sdf$close()
 
-  # read back the data (ignore attributes)
+  # Read back the data (ignore attributes)
+  sdf <- SOMADataFrameOpen(uri)
   expect_equivalent(
     tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
     as.list(rb0),
@@ -96,6 +101,7 @@ test_that("Basic mechanics", {
   sch <- tiledb::schema(arr)
   expect_true(tiledb::is.sparse(sch))
   expect_false(tiledb::allows_dups(sch))
+  sdf$close()
 })
 
 test_that("Basic mechanics with default index_column_names", {
@@ -104,11 +110,11 @@ test_that("Basic mechanics with default index_column_names", {
 
   sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
-    sdf$create(asch, index_column_names = "qux"),
+    sdf$create(asch, index_column_names = "qux", internal_use_only = "allowed_use"),
     "The following field does not exist: qux"
   )
 
-  sdf$create(asch)
+  sdf$create(asch, internal_use_only = "allowed_use")
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
   expect_match(sdf$soma_type, "SOMADataFrame")
@@ -169,11 +175,11 @@ test_that("creation with all supported dimension data types", {
 
   for (dtype in tbl0$ColumnNames()) {
     uri <- withr::local_tempdir(paste0("soma-dataframe-", dtype))
-    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
     expect_silent(
-      sdf$create(tbl0$schema, index_column_names = dtype)
+      sdf <- SOMADataFrameCreate(uri, tbl0$schema, index_column_names = dtype)
     )
     expect_true(sdf$exists())
+    sdf$close()
   }
 })
 
@@ -184,43 +190,49 @@ test_that("int64 values are stored correctly", {
     arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
   )
 
-  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
-  sdf$create(asch, index_column_names = "foo")
+  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
   tbl0 <- arrow::arrow_table(foo = 1L:10L, soma_joinid = 1L:10L, schema = asch)
 
   orig_downcast_value <- getOption("arrow.int64_downcast")
 
   sdf$write(tbl0)
+  sdf$close()
+
+  sdf <- SOMADataFrameOpen(uri)
   tbl1 <- sdf$read()
   expect_true(tbl1$Equals(tbl0))
 
   # verify int64_downcast option was restored
   expect_equal(getOption("arrow.int64_downcast"), orig_downcast_value)
+  sdf$close()
 })
 
 test_that("SOMADataFrame read", {
     uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 
-    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
+    sdf <- SOMADataFrameOpen(uri)
     z <- sdf$read()
     expect_equal(z$num_rows, 2638L)
     expect_equal(z$num_columns, 6L)
+    sdf$close()
 
     columns <- c("n_counts", "n_genes", "louvain")
-    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
+    sdf <- SOMADataFrameOpen(uri)
     z <- sdf$read(column_names=columns)
     expect_equal(z$num_columns, 3L)
     expect_equal(z$ColumnNames(), columns)
+    sdf$close()
 
     columns <- c("n_counts", "does_not_exist")
-    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
+    sdf <- SOMADataFrameOpen(uri)
     expect_error(sdf$read(column_names=columns))
+    sdf$close()
 
     coords <- bit64::as.integer64(seq(100, 109))
-    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
+    sdf <- SOMADataFrameOpen(uri)
     z <- sdf$read(coords = list(soma_joinid=coords))
     expect_equal(z$num_rows, 10L)
-
+    sdf$close()
 })
 
 test_that("soma_ prefix is reserved", {
@@ -233,9 +245,8 @@ test_that("soma_ prefix is reserved", {
     field = arrow::field("soma_foo", arrow::int32(), nullable = FALSE)
   )
 
-  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
-    sdf$create(asch, index_column_names = "foo"),
+    SOMADataFrameCreate(uri, asch, index_column_names = "foo"),
     "Column names must not start with reserved prefix 'soma_'"
   )
 })
@@ -245,11 +256,11 @@ test_that("soma_joinid is added on creation", {
   asch <- create_arrow_schema()
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
 
-  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
-  sdf$create(asch, index_column_names = "foo")
+  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
 
   expect_true("soma_joinid" %in% sdf$attrnames())
   expect_equal(tiledb::datatype(sdf$attributes()$soma_joinid), "INT64")
+  sdf$close()
 })
 
 test_that("soma_joinid validations", {
@@ -263,9 +274,8 @@ test_that("soma_joinid validations", {
     field = arrow::field("soma_joinid", arrow::int32(), nullable = FALSE)
   )
 
-  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
-    sdf$create(asch, index_column_names = "foo"),
+    SOMADataFrameCreate(uri, asch, index_column_names = "foo"),
     "soma_joinid field must be of type Arrow int64"
   )
 })
@@ -361,6 +371,8 @@ test_that("platform_config is respected", {
   expect_equal(tiledb::tiledb_filter_type(i1), "RLE")
   expect_equal(tiledb::tiledb_filter_type(i2), "ZSTD")
   expect_equal(tiledb::tiledb_filter_get_option(i2, "COMPRESSION_LEVEL"), 9)
+
+  sdf$close()
 })
 
 test_that("platform_config defaults", {
@@ -394,4 +406,30 @@ test_that("platform_config defaults", {
   d1 <- dim_filters[0] # C++ indexing here
   expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
   expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
+  sdf$close()
+})
+
+test_that("Metadata", {
+  uri <- file.path(withr::local_tempdir(), "sdf-metadata")
+  asch <- create_arrow_schema()
+  sdf <- SOMADataFrameCreate(uri, asch)
+
+  md <- list(baz = "qux", foo = "bar")
+  sdf$set_metadata(md)
+
+  # Read all metadata while the sdf is still open for write
+  expect_equivalent(sdf$get_metadata("foo"), "bar")
+  expect_equivalent(sdf$get_metadata("baz"), "qux")
+
+  readmd <- sdf$get_metadata()
+  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["foo"]], "bar")
+  sdf$close()
+
+  # Read all metadata while the sdf is open for read
+  sdf <- SOMADataFrameOpen(uri)
+  readmd <- sdf$get_metadata()
+  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["foo"]], "bar")
+  sdf$close()
 })

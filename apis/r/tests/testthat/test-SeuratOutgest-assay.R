@@ -1,5 +1,6 @@
 test_that("Load assay from ExperimentQuery mechanics", {
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+
   uri <- withr::local_tempdir("assay-experiment-query-whole")
   n_obs <- 20L
   n_var <- 10L
@@ -7,8 +8,11 @@ test_that("Load assay from ExperimentQuery mechanics", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA"
@@ -114,6 +118,7 @@ test_that("Load assay from ExperimentQuery mechanics", {
 
 test_that("Load assay from sliced ExperimentQuery", {
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+
   uri <- withr::local_tempdir("assay-experiment-query-sliced")
   n_obs <- 1001L
   n_var <- 99L
@@ -123,8 +128,11 @@ test_that("Load assay from sliced ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
@@ -163,8 +171,11 @@ test_that("Load assay from indexed ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+
   obs_value_filter <- paste0(
     sprintf("baz == '%s'", obs_label_values),
     collapse = "||"

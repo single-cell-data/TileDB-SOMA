@@ -7,8 +7,10 @@ test_that("Load reduction from ExperimentQuery mechanics", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   # Add embeddings
   n_pcs <- 50L
@@ -47,7 +49,10 @@ test_that("Load reduction from ExperimentQuery mechanics", {
     ncols = n_ics,
     seed = 5L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+  obsm$close()
+
+  exp_ms_rna <- SOMACollectionOpen(experiment$ms$get("RNA")$uri, "WRITE")
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
 
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
@@ -73,9 +78,13 @@ test_that("Load reduction from ExperimentQuery mechanics", {
     ncols = n_ics,
     seed = 7L
   ))
-  experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
+  varm$close()
+  exp_ms_rna$add_new_collection(varm, 'varm')
+
+  exp_ms_rna$close()
 
   # Create the query
+  experiment <- SOMAExperimentOpen(experiment$uri)
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA"
@@ -85,7 +94,12 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_no_condition(X_pca <- query$to_seurat_reduction('X_pca'))
   expect_s4_class(X_pca, 'DimReduc')
   expect_equal(dim(X_pca), c(n_obs, n_pcs))
-  expect_equal(dim(SeuratObject::Loadings(X_pca)), c(n_var, n_pcs))
+
+  expect <- dim(SeuratObject::Loadings(X_pca))
+  actual <- c(n_var, n_pcs)
+
+  expect_equal(expect, actual)
+
   expect_false(SeuratObject::IsGlobal(X_pca))
   expect_equal(SeuratObject::Key(X_pca), 'PC_')
   expect_warning(X_ica <- query$to_seurat_reduction('X_ica'))
@@ -257,14 +271,19 @@ test_that("Load reduction from sliced ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+
+  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
   n_pcs <- 50L
   n_ics <- 30L
   n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
+  obsm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsm'))
   obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -297,7 +316,8 @@ test_that("Load reduction from sliced ExperimentQuery", {
     ncols = n_ics,
     seed = 5L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
 
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
@@ -323,7 +343,11 @@ test_that("Load reduction from sliced ExperimentQuery", {
     ncols = n_ics,
     seed = 7L
   ))
-  experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
+  varm$close()
+
+  exp_ms_rna$add_new_collection(varm, 'varm')
+
+  exp_ms_rna$close()
 
   # Create the query
   obs_slice <- bit64::as.integer64(seq(3, 72))
@@ -443,8 +467,13 @@ test_that("Load reduction from indexed ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
+
+  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
   n_pcs <- 50L
@@ -483,7 +512,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
     ncols = n_ics,
     seed = 5L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
 
   # Add loadings
   varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
@@ -509,7 +538,9 @@ test_that("Load reduction from indexed ExperimentQuery", {
     ncols = n_ics,
     seed = 7L
   ))
-  experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
+  exp_ms_rna$add_new_collection(varm, 'varm')
+
+  exp_ms_rna$close()
 
   # Create the query
   obs_value_filter <- paste0(

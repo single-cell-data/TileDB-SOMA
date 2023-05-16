@@ -10,7 +10,7 @@ and is otherwise a specialized \code{\link{SOMACollection}} with pre-defined fie
 details). (lifecycle: experimental)
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{SOMAMeasurement}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAMeasurement}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -51,11 +51,13 @@ pairwise annotations on the variable axis and indexed with \verb{[varid_1, varid
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-get_tiledb_config'><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="close"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-close'><code>tiledbsoma::TileDBGroup$close()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-length'><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-names'><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="open"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-open'><code>tiledbsoma::TileDBGroup$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="print"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-print'><code>tiledbsoma::TileDBGroup$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="remove"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-remove'><code>tiledbsoma::TileDBGroup$remove()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-set_metadata'><code>tiledbsoma::TileDBGroup$set_metadata()</code></a></span></li>

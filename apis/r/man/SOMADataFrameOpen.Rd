@@ -4,7 +4,12 @@
 \alias{SOMADataFrameOpen}
 \title{Open SOMA DataFrame}
 \usage{
-SOMADataFrameOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMADataFrameOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
@@ -12,6 +17,8 @@ SOMADataFrameOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+
+\item{XXX}{TYPE ME UP}
 }
 \description{
 Factory function to open a SOMADataFrame for reading, (lifecycle: experimental)

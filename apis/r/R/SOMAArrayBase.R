@@ -21,6 +21,8 @@ SOMAArrayBase <- R6::R6Class(
 
     #' @description Check if iterated read is complete or not. (lifecycle: experimental)
     read_complete = function() {
+      private$check_open_for_read()
+
       if (is.null(private$soma_reader_pointer)) {
           TRUE
       } else {
@@ -30,6 +32,8 @@ SOMAArrayBase <- R6::R6Class(
 
     #' @description Read the next chunk of an iterated read. (lifecycle: experimental)
     read_next = function() {
+      private$check_open_for_read()
+
       if (is.null(private$soma_reader_pointer)) {
           NULL
       } else {
@@ -54,6 +58,8 @@ SOMAArrayBase <- R6::R6Class(
     },
 
     write_object_type_metadata = function() {
+      private$check_open_for_write()
+
       meta <- list()
       meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
       meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
