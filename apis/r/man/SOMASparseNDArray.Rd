@@ -136,7 +136,6 @@ more advanced operations (with one-based indexing).
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix_zero_based(
   coords = NULL,
   result_order = "auto",
-  repr = c("C", "T", "R"),
   iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
@@ -154,8 +153,6 @@ read. List elements can be named when specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
-
-\item{\code{repr}}{Optional one-character code for sparse matrix representation type}
 
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}

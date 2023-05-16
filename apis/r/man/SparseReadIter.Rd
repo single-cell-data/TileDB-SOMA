@@ -40,7 +40,8 @@ Create (lifecycle: experimental)
   qc = NULL,
   dim_points = NULL,
   loglevel = "auto",
-  repr = c("C", "T", "R")
+  repr = c("C", "T", "R"),
+  shape
 )}\if{html}{\out{</div>}}
 }
 

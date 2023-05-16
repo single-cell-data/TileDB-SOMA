@@ -113,6 +113,8 @@ SOMASparseNDArray <- R6::R6Class(
       log_level = "warn"
     ) {
       uri <- self$uri
+      
+      stopifnot("Array must have non-zero elements less than '.Machine$integer.max'" = self$nnz() < .Machine$integer.max)
 
       result_order <- map_query_layout(match_query_layout(result_order))
 
@@ -150,7 +152,6 @@ SOMASparseNDArray <- R6::R6Class(
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @template param-result-order
-    #' @param repr Optional one-character code for sparse matrix representation type
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
@@ -159,16 +160,18 @@ SOMASparseNDArray <- R6::R6Class(
     read_sparse_matrix_zero_based = function(
       coords = NULL,
       result_order = "auto",
-      repr = c("C", "T", "R"),
       iterated = FALSE,
       log_level = "warn"
     ) {
-      repr <- match.arg(repr)
       dims <- self$dimensions()
       attr <- self$attributes()
+      shape <- self$shape()
+      
       stopifnot("Array must have two dimensions" = length(dims) == 2,
                 "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
                     all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
+                "Array must have non-zero elements less than '.Machine$integer.max'" = self$nnz() < .Machine$integer.max,
+                "Array dimensions must not exceed '.Machine$integer.max'" = any(shape < .Machine$integer.max),
                 "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
       
       if (!is.null(coords)) {
@@ -177,14 +180,15 @@ SOMASparseNDArray <- R6::R6Class(
 
       if (isFALSE(iterated)) {
         tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-        arrow_table_to_sparse(tbl, repr = repr)
+        arrow_table_to_sparse(tbl, repr = "T", dims_one_based = shape + 1)
       } else {
         cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
         SparseReadIter$new(uri = self$uri,
                            config = cfg,
                            dim_points = coords,
                            loglevel = log_level,
-                           repr = repr)
+                           repr = "T",
+                           shape = shape)
       }
     },
 

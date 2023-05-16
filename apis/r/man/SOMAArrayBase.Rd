@@ -4,11 +4,6 @@
 \alias{SOMAArrayBase}
 \title{SOMA Array Base Class}
 \description{
-SOMA Array Base Class
-
-SOMA Array Base Class
-}
-\details{
 Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifecycle: experimental)
 }
 \section{Super classes}{

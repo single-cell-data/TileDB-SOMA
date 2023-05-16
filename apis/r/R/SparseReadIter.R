@@ -29,22 +29,15 @@ SparseReadIter <- R6::R6Class(
                           qc = NULL, 
                           dim_points = NULL, 
                           loglevel = "auto", 
-                          repr = c("C", "T", "R")) {
+                          repr = c("C", "T", "R"),
+                          shape) {
         
         # Initiate super class
           super$initialize (uri = uri, config = config, colnames = colnames, qc = qc,
                             dim_points = dim_points, loglevel = loglevel)
     
           private$repr <- repr
-          
-          # Get max soma dims for indeces via tiledb
-          tiledb_array <- tiledb::tiledb_array(uri)
-          tiledb::tiledb_array_open(tiledb_array, type = "READ")
-          max_soma_dim_0 <- as.integer(max(tiledb::tiledb_array_get_non_empty_domain_from_index(tiledb_array, 1)))
-          max_soma_dim_1 <- as.integer(max(tiledb::tiledb_array_get_non_empty_domain_from_index(tiledb_array, 2)))
-          tiledb::tiledb_array_close(tiledb_array)
-          
-          private$dims_one_based <- c(max_soma_dim_0 + 1, max_soma_dim_1 + 1)
+          private$dims_one_based <- shape + 1
     },
    
     #' @description  Concatenate remainder of iterator.

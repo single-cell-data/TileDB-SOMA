@@ -94,7 +94,6 @@ Read as an 'arrow::Table' (lifecycle: experimental)
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_arrow_table(
   coords = NULL,
   result_order = "auto",
-  iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
@@ -111,9 +110,6 @@ read. List elements can be named when specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
-
-\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
-\code{FALSE}, the default value) or in several iterated steps.}
 
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
@@ -132,7 +128,6 @@ Read as a dense matrix (lifecycle: experimental)
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_dense_matrix(
   coords = NULL,
   result_order = "ROW_MAJOR",
-  iterated = FALSE,
   log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
@@ -149,9 +144,6 @@ read. List elements can be named when specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
-
-\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
-\code{FALSE}, the default value) or in several iterated steps.}
 
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
