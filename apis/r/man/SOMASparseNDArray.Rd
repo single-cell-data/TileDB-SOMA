@@ -89,8 +89,11 @@ Create a SOMASparseNDArray named with the URI. (lifecycle: experimental)
 
 \item{\code{shape}}{a vector of integers defining the shape of the array.}
 
-\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
-\code{new()} is considered internal and should not be called directly}
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
+
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{create()} is considered internal and should not be called directly.}
 }
 \if{html}{\out{</div>}}
 }
