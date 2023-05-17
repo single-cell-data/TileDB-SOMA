@@ -12,7 +12,7 @@
 #' @param tiledbsoma_ctx Optional \code{\link{SOMATileDBContext}}
 #'
 #' @return The URI to the resulting \code{\link{SOMAExperiment}} generated from
-#' the data contained in \code{x}
+#' the data contained in \code{x}, returned opened for write
 #'
 #' @section Known methods:
 #' \itemize{
@@ -39,7 +39,7 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #' relative or aboslute
 #'
 #' @return The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
-#' \link[tiledbsoma:SOMADataFrame]{data frame}
+#' \link[tiledbsoma:SOMADataFrame]{data frame}, returned opened for write
 #'
 #' @name write_soma_objects
 #' @rdname write_soma_objects
@@ -376,6 +376,8 @@ write_soma.TsparseMatrix <- function(
   return(x)
 }
 
+#' @importFrom tools R_user_dir
+#'
 .check_soma_uri <- function(
   uri,
   soma_parent = NULL,
@@ -392,7 +394,7 @@ write_soma.TsparseMatrix <- function(
       warning("uri", call. = FALSE, immediate. = TRUE)
       uri <- basename(uri)
     }
-    uri <- file_path(soma_parent$uri %||% user_dir(), uri)
+    uri <- file_path(soma_parent$uri %||% R_user_dir('tiledbsoma'), uri)
   } else if (!is_remote_uri(uri)) {
     dir.create(dirname(uri), recursive = TRUE)
   }

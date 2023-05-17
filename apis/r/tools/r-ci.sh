@@ -195,6 +195,7 @@ BootstrapLinuxOptions() {
     #    InstallPandoc 'linux/debian/x86_64'
     #fi
     if [[ "${USE_BSPM}" != "FALSE" ]]; then
+        echo "options(bspm.sudo = TRUE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
         echo "suppressMessages(bspm::enable())" | sudo tee --append /etc/R/Rprofile.site >/dev/null
         echo "options(bspm.version.check=FALSE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
     fi

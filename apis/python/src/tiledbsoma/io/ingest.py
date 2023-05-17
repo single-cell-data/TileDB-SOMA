@@ -95,6 +95,11 @@ def from_h5ad(
 
         measurement_name: The name of the measurement to store data in.
 
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Platform-specific options used to create this array, provided in the form
+        ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}`` nested keys.
+
         ingest_mode: The ingestion type to perform:
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
@@ -177,6 +182,12 @@ def from_anndata(
 
         measurement_name: The name of the measurement to store data in.
 
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config:
+            Platform-specific options used to create this array, provided in the form
+            ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}``.
+
         ingest_mode: The ingestion type to perform:
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
@@ -204,6 +215,8 @@ def from_anndata(
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
+
+    _util.validate_platform_config(platform_config)
 
     context = _validate_soma_tiledb_context(context)
 
@@ -650,6 +663,8 @@ def create_from_matrix(
     Lifecycle:
         Experimental.
     """
+    _util.validate_platform_config(platform_config)
+
     # SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
@@ -1033,7 +1048,17 @@ def _write_matrix_to_sparseNDArray(
 
         # Chunk size on the stride axis
         if isinstance(matrix, (np.ndarray, h5py.Dataset)):
-            chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[stride_axis]))
+            # These are dense, being ingested as sparse.
+            # Example:
+            # * goal_chunk_nnz = 100M
+            # * An obsm element has shape (32458, 2)
+            # * stride_axis = 0 (ingest row-wise)
+            # * We want ceiling of 100M / 2 to obtain chunk_size = 50M rows
+            # * This attains goal_chunk_nnz = 100_000_000 since we have 50M rows
+            #   with 2 elements each
+            # * Result: we divide by the shape, slotted by the non-stride axis
+            non_stride_axis = 1 - stride_axis
+            chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[non_stride_axis]))
         else:
             chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
                 matrix, i, stride_axis, goal_chunk_nnz

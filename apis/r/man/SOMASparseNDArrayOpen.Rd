@@ -4,10 +4,17 @@
 \alias{SOMASparseNDArrayOpen}
 \title{Open SOMA Sparse Nd Array}
 \usage{
-SOMASparseNDArrayOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMASparseNDArrayOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
+
+\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
 
 \item{platform_config}{Optional platform configuration}
 

@@ -73,6 +73,7 @@ load_dataset <- function(name, dir = tempdir(), tiledbsoma_ctx = NULL) {
   )
 
   # Instantiate the proper SOMA object
+  object$open(internal_use_only = "allowed_use")
   switch(
     object$get_metadata("soma_object_type"),
     "SOMAExperiment" = SOMAExperimentOpen(dataset_uri, tiledbsoma_ctx = tiledbsoma_ctx),

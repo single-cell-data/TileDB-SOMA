@@ -13,7 +13,7 @@
 
 \item{j}{Column index (zero-based).}
 
-\item{val}{The to-be assigned value.}
+\item{value}{The to-be assigned value.}
 }
 \value{
 Nothing as the method errors.

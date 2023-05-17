@@ -25,7 +25,7 @@ rd_ephemeral_cls <- function(cls, base = FALSE) {
         yes = 'Base class for ephemeral collections',
         no = 'Ephemeral version of \\code{\\link{SOMACollection}s}'
       )
-      link <- '\\link[SOMACollection]{SOMA collections}'
+      link <- '\\link[tiledbsoma:SOMACollection]{SOMA collections}'
     },
     experiment = {
       first <- ifelse(
@@ -33,15 +33,15 @@ rd_ephemeral_cls <- function(cls, base = FALSE) {
         yes = 'Base class for ephemeral experiments',
         no = 'Ephemeral version of \\code{\\link{SOMAExperiment}s}'
       )
-      link <- '\\link[SOMAExperiment]{SOMA experiments}'
+      link <- '\\link[tiledbsoma:SOMAExperiment]{SOMA experiments}'
     },
     measurement = {
       first <- ifelse(
         test = isTRUE(base),
         yes = 'Base class for ephemeral measurements',
-        no = 'Ephemeral version of \\code{\\link{SOMAMeasurements}s}'
+        no = 'Ephemeral version of \\code{\\link{SOMAMeasurement}s}'
       )
-      link <- '\\link[SOMAMeasurements]{SOMA measurements}'
+      link <- '\\link[tiledbsoma:SOMAMeasurement]{SOMA measurements}'
     },
   )
   return(paste0(

@@ -20,7 +20,15 @@ SOMADataFrame <- R6::R6Class(
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
-    create = function(schema, index_column_names, platform_config=NULL) {
+    #' @template param-platform-config
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `create()` is considered internal and should not be called directly.
+    create = function(schema, index_column_names = c("soma_joinid"), platform_config = NULL, internal_use_only = NULL) {
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the create() method is for internal use only. Consider using a",
+                   "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
+      }
+
       schema <- private$validate_schema(schema, index_column_names)
 
       attr_column_names <- setdiff(schema$names, index_column_names)
@@ -119,6 +127,7 @@ SOMADataFrame <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()
       self
     },
@@ -130,7 +139,7 @@ SOMADataFrame <- R6::R6Class(
     #' schema for `values` must match the schema for the `SOMADataFrame`.
     #'
     write = function(values) {
-      on.exit(self$close())
+      private$check_open_for_write()
 
       # Prevent downcasting of int64 to int32 when materializing a column
       op <- options(arrow.int64_downcast = FALSE)
@@ -152,7 +161,6 @@ SOMADataFrame <- R6::R6Class(
       )
 
       df <- as.data.frame(values)[schema_names]
-      private$open("WRITE")
       arr <- self$object
       arr[] <- df
     },
@@ -177,6 +185,8 @@ SOMADataFrame <- R6::R6Class(
                     result_order = "auto",
                     iterated = FALSE,
                     log_level = "warn") {
+
+      private$check_open_for_read()
 
       result_order <- match_query_layout(result_order)
       uri <- self$uri

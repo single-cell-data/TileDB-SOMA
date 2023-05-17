@@ -44,10 +44,6 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
-using MetadataValue =
-    std::tuple<std::string, tiledb_datatype_t, uint32_t, const void*>;
-enum MetadataInfo { key = 0, dtype, num, value };
-
 class SOMAArray {
    public:
     //===================================================================
@@ -132,13 +128,16 @@ class SOMAArray {
 
     /**
      * Open the SOMAArray object.
+     *
+     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param timestamp Timestamp
      */
     void open(
         tiledb_query_type_t mode,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
-     * Closes the SOMAArray object.
+     * Close the SOMAArray object.
      */
     void close();
 
@@ -328,7 +327,7 @@ class SOMAArray {
     }
 
     /**
-     * @brief Returns the total number of cells read so far, including any
+     * @brief Return the total number of cells read so far, including any
      * previous incomplete queries.
      *
      * @return size_t Total number of cells read
@@ -382,7 +381,7 @@ class SOMAArray {
         const void* value);
 
     /**
-     * Deletes a metadata key-value item from an open array. The array must
+     * Delete a metadata key-value item from an open array. The array must
      * be opened in WRITE mode, otherwise the function will error out.
      *
      * @param key The key of the metadata item to be deleted.
@@ -395,12 +394,25 @@ class SOMAArray {
     void delete_metadata(const std::string& key);
 
     /**
-     * @brief Given a key, retrieve the associated value datatype, number of
+     * @brief Given a key, get the associated value datatype, number of
      * values, and value in binary form. The array must be opened in READ mode,
      * otherwise the function will error out.
      *
      * The value may consist of more than one items of the same datatype. Keys
      * that do not exist in the metadata will be return NULL for the value.
+     *
+     * **Example:**
+     * @code{.cpp}
+     * // Open the array for reading
+     * tiledbsoma::SOMAArray soma_array = SOMAArray::open(TILEDB_READ,
+     "s3://bucket-name/group-name");
+     * tiledbsoma::MetadataValue meta_val = soma_array->get_metadata("key");
+     * std::string key = std::get<MetadataInfo::key>(meta_val);
+     * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
+     * uint32_t num = std::get<MetadataInfo::num>(meta_val);
+     * const void* value = *((const
+     int32_t*)std::get<MetadataInfo::value>(meta_val));
+     * @endcode
      *
      * @param key The key of the metadata item to be retrieved. UTF-8 encodings
      *     are acceptable.
@@ -410,7 +422,7 @@ class SOMAArray {
     MetadataValue get_metadata(const std::string& key) const;
 
     /**
-     * @brief Given an index, retrieve the associated value datatype, number of
+     * @brief Given an index, get the associated value datatype, number of
      * values, and value in binary form. The array must be opened in READ mode,
      * otherwise the function will error out.
      *
@@ -421,7 +433,7 @@ class SOMAArray {
     MetadataValue get_metadata(uint64_t index) const;
 
     /**
-     * Checks if key exists in metadata from an open array. The array must
+     * Check if the key exists in metadata from an open array. The array must
      * be opened in READ mode, otherwise the function will error out.
      *
      * @param key The key of the metadata item to be checked. UTF-8 encodings
@@ -431,7 +443,7 @@ class SOMAArray {
     bool has_metadata(const std::string& key);
 
     /**
-     * Returns then number of metadata items in an open array. The array must
+     * Return then number of metadata items in an open array. The array must
      * be opened in READ mode, otherwise the function will error out.
      */
     uint64_t metadata_num() const;

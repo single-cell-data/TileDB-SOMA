@@ -13,8 +13,8 @@ SOMACollectionBase <- R6::R6Class(
     #' @param uri URI of the TileDB group
     #' @param platform_config Optional storage-engine specific configuration
     #' @param tiledbsoma_ctx optional SOMATileDBContext
-    #' @param internal_use_only Character value to signal 'permitted' call as
-    #' `new()` is considered internal and should not be called directly
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `new()` is considered internal and should not be called directly.
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
                           internal_use_only = NULL) {
       super$initialize(uri=uri, platform_config=platform_config,
@@ -22,8 +22,14 @@ SOMACollectionBase <- R6::R6Class(
     },
 
     #' @description Add a new SOMA object to the collection. (lifecycle: experimental)
-    create = function() {
-      super$create()
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `create()` is considered internal and should not be called directly.
+    create = function(internal_use_only = NULL) {
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the create() method is for internal use only. Consider using a",
+                   "factory method as e.g. 'SOMACollectionCreate()'."), call. = FALSE)
+      }
+      super$create(internal_use_only=internal_use_only)
 
       # Root SOMA objects include a `dataset_type` entry to allow the
       # TileDB Cloud UI to detect that they are SOMA datasets.
@@ -33,7 +39,19 @@ SOMACollectionBase <- R6::R6Class(
         metadata <- list()
       }
 
+      # Key constraint on the TileDB Group API:
+      # * tiledb_group_create is synchronous: new items appear on disk once that
+      #   function has returned.
+      # * When we have an open handle for write and we do tiledb_group_put_metadata,
+      #   metadata items do _not_ appear on disk until tiledb_group_close has been
+      #   called.
+      # To avoid confusion, we pay the price of a close-then-reopen here.
+      #
+      # TODO: this feels like it could be resolved through improved caching.
+      self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata(metadata)
+      self$close()
+      self$open(mode = "WRITE", internal_use_only = "allowed_use")
       self
     },
 
@@ -52,6 +70,7 @@ SOMACollectionBase <- R6::R6Class(
 
     #' @description Retrieve a SOMA object by name. (lifecycle: experimental)
     #' @param name The name of the object to retrieve.
+    #' @param mode Mode to open in
     #' @returns SOMA object.
     get = function(name) {
       super$get(name)
@@ -63,6 +82,7 @@ SOMACollectionBase <- R6::R6Class(
     add_new_collection = function(object, key) {
       # TODO: Check that object is a collection
       super$set(object, key)
+      object
     },
 
     #' @description Add a new SOMA dataframe to this collection. (lifecycle: experimental)
@@ -72,9 +92,10 @@ SOMACollectionBase <- R6::R6Class(
     add_new_dataframe = function(key, schema, index_column_names) {
       ## TODO: Check argument validity
       ## TODO: platform_config ?
-      ndf <- SOMADataFrame$new( file.path(self$uri, key), internal_use_only = "allowed_use" )
-      ndf$create(schema, index_column_names)
+      ndf <- SOMADataFrame$new(file.path(self$uri, key), internal_use_only = "allowed_use")
+      ndf$create(schema, index_column_names, internal_use_only = "allowed_use")
       super$set(ndf, key)
+      ndf
     },
 
     #' @description Add a new SOMA DenseNdArray to this collection. (lifecycle: experimental)
@@ -83,9 +104,10 @@ SOMACollectionBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     add_new_dense_ndarray = function(key, type, shape) {
-      ndarr <- SOMADenseNDArray$new( file.path(self$uri, key), internal_use_only = "allowed_use" )
-      ndarr$create(type, shape)
+      ndarr <- SOMADenseNDArray$new(file.path(self$uri, key), internal_use_only = "allowed_use")
+      ndarr$create(type, shape, internal_use_only = "allowed_use")
       super$set(ndarr, key)
+      ndarr
     },
 
     #' @description Add a new SOMA SparseNdArray to this collection. (lifecycle: experimental)
@@ -94,9 +116,10 @@ SOMACollectionBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     add_new_sparse_ndarray = function(key, type, shape) {
-      ndarr <- SOMASparseNDArray$new( file.path(self$uri, key), internal_use_only = "allowed_use" )
-      ndarr$create(type, shape)
+      ndarr <- SOMASparseNDArray$new(file.path(self$uri, key), internal_use_only = "allowed_use")
+      ndarr$create(type, shape, internal_use_only = "allowed_use")
       super$set(ndarr, key)
+      ndarr
     }
 
   ),
@@ -152,13 +175,18 @@ SOMACollectionBase <- R6::R6Class(
         platform_config = self$platform_config,
         internal_use_only = "allowed_use"
       )
+
+      tiledb_object$open(mode = "READ", internal_use_only = "allowed_use")
       soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
+      tiledb_object$close()
+
       spdl::debug(
         "[SOMACollectionBase] Instantiating {} object at: '{}'",
         soma_type %||% "Unknown",
         uri
       )
 
+      stopifnot("Discovered metadata object type is missing; cannot construct" = !is.null(soma_type))
       soma_constructor <- switch(soma_type,
         SOMADataFrame = SOMADataFrame$new,
         SOMADenseNDArray = SOMADenseNDArray$new,
@@ -168,12 +196,13 @@ SOMACollectionBase <- R6::R6Class(
         SOMAExperiment = SOMAExperiment$new,
         stop(sprintf("Unknown member SOMA type: %s", soma_type), call. = FALSE)
       )
-      soma_constructor(
+      obj <- soma_constructor(
         uri,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
         platform_config = self$platform_config,
         internal_use_only = "allowed_use"
       )
+      obj
     },
 
     # Internal method called by SOMA Measurement/Experiment's active bindings
@@ -182,6 +211,8 @@ SOMACollectionBase <- R6::R6Class(
     # @param name the name of the field to retrieve or set.
     # @param expected_class the expected class of the value to set.
     get_or_set_soma_field = function(value, name, expected_class) {
+      private$check_open_for_read_or_write()
+
       if (missing(value)) return(self$get(name))
 
       stopifnot(

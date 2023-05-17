@@ -4,10 +4,17 @@
 \alias{SOMAExperimentOpen}
 \title{Open SOMA Experiment}
 \usage{
-SOMAExperimentOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMAExperimentOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
+
+\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
 
 \item{platform_config}{Optional platform configuration}
 

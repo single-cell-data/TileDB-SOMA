@@ -7,7 +7,7 @@
 SOMADataFrameCreate(
   uri,
   schema,
-  index_column_names,
+  index_column_names = c("soma_joinid"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 )

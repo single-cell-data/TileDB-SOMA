@@ -174,12 +174,12 @@ TEST_CASE("SOMAArray: nnz") {
             10);
 
         // Get total cell num
-        auto sr = SOMAArray::open(TILEDB_READ, ctx, uri);
+        auto soma_array = SOMAArray::open(TILEDB_READ, ctx, uri);
 
-        uint64_t nnz = sr->nnz();
+        uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
 
-        std::vector<int64_t> shape = sr->shape();
+        std::vector<int64_t> shape = soma_array->shape();
         REQUIRE(shape.size() == 1);
         REQUIRE(shape[0] == std::numeric_limits<int64_t>::max());
     }
@@ -223,10 +223,10 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
 
         // Get total cell num at timestamp (0, 15)
         std::pair<uint64_t, uint64_t> timestamp{0, 15};
-        auto sr = SOMAArray::open(
+        auto soma_array = SOMAArray::open(
             TILEDB_READ, ctx, uri, "nnz", {}, "auto", "auto", timestamp);
 
-        uint64_t nnz = sr->nnz();
+        uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
     }
 }
@@ -277,10 +277,10 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
         }
 
         // Get total cell num
-        auto sr = SOMAArray::open(
+        auto soma_array = SOMAArray::open(
             TILEDB_READ, ctx, uri, "nnz", {}, "auto", "auto");
 
-        uint64_t nnz = sr->nnz();
+        uint64_t nnz = soma_array->nnz();
         if (allow_duplicates) {
             // Since we wrote twice
             REQUIRE(nnz == 2 * expected_nnz);
@@ -296,7 +296,7 @@ TEST_CASE("SOMAArray: metadata") {
     std::string base_uri = "mem://unit-test-array";
     const auto& [uri, expected_nnz] = create_array(base_uri, *ctx);
 
-    auto sr = SOMAArray::open(
+    auto soma_array = SOMAArray::open(
         TILEDB_WRITE,
         ctx,
         uri,
@@ -306,32 +306,32 @@ TEST_CASE("SOMAArray: metadata") {
         "auto",
         std::pair<uint64_t, uint64_t>(1, 1));
     int32_t val = 100;
-    sr->set_metadata("md", TILEDB_INT32, 1, &val);
-    sr->close();
+    soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
+    soma_array->close();
 
-    sr->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(1, 1));
-    REQUIRE(sr->has_metadata("md") == true);
-    REQUIRE(sr->metadata_num() == 1);
+    soma_array->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(1, 1));
+    REQUIRE(soma_array->has_metadata("md") == true);
+    REQUIRE(soma_array->metadata_num() == 1);
 
-    auto mdval = sr->get_metadata(0);
+    auto mdval = soma_array->get_metadata(0);
     REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
     REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
     REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
 
-    mdval = sr->get_metadata("md");
+    mdval = soma_array->get_metadata("md");
     REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
     REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
     REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
-    sr->close();
+    soma_array->close();
 
-    sr->open(TILEDB_WRITE, std::pair<uint64_t, uint64_t>(2, 2));
-    sr->delete_metadata("md");
-    sr->close();
+    soma_array->open(TILEDB_WRITE, std::pair<uint64_t, uint64_t>(2, 2));
+    soma_array->delete_metadata("md");
+    soma_array->close();
 
-    sr->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(3, 3));
-    REQUIRE(sr->has_metadata("md") == false);
-    REQUIRE(sr->metadata_num() == 0);
-    sr->close();
+    soma_array->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(3, 3));
+    REQUIRE(soma_array->has_metadata("md") == false);
+    REQUIRE(soma_array->metadata_num() == 0);
+    soma_array->close();
 }

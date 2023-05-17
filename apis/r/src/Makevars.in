@@ -4,23 +4,19 @@ CXX_STD = CXX17
 PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@ -Iinclude
 
 ## We also need the TileDB library
-PKG_LIBS = @cxx17_macos@ -ltiledbsoma @tiledb_libs@ @tiledb_rpath@
+PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@
 
 all: $(SHLIB)
-        # If we are:
-        #  - on macOS aka Darwin which needs this
-        #  - the library is present (implying non-system library use)
-        # then let us call install_name_tool
-        #
-        # Pro-tip: here you can run things like `otool -L tiledbsoma.so`, `ls ../inst`, etc. but
-        # any attempted debug output will only be visible at the terminal if the R build fails.
-        #
-        # Note: we hard-code /usr/local/lib location for libtiledbsoma.so/dylib since this
-        # is likewise hard-coded in our CI build.
-        #
-	@if [ `uname -s` = 'Darwin' ] && [ -f tiledbsoma.so ]; then \
+        # On macOS aka Darwin we call install_name_tool
+        # Case one: If we had a downloaded TileDB Core artifact, adjust zlib path and add to @rpath
+        # Case two: If we see the system libraries (on macOS) ensure /usr/local/lib rpath is considered
+	if [ `uname -s` = 'Darwin' ] && [ -f tiledbsoma.so ]; then \
 	    if [ -f ../inst/tiledb/lib/libtiledb.dylib ] ; then \
 	        install_name_tool -change libz.1.dylib @rpath/libz.1.dylib ../inst/tiledb/lib/libtiledb.dylib; \
+	        install_name_tool -add_rpath @loader_path/../tiledb/lib tiledbsoma.so; \
+	        install_name_tool -add_rpath @loader_path/../tiledbsoma/lib tiledbsoma.so; \
 	    fi; \
-	    install_name_tool -add_rpath /usr/local/lib tiledbsoma.so; \
+	    if [ -f /usr/local/lib/libtiledb.dylib -a -f /usr/local/lib/libtiledbsoma.dylib ] ; then \
+	        install_name_tool -add_rpath /usr/local/lib tiledbsoma.so; \
+	    fi; \
 	fi

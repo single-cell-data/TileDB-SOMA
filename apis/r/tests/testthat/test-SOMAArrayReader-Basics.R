@@ -28,5 +28,8 @@ test_that("Errors on large data, passes with budget", {
     ## pass with budget of 45mb
     ctx <- tiledbsoma::SOMATileDBContext$new(c(soma.init_buffer_bytes="45000000"))
     sdf2 <- SOMADataFrameOpen(uri, tiledbsoma_ctx = ctx)
+    expect_equal(sdf2$mode(), "READ")
     expect_silent(sdf2$read())
+    sdf2$close()
+    expect_equal(sdf2$mode(), "CLOSED")
 })

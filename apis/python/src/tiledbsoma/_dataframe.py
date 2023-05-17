@@ -160,8 +160,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 possible values for the column's datatype.  This makes a
                 :class:`DataFrame` growable.
             platform_config:
-                Platform-specific options used to create this
-                DataFrame, provided via ``{"tiledb": {"create": ...}}`` nested keys.
+                Platform-specific options used to create this array, provided in the form
+                ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by
@@ -201,6 +201,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             Experimental.
         """
         context = _validate_soma_tiledb_context(context)
+        _util.validate_platform_config(platform_config)
         schema = _canonicalize_schema(schema, index_column_names)
         tdb_schema = _build_tiledb_schema(
             schema,
@@ -401,6 +402,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
         dim_cols_tuple = tuple(dim_cols_list)
         self._handle.writer[dim_cols_tuple] = attr_cols_map
+        self._consolidate_and_vacuum_fragment_metadata()
 
         return self
 

@@ -84,7 +84,7 @@ test_that("Iterated Interface from SOMA Classes", {
                       sparse = SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"),
                       dense = SOMADenseNDArray$new(uri, internal_use_only = "allowed_use"))
         expect_true(inherits(sdf, "SOMAArrayBase"))
-        
+      
         iterator <- switch(tc,
                            data.frame = sdf$read(iterated = TRUE),
                            sparse = sdf$read_arrow_table(iterated = TRUE),
@@ -172,4 +172,3 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     rm(sdf)
 
 })
-

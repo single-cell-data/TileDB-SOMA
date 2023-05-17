@@ -1,4 +1,4 @@
-# tiledbsoma development version
+# tiledbsoma 0.0.0.*
 
 ## Changes
 

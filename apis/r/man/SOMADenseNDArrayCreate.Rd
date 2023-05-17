@@ -13,7 +13,7 @@ SOMADenseNDArrayCreate(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB objec}
+\item{uri}{URI for the TileDB object}
 
 \item{type}{An \link[arrow:data-type]{Arrow type} defining the type of each element in the array.}
 

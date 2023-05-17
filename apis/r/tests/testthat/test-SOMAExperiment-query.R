@@ -7,8 +7,10 @@ test_that("returns all coordinates by default", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -42,6 +44,8 @@ test_that("returns all coordinates by default", {
       experiment$ms$get("RNA")$X$get("counts")$read_arrow_table()
     )
   )
+
+  experiment$close()
 })
 
 test_that("querying by dimension coordinates", {
@@ -56,8 +60,10 @@ test_that("querying by dimension coordinates", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -85,6 +91,8 @@ test_that("querying by dimension coordinates", {
     coords = list(obs_slice, var_slice)
   )
   expect_true(query$X("counts")$Equals(raw_X))
+
+  experiment$close()
 })
 
 test_that("querying by value filters", {
@@ -99,8 +107,10 @@ test_that("querying by value filters", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   # TODO: simplify once tiledb-r supports membership expressions
   obs_value_filter <- paste0(
@@ -124,6 +134,8 @@ test_that("querying by value filters", {
 
   expect_equal(query$obs()$baz$as_vector(), obs_label_values)
   expect_equal(query$var()$quux$as_vector(), var_label_values)
+
+  experiment$close()
 })
 
 test_that("querying by both coordinates and value filters", {
@@ -152,8 +164,10 @@ test_that("querying by both coordinates and value filters", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   # obs slice / var value filter
   query <- SOMAExperimentAxisQuery$new(
@@ -210,6 +224,8 @@ test_that("querying by both coordinates and value filters", {
 
   expect_equal(query$obs()$to_data_frame(), obs_df[obs_hits,])
   expect_equal(query$var()$to_data_frame(), var_df[var_hits,])
+
+  experiment$close()
 })
 
 test_that("queries with empty results", {
@@ -221,8 +237,10 @@ test_that("queries with empty results", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   # obs/var slice and value filter
   query <- SOMAExperimentAxisQuery$new(
@@ -238,6 +256,8 @@ test_that("queries with empty results", {
 
   expect_equal(query$obs()$num_rows, 0)
   expect_equal(query$var()$num_rows, 0)
+
+  experiment$close()
 })
 
 test_that("retrieving query results in supported formats", {
@@ -249,8 +269,10 @@ test_that("retrieving query results in supported formats", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -265,6 +287,8 @@ test_that("retrieving query results in supported formats", {
   expect_true(is.list(res$X_layers))
   expect_true(is_arrow_table(res$X_layers[[1]]))
   expect_true(is_arrow_table(res$X_layers[[2]]))
+
+  experiment$close()
 })
 
 test_that("query result value indexer", {
@@ -279,8 +303,10 @@ test_that("query result value indexer", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -327,6 +353,8 @@ test_that("query result value indexer", {
     indexer$by_obs(c(1, 4, 2, 1000, "foo")),
     "'coords' must be a numeric vector or arrow Array"
   )
+
+  experiment$close()
 })
 
 test_that("query result value indexer upcast", {
@@ -341,8 +369,10 @@ test_that("query result value indexer upcast", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -389,4 +419,6 @@ test_that("query result value indexer upcast", {
     indexer$by_obs(c(1, 4, 2, 1000, "foo")),
     "'coords' must be a numeric vector or arrow Array"
   )
+
+  experiment$close()
 })

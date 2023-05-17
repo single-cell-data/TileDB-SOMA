@@ -59,8 +59,8 @@ class NDArray(TileDBArray, somacore.NDArray):
                 possible int64 will be used.  This makes a :class:`SparseNDArray`
                 growable.
             platform_config:
-                Platform-specific options used to create this Array,
-                provided via ``{"tiledb": {"create": ...}}`` nested keys.
+                Platform-specific options used to create this array, provided in the form
+                ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}``.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by
@@ -88,6 +88,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         # the upper limit is exactly 2**63-1.
 
         context = _validate_soma_tiledb_context(context)
+        _util.validate_platform_config(platform_config)
         schema = cls._build_tiledb_schema(
             type,
             shape,
