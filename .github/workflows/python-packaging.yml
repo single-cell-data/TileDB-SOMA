@@ -1,12 +1,19 @@
+# Workflow to build distribution, and push to PyPi or TestPyPi
+
 name: TileDB-SOMA python sdist & wheels
 
 on:
-  # trigger via user request, e.g.,
+  # Trigger publication to TestPyPi via user workflow request:
   #     gh workflow run python-packaging.yml --ref branch
   # Specify the branch or other ref as required.
   workflow_dispatch:
+
+  # Trigger publication to PyPi via new release event.
   release:
     types: [published]
+
+  # Currently, TestPyPi publication is ONLY via user workflow request
+  # and PyPi publication is ONLY via a Github release.
 
 jobs:
   sdist:
