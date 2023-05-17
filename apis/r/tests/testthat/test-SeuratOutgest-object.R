@@ -8,10 +8,10 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "READ"
+    mode = "WRITE"
   )
   on.exit(experiment$close())
-  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  exp_ms_rna <- experiment$ms$get('RNA')
   expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
@@ -65,7 +65,11 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   ))
   exp_ms_rna$add_new_collection(obsp, 'obsp')
 
-  exp_ms_rna$close()
+  experiment$close()
+
+  # Re-open for read.
+  # Leverage the still-pending on.exit(experiment$close()).
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   query <- SOMAExperimentAxisQuery$new(
@@ -237,10 +241,10 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "READ"
+    mode = "WRITE"
   )
   on.exit(experiment$close())
-  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  exp_ms_rna <- experiment$ms$get('RNA')
   expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
@@ -294,7 +298,11 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   ))
   exp_ms_rna$add_new_collection(obsp, 'obsp')
 
-  exp_ms_rna$close()
+  experiment$close()
+
+  # Re-open for read.
+  # Leverage the still-pending on.exit(experiment$close()).
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   obs_slice <- bit64::as.integer64(seq(3, 72))
@@ -350,10 +358,10 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "READ"
+    mode = "WRITE"
   )
   on.exit(experiment$close())
-  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  exp_ms_rna <- experiment$ms$get('RNA')
   expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
@@ -407,7 +415,11 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   ))
   exp_ms_rna$add_new_collection(obsp, 'obsp')
   
-  exp_ms_rna$close()
+  experiment$close()
+
+  # Re-open for read.
+  # Leverage the still-pending on.exit(experiment$close()).
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   obs_value_filter <- paste0(

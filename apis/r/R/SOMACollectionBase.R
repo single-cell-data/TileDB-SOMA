@@ -72,8 +72,8 @@ SOMACollectionBase <- R6::R6Class(
     #' @param name The name of the object to retrieve.
     #' @param mode Mode to open in
     #' @returns SOMA object.
-    get = function(name, mode = "READ") {
-      super$get(name, mode = mode)
+    get = function(name) {
+      super$get(name)
     },
 
     #' @description Add a new SOMA collection to this collection. (lifecycle: experimental)
@@ -202,7 +202,6 @@ SOMACollectionBase <- R6::R6Class(
         platform_config = self$platform_config,
         internal_use_only = "allowed_use"
       )
-      obj$open(mode = "READ", internal_use_only = "allowed_use")
       obj
     },
 

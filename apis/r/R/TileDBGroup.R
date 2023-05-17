@@ -131,11 +131,11 @@ TileDBGroup <- R6::R6Class(
    },
 
     #' @description Retrieve a group member by name. If the member isn't already
-    #' open, it is opened for read. (lifecycle: experimental)
+    #' open, it is opened in the same mode as the parent. (lifecycle: experimental)
     #' @param name The name of the member.
     #' @param mode Mode to open in
     #' @returns A `TileDBArray` or `TileDBGroup`.
-    get = function(name, mode = "READ") {
+    get = function(name) {
       stopifnot(is_scalar_character(name))
       private$check_open_for_read_or_write()
 
@@ -156,21 +156,14 @@ TileDBGroup <- R6::R6Class(
       # may override construct_member.
       if (is.null(member$object)) {
         obj <- private$construct_member(member$uri, member$type)
+        obj$open(mode = self$mode(), internal_use_only = "allowed_use")
       } else {
         obj <- member$object
+        if (!obj$is_open()) {
+          obj$open(mode = self$mode(), internal_use_only = "allowed_use")
+        }
       }
 
-      # TODO: this seems a bit ad-hoc but is passing tests ...
-      # issue is doing foo$bar$get("baz", "WRITE") if foo$bar$get("baz")
-      # has already been implicitly opened.
-      if (obj$is_open()) {
-        if (mode == "WRITE" && obj$mode() != "WRITE") {
-          obj$close()
-          obj$open(mode, internal_use_only = "allowed_use")
-        }
-      } else {
-        obj$open(mode, internal_use_only = "allowed_use")
-      }
       obj
     },
 

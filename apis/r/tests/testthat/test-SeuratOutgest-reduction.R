@@ -8,7 +8,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "READ"
+    mode = "WRITE"
   )
   on.exit(experiment$close())
 
@@ -51,7 +51,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   ))
   obsm$close()
 
-  exp_ms_rna <- SOMACollectionOpen(experiment$ms$get("RNA")$uri, "WRITE")
+  exp_ms_rna <- experiment$ms$get("RNA")
   exp_ms_rna$add_new_collection(obsm, 'obsm')
 
   # Add loadings
@@ -81,10 +81,13 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   varm$close()
   exp_ms_rna$add_new_collection(varm, 'varm')
 
-  exp_ms_rna$close()
+  experiment$close()
+
+  # Re-open for read.
+  # Leverage the still-pending on.exit(experiment$close()).
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
-  experiment <- SOMAExperimentOpen(experiment$uri)
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA"
@@ -272,11 +275,11 @@ test_that("Load reduction from sliced ExperimentQuery", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "READ"
+    mode = "WRITE"
   )
   on.exit(experiment$close())
 
-  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  exp_ms_rna <- experiment$ms$get('RNA')
   expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
@@ -347,7 +350,11 @@ test_that("Load reduction from sliced ExperimentQuery", {
 
   exp_ms_rna$add_new_collection(varm, 'varm')
 
-  exp_ms_rna$close()
+  experiment$close()
+
+  # Re-open for read.
+  # Leverage the still-pending on.exit(experiment$close()).
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   obs_slice <- bit64::as.integer64(seq(3, 72))
@@ -468,11 +475,11 @@ test_that("Load reduction from indexed ExperimentQuery", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "READ"
+    mode = "WRITE"
   )
   on.exit(experiment$close())
 
-  exp_ms_rna <- experiment$ms$get('RNA', 'WRITE')
+  exp_ms_rna <- experiment$ms$get('RNA')
   expect_equal(exp_ms_rna$mode(), 'WRITE')
 
   # Add embeddings
@@ -540,7 +547,11 @@ test_that("Load reduction from indexed ExperimentQuery", {
   ))
   exp_ms_rna$add_new_collection(varm, 'varm')
 
-  exp_ms_rna$close()
+  experiment$close()
+
+  # Re-open for read.
+  # Leverage the still-pending on.exit(experiment$close()).
+  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   obs_value_filter <- paste0(
