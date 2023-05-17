@@ -52,8 +52,9 @@ test_that("matrixZeroBasedView", {
     expect_error(mat[1, ] <- c(0, 99, 0), rdo)
     expect_error(mat[, 1] <- c(0, 99, 0), rdo)
 
-    # reject arithmetic
-    expect_error(mat + 1)
-    expect_error(mat + mat)
+    # test arithmetic
+    expect_equal (as.one.based(mat + 1), mat1 + 1)
+    expect_equal (as.one.based(mat + mat), mat1 + mat1)
+    expect_equal (as.one.based(mat == 41), mat1 == 41)
   }
 })

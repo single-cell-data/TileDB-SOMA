@@ -127,6 +127,7 @@ SOMASparseNDArray <- R6::R6Class(
          rl <- soma_array_reader(uri = self$uri,
                                  config = cfg,
                                  dim_points = coords,
+                                 result_order = result_order,
                                  loglevel = log_level
                                 )
       
@@ -160,6 +161,7 @@ SOMASparseNDArray <- R6::R6Class(
     read_sparse_matrix_zero_based = function(
       coords = NULL,
       result_order = "auto",
+      repr = "T",
       iterated = FALSE,
       log_level = "warn"
     ) {
@@ -167,12 +169,22 @@ SOMASparseNDArray <- R6::R6Class(
       attr <- self$attributes()
       shape <- self$shape()
       
+      stopifnot("'repr' must be a sinlge character string" = length(repr) == 1 | mode(repr) == "character",
+                "'repr' can only be one of 'C', 'R', or 'T', for  dgCMatrix, dgRMatrix, or dgTMatrix, respectively" =
+                repr == "C" | repr == "R" | repr == "T")
+      
+      if (repr %in% c("C", "R") & iterated) {
+          stop("When `repr` is 'C' (dgCMatrix) or 'R' (dgRMatrix), iteration mode is not possible")
+      }
+                
+      
       stopifnot("Array must have two dimensions" = length(dims) == 2,
                 "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
                     all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
                 "Array must have non-zero elements less than '.Machine$integer.max'" = self$nnz() < .Machine$integer.max,
                 "Array dimensions must not exceed '.Machine$integer.max'" = any(shape < .Machine$integer.max),
-                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
+                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr))
+      )
       
       if (!is.null(coords)) {
         coords <- private$convert_coords(coords)
@@ -180,14 +192,15 @@ SOMASparseNDArray <- R6::R6Class(
 
       if (isFALSE(iterated)) {
         tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-        arrow_table_to_sparse(tbl, repr = "T", dims_one_based = shape + 1)
+        arrow_table_to_sparse(tbl, repr = repr, dims_one_based = shape + 1)
       } else {
+        stopifnot(repr == "T")
         cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
         SparseReadIter$new(uri = self$uri,
                            config = cfg,
                            dim_points = coords,
                            loglevel = log_level,
-                           repr = "T",
+                           repr = repr,
                            shape = shape)
       }
     },

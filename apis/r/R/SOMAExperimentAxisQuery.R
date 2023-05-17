@@ -590,7 +590,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         dims = seq_len(as.integer(embed$shape()[2L])) - 1L
       )
       embed_mat <- if (inherits(embed, 'SOMASparseNDArray')) {
-        as.matrix(embed$read_sparse_matrix_zero_based()[coords$cells, coords$dims])
+        as.matrix(embed$read_sparse_matrix_zero_based(repr = "C")[coords$cells, coords$dims])
       } else if (inherits(embed, 'SOMADenseNDArray')) {
         warning(
           paste(
@@ -639,7 +639,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           dims = seq_len(as.integer(loads$shape()[2L])) - 1L
         )
         load_mat <- if (inherits(loads, 'SOMASparseNDArray')) {
-          as.matrix(loads$read_sparse_matrix_zero_based()[coords$features, coords$dims])
+          as.matrix(loads$read_sparse_matrix_zero_based(repr = "C")[coords$features, coords$dims])
         } else if (inherits(loads, 'SOMADenseNDArray')) {
           warning(
             paste(

@@ -83,9 +83,11 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   mat2 <- ndarray$read_sparse_matrix_zero_based(repr="T")
   expect_true(inherits(mat2, "matrixZeroBasedView"))
   expect_s4_class(as.one.based(mat2), "sparseMatrix")
-  expect_equal(dim(mat2), c(10, 10))
-  expect_equal(nrow(mat2), 10)
-  expect_equal(ncol(mat2), 10)
+  # 10 + 1 because 10 is the max 0-based dimension value
+  # and the following return 1-based values
+  expect_equal(dim(mat2), c(10 + 1, 10 + 1))
+  expect_equal(nrow(mat2), 10 + 1)
+  expect_equal(ncol(mat2), 10 + 1)
   ## not sure why all.equal(mat, mat2) does not pass
   expect_true(all.equal(as.numeric(mat), as.numeric(mat2[0:8,0:8])))
   expect_equal(sum(mat), sum(as.one.based(mat2)))
@@ -95,9 +97,11 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   mat2 <- ndarray$read_next()
   expect_true(inherits(mat2, "matrixZeroBasedView"))
   expect_s4_class(as.one.based(mat2), "sparseMatrix")
-  expect_equal(dim(mat2), c(10, 10))
-  expect_equal(nrow(mat2), 10)
-  expect_equal(ncol(mat2), 10)
+  # 10 + 1 because 10 is the max 0-based dimension value
+  # and the following return 1-based values
+  expect_equal(dim(mat2), c(10 + 1, 10 + 1)) 
+  expect_equal(nrow(mat2), 10 + 1)
+  expect_equal(ncol(mat2), 10 + 1)
   expect_true(all.equal(as.numeric(mat), as.numeric(mat2[0:8,0:8])))
   expect_equal(sum(mat), sum(as.one.based(mat2)))
 })
