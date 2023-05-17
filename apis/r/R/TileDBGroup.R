@@ -133,7 +133,7 @@ TileDBGroup <- R6::R6Class(
    },
 
     #' @description Retrieve a group member by name. If the member isn't already
-    #' open, it is opened in the same mode as the parent is open for. (lifecycle: experimental)
+    #' open, it is opened in the same mode as the parent. (lifecycle: experimental)
     #' @param name The name of the member.
     #' @returns A `TileDBArray` or `TileDBGroup`.
     get = function(name) {
