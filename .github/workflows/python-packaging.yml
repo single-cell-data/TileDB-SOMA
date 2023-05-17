@@ -128,9 +128,12 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.event_name == 'workflow_dispatch'
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
       - name: Create dist
         run: |
           set -x
+          ls -alR
           mkdir dist
           cp sdist/tiledbsoma-*.tar.gz wheels-*/*.whl dist
           ls -l dist
