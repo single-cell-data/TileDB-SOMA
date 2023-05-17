@@ -158,16 +158,19 @@ jobs:
         packages_dir: sdist, dist-wheel
         verbose: true
 
-  create_issue_on_fail:
-    runs-on: ubuntu-latest
-    needs: publish-to-pypi
-    if: failure() || cancelled()
-    steps:
-      - name: Checkout TileDB-SOMA `main`
-        uses: actions/checkout@v2
-      - name: Create Issue if Build Fails
-        uses: JasonEtco/create-an-issue@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          filename: .github/workflows/daily-test-build-issue-template.md
+# DO NOT COMMIT
+# Commented out only for dev-iterating -- please comment this back in before merge
+
+#  create_issue_on_fail:
+#    runs-on: ubuntu-latest
+#    needs: publish-to-pypi
+#    if: failure() || cancelled()
+#    steps:
+#      - name: Checkout TileDB-SOMA `main`
+#        uses: actions/checkout@v2
+#      - name: Create Issue if Build Fails
+#        uses: JasonEtco/create-an-issue@v2
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          filename: .github/workflows/daily-test-build-issue-template.md
