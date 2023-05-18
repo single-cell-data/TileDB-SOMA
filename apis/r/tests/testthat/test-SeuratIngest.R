@@ -116,6 +116,21 @@ test_that("Write Assay mechanics", {
     rna,
     soma_parent = SOMADataFrameCreate(uri = file.path(uri, 'data-frame'))
   ))
+
+  # Verify data slot isn't ingested when it's identical to counts
+  rna6 <- SeuratObject::CreateAssayObject(
+    counts = SeuratObject::GetAssayData(rna, "counts")
+  )
+  expect_identical(
+    SeuratObject::GetAssayData(rna6, "counts"),
+    SeuratObject::GetAssayData(rna6, "data")
+  )
+  expect_no_condition(ms6 <- write_soma(
+    rna6,
+    uri = "rna-identical-counts-data",
+    soma_parent = collection
+  ))
+  expect_equal(ms6$X$names(), "counts")
 })
 
 test_that("Write DimReduc mechanics", {
