@@ -68,24 +68,43 @@ else()
           message("BBB401 CMAKE_OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES}")
           message("BBB402 CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
 
-          #####if (CMAKE_OSX_ARCHITECTURES STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64)|(AMD64|amd64)|(^i.86$)")
+          # Status quo as of 2023-05-18:
+          # * GitHub Actions does not have MacOS arm64 hardware available -- tracked at
+          #   https://github.com/github/roadmap/issues/528
+          # * The best we can do is cross-compile for arm64 while actually running on x86_64
+          # * When we're invoked from python setup.py:
+          #   o CMAKE_OSX_ARCHITECTURES is x86_64 or arm64
+          #   o CMAKE_SYSTEM_PROCESSOR is x86_64 in either case
+          #   o We must download the tiledb artifacts for the cross-compile architecture (x86_64 or arm64)
+          #   o Therefore we must respect CMAKE_OSX_ARCHITECTURES not CMAKE_SYSTEM_PROCESSOR
+          # * When we're invoked from R configure and src/Makevars.in:
+          #   o CMAKE_OSX_ARCHITECTURES is unset
+          #   o CMAKE_SYSTEM_PROCESSOR is x86_64
+
           if (CMAKE_OSX_ARCHITECTURES STREQUAL x86_64)
             message("BBB500 DOWNLOAD APPLE X86")
             SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.2/tiledb-macos-x86_64-2.15.2-90f30eb.tar.gz")
             SET(DOWNLOAD_SHA1 "616b9ab508d1233d3bc3d6a2a7b1c42c8098f38a")
-          #####elseif (CMAKE_OSX_ARCHITECTURES STREQUAL arm64 OR CMAKE_SYSTEM_PROCESSOR MATCHES "^aarch64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
           elseif (CMAKE_OSX_ARCHITECTURES STREQUAL arm64)
-            message("BBB600 DOWNLOAD APPLE X86")
+            message("BBB600 DOWNLOAD APPLE ARM64")
+            SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.2/tiledb-macos-arm64-2.15.2-90f30eb.tar.gz")
+            SET(DOWNLOAD_SHA1 "882eadcc256f95a5c91094407770799a8bd4e759")
+          elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64)|(AMD64|amd64)|(^i.86$)")
+            message("BBB700 DOWNLOAD APPLE X86")
+            SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.2/tiledb-macos-x86_64-2.15.2-90f30eb.tar.gz")
+            SET(DOWNLOAD_SHA1 "616b9ab508d1233d3bc3d6a2a7b1c42c8098f38a")
+          elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^aarch64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+            message("BBB800 DOWNLOAD APPLE ARM64")
             SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.2/tiledb-macos-arm64-2.15.2-90f30eb.tar.gz")
             SET(DOWNLOAD_SHA1 "882eadcc256f95a5c91094407770799a8bd4e759")
           endif()
+
         else() # Linux
-          message("BBB700 DOWNLOAD LINUX")
           SET(DOWNLOAD_URL "https://github.com/TileDB-Inc/TileDB/releases/download/2.15.2/tiledb-linux-x86_64-2.15.2-90f30eb.tar.gz")
           SET(DOWNLOAD_SHA1 "33ae11d507dc7bec82fbdfbd8e2b2e13cff16b89")
         endif()
 
-        message("BBB800 EXTERNAL PROJECT ADD")
+        message("BBB900 EXTERNAL PROJECT ADD")
         ExternalProject_Add(ep_tiledb
                 PREFIX "externals"
                 URL ${DOWNLOAD_URL}
