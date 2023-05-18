@@ -45,11 +45,14 @@ Functions
     :toctree: _autosummary/
     :nosignatures:
 
+    tiledbsoma.open
+
+    tiledbsoma.show_package_versions
+
     tiledbsoma.get_implementation
     tiledbsoma.get_implementation_version
     tiledbsoma.get_storage_engine
-    tiledbsoma.open
-    tiledbsoma.show_package_versions
+
     tiledbsoma.tiledbsoma_stats_disable
     tiledbsoma.tiledbsoma_stats_dump
     tiledbsoma.tiledbsoma_stats_enable
