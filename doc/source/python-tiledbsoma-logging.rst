@@ -16,4 +16,3 @@ Functions
     tiledbsoma.logging.info
     tiledbsoma.logging.debug
     tiledbsoma.logging.warning
-    tiledbsoma.logging.log_io
