@@ -6,7 +6,7 @@ motivated by use cases from single-cell biology. The ``tiledbsoma``
 Python package is an implementation of SOMA using the
 `TileDB Embedded <https://github.com/TileDB-Inc/TileDB>`_ engine.
 
-Provides:
+Provides
 ----------
   1. The ability to store, query, and retrieve larger-than-core datasets,
      resident in both cloud (object-store) and local (file) systems.
@@ -17,7 +17,7 @@ Provides:
 See the `SOMA GitHub repo <https://github.com/single-cell-data/SOMA>`_ for more
 information on the SOMA project.
 
-Using the documentation:
+Using the documentation
 -------------------------
 
 Documentation is also available via the Python builtin ``help`` function. We
@@ -26,7 +26,7 @@ recommend exploring the package. For example:
 >>> import tiledbsoma
 >>> help(tiledbsoma.DataFrame)
 
-API maturity tags:
+API maturity tags
 ------------------
 
 Classes and functions are annotated with API maturity tags, for example:
@@ -49,7 +49,7 @@ the RStudio lifecycle stage model. Tags are:
 
 If no tag is present, the state is ``experimental``.
 
-Data types:
+Data types
 ------------
 
 The principal persistent types provided by SOMA are:
@@ -76,7 +76,7 @@ system and memory model for its in-memory type system and schema. For
 example, the schema of a :class:`DataFrame` is expressed as an
 `Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_.
 
-Error handling:
+Error handling
 ---------------
 Most errors will be signaled with a raised Exception. Of note:
 
@@ -87,9 +87,6 @@ Most errors will be signaled with a raised Exception. Of note:
 
 Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
 :class:`ValueError`.
-
-Classes and functions:
-----------------------
 """
 
 # ^^ the rest is autogen whether viewed from Python on-line help, Sphinx/readthedocs, etc.  It's

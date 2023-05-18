@@ -39,8 +39,11 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
+    "sphinx.ext.autosummary",
     "nbsphinx",
 ]
+
+autosummary_generate = True
 
 # Mapping for linking between RTD subprojects.
 if readthedocs:
