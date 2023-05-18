@@ -5,15 +5,20 @@ name: TileDB-SOMA python sdist & wheels
 on:
   # Trigger publication to TestPyPi via user workflow request:
   #     gh workflow run python-packaging.yml --ref branch
-  # Specify the branch or other ref as required.
+  # Specify the branch or other ref as required, allowing testing
+  # of PRs/branches.
   workflow_dispatch:
 
   # Trigger publication to PyPi via new release event.
   release:
     types: [published]
 
-  # Currently, TestPyPi publication is ONLY via user workflow request
-  # and PyPi publication is ONLY via a Github release.
+  # Schedule wheel build and smoke test on a regular schedule.
+  #
+  # This will not publish to either PyPi or TestPyPi (see the conditionals
+  # guarding those steps below).
+  schedule:
+    - cron: "42 9 * * *"
 
 jobs:
   sdist:
@@ -124,6 +129,7 @@ jobs:
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
           "
 
+  # Publish to TestPyPi upon user workflow request.
   publish-to-test-pypi:
     name: Publish package to TestPyPI
     needs: smoke-test
@@ -147,6 +153,7 @@ jobs:
           packages_dir: dist
           verbose: true
 
+  # Publish to PyPi upon release.
   publish-to-pypi:
     name: Publish package to PyPI
     needs: smoke-test
@@ -168,9 +175,10 @@ jobs:
           packages_dir: dist
           verbose: true
 
+  # File a bug if anything fails
   create_issue_on_fail:
     runs-on: ubuntu-latest
-    needs: publish-to-pypi
+    needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
     if: failure() || cancelled()
     steps:
       - name: Checkout TileDB-SOMA `main`
