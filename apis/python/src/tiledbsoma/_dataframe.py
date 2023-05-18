@@ -402,6 +402,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
         dim_cols_tuple = tuple(dim_cols_list)
         self._handle.writer[dim_cols_tuple] = attr_cols_map
+        self._consolidate_and_vacuum_fragment_metadata()
 
         return self
 

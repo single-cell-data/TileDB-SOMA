@@ -174,6 +174,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         del platform_config  # Currently unused.
         self._handle.writer[coords] = values.to_numpy()
+        self._consolidate_and_vacuum_fragment_metadata()
         return self
 
     @classmethod
