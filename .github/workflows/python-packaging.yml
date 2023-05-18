@@ -4,7 +4,7 @@ on:
   # I.e. on request
   workflow_dispatch:
   # Normally the smoke test only runs on merge to main.  To run it on a PR CI, uncomment `pull_request:`
-  pull_request:
+  # pull_request:
   #   branches: [main]
   # paths-ignore:
   #   - 'apis/r/**'
@@ -70,7 +70,7 @@ jobs:
         package-dir: tiledbsoma.tar.gz
       env:
         CIBW_BUILD: ${{ matrix.cibw_build }}
-        CIBW_BUILD_VERBOSITY: 3
+        CIBW_BUILD_VERBOSITY: 1
         CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
         # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
         #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
@@ -181,19 +181,16 @@ jobs:
         packages_dir: sdist, dist-wheel
         verbose: true
 
-# DO NOT COMMIT
-# Commented out only for dev-iterating -- please comment this back in before merge
-
-#  create_issue_on_fail:
-#    runs-on: ubuntu-latest
-#    needs: publish-to-pypi
-#    if: failure() || cancelled()
-#    steps:
-#      - name: Checkout TileDB-SOMA `main`
-#        uses: actions/checkout@v2
-#      - name: Create Issue if Build Fails
-#        uses: JasonEtco/create-an-issue@v2
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          filename: .github/workflows/daily-test-build-issue-template.md
+  create_issue_on_fail:
+    runs-on: ubuntu-latest
+    needs: publish-to-pypi
+    if: failure() || cancelled()
+    steps:
+      - name: Checkout TileDB-SOMA `main`
+        uses: actions/checkout@v2
+      - name: Create Issue if Build Fails
+        uses: JasonEtco/create-an-issue@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/workflows/daily-test-build-issue-template.md
