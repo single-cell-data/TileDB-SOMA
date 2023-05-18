@@ -13,7 +13,7 @@ Functions
     :toctree: _autosummary/
     :nosignatures:
 
-    tiledbsoma.logging.debug
     tiledbsoma.logging.info
-    tiledbsoma.logging.log_io
+    tiledbsoma.logging.debug
     tiledbsoma.logging.warning
+    tiledbsoma.logging.log_io
