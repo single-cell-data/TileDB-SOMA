@@ -93,11 +93,18 @@ write_soma.Assay <- function(
   )
 
   # Write `X` matrices
-  for (slot in c('counts', 'data', 'scale.data')) {
-    mat <- SeuratObject::GetAssayData(object = x, slot = slot)
-    if (SeuratObject::IsMatrixEmpty(mat)) {
-      next
+  for (slot in c("counts", "data", "scale.data")) {
+    mat <- SeuratObject::GetAssayData(x, slot = slot)
+    if (SeuratObject::IsMatrixEmpty(mat)) next
+
+    # Skip 'data' slot if it's identical to 'counts'
+    if (slot == "data") {
+      if (identical(mat, SeuratObject::GetAssayData(x, slot = "counts"))) {
+        spdl::info("Skipping 'data' slot because it's identical to 'counts'")
+        next
+      }
     }
+
     if (!identical(x = dim(mat), y = dim(x))) {
       spdl::info("Padding layer {} to match dimensions of assay", sQuote(slot))
       mat <- pad_matrix(
