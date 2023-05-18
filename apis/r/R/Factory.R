@@ -158,3 +158,5 @@ SOMAExperimentOpen <- function(uri, mode="READ", platform_config = NULL, tiledbs
     exp$open(mode, internal_use_only = "allowed_use")
     exp
 }
+
+# test
