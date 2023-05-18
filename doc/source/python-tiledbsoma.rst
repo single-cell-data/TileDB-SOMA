@@ -5,25 +5,42 @@ The tiledbsoma module
 
 .. automodule:: tiledbsoma
 
-Testing
+Classes
 -------
 
 .. autosummary::
     :toctree: _autosummary/
+    :nosignatures:
 
     tiledbsoma.AxisColumnNames
     tiledbsoma.AxisQuery
     tiledbsoma.Collection
     tiledbsoma.DataFrame
     tiledbsoma.DenseNDArray
-    tiledbsoma.DoesNotExistError
     tiledbsoma.Experiment
     tiledbsoma.ExperimentAxisQuery
     tiledbsoma.Measurement   
     tiledbsoma.ResultOrder
-    tiledbsoma.SOMAError
     tiledbsoma.SOMATileDBContext
     tiledbsoma.SparseNDArray
+
+Exceptions
+----------
+
+.. autosummary::
+    :toctree: _autosummary/
+    :nosignatures:
+
+    tiledbsoma.DoesNotExistError
+    tiledbsoma.SOMAError
+
+Functions
+---------
+
+.. autosummary::
+    :toctree: _autosummary/
+    :nosignatures:
+
     tiledbsoma.get_implementation
     tiledbsoma.get_implementation_version
     tiledbsoma.get_storage_engine

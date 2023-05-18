@@ -23,4 +23,5 @@ Features:
    :maxdepth: 2
 
    python-tiledbsoma
-   python-tiledbsomaio
+   python-tiledbsoma-io
+   python-tiledbsoma-logging
