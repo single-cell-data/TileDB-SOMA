@@ -43,12 +43,12 @@ jobs:
     strategy:
       matrix:
         include:
-        # - os: ubuntu-20.04
-        #   cibw_build: 'cp3*-manylinux_x86_64'
-        #   platform: manylinux2014
-        # - os: macos-11
-        #   cibw_build: 'cp3*-macosx_x86_64'
-        #   platform: macosx
+        - os: ubuntu-20.04
+          cibw_build: 'cp3*-manylinux_x86_64'
+          platform: manylinux2014
+        - os: macos-11
+          cibw_build: 'cp3*-macosx_x86_64'
+          platform: macosx
         - os: macos-12
           cibw_build: 'cp310-macosx_arm64'
           cibw_archs_macos: arm64
