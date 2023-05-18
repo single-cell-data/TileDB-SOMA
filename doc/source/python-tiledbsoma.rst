@@ -12,17 +12,21 @@ Classes
     :toctree: _autosummary/
     :nosignatures:
 
+    tiledbsoma.Collection
+    tiledbsoma.Experiment
+    tiledbsoma.Measurement   
+
+    tiledbsoma.DataFrame
+    tiledbsoma.SparseNDArray
+    tiledbsoma.DenseNDArray
+
+      tiledbsoma.ResultOrder
+
     tiledbsoma.AxisColumnNames
     tiledbsoma.AxisQuery
-    tiledbsoma.Collection
-    tiledbsoma.DataFrame
-    tiledbsoma.DenseNDArray
-    tiledbsoma.Experiment
     tiledbsoma.ExperimentAxisQuery
-    tiledbsoma.Measurement   
-    tiledbsoma.ResultOrder
+    
     tiledbsoma.SOMATileDBContext
-    tiledbsoma.SparseNDArray
 
 Exceptions
 ----------
