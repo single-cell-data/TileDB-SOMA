@@ -75,7 +75,7 @@ jobs:
         #   built for the wrong python version.
         CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
         CIBW_TEST_SKIP: "*_arm64"
-        CMAKE_OSX_ARCHITECTURES: "arm64"
+        CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
     - name: Upload wheels-${{ matrix.platform }} to GitHub Actions storage
       uses: actions/upload-artifact@v3
       with:
@@ -95,6 +95,11 @@ jobs:
           arch: x86_64
           cc: gcc-11
           cxx: g++-11
+        - os: macos-11
+          platform: macosx
+          arch: x86_64
+          cc: clang
+          cxx: clang++
         - os: macos-11
           platform: macosx
           arch: arm64
