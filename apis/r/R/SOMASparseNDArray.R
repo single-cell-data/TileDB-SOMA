@@ -164,6 +164,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @template param-result-order
+    #' @param repr Optional one-character code for sparse matrix representation type
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
@@ -204,7 +205,7 @@ SOMASparseNDArray <- R6::R6Class(
 
       if (isFALSE(iterated)) {
         tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-        arrow_table_to_sparse(tbl, repr = repr, dims_one_based = shape + 1)
+        arrow_table_to_sparse(tbl, repr = repr, shape = shape)
       } else {
         stopifnot(repr == "T")
         cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))

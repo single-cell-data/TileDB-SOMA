@@ -84,6 +84,7 @@ test_that("Iterated Interface from SOMA Classes", {
                       sparse = SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"),
                       dense = SOMADenseNDArray$new(uri, internal_use_only = "allowed_use"))
         expect_true(inherits(sdf, "SOMAArrayBase"))
+        sdf$open("READ", internal_use_only = "allowed_use")
       
         iterator <- switch(tc,
                            data.frame = sdf$read(iterated = TRUE),
@@ -142,6 +143,7 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
 
     sdf <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
     expect_true(inherits(sdf, "SOMAArrayBase"))
+    sdf$open("READ", internal_use_only = "allowed_use")
     
     expect_error(sdf$read_sparse_matrix_zero_based(repr = "x"))
     expect_error(sdf$read_sparse_matrix_zero_based(iterated = TRUE, repr = "C"))
@@ -157,9 +159,8 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
         nnz <- Matrix::nnzero(dat)
         expect_gt(nnz, 0)
         nnzTotal <- nnzTotal + nnz
-        # the shard dims always match the shape of the whole sparse matrix + 1
-        # + 1 beacause the shape is 0-based and dim() here returns 1-based
-        expect_equal(dim(dat), as.integer(sdf$shape()) + 1)
+        # the shard dims always match the shape of the whole sparse matrix
+        expect_equal(dim(dat), as.integer(sdf$shape()))
     }
     
     expect_true(iterator$read_complete())

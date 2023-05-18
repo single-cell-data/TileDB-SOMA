@@ -1,18 +1,23 @@
+#' Transformer function: SOMAArray to Arrow table
+#' 
 #' @description Converts the results of a \link{soma_array_reader} or \link{sr_next} to 
 #' an arrow::\link[arrow]{Table}
+#' @param x A List object with two pointers to Arrow array data and schema 
 #' @return arrow::\link[arrow]{Table}
 soma_array_to_arrow_table <- function(x) {
     arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
 }
 
+#' Transformer function: Arrow table to Matrix::sparseMatrix
+#' 
 #' @description Converts a \link[Arrow]{Table} of sparse format (columns: "soma_dim_0", 
 #' "soma_dim_1", "soma_data") to a \link{matrixZeroBasedView}
 #' @param tbl  \link[Arrow]{Table} with columns "soma_dim_0", "soma_dim_1", and "soma_datah"
 #' @param repr Optional one-character code for sparse matrix representation type
-#' @param dims_one_based Numerical vectors with two elements, one for each dimension. If
-#' \code{NULL}, then the following is used \code{c(max(tbl["soma_dim_0"]), max(tbl["soma_dim_1"]))}
+#' @param shape Numerical vector with two elements, one for each dimension. If
+#' \code{NULL}, then the following is used \code{1 + c(max(tbl["soma_dim_0"]), max(tbl["soma_dim_1"]))}
 #' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}
-arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), dims_one_based = NULL) {
+arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL) {
 
   # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
   # zero-based soma_dim_0 and soma_dim_1 (done by arrow_table_to_sparse). But, because these dimensions are
@@ -27,27 +32,29 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), dims_one_based =
   
   soma_data <- as.numeric(tbl$GetColumnByName("soma_data"))
   
-  if (is.null(dims_one_based)) {
-      dims_one_based <- c(max(soma_dim_0_one_based), max(soma_dim_1_one_based))
+  if (is.null(shape)) {
+      shape <- c(max(soma_dim_0_one_based), max(soma_dim_1_one_based))
   }
   
-  if(any(dims_one_based > .Machine$integer.max)) {
-      error("The dimensions of the array are larger than supported by Matrix::sparseMatrix")
+  if(any(shape > .Machine$integer.max)) {
+      error("The shape of the array is larger than supported by Matrix::sparseMatrix")
   }
   
   mat <- Matrix::sparseMatrix(i = soma_dim_0_one_based,
                               j = soma_dim_1_one_based,
                               x = soma_data,
-                              dims = dims_one_based, repr = repr)
+                              dims = shape, repr = repr)
   matrixZeroBasedView(mat)
 }
 
+
+#' Transformer function: Arrow table to matrix
+#' 
 #' @description Converts a \link[Arrow]{Table} of sparse format (columns: "soma_dim_0", 
-#' "soma_dim_1", "soma_data") to a \link{matrixZeroBasedView}
+#' "soma_dim_1", "soma_data") to a \link{matrixZeroBasedView} of a \link{matrix}.
 #' @param tbl  \link[Arrow]{Table} with columns "soma_dim_0", "soma_dim_1", and "soma_datah"
-#' @param repr Optional one-character code for sparse matrix representation type
-#' @param dims_one_based Numerical vectors with two elements, one for each dimension. If
-#' \code{NULL}, then the following is used \code{c(max(tbl["soma_dim_0"]), max(tbl["soma_dim_1"]))}
+#' @param byrow Logical, TRUE if "soma_data" is ordered by row, this argument is directly passed
+#' to the argument \code{byrow} of \link{matrix}
 #' @return \link{matrixZeroBasedView} of \link[base]{matrix}
 arrow_table_to_dense <- function(tbl, byrow) {
 

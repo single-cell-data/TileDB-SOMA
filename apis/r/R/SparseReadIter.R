@@ -23,6 +23,7 @@ SparseReadIter <- R6::R6Class(
     #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
     #' @param repr Optional one-character code for sparse matrix representation type
     #' which lets prior setting prevail, any other value is set as new logging level.
+    #' @param shape Numerical vector with two elements.
     initialize = function(uri, 
                           config, 
                           colnames = NULL, 
@@ -37,7 +38,7 @@ SparseReadIter <- R6::R6Class(
                             dim_points = dim_points, loglevel = loglevel)
     
           private$repr <- repr
-          private$dims_one_based <- shape + 1
+          private$shape <- shape 
     },
    
     #' @description  Concatenate remainder of iterator.
@@ -62,11 +63,11 @@ SparseReadIter <- R6::R6Class(
   private = list(
                  
     repr=NULL,
-    dims_one_based=NULL,
+    shape=NULL,
     
     ## refined from base class
     soma_reader_transform = function(x) {
-      arrow_table_to_sparse(soma_array_to_arrow_table(x), repr = private$repr, dims_one_based = private$dims_one_based)
+      arrow_table_to_sparse(soma_array_to_arrow_table(x), repr = private$repr, shape = private$shape)
    }
     
   )
