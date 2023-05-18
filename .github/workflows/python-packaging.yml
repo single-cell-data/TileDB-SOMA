@@ -48,6 +48,7 @@ jobs:
           platform: manylinux2014
         - os: macos-11
           cibw_build: 'cp3*-macosx_x86_64'
+          cibw_archs_macos: x86_64
           platform: macosx
         - os: macos-12
           cibw_build: 'cp310-macosx_arm64'
