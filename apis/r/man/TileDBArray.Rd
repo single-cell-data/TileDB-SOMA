@@ -10,6 +10,14 @@ Base class for representing an individual TileDB array.
 \section{Super class}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
 }
+\section{Active bindings}{
+\if{html}{\out{<div class="r6-active-bindings">}}
+\describe{
+\item{\code{object}}{Access the underlying TileB object directly (either a
+\code{\link[tiledb:tiledb_array]{tiledb::tiledb_array}} or \code{\link[tiledb:tiledb_group]{tiledb::tiledb_group}}).}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{

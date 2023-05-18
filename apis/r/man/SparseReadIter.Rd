@@ -64,6 +64,8 @@ dimension(s). Each dimension can be one entry in the list.}
 
 \item{\code{repr}}{Optional one-character code for sparse matrix representation type
 which lets prior setting prevail, any other value is set as new logging level.}
+
+\item{\code{shape}}{Numerical vector with two elements.}
 }
 \if{html}{\out{</div>}}
 }

@@ -96,7 +96,7 @@ determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}}
 }
 \value{
 The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
-\link[tiledbsoma:SOMADataFrame]{data frame}
+\link[tiledbsoma:SOMADataFrame]{data frame}, returned opened for write
 }
 \description{
 Various helpers to write R objects to SOMA
