@@ -8,11 +8,8 @@ on:
   # Specify the branch or other ref as required, allowing testing
   # of PRs/branches.
   workflow_dispatch:
-  # Normally the smoke test only runs on merge to main.  To run it on a PR CI, uncomment `pull_request:`
-  # pull_request:
-  #   branches: [main]
-  # paths-ignore:
-  #   - 'apis/r/**'
+
+  # Trigger publication to PyPi via new release event.
   release:
     types: [published]
   # Schedule wheel-build and smoke-test on a regular schedule.
@@ -30,7 +27,7 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # ensure we get all tags to inform package version determination
+          fetch-depth: 0 # ensure we get all tags to inform package version determination
       - name: Build sdist
         run: python setup.py sdist
         working-directory: ./apis/python
