@@ -1,9 +1,9 @@
-# Workflow to build distribution, and push to PyPi or TestPyPi
+# Workflow to build distribution, and push to PyPI or TestPyPI
 
 name: TileDB-SOMA python sdist & wheels
 
 on:
-  # Trigger publication to TestPyPi via user workflow request:
+  # Trigger publication to TestPyPI via user workflow request:
   #     gh workflow run python-packaging.yml --ref branch
   # Specify the branch or other ref as required, allowing testing
   # of PRs/branches.
@@ -12,10 +12,9 @@ on:
   # Trigger publication to PyPi via new release event.
   release:
     types: [published]
-
-  # Schedule wheel build and smoke test on a regular schedule.
+  # Schedule wheel-build and smoke-test on a regular schedule.
   #
-  # This will not publish to either PyPi or TestPyPi (see the conditionals
+  # This will not publish to either PyPI or TestPyPI (see the conditionals
   # guarding those steps below).
   schedule:
     - cron: "42 9 * * *"
@@ -51,11 +50,19 @@ jobs:
       matrix:
         include:
           - os: ubuntu-20.04
-            cibw_build: "cp3*-manylinux_x86_64"
+            cibw_build: 'cp3*-manylinux_x86_64'
             platform: manylinux2014
+            wheel_name: manylinux2014
           - os: macos-11
-            cibw_build: "cp3*-macosx_x86_64"
+            cibw_build: 'cp3*-macosx_x86_64'
+            cibw_archs_macos: x86_64
             platform: macosx
+            wheel_name: macos-x86_64
+          - os: macos-12
+            cibw_build: 'cp3*-macosx_arm64'
+            cibw_archs_macos: arm64
+            platform: macosx
+            wheel_name: macos-arm64
     steps:
       - name: Download sdist artifact
         uses: actions/download-artifact@v3
@@ -75,10 +82,13 @@ jobs:
           #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
           #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
           #   built for the wrong python version.
-      - name: Upload wheels-${{ matrix.platform }} to GitHub Actions storage
+          CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
+          CIBW_TEST_SKIP: "*_arm64"
+          CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
+      - name: Upload wheels-${{ matrix.wheel_name }} to GitHub Actions storage
         uses: actions/upload-artifact@v3
         with:
-          name: wheels-${{ matrix.platform }}
+          name: wheels-${{ matrix.wheel_name }}
           path: ./wheelhouse/*.whl
 
   # This step locally tries out the built wheels, without publishing to PyPI
@@ -99,6 +109,20 @@ jobs:
             arch: x86_64
             cc: clang
             cxx: clang++
+          # TODO: As of 2023-05-18 all we can do in GitHub Actions for MacOS arm64 is cross-compile the wheels
+          # for arm64, while actually running on x86 hardware. This means we can build the wheels but we cannot
+          # smoke-test them. This is pending MacOS arm64 runners for GitHub Actions which is tracked here:
+          #   https://github.com/github/roadmap/issues/528
+          # Any smoke-testing for arm64 wheels needs to be done manually by:
+          # * Download the whatever.zip file from GitHub Actions -> our instance -> Artifacts
+          # * unzip whatever.zip
+          # * pip install tiledbsoma-i.j.k-cp310-cp310-macosx_11_0_arm64.whl
+          #
+          #- os: macos-11
+          #  platform: macosx
+          #  arch: arm64
+          #  cc: clang
+          #  cxx: clang++
     steps:
       - name: Set up Python 3.8
         uses: actions/setup-python@v4
@@ -110,7 +134,9 @@ jobs:
         run: |
           set -x
           ls -lR
+          ls -lR wheels-*
           WHL=$(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+          if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
           pip install wheel
           pip install $WHL
@@ -129,7 +155,7 @@ jobs:
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
           "
 
-  # Publish to TestPyPi upon user workflow request.
+  # Publish to TestPyPI upon user workflow request
   publish-to-test-pypi:
     name: Publish package to TestPyPI
     needs: smoke-test
@@ -153,7 +179,7 @@ jobs:
           packages_dir: dist
           verbose: true
 
-  # Publish to PyPi upon release.
+  # Publish to PyPI upon release.
   publish-to-pypi:
     name: Publish package to PyPI
     needs: smoke-test
@@ -175,7 +201,7 @@ jobs:
           packages_dir: dist
           verbose: true
 
-  # File a bug if anything fails
+  # File a bug report if anything fails
   create_issue_on_fail:
     runs-on: ubuntu-latest
     needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
