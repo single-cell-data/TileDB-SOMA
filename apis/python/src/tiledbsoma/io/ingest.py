@@ -255,6 +255,14 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
+
+    # For local disk and S3, this is the same as experiment.ms.uri.
+    # For ingest_mode="resume" on TileDB Cloud, experiment_uri will be of the form
+    # tiledb://namespace/s3://bucket/path/to/exp whereas experiment.ms.uri will
+    # be of the form tiledb://namespace/uuid. Only for the former is it suitable
+    # to append "/ms" so that is what we do here.
+    experiment_ms_uri = f"{experiment_uri}/ms"
+
     with _create_or_open_coll(
         Collection[Measurement],
         _util.uri_joinpath(experiment.uri, "ms"),
@@ -267,7 +275,7 @@ def from_anndata(
         # MS/meas
         with _create_or_open_coll(
             Measurement,
-            f"{experiment.ms.uri}/{measurement_name}",
+            _util.uri_joinpath(experiment_ms_uri, measurement_name),
             ingest_mode,
             context=context,
         ) as measurement:
@@ -449,7 +457,7 @@ def from_anndata(
                 if anndata.raw is not None:
                     with _create_or_open_coll(
                         Measurement,
-                        _util.uri_joinpath(experiment.ms.uri, "raw"),
+                        _util.uri_joinpath(experiment_ms_uri, "raw"),
                         ingest_mode,
                         context=context,
                     ) as raw_measurement:
