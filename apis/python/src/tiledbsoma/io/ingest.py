@@ -216,8 +216,6 @@ def from_anndata(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
 
-    _util.validate_platform_config(platform_config)
-
     context = _validate_soma_tiledb_context(context)
 
     # Without _at least_ an index, there is nothing to indicate the dimension indices.
@@ -679,8 +677,6 @@ def create_from_matrix(
     Lifecycle:
         Experimental.
     """
-    _util.validate_platform_config(platform_config)
-
     # SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
@@ -859,7 +855,7 @@ def _write_matrix_to_denseNDArray(
             return
 
     # Write all at once?
-    if not tiledb_create_options.write_X_chunked():
+    if not tiledb_create_options.write_X_chunked:
         if not isinstance(matrix, np.ndarray):
             matrix = matrix.toarray()
         soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(matrix))
@@ -870,7 +866,7 @@ def _write_matrix_to_denseNDArray(
     nrow, ncol = matrix.shape
     i = 0
     # Number of rows to chunk by. Dense writes, so this is a constant.
-    chunk_size = int(math.ceil(tiledb_create_options.goal_chunk_nnz() / ncol))
+    chunk_size = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
     while i < nrow:
         t1 = time.time()
         i2 = i + chunk_size
@@ -1038,7 +1034,7 @@ def _write_matrix_to_sparseNDArray(
             return
 
     # Write all at once?
-    if not tiledb_create_options.write_X_chunked():
+    if not tiledb_create_options.write_X_chunked:
         soma_ndarray.write(_coo_to_table(sp.coo_matrix(matrix)))
         return
 
@@ -1055,7 +1051,7 @@ def _write_matrix_to_sparseNDArray(
     dim_max_size = matrix.shape[stride_axis]
 
     eta_tracker = eta.Tracker()
-    goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz()
+    goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz
 
     coords = [slice(None), slice(None)]
     i = 0
