@@ -242,7 +242,7 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
-    df_uri = _util.uri_joinpath(experiment.uri, "obs")
+    df_uri = _util.uri_joinpath(experiment_uri, "obs")
     with _write_dataframe(
         df_uri,
         conversions.decategoricalize_obs_or_var(anndata.obs),
@@ -255,9 +255,17 @@ def from_anndata(
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # MS
+
+    # For local disk and S3, this is the same as experiment.ms.uri.
+    # For ingest_mode="resume" on TileDB Cloud, experiment_uri will be of the form
+    # tiledb://namespace/s3://bucket/path/to/exp whereas experiment.ms.uri will
+    # be of the form tiledb://namespace/uuid. Only for the former is it suitable
+    # to append "/ms" so that is what we do here.
+    experiment_ms_uri = f"{experiment_uri}/ms"
+
     with _create_or_open_coll(
         Collection[Measurement],
-        _util.uri_joinpath(experiment.uri, "ms"),
+        experiment_ms_uri,
         ingest_mode,
         context=context,
     ) as ms:
@@ -265,9 +273,10 @@ def from_anndata(
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS/meas
+        measurement_uri = _util.uri_joinpath(experiment_ms_uri, measurement_name)
         with _create_or_open_coll(
             Measurement,
-            f"{experiment.ms.uri}/{measurement_name}",
+            measurement_uri,
             ingest_mode,
             context=context,
         ) as measurement:
@@ -289,7 +298,7 @@ def from_anndata(
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/VAR
             with _write_dataframe(
-                _util.uri_joinpath(measurement.uri, "var"),
+                _util.uri_joinpath(measurement_uri, "var"),
                 conversions.decategoricalize_obs_or_var(anndata.var),
                 id_column_name="var_id",
                 platform_config=platform_config,
@@ -301,9 +310,10 @@ def from_anndata(
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/X/DATA
 
+            measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
             with _create_or_open_coll(
                 Collection,
-                _util.uri_joinpath(measurement.uri, "X"),
+                measurement_X_uri,
                 ingest_mode,
                 context=context,
             ) as x:
@@ -317,7 +327,7 @@ def from_anndata(
 
                 with create_from_matrix(
                     X_kind,
-                    _util.uri_joinpath(measurement.X.uri, "data"),
+                    _util.uri_joinpath(measurement_X_uri, "data"),
                     anndata.X,
                     platform_config,
                     ingest_mode,
@@ -328,9 +338,10 @@ def from_anndata(
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/OBSM,VARM,OBSP,VARP
                 if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
+                    obsm_uri = _util.uri_joinpath(measurement_uri, "obsm")
                     with _create_or_open_coll(
                         Collection,
-                        _util.uri_joinpath(measurement.uri, "obsm"),
+                        obsm_uri,
                         ingest_mode,
                         context=context,
                     ) as obsm:
@@ -343,7 +354,7 @@ def from_anndata(
                                 # consider a use-dense flag at the tiledbsoma.io API
                                 # DenseNDArray,
                                 SparseNDArray,
-                                _util.uri_joinpath(measurement.obsm.uri, key),
+                                _util.uri_joinpath(obsm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.obsm[key]
                                 ),
@@ -358,6 +369,7 @@ def from_anndata(
                     measurement.obsm.close()
 
                 if len(anndata.varm.keys()) > 0:  # do not create an empty collection
+                    _util.uri_joinpath(measurement_uri, "varm")
                     with _create_or_open_coll(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varm"),
@@ -373,7 +385,7 @@ def from_anndata(
                                 # consider a use-dense flag at the tiledbsoma.io API
                                 # DenseNDArray,
                                 SparseNDArray,
-                                _util.uri_joinpath(measurement.varm.uri, key),
+                                _util.uri_joinpath(varm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.varm[key]
                                 ),
@@ -389,6 +401,7 @@ def from_anndata(
                                 )
 
                 if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
+                    _util.uri_joinpath(measurement_uri, "obsp")
                     with _create_or_open_coll(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "obsp"),
@@ -401,7 +414,7 @@ def from_anndata(
                         for key in anndata.obsp.keys():
                             with create_from_matrix(
                                 SparseNDArray,
-                                _util.uri_joinpath(measurement.obsp.uri, key),
+                                _util.uri_joinpath(obsp.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.obsp[key]
                                 ),
@@ -417,6 +430,7 @@ def from_anndata(
                                 )
 
                 if len(anndata.varp.keys()) > 0:  # do not create an empty collection
+                    _util.uri_joinpath(measurement_uri, "obsp")
                     with _create_or_open_coll(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varp"),
@@ -429,7 +443,7 @@ def from_anndata(
                         for key in anndata.varp.keys():
                             with create_from_matrix(
                                 SparseNDArray,
-                                _util.uri_joinpath(measurement.varp.uri, key),
+                                _util.uri_joinpath(varp.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.varp[key]
                                 ),
@@ -447,9 +461,10 @@ def from_anndata(
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/RAW
                 if anndata.raw is not None:
+                    raw_uri = _util.uri_joinpath(experiment_ms_uri, "raw")
                     with _create_or_open_coll(
                         Measurement,
-                        _util.uri_joinpath(experiment.ms.uri, "raw"),
+                        raw_uri,
                         ingest_mode,
                         context=context,
                     ) as raw_measurement:
@@ -461,7 +476,7 @@ def from_anndata(
                         )
 
                         with _write_dataframe(
-                            _util.uri_joinpath(raw_measurement.uri, "var"),
+                            _util.uri_joinpath(raw_uri, "var"),
                             conversions.decategoricalize_obs_or_var(anndata.raw.var),
                             id_column_name="var_id",
                             platform_config=platform_config,
@@ -475,9 +490,10 @@ def from_anndata(
                                 use_relative_uri=use_relative_uri,
                             )
 
+                        raw_X_uri = _util.uri_joinpath(raw_uri, "X")
                         with _create_or_open_coll(
                             Collection,
-                            _util.uri_joinpath(raw_measurement.uri, "X"),
+                            raw_X_uri,
                             ingest_mode,
                             context=context,
                         ) as rm_x:
@@ -490,7 +506,7 @@ def from_anndata(
 
                             with create_from_matrix(
                                 SparseNDArray,
-                                _util.uri_joinpath(raw_measurement.X.uri, "data"),
+                                _util.uri_joinpath(raw_X_uri, "data"),
                                 anndata.raw.X,
                                 platform_config,
                                 ingest_mode,
