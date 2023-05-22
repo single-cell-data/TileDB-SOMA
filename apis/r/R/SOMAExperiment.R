@@ -62,7 +62,7 @@ SOMAExperiment <- R6::R6Class(
     #' reductions for all measurements described in \code{X_layers}
     #' @param obsp_layers A named list of character vectors describing the
     #' arrays in \code{obsp} for each measurement to load in as
-    #' nearest neighbor graphs; for example: \preformatted{
+    #' nearest-neighbor graphs; for example: \preformatted{
     #' list(
     #'   RNA = c("RNA_nn", "RNA_snn"),
     #'   ADT = c("ADT_nn")
