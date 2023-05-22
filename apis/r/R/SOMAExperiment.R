@@ -37,7 +37,7 @@ SOMAExperiment <- R6::R6Class(
     #'   ADT = c("ensembl_id")
     #' )
     #' }
-    #' By default, loads in entire feature-level meta data for all measurements
+    #' By default, loads in entire feature-level metadata for all measurements
     #' described in \code{X_layers}
     #' @param obsm_layers A named list of character vectors describing the
     #' arrays in \code{obsm} for each measurement to load in as
