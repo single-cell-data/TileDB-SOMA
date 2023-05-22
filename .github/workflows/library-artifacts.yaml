@@ -1,0 +1,104 @@
+name: artifacts
+
+on:
+  pull_request:
+    paths-ignore:
+      - "apis/**"
+      - ".pre-commit-config.yaml"
+  push:
+    branches: [main, master]
+  release:
+
+env:
+  TILEDBSOMA_SHA: "dev"
+  TILEDBSOMA_BUILD: "${{ github.workspace }}/tiledb_build"
+  TILEDBSOMA_SOURCE: "${{ github.workspace }}/libtiledbsoma"
+  TILEDBSOMA_INSTALL: "${{ github.workspace }}/.tiledbsoma_dist/$TILEDBSOMA_SHA"
+    
+jobs:
+  build:
+    
+    strategy:
+      matrix:
+        #considering https://stackoverflow.com/questions/65035256/how-to-access-matrix-variables-in-github-actions
+        environ: [macos_x86, macos_arm, linux]
+        include:
+          - environ: 'macos_x86'
+            imageName: "macOS-11"
+            CMAKE_OSX_ARCHITECTURES: "x86_64"
+            MACOSX_DEPLOYMENT_TARGET: 10.14
+            ARTIFACT_OS: 'macos'
+            ARTIFACT_ARCH: 'x86_64'
+          - environ: 'macos_arm'
+            imageName: "macOS-11"
+            CMAKE_OSX_ARCHITECTURES: "arm64"
+            MACOSX_DEPLOYMENT_TARGET: 11 
+            ARTIFACT_OS: 'macos'
+            ARTIFACT_ARCH: 'arm64'
+          - environ: "linux"
+            imageName: "ubuntu-latest"
+            CMAKE_OSX_ARCHITECTURES: ""
+            MACOSX_DEPLOYMENT_TARGET: ""
+            ARTIFACT_OS: 'linux'
+            ARTIFACT_ARCH: "x86_64"
+
+    runs-on: ${{ matrix.imageName }}
+
+    steps:
+
+          - uses: actions/checkout@v3
+ 
+          - name: "Echo variables"
+            run: |
+              echo "Vars are "
+              echo "  image   ${{ matrix.imageName }}"
+              echo "  osxarch ${{ matrix.CMAKE_OSX_ARCHITECTURES }}"
+              echo "  build   ${{ env.TILEDBSOMA_BUILD }}"
+              echo "  install ${{ env.TILEDBSOMA_INSTALL }}"
+              echo "  wkspce  ${{ github.workspace }}"
+
+          - name: "Add pkg-config"
+            run: brew install pkg-config
+            if: ${{ matrix.ARTIFACT_OS == 'macos' }}
+
+          - name: "Check cmake"
+            run: cmake --version
+
+          - name: "Build"
+            run: |
+              set -xe pipefail
+              #
+              cd libtiledbsoma
+              #
+              mkdir -p ${{ env.TILEDBSOMA_BUILD }}
+              cd ${{ env.TILEDBSOMA_BUILD }}
+              #
+              #
+              cmake -B ${{ env.TILEDBSOMA_BUILD }} \
+                    -S ${{ env.TILEDBSOMA_SOURCE }} \
+               	    -DDOWNLOAD_TILEDB_PREBUILT=ON \
+              	    -DTILEDBSOMA_BUILD_CLI=OFF \
+              	    -DTILEDBSOMA_ENABLE_TESTING=OFF \
+                    -DOVERRIDE_INSTALL_PREFIX=OFF \
+                    -DCMAKE_INSTALL_PREFIX=${{ env.TILEDBSOMA_INSTALL }} \
+                    -DCMAKE_OSX_ARCHITECTURES=${{ matrix.CMAKE_OSX_ARCHITECTURES }}
+              #
+              cmake --build ${{ env.TILEDBSOMA_BUILD }} --config Release -j4
+              cmake --build ${{ env.TILEDBSOMA_BUILD }} --target install-libtiledbsoma --config Release
+              #
+              # this should not be needed -- the tiledb core library gets 'co-installed'
+              rm -vf ${{ env.TILEDBSOMA_INSTALL }}/lib/libtiledb.{so,dylib}*
+
+          - name: "Inspect installation output"
+            run: ls -lR ${{ env.TILEDBSOMA_INSTALL }}
+
+          - name: "Archive files"
+            run: |
+              cd ${{ env.TILEDBSOMA_INSTALL }}
+              tar -cvf ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_SHA }}.tar *
+              gzip -9v ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_SHA }}.tar
+              
+          - uses: actions/upload-artifact@v3
+            with:
+              name: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
+              path: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
