@@ -68,7 +68,7 @@
     </div>
 
     <div class="ref-description">
-    <p>Base class for ephemeral collections; ephemeral collections are equivalent to SOMA collections but are stored in-memory instead of on-disk</p>
+    <p>Base class for ephemeral collections; ephemeral collections are equivalent to <a href="SOMACollection.html">SOMA collections</a> but are stored in-memory instead of on-disk</p>
     </div>
 
 
@@ -78,7 +78,15 @@
     </div>
     <div id="active-bindings">
     <h2>Active bindings</h2>
-    <p></p><div class="r6-active-bindings"><dl><dt><code>platform_config</code></dt>
+    <p></p><div class="r6-active-bindings"><dl><dt><code>uri</code></dt>
+<dd><p>“<code>ephemeral-collection:&lt;MEMORY_ADDRESS&gt;</code>”</p></dd>
+
+
+<dt><code>soma_type</code></dt>
+<dd><p>Dummy field for ephemeral objects for compatibility with SOMA collections</p></dd>
+
+
+<dt><code>platform_config</code></dt>
 <dd><p>Dummy field for ephemeral objects for compatibility with SOMA collections</p></dd>
 
 
@@ -86,15 +94,7 @@
 <dd><p>Dummy field for ephemeral objects for compatibility with SOMA collections</p></dd>
 
 
-<dt><code>uri</code></dt>
-<dd><p>“<code>ephemeral-collection:&lt;MEMORY_ADDRESS&gt;</code>”</p></dd>
-
-
 <dt><code>object</code></dt>
-<dd><p>Dummy field for ephemeral objects for compatibility with SOMA collections</p></dd>
-
-
-<dt><code>soma_type</code></dt>
 <dd><p>Dummy field for ephemeral objects for compatibility with SOMA collections</p></dd>
 
 
@@ -107,24 +107,27 @@
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 
 <ul><li><p><a href="#method-EphemeralCollectionBase-new"><code>EphemeralCollectionBase$new()</code></a></p></li>
-<li><p><a href="#method-EphemeralCollectionBase-exists"><code>EphemeralCollectionBase$exists()</code></a></p></li>
-<li><p><a href="#method-EphemeralCollectionBase-get_tiledb_config"><code>EphemeralCollectionBase$get_tiledb_config()</code></a></p></li>
-<li><p><a href="#method-EphemeralCollectionBase-print"><code>EphemeralCollectionBase$print()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-create"><code>EphemeralCollectionBase$create()</code></a></p></li>
+<li><p><a href="#method-EphemeralCollectionBase-open"><code>EphemeralCollectionBase$open()</code></a></p></li>
+<li><p><a href="#method-EphemeralCollectionBase-close"><code>EphemeralCollectionBase$close()</code></a></p></li>
+<li><p><a href="#method-EphemeralCollectionBase-exists"><code>EphemeralCollectionBase$exists()</code></a></p></li>
+<li><p><a href="#method-EphemeralCollectionBase-print"><code>EphemeralCollectionBase$print()</code></a></p></li>
+<li><p><a href="#method-EphemeralCollectionBase-get_tiledb_config"><code>EphemeralCollectionBase$get_tiledb_config()</code></a></p></li>
+<li><p><a href="#method-EphemeralCollectionBase-length"><code>EphemeralCollectionBase$length()</code></a></p></li>
+<li><p><a href="#method-EphemeralCollectionBase-names"><code>EphemeralCollectionBase$names()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-set"><code>EphemeralCollectionBase$set()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-get"><code>EphemeralCollectionBase$get()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-remove"><code>EphemeralCollectionBase$remove()</code></a></p></li>
-<li><p><a href="#method-EphemeralCollectionBase-get_metadata"><code>EphemeralCollectionBase$get_metadata()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-set_metadata"><code>EphemeralCollectionBase$set_metadata()</code></a></p></li>
-<li><p><a href="#method-EphemeralCollectionBase-close"><code>EphemeralCollectionBase$close()</code></a></p></li>
+<li><p><a href="#method-EphemeralCollectionBase-get_metadata"><code>EphemeralCollectionBase$get_metadata()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-add_new_collection"><code>EphemeralCollectionBase$add_new_collection()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-add_new_dataframe"><code>EphemeralCollectionBase$add_new_dataframe()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-add_new_dense_ndarray"><code>EphemeralCollectionBase$add_new_dense_ndarray()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-add_new_sparse_ndarray"><code>EphemeralCollectionBase$add_new_sparse_ndarray()</code></a></p></li>
 <li><p><a href="#method-EphemeralCollectionBase-clone"><code>EphemeralCollectionBase$clone()</code></a></p></li>
 </ul></div><p><details open><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href="TileDBGroup.html#method-length"><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href="TileDBGroup.html#method-names"><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href="TileDBObject.html#method-is_open"><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href="TileDBObject.html#method-mode"><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_data_frame"><a href="TileDBGroup.html#method-to_data_frame"><code>tiledbsoma::TileDBGroup$to_data_frame()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_list"><a href="TileDBGroup.html#method-to_list"><code>tiledbsoma::TileDBGroup$to_list()</code></a></span></li>
 </ul></details></p><hr><a id="method-EphemeralCollectionBase-new"></a><div class="section">
@@ -143,29 +146,28 @@
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-EphemeralCollectionBase-exists"></a><div class="section">
-<h3 id="method-exists-">Method <code><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists()</a></code><a class="anchor" aria-label="anchor" href="#method-exists-"></a></h3>
-<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
+</div><p></p><hr><a id="method-EphemeralCollectionBase-create"></a><div class="section">
+<h3 id="method-create-">Method <code>create()</code><a class="anchor" aria-label="anchor" href="#method-create-"></a></h3>
+<p>Create a new, empty ephemeral collection</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">exists</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
-<p>Returns <code>FALSE</code> as ephemeral collections do not
-exist on-disk</p>
+<p>Returns a new ephemeral collection of class <code>class(self)</code></p>
 </div>
 
-</div><p></p><hr><a id="method-EphemeralCollectionBase-get_tiledb_config"></a><div class="section">
-<h3 id="method-get-tiledb-config-">Method <code>get_tiledb_config()</code><a class="anchor" aria-label="anchor" href="#method-get-tiledb-config-"></a></h3>
+</div><p></p><hr><a id="method-EphemeralCollectionBase-open"></a><div class="section">
+<h3 id="method-open-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">open()</a></code><a class="anchor" aria-label="anchor" href="#method-open-"></a></h3>
 <p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">get_tiledb_config</span><span class="op">(</span>param <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">open</span><span class="op">(</span><span class="va">mode</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>param</code></dt>
+<p></p><div class="arguments"><dl><dt><code>mode</code></dt>
 <dd><p>Ignored for ephemeral objects</p></dd>
 
 
@@ -173,44 +175,101 @@ exist on-disk</p>
 </div>
 <div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
-<p>Returns <code>NULL</code> as ephemeral collections do not have an
-on-disk configuration</p>
+<p>Throws an error as this method is not supported by ephemeral objects</p>
+</div>
+
+</div><p></p><hr><a id="method-EphemeralCollectionBase-close"></a><div class="section">
+<h3 id="method-close-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code><a class="anchor" aria-label="anchor" href="#method-close-"></a></h3>
+<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p>Invisibly returns <code>NULL</code></p>
+</div>
+
+</div><p></p><hr><a id="method-EphemeralCollectionBase-exists"></a><div class="section">
+<h3 id="method-exists-">Method <code><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists()</a></code><a class="anchor" aria-label="anchor" href="#method-exists-"></a></h3>
+<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">exists</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<p>Returns <code>FALSE</code> as ephemeral collections do not
+exist on-disk</p>
 </div>
 
 </div><p></p><hr><a id="method-EphemeralCollectionBase-print"></a><div class="section">
 <h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
 <p>Special method for printing object representation to console</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
 <p>Prints details about the ephemeral collection and invisibly
 returns itself</p>
 </div>
 
-</div><p></p><hr><a id="method-EphemeralCollectionBase-create"></a><div class="section">
-<h3 id="method-create-">Method <code>create()</code><a class="anchor" aria-label="anchor" href="#method-create-"></a></h3>
-<p>Create a new, empty ephemeral collection</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><hr><a id="method-EphemeralCollectionBase-get_tiledb_config"></a><div class="section">
+<h3 id="method-get-tiledb-config-">Method <code>get_tiledb_config()</code><a class="anchor" aria-label="anchor" href="#method-get-tiledb-config-"></a></h3>
+<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">get_tiledb_config</span><span class="op">(</span>param <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
-<p>Returns a new ephemeral collection of class <code>class(self)</code></p>
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>param</code></dt>
+<dd><p>Ignored for ephemeral objects</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<p>Returns <code>NULL</code> as ephemeral collections do not have an
+on-disk configuration</p>
+</div>
+
+</div><p></p><hr><a id="method-EphemeralCollectionBase-length"></a><div class="section">
+<h3 id="method-length-">Method <code><a href="https://rdrr.io/r/base/length.html" class="external-link">length()</a></code><a class="anchor" aria-label="anchor" href="#method-length-"></a></h3>
+<p>Retrieve the number of items in the collection</p><div class="section">
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">length</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<p>The length of the collection</p>
+</div>
+
+</div><p></p><hr><a id="method-EphemeralCollectionBase-names"></a><div class="section">
+<h3 id="method-names-">Method <code><a href="https://rdrr.io/r/base/names.html" class="external-link">names()</a></code><a class="anchor" aria-label="anchor" href="#method-names-"></a></h3>
+<p>Retrieve the names of members. (lifecycle: experimental)</p><div class="section">
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">names</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
+<p>A <code>character</code> vector of member names.</p>
 </div>
 
 </div><p></p><hr><a id="method-EphemeralCollectionBase-set"></a><div class="section">
 <h3 id="method-set-">Method <code>set()</code><a class="anchor" aria-label="anchor" href="#method-set-"></a></h3>
 <p>Add object to an ephemeral collection</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span><span class="va">object</span>, name <span class="op">=</span> <span class="cn">NULL</span>, relative <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>object</code></dt>
 <dd><p>A TileDB object (eg. <code><a href="TileDBGroup.html">TileDBGroup</a></code>) to add
 to the collection</p></dd>
@@ -227,7 +286,7 @@ to the collection</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
 <p>[chainable] Invisibly returns <code>self</code> with <code>object</code>
 added as <code>name</code></p>
 </div>
@@ -235,12 +294,12 @@ added as <code>name</code></p>
 </div><p></p><hr><a id="method-EphemeralCollectionBase-get"></a><div class="section">
 <h3 id="method-get-">Method <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code><a class="anchor" aria-label="anchor" href="#method-get-"></a></h3>
 <p>Get objects from an ephemeral collection</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="va">name</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>name</code></dt>
 <dd><p>Name of object in the collection to get</p></dd>
 
@@ -248,19 +307,19 @@ added as <code>name</code></p>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
 <p>The object named <code>name</code></p>
 </div>
 
 </div><p></p><hr><a id="method-EphemeralCollectionBase-remove"></a><div class="section">
 <h3 id="method-remove-">Method <code><a href="https://rdrr.io/r/base/rm.html" class="external-link">remove()</a></code><a class="anchor" aria-label="anchor" href="#method-remove-"></a></h3>
 <p>Remove objects from an ephemeral collection</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">remove</span><span class="op">(</span><span class="va">name</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>name</code></dt>
 <dd><p>Name of object to remove from the collection</p></dd>
 
@@ -268,35 +327,15 @@ added as <code>name</code></p>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
 <p>[chainable] Invisibly returns <code>self</code> with the object at
 <code>name</code> removed</p>
-</div>
-
-</div><p></p><hr><a id="method-EphemeralCollectionBase-get_metadata"></a><div class="section">
-<h3 id="method-get-metadata-">Method <code>get_metadata()</code><a class="anchor" aria-label="anchor" href="#method-get-metadata-"></a></h3>
-<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">get_metadata</span><span class="op">(</span>key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>key</code></dt>
-<dd><p>Ignored for ephemeral objects</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
-<p>An empty list</p>
 </div>
 
 </div><p></p><hr><a id="method-EphemeralCollectionBase-set_metadata"></a><div class="section">
 <h3 id="method-set-metadata-">Method <code>set_metadata()</code><a class="anchor" aria-label="anchor" href="#method-set-metadata-"></a></h3>
 <p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">set_metadata</span><span class="op">(</span><span class="va">metadata</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -309,72 +348,20 @@ added as <code>name</code></p>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
-<p>Throws an error as this method is not supported by ephemeral objects</p>
-</div>
-
-</div><p></p><hr><a id="method-EphemeralCollectionBase-close"></a><div class="section">
-<h3 id="method-close-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code><a class="anchor" aria-label="anchor" href="#method-close-"></a></h3>
-<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
-<p>Invisibly returns <code>NULL</code></p>
-</div>
-
-</div><p></p><hr><a id="method-EphemeralCollectionBase-add_new_collection"></a><div class="section">
-<h3 id="method-add-new-collection-">Method <code>add_new_collection()</code><a class="anchor" aria-label="anchor" href="#method-add-new-collection-"></a></h3>
-<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">add_new_collection</span><span class="op">(</span><span class="va">object</span>, <span class="va">key</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>object, key</code></dt>
-<dd><p>Ignored for ephemeral objects</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
-<p>Throws an error as this method is not supported by ephemeral objects</p>
-</div>
-
-</div><p></p><hr><a id="method-EphemeralCollectionBase-add_new_dataframe"></a><div class="section">
-<h3 id="method-add-new-dataframe-">Method <code>add_new_dataframe()</code><a class="anchor" aria-label="anchor" href="#method-add-new-dataframe-"></a></h3>
-<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">add_new_dataframe</span><span class="op">(</span><span class="va">key</span>, <span class="va">schema</span>, <span class="va">index_column_names</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>key, schema, index_column_names</code></dt>
-<dd><p>Ignored for ephemeral objects</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
 <h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
 <p>Throws an error as this method is not supported by ephemeral objects</p>
 </div>
 
-</div><p></p><hr><a id="method-EphemeralCollectionBase-add_new_dense_ndarray"></a><div class="section">
-<h3 id="method-add-new-dense-ndarray-">Method <code>add_new_dense_ndarray()</code><a class="anchor" aria-label="anchor" href="#method-add-new-dense-ndarray-"></a></h3>
+</div><p></p><hr><a id="method-EphemeralCollectionBase-get_metadata"></a><div class="section">
+<h3 id="method-get-metadata-">Method <code>get_metadata()</code><a class="anchor" aria-label="anchor" href="#method-get-metadata-"></a></h3>
 <p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
 <h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">add_new_dense_ndarray</span><span class="op">(</span><span class="va">key</span>, <span class="va">type</span>, <span class="va">shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">get_metadata</span><span class="op">(</span>key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>key, type, shape</code></dt>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>key</code></dt>
 <dd><p>Ignored for ephemeral objects</p></dd>
 
 
@@ -382,14 +369,54 @@ added as <code>name</code></p>
 </div>
 <div class="section">
 <h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
+<p>An empty list</p>
+</div>
+
+</div><p></p><hr><a id="method-EphemeralCollectionBase-add_new_collection"></a><div class="section">
+<h3 id="method-add-new-collection-">Method <code>add_new_collection()</code><a class="anchor" aria-label="anchor" href="#method-add-new-collection-"></a></h3>
+<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">add_new_collection</span><span class="op">(</span><span class="va">object</span>, <span class="va">key</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>object, key</code></dt>
+<dd><p>Ignored for ephemeral objects</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
 <p>Throws an error as this method is not supported by ephemeral objects</p>
 </div>
 
-</div><p></p><hr><a id="method-EphemeralCollectionBase-add_new_sparse_ndarray"></a><div class="section">
-<h3 id="method-add-new-sparse-ndarray-">Method <code>add_new_sparse_ndarray()</code><a class="anchor" aria-label="anchor" href="#method-add-new-sparse-ndarray-"></a></h3>
+</div><p></p><hr><a id="method-EphemeralCollectionBase-add_new_dataframe"></a><div class="section">
+<h3 id="method-add-new-dataframe-">Method <code>add_new_dataframe()</code><a class="anchor" aria-label="anchor" href="#method-add-new-dataframe-"></a></h3>
 <p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">add_new_sparse_ndarray</span><span class="op">(</span><span class="va">key</span>, <span class="va">type</span>, <span class="va">shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">add_new_dataframe</span><span class="op">(</span><span class="va">key</span>, <span class="va">schema</span>, <span class="va">index_column_names</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>key, schema, index_column_names</code></dt>
+<dd><p>Ignored for ephemeral objects</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
+<p>Throws an error as this method is not supported by ephemeral objects</p>
+</div>
+
+</div><p></p><hr><a id="method-EphemeralCollectionBase-add_new_dense_ndarray"></a><div class="section">
+<h3 id="method-add-new-dense-ndarray-">Method <code>add_new_dense_ndarray()</code><a class="anchor" aria-label="anchor" href="#method-add-new-dense-ndarray-"></a></h3>
+<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">add_new_dense_ndarray</span><span class="op">(</span><span class="va">key</span>, <span class="va">type</span>, <span class="va">shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -401,19 +428,39 @@ added as <code>name</code></p>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
+<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
+<p>Throws an error as this method is not supported by ephemeral objects</p>
+</div>
+
+</div><p></p><hr><a id="method-EphemeralCollectionBase-add_new_sparse_ndarray"></a><div class="section">
+<h3 id="method-add-new-sparse-ndarray-">Method <code>add_new_sparse_ndarray()</code><a class="anchor" aria-label="anchor" href="#method-add-new-sparse-ndarray-"></a></h3>
+<p>Dummy method for ephemeral cobjects for compatibility with SOMA collections</p><div class="section">
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">add_new_sparse_ndarray</span><span class="op">(</span><span class="va">key</span>, <span class="va">type</span>, <span class="va">shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>key, type, shape</code></dt>
+<dd><p>Ignored for ephemeral objects</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-16">Returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
 <p>Throws an error as this method is not supported by ephemeral objects</p>
 </div>
 
 </div><p></p><hr><a id="method-EphemeralCollectionBase-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">EphemeralCollectionBase</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
+<h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

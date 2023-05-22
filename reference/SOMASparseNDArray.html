@@ -113,14 +113,15 @@ the object are overwritten and new index values are added. (lifecycle: experimen
 
 <ul><li><p><a href="#method-SOMASparseNDArray-create"><code>SOMASparseNDArray$create()</code></a></p></li>
 <li><p><a href="#method-SOMASparseNDArray-read_arrow_table"><code>SOMASparseNDArray$read_arrow_table()</code></a></p></li>
-<li><p><a href="#method-SOMASparseNDArray-read_sparse_matrix"><code>SOMASparseNDArray$read_sparse_matrix()</code></a></p></li>
+<li><p><a href="#method-SOMASparseNDArray-read_sparse_matrix_zero_based"><code>SOMASparseNDArray$read_sparse_matrix_zero_based()</code></a></p></li>
 <li><p><a href="#method-SOMASparseNDArray-write"><code>SOMASparseNDArray$write()</code></a></p></li>
 <li><p><a href="#method-SOMASparseNDArray-nnz"><code>SOMASparseNDArray$nnz()</code></a></p></li>
 <li><p><a href="#method-SOMASparseNDArray-clone"><code>SOMASparseNDArray$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href="TileDBObject.html#method-get_tiledb_config"><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href="TileDBObject.html#method-initialize"><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href="TileDBObject.html#method-is_open"><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href="TileDBObject.html#method-mode"><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attributes"><a href="TileDBArray.html#method-attributes"><code>tiledbsoma::TileDBArray$attributes()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href="TileDBArray.html#method-attrnames"><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href="TileDBArray.html#method-close"><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
@@ -131,6 +132,7 @@ the object are overwritten and new index values are added. (lifecycle: experimen
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href="TileDBArray.html#method-get_metadata"><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href="TileDBArray.html#method-index_column_names"><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href="TileDBArray.html#method-ndim"><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href="TileDBArray.html#method-open"><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href="TileDBArray.html#method-print"><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="reset_query"><a href="TileDBArray.html#method-reset_query"><code>tiledbsoma::TileDBArray$reset_query()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href="TileDBArray.html#method-schema"><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
@@ -145,7 +147,12 @@ the object are overwritten and new index values are added. (lifecycle: experimen
 <h3 id="method-create-">Method <code>create()</code><a class="anchor" aria-label="anchor" href="#method-create-"></a></h3>
 <p>Create a SOMASparseNDArray named with the URI. (lifecycle: experimental)</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArray</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span><span class="va">type</span>, <span class="va">shape</span>, platform_config <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArray</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span></span>
+<span>  <span class="va">type</span>,</span>
+<span>  <span class="va">shape</span>,</span>
+<span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  internal_use_only <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -156,6 +163,16 @@ the object are overwritten and new index values are added. (lifecycle: experimen
 
 <dt><code>shape</code></dt>
 <dd><p>a vector of integers defining the shape of the array.</p></dd>
+
+
+<dt><code>platform_config</code></dt>
+<dd><p>A <a href="PlatformConfig.html">platform configuration</a>
+object</p></dd>
+
+
+<dt><code>internal_use_only</code></dt>
+<dd><p>Character value to signal this is a 'permitted' call,
+as <code>create()</code> is considered internal and should not be called directly.</p></dd>
 
 
 </dl><p></p></div>
@@ -207,11 +224,11 @@ read. List elements can be named when specifying a subset of dimensions.</p></dd
 <p>An <code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code>.</p>
 </div>
 
-</div><p></p><hr><a id="method-SOMASparseNDArray-read_sparse_matrix"></a><div class="section">
-<h3 id="method-read-sparse-matrix-">Method <code>read_sparse_matrix()</code><a class="anchor" aria-label="anchor" href="#method-read-sparse-matrix-"></a></h3>
+</div><p></p><hr><a id="method-SOMASparseNDArray-read_sparse_matrix_zero_based"></a><div class="section">
+<h3 id="method-read-sparse-matrix-zero-based-">Method <code>read_sparse_matrix_zero_based()</code><a class="anchor" aria-label="anchor" href="#method-read-sparse-matrix-zero-based-"></a></h3>
 <p>Read as a sparse matrix (lifecycle: experimental)</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArray</span><span class="op">$</span><span class="fu">read_sparse_matrix</span><span class="op">(</span></span>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArray</span><span class="op">$</span><span class="fu">read_sparse_matrix_zero_based</span><span class="op">(</span></span>
 <span>  coords <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  result_order <span class="op">=</span> <span class="st">"auto"</span>,</span>
 <span>  repr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"C"</span>, <span class="st">"T"</span>, <span class="st">"R"</span><span class="op">)</span>,</span>
@@ -255,7 +272,11 @@ read. List elements can be named when specifying a subset of dimensions.</p></dd
 </div>
 <div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
-<p>A <code>matrix</code> object</p>
+<p>A <code>matrix</code>-like object accessed using zero-based indexes. It supports
+only basic access operations with zero-based indexes as well as <code><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim()</a></code>,
+<code><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow()</a></code>, and <code><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol()</a></code>. Use <code><a href="as.one.based.html">as.one.based()</a></code> to get a fully-featured
+sparse matrix object supporting more advanced operations (with one-based
+indexing).</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMASparseNDArray-write"></a><div class="section">

@@ -78,13 +78,24 @@
     <h2>Super class</h2>
     <p><code><a href="TileDBObject.html">tiledbsoma::TileDBObject</a></code> -&gt; <code>TileDBArray</code></p>
     </div>
+    <div id="active-bindings">
+    <h2>Active bindings</h2>
+    <p></p><div class="r6-active-bindings"><dl><dt><code>object</code></dt>
+<dd><p>Access the underlying TileB object directly (either a
+<code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array.html" class="external-link">tiledb::tiledb_array</a></code> or <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_group.html" class="external-link">tiledb::tiledb_group</a></code>).</p></dd>
+
+
+</dl><p></p></div>
+    </div>
     <div id="methods">
     <h2>Methods</h2>
     
 <div class="section">
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 
-<ul><li><p><a href="#method-TileDBArray-print"><code>TileDBArray$print()</code></a></p></li>
+<ul><li><p><a href="#method-TileDBArray-open"><code>TileDBArray$open()</code></a></p></li>
+<li><p><a href="#method-TileDBArray-close"><code>TileDBArray$close()</code></a></p></li>
+<li><p><a href="#method-TileDBArray-print"><code>TileDBArray$print()</code></a></p></li>
 <li><p><a href="#method-TileDBArray-tiledb_array"><code>TileDBArray$tiledb_array()</code></a></p></li>
 <li><p><a href="#method-TileDBArray-get_metadata"><code>TileDBArray$get_metadata()</code></a></p></li>
 <li><p><a href="#method-TileDBArray-set_metadata"><code>TileDBArray$set_metadata()</code></a></p></li>
@@ -101,16 +112,53 @@
 <li><p><a href="#method-TileDBArray-fragment_count"><code>TileDBArray$fragment_count()</code></a></p></li>
 <li><p><a href="#method-TileDBArray-set_query"><code>TileDBArray$set_query()</code></a></p></li>
 <li><p><a href="#method-TileDBArray-reset_query"><code>TileDBArray$reset_query()</code></a></p></li>
-<li><p><a href="#method-TileDBArray-close"><code>TileDBArray$close()</code></a></p></li>
 <li><p><a href="#method-TileDBArray-clone"><code>TileDBArray$clone()</code></a></p></li>
 </ul></div><p><details open><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href="TileDBObject.html#method-get_tiledb_config"><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href="TileDBObject.html#method-initialize"><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
-</ul></details></p><hr><a id="method-TileDBArray-print"></a><div class="section">
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href="TileDBObject.html#method-is_open"><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href="TileDBObject.html#method-mode"><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
+</ul></details></p><hr><a id="method-TileDBArray-open"></a><div class="section">
+<h3 id="method-open-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">open()</a></code><a class="anchor" aria-label="anchor" href="#method-open-"></a></h3>
+<p>Open the SOMA object for read or write.</p><div class="section">
+<h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">open</span><span class="op">(</span>mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"READ"</span>, <span class="st">"WRITE"</span><span class="op">)</span>, internal_use_only <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>mode</code></dt>
+<dd><p>Mode to open in; defaults to <code>READ</code>.</p></dd>
+
+
+<dt><code>internal_use_only</code></dt>
+<dd><p>Character value to signal this is a 'permitted' call,
+as <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">open()</a></code> is considered internal and should not be called directly.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
+<p>The object, invisibly</p>
+</div>
+
+</div><p></p><hr><a id="method-TileDBArray-close"></a><div class="section">
+<h3 id="method-close-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code><a class="anchor" aria-label="anchor" href="#method-close-"></a></h3>
+<p>Close the SOMA object.</p><div class="section">
+<h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
+<p>The object, invisibly</p>
+</div>
+
+</div><p></p><hr><a id="method-TileDBArray-print"></a><div class="section">
 <h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
 <p>Print summary of the array. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -118,12 +166,12 @@
 </div><p></p><hr><a id="method-TileDBArray-tiledb_array"></a><div class="section">
 <h3 id="method-tiledb-array-">Method <code>tiledb_array()</code><a class="anchor" aria-label="anchor" href="#method-tiledb-array-"></a></h3>
 <p>Return a <code>TileDBArray</code> object (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">tiledb_array</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
+<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>...</code></dt>
 <dd><p>Optional arguments to pass to <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array.html" class="external-link">tiledb::tiledb_array()</a></code></p></dd>
 
@@ -131,44 +179,39 @@
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
 <p>A <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array.html" class="external-link">tiledb::tiledb_array</a></code> object.</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-get_metadata"></a><div class="section">
 <h3 id="method-get-metadata-">Method <code>get_metadata()</code><a class="anchor" aria-label="anchor" href="#method-get-metadata-"></a></h3>
 <p>Retrieve metadata from the TileDB array. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">get_metadata</span><span class="op">(</span>key <span class="op">=</span> <span class="cn">NULL</span>, prefix <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">get_metadata</span><span class="op">(</span>key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>key</code></dt>
 <dd><p>The name of the metadata attribute to retrieve.</p></dd>
-
-
-<dt><code>prefix</code></dt>
-<dd><p>Filter metadata using an optional prefix. Ignored if <code>key</code>
-is not NULL.</p></dd>
 
 
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
 <p>A list of metadata values.</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-set_metadata"></a><div class="section">
 <h3 id="method-set-metadata-">Method <code>set_metadata()</code><a class="anchor" aria-label="anchor" href="#method-set-metadata-"></a></h3>
 <p>Add list of metadata to the specified TileDB array. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">set_metadata</span><span class="op">(</span><span class="va">metadata</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>metadata</code></dt>
 <dd><p>Named list of metadata to add.</p></dd>
 
@@ -176,103 +219,103 @@ is not NULL.</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
 <p>NULL</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-schema"></a><div class="section">
 <h3 id="method-schema-">Method <code>schema()</code><a class="anchor" aria-label="anchor" href="#method-schema-"></a></h3>
 <p>Retrieve the array schema as an Arrow schema (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">schema</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
 <p>A <code><a href="https://arrow.apache.org/docs/r/reference/Schema.html" class="external-link">arrow::schema</a></code> object</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-tiledb_schema"></a><div class="section">
 <h3 id="method-tiledb-schema-">Method <code>tiledb_schema()</code><a class="anchor" aria-label="anchor" href="#method-tiledb-schema-"></a></h3>
 <p>Retrieve the array schema as TileDB schema (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">tiledb_schema</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
 <p>A <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array_schema.html" class="external-link">tiledb::tiledb_array_schema</a></code> object</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-dimensions"></a><div class="section">
 <h3 id="method-dimensions-">Method <code>dimensions()</code><a class="anchor" aria-label="anchor" href="#method-dimensions-"></a></h3>
 <p>Retrieve the array dimensions (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">dimensions</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
 <p>A named list of <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_dim.html" class="external-link">tiledb::tiledb_dim</a></code> objects</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-shape"></a><div class="section">
 <h3 id="method-shape-">Method <code><a href="soma_array_reader.html">shape()</a></code><a class="anchor" aria-label="anchor" href="#method-shape-"></a></h3>
 <p>Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">shape</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
 <p>A named vector of dimension length (and the same type as the dimension)</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-ndim"></a><div class="section">
 <h3 id="method-ndim-">Method <code>ndim()</code><a class="anchor" aria-label="anchor" href="#method-ndim-"></a></h3>
 <p>Retrieve number of dimensions (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">ndim</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
+<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
 <p>A scalar with the number of dimensions</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-attributes"></a><div class="section">
 <h3 id="method-attributes-">Method <code><a href="https://rdrr.io/r/base/attributes.html" class="external-link">attributes()</a></code><a class="anchor" aria-label="anchor" href="#method-attributes-"></a></h3>
 <p>Retrieve the array attributes (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">attributes</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
+<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
 <p>A list of <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_attr.html" class="external-link">tiledb::tiledb_attr</a></code> objects</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-dimnames"></a><div class="section">
 <h3 id="method-dimnames-">Method <code><a href="https://rdrr.io/r/base/dimnames.html" class="external-link">dimnames()</a></code><a class="anchor" aria-label="anchor" href="#method-dimnames-"></a></h3>
 <p>Retrieve dimension names (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">dimnames</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
+<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
 <p>A character vector with the array's dimension names</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-attrnames"></a><div class="section">
 <h3 id="method-attrnames-">Method <code>attrnames()</code><a class="anchor" aria-label="anchor" href="#method-attrnames-"></a></h3>
 <p>Retrieve attribute names (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">attrnames</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
+<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
 <p>A character vector with the array's attribute names</p>
 </div>
 
@@ -280,31 +323,31 @@ is not NULL.</p></dd>
 <h3 id="method-colnames-">Method <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code><a class="anchor" aria-label="anchor" href="#method-colnames-"></a></h3>
 <p>Retrieve the names of all columns, including dimensions and
 attributes (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">colnames</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
+<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
 <p>A character vector with the array's column names</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-index_column_names"></a><div class="section">
 <h3 id="method-index-column-names-">Method <code>index_column_names()</code><a class="anchor" aria-label="anchor" href="#method-index-column-names-"></a></h3>
 <p>Retrieve names of index (dimension) columns (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">index_column_names</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
+<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
 <p>A character vector with the array index (dimension) names</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-fragment_count"></a><div class="section">
 <h3 id="method-fragment-count-">Method <code>fragment_count()</code><a class="anchor" aria-label="anchor" href="#method-fragment-count-"></a></h3>
 <p>Get number of fragments in the array (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">fragment_count</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -312,12 +355,12 @@ attributes (lifecycle: experimental)</p><div class="section">
 </div><p></p><hr><a id="method-TileDBArray-set_query"></a><div class="section">
 <h3 id="method-set-query-">Method <code>set_query()</code><a class="anchor" aria-label="anchor" href="#method-set-query-"></a></h3>
 <p>Set dimension values to slice from the array. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">set_query</span><span class="op">(</span>dims <span class="op">=</span> <span class="cn">NULL</span>, attr_filter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>dims</code></dt>
 <dd><p>a named list of character vectors. Each name must correspond
 to an array dimension. The character vectors within each element are used
@@ -336,12 +379,12 @@ pushdown.</p></dd>
 <h3 id="method-reset-query-">Method <code>reset_query()</code><a class="anchor" aria-label="anchor" href="#method-reset-query-"></a></h3>
 <p>Reset the query. By default both dimension ranges and
 attribute filters are cleared. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
+<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">reset_query</span><span class="op">(</span>dims <span class="op">=</span> <span class="cn">TRUE</span>, attr_filter <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>dims</code></dt>
 <dd><p>Clear the defined dimension ranges?</p></dd>
 
@@ -353,31 +396,19 @@ attribute filters are cleared. (lifecycle: experimental)</p><div class="section"
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
+<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
 <p>NULL</p>
-</div>
-
-</div><p></p><hr><a id="method-TileDBArray-close"></a><div class="section">
-<h3 id="method-close-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code><a class="anchor" aria-label="anchor" href="#method-close-"></a></h3>
-<p>Close the SOMA object.</p><div class="section">
-<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
-<p>The object, invisibly</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
+<h4 id="usage-19">Usage<a class="anchor" aria-label="anchor" href="#usage-19"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

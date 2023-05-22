@@ -88,11 +88,6 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 <dd><p>The URI of the TileDB object.</p></dd>
 
 
-<dt><code>object</code></dt>
-<dd><p>Access the underlying TileB object directly (either a
-<code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array.html" class="external-link">tiledb::tiledb_array</a></code> or <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_group.html" class="external-link">tiledb::tiledb_group</a></code>).</p></dd>
-
-
 </dl><p></p></div>
     </div>
     <div id="methods">
@@ -103,9 +98,10 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 
 <ul><li><p><a href="#method-TileDBObject-new"><code>TileDBObject$new()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-class"><code>TileDBObject$class()</code></a></p></li>
+<li><p><a href="#method-TileDBObject-is_open"><code>TileDBObject$is_open()</code></a></p></li>
+<li><p><a href="#method-TileDBObject-mode"><code>TileDBObject$mode()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-print"><code>TileDBObject$print()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-exists"><code>TileDBObject$exists()</code></a></p></li>
-<li><p><a href="#method-TileDBObject-get_tiledb_config"><code>TileDBObject$get_tiledb_config()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-clone"><code>TileDBObject$clone()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-TileDBObject-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
@@ -115,7 +111,6 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 <span>  <span class="va">uri</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  mode <span class="op">=</span> <span class="st">"READ"</span>,</span>
 <span>  internal_use_only <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -134,13 +129,9 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 <dd><p>Optional SOMATileDBContext</p></dd>
 
 
-<dt><code>mode</code></dt>
-<dd><p>One of "READ" or "WRITE"</p></dd>
-
-
 <dt><code>internal_use_only</code></dt>
-<dd><p>Character value to signal 'permitted' call as
-<code>new()</code> is considered internal and should not be called directly</p></dd>
+<dd><p>Character value to signal this is a 'permitted' call,
+as <code>new()</code> is considered internal and should not be called directly.</p></dd>
 
 
 </dl><p></p></div>
@@ -154,10 +145,35 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 </div>
 
 
+</div><p></p><hr><a id="method-TileDBObject-is_open"></a><div class="section">
+<h3 id="method-is-open-">Method <code>is_open()</code><a class="anchor" aria-label="anchor" href="#method-is-open-"></a></h3>
+<p>Determine if the object is open for reading or writing</p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">is_open</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
+<p><code>TRUE</code> if the object is open, otherwise <code>FALSE</code></p>
+</div>
+
+</div><p></p><hr><a id="method-TileDBObject-mode"></a><div class="section">
+<h3 id="method-mode-">Method <code><a href="https://rdrr.io/r/base/mode.html" class="external-link">mode()</a></code><a class="anchor" aria-label="anchor" href="#method-mode-"></a></h3>
+<p>Get the mode of the object</p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">mode</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
+<p>If the object is closed, returns “<code>CLOSED</code>”;
+otherwise returns the mode (eg. “<code>READ</code>”) of the object</p>
+</div>
+
 </div><p></p><hr><a id="method-TileDBObject-print"></a><div class="section">
 <h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
 <p>Print-friendly representation of the object.</p><div class="section">
-<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -165,45 +181,24 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 </div><p></p><hr><a id="method-TileDBObject-exists"></a><div class="section">
 <h3 id="method-exists-">Method <code><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists()</a></code><a class="anchor" aria-label="anchor" href="#method-exists-"></a></h3>
 <p>Check if the object exists. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">exists</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
 <p><code>TRUE`` if the object exists, </code>FALSE` otherwise.</p>
-</div>
-
-</div><p></p><hr><a id="method-TileDBObject-get_tiledb_config"></a><div class="section">
-<h3 id="method-get-tiledb-config-">Method <code>get_tiledb_config()</code><a class="anchor" aria-label="anchor" href="#method-get-tiledb-config-"></a></h3>
-
-<div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">get_tiledb_config</span><span class="op">(</span>param <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>param</code></dt>
-<dd><p>Parameter name from <code>self$platform_config</code> to fetch</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
-<p>SOMATileDBContext</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBObject-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

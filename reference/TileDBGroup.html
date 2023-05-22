@@ -90,6 +90,8 @@
 
 <ul><li><p><a href="#method-TileDBGroup-print"><code>TileDBGroup$print()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-create"><code>TileDBGroup$create()</code></a></p></li>
+<li><p><a href="#method-TileDBGroup-open"><code>TileDBGroup$open()</code></a></p></li>
+<li><p><a href="#method-TileDBGroup-close"><code>TileDBGroup$close()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-set"><code>TileDBGroup$set()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-get"><code>TileDBGroup$get()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-remove"><code>TileDBGroup$remove()</code></a></p></li>
@@ -99,12 +101,12 @@
 <li><p><a href="#method-TileDBGroup-to_data_frame"><code>TileDBGroup$to_data_frame()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-get_metadata"><code>TileDBGroup$get_metadata()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-set_metadata"><code>TileDBGroup$set_metadata()</code></a></p></li>
-<li><p><a href="#method-TileDBGroup-close"><code>TileDBGroup$close()</code></a></p></li>
 <li><p><a href="#method-TileDBGroup-clone"><code>TileDBGroup$clone()</code></a></p></li>
 </ul></div><p><details open><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href="TileDBObject.html#method-get_tiledb_config"><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href="TileDBObject.html#method-initialize"><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href="TileDBObject.html#method-is_open"><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href="TileDBObject.html#method-mode"><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 </ul></details></p><hr><a id="method-TileDBGroup-print"></a><div class="section">
 <h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
 <p>Print summary of the group. (lifecycle: experimental)</p><div class="section">
@@ -117,19 +119,65 @@
 <h3 id="method-create-">Method <code>create()</code><a class="anchor" aria-label="anchor" href="#method-create-"></a></h3>
 <p>Creates the data structure on disk/S3/cloud. (lifecycle: experimental)</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-
-</div><p></p><hr><a id="method-TileDBGroup-set"></a><div class="section">
-<h3 id="method-set-">Method <code>set()</code><a class="anchor" aria-label="anchor" href="#method-set-"></a></h3>
-<p>Add new member to the group. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span><span class="va">object</span>, name <span class="op">=</span> <span class="cn">NULL</span>, relative <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span>internal_use_only <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>internal_use_only</code></dt>
+<dd><p>Character value to signal this is a 'permitted' call,
+as <code>create()</code> is considered internal and should not be called directly.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-TileDBGroup-open"></a><div class="section">
+<h3 id="method-open-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">open()</a></code><a class="anchor" aria-label="anchor" href="#method-open-"></a></h3>
+<p>Open the SOMA object for read or write.</p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">open</span><span class="op">(</span>mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"READ"</span>, <span class="st">"WRITE"</span><span class="op">)</span>, internal_use_only <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>mode</code></dt>
+<dd><p>Mode to open in; defaults to <code>READ</code>.</p></dd>
+
+
+<dt><code>internal_use_only</code></dt>
+<dd><p>Character value to signal this is a 'permitted' call,
+as <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">open()</a></code> is considered internal and should not be called directly.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
+<p>The object, invisibly</p>
+</div>
+
+</div><p></p><hr><a id="method-TileDBGroup-close"></a><div class="section">
+<h3 id="method-close-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code><a class="anchor" aria-label="anchor" href="#method-close-"></a></h3>
+<p>Close the SOMA object.</p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
+<p>The object, invisibly</p>
+</div>
+
+</div><p></p><hr><a id="method-TileDBGroup-set"></a><div class="section">
+<h3 id="method-set-">Method <code>set()</code><a class="anchor" aria-label="anchor" href="#method-set-"></a></h3>
+<p>Add new member to the group. (lifecycle: experimental)</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span><span class="va">object</span>, name <span class="op">=</span> <span class="cn">NULL</span>, relative <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>object</code></dt>
 <dd><p>A <code>TileDBArray</code> or <code>TileDBGroup</code> object to add.</p></dd>
 
@@ -151,15 +199,20 @@ default), the object's URI is assumed to be relative unless it is a
 
 </div><p></p><hr><a id="method-TileDBGroup-get"></a><div class="section">
 <h3 id="method-get-">Method <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code><a class="anchor" aria-label="anchor" href="#method-get-"></a></h3>
-<p>Retrieve a group member by name. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="va">name</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p>Retrieve a group member by name. If the member isn't already
+open, it is opened for read. (lifecycle: experimental)</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="va">name</span>, mode <span class="op">=</span> <span class="st">"READ"</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>name</code></dt>
 <dd><p>The name of the member.</p></dd>
+
+
+<dt><code>mode</code></dt>
+<dd><p>Mode to open in</p></dd>
 
 
 </dl><p></p></div>
@@ -168,12 +221,12 @@ default), the object's URI is assumed to be relative unless it is a
 </div><p></p><hr><a id="method-TileDBGroup-remove"></a><div class="section">
 <h3 id="method-remove-">Method <code><a href="https://rdrr.io/r/base/rm.html" class="external-link">remove()</a></code><a class="anchor" aria-label="anchor" href="#method-remove-"></a></h3>
 <p>Remove member. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">remove</span><span class="op">(</span><span class="va">name</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>name</code></dt>
 <dd><p>Name of the member to remove.</p></dd>
 
@@ -184,31 +237,31 @@ default), the object's URI is assumed to be relative unless it is a
 </div><p></p><hr><a id="method-TileDBGroup-length"></a><div class="section">
 <h3 id="method-length-">Method <code><a href="https://rdrr.io/r/base/length.html" class="external-link">length()</a></code><a class="anchor" aria-label="anchor" href="#method-length-"></a></h3>
 <p>Length in the number of members. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">length</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
 <p>Scalar <code>integer</code></p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBGroup-names"></a><div class="section">
 <h3 id="method-names-">Method <code><a href="https://rdrr.io/r/base/names.html" class="external-link">names()</a></code><a class="anchor" aria-label="anchor" href="#method-names-"></a></h3>
 <p>Retrieve the names of members. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">names</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
 <p>A <code>character</code> vector of member names.</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBGroup-to_list"></a><div class="section">
 <h3 id="method-to-list-">Method <code>to_list()</code><a class="anchor" aria-label="anchor" href="#method-to-list-"></a></h3>
 <p>Retrieve a <code>list</code> of members. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">to_list</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -216,7 +269,7 @@ default), the object's URI is assumed to be relative unless it is a
 </div><p></p><hr><a id="method-TileDBGroup-to_data_frame"></a><div class="section">
 <h3 id="method-to-data-frame-">Method <code>to_data_frame()</code><a class="anchor" aria-label="anchor" href="#method-to-data-frame-"></a></h3>
 <p>Retrieve a <code>data.frame</code> of members. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">to_data_frame</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -224,12 +277,12 @@ default), the object's URI is assumed to be relative unless it is a
 </div><p></p><hr><a id="method-TileDBGroup-get_metadata"></a><div class="section">
 <h3 id="method-get-metadata-">Method <code>get_metadata()</code><a class="anchor" aria-label="anchor" href="#method-get-metadata-"></a></h3>
 <p>Retrieve metadata. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">get_metadata</span><span class="op">(</span>key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>key</code></dt>
 <dd><p>The name of the metadata attribute to retrieve.
 is not NULL.</p></dd>
@@ -238,19 +291,19 @@ is not NULL.</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
 <p>A list of metadata values.</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBGroup-set_metadata"></a><div class="section">
 <h3 id="method-set-metadata-">Method <code>set_metadata()</code><a class="anchor" aria-label="anchor" href="#method-set-metadata-"></a></h3>
 <p>Add list of metadata. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">set_metadata</span><span class="op">(</span><span class="va">metadata</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>metadata</code></dt>
 <dd><p>Named list of metadata to add.</p></dd>
 
@@ -258,31 +311,19 @@ is not NULL.</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
 <p>NULL</p>
-</div>
-
-</div><p></p><hr><a id="method-TileDBGroup-close"></a><div class="section">
-<h3 id="method-close-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code><a class="anchor" aria-label="anchor" href="#method-close-"></a></h3>
-<p>Close the SOMA object.</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
-<p>The object, invisibly</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBGroup-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBGroup</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

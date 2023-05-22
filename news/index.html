@@ -66,6 +66,30 @@
       <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.0.0" id="tiledbsoma-000">tiledbsoma 0.0.0.*<a class="anchor" aria-label="anchor" href="#tiledbsoma-000"></a></h2>
+<div class="section level3">
+<h3 id="changes-0-0-0">Changes<a class="anchor" aria-label="anchor" href="#changes-0-0-0"></a></h3>
+<ul><li>Added a <code>NEWS.md</code> file to track changes to the package</li>
+<li>
+<code>TileDBGroup</code> gains a <code>names</code> method to retrieve the names of group members</li>
+<li>Added <code>SOMAMeasurement</code> and <code>SOMAExperiment</code> classes</li>
+<li>spdl is now used for logging</li>
+<li>TileDB performance statistics can now be collected for analysis</li>
+<li>Added support for performing axis-based queries against a <code>SOMAExperiment</code> via the <code>SOMAExperimentAxisQuery</code> class</li>
+<li>
+<code>TileDBArray</code> class gained a <code><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames()</a></code> method that returns the names of both dimensions and attributes</li>
+<li>Added internal helpers to centrally validate <code>coords</code> and <code>value_filter</code> arguments</li>
+<li>All R6 classes’ <code>create()</code> method now return <code>self</code> rather than nothing</li>
+<li>Fixed calculating of relative paths when 1 of the URIs contains the <code>file://</code> prefix</li>
+<li>Added <code>PlatformConfig</code> and <code>SOMATileDBContext</code> classes to handle SOMA and TileDB configuration</li>
+<li>Add Seurat outgestors for <code>SOMAExperimentAxisQuery</code> objects</li>
+<li>Numeric coordinates passed to SOMADataFrame$read() are now automatically upcast to int64 when necessary</li>
+<li>Add ingestors to read data from <code>Seurat</code> objects</li>
+<li>Add methods for listing and accessing bundled datasets, which now includes a <code>SOMAExperiment</code> containing the pbmc_small dataset from the SeuratObject package</li>
+<li>New vignettes describing SOMA objects, reading data from them, and querying SOMA experiments</li>
+</ul></div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

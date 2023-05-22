@@ -109,11 +109,13 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)</p>
 <li><p><a href="#method-SOMACollectionBase-clone"><code>SOMACollectionBase$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href="TileDBObject.html#method-get_tiledb_config"><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href="TileDBObject.html#method-is_open"><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href="TileDBObject.html#method-mode"><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="close"><a href="TileDBGroup.html#method-close"><code>tiledbsoma::TileDBGroup$close()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href="TileDBGroup.html#method-get_metadata"><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href="TileDBGroup.html#method-length"><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href="TileDBGroup.html#method-names"><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="open"><a href="TileDBGroup.html#method-open"><code>tiledbsoma::TileDBGroup$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="print"><a href="TileDBGroup.html#method-print"><code>tiledbsoma::TileDBGroup$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="remove"><a href="TileDBGroup.html#method-remove"><code>tiledbsoma::TileDBGroup$remove()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="set_metadata"><a href="TileDBGroup.html#method-set_metadata"><code>tiledbsoma::TileDBGroup$set_metadata()</code></a></span></li>
@@ -146,8 +148,8 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)</p>
 
 
 <dt><code>internal_use_only</code></dt>
-<dd><p>Character value to signal 'permitted' call as
-<code>new()</code> is considered internal and should not be called directly</p></dd>
+<dd><p>Character value to signal this is a 'permitted' call,
+as <code>new()</code> is considered internal and should not be called directly.</p></dd>
 
 
 </dl><p></p></div>
@@ -157,9 +159,18 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)</p>
 <h3 id="method-create-">Method <code>create()</code><a class="anchor" aria-label="anchor" href="#method-create-"></a></h3>
 <p>Add a new SOMA object to the collection. (lifecycle: experimental)</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMACollectionBase</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMACollectionBase</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span>internal_use_only <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+<div class="section">
+<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>internal_use_only</code></dt>
+<dd><p>Character value to signal this is a 'permitted' call,
+as <code>create()</code> is considered internal and should not be called directly.</p></dd>
+
+
+</dl><p></p></div>
+</div>
 
 </div><p></p><hr><a id="method-SOMACollectionBase-set"></a><div class="section">
 <h3 id="method-set-">Method <code>set()</code><a class="anchor" aria-label="anchor" href="#method-set-"></a></h3>
@@ -169,7 +180,7 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)</p>
 </div>
 
 <div class="section">
-<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>object</code></dt>
 <dd><p>SOMA object.</p></dd>
 
@@ -193,13 +204,17 @@ default), the object's URI is assumed to be relative unless it is a
 <h3 id="method-get-">Method <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code><a class="anchor" aria-label="anchor" href="#method-get-"></a></h3>
 <p>Retrieve a SOMA object by name. (lifecycle: experimental)</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMACollectionBase</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="va">name</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMACollectionBase</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="va">name</span>, mode <span class="op">=</span> <span class="st">"READ"</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>name</code></dt>
 <dd><p>The name of the object to retrieve.</p></dd>
+
+
+<dt><code>mode</code></dt>
+<dd><p>Mode to open in</p></dd>
 
 
 </dl><p></p></div>
@@ -213,7 +228,7 @@ default), the object's URI is assumed to be relative unless it is a
 </div>
 
 <div class="section">
-<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>object</code></dt>
 <dd><p>SOMA collection object.</p></dd>
 
@@ -233,7 +248,7 @@ default), the object's URI is assumed to be relative unless it is a
 </div>
 
 <div class="section">
-<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>key</code></dt>
 <dd><p>The key to be added.</p></dd>
 
@@ -257,7 +272,7 @@ default), the object's URI is assumed to be relative unless it is a
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>key</code></dt>
 <dd><p>The key to be added.</p></dd>
 
@@ -282,7 +297,7 @@ element in the array.</p></dd>
 </div>
 
 <div class="section">
-<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>key</code></dt>
 <dd><p>The key to be added.</p></dd>
 
@@ -307,7 +322,7 @@ element in the array.</p></dd>
 </div>
 
 <div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
