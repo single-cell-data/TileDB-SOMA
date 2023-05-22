@@ -85,7 +85,7 @@ SOMAExperiment <- R6::R6Class(
     ) {
       .check_seurat_installed()
       stopifnot(
-        "'X_layers' must be named list" = is_named_list(
+        "'X_layers' must be a named list" = is_named_list(
           X_layers,
           allow_empty = FALSE
         ),
