@@ -31,7 +31,7 @@ SOMAExperiment <- R6::R6Class(
     #' @template param-obs-column-names
     #' @param var_column_names A named list of character vectors describing the
     #' columns in \code{var} for each measurement to load in as feature-level
-    #' meta data; for example: \preformatted{
+    #' metadata; for example: \preformatted{
     #' list(
     #'   RNA = c("vst.mean", "vst.variable"),
     #'   ADT = c("ensembl_id")
