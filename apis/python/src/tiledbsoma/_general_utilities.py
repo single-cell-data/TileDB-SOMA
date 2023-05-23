@@ -18,7 +18,7 @@ from .pytiledbsoma import version as libtiledbsoma_version
 def get_SOMA_version() -> str:
     """Returns semver-compatible version of the supported SOMA API.
 
-    Lifecycle: Experimental.
+    Lifecycle: maturing
     """
     return "0.2.0-dev"
 
@@ -26,7 +26,7 @@ def get_SOMA_version() -> str:
 def get_implementation() -> str:
     """Returns the implementation name, e.g., "python-tiledb".
 
-    Lifecycle: Experimental.
+    Lifecycle: maturing
     """
     return "python-tiledb"
 
@@ -34,7 +34,7 @@ def get_implementation() -> str:
 def get_implementation_version() -> str:
     """Returns the package implementation version as a semver.
 
-    Lifecycle: Experimental.
+    Lifecycle: maturing
     """
     try:
         return get_distribution("tiledbsoma").version
@@ -45,7 +45,7 @@ def get_implementation_version() -> str:
 def get_storage_engine() -> str:
     """Returns underlying storage engine name, e.g., "tiledb".
 
-    Lifecycle: Experimental.
+    Lifecycle: maturing
     """
     return "tiledb"
 
@@ -54,7 +54,7 @@ def show_package_versions() -> None:
     """Nominal use is for bug reports, so issue filers and issue fixers can be on
     the same page.
 
-    Lifecycle: Experimental.
+    Lifecycle: maturing
     """
     print("tiledbsoma.__version__       ", get_implementation_version())
     print("TileDB-Py tiledb.version()   ", tiledb.version())
