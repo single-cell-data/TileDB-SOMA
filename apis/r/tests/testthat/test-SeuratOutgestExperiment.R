@@ -9,10 +9,12 @@ test_that("Load Seurat object from SOMA Experiment mechanics", {
     n_var = n_var,
     X_layer_names = c("counts", "logcounts")
   )
+  experiment <- SOMAExperimentOpen(experiment$uri, mode = 'WRITE')
+  exp_ms_rna <- experiment$ms$get('RNA')
   # Add embeddings
   n_pcs <- 50L
   n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
+  obsm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsm'))
   obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -32,9 +34,10 @@ test_that("Load Seurat object from SOMA Experiment mechanics", {
     ncols = n_umaps,
     seed = 2L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+  obsm$close()
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
   # Add loadings
-  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
+  varm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'varm'))
   varm$add_new_sparse_ndarray(
     key = 'PCs',
     type = arrow::int32(),
@@ -44,9 +47,10 @@ test_that("Load Seurat object from SOMA Experiment mechanics", {
     nrows = n_var,
     ncols = n_pcs
   ))
-  experiment$ms$get('RNA')$add_new_collection(varm, 'varm')
+  varm$close()
+  exp_ms_rna$add_new_collection(varm, 'varm')
   # Add graph
-  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
+  obsp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
@@ -56,7 +60,12 @@ test_that("Load Seurat object from SOMA Experiment mechanics", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  obsp$close()
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
+  # Close and reopen in read mode
+  exp_ms_rna$close()
+  experiment$close()
+  experiment <- SOMAExperimentOpen(experiment$uri)
   var_tbl <- experiment$ms$get('RNA')$get('var')$read()
   obs_tbl <- experiment$obs$read()
   X_layers <- list(RNA = c(counts = 'counts', data = 'logcounts'))
@@ -82,7 +91,7 @@ test_that("Load Seurat object from SOMA Experiment mechanics", {
   expect_s4_class(rna <- obj[['RNA']], 'Assay')
   expect_identical(rownames(rna), rownames(obj))
   expect_identical(colnames(rna), colnames(obj))
-  expect_identical(SeuratObject::Reductions(obj), c('pca', 'umap'))
+  expect_identical(sort(SeuratObject::Reductions(obj)), c('pca', 'umap'))
   expect_s4_class(pca <- obj[['pca']], 'DimReduc')
   expect_identical(SeuratObject::Cells(pca), colnames(obj))
   expect_identical(rownames(SeuratObject::Loadings(pca)), rownames(obj))
@@ -118,7 +127,7 @@ test_that("Load Seurat object from SOMA Experiment mechanics", {
   expect_s4_class(rna <- obj[['RNA']], 'Assay')
   expect_identical(rownames(rna), rownames(obj))
   expect_identical(colnames(rna), colnames(obj))
-  expect_identical(SeuratObject::Reductions(obj), c('pca', 'umap'))
+  expect_identical(sort(SeuratObject::Reductions(obj)), c('pca', 'umap'))
   expect_s4_class(pca <- obj[['pca']], 'DimReduc')
   expect_identical(SeuratObject::Cells(pca), colnames(obj))
   expect_identical(rownames(SeuratObject::Loadings(pca)), rownames(obj))
@@ -167,7 +176,7 @@ test_that("Load Seurat object from SOMA Experiment mechanics", {
   expect_error(obj[['pca']])
   # Test suppress loadings
   expect_no_condition(obj <- experiment$to_seurat(X_layers, varm_layers = FALSE))
-  expect_identical(SeuratObject::Reductions(obj), c('pca', 'umap'))
+  expect_identical(sort(SeuratObject::Reductions(obj)), c('pca', 'umap'))
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(obj[['pca']])))
   # Test suppress graphs
   expect_no_condition(obj <- experiment$to_seurat(X_layers, obsp_layers = FALSE))
