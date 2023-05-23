@@ -41,6 +41,9 @@ Rcpp::XPtr<ArrowArray> array_owning_xptr(void) {
 
 namespace tdbs = tiledbsoma;
 
+Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children);
+Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children);
+
 //' Read SOMA Data From a Given URI
 //'
 //' This functions access a given SOMA URI and returns a complete data.frame. It does
@@ -151,11 +154,8 @@ Rcpp::List soma_array_reader(const std::string& uri,
     auto ncol = names.size();
     Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
     Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
-    ArrowSchemaInitFromType((ArrowSchema*)R_ExternalPtrAddr(schemaxp), NANOARROW_TYPE_STRUCT);
-    ArrowSchemaAllocateChildren((ArrowSchema*)R_ExternalPtrAddr(schemaxp), ncol);
-    ArrowArrayInitFromType((ArrowArray*)R_ExternalPtrAddr(arrayxp), NANOARROW_TYPE_STRUCT);
-    ArrowArrayAllocateChildren((ArrowArray*)R_ExternalPtrAddr(arrayxp), ncol);
-
+    schemaxp = schema_setup_struct(schemaxp, ncol);
+    arrayxp = array_setup_struct(arrayxp, ncol);
     arrayxp->length = 0;
 
     for (size_t i=0; i<ncol; i++) {
