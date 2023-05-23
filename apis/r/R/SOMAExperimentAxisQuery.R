@@ -174,8 +174,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @template param-x-layers-v3
     #' @template param-obs-index
     #' @template param-var-index
-    #' @param obs_column_names Names of columns in \code{obs} to add as
-    #' cell-level meta data; by default, loads all columns
+    #' @template param-obs-column-names
     #' @template param-var-column-names
     #' @param obsm_layers Names of arrays in \code{obsm} to load in as the
     #' cell embeddings; pass \code{FALSE} to suppress loading in any
@@ -269,79 +268,88 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         skip_reducs <- TRUE
       }
       if (!skip_reducs) {
-        names(ms_embed) <- .anndata_to_seurat_reduc(ms_embed)
         if (isTRUE(obsm_layers)) {
           obsm_layers <- NULL
         }
-        obsm_layers <- obsm_layers %||% ms_embed
-        # Match loadings to embeddings
-        ms_load <- tryCatch(expr = self$ms$varm$names(), error = null)
-        if (isTRUE(varm_layers)) {
-          varm_layers <- NULL
-        } else if (rlang::is_na(varm_layers)) {
-          varm_layers <- FALSE
-        }
-        if (is.null(ms_load)) {
-          if (!(isFALSE(varm_layers) || is.null(varm_layers))) {
-            warning("No loadings found", call. = FALSE, immediate. = TRUE)
+        # obsm_layers <- obsm_layers %||% ms_embed
+        # # Match loadings to embeddings
+        # ms_load <- tryCatch(expr = self$ms$varm$names(), error = null)
+        # if (isTRUE(varm_layers)) {
+        #   varm_layers <- NULL
+        # } else if (rlang::is_na(varm_layers)) {
+        #   varm_layers <- FALSE
+        # }
+        # if (is.null(ms_load)) {
+        #   if (!(isFALSE(varm_layers) || is.null(varm_layers))) {
+        #     warning("No loadings found", call. = FALSE, immediate. = TRUE)
+        #   }
+        #   varm_layers <- FALSE
+        # }
+        # if (!isFALSE(varm_layers)) {
+        #   names(ms_load) <- ms_embed[.anndata_to_seurat_reduc(ms_load, 'loadings')]
+        #   varm_layers <- varm_layers %||% ms_load
+        #   reduc_misisng <- setdiff(x = names(varm_layers), y = names(ms_load))
+        #   if (length(reduc_misisng) == length(varm_layers)) {
+        #     warning(
+        #       "None of the reductions specified in 'varm_layers' can be found",
+        #       call. = FALSE,
+        #       immediate. = TRUE
+        #     )
+        #     varm_layers <- FALSE
+        #   } else if (length(reduc_misisng)) {
+        #     warning(
+        #       paste(
+        #         strwrap(paste(
+        #           "The reductions for the following loadings cannot be found in 'varm':",
+        #           sQuote(varm_layers[reduc_misisng]),
+        #           collapse = ', '
+        #         )),
+        #         collapse = '\n'
+        #       ),
+        #       call. = FALSE,
+        #       immediate. = TRUE
+        #     )
+        #     varm_layers <- varm_layers[!names(varm_layers) %in% reduc_misisng]
+        reductions <- tryCatch(
+          expr = .get_seurat_reductions(
+            query = self,
+            obsm_layers = obsm_layers,
+            varm_layers = varm_layers,
+            obs_index = obs_index,
+            var_index = var_index
+          ),
+          error = function(e) {
+            warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
+            return(NULL)
           }
-          varm_layers <- FALSE
-        }
-        if (!isFALSE(varm_layers)) {
-          names(ms_load) <- ms_embed[.anndata_to_seurat_reduc(ms_load, 'loadings')]
-          varm_layers <- varm_layers %||% ms_load
-          reduc_misisng <- setdiff(x = names(varm_layers), y = names(ms_load))
-          if (length(reduc_misisng) == length(varm_layers)) {
-            warning(
-              "None of the reductions specified in 'varm_layers' can be found",
-              call. = FALSE,
-              immediate. = TRUE
-            )
-            varm_layers <- FALSE
-          } else if (length(reduc_misisng)) {
-            warning(
-              paste(
-                strwrap(paste(
-                  "The reductions for the following loadings cannot be found in 'varm':",
-                  sQuote(varm_layers[reduc_misisng]),
-                  collapse = ', '
-                )),
-                collapse = '\n'
-              ),
-              call. = FALSE,
-              immediate. = TRUE
-            )
-            varm_layers <- varm_layers[!names(varm_layers) %in% reduc_misisng]
+        )
+        if (length(reductions)) {
+          for (reduc in names(reductions)) {
+            object[[reduc]] <- reductions[[reduc]]
           }
-        }
-        # Read in reductions and add to `object`
-        for (embed in obsm_layers) {
-          if (embed %in% names(ms_embed)) {
-            embed <- ms_embed[embed]
-          }
-          rname <- .anndata_to_seurat_reduc(embed)
-          reduc <- withCallingHandlers(
-            expr = tryCatch(
-              expr = self$to_seurat_reduction(
-                obsm_layer = embed,
-                varm_layer = ifelse(
-                  embed %in% names(varm_layers),
-                  yes = varm_layers[embed],
-                  no = FALSE
-                ),
-                obs_index = obs_index,
-                var_index = var_index
-              ),
-              error = err_to_warn
-            ),
-            noArrayWarning = function(w) {
-              invokeRestart("muffleWarning")
-            }
-          )
-          if (!inherits(reduc, 'DimReduc')) {
-            next
-          }
-          object[[rname]] <- reduc
+        #   rname <- .anndata_to_seurat_reduc(embed)
+        #   reduc <- withCallingHandlers(
+        #     expr = tryCatch(
+        #       expr = self$to_seurat_reduction(
+        #         obsm_layer = embed,
+        #         varm_layer = ifelse(
+        #           embed %in% names(varm_layers),
+        #           yes = varm_layers[embed],
+        #           no = FALSE
+        #         ),
+        #         obs_index = obs_index,
+        #         var_index = var_index
+        #       ),
+        #       error = err_to_warn
+        #     ),
+        #     noArrayWarning = function(w) {
+        #       invokeRestart("muffleWarning")
+        #     }
+        #   )
+        #   if (!inherits(reduc, 'DimReduc')) {
+        #     next
+        #   }
+        #   object[[rname]] <- reduc
         }
       }
       # Load in graphs
@@ -357,21 +365,28 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         if (isTRUE(obsp_layers)) {
           obsp_layers <- NULL
         }
-        obsp_layers <- obsp_layers %||% ms_graphs
-        for (grph in obsp_layers) {
-          mat <- withCallingHandlers(
-            expr = tryCatch(
-              expr = self$to_seurat_graph(obsp_layer = grph, obs_index = obs_index),
-              error = err_to_warn
-            ),
-            noArrayWarning = function(w) {
-              invokeRestart("muffleWarning")
-            }
-          )
-          if (!inherits(mat, 'Graph')) {
-            next
+        # obsp_layers <- obsp_layers %||% ms_graphs
+        # for (grph in obsp_layers) {
+        #   mat <- withCallingHandlers(
+        #     expr = tryCatch(
+        #       expr = self$to_seurat_graph(obsp_layer = grph, obs_index = obs_index),
+        #       error = err_to_warn
+        #     ),
+        #     noArrayWarning = function(w) {
+        #       invokeRestart("muffleWarning")
+        #     }
+        #   )
+        #   if (!inherits(mat, 'Graph')) {
+        #     next
+        graphs <- .get_seurat_graphs(
+          query = self,
+          obsp_layers = obsp_layers,
+          obs_index = obs_index
+        )
+        if (length(graphs)) {
+          for (grph in names(graphs)) {
+            object[[grph]] <- graphs[[grph]]
           }
-          object[[grph]] <- mat
         }
       }
       # Validate and return
@@ -651,8 +666,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
               )),
               collapse = '\n'
             ),
-            call. = FALSE,
-            immediate. = TRUE
+            call. = FALSE
           )
           loads$read_dense_matrix(unname(coords))
         } else {
