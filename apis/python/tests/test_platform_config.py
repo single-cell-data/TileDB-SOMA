@@ -87,6 +87,12 @@ def test__from_platform_config__admits_ignored_config_structure():
         pytest.fail(f"unexpected exception {e}")
 
 
+def test__from_platform_config__admits_ignored_options():
+    tco.TileDBCreateOptions.from_platform_config(
+        {"tiledb": {"create": {"zzz_future_option": "hello"}}}
+    )
+
+
 def test__from_platform_config__admits_plain_dict():
     tdb_create_options = tco.TileDBCreateOptions.from_platform_config(
         {"tiledb": {"create": {"dims": {"soma_dim_0": {"tile": 6}}}}}

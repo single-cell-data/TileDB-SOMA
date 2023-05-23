@@ -1,4 +1,5 @@
 from typing import (
+    Any,
     Dict,
     Iterable,
     Mapping,
@@ -158,8 +159,13 @@ class TileDBCreateOptions:
         """
         create_entry = _dig_platform_config(platform_config, cls, ("tiledb", "create"))
         if isinstance(create_entry, dict):
-            # Unclear why mypy doesn't like this but it *should* be valid.
-            return cls(**create_entry)  # type: ignore[arg-type]
+            attrs: Tuple["attrs_.Attribute[Any]", ...] = cls.__attrs_attrs__
+            attr_names = frozenset(a.name for a in attrs)
+            # Explicitly opt out of type-checking for these kwargs.
+            filered_create_entry: Dict[str, Any] = {
+                key: value for (key, value) in create_entry.items() if key in attr_names
+            }
+            return cls(**filered_create_entry)
         return create_entry
 
     def cell_tile_orders(self) -> Tuple[Optional[str], Optional[str]]:
@@ -209,7 +215,12 @@ _T = TypeVar("_T")
 def _dig_platform_config(
     input: object, typ: Type[_T], full_path: Tuple[str, ...]
 ) -> Union[Dict[str, object], _T]:
-    """Looks for an object of the given type along the path of a"""
+    """Looks for an object of the given type in dictionaries.
+
+    This is used to extract a valid object out of `platform_config`. If an
+    object matching `typ` is found, it is returned directly; otherwise we
+    descend in the next dictionary key specified by `full_path`.
+    """
     current = input
     path = full_path
     while path:
@@ -225,7 +236,7 @@ def _dig_platform_config(
     if not isinstance(current, (typ, dict)):
         path_dots = ".".join(full_path)
         raise TypeError(
-            f"`{path_dots}` key of `platform_config` must be"
+            f"`{path_dots}` entry of `platform_config` must be"
             f" either a dict or `{typ.__name__}`, not {type(current)}"
         )
     return current
