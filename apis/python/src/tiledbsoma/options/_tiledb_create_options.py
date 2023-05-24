@@ -153,9 +153,9 @@ class TileDBCreateOptions:
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
-        The value passed in should be the exact value passed in
-        ``platform_config``. This function will extract the ``tiledb.create``
-        entry from a dict as needed.
+        The value passed in should be the exact value passed into a public API
+        method as the ``platform_config`` parameter. This function will extract
+        the ``tiledb.create`` entry from a dict as needed.
         """
         create_entry = _dig_platform_config(platform_config, cls, ("tiledb", "create"))
         if isinstance(create_entry, dict):
@@ -217,28 +217,34 @@ def _dig_platform_config(
 ) -> Union[Dict[str, object], _T]:
     """Looks for an object of the given type in dictionaries.
 
-    This is used to extract a valid object out of `platform_config`. If an
-    object matching `typ` is found, it is returned directly; otherwise we
-    descend in the next dictionary key specified by `full_path`.
+    This is used to extract a valid object out of ``platform_config``. If an
+    object of type ``typ`` is found, it is returned directly; otherwise we
+    descend in the next dictionary key specified by ``full_path``. A ``dict``
+    is allowed as the leaf element (to allow declarative configuration).
     """
     current = input
     path = full_path
-    while path:
+    while path:  # Until we reach the leaf:
         if isinstance(current, typ):
             return current
         if not isinstance(current, dict):
+            # Unrecognized type; return as an empty dict.
             return {}
+        # Descend into the dict one more level.
         key, path = path[0], path[1:]
         try:
             current = current[key]
         except KeyError:
+            # If the key isn't present, return as an empty dict.
             return {}
+    # We've reached the leaf.  We validate this more closely.
     if not isinstance(current, (typ, dict)):
         path_dots = ".".join(full_path)
         raise TypeError(
             f"`{path_dots}` entry of `platform_config` must be"
             f" either a dict or `{typ.__name__}`, not {type(current)}"
         )
+    # It's of the expected type! Return it.
     return current
 
 

@@ -100,14 +100,14 @@ def test__from_platform_config__admits_plain_dict():
     assert tdb_create_options.dim_tile("soma_dim_0") == 6
 
 
-def test__from_platform_config__admits_create_options_in_shallow_dict():
+def test__from_platform_config__admits_create_options_in_dict_shallow():
     tdb_create_options = tco.TileDBCreateOptions.from_platform_config(
         {"tiledb": tco.TileDBCreateOptions(dims={"soma_dim_0": {"tile": 6}})}
     )
     assert tdb_create_options.dim_tile("soma_dim_0") == 6
 
 
-def test__from_platform_config__admits_create_options_in_dict():
+def test__from_platform_config__admits_create_options_in_dict_at_leaf():
     tdb_create_options = tco.TileDBCreateOptions.from_platform_config(
         {
             "tiledb": {
@@ -118,7 +118,7 @@ def test__from_platform_config__admits_create_options_in_dict():
     assert tdb_create_options.dim_tile("soma_dim_0") == 6
 
 
-def test__from_platform_config__admits_create_options():
+def test__from_platform_config__admits_create_options_at_root():
     tdb_create_options = tco.TileDBCreateOptions.from_platform_config(
         tco.TileDBCreateOptions(dims={"soma_dim_0": {"tile": 6}})
     )
