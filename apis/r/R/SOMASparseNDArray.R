@@ -179,11 +179,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return A `matrix`-like object accessed using zero-based indexes. It supports
-    #'         only basic access operations with zero-based indexes as well as `dim()`,
-    #'         `nrow()`, and `ncol()`. Use `as.one.based()` to get a fully-featured
-    #'         sparse matrix object supporting more advanced operations (with one-based
-    #'         indexing).
+    #' @return A \link{matrixZeroBasedView}
     read_sparse_matrix_zero_based = function(
       coords = NULL,
       result_order = "auto",
@@ -214,7 +210,7 @@ SOMASparseNDArray <- R6::R6Class(
                                       j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
                                       x = as.numeric(tbl$GetColumnByName("soma_data")),
                                       dims = as.integer(self$shape()), repr = repr)
-          matrixZeroBasedView(mat)
+          matrixZeroBasedView$new(mat)
       } else {
           ## should we error if this isn't null?
           if (!is.null(self$soma_reader_pointer)) {
@@ -280,7 +276,7 @@ SOMASparseNDArray <- R6::R6Class(
                                       x = as.numeric(tbl$GetColumnByName("soma_data")),
                                       dims = as.integer(self$shape()), repr = private$sparse_repr)
           # see read_sparse_matrix_zero_based() abave
-          matrixZeroBasedView(mat)
+          matrixZeroBasedView$new(mat)
       }
     },
 
