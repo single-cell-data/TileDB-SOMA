@@ -188,7 +188,6 @@ SOMASparseNDArray <- R6::R6Class(
       log_level = "warn"
     ) {
       private$check_open_for_read()
-      repr <- repr[1L]
       repr <- match.arg(repr)
       dims <- self$dimensions()
       attr <- self$attributes()
