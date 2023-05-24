@@ -942,8 +942,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Load in rowData
       var <- private$.load_df('var', index = var_index, columns = var_column_names)
       # Check the layers
-      X_layers <- X_layers %||% self$ms$X$names()
-      X_layers <- pad_names(X_layers)
+      X_layers <- pad_names(X_layers %||% self$ms$X$names())
       assert_subset(x = X_layers, y = self$ms$X$names(), type = 'X_layer')
       # Read in the layers
       layers <- lapply(
