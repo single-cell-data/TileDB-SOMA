@@ -10,10 +10,11 @@ on:
   release:
 
 env:
-  TILEDBSOMA_SHA: "dev"
+  TILEDBSOMA_VER: "1.2.4"
+  TILEDBSOMA_SHA: "1169798"
   TILEDBSOMA_BUILD: "${{ github.workspace }}/tiledb_build"
   TILEDBSOMA_SOURCE: "${{ github.workspace }}/libtiledbsoma"
-  TILEDBSOMA_INSTALL: "${{ github.workspace }}/.tiledbsoma_dist/$TILEDBSOMA_SHA"
+  TILEDBSOMA_INSTALL: "${{ github.workspace }}/.tiledbsoma_dist/$TILEDBSOMA_VER-$TILEDBSOMA_SHA"
     
 jobs:
   build:
@@ -95,10 +96,10 @@ jobs:
           - name: "Archive files"
             run: |
               cd ${{ env.TILEDBSOMA_INSTALL }}
-              tar -cvf ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_SHA }}.tar *
-              gzip -9v ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_SHA }}.tar
+              tar -cvf ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar *
+              gzip -9v ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar
               
           - uses: actions/upload-artifact@v3
             with:
-              name: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
-              path: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
+              name: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
+              path: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
