@@ -14,7 +14,6 @@ import somacore
 from somacore import options
 
 from ._types import OpenTimestamp, Slice, is_slice_of
-from .options._tiledb_create_options import TileDBCreateOptions
 
 
 def get_start_stamp() -> float:
@@ -261,12 +260,3 @@ def ms_to_datetime(millis: int) -> datetime.datetime:
     secs, millis = divmod(millis, 1000)
     dt = datetime.datetime.fromtimestamp(secs, tz=datetime.timezone.utc)
     return dt.replace(microsecond=millis * 1000)
-
-
-def validate_platform_config(platform_config: Any) -> None:
-    """Offers a run-time type check on this ingestion/creation argument, which is easy to miskey."""
-    if platform_config is not None:
-        if isinstance(platform_config, TileDBCreateOptions):
-            raise TypeError(
-                """platform_config argument is of type TileDBCreateOptions -- please wrap it in `{"tiledb": {"create": argument}}`."""
-            )
