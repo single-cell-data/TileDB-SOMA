@@ -177,14 +177,14 @@ SOMADataFrame <- R6::R6Class(
     #' @template param-result-order
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @param log_level Optional logging level with default value of `"auto"`.
     #' @return An [`arrow::Table`].
     read = function(coords = NULL,
                     column_names = NULL,
                     value_filter = NULL,
                     result_order = "auto",
                     iterated = FALSE,
-                    log_level = "warn") {
+                    log_level = "auto") {
 
       private$check_open_for_read()
 

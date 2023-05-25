@@ -95,7 +95,7 @@ shape <- function(uri, config = NULL) {
 #' \dontrun{
 #' ctx <- tiledb::tiledb_ctx()
 #' uri <- "test/soco/pbmc3k_processed/obs"
-#' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="warn")
+#' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="auto")
 #' rl <- data.frame()
 #' while (!sr_complete(sr)) {
 #'     sr |>
