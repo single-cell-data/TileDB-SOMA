@@ -72,7 +72,7 @@ matrixZeroBasedView <- R6::R6Class(
     #' @return The result of the sum as a \link{matrixZeroBasedView}.
     sum = function(x) {
       if (!inherits(x, "matrixZeroBasedView")) {
-        "Only arithmetic sum with another 'matrixZeroBasedView` is supported"
+        stop("Only arithmetic sum with another 'matrixZeroBasedView` is supported")
       }
       matrixZeroBasedView$new(private$one_based_matrix + x$get_one_based_matrix())
     },
