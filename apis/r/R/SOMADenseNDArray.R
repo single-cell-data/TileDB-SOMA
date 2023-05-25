@@ -116,13 +116,13 @@ SOMADenseNDArray <- R6::R6Class(
     #' @template param-result-order
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @param log_level Optional logging level with default value of `"auto"`.
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
       result_order = "auto",
       iterated = FALSE,
-      log_level = "warn"
+      log_level = "auto"
     ) {
       private$check_open_for_read()
 
@@ -181,13 +181,13 @@ SOMADenseNDArray <- R6::R6Class(
     #' @template param-result-order
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @param log_level Optional logging level with default value of `"auto"`.
     #' @return A `matrix` object
     read_dense_matrix = function(
       coords = NULL,
       result_order = "ROW_MAJOR",
       iterated = FALSE,
-      log_level = "warn"
+      log_level = "auto"
     ) {
       private$check_open_for_read()
 

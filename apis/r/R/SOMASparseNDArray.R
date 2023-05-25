@@ -113,13 +113,13 @@ SOMASparseNDArray <- R6::R6Class(
     #' @template param-result-order
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @param log_level Optional logging level with default value of `"auto"`.
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
       result_order = "auto",
       iterated = FALSE,
-      log_level = "warn"
+      log_level = "auto"
     ) {
       private$check_open_for_read()
 
@@ -177,7 +177,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param repr Optional one-character code for sparse matrix representation type
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @param log_level Optional logging level with default value of `"auto"`.
     #' @return A sparse matrix whose exact representation
     #' is determined by \code{repr}.
     read_sparse_matrix = function(
@@ -185,7 +185,7 @@ SOMASparseNDArray <- R6::R6Class(
       result_order = "auto",
       repr = c("C", "T", "R"),
       iterated = FALSE,
-      log_level = "warn"
+      log_level = "auto"
     ) {
       private$check_open_for_read()
       repr <- match.arg(repr)
@@ -229,14 +229,14 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param repr Optional one-character code for sparse matrix representation type
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @param log_level Optional logging level with default value of `"auto"`.
     #' @return A \link{matrixZeroBasedView}
     read_sparse_matrix_zero_based = function(
       coords = NULL,
       result_order = "auto",
       repr = c("C", "T", "R"),
       iterated = FALSE,
-      log_level = "warn"
+      log_level = "auto"
     ) {
       # If we're setting up an iterated reader, set the tracker for zero-based
       # and use `self$read_sparse_matrix()` for the rest of the setup

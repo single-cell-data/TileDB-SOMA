@@ -20,7 +20,7 @@ configuration}}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
-the data contained in \code{x}
+the data contained in \code{x}, returned opened for write
 }
 \description{
 Convert \R objects to their appropriate SOMA counterpart

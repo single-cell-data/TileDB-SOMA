@@ -110,7 +110,7 @@ Read as an 'arrow::Table' (lifecycle: experimental)
   coords = NULL,
   result_order = "auto",
   iterated = FALSE,
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 
@@ -130,7 +130,7 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -148,7 +148,7 @@ Read as a dense matrix (lifecycle: experimental)
   coords = NULL,
   result_order = "ROW_MAJOR",
   iterated = FALSE,
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 
@@ -168,7 +168,7 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
 }
 \if{html}{\out{</div>}}
 }
