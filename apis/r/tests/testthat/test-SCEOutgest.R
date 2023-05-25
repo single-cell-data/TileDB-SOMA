@@ -7,13 +7,16 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = 'WRITE'
   )
+  on.exit(experiment$close())
+  exp_ms_rna <- experiment$ms$get("RNA")
   # Add embeddings
   n_pcs <- 50L
   n_ics <- 30L
   n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
+  obsm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsm'))
   obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -44,10 +47,11 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     ncols = n_ics,
     seed = 5L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+  obsm$close()
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
   # SingleCellExperiment object don't support `varm`
   # Add graph
-  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
+  obsp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
@@ -57,9 +61,10 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  obsp$close()
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
   # Add coexpression network
-  varp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varp'))
+  varp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'varp'))
   varp$add_new_sparse_ndarray(
     key = 'network',
     type = arrow::int32(),
@@ -69,7 +74,12 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     nrows = n_var,
     ncols = n_var
   ))
-  experiment$ms$get("RNA")$add_new_collection(varp, 'varp')
+  varp$close()
+  exp_ms_rna$add_new_collection(varp, 'varp')
+  # Close and reopen
+  exp_ms_rna$close()
+  experiment$close()
+  experiment <- SOMAExperimentOpen(experiment$uri)
   # Create the query
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -82,7 +92,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_identical(colnames(obj), paste0('obs', query$obs_joinids()$as_vector()))
   expect_true(all(query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))))
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(SummarizedExperiment::assayNames(obj), c('counts', 'logcounts'))
+  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
   for (slot in SummarizedExperiment::assayNames(obj)) {
     expect_s4_class(mat <- SummarizedExperiment::assay(obj, slot), 'dgCMatrix')
     expect_identical(rownames(mat), rownames(obj))
@@ -131,7 +141,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     query$obs('baz')$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(SummarizedExperiment::assayNames(obj), c('counts', 'logcounts'))
+  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
   expect_false(all(query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))))
   expect_true(all(setdiff(query$obs_df$attrnames(), 'baz') %in% names(SingleCellExperiment::colData(obj))))
   for (slot in SummarizedExperiment::assayNames(obj)) {
@@ -224,12 +234,15 @@ test_that("Load SCE object from sliced ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = 'WRITE'
   )
+  on.exit(experiment$close())
+  exp_ms_rna <- experiment$ms$get("RNA")
   # Add embeddings
   n_pcs <- 50L
   n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
+  obsm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsm'))
   obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -249,10 +262,11 @@ test_that("Load SCE object from sliced ExperimentQuery", {
     ncols = n_umaps,
     seed = 2L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+  obsm$close()
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
   # SingleCellExperiment object don't support `varm`
   # Add graph
-  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
+  obsp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
@@ -262,9 +276,10 @@ test_that("Load SCE object from sliced ExperimentQuery", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  obsp$close()
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
   # Add coexpression network
-  varp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varp'))
+  varp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'varp'))
   varp$add_new_sparse_ndarray(
     key = 'network',
     type = arrow::int32(),
@@ -274,7 +289,12 @@ test_that("Load SCE object from sliced ExperimentQuery", {
     nrows = n_var,
     ncols = n_var
   ))
-  experiment$ms$get("RNA")$add_new_collection(varp, 'varp')
+  varp$close()
+  exp_ms_rna$add_new_collection(varp, 'varp')
+  # Close and reopen
+  exp_ms_rna$close()
+  experiment$close()
+  experiment <- SOMAExperimentOpen(experiment$uri)
   # Create the query
   obs_slice <- bit64::as.integer64(seq(3, 72))
   var_slice <- bit64::as.integer64(seq(7, 21))
@@ -292,8 +312,8 @@ test_that("Load SCE object from sliced ExperimentQuery", {
   expect_identical(rownames(obj), paste0('var', query$var_joinids()$as_vector()))
   expect_identical(colnames(obj), paste0('obs', query$obs_joinids()$as_vector()))
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(SummarizedExperiment::assayNames(obj), c('counts', 'logcounts'))
-  expect_identical(SingleCellExperiment::reducedDimNames(obj), c('PCA', 'UMAP'))
+  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
+  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('PCA', 'UMAP'))
   expect_identical(SingleCellExperiment::colPairNames(obj), 'connectivities')
   expect_identical(SingleCellExperiment::rowPairNames(obj), 'network')
   # Test named
@@ -309,8 +329,8 @@ test_that("Load SCE object from sliced ExperimentQuery", {
     query$obs('baz')$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(SummarizedExperiment::assayNames(obj), c('counts', 'logcounts'))
-  expect_identical(SingleCellExperiment::reducedDimNames(obj), c('PCA', 'UMAP'))
+  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
+  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('PCA', 'UMAP'))
   expect_identical(SingleCellExperiment::colPairNames(obj), 'connectivities')
   expect_identical(SingleCellExperiment::rowPairNames(obj), 'network')
 })
@@ -326,12 +346,15 @@ test_that("Load SCE object from indexed ExperimentQuery", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = 'WRITE'
   )
+  on.exit(experiment$close())
+  exp_ms_rna <- experiment$ms$get("RNA")
   # Add embeddings
   n_pcs <- 50L
   n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
+  obsm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsm'))
   obsm$add_new_sparse_ndarray(
     key = 'X_pca',
     type = arrow::int32(),
@@ -351,10 +374,11 @@ test_that("Load SCE object from indexed ExperimentQuery", {
     ncols = n_umaps,
     seed = 2L
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsm, 'obsm')
+  obsm$close()
+  exp_ms_rna$add_new_collection(obsm, 'obsm')
   # SingleCellExperiment object don't support `varm`
   # Add graph
-  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
+  obsp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsp'))
   obsp$add_new_sparse_ndarray(
     key = 'connectivities',
     type = arrow::int32(),
@@ -364,9 +388,10 @@ test_that("Load SCE object from indexed ExperimentQuery", {
     nrows = n_obs,
     ncols = n_obs
   ))
-  experiment$ms$get("RNA")$add_new_collection(obsp, 'obsp')
+  obsp$close()
+  exp_ms_rna$add_new_collection(obsp, 'obsp')
   # Add coexpression network
-  varp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varp'))
+  varp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'varp'))
   varp$add_new_sparse_ndarray(
     key = 'network',
     type = arrow::int32(),
@@ -376,7 +401,12 @@ test_that("Load SCE object from indexed ExperimentQuery", {
     nrows = n_var,
     ncols = n_var
   ))
-  experiment$ms$get("RNA")$add_new_collection(varp, 'varp')
+  varp$close()
+  exp_ms_rna$add_new_collection(varp, 'varp')
+  # Close and reopen
+  exp_ms_rna$close()
+  experiment$close()
+  experiment <- SOMAExperimentOpen(experiment$uri)
   # Create the query
   obs_value_filter <- paste0(
     sprintf("baz == '%s'", obs_label_values),
@@ -400,8 +430,8 @@ test_that("Load SCE object from indexed ExperimentQuery", {
   expect_identical(rownames(obj), paste0('var', query$var_joinids()$as_vector()))
   expect_identical(colnames(obj), paste0('obs', query$obs_joinids()$as_vector()))
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(SummarizedExperiment::assayNames(obj), c('counts', 'logcounts'))
-  expect_identical(SingleCellExperiment::reducedDimNames(obj), c('PCA', 'UMAP'))
+  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
+  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('PCA', 'UMAP'))
   expect_identical(SingleCellExperiment::colPairNames(obj), 'connectivities')
   expect_identical(SingleCellExperiment::rowPairNames(obj), 'network')
   # Test named
@@ -417,8 +447,8 @@ test_that("Load SCE object from indexed ExperimentQuery", {
     query$obs('baz')$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(SummarizedExperiment::assayNames(obj), c('counts', 'logcounts'))
-  expect_identical(SingleCellExperiment::reducedDimNames(obj), c('PCA', 'UMAP'))
+  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
+  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('PCA', 'UMAP'))
   expect_identical(SingleCellExperiment::colPairNames(obj), 'connectivities')
   expect_identical(SingleCellExperiment::rowPairNames(obj), 'network')
 })
