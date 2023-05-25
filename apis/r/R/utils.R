@@ -46,6 +46,41 @@ null <- function(...) {
   return(NULL)
 }
 
+#' Pad Names of a Character Vector
+#'
+#' Fill in missing names of a vector using missing values of said vector
+#'
+#' @param x A character vector
+#'
+#' @return \code{x} with any missing names set to the values of \code{x}; see
+#' examples for more details
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+#' @examples
+#' x1 <- c("a", "b", "c")
+#' pad_names(x1) # returns c(a = "a", b = "b", c = "c")
+#'
+#' x2 <- c(a = "x", b = "y", c = "z")
+#' pad_names(x2) # returns c(a = "x", b = "y", c = "z")
+#'
+#' x3 <- c(a = "x", "y", c = "z")
+#' pad_names(x3) # returns c(a = "x", y = "y", c = "z")
+#'
+pad_names <- function(x) {
+  stopifnot(
+    is.character(x)
+  )
+  if (is.null(names(x))) {
+    return(stats::setNames(nm = x))
+  }
+  unnamed <- !nzchar(names(x))
+  names(x)[unnamed] <- x[unnamed]
+  return(x)
+}
+
 # For use in read-only R6 active bindings
 read_only_error <- function(field_name) {
   stop(

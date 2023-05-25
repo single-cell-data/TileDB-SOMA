@@ -906,37 +906,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           is.character(varp_layers) ||
           is_scalar_logical(varp_layers)
       )
-      pad_names <- function(x) {
-        stopifnot(
-          is.character(x)
-        )
-        if (is.null(names(x))) {
-          return(stats::setNames(nm = x))
-        }
-        unnamed <- !nzchar(names(x))
-        names(x)[unnamed] <- x[unnamed]
-        return(x)
-      }
-      # Re-implement SingleCellExperiment's internal `.mat2hits` function as
-      # theirs doesn't recognize the difference between `Matrix` and `matrix`
-      # without {Matrix} being attached
-      # Also correct cases where `S4Vectors::SelfHits(from =` and
-      # `S4Vectors::SelfHits(to =` are not integers by explicitly casting to
-      # integer
-      mat_to_hits <- function(mat) {
-        f <- if (inherits(mat, 'Matrix')) {
-          Matrix::which
-        } else {
-          base::which
-        }
-        i <- f(mat != 0, arr.ind = TRUE)
-        return(S4Vectors::SelfHits(
-          from = as.integer(i[, 1L]),
-          to = as.integer(i[, 2L]),
-          nnode = nrow(mat),
-          x = mat[i]
-        ))
-      }
       # Load in colData
       obs <- private$.load_df('obs', index = obs_index, columns = obs_column_names)
       # Load in rowData
@@ -1027,7 +996,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           FUN = function(layer, obs_ids = row.names(obs)) {
             mat <- private$.load_p_axis(layer)
             dimnames(mat) <- list(obs_ids, obs_ids)
-            return(mat_to_hits(mat))
+            return(.mat_to_hits(mat))
           }
         )
         names(col_pairs) <- names(obsp_layers)
@@ -1059,7 +1028,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           FUN = function(layer, var_ids = row.names(var)) {
             mat <- private$.load_p_axis(layer, p_axis = 'varp')
             dimnames(mat) <- list(var_ids, var_ids)
-            return(mat_to_hits(mat))
+            return(.mat_to_hits(mat))
           }
         )
         names(row_pairs) <- names(varp_layers)
