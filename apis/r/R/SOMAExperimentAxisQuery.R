@@ -907,9 +907,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           is_scalar_logical(varp_layers)
       )
       # Load in colData
-      obs <- private$.load_df('obs', index = obs_index, columns = obs_column_names)
+      obs <- private$.load_df('obs', index = obs_index, column_names = obs_column_names)
       # Load in rowData
-      var <- private$.load_df('var', index = var_index, columns = var_column_names)
+      var <- private$.load_df('var', index = var_index, column_names = var_column_names)
       # Check the layers
       X_layers <- pad_names(X_layers %||% self$ms$X$names())
       assert_subset(x = X_layers, y = self$ms$X$names(), type = 'X_layer')
@@ -1179,15 +1179,15 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       return(mat)
     },
-    .load_df = function(df = 'obs', index = NULL, columns = NULL) {
+    .load_df = function(df_name = c('obs', 'var'), index = NULL, column_names = NULL) {
       stopifnot(
-        is_scalar_character(df),
+        is.character(df_name),
         is.null(index) || is_scalar_character(index),
-        is.null(columns) || is.character(columns) || is_scalar_logical(columns)
+        is.null(column_names) || is.character(column_names) || is_scalar_logical(column_names)
       )
-      df <- match.arg(arg = df, choices = c('obs', 'var'))
+      df_name <- match.arg(arg = df_name)
       switch(
-        EXPR = df,
+        EXPR = df_name,
         obs = {
           soma_df <- self$obs_df
           soma_reader <- self$obs
@@ -1200,19 +1200,19 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
       )
       ids <- if (is.null(index)) {
-        paste0(df, soma_joinids$as_vector())
+        paste0(df_name, soma_joinids$as_vector())
       } else {
         index <- match.arg(arg = index, choices = soma_df$attrnames())
         soma_reader(index)$GetColumnByName(index)$as_vector()
       }
-      if (isTRUE(columns)) {
-        columns <- NULL
+      if (isTRUE(column_names)) {
+        column_names <- NULL
       }
-      columns <- columns %||% setdiff(x = soma_df$attrnames(), y = index)
-      obj <- if (isFALSE(columns) || rlang::is_na(columns)) {
+      column_names <- column_names %||% setdiff(x = soma_df$attrnames(), y = index)
+      obj <- if (isFALSE(column_names) || rlang::is_na(column_names)) {
         as.data.frame(matrix(nrow = length(ids), ncol = 0L))
       } else {
-        as.data.frame(soma_reader(columns)$to_data_frame())
+        as.data.frame(soma_reader(column_names)$to_data_frame())
       }
       row.names(obj) <- ids
       return(obj)
