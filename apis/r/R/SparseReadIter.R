@@ -13,32 +13,16 @@ SparseReadIter <- R6::R6Class(
   public = list(
                 
     #' @description Create (lifecycle: experimental)
-    #' @param uri Character value with URI path to a SOMADataFrame or SOMASparseNDArray
-    #' @param config character vector containing TileDB config.
-    #' @param colnames Optional vector of character value with the name of the columns to retrieve
-    #' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
-    #' no query condition
-    #' @param dim_points Optional named list with vector of data points to select on the given
-    #' dimension(s). Each dimension can be one entry in the list.
-    #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
-    #' @param repr Optional one-character code for sparse matrix representation type
-    #' which lets prior setting prevail, any other value is set as new logging level.
-    #' @param shape Numerical vector with two elements.
-    initialize = function(uri, 
-                          config, 
-                          colnames = NULL, 
-                          qc = NULL, 
-                          dim_points = NULL, 
-                          loglevel = "auto", 
-                          repr = c("C", "T", "R"),
-                          shape) {
-        
-        # Initiate super class
-          super$initialize (uri = uri, config = config, colnames = colnames, qc = qc,
-                            dim_points = dim_points, loglevel = loglevel)
-    
-          private$repr <- repr
-          private$shape <- shape 
+    initialize = function(sr, shape, zero_based=FALSE) {
+      #TODO implement zero_based argument, currently doesn't do anything
+      stopifnot("Array must have two dimensions" = length(shape) == 2,
+                "Array dimensions must not exceed '.Machine$integer.max'" = any(shape < .Machine$integer.max))
+                
+      
+      # Initiate super class
+        super$initialize(sr)
+        private$repr <- "T"
+        private$shape <- shape 
     },
    
     #' @description  Concatenate remainder of iterator.

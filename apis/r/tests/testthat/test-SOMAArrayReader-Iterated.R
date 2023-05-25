@@ -81,15 +81,14 @@ test_that("Iterated Interface from SOMA Classes", {
     for (tc in test_cases) {
         sdf <- switch(tc,
                       data.frame = SOMADataFrame$new(uri, internal_use_only = "allowed_use"),
-                      sparse = SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"),
-                      dense = SOMADenseNDArray$new(uri, internal_use_only = "allowed_use"))
+                      sparse = SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"))
         expect_true(inherits(sdf, "SOMAArrayBase"))
         sdf$open("READ", internal_use_only = "allowed_use")
       
         iterator <- switch(tc,
-                           data.frame = sdf$read(iterated = TRUE),
-                           sparse = sdf$read_arrow_table(iterated = TRUE),
-                           dense = sdf$read_arrow_table(iterated = TRUE))
+                           data.frame = sdf$read(),
+                           sparse = sdf$read()$tables())
+                           
         expect_true(inherits(iterator, "ReadIter"))
         expect_true(inherits(iterator, "TableReadIter"))
         
@@ -105,9 +104,8 @@ test_that("Iterated Interface from SOMA Classes", {
         
         # Test $read_next()
         iterator <- switch(tc,
-                           data.frame = sdf$read(iterated = TRUE),
-                           sparse = sdf$read_arrow_table(iterated = TRUE),
-                           dense = sdf$read_arrow_table(iterated = TRUE))
+                           data.frame = sdf$read(),
+                           sparse = sdf$read()$tables())
         
         expect_false(iterator$read_complete())
         for (i in 1:2) {
@@ -144,12 +142,8 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     sdf <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
     expect_true(inherits(sdf, "SOMAArrayBase"))
     sdf$open("READ", internal_use_only = "allowed_use")
-    
-    expect_error(sdf$read_sparse_matrix_zero_based(repr = "x"))
-    expect_error(sdf$read_sparse_matrix_zero_based(iterated = TRUE, repr = "C"))
-    expect_error(sdf$read_sparse_matrix_zero_based(iterated = TRUE, repr = "R"))
 
-    iterator <- sdf$read_sparse_matrix_zero_based(iterated = TRUE)
+    iterator <- sdf$read()$sparse_matrix(zero_based = T)
 
     nnzTotal <- 0
     rowsTotal <- 0
@@ -167,7 +161,7 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     expect_null(iterator$read_next())
     expect_warning(iterator$read_next())
     
-    expect_equal(nnzTotal, Matrix::nnzero(as.one.based(sdf$read_sparse_matrix_zero_based(iterated=T)$concat())))
+    expect_equal(nnzTotal, Matrix::nnzero(as.one.based(sdf$read()$sparse_matrix(T)$concat())))
     expect_equal(nnzTotal, 2238732)
 
     rm(sdf)

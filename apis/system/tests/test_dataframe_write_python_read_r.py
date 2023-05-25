@@ -39,7 +39,7 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
         return f"""
         library("tiledbsoma")
         soma_df <- SOMADataFrameOpen("{self.uri}")
-        table = soma_df$read()
+        table = soma_df$read()$concat()
         df = as.data.frame(table)
         """
 

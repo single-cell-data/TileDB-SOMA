@@ -106,7 +106,7 @@ SOMASparseNDArray <- R6::R6Class(
       self
     },
 
-    #' @description Read as an 'arrow::Table' (lifecycle: experimental)
+    #' @description Reads a user-defined slice of the \code{SOMASparseNDArray}
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
@@ -115,17 +115,19 @@ SOMASparseNDArray <- R6::R6Class(
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
-    read_arrow_table = function(
+    read = function(
       coords = NULL,
       result_order = "auto",
-      iterated = FALSE,
       log_level = "warn"
     ) {
       private$check_open_for_read()
 
       uri <- self$uri
       
-      stopifnot("Array must have non-zero elements less than '.Machine$integer.max'" = self$nnz() < .Machine$integer.max)
+      if (self$nnz() > .Machine$integer.max) {
+          warning("Iteration results cannot be concatenated on its entirerity beceause ",
+                  "array has non-zero elements greater than '.Machine$integer.max'.")
+      }
 
       result_order <- map_query_layout(match_query_layout(result_order))
 
@@ -134,89 +136,15 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      if (isFALSE(iterated)) {
-         rl <- soma_array_reader(uri = self$uri,
-                                 config = cfg,
-                                 dim_points = coords,
-                                 result_order = result_order,
-                                 loglevel = log_level
-                                )
+      sr <- sr_setup(uri = uri, 
+                     config = cfg, 
+                     dim_points = coords, 
+                     #result_order = result_order,
+                     loglevel = log_level)
       
-        soma_array_to_arrow_table(rl)
-      } else {
-         read_iter <- TableReadIter$new(uri = self$uri,
-                                        config = cfg,
-                                        dim_points = coords,
-                                        loglevel = log_level
-                                       )
-         read_iter
-      }
+      SOMASparseNDArrayRead$new(sr, shape = self$shape())
     },
 
-    #' @description Read as a sparse matrix (lifecycle: experimental). Returns 
-    #' a `matrix`-like object accessed using zero-based indexes or an iterator 
-    #' of those. The matrix-like objects supports only basic access operations 
-    #' with zero-based indexes as well as `dim()`,`nrow()`, and `ncol()` and 
-    #' arithmetic operations as defined in \link[base]{groupGeneric}. 
-    #' Use `as.one.based()` to get a fully-featured sparse matrix object supporting 
-    #' more advanced operations (with one-based indexing).
-    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
-    #' length equal to the number of values to read. If `NULL`, all values are
-    #' read. List elements can be named when specifying a subset of dimensions.
-    #' @template param-result-order
-    #' @param repr Optional one-character code for sparse matrix representation type
-    #' @param iterated Option boolean indicated whether data is read in call (when
-    #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix} or 
-    #' \link{SparseReadIter}
-    read_sparse_matrix_zero_based = function(
-      coords = NULL,
-      result_order = "auto",
-      repr = "T",
-      iterated = FALSE,
-      log_level = "warn"
-    ) {
-
-      dims <- self$dimensions()
-      attr <- self$attributes()
-      shape <- self$shape()
-      
-      stopifnot("'repr' must be a sinlge character string" = length(repr) == 1 | mode(repr) == "character",
-                "'repr' can only be one of 'C', 'R', or 'T', for  dgCMatrix, dgRMatrix, or dgTMatrix, respectively" =
-                repr == "C" | repr == "R" | repr == "T")
-      
-      if (repr %in% c("C", "R") & iterated) {
-          stop("When `repr` is 'C' (dgCMatrix) or 'R' (dgRMatrix), iteration mode is not possible")
-      }
-                
-      
-      stopifnot("Array must have two dimensions" = length(dims) == 2,
-                "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
-                    all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
-                "Array must have non-zero elements less than '.Machine$integer.max'" = self$nnz() < .Machine$integer.max,
-                "Array dimensions must not exceed '.Machine$integer.max'" = any(shape < .Machine$integer.max),
-                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr))
-      )
-      
-      if (!is.null(coords)) {
-        coords <- private$convert_coords(coords)
-      }
-
-      if (isFALSE(iterated)) {
-        tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-        arrow_table_to_sparse(tbl, repr = repr, shape = shape)
-      } else {
-        stopifnot(repr == "T")
-        cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-        SparseReadIter$new(uri = self$uri,
-                           config = cfg,
-                           dim_points = coords,
-                           loglevel = log_level,
-                           repr = repr,
-                           shape = shape)
-      }
-    },
 
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
     #'
