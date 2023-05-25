@@ -1263,13 +1263,13 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       return(mat)
     },
-    .load_p_axis = function(layer, p_axis = 'obsp', repr = 'C') {
+    .load_p_axis = function(layer, p_axis = c('obsp', 'varp'), repr = 'C') {
       stopifnot(
         is_scalar_character(layer),
-        is_scalar_character(p_axis),
+        is.character(p_axis),
         is_scalar_character(repr)
       )
-      p_axis <- match.arg(arg = p_axis, choices = c('obsp', 'varp'))
+      p_axis <- match.arg(arg = p_axis)
       switch(
         EXPR = p_axis,
         obsp = {
