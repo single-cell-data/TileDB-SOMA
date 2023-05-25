@@ -44,7 +44,6 @@ from ._util import (
     is_relative_uri,
     make_relative_path,
     uri_joinpath,
-    validate_platform_config,
 )
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -114,7 +113,6 @@ class CollectionBase(
             Experimental.
         """
         context = _validate_soma_tiledb_context(context)
-        validate_platform_config(platform_config)
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         cls._set_create_metadata(handle)

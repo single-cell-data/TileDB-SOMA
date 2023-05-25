@@ -174,7 +174,58 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
-    #' @template param-result-order
+    #' @param repr Optional one-character code for sparse matrix representation type
+    #' @param iterated Option boolean indicated whether data is read in call (when
+    #' `FALSE`, the default value) or in several iterated steps.
+    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @return A sparse matrix whose exact representation
+    #' is determined by \code{repr}.
+    read_sparse_matrix = function(
+      coords = NULL,
+      result_order = "auto",
+      repr = c("C", "T", "R"),
+      iterated = FALSE,
+      log_level = "warn"
+    ) {
+      private$check_open_for_read()
+      repr <- match.arg(repr)
+      dims <- self$dimensions()
+      attr <- self$attributes()
+      stopifnot("Array must have two dimensions" = length(dims) == 2,
+                "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
+                  all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
+                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
+
+      if (isFALSE(iterated)) {
+        tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+        mat <- Matrix::sparseMatrix(
+          i = as.numeric(tbl$GetColumnByName("soma_dim_0")),
+          j = as.numeric(tbl$GetColumnByName("soma_dim_1")),
+          x = as.numeric(tbl$GetColumnByName("soma_data")),
+          index1 = FALSE,
+          dims = as.integer(self$shape()),
+          repr = repr
+        )
+        return(mat)
+      } else {
+        ## should we error if this isn't null?
+        if (!is.null(private$soma_reader_pointer)) {
+          warning("pointer not null, skipping")
+        } else {
+          private$soma_reader_setup()
+          private$sparse_repr <- repr
+          if (rlang::is_na(private$read_next)) {
+            private$zero_based <- FALSE
+          }
+        }
+        invisible(NULL)
+      }
+    },
+
+    #' @description Read as a zero-indexed sparse matrix (lifecycle: experimental)
+    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
+    #' length equal to the number of values to read. If `NULL`, all values are
+    #' read. List elements can be named when specifying a subset of dimensions.
     #' @param repr Optional one-character code for sparse matrix representation type
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
@@ -187,40 +238,39 @@ SOMASparseNDArray <- R6::R6Class(
       iterated = FALSE,
       log_level = "warn"
     ) {
-      private$check_open_for_read()
+      # If we're setting up an iterated reader, set the tracker for zero-based
+      # and use `self$read_sparse_matrix()` for the rest of the setup
 
-      repr <- match.arg(repr)
-      dims <- self$dimensions()
-      attr <- self$attributes()
-      stopifnot("Array must have two dimensions" = length(dims) == 2,
-                "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
-                    all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
-                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
-
-      if (isFALSE(iterated)) {
-          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-          # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
-          # zero-based soma_dim_0 and soma_dim_1. But, because these dimensions are
-          # usually populated with soma_joinid, users will need to access the matrix
-          # using the original, possibly-zero IDs. Therefore, we'll wrap the one-based
-          # sparseMatrix with a shim providing basic access with zero-based indexes.
-          # If needed, user can then explicitly ask the shim for the underlying
-          # sparseMatrix using `as.one.based()`.
-          mat <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                                      j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                                      x = as.numeric(tbl$GetColumnByName("soma_data")),
-                                      dims = as.integer(self$shape()), repr = repr)
-          matrixZeroBasedView$new(mat)
-      } else {
-          ## should we error if this isn't null?
-          if (!is.null(self$soma_reader_pointer)) {
-              warning("pointer not null, skipping")
-          } else {
-              private$soma_reader_setup()
-              private$sparse_repr <- repr
-          }
-          invisible(NULL)
+      # Use `!ifFALSE()` as the logic in `self$read_sparse_matrix()` says
+      # if iterated is FALSE, do non-iterated
+      # otherwise, do iterated
+      if (!isFALSE(iterated) && is.null(private$soma_reader_pointer)) {
+        private$zero_based <- TRUE
       }
+      mat <- self$read_sparse_matrix(
+        coords = coords,
+        result_order = result_order,
+        repr = repr,
+        iterated = iterated,
+        log_level = log_level
+      )
+      # Wrap in zero-based view
+      if (isFALSE(iterated)) {
+        return(matrixZeroBasedView$new(mat))
+      }
+      return(invisible(NULL))
+    },
+
+    #' @description Read the next chunk of an iterated read. (lifecycle: experimental)
+    read_next = function() {
+      res <- super$read_next()
+      # If we've reached the end of iteration, reset the tracker for
+      # zero or one-based matrices
+      if (is.null(res)) {
+        private$zero_based <- NA
+        return(invisible(NULL))
+      }
+      return(res)
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
@@ -268,20 +318,29 @@ SOMASparseNDArray <- R6::R6Class(
     ## refined from base class
     soma_reader_transform = function(x) {
       tbl <- as_arrow_table(x)
-      if (private$sparse_repr == "") {
-          tbl
-      } else {
-          mat <- Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                                      j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                                      x = as.numeric(tbl$GetColumnByName("soma_data")),
-                                      dims = as.integer(self$shape()), repr = private$sparse_repr)
-          # see read_sparse_matrix_zero_based() abave
-          matrixZeroBasedView$new(mat)
+      if (!nzchar(private$sparse_repr)) {
+        return(tbl)
       }
+      mat <- Matrix::sparseMatrix(
+        i = as.numeric(tbl$GetColumnByName("soma_dim_0")),
+        j = as.numeric(tbl$GetColumnByName("soma_dim_1")),
+        x = as.numeric(tbl$GetColumnByName("soma_data")),
+        index1 = FALSE,
+        dims = as.integer(self$shape()),
+        repr = private$sparse_repr
+      )
+      # see read_sparse_matrix_zero_based() above
+      if (isTRUE(private$zero_based)) {
+        mat <- matrixZeroBasedView$new(mat)
+      }
+      return(mat)
     },
 
     ## internal 'repr' state variable, by default 'unset'
-    sparse_repr = ""
+    sparse_repr = "",
+
+    # Internal marking of one or zero based matrices for iterated reads
+    zero_based = NA
 
   )
 )

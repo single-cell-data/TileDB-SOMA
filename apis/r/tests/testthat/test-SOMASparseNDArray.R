@@ -72,6 +72,41 @@ test_that("SOMASparseNDArray creation", {
 
 })
 
+test_that("SOMASparseNDArray read_sparse_matrix", {
+  uri <- withr::local_tempdir("sparse-ndarray")
+  ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
+
+  # For this test, write 9x9 data into 10x10 array. Leaving the last row & column
+  # empty touches corner cases with setting dims() correctly
+  mat <- create_sparse_matrix_with_int_dims(9, 9)
+  ndarray$write(mat)
+  expect_equal(as.numeric(ndarray$shape()), c(10, 10))
+  ndarray$close()
+
+  # read_sparse_matrix
+  ndarray <- SOMASparseNDArrayOpen(uri)
+  expect_s4_class(mat2 <- ndarray$read_sparse_matrix(repr = "T"), "TsparseMatrix")
+  expect_equal(dim(mat2), c(10, 10))
+  expect_equal(nrow(mat2), 10)
+  expect_equal(ncol(mat2), 10)
+  ## not sure why all.equal(mat, mat2) does not pass
+  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9, 1:9])))
+  expect_equal(sum(mat), sum(mat2))
+
+  ndarray <- SOMASparseNDArrayOpen(uri)
+
+  # repeat with iterated reader
+  ndarray$read_sparse_matrix(repr = "T", iterated = TRUE)
+  mat3 <- ndarray$read_next()
+  expect_s4_class(mat3, "TsparseMatrix")
+  expect_equal(dim(mat3), c(10, 10))
+  expect_equal(nrow(mat3), 10)
+  expect_equal(ncol(mat3), 10)
+  expect_true(all.equal(as.numeric(mat), as.numeric(mat3[1:9, 1:9])))
+  expect_equal(sum(mat), sum(mat3))
+  ndarray$close()
+})
+
 test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   uri <- withr::local_tempdir("sparse-ndarray")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
