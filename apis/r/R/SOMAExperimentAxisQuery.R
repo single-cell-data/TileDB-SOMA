@@ -1217,13 +1217,13 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       row.names(obj) <- ids
       return(obj)
     },
-    .load_m_axis = function(layer, m_axis = 'obsm', type = "Embeddings") {
+    .load_m_axis = function(layer, m_axis = c('obsm', 'varm'), type = "Embeddings") {
       stopifnot(
         is_scalar_character(layer),
-        is_scalar_character(m_axis),
+        is.character(m_axis),
         is_scalar_character(type)
       )
-      m_axis <- match.arg(arg = m_axis, choices = c('obsm', 'varm'))
+      m_axis <- match.arg(arg = m_axis)
       switch(
         EXPR = m_axis,
         obsm = {
