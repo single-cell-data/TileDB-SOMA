@@ -1,4 +1,4 @@
-.anndata_to_sce_rd <- function(x) {
+.anndata_to_sce_reduced_dim <- function(x) {
   if (is.null(x)) {
     return(NULL)
   }

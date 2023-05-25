@@ -946,7 +946,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
         obsm_layers <- obsm_layers %||% stats::setNames(
           object = ms_obsm,
-          nm = .anndata_to_sce_rd(ms_obsm)
+          nm = .anndata_to_sce_reduced_dim(ms_obsm)
         )
         obsm_layers <- pad_names(obsm_layers)
         assert_subset(x = obsm_layers, y = ms_obsm, type = 'cell embedding')
