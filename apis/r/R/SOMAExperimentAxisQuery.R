@@ -347,8 +347,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}
     #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
     #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
-    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames()}
-    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames(axis = 'var')}
+    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names()}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}
     #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers()}
     #' @param varm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers(axis = 'varm')}
     #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players()}
@@ -548,7 +548,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}
     #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
     #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
-    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames(axis = 'var')}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}
     #'
     #' @return An \code{\link[SeuratObject]{Assay}} object
     #'
@@ -866,8 +866,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}
     #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}
     #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}
-    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce')}
-    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce', 'var')}
+    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce')}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce', 'var')}
     #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}
     #' @param varp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}
     #'
@@ -1059,8 +1059,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}
     #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}
     #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}
-    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce')}
-    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce', 'var')}
+    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce')}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce', 'var')}
     #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}
     #' @param varp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}
     #'

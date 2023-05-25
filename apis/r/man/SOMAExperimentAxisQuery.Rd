@@ -279,9 +279,9 @@ Loads the query as a \code{\link[SeuratObject]{Seurat}} object
 
 \item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}}
 
-\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames()}}
+\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names()}}
 
-\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames(axis = 'var')}}
+\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}}
 
 \item{\code{obsm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers()}}
 
@@ -318,7 +318,7 @@ Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
 
 \item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}}
 
-\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames(axis = 'var')}}
+\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}}
 }
 \if{html}{\out{</div>}}
 }
@@ -411,9 +411,9 @@ Loads the query as a
 
 \item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}}
 
-\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce')}}
+\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce')}}
 
-\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce', 'var')}}
+\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce', 'var')}}
 
 \item{\code{obsm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}}
 
@@ -454,9 +454,9 @@ Convenience method for \code{$to_single_cell_experiment()}
 
 \item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}}
 
-\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce')}}
+\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce')}}
 
-\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mdnames('sce', 'var')}}
+\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce', 'var')}}
 
 \item{\code{obsm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}}
 
