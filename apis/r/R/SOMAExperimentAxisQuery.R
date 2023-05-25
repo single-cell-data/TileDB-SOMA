@@ -880,6 +880,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obs_column_names = NULL,
       var_column_names = NULL,
       obsm_layers = NULL,
+      # Omission of `varm_layers` parameter is purposeful as
+      # SCE objects do not support `varm_layers`
       obsp_layers = NULL,
       varp_layers = NULL
     ) {
