@@ -925,18 +925,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       names(layers) <- names(X_layers)
       # Load in reduced dimensions
       ms_obsm <- tryCatch(expr = self$ms$obsm$names(), error = null)
-      skip_rd <- isFALSE(obsm_layers) || rlang::is_na(obsm_layers)
+      skip_reduced_dims <- isFALSE(obsm_layers) || rlang::is_na(obsm_layers)
       if (is.null(ms_obsm)) {
-        if (!skip_rd && !is.null(obsm_layers)) {
+        if (!skip_reduced_dims && !is.null(obsm_layers)) {
           warning(
             "Reduced dimensions requested but none were found, skipping",
             call. = FALSE,
             immediate. = TRUE
           )
         }
-        skip_rd <- TRUE
+        skip_reduced_dims <- TRUE
       }
-      if (skip_rd) {
+      if (skip_reduced_dims) {
         reduced_dims <- list()
       } else {
         if (isTRUE(obsm_layers)) {
@@ -971,18 +971,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Load in the colPairs
       ms_obsp <- tryCatch(expr = self$ms$obsp$names(), error = null)
-      skip_cp <- isFALSE(obsp_layers) || rlang::is_na(obsp_layers)
+      skip_col_pairs <- isFALSE(obsp_layers) || rlang::is_na(obsp_layers)
       if (is.null(ms_obsp)) {
-        if (!skip_cp && !is.null(obsp_layers)) {
+        if (!skip_col_pairs && !is.null(obsp_layers)) {
           warning(
             "colPairs requested but none were found, skipping",
             call. = FALSE,
             immediate. = TRUE
           )
         }
-        skip_cp <- TRUE
+        skip_col_pairs <- TRUE
       }
-      if (skip_cp) {
+      if (skip_col_pairs) {
         col_pairs <- list()
       } else {
         if (isTRUE(obsp_layers)) {
@@ -1003,18 +1003,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Load in the rowPairs
       ms_varp <- tryCatch(expr = self$ms$varp$names(), error = null)
-      skip_rp <- isFALSE(varp_layers) || rlang::is_na(varp_layers)
+      skip_row_pairs <- isFALSE(varp_layers) || rlang::is_na(varp_layers)
       if (is.null(ms_varp)) {
-        if (!skip_rp && !is.null(varp_layers)) {
+        if (!skip_row_pairs && !is.null(varp_layers)) {
           warning(
             "rowPairs requested but none were found, skipping",
             call. = FALSE,
             immediate. = TRUE
           )
         }
-        skip_rp <- TRUE
+        skip_row_pairs <- TRUE
       }
-      if (skip_rp) {
+      if (skip_row_pairs) {
         row_pairs <- list()
       } else {
         if (isTRUE(varp_layers)) {
