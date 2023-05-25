@@ -230,11 +230,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return A `matrix`-like object accessed using zero-based indexes. It supports
-    #'         only basic access operations with zero-based indexes as well as `dim()`,
-    #'         `nrow()`, and `ncol()`. Use `as.one.based()` to get a fully-featured
-    #'         sparse matrix object supporting more advanced operations (with one-based
-    #'         indexing).
+    #' @return A \link{matrixZeroBasedView}
     read_sparse_matrix_zero_based = function(
       coords = NULL,
       result_order = "auto",
@@ -260,7 +256,7 @@ SOMASparseNDArray <- R6::R6Class(
       )
       # Wrap in zero-based view
       if (isFALSE(iterated)) {
-        return(matrixZeroBasedView(mat))
+        return(matrixZeroBasedView$new(mat))
       }
       return(invisible(NULL))
     },
@@ -335,7 +331,7 @@ SOMASparseNDArray <- R6::R6Class(
       )
       # see read_sparse_matrix_zero_based() above
       if (isTRUE(private$zero_based)) {
-        mat <- matrixZeroBasedView(mat)
+        mat <- matrixZeroBasedView$new(mat)
       }
       return(mat)
     },

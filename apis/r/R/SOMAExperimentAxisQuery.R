@@ -590,7 +590,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         dims = seq_len(as.integer(embed$shape()[2L])) - 1L
       )
       embed_mat <- if (inherits(embed, 'SOMASparseNDArray')) {
-        as.matrix(embed$read_sparse_matrix_zero_based()[coords$cells, coords$dims])
+        this_mat <- embed$read_sparse_matrix_zero_based()
+        this_mat <- this_mat$take(coords$cells, coords$dims)
+        this_mat <- this_mat$get_one_based_matrix()
+        as.matrix(this_mat)
       } else if (inherits(embed, 'SOMADenseNDArray')) {
         warning(
           paste(
@@ -639,7 +642,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           dims = seq_len(as.integer(loads$shape()[2L])) - 1L
         )
         load_mat <- if (inherits(loads, 'SOMASparseNDArray')) {
-          as.matrix(loads$read_sparse_matrix_zero_based()[coords$features, coords$dims])
+          this_mat <- embed$read_sparse_matrix_zero_based()
+          this_mat <- this_mat$take(coords$features, coords$dims)
+          this_mat <- this_mat$get_one_based_matrix()
+          as.matrix(this_mat)
         } else if (inherits(loads, 'SOMADenseNDArray')) {
           warning(
             paste(
@@ -704,7 +710,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Check provided graph name
       obsp_layer <- match.arg(arg = obsp_layer, choices = ms_graph)
-      mat <- as.one.based(self$ms$obsp$get(obsp_layer)$read_sparse_matrix_zero_based(repr = 'C'))
+      mat <- self$ms$obsp$get(obsp_layer)$read_sparse_matrix_zero_based(repr = 'C')$get_one_based_matrix()
       idx <- self$obs_joinids()$as_vector() + 1L
       mat <- mat[idx, idx]
       mat <- as(mat, 'Graph')

@@ -1,109 +1,94 @@
-# matrixZeroBasedView is a wrapper shim for a matrix or Matrix::sparseMatrix providing
-# elemental access using zero-based indexes.
-#
-# For M0 <- matrixZeroBasedView(M1):
-# - M0[i,j] is equivalent to M1[i+1,j+1].
-# - In particular, if M0[i,j] is vector- or matrix-valued, then the returned
-#   vector/matrix is ONE-based.
-# - as.one.based(M0) returns M1.
-# - The only other supported operations are: dim(M0), nrow(M0), ncol(M0).
-
-#' Zero-based matrix shim
+#' matrixZeroBasedView is a wrapper shim for a matrix or Matrix::sparseMatrix providing
 #'
-#' @param one_based_matrix matrix or Matrix::sparseMatrix
-#'
-#' @return Shim providing elemental access to the matrix using zero-based indexes.
+#' @description
+#' `matrixZeroBasedView` is a class that allows elemental 
+#'  matrix access using zero-based indeces.
 #' @export
-matrixZeroBasedView <- function(one_based_matrix) {
-  if (!inherits(one_based_matrix, "matrix") && !inherits(one_based_matrix, "sparseMatrix")) {
-    stop("Matrix object must inherit class matrix or Matrix::sparseMatrix.")
-  }
-  structure(list(one_based_matrix = one_based_matrix), class = "matrixZeroBasedView")
-}
 
-#' Zero-based matrix element access
-#'
-#' @param x The zero-based matrix view.
-#' @param i Row index (zero-based).
-#' @param j Column index (zero-based).
-#' @param drop Coerce result to lowest possible dimension.
-#'
-#' @return The specified matrix elements. Vector- or matrix-valued results are returned
-#'         as conventional one-based R objects.
-#' @export
-`[.matrixZeroBasedView` <- function(x, i, j, drop = TRUE) {
-  if (missing(i) && missing(j)) {
-    x$one_based_matrix[, , drop = drop]
-  } else if (missing(i)) {
-    x$one_based_matrix[, j + 1, drop = drop]
-  } else if (missing(j)) {
-    x$one_based_matrix[i + 1, , drop = drop]
-  } else {
-    x$one_based_matrix[i + 1, j + 1, drop = drop]
-  }
-}
+matrixZeroBasedView <- R6::R6Class(
+  classname = "matrixZeroBasedView",
+  public = list(
+  
+    #' @description Initialize (lifecycle: experimental)
+    #' @param x \link{matrix} or Matrix::\link[Matrix]{sparseMatrix} or Matrix::\link[Matrix]{denseMatrix}
+    initialize = function(x) {
+      if (!inherits(x, "matrix") && !inherits(x, "sparseMatrix") && !inherits(one_based_matrix, "denseMatrix")) {
+        stop("Matrix object must inherit class matrix or Matrix::sparseMatrix or Matrix:denseMatrix")
+      }
+      if (length(dim(x)) != 2) {
+        stop("Only two-dimensional matrices are supported")
+      }
+      private$one_based_matrix <- x
+    },
+    
+    #' @description Zero-based matrix element access
+    #' @param i Row index (zero-based).
+    #' @param j Column index (zero-based).
+    #' @return The specified matrix slice as another \link{matrixZeroBasedView} 
+    take = function(i = NULL, j = NULL) {
+      
+      x <- NULL
+      if (is.null(i) && is.null(j)) {
+        x <- private$one_based_matrix[, , drop = FALSE]
+      } else if (is.null(i)) {
+        x <- private$one_based_matrix[, j + 1, drop = FALSE]
+      } else if (is.null(j)) {
+        x <- private$one_based_matrix[i + 1, , drop = FALSE]
+      } else {
+        x <- private$one_based_matrix[i + 1, j + 1, drop = FALSE]
+      }
+      
+      matrixZeroBasedView$new(x)
+    },
+    
+    #' @description dim
+    #' @return The dimensions of the matrix.
+    dim = function() {
+      dim(private$one_based_matrix)
+    },
 
-#' dim
-#'
-#' @param x The zero-based matrix view.
-#'
-#' @return The dimensions of the matrix.
-#' @export
-dim.matrixZeroBasedView <- function(x) {
-  dim(x$one_based_matrix)
-}
+    #' @description nrow
+    #' @return Matrix row count.
+    #' @export
+    nrow = function() {
+      nrow(private$one_based_matrix)
+    },
 
-#' nrow
-#'
-#' @param x The zero-based matrix view.
-#'
-#' @return Matrix row count.
-#' @export
-nrow.matrixZeroBasedView <- function(x) {
-  nrow(x$one_based_matrix)
-}
-
-#' ncol
-#'
-#' @param x The zero-based matrix view.
-#'
-#' @return Matrix column count.
-#' @export
-ncol.matrixZeroBasedView <- function(x) {
-  ncol(x$one_based_matrix)
-}
-
-#' Get one-based object
-#'
-#' @param x The object.
-#'
-#' @return A one-based version/view of the object.
-#' @export
-as.one.based <- function(x) {
-  UseMethod("as.one.based")
-}
-
-#' Get one-based matrix object underlying zero-based view
-#'
-#' @param x The zero-based matrix view.
-#'
-#' @return The one-based `matrix` or `Matrix::sparseMatrix` underlying the view.
-#' @export
-as.one.based.matrixZeroBasedView <- function(x) {
-  x$one_based_matrix
-}
-
-#' Zero-based matrix element assigment
-#'
-#' This method errors as a read-only view is implemented.
-#'
-#' @param x The zero-based matrix view.
-#' @param i Row index (zero-based).
-#' @param j Column index (zero-based).
-#' @param value The to-be assigned value.
-#'
-#' @return Nothing as the method errors.
-#' @export
-`[<-.matrixZeroBasedView` <- function(x, i, j, value) {
-  stop("matrixZeroBasedView is read-only; use as.one.based() to get full-featured matrix object", call. = FALSE)
-}
+    #' @description ncol
+    #' @return Matrix column count.
+    ncol = function() {
+      ncol(private$one_based_matrix)
+    },
+    
+    #' @description Get the one-based R matrix with its original class
+    #' @return One-based matrix
+    get_one_based_matrix = function() {
+      private$one_based_matrix
+    },
+    
+    #' @description Perform arithmetic sum between this link{matrixZeroBasedView}
+    #' and another link{matrixZeroBasedView}.
+    #' @param x the link{matrixZeroBasedView} to sum.
+    #' @return The result of the sum as a \link{matrixZeroBasedView}.
+    sum = function(x) {
+      if (!inherits(x, "matrixZeroBasedView")) {
+        stop("Only arithmetic sum with another 'matrixZeroBasedView` is supported")
+      }
+      matrixZeroBasedView$new(private$one_based_matrix + x$get_one_based_matrix())
+    },
+    
+    #' @description print
+    print = function() {
+      dims <- self$dim()
+      cat("Non-mutable 0-based 'view' class for matrices.\n")
+      cat("To get 1-based matrix use `x$get_one_based_matrix()\n")
+      cat(paste0("Dimensions: ", dims[1], "x", dims[2], "\n"))
+      invisible(self)
+    }
+  ),
+  
+  private = list(
+    one_based_matrix = NULL
+  )
+  
+)
