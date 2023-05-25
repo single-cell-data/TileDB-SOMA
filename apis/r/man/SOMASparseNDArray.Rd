@@ -109,7 +109,7 @@ Read as an 'arrow::Table' (lifecycle: experimental)
   coords = NULL,
   result_order = "auto",
   iterated = FALSE,
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 
@@ -126,7 +126,7 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -145,7 +145,7 @@ Read as a sparse matrix (lifecycle: experimental)
   result_order = "auto",
   repr = c("C", "T", "R"),
   iterated = FALSE,
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 
@@ -164,7 +164,7 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -184,7 +184,7 @@ Read as a zero-indexed sparse matrix (lifecycle: experimental)
   result_order = "auto",
   repr = c("C", "T", "R"),
   iterated = FALSE,
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 
@@ -203,16 +203,12 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A \code{matrix}-like object accessed using zero-based indexes. It supports
-only basic access operations with zero-based indexes as well as \code{dim()},
-\code{nrow()}, and \code{ncol()}. Use \code{as.one.based()} to get a fully-featured
-sparse matrix object supporting more advanced operations (with one-based
-indexing).
+A \link{matrixZeroBasedView}
 }
 }
 \if{html}{\out{<hr>}}

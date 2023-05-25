@@ -132,7 +132,7 @@ default), the object's URI is assumed to be relative unless it is a
 \subsection{Method \code{get()}}{
 Retrieve a SOMA object by name. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$get(name, mode = "READ")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$get(name)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
