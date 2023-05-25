@@ -187,7 +187,7 @@ zero-based underlying representation access but then accesses a one-based
 view as the sparse matrix functionality from package `Matrix` imposes this.*
 
 ```{r}
-#X_data$read_sparse_matrix_zero_based()$get_one_based_matrix()[1:5, 1:10]
+X_data$read_sparse_matrix_zero_based()$get_one_based_matrix()[1:5, 1:10]
 ```
 
 Similarly to `SOMADataFrame`s, `read()` method we can define coordinates to slice obtain a subset of the matrix from disk:
