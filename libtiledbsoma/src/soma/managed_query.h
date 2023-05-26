@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- *   This declares the managed query API
+ *   This declares the managed query API.
  */
 
 #ifndef MANAGED_QUERY_H
@@ -167,10 +167,26 @@ class ManagedQuery {
     }
 
     /**
-     * @brief Submit the query.
+     * @brief Set column data for write query.
+     *
+     * @param column_buffer Column data
+     */
+    template <typename T>
+    void set_column_data(std::string column_name, std::vector<T>& buf) {
+        query_->set_data_buffer(column_name, buf);
+    }
+
+    /**
+     * @brief Submit the read query.
      *
      */
-    void submit();
+    void submit_read();
+
+    /**
+     * @brief Submit the write query.
+     *
+     */
+    void submit_write();
 
     /**
      * @brief Check if the query is complete.
@@ -281,6 +297,15 @@ class ManagedQuery {
      */
     bool is_empty_query() {
         return subarray_range_set_ && subarray_range_empty_;
+    }
+
+    /**
+     * @brief Return the query type.
+     *
+     * @return TILEDB_READ or TILEDB_WRITE
+     */
+    tiledb_query_type_t query_type() const {
+        return query_->query_type();
     }
 
    private:

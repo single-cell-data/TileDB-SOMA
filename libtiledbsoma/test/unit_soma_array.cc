@@ -94,7 +94,7 @@ std::tuple<std::string, uint64_t> create_array(
     schema.check();
 
     // Create array
-    Array::create(uri, schema);
+    SOMAArray::create(uri, schema);
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -134,8 +134,8 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         std::vector<int64_t> d0(num_cells_per_fragment);
         for (int j = 0; j < num_cells_per_fragment; j++) {
             // Overlap odd fragments when generating overlaps
-            if (overlap && frag_num % 2 == 1) {
-                d0[j] = j + num_cells_per_fragment * (frag_num - 1);
+            if (overlap && i % 2 == 1) {
+                d0[j] = j + num_cells_per_fragment * (i - 1);
             } else {
                 d0[j] = j + num_cells_per_fragment * frag_num;
             }
@@ -143,14 +143,12 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         std::vector<int> a0(num_cells_per_fragment, frag_num);
 
         // Write data to array
-        Query query(*ctx, array);
-        query.set_layout(TILEDB_UNORDERED)
-            .set_data_buffer("d0", d0)
-            .set_data_buffer("a0", a0);
-        query.submit();
-        array.close();
+        soma_array_write->submit();
+        soma_array_write->set_column_data("d0", d0);
+        soma_array_write->set_column_data("a0", a0);
+        soma_array_write->write();
+        soma_array_write->close();
     }
-
     Array rarray(*ctx, uri, TILEDB_READ, timestamp + num_fragments - 1);
     rarray.reopen();
 
@@ -214,8 +212,7 @@ TEST_CASE("SOMAArray: nnz") {
             {},
             "auto",
             "auto",
-            std::pair<uint64_t, uint64_t>(
-                timestamp, timestamp + num_fragments - 1));
+            std::pair<uint64_t, uint64_t>(10, 10));
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -307,6 +304,7 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
             num_fragments,
             overlap,
             allow_duplicates);
+
         write_array(
             uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
 
