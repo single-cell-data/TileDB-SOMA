@@ -12,7 +12,7 @@ import tiledb
 class SOMAError(Exception):
     """Base error type for SOMA-specific exceptions.
 
-    Lifecycle: Experimental.
+    Lifecycle: maturing
     """
 
     pass
@@ -21,7 +21,7 @@ class SOMAError(Exception):
 class DoesNotExistError(SOMAError):
     """Raised when attempting to open a non-existent or inaccessible SOMA object.
 
-    Lifecycle: Experimental.
+    Lifecycle: maturing
     """
 
     pass
@@ -30,8 +30,7 @@ class DoesNotExistError(SOMAError):
 def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
     """Given a TileDBError, return true if it indicates the object does not exist
 
-    Lifecycle:
-        Experimental.
+    Lifecycle: maturing
 
     Example:
         try:
@@ -60,7 +59,7 @@ def is_duplicate_group_key_error(e: tiledb.TileDBError) -> bool:
     """Given a TileDBError, return try if it indicates a duplicate member
     add request in a tiledb.Group.
 
-    Lifecycle: Experimental.
+    Lifecycle: maturing
     """
     stre = str(e)
     if "member already exists in group" in stre:
