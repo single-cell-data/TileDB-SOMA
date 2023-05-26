@@ -69,12 +69,12 @@ namespace tdbs = tiledbsoma;
 //' @export
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
-                                           Rcpp::CharacterVector config,
-                                           Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                                           Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                                           Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                                           Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                                           const std::string& loglevel = "auto") {
+                                     Rcpp::CharacterVector config,
+                                     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                                     const std::string& loglevel = "auto") {
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -159,6 +159,12 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    if (sr_complete(sr)) {
        spdl::trace("[sr_next] complete {} num_cells {}",
                    sr->is_complete(true), sr->total_num_cells());
+       return Rcpp::List::create(R_NilValue, R_NilValue);
+   }
+
+   if (!sr->is_initial_read() && sr->total_num_cells() == 0) {
+       spdl::trace("[sr_next] is_initial_read {} num_cells {}",
+                   sr->is_initial_read(), sr->total_num_cells());
        return Rcpp::List::create(R_NilValue, R_NilValue);
    }
 
