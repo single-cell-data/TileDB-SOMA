@@ -45,7 +45,7 @@ test_that("Basic mechanics", {
   )
 
   # Read result should recreate the original Table
-  tbl1 <- sdf$read()
+  tbl1 <- sdf$read()$concat()
   expect_true(tbl1$Equals(tbl0))
   sdf$close()
 
@@ -72,15 +72,15 @@ test_that("Basic mechanics", {
   )
 
   # Read result should recreate the original RecordBatch (when seen as a tibble)
-  rb1 <- arrow::as_record_batch(sdf$read())
+  rb1 <- arrow::as_record_batch(sdf$read()$concat())
   expect_equivalent(dplyr::collect(rb0), dplyr::collect(rb1))
 
   # Slicing by foo
-  tbl1 <- sdf$read(coords = list(foo = 1L:2L))
+  tbl1 <- sdf$read(coords = list(foo = 1L:2L))$concat()
   expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))
 
   # Slicing unnamed also work
-  tbl1 <- sdf$read(coords = 1L:2L)
+  tbl1 <- sdf$read(coords = 1L:2L)$concat()
   expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))
 
   # Subselecting columns
@@ -89,11 +89,11 @@ test_that("Basic mechanics", {
     "'column_names' must only contain valid dimension or attribute columns"
   )
 
-  tbl1 <- sdf$read(column_names = "bar")
+  tbl1 <- sdf$read(column_names = "bar")$concat()
   expect_true(tbl1$Equals(tbl0$SelectColumns(2L)))
 
   # Attribute filters
-  tbl1 <- sdf$read(value_filter = "bar < 5")
+  tbl1 <- sdf$read(value_filter = "bar < 5")$concat()
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
 
   # Validate TileDB array schema
@@ -199,7 +199,7 @@ test_that("int64 values are stored correctly", {
   sdf$close()
 
   sdf <- SOMADataFrameOpen(uri)
-  tbl1 <- sdf$read()
+  tbl1 <- sdf$read()$concat()
   expect_true(tbl1$Equals(tbl0))
 
   # verify int64_downcast option was restored
@@ -211,14 +211,14 @@ test_that("SOMADataFrame read", {
     uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 
     sdf <- SOMADataFrameOpen(uri)
-    z <- sdf$read()
+    z <- sdf$read()$concat()
     expect_equal(z$num_rows, 2638L)
     expect_equal(z$num_columns, 6L)
     sdf$close()
 
     columns <- c("n_counts", "n_genes", "louvain")
     sdf <- SOMADataFrameOpen(uri)
-    z <- sdf$read(column_names=columns)
+    z <- sdf$read(column_names=columns)$concat()
     expect_equal(z$num_columns, 3L)
     expect_equal(z$ColumnNames(), columns)
     sdf$close()
@@ -230,7 +230,7 @@ test_that("SOMADataFrame read", {
 
     coords <- bit64::as.integer64(seq(100, 109))
     sdf <- SOMADataFrameOpen(uri)
-    z <- sdf$read(coords = list(soma_joinid=coords))
+    z <- sdf$read(coords = list(soma_joinid=coords))$concat()
     expect_equal(z$num_rows, 10L)
     sdf$close()
 })

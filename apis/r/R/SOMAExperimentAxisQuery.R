@@ -69,7 +69,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         coords = recursively_make_integer64(obs_query$coords),
         value_filter = obs_query$value_filter,
         column_names = column_names
-      )
+      )$concat()
     },
 
     #' @description Retrieve var [`arrow::Table`]
@@ -80,7 +80,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         coords = recursively_make_integer64(var_query$coords),
         value_filter = var_query$value_filter,
         column_names = column_names
-      )
+      )$concat()
     },
 
     #' @description Retrieve `soma_joinids` as an [`arrow::Array`] for `obs`.
@@ -93,7 +93,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       arrow::concat_arrays(private$.joinids$var())
     },
 
-    #' @description Retrieves an `X` layer as an [`arrow::Table`].
+    #' @description Retrieves an `X` layer as a link{SOMASparseNDArrayRead}
     #' @param layer_name The name of the layer to retrieve.
     X = function(layer_name) {
       stopifnot(
@@ -109,10 +109,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
 
       # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
-      x_layer$read_arrow_table(coords = list(
+      x_layer$read(coords = list(
         self$obs_joinids()$as_vector(),
         self$var_joinids()$as_vector()
-      ))
+      ))$tables()$concat()
     },
 
     #' @description Reads the entire query result as a list of
@@ -158,10 +158,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       var_ft <- self$var(var_column_names)
 
       x_matrices <- lapply(x_arrays, function(x_array) {
-          x_array$read_arrow_table(coords = list(
+          x_array$read(coords = list(
             self$obs_joinids()$as_vector(),
             self$var_joinids()$as_vector()
-          ))
+          ))$tables()$concat()
         }
       )
 
@@ -590,9 +590,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         dims = seq_len(as.integer(embed$shape()[2L])) - 1L
       )
       embed_mat <- if (inherits(embed, 'SOMASparseNDArray')) {
-        this_mat <- embed$read_sparse_matrix_zero_based()
+        this_mat <- embed$read()$sparse_matrix(zero_based=TRUE)$concat()
         this_mat <- this_mat$take(coords$cells, coords$dims)
         this_mat <- this_mat$get_one_based_matrix()
+        this_mat <- as(this_mat, "CsparseMatrix")
         as.matrix(this_mat)
       } else if (inherits(embed, 'SOMADenseNDArray')) {
         warning(
@@ -642,9 +643,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           dims = seq_len(as.integer(loads$shape()[2L])) - 1L
         )
         load_mat <- if (inherits(loads, 'SOMASparseNDArray')) {
-          this_mat <- embed$read_sparse_matrix_zero_based()
+          this_mat <- loads$read()$sparse_matrix(zero_based=TRUE)$concat()
           this_mat <- this_mat$take(coords$features, coords$dims)
           this_mat <- this_mat$get_one_based_matrix()
+          this_mat <- as(this_mat, "CsparseMatrix")
           as.matrix(this_mat)
         } else if (inherits(loads, 'SOMADenseNDArray')) {
           warning(
@@ -710,7 +712,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Check provided graph name
       obsp_layer <- match.arg(arg = obsp_layer, choices = ms_graph)
-      mat <- self$ms$obsp$get(obsp_layer)$read_sparse_matrix_zero_based(repr = 'C')$get_one_based_matrix()
+      mat <- self$ms$obsp$get(obsp_layer)$read()$sparse_matrix(zero_based=TRUE)$concat()$get_one_based_matrix()
+      mat <- as(mat, "CsparseMatrix")
       idx <- self$obs_joinids()$as_vector() + 1L
       mat <- mat[idx, idx]
       mat <- as(mat, 'Graph')
@@ -973,7 +976,7 @@ JoinIDCache <- R6::R6Class(
         coords = axis_query$coords,
         value_filter = axis_query$value_filter,
         column_names = "soma_joinid",
-      )
+      )$concat()
       tbl$soma_joinid
     }
   )

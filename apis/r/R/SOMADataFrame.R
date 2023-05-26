@@ -177,8 +177,8 @@ SOMADataFrame <- R6::R6Class(
     #' @template param-result-order
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"auto"`.
-    #' @return An [`arrow::Table`].
+    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
     read = function(coords = NULL,
                     column_names = NULL,
                     value_filter = NULL,
@@ -191,7 +191,7 @@ SOMADataFrame <- R6::R6Class(
       result_order <- match_query_layout(result_order)
       uri <- self$uri
       arr <- self$object                 # need array (schema) to properly parse query condition
-
+      
       ## if unnamed set names
       if (!is.null(coords)) {
           if (!is.list(coords))
@@ -215,30 +215,16 @@ SOMADataFrame <- R6::R6Class(
           value_filter <- parsed@ptr
       }
 
-      if (isFALSE(iterated)) {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-          rl <- soma_array_reader(uri = uri,
-                                  colnames = column_names,   # NULL dealt with by soma_array_reader()
-                                  qc = value_filter,         # idem
-                                  dim_points = coords,       # idem
-                                  loglevel = log_level,      # idem
-                                  config = cfg)
-          private$soma_reader_transform(rl)
-      } else {
-          ## should we error if this isn't null?
-          if (!is.null(private$soma_reader_pointer)) {
-              warning("Reader pointer not null, skipping")
-              rl <- NULL
-          } else {
-              private$soma_reader_setup()
-              rl <- list()
-              while (!self$read_complete()) {
-                  ## soma_reader_transform() applied inside read_next()
-                  rl <- c(rl, self$read_next())
-              }
-          }
-          invisible(rl)
-      }
+      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      sr <- sr_setup(uri = self$uri, 
+                     config = cfg, 
+                     colnames = column_names,
+                     qc = value_filter,
+                     dim_points = coords, 
+                     loglevel = log_level)
+      
+      TableReadIter$new(sr)
+        
     }
 
   ),
@@ -275,12 +261,7 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
-    },
-
-    ## refined from base class
-    soma_reader_transform = function(x) {
-      arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
     }
-
+    
   )
 )

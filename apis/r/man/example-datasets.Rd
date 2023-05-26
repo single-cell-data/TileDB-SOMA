@@ -11,7 +11,7 @@ list_datasets()
 
 extract_dataset(name, dir = tempdir())
 
-load_dataset(name, dir = tempdir())
+load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL)
 }
 \arguments{
 \item{name}{The name of the dataset.}

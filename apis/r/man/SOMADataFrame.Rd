@@ -48,8 +48,6 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_complete"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_complete'><code>tiledbsoma::SOMAArrayBase$read_complete()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_next"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_next'><code>tiledbsoma::SOMAArrayBase$read_next()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -140,12 +138,12 @@ more information.}
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-An \code{\link[arrow:Table]{arrow::Table}}.
+arrow::\link[arrow]{Table} or \link{TableReadIter}
 }
 }
 \if{html}{\out{<hr>}}

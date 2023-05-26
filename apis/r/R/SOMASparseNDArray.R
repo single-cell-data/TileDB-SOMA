@@ -106,171 +106,43 @@ SOMASparseNDArray <- R6::R6Class(
       self
     },
 
-    #' @description Read as an 'arrow::Table' (lifecycle: experimental)
+    #' @description Reads a user-defined slice of the \code{SOMASparseNDArray}
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @template param-result-order
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"auto"`.
-    #' @return An [`arrow::Table`].
-    read_arrow_table = function(
+    #' @param log_level Optional logging level with default value of `"warn"`.
+    #' @return \link{SOMASparseNDArrayRead}
+    read = function(
       coords = NULL,
       result_order = "auto",
-      iterated = FALSE,
-      log_level = "auto"
+      log_level = "warn"
     ) {
       private$check_open_for_read()
 
       uri <- self$uri
+      
+      if (self$nnz() > .Machine$integer.max) {
+          warning("Iteration results cannot be concatenated on its entirerity beceause ",
+                  "array has non-zero elements greater than '.Machine$integer.max'.")
+      }
 
       result_order <- map_query_layout(match_query_layout(result_order))
 
       if (!is.null(coords)) {
-          ## ensure coords is a named list, use to select dim points
-          stopifnot("'coords' must be a list" = is.list(coords),
-                    "'coords' must be a list of vectors or integer64" =
-                        all(vapply_lgl(coords, is_vector_or_int64)),
-                    "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
-                        (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
-                        (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
-                    )
-
-          ## if unnamed (and test for length has passed in previous statement) set names
-          if (is.null(names(coords))) names(coords) <- self$dimnames()
-
-          ## convert integer to integer64 to match dimension type
-          coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+        coords <- private$convert_coords(coords)
       }
 
-      if (isFALSE(iterated)) {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-          rl <- soma_array_reader(uri = uri,
-                                  dim_points = coords,        # NULL dealt with by soma_array_reader()
-                                  result_order = result_order,
-                                  loglevel = log_level,       # idem
-                                  config = cfg)
-          private$soma_reader_transform(rl)
-      } else {
-          ## should we error if this isn't null?
-          if (!is.null(self$soma_reader_pointer)) {
-              warning("Reader pointer not null, skipping")
-              rl <- NULL
-          } else {
-              private$soma_reader_setup()
-              private$sparse_repr <- "" # no sparse matrix transformation
-              rl <- list()
-              while (!self$read_complete()) {
-                  ## soma_reader_transform() applied inside read_next()
-                  rl <- c(rl, self$read_next())
-              }
-          }
-          invisible(rl)
-      }
-    },
-
-    #' @description Read as a sparse matrix (lifecycle: experimental)
-    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
-    #' length equal to the number of values to read. If `NULL`, all values are
-    #' read. List elements can be named when specifying a subset of dimensions.
-    #' @param repr Optional one-character code for sparse matrix representation type
-    #' @param iterated Option boolean indicated whether data is read in call (when
-    #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"auto"`.
-    #' @return A sparse matrix whose exact representation
-    #' is determined by \code{repr}.
-    read_sparse_matrix = function(
-      coords = NULL,
-      result_order = "auto",
-      repr = c("C", "T", "R"),
-      iterated = FALSE,
-      log_level = "auto"
-    ) {
-      private$check_open_for_read()
-      repr <- match.arg(repr)
-      dims <- self$dimensions()
-      attr <- self$attributes()
-      stopifnot("Array must have two dimensions" = length(dims) == 2,
-                "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
-                  all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
-                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
-
-      if (isFALSE(iterated)) {
-        tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-        mat <- Matrix::sparseMatrix(
-          i = as.numeric(tbl$GetColumnByName("soma_dim_0")),
-          j = as.numeric(tbl$GetColumnByName("soma_dim_1")),
-          x = as.numeric(tbl$GetColumnByName("soma_data")),
-          index1 = FALSE,
-          dims = as.integer(self$shape()),
-          repr = repr
-        )
-        return(mat)
-      } else {
-        ## should we error if this isn't null?
-        if (!is.null(private$soma_reader_pointer)) {
-          warning("pointer not null, skipping")
-        } else {
-          private$soma_reader_setup()
-          private$sparse_repr <- repr
-          if (rlang::is_na(private$read_next)) {
-            private$zero_based <- FALSE
-          }
-        }
-        invisible(NULL)
-      }
-    },
-
-    #' @description Read as a zero-indexed sparse matrix (lifecycle: experimental)
-    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
-    #' length equal to the number of values to read. If `NULL`, all values are
-    #' read. List elements can be named when specifying a subset of dimensions.
-    #' @param repr Optional one-character code for sparse matrix representation type
-    #' @param iterated Option boolean indicated whether data is read in call (when
-    #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"auto"`.
-    #' @return A \link{matrixZeroBasedView}
-    read_sparse_matrix_zero_based = function(
-      coords = NULL,
-      result_order = "auto",
-      repr = c("C", "T", "R"),
-      iterated = FALSE,
-      log_level = "auto"
-    ) {
-      # If we're setting up an iterated reader, set the tracker for zero-based
-      # and use `self$read_sparse_matrix()` for the rest of the setup
-
-      # Use `!ifFALSE()` as the logic in `self$read_sparse_matrix()` says
-      # if iterated is FALSE, do non-iterated
-      # otherwise, do iterated
-      if (!isFALSE(iterated) && is.null(private$soma_reader_pointer)) {
-        private$zero_based <- TRUE
-      }
-      mat <- self$read_sparse_matrix(
-        coords = coords,
-        result_order = result_order,
-        repr = repr,
-        iterated = iterated,
-        log_level = log_level
-      )
-      # Wrap in zero-based view
-      if (isFALSE(iterated)) {
-        return(matrixZeroBasedView$new(mat))
-      }
-      return(invisible(NULL))
-    },
-
-    #' @description Read the next chunk of an iterated read. (lifecycle: experimental)
-    read_next = function() {
-      res <- super$read_next()
-      # If we've reached the end of iteration, reset the tracker for
-      # zero or one-based matrices
-      if (is.null(res)) {
-        private$zero_based <- NA
-        return(invisible(NULL))
-      }
-      return(res)
+      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      sr <- sr_setup(uri = uri, 
+                     config = cfg, 
+                     dim_points = coords, 
+                     #result_order = result_order,
+                     loglevel = log_level)
+      
+      SOMASparseNDArrayRead$new(sr, shape = self$shape())
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
@@ -314,26 +186,27 @@ SOMASparseNDArray <- R6::R6Class(
       arr <- self$object
       arr[] <- values
     },
+    
+    #' @description Converts a list of vectors corresponding to coords to a 
+    #' format acceptable for sr_setup and soma_array_reader
+    convert_coords = function(coords) {
+      
+      ## ensure coords is a named list, use to select dim points
+      stopifnot("'coords' must be a list" = is.list(coords),
+                "'coords' must be a list of vectors or integer64" =
+                    all(vapply_lgl(coords, is_vector_or_int64)),
+                "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
+                    (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
+                    (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
+                )
 
-    ## refined from base class
-    soma_reader_transform = function(x) {
-      tbl <- as_arrow_table(x)
-      if (!nzchar(private$sparse_repr)) {
-        return(tbl)
-      }
-      mat <- Matrix::sparseMatrix(
-        i = as.numeric(tbl$GetColumnByName("soma_dim_0")),
-        j = as.numeric(tbl$GetColumnByName("soma_dim_1")),
-        x = as.numeric(tbl$GetColumnByName("soma_data")),
-        index1 = FALSE,
-        dims = as.integer(self$shape()),
-        repr = private$sparse_repr
-      )
-      # see read_sparse_matrix_zero_based() above
-      if (isTRUE(private$zero_based)) {
-        mat <- matrixZeroBasedView$new(mat)
-      }
-      return(mat)
+      ## if unnamed (and test for length has passed in previous statement) set names
+      if (is.null(names(coords))) names(coords) <- self$dimnames()
+
+      ## convert integer to integer64 to match dimension type
+      coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+      
+      coords
     },
 
     ## internal 'repr' state variable, by default 'unset'

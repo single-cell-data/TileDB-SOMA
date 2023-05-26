@@ -114,64 +114,31 @@ SOMADenseNDArray <- R6::R6Class(
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @template param-result-order
-    #' @param iterated Option boolean indicated whether data is read in call (when
-    #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"auto"`.
+    #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
       result_order = "auto",
-      iterated = FALSE,
-      log_level = "auto"
+      log_level = "warn"
     ) {
       private$check_open_for_read()
 
       uri <- self$uri
 
       result_order <- map_query_layout(match_query_layout(result_order))
-
+      
       if (!is.null(coords)) {
-          ## ensure coords is a named list, use to select dim points
-          stopifnot("'coords' must be a list" = is.list(coords),
-                    "'coords' must be a list of vectors or integer64" =
-                        all(vapply_lgl(coords, is_vector_or_int64)),
-                    "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
-                        (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
-                        (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
-                    )
-
-          ## if unnamed (and test for length has passed in previous statement) set names
-          if (is.null(names(coords))) names(coords) <- self$dimnames()
-
-          ## convert integer to integer64 to match dimension type
-          coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+        coords <- private$convert_coords(coords)
       }
 
-      private$dense_matrix <- FALSE
-
-      if (isFALSE(iterated)) {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-          rl <- soma_array_reader(uri = uri,
-                                  dim_points = coords,        # NULL dealt with by soma_array_reader()
-                                  result_order = result_order,
-                                  loglevel = log_level,       # idem
-                                  config = cfg)
-          private$soma_reader_transform(rl)
-      } else {
-          ## should we error if this isn't null?
-          if (!is.null(self$soma_reader_pointer)) {
-              warning("pointer not null, skipping")
-              rl <- NULL
-          } else {
-              private$soma_reader_setup()
-              rl <- list()
-              while (!self$read_complete()) {
-                  ## soma_reader_transform() applied inside read_next()
-                  rl <- c(rl, self$read_next())
-              }
-          }
-          invisible(rl)
-      }
+      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      rl <- soma_array_reader(uri = uri,
+                              dim_points = coords,        # NULL dealt with by soma_array_reader()
+                              result_order = result_order,
+                              loglevel = log_level,       # idem
+                              config = cfg)
+      
+      soma_array_to_arrow_table(rl)
     },
 
     #' @description Read as a dense matrix (lifecycle: experimental)
@@ -179,15 +146,12 @@ SOMADenseNDArray <- R6::R6Class(
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @template param-result-order
-    #' @param iterated Option boolean indicated whether data is read in call (when
-    #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"auto"`.
+    #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return A `matrix` object
     read_dense_matrix = function(
       coords = NULL,
       result_order = "ROW_MAJOR",
-      iterated = FALSE,
-      log_level = "auto"
+      log_level = "warn"
     ) {
       private$check_open_for_read()
 
@@ -198,23 +162,12 @@ SOMADenseNDArray <- R6::R6Class(
                     all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
                 "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
 
-      if (isFALSE(iterated)) {
-          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-          m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
-                      nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
-                      ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
-                      byrow = result_order == "ROW_MAJOR")
-      } else {
-          ## should we error if this isn't null?
-          if (!is.null(self$soma_reader_pointer)) {
-              warning("pointer not null, skipping")
-          } else {
-              private$soma_reader_setup()
-              private$dense_matrix <- TRUE
-              private$result_order <- result_order
-          }
-          invisible(NULL)
-      }
+      tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
+      m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
+                  nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
+                  ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
+                  byrow = result_order == "ROW_MAJOR")
+      
     },
 
     #' @description Write matrix data to the array. (lifecycle: experimental)
@@ -251,22 +204,27 @@ SOMADenseNDArray <- R6::R6Class(
   ),
 
   private = list(
+                 
+    #' @description Converts a list of vectors corresponding to coords to a 
+    #' format acceptable for sr_setup and soma_array_reader
+    convert_coords = function(coords) {
+      
+      ## ensure coords is a named list, use to select dim points
+      stopifnot("'coords' must be a list" = is.list(coords),
+                "'coords' must be a list of vectors or integer64" =
+                    all(vapply_lgl(coords, is_vector_or_int64)),
+                "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
+                    (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
+                    (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
+                )
 
-    ## refined from base class
-    soma_reader_transform = function(x) {
-      tbl <- arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
-      if (isTRUE(private$dense_matrix)) {
-          m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
-                      nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
-                      ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
-                      byrow = private$result_order == "ROW_MAJOR")
-      } else {
-          tbl
-      }
-    },
+      ## if unnamed (and test for length has passed in previous statement) set names
+      if (is.null(names(coords))) names(coords) <- self$dimnames()
 
-    ## internal state variable for dense matrix vs arrow table return
-    dense_matrix = TRUE,
-    result_order = "ROW_MAJOR"
+      ## convert integer to integer64 to match dimension type
+      coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+      
+      coords
+    }
   )
 )

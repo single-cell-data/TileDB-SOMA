@@ -64,8 +64,6 @@ The \code{write} method is currently limited to writing from 2-d matrices.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_complete"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_complete'><code>tiledbsoma::SOMAArrayBase$read_complete()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="read_next"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-read_next'><code>tiledbsoma::SOMAArrayBase$read_next()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -109,8 +107,7 @@ Read as an 'arrow::Table' (lifecycle: experimental)
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_arrow_table(
   coords = NULL,
   result_order = "auto",
-  iterated = FALSE,
-  log_level = "auto"
+  log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
 
@@ -127,10 +124,7 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
-\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
-\code{FALSE}, the default value) or in several iterated steps.}
-
-\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -147,8 +141,7 @@ Read as a dense matrix (lifecycle: experimental)
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_dense_matrix(
   coords = NULL,
   result_order = "ROW_MAJOR",
-  iterated = FALSE,
-  log_level = "auto"
+  log_level = "warn"
 )}\if{html}{\out{</div>}}
 }
 
@@ -165,10 +158,7 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
-\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
-\code{FALSE}, the default value) or in several iterated steps.}
-
-\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
 }

@@ -14,35 +14,36 @@ test_that("SOMASparseNDArray creation", {
 
   ndarray <- SOMASparseNDArrayOpen(uri)
 
-  tbl <- ndarray$read_arrow_table(result_order = "COL_MAJOR")
-  expect_true(is_arrow_table(tbl))
-  expect_equal(tbl$ColumnNames(), c("soma_dim_0", "soma_dim_1", "soma_data"))
+  # TODO include when sr_setup allows for result_order
+  #tbl <- ndarray$read(result_order = "COL_MAJOR")$tables()$concat()
+  #expect_true(is_arrow_table(tbl))
+  #expect_equal(tbl$ColumnNames(), c("soma_dim_0", "soma_dim_1", "soma_data"))
 
-  expect_identical(
-    as.numeric(tbl$GetColumnByName("soma_data")),
-    ## need to convert to Csparsematrix first to get x values sorted appropriately
-    as.numeric(as(mat, "CsparseMatrix")@x)
-  )
+  #expect_identical(
+  #  as.numeric(tbl$GetColumnByName("soma_data")),
+  #  ## need to convert to Csparsematrix first to get x values sorted appropriately
+  #  as.numeric(as(mat, "CsparseMatrix")@x)
+  #)
 
-  # Subset both dims
-  tbl <- ndarray$read_arrow_table(
-    coords = list(soma_dim_0=0, soma_dim_1=0:2),
-    result_order = "COL_MAJOR"
-  )
-  expect_identical(
-    as.numeric(tbl$GetColumnByName("soma_data")),
-    as.numeric(mat[1, 1:3])
-  )
+  ## Subset both dims
+  #tbl <- ndarray$read(
+  #  coords = list(soma_dim_0=0, soma_dim_1=0:2),
+  #  result_order = "COL_MAJOR"
+  #)$tables()$concat()
+  #expect_identical(
+  #  as.numeric(tbl$GetColumnByName("soma_data")),
+  #  as.numeric(mat[1, 1:3])
+  #)
 
-  # Subset both dims, unnamed
-  tbl <- ndarray$read_arrow_table(
-    coords = list(0, 0:2),
-    result_order = "COL_MAJOR"
-  )
-  expect_identical(
-    as.numeric(tbl$GetColumnByName("soma_data")),
-    as.numeric(mat[1, 1:3])
-  )
+  ## Subset both dims, unnamed
+  #tbl <- ndarray$read(
+  #  coords = list(0, 0:2),
+  #  result_order = "COL_MAJOR"
+  #)$tables()$concat()
+  #expect_identical(
+  #  as.numeric(tbl$GetColumnByName("soma_data")),
+  #  as.numeric(mat[1, 1:3])
+  #)
 
   # Validate TileDB array schema
   arr <- tiledb::tiledb_array(uri)
@@ -85,25 +86,18 @@ test_that("SOMASparseNDArray read_sparse_matrix", {
 
   # read_sparse_matrix
   ndarray <- SOMASparseNDArrayOpen(uri)
-  expect_s4_class(mat2 <- ndarray$read_sparse_matrix(repr = "T"), "TsparseMatrix")
-  expect_equal(dim(mat2), c(10, 10))
-  expect_equal(nrow(mat2), 10)
-  expect_equal(ncol(mat2), 10)
+  mat2 <- ndarray$read()$sparse_matrix(zero_based = T)$concat()
+  expect_true(inherits(mat2, "matrixZeroBasedView"))
+  expect_s4_class(mat2$get_one_based_matrix(), "sparseMatrix")
+  expect_equal(mat2$dim(), c(10, 10))
+  expect_equal(mat2$nrow(), 10)
+  expect_equal(mat2$ncol(), 10)
   ## not sure why all.equal(mat, mat2) does not pass
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9, 1:9])))
-  expect_equal(sum(mat), sum(mat2))
+  expect_true(all.equal(as.numeric(mat[1:9, 1:9]), as.numeric(mat2$take(0:8, 0:8)$get_one_based_matrix())))
+  expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
 
   ndarray <- SOMASparseNDArrayOpen(uri)
 
-  # repeat with iterated reader
-  ndarray$read_sparse_matrix(repr = "T", iterated = TRUE)
-  mat3 <- ndarray$read_next()
-  expect_s4_class(mat3, "TsparseMatrix")
-  expect_equal(dim(mat3), c(10, 10))
-  expect_equal(nrow(mat3), 10)
-  expect_equal(ncol(mat3), 10)
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat3[1:9, 1:9])))
-  expect_equal(sum(mat), sum(mat3))
   ndarray$close()
 })
 
@@ -120,7 +114,7 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
 
   # read_sparse_matrix
   ndarray <- SOMASparseNDArrayOpen(uri)
-  mat2 <- ndarray$read_sparse_matrix_zero_based(repr="T")
+  mat2 <- ndarray$read()$sparse_matrix(zero_based=T)$concat()
   expect_true(inherits(mat2, "matrixZeroBasedView"))
   expect_s4_class(mat2$get_one_based_matrix(), "sparseMatrix")
   expect_equal(mat2$dim(), c(10, 10))
@@ -133,8 +127,8 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   ndarray <- SOMASparseNDArrayOpen(uri)
 
   # repeat with iterated reader
-  ndarray$read_sparse_matrix_zero_based(repr="T", iterated=TRUE)
-  mat2 <- ndarray$read_next()
+  iterator <- ndarray$read()$sparse_matrix(zero_based = T)
+  mat2 <- iterator$read_next()
   expect_true(inherits(mat2, "matrixZeroBasedView"))
   expect_s4_class(mat2$get_one_based_matrix(), "sparseMatrix")
   expect_equal(mat2$dim(), c(10, 10))

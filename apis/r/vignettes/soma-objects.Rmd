@@ -71,10 +71,10 @@ experiment$obs$schema()
 
 Note that `soma_joinid` is a field that exists in every `SOMADataFrame` and acts as a join key for other objects in the dataset.
 
-Again, when a SOMA object is accessed, only a pointer is returned and no data is read into memory. To load the data in memory, we call `read()`, which returns an [Arrow Table](https://arrow.apache.org/docs/r/reference/Table.html) and is easily converted to a data frame by appending `$to_data_frame()`.
+Again, when a SOMA object is accessed, only a pointer is returned and no data is read into memory. To load the data in memory, we call `read()$concat()`, which returns an [Arrow Table](https://arrow.apache.org/docs/r/reference/Table.html) and is easily converted to a data frame by appending `$to_data_frame()`.
 
 ```{r}
-experiment$obs$read()
+experiment$obs$read()$concat()
 ```
 
 The amount of data that can be read at once is determined by the `soma.init_buffer_bytes` configuration parameter, which, by default, is set to 16MB for each column. If the requested data is larger than this value an error will be thrown.
@@ -82,7 +82,8 @@ The amount of data that can be read at once is determined by the `soma.init_buff
 If your system has more memory, you can increase this parameter to a larger value to read in more data at once. Alternatively, you can use the iterated reader, which retrieves data in chunks that are smaller than the `soma.init_buffer_bytes` parameter. The result of which is a list of Arrow Tables.
 
 ```{r}
-experiment$obs$read(iterated = TRUE)
+iterator <- experiment$obs$read()
+iterator$read_next()
 ```
 
 We can also select a subset of rows from the `SOMADataFrame` using the `coords` argument. This will retrieve only the required subset from disk to memory. In this example, we will select only the first 10 rows:
@@ -90,19 +91,19 @@ We can also select a subset of rows from the `SOMADataFrame` using the `coords` 
 *NOTE: The `coords` argument is 0-based.*
 
 ```{r}
-experiment$obs$read(coords = 0:9)
+experiment$obs$read(coords = 0:9)$concat()
 ```
 
 As TileDB is a columnar format, we can also select a subset of the columns:
 
 ```{r}
-experiment$obs$read(0:9, column_names = c("obs_id", "nCount_RNA"))
+experiment$obs$read(0:9, column_names = c("obs_id", "nCount_RNA"))$concat()
 ```
 
 Finally, we can use `value_filter` to retrieve a subset of rows that match a certain condition.
 
 ```{r}
-experiment$obs$read(value_filter = "nCount_RNA > 100")
+experiment$obs$read(value_filter = "nCount_RNA > 100")$concat()
 ```
 
 And of course, you can combine all of these arguments together to get at only the data you need.
@@ -187,13 +188,11 @@ zero-based underlying representation access but then accesses a one-based
 view as the sparse matrix functionality from package `Matrix` imposes this.*
 
 ```{r}
-X_data$read_sparse_matrix_zero_based()$get_one_based_matrix()[1:5, 1:10]
+X_data$read()$sparse_matrix()$concat()[1:5, 1:10]
 ```
 
 Similarly to `SOMADataFrame`s, `read()` method we can define coordinates to slice obtain a subset of the matrix from disk:
 
 ```{r}
-X_data$read_sparse_matrix_zero_based(
-  coords = list(soma_dim_0 = 0:4, soma_dim_1 = 0:9)
-)
+X_data$read(coords = list(soma_dim_0 = 0:4, soma_dim_1 = 0:9))$sparse_matrix()$concat()
 ```
