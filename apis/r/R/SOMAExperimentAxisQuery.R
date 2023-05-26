@@ -1144,9 +1144,13 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
       )
       soma_axis <- soma_collection$get(layer)
+      ncoords <- max(tiledb::tiledb_array_get_non_empty_domain_from_name(
+        arr = soma_axis$object,
+        name = soma_axis$dimnames()[2L]
+      ))
       coords <- list(
         rows = soma_joinids$as_vector(),
-        dims = seq_len(as.integer(soma_axis$shape()[2L])) - 1L
+        dims = seq.int(0L, as.integer(ncoords))
       )
       mat <- if (inherits(soma_axis, 'SOMASparseNDArray')) {
         as.matrix(soma_axis$read_sparse_matrix()[coords$rows + 1L, coords$dims + 1L])
