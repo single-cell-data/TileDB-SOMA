@@ -65,14 +65,6 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
 #' @return \link{matrixZeroBasedView} of \link[base]{matrix}
 arrow_table_to_dense <- function(tbl, byrow) {
 
-  # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
-  # zero-based soma_dim_0 and soma_dim_1 (done by arrow_table_to_sparse). But, because these dimensions are
-  # usually populated with soma_joinid, users will need to access the matrix
-  # using the original, possibly-zero IDs. Therefore, we'll wrap the one-based
-  # sparseMatrix with a shim providing basic access with zero-based indexes.
-  # If needed, user can then explicitly ask the shim for the underlying
-  # sparseMatrix using `as.one.based()`.
-
   nrows <- length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0"))))
   ncols <- length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1"))))
   soma_data <- as.numeric(tbl$GetColumnByName("soma_data"))
