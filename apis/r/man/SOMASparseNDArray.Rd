@@ -30,7 +30,9 @@ the object are overwritten and new index values are added. (lifecycle: experimen
 \itemize{
 \item \href{#method-SOMASparseNDArray-create}{\code{SOMASparseNDArray$create()}}
 \item \href{#method-SOMASparseNDArray-read_arrow_table}{\code{SOMASparseNDArray$read_arrow_table()}}
+\item \href{#method-SOMASparseNDArray-read_sparse_matrix}{\code{SOMASparseNDArray$read_sparse_matrix()}}
 \item \href{#method-SOMASparseNDArray-read_sparse_matrix_zero_based}{\code{SOMASparseNDArray$read_sparse_matrix_zero_based()}}
+\item \href{#method-SOMASparseNDArray-read_next}{\code{SOMASparseNDArray$read_next()}}
 \item \href{#method-SOMASparseNDArray-write}{\code{SOMASparseNDArray$write()}}
 \item \href{#method-SOMASparseNDArray-nnz}{\code{SOMASparseNDArray$nnz()}}
 \item \href{#method-SOMASparseNDArray-clone}{\code{SOMASparseNDArray$clone()}}
@@ -106,7 +108,7 @@ Read as an 'arrow::Table' (lifecycle: experimental)
   coords = NULL,
   result_order = "auto",
   iterated = FALSE,
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 
@@ -120,13 +122,48 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
+\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
+\code{FALSE}, the default value) or in several iterated steps.}
+
+\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+An \code{\link[arrow:Table]{arrow::Table}}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMASparseNDArray-read_sparse_matrix"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_sparse_matrix}{}}}
+\subsection{Method \code{read_sparse_matrix()}}{
+Read as a sparse matrix (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix(
+  coords = NULL,
+  result_order = "auto",
+  repr = c("C", "T", "R"),
+  iterated = FALSE,
+  log_level = "auto"
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{coords}}{Optional \code{list} of integer vectors, one for each dimension, with a
+length equal to the number of values to read. If \code{NULL}, all values are
+read. List elements can be named when specifying a subset of dimensions.}
+
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
+
+\item{\code{repr}}{Optional one-character code for sparse matrix representation type}
 
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -138,20 +175,15 @@ arrow::\link[arrow]{Table} or \link{TableReadIter}
 \if{html}{\out{<a id="method-SOMASparseNDArray-read_sparse_matrix_zero_based"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_sparse_matrix_zero_based}{}}}
 \subsection{Method \code{read_sparse_matrix_zero_based()}}{
-Read as a sparse matrix (lifecycle: experimental). Returns
-a \code{matrix}-like object accessed using zero-based indexes or an iterator
-of those. The matrix-like objects supports only basic access operations
-with zero-based indexes as well as \code{dim()},\code{nrow()}, and \code{ncol()} and
-arithmetic operations as defined in \link[base]{groupGeneric}.
-Use \code{as.one.based()} to get a fully-featured sparse matrix object supporting
-more advanced operations (with one-based indexing).
+d operations (with one-based indexing).
+Read as a zero-indexed sparse matrix (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_sparse_matrix_zero_based(
   coords = NULL,
   result_order = "auto",
   repr = "T",
   iterated = FALSE,
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 
@@ -165,22 +197,29 @@ read. List elements can be named when specifying a subset of dimensions.}
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
-\item{\code{result_order}}{Optional order of read results. This can be one of either
-\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
-
 \item{\code{repr}}{Optional one-character code for sparse matrix representation type}
 
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix} or
 \link{SparseReadIter}
+
 }
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMASparseNDArray-read_next"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read_next}{}}}
+\subsection{Method \code{read_next()}}{
+Read the next chunk of an iterated read. (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read_next()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMASparseNDArray-write"></a>}}

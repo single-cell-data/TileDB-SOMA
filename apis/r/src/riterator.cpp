@@ -16,7 +16,9 @@
 #include <tiledbsoma/tiledbsoma>
 
 #include "rutilities.h"         // local declarations
-#include "xptr-utils.h"         // xptr taggging utilities
+#include "xptr-utils.h"         // xptr taggging utilitie
+Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children);
+Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children);
 
 namespace tdbs = tiledbsoma;
 
@@ -51,7 +53,7 @@ namespace tdbs = tiledbsoma;
 //' \dontrun{
 //' ctx <- tiledb::tiledb_ctx()
 //' uri <- "test/soco/pbmc3k_processed/obs"
-//' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="warn")
+//' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="auto")
 //' rl <- data.frame()
 //' while (!sr_complete(sr)) {
 //'     sr |>
@@ -168,11 +170,8 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    auto ncol = names.size();
    Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
    Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
-   ArrowSchemaInitFromType((ArrowSchema*)R_ExternalPtrAddr(schemaxp), NANOARROW_TYPE_STRUCT);
-   ArrowSchemaAllocateChildren((ArrowSchema*)R_ExternalPtrAddr(schemaxp), ncol);
-   ArrowArrayInitFromType((ArrowArray*)R_ExternalPtrAddr(arrayxp), NANOARROW_TYPE_STRUCT);
-   ArrowArrayAllocateChildren((ArrowArray*)R_ExternalPtrAddr(arrayxp), ncol);
-
+   schemaxp = schema_setup_struct(schemaxp, ncol);
+   arrayxp = array_setup_struct(arrayxp, ncol);
    arrayxp->length = 0;
 
    for (size_t i=0; i<ncol; i++) {

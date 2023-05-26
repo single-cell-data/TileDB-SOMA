@@ -149,7 +149,7 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     rowsTotal <- 0
     for (i in 1:2) {
         expect_false(iterator$read_complete())
-        dat <- as.one.based(iterator$read_next())
+        dat <- iterator$read_next()$get_one_based_matrix()
         nnz <- Matrix::nnzero(dat)
         expect_gt(nnz, 0)
         nnzTotal <- nnzTotal + nnz

@@ -116,7 +116,7 @@ column, and optionally filtered.
   value_filter = NULL,
   result_order = "auto",
   iterated = FALSE,
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 
@@ -138,7 +138,7 @@ more information.}
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
 }
 \if{html}{\out{</div>}}
 }

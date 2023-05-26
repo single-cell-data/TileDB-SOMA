@@ -201,7 +201,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             Experimental.
         """
         context = _validate_soma_tiledb_context(context)
-        _util.validate_platform_config(platform_config)
         schema = _canonicalize_schema(schema, index_column_names)
         tdb_schema = _build_tiledb_schema(
             schema,
@@ -699,12 +698,12 @@ def _build_tiledb_schema(
             domain=slot_domain,
             tile=extent,
             dtype=dtype,
-            filters=tiledb_create_options.dim_filters(
+            filters=tiledb_create_options.dim_filters_tiledb(
                 index_column_name,
                 [
                     dict(
                         _type="ZstdFilter",
-                        level=tiledb_create_options.dataframe_dim_zstd_level(),
+                        level=tiledb_create_options.dataframe_dim_zstd_level,
                     )
                 ],
             ),
@@ -724,7 +723,9 @@ def _build_tiledb_schema(
                 schema.field(attr_name).type
             ),
             nullable=metadata.get(attr_name.encode("utf-8")) == b"nullable",
-            filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
+            filters=tiledb_create_options.attr_filters_tiledb(
+                attr_name, ["ZstdFilter"]
+            ),
             ctx=context.tiledb_ctx,
         )
         attrs.append(attr)
@@ -735,10 +736,10 @@ def _build_tiledb_schema(
         domain=dom,
         attrs=attrs,
         sparse=True,
-        allows_duplicates=tiledb_create_options.allows_duplicates(),
-        offsets_filters=tiledb_create_options.offsets_filters(),
-        validity_filters=tiledb_create_options.validity_filters(),
-        capacity=tiledb_create_options.capacity(),
+        allows_duplicates=tiledb_create_options.allows_duplicates,
+        offsets_filters=tiledb_create_options.offsets_filters_tiledb(),
+        validity_filters=tiledb_create_options.validity_filters_tiledb(),
+        capacity=tiledb_create_options.capacity,
         cell_order=cell_order,
         # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
         # col-major tile order: so we write ``X`` with row-major tile order.

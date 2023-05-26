@@ -145,7 +145,6 @@ SOMASparseNDArray <- R6::R6Class(
       SOMASparseNDArrayRead$new(sr, shape = self$shape())
     },
 
-
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
     #'
     #' @param values Any `matrix`-like object coercible to a
@@ -211,7 +210,10 @@ SOMASparseNDArray <- R6::R6Class(
     },
 
     ## internal 'repr' state variable, by default 'unset'
-    sparse_repr = ""
+    sparse_repr = "",
+
+    # Internal marking of one or zero based matrices for iterated reads
+    zero_based = NA
 
   )
 )

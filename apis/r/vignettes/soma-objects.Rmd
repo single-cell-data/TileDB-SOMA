@@ -181,10 +181,13 @@ X_data$nnz()
 
 Let's load the data as a sparse matrix into memory:
 
-*Note: We are reading the full matrix into memory and then subsetting it to the first 5 rows and 10 columns to truncate the output.*
+*Note: We are reading the full matrix into memory and then subsetting it to
+the first 5 rows and 10 columns to truncate the output. This uses the
+zero-based underlying representation access but then accesses a one-based
+view as the sparse matrix functionality from package `Matrix` imposes this.*
 
 ```{r}
-X_data$read_sparse_matrix_zero_based()[0:4, 0:9]
+X_data$read_sparse_matrix_zero_based()$get_one_based_matrix()[1:5, 1:10]
 ```
 
 Similarly to `SOMADataFrame`s, `read()` method we can define coordinates to slice obtain a subset of the matrix from disk:

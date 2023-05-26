@@ -10,7 +10,7 @@ all: $(SHLIB)
         # On macOS aka Darwin we call install_name_tool
         # Case one: If we had a downloaded TileDB Core artifact, adjust zlib path and add to @rpath
         # Case two: If we see the system libraries (on macOS) ensure /usr/local/lib rpath is considered
-	if [ `uname -s` = 'Darwin' ] && [ -f tiledbsoma.so ]; then \
+	@if [ `uname -s` = 'Darwin' ] && [ -f tiledbsoma.so ]; then \
 	    if [ -f ../inst/tiledb/lib/libtiledb.dylib ] ; then \
 	        install_name_tool -change libz.1.dylib @rpath/libz.1.dylib ../inst/tiledb/lib/libtiledb.dylib; \
 	        install_name_tool -add_rpath @loader_path/../tiledb/lib tiledbsoma.so; \
