@@ -255,8 +255,6 @@ test_that("queries with empty results", {
     )
   expect_equal(query$obs()$num_rows, 0)
   expect_equal(query$var()$num_rows, 0)
-  expect_equal(4L/2L, 2L)
-  experiment$close()
 })
 
 test_that("retrieving query results in supported formats", {
