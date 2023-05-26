@@ -123,8 +123,8 @@ test_that("Iterated Interface from SOMA Classes", {
         }
 
         expect_true(iterator$read_complete())
-        expect_null(iterator$read_next())
-        expect_warning(iterator$read_next())
+        expect_warning(iterator$read_next()) # returns NULL with warning
+        expect_warning(iterator$read_next()) # returns NULL with warning
 
         rm(sdf)
     }
@@ -158,9 +158,8 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     }
 
     expect_true(iterator$read_complete())
-    expect_null(iterator$read_next())
-    expect_warning(iterator$read_next())
-
+    expect_warning(iterator$read_next()) # returns NULL with warning
+    expect_warning(iterator$read_next()) # returns NULL with warning
     expect_equal(nnzTotal, Matrix::nnzero(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
     expect_equal(nnzTotal, 2238732)
 

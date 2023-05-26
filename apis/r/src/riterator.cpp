@@ -143,12 +143,24 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 // [[Rcpp::export]]
 bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    check_xptr_tag<tdbs::SOMAArray>(sr);
-   size_t nobs = sr->total_num_cells();
    bool complt = sr->is_complete(true);
-   bool res = complt && nobs > 0; // completed transfer if query status complete and data shipped
-   spdl::debug("[sr_complete] Complete query test {} (compl {} nobs {})", res, complt, nobs);
+   bool initial = sr->is_initial_read();
+   bool res = complt && !initial; // completed transfer if query status complete and query ran once
+   spdl::debug("[sr_complete] Complete query test {} (compl {} initial {})", res, complt, initial);
    return res;
 }
+
+Rcpp::List create_empty_arrow_table() {
+    Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
+    Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
+    schemaxp = schema_setup_struct(schemaxp, 0);
+    arrayxp = array_setup_struct(arrayxp, 0);
+    arrayxp->length = 0;
+    Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
+                                       Rcpp::Named("schema") = schemaxp);
+    return as;
+}
+
 
 //' @rdname sr_setup
 //' @export
@@ -159,13 +171,13 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    if (sr_complete(sr)) {
        spdl::trace("[sr_next] complete {} num_cells {}",
                    sr->is_complete(true), sr->total_num_cells());
-       return Rcpp::List::create(R_NilValue, R_NilValue);
+       return create_empty_arrow_table();
    }
 
    if (!sr->is_initial_read() && sr->total_num_cells() == 0) {
        spdl::trace("[sr_next] is_initial_read {} num_cells {}",
                    sr->is_initial_read(), sr->total_num_cells());
-       return Rcpp::List::create(R_NilValue, R_NilValue);
+       return create_empty_arrow_table();
    }
 
    auto sr_data = sr->read_next();

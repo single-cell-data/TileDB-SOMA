@@ -228,38 +228,36 @@ test_that("querying by both coordinates and value filters", {
   experiment$close()
 })
 
-# TODO include when sr_setup and sr_next support empty results
-#test_that("queries with empty results", {
-#  uri <- withr::local_tempdir("soma-experiment-query-empty-results")
-#  n_obs <- 1001L
-#  n_var <- 99L
-#
-#  experiment <- create_and_populate_experiment(
-#    uri = uri,
-#    n_obs = n_obs,
-#    n_var = n_var,
-#    X_layer_names = c("counts", "logcounts"),
-#    mode = "READ"
-#  )
-#  on.exit(experiment$close())
-#
-#  # obs/var slice and value filter
-#  query <- SOMAExperimentAxisQuery$new(
-#    experiment = experiment,
-#    measurement_name = "RNA",
-#    obs_query = SOMAAxisQuery$new(
-#      value_filter = "baz == 'does-not-exist'"
-#    ),
-#    var_query = SOMAAxisQuery$new(
-#      value_filter = "quux == 'does-not-exist'"
-#    )
-#  )
-#
-#  expect_equal(query$obs()$num_rows, 0)
-#  expect_equal(query$var()$num_rows, 0)
-#
-#  experiment$close()
-#})
+test_that("queries with empty results", {
+  uri <- withr::local_tempdir("soma-experiment-query-empty-results")
+  n_obs <- 1001L
+  n_var <- 99L
+
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
+  )
+  on.exit(experiment$close())
+
+  # obs/var slice and value filter
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(
+      value_filter = "baz == 'does-not-exist'"
+    ),
+    var_query = SOMAAxisQuery$new(
+      value_filter = "quux == 'does-not-exist'"
+    )
+    )
+  expect_equal(query$obs()$num_rows, 0)
+  expect_equal(query$var()$num_rows, 0)
+  expect_equal(4L/2L, 2L)
+  experiment$close()
+})
 
 test_that("retrieving query results in supported formats", {
   uri <- withr::local_tempdir("soma-experiment-query-results-formats1")
