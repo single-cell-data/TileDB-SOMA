@@ -9,6 +9,9 @@ SOMASparseNDArrayRead <- R6::R6Class(
 
   public = list(
                 
+    #' @description Create (lifecycle: experimental)
+    #' @param sr soma read pointer
+    #' @param shape Shape of the full matrix
     initialize = function(sr, shape) {
       private$sr <- sr
       private$shape <- shape

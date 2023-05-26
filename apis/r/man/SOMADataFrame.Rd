@@ -138,7 +138,7 @@ more information.}
 \item{\code{iterated}}{Option boolean indicated whether data is read in call (when
 \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"auto"}.}
+\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
 }

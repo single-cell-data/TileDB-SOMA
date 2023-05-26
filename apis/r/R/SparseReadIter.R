@@ -13,6 +13,7 @@ SparseReadIter <- R6::R6Class(
   public = list(
                 
     #' @description Create (lifecycle: experimental)
+    #' @param sr Soma reader pointer
     #' @param shape Shape of the full matrix
     #' @param zero_based Logical, if TRUE will make iterator for Matrix::\link[Matrix]{dgTMatrix}
     #' otherwise \link{matrixZeroBasedView}.

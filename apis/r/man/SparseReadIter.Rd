@@ -33,39 +33,18 @@ Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Ma
 \subsection{Method \code{new()}}{
 Create (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SparseReadIter$new(
-  uri,
-  config,
-  colnames = NULL,
-  qc = NULL,
-  dim_points = NULL,
-  loglevel = "auto",
-  repr = c("C", "T", "R"),
-  shape
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SparseReadIter$new(sr, shape, zero_based = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{uri}}{Character value with URI path to a SOMADataFrame or SOMASparseNDArray}
+\item{\code{sr}}{Soma reader pointer}
 
-\item{\code{config}}{character vector containing TileDB config.}
+\item{\code{shape}}{Shape of the full matrix}
 
-\item{\code{colnames}}{Optional vector of character value with the name of the columns to retrieve}
-
-\item{\code{qc}}{Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
-no query condition}
-
-\item{\code{dim_points}}{Optional named list with vector of data points to select on the given
-dimension(s). Each dimension can be one entry in the list.}
-
-\item{\code{loglevel}}{Character value with the desired logging level, defaults to \sQuote{auto}}
-
-\item{\code{repr}}{Optional one-character code for sparse matrix representation type
-which lets prior setting prevail, any other value is set as new logging level.}
-
-\item{\code{shape}}{Numerical vector with two elements.}
+\item{\code{zero_based}}{Logical, if TRUE will make iterator for Matrix::\link[Matrix]{dgTMatrix}
+otherwise \link{matrixZeroBasedView}.}
 }
 \if{html}{\out{</div>}}
 }

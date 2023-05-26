@@ -8,7 +8,7 @@ ReadIter <- R6::R6Class(
   public = list(
                 
     #' @description Create (lifecycle: experimental)
-    #' @param sr
+    #' @param sr soma read pointer
     initialize = function(sr) {
       private$soma_reader_pointer <- sr
     },

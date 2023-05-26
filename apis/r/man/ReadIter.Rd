@@ -27,33 +27,13 @@ Class that allows for read iteration of SOMA reads.
 \subsection{Method \code{new()}}{
 Create (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ReadIter$new(
-  uri,
-  config,
-  colnames = NULL,
-  qc = NULL,
-  dim_points = NULL,
-  loglevel = "auto"
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ReadIter$new(sr)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{uri}}{Character value with URI path to a SOMADataFrame or SOMASparseNDArray}
-
-\item{\code{config}}{character vector containing TileDB config.}
-
-\item{\code{colnames}}{Optional vector of character value with the name of the columns to retrieve}
-
-\item{\code{qc}}{Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
-no query condition}
-
-\item{\code{dim_points}}{Optional named list with vector of data points to select on the given
-dimension(s). Each dimension can be one entry in the list.}
-
-\item{\code{loglevel}}{Character value with the desired logging level, defaults to \sQuote{auto}
-which lets prior setting prevail, any other value is set as new logging level.}
+\item{\code{sr}}{soma read pointer}
 }
 \if{html}{\out{</div>}}
 }
