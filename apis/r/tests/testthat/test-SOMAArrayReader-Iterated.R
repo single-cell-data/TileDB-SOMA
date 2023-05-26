@@ -62,7 +62,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
     sr <- sr_setup(uri, config=as.character(config(ctx)))
 
     expect_false(tiledbsoma:::sr_complete(sr))
-    dat <- dat <- sr_next(sr)
+    dat <- sr_next(sr)
     expect_true(tiledbsoma:::sr_complete(sr))
 })
 
@@ -84,14 +84,14 @@ test_that("Iterated Interface from SOMA Classes", {
                       sparse = SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"))
         expect_true(inherits(sdf, "SOMAArrayBase"))
         sdf$open("READ", internal_use_only = "allowed_use")
-      
+
         iterator <- switch(tc,
                            data.frame = sdf$read(),
                            sparse = sdf$read()$tables())
-                           
+
         expect_true(inherits(iterator, "ReadIter"))
         expect_true(inherits(iterator, "TableReadIter"))
-        
+
         # Test $concat()
         expect_false(iterator$read_complete())
         dat <- iterator$concat()
@@ -99,33 +99,33 @@ test_that("Iterated Interface from SOMA Classes", {
         expect_true(inherits(dat, "Table"))
         expect_equal(dat$num_columns, 3)
         expect_equal(dat$num_rows, 2238732)
-        
+
         rm(iterator)
-        
+
         # Test $read_next()
         iterator <- switch(tc,
                            data.frame = sdf$read(),
                            sparse = sdf$read()$tables())
-        
+
         expect_false(iterator$read_complete())
         for (i in 1:2) {
-            
+
             expect_false(iterator$read_complete())
             dat_slice <- iterator$read_next()
             expect_true(inherits(dat_slice, "Table"))
             expect_equal(dat_slice$num_columns, 3)
-            
+
             if (i < 2) {
                 expect_equal(dat_slice$num_rows, 2097152)
             } else {
                 expect_equal(dat_slice$num_rows, 141580)
             }
         }
-        
+
         expect_true(iterator$read_complete())
         expect_null(iterator$read_next())
         expect_warning(iterator$read_next())
-        
+
         rm(sdf)
     }
 
@@ -156,11 +156,11 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
         # the shard dims always match the shape of the whole sparse matrix
         expect_equal(dim(dat), as.integer(sdf$shape()))
     }
-    
+
     expect_true(iterator$read_complete())
     expect_null(iterator$read_next())
     expect_warning(iterator$read_next())
-    
+
     expect_equal(nnzTotal, Matrix::nnzero(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
     expect_equal(nnzTotal, 2238732)
 

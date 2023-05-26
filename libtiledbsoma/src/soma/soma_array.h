@@ -337,6 +337,16 @@ class SOMAArray {
     }
 
     /**
+     * @brief Return whether next read is the initial read, or a subsequent
+     * read of a previous incomplete query.
+     *
+     * @return bool Logical value if initial read or not
+     */
+    bool is_initial_read() {
+        return first_read_next_;
+    }
+
+    /**
      * @brief Get the total number of unique cells in the array.
      *
      * @return uint64_t Total number of unique cells
