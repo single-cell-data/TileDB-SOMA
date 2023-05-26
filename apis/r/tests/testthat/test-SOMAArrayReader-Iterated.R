@@ -161,7 +161,7 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     expect_null(iterator$read_next())
     expect_warning(iterator$read_next())
     
-    expect_equal(nnzTotal, Matrix::nnzero(as.one.based(sdf$read()$sparse_matrix(T)$concat())))
+    expect_equal(nnzTotal, Matrix::nnzero(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
     expect_equal(nnzTotal, 2238732)
 
     rm(sdf)

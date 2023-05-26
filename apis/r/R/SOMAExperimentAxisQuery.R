@@ -644,7 +644,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         )
         load_mat <- if (inherits(loads, 'SOMASparseNDArray')) {
           this_mat <- loads$read()$sparse_matrix(zero_based=TRUE)$concat()
-          this_mat <- embed$read_sparse_matrix_zero_based()
           this_mat <- this_mat$take(coords$features, coords$dims)
           this_mat <- this_mat$get_one_based_matrix()
           this_mat <- as(this_mat, "CsparseMatrix")
@@ -713,7 +712,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Check provided graph name
       obsp_layer <- match.arg(arg = obsp_layer, choices = ms_graph)
-      mat <- self$ms$obsp$get(obsp_layer)$read()$sparse_matrix(zero_based=FALSE)$concat()$get_one_based_matrix()
+      mat <- self$ms$obsp$get(obsp_layer)$read()$sparse_matrix(zero_based=TRUE)$concat()$get_one_based_matrix()
       mat <- as(mat, "CsparseMatrix")
       idx <- self$obs_joinids()$as_vector() + 1L
       mat <- mat[idx, idx]

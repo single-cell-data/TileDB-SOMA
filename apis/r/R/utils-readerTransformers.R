@@ -16,8 +16,11 @@ soma_array_to_arrow_table <- function(x) {
 #' @param repr Optional one-character code for sparse matrix representation type
 #' @param shape Numerical vector with two elements, one for each dimension. If
 #' \code{NULL}, then the following is used \code{1 + c(max(tbl["soma_dim_0"]), max(tbl["soma_dim_1"]))}
-#' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}
-arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL) {
+#' @param repr Optional one-character code for sparse matrix representation type
+#' @param zero_based Logical, if TRUE returns a Matrix::\link{sparse_matrix} 
+#' otherwise \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}
+#' @return Matrix::\link{sparse_matrix} or \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}
+arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, zero_based = FALSE) {
 
   # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
   # zero-based soma_dim_0 and soma_dim_1 (done by arrow_table_to_sparse). But, because these dimensions are
@@ -44,7 +47,11 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL) {
                               j = soma_dim_1_one_based,
                               x = soma_data,
                               dims = shape, repr = repr)
-  matrixZeroBasedView(mat)
+  if(zero_based) {
+      matrixZeroBasedView$new(mat)
+  } else {
+      mat
+  }
 }
 
 

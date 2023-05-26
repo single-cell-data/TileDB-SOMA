@@ -14,10 +14,6 @@ SOMASparseNDArrayRead <- R6::R6Class(
       private$shape <- shape
     },
     
-    #sparse_matrix = function(){
-    # "sdf" 
-    #},
-    
     #' @description Read as a sparse matrix (lifecycle: experimental). Returns 
     #' an iterator of Matrix::\link[Matrix]{dgTMatrix} or \link{matrixZeroBasedView} of it.
     #' @param zero_based Logical, if \code{TRUE} returns iterator of \link{matrixZeroBasedView} 
@@ -25,7 +21,7 @@ SOMASparseNDArrayRead <- R6::R6Class(
     #' @return \link{SparseReadIter}
     sparse_matrix = function(zero_based=FALSE) {
       #TODO implement zero_based argument, currently doesn't do anything
-      SparseReadIter$new(sr = private$sr, shape = private$shape, zero_based=FALSE)
+      SparseReadIter$new(sr = private$sr, shape = private$shape, zero_based=zero_based)
     },
     
     #' @description Read as a arrow::\link[arrow]{Table} (lifecycle: experimental). 
