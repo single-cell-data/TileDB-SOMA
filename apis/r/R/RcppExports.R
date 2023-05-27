@@ -109,8 +109,8 @@ shape <- function(uri, config = NULL) {
 #' summary(rl)
 #' }
 #' @export
-sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, loglevel = "auto") {
-    .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, loglevel)
+sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto") {
+    .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel)
 }
 
 #' @rdname sr_setup
