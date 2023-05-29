@@ -13,12 +13,14 @@ SOMACollectionBase <- R6::R6Class(
     #' @param uri URI of the TileDB group
     #' @param platform_config Optional storage-engine specific configuration
     #' @param tiledbsoma_ctx optional SOMATileDBContext
+    #' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `new()` is considered internal and should not be called directly.
-    initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
+    initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL,
                           internal_use_only = NULL) {
       super$initialize(uri=uri, platform_config=platform_config,
-                       tiledbsoma_ctx=tiledbsoma_ctx, internal_use_only=internal_use_only)
+                       tiledbsoma_ctx=tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp,
+                       internal_use_only=internal_use_only)
     },
 
     #' @description Add a new SOMA object to the collection. (lifecycle: experimental)
