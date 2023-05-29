@@ -29,7 +29,7 @@ TileDBArray <- R6::R6Class(
         spdl::debug("Opening {} '{}' in {} mode at {}",
                     self$class(), self$uri, mode, self$tiledb_timestamp)
         tiledb::tiledb_array_open_at(self$object, type = mode,
-                                     timestamp = private$tiledb_timestamp))
+                                     timestamp = private$tiledb_timestamp)
       }
       private$update_metadata_cache()
       self

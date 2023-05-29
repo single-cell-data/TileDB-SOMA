@@ -64,6 +64,7 @@ Create a new \code{SOMACollection}. (lifecycle: experimental)
   uri,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL,
   internal_use_only = NULL
 )}\if{html}{\out{</div>}}
 }
@@ -76,6 +77,8 @@ Create a new \code{SOMACollection}. (lifecycle: experimental)
 \item{\code{platform_config}}{Optional storage-engine specific configuration}
 
 \item{\code{tiledbsoma_ctx}}{optional SOMATileDBContext}
+
+\item{\code{tiledb_timestamp}}{Optional POSIXct for TileDB timestamp}
 
 \item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
 as \code{new()} is considered internal and should not be called directly.}
