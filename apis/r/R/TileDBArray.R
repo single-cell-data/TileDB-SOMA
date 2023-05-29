@@ -21,11 +21,16 @@ TileDBArray <- R6::R6Class(
                    "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
       }
 
-      spdl::debug(
-        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
-      )
       private$.mode = mode
-      tiledb::tiledb_array_open(self$object, type = mode)
+      if (is.null(private$tiledb_timestamp)) {
+        spdl::debug("Opening {} '{}' in {} mode", self$class(), self$uri, mode)
+        tiledb::tiledb_array_open(self$object, type = mode)
+      } else {
+        spdl::debug("Opening {} '{}' in {} mode at {}",
+                    self$class(), self$uri, mode, self$tiledb_timestamp)
+        tiledb::tiledb_array_open_at(self$object, type = mode,
+                                     timestamp = private$tiledb_timestamp))
+      }
       private$update_metadata_cache()
       self
     },
@@ -266,7 +271,7 @@ TileDBArray <- R6::R6Class(
     }
 
   ),
-  
+
   active = list(
     #' @field object Access the underlying TileB object directly (either a
     #' [`tiledb::tiledb_array`] or [`tiledb::tiledb_group`]).
