@@ -126,7 +126,7 @@ SOMADenseNDArray <- R6::R6Class(
       uri <- self$uri
 
       result_order <- map_query_layout(match_query_layout(result_order))
-      
+
       if (!is.null(coords)) {
         coords <- private$convert_coords(coords)
       }
@@ -137,7 +137,7 @@ SOMADenseNDArray <- R6::R6Class(
                               result_order = result_order,
                               loglevel = log_level,       # idem
                               config = cfg)
-      
+
       soma_array_to_arrow_table(rl)
     },
 
@@ -167,7 +167,7 @@ SOMADenseNDArray <- R6::R6Class(
                   nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
                   ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
                   byrow = result_order == "ROW_MAJOR")
-      
+
     },
 
     #' @description Write matrix data to the array. (lifecycle: experimental)
@@ -204,11 +204,11 @@ SOMADenseNDArray <- R6::R6Class(
   ),
 
   private = list(
-                 
-    #' @description Converts a list of vectors corresponding to coords to a 
-    #' format acceptable for sr_setup and soma_array_reader
+
+    # @description Converts a list of vectors corresponding to coords to a
+    # format acceptable for sr_setup and soma_array_reader
     convert_coords = function(coords) {
-      
+
       ## ensure coords is a named list, use to select dim points
       stopifnot("'coords' must be a list" = is.list(coords),
                 "'coords' must be a list of vectors or integer64" =
@@ -223,7 +223,7 @@ SOMADenseNDArray <- R6::R6Class(
 
       ## convert integer to integer64 to match dimension type
       coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
-      
+
       coords
     }
   )

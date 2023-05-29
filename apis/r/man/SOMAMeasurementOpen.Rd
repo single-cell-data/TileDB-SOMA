@@ -8,7 +8,8 @@ SOMAMeasurementOpen(
   uri,
   mode = "READ",
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ SOMAMeasurementOpen(
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{optional SOMATileDBContext}
+
+\item{tiledb_timestamp}{Optional POSIXct for TileDB timestamp}
 }
 \description{
 Factory function to open a SOMAMeasurement for reading, (lifecycle: experimental)

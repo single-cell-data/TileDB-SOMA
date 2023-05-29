@@ -50,17 +50,23 @@ TileDBGroup <- R6::R6Class(
         stop(paste("Use of the open() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMACollectionOpen()'."), call. = FALSE)
       }
-      spdl::debug(
-        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
-      )
       private$.mode = mode
-
-      private$.tiledb_group <- tiledb::tiledb_group(
-        self$uri,
-        type = mode,
-        ctx = private$.tiledb_ctx
-      )
-
+      if (is.null(private$tiledb_timestamp)) {
+        spdl::debug("Opening {} '{}' in {} mode", self$class(), self$uri, mode)
+        private$.tiledb_group <- tiledb::tiledb_group(
+          self$uri,
+          type = mode,
+          ctx = private$.tiledb_ctx
+        )
+      } else {
+        spdl::debug("Opening {} '{}' in {} mode at {}",
+                    self$class(), self$uri, mode, private$tiledb_timestamp)
+        ## The Group API does not expose a timestamp setter so we have to go via the config
+        cfg <- tiledb::config(private$.tiledb_ctx)
+        cfg["sm.group.timestamp_end"] <- private$tiledb_timestamp
+        private$.tiledb_group <- tiledb::tiledb_group(self$uri, type = mode,
+                                                      ctx = private$.tiledb_ctx, cfg = cfg)
+      }
       private$update_member_cache()
       private$update_metadata_cache()
 
