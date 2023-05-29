@@ -54,7 +54,7 @@ Create a new TileDB object. (lifecycle: experimental)
 
 \item{\code{tiledbsoma_ctx}}{Optional SOMATileDBContext}
 
-\item{\code{tiledb_timestamp}}{Optional POSIXct for the TileDB timestamp}
+\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) with TileDB timestamp}
 
 \item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
 as \code{new()} is considered internal and should not be called directly.}

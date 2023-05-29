@@ -5,7 +5,7 @@
 #' @param uri URI for the TileDB object
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
 #' @export
 SOMAOpen <- function(uri, mode = "READ", platform_config = NULL,
                      tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {

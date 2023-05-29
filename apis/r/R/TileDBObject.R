@@ -11,7 +11,7 @@ TileDBObject <- R6::R6Class(
     #' @param uri URI for the TileDB object
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional SOMATileDBContext
-    #' @param tiledb_timestamp Optional POSIXct for the TileDB timestamp
+    #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `new()` is considered internal and should not be called directly.
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
@@ -39,7 +39,7 @@ TileDBObject <- R6::R6Class(
       private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
 
       if (!is.null(tiledb_timestamp)) {
-        stopifnot("'tiledb_timestamp' must be a POSIXct object" = inherits(tiledb_timestamp, "POSIXct"))
+        stopifnot("'tiledb_timestamp' must be a POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct"))
         private$tiledb_timestamp <- tiledb_timestamp
       }
 

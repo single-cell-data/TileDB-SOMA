@@ -18,7 +18,7 @@ SOMAMeasurementCreate(
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 
-\item{tiledb_timestamp}{Optional POSIXct for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
 }
 \description{
 Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)

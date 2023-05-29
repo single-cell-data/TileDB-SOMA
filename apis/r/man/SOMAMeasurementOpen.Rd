@@ -21,7 +21,7 @@ SOMAMeasurementOpen(
 
 \item{tiledbsoma_ctx}{optional SOMATileDBContext}
 
-\item{tiledb_timestamp}{Optional POSIXct for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
 }
 \description{
 Factory function to open a SOMAMeasurement for reading, (lifecycle: experimental)

@@ -6,7 +6,7 @@
 #' @param index_column_names Index column names passed on to DataFrame$create()
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMADataFrameCreate <- function(uri, schema, index_column_names = c("soma_joinid"),
                                 platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -22,7 +22,7 @@ SOMADataFrameCreate <- function(uri, schema, index_column_names = c("soma_joinid
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMADataFrameOpen <- function(uri, mode="READ",
                               platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -39,7 +39,7 @@ SOMADataFrameOpen <- function(uri, mode="READ",
 #' @param shape A vector of integers defining the shape of the array.
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMASparseNDArrayCreate <- function(uri, type, shape,
                                     platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -55,7 +55,7 @@ SOMASparseNDArrayCreate <- function(uri, type, shape,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMASparseNDArrayOpen <- function(uri, mode="READ",
                                   platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -72,7 +72,7 @@ SOMASparseNDArrayOpen <- function(uri, mode="READ",
 #' @param shape A vector of integers defining the shape of the array.
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMADenseNDArrayCreate <- function(uri, type, shape,
                                    platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -88,7 +88,7 @@ SOMADenseNDArrayCreate <- function(uri, type, shape,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMADenseNDArrayOpen <- function(uri, mode="READ",
                                  platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -103,7 +103,7 @@ SOMADenseNDArrayOpen <- function(uri, mode="READ",
 #' @param uri URI for the TileDB object
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMACollectionCreate <- function(uri,
                                  platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -119,7 +119,7 @@ SOMACollectionCreate <- function(uri,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMACollectionOpen <- function(uri, mode="READ",
                                platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -134,7 +134,7 @@ SOMACollectionOpen <- function(uri, mode="READ",
 #' @param uri URI for the TileDB object
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMAMeasurementCreate <- function(uri,
                                   platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -150,7 +150,7 @@ SOMAMeasurementCreate <- function(uri,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMAMeasurementOpen <- function(uri, mode="READ",
                                 platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -165,7 +165,7 @@ SOMAMeasurementOpen <- function(uri, mode="READ",
 #' @param uri URI for the TileDB object
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMAExperimentCreate <- function(uri,
                                  platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -181,7 +181,7 @@ SOMAExperimentCreate <- function(uri,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
-#' @param tiledb_timestamp Optional POSIXct for TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMAExperimentOpen <- function(uri, mode="READ",
                                platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {

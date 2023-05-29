@@ -21,7 +21,7 @@ SOMAOpen(
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 
-\item{tiledb_timestamp}{Optional POSIXct for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) with TileDB timestamp}
 }
 \description{
 Utility function to open the corresponding SOMA Object given a URI, (lifecycle: experimental)
