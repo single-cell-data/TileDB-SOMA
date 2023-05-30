@@ -5,7 +5,10 @@
 #' @param uri URI for the TileDB object
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
+#' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp. For SOMACollections,
+#'        all accessed members inherit the collection opening timestamp, and in READ mode the
+#'        collection timestamp defaults to the time of opening.
+#'
 #' @export
 SOMAOpen <- function(uri, mode = "READ", platform_config = NULL,
                      tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {

@@ -308,3 +308,30 @@ test_that("platform_config defaults", {
 
   snda$close()
 })
+
+test_that("SOMASparseNDArray timestamped ops", {
+  uri <- withr::local_tempdir("soma-sparse-nd-array-timestamps")
+
+  ts <- function(s) as.POSIXct(s, origin="1970-01-01", tz="UTC")
+
+  # t=10: create 2x2 array and write 1 into top-left entry
+  snda <- SOMASparseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2),
+                                  tiledb_timestamp=ts(10))
+  snda$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
+  snda$close()
+
+  # t=20: write 1 into bottom-right entry
+  snda <- SOMASparseNDArrayOpen(uri=uri, mode="WRITE", tiledb_timestamp=ts(20))
+  snda$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
+  snda$close()
+
+  # read with no timestamp args and see both writes
+  snda <- SOMASparseNDArrayOpen(uri=uri)
+  expect_equal(sum(snda$read()$sparse_matrix()$concat()), 2)
+  snda$close()
+
+  # read @ t=15 and see only the first write
+  snda <- SOMASparseNDArrayOpen(uri=uri, tiledb_timestamp = ts(15))
+  expect_equal(sum(snda$read()$sparse_matrix()$concat()), 1)
+  snda$close()
+})

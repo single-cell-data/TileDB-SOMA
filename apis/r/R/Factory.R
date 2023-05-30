@@ -119,8 +119,9 @@ SOMACollectionCreate <- function(uri,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
-#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp. Defaults to the
-#'        current time. All members accessed through the collection object inherit this timestamp.
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp. In READ mode, defaults
+#'        to the current time. If non-NULL, then all members accessed through the collection object
+#'        inherit the timestamp.
 #' @export
 SOMACollectionOpen <- function(uri, mode="READ",
                                platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -151,8 +152,9 @@ SOMAMeasurementCreate <- function(uri,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
-#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp. Defaults to the
-#'        current time. All members accessed through the collection object inherit this timestamp.
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp. In READ mode, defaults
+#'        to the current time. If non-NULL, then all members accessed through the collection object
+#'        inherit the timestamp.
 #' @export
 SOMAMeasurementOpen <- function(uri, mode="READ",
                                 platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
@@ -183,8 +185,9 @@ SOMAExperimentCreate <- function(uri,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
-#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp. Defaults to the
-#'        current time. All members accessed through the collection object inherit this timestamp.
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp. In READ mode, defaults
+#'        to the current time. If non-NULL, then all members accessed through the collection object
+#'        inherit the timestamp.
 #' @export
 SOMAExperimentOpen <- function(uri, mode="READ",
                                platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
