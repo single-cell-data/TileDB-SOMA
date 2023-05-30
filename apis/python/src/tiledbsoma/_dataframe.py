@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -351,7 +351,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return TableReadIter(sr)
 
     def write(
-        self, values: pa.Table, platform_config: Optional[Mapping[str, Any]] = None
+        self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None
     ) -> Self:
         """Writes an `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
         to the persistent object. As duplicate index values are not allowed, index values already
