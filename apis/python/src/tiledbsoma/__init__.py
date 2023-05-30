@@ -115,7 +115,7 @@ from ._general_utilities import (
 )
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
-from .options import SOMATileDBContext
+from .options import SOMATileDBContext, TileDBCreateOptions
 from .pytiledbsoma import (
     tiledbsoma_stats_disable,
     tiledbsoma_stats_dump,
@@ -140,12 +140,13 @@ __all__ = [
     "get_storage_engine",
     "Measurement",
     "open",
-    "show_package_versions",
-    "SOMAError",
     "ResultOrder",
-    "SOMATileDBContext",
+    "show_package_versions",
     "SOMA_JOINID",
+    "SOMAError",
+    "SOMATileDBContext",
     "SparseNDArray",
+    "TileDBCreateOptions",
     "tiledbsoma_stats_disable",
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
