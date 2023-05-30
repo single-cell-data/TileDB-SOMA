@@ -74,6 +74,8 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
                                      Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                                      Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
                                      Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                                     std::string batch_size = "auto",
+                                     std::string result_order = "auto",
                                      const std::string& loglevel = "auto") {
 
     if (loglevel != "auto") {
@@ -85,8 +87,6 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
-    std::string_view batch_size = "auto";
-    std::string_view result_order = "auto";
 
     std::shared_ptr<tiledb::Context> ctxptr = nullptr;
 
