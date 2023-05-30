@@ -21,7 +21,8 @@ SOMAExperimentOpen(
 
 \item{tiledbsoma_ctx}{optional SOMATileDBContext}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp. Defaults to the
+current time. All members accessed through the collection object inherit this timestamp.}
 }
 \description{
 Factory function to open a SOMAExperiment for reading, (lifecycle: experimental)

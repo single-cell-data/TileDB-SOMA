@@ -21,5 +21,5 @@ SOMAMeasurementCreate(
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
 }
 \description{
-Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)
+Factory function to create a SOMAMeasurement for writing, (lifecycle: experimental)
 }
