@@ -25,10 +25,10 @@ def src_matrix(request):
 @pytest.mark.parametrize(
     "tdb_create_options",
     [
-        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=10000)),
-        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=100000)),
-        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=10000)),
-        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=100000)),
+        TileDBCreateOptions(write_X_chunked=False, goal_chunk_nnz=10000),
+        TileDBCreateOptions(write_X_chunked=False, goal_chunk_nnz=100000),
+        TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=10000),
+        TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=100000),
     ],
 )
 @pytest.mark.parametrize(
@@ -72,10 +72,10 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
 @pytest.mark.parametrize(
     "tdb_create_options",
     [
-        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=10000)),
-        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=100000)),
-        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=10000)),
-        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=100000)),
+        TileDBCreateOptions(write_X_chunked=False, goal_chunk_nnz=10000),
+        TileDBCreateOptions(write_X_chunked=False, goal_chunk_nnz=100000),
+        TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=10000),
+        TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=100000),
     ],
 )
 @pytest.mark.parametrize(

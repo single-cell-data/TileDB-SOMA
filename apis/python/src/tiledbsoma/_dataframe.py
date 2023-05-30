@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -160,8 +160,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 possible values for the column's datatype.  This makes a
                 :class:`DataFrame` growable.
             platform_config:
-                Platform-specific options used to create this array, provided in the form
-                ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``.
+                Platform-specific options used to create this array.
+                This may be provided as settings in a dictionary, with options
+                located in the ``{'tiledb': {'create': ...}}`` key,
+                or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by
@@ -201,7 +203,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             Experimental.
         """
         context = _validate_soma_tiledb_context(context)
-        _util.validate_platform_config(platform_config)
         schema = _canonicalize_schema(schema, index_column_names)
         tdb_schema = _build_tiledb_schema(
             schema,
@@ -352,7 +353,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return TableReadIter(sr)
 
     def write(
-        self, values: pa.Table, platform_config: Optional[Mapping[str, Any]] = None
+        self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None
     ) -> Self:
         """Writes an `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
         to the persistent object. As duplicate index values are not allowed, index values already
@@ -699,12 +700,12 @@ def _build_tiledb_schema(
             domain=slot_domain,
             tile=extent,
             dtype=dtype,
-            filters=tiledb_create_options.dim_filters(
+            filters=tiledb_create_options.dim_filters_tiledb(
                 index_column_name,
                 [
                     dict(
                         _type="ZstdFilter",
-                        level=tiledb_create_options.dataframe_dim_zstd_level(),
+                        level=tiledb_create_options.dataframe_dim_zstd_level,
                     )
                 ],
             ),
@@ -724,7 +725,9 @@ def _build_tiledb_schema(
                 schema.field(attr_name).type
             ),
             nullable=metadata.get(attr_name.encode("utf-8")) == b"nullable",
-            filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
+            filters=tiledb_create_options.attr_filters_tiledb(
+                attr_name, ["ZstdFilter"]
+            ),
             ctx=context.tiledb_ctx,
         )
         attrs.append(attr)
@@ -735,10 +738,10 @@ def _build_tiledb_schema(
         domain=dom,
         attrs=attrs,
         sparse=True,
-        allows_duplicates=tiledb_create_options.allows_duplicates(),
-        offsets_filters=tiledb_create_options.offsets_filters(),
-        validity_filters=tiledb_create_options.validity_filters(),
-        capacity=tiledb_create_options.capacity(),
+        allows_duplicates=tiledb_create_options.allows_duplicates,
+        offsets_filters=tiledb_create_options.offsets_filters_tiledb(),
+        validity_filters=tiledb_create_options.validity_filters_tiledb(),
+        capacity=tiledb_create_options.capacity,
         cell_order=cell_order,
         # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
         # col-major tile order: so we write ``X`` with row-major tile order.

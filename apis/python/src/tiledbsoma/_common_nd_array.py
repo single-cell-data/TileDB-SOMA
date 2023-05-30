@@ -59,8 +59,10 @@ class NDArray(TileDBArray, somacore.NDArray):
                 possible int64 will be used.  This makes a :class:`SparseNDArray`
                 growable.
             platform_config:
-                Platform-specific options used to create this array, provided in the form
-                ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}``.
+                Platform-specific options used to create this array.
+                This may be provided as settings in a dictionary, with options
+                located in the ``{'tiledb': {'create': ...}}`` key,
+                or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by
@@ -88,7 +90,6 @@ class NDArray(TileDBArray, somacore.NDArray):
         # the upper limit is exactly 2**63-1.
 
         context = _validate_soma_tiledb_context(context)
-        _util.validate_platform_config(platform_config)
         schema = cls._build_tiledb_schema(
             type,
             shape,
@@ -151,12 +152,12 @@ class NDArray(TileDBArray, somacore.NDArray):
                 domain=(0, dim_capacity - 1),
                 tile=dim_extent,
                 dtype=np.int64,
-                filters=create_options.dim_filters(
+                filters=create_options.dim_filters_tiledb(
                     dim_name,
                     [
                         dict(
                             _type="ZstdFilter",
-                            level=create_options.sparse_nd_array_dim_zstd_level(),
+                            level=create_options.sparse_nd_array_dim_zstd_level,
                         )
                     ],
                 ),
@@ -168,7 +169,7 @@ class NDArray(TileDBArray, somacore.NDArray):
             tiledb.Attr(
                 name="soma_data",
                 dtype=_arrow_types.tiledb_type_from_arrow_type(type),
-                filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
+                filters=create_options.attr_filters_tiledb("soma_data", ["ZstdFilter"]),
                 ctx=context.tiledb_ctx,
             )
         ]
@@ -181,10 +182,10 @@ class NDArray(TileDBArray, somacore.NDArray):
             domain=dom,
             attrs=attrs,
             sparse=is_sparse,
-            allows_duplicates=create_options.allows_duplicates(),
-            offsets_filters=create_options.offsets_filters(),
-            validity_filters=create_options.validity_filters(),
-            capacity=create_options.capacity(),
+            allows_duplicates=create_options.allows_duplicates,
+            offsets_filters=create_options.offsets_filters_tiledb(),
+            validity_filters=create_options.validity_filters_tiledb(),
+            capacity=create_options.capacity,
             tile_order=tile_order,
             cell_order=cell_order,
             ctx=context.tiledb_ctx,

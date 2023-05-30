@@ -44,7 +44,6 @@ from ._util import (
     is_relative_uri,
     make_relative_path,
     uri_joinpath,
-    validate_platform_config,
 )
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -96,8 +95,11 @@ class CollectionBase(
             uri:
                 The location to create this SOMA collection at.
             platform_config:
-                Platform-specific options used to create this collection, provided in the form
-                ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}``.
+                Platform-specific options used to create this collection.
+                This may be provided as settings in a dictionary, with options
+                located in the ``{'tiledb': {'create': ...}}`` key,
+                or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
+                (Currently unused for collections.)
             context:
                 If provided, the :class:`SOMATileDBContext` to use when creating and
                 opening this collection.
@@ -114,7 +116,6 @@ class CollectionBase(
             Experimental.
         """
         context = _validate_soma_tiledb_context(context)
-        validate_platform_config(platform_config)
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         cls._set_create_metadata(handle)
