@@ -76,6 +76,7 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
                                      Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
                                      std::string batch_size = "auto",
                                      std::string result_order = "auto",
+                                     Rcpp::Nullable<Rcpp::Datetime> timestamp_end = R_NilValue,
                                      const std::string& loglevel = "auto") {
 
     if (loglevel != "auto") {
@@ -99,7 +100,15 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
     }
 
-    auto ptr = new tdbs::SOMAArray(TILEDB_READ, uri, name, ctxptr, column_names, batch_size, result_order);
+    std::uint64_t ts_start = 0; 		// beginning of time aka the epoch (force double signature)
+    std::uint64_t ts_end = std::numeric_limits<uint64_t>::max(); 	// max if unset
+    if (!timestamp_end.isNull()) {
+        ts_end = Rcpp::as<Rcpp::Datetime>(timestamp_end).getFractionalTimestamp() * 1e3; // in msec
+        spdl::info(tfm::format("[sr_setup] ts_end set to %ld", ts_end));
+    }
+
+    auto ptr = new tdbs::SOMAArray(TILEDB_READ, uri, name, ctxptr, column_names, batch_size,
+                                   result_order, std::make_pair(ts_start, ts_end));
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = ptr->schema();

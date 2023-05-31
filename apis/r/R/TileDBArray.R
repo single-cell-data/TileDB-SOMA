@@ -21,13 +21,13 @@ TileDBArray <- R6::R6Class(
                    "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
       }
 
-      private$.mode = mode
+      private$.mode <- mode
       if (is.null(private$tiledb_timestamp)) {
-        spdl::debug("Opening {} '{}' in {} mode", self$class(), self$uri, mode)
+        spdl::debug("[TileDBArray::open] Opening {} '{}' in {} mode", self$class(), self$uri, mode)
         tiledb::tiledb_array_open(self$object, type = mode)
       } else {
-        spdl::debug("Opening {} '{}' in {} mode at {}",
-                    self$class(), self$uri, mode, self$tiledb_timestamp)
+        spdl::debug("[TileDBArray::open] Opening {} '{}' in {} mode at {}",
+                    self$class(), self$uri, mode, private$tiledb_timestamp)
         tiledb::tiledb_array_open_at(self$object, type = mode,
                                      timestamp = private$tiledb_timestamp)
       }
@@ -38,7 +38,7 @@ TileDBArray <- R6::R6Class(
     #' @description Close the SOMA object.
     #' @return The object, invisibly
     close = function() {
-      spdl::debug("Closing {} '{}'", self$class(), self$uri)
+      spdl::debug("[TileDBArray::close] Closing {} '{}'", self$class(), self$uri)
       private$.mode = "CLOSED"
       tiledb::tiledb_array_close(self$object)
       invisible(self)
@@ -59,9 +59,10 @@ TileDBArray <- R6::R6Class(
     tiledb_array = function(...) {
       args <- list(...)
       args$uri <- self$uri
-      args$query_type <- "READ"
+      args$query_type <- self$.mode
       args$query_layout <- "UNORDERED"
       args$ctx <- self$tiledbsoma_ctx$context()
+      spdl::debug("[TileDBArray::tiledb_array] ctor uri {} mode {} layout {}", args$uri, args$query_type, args$query_layout)
       do.call(tiledb::tiledb_array, args)
     },
 
@@ -71,7 +72,7 @@ TileDBArray <- R6::R6Class(
     get_metadata = function(key = NULL) {
       private$check_open_for_read_or_write()
 
-      spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
+      spdl::debug("[TileDBArray::get_metadata] Retrieving metadata for {} '{}'", self$class(), self$uri)
       private$fill_metadata_cache_if_null()
       if (!is.null(key)) {
         private$.metadata_cache[[key]]
@@ -334,7 +335,7 @@ TileDBArray <- R6::R6Class(
     },
 
     update_metadata_cache = function() {
-      spdl::debug("Updating metadata cache for {} '{}'", self$class(), self$uri)
+      spdl::debug("[TileDBArray::update_metadata_cache] updating metadata cache for {} '{}' in {}", self$class(), self$uri, private$.mode)
 
       # See notes above -- at the TileDB implementation level, we cannot read array metadata
       # while the array is open for read, but at the SOMA application level we must support
@@ -342,8 +343,14 @@ TileDBArray <- R6::R6Class(
       # we must open a temporary handle for read, to fill the cache.
       array_handle <- private$.tiledb_array
       if (private$.mode == "WRITE") {
+        spdl::debug("[TileDBArray::update_metadata_cache] getting object")
         array_object <- tiledb::tiledb_array(self$uri, ctx = private$.tiledb_ctx)
         array_handle <- tiledb::tiledb_array_open(array_object, type = "READ")
+      }
+
+      if (isFALSE(tiledb::tiledb_array_is_open(array_handle))) {
+        spdl::debug("[TileDBArray::update_metadata_cache] reopening object")
+        array_handle <- tiledb::tiledb_array_open(array_handle, type = "READ")
       }
 
       private$.metadata_cache <- tiledb::tiledb_get_all_metadata(array_handle)

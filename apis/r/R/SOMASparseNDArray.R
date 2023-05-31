@@ -118,7 +118,7 @@ SOMASparseNDArray <- R6::R6Class(
     read = function(
       coords = NULL,
       result_order = "auto",
-      log_level = "warn"
+      log_level = "auto"
     ) {
       private$check_open_for_read()
 
@@ -139,7 +139,8 @@ SOMASparseNDArray <- R6::R6Class(
       sr <- sr_setup(uri = uri,
                      config = cfg,
                      dim_points = coords,
-                     #result_order = result_order,
+                     result_order = result_order,
+                     timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
 
       SOMASparseNDArrayRead$new(sr, shape = self$shape())
@@ -184,6 +185,9 @@ SOMASparseNDArray <- R6::R6Class(
       stopifnot(is.data.frame(values))
       # private$log_array_ingestion()
       arr <- self$object
+      if (!is.null(private$tiledb_timestamp)) {
+          arr@timestamp <- private$tiledb_timestamp
+      }
       arr[] <- values
     },
 
