@@ -1322,7 +1322,10 @@ def to_h5ad(
     experiment: Experiment,
     h5ad_path: Path,
     measurement_name: str,
+    *,
     X_layer_name: str = "data",
+    obs_id_name: str = "obs_id",
+    var_id_name: str = "var_id",
 ) -> None:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
     format and writes it to the specified ``.h5ad`` file.
@@ -1334,7 +1337,11 @@ def to_h5ad(
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
 
     anndata = to_anndata(
-        experiment, measurement_name=measurement_name, X_layer_name=X_layer_name
+        experiment,
+        measurement_name=measurement_name,
+        obs_id_name=obs_id_name,
+        var_id_name=var_id_name,
+        X_layer_name=X_layer_name,
     )
 
     s2 = _util.get_start_stamp()
@@ -1354,9 +1361,9 @@ def to_anndata(
     experiment: Experiment,
     measurement_name: str,
     *,
+    X_layer_name: str = "data",
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
-    X_layer_name: str = "data",
 ) -> ad.AnnData:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
     format. Choice of matrix formats is following what we often see in input
@@ -1384,7 +1391,7 @@ def to_anndata(
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
     if obs_id_name not in obs_df.keys():
         raise ValueError(
-            f"requested obs IDs column name {obs_id_name} not found in inputinput: {obs_df.keys()}"
+            f"requested obs IDs column name {obs_id_name} not found in input: {obs_df.keys()}"
         )
     obs_df.set_index(obs_id_name, inplace=True)
 
@@ -1392,7 +1399,7 @@ def to_anndata(
     var_df.drop([SOMA_JOINID], axis=1, inplace=True)
     if var_id_name not in var_df.keys():
         raise ValueError(
-            f"requested var IDs column name {var_id_name} not found in inputinput: {var_df.keys()}"
+            f"requested var IDs column name {var_id_name} not found in input: {var_df.keys()}"
         )
     var_df.set_index(var_id_name, inplace=True)
 
