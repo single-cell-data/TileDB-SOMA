@@ -1126,6 +1126,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       return(obj)
     },
     .load_m_axis = function(layer, m_axis = c('obsm', 'varm'), type = "Embeddings") {
+      browser()
       stopifnot(
         is_scalar_character(layer),
         is.character(m_axis),
@@ -1153,7 +1154,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         dims = seq.int(0L, as.integer(ncoords))
       )
       mat <- if (inherits(soma_axis, 'SOMASparseNDArray')) {
-        as.matrix(soma_axis$read_sparse_matrix()[coords$rows + 1L, coords$dims + 1L])
+        as.matrix(soma_axis$read(unname(coords))$sparse_matrix()$concat())
+        # as.matrix(soma_axis$read_sparse_matrix()[coords$rows + 1L, coords$dims + 1L])
       } else if (inherits(soma_axis, 'SOMADenseNDArray')) {
         warning(
           paste(
@@ -1175,13 +1177,15 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       return(mat)
     },
-    .load_p_axis = function(layer, p_axis = c('obsp', 'varp'), repr = 'C') {
+    .load_p_axis = function(layer, p_axis = c('obsp', 'varp'), repr = c('C', 'T', 'R', 'D')) {
       stopifnot(
         is_scalar_character(layer),
         is.character(p_axis),
-        is_scalar_character(repr)
+        is.character(repr)
+        # is_scalar_character(repr)
       )
-      p_axis <- match.arg(arg = p_axis)
+      p_axis <- match.arg(p_axis)
+      repr <- match.arg(repr)
       switch(
         EXPR = p_axis,
         obsp = {
@@ -1194,8 +1198,17 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
       )
       soma_axis <- soma_collection$get(layer)
-      idx <- soma_joinids$as_vector() + 1L
-      return(soma_axis$read_sparse_matrix(repr = repr)[idx, idx])
+      # idx <- soma_joinids$as_vector() + 1L
+      # return(soma_axis$read_sparse_matrix(repr = repr)[idx, idx])
+      idx <- soma_joinids$as_vector()
+      mat <- soma_axis$read(list(idx, idx))$sparse_matrix()$concat()
+      return(switch(
+        EXPR = repr,
+        C = as(mat, 'CsparseMatrix'),
+        R = as(mat, 'RsparseMatrix'),
+        D = as.matrix(mat),
+        mat
+      ))
     },
     # Helper methods for loading SCE components
     .load_sce_reduced_dims = function(obsm_layers, obs_ids) {
