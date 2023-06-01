@@ -123,7 +123,7 @@ SOMASparseNDArray <- R6::R6Class(
       private$check_open_for_read()
 
       uri <- self$uri
-      
+
       if (self$nnz() > .Machine$integer.max) {
           warning("Iteration results cannot be concatenated on its entirerity beceause ",
                   "array has non-zero elements greater than '.Machine$integer.max'.")
@@ -136,12 +136,12 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      sr <- sr_setup(uri = uri, 
-                     config = cfg, 
-                     dim_points = coords, 
+      sr <- sr_setup(uri = uri,
+                     config = cfg,
+                     dim_points = coords,
                      #result_order = result_order,
                      loglevel = log_level)
-      
+
       SOMASparseNDArrayRead$new(sr, shape = self$shape())
     },
 
@@ -166,6 +166,18 @@ SOMASparseNDArray <- R6::R6Class(
       private$write_coo_dataframe(coo)
     },
 
+    #' @description Ingest COO-formatted dataframe into the TileDB array. (lifecycle: experimental)
+    #' @param x A [`data.frame`].
+    #'
+    write_coo_dataframe = function(values) {
+      private$check_open_for_write()
+
+      stopifnot(is.data.frame(values))
+      # private$log_array_ingestion()
+      arr <- self$object
+      arr[] <- values
+    },
+
     #' @description Retrieve number of non-zero elements (lifecycle: experimental)
     #' @return A scalar with the number of non-zero elements
     nnz = function() {
@@ -176,21 +188,10 @@ SOMASparseNDArray <- R6::R6Class(
 
   private = list(
 
-    # @description Ingest COO-formatted dataframe into the TileDB array. (lifecycle: experimental)
-    # @param x A [`data.frame`].
-    write_coo_dataframe = function(values) {
-      private$check_open_for_write()
-
-      stopifnot(is.data.frame(values))
-      # private$log_array_ingestion()
-      arr <- self$object
-      arr[] <- values
-    },
-    
-    #' @description Converts a list of vectors corresponding to coords to a 
+    #' @description Converts a list of vectors corresponding to coords to a
     #' format acceptable for sr_setup and soma_array_reader
     convert_coords = function(coords) {
-      
+
       ## ensure coords is a named list, use to select dim points
       stopifnot("'coords' must be a list" = is.list(coords),
                 "'coords' must be a list of vectors or integer64" =
@@ -205,8 +206,29 @@ SOMASparseNDArray <- R6::R6Class(
 
       ## convert integer to integer64 to match dimension type
       coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
-      
+
       coords
+    },
+
+    ## refined from base class
+    soma_reader_transform = function(x) {
+      tbl <- as_arrow_table(x)
+      if (!nzchar(private$sparse_repr)) {
+        return(tbl)
+      }
+      mat <- Matrix::sparseMatrix(
+        i = as.numeric(tbl$GetColumnByName("soma_dim_0")),
+        j = as.numeric(tbl$GetColumnByName("soma_dim_1")),
+        x = as.numeric(tbl$GetColumnByName("soma_data")),
+        index1 = FALSE,
+        dims = as.integer(self$shape()),
+        repr = private$sparse_repr
+      )
+      # see read_sparse_matrix_zero_based() above
+      if (isTRUE(private$zero_based)) {
+        mat <- matrixZeroBasedView$new(mat)
+      }
+      return(mat)
     },
 
     ## internal 'repr' state variable, by default 'unset'
