@@ -46,6 +46,30 @@ null <- function(...) {
   return(NULL)
 }
 
+chunk_points <- function(dsize, csize) {
+  stopifnot(
+    rlang::is_integerish(dsize, 1L, TRUE) && dsize > 0L,
+    rlang::is_na(csize) || (rlang::is_integerish(csize, 1L, TRUE) && csize > 0L)
+  )
+  if (is.na(csize)) {
+    return(matrix(
+      data = c(1L, dsize),
+      nrow = 2L,
+      dimnames = list(c('start', 'end'), NULL)
+    ))
+  }
+  return(vapply(
+    X = seq.default(from = 1L, to = ceiling(dsize / csize)),
+    FUN = function(i) {
+      return(c(
+        start = (csize * (i - 1L)) + 1L,
+        end = min(csize * i, dsize)
+      ))
+    },
+    FUN.VALUE = numeric(length = 2L)
+  ))
+}
+
 # For use in read-only R6 active bindings
 read_only_error <- function(field_name) {
   stop(
