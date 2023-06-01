@@ -104,7 +104,7 @@ Reads a user-defined slice of the \code{SOMASparseNDArray}
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read(
   coords = NULL,
   result_order = "auto",
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 
