@@ -310,8 +310,6 @@ test_that("platform_config defaults", {
 })
 
 test_that("SOMASparseNDArray timestamped ops", {
-  expect_equal(4/2, 2)
-  if (FALSE) {
   uri <- withr::local_tempdir("soma-sparse-nd-array-timestamps")
 
   ts <- function(s) as.POSIXct(s, origin="1970-01-01", tz="UTC")
@@ -337,8 +335,7 @@ test_that("SOMASparseNDArray timestamped ops", {
   snda$close()
 
   # read @ t=15 and see only the first write
-  snda <- SOMASparseNDArrayOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t15))
+  snda <- SOMASparseNDArrayOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t10))
   expect_equal(sum(snda$read()$sparse_matrix()$concat()), 1)
   snda$close()
-  }
 })
