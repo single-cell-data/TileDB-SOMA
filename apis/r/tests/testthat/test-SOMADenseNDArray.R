@@ -236,8 +236,7 @@ test_that("SOMADenseNDArray timestamped ops", {
   expect_equal(dnda$read_dense_matrix(), M2)
   dnda$close()
 
-  dnda <- SOMADenseNDArrayOpen(uri=uri, mode="READ")
-  snda <- SOMADenseNDArrayOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t10))
+  dnda <- SOMADenseNDArrayOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t10))
   expect_equal(dnda$read_dense_matrix(), M1)   # read between t10 and t20 sees only first write
-  snda$close()
+  dnda$close()
 })
