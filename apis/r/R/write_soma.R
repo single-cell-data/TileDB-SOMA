@@ -284,13 +284,13 @@ write_soma.TsparseMatrix <- function(
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  relative = TRUE
+  relative = TRUE,
+  verbose = FALSE
 ) {
   stopifnot(
     "'x' must be a general sparse matrix" = inherits(x = x, what = 'generalMatrix'),
     "'x' must not be a pattern matrix" = !inherits(x = x, what = 'nsparseMatrix'),
-    "'type' must be an Arrow type" = is.null(type) ||
-      (R6::is.R6(type) && inherits(x = type, what = 'DataType')),
+    "'type' must be an Arrow type" = is.null(type) || is_arrow_data_type(type),
     "'transpose' must be a single logical value" = is_scalar_logical(transpose)
   )
   # Create a proper URI
@@ -302,6 +302,7 @@ write_soma.TsparseMatrix <- function(
   # Transpose the matrix
   if (isTRUE(transpose)) {
     x <- Matrix::t(x)
+    gc()
   }
   # Create the array
   array <- SOMASparseNDArrayCreate(
@@ -311,10 +312,50 @@ write_soma.TsparseMatrix <- function(
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
+  # Create chunk size
+  # TODO: determine better way of calculating chunk sizes
+  # This chunk size is because a numeric and two integer64 vectors
+  # of this length is roughly 1.66 Gb
+  chunks <- chunk_points(dsize = length(methods::slot(x, "i")), csize = 55926400)
+  if (isTRUE(verbose)) {
+    pb <- utils::txtProgressBar(max = nrow(chunks), style = 3L, file = stderr())
+    on.exit(close(con = pb), add = TRUE)
+  }
+  for (i in seq_len(ncol(chunks))) {
+    slice <- seq.int(chunks['start', i], chunks['end', i])
+    coo <- data.frame(
+      bit64::as.integer64(methods::slot(x, "i")[slice]),
+      bit64::as.integer64(methods::slot(x, "j")[slice]),
+      methods::slot(x, "x")[slice]
+    )
+    names(coo) <- c(array$dimnames(), array$attrnames())
+    array$write_coo_dataframe(coo)
+    rm(coo)
+    gc()
+    if (isTRUE(verbose)) {
+      utils::setTxtProgressBar(pb, value = i)
+    }
+  }
   # Write and return
-  array$write(x)
+  # array$write(x)
   return(array)
 }
+
+# n <- 10000L
+# res <- vector(mode = 'list', length = n)
+# for (i in seq_len(length.out = n)) {
+#   res[[i]] <- data.frame(
+#     n = i,
+#     integer = as.numeric(x = object.size(x = integer(length = i))),
+#     double = as.numeric(x = object.size(x = double(length = i)))
+#   )
+# }
+#
+# res <- do.call(what = rbind, args = res)
+# res <- reshape2::melt(data = res, id.vars = 'n')
+#
+# ggplot(data = res, mapping = aes(x = n, y = value, group = variable, color = variable)) +
+#   geom_line()
 
 #' Add an index to a data frame
 #'
