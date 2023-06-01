@@ -168,4 +168,3 @@ libtiledbsoma_version <- function() {
 tiledb_embedded_version <- function() {
     .Call(`_tiledbsoma_tiledb_embedded_version`)
 }
-

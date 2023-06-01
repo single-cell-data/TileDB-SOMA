@@ -9,6 +9,8 @@ test_that("SOMASparseNDArray creation", {
   expect_equal(tiledb::datatype(ndarray$attributes()$soma_data), "INT32")
 
   mat <- create_sparse_matrix_with_int_dims(10, 10)
+  vals <- as.vector(t(as.matrix(mat)))
+  vals <- vals[ vals != 0 ] # needed below for comparison
   ndarray$write(mat)
   ndarray$close()
 
