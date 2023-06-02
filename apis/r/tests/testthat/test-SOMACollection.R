@@ -65,3 +65,58 @@ test_that("SOMACollection basics", {
 
   collection$close()
 })
+
+test_that("Platform config and context are respected by add_ methods", {
+  uri <- file.path(withr::local_tempdir(), "new-collection")
+
+  # Set params in the config and context
+  cfg <- PlatformConfig$new()
+  cfg$set("tiledb", "test", "foo", "bar")
+  cfg$get("tiledb", "test", "foo")
+
+  ctx <- SOMATileDBContext$new()
+  ctx$set("foo", "bar")
+  ctx$get("foo")
+
+  # Create an empty collection
+  collection <- SOMACollectionCreate(
+    uri = uri,
+    platform_config = cfg,
+    tiledbsoma_ctx = ctx
+  )
+
+  # Add a dataframe element to the collection
+  tbl <- create_arrow_table()
+  sdf1 <- collection$add_new_dataframe("sdf1", tbl$schema, "soma_joinid")
+  sdf1$write(tbl)
+  collection$close()
+
+  # Verify the config and context params were inherited
+  collection$open("READ", internal_use_only = "allowed_use")
+  expect_equal(
+    collection$get("sdf1")$platform_config$get("tiledb", "test", "foo"),
+    "bar"
+  )
+  expect_equal(
+    collection$get("sdf1")$tiledbsoma_ctx$get("foo"),
+    "bar"
+  )
+  collection$close()
+
+  # Method-level config params override instance params
+  collection$open("WRITE", internal_use_only = "allowed_use")
+  cfg$set("tiledb", "test", "foo", "baz")
+  sdf2 <- collection$add_new_dataframe(
+    key = "sdf2",
+    schema = tbl$schema,
+    index_column_names = "soma_joinid",
+    platform_config = cfg
+  )
+  sdf2$write(tbl)
+
+  expect_equal(
+    collection$get("sdf2")$platform_config$get("tiledb", "test", "foo"),
+    "baz"
+  )
+  collection$close()
+})
