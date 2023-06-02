@@ -264,7 +264,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         int64 is returned for the capacity.
         """
         if dim_shape is None:
-            dim_capacity = 2**32 - 1  # Make this friendly for reads by tiledbsoma-r
+            dim_capacity = 2**31 - 1  # Make this friendly for reads by tiledbsoma-r
             dim_extent = min(dim_capacity, create_options.dim_tile(dim_name, 2048))
         else:
             if dim_shape <= 0:
