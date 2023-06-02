@@ -29,7 +29,7 @@ SOMACollectionBase <- R6::R6Class(
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMACollectionCreate()'."), call. = FALSE)
       }
-      super$create(internal_use_only=internal_use_only)
+      super$create(internal_use_only = internal_use_only)
 
       # Root SOMA objects include a `dataset_type` entry to allow the
       # TileDB Cloud UI to detect that they are SOMA datasets.
@@ -91,8 +91,13 @@ SOMACollectionBase <- R6::R6Class(
     #' @param index_column_names Index column names passed on to DataFrame$create()
     add_new_dataframe = function(key, schema, index_column_names) {
       ## TODO: Check argument validity
-      ## TODO: platform_config ?
-      ndf <- SOMADataFrame$new(file.path(self$uri, key), internal_use_only = "allowed_use")
+      ndf <- SOMADataFrame$new(
+        uri = file_path(self$uri, key),
+        platform_config = private$tiledb_platform_config,
+        tiledbsoma_ctx = private$.tiledbsoma_ctx,
+        internal_use_only = "allowed_use"
+      )
+
       ndf$create(schema, index_column_names, internal_use_only = "allowed_use")
       super$set(ndf, key)
       ndf
@@ -104,7 +109,13 @@ SOMACollectionBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     add_new_dense_ndarray = function(key, type, shape) {
-      ndarr <- SOMADenseNDArray$new(file.path(self$uri, key), internal_use_only = "allowed_use")
+      ndarr <- SOMADenseNDArray$new(
+        uri = file_path(self$uri, key),
+        platform_config = private$tiledb_platform_config,
+        tiledbsoma_ctx = private$.tiledbsoma_ctx,
+        internal_use_only = "allowed_use"
+      )
+
       ndarr$create(type, shape, internal_use_only = "allowed_use")
       super$set(ndarr, key)
       ndarr
@@ -116,7 +127,13 @@ SOMACollectionBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     add_new_sparse_ndarray = function(key, type, shape) {
-      ndarr <- SOMASparseNDArray$new(file.path(self$uri, key), internal_use_only = "allowed_use")
+      ndarr <- SOMASparseNDArray$new(
+        uri = file_path(self$uri, key),
+        platform_config = private$tiledb_platform_config,
+        tiledbsoma_ctx = private$.tiledbsoma_ctx,
+        internal_use_only = "allowed_use"
+      )
+
       ndarr$create(type, shape, internal_use_only = "allowed_use")
       super$set(ndarr, key)
       ndarr
