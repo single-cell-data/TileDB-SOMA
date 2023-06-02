@@ -93,7 +93,7 @@ SOMACollectionBase <- R6::R6Class(
       ## TODO: Check argument validity
       ndf <- SOMADataFrame$new(
         uri = file_path(self$uri, key),
-        platform_config = private$tiledb_platform_config,
+        platform_config = private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
         internal_use_only = "allowed_use"
       )
@@ -111,7 +111,7 @@ SOMACollectionBase <- R6::R6Class(
     add_new_dense_ndarray = function(key, type, shape) {
       ndarr <- SOMADenseNDArray$new(
         uri = file_path(self$uri, key),
-        platform_config = private$tiledb_platform_config,
+        platform_config = private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
         internal_use_only = "allowed_use"
       )
@@ -129,7 +129,7 @@ SOMACollectionBase <- R6::R6Class(
     add_new_sparse_ndarray = function(key, type, shape) {
       ndarr <- SOMASparseNDArray$new(
         uri = file_path(self$uri, key),
-        platform_config = private$tiledb_platform_config,
+        platform_config = private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
         internal_use_only = "allowed_use"
       )
