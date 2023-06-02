@@ -796,7 +796,7 @@ def _fill_out_slot_domain(
         # Here the slot_domain isn't specified by the user; we're setting it.
         # The SOMA spec disallows negative soma_joinid.
         if index_column_name == SOMA_JOINID:
-            slot_domain = (0, 2**31 - 1)  # R-friendly, which 2**63-1 is not
+            slot_domain = (0, 2**31 - 2)  # R-friendly, which 2**63-1 is not
     elif np.issubdtype(dtype, NPFloating):
         finfo = np.finfo(cast(NPFloating, dtype))
         slot_domain = finfo.min, finfo.max
