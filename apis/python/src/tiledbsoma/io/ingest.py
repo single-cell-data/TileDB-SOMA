@@ -577,12 +577,14 @@ def _create_or_open_coll(
     try:
         thing = cls.open(uri, "w", context=context)
     except DoesNotExistError:
-        # This is always OK. Make a new one.
-        return cls.create(uri, context=context)
-    # It already exists. Are we resuming?
-    if ingest_mode == "resume":
-        return thing
-    raise SOMAError(f"{uri} already exists")
+        pass  # This is always OK; make a new one.
+    else:
+        # It already exists. Are we resuming?
+        if ingest_mode == "resume":
+            return thing
+        raise SOMAError(f"{uri} already exists")
+
+    return cls.create(uri, context=context)
 
 
 def _write_dataframe(
