@@ -124,18 +124,25 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
 
     for (auto i = 0; i < num_fragments; ++i) {
         auto frag_num = frags[i];
+        auto soma_array = SOMAArray::open(
+            TILEDB_WRITE,
+            ctx,
+            uri,
+            "",
+            {},
+            "auto",
+            "auto",
+            std::pair<uint64_t, uint64_t>(timestamp + i, timestamp + i));
 
-        // Open array for writing
-        Array array(*ctx, uri, TILEDB_WRITE, timestamp + i);
         if (LOG_DEBUG_ENABLED()) {
-            array.schema().dump();
+            soma_array->schema()->dump();
         }
 
         std::vector<int64_t> d0(num_cells_per_fragment);
         for (int j = 0; j < num_cells_per_fragment; j++) {
             // Overlap odd fragments when generating overlaps
-            if (overlap && i % 2 == 1) {
-                d0[j] = j + num_cells_per_fragment * (i - 1);
+            if (overlap && frag_num % 2 == 1) {
+                d0[j] = j + num_cells_per_fragment * (frag_num - 1);
             } else {
                 d0[j] = j + num_cells_per_fragment * frag_num;
             }
@@ -143,25 +150,26 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         std::vector<int> a0(num_cells_per_fragment, frag_num);
 
         // Write data to array
-        soma_array_write->submit();
-        soma_array_write->set_column_data("d0", d0);
-        soma_array_write->set_column_data("a0", a0);
-        soma_array_write->write();
-        soma_array_write->close();
+        soma_array->submit();
+        soma_array->set_column_data("d0", d0);
+        soma_array->set_column_data("a0", a0);
+        soma_array->write();
+        soma_array->close();
     }
-    Array rarray(*ctx, uri, TILEDB_READ, timestamp + num_fragments - 1);
-    rarray.reopen();
+
+    Array tiledb_array(*ctx, uri, TILEDB_READ, timestamp + num_fragments - 1);
+    tiledb_array.reopen();
 
     std::vector<int64_t> expected_d0(num_cells_per_fragment * num_fragments);
     std::vector<int> expected_a0(num_cells_per_fragment * num_fragments);
 
-    Query query(*ctx, rarray);
+    Query query(*ctx, tiledb_array);
     query.set_layout(TILEDB_UNORDERED)
         .set_data_buffer("d0", expected_d0)
         .set_data_buffer("a0", expected_a0);
     query.submit();
 
-    rarray.close();
+    tiledb_array.close();
 
     expected_d0.resize(query.result_buffer_elements()["d0"].second);
     expected_a0.resize(query.result_buffer_elements()["a0"].second);
@@ -212,7 +220,8 @@ TEST_CASE("SOMAArray: nnz") {
             {},
             "auto",
             "auto",
-            std::pair<uint64_t, uint64_t>(10, 10));
+            std::pair<uint64_t, uint64_t>(
+                timestamp, timestamp + num_fragments - 1));
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
