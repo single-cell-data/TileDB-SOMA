@@ -94,14 +94,14 @@ test_that("SOMACollection timestamped ops", {
   collection$close()
 
   # open A via collection @ t1 => the last write should not be visible
-  collection <- SOMACollectionOpen(uri, tiledb_timestamp = t1)
+  collection <- SOMACollectionOpen(uri, tiledb_timestamp = t1 + 0.5)
   expect_true("A" %in% collection$names())
   a <- collection$get("A")$read()$sparse_matrix()$concat()
   expect_equal(sum(a), 0)
   collection$close()
 
   # open collection @ t0 => A should not even be there
-  collection <- SOMACollectionOpen(uri, tiledb_timestamp = t0)
+  collection <- SOMACollectionOpen(uri, tiledb_timestamp = t0 + 0.5)
   expect_false("A" %in% collection$names())
   expect_error(collection$get("A"))
   collection$close()
