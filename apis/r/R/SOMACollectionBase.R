@@ -203,7 +203,7 @@ SOMACollectionBase <- R6::R6Class(
         uri,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
         platform_config = self$platform_config,
-        tiledb_timestamp = self$.group_open_timestamp,
+        tiledb_timestamp = private$.group_open_timestamp,
         internal_use_only = "allowed_use"
       )
       obj

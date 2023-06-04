@@ -53,12 +53,12 @@ TileDBGroup <- R6::R6Class(
       private$.mode = mode
       private$.group_open_timestamp <- if (mode == "READ" && is.null(private$tiledb_timestamp)) {
         # In READ mode, if the opener supplied no timestamp then we default to the time of
-        # opening, ensuring a temporally-coherent view of all group members.
+        # opening, providing a temporal snapshot of all group members.
         Sys.time()
       } else {
         private$tiledb_timestamp
       }
-      if (is.null(private$group_open_timestamp)) {
+      if (is.null(private$.group_open_timestamp)) {
         spdl::debug("Opening {} '{}' in {} mode", self$class(), self$uri, mode)
         private$.tiledb_group <- tiledb::tiledb_group(
           self$uri,
@@ -66,11 +66,15 @@ TileDBGroup <- R6::R6Class(
           ctx = private$.tiledb_ctx
         )
       } else {
+        if (mode == "WRITE") {
+          warning("Setting tiledb_timestamp is not recommended in WRITE mode!")
+        }
         spdl::debug("Opening {} '{}' in {} mode at {}",
                     self$class(), self$uri, mode, private$.group_open_timestamp)
         ## The Group API does not expose a timestamp setter so we have to go via the config
         cfg <- tiledb::config(private$.tiledb_ctx)
-        cfg["sm.group.timestamp_end"] <- private$.group_open_timestamp
+        cfg["sm.group.timestamp_end"] <- format(round(as.numeric(private$.group_open_timestamp) * 1000),
+                                                scientific = FALSE, big.mark = "")
         private$.tiledb_group <- tiledb::tiledb_group(self$uri, type = mode,
                                                       ctx = private$.tiledb_ctx, cfg = cfg)
       }
@@ -330,7 +334,7 @@ TileDBGroup <- R6::R6Class(
         GROUP = TileDBGroup$new,
         stop(sprintf("Unknown member type: %s", type), call. = FALSE)
       )
-      obj <- constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx, tiledb_timestamp = self$.group_open_timestamp,
+      obj <- constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx, tiledb_timestamp = private$.group_open_timestamp,
                          platform_config = self$platform_config, internal_use_only = "allowed_use")
       obj
     },
@@ -391,6 +395,7 @@ TileDBGroup <- R6::R6Class(
       # we must open a temporary handle for read, to fill the cache.
       group_handle <- private$.tiledb_group
       if (private$.mode == "WRITE") {
+        stopifnot("FIXME" = is.null(private$.group_open_timestamp))
         group_handle <- tiledb::tiledb_group(self$uri, type = "READ", ctx = private$.tiledb_ctx)
       }
 
