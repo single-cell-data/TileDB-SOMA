@@ -66,9 +66,7 @@ TileDBGroup <- R6::R6Class(
           ctx = private$.tiledb_ctx
         )
       } else {
-        if (mode == "WRITE") {
-          warning("Setting tiledb_timestamp is not recommended in WRITE mode!")
-        }
+        stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
         spdl::debug("Opening {} '{}' in {} mode at {}",
                     self$class(), self$uri, mode, private$.group_open_timestamp)
         ## The Group API does not expose a timestamp setter so we have to go via the config
@@ -395,6 +393,9 @@ TileDBGroup <- R6::R6Class(
       # we must open a temporary handle for read, to fill the cache.
       group_handle <- private$.tiledb_group
       if (private$.mode == "WRITE") {
+        # FIXME: when we add write timestamps we should open this temp handle with tiledb_timestamp
+        # too. The stopifnot is currently "unreachable" since open() stops if called with WRITE
+        # mode and non-null tiledb_timestamp.
         stopifnot("FIXME" = is.null(private$.group_open_timestamp))
         group_handle <- tiledb::tiledb_group(self$uri, type = "READ", ctx = private$.tiledb_ctx)
       }

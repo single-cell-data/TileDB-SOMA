@@ -26,9 +26,7 @@ TileDBArray <- R6::R6Class(
         spdl::debug("[TileDBArray::open] Opening {} '{}' in {} mode", self$class(), self$uri, mode)
         private$.tiledb_array <- tiledb::tiledb_array_open(self$object, type = mode)
       } else {
-        if (mode == "WRITE") {
-          warning("Setting tiledb_timestamp is not recommended in WRITE mode!")
-        }
+        stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
         spdl::debug("[TileDBArray::open] Opening {} '{}' in {} mode at {}",
                     self$class(), self$uri, mode, private$tiledb_timestamp)
         private$.tiledb_array <- tiledb::tiledb_array_open_at(self$object, type = mode,
