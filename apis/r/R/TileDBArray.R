@@ -120,7 +120,10 @@ TileDBArray <- R6::R6Class(
       setNames(dims, nm = vapply_char(dims, tiledb::name))
     },
 
-    #' @description Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)
+    #' @description Retrieve the shape, i.e. the capacity of each dimension.
+    #' This will not necessarily match the bounds of occupied cells within the
+    #' array.  Rather, it is the bounds outside of which no data may be written.
+    #' (lifecycle: experimental)
     #' @return A named vector of dimension length (and the same type as the dimension)
     shape = function() {
       as.integer64(shape(
