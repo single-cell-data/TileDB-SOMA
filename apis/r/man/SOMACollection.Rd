@@ -4,24 +4,11 @@
 \alias{SOMACollection}
 \title{SOMA Collection}
 \description{
-Contains a key-value mapping where the keys are string names
-and the values are any SOMA-defined foundational or composed type, including
-\code{SOMACollection}, \code{SOMADataFrame}, \code{SOMADenseNDArray}, \code{SOMASparseNDArray}
-or \code{SOMAExperiment}.  (lifecycle: experimental)
+Contains a key-value mapping where the keys are string names and
+the values are any SOMA-defined foundational or composed type, including
+\code{\link{SOMACollection}}, \code{\link{SOMADataFrame}}, \code{\link{SOMADenseNDArray}},
+\code{\link{SOMASparseNDArray}}, or \code{\link{SOMAExperiment}}.  (lifecycle: experimental)
 }
-\section{Adding new objects to a collection}{
-
-
-The \code{\link{SOMACollection}} class provides a number of type-specific methods for
-adding new object to the collection, such as \code{add_new_sparse_ndarray()} and
-\code{add_new_dataframe()}. These methods will create the new object and add it as
-member of the \code{SOMACollection}. The new object will always inherit the parent
-context (see \code{\link{SOMATileDBContext}}) and, by default, its platform
-configuration (see \code{\link{PlatformConfig}}). However, the user can override the
-default platform configuration by passing a custom configuration to the
-\code{platform_config} argument.
-}
-
 \section{Super classes}{
 \code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{SOMACollection}
 }

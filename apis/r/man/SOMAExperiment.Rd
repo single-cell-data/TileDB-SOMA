@@ -13,7 +13,7 @@ cells (aka a "multimodal dataset") with pre-defined fields: \code{obs} and \code
 
 
 The \code{\link{SOMAExperiment}} class provides a number of type-specific methods for
-adding new object to the collection, such as \code{add_new_sparse_ndarray()} and
+adding new a object to the collection, such as \code{add_new_sparse_ndarray()} and
 \code{add_new_dataframe()}. These methods will create the new object and add it as
 member of the \code{SOMAExperiment}. The new object will always inherit the parent
 context (see \code{\link{SOMATileDBContext}}) and, by default, its platform
