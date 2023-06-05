@@ -216,7 +216,7 @@ test_that("SOMADenseNDArray timestamped ops", {
   uri <- withr::local_tempdir("soma-dense-nd-array-timestamps")
 
   t10 <- Sys.time()
-  dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2)) #tiledb_timestamp=ts(10))
+  dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2))
   M1 <- matrix(rep(1, 4), 2, 2)
   dnda$write(M1)
   dnda$close()
@@ -227,7 +227,7 @@ test_that("SOMADenseNDArray timestamped ops", {
   Sys.sleep(1.0)
 
   t20 <- Sys.time()
-  dnda <- SOMADenseNDArrayOpen(uri=uri, mode="WRITE") ##, tiledb_timestamp=ts(20))
+  dnda <- SOMADenseNDArrayOpen(uri=uri, mode="WRITE")
   M2 <- matrix(rep(1, 4), 2, 2)
   dnda$write(M2)
   dnda$close()

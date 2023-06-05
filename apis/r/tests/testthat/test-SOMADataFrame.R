@@ -456,7 +456,7 @@ test_that("SOMADataFrame timestamped ops", {
   Sys.sleep(1.0)
 
   t20 <- Sys.time()
-  sdf <- SOMADataFrameOpen(uri=uri, mode="WRITE") ##, tiledb_timestamp=ts(20))
+  sdf <- SOMADataFrameOpen(uri=uri, mode="WRITE")
   rb2 <- arrow::record_batch(soma_joinid = bit64::as.integer64(4L:6L),
                              valint = 4L:6L,
                              valdbl = 100*(4:6),

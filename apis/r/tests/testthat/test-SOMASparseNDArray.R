@@ -312,20 +312,16 @@ test_that("platform_config defaults", {
 test_that("SOMASparseNDArray timestamped ops", {
   uri <- withr::local_tempdir("soma-sparse-nd-array-timestamps")
 
-  ts <- function(s) as.POSIXct(s, origin="1970-01-01", tz="UTC")
-
   # t=10: create 2x2 array and write 1 into top-left entry
-  ## NB: timestamp-on-write do not currently go through on write via tiledb-r
-  ##     this needs to be addressed first in tiledb-r, this package can then catch up
   t10 <- Sys.time()
-  snda <- SOMASparseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2)) #tiledb_timestamp=ts(10))
+  snda <- SOMASparseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2))
   snda$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
   snda$close()
   Sys.sleep(1.0)
 
   # t=20: write 1 into bottom-right entry
   t20 <- Sys.time()
-  snda <- SOMASparseNDArrayOpen(uri=uri, mode="WRITE") ##, tiledb_timestamp=ts(20))
+  snda <- SOMASparseNDArrayOpen(uri=uri, mode="WRITE")
   snda$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
   snda$close()
 
