@@ -8,7 +8,7 @@ Base class for representing an individual TileDB array.
 (lifecycle: experimental)
 }
 \section{Super class}{
-\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
