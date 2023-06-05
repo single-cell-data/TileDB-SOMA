@@ -205,8 +205,8 @@ SOMADenseNDArray <- R6::R6Class(
 
   private = list(
 
-    # @description Converts a list of vectors corresponding to coords to a
-    # format acceptable for sr_setup and soma_array_reader
+    #  @description Converts a list of vectors corresponding to coords to a
+    #  format acceptable for sr_setup and soma_array_reader
     convert_coords = function(coords) {
 
       ## ensure coords is a named list, use to select dim points

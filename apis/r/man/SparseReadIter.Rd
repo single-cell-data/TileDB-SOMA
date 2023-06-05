@@ -6,10 +6,10 @@
 \description{
 \code{SparseReadIter} is a class that allows for iteration over
 a reads on \link{SOMASparseNDArray}.
-Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}.
+Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}.
 }
 \section{Super class}{
-\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{SparseReadIter}
+\code{tiledbsoma::ReadIter} -> \code{SparseReadIter}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -43,7 +43,7 @@ Create (lifecycle: experimental)
 
 \item{\code{shape}}{Shape of the full matrix}
 
-\item{\code{zero_based}}{Logical, if TRUE will make iterator for Matrix::\link[Matrix]{dgTMatrix}
+\item{\code{zero_based}}{Logical, if TRUE will make iterator for Matrix::\link[Matrix]{dgTMatrix-class}
 otherwise \link{matrixZeroBasedView}.}
 }
 \if{html}{\out{</div>}}
@@ -59,7 +59,7 @@ Concatenate remainder of iterator.
 }
 
 \subsection{Returns}{
-\link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}
+\link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}
 }
 }
 \if{html}{\out{<hr>}}

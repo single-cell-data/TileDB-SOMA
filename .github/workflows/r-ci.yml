@@ -17,8 +17,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - { os: ubuntu-latest }
-          - { os: macOS-latest }
+          - name: linux
+            os: ubuntu-latest
+            covr: 'no'
+          - name: macos
+            os: macOS-latest
+            covr: 'no'
+          - name: coverage
+            os: ubuntu-latest
+            covr: 'yes'
 
     runs-on: ${{ matrix.os }}
 
@@ -34,8 +41,8 @@ jobs:
       - name: CMake
         uses: lukka/get-cmake@latest
 
-      - name: MkVars
-        run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
+      #- name: MkVars
+      #  run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
       #- name: Build and install libtiledbsoma
       #  run: sudo scripts/bld --prefix=/usr/local 
@@ -45,6 +52,7 @@ jobs:
       #  run: sudo ldconfig
         
       - name: Test
+        if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests
 
       - name: View Install Output
@@ -52,5 +60,5 @@ jobs:
         if: failure()
 
       - name: Coverage
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}
         run: cd apis/r && tools/r-ci.sh coverage

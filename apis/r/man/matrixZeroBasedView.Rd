@@ -33,7 +33,7 @@ Initialize (lifecycle: experimental)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{x}}{\link{matrix} or Matrix::\link[Matrix]{sparseMatrix} or Matrix::\link[Matrix]{denseMatrix}}
+\item{\code{x}}{\link{matrix} or Matrix::\link[Matrix]{sparseMatrix} or Matrix::\link[Matrix]{Matrix}}
 }
 \if{html}{\out{</div>}}
 }

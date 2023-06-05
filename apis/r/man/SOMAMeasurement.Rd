@@ -9,8 +9,21 @@ and is otherwise a specialized \code{\link{SOMACollection}} with pre-defined fie
 \code{X}, \code{var}, \code{obsm}/\code{varm}, and \code{obsp}/\code{varp} (see \emph{Active Bindings} below for
 details). (lifecycle: experimental)
 }
+\section{Adding new objects to a collection}{
+
+
+The \code{\link{SOMAMeasurement}} class provides a number of type-specific methods for
+adding new a object to the collection, such as \code{add_new_sparse_ndarray()} and
+\code{add_new_dataframe()}. These methods will create the new object and add it as
+member of the \code{SOMAMeasurement}. The new object will always inherit the parent
+context (see \code{\link{SOMATileDBContext}}) and, by default, its platform
+configuration (see \code{\link{PlatformConfig}}). However, the user can override the
+default platform configuration by passing a custom configuration to the
+\code{platform_config} argument.
+}
+
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAMeasurement}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{SOMAMeasurement}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

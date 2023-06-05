@@ -84,6 +84,8 @@ shape <- function(uri, config = NULL) {
 #' dimension(s). Each dimension can be one entry in the list.
 #' @param dim_ranges Optional named list with two-column matrix where each row select a range
 #' for the given dimension. Each dimension can be one entry in the list.
+#' @param batch_size Optional argument for size of data batches, defaults to \sQuote{auto}
+#' @param result_order Optional argument for query result order, defaults to \sQuote{auto}
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
 #' @param sr An external pointer to a TileDB SOMAArray object

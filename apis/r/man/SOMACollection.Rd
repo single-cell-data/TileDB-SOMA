@@ -4,13 +4,13 @@
 \alias{SOMACollection}
 \title{SOMA Collection}
 \description{
-Contains a key-value mapping where the keys are string names
-and the values are any SOMA-defined foundational or composed type, including
-\code{SOMACollection}, \code{SOMADataFrame}, \code{SOMADenseNDArray}, \code{SOMASparseNDArray}
-or \code{SOMAExperiment}.  (lifecycle: experimental)
+Contains a key-value mapping where the keys are string names and
+the values are any SOMA-defined foundational or composed type, including
+\code{\link{SOMACollection}}, \code{\link{SOMADataFrame}}, \code{\link{SOMADenseNDArray}},
+\code{\link{SOMASparseNDArray}}, or \code{\link{SOMAExperiment}}.  (lifecycle: experimental)
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMACollection}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{SOMACollection}
 }
 \section{Methods}{
 \subsection{Public methods}{

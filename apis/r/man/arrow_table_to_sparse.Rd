@@ -12,20 +12,20 @@ arrow_table_to_sparse(
 )
 }
 \arguments{
-\item{tbl}{\link[Arrow]{Table} with columns "soma_dim_0", "soma_dim_1", and "soma_datah"}
+\item{tbl}{\link[arrow]{Table} with columns "soma_dim_0", "soma_dim_1", and "soma_datah"}
 
 \item{repr}{Optional one-character code for sparse matrix representation type}
 
 \item{shape}{Numerical vector with two elements, one for each dimension. If
 \code{NULL}, then the following is used \code{1 + c(max(tbl["soma_dim_0"]), max(tbl["soma_dim_1"]))}}
 
-\item{zero_based}{Logical, if TRUE returns a Matrix::\link{sparse_matrix}
-otherwise \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}}
+\item{zero_based}{Logical, if TRUE returns a Matrix::\link{sparseMatrix}
+otherwise \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}}
 }
 \value{
-Matrix::\link{sparse_matrix} or \link{matrixZeroBasedView} of Matrix::\link[Matrix]{SparseMatrix}
+Matrix::\link{sparseMatrix} or \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}
 }
 \description{
-Converts a \link[Arrow]{Table} of sparse format (columns: "soma_dim_0",
+Converts a \link[arrow]{Table} of sparse format (columns: "soma_dim_0",
 "soma_dim_1", "soma_data") to a \link{matrixZeroBasedView}
 }

@@ -11,7 +11,7 @@ Base class for objects containing persistent collection of SOMA
 objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{SOMACollectionBase}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{SOMACollectionBase}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -173,7 +173,12 @@ Add a new SOMA collection to this collection. (lifecycle: experimental)
 \subsection{Method \code{add_new_dataframe()}}{
 Add a new SOMA dataframe to this collection. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dataframe(key, schema, index_column_names)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dataframe(
+  key,
+  schema,
+  index_column_names,
+  platform_config = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -184,6 +189,15 @@ Add a new SOMA dataframe to this collection. (lifecycle: experimental)
 \item{\code{schema}}{Arrow schema argument passed on to DataFrame$create()}
 
 \item{\code{index_column_names}}{Index column names passed on to DataFrame$create()}
+
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
+
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
+
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
 }
 \if{html}{\out{</div>}}
 }
@@ -194,7 +208,12 @@ Add a new SOMA dataframe to this collection. (lifecycle: experimental)
 \subsection{Method \code{add_new_dense_ndarray()}}{
 Add a new SOMA DenseNdArray to this collection. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dense_ndarray(key, type, shape)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dense_ndarray(
+  key,
+  type,
+  shape,
+  platform_config = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -206,6 +225,15 @@ Add a new SOMA DenseNdArray to this collection. (lifecycle: experimental)
 element in the array.}
 
 \item{\code{shape}}{a vector of integers defining the shape of the array.}
+
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
+
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
+
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
 }
 \if{html}{\out{</div>}}
 }
@@ -216,7 +244,12 @@ element in the array.}
 \subsection{Method \code{add_new_sparse_ndarray()}}{
 Add a new SOMA SparseNdArray to this collection. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_sparse_ndarray(key, type, shape)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_sparse_ndarray(
+  key,
+  type,
+  shape,
+  platform_config = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -228,6 +261,15 @@ Add a new SOMA SparseNdArray to this collection. (lifecycle: experimental)
 element in the array.}
 
 \item{\code{shape}}{a vector of integers defining the shape of the array.}
+
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
+
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
+
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
 }
 \if{html}{\out{</div>}}
 }
