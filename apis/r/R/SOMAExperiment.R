@@ -5,6 +5,9 @@
 #' cells (aka a "multimodal dataset") with pre-defined fields: `obs` and `ms`
 #' (see _Active Bindings_ below for details). (lifecycle: experimental)
 #'
+#' @templateVar id SOMAExperiment
+#' @template section-add-element-to-collection
+#'
 #' @export
 SOMAExperiment <- R6::R6Class(
   classname = "SOMAExperiment",
