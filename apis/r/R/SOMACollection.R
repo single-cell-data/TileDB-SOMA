@@ -5,8 +5,8 @@
 #' `SOMACollection`, `SOMADataFrame`, `SOMADenseNDArray`, `SOMASparseNDArray`
 #' or `SOMAExperiment`.  (lifecycle: experimental)
 #'
-#' @templateVar id SOMACollection
-#' @template section-add-element-to-collection
+#' @templateVar class SOMACollection
+#' @template section-add-object-to-collection
 #'
 #' @export
 SOMACollection <- R6::R6Class(
