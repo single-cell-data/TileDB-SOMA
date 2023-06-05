@@ -18,6 +18,8 @@ load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL)
 
 \item{dir}{The directory where the dataset will be extracted to (default:
 \code{tempdir()}).}
+
+\item{tiledbsoma_ctx}{Optional TileDB \sQuote{Context} object, defaults to \code{NULL}}
 }
 \value{
 \itemize{

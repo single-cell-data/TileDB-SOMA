@@ -7,7 +7,7 @@
 arrow_table_to_dense(tbl, byrow)
 }
 \arguments{
-\item{tbl}{\link[Arrow]{Table} with columns "soma_dim_0", "soma_dim_1", and "soma_datah"}
+\item{tbl}{\link[arrow]{Table} with columns "soma_dim_0", "soma_dim_1", and "soma_datah"}
 
 \item{byrow}{Logical, TRUE if "soma_data" is ordered by row, this argument is directly passed
 to the argument \code{byrow} of \link{matrix}}
@@ -16,6 +16,6 @@ to the argument \code{byrow} of \link{matrix}}
 \link{matrixZeroBasedView} of \link[base]{matrix}
 }
 \description{
-Converts a \link[Arrow]{Table} of sparse format (columns: "soma_dim_0",
+Converts a \link[arrow]{Table} of sparse format (columns: "soma_dim_0",
 "soma_dim_1", "soma_data") to a \link{matrixZeroBasedView} of a \link{matrix}.
 }
