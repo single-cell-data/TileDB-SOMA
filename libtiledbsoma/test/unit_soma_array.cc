@@ -72,7 +72,7 @@ std::tuple<std::string, uint64_t> create_array(
         num_fragments,
         overlap,
         allow_duplicates);
-    // Create array, if not reusing the existing array
+
     auto vfs = VFS(ctx);
     if (vfs.is_dir(uri)) {
         vfs.remove_dir(uri);
@@ -122,6 +122,7 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
     std::iota(frags.begin(), frags.end(), 0);
     std::shuffle(frags.begin(), frags.end(), std::random_device{});
 
+    // Write to SOMAArray
     for (auto i = 0; i < num_fragments; ++i) {
         auto frag_num = frags[i];
         auto soma_array = SOMAArray::open(
@@ -157,6 +158,7 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         soma_array->close();
     }
 
+    // Read from TileDB Array to get expected data
     Array tiledb_array(*ctx, uri, TILEDB_READ, timestamp + num_fragments - 1);
     tiledb_array.reopen();
 
@@ -193,7 +195,7 @@ TEST_CASE("SOMAArray: nnz") {
         allow_duplicates)) {
         auto ctx = std::make_shared<Context>();
 
-        // Create array at timestamp 10
+        // Create array
         std::string base_uri = "mem://unit-test-array";
         auto [uri, expected_nnz] = create_array(
             base_uri,
@@ -203,6 +205,7 @@ TEST_CASE("SOMAArray: nnz") {
             overlap,
             allow_duplicates);
 
+        // Write at timestamp 10
         auto [expected_d0, expected_a0] = write_array(
             uri,
             ctx,
@@ -230,6 +233,7 @@ TEST_CASE("SOMAArray: nnz") {
         REQUIRE(shape.size() == 1);
         REQUIRE(shape[0] == std::numeric_limits<int64_t>::max());
 
+        // Check that data from SOMAArray::read_next matches expected data
         soma_array->submit();
         while (auto batch = soma_array->read_next()) {
             auto arrbuf = batch.value();
@@ -262,7 +266,7 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
         allow_duplicates)) {
         auto ctx = std::make_shared<Context>();
 
-        // Create array at timestamp 10
+        // Create array
         std::string base_uri = "mem://unit-test-array";
         const auto& [uri, expected_nnz] = create_array(
             base_uri,
@@ -271,6 +275,8 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
             num_fragments,
             overlap,
             allow_duplicates);
+
+        // Write at timestamp 10
         write_array(
             uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
 
@@ -304,7 +310,7 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
         vacuum)) {
         auto ctx = std::make_shared<Context>();
 
-        // Create array at timestamp 10
+        // Create array
         std::string base_uri = "mem://unit-test-array";
         const auto& [uri, expected_nnz] = create_array(
             base_uri,
@@ -314,6 +320,7 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
             overlap,
             allow_duplicates);
 
+        // Write at timestamp 10
         write_array(
             uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
 
