@@ -38,7 +38,7 @@ create_dense_matrix_with_int_dims <- function(nrows = 10, ncols = 5, seed = 1) {
   )
 }
 
-create_arrow_schema <- function(foo_first=TRUE) {
+create_arrow_schema <- function(foo_first = TRUE) {
   if (foo_first) {
     arrow::schema(
       arrow::field("foo", arrow::int32(), nullable = FALSE),
@@ -54,4 +54,14 @@ create_arrow_schema <- function(foo_first=TRUE) {
       arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
     )
   }
+}
+
+create_arrow_table <- function(nrows = 10L) {
+  arrow::arrow_table(
+      foo = seq.int(nrows) + 1000L,
+      soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
+      bar = seq(nrows) + 0.1,
+      baz = as.character(seq.int(nrows) + 1000L),
+      schema = create_arrow_schema()
+    )
 }

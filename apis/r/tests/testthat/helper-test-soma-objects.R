@@ -9,14 +9,7 @@ create_and_populate_soma_dataframe <- function(
   set.seed(seed)
 
   arrow_schema <- create_arrow_schema()
-
-  tbl <- arrow::arrow_table(
-    foo = seq.int(nrows) + 1000L,
-    soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
-    bar = seq(nrows) + 0.1,
-    baz = as.character(seq.int(nrows) + 1000L),
-    schema = arrow_schema
-  )
+  tbl <- create_arrow_table(nrows = nrows)
 
   sdf <- SOMADataFrameCreate(uri, arrow_schema, index_column_names = index_column_names)
   sdf$write(tbl)
