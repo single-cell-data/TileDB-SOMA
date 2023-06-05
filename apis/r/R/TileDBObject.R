@@ -27,7 +27,7 @@ TileDBObject <- R6::R6Class(
       if (!inherits(platform_config, 'PlatformConfig')) {
         stop("'platform_config' must be a PlatformConfig object", call. = FALSE)
       }
-      private$tiledb_platform_config <- platform_config
+      private$.tiledb_platform_config <- platform_config
 
       # Set context
       tiledbsoma_ctx <- tiledbsoma_ctx %||% SOMATileDBContext$new()
@@ -97,7 +97,7 @@ TileDBObject <- R6::R6Class(
       if (!missing(x = value)) {
         stop("'platform_config' is a read-only field", call. = FALSE)
       }
-      return(private$tiledb_platform_config)
+      return(private$.tiledb_platform_config)
     },
     #' @field tiledbsoma_ctx SOMATileDBContext
     tiledbsoma_ctx = function(value) {
@@ -134,7 +134,7 @@ TileDBObject <- R6::R6Class(
     tiledb_uri = NULL,
 
     # Internal platform config
-    tiledb_platform_config = NULL,
+    .tiledb_platform_config = NULL,
 
     # Internal context
     .tiledbsoma_ctx = NULL,

@@ -5,6 +5,9 @@
 #' `X`, `var`, `obsm`/`varm`, and `obsp`/`varp` (see _Active Bindings_ below for
 #' details). (lifecycle: experimental)
 #'
+#' @templateVar class SOMAMeasurement
+#' @template section-add-object-to-collection
+#'
 #' @export
 SOMAMeasurement <- R6::R6Class(
   classname = "SOMAMeasurement",

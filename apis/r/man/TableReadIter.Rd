@@ -9,7 +9,7 @@ a reads on \link{SOMASparseNDArray} and \link{SOMADataFrame}.
 Iteration chunks are retrieved as arrow::\link[arrow]{Table}
 }
 \section{Super class}{
-\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{TableReadIter}
+\code{tiledbsoma::ReadIter} -> \code{TableReadIter}
 }
 \section{Methods}{
 \subsection{Public methods}{

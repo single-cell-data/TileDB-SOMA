@@ -18,3 +18,4 @@
 * Add ingestors to read data from `Seurat` objects
 * Add methods for listing and accessing bundled datasets, which now includes a `SOMAExperiment` containing the pbmc_small dataset from the SeuratObject package
 * New vignettes describing SOMA objects, reading data from them, and querying SOMA experiments
+* Objects added to `SOMACollection`-based classes using the `add_new_*()` methods now pass through their parent context and platform config
