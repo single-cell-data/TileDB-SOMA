@@ -50,6 +50,7 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
     std::string_view batch_size,
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    LOG_DEBUG(fmt::format("[SOMAArray] static method 'cfg' opening array '{}'", uri));
     return std::make_unique<SOMAArray>(
         mode,
         uri,
@@ -70,6 +71,7 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
     std::string_view batch_size,
     std::string_view result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    LOG_DEBUG(fmt::format("[SOMAArray] static method 'ctx' opening array '{}'", uri));
     return std::make_unique<SOMAArray>(
         mode,
         uri,
@@ -109,12 +111,10 @@ SOMAArray::SOMAArray(
             arr_->set_open_timestamp_end(timestamp->second);
             arr_->close();
             arr_->open(mode);
+            LOG_DEBUG(fmt::format("[SOMAArray] timestamp_start = {}", arr_->open_timestamp_start()));
+            LOG_DEBUG(fmt::format("[SOMAArray] timestamp_end = {}", arr_->open_timestamp_end()));
         }
         mq_ = std::make_unique<ManagedQuery>(arr_, name);
-        LOG_DEBUG(
-            fmt::format("timestamp_start = {}", arr_->open_timestamp_start()));
-        LOG_DEBUG(
-            fmt::format("timestamp_end = {}", arr_->open_timestamp_end()));
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
             fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));

@@ -6,10 +6,11 @@
 #' @param index_column_names Index column names passed on to DataFrame$create()
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMADataFrameCreate <- function(uri, schema, index_column_names = c("soma_joinid"),
-                                platform_config = NULL, tiledbsoma_ctx = NULL) {
-    sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+                                platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp, internal_use_only = "allowed_use")
     sdf$create(schema, index_column_names=index_column_names, platform_config=platform_config, internal_use_only = "allowed_use")
 
     sdf
@@ -21,9 +22,12 @@ SOMADataFrameCreate <- function(uri, schema, index_column_names = c("soma_joinid
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
-SOMADataFrameOpen <- function(uri, mode="READ", platform_config = NULL, tiledbsoma_ctx = NULL) {
-    sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+SOMADataFrameOpen <- function(uri, mode="READ",
+                              platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                             internal_use_only = "allowed_use")
     sdf$open(mode, internal_use_only = "allowed_use")
     sdf
 }
@@ -35,10 +39,12 @@ SOMADataFrameOpen <- function(uri, mode="READ", platform_config = NULL, tiledbso
 #' @param shape A vector of integers defining the shape of the array.
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMASparseNDArrayCreate <- function(uri, type, shape,
-                                    platform_config = NULL, tiledbsoma_ctx = NULL) {
-    snda <- SOMASparseNDArray$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+                                    platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    snda <- SOMASparseNDArray$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                                  internal_use_only = "allowed_use")
     snda$create(type, shape, platform_config=platform_config, internal_use_only = "allowed_use")
     snda
 }
@@ -49,9 +55,12 @@ SOMASparseNDArrayCreate <- function(uri, type, shape,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
-SOMASparseNDArrayOpen <- function(uri, mode="READ", platform_config = NULL, tiledbsoma_ctx = NULL) {
-    snda <- SOMASparseNDArray$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+SOMASparseNDArrayOpen <- function(uri, mode="READ",
+                                  platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    snda <- SOMASparseNDArray$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                                  internal_use_only = "allowed_use")
     snda$open(mode, internal_use_only = "allowed_use")
     snda
 }
@@ -63,10 +72,12 @@ SOMASparseNDArrayOpen <- function(uri, mode="READ", platform_config = NULL, tile
 #' @param shape A vector of integers defining the shape of the array.
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMADenseNDArrayCreate <- function(uri, type, shape,
-                                   platform_config = NULL, tiledbsoma_ctx = NULL) {
-    dnda <- SOMADenseNDArray$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+                                   platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    dnda <- SOMADenseNDArray$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                                 internal_use_only = "allowed_use")
     dnda$create(type, shape, platform_config=platform_config, internal_use_only = "allowed_use")
     dnda
 }
@@ -77,9 +88,12 @@ SOMADenseNDArrayCreate <- function(uri, type, shape,
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
-SOMADenseNDArrayOpen <- function(uri, mode="READ", platform_config = NULL, tiledbsoma_ctx = NULL) {
-    dnda <- SOMADenseNDArray$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+SOMADenseNDArrayOpen <- function(uri, mode="READ",
+                                 platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    dnda <- SOMADenseNDArray$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                                 internal_use_only = "allowed_use")
     dnda$open(mode, internal_use_only = "allowed_use")
     dnda
 }
@@ -89,9 +103,12 @@ SOMADenseNDArrayOpen <- function(uri, mode="READ", platform_config = NULL, tiled
 #' @param uri URI for the TileDB object
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
-SOMACollectionCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
-    coll <- SOMACollection$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+SOMACollectionCreate <- function(uri,
+                                 platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    coll <- SOMACollection$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                               internal_use_only = "allowed_use")
     coll$create(internal_use_only = "allowed_use")
     coll
 }
@@ -102,21 +119,29 @@ SOMACollectionCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = N
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp. In READ mode, defaults
+#'        to the current time. If non-NULL, then all members accessed through the collection object
+#'        inherit the timestamp.
 #' @export
-SOMACollectionOpen <- function(uri, mode="READ", platform_config = NULL, tiledbsoma_ctx = NULL) {
-    coll <- SOMACollection$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+SOMACollectionOpen <- function(uri, mode="READ",
+                               platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    coll <- SOMACollection$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                               internal_use_only = "allowed_use")
     coll$open(mode, internal_use_only = "allowed_use")
     coll
 }
 
 #' @title Create SOMA Measurement
-#' @description Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)
+#' @description Factory function to create a SOMAMeasurement for writing, (lifecycle: experimental)
 #' @param uri URI for the TileDB object
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
-SOMAMeasurementCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
-    meas <- SOMAMeasurement$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+SOMAMeasurementCreate <- function(uri,
+                                  platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    meas <- SOMAMeasurement$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                                internal_use_only = "allowed_use")
     meas$create(internal_use_only = "allowed_use")
     meas
 }
@@ -127,9 +152,14 @@ SOMAMeasurementCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = 
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp. In READ mode, defaults
+#'        to the current time. If non-NULL, then all members accessed through the collection object
+#'        inherit the timestamp.
 #' @export
-SOMAMeasurementOpen <- function(uri, mode="READ", platform_config = NULL, tiledbsoma_ctx = NULL) {
-    meas <- SOMAMeasurement$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+SOMAMeasurementOpen <- function(uri, mode="READ",
+                                platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    meas <- SOMAMeasurement$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                                internal_use_only = "allowed_use")
     meas$open(mode, internal_use_only = "allowed_use")
     meas
 }
@@ -139,9 +169,12 @@ SOMAMeasurementOpen <- function(uri, mode="READ", platform_config = NULL, tiledb
 #' @param uri URI for the TileDB object
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
-SOMAExperimentCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = NULL) {
-    exp <- SOMAExperiment$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+SOMAExperimentCreate <- function(uri,
+                                 platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    exp <- SOMAExperiment$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                              internal_use_only = "allowed_use")
     exp$create(internal_use_only = "allowed_use")
     exp
 }
@@ -152,9 +185,14 @@ SOMAExperimentCreate <- function(uri, platform_config = NULL, tiledbsoma_ctx = N
 #' @param mode One of `"READ"` or `"WRITE"`
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx optional SOMATileDBContext
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp. In READ mode, defaults
+#'        to the current time. If non-NULL, then all members accessed through the collection object
+#'        inherit the timestamp.
 #' @export
-SOMAExperimentOpen <- function(uri, mode="READ", platform_config = NULL, tiledbsoma_ctx = NULL) {
-    exp <- SOMAExperiment$new(uri, platform_config, tiledbsoma_ctx, internal_use_only = "allowed_use")
+SOMAExperimentOpen <- function(uri, mode="READ",
+                               platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    exp <- SOMAExperiment$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                              internal_use_only = "allowed_use")
     exp$open(mode, internal_use_only = "allowed_use")
     exp
 }

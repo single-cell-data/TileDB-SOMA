@@ -66,6 +66,47 @@ test_that("SOMACollection basics", {
   collection$close()
 })
 
+test_that("SOMACollection timestamped ops", {
+  # Create a collection @ t0
+  uri <- file.path(withr::local_tempdir(), "timestamped-collection")
+  collection <- SOMACollectionCreate(uri)
+  expect_equal(collection$uri, uri)
+  collection$close()
+  t0 <- Sys.time()
+  Sys.sleep(1.01)
+
+  # add array A with 1 in top-left entry @ t1
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  collection$add_new_sparse_ndarray("A", arrow::int8(), shape = c(2,2))$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
+  collection$close()
+  t1 <- Sys.time()
+  Sys.sleep(1.01)
+
+  # write 1 into bottom-right of A @ t2
+  collection <- SOMACollectionOpen(uri, mode = "WRITE")
+  collection$get("A")$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
+  collection$close()
+
+  # open A via collection with no timestamp => A should reflect the final state
+  collection <- SOMACollectionOpen(uri)
+  a <- collection$get("A")$read()$sparse_matrix()$concat()
+  expect_equal(sum(a), 2)
+  collection$close()
+
+  # open A via collection @ t1 => the last write should not be visible
+  collection <- SOMACollectionOpen(uri, tiledb_timestamp = t1)
+  expect_true("A" %in% collection$names())
+  a <- collection$get("A")$read()$sparse_matrix()$concat()
+  expect_equal(sum(a), 1)
+  collection$close()
+
+  # open collection @ t0 => A should not even be there
+  collection <- SOMACollectionOpen(uri, tiledb_timestamp = t0)
+  expect_false("A" %in% collection$names())
+  expect_error(collection$get("A"))
+    collection$close()
+})
+
 test_that("Platform config and context are respected by add_ methods", {
   uri <- file.path(withr::local_tempdir(), "new-collection")
 

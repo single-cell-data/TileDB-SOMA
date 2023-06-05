@@ -50,17 +50,32 @@ TileDBGroup <- R6::R6Class(
         stop(paste("Use of the open() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMACollectionOpen()'."), call. = FALSE)
       }
-      spdl::debug(
-        "Opening {} '{}' in {} mode", self$class(), self$uri, mode
-      )
       private$.mode = mode
-
-      private$.tiledb_group <- tiledb::tiledb_group(
-        self$uri,
-        type = mode,
-        ctx = private$.tiledb_ctx
-      )
-
+      private$.group_open_timestamp <- if (mode == "READ" && is.null(private$tiledb_timestamp)) {
+        # In READ mode, if the opener supplied no timestamp then we default to the time of
+        # opening, providing a temporal snapshot of all group members.
+        Sys.time()
+      } else {
+        private$tiledb_timestamp
+      }
+      if (is.null(private$.group_open_timestamp)) {
+        spdl::debug("Opening {} '{}' in {} mode", self$class(), self$uri, mode)
+        private$.tiledb_group <- tiledb::tiledb_group(
+          self$uri,
+          type = mode,
+          ctx = private$.tiledb_ctx
+        )
+      } else {
+        stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
+        spdl::debug("Opening {} '{}' in {} mode at {}",
+                    self$class(), self$uri, mode, private$.group_open_timestamp)
+        ## The Group API does not expose a timestamp setter so we have to go via the config
+        cfg <- tiledb::config(private$.tiledb_ctx)
+        cfg["sm.group.timestamp_end"] <- format(round(as.numeric(private$.group_open_timestamp) * 1000),
+                                                scientific = FALSE, big.mark = "")
+        private$.tiledb_group <- tiledb::tiledb_group(self$uri, type = mode,
+                                                      ctx = private$.tiledb_ctx, cfg = cfg)
+      }
       private$update_member_cache()
       private$update_metadata_cache()
 
@@ -85,6 +100,7 @@ TileDBGroup <- R6::R6Class(
         tiledb::tiledb_group_close(private$.tiledb_group)
         private$.mode <- NULL
         private$.tiledb_group <- NULL
+        private$.group_open_timestamp <- NULL
       }
       invisible(self)
     },
@@ -290,6 +306,11 @@ TileDBGroup <- R6::R6Class(
     # and TileDBGroup.
     .tiledb_group = NULL,
 
+    # This field stores the timestamp with which we opened the group, whether we used the
+    # opener-supplied private$tiledb_timestamp, or defaulted to the time of opening, or neither
+    # (NULL). This is the timestamp to propagate to accessed members.
+    .group_open_timestamp = NULL,
+
     # @description List of cached group members
     # Initially NULL, once the group is created or opened, this is populated
     # with a list that's empty or contains the group members.
@@ -311,7 +332,7 @@ TileDBGroup <- R6::R6Class(
         GROUP = TileDBGroup$new,
         stop(sprintf("Unknown member type: %s", type), call. = FALSE)
       )
-      obj <- constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx,
+      obj <- constructor(uri, tiledbsoma_ctx = self$tiledbsoma_ctx, tiledb_timestamp = private$.group_open_timestamp,
                          platform_config = self$platform_config, internal_use_only = "allowed_use")
       obj
     },
@@ -372,6 +393,10 @@ TileDBGroup <- R6::R6Class(
       # we must open a temporary handle for read, to fill the cache.
       group_handle <- private$.tiledb_group
       if (private$.mode == "WRITE") {
+        # FIXME: when we add write timestamps we should open this temp handle with tiledb_timestamp
+        # too. The stopifnot is currently "unreachable" since open() stops if called with WRITE
+        # mode and non-null tiledb_timestamp.
+        stopifnot("FIXME" = is.null(private$.group_open_timestamp))
         group_handle <- tiledb::tiledb_group(self$uri, type = "READ", ctx = private$.tiledb_ctx)
       }
 

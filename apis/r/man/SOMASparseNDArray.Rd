@@ -23,7 +23,7 @@ the object are overwritten and new index values are added. (lifecycle: experimen
 }
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{tiledbsoma::SOMAArrayBase} -> \code{SOMASparseNDArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMASparseNDArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -104,7 +104,7 @@ Reads a user-defined slice of the \code{SOMASparseNDArray}
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read(
   coords = NULL,
   result_order = "auto",
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 

@@ -11,7 +11,7 @@ Base class for objects containing persistent collection of SOMA
 objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{SOMACollectionBase}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{SOMACollectionBase}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -64,6 +64,7 @@ Create a new \code{SOMACollection}. (lifecycle: experimental)
   uri,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL,
   internal_use_only = NULL
 )}\if{html}{\out{</div>}}
 }
@@ -76,6 +77,8 @@ Create a new \code{SOMACollection}. (lifecycle: experimental)
 \item{\code{platform_config}}{Optional storage-engine specific configuration}
 
 \item{\code{tiledbsoma_ctx}}{optional SOMATileDBContext}
+
+\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) for TileDB timestamp}
 
 \item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
 as \code{new()} is considered internal and should not be called directly.}

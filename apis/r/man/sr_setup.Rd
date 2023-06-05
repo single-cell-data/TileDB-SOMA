@@ -15,6 +15,7 @@ sr_setup(
   dim_ranges = NULL,
   batch_size = "auto",
   result_order = "auto",
+  timestamp_end = NULL,
   loglevel = "auto"
 )
 

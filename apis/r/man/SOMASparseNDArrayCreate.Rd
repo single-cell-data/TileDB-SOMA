@@ -9,7 +9,8 @@ SOMASparseNDArrayCreate(
   type,
   shape,
   platform_config = NULL,
-  tiledbsoma_ctx = NULL
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ SOMASparseNDArrayCreate(
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
 }
 \description{
 Factory function to create a SOMASparseNDArray for writing, (lifecycle: experimental)

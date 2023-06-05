@@ -22,8 +22,7 @@ test_that("SOMASparseNDArray creation", {
   expect_identical(
     as.numeric(tbl$GetColumnByName("soma_data")),
     ## need to convert to Csparsematrix first to get x values sorted appropriately
-    ##-- gets values _transposed_:  as.numeric(as(mat, "CsparseMatrix")@x)
-    as.numeric(vals)
+    as.numeric(as(mat, "CsparseMatrix")@x)
   )
 
   ## Subset both dims
@@ -307,5 +306,32 @@ test_that("platform_config defaults", {
   expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
   expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
 
+  snda$close()
+})
+
+test_that("SOMASparseNDArray timestamped ops", {
+  uri <- withr::local_tempdir("soma-sparse-nd-array-timestamps")
+
+  # t=10: create 2x2 array and write 1 into top-left entry
+  t10 <- Sys.time()
+  snda <- SOMASparseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2))
+  snda$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
+  snda$close()
+  Sys.sleep(1.0)
+
+  # t=20: write 1 into bottom-right entry
+  t20 <- Sys.time()
+  snda <- SOMASparseNDArrayOpen(uri=uri, mode="WRITE")
+  snda$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
+  snda$close()
+
+  # read with no timestamp args and see both writes
+  snda <- SOMASparseNDArrayOpen(uri=uri)
+  expect_equal(sum(snda$read()$sparse_matrix()$concat()), 2)
+  snda$close()
+
+  # read @ t=15 and see only the first write
+  snda <- SOMASparseNDArrayOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t10))
+  expect_equal(sum(snda$read()$sparse_matrix()$concat()), 1)
   snda$close()
 })

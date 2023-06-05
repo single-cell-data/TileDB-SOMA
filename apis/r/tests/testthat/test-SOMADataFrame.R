@@ -433,3 +433,44 @@ test_that("Metadata", {
   expect_equivalent(readmd[["foo"]], "bar")
   sdf$close()
 })
+
+test_that("SOMADataFrame timestamped ops", {
+  uri <- withr::local_tempdir("soma-dataframe-timestamps")
+
+  sch <- arrow::schema(arrow::field("soma_joinid", arrow::int64(), nullable=FALSE),
+                       arrow::field("valint", arrow::int32(), nullable=FALSE),
+                       arrow::field("valdbl", arrow::float64(), nullable=FALSE))
+  sdf <- SOMADataFrameCreate(uri=uri, schema=sch)
+  rb1 <- arrow::record_batch(soma_joinid = bit64::as.integer64(1L:3L),
+                             valint = 1L:3L,
+                             valdbl = 100*(1:3),
+                             schema = sch)
+  t10 <- Sys.time()
+  sdf$write(rb1)
+  sdf$close()
+
+  sdf <- SOMADataFrameOpen(uri=uri)
+  d1 <- as.data.frame(sdf$read()$concat())
+  expect_equal(d1, as.data.frame(rb1))
+  sdf$close()
+  Sys.sleep(1.0)
+
+  t20 <- Sys.time()
+  sdf <- SOMADataFrameOpen(uri=uri, mode="WRITE")
+  rb2 <- arrow::record_batch(soma_joinid = bit64::as.integer64(4L:6L),
+                             valint = 4L:6L,
+                             valdbl = 100*(4:6),
+                             schema = sch)
+  sdf$write(rb2)
+  sdf$close()
+
+  sdf <- SOMADataFrameOpen(uri=uri)
+  d2 <- as.data.frame(sdf$read()$concat())
+  expect_equal(as.data.frame(sdf$read()$concat()), d2)
+  sdf$close()
+
+  sdf <- SOMADataFrameOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t10))
+  expect_equal(as.data.frame(sdf$read()$concat()), d1)  # read between t10 and t20 sees only first write
+  sdf$close()
+
+})
