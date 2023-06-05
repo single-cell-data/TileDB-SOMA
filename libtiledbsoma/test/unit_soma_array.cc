@@ -64,9 +64,7 @@ std::tuple<std::string, uint64_t> create_array(
     int num_cells_per_fragment = 10,
     int num_fragments = 1,
     bool overlap = false,
-    bool allow_duplicates = false,
-    uint64_t timestamp = 1,
-    bool reuse_existing = false) {
+    bool allow_duplicates = false) {
     std::string uri = fmt::format(
         "{}-{}-{}-{}-{}",
         uri_in,
@@ -75,63 +73,28 @@ std::tuple<std::string, uint64_t> create_array(
         overlap,
         allow_duplicates);
     // Create array, if not reusing the existing array
-    if (!reuse_existing) {
-        auto vfs = VFS(ctx);
-        if (vfs.is_dir(uri)) {
-            vfs.remove_dir(uri);
-        }
-
-        // Create schema
-        ArraySchema schema(ctx, TILEDB_SPARSE);
-
-        auto dim = Dimension::create<int64_t>(
-            ctx, "d0", {0, std::numeric_limits<int64_t>::max() - 1});
-
-        Domain domain(ctx);
-        domain.add_dimension(dim);
-        schema.set_domain(domain);
-
-        auto attr = Attribute::create<int>(ctx, "a0");
-        schema.add_attribute(attr);
-        schema.set_allows_dups(allow_duplicates);
-        schema.check();
-
-        // Create array
-        Array::create(uri, schema);
+    auto vfs = VFS(ctx);
+    if (vfs.is_dir(uri)) {
+        vfs.remove_dir(uri);
     }
 
-    // Open array for writing
-    Array array(ctx, uri, TILEDB_WRITE, timestamp);
-    if (LOG_DEBUG_ENABLED()) {
-        array.schema().dump();
-    }
+    // Create schema
+    ArraySchema schema(ctx, TILEDB_SPARSE);
 
-    // Generate fragments in random order
-    std::vector<int> frags(num_fragments);
-    std::iota(frags.begin(), frags.end(), 0);
-    std::shuffle(frags.begin(), frags.end(), std::random_device{});
+    auto dim = Dimension::create<int64_t>(
+        ctx, "d0", {0, std::numeric_limits<int64_t>::max() - 1});
 
-    for (auto i : frags) {
-        std::vector<int64_t> d0(num_cells_per_fragment);
-        for (int j = 0; j < num_cells_per_fragment; j++) {
-            // Overlap odd fragments when generating overlaps
-            if (overlap && i & 1) {
-                d0[j] = j + num_cells_per_fragment * (i - 1);
-            } else {
-                d0[j] = j + num_cells_per_fragment * i;
-            }
-        }
-        std::vector<int> a0(num_cells_per_fragment, i);
+    Domain domain(ctx);
+    domain.add_dimension(dim);
+    schema.set_domain(domain);
 
-        // Write data to array
-        Query query(ctx, array);
-        query.set_layout(TILEDB_UNORDERED)
-            .set_data_buffer("d0", d0)
-            .set_data_buffer("a0", a0);
-        query.submit();
-    }
+    auto attr = Attribute::create<int>(ctx, "a0");
+    schema.add_attribute(attr);
+    schema.set_allows_dups(allow_duplicates);
+    schema.check();
 
-    array.close();
+    // Create array
+    Array::create(uri, schema);
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -147,6 +110,67 @@ std::tuple<std::string, uint64_t> create_array(
     return {uri, nnz};
 }
 
+std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
+    const std::string& uri,
+    std::shared_ptr<Context> ctx,
+    int num_cells_per_fragment = 10,
+    int num_fragments = 1,
+    bool overlap = false,
+    uint64_t timestamp = 1) {
+    // Generate fragments in random order
+    std::vector<int> frags(num_fragments);
+    std::iota(frags.begin(), frags.end(), 0);
+    std::shuffle(frags.begin(), frags.end(), std::random_device{});
+
+    for (auto i = 0; i < num_fragments; ++i) {
+        auto frag_num = frags[i];
+
+        // Open array for writing
+        Array array(*ctx, uri, TILEDB_WRITE, timestamp + i);
+        if (LOG_DEBUG_ENABLED()) {
+            array.schema().dump();
+        }
+
+        std::vector<int64_t> d0(num_cells_per_fragment);
+        for (int j = 0; j < num_cells_per_fragment; j++) {
+            // Overlap odd fragments when generating overlaps
+            if (overlap && frag_num % 2 == 1) {
+                d0[j] = j + num_cells_per_fragment * (frag_num - 1);
+            } else {
+                d0[j] = j + num_cells_per_fragment * frag_num;
+            }
+        }
+        std::vector<int> a0(num_cells_per_fragment, frag_num);
+
+        // Write data to array
+        Query query(*ctx, array);
+        query.set_layout(TILEDB_UNORDERED)
+            .set_data_buffer("d0", d0)
+            .set_data_buffer("a0", a0);
+        query.submit();
+        array.close();
+    }
+
+    Array rarray(*ctx, uri, TILEDB_READ, timestamp + num_fragments - 1);
+    rarray.reopen();
+
+    std::vector<int64_t> expected_d0(num_cells_per_fragment * num_fragments);
+    std::vector<int> expected_a0(num_cells_per_fragment * num_fragments);
+
+    Query query(*ctx, rarray);
+    query.set_layout(TILEDB_UNORDERED)
+        .set_data_buffer("d0", expected_d0)
+        .set_data_buffer("a0", expected_a0);
+    query.submit();
+
+    rarray.close();
+
+    expected_d0.resize(query.result_buffer_elements()["d0"].second);
+    expected_a0.resize(query.result_buffer_elements()["a0"].second);
+
+    return {expected_d0, expected_a0};
+}
+
 };  // namespace
 
 TEST_CASE("SOMAArray: nnz") {
@@ -154,6 +178,7 @@ TEST_CASE("SOMAArray: nnz") {
     auto overlap = GENERATE(false, true);
     auto allow_duplicates = GENERATE(false, true);
     int num_cells_per_fragment = 128;
+    auto timestamp = 10;
 
     SECTION(fmt::format(
         " - fragments={}, overlap={}, allow_duplicates={}",
@@ -170,11 +195,27 @@ TEST_CASE("SOMAArray: nnz") {
             num_cells_per_fragment,
             num_fragments,
             overlap,
-            allow_duplicates,
-            10);
+            allow_duplicates);
+
+        auto [expected_d0, expected_a0] = write_array(
+            uri,
+            ctx,
+            num_cells_per_fragment,
+            num_fragments,
+            overlap,
+            timestamp);
 
         // Get total cell num
-        auto soma_array = SOMAArray::open(TILEDB_READ, ctx, uri);
+        auto soma_array = SOMAArray::open(
+            TILEDB_READ,
+            ctx,
+            uri,
+            "",
+            {},
+            "auto",
+            "auto",
+            std::pair<uint64_t, uint64_t>(
+                timestamp, timestamp + num_fragments - 1));
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -182,6 +223,23 @@ TEST_CASE("SOMAArray: nnz") {
         std::vector<int64_t> shape = soma_array->shape();
         REQUIRE(shape.size() == 1);
         REQUIRE(shape[0] == std::numeric_limits<int64_t>::max());
+
+        soma_array->submit();
+        while (auto batch = soma_array->read_next()) {
+            auto arrbuf = batch.value();
+            REQUIRE(arrbuf->names() == std::vector<std::string>({"d0", "a0"}));
+            REQUIRE(arrbuf->num_rows() == nnz);
+
+            auto d0span = arrbuf->at("d0")->data<int64_t>();
+            auto a0span = arrbuf->at("a0")->data<int>();
+
+            std::vector<int64_t> d0col(d0span.begin(), d0span.end());
+            std::vector<int> a0col(a0span.begin(), a0span.end());
+
+            REQUIRE(d0col == expected_d0);
+            REQUIRE(a0col == expected_a0);
+        }
+        soma_array->close();
     }
 }
 
@@ -206,23 +264,17 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
             num_cells_per_fragment,
             num_fragments,
             overlap,
-            allow_duplicates,
-            10);
+            allow_duplicates);
+        write_array(
+            uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
 
-        // Write more data to the array at timestamp 20, which will be
+        // Write more data to the array at timestamp 40, which will be
         // not be included in the nnz call with a timestamp
-        create_array(
-            base_uri,
-            *ctx,
-            num_cells_per_fragment,
-            num_fragments,
-            overlap,
-            allow_duplicates,
-            20,
-            true);
+        write_array(
+            uri, ctx, num_cells_per_fragment, num_fragments, overlap, 40);
 
-        // Get total cell num at timestamp (0, 15)
-        std::pair<uint64_t, uint64_t> timestamp{0, 15};
+        // Get total cell num at timestamp (0, 20)
+        std::pair<uint64_t, uint64_t> timestamp{0, 20};
         auto soma_array = SOMAArray::open(
             TILEDB_READ, ctx, uri, "nnz", {}, "auto", "auto", timestamp);
 
@@ -254,21 +306,15 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
             num_cells_per_fragment,
             num_fragments,
             overlap,
-            allow_duplicates,
-            10);
+            allow_duplicates);
+        write_array(
+            uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
 
         // Write more data to the array at timestamp 20, which will be
         // duplicates of the data written at timestamp 10
         // The duplicates get merged into one fragment during consolidation.
-        create_array(
-            base_uri,
-            *ctx,
-            num_cells_per_fragment,
-            num_fragments,
-            overlap,
-            allow_duplicates,
-            20,
-            true);
+        write_array(
+            uri, ctx, num_cells_per_fragment, num_fragments, overlap, 20);
 
         // Consolidate and optionally vacuum
         Array::consolidate(*ctx, uri);
