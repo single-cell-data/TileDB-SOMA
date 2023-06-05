@@ -13,6 +13,8 @@ sr_setup(
   qc = NULL,
   dim_points = NULL,
   dim_ranges = NULL,
+  batch_size = "auto",
+  result_order = "auto",
   loglevel = "auto"
 )
 
@@ -36,6 +38,10 @@ dimension(s). Each dimension can be one entry in the list.}
 
 \item{dim_ranges}{Optional named list with two-column matrix where each row select a range
 for the given dimension. Each dimension can be one entry in the list.}
+
+\item{batch_size}{Optional argument for size of data batches, defaults to \sQuote{auto}}
+
+\item{result_order}{Optional argument for query result order, defaults to \sQuote{auto}}
 
 \item{loglevel}{Character value with the desired logging level, defaults to \sQuote{auto}
 which lets prior setting prevail, any other value is set as new logging level.}

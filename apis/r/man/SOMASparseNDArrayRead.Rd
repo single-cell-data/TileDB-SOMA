@@ -39,7 +39,7 @@ Create (lifecycle: experimental)
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArrayRead-sparse_matrix}{}}}
 \subsection{Method \code{sparse_matrix()}}{
 Read as a sparse matrix (lifecycle: experimental). Returns
-an iterator of Matrix::\link[Matrix]{dgTMatrix} or \link{matrixZeroBasedView} of it.
+an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or \link{matrixZeroBasedView} of it.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayRead$sparse_matrix(zero_based = FALSE)}\if{html}{\out{</div>}}
 }
@@ -48,7 +48,7 @@ an iterator of Matrix::\link[Matrix]{dgTMatrix} or \link{matrixZeroBasedView} of
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{zero_based}}{Logical, if \code{TRUE} returns iterator of \link{matrixZeroBasedView}
-if \code{FALSE} returns iterator of Matrix::\link[Matrix]{dgTMatrix}.}
+if \code{FALSE} returns iterator of Matrix::\link[Matrix]{dgTMatrix-class}.}
 }
 \if{html}{\out{</div>}}
 }
