@@ -1,28 +1,34 @@
 name: artifacts
 
 on:
-  pull_request:
-    paths-ignore:
-      - "apis/**"
-      - ".pre-commit-config.yaml"
-  push:
-    branches: [main, master]
+  #pull_request:
+  #  paths-ignore:
+  #    - "apis/**"
+  #    - ".pre-commit-config.yaml"
+  #push:
+  #  branches: [main, master]
   release:
+    types:
+      - created
 
 env:
-  TILEDBSOMA_VER: "1.2.4"
-  TILEDBSOMA_SHA: "1169798"
+  ## for workflows triggered by release this is the release tag created (cf https://docs.github.com/en/actions/learn-github-actions/contexts)
+  ## note that this is filtered below and then used via 'steps.versubstr.outputs.substring'
+  TILEDBSOMA_VER: "${{ github.ref }}"
+  ## the commit sha that triggered the workflow (cf https://docs.github.com/en/actions/learn-github-actions/contexts)
+  ## note that this is shortened below from the full-length sha1 sum to the common first seven letters, used via steps.shasubstr.outputs.substring
+  TILEDBSOMA_SHA: "${{ github.sha }}"
+  ## three variables for scratch space while this runs, defined off the current 'workspace'
   TILEDBSOMA_BUILD: "${{ github.workspace }}/tiledb_build"
   TILEDBSOMA_SOURCE: "${{ github.workspace }}/libtiledbsoma"
-  TILEDBSOMA_INSTALL: "${{ github.workspace }}/.tiledbsoma_dist/$TILEDBSOMA_VER-$TILEDBSOMA_SHA"
-    
+  TILEDBSOMA_INSTALL: "${{ github.workspace }}/.tiledbsoma_dist/${{ github.sha }}"
+
 jobs:
   build:
     
     strategy:
       matrix:
         #considering https://stackoverflow.com/questions/65035256/how-to-access-matrix-variables-in-github-actions
-        environ: [macos_x86, macos_arm, linux]
         include:
           - environ: 'macos_x86'
             imageName: "macOS-11"
@@ -93,13 +99,49 @@ jobs:
           - name: "Inspect installation output"
             run: ls -lR ${{ env.TILEDBSOMA_INSTALL }}
 
+          - name: "Get VER Substring"
+            uses: bhowell2/github-substring-action@1.0.2
+            id: versubstr
+            with:
+              value: ${{ env.TILEDBSOMA_VER }}
+              index_of_str: "refs/tags/"
+              fail_if_not_found: false
+              default_return_value: "unset"
+
+          - name: "Get SHA Substring"
+            uses: bhowell2/github-substring-action@1.0.2
+            id: shasubstr
+            with:
+              value: ${{ env.TILEDBSOMA_SHA }}
+              length_from_start: 7
+
+          - name: "Show Substrings"
+            run: echo "VER " ${{ steps.versubstr.outputs.substring }} " and SHA " ${{ steps.shasubstr.outputs.substring }}
+
           - name: "Archive files"
             run: |
               cd ${{ env.TILEDBSOMA_INSTALL }}
-              tar -cvf ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar *
-              gzip -9v ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar
-              
-          - uses: actions/upload-artifact@v3
+              tar -cvf ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ steps.versubstr.outputs.substring }}-${{ steps.shasubstr.outputs.substring }}.tar *
+              gzip -9v ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ steps.versubstr.outputs.substring }}-${{ steps.shasubstr.outputs.substring }}.tar
+            
+          # an 'artifact' is downloadable by clicking on it but has no # external URL
+          #- name: "Artifact"
+          #  uses: actions/upload-artifact@v3
+          #  with:
+          #    name: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
+          #    path: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
+
+          #- name: "Release"
+          #  uses: softprops/action-gh-release@v1
+          #  if: startsWith(github.ref, 'refs/tags/')
+          #  with:
+          #    files: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
+
+          - name: "Release"
+            uses: shogo82148/actions-upload-release-asset@v1
+            if: startsWith(github.ref, 'refs/tags/')
             with:
-              name: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
-              path: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ env.TILEDBSOMA_VER }}-${{ env.TILEDBSOMA_SHA }}.tar.gz
+              github_token: ${{ secrets.PAT }}
+              upload_url: ${{ github.event.release.upload_url }}
+              asset_path: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ steps.versubstr.outputs.substring }}-${{ steps.shasubstr.outputs.substring }}.tar.gz
+              overwrite: true
