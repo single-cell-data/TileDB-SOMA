@@ -1,5 +1,20 @@
 #!/bin/sh
 
+# Cannot set as pkg-config may error (when we need artifacts) leading to exit
+#set -ue
+
+## Overall Approach
+##  Case 1: Use given and/or system libraries:
+##     - if user supplies -c CORE_DIR then the -I and -L switches are set for CORE_DIR
+##     - if user supplies -s SOMA_DIR then the -I and -L switches are set for SOMA_DIR
+##     - if either one is not supplied, a check for pkg-config is made and, if found output
+##       from pkg-config is used
+##  2. As a general fall-back, as well as via another command-line argument, use artifacts for
+##     the libraries and header from TileDB Embedded and the TileDB-SOMA C++ library can be used
+
+
+## Two Preliminaries
+##
 ## This allow for standard CRAN override preference for both a settable R_HOME
 ## with fallback to query R in $PATH for the value it has so it works both
 ## explicitly, implicitly from the running R instance or by pointing at alternate
@@ -9,44 +24,125 @@ if test -z "${R_HOME}"; then
     echo Could not determine R_HOME.
     exit 1
 fi
+##
+## If on macOS check for Darwin and the required 'min version' settings
+macosver=`${R_HOME}/bin/Rscript -e 'if (Sys.info()["machine"] == "x86_64" && Sys.info()["sysname"] == "Darwin") cat("-mmacosx-version-min=10.14") else cat("")'`
 
-## Check for pkg-config and use it to inquire about tiledb and tiledbsoma build options
-pkg-config --version >/dev/null 2>&1
-if [ $? -eq 0 ]; then
-    pkg-config --exists tiledb tiledbsoma
-    if [ $? -eq 0 ]; then
-        pkgcflags=`pkg-config --cflags tiledb tiledbsoma`
-        pkglibs=`pkg-config --libs tiledb tiledbsoma`
-
-        ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
-        sed -e "s|@tiledb_include@|$pkgcflags |" \
-            -e "s|@tiledb_libs@|$pkglibs|" \
-            -e "s|@tiledb_rpath@||" \
-            -e "s|@cxx17_macos@||" \
-            src/Makevars.in > src/Makevars
-
-        echo "** updated src/Makevars for system library via pkg-config"
-
-        ## we can exit now as we have a working setup
-        exit 0
-    fi
+## Case 1
+##
+## Check command-line arguments for core or soma dir
+incl_dirs=""
+lib_dirs=""
+given_core=0
+given_soma=0
+force_artifacts=0
+if [ "$#" -ne 0 ]; then
+    options='ac:s:?h'
+    while getopts "$options" i
+    do
+        case "$i" in
+        a)
+            force_artifacts=1
+            shift
+            ;;
+        c)
+            core_dir=$OPTARG
+            incl_dirs="${incl_dirs} -I${core_dir} "
+            lib_dirs="${lib_dirs} -L${core_dir} -ltiledb "
+            given_core=1
+            shift
+            shift
+            ;;
+        s)
+            soma_dir=$OPTARG
+            incl_dirs="${incl_dirs} -I${soma_dir} "
+            lib_dirs="${lib_dirs} -L${soma_dir} -ltiledbsoma "
+            given_soma=1
+            shift
+            shift
+            ;;
+        h|?)
+            echo "configure [-c DIR_CORE] [-s DIR_SOMA] [-a]"
+            echo "    to use either or both of the core or soma install directories."
+            echo "    If neither has been supplied, pkg-config will be used."
+            echo "    Otherwise pre-made artifacts will downloaded."
+            echo "    The '-a' flag can also force artifact mode."
+            exit 1
+            ;;
+        esac
+    done
+    #echo "Args \"$incl_dirs\" \"$lib_dirs\" $given_core $given_soma"
 fi
 
-## If we are still here `pkg-config` alone did not work.
+## Unless artifacts mode was forced, try the supplied library directories; complement with pkg-config
+if [ ${force_artifacts} -ne 1 ]; then
 
-## Download tiledb pre-made
-${R_HOME}/bin/Rscript tools/get_tarball.R
+    ## if either optional arg is still missing
+    if [ ${given_core} -eq 0 -o ${given_soma} -eq 0 ]; then
+        ## Check for pkg-config and use it to inquire about tiledb and tiledbsoma build options
+        pkg-config --version >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            if [ ${given_core} -eq 0 ]; then
+                pkg-config --exists tiledb
+                if [ $? -eq 0 ]; then
+                    pkgcflags=`pkg-config --cflags tiledb`
+                    pkglibs=`pkg-config --libs tiledb`
+                    echo "** updating src/Makevars for TileDB Core system library via pkg-config"
+                    incl_dirs="${incl_dirs} ${pkgcflags}"
+                    lib_dirs="${lib_dirs} ${pkglibs}"
+                    given_core=1
+                fi
+            fi
+            if [ ${given_soma} -eq 0 ]; then
+                pkg-config --exists tiledbsoma
+                if [ $? -eq 0 ]; then
+                    pkgcflags=`pkg-config --cflags tiledbsoma`
+                    pkglibs=`pkg-config --libs tiledbsoma`
+                    echo "** updating src/Makevars for TileDB-SOMA system library via pkg-config"
+                    incl_dirs="${incl_dirs} ${pkgcflags}"
+                    lib_dirs="${lib_dirs} ${pkglibs}"
+                    given_soma=1
+                fi
+            fi
+        fi
+    fi
 
+    if [ ${given_core} -eq 1 -a ${given_soma} -eq 1 ]; then
+        ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
+        sed -e "s|@tiledb_include@|${incl_dirs} |" \
+            -e "s|@tiledb_libs@|${lib_dirs} |" \
+            -e "s|@tiledb_rpath@||" \
+            -e "s|@cxx17_macos@|${macosver}|" \
+            src/Makevars.in > src/Makevars
+        exit 0
+    fi
+
+    ## There is a possible 'waterfall' effect here in that user may have tried to set
+    ## libraries and/or rely on pkg-config, but that not successful. In that case artifacts
+    ## are used too.
+fi
+
+
+## Case 2
+##
+## If we are still here arguments and/or `pkg-config` alone did not work,
+## or the artifact case was forced.
+
+echo "** using artifact mode"
+
+## Download tiledb core pre-made
+${R_HOME}/bin/Rscript tools/get_tarball_core.R
+## Download tiledb-soma pre-made
+${R_HOME}/bin/Rscript tools/get_tarball_soma.R
 ## Check for cmake and git
-${R_HOME}/bin/Rscript tools/check_cmake_and_git.R
+# ${R_HOME}/bin/Rscript tools/check_cmake_and_git.R
 
 ## Make libtiledbsoma library using cmake (and an added git dependency)
-tools/build_libtiledbsoma.sh
+# tools/build_libtiledbsoma.sh
 
 pkgincl="-I../inst/tiledb/include -I../inst/tiledbsoma/include"
 pkglibs="-ltiledb -L../inst/tiledb/lib -ltiledbsoma -L../inst/tiledbsoma/lib"
 rpath="-Wl,-rpath,'\$\$ORIGIN/../tiledb/lib' -Wl,-rpath,'\$\$ORIGIN/../tiledbsoma/lib'"
-macosver=`${R_HOME}/bin/Rscript -e 'if (Sys.info()["machine"] == "x86_64" && Sys.info()["sysname"] == "Darwin") cat("-mmacosx-version-min=10.14") else cat("")'`
 
 sed -e "s|@tiledb_include@|$pkgincl |" \
     -e "s|@tiledb_libs@|$pkglibs|" \
