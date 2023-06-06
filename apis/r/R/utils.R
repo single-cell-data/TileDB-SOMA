@@ -63,6 +63,12 @@ check_arrow_pointers <- function(arrlst) {
               "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
 }
 
+#' @noRd
+arrow_pointer_to_record_batch <- function(arrlst) {
+  check_arrow_pointers(arrlst)
+  arrow::RecordBatch$import_from_c(arrlst$array_data, arrlst$schema)
+}
+
 ##' @noRd
 arrow_to_dt <- function(arrlst) {
     check_arrow_pointers(arrlst)
