@@ -31,9 +31,6 @@
  */
 
 #include "column_buffer.h"
-#include "array_buffers.h"
-#include "common.h"
-#include "logger.h"
 
 namespace tiledbsoma {
 
@@ -45,13 +42,21 @@ using namespace tiledb;
 
 std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     std::shared_ptr<Array> array, std::string_view name) {
+    return ColumnBuffer::create(array->schema(), name);
+}
+
+std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
+    ArraySchema schema, std::string_view name) {
     auto name_str = std::string(name);  // string for TileDB API
-    auto schema = array->schema();
+    auto num_bytes = DEFAULT_ALLOC_BYTES;
 
     if (schema.has_attribute(name_str)) {
         auto attr = schema.attribute(name_str);
+        auto type = attr.type();
         bool is_var = attr.cell_val_num() == TILEDB_VAR_NUM;
         bool is_nullable = attr.nullable();
+        size_t num_cells = is_var ? num_bytes / sizeof(uint64_t) :
+                                    num_bytes / tiledb::impl::type_size(type);
 
         if (!is_var && attr.cell_val_num() != 1) {
             throw TileDBSOMAError(
@@ -59,14 +64,17 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
                 name_str);
         }
 
-        return ColumnBuffer::alloc(
-            array, attr.name(), attr.type(), is_var, is_nullable);
+        return std::make_shared<ColumnBuffer>(
+            name, type, num_cells, num_bytes, is_var, is_nullable);
 
     } else if (schema.domain().has_dimension(name_str)) {
         auto dim = schema.domain().dimension(name_str);
+        auto type = dim.type();
         bool is_var = dim.cell_val_num() == TILEDB_VAR_NUM ||
                       dim.type() == TILEDB_STRING_ASCII ||
                       dim.type() == TILEDB_STRING_UTF8;
+        size_t num_cells = is_var ? num_bytes / sizeof(uint64_t) :
+                                    num_bytes / tiledb::impl::type_size(type);
 
         if (!is_var && dim.cell_val_num() != 1) {
             throw TileDBSOMAError(
@@ -74,8 +82,8 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
                 name_str);
         }
 
-        return ColumnBuffer::alloc(
-            array, dim.name(), dim.type(), is_var, false);
+        return std::make_shared<ColumnBuffer>(
+            name, type, num_cells, num_bytes, is_var, false);
     }
 
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);

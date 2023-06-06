@@ -72,7 +72,7 @@ std::tuple<std::string, uint64_t> create_array(
         num_fragments,
         overlap,
         allow_duplicates);
-    // Create array, if not reusing the existing array
+
     auto vfs = VFS(ctx);
     if (vfs.is_dir(uri)) {
         vfs.remove_dir(uri);
@@ -94,7 +94,7 @@ std::tuple<std::string, uint64_t> create_array(
     schema.check();
 
     // Create array
-    Array::create(uri, schema);
+    SOMAArray::create(uri, schema);
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -122,13 +122,21 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
     std::iota(frags.begin(), frags.end(), 0);
     std::shuffle(frags.begin(), frags.end(), std::random_device{});
 
+    // Write to SOMAArray
     for (auto i = 0; i < num_fragments; ++i) {
         auto frag_num = frags[i];
+        auto soma_array = SOMAArray::open(
+            TILEDB_WRITE,
+            ctx,
+            uri,
+            "",
+            {},
+            "auto",
+            "auto",
+            std::pair<uint64_t, uint64_t>(timestamp + i, timestamp + i));
 
-        // Open array for writing
-        Array array(*ctx, uri, TILEDB_WRITE, timestamp + i);
         if (LOG_DEBUG_ENABLED()) {
-            array.schema().dump();
+            soma_array->schema()->dump();
         }
 
         std::vector<int64_t> d0(num_cells_per_fragment);
@@ -143,27 +151,27 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         std::vector<int> a0(num_cells_per_fragment, frag_num);
 
         // Write data to array
-        Query query(*ctx, array);
-        query.set_layout(TILEDB_UNORDERED)
-            .set_data_buffer("d0", d0)
-            .set_data_buffer("a0", a0);
-        query.submit();
-        array.close();
+        soma_array->submit();
+        soma_array->set_column_data("d0", d0);
+        soma_array->set_column_data("a0", a0);
+        soma_array->write();
+        soma_array->close();
     }
 
-    Array rarray(*ctx, uri, TILEDB_READ, timestamp + num_fragments - 1);
-    rarray.reopen();
+    // Read from TileDB Array to get expected data
+    Array tiledb_array(*ctx, uri, TILEDB_READ, timestamp + num_fragments - 1);
+    tiledb_array.reopen();
 
     std::vector<int64_t> expected_d0(num_cells_per_fragment * num_fragments);
     std::vector<int> expected_a0(num_cells_per_fragment * num_fragments);
 
-    Query query(*ctx, rarray);
+    Query query(*ctx, tiledb_array);
     query.set_layout(TILEDB_UNORDERED)
         .set_data_buffer("d0", expected_d0)
         .set_data_buffer("a0", expected_a0);
     query.submit();
 
-    rarray.close();
+    tiledb_array.close();
 
     expected_d0.resize(query.result_buffer_elements()["d0"].second);
     expected_a0.resize(query.result_buffer_elements()["a0"].second);
@@ -187,7 +195,7 @@ TEST_CASE("SOMAArray: nnz") {
         allow_duplicates)) {
         auto ctx = std::make_shared<Context>();
 
-        // Create array at timestamp 10
+        // Create array
         std::string base_uri = "mem://unit-test-array";
         auto [uri, expected_nnz] = create_array(
             base_uri,
@@ -197,6 +205,7 @@ TEST_CASE("SOMAArray: nnz") {
             overlap,
             allow_duplicates);
 
+        // Write at timestamp 10
         auto [expected_d0, expected_a0] = write_array(
             uri,
             ctx,
@@ -224,6 +233,7 @@ TEST_CASE("SOMAArray: nnz") {
         REQUIRE(shape.size() == 1);
         REQUIRE(shape[0] == std::numeric_limits<int64_t>::max());
 
+        // Check that data from SOMAArray::read_next matches expected data
         soma_array->submit();
         while (auto batch = soma_array->read_next()) {
             auto arrbuf = batch.value();
@@ -256,7 +266,7 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
         allow_duplicates)) {
         auto ctx = std::make_shared<Context>();
 
-        // Create array at timestamp 10
+        // Create array
         std::string base_uri = "mem://unit-test-array";
         const auto& [uri, expected_nnz] = create_array(
             base_uri,
@@ -265,6 +275,8 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
             num_fragments,
             overlap,
             allow_duplicates);
+
+        // Write at timestamp 10
         write_array(
             uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
 
@@ -298,7 +310,7 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
         vacuum)) {
         auto ctx = std::make_shared<Context>();
 
-        // Create array at timestamp 10
+        // Create array
         std::string base_uri = "mem://unit-test-array";
         const auto& [uri, expected_nnz] = create_array(
             base_uri,
@@ -307,6 +319,8 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
             num_fragments,
             overlap,
             allow_duplicates);
+
+        // Write at timestamp 10
         write_array(
             uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
 

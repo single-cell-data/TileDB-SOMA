@@ -37,8 +37,8 @@
 
 #include <tiledb/tiledb>
 
-#include "common.h"
-#include "logger.h"
+#include "../utils/common.h"
+#include "../utils/logger.h"
 #include "span/span.hpp"
 
 namespace tiledbsoma {
@@ -68,6 +68,16 @@ class ColumnBuffer {
      */
     static std::shared_ptr<ColumnBuffer> create(
         std::shared_ptr<Array> array, std::string_view name);
+
+    /**
+     * @brief Create a ColumnBuffer from a schema and column name.
+     *
+     * @param schema TileDB schema
+     * @param name TileDB dimension or attribute name
+     * @return ColumnBuffer
+     */
+    static std::shared_ptr<ColumnBuffer> create(
+        ArraySchema schema, std::string_view name);
 
     /**
      * @brief Convert a bytemap to a bitmap in place.
