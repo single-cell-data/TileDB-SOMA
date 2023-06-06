@@ -1,13 +1,14 @@
 import pyarrow as pa
 import pytest
+import tiledb
 
 import tiledbsoma as soma
 
 
 def test_stats(tmp_path, capsys: pytest.CaptureFixture[str]):
     """Make sure these exist, don't throw, and write correctly."""
-    soma.tiledbsoma_stats_enable()
-    soma.tiledbsoma_stats_reset()
+    tiledb.stats_enable()
+    tiledb.stats_reset()
 
     schema = pa.schema([("soma_joinid", pa.int64())])
     with soma.DataFrame.create(
@@ -23,8 +24,10 @@ def test_stats(tmp_path, capsys: pytest.CaptureFixture[str]):
     with soma.DataFrame.open(tmp_path.as_posix()) as sidf:
         sidf.read().concat()
 
-    soma.tiledbsoma_stats_dump()
-    soma.tiledbsoma_stats_disable()
+    tiledb.stats_dump()
+    tiledb.stats_disable()
     stdout, stderr = capsys.readouterr()
     assert stdout != ""
     assert stderr == ""
+    print(f"tiledbsoma_stats_dump() = {stdout}")
+    soma.show_package_versions()
