@@ -13,52 +13,56 @@ test_that("Iterated Interface from SOMAArrayReader", {
     uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "RNA", "X", "data")
     expect_true(dir.exists(uri))
 
-    ctx <- tiledb_ctx()
-    sr <- sr_setup(uri, config=as.character(config(ctx)), loglevel="warn")
+    ctx <- tiledb::tiledb_ctx()
+    config <- tiledb::config(ctx)
+    sr <- sr_setup(uri, config = as.character(config), loglevel = "warn")
     expect_true(inherits(sr, "externalptr"))
+
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
         dat <- sr_next(sr)
-        D <- tiledbsoma:::arrow_to_dt(dat)
+        D <- arrow_pointer_to_record_batch(dat)
         expect_true(nrow(D) > 0)
-        expect_true(inherits(D, "data.table"))
-        rl <- rbind(rl, D)
+        expect_true(is_arrow_record_batch(D))
+        rl <- rbind(rl, as.data.frame(D))
     }
-    expect_true(inherits(rl, "data.table"))
+    expect_true(is.data.frame(rl))
     expect_equal(nrow(rl), 4848644)
     expect_equal(ncol(rl), 3)
 
-    sr <- sr_setup(uri, config=as.character(config(ctx)), dim_points=list(soma_dim_0=as.integer64(1)))
+    sr <- sr_setup(uri, config=as.character(config), dim_points=list(soma_dim_0=as.integer64(1)))
     expect_true(inherits(sr, "externalptr"))
+
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
         dat <- sr_next(sr)
-        D <- tiledbsoma:::arrow_to_dt(dat)
+        D <- arrow_pointer_to_record_batch(dat)
         expect_true(nrow(D) > 0)
-        expect_true(inherits(D, "data.table"))
-        rl <- rbind(rl, D)
+        expect_true(is_arrow_record_batch(D))
+        rl <- rbind(rl, as.data.frame(D))
     }
-    expect_true(inherits(rl, "data.table"))
+    expect_true(is.data.frame(rl))
     expect_equal(nrow(rl), 1838)
     expect_equal(ncol(rl), 3)
 
-    sr <- sr_setup(uri, config=as.character(config(ctx)), dim_range=list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
+    sr <- sr_setup(uri, config=as.character(config), dim_range=list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
     expect_true(inherits(sr, "externalptr"))
+
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
         dat <- sr_next(sr)
-        D <- tiledbsoma:::arrow_to_dt(dat)
+        D <- arrow_pointer_to_record_batch(dat)
         expect_true(nrow(D) > 0)
-        expect_true(inherits(D, "data.table"))
-        rl <- rbind(rl, D)
+        expect_true(is_arrow_record_batch(D))
+        rl <- rbind(rl, as.data.frame(D))
     }
-    expect_true(inherits(rl, "data.table"))
+    expect_true(is.data.frame(rl))
     expect_equal(nrow(rl), 5276)
     expect_equal(ncol(rl), 3)
 
     ## test completeness predicate on shorter data
     uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-    sr <- sr_setup(uri, config=as.character(config(ctx)))
+    sr <- sr_setup(uri, config=as.character(config))
 
     expect_false(tiledbsoma:::sr_complete(sr))
     dat <- sr_next(sr)
