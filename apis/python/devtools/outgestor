@@ -53,6 +53,18 @@ def main():
         default="data",
     )
     parser.add_argument(
+        "--obs-id-name",
+        help="Which obs column name to use as index for outgested andata",
+        type=str,
+        default="obs_id",
+    )
+    parser.add_argument(
+        "--var-id-name",
+        help="Which var column name to use as index for outgested andata",
+        type=str,
+        default="obs_id",
+    )
+    parser.add_argument(
         "paths",
         type=str,
         help="One for specified input with default output path, or two to specify input and output paths",
@@ -99,6 +111,8 @@ def main():
         output_path,
         measurement_name=args.measurement_name,
         X_layer_name=args.X_layer_name,
+        obs_id_name=args.obs_id_name,
+        var_id_name=args.var_id_name,
     )
 
     logger.info(f"Wrote {output_path}")
