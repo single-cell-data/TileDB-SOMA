@@ -7,10 +7,11 @@ on:
   #    - ".pre-commit-config.yaml"
   #push:
   #  branches: [main, master]
+  workflow_dispatch:
   release:
     types:
       - created
-
+      
 env:
   ## for workflows triggered by release this is the release tag created (cf https://docs.github.com/en/actions/learn-github-actions/contexts)
   ## note that this is filtered below and then used via 'steps.versubstr.outputs.substring'
