@@ -337,7 +337,7 @@ def from_anndata(
                     with create_from_matrix(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, key),
-                        anndata.X,
+                        anndata.layers[key],
                         platform_config,
                         ingest_mode,
                         context,
