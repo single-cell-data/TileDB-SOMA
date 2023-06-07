@@ -347,6 +347,9 @@ def test_add_matrix_to_collection(adata):
     with _factory.open(output_path) as exp_r:
         assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
 
+    with _factory.open(output_path, "r") as exp:
+        with pytest.raises(tiledbsoma.SOMAError):
+            tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
     with _factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
     with _factory.open(output_path) as exp_r:
