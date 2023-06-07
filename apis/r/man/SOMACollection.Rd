@@ -10,7 +10,7 @@ the values are any SOMA-defined foundational or composed type, including
 \code{\link{SOMASparseNDArray}}, or \code{\link{SOMAExperiment}}.  (lifecycle: experimental)
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMACollection}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{SOMACollection}
 }
 \section{Methods}{
 \subsection{Public methods}{
