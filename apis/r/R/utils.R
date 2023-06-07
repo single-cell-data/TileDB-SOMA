@@ -58,11 +58,6 @@ SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY <- "soma_encoding_version"
 SOMA_ENCODING_VERSION <- "1"
 
-check_arrow_pointers <- function(arrlst) {
-    stopifnot("First argument must be an external pointer to ArrowArray" = check_arrow_array_tag(arrlst[[1]]),
-              "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
-}
-
 #' @importFrom Matrix as.matrix
 #' @importFrom arrow RecordBatch
 #' @import R6 methods utils
