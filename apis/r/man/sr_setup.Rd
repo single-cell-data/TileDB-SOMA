@@ -45,7 +45,7 @@ for the given dimension. Each dimension can be one entry in the list.}
 \item{result_order}{Optional argument for query result order, defaults to \sQuote{auto}}
 
 \item{timestamp_end}{Optional POSIXct (i.e. Datetime) type for end of interval for which
-data is considerd.}
+data is considered.}
 
 \item{loglevel}{Character value with the desired logging level, defaults to \sQuote{auto}
 which lets prior setting prevail, any other value is set as new logging level.}
