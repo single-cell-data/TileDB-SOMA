@@ -3,7 +3,6 @@ test_that("Iterated Interface from SOMAArrayReader", {
                                                 # see https://ghrr.github.io/drat/
     library(arrow)
     library(bit64)
-    library(data.table)
     library(tiledb)
 
     tdir <- tempfile()

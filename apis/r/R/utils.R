@@ -62,7 +62,6 @@ SOMA_ENCODING_VERSION <- "1"
 #' @importFrom arrow RecordBatch
 #' @import R6 methods utils
 ##' @importFrom Rcpp evalCpp
-##' @importFrom data.table data.table
 ##' @importFrom spdl setup
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL

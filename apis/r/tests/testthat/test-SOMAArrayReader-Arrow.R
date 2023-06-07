@@ -3,7 +3,6 @@ test_that("Arrow Interface from SOMAArrayReader", {
     library(tiledb)
 
     uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-
     columns <- c("n_counts", "n_genes", "louvain")
 
     z <- soma_array_reader(uri, columns)
