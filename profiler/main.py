@@ -1,10 +1,11 @@
 import argparse
+import json
 import os
 import re
 import subprocess
 from datetime import date, datetime
 from subprocess import PIPE
-from typing import Optional
+from typing import Dict, Optional
 
 import somacore
 
@@ -12,6 +13,16 @@ import tiledbsoma
 from data import FileBasedProfileDB, ProfileData, ProfileDB
 
 TILEDB_STATS_FILE_PATH = "./tiledb_stats.txt"
+
+
+def read_context() -> Dict[str, str]:
+    """Run the context generator process and collects the JSON printed output"""
+    context_process = subprocess.Popen(
+        ["python", "context_generator.py"], stdout=PIPE, stderr=PIPE
+    )
+    stdout, stderr = context_process.communicate()
+    stats = json.loads(stdout.decode("utf-8"))
+    return stats
 
 
 def build_profile_data(
@@ -55,12 +66,13 @@ def build_profile_data(
         if peak_memory_footprint_match:
             peak_memory_footprint = int(peak_memory_footprint_match.groups()[0])
             print(f"peak_memory_footprint = {peak_memory_footprint}")
-    tiledb_stats: str = None
+    tiledb_stats = None
     if os.path.isfile(TILEDB_STATS_FILE_PATH):
         with open(TILEDB_STATS_FILE_PATH, "r") as f:
             print("TileDB stats found")
             tiledb_stats = f.read()
     custom_out = [prof1, prof2]
+    context: Dict[str, str] = read_context()
     data: ProfileData = ProfileData(
         process=" ".join(process),
         custom_out=custom_out,
@@ -72,11 +84,12 @@ def build_profile_data(
         page_faults=page_faults,
         cycles_elapsed=cycles_elapsed,
         peak_memory=peak_memory_footprint,
-        date=date.today(),
+        date=str(date.today()),
         now=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         tiledb_stats=tiledb_stats,
         somacore_version=somacore.__version__,
         tiledbsoma_version=tiledbsoma.__version__,
+        context=context,
     )
     return data
 
@@ -98,7 +111,6 @@ def main():
         required=False,
         help="The flamegraph output produced by prof1",
     )
-
     parser.add_argument(
         "-p2",
         "--prof2",
@@ -118,8 +130,8 @@ def main():
     p = subprocess.Popen(
         ["/usr/bin/time", "-al"] + args.process, stdout=PIPE, stderr=PIPE
     )
-    print(f"Running main process, PID = {p.pid}")
 
+    print(f"Running main process, PID = {p.pid}")
     # Running additional profilers to extract flame graphs for the run
     p1 = None
     p2 = None

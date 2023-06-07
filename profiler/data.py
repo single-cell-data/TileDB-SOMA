@@ -3,7 +3,7 @@ import os
 import pickle
 import re
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Dict, List, Optional
 
 from attr import attrib, attrs
 
@@ -13,7 +13,7 @@ from attr import attrib, attrs
 @attrs
 class ProfileData:
     process: str = attrib()
-    custom_out: list[str] = attrib()
+    custom_out: List[Optional[str]] = attrib()
     rt: float = attrib()
     ut: float = attrib()
     st: float = attrib()
@@ -22,11 +22,13 @@ class ProfileData:
     page_faults: int = attrib()
     cycles_elapsed: int = attrib()
     peak_memory: int = attrib()
-    tiledb_stats: str = attrib()
+    tiledb_stats: Optional[str] = attrib()
     date: str = attrib()
     now: str = attrib()
     somacore_version: str = attrib()
     tiledbsoma_version: str = attrib()
+    context: Dict[str, str] = attrib()
+    print("Creating ProfileData")
 
 
 def extract_key_from_filename(filename: str) -> str:

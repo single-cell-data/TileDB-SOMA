@@ -31,6 +31,17 @@ Memory stats:
 * somacore_version
 * tiledbsoma_version
 
+Context data:
+
+* uname: uname -a
+* total_virtual_mem
+* total_physical_mem
+* swap_mem 
+* cpu_count
+* python_version
+
+We also store tileDB stats.
+
 This example shows how to use a profiler plot generator on the same generated profile:
 ```shell
 python profiler_plot.py python tests/objects.py -m ut
