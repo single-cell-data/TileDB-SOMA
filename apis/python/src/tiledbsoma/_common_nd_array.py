@@ -106,6 +106,8 @@ class NDArray(TileDBArray, somacore.NDArray):
     @property
     def shape(self) -> Tuple[int, ...]:
         """Returns capacity of each dimension, always a list of length ``ndim``.
+        This will not necessarily match the bounds of occupied cells within the array.
+        Rather, it is the bounds outside of which no data may be written.
 
         Lifecycle:
             Experimental.
