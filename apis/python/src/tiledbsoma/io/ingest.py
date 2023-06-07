@@ -333,7 +333,7 @@ def from_anndata(
                 ) as data:
                     _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
-                for key in anndata.layers.keys():
+                for key in anndata.layers:
                     with create_from_matrix(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, key),
