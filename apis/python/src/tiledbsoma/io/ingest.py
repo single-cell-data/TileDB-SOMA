@@ -533,6 +533,8 @@ def _maybe_set(
     *,
     use_relative_uri: Optional[bool],
 ) -> None:
+    if coll.closed or coll.mode != "w":
+        raise SOMAError(f"Collection must be open for write: {coll.uri}")
     try:
         coll.set(key, value, use_relative_uri=use_relative_uri)
     except SOMAError:
@@ -764,6 +766,8 @@ def add_X_layer(
     Lifecycle:
         Experimental.
     """
+    if exp.closed or exp.mode != "w":
+        raise SOMAError(f"Experiment must be open for write: {exp.uri}")
     add_matrix_to_collection(
         exp,
         measurement_name,
