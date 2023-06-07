@@ -333,6 +333,19 @@ def from_anndata(
                 ) as data:
                     _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
+                for key in anndata.layers.keys():
+                    with create_from_matrix(
+                        X_kind,
+                        _util.uri_joinpath(measurement_X_uri, key),
+                        anndata.X,
+                        platform_config,
+                        ingest_mode,
+                        context,
+                    ) as layer_data:
+                        _maybe_set(
+                            x, key, layer_data, use_relative_uri=use_relative_uri
+                        )
+
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/OBSM,VARM,OBSP,VARP
                 if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
