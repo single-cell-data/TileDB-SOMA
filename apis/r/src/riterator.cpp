@@ -64,8 +64,8 @@ namespace tdbs = tiledbsoma;
 //'   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
 //'   rl <- rbind(rl, as.data.frame(rb))
 //' }
-//' }
 //' summary(rl)
+//' }
 //' @export
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,

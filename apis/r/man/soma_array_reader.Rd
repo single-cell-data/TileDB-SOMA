@@ -54,7 +54,9 @@ not iterate; if your data is large than the initial read size consider the \code
 functions.
 }
 \examples{
+\dontrun{
 uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 z <- soma_array_reader(uri)
 arrow::RecordBatch$import_from_c(z$array_data, z$schema)
+}
 }

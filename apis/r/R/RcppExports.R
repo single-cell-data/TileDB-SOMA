@@ -106,8 +106,8 @@ shape <- function(uri, config = NULL) {
 #'   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
 #'   rl <- rbind(rl, as.data.frame(rb))
 #' }
-#' }
 #' summary(rl)
+#' }
 #' @export
 sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamp_end = NULL, loglevel = "auto") {
     .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamp_end, loglevel)
