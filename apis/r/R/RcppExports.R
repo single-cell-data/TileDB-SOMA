@@ -22,9 +22,11 @@
 #' @param config Optional character vector containing TileDB config.
 #' @return A List object with two pointers to Arrow array data and schema is returned
 #' @examples
+#' \dontrun{
 #' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 #' z <- soma_array_reader(uri)
 #' arrow::RecordBatch$import_from_c(z$array_data, z$schema)
+#' }
 #' @export
 soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", config = NULL) {
     .Call(`_tiledbsoma_soma_array_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config)
@@ -94,6 +96,7 @@ shape <- function(uri, config = NULL) {
 #' returns a boolean, and \code{sr_next} returns an Arrow array helper object.
 #'
 #' @examples
+#' \dontrun{
 #' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 #' ctx <- tiledb::tiledb_ctx()
 #' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)))
@@ -102,6 +105,7 @@ shape <- function(uri, config = NULL) {
 #'   dat <- sr_next(sr)
 #'   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
 #'   rl <- rbind(rl, as.data.frame(rb))
+#' }
 #' }
 #' summary(rl)
 #' @export

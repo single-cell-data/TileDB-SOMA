@@ -54,6 +54,7 @@ namespace tdbs = tiledbsoma;
 //' returns a boolean, and \code{sr_next} returns an Arrow array helper object.
 //'
 //' @examples
+//' \dontrun{
 //' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 //' ctx <- tiledb::tiledb_ctx()
 //' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)))
@@ -62,6 +63,7 @@ namespace tdbs = tiledbsoma;
 //'   dat <- sr_next(sr)
 //'   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
 //'   rl <- rbind(rl, as.data.frame(rb))
+//' }
 //' }
 //' summary(rl)
 //' @export

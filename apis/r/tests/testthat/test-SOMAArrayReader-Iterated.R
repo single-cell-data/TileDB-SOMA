@@ -3,7 +3,6 @@ test_that("Iterated Interface from SOMAArrayReader", {
                                                 # see https://ghrr.github.io/drat/
     library(arrow)
     library(bit64)
-    library(tiledb)
 
     tdir <- tempfile()
     tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package="pbmc3k.tiledb")
