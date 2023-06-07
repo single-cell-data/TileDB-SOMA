@@ -27,7 +27,7 @@ setAs(from = "SOMASparseNDArrayRead",
 # Coerce \link[tiledbsoma]{SOMASparseNDArrayRead} to Matrix::\link[Matrix]{dgRMatrix}
 setAs(from = "SOMASparseNDArrayRead", 
       to = "RsparseMatrix", 
-      def = sparseReader2Rsparse <- function(from) as(as(from, "TsparseMatrix"), "RsparseMatrix")
+      def = function(from) as(as(from, "TsparseMatrix"), "RsparseMatrix")
       )
 
 #' @importFrom arrow as_arrow_table
