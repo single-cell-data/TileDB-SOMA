@@ -71,39 +71,55 @@ experiment$obs$schema()
 
 Note that `soma_joinid` is a field that exists in every `SOMADataFrame` and acts as a join key for other objects in the dataset.
 
-Again, when a SOMA object is accessed, only a pointer is returned and no data is read into memory. To load the data in memory, we call `read()$concat()`, which returns an [Arrow Table](https://arrow.apache.org/docs/r/reference/Table.html) and is easily converted to a data frame by appending `$to_data_frame()`.
+When a SOMADataFrame is read an iterator is returned. To load the data in memory, we can coerce the iterator from `$read()` with `as.data.frame` or `arrow:as_arrow_table()`, which respectively return a `data.frame` or an [Arrow Table](https://arrow.apache.org/docs/r/reference/Table.html).
 
 ```{r}
-experiment$obs$read()$concat()
+as.data.frame(experiment$obs$read())
 ```
 
-The amount of data that can be read at once is determined by the `soma.init_buffer_bytes` configuration parameter, which, by default, is set to 16MB for each column. If the requested data is larger than this value an error will be thrown.
+```{r}
+arrow::as_arrow_table(experiment$obs$read())
+```
 
-If your system has more memory, you can increase this parameter to a larger value to read in more data at once. Alternatively, you can use the iterated reader, which retrieves data in chunks that are smaller than the `soma.init_buffer_bytes` parameter. The result of which is a list of Arrow Tables.
+Alternatively, you can use the iterator, which retrieves data in chunks that are smaller than the `soma.init_buffer_bytes` parameter. You can user the iterator's method `$read_next()` to load a chunk 
+in memory.
 
 ```{r}
 iterator <- experiment$obs$read()
 iterator$read_next()
 ```
 
+In this example the full table is relatively small and fits all in one chunk.
+
+For bigger `SOMADataFrame`s you can check if the iteration has finished by checking the logical `$read_complete()`, and you can concatenate the rest of the chunks by using `$concat()`.
+
+Here we demonstrate by creating a fresh new iterator.
+
+```{r}
+iterator <- experiment$obs$read()
+iterator$read_complete()
+```
+```{r}
+iterator$concat()
+```
 We can also select a subset of rows from the `SOMADataFrame` using the `coords` argument. This will retrieve only the required subset from disk to memory. In this example, we will select only the first 10 rows:
 
 *NOTE: The `coords` argument is 0-based.*
 
 ```{r}
-experiment$obs$read(coords = 0:9)$concat()
+as.data.frame(experiment$obs$read(coords = 0:9))
 ```
 
 As TileDB is a columnar format, we can also select a subset of the columns:
 
 ```{r}
-experiment$obs$read(0:9, column_names = c("obs_id", "nCount_RNA"))$concat()
+as.data.frame(experiment$obs$read(0:9, column_names = c("obs_id", "nCount_RNA")))
 ```
 
 Finally, we can use `value_filter` to retrieve a subset of rows that match a certain condition.
 
 ```{r}
-experiment$obs$read(value_filter = "nCount_RNA > 100")$concat()
+as.data.frame(experiment$obs$read(value_filter = "nCount_RNA > 100"))
 ```
 
 And of course, you can combine all of these arguments together to get at only the data you need.
@@ -180,19 +196,58 @@ We can get the number of non-zero elements by calling `nnz()`:
 X_data$nnz()
 ```
 
-Let's load the data as a sparse matrix into memory:
+Let's load the data as a sparse matrix into memory. The following function are availabe to coerce the output of `$read()`:
 
-*Note: We are reading the full matrix into memory and then subsetting it to
-the first 5 rows and 10 columns to truncate the output. This uses the
-zero-based underlying representation access but then accesses a one-based
-view as the sparse matrix functionality from package `Matrix` imposes this.*
+- `arrow::as_arrow_table(x)` to an Arrow `Table`.
+- `as(x, "TsparseMatrix")` to a `dgTMatrix` from the Matrix package. 
+- `as(x, "CsparseMatrix")` to a `dgCMatrix` from the Matrix package.
+- `as(x, "RsparseMatrix")` to a `dgRMatrix` from the Matrix package.
 
-```{r}
-X_data$read()$sparse_matrix()$concat()[1:5, 1:10]
-```
-
-Similarly to `SOMADataFrame`s, `read()` method we can define coordinates to slice obtain a subset of the matrix from disk:
+Keep in mind that dgTMatrix is the most memory-efficient option from the Matrix package.
 
 ```{r}
-X_data$read(coords = list(soma_dim_0 = 0:4, soma_dim_1 = 0:9))$sparse_matrix()$concat()
+arrow::as_arrow_table(X_data$read())
 ```
+```{r}
+sparse <- as(X_data$read(), "TsparseMatrix")
+str(sparse)
+```
+
+```{r}
+sparse <- as(X_data$read(), "CsparseMatrix")
+str(sparse)
+```
+
+```{r}
+sparse <- as(X_data$read(), "RsparseMatrix")
+str(sparse)
+```
+
+Similarly to `SOMADataFrame`s, with the `$read()` method we can define coordinates to slice obtain a subset of the matrix from disk:
+
+```{r}
+arrow::as_arrow_table((X_data$read(coords = list(soma_dim_0 = 0:4, soma_dim_1 = 0:9))))
+```
+
+And you can also iterate by chunks. However with `SOMASparseNDArray` the method `$read()` returns a reader 
+that gives you access to 2 different iterators, one for Arrow Table and one for dgTMatrix.
+
+Let's take a look at the Arrow Table iterator:
+
+```{r}
+reader <- X_data$read()
+iterator <- reader$tables()
+iterator$read_next()
+```
+Similar to the `SOMADataFrame` example the data is small enough to fit in one chunk. For bigger data
+you can user `iterator$read_complete()` to check the status of iteration and `iterator$concat()`
+to concatenate the rest of the chunks.
+
+The dgTMatrix iterator works in the same way:
+
+```{r}
+reader <- X_data$read()
+iterator <- reader$sparse_matrix()
+str(iterator$read_next())
+```
+

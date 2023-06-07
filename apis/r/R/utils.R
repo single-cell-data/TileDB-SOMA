@@ -71,7 +71,7 @@ arrow_to_dt <- function(arrlst) {
 }
 
 ##' @noRd
-as_arrow_table <- function(arrlst) {
+to_arrow_table <- function(arrlst) {
     check_arrow_pointers(arrlst)
     arrow::as_arrow_table(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
 }

@@ -222,7 +222,7 @@ test_that("SOMADataFrame read", {
     expect_equal(z$num_columns, 3L)
     expect_equal(z$ColumnNames(), columns)
     sdf$close()
-
+    
     columns <- c("n_counts", "does_not_exist")
     sdf <- SOMADataFrameOpen(uri)
     expect_error(sdf$read(column_names=columns))
@@ -232,6 +232,14 @@ test_that("SOMADataFrame read", {
     sdf <- SOMADataFrameOpen(uri)
     z <- sdf$read(coords = list(soma_joinid=coords))$concat()
     expect_equal(z$num_rows, 10L)
+    sdf$close()
+    
+    # coercion from TableReader to arrow Table and data.frame
+    sdf <- SOMADataFrameOpen(uri)
+    all.equal(sdf$read()$concat(), 
+              arrow::as_arrow_table(sdf$read()))
+    all.equal(as.data.frame(sdf$read()$concat()), 
+              as.data.frame(sdf$read()))
     sdf$close()
 })
 
