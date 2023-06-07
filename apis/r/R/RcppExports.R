@@ -88,6 +88,8 @@ shape <- function(uri, config = NULL) {
 #' @param result_order Optional argument for query result order, defaults to \sQuote{auto}
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
+#' @param timestamp_end Optional POSIXct (i.e. Datetime) type for end of interval for which
+#' data is considered.
 #' @param sr An external pointer to a TileDB SOMAArray object
 #'
 #' @return \code{sr_setup} returns an external pointer to a SOMAArray. \code{sr_complete}

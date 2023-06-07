@@ -4,7 +4,6 @@ test_that("Iterated Interface from SOMAArrayReader", {
     library(arrow)
     library(bit64)
     library(data.table)
-    library(dplyr)
     library(tiledb)
 
     tdir <- tempfile()
