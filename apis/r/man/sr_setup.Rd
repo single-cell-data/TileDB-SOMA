@@ -76,6 +76,6 @@ while (!sr_complete(sr)) {
   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
   rl <- rbind(rl, as.data.frame(rb))
 }
-}
 summary(rl)
+}
 }
