@@ -65,11 +65,9 @@ Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t 
 //' @param config Optional character vector containing TileDB config.
 //' @return A List object with two pointers to Arrow array data and schema is returned
 //' @examples
-//' \dontrun{
-//' uri <- "test/soco/pbmc3k_processed/obs"
+//' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 //' z <- soma_array_reader(uri)
-//' tb <- as_arrow_table(z)
-//' }
+//' arrow::RecordBatch$import_from_c(z$array_data, z$schema)
 //' @export
 // [[Rcpp::export]]
 Rcpp::List soma_array_reader(const std::string& uri,

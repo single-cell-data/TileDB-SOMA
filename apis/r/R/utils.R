@@ -63,25 +63,6 @@ check_arrow_pointers <- function(arrlst) {
               "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
 }
 
-#' @noRd
-arrow_pointer_to_record_batch <- function(arrlst) {
-  check_arrow_pointers(arrlst)
-  arrow::RecordBatch$import_from_c(arrlst$array_data, arrlst$schema)
-}
-
-##' @noRd
-arrow_to_dt <- function(arrlst) {
-    check_arrow_pointers(arrlst)
-    rb <- arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]])
-    data.table(as.data.frame(rb))
-}
-
-##' @noRd
-as_arrow_table <- function(arrlst) {
-    check_arrow_pointers(arrlst)
-    arrow::as_arrow_table(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
-}
-
 #' @importFrom Matrix as.matrix
 #' @importFrom arrow RecordBatch
 #' @import R6 methods utils

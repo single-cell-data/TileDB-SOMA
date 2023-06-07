@@ -60,5 +60,3 @@ test_that("Configured SOMAExperiment", {
   expect_equal(experiment$platform_config$get('tiledb', 'create', 'cell_order'), 'row-major')
   expect_equal(experiment$platform_config$get('tiledb', 'create', 'tile_order'), 'col-major')
 })
-
-

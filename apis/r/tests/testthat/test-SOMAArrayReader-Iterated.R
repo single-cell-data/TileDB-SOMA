@@ -21,10 +21,10 @@ test_that("Iterated Interface from SOMAArrayReader", {
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
         dat <- sr_next(sr)
-        D <- arrow_pointer_to_record_batch(dat)
+        D <- soma_array_to_arrow_table(dat)
         expect_true(nrow(D) > 0)
-        expect_true(is_arrow_record_batch(D))
-        rl <- rbind(rl, as.data.frame(D))
+        expect_true(is_arrow_table(D))
+        rl <- rbind(rl, D$to_data_frame())
     }
     expect_true(is.data.frame(rl))
     expect_equal(nrow(rl), 4848644)
@@ -36,9 +36,9 @@ test_that("Iterated Interface from SOMAArrayReader", {
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
         dat <- sr_next(sr)
-        D <- arrow_pointer_to_record_batch(dat)
+        D <- soma_array_to_arrow_table(dat)
         expect_true(nrow(D) > 0)
-        expect_true(is_arrow_record_batch(D))
+        expect_true(is_arrow_table(D))
         rl <- rbind(rl, as.data.frame(D))
     }
     expect_true(is.data.frame(rl))
@@ -51,9 +51,9 @@ test_that("Iterated Interface from SOMAArrayReader", {
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
         dat <- sr_next(sr)
-        D <- arrow_pointer_to_record_batch(dat)
+        D <- soma_array_to_arrow_table(dat)
         expect_true(nrow(D) > 0)
-        expect_true(is_arrow_record_batch(D))
+        expect_true(is_arrow_table(D))
         rl <- rbind(rl, as.data.frame(D))
     }
     expect_true(is.data.frame(rl))
