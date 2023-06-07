@@ -222,8 +222,8 @@ test_that("querying by both coordinates and value filters", {
   var_hits <- var_df$soma_joinid %in% as.integer(var_slice) &
     var_df$quux %in% var_label_values
 
-  expect_equal(query$obs()$to_data_frame(), obs_df[obs_hits,])
-  expect_equal(query$var()$to_data_frame(), var_df[var_hits,])
+  expect_equivalent(query$obs()$to_data_frame(), obs_df[obs_hits,])
+  expect_equivalent(query$var()$to_data_frame(), var_df[var_hits,])
 
   experiment$close()
 })

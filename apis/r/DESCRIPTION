@@ -47,7 +47,6 @@ Imports:
     glue,
     urltools,
     Rcpp,
-    dplyr,
     data.table,
     spdl,
     rlang,

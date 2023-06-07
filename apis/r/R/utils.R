@@ -66,7 +66,7 @@ check_arrow_pointers <- function(arrlst) {
 ##' @noRd
 arrow_to_dt <- function(arrlst) {
     check_arrow_pointers(arrlst)
-    rb <- dplyr::collect(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
+    rb <- arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]])
     data.table(as.data.frame(rb))
 }
 
@@ -81,7 +81,6 @@ to_arrow_table <- function(arrlst) {
 #' @import R6 methods utils
 ##' @importFrom Rcpp evalCpp
 ##' @importFrom data.table data.table
-##' @importFrom dplyr collect
 ##' @importFrom spdl setup
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL

@@ -73,7 +73,7 @@ test_that("Basic mechanics", {
 
   # Read result should recreate the original RecordBatch (when seen as a tibble)
   rb1 <- arrow::as_record_batch(sdf$read()$concat())
-  expect_equivalent(dplyr::collect(rb0), dplyr::collect(rb1))
+  expect_equivalent(as.data.frame(rb0), as.data.frame(rb1))
 
   # Slicing by foo
   tbl1 <- sdf$read(coords = list(foo = 1L:2L))$concat()

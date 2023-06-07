@@ -41,6 +41,10 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
+void SOMAArray::create(std::string_view uri, ArraySchema schema) {
+    Array::create(std::string(uri), schema);
+}
+
 std::unique_ptr<SOMAArray> SOMAArray::open(
     tiledb_query_type_t mode,
     std::string_view uri,
@@ -181,8 +185,21 @@ void SOMAArray::reset(
 
 void SOMAArray::submit() {
     // Submit the query
-    mq_->submit();
+    if (mq_->query_type() == TILEDB_READ) {
+        mq_->submit_read();
+    } else {
+        mq_->reset();
+    }
     submitted_ = true;
+}
+
+void SOMAArray::set_condition(QueryCondition& qc) {
+    mq_->set_condition(qc);
+}
+
+void SOMAArray::select_columns(
+    const std::vector<std::string>& names, bool if_not_empty) {
+    mq_->select_columns(names, if_not_empty);
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
@@ -203,10 +220,30 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     }
 
     // Submit the query
-    mq_->submit();
+    mq_->submit_read();
 
     // Return the results, possibly incomplete
     return mq_->results();
+}
+
+void SOMAArray::write() {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
+    }
+
+    mq_->submit_write();
+}
+
+bool SOMAArray::is_complete(bool query_status_only) {
+    return mq_->is_complete(query_status_only);
+}
+
+bool SOMAArray::results_complete() {
+    return mq_->results_complete();
+}
+
+size_t SOMAArray::total_num_cells() {
+    return mq_->total_num_cells();
 }
 
 uint64_t SOMAArray::nnz() {
@@ -338,7 +375,7 @@ uint64_t SOMAArray::nnz_slow() {
 
 std::vector<int64_t> SOMAArray::shape() {
     std::vector<int64_t> result;
-    auto dimensions = this->schema().get()->domain().dimensions();
+    auto dimensions = mq_->schema()->domain().dimensions();
 
     for (const auto& dim : dimensions) {
         switch (dim.type()) {
