@@ -55,8 +55,8 @@ functions.
 }
 \examples{
 \dontrun{
-uri <- "test/soco/pbmc3k_processed/obs"
+uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 z <- soma_array_reader(uri)
-tb <- as_arrow_table(z)
+arrow::RecordBatch$import_from_c(z$array_data, z$schema)
 }
 }

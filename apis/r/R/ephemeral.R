@@ -3,6 +3,7 @@
 #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection", TRUE)}
 #'
 #' @keywords internal
+#' @importFrom data.table address
 #'
 EphemeralCollectionBase <- R6::R6Class(
   classname = 'EphemeralCollectionBase',

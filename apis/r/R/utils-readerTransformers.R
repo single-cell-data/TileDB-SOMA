@@ -5,7 +5,10 @@
 #' @param x A List object with two pointers to Arrow array data and schema
 #' @return arrow::\link[arrow]{Table}
 soma_array_to_arrow_table <- function(x) {
-    arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
+  check_arrow_pointers(x)
+  arrow::as_arrow_table(
+    arrow::RecordBatch$import_from_c(x$array_data, x$schema)
+  )
 }
 
 #' Transformer function: Arrow table to Matrix::sparseMatrix
