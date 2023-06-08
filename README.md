@@ -69,10 +69,10 @@ The capabilities of TileDB-SOMA lay on the different read, access, and query pat
 	* `obs`: a  `DataFrame` with primary annotations on the observation axis.
 	* `ms`: a  `Collection` of measurements, each composed of `X` matrices and axis annotation matrices or data frames (e.g. `var`, `varm`, `obsm`, etc).
 
-### APIs quick start
+### APIs installation and quick start
 
-* [Python quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/Python-quick-start)
-* [R quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/R-quick-start)
+* [Python installation and quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/Python-quick-start)
+* [R installation and quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/R-quick-start)
 
 ## Who is using SOMA?
 
