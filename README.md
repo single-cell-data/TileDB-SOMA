@@ -22,7 +22,7 @@ Get started on using TileDB-SOMA:
 * R [documentation](https://single-cell-data.github.io/TileDB-SOMA/).
 
 
-## What can TileDB-SOMA do?
+## What Can TileDB-SOMA Do?
 
 Intended to be used for single-cell data, TileDB-SOMA provides Python and R APIs to allow for storage and data access patterns at scale and for larger-than-memory operations:
 
@@ -49,7 +49,7 @@ TileDB-SOMA provides interoperability with existing Python or R data structures:
 channel `#cellxgene-census-users`.
 
 
-## Quick start
+## Quick Start
 
 ### Documentation
 
@@ -69,19 +69,19 @@ The capabilities of TileDB-SOMA lay on the different read, access, and query pat
 	* `obs`: a  `DataFrame` with primary annotations on the observation axis.
 	* `ms`: a  `Collection` of measurements, each composed of `X` matrices and axis annotation matrices or data frames (e.g. `var`, `varm`, `obsm`, etc).
 
-### APIs installation and quick start
+### APIs Installation and Quick Start
 
 * [Python installation and quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/Python-quick-start)
 * [R installation and quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/R-quick-start)
 
-## Who is using SOMA?
+## Who Is Using SOMA?
 
 * [CZ CELLxGENE Discover](https://cellxgene.cziscience.com/) to build its [Census](https://github.com/chanzuckerberg/cellxgene-census/), which provides efficient access and querying to a corpus containing nearly 50 million cells, compiled from 700+ datasets.
 
 If you are interested in listing any projects here please contact us at [soma@chanzuckerberg.com](mailto:soma@chanzuckerberg.com).
 
 
-## Issues and contacts
+## Issues and Contacts
 
 * Any/all questions, comments, and concerns are welcome at the [GitHub new-issue page](https://github.com/single-cell-data/TileDB-SOMA/issues/new/choose) -- or, you can also browse [existing issues](https://github.com/single-cell-data/TileDB-SOMA/issues).
 * If you believe you have found a security issue, in lieu of filing an issue please responsibly disclose it by contacting [security@tiledb.com](mailto:security@tiledb.com).
@@ -92,7 +92,7 @@ If you are interested in listing any projects here please contact us at [soma@ch
 This branch, `main`, implements the [updated specfication](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).  Please also see the `main-old` branch which implements the [original specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md).
 
 
-## Developer information
+## Developer Information
 
 * [TileDB-SOMA wiki](https://github.com/single-cell-data/TileDB-SOMA/wiki).
 * [Build instructions for developers](libtiledbsoma/README.md).
