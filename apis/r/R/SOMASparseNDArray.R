@@ -125,7 +125,7 @@ SOMASparseNDArray <- R6::R6Class(
       uri <- self$uri
 
       if (self$nnz() > .Machine$integer.max) {
-          warning("Iteration results cannot be concatenated on its entirety beceause ",
+          warning("Iteration results cannot be concatenated on its entirety because ",
                   "array has non-zero elements greater than '.Machine$integer.max'.")
       }
 
