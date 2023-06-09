@@ -13,9 +13,13 @@ test_that("matrix outgest with all results", {
     layer_name = "PCs",
     var_index = "var_id"
   )
-  # Need to manually name the columns since we don't store them
+  # Column names are unset since we don't store them
+  expect_null(colnames(pcs2))
+  # Manually name the columns for comparison
   colnames(pcs2) <- paste0("PC_", 1:ncol(pcs2))
-  expect_identical(pcs1, as.matrix(pcs2[rownames(pcs1), colnames(pcs2)]))
+  # Coerce to dense matrix and reorder for comparison
+  as.matrix(pcs2[rownames(pcs1), colnames(pcs2)])
+  expect_identical(pcs2, pcs1)
 
   # Embeddings
   pcas1 <- SeuratObject::Embeddings(pbmc_small, "pca")
@@ -24,8 +28,10 @@ test_that("matrix outgest with all results", {
     layer_name = "X_pca",
     obs_index = "obs_id"
   )
+  expect_null(colnames(pcs2))
   colnames(pcas2) <- paste0("PC_", 1:ncol(pcas2))
-  expect_identical(pcas1, as.matrix(pcas2[rownames(pcas1), colnames(pcas1)]))
+  pcas2 <- as.matrix(pcas2[rownames(pcas1), colnames(pcas1)])
+  expect_identical(pcas2, pcas1)
 
   # Graphs
   # Need to coerce original and retrieved graphs to dgCMatrices for comparison
@@ -37,7 +43,7 @@ test_that("matrix outgest with all results", {
   ) |> as("CsparseMatrix")
   expect_identical(snn1, snn2)
 
-
+  # Assay data
   assay1 <- SeuratObject::GetAssayData(pbmc_small[["RNA"]], slot = "counts")
   assay2 <- query$to_matrix(
     collection = "X",
