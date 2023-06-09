@@ -197,6 +197,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
         "Must specify a single layer name" =
           is.null(layer_name) || is_scalar_character(layer_name),
+        assert_subset(layer_name, self$ms[[collection]]$names(), "layer"),
 
         "Must specify a single obs index" =
           is.null(obs_index) || is_scalar_character(obs_index),
@@ -212,71 +213,61 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       if (!is.null(obs_index)) {
         if (collection %in% c("varm", "varp")) {
           spdl::warn("The obs_index is ignored for {} collections", collection)
+        } else {
+          obs_labels <- self$obs(column_names = obs_index)[[1]]$as_vector()
         }
-        obs_labels <- self$obs(column_names = obs_index)[[1]]$as_vector()
         stopifnot(
           "All obs_index values must be unique" = anyDuplicated(obs_labels) == 0
         )
       }
 
       if (!is.null(var_index)) {
-        if (collection %in% c("varm", "varp")) {
+        if (collection %in% c("obsm", "obsp")) {
           spdl::warn("The var_index is ignored for {} collections", collection)
+        } else {
+          var_labels <- self$var(column_names = var_index)[[1]]$as_vector()
         }
-        var_labels <- self$var(column_names = var_index)[[1]]$as_vector()
         stopifnot(
           "All var_index values must be unique" = anyDuplicated(var_labels) == 0
         )
       }
 
-      # TODO: DRY OUT THESE BLOCKS
-      if (collection == "X") {
-        stopifnot(
-          assert_subset(layer_name, self$ms[[collection]]$names(), "layer")
+      # Construct coordinates
+      coords <- switch(collection,
+        X = list(
+          soma_dim_0 = self$obs_joinids(),
+          soma_dim_1 = self$var_joinids()
+        ),
+        obsm = list(
+          soma_dim_0 = self$obs_joinids()
+        ),
+        varm = list(
+          soma_dim_0 = self$var_joinids()
+        ),
+        obsp = list(
+          soma_dim_0 = self$obs_joinids(),
+          soma_dim_1 = self$obs_joinids()
+        ),
+        varp = list(
+          soma_dim_0 = self$var_joinids(),
+          soma_dim_1 = self$var_joinids()
         )
-        coords <- list(
-            soma_dim_0 = self$obs_joinids()$as_vector(),
-            soma_dim_1 = self$var_joinids()$as_vector()
-          )
+      )
 
-        mat <- self$ms[[collection]]$get(layer_name)$read(
-          coords = coords
-        )$sparse_matrix()$concat()
-        dimnames(mat) <- list(obs_labels, var_labels)
+      # Coords must be vectors until arrow arrays are supported
+      coords <- lapply(coords, function(x) x$as_vector())
 
-      } else if (collection == "obsm") {
-        stopifnot(
-          assert_subset(layer_name, self$ms[[collection]]$names(), "layer")
-        )
-        tbl <- self$ms[[collection]]$get(layer_name)$read(
-          coords = list(soma_dim_0 = self$obs_joinids()$as_vector())
-        )$tables()$concat()
-        mat <- private$.as_matrix(tbl, repr = repr)
-        dimnames(mat) <- list(obs_labels, NULL)
+      layer <- self$ms[[collection]]$get(layer_name)
+      mat <- layer$read(coords)$sparse_matrix()$concat()
 
-      } else if (collection == "varm") {
-        stopifnot(
-          assert_subset(layer_name, self$ms[[collection]]$names(), "layer")
-        )
-        coords <- list(soma_dim_0 = self$var_joinids()$as_vector())
-        mat <- self$ms[[collection]]$get(layer_name)$read(
-          coords = coords
-        )$sparse_matrix()$concat()
-        dimnames(mat) <- list(var_labels, NULL)
-
-      } else if (collection == "obsp") {
-        stopifnot(
-          assert_subset(layer_name, self$ms[[collection]]$names(), "layer")
-        )
-
-        obs_joinids <- self$obs_joinids()$as_vector()
-        mat <- self$ms[[collection]]$get(layer_name)$read(
-          coords = list(soma_dim_0 = obs_joinids, soma_dim_1 = obs_joinids)
-        )$sparse_matrix()$concat()
-
-        dimnames(mat) <- list(obs_labels, obs_labels)
-      }
-
+      # Apply dimension labels
+      dimnames(mat) <- switch(collection,
+        X = list(obs_labels, var_labels),
+        obsm = list(obs_labels, NULL),
+        varm = list(var_labels, NULL),
+        obsp = list(obs_labels, obs_labels),
+        varp = list(var_labels, var_labels)
+      )
       mat
     },
 
