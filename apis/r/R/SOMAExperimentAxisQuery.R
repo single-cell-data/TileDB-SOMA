@@ -187,7 +187,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param repr Optional one-character code for sparse matrix representation type.
     #' @return A [`Matrix::sparseMatrix-class`]
     to_matrix = function(
-      collection, layer_name = NULL, obs_index = NULL, var_index = NULL, repr = "T") {
+      collection, layer_name = NULL, obs_index = NULL, var_index = NULL) {
       stopifnot(
         assert_subset(
           x = collection,
