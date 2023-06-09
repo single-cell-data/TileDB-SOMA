@@ -56,3 +56,69 @@ test_that("matrix outgest with all results", {
   assay2 <- as(t(assay2), "CsparseMatrix")
   expect_equal(assay2, assay1)
 })
+
+test_that("matrix outgest assertions", {
+  experiment <- load_dataset("soma-exp-pbmc-small")
+
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA"
+  )
+
+  expect_error(
+    query$to_matrix(collection = "foo"),
+    "The following collection does not exist: foo"
+  )
+
+  expect_error(
+    query$to_matrix(collection = "X", layer_name = "foo"),
+    "The following layer does not exist: foo"
+  )
+
+  expect_message(
+    query$to_matrix(collection = "X", layer_name = "counts", obs_index = "foo"),
+    "The following obs index does not exist: foo"
+  )
+
+  # an unnamed matrix is returned if obs/var_index args are not provided
+  expect_identical(
+    dimnames(query$to_matrix("X", "counts")),
+    list(NULL, NULL)
+  )
+
+  # error if specified obs/var_index does not exist
+  expect_error(
+    query$to_matrix("X", "counts", obs_index = "foo"),
+    "The following column does not exist: foo"
+  )
+  expect_error(
+    query$to_matrix("X", "counts", var_index = "foo"),
+    "The following column does not exist: foo"
+  )
+
+  # only one of obs_index or var_index can be provided
+  expect_identical(
+    dimnames(query$to_matrix("X", "counts", obs_index = "obs_id")),
+    list(query$obs(column_names = "obs_id")$obs_id$as_vector(), NULL)
+  )
+  expect_identical(
+    dimnames(query$to_matrix("X", "counts", var_index = "var_id")),
+    list(NULL, query$var(column_names = "var_id")$var_id$as_vector())
+  )
+
+  # a warning is issued if an index is unnecessarily provided
+  expect_output(
+    query$to_matrix("obsm", "X_pca", var_index = "var_id"),
+    "The var_index is ignored for obsm collections"
+  )
+  expect_output(
+    query$to_matrix("varm", "PCs", obs_index = "obs_id"),
+    "The obs_index is ignored for varm collections"
+  )
+
+  # retrieved labels must be unique
+  expect_error(
+    query$to_matrix("obsm", "X_pca", obs_index = "groups"),
+    "All obs_index values must be unique"
+  )
+})

@@ -259,14 +259,16 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       layer <- self$ms[[collection]]$get(layer_name)
       mat <- layer$read(coords)$sparse_matrix()$concat()
 
-      # Apply dimension labels
-      dimnames(mat) <- switch(collection,
-        X = list(obs_labels, var_labels),
-        obsm = list(obs_labels, NULL),
-        varm = list(var_labels, NULL),
-        obsp = list(obs_labels, obs_labels),
-        varp = list(var_labels, var_labels)
-      )
+      # Apply dimension labels if obs/var_index is specified
+      if (!is.null(obs_labels) || !is.null(var_labels)) {
+        dimnames(mat) <- switch(collection,
+          X = list(obs_labels, var_labels),
+          obsm = list(obs_labels, NULL),
+          varm = list(var_labels, NULL),
+          obsp = list(obs_labels, obs_labels),
+          varp = list(var_labels, var_labels)
+        )
+      }
       mat
     },
 
