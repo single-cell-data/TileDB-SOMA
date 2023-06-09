@@ -9,14 +9,16 @@ Please also see the `main-old` branch for an implementation of the [original spe
 
 ## Using R-universe
 
-This package is hosted at R-universe so you can do
+TileDB-SOMA is available on  R-universe and [Conda](https://anaconda.org/tiledb/r-tiledbsoma), and can be installed directly from R or `mambda` as indicated below.
 
-```shell
-> install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev',
-                                           'https://cloud.r-project.org'))
+```r
+install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev',
+                                         'https://cloud.r-project.org'))
 ```
 
-to install it directly (as a pre-made binary on macOS, or from source on Linux) along with all its dependencies.
+```bash
+mamba install -c conda-forge -c tiledb r-tiledbsoma
+```
 
 ## From source
 
