@@ -173,8 +173,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @description Retrieve  layer as a sparse matrix.
     #' @param collection The [`SOMACollection`] containing the layer of
     #' interest, either: `"X"`, `"obsm"`, `"varm"`, `"obsp"`, or `"varp"`.
-    #' @param layer_name The name of the layer to retrieve. Defaults to the
-    #' first layer within the `collection`.
+    #' @param layer_name The name of the layer to retrieve.
     #' @param obs_index Name of the column in `obs` to use as dimension labels. The dimension the values are applied to is determined by the selected  `collection`:
     #' - `X` and `obsm`: row names
     #' - `obsp`: row and column names
@@ -187,7 +186,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param repr Optional one-character code for sparse matrix representation type.
     #' @return A [`Matrix::sparseMatrix-class`]
     to_matrix = function(
-      collection, layer_name = NULL, obs_index = NULL, var_index = NULL) {
+      collection, layer_name, obs_index = NULL, var_index = NULL
+    ) {
       stopifnot(
         assert_subset(
           x = collection,
@@ -195,8 +195,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           type = "collection"
         ),
 
-        "Must specify a single layer name" =
-          is.null(layer_name) || is_scalar_character(layer_name),
+        "Must specify a single layer name" = is_scalar_character(layer_name),
         assert_subset(layer_name, self$ms[[collection]]$names(), "layer"),
 
         "Must specify a single obs index" =
