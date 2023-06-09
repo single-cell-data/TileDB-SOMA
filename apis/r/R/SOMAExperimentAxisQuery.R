@@ -169,6 +169,117 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         obs = obs_ft, var = var_ft, X_layers = x_matrices
       )
     },
+
+    #' @description Retrieve  layer as a sparse matrix.
+    #' @param collection The [`SOMACollection`] containing the layer of
+    #' interest, either: `"X"`, `"obsm"`, `"varm"`, `"obsp"`, or `"varp"`.
+    #' @param layer_name The name of the layer to retrieve. Defaults to the
+    #' first layer within the `collection`.
+    #' @param obs_index Name of the column in `obs` to use as dimension labels. The dimension the values are applied to is determined by the selected  `collection`:
+    #' - `X` and `obsm`: row names
+    #' - `obsp`: row and column names
+    #' - `varm` and `varp`: ignored
+    #' @param var_index Name of the column in `var` to use as dimension labels. The dimension the values are applied to is determined by the selected  `collection`:
+    #' - `X`: column names
+    #' - `varm`: row names
+    #' - `varp`: row and column names
+    #' - `obsm` and `obsp`: ignored.
+    #' @param repr Optional one-character code for sparse matrix representation type.
+    #' @return A [`Matrix::sparseMatrix-class`]
+    to_matrix = function(
+      collection, layer_name = NULL, obs_index = NULL, var_index = NULL, repr = "T") {
+      stopifnot(
+        assert_subset(
+          x = collection,
+          y = c("X", "obsm", "varm", "obsp", "varp"),
+          type = "collection"
+        ),
+
+        "Must specify a single layer name" =
+          is.null(layer_name) || is_scalar_character(layer_name),
+
+        "Must specify a single obs index" =
+          is.null(obs_index) || is_scalar_character(obs_index),
+        assert_subset(obs_index, self$obs_df$colnames(), "column"),
+
+        "Must specify a single var index" =
+          is.null(var_index) || is_scalar_character(var_index),
+        assert_subset(var_index, self$var_df$colnames(), "column")
+      )
+
+      # Retrieve and validate obs/var indices
+      obs_labels <- var_labels <- NULL
+      if (!is.null(obs_index)) {
+        if (collection %in% c("varm", "varp")) {
+          spdl::warn("The obs_index is ignored for {} collections", collection)
+        }
+        obs_labels <- self$obs(column_names = obs_index)[[1]]$as_vector()
+        stopifnot(
+          "All obs_index values must be unique" = anyDuplicated(obs_labels) == 0
+        )
+      }
+
+      if (!is.null(var_index)) {
+        if (collection %in% c("varm", "varp")) {
+          spdl::warn("The var_index is ignored for {} collections", collection)
+        }
+        var_labels <- self$var(column_names = var_index)[[1]]$as_vector()
+        stopifnot(
+          "All var_index values must be unique" = anyDuplicated(var_labels) == 0
+        )
+      }
+
+      # TODO: DRY OUT THESE BLOCKS
+      if (collection == "X") {
+        stopifnot(
+          assert_subset(layer_name, self$ms[[collection]]$names(), "layer")
+        )
+        coords <- list(
+            soma_dim_0 = self$obs_joinids()$as_vector(),
+            soma_dim_1 = self$var_joinids()$as_vector()
+          )
+
+        mat <- self$ms[[collection]]$get(layer_name)$read(
+          coords = coords
+        )$sparse_matrix()$concat()
+        dimnames(mat) <- list(obs_labels, var_labels)
+
+      } else if (collection == "obsm") {
+        stopifnot(
+          assert_subset(layer_name, self$ms[[collection]]$names(), "layer")
+        )
+        tbl <- self$ms[[collection]]$get(layer_name)$read(
+          coords = list(soma_dim_0 = self$obs_joinids()$as_vector())
+        )$tables()$concat()
+        mat <- private$.as_matrix(tbl, repr = repr)
+        dimnames(mat) <- list(obs_labels, NULL)
+
+      } else if (collection == "varm") {
+        stopifnot(
+          assert_subset(layer_name, self$ms[[collection]]$names(), "layer")
+        )
+        coords <- list(soma_dim_0 = self$var_joinids()$as_vector())
+        mat <- self$ms[[collection]]$get(layer_name)$read(
+          coords = coords
+        )$sparse_matrix()$concat()
+        dimnames(mat) <- list(var_labels, NULL)
+
+      } else if (collection == "obsp") {
+        stopifnot(
+          assert_subset(layer_name, self$ms[[collection]]$names(), "layer")
+        )
+
+        obs_joinids <- self$obs_joinids()$as_vector()
+        mat <- self$ms[[collection]]$get(layer_name)$read(
+          coords = list(soma_dim_0 = obs_joinids, soma_dim_1 = obs_joinids)
+        )$sparse_matrix()$concat()
+
+        dimnames(mat) <- list(obs_labels, obs_labels)
+      }
+
+      mat
+    },
+
     #' @description Loads the query as a \code{\link[SeuratObject]{Seurat}} object
     #'
     #' @template param-x-layers-v3
