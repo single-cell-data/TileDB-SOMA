@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
 ## version pinning info (NB: temporary from test repo url below)
-tiledb_soma_version <- "0.0.0.11.9026"
-tiledb_soma_sha1 <- "39be1e2"
+tiledb_soma_version <- "0.0.1.27"
+tiledb_soma_sha1 <- "76172ec"
 ##tiledb_soma_repo <- "single-cell-data/TileDB-SOMA"
 tiledb_soma_repo <- "eddelbuettel/tldbsm2"
 
