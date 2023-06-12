@@ -49,15 +49,18 @@ TileDB-SOMA provides interoperability with existing Python or R data structures:
 channel `#cellxgene-census-users`.
 
 
-## Quick Start
+## APIs Installation and Quick Start
 
-### Documentation
+* [Python installation and quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/Python-quick-start)
+* [R installation and quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/R-quick-start)
+
+## API Documentation
 
 The TileDB-SOMA doc-site ([Python](https://tiledbsoma.readthedocs.io/en/latest/python-api.html)|[R](https://single-cell-data.github.io/TileDB-SOMA/)), contains the reference documentation and tutorials.
 
 Reference documentation can also be accessed directly from Python `help(tiledsoma)` or R `help(package = "tiledbsoma")`.
 
-### Main SOMA Objects
+## Main SOMA Objects
 
 The capabilities of TileDB-SOMA lay on the different read, access, and query patterns that each of the main implementations of SOMA objects provide:
 
@@ -68,11 +71,6 @@ The capabilities of TileDB-SOMA lay on the different read, access, and query pat
 * `Experiment` is a class that represents a single-cell experiment. It always contains two objects:
 	* `obs`: a  `DataFrame` with primary annotations on the observation axis.
 	* `ms`: a  `Collection` of measurements, each composed of `X` matrices and axis annotation matrices or data frames (e.g. `var`, `varm`, `obsm`, etc).
-
-### APIs Installation and Quick Start
-
-* [Python installation and quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/Python-quick-start)
-* [R installation and quick start](https://github.com/single-cell-data/TileDB-SOMA/wiki/R-quick-start)
 
 ## Who Is Using SOMA?
 
