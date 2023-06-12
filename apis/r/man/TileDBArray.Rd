@@ -8,7 +8,7 @@ Base class for representing an individual TileDB array.
 (lifecycle: experimental)
 }
 \section{Super class}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
+\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -203,7 +203,10 @@ A named list of \code{\link[tiledb:tiledb_dim]{tiledb::tiledb_dim}} objects
 \if{html}{\out{<a id="method-TileDBArray-shape"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-shape}{}}}
 \subsection{Method \code{shape()}}{
-Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)
+Retrieve the shape, i.e. the capacity of each dimension.
+This will not necessarily match the bounds of occupied cells within the
+array.  Rather, it is the bounds outside of which no data may be written.
+(lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$shape()}\if{html}{\out{</div>}}
 }

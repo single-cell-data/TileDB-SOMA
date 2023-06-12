@@ -178,3 +178,10 @@ arrow_schema_from_tiledb_schema <- function(x) {
   )
   arrow::schema(fields)
 }
+
+#' Validate external pointer to ArrowArray
+#' @noRd
+check_arrow_pointers <- function(arrlst) {
+    stopifnot("First argument must be an external pointer to ArrowArray" = check_arrow_array_tag(arrlst[[1]]),
+              "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
+}

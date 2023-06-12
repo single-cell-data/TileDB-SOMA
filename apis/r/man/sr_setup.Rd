@@ -67,18 +67,14 @@ class so that iterative access over parts of a (large) array is possible.
 }
 \examples{
 \dontrun{
+uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 ctx <- tiledb::tiledb_ctx()
-uri <- "test/soco/pbmc3k_processed/obs"
-sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="auto")
+sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)))
 rl <- data.frame()
 while (!sr_complete(sr)) {
-    sr |>
-        sr_next() |>
-        as_arrow_table() |>
-        collect() |>
-        as.data.frame() |>
-        data.table() -> D
-    rl <- rbind(rl, D)
+  dat <- sr_next(sr)
+  rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
+  rl <- rbind(rl, as.data.frame(rb))
 }
 summary(rl)
 }

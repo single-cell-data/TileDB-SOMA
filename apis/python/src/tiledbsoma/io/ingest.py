@@ -1307,6 +1307,12 @@ def _ingest_uns_ndarray(
     use_relative_uri: Optional[bool],
 ) -> None:
     arr_uri = _util.uri_joinpath(coll.uri, key)
+
+    if any(e <= 0 for e in value.shape):
+        msg = f"Skipped {arr_uri} (uns ndarray): zero in shape {value.shape}"
+        logging.log_io(msg, msg)
+        return
+
     try:
         pa_dtype = pa.from_numpy_dtype(value.dtype)
     except pa.ArrowNotImplementedError:
