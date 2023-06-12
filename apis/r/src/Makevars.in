@@ -1,7 +1,7 @@
 CXX_STD = CXX17
 
 ## We need the TileDB Headers, and for macOS aka Darwin need to set minimum version 10.14 for macOS
-PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@ -Iinclude
+PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@
 
 ## We also need the TileDB library
 PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@
