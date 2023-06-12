@@ -1,12 +1,23 @@
 #' Coercion methods for SOMA classes
 
+# Set R6 methods formally as S3 to create apply generics
+methods::setOldClass("SOMASparseNDArrayRead")
+methods::setOldClass("TableReadIter")
+
+#' @importClassesFrom Matrix TsparseMatrix CsparseMatrix RsparseMatrix 
+NULL
+
+#' @importFrom arrow as_arrow_table
+#' @export
+arrow::as_arrow_table
+
+
 #' @importFrom arrow as_arrow_table
 #' @export
 as_arrow_table.SOMASparseNDArrayRead <- function(x){
   x$tables()$concat()
 }
 
-#' Coerce \link[tiledbsoma]{SOMASparseNDArrayRead} to \link{data.frame} or \link[tibble]{tibble}
 #' @export
 as.data.frame.SOMASparseNDArrayRead <- function(x, ...){ 
    as.data.frame(x$tables()$concat(), ...)
@@ -30,7 +41,6 @@ setAs(from = "SOMASparseNDArrayRead",
       def = function(from) as(as(from, "TsparseMatrix"), "RsparseMatrix")
       )
 
-#' @importFrom arrow as_arrow_table
 #' @export
 as_arrow_table.TableReadIter <- function(x) x$concat()
 
