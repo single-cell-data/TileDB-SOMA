@@ -1,10 +1,10 @@
-This tool is profiler for [SOMA](https://github.com/single-cell-data/SOMA/tree/main) workloads collecting both performance and memory usage across runs and alos can be used for detecting performance or memory hot spots.
+This tool is a profiler for [SOMA](https://github.com/single-cell-data/SOMA/tree/main) workloads collecting both performance and memory usage across runs and can also be used for detecting performance or memory hot spots.
 
 Here's an example for how to profile a SOMA script (here ```tests/objects.py```)
 
 This example shows how to generate the profile data for a given SOMA run (here ```tests/objects.py```)
 ```shell
-python main.py python tests/objects.py
+python profilerß.py python tests/objects.py
 ```
 
 The profiled data includes the following items (for the time being):
@@ -40,7 +40,7 @@ Context data:
 * cpu_count
 * python_version
 
-We also store tileDB stats.
+We also store TileDB stats.
 
 This example shows how to use a profiler plot generator on the same generated profile:
 ```shell

@@ -95,7 +95,35 @@ def build_profile_data(
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        epilog="""The list of collected metrics by the generic profiler:
+         
+         process: The process and its parameters to be profile\n
+         custom_out: list of custom profilers to be stored\n
+         date\n
+         time\n
+           
+         rt: Real time\n
+         ut: User time\n
+         st: System time\n
+                        
+         max_set_size\n
+         page_reclaims\n
+         page_faults\n
+         cycles_elapsed\n
+         peak_memory\n
+         tiledb_stats\n
+         somacore_version\n
+         tiledbsoma_version\n
+                        
+         uname: uname -a\n
+         total_virtual_mem\n
+         total_physical_mem\n
+         swap_mem\n 
+         cpu_count\n
+         python_version\n
+             """
+    )
     parser.add_argument(
         "process", nargs="+", help="The main process and its arguments to run"
     )

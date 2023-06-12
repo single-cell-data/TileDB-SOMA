@@ -58,7 +58,7 @@ def extract_context_data(data: ProfileData, metric: str) -> Union[int, float, No
 
 
 def create_pandas_df(data: List[ProfileData]) -> pd.DataFrame:
-    """Create panda datat frame for all the runs of a given process
+    """Create pandas dataframe for all the runs of a given process
     Columns are metric names and rows are the runs
     """
     table = []
