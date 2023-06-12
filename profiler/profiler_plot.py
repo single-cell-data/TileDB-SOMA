@@ -13,7 +13,12 @@ def collect_tiledb_stats(data: ProfileData) -> Dict[str, Union[int, float]]:
     """Extract all TileDB stats as dictionary"""
     result = {}
     tiledb_stats = data.tiledb_stats
+
+    if tiledb_stats is None:
+        return result
+
     lines = tiledb_stats.split("\n")
+
     for idx, line in enumerate(lines):
         perf_match = re.match(r"\s+\"(.+)\": (\d+\.\d+)\s*,", line)
         if perf_match:
