@@ -66,6 +66,35 @@ Matrix = Union[DenseMatrix, SparseMatrix]
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
 
+# ----------------------------------------------------------------
+class IngestionParams:
+    """Maps from user-level ingest modes to a set of implementation-level boolean flags."""
+
+    write_schema_no_data: bool
+    error_if_already_exists: bool
+    skip_existing_nonempty_domain: bool
+
+    def __init__(self, ingest_mode: str) -> None:
+        if ingest_mode == "write":
+            self.write_schema_no_data = False
+            self.error_if_already_exists = True
+            self.skip_existing_nonempty_domain = False
+
+        elif ingest_mode == "schema_only":
+            self.write_schema_no_data = True
+            self.error_if_already_exists = True
+            self.skip_existing_nonempty_domain = False
+
+        elif ingest_mode == "resume":
+            self.write_schema_no_data = False
+            self.error_if_already_exists = False
+            self.skip_existing_nonempty_domain = True
+
+        else:
+            raise SOMAError(
+                f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
+            )
+
 
 # ----------------------------------------------------------------
 def from_h5ad(
@@ -211,6 +240,9 @@ def from_anndata(
             f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
         )
 
+    # Map the user-level ingest mode to a set of implementation-level boolean flags
+    ingestion_params = IngestionParams(ingest_mode)
+
     if not isinstance(anndata, ad.AnnData):
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
@@ -235,7 +267,7 @@ def from_anndata(
 
     # Must be done first, to create the parent directory.
     experiment = _create_or_open_coll(
-        Experiment, experiment_uri, ingest_mode, context=context
+        Experiment, experiment_uri, ingestion_params=ingestion_params, context=context
     )
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -247,7 +279,7 @@ def from_anndata(
         id_column_name="obs_id",
         platform_config=platform_config,
         context=context,
-        ingest_mode=ingest_mode,
+        ingestion_params=ingestion_params,
     ) as obs:
         _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
@@ -264,7 +296,7 @@ def from_anndata(
     with _create_or_open_coll(
         Collection[Measurement],
         experiment_ms_uri,
-        ingest_mode,
+        ingestion_params=ingestion_params,
         context=context,
     ) as ms:
         _maybe_set(experiment, "ms", ms, use_relative_uri=use_relative_uri)
@@ -275,7 +307,7 @@ def from_anndata(
         with _create_or_open_coll(
             Measurement,
             measurement_uri,
-            ingest_mode,
+            ingestion_params=ingestion_params,
             context=context,
         ) as measurement:
             _maybe_set(
@@ -287,9 +319,9 @@ def from_anndata(
             _maybe_ingest_uns(
                 measurement,
                 anndata.uns,
-                platform_config,
-                context,
-                ingest_mode,
+                platform_config=platform_config,
+                context=context,
+                ingestion_params=ingestion_params,
                 use_relative_uri=use_relative_uri,
             )
 
@@ -301,7 +333,7 @@ def from_anndata(
                 id_column_name="var_id",
                 platform_config=platform_config,
                 context=context,
-                ingest_mode=ingest_mode,
+                ingestion_params=ingestion_params,
             ) as var:
                 _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
 
@@ -312,7 +344,7 @@ def from_anndata(
             with _create_or_open_coll(
                 Collection,
                 measurement_X_uri,
-                ingest_mode,
+                ingestion_params=ingestion_params,
                 context=context,
             ) as x:
                 _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
@@ -323,24 +355,24 @@ def from_anndata(
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
 
-                with create_from_matrix(
+                with _create_from_matrix(
                     X_kind,
                     _util.uri_joinpath(measurement_X_uri, "data"),
                     anndata.X,
-                    platform_config,
-                    ingest_mode,
-                    context,
+                    ingestion_params=ingestion_params,
+                    platform_config=platform_config,
+                    context=context,
                 ) as data:
                     _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
                 for layer_name, layer in anndata.layers.items():
-                    with create_from_matrix(
+                    with _create_from_matrix(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, layer_name),
                         layer,
-                        platform_config,
-                        ingest_mode,
-                        context,
+                        ingestion_params=ingestion_params,
+                        platform_config=platform_config,
+                        context=context,
                     ) as layer_data:
                         _maybe_set(
                             x, layer_name, layer_data, use_relative_uri=use_relative_uri
@@ -353,14 +385,14 @@ def from_anndata(
                     with _create_or_open_coll(
                         Collection,
                         obsm_uri,
-                        ingest_mode,
+                        ingestion_params=ingestion_params,
                         context=context,
                     ) as obsm:
                         _maybe_set(
                             measurement, "obsm", obsm, use_relative_uri=use_relative_uri
                         )
                         for key in anndata.obsm.keys():
-                            with create_from_matrix(
+                            with _create_from_matrix(
                                 # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
                                 # consider a use-dense flag at the tiledbsoma.io API
                                 # DenseNDArray,
@@ -369,8 +401,8 @@ def from_anndata(
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.obsm[key]
                                 ),
-                                platform_config,
-                                ingest_mode,
+                                ingestion_params=ingestion_params,
+                                platform_config=platform_config,
                                 context=context,
                             ) as arr:
                                 _maybe_set(
@@ -384,14 +416,14 @@ def from_anndata(
                     with _create_or_open_coll(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varm"),
-                        ingest_mode,
+                        ingestion_params=ingestion_params,
                         context=context,
                     ) as varm:
                         _maybe_set(
                             measurement, "varm", varm, use_relative_uri=use_relative_uri
                         )
                         for key in anndata.varm.keys():
-                            with create_from_matrix(
+                            with _create_from_matrix(
                                 # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
                                 # consider a use-dense flag at the tiledbsoma.io API
                                 # DenseNDArray,
@@ -400,8 +432,8 @@ def from_anndata(
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.varm[key]
                                 ),
-                                platform_config,
-                                ingest_mode,
+                                ingestion_params=ingestion_params,
+                                platform_config=platform_config,
                                 context=context,
                             ) as darr:
                                 _maybe_set(
@@ -416,21 +448,21 @@ def from_anndata(
                     with _create_or_open_coll(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "obsp"),
-                        ingest_mode,
+                        ingestion_params=ingestion_params,
                         context=context,
                     ) as obsp:
                         _maybe_set(
                             measurement, "obsp", obsp, use_relative_uri=use_relative_uri
                         )
                         for key in anndata.obsp.keys():
-                            with create_from_matrix(
+                            with _create_from_matrix(
                                 SparseNDArray,
                                 _util.uri_joinpath(obsp.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.obsp[key]
                                 ),
-                                platform_config,
-                                ingest_mode,
+                                ingestion_params=ingestion_params,
+                                platform_config=platform_config,
                                 context=context,
                             ) as sarr:
                                 _maybe_set(
@@ -445,21 +477,21 @@ def from_anndata(
                     with _create_or_open_coll(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varp"),
-                        ingest_mode,
+                        ingestion_params=ingestion_params,
                         context=context,
                     ) as varp:
                         _maybe_set(
                             measurement, "varp", varp, use_relative_uri=use_relative_uri
                         )
                         for key in anndata.varp.keys():
-                            with create_from_matrix(
+                            with _create_from_matrix(
                                 SparseNDArray,
                                 _util.uri_joinpath(varp.uri, key),
                                 conversions.to_tiledb_supported_array_type(
                                     anndata.varp[key]
                                 ),
-                                platform_config,
-                                ingest_mode,
+                                ingestion_params=ingestion_params,
+                                platform_config=platform_config,
                                 context=context,
                             ) as sarr:
                                 _maybe_set(
@@ -476,7 +508,7 @@ def from_anndata(
                     with _create_or_open_coll(
                         Measurement,
                         raw_uri,
-                        ingest_mode,
+                        ingestion_params=ingestion_params,
                         context=context,
                     ) as raw_measurement:
                         _maybe_set(
@@ -490,9 +522,9 @@ def from_anndata(
                             _util.uri_joinpath(raw_uri, "var"),
                             conversions.decategoricalize_obs_or_var(anndata.raw.var),
                             id_column_name="var_id",
+                            ingestion_params=ingestion_params,
                             platform_config=platform_config,
                             context=context,
-                            ingest_mode=ingest_mode,
                         ) as var:
                             _maybe_set(
                                 raw_measurement,
@@ -505,7 +537,7 @@ def from_anndata(
                         with _create_or_open_coll(
                             Collection,
                             raw_X_uri,
-                            ingest_mode,
+                            ingestion_params=ingestion_params,
                             context=context,
                         ) as rm_x:
                             _maybe_set(
@@ -515,12 +547,12 @@ def from_anndata(
                                 use_relative_uri=use_relative_uri,
                             )
 
-                            with create_from_matrix(
+                            with _create_from_matrix(
                                 SparseNDArray,
                                 _util.uri_joinpath(raw_X_uri, "data"),
                                 anndata.raw.X,
-                                platform_config,
-                                ingest_mode,
+                                ingestion_params=ingestion_params,
+                                platform_config=platform_config,
                                 context=context,
                             ) as rm_x_data:
                                 _maybe_set(
@@ -559,7 +591,8 @@ def _maybe_set(
 def _create_or_open_coll(
     cls: Type[Experiment],
     uri: str,
-    ingest_mode: str,
+    *,
+    ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
 ) -> Experiment:
     ...
@@ -569,7 +602,8 @@ def _create_or_open_coll(
 def _create_or_open_coll(
     cls: Type[Measurement],
     uri: str,
-    ingest_mode: str,
+    *,
+    ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
 ) -> Measurement:
     ...
@@ -579,7 +613,8 @@ def _create_or_open_coll(
 def _create_or_open_coll(
     cls: Type[Collection[_TDBO]],
     uri: str,
-    ingest_mode: str,
+    *,
+    ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
 ) -> Collection[_TDBO]:
     ...
@@ -587,7 +622,11 @@ def _create_or_open_coll(
 
 @typeguard_ignore
 def _create_or_open_coll(
-    cls: Type[Any], uri: str, ingest_mode: str, context: Optional[SOMATileDBContext]
+    cls: Type[Any],
+    uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    context: Optional[SOMATileDBContext],
 ) -> Any:
     try:
         thing = cls.open(uri, "w", context=context)
@@ -595,9 +634,9 @@ def _create_or_open_coll(
         pass  # This is always OK; make a new one.
     else:
         # It already exists. Are we resuming?
-        if ingest_mode == "resume":
-            return thing
-        raise SOMAError(f"{uri} already exists")
+        if ingestion_params.error_if_already_exists:
+            raise SOMAError(f"{uri} already exists")
+        return thing
 
     return cls.create(uri, context=context)
 
@@ -606,9 +645,10 @@ def _write_dataframe(
     df_uri: str,
     df: pd.DataFrame,
     id_column_name: Optional[str],
+    *,
+    ingestion_params: IngestionParams,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
-    ingest_mode: IngestMode = "write",
 ) -> DataFrame:
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
@@ -652,7 +692,7 @@ def _write_dataframe(
             context=context,
         )
     else:
-        if ingest_mode == "resume":
+        if ingestion_params.skip_existing_nonempty_domain:
             storage_ned = _read_nonempty_domain(soma_df)
             dim_range = ((int(df.index.min()), int(df.index.max())),)
             if _chunk_is_contained_in(dim_range, storage_ned):
@@ -664,7 +704,7 @@ def _write_dataframe(
         else:
             raise SOMAError(f"{soma_df.uri} already exists")
 
-    if ingest_mode == "schema_only":
+    if ingestion_params.write_schema_no_data:
         logging.log_io(
             f"Wrote schema {soma_df.uri}",
             _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),
@@ -694,6 +734,29 @@ def create_from_matrix(
     Lifecycle:
         Experimental.
     """
+    return _create_from_matrix(
+        cls,
+        uri,
+        matrix,
+        ingestion_params=IngestionParams(ingest_mode),
+        platform_config=platform_config,
+        context=context,
+    )
+
+
+@typeguard_ignore
+def _create_from_matrix(
+    cls: Type[_NDArr],
+    uri: str,
+    matrix: Union[Matrix, h5py.Dataset],
+    *,
+    ingestion_params: IngestionParams,
+    platform_config: Optional[PlatformConfig] = None,
+    context: Optional[SOMATileDBContext] = None,
+) -> _NDArr:
+    """
+    Internal helper for user-facing ``create_from_matrix``.
+    """
     # SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
@@ -716,10 +779,10 @@ def create_from_matrix(
             context=context,
         )
     else:
-        if ingest_mode != "resume":
+        if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{soma_ndarray.uri} already exists")
 
-    if ingest_mode == "schema_only":
+    if ingestion_params.write_schema_no_data:
         logging.log_io(
             f"Wrote schema {soma_ndarray.uri}",
             _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_ndarray.uri}"),
@@ -739,7 +802,7 @@ def create_from_matrix(
                 platform_config
             ),
             context=context,
-            ingest_mode=ingest_mode,
+            ingestion_params=ingestion_params,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
         _write_matrix_to_sparseNDArray(
@@ -749,7 +812,7 @@ def create_from_matrix(
                 platform_config
             ),
             context=context,
-            ingest_mode=ingest_mode,
+            ingestion_params=ingestion_params,
         )
     else:
         raise TypeError(f"unknown array type {type(soma_ndarray)}")
@@ -811,6 +874,7 @@ def add_matrix_to_collection(
     Lifecycle:
         Experimental.
     """
+    ingestion_params = IngestionParams(ingest_mode)
     with exp.ms[measurement_name] as meas:
         if collection_name in meas:
             coll = cast(Collection[RawHandle], meas[collection_name])
@@ -818,17 +882,17 @@ def add_matrix_to_collection(
             coll = _create_or_open_coll(
                 Collection,
                 f"{meas.uri}/{collection_name}",
-                ingest_mode,
+                ingestion_params=ingestion_params,
                 context=context,
             )
             _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
         with coll:
             uri = f"{coll.uri}/{matrix_name}"
-            with create_from_matrix(
+            with _create_from_matrix(
                 SparseNDArray,
                 uri,
                 matrix_data,
-                ingest_mode=ingest_mode,
+                ingestion_params=ingestion_params,
                 context=context,
             ) as sparse_nd_array:
                 _maybe_set(
@@ -844,7 +908,7 @@ def _write_matrix_to_denseNDArray(
     matrix: Union[Matrix, h5py.Dataset],
     tiledb_create_options: TileDBCreateOptions,
     context: Optional[SOMATileDBContext],
-    ingest_mode: IngestMode,
+    ingestion_params: IngestionParams,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
@@ -857,7 +921,7 @@ def _write_matrix_to_denseNDArray(
     # * Of course, this also helps us catch already-completed writes in the non-chunked case.
     # TODO: make sure we're not using an old timestamp for this
     storage_ned = None
-    if ingest_mode == "resume":
+    if ingestion_params.skip_existing_nonempty_domain:
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
         storage_ned = _read_nonempty_domain(soma_ndarray)
         matrix_bounds = [
@@ -900,7 +964,7 @@ def _write_matrix_to_denseNDArray(
 
         chunk = matrix[i:i2, :]
 
-        if ingest_mode == "resume" and storage_ned is not None:
+        if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
             chunk_bounds = matrix_bounds
             chunk_bounds[0] = (
                 int(i),
@@ -1014,7 +1078,7 @@ def _write_matrix_to_sparseNDArray(
     matrix: Matrix,
     tiledb_create_options: TileDBCreateOptions,
     context: Optional[SOMATileDBContext],
-    ingest_mode: IngestMode,
+    ingestion_params: IngestionParams,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
@@ -1035,7 +1099,7 @@ def _write_matrix_to_sparseNDArray(
     # * Of course, this also helps us catch already-completed writes in the non-chunked case.
     # TODO: make sure we're not using an old timestamp for this
     storage_ned = None
-    if ingest_mode == "resume":
+    if ingestion_params.skip_existing_nonempty_domain:
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
         # THIS IS A HACK AND ONLY WORKS BECAUSE WE ARE DOING THIS BEFORE ALL WRITES.
         storage_ned = _read_nonempty_domain(soma_ndarray)
@@ -1102,7 +1166,7 @@ def _write_matrix_to_sparseNDArray(
 
         chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
 
-        if ingest_mode == "resume" and storage_ned is not None:
+        if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
             chunk_bounds = matrix_bounds
             chunk_bounds[stride_axis] = (
                 int(i),
@@ -1197,10 +1261,10 @@ def _chunk_is_contained_in_axis(
 def _maybe_ingest_uns(
     m: Measurement,
     uns: Mapping[str, object],
+    *,
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
-    ingest_mode: IngestMode,
-    *,
+    ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
 ) -> None:
     # Don't try to ingest an empty uns.
@@ -1210,9 +1274,9 @@ def _maybe_ingest_uns(
         m,
         "uns",
         uns,
-        platform_config,
-        context,
-        ingest_mode,
+        platform_config=platform_config,
+        context=context,
+        ingestion_params=ingestion_params,
         use_relative_uri=use_relative_uri,
     )
 
@@ -1221,16 +1285,16 @@ def _ingest_uns_dict(
     parent: AnyTileDBCollection,
     parent_key: str,
     dct: Mapping[str, object],
+    *,
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
-    ingest_mode: IngestMode,
-    *,
+    ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
 ) -> None:
     with _create_or_open_coll(
         Collection,
         _util.uri_joinpath(parent.uri, parent_key),
-        ingest_mode,
+        ingestion_params=ingestion_params,
         context=context,
     ) as coll:
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
@@ -1250,9 +1314,9 @@ def _ingest_uns_dict(
                     coll,
                     key,
                     value,
-                    platform_config,
-                    context,
-                    ingest_mode,
+                    platform_config=platform_config,
+                    context=context,
+                    ingestion_params=ingestion_params,
                     use_relative_uri=use_relative_uri,
                 )
                 continue
@@ -1261,9 +1325,9 @@ def _ingest_uns_dict(
                     _util.uri_joinpath(coll.uri, key),
                     value,
                     None,
-                    platform_config,
+                    platform_config=platform_config,
                     context=context,
-                    ingest_mode=ingest_mode,
+                    ingestion_params=ingestion_params,
                 ) as df:
                     _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
                 continue
