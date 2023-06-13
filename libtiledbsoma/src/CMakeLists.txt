@@ -173,6 +173,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h 
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h 
   DESTINATION "include/tiledbsoma/soma"
 )
 
