@@ -1,11 +1,11 @@
 /**
- * @file   tiledbsoma
+ * @file   soma_object.h
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,31 +27,47 @@
  *
  * @section DESCRIPTION
  *
- * This is the main import header for the C++ API
+ * This file defines the SOMAObject class. SOMAObject is an abstract base
+ * class for all public SOMA classes: SOMACollection, SOMAExperiment,
+ * SOMAMeasurement, SOMA{Sparse,Dense}NdArray, and SOMADataFrame.
  */
 
-#ifndef __TILEDBSOMA__
-#define __TILEDBSOMA__
+#ifndef SOMA_OBJECT
+#define SOMA_OBJECT
 
-// TODO Uncomment after finishing Python and R bindings
-// #include "soma_collection.h"
-// #include "soma_dataframe.h"
-// #include "soma_dense_ndarray.h"
-// #include "soma_experiment.h"
-// #include "soma_measurement.h"
-// #include "soma_object.h"
-// #include "soma_sparse_ndarray.h"
+#include <map>
+#include <string>
+#include <tiledb/tiledb>
 
-#include "utils/arrow_adapter.h"
-#include "utils/array_buffers.h"
-#include "utils/column_buffer.h"
-#include "utils/common.h"
-#include "utils/stats.h"
-#include "utils/version.h"
-#include "soma/logger_public.h"
-#include "soma/managed_query.h"
-#include "soma/soma_array.h"
-#include "soma/soma_group.h"
-#include "soma/soma_object.h"
+namespace tiledbsoma {
 
-#endif
+using namespace tiledb;
+class SOMAObject {
+   public:
+    //===================================================================
+    //= public non-static
+    //===================================================================
+    /**
+     * @brief Return a constant string describing the type of the object.
+     *
+     * @return std::string SOMA type
+     */
+    virtual std::string type() const = 0;
+
+    /**
+     * @brief Get URI of the SOMAObject.
+     *
+     * @return std::string URI
+     */
+    virtual std::string uri() const = 0;
+
+    /**
+     * Get the context associated with the SOMAObject.
+     *
+     * @return std::shared_ptr<Context>
+     */
+    virtual std::shared_ptr<Context> ctx() = 0;
+};
+}  // namespace tiledbsoma
+
+#endif  // SOMA_OBJECT
