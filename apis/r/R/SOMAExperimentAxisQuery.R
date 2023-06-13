@@ -170,20 +170,22 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
     },
 
-    #' @description Retrieve  layer as a sparse matrix.
+    #' @description Retrieve layer as a sparse matrix.
     #' @param collection The [`SOMACollection`] containing the layer of
     #' interest, either: `"X"`, `"obsm"`, `"varm"`, `"obsp"`, or `"varp"`.
     #' @param layer_name The name of the layer to retrieve.
-    #' @param obs_index Name of the column in `obs` to use as dimension labels. The dimension the values are applied to is determined by the selected  `collection`:
-    #' - `X` and `obsm`: row names
-    #' - `obsp`: row and column names
-    #' - `varm` and `varp`: ignored
-    #' @param var_index Name of the column in `var` to use as dimension labels. The dimension the values are applied to is determined by the selected  `collection`:
-    #' - `X`: column names
-    #' - `varm`: row names
-    #' - `varp`: row and column names
-    #' - `obsm` and `obsp`: ignored.
-    #' @param repr Optional one-character code for sparse matrix representation type.
+    #' @param obs_index,var_index Name of the column in `obs` or `var`
+    #' (`var_index`) containing values that should be used as dimension labels
+    #' in the resulting matrix. Whether the values are used as row or column
+    #' labels depends on the selected `collection`:
+    #'
+    #' | Collection | `obs_index`          | `var_index`          |
+    #' |-----------:|:---------------------|:---------------------|
+    #' | `X`        | row names            | column names         |
+    #' | `obsm`     | row names            | ignored              |
+    #' | `varm`     | ignored              | row names            |
+    #' | `obsp`     | row and column names | ignored              |
+    #' | `varp`     | ignored              | row and column names |
     #' @return A [`Matrix::sparseMatrix-class`]
     to_matrix = function(
       collection, layer_name, obs_index = NULL, var_index = NULL
