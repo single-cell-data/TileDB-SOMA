@@ -50,7 +50,18 @@ class SOMAArray {
     //= public static
     //===================================================================
 
-    static void create(std::string_view uri, ArraySchema schema);
+    /**
+     * @brief Create a SOMAArray object at the given URI.
+     *
+     * @param ctx TileDB context
+     * @param uri URI to create the SOMAArray
+     * @param schema TileDB ArraySchema
+     */
+    static void create(
+        std::shared_ptr<Context> ctx,
+        std::string_view uri,
+        ArraySchema schema,
+        std::string soma_object_type);
 
     /**
      * @brief Open an array at the specified URI and return SOMAArray
@@ -127,6 +138,20 @@ class SOMAArray {
     SOMAArray(const SOMAArray&) = delete;
     SOMAArray(SOMAArray&&) = default;
     ~SOMAArray() = default;
+
+    /**
+     * @brief Get URI of the SOMAArray.
+     *
+     * @return std::string URI
+     */
+    std::string uri() const;
+
+    /**
+     * @brief Get URI of the SOMAArray.
+     *
+     * @return std::string URI
+     */
+    std::shared_ptr<Context> ctx();
 
     /**
      * Open the SOMAArray object.
@@ -290,7 +315,7 @@ class SOMAArray {
      *
      * An example use model:
      *
-     *   auto reader = SOMAArray::open(uri);
+     *   auto reader = SOMAArray::open(TILEDB_READ, uri);
      *   reader->submit();
      *   while (auto batch = x_data->read_next()) {
      *       ...process batch ...
@@ -301,9 +326,28 @@ class SOMAArray {
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
     /**
+     * @brief Set the write data for a column.
+     *
+     * @param column_name Column name
+     * @param buff Buffer array pointer with elements of the column type.
+     * @param nelements Number of array elements in buffer
+     */
+    void set_column_data(
+        std::string_view column_name,
+        std::shared_ptr<ColumnBuffer> column_buffer) {
+        mq_->set_column_data(std::string(column_name), column_buffer);
+    }
+
+    /**
      * @brief Write ArrayBuffers data to the array.
      *
-     * @param buffers ArrayBuffers with containing the data to be written.
+     * An example use model:
+     *
+     *   auto writer = SOMAArray::open(TILEDB_WRITE, uri);
+     *   std::vector<int> x(10, 1);
+     *   writer->submit();
+     *   writer->set_column_data("x", x_data);
+     *   writer->write();
      */
     void write(std::shared_ptr<ArrayBuffers> buffers);
 
@@ -367,7 +411,7 @@ class SOMAArray {
      *
      * @return std::shared_ptr<ArraySchema> Schema
      */
-    std::shared_ptr<ArraySchema> schema() {
+    std::shared_ptr<ArraySchema> schema() const {
         return mq_->schema();
     }
 
@@ -378,6 +422,20 @@ class SOMAArray {
      * value in the vector is the capcity of each dimension.
      */
     std::vector<int64_t> shape();
+
+    /**
+     * @brief Get the number of dimensions.
+     *
+     * @return uint64_t Number of dimensions.
+     */
+    uint64_t ndim() const;
+
+    /**
+     * @brief Get the name of each dimensions.
+     *
+     * @return std::vector<std::string> Name of each dimensions.
+     */
+    std::vector<std::string> dimension_names() const;
 
     /**
      * Set metadata key-value items to an open array. The array must

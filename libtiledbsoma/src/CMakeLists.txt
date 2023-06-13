@@ -46,7 +46,8 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/column_buffer.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
@@ -171,9 +172,12 @@ endif()
 install(FILES 
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/logger_public.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h 
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.h 
   DESTINATION "include/tiledbsoma/soma"
 )
 
@@ -183,10 +187,8 @@ install(FILES
 )
 
 install(FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/array_buffers.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/carrow.h  
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/column_buffer.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/common.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h  
@@ -197,7 +199,7 @@ install(FILES
 
 install(FILES 
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span/span.hpp
-  DESTINATION "include/tiledbsoma/utils/span"
+  DESTINATION "include/tiledbsoma/soma/span"
 )
 
 

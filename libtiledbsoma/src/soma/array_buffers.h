@@ -40,7 +40,6 @@
 #include "../utils/common.h"
 #include "../utils/logger.h"
 #include "column_buffer.h"
-#include "span/span.hpp"
 
 namespace tiledbsoma {
 

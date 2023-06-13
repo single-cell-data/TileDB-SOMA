@@ -25,6 +25,7 @@ add_executable(unit_soma EXCLUDE_FROM_ALL
     unit_managed_query.cc
     unit_soma_array.cc
     unit_soma_group.cc
+    unit_soma_dataframe.cc
 # TODO: uncomment when thread_pool is enabled
 #    unit_thread_pool.cc
 )

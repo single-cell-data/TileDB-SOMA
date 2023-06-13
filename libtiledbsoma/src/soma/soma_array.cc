@@ -41,8 +41,16 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-void SOMAArray::create(std::string_view uri, ArraySchema schema) {
+void SOMAArray::create(
+    std::shared_ptr<Context> ctx,
+    std::string_view uri,
+    ArraySchema schema,
+    std::string soma_object_type) {
     Array::create(std::string(uri), schema);
+    auto array = Array(*ctx, std::string(uri), TILEDB_WRITE);
+    array.put_metadata(
+        "soma_object_type", TILEDB_STRING_UTF8, 1, soma_object_type.c_str());
+    array.close();
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
@@ -131,6 +139,14 @@ SOMAArray::SOMAArray(
 
     reset(column_names, batch_size, result_order);
 }
+
+std::string SOMAArray::uri() const {
+    return uri_;
+};
+
+std::shared_ptr<Context> SOMAArray::ctx() {
+    return ctx_;
+};
 
 void SOMAArray::open(
     tiledb_query_type_t mode,
@@ -429,6 +445,19 @@ std::vector<int64_t> SOMAArray::shape() {
         }
     }
 
+    return result;
+}
+
+uint64_t SOMAArray::ndim() const {
+    return this->schema().get()->domain().ndim();
+}
+
+std::vector<std::string> SOMAArray::dimension_names() const {
+    std::vector<std::string> result;
+    auto dimensions = this->schema().get()->domain().dimensions();
+    for (const auto& dim : dimensions) {
+        result.push_back(dim.name());
+    }
     return result;
 }
 

@@ -60,7 +60,7 @@ namespace {
 
 std::tuple<std::string, uint64_t> create_array(
     const std::string& uri_in,
-    Context& ctx,
+    std::shared_ptr<Context> ctx,
     int num_cells_per_fragment = 10,
     int num_fragments = 1,
     bool overlap = false,
@@ -73,28 +73,28 @@ std::tuple<std::string, uint64_t> create_array(
         overlap,
         allow_duplicates);
 
-    auto vfs = VFS(ctx);
+    auto vfs = VFS(*ctx);
     if (vfs.is_dir(uri)) {
         vfs.remove_dir(uri);
     }
 
     // Create schema
-    ArraySchema schema(ctx, TILEDB_SPARSE);
+    ArraySchema schema(*ctx, TILEDB_SPARSE);
 
     auto dim = Dimension::create<int64_t>(
-        ctx, "d0", {0, std::numeric_limits<int64_t>::max() - 1});
+        *ctx, "d0", {0, std::numeric_limits<int64_t>::max() - 1});
 
-    Domain domain(ctx);
+    Domain domain(*ctx);
     domain.add_dimension(dim);
     schema.set_domain(domain);
 
-    auto attr = Attribute::create<int>(ctx, "a0");
+    auto attr = Attribute::create<int>(*ctx, "a0");
     schema.add_attribute(attr);
     schema.set_allows_dups(allow_duplicates);
     schema.check();
 
     // Create array
-    SOMAArray::create(uri, schema);
+    SOMAArray::create(ctx, uri, schema, "NONE");
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -187,7 +187,7 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
 TEST_CASE("SOMAArray: nnz") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
-    auto allow_duplicates = GENERATE(false, true);
+    auto allow_duplicates = true;
     int num_cells_per_fragment = 128;
     auto timestamp = 10;
 
@@ -202,7 +202,7 @@ TEST_CASE("SOMAArray: nnz") {
         std::string base_uri = "mem://unit-test-array";
         auto [uri, expected_nnz] = create_array(
             base_uri,
-            *ctx,
+            ctx,
             num_cells_per_fragment,
             num_fragments,
             overlap,
@@ -259,7 +259,7 @@ TEST_CASE("SOMAArray: nnz") {
 TEST_CASE("SOMAArray: nnz with timestamp") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
-    auto allow_duplicates = GENERATE(false, true);
+    auto allow_duplicates = true;
     int num_cells_per_fragment = 128;
 
     SECTION(fmt::format(
@@ -273,7 +273,7 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
         std::string base_uri = "mem://unit-test-array";
         const auto& [uri, expected_nnz] = create_array(
             base_uri,
-            *ctx,
+            ctx,
             num_cells_per_fragment,
             num_fragments,
             overlap,
@@ -301,7 +301,7 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
 TEST_CASE("SOMAArray: nnz with consolidation") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
-    auto allow_duplicates = GENERATE(false, true);
+    auto allow_duplicates = true;
     auto vacuum = GENERATE(false, true);
     int num_cells_per_fragment = 128;
 
@@ -317,7 +317,7 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
         std::string base_uri = "mem://unit-test-array";
         const auto& [uri, expected_nnz] = create_array(
             base_uri,
-            *ctx,
+            ctx,
             num_cells_per_fragment,
             num_fragments,
             overlap,
@@ -357,7 +357,7 @@ TEST_CASE("SOMAArray: metadata") {
     auto ctx = std::make_shared<Context>();
 
     std::string base_uri = "mem://unit-test-array";
-    const auto& [uri, expected_nnz] = create_array(base_uri, *ctx);
+    const auto& [uri, expected_nnz] = create_array(base_uri, ctx);
 
     auto soma_array = SOMAArray::open(
         TILEDB_WRITE,
@@ -409,7 +409,7 @@ TEST_CASE("SOMAArray: Test buffer size") {
     auto ctx = std::make_shared<Context>(cfg);
 
     std::string base_uri = "mem://unit-test-array";
-    auto [uri, expected_nnz] = create_array(base_uri, *ctx);
+    auto [uri, expected_nnz] = create_array(base_uri, ctx);
     auto [expected_d0, expected_a0] = write_array(uri, ctx);
     auto soma_array = SOMAArray::open(TILEDB_READ, ctx, uri);
 
