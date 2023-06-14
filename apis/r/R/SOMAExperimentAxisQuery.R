@@ -255,23 +255,59 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         )
       )
 
-      # Coords must be vectors until arrow arrays are supported
+      # TODO: Coords must be vectors until read() supports arrow arrays
       coords <- lapply(coords, function(x) x$as_vector())
 
+      # Retrieve coo arrow table with query result
       layer <- self$ms[[collection]]$get(layer_name)
-      mat <- layer$read(coords)$sparse_matrix()$concat()
+      tbl <- layer$read(coords = coords)$tables()$concat()
 
-      # Apply dimension labels if obs/var_index is specified
-      if (!is.null(obs_labels) || !is.null(var_labels)) {
-        dimnames(mat) <- switch(collection,
-          X = list(obs_labels, var_labels),
-          obsm = list(obs_labels, NULL),
-          varm = list(var_labels, NULL),
-          obsp = list(obs_labels, obs_labels),
-          varp = list(var_labels, var_labels)
+      # Reindex the coordinates
+      # Constructing a matrix with the joinids produces a matrix with
+      # the same shape as the original array, which is not we want. To create
+      # a matrix containing only values in the query result we use order to
+      # project the joinids to a 1-based index of contiguous values.
+      mat_coords <- switch(collection,
+        X = list(
+          i = self$indexer$by_obs(tbl$soma_dim_0),
+          j = self$indexer$by_var(tbl$soma_dim_1)
+        ),
+        obsm = list(
+          i = self$indexer$by_obs(tbl$soma_dim_0),
+          j = tbl$soma_dim_1
+        ),
+        varm = list(
+          i = self$indexer$by_var(tbl$soma_dim_0),
+          j = tbl$soma_dim_1
+        ),
+        obsp = list(
+          i = self$indexer$by_obs(tbl$soma_dim_0),
+          j = self$indexer$by_obs(tbl$soma_dim_1)
+        ),
+        varp = list(
+          i = self$indexer$by_var(tbl$soma_dim_0),
+          j = self$indexer$by_var(tbl$soma_dim_1)
         )
-      }
-      mat
+      )
+
+      # Construct the dimension names
+      dim_names <- switch(collection,
+        X = list(obs_labels, var_labels),
+        obsm = list(obs_labels, unique(tbl$soma_dim_1)$as_vector()),
+        varm = list(var_labels, unique(tbl$soma_dim_1)$as_vector()),
+        obsp = list(obs_labels, obs_labels),
+        varp = list(var_labels, var_labels)
+      )
+
+      Matrix::sparseMatrix(
+        i = mat_coords$i$as_vector(),
+        j = mat_coords$j$as_vector(),
+        x = tbl$soma_data$as_vector(),
+        index1 = FALSE,
+        dims = vapply_int(dim_names, length),
+        dimnames = dim_names,
+        repr = "T"
+      )
     },
 
     #' @description Loads the query as a \code{\link[SeuratObject]{Seurat}} object

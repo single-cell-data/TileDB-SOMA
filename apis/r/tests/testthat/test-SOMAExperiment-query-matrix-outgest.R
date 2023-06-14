@@ -13,6 +13,7 @@ test_that("matrix outgest with all results", {
     layer_name = "PCs",
     var_index = "var_id"
   )
+
   # Column names are unset since we don't store them
   expect_null(colnames(pcs2))
   # Manually name the columns for comparison
@@ -55,6 +56,80 @@ test_that("matrix outgest with all results", {
   # Transpose and coerce to dGCMatrix for comparison
   assay2 <- as(t(assay2), "CsparseMatrix")
   expect_equal(assay2, assay1)
+})
+
+test_that("matrix outgest with filtered results", {
+  pbmc_small1 <- pbmc_small[
+    SeuratObject::VariableFeatures(pbmc_small),
+    pbmc_small$nCount_RNA > 400
+  ]
+
+  experiment <- load_dataset("soma-exp-pbmc-small")
+
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    var_query = SOMAAxisQuery$new(
+      value_filter = "vst.variable == 'TRUE'"
+    ),
+    obs_query = SOMAAxisQuery$new(
+      value_filter = "nCount_RNA > 400"
+    )
+  )
+
+  expect_equal(query$n_obs, ncol(pbmc_small1))
+  expect_equal(query$n_vars, nrow(pbmc_small1))
+
+  # Loadings
+  pcs1 <- SeuratObject::Loadings(pbmc_small1, "pca")
+  pcs2 <- query$to_matrix(
+    collection = "varm",
+    layer_name = "PCs",
+    var_index = "var_id"
+  )
+
+  # Manually name the columns for comparison
+  colnames(pcs2) <- paste0("PC_", 1:ncol(pcs2))
+  # Coerce to dense matrix and reorder for comparison
+  pcs2 <- as.matrix(pcs2[rownames(pcs1), ])
+  expect_identical(pcs2, pcs1)
+
+  # Embeddings
+  pcas1 <- SeuratObject::Embeddings(pbmc_small1, "pca")
+  pcas2 <- query$to_matrix(
+    collection = "obsm",
+    layer_name = "X_pca",
+    obs_index = "obs_id"
+  )
+
+  colnames(pcas2) <- paste0("PC_", 1:ncol(pcas2))
+  pcas2 <- as.matrix(pcas2[rownames(pcas1), ])
+  expect_identical(pcas2, pcas1)
+
+  # Graphs
+  # Seurat drops graphs from indexed objects so we need to subset manually
+  snn1 <- as(SeuratObject::Graphs(pbmc_small, "RNA_snn"), "CsparseMatrix")
+  snn1 <- snn1[colnames(pbmc_small1), colnames(pbmc_small1)]
+
+  snn2 <- query$to_matrix(
+    collection = "obsp",
+    layer_name = "RNA_snn",
+    obs_index = "obs_id"
+  ) |> as("CsparseMatrix")
+  expect_identical(snn2, snn1)
+
+  # Assay data
+  assay1 <- SeuratObject::GetAssayData(pbmc_small1[["RNA"]], slot = "counts")
+  assay2 <- query$to_matrix(
+    collection = "X",
+    layer_name = "counts",
+    obs_index = "obs_id",
+    var_index = "var_id"
+  )
+
+  # Transpose and coerce to dGCMatrix for comparison
+  assay2 <- as(t(assay2), "CsparseMatrix")[rownames(assay1), colnames(assay1)]
+  expect_identical(assay2, assay1)
 })
 
 test_that("matrix outgest assertions", {
