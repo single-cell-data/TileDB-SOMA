@@ -28,6 +28,7 @@ if (isMac && isX86) {
     stop("Unsupported platform for downloading artifacts. Please have TileDB Core installed locally.")
 }
 
-tarball <- "libtiledbsoma.tar.gz"
-if (!file.exists(tarball)) download.file(url, tarball, quiet=TRUE)
-if (!dir.exists("inst/tiledbsoma")) untar(tarball, exdir="inst/tiledbsoma")
+filename <- basename(url)
+cat("** Accessing", url, "as", filename, "\n")
+if (!file.exists(filename)) download.file(url, filename, quiet=TRUE)
+if (!dir.exists("inst/tiledbsoma")) untar(filename, exdir="inst/tiledbsoma")
