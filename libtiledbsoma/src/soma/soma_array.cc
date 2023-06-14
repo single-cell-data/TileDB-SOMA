@@ -193,15 +193,6 @@ void SOMAArray::submit() {
     submitted_ = true;
 }
 
-void SOMAArray::set_condition(QueryCondition& qc) {
-    mq_->set_condition(qc);
-}
-
-void SOMAArray::select_columns(
-    const std::vector<std::string>& names, bool if_not_empty) {
-    mq_->select_columns(names, if_not_empty);
-}
-
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     if (!submitted_) {
         throw TileDBSOMAError(
@@ -226,24 +217,16 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     return mq_->results();
 }
 
-void SOMAArray::write() {
+void SOMAArray::write(std::shared_ptr<ArrayBuffers> buffers) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
 
+    for (auto col_name : buffers->names()) {
+        mq_->set_column_data(col_name, buffers->at(col_name));
+    }
+
     mq_->submit_write();
-}
-
-bool SOMAArray::is_complete(bool query_status_only) {
-    return mq_->is_complete(query_status_only);
-}
-
-bool SOMAArray::results_complete() {
-    return mq_->results_complete();
-}
-
-size_t SOMAArray::total_num_cells() {
-    return mq_->total_num_cells();
 }
 
 uint64_t SOMAArray::nnz() {
