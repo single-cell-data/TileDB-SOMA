@@ -60,6 +60,7 @@ this in the class.
 \item \href{#method-SOMAExperimentAxisQuery-var_joinids}{\code{SOMAExperimentAxisQuery$var_joinids()}}
 \item \href{#method-SOMAExperimentAxisQuery-X}{\code{SOMAExperimentAxisQuery$X()}}
 \item \href{#method-SOMAExperimentAxisQuery-read}{\code{SOMAExperimentAxisQuery$read()}}
+\item \href{#method-SOMAExperimentAxisQuery-to_sparse_matrix}{\code{SOMAExperimentAxisQuery$to_sparse_matrix()}}
 \item \href{#method-SOMAExperimentAxisQuery-to_seurat}{\code{SOMAExperimentAxisQuery$to_seurat()}}
 \item \href{#method-SOMAExperimentAxisQuery-to_seurat_assay}{\code{SOMAExperimentAxisQuery$to_seurat_assay()}}
 \item \href{#method-SOMAExperimentAxisQuery-to_seurat_reduction}{\code{SOMAExperimentAxisQuery$to_seurat_reduction()}}
@@ -190,6 +191,56 @@ from the resulting Tables.
 \code{var} and \code{obs} dataframes to read and return.}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_sparse_matrix"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_sparse_matrix}{}}}
+\subsection{Method \code{to_sparse_matrix()}}{
+Retrieve a collection layer as a sparse matrix with named
+dimensions.
+
+Load any layer from the \code{X}, \code{obsm}, \code{varm}, \code{obsp}, or \code{varp}
+collections as a \link[Matrix:sparseMatrix-class]{sparse matrix}.
+
+By default the matrix dimensions are named using the \code{soma_joinid} values
+in the specified layer's dimensions (e.g., \code{soma_dim_0}). However,
+dimensions can be named using values from any \code{obs} or \code{var} column that
+uniquely identifies each record by specifying the \code{obs_index} and
+\code{var_index} arguments.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_sparse_matrix(
+  collection,
+  layer_name,
+  obs_index = NULL,
+  var_index = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{collection}}{The \code{\link{SOMACollection}} containing the layer of
+interest, either: \code{"X"}, \code{"obsm"}, \code{"varm"}, \code{"obsp"}, or \code{"varp"}.}
+
+\item{\code{layer_name}}{Name of the layer to retrieve from the \code{collection}.}
+
+\item{\code{obs_index, var_index}}{Name of the column in \code{obs} or \code{var}
+(\code{var_index}) containing values that should be used as dimension labels
+in the resulting matrix. Whether the values are used as row or column
+labels depends on the selected \code{collection}:\tabular{rll}{
+   Collection \tab \code{obs_index} \tab \code{var_index} \cr
+   \code{X} \tab row names \tab column names \cr
+   \code{obsm} \tab row names \tab ignored \cr
+   \code{varm} \tab ignored \tab row names \cr
+   \code{obsp} \tab row and column names \tab ignored \cr
+   \code{varp} \tab ignored \tab row and column names \cr
+}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{\link[Matrix:sparseMatrix-class]{Matrix::sparseMatrix}}
 }
 }
 \if{html}{\out{<hr>}}
