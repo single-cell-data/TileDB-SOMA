@@ -1,31 +1,48 @@
-name: TileDB-SOMA R CI
+name: r-ci
 
 on:
-  pull_request:
-    paths-ignore:
-      - "apis/python/**"
-      - ".pre-commit-config.yaml"
+  workflow_dispatch:
+  workflow_call:
+  #pull_request:
+  #  paths-ignore:
+  #    - "apis/python/**"
+  #    - ".pre-commit-config.yaml"
   push:
-    branches: [main]
+    branches: [main, master]
+  #release:
 
 env:
   COVERAGE_FLAGS: "r"
   COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  ## for workflows triggered by release this is the release tag created (cf https://docs.github.com/en/actions/learn-github-actions/contexts)
+  ## note that this is filtered below and then used via 'steps.versubstr.outputs.substring'
+  ## also note that in a non-release trigger the value is simply 'unset' (which still works for us)
+  TILEDBSOMA_VER: "${{ github.ref }}"
+  ## the commit sha that triggered the workflow (cf https://docs.github.com/en/actions/learn-github-actions/contexts)
+  ## note that this is shortened below from the full-length sha1 sum to the common first seven letters, used via steps.shasubstr.outputs.substring
+  TILEDBSOMA_SHA: "${{ github.sha }}"
 
 jobs:
+  lib:
+    uses: ./.github/workflows/library-artifacts.yaml
+      
   ci:
+    needs: lib
     strategy:
       matrix:
         include:
           - name: linux
             os: ubuntu-latest
             covr: 'no'
+            arch_os: linux-x86_64
           - name: macos
             os: macOS-latest
             covr: 'no'
+            arch_os: macos-x86_64
           - name: coverage
             os: ubuntu-latest
             covr: 'yes'
+            arch_os: linux-x86_64
 
     runs-on: ${{ matrix.os }}
 
@@ -41,6 +58,9 @@ jobs:
       - name: CMake
         uses: lukka/get-cmake@latest
 
+      - name: Show cmake
+        run: type -p cmake
+        
       #- name: MkVars
       #  run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
@@ -50,14 +70,47 @@ jobs:
       #- name: Call ldconfig
       #  if: ${{ matrix.os == 'ubuntu-latest' }}
       #  run: sudo ldconfig
+
+      - name: "Get VER Substring"
+        uses: bhowell2/github-substring-action@1.0.2
+        id: versubstr
+        with:
+          value: ${{ env.TILEDBSOMA_VER }}
+          index_of_str: "refs/tags/"
+          fail_if_not_found: false
+          default_return_value: "unset"
+
+      - name: "Get SHA Substring"
+        uses: bhowell2/github-substring-action@1.0.2
+        id: shasubstr
+        with:
+          value: ${{ env.TILEDBSOMA_SHA }}
+          length_from_start: 7
+
+      - name: "Show Substrings"
+        run: echo "VER " ${{ steps.versubstr.outputs.substring }} " and SHA " ${{ steps.shasubstr.outputs.substring }}
+       
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: libtiledbsoma-${{ matrix.arch_os }}-${{ steps.versubstr.outputs.substring }}-${{ steps.shasubstr.outputs.substring }}.tar.gz
+    
+      - name: Move downloaded file
+        run: mv -v libtiledbsoma-${{ matrix.arch_os }}-${{steps.versubstr.outputs.substring }}-${{steps.shasubstr.outputs.substring }}.tar.gz apis/r/libtiledbsoma.tar.gz
+
+      - name: Show files
+        run: ls -l apis/r/*.tar.gz
+
+      - name: Configure
+        run: cd apis/r && ./configure
         
       - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests
 
-      - name: View Install Output
-        run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
-        if: failure()
+      #- name: View Install Output
+      #  run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
+      #  if: failure()
 
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}

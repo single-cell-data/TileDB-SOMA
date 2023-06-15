@@ -30,5 +30,11 @@ if (isMac && isX86) {
 
 filename <- basename(url)
 cat("** Accessing", url, "as", filename, "\n")
-if (!file.exists(filename)) download.file(url, filename, quiet=TRUE)
-if (!dir.exists("inst/tiledbsoma")) untar(filename, exdir="inst/tiledbsoma")
+if (!file.exists(filename)) {
+    cat("** Downloading", url, "\n")
+    download.file(url, filename, quiet=TRUE)
+}
+if (!dir.exists("inst/tiledbsoma")) {
+    cat("** Unarchiving", filename, "\n")
+    untar(filename, exdir="inst/tiledbsoma")
+}

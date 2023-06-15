@@ -78,7 +78,7 @@ fi
 if [ ${force_artifacts} -ne 1 ]; then
 
     ## if either optional arg is still missing
-    if [ ${given_core} -eq 0 -o ${given_soma} -eq 0 ]; then
+    if test ${given_core} -eq 0 -o ${given_soma} -eq 0; then
         ## Check for pkg-config and use it to inquire about tiledb and tiledbsoma build options
         pkg-config --version >/dev/null 2>&1
         if [ $? -eq 0 ]; then
@@ -107,7 +107,7 @@ if [ ${force_artifacts} -ne 1 ]; then
         fi
     fi
 
-    if [ ${given_core} -eq 1 -a ${given_soma} -eq 1 ]; then
+    if test ${given_core} -eq 1 -a ${given_soma} -eq 1; then
         ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
         sed -e "s|@tiledb_include@|${incl_dirs} |" \
             -e "s|@tiledb_libs@|${lib_dirs} |" \
@@ -132,13 +132,13 @@ echo "** using artifact mode"
 
 ## Download tiledb core pre-made
 ${R_HOME}/bin/Rscript tools/get_tarball_core.R
-## Download tiledb-soma pre-made
-${R_HOME}/bin/Rscript tools/get_tarball_soma.R
-## Check for cmake and git
-# ${R_HOME}/bin/Rscript tools/check_cmake_and_git.R
-
-## Make libtiledbsoma library using cmake (and an added git dependency)
-# tools/build_libtiledbsoma.sh
+## Download artifact, or (if in CI mode) use already prepared one
+if test -f libtiledbsoma.tar.gz; then
+    ${R_HOME}/bin/Rscript tools/use_tarball_soma.R
+else
+    ## Download tiledb-soma pre-made
+    ${R_HOME}/bin/Rscript tools/get_tarball_soma.R
+fi
 
 pkgincl="-I../inst/tiledb/include -I../inst/tiledbsoma/include"
 pkglibs="-ltiledb -L../inst/tiledb/lib -ltiledbsoma -L../inst/tiledbsoma/lib"

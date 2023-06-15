@@ -1,0 +1,148 @@
+name: artifacts
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  #pull_request:
+  #  paths-ignore:
+  #    - "apis/python/**"
+  #    - ".pre-commit-config.yaml"
+  #push:
+  #  branches: [main, master]
+  release:
+    types:
+      - created
+    
+env:
+  ## for workflows triggered by release this is the release tag created (cf https://docs.github.com/en/actions/learn-github-actions/contexts)
+  ## note that this is filtered below and then used via 'steps.versubstr.outputs.substring'
+  TILEDBSOMA_VER: "${{ github.ref }}"
+  ## the commit sha that triggered the workflow (cf https://docs.github.com/en/actions/learn-github-actions/contexts)
+  ## note that this is shortened below from the full-length sha1 sum to the common first seven letters, used via steps.shasubstr.outputs.substring
+  TILEDBSOMA_SHA: "${{ github.sha }}"
+  ## three variables for scratch space while this runs, defined off the current 'workspace'
+  TILEDBSOMA_BUILD: "${{ github.workspace }}/tiledb_build"
+  TILEDBSOMA_SOURCE: "${{ github.workspace }}/libtiledbsoma"
+  TILEDBSOMA_INSTALL: "${{ github.workspace }}/.tiledbsoma_dist/${{ github.sha }}"
+
+jobs:
+  build:
+    
+    strategy:
+      matrix:
+        #considering https://stackoverflow.com/questions/65035256/how-to-access-matrix-variables-in-github-actions
+        include:
+          - environ: 'macos_x86'
+            imageName: "macOS-11"
+            CMAKE_OSX_ARCHITECTURES: "x86_64"
+            MACOSX_DEPLOYMENT_TARGET: 10.14
+            ARTIFACT_OS: 'macos'
+            ARTIFACT_ARCH: 'x86_64'
+          - environ: 'macos_arm'
+            imageName: "macOS-11"
+            CMAKE_OSX_ARCHITECTURES: "arm64"
+            MACOSX_DEPLOYMENT_TARGET: 11 
+            ARTIFACT_OS: 'macos'
+            ARTIFACT_ARCH: 'arm64'
+          - environ: "linux"
+            imageName: "ubuntu-20.04"
+            CMAKE_OSX_ARCHITECTURES: ""
+            MACOSX_DEPLOYMENT_TARGET: ""
+            ARTIFACT_OS: 'linux'
+            ARTIFACT_ARCH: "x86_64"
+
+    runs-on: ${{ matrix.imageName }}
+
+    steps:
+
+          - uses: actions/checkout@v3
+ 
+          - name: "Echo variables"
+            run: |
+              echo "Vars are "
+              echo "  image   ${{ matrix.imageName }}"
+              echo "  osxarch ${{ matrix.CMAKE_OSX_ARCHITECTURES }}"
+              echo "  build   ${{ env.TILEDBSOMA_BUILD }}"
+              echo "  install ${{ env.TILEDBSOMA_INSTALL }}"
+              echo "  wkspce  ${{ github.workspace }}"
+
+          - name: "Add pkg-config"
+            run: brew install pkg-config
+            if: ${{ matrix.ARTIFACT_OS == 'macos' }}
+
+          - name: "Add cmake"
+            uses: lukka/get-cmake@latest
+            
+          - name: "Check cmake"
+            run: cmake --version
+
+          - name: "Build"
+            run: |
+              set -xe pipefail
+              #
+              cd libtiledbsoma
+              #
+              mkdir -p ${{ env.TILEDBSOMA_BUILD }}
+              cd ${{ env.TILEDBSOMA_BUILD }}
+              #
+              #
+              cmake -B ${{ env.TILEDBSOMA_BUILD }} \
+                    -S ${{ env.TILEDBSOMA_SOURCE }} \
+               	    -DDOWNLOAD_TILEDB_PREBUILT=ON \
+              	    -DTILEDBSOMA_BUILD_CLI=OFF \
+              	    -DTILEDBSOMA_ENABLE_TESTING=OFF \
+                    -DOVERRIDE_INSTALL_PREFIX=OFF \
+                    -DCMAKE_INSTALL_PREFIX=${{ env.TILEDBSOMA_INSTALL }} \
+                    -DCMAKE_OSX_ARCHITECTURES=${{ matrix.CMAKE_OSX_ARCHITECTURES }}
+              #
+              cmake --build ${{ env.TILEDBSOMA_BUILD }} --config Release -j4
+              cmake --build ${{ env.TILEDBSOMA_BUILD }} --target install-libtiledbsoma --config Release
+              #
+              # this should not be needed -- the tiledb core library gets 'co-installed'
+              rm -vf ${{ env.TILEDBSOMA_INSTALL }}/lib/libtiledb.{so,dylib}*
+
+          - name: "Inspect installation output"
+            run: ls -lR ${{ env.TILEDBSOMA_INSTALL }}
+
+          - name: "Get VER Substring"
+            uses: bhowell2/github-substring-action@1.0.2
+            id: versubstr
+            with:
+              value: ${{ env.TILEDBSOMA_VER }}
+              index_of_str: "refs/tags/"
+              fail_if_not_found: false
+              default_return_value: "unset"
+
+          - name: "Get SHA Substring"
+            uses: bhowell2/github-substring-action@1.0.2
+            id: shasubstr
+            with:
+              value: ${{ env.TILEDBSOMA_SHA }}
+              length_from_start: 7
+
+          - name: "Show Substrings"
+            run: echo "VER " ${{ steps.versubstr.outputs.substring }} " and SHA " ${{ steps.shasubstr.outputs.substring }}
+
+          - name: "Archive files"
+            run: |
+              cd ${{ env.TILEDBSOMA_INSTALL }}
+              tar -cvf ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ steps.versubstr.outputs.substring }}-${{ steps.shasubstr.outputs.substring }}.tar *
+              gzip -9v ${{ github.workspace }}/libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ steps.versubstr.outputs.substring }}-${{ steps.shasubstr.outputs.substring }}.tar
+
+          # an 'artifact' is downloadable by clicking on it but has no external URL
+          # we use the artifact to pass the tar.gz on to the next step
+          - name: "Artifact"
+            uses: actions/upload-artifact@v3
+            with:
+              name: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ steps.versubstr.outputs.substring }}-${{ steps.shasubstr.outputs.substring }}.tar.gz
+              path: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ steps.versubstr.outputs.substring }}-${{ steps.shasubstr.outputs.substring }}.tar.gz
+
+          - name: "Release"
+            uses: shogo82148/actions-upload-release-asset@v1
+            if: startsWith(github.ref, 'refs/tags/')
+            with:
+              github_token: ${{ secrets.PAT }}
+              upload_url: ${{ github.event.release.upload_url }}
+              asset_path: libtiledbsoma-${{ matrix.ARTIFACT_OS }}-${{ matrix.ARTIFACT_ARCH }}-${{ steps.versubstr.outputs.substring }}-${{ steps.shasubstr.outputs.substring }}.tar.gz
+              overwrite: true
+        
