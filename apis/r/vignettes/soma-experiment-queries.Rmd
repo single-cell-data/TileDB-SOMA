@@ -163,6 +163,11 @@ query$to_sparse_matrix(
 The `query` object also contains methods for loading in results as a Seurat object (or any of Seurat's component classes). As with the `to_sparse_matrix()` method, we can specify the `obs_index` and `var_index` to use for naming the dimensions of the resulting object.
 
 ```{r eval=requireNamespace("SeuratObject", quietly = TRUE)}
+query <- SOMAExperimentAxisQuery$new(
+  experiment = experiment,
+  measurement_name = "RNA"
+)
+
 query$to_seurat(
   X_layers = c(counts = "counts", data = "data"),
   obs_index = "obs_id",
