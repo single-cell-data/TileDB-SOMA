@@ -1,4 +1,5 @@
 test_that("matrix outgest with all results", {
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
   experiment <- load_dataset("soma-exp-pbmc-small")
 
