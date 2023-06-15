@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2022-2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -78,6 +78,26 @@ class ColumnBuffer {
      */
     static std::shared_ptr<ColumnBuffer> create(
         ArraySchema schema, std::string_view name);
+
+    /**
+     * @brief Create a ColumnBuffer from a schema, column name, and data.
+     *
+     * @param schema TileDB schema
+     * @param name TileDB dimension or attribute name
+     * @param data Data to set in buffer
+     * @return ColumnBuffer
+     */
+    template <typename T>
+    static std::shared_ptr<ColumnBuffer> create(
+        ArraySchema schema, std::string_view name, std::vector<T> data) {
+        auto column_buff = ColumnBuffer::create(schema, name);
+        column_buff->num_cells_ = data.size();
+        column_buff->data_.resize(data.size());
+        column_buff->data_.assign(
+            reinterpret_cast<std::byte*>(data.data()),
+            reinterpret_cast<std::byte*>(data.data() + data.size()));
+        return column_buff;
+    }
 
     /**
      * @brief Convert a bytemap to a bitmap in place.

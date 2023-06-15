@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2022-2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -260,7 +260,9 @@ class SOMAArray {
      *
      * @param qc Query condition
      */
-    void set_condition(QueryCondition& qc);
+    void set_condition(QueryCondition& qc) {
+        mq_->set_condition(qc);
+    }
 
     /**
      * @brief Select columns names to query (dim and attr). If the
@@ -272,7 +274,9 @@ class SOMAArray {
      * @param if_not_empty Prevent changing an "empty" selection of all columns
      */
     void select_columns(
-        const std::vector<std::string>& names, bool if_not_empty = false);
+        const std::vector<std::string>& names, bool if_not_empty = false) {
+        mq_->select_columns(names, if_not_empty);
+    }
 
     /**
      * @brief Submit the query
@@ -296,15 +300,12 @@ class SOMAArray {
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
-    template <typename T>
-    void set_column_data(std::string_view column_name, std::vector<T>& buf) {
-        mq_->set_column_data(std::string(column_name), buf);
-    }
-
     /**
      * @brief Write ArrayBuffers data to the array.
+     *
+     * @param buffers ArrayBuffers with containing the data to be written.
      */
-    void write();
+    void write(std::shared_ptr<ArrayBuffers> buffers);
 
     /**
      * @brief Check if the query is complete.
@@ -319,7 +320,9 @@ class SOMAArray {
      * @param query_status_only Query complete mode.
      * @return true if the query is complete, as described above
      */
-    bool is_complete(bool query_status_only = false);
+    bool is_complete(bool query_status_only = false) {
+        return mq_->is_complete(query_status_only);
+    }
 
     /**
      * @brief Return true if `read_next` returned all results from the
@@ -328,7 +331,9 @@ class SOMAArray {
      * @return True if last call to `read_next` returned all results of the
      * query
      */
-    bool results_complete();
+    bool results_complete() {
+        return mq_->results_complete();
+    }
 
     /**
      * @brief Return the total number of cells read so far, including any
@@ -336,7 +341,9 @@ class SOMAArray {
      *
      * @return size_t Total number of cells read
      */
-    size_t total_num_cells();
+    size_t total_num_cells() {
+        return mq_->total_num_cells();
+    }
 
     /**
      * @brief Return whether next read is the initial read, or a subsequent

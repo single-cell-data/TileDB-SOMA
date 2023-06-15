@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2022-2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -169,11 +169,15 @@ class ManagedQuery {
     /**
      * @brief Set column data for write query.
      *
-     * @param column_buffer Column data
+     * @param column_name Column name
+     * @param buff Buffer array pointer with elements of the column type.
+     * @param nelements Number of array elements in buffer
      */
-    template <typename T>
-    void set_column_data(std::string column_name, std::vector<T>& buf) {
-        query_->set_data_buffer(column_name, buf);
+    void set_column_data(
+        std::string column_name, std::shared_ptr<ColumnBuffer> column_buffer) {
+        auto data = column_buffer->data<std::byte>();
+        query_->set_data_buffer(
+            column_name, (void*)data.data(), data.size_bytes());
     }
 
     /**
