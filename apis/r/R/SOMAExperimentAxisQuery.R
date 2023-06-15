@@ -170,10 +170,21 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
     },
 
-    #' @description Retrieve layer as a sparse matrix.
+    #' @description Retrieve a collection layer as a sparse matrix with named
+    #' dimensions.
+    #'
+    #' Load any layer from the `X`, `obsm`, `varm`, `obsp`, or `varp`
+    #' collections as a [sparse matrix][Matrix::sparseMatrix-class].
+    #'
+    #' By default the matrix dimensions are named using the `soma_joinid` values
+    #' in the specified layer's dimensions (e.g., `soma_dim_0`). However,
+    #' dimensions can be named using values from any `obs` or `var` column that
+    #' uniquely identifies each record by specifying the `obs_index` and
+    #' `var_index` arguments.
+    #'
     #' @param collection The [`SOMACollection`] containing the layer of
     #' interest, either: `"X"`, `"obsm"`, `"varm"`, `"obsp"`, or `"varp"`.
-    #' @param layer_name The name of the layer to retrieve.
+    #' @param layer_name Name of the layer to retrieve from the `collection`.
     #' @param obs_index,var_index Name of the column in `obs` or `var`
     #' (`var_index`) containing values that should be used as dimension labels
     #' in the resulting matrix. Whether the values are used as row or column
@@ -187,7 +198,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' | `obsp`     | row and column names | ignored              |
     #' | `varp`     | ignored              | row and column names |
     #' @return A [`Matrix::sparseMatrix-class`]
-    to_matrix = function(
+    to_sparse_matrix = function(
       collection, layer_name, obs_index = NULL, var_index = NULL
     ) {
       stopifnot(
@@ -265,8 +276,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Reindex the coordinates
       # Constructing a matrix with the joinids produces a matrix with
       # the same shape as the original array, which is not we want. To create
-      # a matrix containing only values in the query result we use order to
-      # project the joinids to a 1-based index of contiguous values.
+      # a matrix containing only values in the query result we need to
+      # reindex the coordinates.
       mat_coords <- switch(collection,
         X = list(
           i = self$indexer$by_obs(tbl$soma_dim_0),

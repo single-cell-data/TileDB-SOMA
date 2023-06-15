@@ -9,7 +9,7 @@ test_that("matrix outgest with all results", {
 
   # Loadings
   pcs1 <- SeuratObject::Loadings(pbmc_small, "pca")
-  pcs2 <- query$to_matrix(
+  pcs2 <- query$to_sparse_matrix(
     collection = "varm",
     layer_name = "PCs",
     var_index = "var_id"
@@ -26,7 +26,7 @@ test_that("matrix outgest with all results", {
 
   # Embeddings
   pcas1 <- SeuratObject::Embeddings(pbmc_small, "pca")
-  pcas2 <- query$to_matrix(
+  pcas2 <- query$to_sparse_matrix(
     collection = "obsm",
     layer_name = "X_pca",
     obs_index = "obs_id"
@@ -39,7 +39,7 @@ test_that("matrix outgest with all results", {
   # Graphs
   # Need to coerce original and retrieved graphs to dgCMatrices for comparison
   snn1 <- as(SeuratObject::Graphs(pbmc_small, "RNA_snn"), "CsparseMatrix")
-  snn2 <- query$to_matrix(
+  snn2 <- query$to_sparse_matrix(
     collection = "obsp",
     layer_name = "RNA_snn",
     obs_index = "obs_id"
@@ -48,7 +48,7 @@ test_that("matrix outgest with all results", {
 
   # Assay data
   assay1 <- SeuratObject::GetAssayData(pbmc_small[["RNA"]], slot = "counts")
-  assay2 <- query$to_matrix(
+  assay2 <- query$to_sparse_matrix(
     collection = "X",
     layer_name = "counts",
     obs_index = "obs_id",
@@ -86,7 +86,7 @@ test_that("matrix outgest with filtered results", {
 
   # Loadings
   pcs1 <- SeuratObject::Loadings(pbmc_small1, "pca")
-  pcs2 <- query$to_matrix(
+  pcs2 <- query$to_sparse_matrix(
     collection = "varm",
     layer_name = "PCs",
     var_index = "var_id"
@@ -100,7 +100,7 @@ test_that("matrix outgest with filtered results", {
 
   # Embeddings
   pcas1 <- SeuratObject::Embeddings(pbmc_small1, "pca")
-  pcas2 <- query$to_matrix(
+  pcas2 <- query$to_sparse_matrix(
     collection = "obsm",
     layer_name = "X_pca",
     obs_index = "obs_id"
@@ -115,7 +115,7 @@ test_that("matrix outgest with filtered results", {
   snn1 <- as(SeuratObject::Graphs(pbmc_small, "RNA_snn"), "CsparseMatrix")
   snn1 <- snn1[colnames(pbmc_small1), colnames(pbmc_small1)]
 
-  snn2 <- query$to_matrix(
+  snn2 <- query$to_sparse_matrix(
     collection = "obsp",
     layer_name = "RNA_snn",
     obs_index = "obs_id"
@@ -124,7 +124,7 @@ test_that("matrix outgest with filtered results", {
 
   # Assay data
   assay1 <- SeuratObject::GetAssayData(pbmc_small1[["RNA"]], slot = "counts")
-  assay2 <- query$to_matrix(
+  assay2 <- query$to_sparse_matrix(
     collection = "X",
     layer_name = "counts",
     obs_index = "obs_id",
@@ -145,46 +145,46 @@ test_that("matrix outgest assertions", {
   )
 
   expect_error(
-    query$to_matrix(collection = "foo"),
+    query$to_sparse_matrix(collection = "foo"),
     "The following collection does not exist: foo"
   )
 
   expect_error(
-    query$to_matrix(collection = "X", layer_name = "foo"),
+    query$to_sparse_matrix(collection = "X", layer_name = "foo"),
     "The following layer does not exist: foo"
   )
 
   expect_error(
-    query$to_matrix(collection = "X", layer_name = "counts", obs_index = "foo"),
+    query$to_sparse_matrix(collection = "X", layer_name = "counts", obs_index = "foo"),
     "The following column does not exist: foo"
   )
 
   # joinds are used as default dimnames if no obs/var_index is provided
   expect_identical(
-    dimnames(query$to_matrix("X", "counts")),
+    dimnames(query$to_sparse_matrix("X", "counts")),
     list(as.character(query$obs_joinids()), as.character(query$var_joinids()))
   )
 
   # error if specified obs/var_index does not exist
   expect_error(
-    query$to_matrix("X", "counts", obs_index = "foo"),
+    query$to_sparse_matrix("X", "counts", obs_index = "foo"),
     "The following column does not exist: foo"
   )
   expect_error(
-    query$to_matrix("X", "counts", var_index = "foo"),
+    query$to_sparse_matrix("X", "counts", var_index = "foo"),
     "The following column does not exist: foo"
   )
 
   # only one of obs_index or var_index can be provided
   expect_identical(
-    dimnames(query$to_matrix("X", "counts", obs_index = "obs_id")),
+    dimnames(query$to_sparse_matrix("X", "counts", obs_index = "obs_id")),
     list(
       as.character(query$obs(column_names = "obs_id")$obs_id),
       as.character(query$var_joinids())
     )
   )
   expect_identical(
-    dimnames(query$to_matrix("X", "counts", var_index = "var_id")),
+    dimnames(query$to_sparse_matrix("X", "counts", var_index = "var_id")),
     list(
       as.character(query$obs_joinids()),
       query$var(column_names = "var_id")$var_id$as_vector()
@@ -193,17 +193,17 @@ test_that("matrix outgest assertions", {
 
   # a warning is issued if an index is unnecessarily provided
   expect_output(
-    query$to_matrix("obsm", "X_pca", var_index = "var_id"),
+    query$to_sparse_matrix("obsm", "X_pca", var_index = "var_id"),
     "The var_index is ignored for obsm collections"
   )
   expect_output(
-    query$to_matrix("varm", "PCs", obs_index = "obs_id"),
+    query$to_sparse_matrix("varm", "PCs", obs_index = "obs_id"),
     "The obs_index is ignored for varm collections"
   )
 
   # retrieved labels must be unique
   expect_error(
-    query$to_matrix("obsm", "X_pca", obs_index = "groups"),
+    query$to_sparse_matrix("obsm", "X_pca", obs_index = "groups"),
     "All obs_index values must be unique"
   )
 })
