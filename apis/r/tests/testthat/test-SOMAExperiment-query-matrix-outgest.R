@@ -1,4 +1,5 @@
 test_that("matrix outgest with all results", {
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
   experiment <- load_dataset("soma-exp-pbmc-small")
 
   query <- SOMAExperimentAxisQuery$new(
@@ -14,12 +15,13 @@ test_that("matrix outgest with all results", {
     var_index = "var_id"
   )
 
-  # Column names are unset since we don't store them
-  expect_null(colnames(pcs2))
+  # Column names for non obs/var dimensions default to soma_dim_1 values
+  expect_equal(colnames(pcs2), as.character(seq_len(ncol(pcs2)) - 1))
+
   # Manually name the columns for comparison
   colnames(pcs2) <- paste0("PC_", 1:ncol(pcs2))
   # Coerce to dense matrix and reorder for comparison
-  as.matrix(pcs2[rownames(pcs1), colnames(pcs2)])
+  pcs2 <- as.matrix(pcs2[rownames(pcs1), colnames(pcs2)])
   expect_identical(pcs2, pcs1)
 
   # Embeddings
@@ -29,7 +31,7 @@ test_that("matrix outgest with all results", {
     layer_name = "X_pca",
     obs_index = "obs_id"
   )
-  expect_null(colnames(pcs2))
+  expect_equal(colnames(pcas2), as.character(seq_len(ncol(pcas2)) - 1))
   colnames(pcas2) <- paste0("PC_", 1:ncol(pcas2))
   pcas2 <- as.matrix(pcas2[rownames(pcas1), colnames(pcas1)])
   expect_identical(pcas2, pcas1)
@@ -54,11 +56,13 @@ test_that("matrix outgest with all results", {
   )
 
   # Transpose and coerce to dGCMatrix for comparison
-  assay2 <- as(t(assay2), "CsparseMatrix")
+  assay2 <- as(Matrix::t(assay2), "CsparseMatrix")
   expect_equal(assay2, assay1)
 })
 
 test_that("matrix outgest with filtered results", {
+  # Subset the pbmc_small object to match the filtered results
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
   pbmc_small1 <- pbmc_small[
     SeuratObject::VariableFeatures(pbmc_small),
     pbmc_small$nCount_RNA > 400
@@ -128,8 +132,8 @@ test_that("matrix outgest with filtered results", {
   )
 
   # Transpose and coerce to dGCMatrix for comparison
-  assay2 <- as(t(assay2), "CsparseMatrix")[rownames(assay1), colnames(assay1)]
-  expect_identical(assay2, assay1)
+  assay2 <- as(Matrix::t(assay2), "CsparseMatrix")
+  expect_identical(assay2[rownames(assay1), colnames(assay1)], assay1)
 })
 
 test_that("matrix outgest assertions", {
@@ -150,15 +154,15 @@ test_that("matrix outgest assertions", {
     "The following layer does not exist: foo"
   )
 
-  expect_message(
+  expect_error(
     query$to_matrix(collection = "X", layer_name = "counts", obs_index = "foo"),
-    "The following obs index does not exist: foo"
+    "The following column does not exist: foo"
   )
 
-  # an unnamed matrix is returned if obs/var_index args are not provided
+  # joinds are used as default dimnames if no obs/var_index is provided
   expect_identical(
     dimnames(query$to_matrix("X", "counts")),
-    list(NULL, NULL)
+    list(as.character(query$obs_joinids()), as.character(query$var_joinids()))
   )
 
   # error if specified obs/var_index does not exist
@@ -174,11 +178,17 @@ test_that("matrix outgest assertions", {
   # only one of obs_index or var_index can be provided
   expect_identical(
     dimnames(query$to_matrix("X", "counts", obs_index = "obs_id")),
-    list(query$obs(column_names = "obs_id")$obs_id$as_vector(), NULL)
+    list(
+      as.character(query$obs(column_names = "obs_id")$obs_id),
+      as.character(query$var_joinids())
+    )
   )
   expect_identical(
     dimnames(query$to_matrix("X", "counts", var_index = "var_id")),
-    list(NULL, query$var(column_names = "var_id")$var_id$as_vector())
+    list(
+      as.character(query$obs_joinids()),
+      query$var(column_names = "var_id")$var_id$as_vector()
+    )
   )
 
   # a warning is issued if an index is unnecessarily provided

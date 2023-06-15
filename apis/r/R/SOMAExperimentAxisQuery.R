@@ -299,6 +299,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         varp = list(var_labels, var_labels)
       )
 
+      # Use joinids if the dimension names are empty
+      dim_names <- Map("%||%", dim_names, coords)
+
       Matrix::sparseMatrix(
         i = mat_coords$i$as_vector(),
         j = mat_coords$j$as_vector(),
