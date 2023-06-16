@@ -18,6 +18,10 @@ is_arrow_array <- function(x) {
   is_arrow_object(x) && inherits(x, "Array")
 }
 
+is_arrow_chunked_array <- function(x) {
+  is_arrow_object(x) && inherits(x, "ChunkedArray")
+}
+
 is_arrow_table <- function(x) {
   is_arrow_object(x) && inherits(x, "Table")
 }

@@ -113,11 +113,61 @@ We can also access the expression data for these filtered cells via `X()`:
 query$X(layer_name = "counts")
 ```
 
-## Seurat support
+## Export to a sparse matrix
 
-The `query` object also contains methods for loading in the results as a Seurat object (or any of Seurat's component classes).
+Any component of the queried `SOMAExperiment` can be exported to a [sparse matrix][Matrix::sparseMatrix-class] using the `to_sparse_matrix()` method.
+
+For example, let's create a sparse matrix of the filtered expression data. We'll create a new query that returns a smaller subset of the data to make the output easier to read.
+
+```{r}
+query <- SOMAExperimentAxisQuery$new(
+  experiment = experiment,
+  measurement_name = "RNA",
+  obs_query = SOMAAxisQuery$new(coords = 0:9),
+  var_query = SOMAAxisQuery$new(coords = 0:9)
+)
+```
+
+Then we indicate that we want to access the `"counts"` layer of the `"X"` collection.
+
+```{r}
+query$to_sparse_matrix(
+  collection = "X",
+  layer = "counts"
+)
+```
+
+By default, the dimensions are named using `soma_joinid` values which are unique to each observation and variable. However, dimension names can come from any column in the `obs` and `var` arrays that uniquely identifies each record. For an expression matrix it makes sense to name the dimensions using cell barcodes and gene names, which are stored in the `obs_id` and `var_id` columns, respectively.
+
+```{r}
+query$to_sparse_matrix(
+  collection = "X",
+  layer = "counts",
+  obs_index = "obs_id",
+  var_index = "var_id"
+)
+```
+
+We can use this method for any of the `SOMAExperiment`'s collections. Let's access the t-SNE coordinates stored in the `obsm` collection's `X_tsne` layer, populating the row names with cell barcodes.
+
+```{r}
+query$to_sparse_matrix(
+  collection = "obsm",
+  layer = "X_tsne",
+  obs_index = "obs_id"
+)
+```
+
+## Export to Seurat
+
+The `query` object also contains methods for loading in results as a Seurat object (or any of Seurat's component classes). As with the `to_sparse_matrix()` method, we can specify the `obs_index` and `var_index` to use for naming the dimensions of the resulting object.
 
 ```{r eval=requireNamespace("SeuratObject", quietly = TRUE)}
+query <- SOMAExperimentAxisQuery$new(
+  experiment = experiment,
+  measurement_name = "RNA"
+)
+
 query$to_seurat(
   X_layers = c(counts = "counts", data = "data"),
   obs_index = "obs_id",

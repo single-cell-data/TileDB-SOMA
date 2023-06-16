@@ -169,6 +169,161 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         obs = obs_ft, var = var_ft, X_layers = x_matrices
       )
     },
+
+    #' @description Retrieve a collection layer as a sparse matrix with named
+    #' dimensions.
+    #'
+    #' Load any layer from the `X`, `obsm`, `varm`, `obsp`, or `varp`
+    #' collections as a [sparse matrix][Matrix::sparseMatrix-class].
+    #'
+    #' By default the matrix dimensions are named using the `soma_joinid` values
+    #' in the specified layer's dimensions (e.g., `soma_dim_0`). However,
+    #' dimensions can be named using values from any `obs` or `var` column that
+    #' uniquely identifies each record by specifying the `obs_index` and
+    #' `var_index` arguments.
+    #'
+    #' @param collection The [`SOMACollection`] containing the layer of
+    #' interest, either: `"X"`, `"obsm"`, `"varm"`, `"obsp"`, or `"varp"`.
+    #' @param layer_name Name of the layer to retrieve from the `collection`.
+    #' @param obs_index,var_index Name of the column in `obs` or `var`
+    #' (`var_index`) containing values that should be used as dimension labels
+    #' in the resulting matrix. Whether the values are used as row or column
+    #' labels depends on the selected `collection`:
+    #'
+    #' | Collection | `obs_index`          | `var_index`          |
+    #' |-----------:|:---------------------|:---------------------|
+    #' | `X`        | row names            | column names         |
+    #' | `obsm`     | row names            | ignored              |
+    #' | `varm`     | ignored              | row names            |
+    #' | `obsp`     | row and column names | ignored              |
+    #' | `varp`     | ignored              | row and column names |
+    #' @return A [`Matrix::sparseMatrix-class`]
+    to_sparse_matrix = function(
+      collection, layer_name, obs_index = NULL, var_index = NULL
+    ) {
+      stopifnot(
+        assert_subset(
+          x = collection,
+          y = c("X", "obsm", "varm", "obsp", "varp"),
+          type = "collection"
+        ),
+
+        "Must specify a single layer name" = is_scalar_character(layer_name),
+        assert_subset(layer_name, self$ms[[collection]]$names(), "layer"),
+
+        "Must specify a single obs index" =
+          is.null(obs_index) || is_scalar_character(obs_index),
+        assert_subset(obs_index, self$obs_df$colnames(), "column"),
+
+        "Must specify a single var index" =
+          is.null(var_index) || is_scalar_character(var_index),
+        assert_subset(var_index, self$var_df$colnames(), "column")
+      )
+
+      # Retrieve and validate obs/var indices
+      obs_labels <- var_labels <- NULL
+      if (!is.null(obs_index)) {
+        if (collection %in% c("varm", "varp")) {
+          spdl::warn("The obs_index is ignored for {} collections", collection)
+        } else {
+          obs_labels <- self$obs(column_names = obs_index)[[1]]$as_vector()
+        }
+        stopifnot(
+          "All obs_index values must be unique" = anyDuplicated(obs_labels) == 0
+        )
+      }
+
+      if (!is.null(var_index)) {
+        if (collection %in% c("obsm", "obsp")) {
+          spdl::warn("The var_index is ignored for {} collections", collection)
+        } else {
+          var_labels <- self$var(column_names = var_index)[[1]]$as_vector()
+        }
+        stopifnot(
+          "All var_index values must be unique" = anyDuplicated(var_labels) == 0
+        )
+      }
+
+      # Construct coordinates
+      coords <- switch(collection,
+        X = list(
+          soma_dim_0 = self$obs_joinids(),
+          soma_dim_1 = self$var_joinids()
+        ),
+        obsm = list(
+          soma_dim_0 = self$obs_joinids()
+        ),
+        varm = list(
+          soma_dim_0 = self$var_joinids()
+        ),
+        obsp = list(
+          soma_dim_0 = self$obs_joinids(),
+          soma_dim_1 = self$obs_joinids()
+        ),
+        varp = list(
+          soma_dim_0 = self$var_joinids(),
+          soma_dim_1 = self$var_joinids()
+        )
+      )
+
+      # TODO: Coords must be vectors until read() supports arrow arrays
+      coords <- lapply(coords, function(x) x$as_vector())
+
+      # Retrieve coo arrow table with query result
+      layer <- self$ms[[collection]]$get(layer_name)
+      tbl <- layer$read(coords = coords)$tables()$concat()
+
+      # Reindex the coordinates
+      # Constructing a matrix with the joinids produces a matrix with
+      # the same shape as the original array, which is not we want. To create
+      # a matrix containing only values in the query result we need to
+      # reindex the coordinates.
+      mat_coords <- switch(collection,
+        X = list(
+          i = self$indexer$by_obs(tbl$soma_dim_0),
+          j = self$indexer$by_var(tbl$soma_dim_1)
+        ),
+        obsm = list(
+          i = self$indexer$by_obs(tbl$soma_dim_0),
+          j = tbl$soma_dim_1
+        ),
+        varm = list(
+          i = self$indexer$by_var(tbl$soma_dim_0),
+          j = tbl$soma_dim_1
+        ),
+        obsp = list(
+          i = self$indexer$by_obs(tbl$soma_dim_0),
+          j = self$indexer$by_obs(tbl$soma_dim_1)
+        ),
+        varp = list(
+          i = self$indexer$by_var(tbl$soma_dim_0),
+          j = self$indexer$by_var(tbl$soma_dim_1)
+        )
+      )
+
+      # Construct the dimension names
+      dim_names <- switch(collection,
+        X = list(obs_labels, var_labels),
+        obsm = list(obs_labels, unique(tbl$soma_dim_1)$as_vector()),
+        varm = list(var_labels, unique(tbl$soma_dim_1)$as_vector()),
+        obsp = list(obs_labels, obs_labels),
+        varp = list(var_labels, var_labels)
+      )
+
+      # Use joinids if the dimension names are empty
+      dim_names <- Map("%||%", dim_names, coords)
+
+      Matrix::sparseMatrix(
+        i = mat_coords$i$as_vector(),
+        j = mat_coords$j$as_vector(),
+        x = tbl$soma_data$as_vector(),
+        index1 = FALSE,
+        dims = vapply_int(dim_names, length),
+        dimnames = dim_names,
+        repr = "T"
+      )
+    },
+
     #' @description Loads the query as a \code{\link[SeuratObject]{Seurat}} object
     #'
     #' @template param-x-layers-v3
