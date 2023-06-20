@@ -44,58 +44,8 @@ test_that("TileDBArray helper functions", {
   expect_equal(length(tdba$get_metadata()), 2)
   tdba$close()
 
-  tdba$open(mode = "READ", internal_use_only = "allowed_use")
-
-  # dimension slicing
-  expect_error(
-    tdba$set_query(dims = "foo"),
-    "'dims' must be a named list of character vectors"
-  )
-  expect_error(
-    tdba$set_query(dims = "foo"),
-    "'dims' must be a named list of character vectors"
-  )
-  expect_error(
-    tdba$set_query(dims = list(a = 1L)),
-    "'dims' must be a named list of character vectors"
-  )
-  expect_error(
-    tdba$set_query(dims = list(foo = "bar")),
-    "The following dimension does not exist: foo"
-  )
-
-  expect_silent(
-    tdba$set_query(dims = list(Dept = c("A", "B")))
-  )
-
-  # verify selected ranges were set
-  expect_equal(
-    tiledb::selected_ranges(tdba$object),
-    list(Dept = cbind(c("A", "B"), c("A", "B")))
-  )
-
-  # query result includes only selected ranges
-  expect_equal(
-    unique(tdba$object[]$Dept),
-    c("A", "B")
-  )
-  tdba$close()
-
-  # set attribute filter
-  tdba$open(mode = "READ", internal_use_only = "allowed_use")
-  tdba$set_query(attr_filter = Admit == "Admitted")
-  expect_true(all(tdba$object[]$Admit == "Admitted"))
-
-  # update attribute filter
-  tdba$set_query(attr_filter = Admit != "Admitted")
-  expect_true(all(tdba$object[]$Admit == "Rejected"))
-
-  # reset attribute filter
-  tdba$reset_query()
-  expect_length(tdba$object[]$Admit, nrow(df))
-
   ## shape
+  tdba$open(mode = "READ", internal_use_only = "allowed_use")
   expect_equal(tdba$ndim(), 2)
-
   tdba$close()
 })
