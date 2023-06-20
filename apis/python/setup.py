@@ -282,8 +282,9 @@ setuptools.setup(
         # It' not preferable to pin to an RC dependency, so we only do this
         # when we must, which is for 3.11.
         "numba==0.56.4; python_version<'3.11'",
-        "numba==0.57.0rc1; python_version=='3.11'",
-        "numpy>=1.18,<1.24",
+        "numba==0.57; python_version=='3.11'",
+        "numpy>=1.18,<1.24; python_version<'3.11'",
+        "numpy>=1.18,<1.25; python_version=='3.11'",
         "pandas",
         "pyarrow>=9.0.0",
         "scanpy>=1.9.2",
