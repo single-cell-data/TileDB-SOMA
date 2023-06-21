@@ -5,7 +5,9 @@ name: TileDB-SOMA Python CI (Full)
 # releases.
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'release-*'
   release:
     types: [published]
   # You can also invoke this workflow manually from
@@ -21,7 +23,8 @@ jobs:
         # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
         os: [ubuntu-22.04, macos-12]
         # os: [ubuntu-22.04, macos-12, windows-2019]
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        # 3.7.16 workaround: https://github.com/actions/setup-python/issues/682
+        python-version: ['3.7.16', '3.8', '3.9', '3.10', '3.11']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
