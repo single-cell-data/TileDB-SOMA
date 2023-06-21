@@ -3,7 +3,7 @@
 #
 # Licensed under the MIT License.
 
-"""A high level wrapper around the Pybind11 query_condition.cc implementation for
+"""A high-level wrapper around the Pybind11 query_condition.cc implementation for
 filtering query results on attribute values.
 """
 import ast
