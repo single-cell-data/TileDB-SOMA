@@ -121,7 +121,24 @@ SOMASparseNDArray <- R6::R6Class(
       log_level = "auto"
     ) {
       private$check_open_for_read()
+
+      uri <- self$uri
+
+      if (self$nnz() > .Machine$integer.max) {
+          warning("Iteration results cannot be concatenated on its entirety because ",
+                  "array has non-zero elements greater than '.Machine$integer.max'.")
+      }
+
       result_order <- map_query_layout(match_query_layout(result_order))
+
+      shape <- self$shape()
+      if (any(shape >= .Machine$integer.max)) {
+        warning(
+          "Array has dimensions greater than '.Machine$integer.max'.",
+          "Results will be truncated to include only coordinates less than 2^31 - 1."
+        )
+        shape <- pmin(shape, .Machine$integer.max)
+      }
 
       if (!is.null(coords)) {
         coords <- private$convert_coords(coords)
@@ -135,7 +152,7 @@ SOMASparseNDArray <- R6::R6Class(
                      timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
 
-      SOMASparseNDArrayRead$new(sr, shape = self$shape())
+      SOMASparseNDArrayRead$new(sr, shape = shape)
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
@@ -198,6 +215,15 @@ SOMASparseNDArray <- R6::R6Class(
 
       ## if unnamed (and test for length has passed in previous statement) set names
       if (is.null(names(coords))) names(coords) <- self$dimnames()
+
+      # Remove any coordinates that exceed .Machine$integer.max
+      if (any(vapply_lgl(coords, function(x) any(x >= .Machine$integer.max)))) {
+        warning(
+          "Removing coordinates that exceed '.Machine$integer.max'.",
+          call. = FALSE
+        )
+        coords <- lapply(coords, function(x) x[x < .Machine$integer.max])
+      }
 
       ## convert integer to integer64 to match dimension type
       coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
