@@ -5,7 +5,9 @@ name: TileDB-SOMA Python CI (Full)
 # releases.
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'release-**'
   release:
     types: [published]
   # You can also invoke this workflow manually from
