@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - main
-      - 'release-**'
+      - 'release-*'
   release:
     types: [published]
   # You can also invoke this workflow manually from
