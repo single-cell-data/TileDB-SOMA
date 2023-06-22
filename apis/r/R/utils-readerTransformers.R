@@ -42,10 +42,9 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
       shape <- c(max(soma_dim_0_one_based), max(soma_dim_1_one_based))
   }
 
-  # if(any(shape > .Machine$integer.max)) {
-  #     stop("The shape of the array is larger than supported by Matrix::sparseMatrix",
-  #          call. = FALSE)
-  # }
+  if (any(shape >= .Machine$integer.max)) {
+    stop("'shape' must not exceed '.Machine$integer.max'.", call. = FALSE)
+  }
 
   mat <- Matrix::sparseMatrix(i = soma_dim_0_one_based,
                               j = soma_dim_1_one_based,
