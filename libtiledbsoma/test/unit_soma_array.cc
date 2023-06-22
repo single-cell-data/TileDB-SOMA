@@ -402,7 +402,7 @@ TEST_CASE("SOMAArray: metadata") {
 TEST_CASE("SOMAArray: Test buffer size") {
     // Test soma.init_buffer_bytes by making buffer small
     // enough to read one byte at a time so that read_next
-    // must be called 10 times instead of placing all data 
+    // must be called 10 times instead of placing all data
     // in buffer within a single read
     Config cfg;
     cfg["soma.init_buffer_bytes"] = 8;
