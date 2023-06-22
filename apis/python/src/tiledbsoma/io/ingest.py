@@ -63,6 +63,7 @@ from .registration import (
     AxisIDMapping,
     ExperimentAmbientLabelMapping,
     ExperimentIDMapping,
+    get_dataframe_values,
 )
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
@@ -78,6 +79,7 @@ class IngestionParams:
     write_schema_no_data: bool
     error_if_already_exists: bool
     skip_existing_nonempty_domain: bool
+    appending: bool
 
     def __init__(
         self,
@@ -89,31 +91,35 @@ class IngestionParams:
             self.write_schema_no_data = True
             self.error_if_already_exists = True
             self.skip_existing_nonempty_domain = False
+            self.appending = False
 
         elif ingest_mode == "write":
             if label_mapping is None:
                 self.write_schema_no_data = False
                 self.error_if_already_exists = True
                 self.skip_existing_nonempty_domain = False
+                self.appending = False
             else:
                 # append mode, but, the user supplying non-null registration information suffices
                 # for us to understand "append"
                 self.write_schema_no_data = False
                 self.error_if_already_exists = False
                 self.skip_existing_nonempty_domain = False
-                # XXX need "appending" for set-minus write only -- not just all-vs-none
+                self.appending = True
 
         elif ingest_mode == "resume":
             if label_mapping is None:
                 self.write_schema_no_data = False
                 self.error_if_already_exists = False
                 self.skip_existing_nonempty_domain = True
+                self.appending = False
             else:
                 # resume-append mode, but, the user supplying non-null registration information
                 # suffices for us to understand "resume-append"
                 self.write_schema_no_data = False
                 self.error_if_already_exists = False
                 self.skip_existing_nonempty_domain = True
+                self.appending = True
 
         else:
             raise SOMAError(
@@ -742,6 +748,50 @@ def _df_to_arrow(df: pd.DataFrame) -> pa.Table:
     return arrow_table
 
 
+def _extract_new_values_for_append(
+    df_uri: str,
+    arrow_table: pa.Table,
+    id_column_name: str,
+    context: Optional[SOMATileDBContext] = None,
+) -> pa.Table:
+    """
+    For append mode: mostly we just go ahead and write the data, except var.
+    Nominally:
+
+    * Cell IDs (obs IDs) are distinct per input
+      o This means "obs grows down"
+    * Gene IDs (var IDs) are almost all the same per input
+      o This means "var gets stacked"
+    * X is obs x var
+      o This means "X grows down"
+    * obsm is obs x M, and varm is var x N
+      o This means means they "grow down"
+    * obsp is obs x obs, and varp is var x var
+      o This means means they _would_ grow block-diagonally -- but
+        (for biological reasons) we disallow append of obsp and varp
+
+    Reviewing the above, we can see that "just write the data" is almost always the right way to
+    append -- except for var. There, if there are 100 H5ADs appending into a single SOMA experiment,
+    we don't want 100 TileDB fragment-layers of mostly the same data -- we just want to write the
+    _new_ genes not yet seen before (if any).
+    """
+    try:
+        with _factory.open(
+            df_uri, "r", soma_type=DataFrame, context=context
+        ) as previous_soma_dataframe:
+            previous_table = previous_soma_dataframe.read().concat()
+            previous_df = previous_table.to_pandas()
+            previous_join_ids = set(
+                list(str(e) for e in get_dataframe_values(previous_df, id_column_name))
+            )
+            mask = [
+                e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]
+            ]
+            return arrow_table.filter(mask)
+    except DoesNotExistError:
+        return arrow_table
+
+
 def _write_dataframe(
     df_uri: str,
     df: pd.DataFrame,
@@ -786,6 +836,18 @@ def _write_dataframe_impl(
     logging.log_io(None, f"START  WRITING {df_uri}")
 
     arrow_table = _df_to_arrow(df)
+
+    # Don't many-layer the almost-always-repeated var dataframe.
+    # And for obs, if there are duplicate values for whatever reason, don't write them
+    # when appending.
+    if ingestion_params.appending:
+        if id_column_name is None:
+            # Nominally, nil id_column_name only happens for uns append and we do not append uns,
+            # which is a concern for our caller. This is a second-level check.
+            raise ValueError("internal coding error: id_column_name unspecified")
+        arrow_table = _extract_new_values_for_append(
+            df_uri, arrow_table, id_column_name, context
+        )
 
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
