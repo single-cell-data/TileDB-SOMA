@@ -304,8 +304,14 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Construct the dimension names
       dim_names <- switch(collection,
         X = list(obs_labels, var_labels),
-        obsm = list(obs_labels, unique(tbl$soma_dim_1)$as_vector()),
-        varm = list(var_labels, unique(tbl$soma_dim_1)$as_vector()),
+        obsm = {
+          soma_dim_1 <- range(tbl$soma_dim_1$as_vector())
+          list(obs_labels, seq(min(soma_dim_1), max(soma_dim_1)))
+        },
+        varm = {
+          soma_dim_1 <- range(tbl$soma_dim_1$as_vector())
+          list(var_labels, seq(min(soma_dim_1), max(soma_dim_1)))
+        },
         obsp = list(obs_labels, obs_labels),
         varp = list(var_labels, var_labels)
       )
@@ -313,12 +319,30 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Use joinids if the dimension names are empty
       dim_names <- Map("%||%", dim_names, coords)
 
+      dims <- switch(
+        EXPR = collection,
+        X = list(
+          self$indexer$by_obs(coords$soma_dim_0),
+          self$indexer$by_var(coords$soma_dim_1)
+        ),
+        obsm = list(
+          self$indexer$by_obs(coords$soma_dim_0),
+          mat_coords$j
+        ),
+        varm = list(
+          self$indexer$by_var(coords$soma_dim_0),
+          mat_coords$j
+        ),
+        obsp = lapply(coords, self$indexer$by_obs),
+        varp = lapply(coords, self$indexer$by_var)
+      )
+
       Matrix::sparseMatrix(
         i = mat_coords$i$as_vector(),
         j = mat_coords$j$as_vector(),
         x = tbl$soma_data$as_vector(),
         index1 = FALSE,
-        dims = vapply_int(dim_names, length),
+        dims = vapply_int(dims, function(x) max(range(x$as_vector()))) + 1L,
         dimnames = dim_names,
         repr = "T"
       )
