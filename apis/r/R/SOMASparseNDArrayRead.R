@@ -30,7 +30,8 @@ SOMASparseNDArrayRead <- R6::R6Class(
           "Array domain exceeds '.Machine$integer.max'.\n",
           "  - Result will only include coordinates within [0, 2^31].\n",
           "  - The full range of coordinates can be obtained with $tables().",
-          call. = FALSE
+          call. = FALSE,
+          immediate. = TRUE
         )
         private$shape <- pmin(private$shape, .Machine$integer.max - 1L)
       }
