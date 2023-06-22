@@ -331,12 +331,24 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Use joinids if the dimension names are empty
       dim_names <- Map("%||%", dim_names, coords)
 
+      # dims <- switch(
+      #   EXPR = collection,
+      #   obsm = ,
+      #   varm = c(
+      #     length(dim_names[[1L]]),
+      #     max(range(tbl$soma_dim_1$as_vector())) + 1L
+      #   ),
+      #   vapply_int(dim_names, length)
+      # )
+
       Matrix::sparseMatrix(
         i = mat_coords$i$as_vector(),
         j = mat_coords$j$as_vector(),
         x = tbl$soma_data$as_vector(),
         index1 = FALSE,
         dims = vapply_int(dim_names, length),
+        # dims = vapply_int(dim_names, function(x) max(range(x))) + 1L,
+        # dims = dims,
         dimnames = dim_names,
         repr = "T"
       )
@@ -918,11 +930,16 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Read in the layers
       layers <- lapply(
         X = X_layers,
-        FUN = function(layer, var_ids = row.names(var), obs_ids = row.names(obs)) {
-          mat <- private$.as_matrix(self$X(layer), transpose = TRUE)
+        FUN = function(layer, var_ids, obs_ids) {
+          mat <- Matrix::t(self$to_sparse_matrix(
+            collection = 'X',
+            layer_name = layer
+          ))
           dimnames(mat) <- list(var_ids, obs_ids)
-          return(mat)
-        }
+          return(as(object = mat, Class = 'CsparseMatrix'))
+        },
+        var_ids = row.names(var),
+        obs_ids = row.names(obs)
       )
       names(layers) <- names(X_layers)
       # Load in reduced dimensions
@@ -1126,7 +1143,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       return(obj)
     },
     .load_m_axis = function(layer, m_axis = c('obsm', 'varm'), type = "Embeddings") {
-      browser()
+      # browser()
       stopifnot(
         is_scalar_character(layer),
         is.character(m_axis),
@@ -1145,16 +1162,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
       )
       soma_axis <- soma_collection$get(layer)
-      ncoords <- max(tiledb::tiledb_array_get_non_empty_domain_from_name(
-        arr = soma_axis$object,
-        name = soma_axis$dimnames()[2L]
-      ))
-      coords <- list(
-        rows = soma_joinids$as_vector(),
-        dims = seq.int(0L, as.integer(ncoords))
-      )
       mat <- if (inherits(soma_axis, 'SOMASparseNDArray')) {
-        as.matrix(soma_axis$read(unname(coords))$sparse_matrix()$concat())
+        as.matrix(self$to_sparse_matrix(collection = m_axis, layer_name = layer))
+        # as.matrix(soma_axis$read(unname(coords))$sparse_matrix()$concat())
         # as.matrix(soma_axis$read_sparse_matrix()[coords$rows + 1L, coords$dims + 1L])
       } else if (inherits(soma_axis, 'SOMADenseNDArray')) {
         warning(
@@ -1171,7 +1181,15 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           call. = FALSE,
           immediate. = TRUE
         )
-        soma_axis$read_dense_matrix(unname(coords))
+        ncoords <- max(tiledb::tiledb_array_get_non_empty_domain_from_name(
+          arr = soma_axis$object,
+          name = soma_axis$dimnames()[2L]
+        ))
+        coords <- list(
+          soma_joinids$as_vector(),
+          seq.int(0L, as.integer(ncoords))
+        )
+        soma_axis$read_dense_matrix(coords)
       } else {
         stop("Unknown SOMA Array type: ", class(soma_axis)[1L], call. = FALSE)
       }
@@ -1186,22 +1204,23 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
       p_axis <- match.arg(p_axis)
       repr <- match.arg(repr)
-      switch(
-        EXPR = p_axis,
-        obsp = {
-          soma_collection <- self$ms$obsp
-          soma_joinids <- self$obs_joinids()
-        },
-        varp = {
-          soma_collection <- self$ms$varp
-          soma_joinids <- self$var_joinids()
-        }
-      )
-      soma_axis <- soma_collection$get(layer)
+      # switch(
+      #   EXPR = p_axis,
+      #   obsp = {
+      #     # soma_collection <- self$ms$obsp
+      #     # soma_joinids <- self$obs_joinids()
+      #   },
+      #   varp = {
+      #     # soma_collection <- self$ms$varp
+      #     # soma_joinids <- self$var_joinids()
+      #   }
+      # )
+      # soma_axis <- soma_collection$get(layer)
       # idx <- soma_joinids$as_vector() + 1L
       # return(soma_axis$read_sparse_matrix(repr = repr)[idx, idx])
-      idx <- soma_joinids$as_vector()
-      mat <- soma_axis$read(list(idx, idx))$sparse_matrix()$concat()
+      # idx <- soma_joinids$as_vector()
+      # mat <- soma_axis$read(list(idx, idx))$sparse_matrix()$concat()
+      mat <- self$to_sparse_matrix(collection = p_axis, layer_name = layer)
       return(switch(
         EXPR = repr,
         C = as(mat, 'CsparseMatrix'),
