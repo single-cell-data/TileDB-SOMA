@@ -199,15 +199,6 @@ SOMASparseNDArray <- R6::R6Class(
       ## if unnamed (and test for length has passed in previous statement) set names
       if (is.null(names(coords))) names(coords) <- self$dimnames()
 
-      # Remove any coordinates that exceed .Machine$integer.max
-      if (any(vapply_lgl(coords, function(x) any(x >= .Machine$integer.max)))) {
-        warning(
-          "Removing coordinates that exceed '.Machine$integer.max'.",
-          call. = FALSE
-        )
-        coords <- lapply(coords, function(x) x[x < .Machine$integer.max])
-      }
-
       ## convert integer to integer64 to match dimension type
       coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
 
