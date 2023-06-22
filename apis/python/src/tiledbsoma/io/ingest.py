@@ -101,6 +101,7 @@ class IngestionParams:
                 self.write_schema_no_data = False
                 self.error_if_already_exists = False
                 self.skip_existing_nonempty_domain = False
+                # XXX need "appending" for set-minus write only -- not just all-vs-none
 
         elif ingest_mode == "resume":
             if label_mapping is None:
@@ -903,8 +904,7 @@ def _create_from_matrix(
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
-        # XXX JIDMAP -- non-appendable -- ?
-        # XXX FAIL EARLY
+        # XXX JIDMAP -- non-appendable -- fail early
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
@@ -923,7 +923,8 @@ def _create_from_matrix(
             ),
             context=context,
             ingestion_params=ingestion_params,
-            # XXX JIDMAP
+            axis_0_mapping=axis_0_mapping,
+            axis_1_mapping=axis_1_mapping,
         )
     else:
         raise TypeError(f"unknown array type {type(soma_ndarray)}")
@@ -1207,17 +1208,32 @@ def _write_matrix_to_sparseNDArray(
     tiledb_create_options: TileDBCreateOptions,
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
+    axis_0_mapping: AxisIDMapping,
+    axis_1_mapping: AxisIDMapping,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
-    # XXX JIDMAP
-    def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
+    def _coo_to_table(
+        mat_coo: sp.coo_matrix,
+        axis_0_mapping: AxisIDMapping,
+        axis_1_mapping: AxisIDMapping,
+        axis: int = 0,
+        base: int = 0,
+    ) -> pa.Table:
+
+        soma_dim_0 = mat_coo.row + base if base > 0 and axis == 0 else mat_coo.row
+        soma_dim_1 = mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col
+
+        # XXX COMMENT
+        soma_dim_0 = [axis_0_mapping.data[e] for e in soma_dim_0]
+        soma_dim_1 = [axis_1_mapping.data[e] for e in soma_dim_1]
+
         pydict = {
             "soma_data": mat_coo.data,
-            "soma_dim_0": mat_coo.row + base if base > 0 and axis == 0 else mat_coo.row,
-            "soma_dim_1": mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col,
+            "soma_dim_0": soma_dim_0,
+            "soma_dim_1": soma_dim_1,
         }
-        # XXX RUN THAT THROUGH INT-TO-INT REMAP
+
         return pa.Table.from_pydict(pydict)
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
@@ -1248,7 +1264,9 @@ def _write_matrix_to_sparseNDArray(
 
     # Write all at once?
     if not tiledb_create_options.write_X_chunked:
-        soma_ndarray.write(_coo_to_table(sp.coo_matrix(matrix)))
+        soma_ndarray.write(
+            _coo_to_table(sp.coo_matrix(matrix), axis_0_mapping, axis_1_mapping)
+        )
         return
 
     # Or, write in chunks, striding across the most efficient slice axis
@@ -1267,7 +1285,7 @@ def _write_matrix_to_sparseNDArray(
     goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz
 
     coords = [slice(None), slice(None)]
-    i = 0  # XXX
+    i = 0
     while i < dim_max_size:
         t1 = time.time()
 
@@ -1319,7 +1337,9 @@ def _write_matrix_to_sparseNDArray(
             % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
         )
 
-        soma_ndarray.write(_coo_to_table(chunk_coo, stride_axis, i))
+        soma_ndarray.write(
+            _coo_to_table(chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i)
+        )
 
         t2 = time.time()
         chunk_seconds = t2 - t1
