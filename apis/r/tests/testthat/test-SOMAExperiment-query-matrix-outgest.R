@@ -62,6 +62,7 @@ test_that("matrix outgest with all results", {
 })
 
 test_that("matrix outgest with filtered results", {
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   # Subset the pbmc_small object to match the filtered results
   pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
   pbmc_small1 <- pbmc_small[
