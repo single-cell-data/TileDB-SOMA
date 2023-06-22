@@ -121,38 +121,21 @@ SOMASparseNDArray <- R6::R6Class(
       log_level = "auto"
     ) {
       private$check_open_for_read()
-
-      uri <- self$uri
-
-      # if (self$nnz() > .Machine$integer.max) {
-      #     warning("Iteration results cannot be concatenated on its entirety because ",
-      #             "array has non-zero elements greater than '.Machine$integer.max'.")
-      # }
-
       result_order <- map_query_layout(match_query_layout(result_order))
-
-      shape <- self$shape()
-      if (any(shape >= .Machine$integer.max)) {
-        warning(
-          "Array has dimensions greater than '.Machine$integer.max'.",
-          "Results will be truncated to include only coordinates less than 2^31 - 1."
-        )
-        shape <- pmin(shape, .Machine$integer.max)
-      }
 
       if (!is.null(coords)) {
         coords <- private$convert_coords(coords)
       }
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      sr <- sr_setup(uri = uri,
+      sr <- sr_setup(uri = self$uri,
                      config = cfg,
                      dim_points = coords,
                      result_order = result_order,
                      timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
 
-      SOMASparseNDArrayRead$new(sr, shape = shape)
+      SOMASparseNDArrayRead$new(sr, shape = self$shape())
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
