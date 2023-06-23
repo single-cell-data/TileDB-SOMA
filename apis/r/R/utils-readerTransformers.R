@@ -37,7 +37,7 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
     shape <- c(max(tbl$soma_dim_0)$as_vector(), max(tbl$soma_dim_1)$as_vector())
   }
 
-  if (any(shape >= .Machine$integer.max)) {
+  if (any(shape > .Machine$integer.max)) {
     stop("'shape' must not exceed '.Machine$integer.max'.", call. = FALSE)
   }
 
@@ -53,12 +53,10 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
     )
   }
 
-  # Shape is always 0-based but sparseMatrix treats dims as 1-based, even when
-  # index1 = FALSE, so we need to add 1 to the shape.
   mat <- Matrix::sparseMatrix(i = tbl$soma_dim_0$as_vector(),
                               j = tbl$soma_dim_1$as_vector(),
                               x = tbl$soma_data$as_vector(),
-                              dims = shape + 1L,
+                              dims = shape,
                               repr = repr,
                               index1 = FALSE)
   if (zero_based) {

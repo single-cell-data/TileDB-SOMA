@@ -26,15 +26,15 @@ SOMASparseNDArrayRead <- R6::R6Class(
       #TODO implement zero_based argument, currently doesn't do anything
 
 
-      if (any(private$shape >= .Machine$integer.max)) {
+      if (any(private$shape > .Machine$integer.max)) {
         warning(
-          "Array's 0-based domain exceeds '.Machine$integer.max'.\n",
+          "Array's shape exceeds '.Machine$integer.max'.\n",
           "  - Result will only include coordinates within [0, 2^31 - 1).\n",
           "  - The full range of coordinates can be obtained with $tables().",
           call. = FALSE,
           immediate. = TRUE
         )
-        private$shape <- pmin(private$shape, .Machine$integer.max - 1L)
+        private$shape <- pmin(private$shape, .Machine$integer.max)
       }
 
       SparseReadIter$new(private$sr, private$shape, zero_based = zero_based)

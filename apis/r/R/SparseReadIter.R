@@ -20,8 +20,8 @@ SparseReadIter <- R6::R6Class(
     initialize = function(sr, shape, zero_based=FALSE) {
       #TODO implement zero_based argument, currently doesn't do anything
       stopifnot("'shape' must have two dimensions" = length(shape) == 2,
-                "'shape' (0-based) must be less than '.Machine$integer.max'" =
-                  all(shape < .Machine$integer.max))
+                "'shape' must not exceed '.Machine$integer.max'" =
+                  all(shape <= .Machine$integer.max))
 
       # Initiate super class
       super$initialize(sr)
