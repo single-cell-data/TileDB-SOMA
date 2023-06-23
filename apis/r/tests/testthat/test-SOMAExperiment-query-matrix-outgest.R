@@ -180,7 +180,7 @@ test_that("matrix outgest assertions", {
   expect_identical(
     dimnames(query$to_sparse_matrix("X", "counts", obs_index = "obs_id")),
     list(
-      as.character(query$obs(column_names = "obs_id")$obs_id),
+      as.character(query$obs(column_names = "obs_id")$concat()$obs_id),
       as.character(query$var_joinids())
     )
   )
@@ -188,7 +188,7 @@ test_that("matrix outgest assertions", {
     dimnames(query$to_sparse_matrix("X", "counts", var_index = "var_id")),
     list(
       as.character(query$obs_joinids()),
-      query$var(column_names = "var_id")$var_id$as_vector()
+      query$var(column_names = "var_id")$concat()$var_id$as_vector()
     )
   )
 

@@ -183,15 +183,15 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   ))
   expect_identical(
     SeuratObject::Cells(named_pca),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Embeddings(named_pca)),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_pca)),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_warning(named_ica <- query$to_seurat_reduction(
     'ica',
@@ -200,15 +200,15 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   ))
   expect_identical(
     SeuratObject::Cells(named_ica),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Embeddings(named_ica)),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_ica)),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
@@ -216,11 +216,11 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   ))
   expect_identical(
     SeuratObject::Cells(named_umap),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Embeddings(named_umap)),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
@@ -429,11 +429,11 @@ test_that("Load reduction from sliced ExperimentQuery", {
   ))
   expect_identical(
     SeuratObject::Cells(named_pca),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_pca)),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_warning(named_ica <- query$to_seurat_reduction(
     'ica',
@@ -442,11 +442,11 @@ test_that("Load reduction from sliced ExperimentQuery", {
   ))
   expect_identical(
     SeuratObject::Cells(named_ica),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_ica)),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
@@ -454,7 +454,7 @@ test_that("Load reduction from sliced ExperimentQuery", {
   ))
   expect_identical(
     SeuratObject::Cells(named_umap),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_no_condition(query$to_seurat_reduction(
     'umap',
@@ -647,12 +647,12 @@ test_that("Load reduction from indexed ExperimentQuery", {
   ))
   expect_identical(
     SeuratObject::Cells(named_pca),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SeuratObject::Cells(named_pca), obs_label_values)
   expect_identical(
     rownames(SeuratObject::Loadings(named_pca)),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(rownames(SeuratObject::Loadings(named_pca)), var_label_values)
   expect_warning(named_ica <- query$to_seurat_reduction(
@@ -662,12 +662,12 @@ test_that("Load reduction from indexed ExperimentQuery", {
   ))
   expect_identical(
     SeuratObject::Cells(named_ica),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SeuratObject::Cells(named_ica), obs_label_values)
   expect_identical(
     rownames(SeuratObject::Loadings(named_ica)),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(rownames(SeuratObject::Loadings(named_ica)), var_label_values)
   expect_no_condition(named_umap <- query$to_seurat_reduction(
@@ -676,7 +676,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
   ))
   expect_identical(
     SeuratObject::Cells(named_umap),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SeuratObject::Cells(named_umap), obs_label_values)
   expect_no_condition(query$to_seurat_reduction(

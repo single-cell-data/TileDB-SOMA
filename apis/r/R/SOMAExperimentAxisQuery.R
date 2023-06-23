@@ -61,7 +61,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       private$.indexer <- SOMAAxisIndexer$new(self)
     },
 
-    #' @description Retrieve obs [`arrow::Table`]
+    #' @description Retrieve obs \link{TableReadIter}
     #' @param column_names A character vector of column names to retrieve
     obs = function(column_names = NULL) {
       obs_query <- self$obs_query
@@ -69,7 +69,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         coords = recursively_make_integer64(obs_query$coords),
         value_filter = obs_query$value_filter,
         column_names = column_names
-      )$concat()
+      )
     },
 
     #' @description Retrieve var [`arrow::Table`]
@@ -80,7 +80,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         coords = recursively_make_integer64(var_query$coords),
         value_filter = var_query$value_filter,
         column_names = column_names
-      )$concat()
+      )
     },
 
     #' @description Retrieve `soma_joinids` as an [`arrow::Array`] for `obs`.
@@ -112,7 +112,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       x_layer$read(coords = list(
         self$obs_joinids()$as_vector(),
         self$var_joinids()$as_vector()
-      ))$tables()$concat()
+      ))
     },
 
     #' @description Reads the entire query result as a list of
@@ -154,8 +154,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
 
       # TODO: parallelize with futures
-      obs_ft <- self$obs(obs_column_names)
-      var_ft <- self$var(var_column_names)
+      obs_ft <- self$obs(obs_column_names)$concat()
+      var_ft <- self$var(var_column_names)$concat()
 
       x_matrices <- lapply(x_arrays, function(x_array) {
           x_array$read(coords = list(
@@ -226,7 +226,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         if (collection %in% c("varm", "varp")) {
           spdl::warn("The obs_index is ignored for {} collections", collection)
         } else {
-          obs_labels <- self$obs(column_names = obs_index)[[1]]$as_vector()
+          obs_labels <- self$obs(column_names = obs_index)$concat()[[1]]$as_vector()
         }
         stopifnot(
           "All obs_index values must be unique" = anyDuplicated(obs_labels) == 0
@@ -237,7 +237,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         if (collection %in% c("obsm", "obsp")) {
           spdl::warn("The var_index is ignored for {} collections", collection)
         } else {
-          var_labels <- self$var(column_names = var_index)[[1]]$as_vector()
+          var_labels <- self$var(column_names = var_index)$concat()[[1]]$as_vector()
         }
         stopifnot(
           "All var_index values must be unique" = anyDuplicated(var_labels) == 0
@@ -386,7 +386,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           arg = obs_index,
           choices = self$obs_df$attrnames()
         )
-        self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
+        self$obs(obs_index)$concat()$GetColumnByName(obs_index)$as_vector()
       }
       # Load in the assay
       assay <- self$to_seurat_assay(
@@ -409,7 +409,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
       if (!(isFALSE(obs_column_names) || rlang::is_na(obs_column_names))) {
         obs <- as.data.frame(
-          x = self$obs(obs_column_names)$to_data_frame()
+          x = self$obs(obs_column_names)$concat()$to_data_frame()
         )
         row.names(obs) <- cells
         object[[names(obs)]] <- obs
@@ -565,7 +565,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           arg = var_index,
           choices = self$var_df$attrnames()
         )
-        self$var(var_index)$GetColumnByName(var_index)$as_vector()
+        self$var(var_index)$concat()$GetColumnByName(var_index)$as_vector()
       }
       cells <- if (is.null(obs_index)) {
         paste0('cell', self$obs_joinids()$as_vector())
@@ -574,7 +574,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           arg = obs_index,
           choices = self$obs_df$attrnames()
         )
-        self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
+        self$obs(obs_index)$concat()$GetColumnByName(obs_index)$as_vector()
       }
       # Check the layers
       assert_subset(x = X_layers, y = self$ms$X$names(), type = 'X_layer')
@@ -610,7 +610,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         y = var_index
       )
       if (!(isFALSE(var_column_names) || rlang::is_na(var_column_names))) {
-        var <- as.data.frame(self$var(var_column_names)$to_data_frame())
+        var <- as.data.frame(self$var(var_column_names)$concat()$to_data_frame())
         row.names(var) <- features
         obj[[names(var)]] <- var
       }
@@ -737,7 +737,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           arg = obs_index,
           choices = self$obs_df$attrnames()
         )
-        self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
+        self$obs(obs_index)$concat()$GetColumnByName(obs_index)$as_vector()
       }
       embed <- self$ms$obsm$get(obsm_layer)
       coords <- list(
@@ -790,7 +790,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
             arg = var_index,
             choices = self$var_df$attrnames()
           )
-          self$var(var_index)$GetColumnByName(var_index)$as_vector()
+          self$var(var_index)$concat()$GetColumnByName(var_index)$as_vector()
         }
         loads <- self$ms$varm$get(varm_layer)
         coords <- list(
@@ -879,7 +879,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           arg = obs_index,
           choices = self$obs_df$attrnames()
         )
-        self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
+        self$obs(obs_index)$concat()$GetColumnByName(obs_index)$as_vector()
       }
       dimnames(mat) <- list(cells, cells)
       SeuratObject::DefaultAssay(mat) <- private$.measurement_name
@@ -1009,8 +1009,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       dnames <- list(features, cells)
       # Read in `data` slot
       if (is_scalar_character(data)) {
+        # TODO: potentially replace with public$to_sparse_matrix()
         dmat <- private$.as_matrix(
-          table = self$X(data),
+          table = self$X(data)$tables()$concat(),
           repr = 'C',
           transpose = TRUE
         )
@@ -1020,7 +1021,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Add the `counts` slot
       if (is_scalar_character(counts)) {
         cmat <- private$.as_matrix(
-          table = self$X(counts),
+          table = self$X(counts)$tables()$concat(),
           repr = 'C',
           transpose = TRUE
         )
@@ -1038,7 +1039,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Add the `scale.data` slot
       if (is_scalar_character(scale_data)) {
         smat <- private$.as_matrix(
-          table = self$X(scale_data),
+          table = self$X(scale_data)$tables()$concat(),
           repr = 'D',
           transpose = TRUE
         )
