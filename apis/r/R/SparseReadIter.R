@@ -24,10 +24,10 @@ SparseReadIter <- R6::R6Class(
                   all(shape < .Machine$integer.max))
 
       # Initiate super class
-        super$initialize(sr)
-        private$repr <- "T"
-        private$shape <- shape
-        private$zero_based <- zero_based
+      super$initialize(sr)
+      private$repr <- "T"
+      private$shape <- shape
+      private$zero_based <- zero_based
     },
 
 
