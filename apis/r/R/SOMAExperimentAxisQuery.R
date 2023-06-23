@@ -661,6 +661,30 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         "'var_index' must be a single character value" = is.null(var_index) ||
           (is_scalar_character(var_index) && !is.na(var_index))
       )
+
+      # Validate layers are SOMASparseNDArrays
+      assert_layer_is_sparse <- function(collection_name, layer) {
+        stopifnot(is_scalar_character(collection_name))
+        is_sparse <- inherits(layer, "SOMASparseNDArray")
+        if (!is_sparse) {
+          msg1 <- sprintf(
+            "Values for '%s' are encoded as dense instead of sparse\n",
+            basename(layer$uri)
+          )
+          msg2 <- sprintf(
+            "  - all '%s' arrays should be saved as 'SOMASparseNDArrays'\n",
+            collection_name
+          )
+          warning(
+            msg1,
+            msg2,
+            "  - returning 'NULL' and skipping this dimension reduction",
+            call. = FALSE
+          )
+        }
+        is_sparse
+      }
+
       # Check embeddings/loadings
       ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = null)
       ms_load <- tryCatch(expr = self$ms$varm$names(), error = null)
@@ -686,6 +710,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       } else {
         names(ms_load) <- .anndata_to_seurat_reduc(ms_load, 'loadings')
       }
+
       # Check provided names
       assert_subset(
         x = obsm_layer,
@@ -742,115 +767,71 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       if (obsm_layer %in% names(ms_embed)) {
         obsm_layer <- ms_embed[obsm_layer]
       }
-      # Get cell names
-      cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids()$as_vector())
-      } else {
-        obs_index <- match.arg(
-          arg = obs_index,
-          choices = self$obs_df$attrnames()
-        )
-        self$obs(obs_index)$concat()$GetColumnByName(obs_index)$as_vector()
+
+      if (!assert_layer_is_sparse("obsm", self$ms$obsm$get(obsm_layer))) {
+        return(NULL)
       }
-      embed <- self$ms$obsm$get(obsm_layer)
-      coords <- list(
-        cells = self$obs_joinids()$as_vector(),
-        dims = seq_len(as.integer(embed$shape()[2L])) - 1L
+      spdl::info("Reading obsm layer '{}' into memory", obsm_layer)
+      embed_mat <- self$to_sparse_matrix(
+        collection = "obsm",
+        layer_name = obsm_layer,
+        obs_index = obs_index
       )
-      embed_mat <- if (inherits(embed, 'SOMASparseNDArray')) {
-        this_mat <- embed$read()$sparse_matrix(zero_based=TRUE)$concat()
-        this_mat <- this_mat$take(coords$cells, coords$dims)
-        this_mat <- this_mat$get_one_based_matrix()
-        this_mat <- as(this_mat, "CsparseMatrix")
-        as.matrix(this_mat)
-      } else if (inherits(embed, 'SOMADenseNDArray')) {
-        warning(
-          paste(
-            strwrap(paste(
-              "Embeddings for",
-              sQuote(obsm_layer),
-              "are encoded as dense instead of sparse; all arrays should be saved as",
-              sQuote('SOMASparseNDArrays')
-            )),
-            collapse = '\n'
-          ),
-          call. = FALSE
-        )
-        embed$read_dense_matrix(unname(coords))
-      } else {
-        stop("Unknown SOMA Array type: ", class(embed)[1L], call. = FALSE)
-      }
+
       # Set matrix names
-      rownames(embed_mat) <- cells
+      if (is.null(obs_index)) {
+        rownames(embed_mat) <- paste0("cell", rownames(embed_mat))
+      }
       colnames(embed_mat) <- paste0(key, seq_len(ncol(embed_mat)))
+      spdl::debug("Converting '{}' dgTMatrix to matrix", obsm_layer)
+      embed_mat <- as.matrix(embed_mat)
+
       # Autoset loadings if needed
       if (is.null(varm_layer) || isTRUE(varm_layer)) {
         if (seurat %in% c(names(ms_load), ms_load)) {
           varm_layer <- seurat
         }
       }
-      # Read in feature loadings
+
+      # Read in feature loadings (if present)
+      load_mat <- NULL
       if (is_scalar_character(varm_layer)) {
         # Translate Seurat name to AnnData name
         if (varm_layer %in% names(ms_load)) {
           varm_layer <- ms_load[varm_layer]
         }
-        # Get feature names
-        features <- if (is.null(var_index)) {
-          paste0('feature', self$var_joinids()$as_vector())
-        } else {
-          var_index <- match.arg(
-            arg = var_index,
-            choices = self$var_df$attrnames()
-          )
-          self$var(var_index)$concat()$GetColumnByName(var_index)$as_vector()
+
+        if (!assert_layer_is_sparse("varm", self$ms$varm$get(varm_layer))) {
+          return(NULL)
         }
-        loads <- self$ms$varm$get(varm_layer)
-        coords <- list(
-          features = self$var_joinids()$as_vector(),
-          dims = seq_len(as.integer(loads$shape()[2L])) - 1L
+        spdl::info("Reading varm layer '{}' into memory", varm_layer)
+        load_mat <- self$to_sparse_matrix(
+          collection = "varm",
+          layer_name = varm_layer,
+          var_index = var_index
         )
-        load_mat <- if (inherits(loads, 'SOMASparseNDArray')) {
-          this_mat <- loads$read()$sparse_matrix(zero_based=TRUE)$concat()
-          this_mat <- this_mat$take(coords$features, coords$dims)
-          this_mat <- this_mat$get_one_based_matrix()
-          this_mat <- as(this_mat, "CsparseMatrix")
-          as.matrix(this_mat)
-        } else if (inherits(loads, 'SOMADenseNDArray')) {
-          warning(
-            paste(
-              strwrap(paste(
-                "Loadings for",
-                sQuote(varm_layer),
-                "are encoded as dense instead of sparse; all arrays should be saved as",
-                sQuote('SOMASparseNDArrays')
-              )),
-              collapse = '\n'
-            ),
-            call. = FALSE,
-            immediate. = TRUE
-          )
-          loads$read_dense_matrix(unname(coords))
-        } else {
-          stop("Unknown SOMA Array type: ", class(loads)[1L], call. = FALSE)
-        }
+
         # Set matrix names
-        rownames(load_mat) <- features
+        if (is.null(var_index)) {
+          rownames(load_mat) <- paste0('feature', rownames(load_mat))
+        }
         colnames(load_mat) <- paste0(key, seq_len(ncol(load_mat)))
+        spdl::debug("Converting '{}' dgTMatrix to matrix", varm_layer)
+        load_mat <- as.matrix(load_mat)
+
         if (!is.null(embed_mat) && ncol(load_mat) != ncol(embed_mat)) {
           stop("The loadings do not match the embeddings", call. = FALSE)
         }
-      } else {
-        load_mat <- NULL
       }
+
       # Create the DimReduc
-      return(SeuratObject::CreateDimReducObject(
+      SeuratObject::CreateDimReducObject(
         embeddings = embed_mat,
         loadings = load_mat %||% methods::new('matrix'),
         assay = private$.measurement_name,
         global = !seurat %in% c('pca', 'ica'),
         key = key
-      ))
+      )
     },
     #' @description Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
     #'
