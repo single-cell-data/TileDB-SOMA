@@ -73,60 +73,69 @@ test_that("SOMASparseNDArray creation", {
 
 })
 
-test_that("SOMASparseNDArray read_sparse_matrix", {
+test_that("SOMASparseNDArray read", {
   uri <- withr::local_tempdir("sparse-ndarray")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
   # For this test, write 9x9 data into 10x10 array. Leaving the last row & column
   # empty touches corner cases with setting dims() correctly
-  mat <- create_sparse_matrix_with_int_dims(9, 9)
+  mat <- create_sparse_matrix_with_int_dims(9, 9, repr = "T")
   ndarray$write(mat)
   expect_equal(as.numeric(ndarray$shape()), c(10, 10))
   ndarray$close()
-
-  # read_sparse_matrix
+  
   ndarray <- SOMASparseNDArrayOpen(uri)
+
+  # read sparse matrix directly
+  mat2 <- ndarray$read()$sparse_matrix(zero_based = F)$concat()
+  expect_s4_class(mat2, "sparseMatrix")
+  expect_s4_class(mat2, "dgTMatrix")
+  expect_equal(dim(mat2), c(10, 10))
+  expect_equal(nrow(mat2), 10)
+  expect_equal(ncol(mat2), 10)
+  all.equal(mat, mat2) 
+  all.equal(mat[1:9, 1:9], mat2[1:9, 1:9])
+  
+  # test coerced matrix: dgTMatrix
+  mat2 <- ndarray$read()$sparse_matrix(zero_based = F)$concat()
+  mat_coerced <- as(ndarray$read(), "TsparseMatrix")
+  expect_s4_class(mat_coerced, "dgTMatrix")
+  all.equal(mat2, mat_coerced) 
+  
+  # test coerced matrix: dgCMatrix
+  mat2 <- ndarray$read()$sparse_matrix(zero_based = F)$concat()
+  mat_coerced <- as(ndarray$read(), "CsparseMatrix")
+  expect_s4_class(mat_coerced, "dgCMatrix")
+  all.equal(as(mat2, "CsparseMatrix"), mat_coerced) 
+  
+  # test coerced matrix: dgTMatrix
+  mat2 <- ndarray$read()$sparse_matrix(zero_based = F)$concat()
+  mat_coerced <- as(ndarray$read(), "RsparseMatrix")
+  expect_s4_class(mat_coerced, "dgRMatrix")
+  all.equal(as(mat2, "RsparseMatrix"), mat_coerced) 
+  
+
+  # test zero-based Matrix view
+  mat2 <- ndarray$read()$sparse_matrix(zero_based=T)$concat()
+  expect_true(inherits(mat2, "matrixZeroBasedView"))
+  expect_s4_class(mat2$get_one_based_matrix(), "dgTMatrix")
+  expect_equal(mat2$dim(), c(10, 10))
+  expect_equal(mat2$nrow(), 10)
+  expect_equal(mat2$ncol(), 10)
+  all.equal(mat, mat2$get_one_based_matrix)
+  all.equal(mat, mat2$take(0:8,0:8)$get_one_based_matrix())
+  
+  # test zero-based view and convert to sparse matrix
   mat2 <- ndarray$read()$sparse_matrix(zero_based = T)$concat()
   expect_true(inherits(mat2, "matrixZeroBasedView"))
   expect_s4_class(mat2$get_one_based_matrix(), "sparseMatrix")
   expect_equal(mat2$dim(), c(10, 10))
   expect_equal(mat2$nrow(), 10)
   expect_equal(mat2$ncol(), 10)
-  ## not sure why all.equal(mat, mat2) does not pass
-  expect_true(all.equal(as.numeric(mat[1:9, 1:9]), as.numeric(mat2$take(0:8, 0:8)$get_one_based_matrix())))
-  expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
+  all.equal(mat, mat2) 
+  all.equal(mat[1:9, 1:9], mat2$take(0:8, 0:8)$get_one_based_matrix())
 
-  ndarray <- SOMASparseNDArrayOpen(uri)
-
-  ndarray$close()
-})
-
-test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
-  uri <- withr::local_tempdir("sparse-ndarray")
-  ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
-
-  # For this test, write 9x9 data into 10x10 array. Leaving the last row & column
-  # empty touches corner cases with setting dims() correctly
-  mat <- create_sparse_matrix_with_int_dims(9, 9)
-  ndarray$write(mat)
-  expect_equal(as.numeric(ndarray$shape()), c(10, 10))
-  ndarray$close()
-
-  # read_sparse_matrix
-  ndarray <- SOMASparseNDArrayOpen(uri)
-  mat2 <- ndarray$read()$sparse_matrix(zero_based=T)$concat()
-  expect_true(inherits(mat2, "matrixZeroBasedView"))
-  expect_s4_class(mat2$get_one_based_matrix(), "sparseMatrix")
-  expect_equal(mat2$dim(), c(10, 10))
-  expect_equal(mat2$nrow(), 10)
-  expect_equal(mat2$ncol(), 10)
-  ## not sure why all.equal(mat, mat2) does not pass
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2$take(0:8,0:8)$get_one_based_matrix())))
-  expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
-
-  ndarray <- SOMASparseNDArrayOpen(uri)
-
-  # repeat with iterated reader
+  # test with iterated reader
   iterator <- ndarray$read()$sparse_matrix(zero_based = T)
   mat2 <- iterator$read_next()
   expect_true(inherits(mat2, "matrixZeroBasedView"))
@@ -134,8 +143,28 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   expect_equal(mat2$dim(), c(10, 10))
   expect_equal(mat2$nrow(), 10)
   expect_equal(mat2$ncol(), 10)
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2$take(0:8,0:8)$get_one_based_matrix())))
-  expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
+  all.equal(mat, mat2$get_one_based_matrix)
+  all.equal(mat, mat2$take(0:8,0:8)$get_one_based_matrix())
+  
+  # test arrow table reader
+  df <- data.frame(soma_dim_0 = mat@i, soma_dim_1 = mat@j, soma_data = mat@x)
+  tbl <- arrow::arrow_table(df[order(df$soma_dim_0, df$soma_dim_1),])
+  tbl2 <- ndarray$read(result_order = "ROW_MAJOR")$tables()$concat()
+  all.equal(tbl, tbl2)
+  
+  # test arrow table coercion
+  df <- data.frame(soma_dim_0 = mat@i, soma_dim_1 = mat@j, soma_data = mat@x)
+  tbl <- arrow::arrow_table(df[order(df$soma_dim_0, df$soma_dim_1),])
+  tbl2 <- arrow::as_arrow_table(ndarray$read(result_order = "ROW_MAJOR"))
+  all.equal(tbl, tbl2)
+  
+  # test data.frame coercion
+  df <- data.frame(soma_dim_0 = mat@i, soma_dim_1 = mat@j, soma_data = mat@x)
+  df <- df[order(df$soma_dim_0, df$soma_dim_1),]
+  df2 <- as.data.frame(ndarray$read(result_order = "ROW_MAJOR"))
+  expect_true(inherits(df2, "data.frame"))
+  all.equal(df, df2)
+  
   ndarray$close()
 })
 

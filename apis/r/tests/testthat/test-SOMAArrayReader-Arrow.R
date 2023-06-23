@@ -22,13 +22,12 @@ test_that("Arrow Interface from SOMAArrayReader", {
     expect_true(all(tb2$n_counts < 1000))
     expect_true(all(tb2$n_genes >= 400))
 
-
     # read everything
     tb3 <- soma_array_to_arrow_table(soma_array_reader(uri))
 
     expect_equal(tb3$num_rows, 2638)
     expect_equal(tb3$num_columns, 6)
-
+    
     # read a subset of rows and columns
     tb4 <- soma_array_reader(uri = uri,
                 colnames = c("obs_id", "percent_mito", "n_counts", "louvain"),
