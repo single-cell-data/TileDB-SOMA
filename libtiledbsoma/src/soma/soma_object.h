@@ -47,6 +47,8 @@ class SOMAObject {
     //===================================================================
     //= public non-static
     //===================================================================
+    virtual ~SOMAObject() = default;
+
     /**
      * @brief Return a constant string describing the type of the object.
      *
