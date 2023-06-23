@@ -37,9 +37,12 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
     shape <- c(max(tbl$soma_dim_0)$as_vector(), max(tbl$soma_dim_1)$as_vector())
   }
 
-  if (any(shape > .Machine$integer.max)) {
-    stop("'shape' must not exceed '.Machine$integer.max'.", call. = FALSE)
-  }
+  stopifnot(
+    "'shape' must not exceed '.Machine$integer.max'." =
+      all(shape <= .Machine$integer.max),
+    "A Matrix::sparseMatrix cannot hold more than 2^31 - 1 non-zero values" =
+      nrow(tbl) <= .Machine$integer.max
+  )
 
   exceedsInt32Limit <- (
     tbl$soma_dim_0 >= .Machine$integer.max | tbl$soma_dim_1 >= .Machine$integer.max
