@@ -681,7 +681,7 @@ def _write_dataframe(
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
-    df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
+    df[SOMA_JOINID] = np.arange(len(df), dtype=np.int64)
 
     df.reset_index(inplace=True)
     if id_column_name is not None:
