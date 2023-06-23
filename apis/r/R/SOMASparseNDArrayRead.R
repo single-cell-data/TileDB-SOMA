@@ -25,10 +25,11 @@ SOMASparseNDArrayRead <- R6::R6Class(
     sparse_matrix = function(zero_based=FALSE) {
       #TODO implement zero_based argument, currently doesn't do anything
 
+
       if (any(private$shape >= .Machine$integer.max)) {
         warning(
-          "Array domain exceeds '.Machine$integer.max'.\n",
-          "  - Result will only include coordinates within [0, 2^31].\n",
+          "Array's 0-based domain exceeds '.Machine$integer.max'.\n",
+          "  - Result will only include coordinates within [0, 2^31 - 1).\n",
           "  - The full range of coordinates can be obtained with $tables().",
           call. = FALSE,
           immediate. = TRUE
