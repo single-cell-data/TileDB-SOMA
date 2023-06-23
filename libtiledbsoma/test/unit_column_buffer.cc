@@ -99,16 +99,3 @@ TEST_CASE("ColumnBuffer: Create from array") {
         REQUIRE(buffers->is_nullable() == true);
     }
 }
-
-// TEST_CASE("ColumnBuffer: Read buffer size from config") {
-//     std::string uri = "mem://unit-buffer-size-config";
-
-//     Config cfg;
-//     cfg["soma.init_buffer_bytes"] = 10;
-//     Context ctx(cfg);
-
-//     auto array = create_array(uri, ctx);
-//     auto buffers = ColumnBuffer::create(array, "a1");
-
-//     REQUIRE(buffers->data_.size() == 29384239048);
-// }
