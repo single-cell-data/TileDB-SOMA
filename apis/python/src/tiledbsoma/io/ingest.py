@@ -641,27 +641,11 @@ def _create_or_open_coll(
     return cls.create(uri, context=context)
 
 
-def _write_dataframe(
-    df_uri: str,
-    df: pd.DataFrame,
-    id_column_name: Optional[str],
-    *,
-    ingestion_params: IngestionParams,
-    platform_config: Optional[PlatformConfig] = None,
-    context: Optional[SOMATileDBContext] = None,
-) -> DataFrame:
-    s = _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {df_uri}")
-
-    df[SOMA_JOINID] = np.asarray(range(len(df)), dtype=np.int64)
-
-    df.reset_index(inplace=True)
-    if id_column_name is not None:
-        df.rename(columns={"index": id_column_name}, inplace=True)
-    df.set_index(SOMA_JOINID, inplace=True)
-
-    # Categoricals are not yet well supported, so we must flatten
-    # Also replace Numpy/Pandas-style nulls with Arrow-style nulls
+def _df_to_arrow(df: pd.DataFrame) -> pa.Table:
+    """
+    Categoricals are not yet well supported, so we must flatten.
+    Also replace Numpy/Pandas-style nulls with Arrow-style nulls.
+    """
     null_fields = set()
     for k in df:
         if df[k].dtype == "category":
@@ -681,6 +665,30 @@ def _write_dataframe(
         md = arrow_table.schema.metadata
         md.update(dict.fromkeys(null_fields, "nullable"))
         arrow_table = arrow_table.replace_schema_metadata(md)
+
+    return arrow_table
+
+
+def _write_dataframe(
+    df_uri: str,
+    df: pd.DataFrame,
+    id_column_name: Optional[str],
+    *,
+    ingestion_params: IngestionParams,
+    platform_config: Optional[PlatformConfig] = None,
+    context: Optional[SOMATileDBContext] = None,
+) -> DataFrame:
+    s = _util.get_start_stamp()
+    logging.log_io(None, f"START  WRITING {df_uri}")
+
+    df[SOMA_JOINID] = np.arange(len(df), dtype=np.int64)
+
+    df.reset_index(inplace=True)
+    if id_column_name is not None:
+        df.rename(columns={"index": id_column_name}, inplace=True)
+    df.set_index(SOMA_JOINID, inplace=True)
+
+    arrow_table = _df_to_arrow(df)
 
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
