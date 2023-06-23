@@ -7,12 +7,12 @@ Please also see the `main-old` branch for an implementation of the [original spe
 
 # Installation
 
-## Using R-universe
+## Release packages
 
-TileDB-SOMA is available on  R-universe and [Conda](https://anaconda.org/tiledb/r-tiledbsoma), and can be installed directly from R or `mambda` as indicated below.
+TileDB-SOMA releases are available on R-universe and [Conda](https://anaconda.org/tiledb/r-tiledbsoma), and can be installed directly from R or `mamba` as indicated below.
 
 ```r
-install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev',
+install.packages('tiledbsoma', repos = c('https://chanzuckerberg.r-universe.dev',
                                          'https://cloud.r-project.org'))
 ```
 
@@ -21,6 +21,12 @@ mamba install -c conda-forge -c tiledb r-tiledbsoma
 ```
 
 ## From source
+
+To install the very latest tiledbsoma development version (our `main` branch), use [`devtools::install_github()`](https://cran.r-project.org/web/packages/githubinstall/vignettes/githubinstall.html):
+
+```r
+devtools::install_github("https://github.com/single-cell-data/TileDB-SOMA", subdir="apis/r")
+```
 
 ### Requirements
 
@@ -31,7 +37,9 @@ mamba install -c conda-forge -c tiledb r-tiledbsoma
 * In addition, this R package also depends on the [`libtiledbsoma` library](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma) from this repository. It is either installed with the package (as described in the next section), or can be used as a system library (if one is found). A system installation can be provided by following the steps in the [`libtiledbsoma` directory](https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma).
 
 
-### Step-by-step
+### Development setup
+
+To set up & install from a local clone of this git repository:
 
 * Clone this repository: `git clone https://github.com/single-cell-data/TileDB-SOMA.git`.
 * Change into the R API package directory: `cd TileDB-SOMA/apis/r`.
