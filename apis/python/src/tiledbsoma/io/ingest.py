@@ -1384,6 +1384,7 @@ def _ingest_uns_node(
             platform_config,
             context=context,
             use_relative_uri=use_relative_uri,
+            ingestion_params=ingestion_params,
         )
         return
 
@@ -1401,6 +1402,7 @@ def _ingest_uns_ndarray(
     context: Optional[SOMATileDBContext],
     *,
     use_relative_uri: Optional[bool],
+    ingestion_params: IngestionParams,
 ) -> None:
     arr_uri = _util.uri_joinpath(coll.uri, key)
 
@@ -1428,6 +1430,19 @@ def _ingest_uns_ndarray(
             platform_config=platform_config,
             context=context,
         )
+
+    # If resume mode: don't re-write existing data. This is the user's explicit request
+    # that we not re-write things that have already been written.
+    if ingestion_params.skip_existing_nonempty_domain:
+        storage_ned = _read_nonempty_domain(soma_arr)
+        dim_range = ((0, value.shape[0] - 1),)
+        if _chunk_is_contained_in(dim_range, storage_ned):
+            logging.log_io(
+                f"Skipped {soma_arr.uri}",
+                f"Skipped {soma_arr.uri}",
+            )
+            return
+
     with soma_arr:
         _maybe_set(coll, key, soma_arr, use_relative_uri=use_relative_uri)
         soma_arr.write(
