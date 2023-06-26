@@ -319,30 +319,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Use joinids if the dimension names are empty
       dim_names <- Map("%||%", dim_names, coords)
 
-      dims <- switch(
-        EXPR = collection,
-        X = list(
-          self$indexer$by_obs(coords$soma_dim_0),
-          self$indexer$by_var(coords$soma_dim_1)
-        ),
-        obsm = list(
-          self$indexer$by_obs(coords$soma_dim_0),
-          mat_coords$j
-        ),
-        varm = list(
-          self$indexer$by_var(coords$soma_dim_0),
-          mat_coords$j
-        ),
-        obsp = lapply(coords, self$indexer$by_obs),
-        varp = lapply(coords, self$indexer$by_var)
-      )
-
       Matrix::sparseMatrix(
         i = mat_coords$i$as_vector(),
         j = mat_coords$j$as_vector(),
         x = tbl$soma_data$as_vector(),
         index1 = FALSE,
-        dims = vapply_int(dims, function(x) max(range(x$as_vector()))) + 1L,
+        dims = vapply_int(dim_names, length),
         dimnames = dim_names,
         repr = "T"
       )
