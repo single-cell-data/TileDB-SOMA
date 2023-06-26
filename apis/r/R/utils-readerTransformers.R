@@ -33,25 +33,36 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
   # If needed, user can then explicitly ask the shim for the underlying
   # sparseMatrix using `as.one.based()`.
 
-  soma_dim_0_one_based <- 1 + as.numeric(tbl$GetColumnByName("soma_dim_0"))
-  soma_dim_1_one_based <- 1 + as.numeric(tbl$GetColumnByName("soma_dim_1"))
-
-  soma_data <- as.numeric(tbl$GetColumnByName("soma_data"))
-
   if (is.null(shape)) {
-      shape <- c(max(soma_dim_0_one_based), max(soma_dim_1_one_based))
+    shape <- c(max(tbl$soma_dim_0)$as_vector(), max(tbl$soma_dim_1)$as_vector())
   }
 
-  if(any(shape > .Machine$integer.max)) {
-      stop("The shape of the array is larger than supported by Matrix::sparseMatrix",
-           call. = FALSE)
+  stopifnot(
+    "'shape' must not exceed '.Machine$integer.max'." =
+      all(shape <= .Machine$integer.max),
+    "A Matrix::sparseMatrix cannot hold more than 2^31 - 1 non-zero values" =
+      nrow(tbl) <= .Machine$integer.max
+  )
+
+  exceedsInt32Limit <- (
+    tbl$soma_dim_0 >= .Machine$integer.max | tbl$soma_dim_1 >= .Machine$integer.max
+  )
+
+  if (any(exceedsInt32Limit)$as_vector()) {
+    stop(
+      "Query contains 0-based coordinates outside '[0, 2^31 - 1)'.\n",
+      "  - Matrix::sparseMatrix cannot be created with these values",
+      call. = FALSE
+    )
   }
 
-  mat <- Matrix::sparseMatrix(i = soma_dim_0_one_based,
-                              j = soma_dim_1_one_based,
-                              x = soma_data,
-                              dims = shape, repr = repr)
-  if(zero_based) {
+  mat <- Matrix::sparseMatrix(i = tbl$soma_dim_0$as_vector(),
+                              j = tbl$soma_dim_1$as_vector(),
+                              x = tbl$soma_data$as_vector(),
+                              dims = shape,
+                              repr = repr,
+                              index1 = FALSE)
+  if (zero_based) {
       matrixZeroBasedView$new(mat)
   } else {
       mat

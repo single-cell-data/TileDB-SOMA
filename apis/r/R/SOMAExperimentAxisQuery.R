@@ -867,21 +867,21 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Check provided graph name
       obsp_layer <- match.arg(arg = obsp_layer, choices = ms_graph)
-      mat <- self$ms$obsp$get(obsp_layer)$read()$sparse_matrix(zero_based=TRUE)$concat()$get_one_based_matrix()
-      mat <- as(mat, "CsparseMatrix")
-      idx <- self$obs_joinids()$as_vector() + 1L
-      mat <- mat[idx, idx]
-      mat <- as(mat, 'Graph')
-      cells <- if (is.null(obs_index)) {
-        paste0('cell', self$obs_joinids()$as_vector())
-      } else {
-        obs_index <- match.arg(
-          arg = obs_index,
-          choices = self$obs_df$attrnames()
-        )
-        self$obs(obs_index)$GetColumnByName(obs_index)$as_vector()
+
+      # Retrieve the named TsparseMatrix
+      mat <- self$to_sparse_matrix(
+        collection = "obsp",
+        layer_name = obsp_layer,
+        obs_index = obs_index
+      )
+
+      # Convert to Seurat graph by way of a CsparseMatrix
+      mat <- as(as(mat, "CsparseMatrix"), "Graph")
+
+      if (is.null(obs_index)) {
+        dimnames(mat) <- lapply(dimnames(mat), function(x) paste0("cell", x))
       }
-      dimnames(mat) <- list(cells, cells)
+
       SeuratObject::DefaultAssay(mat) <- private$.measurement_name
       validObject(mat)
       return(mat)

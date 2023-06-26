@@ -137,3 +137,51 @@ create_and_populate_experiment <- function(
   }
   experiment
 }
+
+# Creates a SOMASparseNDArray with domains of `[0, 2^31 - 1]` and non-zero
+# values at `(0,0)`, `(2^31 - 2, 2^31 - 2)` and `(2^31 - 1, 2^31 - 1)`. This is
+# intended to test R's ability to read from arrays created with tiledbsoma-py
+# before the default domain was changed to `[0, 2^31)`.
+#
+#  Row/Column:   0      ...    2147483646 |    2147483647
+#  0             1      ...    0          |    0
+#  ...           ...    ...    ...        |    ...
+#  2147483646    0      ...    2          |    0
+#  ---------------------------------------|---------------
+#  2147483647    0      ...    0          |    3
+
+create_and_populate_32bit_sparse_nd_array <- function(uri) {
+
+  df <- data.frame(
+    soma_dim_0 = bit64::as.integer64(c(0, 2^31 - 2, 2^31 - 1)),
+    soma_dim_1 = bit64::as.integer64(c(0, 2^31 - 2, 2^31 - 1)),
+    soma_data = c(1L, 2L, 3L)
+  )
+
+  tdb_dims <- mapply(
+    tiledb::tiledb_dim,
+    name = c("soma_dim_0", "soma_dim_1"),
+    MoreArgs = list(
+      domain = c(bit64::as.integer64(0), 2^31 - 1),
+      tile = bit64::as.integer64(2),
+      type = "INT64"
+    ),
+    SIMPLIFY = FALSE
+  )
+
+  tdb_attr <- tiledb::tiledb_attr(
+    name = "soma_data",
+    type = "INT32",
+  )
+
+  tdb_schema <- tiledb::tiledb_array_schema(
+    domain = tiledb::tiledb_domain(tdb_dims),
+    attrs = tdb_attr,
+    sparse = TRUE
+  )
+
+  tiledb::tiledb_array_create(uri, schema = tdb_schema)
+  arr <- tiledb::tiledb_array(uri, "WRITE")
+  arr[] <- df
+  uri
+}
