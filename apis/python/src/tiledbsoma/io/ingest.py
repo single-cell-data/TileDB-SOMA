@@ -1299,6 +1299,7 @@ def _ingest_uns_dict(
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
 ) -> None:
+
     with _create_or_open_coll(
         Collection,
         _util.uri_joinpath(parent.uri, parent_key),
@@ -1308,64 +1309,87 @@ def _ingest_uns_dict(
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
         coll.metadata["soma_tiledbsoma_type"] = "uns"
         for key, value in dct.items():
-            if isinstance(value, np.generic):
-                # This is some kind of numpy scalar value. Metadata entries
-                # only accept native Python types, so unwrap it.
-                value = value.item()
-            if isinstance(value, (int, float, str)):
-                # Primitives get set on the metadata.
-                coll.metadata[key] = value
-                continue
-            if isinstance(value, Mapping):
-                # Mappings are represented as sub-dictionaries.
-                _ingest_uns_dict(
-                    coll,
-                    key,
-                    value,
-                    platform_config=platform_config,
-                    context=context,
-                    ingestion_params=ingestion_params,
-                    use_relative_uri=use_relative_uri,
-                )
-                continue
-            if isinstance(value, pd.DataFrame):
-                with _write_dataframe(
-                    _util.uri_joinpath(coll.uri, key),
-                    value,
-                    None,
-                    platform_config=platform_config,
-                    context=context,
-                    ingestion_params=ingestion_params,
-                ) as df:
-                    _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
-                continue
-            if isinstance(value, list) or "numpy" in str(type(value)):
-                value = np.asarray(value)
-            if isinstance(value, np.ndarray):
-                if value.dtype.names is not None:
-                    msg = (
-                        f"Skipped {coll.uri}[{key!r}]"
-                        " (uns): unsupported structured array"
-                    )
-                    # This is a structured array, which we do not support.
-                    logging.log_io(msg, msg)
-                    continue
+            _ingest_uns_node(
+                coll,
+                key,
+                value,
+                platform_config=platform_config,
+                context=context,
+                ingestion_params=ingestion_params,
+                use_relative_uri=use_relative_uri,
+            )
 
-                _ingest_uns_ndarray(
-                    coll,
-                    key,
-                    value,
-                    platform_config,
-                    context=context,
-                    use_relative_uri=use_relative_uri,
-                )
-            else:
-                msg = (
-                    f"Skipped {coll.uri}[{key!r}]"
-                    f" (uns object): unrecognized type {type(value)}"
-                )
-                logging.log_io(msg, msg)
     msg = f"Wrote   {coll.uri} (uns collection)"
+    logging.log_io(msg, msg)
+
+
+def _ingest_uns_node(
+    coll: Any,
+    key: Any,
+    value: Any,
+    *,
+    platform_config: Optional[PlatformConfig],
+    context: Optional[SOMATileDBContext],
+    ingestion_params: IngestionParams,
+    use_relative_uri: Optional[bool],
+) -> None:
+
+    if isinstance(value, np.generic):
+        # This is some kind of numpy scalar value. Metadata entries
+        # only accept native Python types, so unwrap it.
+        value = value.item()
+
+    if isinstance(value, (int, float, str)):
+        # Primitives get set on the metadata.
+        coll.metadata[key] = value
+        return
+
+    if isinstance(value, Mapping):
+        # Mappings are represented as sub-dictionaries.
+        _ingest_uns_dict(
+            coll,
+            key,
+            value,
+            platform_config=platform_config,
+            context=context,
+            ingestion_params=ingestion_params,
+            use_relative_uri=use_relative_uri,
+        )
+        return
+
+    if isinstance(value, pd.DataFrame):
+        with _write_dataframe(
+            _util.uri_joinpath(coll.uri, key),
+            value,
+            None,
+            platform_config=platform_config,
+            context=context,
+            ingestion_params=ingestion_params,
+        ) as df:
+            _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
+        return
+
+    if isinstance(value, list) or "numpy" in str(type(value)):
+        value = np.asarray(value)
+    if isinstance(value, np.ndarray):
+        if value.dtype.names is not None:
+            msg = f"Skipped {coll.uri}[{key!r}]" " (uns): unsupported structured array"
+            # This is a structured array, which we do not support.
+            logging.log_io(msg, msg)
+            return
+        _ingest_uns_ndarray(
+            coll,
+            key,
+            value,
+            platform_config,
+            context=context,
+            use_relative_uri=use_relative_uri,
+        )
+        return
+
+    msg = (
+        f"Skipped {coll.uri}[{key!r}]" f" (uns object): unrecognized type {type(value)}"
+    )
     logging.log_io(msg, msg)
 
 
