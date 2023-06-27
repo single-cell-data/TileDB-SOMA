@@ -110,7 +110,7 @@ iterator$read_complete()
 
 We can also access the expression data via `X()`. 
 
-Similarly to `obs()` and `var()`, `X()` is intended for iteration, but in this case we have 
+Similar to `obs()` and `var()`, `X()` is intended for iteration, but in this case we have 
 access to two different iterators, and thus `X()` returns a reader that gives you access to an 
 iterator for `arrow::Table` and one for `Matrix::sparse_matrix`.
 
