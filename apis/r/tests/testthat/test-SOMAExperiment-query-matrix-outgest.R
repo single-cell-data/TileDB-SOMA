@@ -62,6 +62,7 @@ test_that("matrix outgest with all results", {
 })
 
 test_that("matrix outgest with filtered results", {
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   # Subset the pbmc_small object to match the filtered results
   pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
   pbmc_small1 <- pbmc_small[
@@ -207,4 +208,131 @@ test_that("matrix outgest assertions", {
     query$to_sparse_matrix("obsm", "X_pca", obs_index = "groups"),
     "All obs_index values must be unique"
   )
+})
+
+test_that("matrix outgest with implicitly-stored axes", {
+  uri <- withr::local_tempdir("matrix-implicit")
+  set.seed(seed = 42L)
+  n_obs <- 15L
+  n_var <- 10L
+  n_dims <- 5L
+  m_key <- "X_dims"
+  p_key <- "graph"
+  shape <- rep_len(.Machine$integer.max - 1L, length.out = 2L)
+  # Create our experiment
+  experiment <- SOMAExperimentCreate(uri = uri)
+  experiment$obs <- create_and_populate_obs(
+    uri = file.path(experiment$uri, "obs"),
+    nrows = n_obs
+  )
+  experiment$ms <- SOMACollectionCreate(file.path(experiment$uri, "ms"))
+  ms_rna <- SOMAMeasurementCreate(file.path(experiment$ms$uri, "RNA"))
+  experiment$ms$add_new_collection(object = ms_rna, key = "RNA")
+  ms_rna$var <- create_and_populate_var(
+    uri = file.path(ms_rna$uri, "var"),
+    nrows = n_var
+  )
+  # Generate X matrix
+  ms_rna$X <- SOMACollectionCreate(file.path(ms_rna$uri, "X"))
+  X_counts <- Matrix::rsparsematrix(
+    nrow = n_obs,
+    ncol = n_var,
+    density = 0.3,
+    repr = "T"
+  )
+  X_counts[nrow(X_counts) %/% 2L, ] <- 0
+  X_counts[, ncol(X_counts) %/% 2L] <- 0
+  X_array <- SOMASparseNDArrayCreate(
+    uri = file.path(ms_rna$X$uri, "counts"),
+    type = arrow::infer_type(x = X_counts@x),
+    shape = shape
+  )
+  X_array$write(X_counts)
+  X_array$close()
+  ms_rna$X$set(object = X_array, name = "counts")
+  ms_rna$X$close()
+  # Generate obsm
+  ms_rna$obsm <- SOMACollectionCreate(file.path(ms_rna$uri, "obsm"))
+  obsm <- Matrix::rsparsematrix(
+    nrow = n_obs,
+    ncol = n_dims,
+    density = 0.7,
+    repr = "T"
+  )
+  obsm[nrow(obsm) %/% 2L, ] <- 0
+  obsm[, ncol(obsm) %/% 2L] <- 0
+  ms_rna$obsm$add_new_sparse_ndarray(
+    key = m_key,
+    type = arrow::infer_type(x = obsm@x),
+    shape = shape
+  )
+  ms_rna$obsm$get(m_key)$write(obsm)
+  ms_rna$obsm$close()
+  # Generate varm
+  ms_rna$varm <- SOMACollectionCreate(file.path(ms_rna$uri, "varm"))
+  varm <- Matrix::rsparsematrix(
+    nrow = n_var,
+    ncol = n_dims,
+    density = 0.7,
+    repr = "T"
+  )
+  varm[nrow(varm) %/% 2L, ] <- 0
+  varm[, ncol(varm) %/% 2L] <- 0
+  ms_rna$varm$add_new_sparse_ndarray(
+    key = m_key,
+    type = arrow::infer_type(x = varm@x),
+    shape = shape
+  )
+  ms_rna$varm$get(m_key)$write(varm)
+  ms_rna$varm$close()
+  # Generate obsp
+  ms_rna$obsp <- SOMACollectionCreate(file.path(ms_rna$uri, "obsp"))
+  obsp <- Matrix::rsparsematrix(
+    nrow = n_obs,
+    ncol = n_obs,
+    density = 0.3,
+    repr = "T"
+  )
+  obsp[nrow(obsp) %/% 2L, ] <- 0
+  obsp[, ncol(obsp) %/% 2L] <- 0
+  ms_rna$obsp$add_new_sparse_ndarray(
+    key = p_key,
+    type = arrow::infer_type(x = obsp@x),
+    shape = shape
+  )
+  ms_rna$obsp$get(p_key)$write(obsp)
+  ms_rna$obsp$close()
+  # Generate varp
+  ms_rna$varp <- SOMACollectionCreate(file.path(ms_rna$uri, "varp"))
+  varp <- Matrix::rsparsematrix(
+    nrow = n_var,
+    ncol = n_var,
+    density = 0.3,
+    repr = "T"
+  )
+  varp[nrow(varp) %/% 2L, ] <- 0
+  varp[, ncol(varp) %/% 2L] <- 0
+  ms_rna$varp$add_new_sparse_ndarray(
+    key = p_key,
+    type = arrow::infer_type(x = varp@x),
+    shape = shape
+  )
+  ms_rna$varp$get(p_key)$write(varp)
+  ms_rna$varp$close()
+  # Close and reopen
+  ms_rna$close()
+  experiment$close()
+  experiment <- SOMAExperimentOpen(experiment$uri)
+  query <- SOMAExperimentAxisQuery$new(experiment, "RNA")
+  # Read in matrices
+  expect_s4_class(X_read <- query$to_sparse_matrix("X", "counts"), "dgTMatrix")
+  expect_identical(dim(X_read), dim(X_counts))
+  expect_s4_class(obsm_read <- query$to_sparse_matrix("obsm", m_key), "dgTMatrix")
+  expect_identical(dim(obsm_read), dim(obsm))
+  expect_s4_class(varm_read <- query$to_sparse_matrix("varm", m_key), "dgTMatrix")
+  expect_identical(dim(varm_read), dim(varm))
+  expect_s4_class(obsp_read <- query$to_sparse_matrix("obsp", p_key), "dgTMatrix")
+  expect_identical(dim(obsp_read), dim(obsp))
+  expect_s4_class(varp_read <- query$to_sparse_matrix("varp", p_key), "dgTMatrix")
+  expect_identical(dim(varp_read), dim(varp))
 })
