@@ -182,6 +182,13 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' uniquely identifies each record by specifying the `obs_index` and
     #' `var_index` arguments.
     #'
+    #' For layers in \code{obsm} or \code{varm}, the column axis (the axis not
+    #' indexed by \dQuote{\code{obs}} or \dQuote{\code{var}}) is set to the
+    #' range of values present in \dQuote{\code{soma_dim_1}}; this ensures
+    #' that gaps in this axis are preserved (eg. when a query for
+    #' \dQuote{\code{obs}} that results in selecting entries that are all zero
+    #' for a given PC)
+    #'
     #' @param collection The [`SOMACollection`] containing the layer of
     #' interest, either: `"X"`, `"obsm"`, `"varm"`, `"obsp"`, or `"varp"`.
     #' @param layer_name Name of the layer to retrieve from the `collection`.
@@ -304,8 +311,14 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Construct the dimension names
       dim_names <- switch(collection,
         X = list(obs_labels, var_labels),
-        obsm = list(obs_labels, unique(tbl$soma_dim_1)$as_vector()),
-        varm = list(var_labels, unique(tbl$soma_dim_1)$as_vector()),
+        obsm = {
+          soma_dim_1 <- range(tbl$soma_dim_1$as_vector())
+          list(obs_labels, seq(min(soma_dim_1), max(soma_dim_1)))
+        },
+        varm = {
+          soma_dim_1 <- range(tbl$soma_dim_1$as_vector())
+          list(var_labels, seq(min(soma_dim_1), max(soma_dim_1)))
+        },
         obsp = list(obs_labels, obs_labels),
         varp = list(var_labels, var_labels)
       )
