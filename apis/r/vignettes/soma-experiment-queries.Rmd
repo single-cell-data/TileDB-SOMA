@@ -78,7 +78,7 @@ iterator <- query$obs()
 obs <- iterator$concat()
 obs
 ```
-As a reminder `arrow:Table` can be easily cast into a `tibble`
+As a reminder an `arrow::Table` can be easily cast into a `tibble`
 
 ```{r}
 as.data.frame(obs)
