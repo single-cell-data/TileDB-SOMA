@@ -99,7 +99,7 @@ axis.}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-obs"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-obs}{}}}
 \subsection{Method \code{obs()}}{
-Retrieve obs \code{\link[arrow:Table]{arrow::Table}}
+Retrieve obs \link{TableReadIter}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$obs(column_names = NULL)}\if{html}{\out{</div>}}
 }
