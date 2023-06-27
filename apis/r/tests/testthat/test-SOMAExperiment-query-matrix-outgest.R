@@ -164,7 +164,10 @@ test_that("matrix outgest assertions", {
   # joinds are used as default dimnames if no obs/var_index is provided
   expect_identical(
     dimnames(query$to_sparse_matrix("X", "counts")),
-    list(as.character(query$obs_joinids()), as.character(query$var_joinids()))
+    lapply(
+      list(query$obs_joinids(), query$var_joinids()),
+      function(x) as.character(x$as_vector())
+    )
   )
 
   # error if specified obs/var_index does not exist
