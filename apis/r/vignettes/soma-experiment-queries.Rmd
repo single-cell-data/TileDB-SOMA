@@ -118,8 +118,8 @@ Let's take a look at the Arrow Table iterator:
 
 ```{r}
 reader <- query$X(layer_name = "counts")
-table_irerator <- reader$tables()
-table_irerator$read_next()
+table_iterator <- reader$tables()
+table_iterator$read_next()
 ```
 
 As in the `obs` example the data is small enough to fit in one chunk. For bigger data
