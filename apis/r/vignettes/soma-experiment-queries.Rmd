@@ -127,10 +127,9 @@ you can user `iterator$read_complete()` to check the status of iteration and `it
 to concatenate the rest of the chunks.
 
 The iterator for  `Matrix::sparse_matrix` works in the same way. Keep in mind that the
-matrix format is `dgTMatrix` as it is the most memory-efficient and the only
-format type that can be easily iterated. And most importantly, the resulting
-object is a "view" of the full matrix with the original shape and indexes but only
-with data corresponding to the query coordinates or filters (see section below).
+sparse matrix format is `dgTMatrix`, which aligns with the COO encoding TileDB uses on disk and can be concatenated efficiently over each iteration. 
+
+Importantly, the resulting object is a "view" of the full matrix on-disk, retaining its original shape and indices but containing only data corresponding to the query coordinates or filters (see section below).
 
 ```{r}
 reader <- query$X(layer_name = "counts")
