@@ -108,7 +108,7 @@ iterator$read_next()
 iterator$read_complete()
 ```
 
-We can also access the expression via `X()`. 
+We can also access the expression data via `X()`. 
 
 Similarly to `obs()` and `var()`, `X()` is intended for iteration, but in this case we have 
 access to two different iterators, and thus `X()` returns a reader that gives you access to an 
