@@ -135,7 +135,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
-        enum: Optional[dict] = None,
+        enumerations: Optional[dict[str, Sequence[Any]]] = None,
+        ordered_enumerations: Optional[Sequence[str]] = None,
+        column_to_enumerations: Optional[dict[str, str]] = None,
     ) -> "DataFrame":
         """Creates the data structure on disk/S3/cloud.
 
@@ -173,7 +175,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 the context.
             enumeration:
                 If specified, enumerate attributes with the given sequence of values.
-            
+
 
         Returns:
             The DataFrame.
@@ -214,7 +216,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             schema,
             index_column_names,
             domain,
-            enum,
+            enumerations or {},
+            ordered_enumerations or [],
+            column_to_enumerations or {},
             TileDBCreateOptions.from_platform_config(platform_config),
             context,
         )
@@ -267,14 +271,17 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         self._check_open_read()
         return cast(int, self._soma_reader().nnz())
-    
-    def enum(self, name: str) -> Tuple[Any, ...]:
+
+    def enumeration(self, name: str) -> Tuple[Any, ...]:
         """Doc place holder.
 
         Returns:
             Tuple[Any, ...]: _description_
         """
-        return self._soma_reader().get_enumeration(name)
+        return tuple(self._soma_reader().get_enum(name))
+
+    def column_to_enumeration(self, name: str) -> str:
+        return str(self._soma_reader().get_enum_label_on_attr(name))
 
     def enumeration(self, name: str) -> Tuple[Any, ...]:
         """Doc place holder.
@@ -694,7 +701,9 @@ def _build_tiledb_schema(
     schema: pa.Schema,
     index_column_names: Sequence[str],
     domain: Optional[Sequence[Optional[Tuple[Any, Any]]]],
-    enum: Optional[dict],
+    enumerations: dict[str, Any],
+    ordered_enumerations: Sequence[str],
+    column_to_enumerations: dict[str, str],
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
@@ -775,17 +784,13 @@ def _build_tiledb_schema(
             ctx=context.tiledb_ctx,
         )
         attrs.append(attr)
-        
+
     cell_order, tile_order = tiledb_create_options.cell_tile_orders()
-    
-    enumeration = None
-    for enum_name in enum:
-        enumeration = tiledb.Enumeration(enum_name, False, np.array(enum[enum_name]))
 
     return tiledb.ArraySchema(
         domain=dom,
         attrs=attrs,
-        enum=enumeration,
+        enums=enums,
         sparse=True,
         allows_duplicates=tiledb_create_options.allows_duplicates,
         offsets_filters=tiledb_create_options.offsets_filters_tiledb(),

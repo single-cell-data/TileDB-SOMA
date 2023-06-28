@@ -120,11 +120,30 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
         tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("bar",)
     )
     assert sdf.index_column_names == ("bar",)
-    
-def test_dataframe_with_enumeration(tmp_path, arrow_schema):
-    enum_data = {"label": ("onezero", "oneone", "onetwo", "onethree")}
-    sdf = soma.DataFrame.create(tmp_path.as_posix(), schema=arrow_schema(), enum=enum_data)
-    assert sdf.enum("label") == enum_data["label"]
+
+
+def test_dataframe_with_enumeration(tmp_path):
+    schema = pa.schema(
+        [
+            pa.field("foo", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("bar", pa.dictionary(pa.int64(), pa.large_string())),
+        ]
+    )
+    enums = {"enmr1": ("a", "bb", "ccc"), "enmr2": ("cat", "dog")}
+
+    with soma.DataFrame.create(
+        tmp_path.as_posix(),
+        schema=schema,
+        enumerations=enums,
+        column_to_enumerations={"foo": "enmr1", "bar": "enmr2"},
+    ) as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = [2, 1, 2, 1, 0]
+        data["bar"] = [0, 1, 1, 0, 1]
+        sdf.write(pa.Table.from_pydict(data))
+        assert sdf.enumeration("foo") == enums["enmr1"]
+        assert sdf.enumeration("bar") == enums["enmr2"]
 
 
 def test_dataframe_with_enumeration(tmp_path):

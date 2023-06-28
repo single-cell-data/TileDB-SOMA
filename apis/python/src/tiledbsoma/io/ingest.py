@@ -1480,7 +1480,6 @@ def _update_dataframe(
 
     old_keys = set(old_sig.keys())
     new_keys = set(new_sig.keys())
-
     drop_keys = old_keys.difference(new_keys)
     add_keys = new_keys.difference(old_keys)
     common_keys = old_keys.intersection(new_keys)
