@@ -120,11 +120,30 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
         tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("bar",)
     )
     assert sdf.index_column_names == ("bar",)
-    
-def test_dataframe_with_enumeration(tmp_path, arrow_schema):
-    enum_data = {"label": ("onezero", "oneone", "onetwo", "onethree")}
-    sdf = soma.DataFrame.create(tmp_path.as_posix(), schema=arrow_schema(), enum=enum_data)
-    assert sdf.enum("label") == enum_data["label"]
+
+
+def test_dataframe_with_enumeration(tmp_path):
+    schema = pa.schema(
+        [
+            pa.field("foo", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("bar", pa.dictionary(pa.int64(), pa.large_string())),
+        ]
+    )
+    enums = {"enmr1": ("a", "bb", "ccc"), "enmr2": ("cat", "dog")}
+
+    with soma.DataFrame.create(
+        tmp_path.as_posix(),
+        schema=schema,
+        enumerations=enums,
+        column_to_enumerations={"foo": "enmr1", "bar": "enmr2"},
+    ) as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = [2, 1, 2, 1, 0]
+        data["bar"] = [0, 1, 1, 0, 1]
+        sdf.write(pa.Table.from_pydict(data))
+        assert sdf.enumeration("foo") == enums["enmr1"]
+        assert sdf.enumeration("bar") == enums["enmr2"]
 
 
 @pytest.fixture
@@ -788,33 +807,46 @@ def test_create_categorical_types(tmp_path, schema):
     """
     schema = schema.insert(0, pa.field("soma_joinid", pa.int64()))
 
-    # Test exception as normal column
-    with pytest.raises(TypeError):
-        soma.DataFrame.create(
-            tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
-        )
+    soma.DataFrame.create(
+        f"{tmp_path.as_posix()}1", schema=schema, index_column_names=["soma_joinid"]
+    )
+    # with tiledb.open(f"{tmp_path.as_posix()}1") as A:
+    #     print(A.schema)
 
-    # test as index column
-    with pytest.raises(TypeError):
-        soma.DataFrame.create(
-            tmp_path.as_posix(), schema=schema, index_column_names=["A"]
-        )
+    soma.DataFrame.create(
+        f"{tmp_path.as_posix()}2", schema=schema, index_column_names=["A"]
+    )
+    # with tiledb.open(f"{tmp_path.as_posix()}1") as A:
+    #     print(A.schema.attr("A").enum_label)
 
 
 def test_write_categorical_types(tmp_path):
     """
     Verify that write path accepts categoricals
     """
-    schema = pa.schema([("soma_joinid", pa.int64()), ("A", pa.large_string())])
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("A", pa.dictionary(pa.int64(), pa.large_string())),
+            ("B", pa.dictionary(pa.int64(), pa.large_string())),
+        ]
+    )
     with soma.DataFrame.create(
-        tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
+        tmp_path.as_posix(),
+        schema=schema,
+        index_column_names=["soma_joinid"],
+        enumerations={"bao": ["b", "a"], "bau": ["b", "a"]},
+        ordered_enumerations=["bao"],
+        column_to_enumerations={"A": "bao", "B": "bau"},
     ) as sdf:
-
         df = pd.DataFrame(
             data={
                 "soma_joinid": [0, 1, 2, 3],
                 "A": pd.Categorical(
                     ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
+                ),
+                "B": pd.Categorical(
+                    ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
                 ),
             }
         )

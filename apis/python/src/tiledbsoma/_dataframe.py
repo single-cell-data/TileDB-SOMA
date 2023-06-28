@@ -133,7 +133,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
-        enum: Optional[dict] = None,
+        enumerations: Optional[dict[str, Sequence[Any]]] = None,
+        ordered_enumerations: Optional[Sequence[str]] = None,
+        column_to_enumerations: Optional[dict[str, str]] = None,
     ) -> "DataFrame":
         """Creates the data structure on disk/S3/cloud.
 
@@ -171,7 +173,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 the context.
             enumeration:
                 If specified, enumerate attributes with the given sequence of values.
-            
+
 
         Returns:
             The DataFrame.
@@ -212,7 +214,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             schema,
             index_column_names,
             domain,
-            enum,
+            enumerations or {},
+            ordered_enumerations or [],
+            column_to_enumerations or {},
             TileDBCreateOptions.from_platform_config(platform_config),
             context,
         )
@@ -265,14 +269,17 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         self._check_open_read()
         return cast(int, self._soma_reader().nnz())
-    
-    def enum(self, name: str) -> Tuple[Any, ...]:
+
+    def enumeration(self, name: str) -> Tuple[Any, ...]:
         """Doc place holder.
 
         Returns:
             Tuple[Any, ...]: _description_
         """
-        return self._soma_reader().get_enumeration(name)
+        return tuple(self._soma_reader().get_enum(name))
+
+    def column_to_enumeration(self, name: str) -> str:
+        return str(self._soma_reader().get_enum_label_on_attr(name))
 
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
@@ -399,11 +406,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         n = None
 
         for name in values.schema.names:
-            n = len(values.column(name))
-            if name in dim_names_set:
-                dim_cols_map[name] = values.column(name).to_pandas()
+            col = values.column(name)
+            n = len(col)
+            cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
+            if pa.types.is_dictionary(col.type):
+                cols_map[name] = col.chunk(0).indices.to_pandas()
             else:
-                attr_cols_map[name] = values.column(name).to_pandas()
+                cols_map[name] = col.to_pandas()
         if n is None:
             raise ValueError(f"did not find any column names in {values.schema.names}")
 
@@ -647,7 +656,8 @@ def _canonicalize_schema(
             raise ValueError(
                 f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}"
             )
-        if schema.field(index_column_name).type not in [
+        dtype = schema.field(index_column_name).type
+        if not pa.types.is_dictionary(dtype) and dtype not in [
             pa.int8(),
             pa.uint8(),
             pa.int16(),
@@ -678,7 +688,9 @@ def _build_tiledb_schema(
     schema: pa.Schema,
     index_column_names: Sequence[str],
     domain: Optional[Sequence[Optional[Tuple[Any, Any]]]],
-    enum: Optional[dict],
+    enumerations: dict[str, Any],
+    ordered_enumerations: Sequence[str],
+    column_to_enumerations: dict[str, str],
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
@@ -728,6 +740,17 @@ def _build_tiledb_schema(
 
     dom = tiledb.Domain(dims, ctx=context.tiledb_ctx)
 
+    enums = []
+    if enumerations is not None:
+        for enum_name in enumerations:
+            enums.append(
+                tiledb.Enumeration(
+                    enum_name,
+                    enum_name in ordered_enumerations,
+                    np.array(enumerations[enum_name]),
+                )
+            )
+
     attrs = []
     metadata = schema.metadata or {}
     for attr_name in schema.names:
@@ -742,20 +765,19 @@ def _build_tiledb_schema(
             filters=tiledb_create_options.attr_filters_tiledb(
                 attr_name, ["ZstdFilter"]
             ),
+            enum_label=column_to_enumerations[attr_name]
+            if attr_name in column_to_enumerations
+            else None,
             ctx=context.tiledb_ctx,
         )
         attrs.append(attr)
-        
+
     cell_order, tile_order = tiledb_create_options.cell_tile_orders()
-    
-    enumeration = None
-    for enum_name in enum:
-        enumeration = tiledb.Enumeration(enum_name, False, np.array(enum[enum_name]))
 
     return tiledb.ArraySchema(
         domain=dom,
         attrs=attrs,
-        enum=enumeration,
+        enums=enums,
         sparse=True,
         allows_duplicates=tiledb_create_options.allows_duplicates,
         offsets_filters=tiledb_create_options.offsets_filters_tiledb(),

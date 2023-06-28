@@ -95,6 +95,9 @@ def tiledb_type_from_arrow_type(
     Raises:
         TypeError: if the type is unsupported.
     """
+    if pa.types.is_dictionary(t):
+        t = t.index_type
+
     arrow_to_tdb = _ARROW_TO_TDB_DIM if is_indexed_column else _ARROW_TO_TDB_ATTR
     if t in arrow_to_tdb:
         arrow_type = arrow_to_tdb[t]
