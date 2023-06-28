@@ -49,44 +49,12 @@ using namespace py::literals;
 
 namespace tiledbsoma {
 
-/**
- * @brief Convert ColumnBuffer to Arrow array.
- *
- * @param column_buffer ColumnBuffer
- * @return py::object Arrow array
- */
-py::object to_array(std::shared_ptr<ColumnBuffer> column_buffer) {
-    auto pa = py::module::import("pyarrow");
-    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
+py::tuple get_enum(SOMAArray& sr, std::string attr_name){
+    auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
+    if(attr_to_enmrs.count(attr_name) == 0)
+        throw TileDBSOMAError("Given attribute does not have enumeration");
 
-    auto [array, schema] = ArrowAdapter::to_arrow(column_buffer);
-    return pa_array_import(py::capsule(array.get()), py::capsule(schema.get()));
-}
-
-/**
- * @brief Convert ArrayBuffers to Arrow table.
- *
- * @param cbs ArrayBuffers
- * @return py::object
- */
-py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
-    auto pa = py::module::import("pyarrow");
-    auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
-
-    py::list names;
-    py::list arrays;
-
-    for (auto& name : array_buffers->names()) {
-        auto column = array_buffers->at(name);
-        names.append(name);
-        arrays.append(to_array(column));
-    }
-
-    return pa_table_from_arrays(arrays, names);
-}
-
-py::tuple get_enumeration(SOMAArray& sr, std::string name){
-    auto enmr = sr.get_enumeration(name);
+    Enumeration enmr(attr_to_enmrs.at(attr_name));
 
     switch (enmr.type()) {
         case TILEDB_UINT8:
@@ -116,6 +84,61 @@ py::tuple get_enumeration(SOMAArray& sr, std::string name){
         default:
             throw TileDBSOMAError("Unsupported enumeration type.");
     }
+}
+
+bool get_enum_is_ordered(SOMAArray& sr, std::string attr_name){
+    auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
+    if(attr_to_enmrs.count(attr_name) == 0)
+        throw TileDBSOMAError("Given attribute does not have enumeration");
+    return attr_to_enmrs.at(attr_name).ordered();
+}
+
+/**
+ * @brief Convert ColumnBuffer to Arrow array.
+ *
+ * @param column_buffer ColumnBuffer
+ * @return py::object Arrow array
+ */
+py::object to_array(std::shared_ptr<ColumnBuffer> column_buffer) {
+    auto pa = py::module::import("pyarrow");
+    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
+
+    auto [array, schema] = ArrowAdapter::to_arrow(column_buffer);
+    return pa_array_import(py::capsule(array.get()), py::capsule(schema.get()));
+}
+
+/**
+ * @brief Convert ArrayBuffers to Arrow table.
+ *
+ * @param cbs ArrayBuffers
+ * @return py::object
+ */
+py::object to_table(SOMAArray& sr, std::shared_ptr<ArrayBuffers> array_buffers) {
+    auto pa = py::module::import("pyarrow");
+    auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
+    auto pa_dict_from_arrays = pa.attr("DictionaryArray").attr("from_arrays");
+
+    py::list names;
+    py::list arrays;
+
+    for (auto& name : array_buffers->names()) {
+        auto column = array_buffers->at(name);
+        names.append(name);
+
+        if(sr.get_attr_to_enum_mapping().count(name) == 0){
+            arrays.append(to_array(column));
+        }else{
+            arrays.append(pa_dict_from_arrays(
+                to_array(column), 
+                get_enum(sr, name), 
+                py::none(), 
+                get_enum_is_ordered(sr, name)));
+        }
+    }
+
+    auto pa_table = pa_table_from_arrays(arrays, names);
+
+    return pa_table;
 }
 
 /**
@@ -612,7 +635,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                 if (buffers.has_value()) {
                     // Acquire python GIL before accessing python objects
                     py::gil_scoped_acquire acquire;
-                    return to_table(*buffers);
+                    return to_table(reader, *buffers);
                 }
 
                 // No data was read, the query is complete, return nullopt
@@ -623,6 +646,10 @@ PYBIND11_MODULE(pytiledbsoma, m) {
 
         .def_property_readonly("shape", &SOMAArray::shape)
         
-        .def("get_enumeration", get_enumeration);
+        .def("get_enum", get_enum)
+
+        .def("get_enum_is_ordered", get_enum_is_ordered)
+        
+        .def("get_enum_label_on_attr", &SOMAArray::get_enum_label_on_attr);
 }
 }  // namespace tiledbsoma

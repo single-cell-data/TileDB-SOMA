@@ -477,10 +477,6 @@ class SOMAArray {
      */
     std::vector<int64_t> shape();
 
-    Enumeration get_enumeration(std::string name) {
-        return ArrayExperimental::get_enumeration(*ctx_, *arr_, name);
-    }
-
     /**
      * @brief Get the number of dimensions.
      *
