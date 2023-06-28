@@ -12,13 +12,15 @@ Please also see the `main-old` branch for an implementation of the [original spe
 TileDB-SOMA releases are available on R-universe and [Conda](https://anaconda.org/tiledb/r-tiledbsoma), and can be installed directly from R or `mamba` as indicated below.
 
 ```r
-install.packages('tiledbsoma', repos = c('https://chanzuckerberg.r-universe.dev',
+install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev',
                                          'https://cloud.r-project.org'))
 ```
 
 ```bash
 mamba install -c conda-forge -c tiledb r-tiledbsoma
 ```
+
+The r-universe repo serves macOS binaries and the source package for other Unix-like platforms. The conda channel serves binaries for multiple architectures.
 
 ## From source
 
