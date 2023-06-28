@@ -120,6 +120,11 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
         tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("bar",)
     )
     assert sdf.index_column_names == ("bar",)
+    
+def test_dataframe_with_enumeration(tmp_path, arrow_schema):
+    enum_data = {"label": ("onezero", "oneone", "onetwo", "onethree")}
+    sdf = soma.DataFrame.create(tmp_path.as_posix(), schema=arrow_schema(), enum=enum_data)
+    assert sdf.enum("label") == enum_data["label"]
 
 
 @pytest.fixture

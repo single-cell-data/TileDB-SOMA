@@ -85,6 +85,39 @@ py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
     return pa_table_from_arrays(arrays, names);
 }
 
+py::tuple get_enumeration(SOMAArray& sr, std::string name){
+    auto enmr = sr.get_enumeration(name);
+
+    switch (enmr.type()) {
+        case TILEDB_UINT8:
+            return py::tuple(py::cast(enmr.as_vector<uint8_t>()));
+        case TILEDB_INT8:
+            return py::tuple(py::cast(enmr.as_vector<int8_t>()));
+        case TILEDB_UINT16:
+            return py::tuple(py::cast(enmr.as_vector<uint16_t>()));
+        case TILEDB_INT16:
+            return py::tuple(py::cast(enmr.as_vector<int16_t>()));
+        case TILEDB_UINT32:
+            return py::tuple(py::cast(enmr.as_vector<uint32_t>()));
+        case TILEDB_INT32:
+            return py::tuple(py::cast(enmr.as_vector<int32_t>()));
+        case TILEDB_UINT64:
+            return py::tuple(py::cast(enmr.as_vector<uint64_t>()));
+        case TILEDB_INT64:
+            return py::tuple(py::cast(enmr.as_vector<int64_t>()));
+        case TILEDB_FLOAT32:
+            return py::tuple(py::cast(enmr.as_vector<float>()));
+        case TILEDB_FLOAT64:
+            return py::tuple(py::cast(enmr.as_vector<double>()));
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return py::tuple(py::cast(enmr.as_vector<std::string>()));
+        default:
+            throw TileDBSOMAError("Unsupported enumeration type.");
+    }
+}
+
 /**
  * @brief pybind11 bindings
  *
@@ -588,6 +621,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 
-        .def_property_readonly("shape", &SOMAArray::shape);
+        .def_property_readonly("shape", &SOMAArray::shape)
+        
+        .def("get_enumeration", get_enumeration);
 }
 }  // namespace tiledbsoma
