@@ -140,6 +140,49 @@ TileDBArray <- R6::R6Class(
       ))
     },
 
+    used_shape = function() {
+      dims <- self$dimnames()
+      utilized <- bit64::integer64(length = length(dims))
+      for (i in seq_along(along.with = utilized)) {
+        key <- paste0(dims[i], '_DOMAIN')
+        utilized[i] <- self$get_metadata(key) %||% bit64::NA_integer64_
+      }
+      if (any(is.na(utilized))) {
+        ned <- self$non_empty_domain()
+        idx <- which(is.na(utilized))
+        msg <- paste(
+          strwrap(paste0(
+            "The following dimensions have no bounding box, non-empty domain used instead:\n",
+            paste(sQuote(dims[idx]), collapse = ', ')
+          )),
+          collapse = '\n'
+        )
+        msg <- paste(
+          "The following dimensions have no bounding box, non-empty domain used instead:\n-",
+          paste(sQuote(dims[idx]), collapse = '\n- ')
+        )
+        spdl::warn(msg)
+        utilized[idx] <- ned[idx]
+      }
+      return(utilized)
+    },
+
+    non_empty_domain = function(index1 = TRUE) {
+      dims <- self$dimnames()
+      ned <- bit64::integer64(length = length(dims))
+      for (i in seq_along(along.with = ned)) {
+        dom <- max(tiledb::tiledb_array_get_non_empty_domain_from_name(
+          self$object,
+          name = dims[i]
+        ))
+        if (isTRUE(x = index1)) {
+          dom <- dom + 1L
+        }
+        ned[i] <- dom
+      }
+      return(ned)
+    },
+
     #' @description Retrieve number of dimensions (lifecycle: experimental)
     #' @return A scalar with the number of dimensions
     ndim = function() {
