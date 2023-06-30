@@ -678,7 +678,7 @@ def _write_dataframe(
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
 ) -> DataFrame:
-    s = _util.get_start_stamp()
+    _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
     df[SOMA_JOINID] = np.arange(len(df), dtype=np.int64)
@@ -687,6 +687,26 @@ def _write_dataframe(
     if id_column_name is not None:
         df.rename(columns={"index": id_column_name}, inplace=True)
     df.set_index(SOMA_JOINID, inplace=True)
+
+    return _write_dataframe_impl(
+        df,
+        df_uri,
+        ingestion_params=ingestion_params,
+        platform_config=platform_config,
+        context=context,
+    )
+
+
+def _write_dataframe_impl(
+    df: pd.DataFrame,
+    df_uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    platform_config: Optional[PlatformConfig] = None,
+    context: Optional[SOMATileDBContext] = None,
+) -> DataFrame:
+    s = _util.get_start_stamp()
+    logging.log_io(None, f"START  WRITING {df_uri}")
 
     arrow_table = _df_to_arrow(df)
 
@@ -1377,21 +1397,80 @@ def _ingest_uns_node(
             # This is a structured array, which we do not support.
             logging.log_io(msg, msg)
             return
-        _ingest_uns_ndarray(
-            coll,
-            key,
-            value,
-            platform_config,
-            context=context,
-            use_relative_uri=use_relative_uri,
-            ingestion_params=ingestion_params,
-        )
+
+        if value.dtype.char == "U" or value.dtype.char == "O":
+            # In the wild it's quite common to see arrays of strings in uns data.
+            # Frequent example: uns["louvain_colors"].
+            _ingest_uns_string_array(
+                coll,
+                key,
+                value,
+                platform_config,
+                context=context,
+                use_relative_uri=use_relative_uri,
+                ingestion_params=ingestion_params,
+            )
+        else:
+            _ingest_uns_ndarray(
+                coll,
+                key,
+                value,
+                platform_config,
+                context=context,
+                use_relative_uri=use_relative_uri,
+                ingestion_params=ingestion_params,
+            )
         return
 
     msg = (
         f"Skipped {coll.uri}[{key!r}]" f" (uns object): unrecognized type {type(value)}"
     )
     logging.log_io(msg, msg)
+
+
+def _ingest_uns_string_array(
+    coll: AnyTileDBCollection,
+    key: str,
+    value: NPNDArray,
+    platform_config: Optional[PlatformConfig],
+    context: Optional[SOMATileDBContext],
+    *,
+    use_relative_uri: Optional[bool],
+    ingestion_params: IngestionParams,
+) -> None:
+    """
+    Ingest an uns string array. In the SOMA data model, we have NDArrays _of number only_ ...
+    so we need to make this a SOMADataFrame.
+    """
+    if len(value.shape) != 1:
+        msg = (
+            f"Skipped {coll.uri}[{key!r}]"
+            f" (uns object): string-array is not one-dimensional"
+        )
+        logging.log_io(msg, msg)
+        return
+
+    n = len(value)
+    df_uri = _util.uri_joinpath(coll.uri, key)
+    df = pd.DataFrame(
+        data={
+            # Ideally we don't want to call this "soma_joinid" -- "index", maybe.
+            # However, SOMADataFrame _requires_ that soma_joinid be present, either
+            # as an index column, or as a data column. The former is less confusing.
+            "soma_joinid": np.asarray(range(n), dtype=np.int64),
+            "values": [str(e) for e in value],
+        }
+    )
+    df.set_index("soma_joinid", inplace=True)
+
+    with _write_dataframe_impl(
+        df,
+        df_uri,
+        ingestion_params=ingestion_params,
+        platform_config=platform_config,
+        context=context,
+    ) as soma_df:
+        _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
 
 
 def _ingest_uns_ndarray(

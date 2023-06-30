@@ -32,6 +32,13 @@ def h5ad_file_extended(request):
 
 
 @pytest.fixture
+def h5ad_file_uns_string_array(request):
+    # This has uns["louvain_colors"] with dtype.char == "U"
+    input_path = HERE.parent / "testdata/pbmc3k.h5ad"
+    return input_path
+
+
+@pytest.fixture
 def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
@@ -339,6 +346,25 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended):
         assert np.array_equal(random_state.read().to_numpy(), np.array([0]))
         got_pca_variance = uns["pca"]["variance"].read().to_numpy()
         assert np.array_equal(got_pca_variance, original.uns["pca"]["variance"])
+
+
+def test_ingest_uns_string_array(h5ad_file_uns_string_array):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    tiledbsoma.io.from_h5ad(
+        output_path,
+        h5ad_file_uns_string_array,
+        measurement_name="RNA",
+    )
+
+    with tiledbsoma.Experiment.open(output_path) as exp:
+        with tiledbsoma.DataFrame.open(
+            exp.ms["RNA"]["uns"]["louvain_colors"].uri
+        ) as df:
+            contents = df.read().concat()["values"]
+            assert len(contents) == 8
+            assert contents[0].as_py() == "#1f77b4"
 
 
 def test_add_matrix_to_collection(adata):
