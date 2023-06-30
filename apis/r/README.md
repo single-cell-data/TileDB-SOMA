@@ -41,7 +41,7 @@ remotes::install_github("https://github.com/single-cell-data/TileDB-SOMA", subdi
 
 ### Development setup
 
-To set up & install from a local clone of this git repository:
+To set up and install from a local clone of this git repository:
 
 * Clone this repository: `git clone https://github.com/single-cell-data/TileDB-SOMA.git`.
 * Change into the R API package directory: `cd TileDB-SOMA/apis/r`.
