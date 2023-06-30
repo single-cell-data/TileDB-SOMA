@@ -15,81 +15,52 @@ from data import FileBasedProfileDB, ProfileData, ProfileDB
 TILEDB_STATS_FILE_PATH = "./tiledb_stats.txt"
 
 
-def read_context() -> Dict[str, str]:
+def read_host_context() -> Dict[str, str]:
     """Run the context generator process and collects the JSON printed output"""
     context_process = subprocess.Popen(
         ["python", "context_generator.py"], stdout=PIPE, stderr=PIPE
     )
     stdout, stderr = context_process.communicate()
+    if context_process.returncode != 0:
+        raise RuntimeError(f"error reading host context information: {stderr.decode('utf-8')}")
+
     stats = json.loads(stdout.decode("utf-8"))
     return stats
 
 
-def build_profile_data(
-    process: list[str], output: str, prof1: Optional[str], prof2: Optional[str]
-) -> ProfileData:
+def build_profile_data(output: str) -> ProfileData:
     """Parse the time utility output to extract performance and memory metrics"""
-    lines = output.split("\n")
-    lines = lines[-20:]
-    for idx, line in enumerate(lines):
-        perf_match = re.match(
-            "\s+(\d+\.\d+) real\s+(\d+\.\d+) user\s+(\d+\.\d+) sys\s*", line
-        )
-        if perf_match:
-            real_time = float(perf_match.groups()[0])
-            usr_time = float(perf_match.groups()[1])
-            sys_time = float(perf_match.groups()[2])
-            print(
-                f"real_time = {real_time} user_time = {usr_time} sys_time = {sys_time}"
-            )
-        max_resident_set_size_match = re.match(
-            "\s+(\d+)\s+maximum resident set size\s*", line
-        )
-        if max_resident_set_size_match:
-            max_resident_set_size = int(max_resident_set_size_match.groups()[0])
-            print(f"max_resident_set_size = {max_resident_set_size}")
-        page_reclaims_match = re.match("\s+(\d+)\s+page reclaims\s*", line)
-        if page_reclaims_match:
-            page_reclaims = int(page_reclaims_match.groups()[0])
-            print(f"page_reclaims = {page_reclaims}")
-        page_faults_match = re.match("\s+(\d+)\s+page faults\s*", line)
-        if page_faults_match:
-            page_faults = int(page_faults_match.groups()[0])
-            print(f"page_faults = {page_faults}")
-        cycles_elapsed_match = re.match("\s+(\d+)\s+cycles elapsed\s*", line)
-        if cycles_elapsed_match:
-            cycles_elapsed = int(cycles_elapsed_match.groups()[0])
-            print(f"cycles_elapsed = {cycles_elapsed}")
-        peak_memory_footprint_match = re.match(
-            "\s+(\d+)\s+peak memory footprint\s*", line
-        )
-        if peak_memory_footprint_match:
-            peak_memory_footprint = int(peak_memory_footprint_match.groups()[0])
-            print(f"peak_memory_footprint = {peak_memory_footprint}")
+    perf_match = re.match(r""".*Command being timed: \"(?P<command>.+)\"\n\s+User time \(seconds\): (?P<user_time_sec>.+)\n\s+System time \(seconds\): (?P<system_time_sec>.+)\n\s+Percent of CPU this job got: (?P<pct_of_cpu>.+)%\n\s+Elapsed \(wall clock\) time \(h:mm:ss or m:ss\): (?P<elapsed_time>.+)\n\s+Average shared text size \(kbytes\): (?P<avg_shared_text_sz_kb>.+)\n\s+Average unshared data size \(kbytes\): (?P<avg_unshared_text_sz_kb>.+)\n\s+Average stack size \(kbytes\): (?P<avg_stack_sz_kb>.+)\n\s+Average total size \(kbytes\): (?P<avg_total_sz_kb>.+)\n\s+Maximum resident set size \(kbytes\): (?P<max_res_set_sz_kb>.+)\n\s+Average resident set size \(kbytes\): (?P<avg_res_set_sz_kb>.+)\n\s+Major \(requiring I/O\) page faults: (?P<major_page_faults>.+)\n\s+Minor \(reclaiming a frame\) page faults: (?P<minor_page_faults>.+)\n\s+Voluntary context switches: (?P<voluntary_context_switches>.+)\n\s+Involuntary context switches: (?P<involuntary_context_switches>.+)\n\s+Swaps: (?P<swaps>.+)\n\s+File system inputs: (?P<file_system_inputs>.+)\n\s+File system outputs: (?P<file_system_outputs>.+)\n\s+Socket messages sent: (?P<socket_messages_sent>.+)\n\s+Socket messages received: (?P<socket_messages_received>.+)\n\s+Signals delivered: (?P<signals_delivered>.+)\n\s+Page size \(bytes\): (?P<page_size_bytes>.+)\n\s+Exit status: (?P<exit_status>.+)\n.*""", output)
+    assert perf_match
+
+    profile_data = perf_match.groupdict()
+    # cast all dict int values
+    profile_data.update({k: int(v) for k, v in profile_data.items() if v.isdigit()})
+
+    # cast all dict elapsed time values to int (seconds)
+    def elapsed_to_seconds(elapsed: str) -> float:
+        elapsed_parts = re.match(r"(((\d+):)?((\d+):))?(\d+)(\.\d+)", elapsed).groups()
+        return int(elapsed_parts[2] or "0") * 3600 + int(elapsed_parts[4] or "0") * 60 + int(elapsed_parts[5]) + float(elapsed_parts[6])
+
+    profile_data["user_time_sec"] = elapsed_to_seconds(profile_data["user_time_sec"])
+    profile_data["system_time_sec"] = elapsed_to_seconds(profile_data["system_time_sec"])
+    profile_data["elapsed_time"] = elapsed_to_seconds(profile_data["elapsed_time"])
+
     tiledb_stats = None
     if os.path.isfile(TILEDB_STATS_FILE_PATH):
         with open(TILEDB_STATS_FILE_PATH, "r") as f:
             print("TileDB stats found")
             tiledb_stats = f.read()
-    custom_out = [prof1, prof2]
-    context: Dict[str, str] = read_context()
-    data: ProfileData = ProfileData(
-        process=" ".join(process),
-        custom_out=custom_out,
-        rt=real_time,
-        ut=usr_time,
-        st=sys_time,
-        max_set_size=max_resident_set_size,
-        page_reclaims=page_reclaims,
-        page_faults=page_faults,
-        cycles_elapsed=cycles_elapsed,
-        peak_memory=peak_memory_footprint,
+    # custom_out = [prof1, prof2]
+    context: Dict[str, str] = read_host_context()
+    data: ProfileData = dict(
         date=str(date.today()),
         now=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         tiledb_stats=tiledb_stats,
         somacore_version=somacore.__version__,
         tiledbsoma_version=tiledbsoma.__version__,
         context=context,
+        **perf_match.groupdict()
     )
     return data
 
@@ -128,6 +99,13 @@ def main():
         "process", nargs="+", help="The main process and its arguments to run"
     )
     parser.add_argument(
+        "-t",
+        "--gtime-cmd",
+        required=False,
+        default="/usr/bin/time",
+        help="Path to the gtime command",
+    )
+    parser.add_argument(
         "-p1",
         "--prof1",
         required=False,
@@ -156,7 +134,7 @@ def main():
     print(f"Process to be run: {args.process}")
     # Running the main process using time -v to get detailed memory and time"""
     p = subprocess.Popen(
-        ["/usr/bin/time", "-al"] + args.process, stdout=PIPE, stderr=PIPE
+        [args.gtime_cmd, "-v"] + args.process, stdout=PIPE, stderr=PIPE
     )
 
     print(f"Running main process, PID = {p.pid}")
@@ -194,9 +172,7 @@ def main():
     o: str = stdout.decode("utf-8")
     print(f"The benchmarked process output:\n {o}")
     # Parse the generated output from the time utility
-    data: ProfileData = build_profile_data(
-        args.process, stderr.decode("utf-8"), args.prof1_output, args.prof2_output
-    )
+    data: ProfileData = build_profile_data(stderr.decode("utf-8"))
     # Add the run data to DB
     db: ProfileDB = FileBasedProfileDB()
     db.add(data)

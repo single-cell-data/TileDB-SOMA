@@ -1,34 +1,14 @@
 import errno
+import json
 import os
-import pickle
 import re
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
-
-from attr import attrib, attrs
+from typing import Dict, List, Any
 
 """This class represents the data stored per run"""
 
 
-@attrs
-class ProfileData:
-    process: str = attrib()
-    custom_out: List[Optional[str]] = attrib()
-    rt: float = attrib()
-    ut: float = attrib()
-    st: float = attrib()
-    max_set_size: int = attrib()
-    page_reclaims: int = attrib()
-    page_faults: int = attrib()
-    cycles_elapsed: int = attrib()
-    peak_memory: int = attrib()
-    tiledb_stats: Optional[str] = attrib()
-    date: str = attrib()
-    now: str = attrib()
-    somacore_version: str = attrib()
-    tiledbsoma_version: str = attrib()
-    context: Dict[str, str] = attrib()
-    print("Creating ProfileData")
+ProfileData = Dict[str, Any]
 
 
 def extract_key_from_filename(filename: str) -> str:
@@ -97,18 +77,18 @@ class FileBasedProfileDB(ProfileDB):
         dir_list = os.listdir(f"{self.path}/{key}")
         result = []
         for filename in dir_list:
-            with open(f"{self.path}/{key}/{filename}", "rb") as file:
-                data: ProfileData = pickle.load(file)
+            with open(f"{self.path}/{key}/{filename}", "r") as file:
+                data: ProfileData = json.load(file)
                 result.append(data)
         return result
 
     def add(self, data: ProfileData):
-        key = improve_profileDB_key(data.process)
+        key = improve_profileDB_key(data["command"])
         os.makedirs(f"{self.path}/{key}", exist_ok=True)
-        key2 = data.now
+        key2 = data["now"]
         filename = f"{self.path}/{key}/{key2}.run"
-        with open(filename, "wb") as f:
-            pickle.dump(data, f)
+        with open(filename, "w") as f:
+            json.dump(data, f)
 
     def close(self):
         pass

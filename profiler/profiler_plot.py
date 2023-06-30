@@ -12,7 +12,7 @@ from data import FileBasedProfileDB, ProfileData, improve_profileDB_key
 def collect_tiledb_stats(data: ProfileData) -> Dict[str, Union[int, float]]:
     """Extract all TileDB stats as dictionary"""
     result = {}
-    tiledb_stats = data.tiledb_stats
+    tiledb_stats = data["tiledb_stats"]
 
     if tiledb_stats is None:
         return result
@@ -54,12 +54,11 @@ def extract_tiledb_data(data: ProfileData, metric: str) -> Union[int, float, Non
 
 def extract_context_data(data: ProfileData, metric: str) -> Union[int, float, None]:
     """Read the context data from a profile stored data and return the expected metric"""
-    context = data.context
+    context = data["context"]
     if metric in context.keys():
         return context[metric]
     else:
         raise Exception(f"context does not have the following metric {metric}")
-    return None
 
 
 def create_pandas_df(data: List[ProfileData]) -> pd.DataFrame:
@@ -71,7 +70,7 @@ def create_pandas_df(data: List[ProfileData]) -> pd.DataFrame:
     tmp = data[0]
     metrics = [m for m in dir(tmp) if not m.startswith("__")]
     tdb_metrics = collect_tiledb_stats(tmp).keys()
-    context_metrics = tmp.context.keys()
+    context_metrics = tmp["context"].keys()
     all_metrics = metrics + list(tdb_metrics) + list(context_metrics)
 
     # collecting data
@@ -79,10 +78,10 @@ def create_pandas_df(data: List[ProfileData]) -> pd.DataFrame:
         row = (
             [getattr(run_data, metric) for metric in metrics]
             + [collect_tiledb_stats(run_data)[key] for key in tdb_metrics]
-            + [run_data.context[key] for key in context_metrics]
+            + [run_data["context"][key] for key in context_metrics]
         )
         table.append(row)
-    row_labels = [runData.now for runData in data]
+    row_labels = [runData["now"] for runData in data]
 
     # Creating dataframe
     df = pd.DataFrame(table, columns=all_metrics, index=row_labels)
@@ -92,28 +91,28 @@ def create_pandas_df(data: List[ProfileData]) -> pd.DataFrame:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "process",
+        "command",
         nargs="+",
-        help="The main process name (and optional arguments) to be plotted",
+        help="The command to be profiled (and optional arguments) to be plotted",
     )
     parser.add_argument(
         "-pd",
         "--pandas",
         required=False,
-        help="create pandas dataframe and prints it",
+        help="Displays results as Pandas DataFrame output",
         action="store_true",
     )
     parser.add_argument(
         "-m",
         "--metric",
         required=False,
-        help="the metric to be plotted",
+        help="The metric to be plotted",
     )
     parser.add_argument(
         "-tdm",
         "--tiledb_metric",
         required=False,
-        help="the tiledb metric to be plotted",
+        help="The tiledb metric to be plotted",
     )
     parser.add_argument(
         "-cm",
@@ -123,11 +122,11 @@ def main():
     )
 
     args = parser.parse_args()
-    print(f"Process to be plotted: {args.process}")
+    print(f"Profiling command to be plotted: {args.command}")
 
-    # extract process run data
+    # extract profiling command run data
     db = FileBasedProfileDB()
-    data: ProfileData = db.find(" ".join(args.process))
+    data: List[ProfileData] = db.find(" ".join(args.command))
 
     # prepare the extracted data for plotting
     pdata = {}
@@ -135,33 +134,33 @@ def main():
         if args.pandas:
             df: pd.DataFrame = create_pandas_df(data)
             file_name: str = (
-                improve_profileDB_key(" ".join(args.process)) + "_df.pickle"
+                improve_profileDB_key(" ".join(args.command)) + "_df.json"
             )
-            df.to_pickle(file_name)
+            df.to_json(file_name)
             print(f"The panda DataFrame is stored in {file_name}")
             print(df)
             return
         elif args.metric:
-            pdata[profile_data.now] = getattr(profile_data, str(args.metric))
+            pdata[profile_data["now"]] = profile_data[str(args.metric)]
         elif args.tiledb_metric:
-            pdata[profile_data.now] = extract_tiledb_data(
+            pdata[profile_data["now"]] = extract_tiledb_data(
                 profile_data, str(args.tiledb_metric)
             )
-            if not pd[profile_data.now]:
+            if not pd[profile_data["now"]]:
                 raise Exception(f"TileDB stat {args.tiledb_metric} not found!")
         elif args.context_metric:
-            pdata[profile_data.now] = extract_context_data(
+            pdata[profile_data["now"]] = extract_context_data(
                 profile_data, str(args.context_metric)
             )
-            if not pdata[profile_data.now]:
+            if not pdata[profile_data["now"]]:
                 raise Exception(f"TileDB stat {args.context_metric} not found!")
         else:
             raise Exception("No metric or TileDB or context metric specified!")
 
-    plot_data = OrderedDict(pd)
+    plot_data = OrderedDict(pdata)
     plt.xticks(rotation=15, ha="right")
     plt.plot(plot_data.keys(), plot_data.values())
-    plt.title(args.process)
+    plt.title(args.command)
     plt.show()
 
 
