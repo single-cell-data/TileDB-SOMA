@@ -678,9 +678,6 @@ def _write_dataframe(
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
 ) -> DataFrame:
-    _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {df_uri}")
-
     df[SOMA_JOINID] = np.arange(len(df), dtype=np.int64)
 
     df.reset_index(inplace=True)
@@ -1441,6 +1438,10 @@ def _ingest_uns_string_array(
     """
     Ingest an uns string array. In the SOMA data model, we have NDArrays _of number only_ ...
     so we need to make this a SOMADataFrame.
+
+    Ideally we don't want to an index column "soma_joinid" -- "index", maybe.
+    However, ``SOMADataFrame`` _requires_ that soma_joinid be present, either
+    as an index column, or as a data column. The former is less confusing.
     """
     if len(value.shape) != 1:
         msg = (
@@ -1454,9 +1455,6 @@ def _ingest_uns_string_array(
     df_uri = _util.uri_joinpath(coll.uri, key)
     df = pd.DataFrame(
         data={
-            # Ideally we don't want to call this "soma_joinid" -- "index", maybe.
-            # However, SOMADataFrame _requires_ that soma_joinid be present, either
-            # as an index column, or as a data column. The former is less confusing.
             "soma_joinid": np.asarray(range(n), dtype=np.int64),
             "values": [str(e) for e in value],
         }
