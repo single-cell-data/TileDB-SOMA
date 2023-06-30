@@ -327,6 +327,7 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended):
         assert set(uns) == {
             "draw_graph",
             "louvain",
+            "louvain_colors",
             "neighbors",
             "pca",
             "rank_genes_groups",
