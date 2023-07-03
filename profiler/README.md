@@ -70,17 +70,14 @@ If you want TileDB stats to also be added to the profile, please surround your c
 tiledb.stats_enable()
 tiledb.stats_reset()
 
+# your profiling code goes here
 ...
 
-tmp = sys.stdout
-my_result = StringIO()
-sys.stdout = my_result
-tiledb.stats_dump()
 tiledb.stats_disable()
-sys.stdout = tmp
 
-with open("tiledb_stats.txt", "w") as f:
-    f.write(my_result.getvalue())
+import json
+with open("tiledb_stats.json", "w") as f:
+    json.dump(tiledb.stats_dump(json=True), f)
 
 ```
 The profiler automatically reads and stores the content of `tiledb_stats.txt` file.

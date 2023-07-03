@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 import attr
 
@@ -14,7 +14,7 @@ class ProfileData:
     """This class represents the data stored per run"""
     command: str
     timestamp: float
-    tiledb_stats: Optional[str]
+    tiledb_stats: Dict[str, Any]
     somacore_version: str
     tiledbsoma_version: str
     host_context: Dict[str, str]
