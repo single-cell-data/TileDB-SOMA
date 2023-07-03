@@ -12,23 +12,11 @@ import somacore
 
 import tiledbsoma
 from data import FileBasedProfileDB, ProfileData, ProfileDB
+from context_generator import host_context
 
 GNU_TIME_OUTPUT_REGEXP = re.compile(r""".*Command being timed: \"(?P<command>.+)\"\n\s+User time \(seconds\): (?P<user_time_sec>.+)\n\s+System time \(seconds\): (?P<system_time_sec>.+)\n\s+Percent of CPU this job got: (?P<pct_of_cpu>.+)%\n\s+Elapsed \(wall clock\) time \(h:mm:ss or m:ss\): (?P<elapsed_time_sec>.+)\n\s+Average shared text size \(kbytes\): (?P<avg_shared_text_sz_kb>.+)\n\s+Average unshared data size \(kbytes\): (?P<avg_unshared_text_sz_kb>.+)\n\s+Average stack size \(kbytes\): (?P<avg_stack_sz_kb>.+)\n\s+Average total size \(kbytes\): (?P<avg_total_sz_kb>.+)\n\s+Maximum resident set size \(kbytes\): (?P<max_res_set_sz_kb>.+)\n\s+Average resident set size \(kbytes\): (?P<avg_res_set_sz_kb>.+)\n\s+Major \(requiring I/O\) page faults: (?P<major_page_faults>.+)\n\s+Minor \(reclaiming a frame\) page faults: (?P<minor_page_faults>.+)\n\s+Voluntary context switches: (?P<voluntary_context_switches>.+)\n\s+Involuntary context switches: (?P<involuntary_context_switches>.+)\n\s+Swaps: (?P<swaps>.+)\n\s+File system inputs: (?P<file_system_inputs>.+)\n\s+File system outputs: (?P<file_system_outputs>.+)\n\s+Socket messages sent: (?P<socket_messages_sent>.+)\n\s+Socket messages received: (?P<socket_messages_received>.+)\n\s+Signals delivered: (?P<signals_delivered>.+)\n\s+Page size \(bytes\): (?P<page_size_bytes>.+)\n\s+Exit status: (?P<exit_status>.+)\n.*""")
 
 TILEDB_STATS_FILE_PATH = "./tiledb_stats.txt"
-
-
-def read_host_context() -> Dict[str, str]:
-    """Run the context generator process and collects the JSON printed output"""
-    context_process = subprocess.Popen(
-        ["python", "context_generator.py"], stdout=PIPE, stderr=PIPE
-    )
-    stdout, stderr = context_process.communicate()
-    if context_process.returncode != 0:
-        raise RuntimeError(f"error reading host context information: {stderr.decode('utf-8')}")
-
-    stats = json.loads(stdout.decode("utf-8"))
-    return stats
 
 
 def build_profile_data(output: str, prof1: Optional[str], prof2: Optional[str]) -> ProfileData:
@@ -54,7 +42,7 @@ def build_profile_data(output: str, prof1: Optional[str], prof2: Optional[str]) 
         tiledb_stats=read_tiledb_stats_output(),
         somacore_version=somacore.__version__,
         tiledbsoma_version=tiledbsoma.__version__,
-        host_context=read_host_context(),
+        host_context=host_context(),
         custom_out=[prof1, prof2],
         **gnu_time_output_values
     )
