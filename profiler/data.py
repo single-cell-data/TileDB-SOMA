@@ -1,4 +1,5 @@
 import errno
+import glob
 import hashlib
 import json
 import os
@@ -42,13 +43,12 @@ class ProfileData:
     custom_out: List[Optional[str]]
 
 
-PROFILE_PATH = "./profiling_runs"
+DEFAULT_PROFILE_DB_PATH = "./profiling_db"
 
 
-def command_key(command: str) -> str:
+def _command_key(command: str) -> str:
     """Remove space characters from profileDB command keys."""
     return hashlib.md5(command.encode('utf-8')).hexdigest()
-
 
 
 class ProfileDB(ABC):
@@ -76,7 +76,7 @@ class FileBasedProfileDB(ProfileDB):
     runs database. Each run is stored as a separate file under a subdirectory structured as `<command>/<timestamp>`.
     """
 
-    def __init__(self, path: str = PROFILE_PATH):
+    def __init__(self, path: str = DEFAULT_PROFILE_DB_PATH):
         self.path = path
         if not os.path.exists(self.path):
             os.mkdir(self.path)
@@ -84,33 +84,33 @@ class FileBasedProfileDB(ProfileDB):
     def __str__(self):
         result = ""
         if os.path.exists(self.path):
-            for command in os.listdir(self.path):
-                result += (
-                    f"{command}: "
-                    + str(len(os.listdir(f"{self.path}/{command}")))
-                    + "\n"
-                )
+            for command_hash in glob.glob(self.path + "/*"):
+                with open(os.path.join(command_hash, "command.txt"), "r") as f:
+                    command = f.read()
+                n_runs = len(glob.glob(os.path.join(command_hash, "*.json")))
+                result += f"[{command_hash.split('/')[-1]}] \"{command}\": {n_runs} runs\n"
             return result
         return ""
 
     def find(self, command) -> List[ProfileData]:
-        key = command_key(command)
+        key = _command_key(command)
         if not os.path.exists(f"{self.path}/{key}"):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), key)
-        dir_list = os.listdir(f"{self.path}/{key}")
         result = []
-        for filename in dir_list:
-            with open(f"{self.path}/{key}/{filename}", "r") as file:
+        for filename in glob.glob(f"{self.path}/{key}/*.json"):
+            with open(filename, "r") as file:
                 result.append(ProfileData(**json.load(file)))
         return result
 
     def add(self, data: ProfileData):
-        key = command_key(data.command)
+        key = _command_key(data.command)
         os.makedirs(f"{self.path}/{key}", exist_ok=True)
+        with open(f"{self.path}/{key}/command.txt", "w") as f:
+            f.write(data.command.strip())
 
         key2 = data.timestamp
 
-        filename = f"{self.path}/{key}/{key2}.run"
+        filename = f"{self.path}/{key}/{key2}.json"
         with open(filename, "w") as f:
             json.dump(attr.asdict(data), f)
 
