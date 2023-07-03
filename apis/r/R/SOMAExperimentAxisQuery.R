@@ -1116,7 +1116,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         paste0(df_name, soma_joinids$as_vector())
       } else {
         index <- match.arg(arg = index, choices = soma_df$attrnames())
-        soma_reader(index)$GetColumnByName(index)$as_vector()
+        soma_reader(index)$concat()$GetColumnByName(index)$as_vector()
       }
       if (isTRUE(column_names)) {
         column_names <- NULL
@@ -1125,7 +1125,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obj <- if (isFALSE(column_names) || rlang::is_na(column_names)) {
         as.data.frame(matrix(nrow = length(ids), ncol = 0L))
       } else {
-        as.data.frame(soma_reader(column_names)$to_data_frame())
+        as.data.frame(soma_reader(column_names)$concat()$to_data_frame())
       }
       row.names(obj) <- ids
       return(obj)
