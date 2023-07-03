@@ -1,7 +1,7 @@
 import errno
+import hashlib
 import json
 import os
-import re
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
@@ -12,7 +12,7 @@ import attr
 class ProfileData:
     """This class represents the data stored per run"""
     command: str
-    datetime: str
+    timestamp: float
     tiledb_stats: Optional[str]
     somacore_version: str
     tiledbsoma_version: str
@@ -42,19 +42,13 @@ class ProfileData:
     custom_out: List[Optional[str]]
 
 
-def extract_key_from_filename(filename: str) -> str:
-    """Extracts DB key for stats from the corresponding filename"""
-    match = re.match(r"(.+)\.run", filename)
-    assert match
-    return match.groups()[0]
-
-
 PROFILE_PATH = "./profiling_runs"
 
 
 def command_key(command: str) -> str:
     """Remove space characters from profileDB command keys."""
-    return command.replace(" ", "_").replace("/", "_").replace(".", "_")
+    return hashlib.md5(command.encode('utf-8')).hexdigest()
+
 
 
 class ProfileDB(ABC):
@@ -113,7 +107,9 @@ class FileBasedProfileDB(ProfileDB):
     def add(self, data: ProfileData):
         key = command_key(data.command)
         os.makedirs(f"{self.path}/{key}", exist_ok=True)
-        key2 = data.datetime
+
+        key2 = data.timestamp
+
         filename = f"{self.path}/{key}/{key2}.run"
         with open(filename, "w") as f:
             json.dump(attr.asdict(data), f)

@@ -37,7 +37,7 @@ def build_profile_data(output: str, prof1: Optional[str], prof2: Optional[str]) 
     gnu_time_output_values["elapsed_time_sec"] = elapsed_to_seconds(gnu_time_output_values["elapsed_time_sec"])
 
     data = ProfileData(
-        datetime=str(datetime.utcnow()),
+        timestamp=datetime.utcnow().timestamp(),
         tiledb_stats=read_tiledb_stats_output(),
         somacore_version=somacore.__version__,
         tiledbsoma_version=tiledbsoma.__version__,

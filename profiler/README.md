@@ -11,7 +11,7 @@ This will capture the following context information and metrics in a databased, 
 
 Context info:
 * command
-* datetime
+* timestamp
 * tiledb_stats
 * somacore_version
 * tiledbsoma_version
