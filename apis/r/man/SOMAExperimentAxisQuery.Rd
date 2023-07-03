@@ -99,7 +99,7 @@ axis.}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-obs"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-obs}{}}}
 \subsection{Method \code{obs()}}{
-Retrieve obs \code{\link[arrow:Table]{arrow::Table}}
+Retrieve obs \link{TableReadIter}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$obs(column_names = NULL)}\if{html}{\out{</div>}}
 }
@@ -208,6 +208,13 @@ in the specified layer's dimensions (e.g., \code{soma_dim_0}). However,
 dimensions can be named using values from any \code{obs} or \code{var} column that
 uniquely identifies each record by specifying the \code{obs_index} and
 \code{var_index} arguments.
+
+For layers in \code{obsm} or \code{varm}, the column axis (the axis not
+indexed by \dQuote{\code{obs}} or \dQuote{\code{var}}) is set to the
+range of values present in \dQuote{\code{soma_dim_1}}; this ensures
+that gaps in this axis are preserved (eg. when a query for
+\dQuote{\code{obs}} that results in selecting entries that are all zero
+for a given PC)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_sparse_matrix(
   collection,

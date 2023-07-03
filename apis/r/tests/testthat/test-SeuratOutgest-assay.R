@@ -67,11 +67,11 @@ test_that("Load assay from ExperimentQuery mechanics", {
   ))
   expect_identical(
     colnames(named),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     rownames(named),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
 
   # Test `X_layers` assertions
@@ -152,11 +152,11 @@ test_that("Load assay from sliced ExperimentQuery", {
   ))
   expect_identical(
     rownames(named),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(
     colnames(named),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
 })
 
@@ -206,12 +206,12 @@ test_that("Load assay from indexed ExperimentQuery", {
   ))
   expect_identical(
     rownames(named),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(rownames(named), var_label_values)
   expect_identical(
     colnames(named),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(colnames(named), obs_label_values)
 })

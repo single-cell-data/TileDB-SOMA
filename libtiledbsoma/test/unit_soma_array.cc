@@ -398,3 +398,25 @@ TEST_CASE("SOMAArray: metadata") {
     REQUIRE(soma_array->metadata_num() == 0);
     soma_array->close();
 }
+
+TEST_CASE("SOMAArray: Test buffer size") {
+    // Test soma.init_buffer_bytes by making buffer small
+    // enough to read one byte at a time so that read_next
+    // must be called 10 times instead of placing all data
+    // in buffer within a single read
+    Config cfg;
+    cfg["soma.init_buffer_bytes"] = 8;
+    auto ctx = std::make_shared<Context>(cfg);
+
+    std::string base_uri = "mem://unit-test-array";
+    auto [uri, expected_nnz] = create_array(base_uri, *ctx);
+    auto [expected_d0, expected_a0] = write_array(uri, ctx);
+    auto soma_array = SOMAArray::open(TILEDB_READ, ctx, uri);
+
+    size_t loops = 0;
+    soma_array->submit();
+    while (auto batch = soma_array->read_next())
+        ++loops;
+    REQUIRE(loops == 10);
+    soma_array->close();
+}

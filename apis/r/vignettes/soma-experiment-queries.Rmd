@@ -66,10 +66,63 @@ Number of variables:
 query$n_vars
 ```
 
-We can also extract any data component from the experiment. Here we'll read in the `obs` data frame from the query.
+We can also extract any data component from the experiment. Here we'll read in the `obs` data frame from the query using `obs()` which returns an iterator of `arrow::Table`. The iterator is useful when the data is too large to load in memory allowing to stream the data in chunks. This applies to `var()` as well.
+
+To load the data in memory you can concatenate all chunks of the iterator as shown below.
 
 ```{r}
-query$obs()
+iterator <- query$obs()
+obs <- iterator$concat()
+obs
+```
+As a reminder `arrow:Table` can be easily cast into a `tibble`
+
+```{r}
+obs$to_data_frame()
+```
+
+Alternatively, you can use the iterator, which retrieves data in chunks that are smaller than the `soma.init_buffer_bytes` context field. You can use the iterator's method `$read_next()` to load a chunk in memory.
+
+```{r}
+iterator <- query$obs()
+iterator$read_next()
+```
+
+In this example the full `obs` table is relatively small and fits all in one chunk.
+
+For a bigger `SOMADataFrame` you can check if the iteration has finished by checking the logical `$read_complete()`.
+
+Here we demonstrate by creating a new iterator.
+
+```{r}
+iterator <- experiment$obs$read()
+iterator$read_complete()
+```
+```{r}
+iterator$read_next()
+iterator$read_complete()
+```
+
+We can also access the expression via `X()`. 
+
+Similarly to `obs()` and `var()`, `X()` is intended for iteration, but in this case we have access to two different iterators, and thus `X()` returns a reader that gives you access to an iterator for `arrow::Table` and one for `Matrix::sparse_matrix`.
+
+Let's take a look at the Arrow Table iterator:
+
+```{r}
+reader <- query$X(layer_name = "counts")
+table_irerator <- reader$tables()
+table_irerator$read_next()
+```
+
+As in the `obs` example the data is small enough to fit in one chunk. For bigger data you can user `iterator$read_complete()` to check the status of iteration and `iterator$concat()` to concatenate the rest of the chunks.
+
+The iterator for  `Matrix::sparse_matrix` works in the same way. Keep in mind that the matrix format is `dgTMatrix` as it is the most memory-efficient and the only format type that can be easily iterated. And most importantly, the resulting object is a "view" of the full matrix with the original shape and indexes but only with data corresponding to the query coordinates or filters (see section below).
+
+```{r}
+reader <- query$X(layer_name = "counts")
+iterator <- reader$sparse_matrix()
+str(iterator$read_next())
 ```
 
 ## Adding filters
@@ -104,16 +157,27 @@ query$n_obs
 As before, we can load the `obs` data frame into memory but now it only includes the filtered observations.
 
 ```{r}
-query$obs(column_names = c("obs_id", "nCount_RNA"))$to_data_frame()
+obs <- query$obs(column_names = c("obs_id", "nCount_RNA"))$concat()
+obs$to_data_frame()
 ```
 
-We can also access the expression data for these filtered cells via `X()`:
+As well as the X matrix in two different formats:
+
+`arrow::Table`
 
 ```{r}
-query$X(layer_name = "counts")
+query$X("counts")$tables()$concat()
+```
+ 
+`Matrix::sparse_matrix` in `dgTMatrix` format.
+
+```{r}
+str(query$X("counts")$sparse_matrix()$concat())
 ```
 
-## Export to a sparse matrix
+For a re-indexed and re-shaped sparse matrix see the section below.
+
+## Export to an annotated re-indexed sparse matrix
 
 Any component of the queried `SOMAExperiment` can be exported to a [sparse matrix][Matrix::sparseMatrix-class] using the `to_sparse_matrix()` method.
 

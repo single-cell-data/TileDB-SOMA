@@ -113,11 +113,11 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(
     rownames(obj),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(
     colnames(obj),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SeuratObject::Assays(obj), 'RNA')
   expect_false(all(query$obs_df$attrnames() %in% names(obj[[]])))
@@ -334,11 +334,11 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(
     rownames(obj),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(
     colnames(obj),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     lapply(list(names(obj)), sort),
@@ -457,11 +457,11 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(
     rownames(obj),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(
     colnames(obj),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     lapply(list(names(obj)), sort),

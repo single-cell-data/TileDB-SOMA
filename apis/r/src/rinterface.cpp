@@ -44,34 +44,9 @@ namespace tdbs = tiledbsoma;
 Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children);
 Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children);
 
-//' Read SOMA Data From a Given URI
-//'
-//' This functions access a given SOMA URI and returns a complete data.frame. It does
-//' not iterate; if your data is large than the initial read size consider the \code{sr_*}
-//' functions.
-//'
-//' @param uri Character value with URI path to a SOMA data set
-//' @param colnames Optional vector of character value with the name of the columns to retrieve
-//' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
-//' no query condition
-//' @param dim_points Optional named list with vector of data points to select on the given
-//' dimension(s). Each dimension can be one entry in the list.
-//' @param dim_ranges Optional named list with two-column matrix where each row select a range
-//' for the given dimension. Each dimension can be one entry in the list.
-//' @param batch_size Character value with the desired batch size, defaults to \sQuote{auto}
-//' @param result_order Character value with the desired result order, defaults to \sQuote{auto}
-//' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
-//' which lets prior setting prevail, any other value is set as new logging level.
-//' @param config Optional character vector containing TileDB config.
-//' @return A List object with two pointers to Arrow array data and schema is returned
-//' @examples
-//' \dontrun{
-//' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-//' z <- soma_array_reader(uri)
-//' arrow::RecordBatch$import_from_c(z$array_data, z$schema)
-//' }
-//' @export
-// [[Rcpp::export]]
+
+//' @noRd
+// [[Rcpp::export(soma_array_reader_impl)]]
 Rcpp::List soma_array_reader(const std::string& uri,
                              Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                              Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,

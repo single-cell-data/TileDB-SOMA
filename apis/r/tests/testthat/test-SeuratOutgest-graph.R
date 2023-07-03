@@ -53,11 +53,11 @@ test_that("Load graph from ExperimentQuery mechanics", {
   expect_identical(dim(named), c(n_obs, n_obs))
   expect_identical(
     rownames(named),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     colnames(named),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SeuratObject::DefaultAssay(named), 'RNA')
 
@@ -141,11 +141,11 @@ test_that("Load graph from sliced ExperimentQuery", {
   expect_identical(dim(named), c(n_obs_slice, n_obs_slice))
   expect_identical(
     rownames(named),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(
     colnames(named),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SeuratObject::DefaultAssay(named), 'RNA')
 })
@@ -216,12 +216,12 @@ test_that("Load graph from indexed ExperimentQuery", {
   expect_identical(dim(named), c(n_obs_select, n_obs_select))
   expect_identical(
     rownames(named),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(rownames(named), obs_label_values)
   expect_identical(
     colnames(named),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(colnames(named), obs_label_values)
   expect_identical(SeuratObject::DefaultAssay(named), 'RNA')

@@ -275,7 +275,7 @@ class ColumnBuffer {
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> alloc(
-        std::shared_ptr<Array> array,
+        ArraySchema schema,
         std::string_view name,
         tiledb_datatype_t type,
         bool is_var,

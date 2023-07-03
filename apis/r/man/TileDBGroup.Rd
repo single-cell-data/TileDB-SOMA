@@ -10,7 +10,7 @@ A \code{TileDBArray} or \code{TileDBGroup}.
 Base class for interacting with TileDB groups (lifecycle: experimental)
 }
 \section{Super class}{
-\code{tiledbsoma::TileDBObject} -> \code{TileDBGroup}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBGroup}
 }
 \section{Methods}{
 \subsection{Public methods}{

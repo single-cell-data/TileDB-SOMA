@@ -74,12 +74,12 @@ test_that("SOMASparseNDArray creation", {
 })
 
 test_that("SOMASparseNDArray read_sparse_matrix", {
-  uri <- withr::local_tempdir("sparse-ndarray")
+  uri <- withr::local_tempdir("sparse-ndarray-3")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
   # For this test, write 9x9 data into 10x10 array. Leaving the last row & column
   # empty touches corner cases with setting dims() correctly
-  mat <- create_sparse_matrix_with_int_dims(9, 9)
+  mat <- create_sparse_matrix_with_int_dims(10, 10)
   ndarray$write(mat)
   expect_equal(as.numeric(ndarray$shape()), c(10, 10))
   ndarray$close()
@@ -334,4 +334,44 @@ test_that("SOMASparseNDArray timestamped ops", {
   snda <- SOMASparseNDArrayOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t10))
   expect_equal(sum(snda$read()$sparse_matrix()$concat()), 1)
   snda$close()
+})
+
+test_that("SOMASparseNDArray compatibility with shape >= 2^31 - 1", {
+  uri <- create_and_populate_32bit_sparse_nd_array(
+    uri = withr::local_tempdir("soma-32bit-sparse-nd-array")
+  )
+
+  # Coords for all non-zero entries in the array
+  all_coords <- bit64::as.integer64(c(0, 2^31 - 2, 2^31 - 1))
+  # Coords within R Matrix limits
+  safe_coords <- all_coords[1:2]
+
+  snda <- SOMASparseNDArrayOpen(uri, mode = "READ")
+
+  expect_silent(snda$read())
+  expect_silent(snda$read()$tables())
+
+  # Arrow table contains all data
+  tbl <- snda$read()$tables()$concat()
+  expect_identical(tbl$soma_data$as_vector(), c(1L, 2L, 3L))
+  expect_identical(tbl$soma_dim_0$as_vector(), as.integer(all_coords))
+
+  # Warning upon creation of SparseReadIter
+  expect_warning(
+    snda_reader <- snda$read()$sparse_matrix(),
+    "Array's shape exceeds"
+  )
+
+  # Error when attempting to create a sparse matrix with coordinates >= 2^31-1
+  expect_error(
+    snda_reader$concat(),
+    "Query contains 0-based coordinates outside"
+  )
+
+  # Sparse matrix can be created from coordinates within [0, 2^31 - 1]
+  suppressWarnings(
+    mat <- snda$read(list(safe_coords, safe_coords))$sparse_matrix()$concat()
+  )
+  expect_identical(dim(mat), as.integer(c(2^31 - 1, 2^31 - 1)))
+  expect_length(mat@i, 2)
 })

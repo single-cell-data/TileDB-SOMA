@@ -19,14 +19,15 @@ SparseReadIter <- R6::R6Class(
     #' otherwise \link{matrixZeroBasedView}.
     initialize = function(sr, shape, zero_based=FALSE) {
       #TODO implement zero_based argument, currently doesn't do anything
-      stopifnot("Array must have two dimensions" = length(shape) == 2,
-                "Array dimensions must not exceed '.Machine$integer.max'" = any(shape < .Machine$integer.max))
+      stopifnot("'shape' must have two dimensions" = length(shape) == 2,
+                "'shape' must not exceed '.Machine$integer.max'" =
+                  all(shape <= .Machine$integer.max))
 
       # Initiate super class
-        super$initialize(sr)
-        private$repr <- "T"
-        private$shape <- shape
-        private$zero_based <- zero_based
+      super$initialize(sr)
+      private$repr <- "T"
+      private$shape <- shape
+      private$zero_based <- zero_based
     },
 
 
