@@ -1395,7 +1395,7 @@ def _ingest_uns_node(
             logging.log_io(msg, msg)
             return
 
-        if value.dtype.char == "U" or value.dtype.char == "O":
+        if value.dtype.char in ("U", "O"):
             # In the wild it's quite common to see arrays of strings in uns data.
             # Frequent example: uns["louvain_colors"].
             _ingest_uns_string_array(
@@ -1455,8 +1455,8 @@ def _ingest_uns_string_array(
     df_uri = _util.uri_joinpath(coll.uri, key)
     df = pd.DataFrame(
         data={
-            "soma_joinid": np.asarray(range(n), dtype=np.int64),
-            "values": [str(e) for e in value],
+            "soma_joinid": np.arange(n, dtype=np.int64),
+            "values": [str(e) if e else "" for e in value],
         }
     )
     df.set_index("soma_joinid", inplace=True)
