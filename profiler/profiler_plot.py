@@ -8,7 +8,7 @@ import attr
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from data import FileBasedProfileDB, ProfileData, command_key
+from .data import FileBasedProfileDB, ProfileData
 
 
 def collect_tiledb_stats(data: ProfileData) -> Dict[str, Union[int, float]]:

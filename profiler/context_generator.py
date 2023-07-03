@@ -1,21 +1,22 @@
 import json
 import os
-import subprocess
 import sys
 from typing import Dict
 
 import psutil
+from git import Repo
 
 
 def host_context() -> Dict[str, str]:
     physical_mem_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
 
     def get_git_revision_hash() -> str:
-        return (
-            subprocess.check_output(["git", "rev-parse", "HEAD"])
-            .decode("ascii")
-            .strip()
-        )
+        # determine current git hash
+        try:
+            repo = Repo(search_parent_directories=True)
+            return repo.head.object.hexsha
+        except Exception:
+            return "unknown"
 
     swap_mem = psutil.swap_memory()
 
