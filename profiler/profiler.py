@@ -20,9 +20,9 @@ GNU_TIME_OUTPUT_REGEXP = re.compile(r""".*Command being timed: \"(?P<command>.+)
 TILEDB_STATS_FILE_PATH = "./tiledb_stats.json"
 
 
-def build_profile_data(output: str, prof1: Optional[str], prof2: Optional[str]) -> ProfileData:
+def build_profile_data(stderr_: str, stdout_: str, prof1: Optional[str], prof2: Optional[str]) -> ProfileData:
     """Parse the time utility output to extract performance and memory metrics"""
-    gnu_time_output_values = GNU_TIME_OUTPUT_REGEXP.search(output)
+    gnu_time_output_values = GNU_TIME_OUTPUT_REGEXP.search(stderr_)
     assert gnu_time_output_values
 
     gnu_time_output_values = gnu_time_output_values.groupdict()
@@ -39,6 +39,8 @@ def build_profile_data(output: str, prof1: Optional[str], prof2: Optional[str]) 
     gnu_time_output_values["elapsed_time_sec"] = elapsed_to_seconds(gnu_time_output_values["elapsed_time_sec"])
 
     data = ProfileData(
+        stdout=stdout_,
+        stderr=stderr_,
         timestamp=datetime.utcnow().timestamp(),
         tiledb_stats=read_tiledb_stats_output(),
         somacore_version=somacore.__version__,
@@ -136,10 +138,10 @@ def main():
     if p2 is not None:
         p2.wait()
 
-    o: str = p_stdout.decode("utf-8")
-    print(f"The benchmarked process output:\n {o}", file=stderr)
+    p_stdout = p_stdout.decode("utf-8")
+    print(f"The benchmarked process output:\n {p_stdout}", file=stderr)
     # Parse the generated output from the time utility
-    data: ProfileData = build_profile_data(p_stderr.decode("utf-8"), args.prof1_output, args.prof2_output)
+    data: ProfileData = build_profile_data(p_stderr.decode("utf-8"), p_stdout, args.prof1_output, args.prof2_output)
     # Add the run data to DB
     db: ProfileDB = FileBasedProfileDB()
     db.add(data)

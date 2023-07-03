@@ -14,6 +14,8 @@ class ProfileData:
     """This class represents the data stored per run"""
     command: str
     timestamp: float
+    stdout: str
+    stderr: str
     tiledb_stats: Dict[str, Any]
     somacore_version: str
     tiledbsoma_version: str
