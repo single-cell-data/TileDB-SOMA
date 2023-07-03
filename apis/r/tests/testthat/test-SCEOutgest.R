@@ -88,17 +88,31 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_warning(obj <- query$to_sce())
   expect_s4_class(obj, 'SingleCellExperiment')
   expect_identical(dim(obj), c(n_var, n_obs))
-  expect_identical(rownames(obj), paste0('var', query$var_joinids()$as_vector()))
-  expect_identical(colnames(obj), paste0('obs', query$obs_joinids()$as_vector()))
-  expect_true(all(query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))))
+  expect_identical(
+    rownames(obj),
+    paste0('var', query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(obj),
+    paste0('obs', query$obs_joinids()$as_vector())
+  )
+  expect_true(all(
+    query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))
+  ))
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(obj)),
+    c('counts', 'logcounts')
+  )
   for (slot in SummarizedExperiment::assayNames(obj)) {
     expect_s4_class(mat <- SummarizedExperiment::assay(obj, slot), 'dgCMatrix')
     expect_identical(rownames(mat), rownames(obj))
     expect_identical(colnames(mat), colnames(obj))
   }
-  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('ICA', 'PCA', 'UMAP'))
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(obj)),
+    c('ICA', 'PCA', 'UMAP')
+  )
   expect_is(pca <- SingleCellExperiment::reducedDim(obj, 'PCA'), 'matrix')
   expect_identical(dim(pca), c(n_obs, n_pcs))
   expect_identical(rownames(pca), colnames(obj))
@@ -134,22 +148,32 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(
     rownames(obj),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(
     colnames(obj),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
-  expect_false(all(query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))))
-  expect_true(all(setdiff(query$obs_df$attrnames(), 'baz') %in% names(SingleCellExperiment::colData(obj))))
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(obj)),
+    c('counts', 'logcounts')
+  )
+  expect_false(all(
+    query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))
+  ))
+  expect_true(all(
+    setdiff(query$obs_df$attrnames(), 'baz') %in% names(SingleCellExperiment::colData(obj))
+  ))
   for (slot in SummarizedExperiment::assayNames(obj)) {
     expect_s4_class(mat <- SummarizedExperiment::assay(obj, slot), 'dgCMatrix')
     expect_identical(rownames(mat), rownames(obj))
     expect_identical(colnames(mat), colnames(obj))
   }
-  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('ICA', 'PCA', 'UMAP'))
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(obj)),
+    c('ICA', 'PCA', 'UMAP')
+  )
   for (rd in SingleCellExperiment::reducedDimNames(obj)) {
     expect_is(mat <- SingleCellExperiment::reducedDim(obj, rd), 'matrix')
     expect_identical(nrow(mat), n_obs)
@@ -176,11 +200,17 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_identical(SingleCellExperiment::reducedDimNames(obj), 'UMAP')
   expect_error(SingleCellExperiment::reducedDim(obj, 'PCA'))
   # # Test suppress graphs
-  expect_no_condition(obj <- query$to_sce(obsm_layers = FALSE, obsp_layers = FALSE))
+  expect_no_condition(
+    obj <- query$to_sce(obsm_layers = FALSE, obsp_layers = FALSE)
+  )
   expect_length(SingleCellExperiment::colPairNames(obj), 0L)
   # Test suppress cell-level meta data
-  expect_no_condition(obj <- query$to_sce(obsm_layers = FALSE, obs_column_names = FALSE))
-  expect_false(any(query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))))
+  expect_no_condition(
+    obj <- query$to_sce(obsm_layers = FALSE, obs_column_names = FALSE)
+  )
+  expect_false(any(
+    query$obs_df$attrnames() %in% names(SingleCellExperiment::colData(obj))
+  ))
   # Test `X_layers` assertions
   expect_error(query$to_sce(FALSE))
   expect_error(query$to_sce(1))
@@ -309,11 +339,23 @@ test_that("Load SCE object from sliced ExperimentQuery", {
   expect_no_condition(obj <- query$to_sce())
   expect_s4_class(obj, 'SingleCellExperiment')
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
-  expect_identical(rownames(obj), paste0('var', query$var_joinids()$as_vector()))
-  expect_identical(colnames(obj), paste0('obs', query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(obj),
+    paste0('var', query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(obj),
+    paste0('obs', query$obs_joinids()$as_vector())
+  )
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
-  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('PCA', 'UMAP'))
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(obj)),
+    c('counts', 'logcounts')
+  )
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(obj)),
+    c('PCA', 'UMAP')
+  )
   expect_identical(SingleCellExperiment::colPairNames(obj), 'connectivities')
   expect_identical(SingleCellExperiment::rowPairNames(obj), 'network')
   # Test named
@@ -322,15 +364,21 @@ test_that("Load SCE object from sliced ExperimentQuery", {
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(
     rownames(obj),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(
     colnames(obj),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
-  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('PCA', 'UMAP'))
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(obj)),
+    c('counts', 'logcounts')
+  )
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(obj)),
+    c('PCA', 'UMAP')
+  )
   expect_identical(SingleCellExperiment::colPairNames(obj), 'connectivities')
   expect_identical(SingleCellExperiment::rowPairNames(obj), 'network')
 })
@@ -427,28 +475,48 @@ test_that("Load SCE object from indexed ExperimentQuery", {
   expect_no_condition(obj <- query$to_sce())
   expect_s4_class(obj, 'SingleCellExperiment')
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
-  expect_identical(rownames(obj), paste0('var', query$var_joinids()$as_vector()))
-  expect_identical(colnames(obj), paste0('obs', query$obs_joinids()$as_vector()))
+  expect_identical(
+    rownames(obj),
+    paste0('var', query$var_joinids()$as_vector())
+  )
+  expect_identical(
+    colnames(obj),
+    paste0('obs', query$obs_joinids()$as_vector())
+  )
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
-  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('PCA', 'UMAP'))
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(obj)),
+    c('counts', 'logcounts')
+  )
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(obj)),
+    c('PCA', 'UMAP')
+  )
   expect_identical(SingleCellExperiment::colPairNames(obj), 'connectivities')
   expect_identical(SingleCellExperiment::rowPairNames(obj), 'network')
   # Test named
-  expect_no_condition(obj <- query$to_sce(obs_index = 'baz', var_index = 'quux'))
+  expect_no_condition(
+    obj <- query$to_sce(obs_index = 'baz', var_index = 'quux')
+  )
   expect_s4_class(obj, 'SingleCellExperiment')
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(
     rownames(obj),
-    query$var('quux')$GetColumnByName('quux')$as_vector()
+    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
   )
   expect_identical(
     colnames(obj),
-    query$obs('baz')$GetColumnByName('baz')$as_vector()
+    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
   )
   expect_identical(SingleCellExperiment::mainExpName(obj), 'RNA')
-  expect_identical(sort(SummarizedExperiment::assayNames(obj)), c('counts', 'logcounts'))
-  expect_identical(sort(SingleCellExperiment::reducedDimNames(obj)), c('PCA', 'UMAP'))
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(obj)),
+    c('counts', 'logcounts')
+  )
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(obj)),
+    c('PCA', 'UMAP')
+  )
   expect_identical(SingleCellExperiment::colPairNames(obj), 'connectivities')
   expect_identical(SingleCellExperiment::rowPairNames(obj), 'network')
 })
