@@ -81,7 +81,7 @@ def main():
         "-j",
         "--json",
         required=False,
-        help="Displays results as JSON (Pandas DataFrame \"columns\" format)",
+        help='Displays results as JSON (Pandas DataFrame "columns" format)',
         action="store_true",
     )
     parser.add_argument(

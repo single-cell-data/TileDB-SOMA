@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 import attr
 
@@ -12,6 +12,7 @@ import attr
 @attr.define
 class ProfileData:
     """This class represents the data stored per run"""
+
     command: str
     timestamp: float
     stdout: str
@@ -50,7 +51,7 @@ DEFAULT_PROFILE_DB_PATH = "./profiling_db"
 
 def _command_key(command: str) -> str:
     """Remove space characters from profileDB command keys."""
-    return hashlib.md5(command.encode('utf-8')).hexdigest()
+    return hashlib.md5(command.encode("utf-8")).hexdigest()
 
 
 class ProfileDB(ABC):
@@ -90,7 +91,9 @@ class FileBasedProfileDB(ProfileDB):
                 with open(os.path.join(command_hash, "command.txt"), "r") as f:
                     command = f.read()
                 n_runs = len(glob.glob(os.path.join(command_hash, "*.json")))
-                result += f"[{command_hash.split('/')[-1]}] \"{command}\": {n_runs} runs\n"
+                result += (
+                    f"[{command_hash.split('/')[-1]}] \"{command}\": {n_runs} runs\n"
+                )
             return result
         return ""
 
