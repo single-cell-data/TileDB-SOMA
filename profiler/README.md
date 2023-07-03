@@ -1,52 +1,64 @@
 This tool is a profiler for [SOMA](https://github.com/single-cell-data/SOMA/tree/main) workloads collecting both performance and memory usage across runs and can also be used for detecting performance or memory hot spots.
 
-Here's an example for how to profile a SOMA script (here ```tests/objects.py```)
+Here's an example for how to profile a SOMA script (here `tests/objects.py`)
 
-This example shows how to generate the profile data for a given SOMA run (here ```tests/objects.py```)
+This example shows how to generate the profile data for a given SOMA run (here `tests/objects.py`)
 ```shell
-python profilerß.py python tests/objects.py
+python -m profiler python tests/objects.py
 ```
 
-The profiled data includes the following items (for the time being):
+This will capture the following context information and metrics in a databased, stored under `profiling_runs`:
 
-* process: The process and its parameters to be profile 
-* custom_out: list of custom profilers to be stored
-* date
-* time
-
-Time (perf) stats:
-
-* rt: Real time
-* ut: User time
-* st: System time
-
-Memory stats:
-
-* max_set_size
-* page_reclaims
-* page_faults
-* cycles_elapsed
-* peak_memory
+Context info:
+* command
+* datetime
 * tiledb_stats
 * somacore_version
 * tiledbsoma_version
+* host_context
+* custom_out
 
-Context data:
+Metrics captured:
+* user_time_sec
+* system_time_sec
+* pct_of_cpu
+* elapsed_time_sec
+* avg_shared_text_sz_kb
+* avg_unshared_text_sz_kb
+* avg_stack_sz_kb
+* avg_total_sz_kb
+* max_res_set_sz_kb
+* avg_res_set_sz_kb
+* major_page_faults
+* minor_page_faults
+* voluntary_context_switches
+* involuntary_context_switches
+* swaps
+* file_system_inputs
+* file_system_outputs
+* socket_messages_sent
+* socket_messages_received
+* signals_delivered
+* page_size_bytes
+* exit_status
 
-* uname: uname -a
-* total_virtual_mem
-* total_physical_mem
-* swap_mem 
-* cpu_count
-* python_version
 
-We also store TileDB stats.
-
-This example shows how to use a profiler plot generator on the same generated profile:
+To report the metrics from multiple runs of the profiled script as JSON output:
 ```shell
-python profiler_plot.py python tests/objects.py -m ut
+python -m profiler.report -j python tests/objects.py
 ```
-Finally, this example shows how to use the profiler inside your code (assuming your file is in the same directory as the profiler):
+
+To report on a metric from multiple runs of the profiled script with a graphical plot:
+```shell
+python -m profiler.report  -m <metric_name> python tests/objects.py
+```
+
+The profiling data includes the following metrics:
+
+ 
+
+To capture TileDB stats, you must instrument your command script as follows:
+
 ```code
 from profiler import data
 
@@ -71,4 +83,7 @@ with open("tiledb_stats.txt", "w") as f:
     f.write(my_result.getvalue())
 
 ```
-The profiler automatically reads and stores the content of ```tiledb_stats.txt``` file.
+The profiler automatically reads and stores the content of `tiledb_stats.txt` file.
+
+
+
