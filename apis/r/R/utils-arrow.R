@@ -81,7 +81,8 @@ tiledb_type_from_arrow_type <- function(x) {
     # fixed_size_list = "fixed_size_list",
     # map_of = "map",
     # duration = "duration",
-    stop("Unsupported data type: ", x$name, call. = FALSE)
+    dictionary = "INT32", 			# for a dictionary the 'values' are ints, levels are character
+    stop("Unsupported Arrow data type: ", x$name, call. = FALSE)
   )
 }
 
@@ -292,4 +293,20 @@ check_arrow_schema_data_types <- function(from, to) {
     )
   }
   return(TRUE)
+}
+
+#' Extract levels from dictionaries
+#' @roRD
+extract_levels <- function(arrtbl) {
+    stopifnot("Argument must be an Arrow Table object" = is_arrow_table(arrtbl))
+    nm <- names(AT) 		# we go over the table column by column
+    reslst <- vector(mode = "list", length = length(nm))
+    names(reslst) <- nm		# and fill a named list, entries default to NULL
+    for (n in nm) {
+        if (inherits(infer_type(arrtbl[[n]]), "DictionaryType")) {
+            # levels() extracts the enumeration levels from the factor vector we have
+            reslst[[n]] <- levels(arrtbl[[n]]$as_vector())
+        }
+    }
+    reslst
 }
