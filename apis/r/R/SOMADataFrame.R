@@ -20,10 +20,11 @@ SOMADataFrame <- R6::R6Class(
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
+    #' @param levels Optional list of enumeration (aka factor) levels
     #' @template param-platform-config
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
-    create = function(schema, index_column_names = c("soma_joinid"), platform_config = NULL, internal_use_only = NULL) {
+    create = function(schema, index_column_names = c("soma_joinid"), levels = NULL, platform_config = NULL, internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
@@ -94,9 +95,15 @@ SOMADataFrame <- R6::R6Class(
 
       for (field_name in attr_column_names) {
         field <- schema$GetFieldByName(field_name)
-        tdb_attrs[[field_name]] <- tiledb_attr_from_arrow_field(
-          schema$GetFieldByName(field_name),
-          tiledb_create_options = tiledb_create_options
+        field_type <- tiledb_type_from_arrow_type(field$type)
+
+        tdb_attrs[[field_name]] <- tiledb::tiledb_attr(
+          name = field_name,
+          type = field_type,
+          nullable = field$nullable,
+          ncells = if (field_type == "ASCII") NA_integer_ else 1L,
+          filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters(field_name)),
+          enumeration = levels[[field_name]]
         )
       }
 
@@ -110,13 +117,10 @@ SOMADataFrame <- R6::R6Class(
         tile_order = cell_tile_orders["tile_order"],
         capacity = tiledb_create_options$capacity(),
         allows_dups = tiledb_create_options$allows_duplicates(),
-        offsets_filter_list = tiledb::tiledb_filter_list(
-          tiledb_create_options$offsets_filters()
-        ),
-        validity_filter_list = tiledb::tiledb_filter_list(
-          tiledb_create_options$validity_filters()
+        offsets_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$offsets_filters()),
+        validity_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$validity_filters()),
+        enumerations = if (any(!sapply(levels, is.null))) levels else NULL
         )
-      )
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
