@@ -3,6 +3,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from datetime import datetime
 from subprocess import PIPE
 from sys import stderr
@@ -85,7 +86,7 @@ def main():
         epilog=f"The list of collected metrics by the generic profiler: {data_columns}"
     )
     parser.add_argument(
-        "command", nargs="+", help="The command and its arguments to be profiled"
+        "command", help="The command and its arguments to be profiled (as quoted, single-argument)"
     )
     parser.add_argument(
         "-t",
@@ -118,12 +119,12 @@ def main():
         required=False,
         help="The flamegraph output produced by prof2",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(sys.argv[1:])
 
     print(f"Command to be run: {args.command}", file=stderr)
     # Run the command, using `time -v` to get detailed memory and time"""
     p = subprocess.Popen(
-        [args.gtime_cmd, "-v"] + args.command, stdout=PIPE, stderr=PIPE
+        [args.gtime_cmd, "-v"] + args.command.split(" "), stdout=PIPE, stderr=PIPE
     )
 
     print(f"Running command to be profiled, PID = {p.pid}", file=stderr)

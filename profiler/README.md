@@ -47,12 +47,12 @@ Metrics captured:
 
 To report the metrics from multiple runs of the profiled script as JSON output:
 ```shell
-python -m profiler.report -j python tests/objects.py
+python -m profiler.report -j "python tests/objects.py"
 ```
 
 To report on a metric from multiple runs of the profiled script with a graphical plot:
 ```shell
-python -m profiler.report  -m <metric_name> python tests/objects.py
+python -m profiler.report  -m <metric_name> "python tests/objects.py"
 ```
 
 The profiling data includes the following metrics:
