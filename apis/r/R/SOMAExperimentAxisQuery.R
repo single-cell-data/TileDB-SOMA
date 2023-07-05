@@ -278,7 +278,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
       # Retrieve coo arrow table with query result
       layer <- self$ms[[collection]]$get(layer_name)
-      tbl <- layer$read(coords = coords)$tables()$concat()
+      if (inherits(layer, "SOMADenseNDArray")) {
+        tbl <- layer$read_arrow_table(coords = coords)
+      } else {
+        tbl <- layer$read(coords = coords)$tables()$concat()
+      }
+
 
       # Reindex the coordinates
       # Constructing a matrix with the joinids produces a matrix with
@@ -678,11 +683,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           warning(
             msg1,
             msg2,
-            "  - returning 'NULL' and skipping this dimension reduction",
+            # "  - returning 'NULL' and skipping this dimension reduction",
             call. = FALSE
           )
         }
-        is_sparse
+        invisible(is_sparse)
       }
 
       # Check embeddings/loadings
@@ -768,10 +773,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         obsm_layer <- ms_embed[obsm_layer]
       }
 
-      if (!assert_layer_is_sparse("obsm", self$ms$obsm$get(obsm_layer))) {
-        return(NULL)
-      }
       spdl::info("Reading obsm layer '{}' into memory", obsm_layer)
+      assert_layer_is_sparse("obsm", self$ms$obsm$get(obsm_layer))
       embed_mat <- self$to_sparse_matrix(
         collection = "obsm",
         layer_name = obsm_layer,
@@ -801,10 +804,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           varm_layer <- ms_load[varm_layer]
         }
 
-        if (!assert_layer_is_sparse("varm", self$ms$varm$get(varm_layer))) {
-          return(NULL)
-        }
         spdl::info("Reading varm layer '{}' into memory", varm_layer)
+        assert_layer_is_sparse("varm", self$ms$varm$get(varm_layer))
         load_mat <- self$to_sparse_matrix(
           collection = "varm",
           layer_name = varm_layer,
@@ -874,7 +875,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
       if (is.null(obs_index)) {
         dimnames(mat) <- lapply(dimnames(mat), function(x) paste0("cell", x))
-                                
+
       }
 
       SeuratObject::DefaultAssay(mat) <- private$.measurement_name
