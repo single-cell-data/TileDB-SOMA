@@ -86,7 +86,8 @@ def main():
         epilog=f"The list of collected metrics by the generic profiler: {data_columns}"
     )
     parser.add_argument(
-        "command", help="The command and its arguments to be profiled (as quoted, single-argument)"
+        "command",
+        help="The command and its arguments to be profiled (as quoted, single-argument)",
     )
     parser.add_argument(
         "-t",
