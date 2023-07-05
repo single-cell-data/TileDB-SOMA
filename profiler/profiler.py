@@ -171,4 +171,7 @@ def main():
     db_record_file = db.add(data)
     db.close()
 
-    print(f"{data.command_key=}, {data.command=}, {data.exit_status=}, {db_record_file=}", file=stderr)
+    print(
+        f"{data.command_key=}, {data.command=}, {data.exit_status=}, {db_record_file=}",
+        file=stderr,
+    )
