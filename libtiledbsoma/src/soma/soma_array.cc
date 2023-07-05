@@ -470,6 +470,14 @@ std::vector<std::string> SOMAArray::dimension_names() const {
         result.push_back(dim.name());
     }
     return result;
+
+Enumeration SOMAArray::get_enum(std::string name) {
+    return ArrayExperimental::get_enumeration(*ctx_, *arr_, name);
+}
+
+std::optional<std::string> SOMAArray::get_enum_label_on_attr(std::string name) {
+    auto attr = arr_->schema().attribute(name);
+    return AttributeExperimental::get_enumeration_name(*ctx_, attr);
 }
 
 void SOMAArray::set_metadata(
