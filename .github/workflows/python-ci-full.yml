@@ -23,8 +23,7 @@ jobs:
         # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
         os: [ubuntu-22.04, macos-12]
         # os: [ubuntu-22.04, macos-12, windows-2019]
-        # 3.7.16 workaround: https://github.com/actions/setup-python/issues/682
-        python-version: ['3.7.16', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
@@ -42,5 +41,3 @@ jobs:
       report_codecov: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
       run_lint: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
     secrets: inherit
-
-
