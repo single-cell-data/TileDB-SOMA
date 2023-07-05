@@ -39,7 +39,12 @@
 
 #include <tiledb/tiledb>
 
+<<<<<<< HEAD
 #include "enums.h"
+=======
+#include <tiledb/tiledb_experimental>
+
+>>>>>>> [c++] Support `Enumeration` in C++ Codebase
 #include "managed_query.h"
 
 namespace tiledbsoma {
@@ -486,6 +491,20 @@ class SOMAArray {
      * @return std::vector<std::string> Name of each dimensions.
      */
     std::vector<std::string> dimension_names() const;
+
+     * @brief Get the Enumeration associated with the given name from the
+     * ArraySchema.
+     *
+     * @return Enumeration The enumeration.
+     */
+    Enumeration get_enum(std::string name);
+
+    /**
+     * @brief Get the Enumeration name associated with the given Attr.
+     *
+     * @return std::optional<std::string> The enumeration name if one exists.
+     */
+    std::optional<std::string> get_enum_label_on_attr(std::string name);
 
     /**
      * Set metadata key-value items to an open array. The array must

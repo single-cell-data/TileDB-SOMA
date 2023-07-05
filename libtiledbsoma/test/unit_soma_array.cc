@@ -150,10 +150,10 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         }
         std::vector<int> a0(num_cells_per_fragment, frag_num);
 
-        auto schema = *soma_array->schema();
+        auto tdb_array = std::make_shared<Array>(*ctx, uri, TILEDB_READ);
         auto array_buffer = std::make_shared<ArrayBuffers>();
-        array_buffer->emplace("a0", ColumnBuffer::create(schema, "a0", a0));
-        array_buffer->emplace("d0", ColumnBuffer::create(schema, "d0", d0));
+        array_buffer->emplace("a0", ColumnBuffer::create(tdb_array, "a0", a0));
+        array_buffer->emplace("d0", ColumnBuffer::create(tdb_array, "d0", d0));
 
         // Write data to array
         soma_array->submit();
