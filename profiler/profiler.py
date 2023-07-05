@@ -168,6 +168,7 @@ def main():
     )
     # Add the run data to DB
     db: ProfileDB = FileBasedProfileDB()
-    db.add(data)
-    print(f"DB:\n{db}", file=stderr)
+    db_record_file = db.add(data)
     db.close()
+
+    print(f"{data.command_key=}, {data.command=}, {data.exit_status=}, {db_record_file=}", file=stderr)

@@ -45,6 +45,12 @@ class ProfileData:
     exit_status: int
     custom_out: List[Optional[str]]
 
+    command_key: str = attr.field()
+
+    @command_key.default
+    def _command_key_factory(self):
+        return _command_key(self.command)
+
 
 DEFAULT_PROFILE_DB_PATH = "./profiling_db"
 
@@ -107,7 +113,7 @@ class FileBasedProfileDB(ProfileDB):
                 result.append(ProfileData(**json.load(file)))
         return result
 
-    def add(self, data: ProfileData):
+    def add(self, data: ProfileData) -> str:
         key = _command_key(data.command)
         os.makedirs(f"{self.path}/{key}", exist_ok=True)
         with open(f"{self.path}/{key}/command.txt", "w") as f:
@@ -118,6 +124,8 @@ class FileBasedProfileDB(ProfileDB):
         filename = f"{self.path}/{key}/{key2}.json"
         with open(filename, "w") as f:
             json.dump(attr.asdict(data), f)
+
+        return filename
 
     def close(self):
         pass
