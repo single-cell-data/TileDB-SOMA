@@ -16,8 +16,55 @@ import tiledbsoma
 from .context_generator import host_context
 from .data import FileBasedProfileDB, ProfileData, ProfileDB
 
+GNU_TIME_FORMAT = "Command being timed: \"%C\"\n" \
+                  "User time (seconds): %U\n" \
+                  "System time (seconds): %S\n" \
+                  "Percent of CPU this job got: %P\n" \
+                  "Elapsed (wall clock) time (seconds): %e\n" \
+                  "Average shared text size (kbytes): %X\n" \
+                  "Average unshared data size (kbytes): %D\n" \
+                  "Average stack size (kbytes): %p\n" \
+                  "Average total size (kbytes): %K\n" \
+                  "Maximum resident set size (kbytes): %M\n" \
+                  "Average resident set size (kbytes): %t\n" \
+                  "Major (requiring I/O) page faults: %F\n" \
+                  "Minor (reclaiming a frame) page faults: %R\n" \
+                  "Voluntary context switches: %w\n" \
+                  "Involuntary context switches: %c\n" \
+                  "Swaps: %W\n" \
+                  "File system inputs: %I\n" \
+                  "File system outputs: %O\n" \
+                  "Socket messages sent: %s\n" \
+                  "Socket messages received: %r\n" \
+                  "Signals delivered: %k\n" \
+                  "Page size (bytes): %Z\n" \
+                  "Exit status: %x"
+
 GNU_TIME_OUTPUT_REGEXP = re.compile(
-    r""".*Command being timed: \"(?P<command>.+)\"\n\s+User time \(seconds\): (?P<user_time_sec>.+)\n\s+System time \(seconds\): (?P<system_time_sec>.+)\n\s+Percent of CPU this job got: (?P<pct_of_cpu>.+)%\n\s+Elapsed \(wall clock\) time \(h:mm:ss or m:ss\): (?P<elapsed_time_sec>.+)\n\s+Average shared text size \(kbytes\): (?P<avg_shared_text_sz_kb>.+)\n\s+Average unshared data size \(kbytes\): (?P<avg_unshared_text_sz_kb>.+)\n\s+Average stack size \(kbytes\): (?P<avg_stack_sz_kb>.+)\n\s+Average total size \(kbytes\): (?P<avg_total_sz_kb>.+)\n\s+Maximum resident set size \(kbytes\): (?P<max_res_set_sz_kb>.+)\n\s+Average resident set size \(kbytes\): (?P<avg_res_set_sz_kb>.+)\n\s+Major \(requiring I/O\) page faults: (?P<major_page_faults>.+)\n\s+Minor \(reclaiming a frame\) page faults: (?P<minor_page_faults>.+)\n\s+Voluntary context switches: (?P<voluntary_context_switches>.+)\n\s+Involuntary context switches: (?P<involuntary_context_switches>.+)\n\s+Swaps: (?P<swaps>.+)\n\s+File system inputs: (?P<file_system_inputs>.+)\n\s+File system outputs: (?P<file_system_outputs>.+)\n\s+Socket messages sent: (?P<socket_messages_sent>.+)\n\s+Socket messages received: (?P<socket_messages_received>.+)\n\s+Signals delivered: (?P<signals_delivered>.+)\n\s+Page size \(bytes\): (?P<page_size_bytes>.+)\n\s+Exit status: (?P<exit_status>.+)\n.*"""
+    r".*Command being timed: \"(?P<command>.+)\"\n"
+    r"User time \(seconds\): (?P<user_time_sec>.+)\n"
+    r"System time \(seconds\): (?P<system_time_sec>.+)\n"
+    r"Percent of CPU this job got: (?P<pct_of_cpu>.+)%\n"
+    r"Elapsed \(wall clock\) time \(seconds\): (?P<elapsed_time_sec>.+)\n"
+    r"Average shared text size \(kbytes\): (?P<avg_shared_text_sz_kb>.+)\n"
+    r"Average unshared data size \(kbytes\): (?P<avg_unshared_text_sz_kb>.+)\n"
+    r"Average stack size \(kbytes\): (?P<avg_stack_sz_kb>.+)\n"
+    r"Average total size \(kbytes\): (?P<avg_total_sz_kb>.+)\n"
+    r"Maximum resident set size \(kbytes\): (?P<max_res_set_sz_kb>.+)\n"
+    r"Average resident set size \(kbytes\): (?P<avg_res_set_sz_kb>.+)\n"
+    r"Major \(requiring I/O\) page faults: (?P<major_page_faults>.+)\n"
+    r"Minor \(reclaiming a frame\) page faults: (?P<minor_page_faults>.+)\n"
+    r"Voluntary context switches: (?P<voluntary_context_switches>.+)\n"
+    r"Involuntary context switches: (?P<involuntary_context_switches>.+)\n"
+    r"Swaps: (?P<swaps>.+)\n"
+    r"File system inputs: (?P<file_system_inputs>.+)\n"
+    r"File system outputs: (?P<file_system_outputs>.+)\n"
+    r"Socket messages sent: (?P<socket_messages_sent>.+)\n"
+    r"Socket messages received: (?P<socket_messages_received>.+)\n"
+    r"Signals delivered: (?P<signals_delivered>.+)\n"
+    r"Page size \(bytes\): (?P<page_size_bytes>.+)\n"
+    r"Exit status: (?P<exit_status>.+)\n"
+    r".*"
 )
 
 # parameterize as cmd line arg
@@ -35,26 +82,6 @@ def build_profile_data(
     # cast all dict int values
     gnu_time_output_values.update(
         {k: int(v) for k, v in gnu_time_output_values.items() if v.isdigit()}
-    )
-
-    # cast all dict elapsed time values to int (seconds)
-    def elapsed_to_seconds(elapsed: str) -> float:
-        elapsed_parts = re.match(r"(((\d+):)?((\d+):))?(\d+)(\.\d+)", elapsed).groups()
-        return (
-            int(elapsed_parts[2] or "0") * 3600
-            + int(elapsed_parts[4] or "0") * 60
-            + int(elapsed_parts[5])
-            + float(elapsed_parts[6])
-        )
-
-    gnu_time_output_values["user_time_sec"] = elapsed_to_seconds(
-        gnu_time_output_values["user_time_sec"]
-    )
-    gnu_time_output_values["system_time_sec"] = elapsed_to_seconds(
-        gnu_time_output_values["system_time_sec"]
-    )
-    gnu_time_output_values["elapsed_time_sec"] = elapsed_to_seconds(
-        gnu_time_output_values["elapsed_time_sec"]
     )
 
     data = ProfileData(
@@ -125,7 +152,7 @@ def main():
     print(f"Command to be run: {args.command}", file=stderr)
     # Run the command, using `time -v` to get detailed memory and time"""
     p = subprocess.Popen(
-        [args.gtime_cmd, "-v"] + args.command.split(" "), stdout=PIPE, stderr=PIPE
+        [args.gtime_cmd, "--format", GNU_TIME_FORMAT] + args.command.split(" "), stdout=PIPE, stderr=PIPE
     )
 
     print(f"Running command to be profiled, PID = {p.pid}", file=stderr)
