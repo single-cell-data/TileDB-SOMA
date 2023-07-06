@@ -221,7 +221,20 @@ SOMADataFrame <- R6::R6Class(
                      timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
-      TableReadIter$new(rl$sr)
+
+      arr <- tiledb::tiledb_array(self$uri)
+      enumvec <- tiledb::tiledb_array_has_enumeration(arr)
+      enumlst <- vector(mode="list", length=length(enumvec))
+      names(enumlst) <- names(enumvec)
+      attrs <- tiledb::attrs(tiledb::schema(arr))
+      arr <- tiledb::tiledb_array_open(arr, "READ")
+      for (n in names(enumvec)) {
+          if (enumvec[[n]]) {
+              enumlst[[n]] <- tiledb::tiledb_attribute_get_enumeration(attr=attrs[[n]], arr)
+          }
+      }
+
+      TableReadIter$new(rl$sr, enumlst)
     },
 
     #' @description Update (lifecycle: experimental)
@@ -246,7 +259,6 @@ SOMADataFrame <- R6::R6Class(
     #' names will be extracted and added as a new column to the `data.frame`
     #' prior to performing the update. The name of this new column will be set
     #' to the value specified by `row_index_name`.
-
     update = function(values, row_index_name = NULL) {
       private$check_open_for_write()
       stopifnot(
