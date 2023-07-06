@@ -208,7 +208,7 @@ warn_if_dense <- function(collection_name, layer) {
       "  - all '%s' arrays should be saved as 'SOMASparseNDArrays'\n",
       collection_name
     )
-    warning(msg1, msg2, call. = FALSE, .immediate = TRUE)
+    warning(msg1, msg2, call. = FALSE, immediate. = TRUE)
   }
   invisible(is_sparse)
 }
