@@ -185,3 +185,30 @@ recursively_make_integer64 <- function(x) {
     }
     x
 }
+
+#' Warn if using a SOMADenseNDArray
+#' @param collection_name name of the SOMA collection
+#' @param layer a SOMASparseNDArray or SOMADenseNDArray
+#' @return Invisible logical indicating if the layer is sparse
+#' @references https://github.com/single-cell-data/TileDB-SOMA/issues/1245
+#' @noRd
+
+warn_if_dense <- function(collection_name, layer) {
+  stopifnot(
+    is_scalar_character(collection_name),
+    inherits(layer, "SOMASparseNDArray") || inherits(layer, "SOMADenseNDArray")
+  )
+  is_sparse <- inherits(layer, "SOMASparseNDArray")
+  if (!is_sparse) {
+    msg1 <- sprintf(
+      "Values for '%s' are encoded as dense instead of sparse\n",
+      basename(layer$uri)
+    )
+    msg2 <- sprintf(
+      "  - all '%s' arrays should be saved as 'SOMASparseNDArrays'\n",
+      collection_name
+    )
+    warning(msg1, msg2, call. = FALSE, immediate. = TRUE)
+  }
+  invisible(is_sparse)
+}
