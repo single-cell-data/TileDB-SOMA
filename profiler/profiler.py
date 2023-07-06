@@ -16,29 +16,31 @@ import tiledbsoma
 from .context_generator import host_context
 from .data import FileBasedProfileDB, ProfileData, ProfileDB
 
-GNU_TIME_FORMAT = "Command being timed: \"%C\"\n" \
-                  "User time (seconds): %U\n" \
-                  "System time (seconds): %S\n" \
-                  "Percent of CPU this job got: %P\n" \
-                  "Elapsed (wall clock) time (seconds): %e\n" \
-                  "Average shared text size (kbytes): %X\n" \
-                  "Average unshared data size (kbytes): %D\n" \
-                  "Average stack size (kbytes): %p\n" \
-                  "Average total size (kbytes): %K\n" \
-                  "Maximum resident set size (kbytes): %M\n" \
-                  "Average resident set size (kbytes): %t\n" \
-                  "Major (requiring I/O) page faults: %F\n" \
-                  "Minor (reclaiming a frame) page faults: %R\n" \
-                  "Voluntary context switches: %w\n" \
-                  "Involuntary context switches: %c\n" \
-                  "Swaps: %W\n" \
-                  "File system inputs: %I\n" \
-                  "File system outputs: %O\n" \
-                  "Socket messages sent: %s\n" \
-                  "Socket messages received: %r\n" \
-                  "Signals delivered: %k\n" \
-                  "Page size (bytes): %Z\n" \
-                  "Exit status: %x"
+GNU_TIME_FORMAT = (
+    'Command being timed: "%C"\n'
+    "User time (seconds): %U\n"
+    "System time (seconds): %S\n"
+    "Percent of CPU this job got: %P\n"
+    "Elapsed (wall clock) time (seconds): %e\n"
+    "Average shared text size (kbytes): %X\n"
+    "Average unshared data size (kbytes): %D\n"
+    "Average stack size (kbytes): %p\n"
+    "Average total size (kbytes): %K\n"
+    "Maximum resident set size (kbytes): %M\n"
+    "Average resident set size (kbytes): %t\n"
+    "Major (requiring I/O) page faults: %F\n"
+    "Minor (reclaiming a frame) page faults: %R\n"
+    "Voluntary context switches: %w\n"
+    "Involuntary context switches: %c\n"
+    "Swaps: %W\n"
+    "File system inputs: %I\n"
+    "File system outputs: %O\n"
+    "Socket messages sent: %s\n"
+    "Socket messages received: %r\n"
+    "Signals delivered: %k\n"
+    "Page size (bytes): %Z\n"
+    "Exit status: %x"
+)
 
 GNU_TIME_OUTPUT_REGEXP = re.compile(
     r".*Command being timed: \"(?P<command>.+)\"\n"
@@ -152,7 +154,9 @@ def main():
     print(f"Command to be run: {args.command}", file=stderr)
     # Run the command, using `time -v` to get detailed memory and time"""
     p = subprocess.Popen(
-        [args.gtime_cmd, "--format", GNU_TIME_FORMAT] + args.command.split(" "), stdout=PIPE, stderr=PIPE
+        [args.gtime_cmd, "--format", GNU_TIME_FORMAT] + args.command.split(" "),
+        stdout=PIPE,
+        stderr=PIPE,
     )
 
     print(f"Running command to be profiled, PID = {p.pid}", file=stderr)
