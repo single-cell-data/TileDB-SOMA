@@ -6,7 +6,12 @@ soma_array_reader_impl <- function(uri, colnames = NULL, qc = NULL, dim_points =
     .Call(`_tiledbsoma_soma_array_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config)
 }
 
-#' @noRd
+#' Set the logging level for the R package and underlying C++ library
+#'
+#' @param level A character value with logging level understood by \sQuote{spdlog}
+#' such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or \dQuote{warn}.
+#' @return Nothing is returned as the function is invoked for the side-effect.
+#' @export
 set_log_level <- function(level) {
     invisible(.Call(`_tiledbsoma_set_log_level`, level))
 }

@@ -28,13 +28,15 @@ Class that allows for read iteration of SOMA reads.
 \subsection{Method \code{new()}}{
 Create (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ReadIter$new(sr)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ReadIter$new(sr, enums = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{sr}}{soma read pointer}
+
+\item{\code{enums}}{An optional list with enumeration information}
 }
 \if{html}{\out{</div>}}
 }

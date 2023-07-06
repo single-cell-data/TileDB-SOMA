@@ -296,7 +296,7 @@ check_arrow_schema_data_types <- function(from, to) {
 }
 
 #' Extract levels from dictionaries
-#' @roRD
+#' @noRd
 extract_levels <- function(arrtbl) {
     stopifnot("Argument must be an Arrow Table object" = is_arrow_table(arrtbl))
     nm <- names(AT) 		# we go over the table column by column

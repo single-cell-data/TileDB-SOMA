@@ -11,6 +11,7 @@ ReadIter <- R6::R6Class(
 
     #' @description Create (lifecycle: experimental)
     #' @param sr soma read pointer
+    #' @param enums An optional list with enumeration information
     initialize = function(sr, enums=NULL) { # DE::TEMP::FIXME
       private$soma_reader_pointer <- sr
       private$enums <- enums # DE::TEMP::FIXME
