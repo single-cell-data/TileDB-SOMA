@@ -667,29 +667,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           (is_scalar_character(var_index) && !is.na(var_index))
       )
 
-      # Validate layers are SOMASparseNDArrays
-      assert_layer_is_sparse <- function(collection_name, layer) {
-        stopifnot(is_scalar_character(collection_name))
-        is_sparse <- inherits(layer, "SOMASparseNDArray")
-        if (!is_sparse) {
-          msg1 <- sprintf(
-            "Values for '%s' are encoded as dense instead of sparse\n",
-            basename(layer$uri)
-          )
-          msg2 <- sprintf(
-            "  - all '%s' arrays should be saved as 'SOMASparseNDArrays'\n",
-            collection_name
-          )
-          warning(
-            msg1,
-            msg2,
-            # "  - returning 'NULL' and skipping this dimension reduction",
-            call. = FALSE
-          )
-        }
-        invisible(is_sparse)
-      }
-
       # Check embeddings/loadings
       ms_embed <- tryCatch(expr = self$ms$obsm$names(), error = null)
       ms_load <- tryCatch(expr = self$ms$varm$names(), error = null)
@@ -774,7 +751,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
 
       spdl::info("Reading obsm layer '{}' into memory", obsm_layer)
-      assert_layer_is_sparse("obsm", self$ms$obsm$get(obsm_layer))
+      warn_if_dense("obsm", self$ms$obsm$get(obsm_layer))
       embed_mat <- self$to_sparse_matrix(
         collection = "obsm",
         layer_name = obsm_layer,
@@ -805,7 +782,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
 
         spdl::info("Reading varm layer '{}' into memory", varm_layer)
-        assert_layer_is_sparse("varm", self$ms$varm$get(varm_layer))
+        warn_if_dense("varm", self$ms$varm$get(varm_layer))
         load_mat <- self$to_sparse_matrix(
           collection = "varm",
           layer_name = varm_layer,
