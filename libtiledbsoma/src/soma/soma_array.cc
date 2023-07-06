@@ -475,15 +475,6 @@ Enumeration SOMAArray::get_enum(std::string name) {
     return ArrayExperimental::get_enumeration(*ctx_, *arr_, name);
 }
 
-std::optional<std::string> SOMAArray::get_enum_label_on_attr(std::string name) {
-    auto attr = arr_->schema().attribute(name);
-    return AttributeExperimental::get_enumeration_name(*ctx_, attr);
-}
-
-Enumeration SOMAArray::get_enum(std::string name) {
-    return ArrayExperimental::get_enumeration(*ctx_, *arr_, name);
-}
-
 std::map<std::string, Enumeration> SOMAArray::get_attr_to_enum_mapping() {
     std::map<std::string, Enumeration> result;
     for (uint32_t i = 0; i < arr_->schema().attribute_num(); ++i) {
