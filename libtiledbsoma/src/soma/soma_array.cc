@@ -436,6 +436,7 @@ std::vector<int64_t> SOMAArray::shape() {
     return result;
 }
 
+<<<<<<< HEAD
 uint64_t SOMAArray::ndim() const {
     return this->schema().get()->domain().ndim();
 }
@@ -450,11 +451,30 @@ std::vector<std::string> SOMAArray::dimension_names() const {
 
 Enumeration SOMAArray::get_enum(std::string name) {
     return ArrayExperimental::get_enumeration(*ctx_, *arr_, name);
+=======
+std::map<std::string, Enumeration> SOMAArray::get_attr_to_enum_mapping() {
+    std::map<std::string, Enumeration> result;
+    for (uint32_t i = 0; i < arr_->schema().attribute_num(); ++i) {
+        auto attr = arr_->schema().attribute(i);
+        if (attr_has_enum(attr.name())) {
+            auto enmr_label = *get_enum_label_on_attr(attr.name());
+            auto enmr = ArrayExperimental::get_enumeration(
+                *ctx_, *arr_, enmr_label);
+            result.insert({attr.name(), enmr});
+        }
+    }
+    return result;
+>>>>>>> Add `get_attr_to_enum_mapping` Function
 }
 
-std::optional<std::string> SOMAArray::get_enum_label_on_attr(std::string name) {
-    auto attr = arr_->schema().attribute(name);
+std::optional<std::string> SOMAArray::get_enum_label_on_attr(
+    std::string attr_name) {
+    auto attr = arr_->schema().attribute(attr_name);
     return AttributeExperimental::get_enumeration_name(*ctx_, attr);
+}
+
+bool SOMAArray::attr_has_enum(std::string attr_name) {
+    return get_enum_label_on_attr(attr_name).has_value();
 }
 
 void SOMAArray::set_metadata(
