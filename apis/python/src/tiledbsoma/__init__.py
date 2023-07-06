@@ -60,7 +60,7 @@ The principal persistent types provided by SOMA are:
   and value type.
 - :class:`SparseNDArray` -- a sparse multi-dimensional array, storing
   Arrow primitive data types, i.e., int, float, etc.
-- :class:`DenseNDArray` -- a dnese multi-dimensional array, storing
+- :class:`DenseNDArray` -- a dense multi-dimensional array, storing
   Arrow primitive data types, i.e., int, float, etc.
 - :class:`Experiment` -- a specialized :class:`Collection`, representing an
   annotated 2-D matrix of measurements.
