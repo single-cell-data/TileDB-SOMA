@@ -61,6 +61,7 @@ Create (lifecycle: experimental)
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(
   schema,
   index_column_names = c("soma_joinid"),
+  levels = NULL,
   platform_config = NULL,
   internal_use_only = NULL
 )}\if{html}{\out{</div>}}
@@ -74,6 +75,8 @@ Create (lifecycle: experimental)
 \item{\code{index_column_names}}{A vector of column names to use as user-defined
 index columns.  All named columns must exist in the schema, and at least
 one index column name is required.}
+
+\item{\code{levels}}{Optional list of enumeration (aka factor) levels}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
