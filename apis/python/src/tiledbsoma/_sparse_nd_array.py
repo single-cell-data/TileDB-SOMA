@@ -264,13 +264,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         int64 is returned for the capacity.
         """
         if dim_shape is None:
-            dim_capacity = 2**63
+            dim_capacity = 2**31 - 2  # Make this friendly for reads by tiledbsoma-r
             dim_extent = min(dim_capacity, create_options.dim_tile(dim_name, 2048))
-            # TileDB requires that each signed-64-bit-int domain slot, rounded up to
-            # a multiple of the tile extent in that slot, be representable as a
-            # signed 64-bit int. So if the tile extent is 999, say, that would
-            # exceed 2**63 - 1.
-            dim_capacity -= dim_extent
         else:
             if dim_shape <= 0:
                 raise ValueError(
