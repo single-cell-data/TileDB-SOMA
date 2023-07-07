@@ -1123,23 +1123,39 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           soma_joinids <- self$var_joinids()
         }
       )
-      ids <- if (is.null(index)) {
-        paste0(df_name, soma_joinids$as_vector())
-      } else {
-        index <- match.arg(arg = index, choices = soma_df$attrnames())
-        soma_reader(index)$concat()$GetColumnByName(index)$as_vector()
+      attr_names <- soma_df$attrnames()
+      if (is.character(index)) {
+        index <- match.arg(arg = index, choices = attr_names)
       }
       if (isTRUE(column_names)) {
         column_names <- NULL
       }
-      column_names <- column_names %||% setdiff(soma_df$attrnames(), index)
-      obj <- if (isFALSE(column_names) || rlang::is_na(column_names)) {
-        as.data.frame(matrix(nrow = length(ids), ncol = 0L))
+      column_names <- column_names %||% setdiff(attr_names, index)
+      attrs <- if (isFALSE(column_names) || rlang::is_na(column_names)) {
+        index
       } else {
-        as.data.frame(soma_reader(column_names)$concat()$to_data_frame())
+        union(index, column_names)
       }
-      row.names(obj) <- ids
-      return(obj)
+      df <- if (is.null(attrs)) {
+        NULL
+      } else {
+        soma_reader(attrs)$concat()$to_data_frame()
+      }
+      ids <- if (is.null(index)) {
+        paste0(df_name, soma_joinids$as_vector())
+      } else {
+        df[[index]]
+      }
+      if (is.null(df)) {
+        df <- as.data.frame(matrix(nrow = length(ids), ncol = 0L))
+      }
+      row.names(df) <- ids
+      df <- if (isFALSE(column_names) || rlang::is_na(column_names)) {
+        df[, character(), drop = FALSE]
+      } else {
+        df[, column_names, drop = FALSE]
+      }
+      return(df)
     },
     .load_m_axis = function(layer, m_axis = c('obsm', 'varm'), type = "Embeddings") {
       stopifnot(
