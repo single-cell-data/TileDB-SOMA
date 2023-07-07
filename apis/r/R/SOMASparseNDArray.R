@@ -125,9 +125,6 @@ SOMASparseNDArray <- R6::R6Class(
       arr[] <- values
     },
 
-    ## internal 'repr' state variable, by default 'unset'
-    sparse_repr = "",
-
     # Internal marking of one or zero based matrices for iterated reads
     zero_based = NA
 
