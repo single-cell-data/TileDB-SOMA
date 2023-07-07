@@ -1,3 +1,6 @@
+#' @importFrom rlang is_scalar_integerish is_scalar_logical is_scalar_character
+NULL
+
 #' Check if object is empty
 #' @noRd
 is_empty <- function(x) {
@@ -15,14 +18,6 @@ is_named <- function(x, allow_empty = TRUE) {
 
 is_named_list <- function(x) {
   is.list(x) && is_named(x)
-}
-
-is_scalar_logical <- function(x) {
-  is.logical(x) && length(x) == 1
-}
-
-is_scalar_character <- function(x) {
-  is.character(x) && length(x) == 1
 }
 
 is_character_or_null <- function(x) {
