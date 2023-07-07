@@ -1192,9 +1192,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       mat <- self$to_sparse_matrix(collection = p_axis, layer_name = layer)
       return(switch(
         EXPR = repr,
-        C = as(mat, 'CsparseMatrix'),
-        R = as(mat, 'RsparseMatrix'),
-        D = as.matrix(mat),
+        C = {
+          spdl::debug("Converting '{}' TsparseMatrix to CsparseMatrix", layer)
+          as(mat, 'CsparseMatrix')
+        },
+        R = {
+          spdl::debug("Converting '{}' TsparseMatrix to RsparseMatrix", layer)
+          as(mat, 'RsparseMatrix')
+        },
+        D = {
+          spdl::debug("Converting '{}' TsparseMatrix to matrix", layer)
+          as.matrix(mat)
+        },
         mat
       ))
     },
