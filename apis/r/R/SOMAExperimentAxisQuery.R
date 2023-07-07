@@ -1121,7 +1121,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       if (isTRUE(column_names)) {
         column_names <- NULL
       }
-      column_names <- column_names %||% setdiff(x = soma_df$attrnames(), y = index)
+      column_names <- column_names %||% setdiff(soma_df$attrnames(), index)
       obj <- if (isFALSE(column_names) || rlang::is_na(column_names)) {
         as.data.frame(matrix(nrow = length(ids), ncol = 0L))
       } else {
