@@ -1176,36 +1176,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
       )
       soma_axis <- soma_collection$get(layer)
-      mat <- if (inherits(soma_axis, 'SOMASparseNDArray')) {
-        as.matrix(self$to_sparse_matrix(collection = m_axis, layer_name = layer))
-      } else if (inherits(soma_axis, 'SOMADenseNDArray')) {
-        warning(
-          paste(
-            strwrap(paste(
-              type,
-              "for",
-              sQuote(layer),
-              "are encoded as dense instead of sparse; all arrays should be saved as",
-              sQuote('SOMASparseNDArrays')
-            )),
-            collapse = '\n'
-          ),
-          call. = FALSE,
-          immediate. = TRUE
-        )
-        ncoords <- max(tiledb::tiledb_array_get_non_empty_domain_from_name(
-          arr = soma_axis$object,
-          name = soma_axis$dimnames()[2L]
-        ))
-        coords <- list(
-          soma_joinids$as_vector(),
-          seq.int(0L, as.integer(ncoords))
-        )
-        soma_axis$read_dense_matrix(coords)
-      } else {
-        stop("Unknown SOMA Array type: ", class(soma_axis)[1L], call. = FALSE)
-      }
-      return(mat)
+      warn_if_dense(m_axis, soma_axis)
+      mat <- self$to_sparse_matrix(collection = m_axis, layer_name = layer)
+      spdl::debug("Converting '{}' dgTMatrix to matrix", layer)
+      return(as.matrix(mat))
     },
     .load_p_axis = function(layer, p_axis = c('obsp', 'varp'), repr = c('C', 'T', 'R', 'D')) {
       stopifnot(
