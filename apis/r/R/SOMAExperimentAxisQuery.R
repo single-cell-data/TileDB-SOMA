@@ -1092,6 +1092,17 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       return(mat)
     },
     # Helper methods to load aspects of a measurement for the ecosystems
+    # @description Load the `obs` or `var` data frames for usage with the ecosystems
+    # @param df_name Name of SOMADataFrame to load; choose from `"obs"` or `"var"`
+    # @param index Name of attribute in `df_name` to use as the row names for
+    # the resulting data frame. By default, uses `paste0(df_name, df$soma_join_ids)`;
+    # If provided, and `column_names` is `NULL`, `index` will be **excluded** from
+    # the resulting data frame
+    # @param column name The names of attributes in `df_name` to load; choose from:
+    # - `NULL` (default) or `TRUE`: loads all attributes **except** `index`
+    # - `FALSE` or `NA`: return a data frame the number of rows as present
+    # in `df_name` and zero columns
+    # - a character vector of names of attributes to load in
     .load_df = function(df_name = c('obs', 'var'), index = NULL, column_names = NULL) {
       stopifnot(
         is.character(df_name),
