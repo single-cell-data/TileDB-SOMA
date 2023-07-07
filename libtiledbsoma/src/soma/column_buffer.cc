@@ -56,7 +56,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
         if (enum_name.has_value()) {
             enumeration = std::make_optional<Enumeration>(
                 ArrayExperimental::get_enumeration(
-                    schema.context(), *array, name_str));
+                    schema.context(), *array, *enum_name));
         }
 
         if (!is_var && attr.cell_val_num() != 1) {
