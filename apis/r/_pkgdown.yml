@@ -1,11 +1,6 @@
 template:
   bootstrap: 5
 
-reference:
-- title: TileDB-SOMA
-  contents:
-  - matches(".*")
-
 ## Cf https://pkgdown.r-lib.org/articles/customise.html
 navbar:
   components:
@@ -23,3 +18,94 @@ navbar:
       - text: SOMA Configuration
       - text: Using PlatformConfig
         href: articles/UsingPlatformConfig.html
+
+reference:
+
+  - title: Writing data
+    contents:
+    - write_soma
+
+  - title: SOMA foundational classes
+    contents:
+    - SOMADataFrame
+    - SOMASparseNDArray
+    - SOMADenseNDArray
+    - SOMACollection
+    - EphemeralCollection
+
+  - title: SOMA compound classes
+    contents:
+    - SOMAMeasurement
+    - SOMAExperiment
+    - EphemeralExperiment
+    - EphemeralMeasurement
+
+  - title: Factory functions
+    contents:
+    - SOMAOpen
+    - SOMACollectionCreate
+    - SOMACollectionOpen
+    - SOMADataFrameCreate
+    - SOMADataFrameOpen
+    - SOMADenseNDArrayCreate
+    - SOMADenseNDArrayOpen
+    - SOMASparseNDArrayCreate
+    - SOMASparseNDArrayOpen
+    - SOMASparseNDArrayRead
+    - SOMAExperimentCreate
+    - SOMAExperimentOpen
+    - SOMAMeasurementCreate
+    - SOMAMeasurementOpen
+
+  - title: Example datasets
+    contents:
+    - extract_dataset
+    - list_datasets
+    - load_dataset
+
+  - title: Iterators
+    contents:
+    - ReadIter
+    - SparseReadIter
+    - TableReadIter
+
+  - title: Querying
+    contents:
+    - SOMAAxisQuery
+    - SOMAAxisQueryResult
+    - SOMAExperimentAxisQuery
+
+  - title: Configuration
+    contents:
+    - PlatformConfig
+    - SOMAContextBase
+    - SOMATileDBContext
+    - TileDBCreateOptions
+
+  - title: Low-level classes
+    contents:
+    - ConfigList
+    - MappingBase
+    - ScalarMap
+    - TileDBGroup
+    - TileDBObject
+    - TileDBArray
+
+  - title: Performance statistics
+    contents:
+    - matches("tiledbsoma_stats_.*")
+
+  - title: C++ reader interface
+    contents:
+    - soma_array_reader
+    - sr_setup
+    - sr_next
+    - sr_complete
+
+  - title: Miscellaneous
+    contents:
+    - matrixZeroBasedView
+    - nnz
+    - pad_matrix
+    - shape
+    - show_package_versions
