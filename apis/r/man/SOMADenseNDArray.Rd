@@ -25,12 +25,11 @@ The \code{write} method is currently limited to writing from 2-d matrices.
 (lifecycle: experimental)
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADenseNDArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{tiledbsoma::SOMANDArrayBase} -> \code{SOMADenseNDArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-SOMADenseNDArray-create}{\code{SOMADenseNDArray$create()}}
 \item \href{#method-SOMADenseNDArray-read_arrow_table}{\code{SOMADenseNDArray$read_arrow_table()}}
 \item \href{#method-SOMADenseNDArray-read_dense_matrix}{\code{SOMADenseNDArray$read_dense_matrix()}}
 \item \href{#method-SOMADenseNDArray-write}{\code{SOMADenseNDArray$write()}}
@@ -62,40 +61,10 @@ The \code{write} method is currently limited to writing from 2-d matrices.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="create"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-create'><code>tiledbsoma::SOMANDArrayBase$create()</code></a></span></li>
 </ul>
 </details>
 }}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMADenseNDArray-create"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMADenseNDArray-create}{}}}
-\subsection{Method \code{create()}}{
-Create a SOMADenseNDArray named with the URI. (lifecycle: experimental)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$create(
-  type,
-  shape,
-  platform_config = NULL,
-  internal_use_only = NULL
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{type}}{an \link[arrow:data-type]{Arrow type} defining the type of each
-element in the array.}
-
-\item{\code{shape}}{a vector of integers defining the shape of the array.}
-
-\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
-object}
-
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
-as \code{create()} is considered internal and should not be called directly.}
-}
-\if{html}{\out{</div>}}
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADenseNDArray-read_arrow_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_arrow_table}{}}}
