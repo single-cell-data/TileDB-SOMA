@@ -180,6 +180,7 @@ TileDBGroup <- R6::R6Class(
         }
       }
 
+      private$add_cached_member(name, obj)
       obj
     },
 
