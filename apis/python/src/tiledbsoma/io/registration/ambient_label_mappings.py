@@ -246,11 +246,18 @@ class ExperimentAmbientLabelMapping:
 
         var_maps = {measurement_name: var_map}
 
-        if adata.raw is not None:
-            raw_var_map = previous.var_axes["raw"].data
-            raw_var_next_soma_joinid = previous.var_axes[
-                "raw"
-            ].get_next_start_soma_joinid()
+        if adata.raw is None:
+            if "raw" in previous.var_axes:
+                var_maps["raw"] = previous.var_axes["raw"].data
+
+        else:
+            # One input may not have a raw while the next may have one
+            raw_var_map = {}
+            raw_var_next_soma_joinid = 0
+            if "raw" in previous.var_axes:
+                raw_var_axis = previous.var_axes["raw"]
+                raw_var_map = raw_var_axis.data
+                raw_var_next_soma_joinid = raw_var_axis.get_next_start_soma_joinid()
             raw_var_ids = get_dataframe_values(adata.raw.var, var_field_name)
             for raw_var_id in raw_var_ids:
                 if raw_var_id not in raw_var_map:
@@ -329,3 +336,8 @@ class ExperimentAmbientLabelMapping:
 
         tiledbsoma.logging.logger.info("Registration: complete.")
         return registration_data
+
+    def show(self) -> None:
+        print(f"obs:{len(self.obs_axis.data)}")
+        for k, v in self.var_axes.items():
+            print(f"{k}/var:{len(v.data)}")

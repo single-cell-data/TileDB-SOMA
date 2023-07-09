@@ -782,7 +782,7 @@ def _extract_new_values_for_append(
             previous_table = previous_soma_dataframe.read().concat()
             previous_df = previous_table.to_pandas()
             previous_join_ids = set(
-                list(str(e) for e in get_dataframe_values(previous_df, id_column_name))
+                list(int(e) for e in get_dataframe_values(previous_df, SOMA_JOINID))
             )
             mask = [
                 e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]
@@ -803,7 +803,7 @@ def _write_dataframe(
     axis_mapping: AxisIDMapping,
 ) -> DataFrame:
 
-    s = _util.get_start_stamp()
+    _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
     df.reset_index(inplace=True)
@@ -818,6 +818,7 @@ def _write_dataframe(
     return _write_dataframe_impl(
         df,
         df_uri,
+        id_column_name,
         ingestion_params=ingestion_params,
         platform_config=platform_config,
         context=context,
@@ -827,6 +828,7 @@ def _write_dataframe(
 def _write_dataframe_impl(
     df: pd.DataFrame,
     df_uri: str,
+    id_column_name: Optional[str],
     *,
     ingestion_params: IngestionParams,
     platform_config: Optional[PlatformConfig] = None,
@@ -1513,7 +1515,6 @@ def _ingest_uns_dict(
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
         coll.metadata["soma_tiledbsoma_type"] = "uns"
         for key, value in dct.items():
-<<<<<<< HEAD
             _ingest_uns_node(
                 coll,
                 key,
@@ -1523,95 +1524,6 @@ def _ingest_uns_dict(
                 ingestion_params=ingestion_params,
                 use_relative_uri=use_relative_uri,
             )
-||||||| parent of b2691801 ([python] Append-mode sketching)
-            if isinstance(value, np.generic):
-                # This is some kind of numpy scalar value. Metadata entries
-                # only accept native Python types, so unwrap it.
-                value = value.item()
-            if isinstance(value, (int, float, str)):
-                # Primitives get set on the metadata.
-                coll.metadata[key] = value
-                continue
-            if isinstance(value, Mapping):
-                # Mappings are represented as sub-dictionaries.
-                _ingest_uns_dict(
-                    coll,
-                    key,
-                    value,
-                    platform_config=platform_config,
-                    context=context,
-                    ingestion_params=ingestion_params,
-                    use_relative_uri=use_relative_uri,
-                )
-                continue
-            if isinstance(value, pd.DataFrame):
-                with _write_dataframe(
-                    _util.uri_joinpath(coll.uri, key),
-                    value,
-                    None,
-                    platform_config=platform_config,
-                    context=context,
-                    ingestion_params=ingestion_params,
-                ) as df:
-                    _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
-                continue
-            if isinstance(value, list) or "numpy" in str(type(value)):
-                value = np.asarray(value)
-            if isinstance(value, np.ndarray):
-                if value.dtype.names is not None:
-                    msg = (
-                        f"Skipped {coll.uri}[{key!r}]"
-                        " (uns): unsupported structured array"
-                    )
-                    # This is a structured array, which we do not support.
-                    logging.log_io(msg, msg)
-                    continue
-=======
-            if isinstance(value, np.generic):
-                # This is some kind of numpy scalar value. Metadata entries
-                # only accept native Python types, so unwrap it.
-                value = value.item()
-            if isinstance(value, (int, float, str)):
-                # Primitives get set on the metadata.
-                coll.metadata[key] = value
-                continue
-            if isinstance(value, Mapping):
-                # Mappings are represented as sub-dictionaries.
-                _ingest_uns_dict(
-                    coll,
-                    key,
-                    value,
-                    platform_config=platform_config,
-                    context=context,
-                    ingestion_params=ingestion_params,
-                    use_relative_uri=use_relative_uri,
-                )
-                continue
-            if isinstance(value, pd.DataFrame):
-                num_cols = value.shape[1]
-                with _write_dataframe(
-                    _util.uri_joinpath(coll.uri, key),
-                    value,
-                    None,
-                    platform_config=platform_config,
-                    context=context,
-                    ingestion_params=ingestion_params,
-                    axis_mapping=AxisIDMapping.identity(num_cols),
-                ) as df:
-                    _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
-                continue
-            if isinstance(value, list) or "numpy" in str(type(value)):
-                value = np.asarray(value)
-            if isinstance(value, np.ndarray):
-                if value.dtype.names is not None:
-                    msg = (
-                        f"Skipped {coll.uri}[{key!r}]"
-                        " (uns): unsupported structured array"
-                    )
-                    # This is a structured array, which we do not support.
-                    logging.log_io(msg, msg)
-                    continue
->>>>>>> b2691801 ([python] Append-mode sketching)
 
     msg = f"Wrote   {coll.uri} (uns collection)"
     logging.log_io(msg, msg)
@@ -1652,6 +1564,7 @@ def _ingest_uns_node(
         return
 
     if isinstance(value, pd.DataFrame):
+        num_cols = value.shape[1]
         with _write_dataframe(
             _util.uri_joinpath(coll.uri, key),
             value,
@@ -1659,6 +1572,7 @@ def _ingest_uns_node(
             platform_config=platform_config,
             context=context,
             ingestion_params=ingestion_params,
+            axis_mapping=AxisIDMapping.identity(num_cols),
         ) as df:
             _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
         return
@@ -1741,6 +1655,7 @@ def _ingest_uns_string_array(
     with _write_dataframe_impl(
         df,
         df_uri,
+        None,
         ingestion_params=ingestion_params,
         platform_config=platform_config,
         context=context,
