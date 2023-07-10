@@ -167,3 +167,40 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     rm(sdf)
 
 })
+
+test_that("Dimension Point and Ranges Bounds", {
+    ctx <- tiledbsoma::SOMATileDBContext$new()
+    config <- as.character(tiledb::config(ctx$context()))
+    human_experiment <- load_dataset("soma-exp-pbmc-small", tiledbsoma_ctx = ctx)
+    X <- human_experiment$ms$get("RNA")$X$get("data")
+    expect_equal(X$shape(), c(80, 230))
+
+    ## 'good case' with suitable dim points
+    coords <- list(soma_dim_0=bit64::as.integer64(0:5),
+                   soma_dim_1=bit64::as.integer64(0:5))
+    sr <- sr_setup(uri = X$uri, config = config, dim_points = coords)
+    chunk <- sr_next(sr)
+    at <- arrow::as_arrow_table(arrow::RecordBatch$import_from_c(chunk$array_data, chunk$schema))
+    expect_equal(at$num_rows, 5)
+    expect_equal(at$num_columns, 3)
+
+    ## 'good case' with suitable dim ranges
+    ranges <- list(soma_dim_0=matrix(bit64::as.integer64(c(1,4)),1),
+                   soma_dim_1=matrix(bit64::as.integer64(c(1,4)),1))
+    sr <- sr_setup(uri = X$uri, config = config, dim_ranges = ranges)
+    chunk <- sr_next(sr)
+    at <- arrow::as_arrow_table(arrow::RecordBatch$import_from_c(chunk$array_data, chunk$schema))
+    expect_equal(at$num_rows, 2)
+    expect_equal(at$num_columns, 3)
+
+    ## 'bad case' with unsuitable dim points
+    coords <- list(soma_dim_0=bit64::as.integer64(81:86),
+                   soma_dim_1=bit64::as.integer64(0:5))
+    expect_error(sr_setup(uri = X$uri, config = config, dim_points = coords))
+
+    ## 'bad case' with unsuitable dim range
+    ranges <- list(soma_dim_0=matrix(bit64::as.integer64(c(91,94)),1),
+                   soma_dim_1=matrix(bit64::as.integer64(c(1,4)),1))
+    expect_error(sr_setup(uri = X$uri, config = config, dim_ranges = ranges))
+
+})

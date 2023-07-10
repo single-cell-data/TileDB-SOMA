@@ -23,6 +23,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
     for (auto& nm: colnames) {
         auto dm = name2dim[nm];
         auto tp = dm->type();
+        bool suitable = false;
         if (tp == TILEDB_UINT64) {
             Rcpp::NumericVector payload = lst[nm];
             std::vector<int64_t> iv = getInt64Vector(payload);
@@ -33,6 +34,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
                 if (uv[i] >= pr.first && uv[i] <= pr.second) {
                     sr->set_dim_point<uint64_t>(nm, uv[i]);  // bonked when use with vector
                     spdl::info("[apply_dim_points] Applying dim point {} on {}", uv[i], nm);
+                    suitable = true;
                 }
             }
         } else if (tp == TILEDB_INT64) {
@@ -43,6 +45,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
                 if (iv[i] >= pr.first && iv[i] <= pr.second) {
                     sr->set_dim_point<int64_t>(nm, iv[i]);
                     spdl::info("[apply_dim_points] Applying dim point {} on {}", iv[i], nm);
+                    suitable = true;
                 }
             }
         } else if (tp == TILEDB_FLOAT32) {
@@ -53,6 +56,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
                 if (v >= pr.first && v <= pr.second) {
                     sr->set_dim_point<float>(nm, v);
                     spdl::info("[apply_dim_points] Applying dim point {} on {}", v, nm);
+                    suitable = true;
                 }
             }
         } else if (tp == TILEDB_FLOAT64) {
@@ -62,6 +66,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     sr->set_dim_point<double>(nm,payload[i]);
                     spdl::info("[apply_dim_points] Applying dim point {} on {}", payload[i], nm);
+                    suitable = true;
                 }
             }
         } else if (tp == TILEDB_INT32) {
@@ -71,10 +76,14 @@ void apply_dim_points(tdbs::SOMAArray *sr,
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     sr->set_dim_point<int32_t>(nm,payload[i]);
                     spdl::info("[apply_dim_points] Applying dim point {} on {}", payload[i], nm);
+                    suitable = true;
                 }
             }
         } else {
             Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));
+        }
+        if (!suitable) {
+            Rcpp::stop("Unsuitable dim points on dimension '%s' with domain %s", nm, dm->domain_to_str());
         }
     }
 }
@@ -86,6 +95,7 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
     for (auto& nm: colnames) {
         auto dm = name2dim[nm];
         auto tp = dm->type();
+        bool suitable = false;
         if (tp == TILEDB_UINT64) {
             Rcpp::NumericMatrix mm = lst[nm];
             Rcpp::NumericMatrix::Column lo = mm.column(0); // works as proxy for int and float types
@@ -97,8 +107,9 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
                 uint64_t h = static_cast<uint64_t>(makeScalarInteger64(hi[i]));
                 vp[i] = std::make_pair(std::max(l,pr.first), std::min(h, pr.second));
                 spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, l, h) ;
+                suitable = l < pr.second && h > pr.first; // lower must be less than max, higher more than min
             }
-            sr->set_dim_ranges<uint64_t>(nm, vp);
+            if (suitable) sr->set_dim_ranges<uint64_t>(nm, vp);
         } else if (tp == TILEDB_INT64) {
             Rcpp::NumericMatrix mm = lst[nm];
             std::vector<int64_t> lo = getInt64Vector(mm.column(0));
@@ -108,8 +119,9 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
             for (int i=0; i<mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i],pr.first), std::min(hi[i], pr.second));
                 spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]) ;
+                suitable = lo[i] < pr.second && hi[i] > pr.first; // lower must be less than max, higher more than min
             }
-            sr->set_dim_ranges<int64_t>(nm, vp);
+            if (suitable) sr->set_dim_ranges<int64_t>(nm, vp);
         } else if (tp == TILEDB_FLOAT32) {
             Rcpp::NumericMatrix mm = lst[nm];
             Rcpp::NumericMatrix::Column lo = mm.column(0); // works as proxy for int and float types
@@ -121,8 +133,9 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
                 float h = static_cast<float>(hi[i]);
                 vp[i] = std::make_pair(std::max(l,pr.first), std::min(h, pr.second));
                 spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, l, h) ;
+                suitable = l < pr.second && h > pr.first; // lower must be less than max, higher more than min
             }
-            sr->set_dim_ranges<float>(nm, vp);
+            if (suitable) sr->set_dim_ranges<float>(nm, vp);
         } else if (tp == TILEDB_FLOAT64) {
             Rcpp::NumericMatrix mm = lst[nm];
             Rcpp::NumericMatrix::Column lo = mm.column(0); // works as proxy for int and float types
@@ -132,8 +145,9 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
             for (int i=0; i<mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i],pr.first), std::min(hi[i], pr.second));
                 spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]) ;
+                suitable = lo[i] < pr.second && hi[i] > pr.first; // lower must be less than max, higher more than min
             }
-            sr->set_dim_ranges<double>(nm, vp);
+            if (suitable) sr->set_dim_ranges<double>(nm, vp);
         } else if (tp == TILEDB_INT32) {
             Rcpp::IntegerMatrix mm = lst[nm];
             Rcpp::IntegerMatrix::Column lo = mm.column(0); // works as proxy for int and float types
@@ -143,10 +157,14 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
             for (int i=0; i<mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i],pr.first), std::min(hi[i], pr.second));
                 spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm[i], lo[i], hi[i]) ;
+                suitable = lo[i] < pr.second && hi[i] > pr.first; // lower must be less than max, higher more than min
             }
-            sr->set_dim_ranges<int32_t>(nm, vp);
+            if (suitable) sr->set_dim_ranges<int32_t>(nm, vp);
         } else {
             Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));
+        }
+        if (!suitable) {
+            Rcpp::stop("Unsuitable dim ranges on dimension '%s' with domain %s", nm, dm->domain_to_str());
         }
     }
 }
