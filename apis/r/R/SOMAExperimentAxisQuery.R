@@ -365,7 +365,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       varm_layers = NULL,
       obsp_layers = NULL
     ) {
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'obs_index' must be a single character value" = is.null(obs_index) ||
           (is_scalar_character(obs_index) && !is.na(obs_index)),
@@ -559,7 +559,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       var_column_names = NULL
     ) {
       version <- 'v3'
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'X_layers' must be a named character vector" = is.character(X_layers) &&
           is_named(X_layers, allow_empty = FALSE),
@@ -651,7 +651,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obs_index = NULL,
       var_index = NULL
     ) {
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'obsm_layer' must be a single character value" = is_scalar_character(obsm_layer),
         "'varm_layer' must be a single character value" = is.null(varm_layer) ||
@@ -818,7 +818,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @return A \code{\link[SeuratObject]{Graph}} object
     #'
     to_seurat_graph = function(obsp_layer, obs_index = NULL) {
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'obsp_layer' must be a single character value" = is_scalar_character(obsp_layer),
         "'obs_index' must be a single character value" = is.null(obs_index) ||
@@ -885,7 +885,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obsp_layers = NULL,
       varp_layers = NULL
     ) {
-      .check_sce_installed()
+      check_package('SingleCellExperiment', version = .MINIMUM_SCE_VERSION())
       stopifnot(
         "'X_layers' must be a character vector" = is_character_or_null(X_layers),
         "'obs_index' must be a single character value" = is.null(obs_index) ||
@@ -1335,7 +1335,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       cells = NULL,
       features = NULL
     ) {
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'data' must be a single character value" = is.null(data) ||
           is_scalar_character(data),
