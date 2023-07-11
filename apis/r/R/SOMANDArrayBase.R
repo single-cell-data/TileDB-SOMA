@@ -4,7 +4,7 @@
 #' Adds NDArray-specific functionality to the [`SOMAArrayBase`] class.
 #' (lifecycle: experimental)
 #'
-#' @export
+#' @keywords internal
 #' @importFrom bit64 as.integer64
 
 SOMANDArrayBase <- R6::R6Class(
