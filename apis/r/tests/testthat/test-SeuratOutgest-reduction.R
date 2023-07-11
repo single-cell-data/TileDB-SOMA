@@ -3,89 +3,19 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   uri <- withr::local_tempdir("reduc-experiment-query-whole")
   n_obs <- 20L
   n_var <- 10L
+  n_pcs <- 50L
+  n_ics <- 30L
+  n_umaps <- 2L
   experiment <- create_and_populate_experiment(
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "WRITE"
+    obsm_layers = c(X_pca = n_pcs, "dense:X_ica" = n_ics, X_umap = n_umaps),
+    varm_layers = c(PCs = n_pcs, "dense:ICs" = n_ics),
+    mode = "READ"
   )
   on.exit(experiment$close())
-
-  # Add embeddings
-  n_pcs <- 50L
-  n_ics <- 30L
-  n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_pca',
-    type = arrow::int32(),
-    shape = c(n_obs, n_pcs)
-  )
-  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_pcs,
-    seed = 3L
-  ))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_umap',
-    type = arrow::int32(),
-    shape = c(n_obs, n_umaps)
-  )
-  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_umaps,
-    seed = 4L
-  ))
-
-  # Add at least one set of dense arrays
-  obsm$add_new_dense_ndarray(
-    key = 'X_ica',
-    type = arrow::int32(),
-    shape = c(n_obs, n_ics)
-  )
-  obsm$get('X_ica')$write(create_dense_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_ics,
-    seed = 5L
-  ))
-  obsm$close()
-
-  exp_ms_rna <- experiment$ms$get("RNA")
-  exp_ms_rna$add_new_collection(obsm, 'obsm')
-
-  # Add loadings
-  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$add_new_sparse_ndarray(
-    key = 'PCs',
-    type = arrow::int32(),
-    shape = c(n_var, n_pcs)
-  )
-  varm$get('PCs')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_var,
-    ncols = n_pcs,
-    seed = 6L
-  ))
-
-  # Add at least one set of dense arrays
-  varm$add_new_dense_ndarray(
-    key = 'ICs',
-    type = arrow::int32(),
-    shape = c(n_var, n_ics)
-  )
-  varm$get('ICs')$write(create_dense_matrix_with_int_dims(
-    nrows = n_var,
-    ncols = n_ics,
-    seed = 7L
-  ))
-  varm$close()
-  exp_ms_rna$add_new_collection(varm, 'varm')
-
-  experiment$close()
-
-  # Re-open for read.
-  # Leverage the still-pending on.exit(experiment$close()).
-  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   query <- SOMAExperimentAxisQuery$new(
@@ -270,91 +200,19 @@ test_that("Load reduction from sliced ExperimentQuery", {
   uri <- withr::local_tempdir("reduction-experiment-query-sliced")
   n_obs <- 1001L
   n_var <- 99L
+  n_pcs <- 50L
+  n_ics <- 30L
+  n_umaps <- 2L
   experiment <- create_and_populate_experiment(
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "WRITE"
+    obsm_layers = c(X_pca = n_pcs, "dense:X_ica" = n_ics, X_umap = n_umaps),
+    varm_layers = c(PCs = n_pcs, "dense:ICs" = n_ics),
+    mode = "READ"
   )
   on.exit(experiment$close())
-
-  exp_ms_rna <- experiment$ms$get('RNA')
-  expect_equal(exp_ms_rna$mode(), 'WRITE')
-
-  # Add embeddings
-  n_pcs <- 50L
-  n_ics <- 30L
-  n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsm'))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_pca',
-    type = arrow::int32(),
-    shape = c(n_obs, n_pcs)
-  )
-  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_pcs,
-    seed = 3L
-  ))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_umap',
-    type = arrow::int32(),
-    shape = c(n_obs, n_umaps)
-  )
-  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_umaps,
-    seed = 4L
-  ))
-
-  # Add at least one set of dense arrays
-  obsm$add_new_dense_ndarray(
-    key = 'X_ica',
-    type = arrow::int32(),
-    shape = c(n_obs, n_ics)
-  )
-  obsm$get('X_ica')$write(create_dense_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_ics,
-    seed = 5L
-  ))
-
-  exp_ms_rna$add_new_collection(obsm, 'obsm')
-
-  # Add loadings
-  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$add_new_sparse_ndarray(
-    key = 'PCs',
-    type = arrow::int32(),
-    shape = c(n_var, n_pcs)
-  )
-  varm$get('PCs')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_var,
-    ncols = n_pcs,
-    seed = 6L
-  ))
-
-  # Add at least one set of dense arrays
-  varm$add_new_dense_ndarray(
-    key = 'ICs',
-    type = arrow::int32(),
-    shape = c(n_var, n_ics)
-  )
-  varm$get('ICs')$write(create_dense_matrix_with_int_dims(
-    nrows = n_var,
-    ncols = n_ics,
-    seed = 7L
-  ))
-  varm$close()
-
-  exp_ms_rna$add_new_collection(varm, 'varm')
-
-  experiment$close()
-
-  # Re-open for read.
-  # Leverage the still-pending on.exit(experiment$close()).
-  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   obs_slice <- bit64::as.integer64(seq(3, 72))
@@ -468,6 +326,9 @@ test_that("Load reduction from indexed ExperimentQuery", {
   uri <- withr::local_tempdir("reduction-experiment-query-value-filters")
   n_obs <- 1001L
   n_var <- 99L
+  n_pcs <- 50L
+  n_ics <- 30L
+  n_umaps <- 2L
   obs_label_values <- c("1003", "1007", "1038", "1099")
   var_label_values <- c("1018", "1034", "1067")
   experiment <- create_and_populate_experiment(
@@ -475,83 +336,11 @@ test_that("Load reduction from indexed ExperimentQuery", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "WRITE"
+    obsm_layers = c(X_pca = n_pcs, "dense:X_ica" = n_ics, X_umap = n_umaps),
+    varm_layers = c(PCs = n_pcs, "dense:ICs" = n_ics),
+    mode = "READ"
   )
   on.exit(experiment$close())
-
-  exp_ms_rna <- experiment$ms$get('RNA')
-  expect_equal(exp_ms_rna$mode(), 'WRITE')
-
-  # Add embeddings
-  n_pcs <- 50L
-  n_ics <- 30L
-  n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsm'))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_pca',
-    type = arrow::int32(),
-    shape = c(n_obs, n_pcs)
-  )
-  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_pcs,
-    seed = 3L
-  ))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_umap',
-    type = arrow::int32(),
-    shape = c(n_obs, n_umaps)
-  )
-  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_umaps,
-    seed = 4L
-  ))
-
-  # Add at least one set of dense arrays
-  obsm$add_new_dense_ndarray(
-    key = 'X_ica',
-    type = arrow::int32(),
-    shape = c(n_obs, n_ics)
-  )
-  obsm$get('X_ica')$write(create_dense_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_ics,
-    seed = 5L
-  ))
-  exp_ms_rna$add_new_collection(obsm, 'obsm')
-
-  # Add loadings
-  varm <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'varm'))
-  varm$add_new_sparse_ndarray(
-    key = 'PCs',
-    type = arrow::int32(),
-    shape = c(n_var, n_pcs)
-  )
-  varm$get('PCs')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_var,
-    ncols = n_pcs,
-    seed = 6L
-  ))
-
-  # Add at least one set of dense arrays
-  varm$add_new_dense_ndarray(
-    key = 'ICs',
-    type = arrow::int32(),
-    shape = c(n_var, n_ics)
-  )
-  varm$get('ICs')$write(create_dense_matrix_with_int_dims(
-    nrows = n_var,
-    ncols = n_ics,
-    seed = 7L
-  ))
-  exp_ms_rna$add_new_collection(varm, 'varm')
-
-  experiment$close()
-
-  # Re-open for read.
-  # Leverage the still-pending on.exit(experiment$close()).
-  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   obs_value_filter <- paste0(

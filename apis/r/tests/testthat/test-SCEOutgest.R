@@ -3,83 +3,21 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   uri <- withr::local_tempdir("sce-experiment-query-whole")
   n_obs <- 20L
   n_var <- 10L
+  n_pcs <- 50L
+  n_ics <- 30L
+  n_umaps <- 2L
   experiment <- create_and_populate_experiment(
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts"),
-    mode = 'WRITE'
+    X_layer_names = c('counts', 'logcounts'),
+    obsm_layers = c(X_pca = n_pcs, 'dense:X_ica' = n_ics, X_umap = n_umaps),
+    # No varm in SingleCellExperiment
+    obsp_layer_names = 'connectivities',
+    varp_layer_names = 'network',
+    mode = 'READ'
   )
   on.exit(experiment$close())
-  exp_ms_rna <- experiment$ms$get("RNA")
-  # Add embeddings
-  n_pcs <- 50L
-  n_ics <- 30L
-  n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsm'))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_pca',
-    type = arrow::int32(),
-    shape = c(n_obs, n_pcs)
-  )
-  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_pcs
-  ))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_umap',
-    type = arrow::int32(),
-    shape = c(n_obs, n_umaps)
-  )
-  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_umaps,
-    seed = 2L
-  ))
-  # Add at least one set of dense arrays
-  obsm$add_new_dense_ndarray(
-    key = 'X_ica',
-    type = arrow::int32(),
-    shape = c(n_obs, n_ics)
-  )
-  obsm$get('X_ica')$write(create_dense_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_ics,
-    seed = 5L
-  ))
-  obsm$close()
-  exp_ms_rna$add_new_collection(obsm, 'obsm')
-  # SingleCellExperiment object don't support `varm`
-  # Add graph
-  obsp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsp'))
-  obsp$add_new_sparse_ndarray(
-    key = 'connectivities',
-    type = arrow::int32(),
-    shape = c(n_obs, n_obs)
-  )
-  obsp$get('connectivities')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_obs
-  ))
-  obsp$close()
-  exp_ms_rna$add_new_collection(obsp, 'obsp')
-  # Add coexpression network
-  varp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'varp'))
-  varp$add_new_sparse_ndarray(
-    key = 'network',
-    type = arrow::int32(),
-    shape = c(n_var, n_var)
-  )
-  varp$get('network')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_var,
-    ncols = n_var
-  ))
-  varp$close()
-  exp_ms_rna$add_new_collection(varp, 'varp')
-  # Close and reopen
-  exp_ms_rna$close()
-  experiment$close()
-  experiment <- SOMAExperimentOpen(experiment$uri)
   # Create the query
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -260,71 +198,20 @@ test_that("Load SCE object from sliced ExperimentQuery", {
   uri <- withr::local_tempdir("sce-experiment-query-sliced")
   n_obs <- 1001L
   n_var <- 99L
+  n_pcs <- 50L
+  n_umaps <- 2L
   experiment <- create_and_populate_experiment(
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts"),
-    mode = 'WRITE'
+    X_layer_names = c('counts', 'logcounts'),
+    obsm_layers = c(X_pca = n_pcs, X_umap = n_umaps),
+    # No varm in SingleCellExperiment
+    obsp_layer_names = 'connectivities',
+    varp_layer_names = 'network',
+    mode = 'READ'
   )
   on.exit(experiment$close())
-  exp_ms_rna <- experiment$ms$get("RNA")
-  # Add embeddings
-  n_pcs <- 50L
-  n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsm'))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_pca',
-    type = arrow::int32(),
-    shape = c(n_obs, n_pcs)
-  )
-  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_pcs
-  ))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_umap',
-    type = arrow::int32(),
-    shape = c(n_obs, n_umaps)
-  )
-  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_umaps,
-    seed = 2L
-  ))
-  obsm$close()
-  exp_ms_rna$add_new_collection(obsm, 'obsm')
-  # SingleCellExperiment object don't support `varm`
-  # Add graph
-  obsp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsp'))
-  obsp$add_new_sparse_ndarray(
-    key = 'connectivities',
-    type = arrow::int32(),
-    shape = c(n_obs, n_obs)
-  )
-  obsp$get('connectivities')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_obs
-  ))
-  obsp$close()
-  exp_ms_rna$add_new_collection(obsp, 'obsp')
-  # Add coexpression network
-  varp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'varp'))
-  varp$add_new_sparse_ndarray(
-    key = 'network',
-    type = arrow::int32(),
-    shape = c(n_var, n_var)
-  )
-  varp$get('network')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_var,
-    ncols = n_var
-  ))
-  varp$close()
-  exp_ms_rna$add_new_collection(varp, 'varp')
-  # Close and reopen
-  exp_ms_rna$close()
-  experiment$close()
-  experiment <- SOMAExperimentOpen(experiment$uri)
   # Create the query
   obs_slice <- bit64::as.integer64(seq(3, 72))
   var_slice <- bit64::as.integer64(seq(7, 21))
@@ -388,73 +275,22 @@ test_that("Load SCE object from indexed ExperimentQuery", {
   uri <- withr::local_tempdir("sce-experiment-query-value-filters")
   n_obs <- 1001L
   n_var <- 99L
+  n_pcs <- 50L
+  n_umaps <- 2L
   obs_label_values <- c("1003", "1007", "1038", "1099")
   var_label_values <- c("1018", "1034", "1067")
   experiment <- create_and_populate_experiment(
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts"),
-    mode = 'WRITE'
+    X_layer_names = c('counts', 'logcounts'),
+    obsm_layers = c(X_pca = n_pcs, X_umap = n_umaps),
+    # No varm in SingleCellExperiment
+    obsp_layer_names = 'connectivities',
+    varp_layer_names = 'network',
+    mode = 'READ'
   )
   on.exit(experiment$close())
-  exp_ms_rna <- experiment$ms$get("RNA")
-  # Add embeddings
-  n_pcs <- 50L
-  n_umaps <- 2L
-  obsm <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsm'))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_pca',
-    type = arrow::int32(),
-    shape = c(n_obs, n_pcs)
-  )
-  obsm$get('X_pca')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_pcs
-  ))
-  obsm$add_new_sparse_ndarray(
-    key = 'X_umap',
-    type = arrow::int32(),
-    shape = c(n_obs, n_umaps)
-  )
-  obsm$get('X_umap')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_umaps,
-    seed = 2L
-  ))
-  obsm$close()
-  exp_ms_rna$add_new_collection(obsm, 'obsm')
-  # SingleCellExperiment object don't support `varm`
-  # Add graph
-  obsp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'obsp'))
-  obsp$add_new_sparse_ndarray(
-    key = 'connectivities',
-    type = arrow::int32(),
-    shape = c(n_obs, n_obs)
-  )
-  obsp$get('connectivities')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_obs
-  ))
-  obsp$close()
-  exp_ms_rna$add_new_collection(obsp, 'obsp')
-  # Add coexpression network
-  varp <- SOMACollectionCreate(file.path(exp_ms_rna$uri, 'varp'))
-  varp$add_new_sparse_ndarray(
-    key = 'network',
-    type = arrow::int32(),
-    shape = c(n_var, n_var)
-  )
-  varp$get('network')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_var,
-    ncols = n_var
-  ))
-  varp$close()
-  exp_ms_rna$add_new_collection(varp, 'varp')
-  # Close and reopen
-  exp_ms_rna$close()
-  experiment$close()
-  experiment <- SOMAExperimentOpen(experiment$uri)
   # Create the query
   obs_value_filter <- paste0(
     sprintf("baz == '%s'", obs_label_values),

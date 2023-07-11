@@ -8,32 +8,11 @@ test_that("Load graph from ExperimentQuery mechanics", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "WRITE"
+    obsp_layer_names = "connectivities",
+    # No varp in Seurat
+    mode = "READ"
   )
   on.exit(experiment$close())
-
-  exp_ms_rna <- experiment$ms$get('RNA')
-  expect_equal(exp_ms_rna$mode(), 'WRITE')
-
-  # Add graph
-  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
-  obsp$add_new_sparse_ndarray(
-    key = 'connectivities',
-    type = arrow::int32(),
-    shape = c(n_obs, n_obs)
-  )
-  obsp$get('connectivities')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_obs
-  ))
-  exp_ms_rna$add_new_collection(obsp, 'obsp')
-
-  exp_ms_rna$close()
-  experiment$close()
-
-  # Re-open for read.
-  # Leverage the still-pending on.exit(experiment$close()).
-  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   query <- SOMAExperimentAxisQuery$new(
@@ -93,30 +72,11 @@ test_that("Load graph from sliced ExperimentQuery", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "WRITE"
+    obsp_layer_names = "connectivities",
+    # No varp in Seurat
+    mode = "READ"
   )
   on.exit(experiment$close())
-  exp_ms_rna <- experiment$ms$get('RNA')
-  expect_equal(exp_ms_rna$mode(), 'WRITE')
-
-  # Add graph
-  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
-  obsp$add_new_sparse_ndarray(
-    key = 'connectivities',
-    type = arrow::int32(),
-    shape = c(n_obs, n_obs)
-  )
-  obsp$get('connectivities')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_obs
-  ))
-  exp_ms_rna$add_new_collection(obsp, 'obsp')
-  exp_ms_rna$close()
-  experiment$close()
-
-  # Re-open for read.
-  # Leverage the still-pending on.exit(experiment$close()).
-  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   obs_slice <- bit64::as.integer64(seq(3, 72))
@@ -162,30 +122,11 @@ test_that("Load graph from indexed ExperimentQuery", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = c("counts", "logcounts"),
-    mode = "WRITE"
+    obsp_layer_names = "connectivities",
+    # No varp in Seurat
+    mode = "READ"
   )
   on.exit(experiment$close())
-  exp_ms_rna <- experiment$ms$get('RNA')
-  expect_equal(exp_ms_rna$mode(), 'WRITE')
-
-  # Add graph
-  obsp <- SOMACollectionCreate(file.path(experiment$ms$get('RNA')$uri, 'obsp'))
-  obsp$add_new_sparse_ndarray(
-    key = 'connectivities',
-    type = arrow::int32(),
-    shape = c(n_obs, n_obs)
-  )
-  obsp$get('connectivities')$write(create_sparse_matrix_with_int_dims(
-    nrows = n_obs,
-    ncols = n_obs
-  ))
-  exp_ms_rna$add_new_collection(obsp, 'obsp')
-  exp_ms_rna$close()
-  experiment$close()
-
-  # Re-open for read.
-  # Leverage the still-pending on.exit(experiment$close()).
-  experiment <- SOMAExperimentOpen(experiment$uri)
 
   # Create the query
   obs_value_filter <- paste0(
