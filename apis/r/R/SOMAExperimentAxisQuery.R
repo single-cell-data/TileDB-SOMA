@@ -1139,7 +1139,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       df <- if (is.null(attrs)) {
         NULL
       } else {
-        soma_reader(attrs)$concat()$to_data_frame()
+        as.data.frame(soma_reader(attrs)$concat()$to_data_frame())
       }
       ids <- if (is.null(index)) {
         paste0(df_name, soma_joinids$as_vector())
