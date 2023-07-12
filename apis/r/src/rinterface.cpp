@@ -190,8 +190,6 @@ Rcpp::CharacterVector get_column_types(const std::string& uri,
     return vs;
 }
 
-//' @rdname soma_array_reader
-//' @export
 // [[Rcpp::export]]
 double nnz(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     auto sr = tdbs::SOMAArray::open(TILEDB_READ, uri, "unnamed", config_vector_to_map(config));
@@ -212,8 +210,6 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
   return true;
 }
 
-//' @rdname soma_array_reader
-//' @export
 // [[Rcpp::export]]
 Rcpp::NumericVector shape(const std::string& uri,
                           Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
