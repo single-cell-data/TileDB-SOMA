@@ -42,12 +42,14 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-void SOMADataFrame::create(
+std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema) {
     SOMAArray::create(ctx, uri, schema, "SOMADataFrame");
+    return std::make_unique<SOMADataFrame>(
+        TILEDB_READ, uri, ctx, std::vector<std::string>(), std::nullopt);
 }
 
-std::shared_ptr<SOMADataFrame> SOMADataFrame::open(
+std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     tiledb_query_type_t mode,
     std::string_view uri,
     std::vector<std::string> column_names,
@@ -58,7 +60,7 @@ std::shared_ptr<SOMADataFrame> SOMADataFrame::open(
         mode, uri, ctx, column_names, timestamp);
 }
 
-std::shared_ptr<SOMADataFrame> SOMADataFrame::open(
+std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     tiledb_query_type_t mode,
     std::shared_ptr<Context> ctx,
     std::string_view uri,
@@ -103,7 +105,7 @@ void SOMADataFrame::close() {
     array_->close();
 }
 
-std::string SOMADataFrame::uri() const {
+const std::string& SOMADataFrame::uri() const {
     return array_->uri();
 }
 
@@ -115,7 +117,7 @@ std::shared_ptr<ArraySchema> SOMADataFrame::schema() const {
     return array_->schema();
 }
 
-std::vector<std::string> SOMADataFrame::index_column_names() const {
+const std::vector<std::string> SOMADataFrame::index_column_names() const {
     return array_->dimension_names();
 }
 
@@ -124,9 +126,6 @@ int64_t SOMADataFrame::count() const {
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMADataFrame::read_next() {
-    // while (auto batch = array_->read_next()) {
-    //     return batch;
-    // }
     return array_->read_next();
 }
 

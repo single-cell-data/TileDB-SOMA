@@ -56,7 +56,7 @@ class SOMADataFrame : public SOMAObject {
      * @param uri URI to create the SOMADataFrame
      * @param schema TileDB ArraySchema
      */
-    static void create(
+    static std::unique_ptr<SOMADataFrame> create(
         std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema);
 
     /**
@@ -71,9 +71,9 @@ class SOMADataFrame : public SOMAObject {
      * exist in the schema, and at least one index column name is required.
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::shared_ptr<SOMADataFrame> SOMADataFrame
+     * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
      */
-    static std::shared_ptr<SOMADataFrame> open(
+    static std::unique_ptr<SOMADataFrame> open(
         tiledb_query_type_t mode,
         std::string_view uri,
         std::vector<std::string> column_names = {},
@@ -93,9 +93,9 @@ class SOMADataFrame : public SOMAObject {
      * exist in the schema, and at least one index column name is required.
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::shared_ptr<SOMADataFrame> SOMADataFrame
+     * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
      */
-    static std::shared_ptr<SOMADataFrame> open(
+    static std::unique_ptr<SOMADataFrame> open(
         tiledb_query_type_t mode,
         std::shared_ptr<Context> ctx,
         std::string_view uri,
@@ -159,7 +159,7 @@ class SOMADataFrame : public SOMAObject {
      *
      * @return std::string URI
      */
-    std::string uri() const;
+    const std::string& uri() const;
 
     /**
      * Get the Context associated with the SOMADataFrame.
@@ -180,7 +180,7 @@ class SOMADataFrame : public SOMAObject {
      *
      * @return std::vector<std::string>
      */
-    std::vector<std::string> index_column_names() const;
+    const std::vector<std::string> index_column_names() const;
 
     /**
      * Return the number of rows in the SOMADataFrame.

@@ -144,7 +144,7 @@ class SOMAArray {
      *
      * @return std::string URI
      */
-    std::string uri() const;
+    const std::string& uri() const;
 
     /**
      * @brief Get URI of the SOMAArray.
@@ -344,10 +344,21 @@ class SOMAArray {
      * An example use model:
      *
      *   auto writer = SOMAArray::open(TILEDB_WRITE, uri);
+     *
+     *   std::vector<int> att{0, 1, 2, 3, 4, 5};
+     *   std::vector<int> dim{0, 1, 2, 3, 4, 5};
+     *
+     *   auto schema = *soma_array->schema();
+     *   auto array_buffer = std::make_shared<ArrayBuffers>();
+     *   array_buffer->emplace("att", ColumnBuffer::create(schema, "att", att));
+     *   array_buffer->emplace("dim", ColumnBuffer::create(schema, "dim", dim));
+     *
      *   std::vector<int> x(10, 1);
      *   writer->submit();
-     *   writer->set_column_data("x", x_data);
-     *   writer->write();
+     *   writer->write(array_buffer);
+     *   writer->close();
+     *
+     * @param buffers The ArrayBuffers to write to the array
      */
     void write(std::shared_ptr<ArrayBuffers> buffers);
 

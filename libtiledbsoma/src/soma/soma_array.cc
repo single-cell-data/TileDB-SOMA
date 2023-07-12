@@ -140,7 +140,7 @@ SOMAArray::SOMAArray(
     reset(column_names, batch_size, result_order);
 }
 
-std::string SOMAArray::uri() const {
+const std::string& SOMAArray::uri() const {
     return uri_;
 };
 
