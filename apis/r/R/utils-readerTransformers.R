@@ -4,7 +4,7 @@
 #' \link{sr_next} to an arrow::\link[arrow]{Table}
 #' @param x A List object with two pointers to Arrow array data and schema
 #' @return arrow::\link[arrow]{Table}
-#' @keywords internal
+#' @noRd
 soma_array_to_arrow_table <- function(x) {
   check_arrow_pointers(x)
   arrow::as_arrow_table(
@@ -27,7 +27,7 @@ soma_array_to_arrow_table <- function(x) {
 #' otherwise \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}
 #' @return Matrix::\link{sparseMatrix} or \link{matrixZeroBasedView} of
 #' Matrix::\link[Matrix]{sparseMatrix}
-#' @keywords internal
+#' @noRd
 arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, zero_based = FALSE) {
 
   # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
@@ -85,7 +85,7 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
 #' @param byrow Logical, TRUE if "soma_data" is ordered by row, this argument is
 #' directly passed to the argument \code{byrow} of \link{matrix}
 #' @return \link{matrixZeroBasedView} of \link[base]{matrix}
-#' @keywords internal
+#' @noRd
 arrow_table_to_dense <- function(tbl, byrow) {
 
   nrows <- length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0"))))
