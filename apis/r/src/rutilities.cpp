@@ -310,19 +310,19 @@ std::string tiledbsoma_stats_dump() {
 
 // formerly version.cpp
 
-//' libtiledbsoma version information
+//' libtiledbsoma version
 //'
 //' Returns a string with version information for libtiledbsoma and the linked TileDB Embedded library.
-//' @keywords internal
+//' @noRd
 // [[Rcpp::export]]
 std::string libtiledbsoma_version() {
     return tiledbsoma::version::as_string();
 }
 
-//' TileDB Embedded Version interface
+//' TileDB embedded version
 //'
 //' Gets the version of the TileDB Embedded library that is currently in use.
-//' @keywords internal
+//' @noRd
 // [[Rcpp::export]]
 Rcpp::IntegerVector tiledb_embedded_version() {
     std::tuple<int, int, int> triple = tiledbsoma::version::embedded_version_triple();
