@@ -55,6 +55,7 @@ class SOMADataFrame : public SOMAObject {
      * @param ctx TileDB context
      * @param uri URI to create the SOMADataFrame
      * @param schema TileDB ArraySchema
+     * @return std::unique_ptr<SOMADataFrame> opened in read mode
      */
     static std::unique_ptr<SOMADataFrame> create(
         std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema);
@@ -62,13 +63,13 @@ class SOMADataFrame : public SOMAObject {
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.
      *
+     * @param mode TILEDB_READ or TILEDB_WRITE
      * @param uri URI to create the SOMADataFrame
-     * @param schema TileDB ArraySchema
-     * @param platform_config Platform-specific options used to create this
-     * DataFrame
      * @param column_names A list of column names to use as user-defined index
      * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
      * exist in the schema, and at least one index column name is required.
+     * @param platform_config Platform-specific options used to create this
+     * DataFrame
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
      * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
@@ -83,11 +84,10 @@ class SOMADataFrame : public SOMAObject {
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.
      *
+     * @param mode TILEDB_READ or TILEDB_WRITE
      * @param ctx TileDB context
      * @param uri URI to create the SOMADataFrame
      * @param schema TileDB ArraySchema
-     * @param platform_config Platform-specific options used to create this
-     * DataFrame
      * @param column_names A list of column names to use as user-defined index
      * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
      * exist in the schema, and at least one index column name is required.
@@ -111,11 +111,8 @@ class SOMADataFrame : public SOMAObject {
      *
      * @param mode TILEDB_READ or TILEDB_WRITE
      * @param uri URI of the array
-     * @param name name of the array
      * @param ctx TileDB context
      * @param column_names Columns to read
-     * @param batch_size Batch size
-     * @param result_order Result order
      * @param timestamp Timestamp
      */
     SOMADataFrame(
