@@ -433,3 +433,33 @@ TEST_CASE("SOMAArray: Test buffer size") {
     REQUIRE(loops == 10);
     soma_array->close();
 }
+
+TEST_CASE("SOMAArray: Enumeration") {
+    std::string uri = "mem://unit-test-array-enmr";
+    auto ctx = std::make_shared<Context>();
+    ArraySchema schema(*ctx, TILEDB_SPARSE);
+
+    auto dim = Dimension::create<int64_t>(
+        *ctx, "d", {0, std::numeric_limits<int64_t>::max() - 1});
+
+    Domain dom(*ctx);
+    dom.add_dimension(dim);
+    schema.set_domain(dom);
+
+    std::vector<std::string> vals = {"red", "blue", "green"};
+    auto enmr = Enumeration::create(*ctx, "rbg", vals);
+    ArraySchemaExperimental::add_enumeration(*ctx, schema, enmr);
+
+    auto attr = Attribute::create<int>(*ctx, "a");
+    AttributeExperimental::set_enumeration_name(*ctx, attr, "rbg");
+    schema.add_attribute(attr);
+
+    Array::create(uri, schema);
+
+    auto soma_array = SOMAArray::open(TILEDB_READ, ctx, uri);
+    auto attr_to_enum = soma_array->get_attr_to_enum_mapping();
+    REQUIRE(attr_to_enum.size() == 1);
+    REQUIRE(attr_to_enum.at("a").name() == "rbg");
+    REQUIRE(soma_array->get_enum_label_on_attr("a"));
+    REQUIRE(soma_array->attr_has_enum("a"));
+}
