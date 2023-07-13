@@ -1,5 +1,5 @@
 /**
- * @file   soma_dense_ndarray.h
+ * @file   soma_sparse_ndarray.h
  *
  * @section LICENSE
  *
@@ -27,11 +27,11 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMADenseNDArray class.
+ *   This file defines the SOMASparseNDArray class.
  */
 
-#ifndef SOMA_DENSE_NDARRAY
-#define SOMA_DENSE_NDARRAY
+#ifndef SOMA_SPARSE_NDARRAY
+#define SOMA_SPARSE_NDARRAY
 
 #include <tiledb/tiledb>
 #include "soma_object.h"
@@ -43,28 +43,28 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMADenseNDArray : public SOMAObject {
+class SOMASparseNDArray : public SOMAObject {
    public:
     //===================================================================
     //= public static
     //===================================================================
 
     /**
-     * @brief Create a SOMADenseNDArray object at the given URI.
+     * @brief Create a SOMASparseNDArray object at the given URI.
      *
      * @param ctx TileDB context
-     * @param uri URI to create the SOMADenseNDArray
+     * @param uri URI to create the SOMASparseNDArray
      * @param schema TileDB ArraySchema
-     * @return std::unique_ptr<SOMADenseNDArray> opened in read mode
+     * @return std::unique_ptr<SOMASparseNDArray> opened in read mode
      */
-    static std::unique_ptr<SOMADenseNDArray> create(
+    static std::unique_ptr<SOMASparseNDArray> create(
         std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema);
 
     /**
-     * @brief Open and return a SOMADenseNDArray object at the given URI.
+     * @brief Open and return a SOMASparseNDArray object at the given URI.
      *
      * @param mode TILEDB_READ or TILEDB_WRITE
-     * @param uri URI to create the SOMADenseNDArray
+     * @param uri URI to create the SOMASparseNDArray
      * @param column_names A list of column names to use as user-defined index
      * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
      * exist in the schema, and at least one index column name is required.
@@ -72,9 +72,9 @@ class SOMADenseNDArray : public SOMAObject {
      * DataFrame
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray
+     * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
      */
-    static std::unique_ptr<SOMADenseNDArray> open(
+    static std::unique_ptr<SOMASparseNDArray> open(
         tiledb_query_type_t mode,
         std::string_view uri,
         std::vector<std::string> column_names = {},
@@ -82,20 +82,20 @@ class SOMADenseNDArray : public SOMAObject {
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
-     * @brief Open and return a SOMADenseNDArray object at the given URI.
+     * @brief Open and return a SOMASparseNDArray object at the given URI.
      *
      * @param mode TILEDB_READ or TILEDB_WRITE
      * @param ctx TileDB context
-     * @param uri URI to create the SOMADenseNDArray
+     * @param uri URI to create the SOMASparseNDArray
      * @param schema TileDB ArraySchema
      * @param column_names A list of column names to use as user-defined index
      * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
      * exist in the schema, and at least one index column name is required.
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray
+     * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
      */
-    static std::unique_ptr<SOMADenseNDArray> open(
+    static std::unique_ptr<SOMASparseNDArray> open(
         tiledb_query_type_t mode,
         std::shared_ptr<Context> ctx,
         std::string_view uri,
@@ -107,7 +107,7 @@ class SOMADenseNDArray : public SOMAObject {
     //===================================================================
 
     /**
-     * @brief Construct a new SOMADenseNDArray object.
+     * @brief Construct a new SOMASparseNDArray object.
      *
      * @param mode TILEDB_READ or TILEDB_WRITE
      * @param uri URI of the array
@@ -115,7 +115,7 @@ class SOMADenseNDArray : public SOMAObject {
      * @param column_names Columns to read
      * @param timestamp Timestamp
      */
-    SOMADenseNDArray(
+    SOMASparseNDArray(
         tiledb_query_type_t mode,
         std::string_view uri,
         std::shared_ptr<Context> ctx,
@@ -123,47 +123,37 @@ class SOMADenseNDArray : public SOMAObject {
         std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
     /**
-     * Open the SOMADenseNDArray object.
-     *
-     * @param mode TILEDB_READ or TILEDB_WRITE
-     * @param timestamp Timestamp
-     */
-    void open(
-        tiledb_query_type_t mode,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
-
-    /**
-     * Closes the SOMADenseNDArray object.
+     * Closes the SOMASparseNDArray object.
      */
     void close();
 
     /**
-     * Returns the constant "SOMADenseNDArray".
+     * Returns the constant "SOMASparseNDArray".
      *
      * @return std::string
      */
     std::string type() const {
-        return "SOMADenseNDArray";
+        return "SOMASparseNDArray";
     }
 
     /**
-     * Get the Context associated with the SOMADenseNDArray.
+     * Get the Context associated with the SOMASparseNDArray.
      *
      * @return std::shared_ptr<Context>
      */
     std::shared_ptr<Context> ctx();
 
     /**
-     * Return whether the SOMADenseNDArray is sparse.
+     * Return whether the NDArray is sparse.
      *
-     * @return false
+     * @return true
      */
     bool is_sparse() {
-        return false;
+        return true;
     };
 
     /**
-     * @brief Get URI of the SOMADenseNDArray.
+     * @brief Get URI of the SOMASparseNDArray.
      *
      * @return std::string URI
      */
@@ -192,6 +182,13 @@ class SOMADenseNDArray : public SOMAObject {
     int64_t ndim() const;
 
     /**
+     * @brief Get the total number of shared cells in the array.
+     *
+     * @return uint64_t Total number of shared cells
+     */
+    uint64_t nnz() const;
+
+    /**
      * @brief Read the next chunk of results from the query. If all results have
      * already been read, std::nullopt is returned.
      */
@@ -212,4 +209,4 @@ class SOMADenseNDArray : public SOMAObject {
 };
 }  // namespace tiledbsoma
 
-#endif  // SOMA_DENSE_NDARRAY
+#endif  // SOMA_SPARSE_NDARRAY
