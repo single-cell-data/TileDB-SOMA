@@ -43,7 +43,7 @@ using namespace tiledb;
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
     std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema) {
     if (schema.array_type() != TILEDB_SPARSE)
-        throw TileDBSOMAError("ArraySchema must be set to dense.");
+        throw TileDBSOMAError("ArraySchema must be set to sparse.");
 
     SOMAArray::create(ctx, uri, schema, "SOMASparseNDArray");
     return std::make_unique<SOMASparseNDArray>(
@@ -90,6 +90,14 @@ SOMASparseNDArray::SOMASparseNDArray(
         "auto",  // batch_size,
         "auto",  // result_order,
         timestamp);
+    array_->reset();
+    array_->submit();
+}
+
+void SOMASparseNDArray::open(
+    tiledb_query_type_t mode,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    array_->open(mode, timestamp);
     array_->reset();
     array_->submit();
 }

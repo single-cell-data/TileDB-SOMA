@@ -123,6 +123,16 @@ class SOMASparseNDArray : public SOMAObject {
         std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
     /**
+     * Open the SOMASparseNDArray object.
+     *
+     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param timestamp Timestamp
+     */
+    void open(
+        tiledb_query_type_t mode,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+
+    /**
      * Closes the SOMASparseNDArray object.
      */
     void close();
