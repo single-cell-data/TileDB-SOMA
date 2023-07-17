@@ -100,7 +100,7 @@ public:
 
   shared_ptr<QueryCondition> ptr() { return qc_; }
 
-  py::capsule __capsule__() { return py::capsule(&qc_, "qc"); }
+  py::capsule __capsule__() { return py::capsule(&qc_, "qc", nullptr); }
 
   PyQueryCondition
   combine(PyQueryCondition rhs,
