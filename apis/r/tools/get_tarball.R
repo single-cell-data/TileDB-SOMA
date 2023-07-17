@@ -1,15 +1,15 @@
 #!/usr/bin/env Rscript
 
 ## version pinning info
-tiledb_core_version <- "2.15.2"
-tiledb_core_sha1 <- "90f30eb"
+tiledb_core_version <- "2.16.0"
+tiledb_core_sha1 <- "d682dd0"
 
 if ( ! dir.exists("inst/") ) {
     stop("No 'inst/' directory. Exiting.", call. = FALSE)
 }
 
 makeUrl <- function(arch, ver=tiledb_core_version, sha1=tiledb_core_sha1) {
-    sprintf("https://github.com/TileDB-Inc/TileDB/releases/download/%s/tiledb-%s-%s-%s.tar.gz", ver, arch, ver, sha1)
+    sprintf("https://github.com/TileDB-Inc/TileDB/releases/download/2.16.0/tiledb-2.16.0-2.16.0-2.16.0.tar.gz", ver, arch, ver, sha1)
 }
 
 isX86 <- Sys.info()["machine"] == "x86_64"
