@@ -1284,7 +1284,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       col_pairs <- lapply(
         X = obsp_layers,
         FUN = function(layer) {
-          mat <- private$.load_p_axis(layer)
+          mat <- private$.load_p_axis(layer, repr = "T")
           dimnames(mat) <- list(obs_ids, obs_ids)
           return(.mat_to_hits(mat))
         }
