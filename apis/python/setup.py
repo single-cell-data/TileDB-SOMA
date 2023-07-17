@@ -265,7 +265,7 @@ setuptools.setup(
         )
     ],
     zip_safe=False,
-    setup_requires=["pybind11"],
+    setup_requires=["pybind11==2.10.0"],
     install_requires=[
         # Needed for Python 3.7 which anndata 0.9 doesn't support but we do
         "anndata < 0.9; python_version<'3.8'",
