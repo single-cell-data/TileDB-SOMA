@@ -962,40 +962,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Validate and return
       methods::validObject(sce)
       return(sce)
-    },
-    #' @description Convenience method for \code{$to_single_cell_experiment()}
-    #'
-    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers('sce')}
-    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}
-    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}
-    #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}
-    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce')}
-    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce', 'var')}
-    #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}
-    #' @param varp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}
-    #'
-    #' @return A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-    #'
-    to_sce = function(
-      X_layers = NULL,
-      obs_index = NULL,
-      var_index = NULL,
-      obs_column_names = NULL,
-      var_column_names = NULL,
-      obsm_layers = NULL,
-      obsp_layers = NULL,
-      varp_layers = NULL
-    ) {
-      return(self$to_single_cell_experiment(
-        X_layers = X_layers,
-        obs_index = obs_index,
-        var_index = var_index,
-        obs_column_names = obs_column_names,
-        var_column_names = var_column_names,
-        obsm_layers = obsm_layers,
-        obsp_layers = obsp_layers,
-        varp_layers = varp_layers
-      ))
     }
   ),
 
