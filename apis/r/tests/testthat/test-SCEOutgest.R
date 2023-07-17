@@ -43,7 +43,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     c('counts', 'logcounts')
   )
   for (slot in SummarizedExperiment::assayNames(obj)) {
-    expect_s4_class(mat <- SummarizedExperiment::assay(obj, slot), 'dgCMatrix')
+    expect_s4_class(mat <- SummarizedExperiment::assay(obj, slot), 'dgTMatrix')
     expect_identical(rownames(mat), rownames(obj))
     expect_identical(colnames(mat), colnames(obj))
   }
@@ -104,7 +104,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     setdiff(query$obs_df$attrnames(), 'baz') %in% names(SingleCellExperiment::colData(obj))
   ))
   for (slot in SummarizedExperiment::assayNames(obj)) {
-    expect_s4_class(mat <- SummarizedExperiment::assay(obj, slot), 'dgCMatrix')
+    expect_s4_class(mat <- SummarizedExperiment::assay(obj, slot), 'dgTMatrix')
     expect_identical(rownames(mat), rownames(obj))
     expect_identical(colnames(mat), colnames(obj))
   }
@@ -120,15 +120,15 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   # Test `X_layers`
   expect_warning(obj <- query$to_sce('counts'))
   expect_identical(SummarizedExperiment::assayNames(obj), 'counts')
-  expect_s4_class(SummarizedExperiment::assay(obj, 'counts'), 'dgCMatrix')
+  expect_s4_class(SummarizedExperiment::assay(obj, 'counts'), 'dgTMatrix')
   expect_error(SummarizedExperiment::assay(obj, 'logcounts'))
   expect_warning(obj <- query$to_sce('logcounts'))
   expect_identical(SummarizedExperiment::assayNames(obj), 'logcounts')
-  expect_s4_class(SummarizedExperiment::assay(obj, 'logcounts'), 'dgCMatrix')
+  expect_s4_class(SummarizedExperiment::assay(obj, 'logcounts'), 'dgTMatrix')
   expect_error(SummarizedExperiment::assay(obj, 'counts'))
   expect_warning(obj <- query$to_sce(c(matrix = 'logcounts')))
   expect_identical(SummarizedExperiment::assayNames(obj), 'matrix')
-  expect_s4_class(SummarizedExperiment::assay(obj, 'matrix'), 'dgCMatrix')
+  expect_s4_class(SummarizedExperiment::assay(obj, 'matrix'), 'dgTMatrix')
   # Test suppress reductions
   expect_no_condition(obj <- query$to_sce(obsm_layers = FALSE))
   expect_length(SingleCellExperiment::reducedDimNames(obj), 0L)

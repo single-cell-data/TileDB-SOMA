@@ -924,7 +924,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
             layer_name = layer
           ))
           dimnames(mat) <- list(var_ids, obs_ids)
-          return(as(object = mat, Class = 'CsparseMatrix'))
+          return(mat)
         },
         var_ids = row.names(var),
         obs_ids = row.names(obs)
