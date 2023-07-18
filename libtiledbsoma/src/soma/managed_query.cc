@@ -53,8 +53,7 @@ void ManagedQuery::reset() {
     query_ = std::make_unique<Query>(schema_->context(), *array_);
     subarray_ = std::make_unique<Subarray>(schema_->context(), *array_);
 
-    if (this->query_type() == TILEDB_WRITE ||
-        array_->schema().array_type() == TILEDB_SPARSE) {
+    if (array_->schema().array_type() == TILEDB_SPARSE) {
         query_->set_layout(TILEDB_UNORDERED);
     } else {
         query_->set_layout(TILEDB_ROW_MAJOR);

@@ -47,6 +47,8 @@ class SOMAObject {
     //===================================================================
     //= public non-static
     //===================================================================
+    virtual ~SOMAObject() = default;
+
     /**
      * @brief Return a constant string describing the type of the object.
      *
@@ -59,7 +61,7 @@ class SOMAObject {
      *
      * @return std::string URI
      */
-    virtual std::string uri() const = 0;
+    virtual const std::string& uri() const = 0;
 
     /**
      * Get the context associated with the SOMAObject.
