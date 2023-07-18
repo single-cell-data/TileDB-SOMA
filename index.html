@@ -4,14 +4,16 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="Interface for working with TileDB-based Stack of Matrices,
+    Annotated (SOMA): an open data model for representing annotated matrices,
+    like those commonly used for single cell data analysis.">
 <title>TileDB SOMA • tiledbsoma</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
-<script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="TileDB SOMA">
+<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="TileDB SOMA">
 <meta property="og:description" content="Interface for working with TileDB-based Stack of Matrices,
     Annotated (SOMA): an open data model for representing annotated matrices,
     like those commonly used for single cell data analysis.">
@@ -20,126 +22,111 @@
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
-<body data-spy="scroll" data-target="#toc">
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <div class="container template-home">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9024</span>
-      </span>
-    </div>
+    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    
+    <a class="navbar-brand me-2" href="index.html">tiledbsoma</a>
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="reference/index.html">Reference</a>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.1</small>
+
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="nav-item">
+  <a class="nav-link" href="reference/index.html">Reference</a>
 </li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="articles/UsingPlatformConfig.html">Using PlatformConfig</a>
-    </li>
-    <li>
-      <a href="articles/soma-experiment-queries.html">Querying a SOMA experiment</a>
-    </li>
-    <li>
-      <a href="articles/soma-objects.html">SOMA objects overview</a>
-    </li>
-    <li>
-      <a href="articles/soma-reading.html">Reading from SOMA objects</a>
-    </li>
-  </ul>
-</li>
-<li>
-  <a href="news/index.html">Changelog</a>
-</li>
-      </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/single-cell-data/TileDB-SOMA/" class="external-link">
-    <span class="fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
-      </ul>
-</div>
-<!--/.nav-collapse -->
+<li class="nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-vignettes">Vignettes</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-vignettes">
+    <h6 class="dropdown-header" data-toc-skip>SOMA Introduction</h6>
+    <a class="dropdown-item" href="articles/soma-objects.html">SOMA Objects Overview</a>
+    <a class="dropdown-item" href="articles/soma-reading.html">Reading From SOMA Objects</a>
+    <a class="dropdown-item" href="articles/soma-experiment-queries.html">Querying a SOMA Experiment</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>SOMA Configuration</h6>
+    <a class="dropdown-item" href="articles/UsingPlatformConfig.html">Using PlatformConfig</a>
   </div>
-<!--/.container -->
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="news/index.html">Changelog</a>
+</li>
+      </ul>
+<form class="form-inline my-2 my-lg-0" role="search">
+        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="search.json" id="search-input" placeholder="Search for" autocomplete="off">
+</form>
+
+      <ul class="navbar-nav">
+<li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/single-cell-data/TileDB-SOMA/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
-<!--/.navbar -->
 
-      
-
-      </header><div class="row">
-  <div class="contents col-md-9">
-
-<div class="section level1">
+    
+  </div>
+</nav><div class="container template-home">
+<div class="row">
+  <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h1></div>
-<p>This is a R implementation of the <a href="https://github.com/single-cell-data/SOMA" class="external-link">Unified Single-cell Data Model</a>.</p>
-<p>This branch, <code>main</code>, implements the <a href="https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md" class="external-link">updated specfication</a>. Please also see the <code>main-old</code> branch which implements the <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md" class="external-link">original specification</a>.</p>
+<p>This is the R implementation of the <a href="https://github.com/single-cell-data/SOMA" class="external-link">SOMA API specification</a>.</p>
+<p>This <code>main</code> branch implements the <a href="https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md" class="external-link">updated specfication</a>. Please also see the <code>main-old</code> branch for an implementation of the <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md" class="external-link">original specification</a>.</p>
 </div>
 <div class="section level1">
 <h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h1>
 <div class="section level2">
-<h2 id="using-r-universe">Using R-universe<a class="anchor" aria-label="anchor" href="#using-r-universe"></a>
+<h2 id="release-packages">Release packages<a class="anchor" aria-label="anchor" href="#release-packages"></a>
 </h2>
-<p>This code is hosted at R-universe, so you can do</p>
-<pre class="shell"><code>$ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev', 'https://cloud.r-project.org'))</code></pre>
+<p>TileDB-SOMA releases are available on R-universe and <a href="https://anaconda.org/tiledb/r-tiledbsoma" class="external-link">Conda</a>, and can be installed directly from R or <code>mamba</code> as indicated below.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'tiledbsoma'</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'https://tiledb-inc.r-universe.dev'</span>,</span>
+<span>                                         <span class="st">'https://cloud.r-project.org'</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1"></a><span class="ex">mamba</span> install -c conda-forge -c tiledb r-tiledbsoma</span></code></pre></div>
+<p>The r-universe repo serves macOS binaries and the source package for other Unix-like platforms. The conda channel serves binaries for multiple architectures.</p>
 </div>
 <div class="section level2">
 <h2 id="from-source">From source<a class="anchor" aria-label="anchor" href="#from-source"></a>
 </h2>
+<p>To install the very latest tiledbsoma development version (our <code>main</code> branch), use <a href="https://cran.r-project.org/web/packages/remotes/readme/README.html" class="external-link"><code>remotes::install_github()</code></a>:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"https://github.com/single-cell-data/TileDB-SOMA"</span>, subdir<span class="op">=</span><span class="st">"apis/r"</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="requirements">Requirements<a class="anchor" aria-label="anchor" href="#requirements"></a>
 </h3>
 <ul>
-<li>Source installation requires the <a href="https://github.com/TileDB-Inc/TileDB-R" class="external-link"><code>tiledb</code> R package</a> (which in turn depends on the <a href="https://github.com/TileDB-Inc/TileDB" class="external-link"><code>tiledb</code> Core library</a>).</li>
-<li>In general, source installation of TileDB and its packages may require <code>cmake</code> and <code>git</code> to be installed; these are common tools each operating system provides readily.</li>
-<li>Other R package dependencies are listed in the <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION" class="external-link">DESCRIPTION</a> file and can be installed via <em>e.g.</em> <code>remotes::install_deps(".", TRUE)</code>. In order to build vignettes, <code>knitr</code> and <code>rmarkdown</code> are required as is <code>testthat</code> for testing. If <code>testthat</code> is invoked directly then <code>pkgbuild</code> is also needed.</li>
-<li>In addition, the R package also depends on the <a href="https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma" class="external-link"><code>libtiledbsoma</code> library</a> – which gets installed with the package as described in the next section.</li>
+<li>Source installation requires the <a href="https://github.com/TileDB-Inc/TileDB-R" class="external-link"><code>tiledb</code> R package</a> – which in turn depends on either a local installation of <a href="https://github.com/TileDB-Inc/TileDB" class="external-link">TileDB Core library</a> or the provided build artifacts.</li>
+<li>In general, source installation of TileDB Core and its packages requires <code>cmake</code> and <code>git</code> to be installed; these are common tools each operating system provides readily.</li>
+<li>All other R package dependencies are listed in the <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/DESCRIPTION" class="external-link">DESCRIPTION</a> file and can be installed via <em>e.g.</em> <code>remotes::install_deps(".", dependencies=TRUE)</code> which will also install suggested packages. In order to build vignettes, <code>knitr</code> and <code>rmarkdown</code> are required (and will be installed), as is <code>testthat</code> for testing. If <code>testthat</code> is invoked directly then <code>pkgbuild</code> is also needed (but is not installed as not listed in <code>DESCRIPTION</code>).</li>
+<li>In addition, this R package also depends on the <a href="https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma" class="external-link"><code>libtiledbsoma</code> library</a> from this repository. It is either installed with the package (as described in the next section), or can be used as a system library (if one is found). A system installation can be provided by following the steps in the <a href="https://github.com/single-cell-data/TileDB-SOMA/tree/main/libtiledbsoma" class="external-link"><code>libtiledbsoma</code> directory</a>.</li>
 </ul>
 </div>
 <div class="section level3">
-<h3 id="step-by-step">Step-by-step<a class="anchor" aria-label="anchor" href="#step-by-step"></a>
+<h3 id="development-setup">Development setup<a class="anchor" aria-label="anchor" href="#development-setup"></a>
 </h3>
+<p>To set up and install from a local clone of this git repository:</p>
 <ul>
-<li>Clone this repository: <code>git clone https://github.com/single-cell-data/TileDB-SOMA.git</code>
-</li>
-<li>Change into the R API package directory: <code>cd TileDB-SOMA/apis/r</code>
-</li>
-<li>Optionally, clean the files in the repo: <code>./cleanup</code> (this is not needed the first time)</li>
-<li>Access to more test data: <code>install.packages("pbmc3k.tiledb",  repos="https://ghrr.github.io/drat")</code> `</li>
-<li>Optionally, update the <code>libtiledbsoma</code> sources: <code>./copy_source.sh</code> (which updates the includes tarball of <code>libtiledbsoma</code>).</li>
-<li>If you have edited any <code>src/*.cpp</code> with <code>RcppExport</code> then run <code>Rscript -e 'Rcpp::compileAttributes()'</code>
-</li>
-<li>Build the R package source tarball from the repository sources: <code>R CMD build .</code> (which will also build <code>libtiledbsoma</code> from source; other dependencies are required as described in the previous section)</li>
-<li>If you have changed any signatures, run <code>Rscript -e 'roxygen2::roxygenise()'</code>
-</li>
-<li>Check and test the package from the tarball: <code>R CMD check --no-vignettes --no-manual tiledbsoma_*.tar.gz</code><ul><li>For quicker iteration, run <code>Rscript -e 'testthat::test_local("tests/testthat")'</code>
-</li></ul>
-</li>
-<li>Install the package from the tarball: <code>R CMD INSTALL tiledbsoma_*.tar.gz</code>
-</li>
+<li>Clone this repository: <code>git clone https://github.com/single-cell-data/TileDB-SOMA.git</code>.</li>
+<li>Change into the R API package directory: <code>cd TileDB-SOMA/apis/r</code>.</li>
+<li>Optionally, clean the files in the repo: <code>./cleanup</code> (this is not needed the first time).</li>
+<li>Optionally, add on optional package with more more test data: <code>install.packages("pbmc3k.tiledb",  repos="https://ghrr.github.io/drat")</code>.</li>
+<li>If you have edited any <code>src/*.cpp</code> files and changed any function signatures, then running <code>Rscript -e 'Rcpp::compileAttributes()'</code> will update the <code>Rcpp</code>-generated glue code.</li>
+<li>If you have changed any C++ function header documentation, run <code>Rscript -e 'roxygen2::roxygenise()'</code> to update the corresponding R files.</li>
+<li>Build the R package source tarball from the repository sources: <code>R CMD build .</code> (which will also include the <code>libtiledbsoma</code> source via a repository soft-link); other dependencies are required as described in the previous section).</li>
+<li>Optionally, check and test the package from the tarball skipping vignettes and manuals (which need <code>texlive</code> or equivalent): <code>R CMD check --no-vignettes --no-manual tiledbsoma_*.tar.gz</code>.</li>
+<li>Finally, install the package from the tarball: <code>R CMD INSTALL tiledbsoma_*.tar.gz</code>. During this installation presence of the two C++ libraries (TileDB Core, TileDB-SOMA) is tested for. TileDB Core builds can be downloaded as needed, and the TileDB-SOMA library is built if needed. (We plan to provide a downloadable artifact for it too.)</li>
 </ul>
-<p>Once installed successfully, the package sources can be edited and re-installed. The optional clean step ensures a full rebuild, and the optional copy of <code>libtiledbsoma</code> ensures it is updated too.</p>
+<p>Once installed successfully, the package sources can be edited and re-installed iteratively. The optional clean step ensures a full rebuild, and the optional copy of <code>libtiledbsoma</code> ensures it is updated too.</p>
 </div>
 </div>
 </div>
@@ -154,10 +141,7 @@
 <p>Please see the <a href="https://github.com/single-cell-data/TileDB-SOMA/wiki" class="external-link">TileDB-SOMA wiki</a>.</p>
 </div>
 
-  </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-    <div class="links">
+  </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/single-cell-data/TileDB-SOMA/" class="external-link">Browse source code</a></li>
@@ -195,25 +179,24 @@
 
 
 
-  </div>
+  </aside>
 </div>
 
 
-      <footer><div class="copyright">
+    <footer><div class="pkgdown-footer-left">
   <p></p>
 <p>Developed by Aaron Wolen, Dirk Eddelbuettel, Paul Hoffman, John Kerl, TileDB, Inc..</p>
 </div>
 
-<div class="pkgdown">
+<div class="pkgdown-footer-right">
   <p></p>
 <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
 
   
-
 
   
 

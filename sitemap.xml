@@ -52,6 +52,9 @@
     <loc>/reference/PlatformConfig.html</loc>
   </url>
   <url>
+    <loc>/reference/ReadIter.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMAArrayBase.html</loc>
   </url>
   <url>
@@ -118,6 +121,9 @@
     <loc>/reference/SOMAMeasurementOpen.html</loc>
   </url>
   <url>
+    <loc>/reference/SOMANDArrayBase.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMAOpen.html</loc>
   </url>
   <url>
@@ -130,10 +136,19 @@
     <loc>/reference/SOMASparseNDArrayOpen.html</loc>
   </url>
   <url>
+    <loc>/reference/SOMASparseNDArrayRead.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMATileDBContext.html</loc>
   </url>
   <url>
     <loc>/reference/ScalarMap.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SparseReadIter.html</loc>
+  </url>
+  <url>
+    <loc>/reference/TableReadIter.html</loc>
   </url>
   <url>
     <loc>/reference/TileDBArray.html</loc>
@@ -148,13 +163,10 @@
     <loc>/reference/TileDBObject.html</loc>
   </url>
   <url>
-    <loc>/reference/as.one.based.html</loc>
+    <loc>/reference/arrow_table_to_dense.html</loc>
   </url>
   <url>
-    <loc>/reference/as.one.based.matrixZeroBasedView.html</loc>
-  </url>
-  <url>
-    <loc>/reference/dim.matrixZeroBasedView.html</loc>
+    <loc>/reference/arrow_table_to_sparse.html</loc>
   </url>
   <url>
     <loc>/reference/example-datasets.html</loc>
@@ -169,12 +181,6 @@
     <loc>/reference/matrixZeroBasedView.html</loc>
   </url>
   <url>
-    <loc>/reference/ncol.matrixZeroBasedView.html</loc>
-  </url>
-  <url>
-    <loc>/reference/nrow.matrixZeroBasedView.html</loc>
-  </url>
-  <url>
     <loc>/reference/pad_matrix.html</loc>
   </url>
   <url>
@@ -184,13 +190,10 @@
     <loc>/reference/soma_array_reader.html</loc>
   </url>
   <url>
+    <loc>/reference/soma_array_to_arrow_table.html</loc>
+  </url>
+  <url>
     <loc>/reference/sr_setup.html</loc>
-  </url>
-  <url>
-    <loc>/reference/sub-.matrixZeroBasedView.html</loc>
-  </url>
-  <url>
-    <loc>/reference/subset-.matrixZeroBasedView.html</loc>
   </url>
   <url>
     <loc>/reference/tiledb_embedded_version.html</loc>

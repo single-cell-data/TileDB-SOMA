@@ -4,95 +4,83 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="tiledbsoma">
 <title>SOMA objects overview • tiledbsoma</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
-<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="SOMA objects overview">
+<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="SOMA objects overview">
 <meta property="og:description" content="tiledbsoma">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
-<body data-spy="scroll" data-target="#toc">
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <div class="container template-article">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9024</span>
-      </span>
-    </div>
+    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    
+    <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="../reference/index.html">Reference</a>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.1</small>
+
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="nav-item">
+  <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="../articles/UsingPlatformConfig.html">Using PlatformConfig</a>
-    </li>
-    <li>
-      <a href="../articles/soma-experiment-queries.html">Querying a SOMA experiment</a>
-    </li>
-    <li>
-      <a href="../articles/soma-objects.html">SOMA objects overview</a>
-    </li>
-    <li>
-      <a href="../articles/soma-reading.html">Reading from SOMA objects</a>
-    </li>
-  </ul>
-</li>
-<li>
-  <a href="../news/index.html">Changelog</a>
-</li>
-      </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/single-cell-data/TileDB-SOMA/" class="external-link">
-    <span class="fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
-      </ul>
-</div>
-<!--/.nav-collapse -->
+<li class="active nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-vignettes">Vignettes</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-vignettes">
+    <h6 class="dropdown-header" data-toc-skip>SOMA Introduction</h6>
+    <a class="dropdown-item" href="../articles/soma-objects.html">SOMA Objects Overview</a>
+    <a class="dropdown-item" href="../articles/soma-reading.html">Reading From SOMA Objects</a>
+    <a class="dropdown-item" href="../articles/soma-experiment-queries.html">Querying a SOMA Experiment</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>SOMA Configuration</h6>
+    <a class="dropdown-item" href="../articles/UsingPlatformConfig.html">Using PlatformConfig</a>
   </div>
-<!--/.container -->
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="../news/index.html">Changelog</a>
+</li>
+      </ul>
+<form class="form-inline my-2 my-lg-0" role="search">
+        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
+</form>
+
+      <ul class="navbar-nav">
+<li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/single-cell-data/TileDB-SOMA/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
-<!--/.navbar -->
 
-      
+    
+  </div>
+</nav><div class="container template-article">
 
-      </header><script src="soma-objects_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
-  <div class="col-md-9 contents">
-    <div class="page-header toc-ignore">
-      <h1 data-toc-skip>SOMA objects overview</h1>
+
+
+<script src="soma-objects_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+  <main id="main" class="col-md-9"><div class="page-header">
+      <img src="" class="logo" alt=""><h1>SOMA objects overview</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/HEAD/vignettes/soma-objects.Rmd" class="external-link"><code>vignettes/soma-objects.Rmd</code></a></small>
-      <div class="hidden name"><code>soma-objects.Rmd</code></div>
-
+      <div class="d-none name"><code>soma-objects.Rmd</code></div>
     </div>
 
     
@@ -107,7 +95,7 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">uri</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">extract_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small"</span><span class="op">)</span></span>
 <span><span class="va">uri</span></span>
-<span><span class="co">#&gt; [1] "/tmp/Rtmp2BwFxK/soma-exp-pbmc-small"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "/tmp/RtmpfRSsG3/soma-exp-pbmc-small"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="somaexperiment">
@@ -125,7 +113,7 @@
 <code class="sourceCode R"><span><span class="va">experiment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SOMAExperimentOpen.html">SOMAExperimentOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span></span>
 <span><span class="va">experiment</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/Rtmp2BwFxK/soma-exp-pbmc-small </span></span>
+<span><span class="co">#&gt;   uri: /tmp/RtmpfRSsG3/soma-exp-pbmc-small </span></span>
 <span><span class="co">#&gt;   arrays: obs </span></span>
 <span><span class="co">#&gt;   groups: ms</span></span></code></pre></div>
 <p>Note that opening a <code>SOMAExperiment</code> (or any SOMA object) only returns a pointer to the object on disk. No data is actually read into memory until it’s requested. This is important as the full experiment may be too large to fit in memory.</p>
@@ -133,14 +121,14 @@
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmp2BwFxK/soma-exp-pbmc-small/ms </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpfRSsG3/soma-exp-pbmc-small/ms </span></span>
 <span><span class="co">#&gt;   groups: RNA</span></span></code></pre></div>
 <p>This returns the <code>SOMACollection</code> of measurements. We’ll take a closer look at this later.</p>
 <p>To access the <code>obs</code> field containing the observation annotations:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span></span>
 <span><span class="co">#&gt; &lt;SOMADataFrame&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmp2BwFxK/soma-exp-pbmc-small/obs </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpfRSsG3/soma-exp-pbmc-small/obs </span></span>
 <span><span class="co">#&gt;   dimensions: soma_joinid </span></span>
 <span><span class="co">#&gt;   attributes: orig.ident, nCount_RNA, nFeature_RNA, RNA_snn_res.0.8, letter.idents, groups,...</span></span></code></pre></div>
 </div>
@@ -163,9 +151,9 @@
 <span><span class="co">#&gt; RNA_snn_res.1: string</span></span>
 <span><span class="co">#&gt; obs_id: string</span></span></code></pre></div>
 <p>Note that <code>soma_joinid</code> is a field that exists in every <code>SOMADataFrame</code> and acts as a join key for other objects in the dataset.</p>
-<p>Again, when a SOMA object is accessed, only a pointer is returned and no data is read into memory. To load the data in memory, we call <code>read()</code>, which returns an <a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">Arrow Table</a> and is easily converted to a data frame by appending <code>$to_data_frame()</code>.</p>
+<p>Again, when a SOMA object is accessed, only a pointer is returned and no data is read into memory. To load the data in memory, we call <code>read()$concat()</code>, which returns an <a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">Arrow Table</a> and is easily converted to a data frame by appending <code>$to_data_frame()</code>.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 80 rows x 9 columns</span></span>
 <span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
@@ -180,11 +168,23 @@
 <p>The amount of data that can be read at once is determined by the <code>soma.init_buffer_bytes</code> configuration parameter, which, by default, is set to 16MB for each column. If the requested data is larger than this value an error will be thrown.</p>
 <p>If your system has more memory, you can increase this parameter to a larger value to read in more data at once. Alternatively, you can use the iterated reader, which retrieves data in chunks that are smaller than the <code>soma.init_buffer_bytes</code> parameter. The result of which is a list of Arrow Tables.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span>iterated <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_next</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Table</span></span>
+<span><span class="co">#&gt; 80 rows x 9 columns</span></span>
+<span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
+<span><span class="co">#&gt; $orig.ident &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $nCount_RNA &lt;double&gt;</span></span>
+<span><span class="co">#&gt; $nFeature_RNA &lt;int32&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.0.8 &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $letter.idents &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $groups &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.1 &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span></code></pre></div>
 <p>We can also select a subset of rows from the <code>SOMADataFrame</code> using the <code>coords</code> argument. This will retrieve only the required subset from disk to memory. In this example, we will select only the first 10 rows:</p>
 <p><em>NOTE: The <code>coords</code> argument is 0-based.</em></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span>coords <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span>coords <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 10 rows x 9 columns</span></span>
 <span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
@@ -198,14 +198,14 @@
 <span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span></code></pre></div>
 <p>As TileDB is a columnar format, we can also select a subset of the columns:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">9</span>, column_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"obs_id"</span>, <span class="st">"nCount_RNA"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">9</span>, column_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"obs_id"</span>, <span class="st">"nCount_RNA"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 10 rows x 2 columns</span></span>
 <span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span>
 <span><span class="co">#&gt; $nCount_RNA &lt;double&gt;</span></span></code></pre></div>
 <p>Finally, we can use <code>value_filter</code> to retrieve a subset of rows that match a certain condition.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span>value_filter <span class="op">=</span> <span class="st">"nCount_RNA &gt; 100"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span>value_filter <span class="op">=</span> <span class="st">"nCount_RNA &gt; 100"</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 62 rows x 9 columns</span></span>
 <span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
@@ -228,13 +228,13 @@
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmp2BwFxK/soma-exp-pbmc-small/ms </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpfRSsG3/soma-exp-pbmc-small/ms </span></span>
 <span><span class="co">#&gt;   groups: RNA</span></span></code></pre></div>
 <p>In this case, we have one member: <code>RNA</code>, which is a <code>SOMAMeasurement</code>. A specific measurement can be accessed by name with the <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code> method:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"RNA"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;SOMAMeasurement&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmp2BwFxK/soma-exp-pbmc-small/ms/RNA </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpfRSsG3/soma-exp-pbmc-small/ms/RNA </span></span>
 <span><span class="co">#&gt;   arrays: var </span></span>
 <span><span class="co">#&gt;   groups: obsm, obsp, varm, X</span></span></code></pre></div>
 </div>
@@ -269,7 +269,7 @@
 <code class="sourceCode R"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="va">experiment</span><span class="op">$</span><span class="va">ms</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"RNA"</span><span class="op">)</span><span class="op">$</span><span class="va">X</span></span>
 <span><span class="va">X</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmp2BwFxK/soma-exp-pbmc-small/ms/RNA/X </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpfRSsG3/soma-exp-pbmc-small/ms/RNA/X </span></span>
 <span><span class="co">#&gt;   arrays: counts, data, scale_data</span></span></code></pre></div>
 <p>This collection contains 3 layers corresponding to the raw, normalized, and scaled slots from the original Seurat object.</p>
 <p>Any of these <code>X</code> layers can be accessed using <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code>:</p>
@@ -277,7 +277,7 @@
 <code class="sourceCode R"><span><span class="va">X_data</span> <span class="op">&lt;-</span> <span class="va">X</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"data"</span><span class="op">)</span></span>
 <span><span class="va">X_data</span></span>
 <span><span class="co">#&gt; &lt;SOMASparseNDArray&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmp2BwFxK/soma-exp-pbmc-small/ms/RNA/X/data </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpfRSsG3/soma-exp-pbmc-small/ms/RNA/X/data </span></span>
 <span><span class="co">#&gt;   dimensions: soma_dim_0, soma_dim_1 </span></span>
 <span><span class="co">#&gt;   attributes: soma_data</span></span></code></pre></div>
 <p>This returns a <code>SOMASparseNDArray</code>. As we did before, we can inspect the array’s schema:</p>
@@ -298,10 +298,10 @@
 <code class="sourceCode R"><span><span class="va">X_data</span><span class="op">$</span><span class="fu">nnz</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 4456</span></span></code></pre></div>
 <p>Let’s load the data as a sparse matrix into memory:</p>
-<p><em>Note: We are reading the full matrix into memory and then subsetting it to the first 5 rows and 10 columns to truncate the output.</em></p>
+<p><em>Note: We are reading the full matrix into memory and then subsetting it to the first 5 rows and 10 columns to truncate the output. This uses the zero-based underlying representation access but then accesses a one-based view as the sparse matrix functionality from package <code>Matrix</code> imposes this.</em></p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">X_data</span><span class="op">$</span><span class="fu">read_sparse_matrix_zero_based</span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">0</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">0</span><span class="op">:</span><span class="fl">9</span><span class="op">]</span></span>
-<span><span class="co">#&gt; 5 x 10 sparse Matrix of class "dgCMatrix"</span></span>
+<code class="sourceCode R"><span><span class="va">X_data</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">sparse_matrix</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span></span>
+<span><span class="co">#&gt; 5 x 10 sparse Matrix of class "dgTMatrix"</span></span>
 <span><span class="co">#&gt;                                                     </span></span>
 <span><span class="co">#&gt; [1,] . 4.968821 . .        . 4.968821 . . 6.062788 .</span></span>
 <span><span class="co">#&gt; [2,] . .        . 4.776153 . .        . . 6.714813 .</span></span>
@@ -310,11 +310,8 @@
 <span><span class="co">#&gt; [5,] . .        . 4.074201 . .        . . 5.161411 .</span></span></code></pre></div>
 <p>Similarly to <code>SOMADataFrame</code>s, <code>read()</code> method we can define coordinates to slice obtain a subset of the matrix from disk:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">X_data</span><span class="op">$</span><span class="fu">read_sparse_matrix_zero_based</span><span class="op">(</span></span>
-<span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>soma_dim_0 <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">4</span>, soma_dim_1 <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; $one_based_matrix</span></span>
-<span><span class="co">#&gt; 80 x 230 sparse Matrix of class "dgCMatrix"</span></span>
+<code class="sourceCode R"><span><span class="va">X_data</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span>coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>soma_dim_0 <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">4</span>, soma_dim_1 <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="fu">sparse_matrix</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 80 x 230 sparse Matrix of class "dgTMatrix"</span></span>
 <span><span class="co">#&gt;                                                                                </span></span>
 <span><span class="co">#&gt;  [1,] . 4.968821 . .        . 4.968821 . . 6.062788 . . . . . . . . . . . . . .</span></span>
 <span><span class="co">#&gt;  [2,] . .        . 4.776153 . .        . . 6.714813 . . . . . . . . . . . . . .</span></span>
@@ -881,38 +878,28 @@
 <span><span class="co">#&gt; [77,] . . . . . . . . . . . . . . . . . . . . . .</span></span>
 <span><span class="co">#&gt; [78,] . . . . . . . . . . . . . . . . . . . . . .</span></span>
 <span><span class="co">#&gt; [79,] . . . . . . . . . . . . . . . . . . . . . .</span></span>
-<span><span class="co">#&gt; [80,] . . . . . . . . . . . . . . . . . . . . . .</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; attr(,"class")</span></span>
-<span><span class="co">#&gt; [1] "matrixZeroBasedView"</span></span></code></pre></div>
+<span><span class="co">#&gt; [80,] . . . . . . . . . . . . . . . . . . . . . .</span></span></code></pre></div>
 </div>
-  </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
-
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
 
-      <footer><div class="copyright">
+    <footer><div class="pkgdown-footer-left">
   <p></p>
 <p>Developed by Aaron Wolen, Dirk Eddelbuettel, Paul Hoffman, John Kerl, TileDB, Inc..</p>
 </div>
 
-<div class="pkgdown">
+<div class="pkgdown-footer-right">
   <p></p>
 <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
 
   
-
 
   
 

@@ -4,95 +4,83 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="tiledbsoma">
 <title>Querying a SOMA experiment • tiledbsoma</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
-<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Querying a SOMA experiment">
+<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Querying a SOMA experiment">
 <meta property="og:description" content="tiledbsoma">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
-<body data-spy="scroll" data-target="#toc">
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <div class="container template-article">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">tiledbsoma</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9024</span>
-      </span>
-    </div>
+    <nav class="navbar fixed-top navbar-light navbar-expand-lg bg-light"><div class="container">
+    
+    <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="../reference/index.html">Reference</a>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.1</small>
+
+    
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="nav-item">
+  <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="../articles/UsingPlatformConfig.html">Using PlatformConfig</a>
-    </li>
-    <li>
-      <a href="../articles/soma-experiment-queries.html">Querying a SOMA experiment</a>
-    </li>
-    <li>
-      <a href="../articles/soma-objects.html">SOMA objects overview</a>
-    </li>
-    <li>
-      <a href="../articles/soma-reading.html">Reading from SOMA objects</a>
-    </li>
-  </ul>
-</li>
-<li>
-  <a href="../news/index.html">Changelog</a>
-</li>
-      </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/single-cell-data/TileDB-SOMA/" class="external-link">
-    <span class="fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
-      </ul>
-</div>
-<!--/.nav-collapse -->
+<li class="active nav-item dropdown">
+  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-vignettes">Vignettes</a>
+  <div class="dropdown-menu" aria-labelledby="dropdown-vignettes">
+    <h6 class="dropdown-header" data-toc-skip>SOMA Introduction</h6>
+    <a class="dropdown-item" href="../articles/soma-objects.html">SOMA Objects Overview</a>
+    <a class="dropdown-item" href="../articles/soma-reading.html">Reading From SOMA Objects</a>
+    <a class="dropdown-item" href="../articles/soma-experiment-queries.html">Querying a SOMA Experiment</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>SOMA Configuration</h6>
+    <a class="dropdown-item" href="../articles/UsingPlatformConfig.html">Using PlatformConfig</a>
   </div>
-<!--/.container -->
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="../news/index.html">Changelog</a>
+</li>
+      </ul>
+<form class="form-inline my-2 my-lg-0" role="search">
+        <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
+</form>
+
+      <ul class="navbar-nav">
+<li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/single-cell-data/TileDB-SOMA/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
-<!--/.navbar -->
 
-      
+    
+  </div>
+</nav><div class="container template-article">
 
-      </header><script src="soma-experiment-queries_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
-  <div class="col-md-9 contents">
-    <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Querying a SOMA experiment</h1>
+
+
+<script src="soma-experiment-queries_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+  <main id="main" class="col-md-9"><div class="page-header">
+      <img src="" class="logo" alt=""><h1>Querying a SOMA experiment</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/HEAD/vignettes/soma-experiment-queries.Rmd" class="external-link"><code>vignettes/soma-experiment-queries.Rmd</code></a></small>
-      <div class="hidden name"><code>soma-experiment-queries.Rmd</code></div>
-
+      <div class="d-none name"><code>soma-experiment-queries.Rmd</code></div>
     </div>
 
     
@@ -112,7 +100,7 @@
 <code class="sourceCode R"><span><span class="va">experiment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">load_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small"</span><span class="op">)</span></span>
 <span><span class="va">experiment</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/Rtmp2aNd5h/soma-exp-pbmc-small </span></span>
+<span><span class="co">#&gt;   uri: /tmp/RtmpFkq5wf/soma-exp-pbmc-small </span></span>
 <span><span class="co">#&gt;   arrays: obs </span></span>
 <span><span class="co">#&gt;   groups: ms</span></span></code></pre></div>
 </div>
@@ -124,7 +112,7 @@
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmp2aNd5h/soma-exp-pbmc-small/ms </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpFkq5wf/soma-exp-pbmc-small/ms </span></span>
 <span><span class="co">#&gt;   groups: RNA</span></span></code></pre></div>
 <p>Now we can construct our query object.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -142,9 +130,12 @@
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="va">n_vars</span></span>
 <span><span class="co">#&gt; [1] 230</span></span></code></pre></div>
-<p>We can also extract any data component from the experiment. Here we’ll read in the <code>obs</code> data frame from the query.</p>
+<p>We can also extract any data component from the experiment. Here we’ll read in the <code>obs</code> data frame from the query using <code>obs()</code> which returns an iterator of <code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code>. The iterator is useful when the data is too large to load in memory allowing to stream the data in chunks. This applies to <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var()</a></code> as well.</p>
+<p>To load the data in memory you can concatenate all chunks of the iterator as shown below.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">obs</span> <span class="op">&lt;-</span> <span class="va">iterator</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">obs</span></span>
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 80 rows x 9 columns</span></span>
 <span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
@@ -156,96 +147,423 @@
 <span><span class="co">#&gt; $groups &lt;large_string&gt;</span></span>
 <span><span class="co">#&gt; $RNA_snn_res.1 &lt;large_string&gt;</span></span>
 <span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span></code></pre></div>
+<p>As a reminder <code>arrow:Table</code> can be easily cast into a <code>tibble</code></p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">obs</span><span class="op">$</span><span class="fu">to_data_frame</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    soma_joinid    orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8</span></span>
+<span><span class="co">#&gt; 1            0 SeuratProject         70           47               0</span></span>
+<span><span class="co">#&gt; 2            1 SeuratProject         85           52               0</span></span>
+<span><span class="co">#&gt; 3            2 SeuratProject         87           50               1</span></span>
+<span><span class="co">#&gt; 4            3 SeuratProject        127           56               0</span></span>
+<span><span class="co">#&gt; 5            4 SeuratProject        173           53               0</span></span>
+<span><span class="co">#&gt; 6            5 SeuratProject         70           48               0</span></span>
+<span><span class="co">#&gt; 7            6 SeuratProject         64           36               0</span></span>
+<span><span class="co">#&gt; 8            7 SeuratProject         72           45               0</span></span>
+<span><span class="co">#&gt; 9            8 SeuratProject         52           36               0</span></span>
+<span><span class="co">#&gt; 10           9 SeuratProject        100           41               0</span></span>
+<span><span class="co">#&gt; 11          10 SeuratProject         62           31               0</span></span>
+<span><span class="co">#&gt; 12          11 SeuratProject        191           61               0</span></span>
+<span><span class="co">#&gt; 13          12 SeuratProject        101           41               0</span></span>
+<span><span class="co">#&gt; 14          13 SeuratProject         51           26               0</span></span>
+<span><span class="co">#&gt; 15          14 SeuratProject         99           45               0</span></span>
+<span><span class="co">#&gt; 16          15 SeuratProject        168           44               0</span></span>
+<span><span class="co">#&gt; 17          16 SeuratProject         67           33               0</span></span>
+<span><span class="co">#&gt; 18          17 SeuratProject        135           45               0</span></span>
+<span><span class="co">#&gt; 19          18 SeuratProject         79           43               0</span></span>
+<span><span class="co">#&gt; 20          19 SeuratProject        109           41               0</span></span>
+<span><span class="co">#&gt; 21          20 SeuratProject        298           65               1</span></span>
+<span><span class="co">#&gt; 22          21 SeuratProject        406           74               1</span></span>
+<span><span class="co">#&gt; 23          22 SeuratProject        213           48               1</span></span>
+<span><span class="co">#&gt; 24          23 SeuratProject        231           49               1</span></span>
+<span><span class="co">#&gt; 25          24 SeuratProject        463           77               1</span></span>
+<span><span class="co">#&gt; 26          25 SeuratProject         87           42               1</span></span>
+<span><span class="co">#&gt; 27          26 SeuratProject        327           62               1</span></span>
+<span><span class="co">#&gt; 28          27 SeuratProject        224           50               1</span></span>
+<span><span class="co">#&gt; 29          28 SeuratProject        361           76               1</span></span>
+<span><span class="co">#&gt; 30          29 SeuratProject        353           80               1</span></span>
+<span><span class="co">#&gt; 31          30 SeuratProject        246           59               0</span></span>
+<span><span class="co">#&gt; 32          31 SeuratProject        115           51               0</span></span>
+<span><span class="co">#&gt; 33          32 SeuratProject        189           53               0</span></span>
+<span><span class="co">#&gt; 34          33 SeuratProject        187           61               0</span></span>
+<span><span class="co">#&gt; 35          34 SeuratProject        156           48               0</span></span>
+<span><span class="co">#&gt; 36          35 SeuratProject        164           47               0</span></span>
+<span><span class="co">#&gt; 37          36 SeuratProject        221           67               0</span></span>
+<span><span class="co">#&gt; 38          37 SeuratProject        151           59               0</span></span>
+<span><span class="co">#&gt; 39          38 SeuratProject        126           53               0</span></span>
+<span><span class="co">#&gt; 40          39 SeuratProject        316           65               0</span></span>
+<span><span class="co">#&gt; 41          40 SeuratProject        156           60               0</span></span>
+<span><span class="co">#&gt; 42          41 SeuratProject        139           61               0</span></span>
+<span><span class="co">#&gt; 43          42 SeuratProject        108           44               0</span></span>
+<span><span class="co">#&gt; 44          43 SeuratProject         41           32               0</span></span>
+<span><span class="co">#&gt; 45          44 SeuratProject        146           47               0</span></span>
+<span><span class="co">#&gt; 46          45 SeuratProject        104           40               0</span></span>
+<span><span class="co">#&gt; 47          46 SeuratProject        126           48               0</span></span>
+<span><span class="co">#&gt; 48          47 SeuratProject         94           55               0</span></span>
+<span><span class="co">#&gt; 49          48 SeuratProject        204           52               0</span></span>
+<span><span class="co">#&gt; 50          49 SeuratProject         99           45               0</span></span>
+<span><span class="co">#&gt; 51          50 SeuratProject        371           75               1</span></span>
+<span><span class="co">#&gt; 52          51 SeuratProject        387           83               1</span></span>
+<span><span class="co">#&gt; 53          52 SeuratProject        139           50               1</span></span>
+<span><span class="co">#&gt; 54          53 SeuratProject         99           42               1</span></span>
+<span><span class="co">#&gt; 55          54 SeuratProject        443           77               1</span></span>
+<span><span class="co">#&gt; 56          55 SeuratProject        417           75               0</span></span>
+<span><span class="co">#&gt; 57          56 SeuratProject        502           81               1</span></span>
+<span><span class="co">#&gt; 58          57 SeuratProject        324           76               1</span></span>
+<span><span class="co">#&gt; 59          58 SeuratProject        292           71               1</span></span>
+<span><span class="co">#&gt; 60          59 SeuratProject        443           81               0</span></span>
+<span><span class="co">#&gt; 61          60 SeuratProject        787           88               0</span></span>
+<span><span class="co">#&gt; 62          61 SeuratProject        612           69               1</span></span>
+<span><span class="co">#&gt; 63          62 SeuratProject        286           68               0</span></span>
+<span><span class="co">#&gt; 64          63 SeuratProject        462           86               1</span></span>
+<span><span class="co">#&gt; 65          64 SeuratProject        872           96               1</span></span>
+<span><span class="co">#&gt; 66          65 SeuratProject        709           94               1</span></span>
+<span><span class="co">#&gt; 67          66 SeuratProject        745           84               1</span></span>
+<span><span class="co">#&gt; 68          67 SeuratProject        328           72               1</span></span>
+<span><span class="co">#&gt; 69          68 SeuratProject        389           73               1</span></span>
+<span><span class="co">#&gt; 70          69 SeuratProject        754           83               0</span></span>
+<span><span class="co">#&gt; 71          70 SeuratProject        212           38               0</span></span>
+<span><span class="co">#&gt; 72          71 SeuratProject        172           29               0</span></span>
+<span><span class="co">#&gt; 73          72 SeuratProject        168           37               0</span></span>
+<span><span class="co">#&gt; 74          73 SeuratProject        210           33               0</span></span>
+<span><span class="co">#&gt; 75          74 SeuratProject        228           39               0</span></span>
+<span><span class="co">#&gt; 76          75 SeuratProject        527           47               0</span></span>
+<span><span class="co">#&gt; 77          76 SeuratProject        202           30               0</span></span>
+<span><span class="co">#&gt; 78          77 SeuratProject        157           29               0</span></span>
+<span><span class="co">#&gt; 79          78 SeuratProject        150           30               0</span></span>
+<span><span class="co">#&gt; 80          79 SeuratProject        233           76               1</span></span>
+<span><span class="co">#&gt;    letter.idents groups RNA_snn_res.1         obs_id</span></span>
+<span><span class="co">#&gt; 1              A     g2             0 ATGCCAGAACGACT</span></span>
+<span><span class="co">#&gt; 2              A     g1             0 CATGGCCTGTGCAT</span></span>
+<span><span class="co">#&gt; 3              B     g2             0 GAACCTGATGAACC</span></span>
+<span><span class="co">#&gt; 4              A     g2             0 TGACTGGATTCTCA</span></span>
+<span><span class="co">#&gt; 5              A     g2             0 AGTCAGACTGCACA</span></span>
+<span><span class="co">#&gt; 6              A     g1             0 TCTGATACACGTGT</span></span>
+<span><span class="co">#&gt; 7              A     g1             0 TGGTATCTAAACAG</span></span>
+<span><span class="co">#&gt; 8              A     g1             0 GCAGCTCTGTTTCT</span></span>
+<span><span class="co">#&gt; 9              A     g1             0 GATATAACACGCAT</span></span>
+<span><span class="co">#&gt; 10             A     g1             0 AATGTTGACAGTCA</span></span>
+<span><span class="co">#&gt; 11             A     g2             2 AGGTCATGAGTGTC</span></span>
+<span><span class="co">#&gt; 12             A     g1             2 AGAGATGATCTCGC</span></span>
+<span><span class="co">#&gt; 13             A     g2             2 GGGTAACTCTAGTG</span></span>
+<span><span class="co">#&gt; 14             A     g2             2 CATGAGACACGGGA</span></span>
+<span><span class="co">#&gt; 15             A     g2             2 TACGCCACTCCGAA</span></span>
+<span><span class="co">#&gt; 16             A     g1             2 CTAAACCTGTGCAT</span></span>
+<span><span class="co">#&gt; 17             A     g2             2 GTAAGCACTCATTC</span></span>
+<span><span class="co">#&gt; 18             A     g1             2 TTGGTACTGAATCC</span></span>
+<span><span class="co">#&gt; 19             A     g1             2 CATCATACGGAGCA</span></span>
+<span><span class="co">#&gt; 20             A     g2             2 TACATCACGCTAAC</span></span>
+<span><span class="co">#&gt; 21             B     g1             1 TTACCATGAATCGC</span></span>
+<span><span class="co">#&gt; 22             B     g1             1 ATAGGAGAAACAGA</span></span>
+<span><span class="co">#&gt; 23             B     g2             1 GCGCACGACTTTAC</span></span>
+<span><span class="co">#&gt; 24             B     g2             1 ACTCGCACGAAAGT</span></span>
+<span><span class="co">#&gt; 25             B     g1             1 ATTACCTGCCTTAT</span></span>
+<span><span class="co">#&gt; 26             B     g2             1 CCCAACTGCAATCG</span></span>
+<span><span class="co">#&gt; 27             B     g2             1 AAATTCGAATCACG</span></span>
+<span><span class="co">#&gt; 28             B     g2             1 CCATCCGATTCGCC</span></span>
+<span><span class="co">#&gt; 29             B     g2             1 TCCACTCTGAGCTT</span></span>
+<span><span class="co">#&gt; 30             B     g1             1 CATCAGGATGCACA</span></span>
+<span><span class="co">#&gt; 31             A     g1             0 CTAAACCTCTGACA</span></span>
+<span><span class="co">#&gt; 32             A     g1             2 GATAGAGAAGGGTG</span></span>
+<span><span class="co">#&gt; 33             A     g1             0 CTAACGGAACCGAT</span></span>
+<span><span class="co">#&gt; 34             A     g2             0 AGATATACCCGTAA</span></span>
+<span><span class="co">#&gt; 35             A     g1             0 TACTCTGAATCGAC</span></span>
+<span><span class="co">#&gt; 36             A     g1             0 GCGCATCTTGCTCC</span></span>
+<span><span class="co">#&gt; 37             A     g2             0 GTTGACGATATCGG</span></span>
+<span><span class="co">#&gt; 38             A     g1             0 ACAGGTACTGGTGT</span></span>
+<span><span class="co">#&gt; 39             A     g1             0 GGCATATGCTTATC</span></span>
+<span><span class="co">#&gt; 40             A     g2             0 CATTACACCAACTG</span></span>
+<span><span class="co">#&gt; 41             A     g1             0 TAGGGACTGAACTC</span></span>
+<span><span class="co">#&gt; 42             A     g2             2 GCTCCATGAGAAGT</span></span>
+<span><span class="co">#&gt; 43             A     g2             0 TACAATGATGCTAG</span></span>
+<span><span class="co">#&gt; 44             A     g2             0 CTTCATGACCGAAT</span></span>
+<span><span class="co">#&gt; 45             A     g1             2 CTGCCAACAGGAGC</span></span>
+<span><span class="co">#&gt; 46             A     g2             2 TTGCATTGAGCTAC</span></span>
+<span><span class="co">#&gt; 47             A     g1             0 AAGCAAGAGCTTAG</span></span>
+<span><span class="co">#&gt; 48             A     g2             0 CGGCACGAACTCAG</span></span>
+<span><span class="co">#&gt; 49             A     g1             0 GGTGGAGATTACTC</span></span>
+<span><span class="co">#&gt; 50             A     g2             0 GGCCGATGTACTCT</span></span>
+<span><span class="co">#&gt; 51             B     g1             1 CGTAGCCTGTATGC</span></span>
+<span><span class="co">#&gt; 52             B     g2             1 TGAGCTGAATGCTG</span></span>
+<span><span class="co">#&gt; 53             B     g2             2 CCTATAACGAGACG</span></span>
+<span><span class="co">#&gt; 54             B     g2             1 ATAAGTTGGTACGT</span></span>
+<span><span class="co">#&gt; 55             B     g1             1 AAGCGACTTTGACG</span></span>
+<span><span class="co">#&gt; 56             A     g1             1 ACCAGTGAATACCG</span></span>
+<span><span class="co">#&gt; 57             B     g1             1 ATTGCACTTGCTTT</span></span>
+<span><span class="co">#&gt; 58             B     g1             1 CTAGGTGATGGTTG</span></span>
+<span><span class="co">#&gt; 59             B     g2             1 GCACTAGACCTTTA</span></span>
+<span><span class="co">#&gt; 60             A     g1             0 CATGCGCTAGTCAC</span></span>
+<span><span class="co">#&gt; 61             A     g1             2 TTGAGGACTACGCA</span></span>
+<span><span class="co">#&gt; 62             B     g1             1 ATACCACTCTAAGC</span></span>
+<span><span class="co">#&gt; 63             A     g1             2 CATATAGACTAAGC</span></span>
+<span><span class="co">#&gt; 64             B     g1             1 TTTAGCTGTACTCT</span></span>
+<span><span class="co">#&gt; 65             B     g1             2 GACATTCTCCACCT</span></span>
+<span><span class="co">#&gt; 66             B     g2             1 ACGTGATGCCATGA</span></span>
+<span><span class="co">#&gt; 67             B     g2             1 ATTGTAGATTCCCG</span></span>
+<span><span class="co">#&gt; 68             B     g1             1 GATAGAGATCACGA</span></span>
+<span><span class="co">#&gt; 69             B     g1             1 AATGCGTGGACGGA</span></span>
+<span><span class="co">#&gt; 70             A     g1             2 GCGTAAACACGGTT</span></span>
+<span><span class="co">#&gt; 71             A     g2             0 ATTCAGCTCATTGG</span></span>
+<span><span class="co">#&gt; 72             A     g1             0 GGCATATGGGGAGT</span></span>
+<span><span class="co">#&gt; 73             A     g2             0 ATCATCTGACACCA</span></span>
+<span><span class="co">#&gt; 74             A     g2             0 GTCATACTTCGCCT</span></span>
+<span><span class="co">#&gt; 75             A     g1             0 TTACGTACGTTCAG</span></span>
+<span><span class="co">#&gt; 76             A     g1             0 GAGTTGTGGTAGCT</span></span>
+<span><span class="co">#&gt; 77             A     g2             0 GACGCTCTCTCTCG</span></span>
+<span><span class="co">#&gt; 78             A     g1             0 AGTCTTACTTCGGA</span></span>
+<span><span class="co">#&gt; 79             A     g2             0 GGAACACTTCAGAC</span></span>
+<span><span class="co">#&gt; 80             B     g1             1 CTTGATTGATCTTC</span></span></code></pre></div>
+<p>Alternatively, you can use the iterator, which retrieves data in chunks that are smaller than the <code>soma.init_buffer_bytes</code> context field. You can use the iterator’s method <code>$read_next()</code> to load a chunk in memory.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_next</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Table</span></span>
+<span><span class="co">#&gt; 80 rows x 9 columns</span></span>
+<span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
+<span><span class="co">#&gt; $orig.ident &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $nCount_RNA &lt;double&gt;</span></span>
+<span><span class="co">#&gt; $nFeature_RNA &lt;int32&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.0.8 &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $letter.idents &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $groups &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.1 &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span></code></pre></div>
+<p>In this example the full <code>obs</code> table is relatively small and fits all in one chunk.</p>
+<p>For a bigger <code>SOMADataFrame</code> you can check if the iteration has finished by checking the logical <code>$read_complete()</code>.</p>
+<p>Here we demonstrate by creating a new iterator.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_complete</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_next</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Table</span></span>
+<span><span class="co">#&gt; 80 rows x 9 columns</span></span>
+<span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
+<span><span class="co">#&gt; $orig.ident &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $nCount_RNA &lt;double&gt;</span></span>
+<span><span class="co">#&gt; $nFeature_RNA &lt;int32&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.0.8 &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $letter.idents &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $groups &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.1 &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span>
+<span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_complete</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p>We can also access the expression via <code>X()</code>.</p>
+<p>Similarly to <code>obs()</code> and <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var()</a></code>, <code>X()</code> is intended for iteration, but in this case we have access to two different iterators, and thus <code>X()</code> returns a reader that gives you access to an iterator for <code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code> and one for <code>Matrix::sparse_matrix</code>.</p>
+<p>Let’s take a look at the Arrow Table iterator:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">reader</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span>layer_name <span class="op">=</span> <span class="st">"counts"</span><span class="op">)</span></span>
+<span><span class="va">table_irerator</span> <span class="op">&lt;-</span> <span class="va">reader</span><span class="op">$</span><span class="fu">tables</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">table_irerator</span><span class="op">$</span><span class="fu">read_next</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Table</span></span>
+<span><span class="co">#&gt; 4456 rows x 3 columns</span></span>
+<span><span class="co">#&gt; $soma_dim_0 &lt;int64 not null&gt;</span></span>
+<span><span class="co">#&gt; $soma_dim_1 &lt;int64 not null&gt;</span></span>
+<span><span class="co">#&gt; $soma_data &lt;double not null&gt;</span></span></code></pre></div>
+<p>As in the <code>obs</code> example the data is small enough to fit in one chunk. For bigger data you can user <code>iterator$read_complete()</code> to check the status of iteration and <code>iterator$concat()</code> to concatenate the rest of the chunks.</p>
+<p>The iterator for <code>Matrix::sparse_matrix</code> works in the same way. Keep in mind that the matrix format is <code>dgTMatrix</code> as it is the most memory-efficient and the only format type that can be easily iterated. And most importantly, the resulting object is a “view” of the full matrix with the original shape and indexes but only with data corresponding to the query coordinates or filters (see section below).</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">reader</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span>layer_name <span class="op">=</span> <span class="st">"counts"</span><span class="op">)</span></span>
+<span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">reader</span><span class="op">$</span><span class="fu">sparse_matrix</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_next</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Formal class 'dgTMatrix' [package "Matrix"] with 6 slots</span></span>
+<span><span class="co">#&gt;   ..@ i       : int [1:4456] 0 0 0 0 0 0 0 0 0 0 ...</span></span>
+<span><span class="co">#&gt;   ..@ j       : int [1:4456] 1 5 8 11 22 30 33 34 36 38 ...</span></span>
+<span><span class="co">#&gt;   ..@ Dim     : int [1:2] 80 230</span></span>
+<span><span class="co">#&gt;   ..@ Dimnames:List of 2</span></span>
+<span><span class="co">#&gt;   .. ..$ : NULL</span></span>
+<span><span class="co">#&gt;   .. ..$ : NULL</span></span>
+<span><span class="co">#&gt;   ..@ x       : num [1:4456] 1 1 3 1 1 4 1 5 1 1 ...</span></span>
+<span><span class="co">#&gt;   ..@ factors : list()</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="adding-filters">Adding filters<a class="anchor" aria-label="anchor" href="#adding-filters"></a>
 </h2>
 <p>Adding filters requires creating a <code>SOMAAxisQuery</code> object that allows you to define coordinates, value filters, or both for an axis.</p>
 <p>Here we’ll create a query for <code>obs</code> that slices the first 40 rows, and then filters that subset based on the <code>nCount_RNA</code> column.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obs_query</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMAAxisQuery.html">SOMAAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>soma_joinid <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">39</span><span class="op">)</span>,</span>
 <span>  value_filter <span class="op">=</span> <span class="st">"nCount_RNA &gt; 100"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>To apply this filter we’ll pass it to a new <code>SOMAExperimentAxisQuery</code> object.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMAExperimentAxisQuery.html">SOMAExperimentAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  experiment <span class="op">=</span> <span class="va">experiment</span>,</span>
 <span>  measurement_name <span class="op">=</span> <span class="st">"RNA"</span>,</span>
 <span>  obs_query <span class="op">=</span> <span class="va">obs_query</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Let’s see how many observations this query identified.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="va">n_obs</span></span>
 <span><span class="co">#&gt; [1] 26</span></span></code></pre></div>
 <p>As before, we can load the <code>obs</code> data frame into memory but now it only includes the filtered observations.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span>column_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"obs_id"</span>, <span class="st">"nCount_RNA"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="fu">to_data_frame</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 26 × 2</span></span></span>
-<span><span class="co">#&gt;    obs_id         nCount_RNA</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> TGACTGGATTCTCA        127</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AGTCAGACTGCACA        173</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AGAGATGATCTCGC        191</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> GGGTAACTCTAGTG        101</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> CTAAACCTGTGCAT        168</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> TTGGTACTGAATCC        135</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> TACATCACGCTAAC        109</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> TTACCATGAATCGC        298</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ATAGGAGAAACAGA        406</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> GCGCACGACTTTAC        213</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 16 more rows</span></span></span></code></pre></div>
-<p>We can also access the expression data for these filtered cells via <code>X()</code>:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span>layer_name <span class="op">=</span> <span class="st">"counts"</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">obs</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span>column_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"obs_id"</span>, <span class="st">"nCount_RNA"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">obs</span><span class="op">$</span><span class="fu">to_data_frame</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt;            obs_id nCount_RNA</span></span>
+<span><span class="co">#&gt; 1  TGACTGGATTCTCA        127</span></span>
+<span><span class="co">#&gt; 2  AGTCAGACTGCACA        173</span></span>
+<span><span class="co">#&gt; 3  AGAGATGATCTCGC        191</span></span>
+<span><span class="co">#&gt; 4  GGGTAACTCTAGTG        101</span></span>
+<span><span class="co">#&gt; 5  CTAAACCTGTGCAT        168</span></span>
+<span><span class="co">#&gt; 6  TTGGTACTGAATCC        135</span></span>
+<span><span class="co">#&gt; 7  TACATCACGCTAAC        109</span></span>
+<span><span class="co">#&gt; 8  TTACCATGAATCGC        298</span></span>
+<span><span class="co">#&gt; 9  ATAGGAGAAACAGA        406</span></span>
+<span><span class="co">#&gt; 10 GCGCACGACTTTAC        213</span></span>
+<span><span class="co">#&gt; 11 ACTCGCACGAAAGT        231</span></span>
+<span><span class="co">#&gt; 12 ATTACCTGCCTTAT        463</span></span>
+<span><span class="co">#&gt; 13 AAATTCGAATCACG        327</span></span>
+<span><span class="co">#&gt; 14 CCATCCGATTCGCC        224</span></span>
+<span><span class="co">#&gt; 15 TCCACTCTGAGCTT        361</span></span>
+<span><span class="co">#&gt; 16 CATCAGGATGCACA        353</span></span>
+<span><span class="co">#&gt; 17 CTAAACCTCTGACA        246</span></span>
+<span><span class="co">#&gt; 18 GATAGAGAAGGGTG        115</span></span>
+<span><span class="co">#&gt; 19 CTAACGGAACCGAT        189</span></span>
+<span><span class="co">#&gt; 20 AGATATACCCGTAA        187</span></span>
+<span><span class="co">#&gt; 21 TACTCTGAATCGAC        156</span></span>
+<span><span class="co">#&gt; 22 GCGCATCTTGCTCC        164</span></span>
+<span><span class="co">#&gt; 23 GTTGACGATATCGG        221</span></span>
+<span><span class="co">#&gt; 24 ACAGGTACTGGTGT        151</span></span>
+<span><span class="co">#&gt; 25 GGCATATGCTTATC        126</span></span>
+<span><span class="co">#&gt; 26 CATTACACCAACTG        316</span></span></code></pre></div>
+<p>As well as the X matrix in two different formats:</p>
+<p><code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code></p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span><span class="st">"counts"</span><span class="op">)</span><span class="op">$</span><span class="fu">tables</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 1485 rows x 3 columns</span></span>
 <span><span class="co">#&gt; $soma_dim_0 &lt;int64 not null&gt;</span></span>
 <span><span class="co">#&gt; $soma_dim_1 &lt;int64 not null&gt;</span></span>
 <span><span class="co">#&gt; $soma_data &lt;double not null&gt;</span></span></code></pre></div>
+<p><code>Matrix::sparse_matrix</code> in <code>dgTMatrix</code> format.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span><span class="st">"counts"</span><span class="op">)</span><span class="op">$</span><span class="fu">sparse_matrix</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Formal class 'dgTMatrix' [package "Matrix"] with 6 slots</span></span>
+<span><span class="co">#&gt;   ..@ i       : int [1:1485] 3 3 3 3 3 3 3 3 3 3 ...</span></span>
+<span><span class="co">#&gt;   ..@ j       : int [1:1485] 8 11 22 30 31 32 33 34 37 38 ...</span></span>
+<span><span class="co">#&gt;   ..@ Dim     : int [1:2] 80 230</span></span>
+<span><span class="co">#&gt;   ..@ Dimnames:List of 2</span></span>
+<span><span class="co">#&gt;   .. ..$ : NULL</span></span>
+<span><span class="co">#&gt;   .. ..$ : NULL</span></span>
+<span><span class="co">#&gt;   ..@ x       : num [1:1485] 13 1 6 5 2 1 2 2 1 1 ...</span></span>
+<span><span class="co">#&gt;   ..@ factors : list()</span></span></code></pre></div>
+<p>For a re-indexed and re-shaped sparse matrix see the section below.</p>
 </div>
 <div class="section level2">
-<h2 id="seurat-support">Seurat support<a class="anchor" aria-label="anchor" href="#seurat-support"></a>
+<h2 id="export-to-an-annotated-re-indexed-sparse-matrix">Export to an annotated re-indexed sparse matrix<a class="anchor" aria-label="anchor" href="#export-to-an-annotated-re-indexed-sparse-matrix"></a>
 </h2>
-<p>The <code>query</code> object also contains methods for loading in the results as a Seurat object (or any of Seurat’s component classes).</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">to_seurat</span><span class="op">(</span></span>
+<p>Any component of the queried <code>SOMAExperiment</code> can be exported to a [sparse matrix][Matrix::sparseMatrix-class] using the <code>to_sparse_matrix()</code> method.</p>
+<p>For example, let’s create a sparse matrix of the filtered expression data. We’ll create a new query that returns a smaller subset of the data to make the output easier to read.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">query</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMAExperimentAxisQuery.html">SOMAExperimentAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  experiment <span class="op">=</span> <span class="va">experiment</span>,</span>
+<span>  measurement_name <span class="op">=</span> <span class="st">"RNA"</span>,</span>
+<span>  obs_query <span class="op">=</span> <span class="va"><a href="../reference/SOMAAxisQuery.html">SOMAAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>coords <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span>,</span>
+<span>  var_query <span class="op">=</span> <span class="va"><a href="../reference/SOMAAxisQuery.html">SOMAAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>coords <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Then we indicate that we want to access the <code>"counts"</code> layer of the <code>"X"</code> collection.</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">to_sparse_matrix</span><span class="op">(</span></span>
+<span>  collection <span class="op">=</span> <span class="st">"X"</span>,</span>
+<span>  layer <span class="op">=</span> <span class="st">"counts"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; 10 x 10 sparse Matrix of class "dgTMatrix"</span></span>
+<span><span class="co">#&gt;   [[ suppressing 10 column names '0', '1', '2' ... ]]</span></span>
+<span><span class="co">#&gt;                       </span></span>
+<span><span class="co">#&gt; 0 . 1 . . . 1 . .  3 .</span></span>
+<span><span class="co">#&gt; 1 . . . 1 . . . .  7 .</span></span>
+<span><span class="co">#&gt; 2 . . . . . . . . 11 .</span></span>
+<span><span class="co">#&gt; 3 . . . . . . . . 13 .</span></span>
+<span><span class="co">#&gt; 4 . . . 1 . . . .  3 .</span></span>
+<span><span class="co">#&gt; 5 . . . 1 . . . .  4 .</span></span>
+<span><span class="co">#&gt; 6 . . . . . . . .  6 .</span></span>
+<span><span class="co">#&gt; 7 . . . 1 . . . .  4 .</span></span>
+<span><span class="co">#&gt; 8 . . . . . . . .  2 .</span></span>
+<span><span class="co">#&gt; 9 . 1 . . . . . . 21 .</span></span></code></pre></div>
+<p>By default, the dimensions are named using <code>soma_joinid</code> values which are unique to each observation and variable. However, dimension names can come from any column in the <code>obs</code> and <code>var</code> arrays that uniquely identifies each record. For an expression matrix it makes sense to name the dimensions using cell barcodes and gene names, which are stored in the <code>obs_id</code> and <code>var_id</code> columns, respectively.</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">to_sparse_matrix</span><span class="op">(</span></span>
+<span>  collection <span class="op">=</span> <span class="st">"X"</span>,</span>
+<span>  layer <span class="op">=</span> <span class="st">"counts"</span>,</span>
+<span>  obs_index <span class="op">=</span> <span class="st">"obs_id"</span>,</span>
+<span>  var_index <span class="op">=</span> <span class="st">"var_id"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; 10 x 10 sparse Matrix of class "dgTMatrix"</span></span>
+<span><span class="co">#&gt;   [[ suppressing 10 column names 'MS4A1', 'CD79B', 'CD79A' ... ]]</span></span>
+<span><span class="co">#&gt;                                    </span></span>
+<span><span class="co">#&gt; ATGCCAGAACGACT . 1 . . . 1 . .  3 .</span></span>
+<span><span class="co">#&gt; CATGGCCTGTGCAT . . . 1 . . . .  7 .</span></span>
+<span><span class="co">#&gt; GAACCTGATGAACC . . . . . . . . 11 .</span></span>
+<span><span class="co">#&gt; TGACTGGATTCTCA . . . . . . . . 13 .</span></span>
+<span><span class="co">#&gt; AGTCAGACTGCACA . . . 1 . . . .  3 .</span></span>
+<span><span class="co">#&gt; TCTGATACACGTGT . . . 1 . . . .  4 .</span></span>
+<span><span class="co">#&gt; TGGTATCTAAACAG . . . . . . . .  6 .</span></span>
+<span><span class="co">#&gt; GCAGCTCTGTTTCT . . . 1 . . . .  4 .</span></span>
+<span><span class="co">#&gt; GATATAACACGCAT . . . . . . . .  2 .</span></span>
+<span><span class="co">#&gt; AATGTTGACAGTCA . 1 . . . . . . 21 .</span></span></code></pre></div>
+<p>We can use this method for any of the <code>SOMAExperiment</code>’s collections. Let’s access the t-SNE coordinates stored in the <code>obsm</code> collection’s <code>X_tsne</code> layer, populating the row names with cell barcodes.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">to_sparse_matrix</span><span class="op">(</span></span>
+<span>  collection <span class="op">=</span> <span class="st">"obsm"</span>,</span>
+<span>  layer <span class="op">=</span> <span class="st">"X_tsne"</span>,</span>
+<span>  obs_index <span class="op">=</span> <span class="st">"obs_id"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; 10 x 2 sparse Matrix of class "dgTMatrix"</span></span>
+<span><span class="co">#&gt;                          0           1</span></span>
+<span><span class="co">#&gt; ATGCCAGAACGACT   0.8675977  -8.1007483</span></span>
+<span><span class="co">#&gt; CATGGCCTGTGCAT  -7.3925306  -8.7717451</span></span>
+<span><span class="co">#&gt; GAACCTGATGAACC -28.2064258   0.2410102</span></span>
+<span><span class="co">#&gt; TGACTGGATTCTCA  16.3480689 -11.1633255</span></span>
+<span><span class="co">#&gt; AGTCAGACTGCACA   1.9113998 -11.1929311</span></span>
+<span><span class="co">#&gt; TCTGATACACGTGT   3.1475998  -9.9369312</span></span>
+<span><span class="co">#&gt; TGGTATCTAAACAG  17.8526863  -9.8978901</span></span>
+<span><span class="co">#&gt; GCAGCTCTGTTTCT  -6.4912187  -8.3874434</span></span>
+<span><span class="co">#&gt; GATATAACACGCAT   1.3305297  -9.6807936</span></span>
+<span><span class="co">#&gt; AATGTTGACAGTCA  16.9642732  -9.4295980</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="export-to-seurat">Export to Seurat<a class="anchor" aria-label="anchor" href="#export-to-seurat"></a>
+</h2>
+<p>The <code>query</code> object also contains methods for loading in results as a Seurat object (or any of Seurat’s component classes). As with the <code>to_sparse_matrix()</code> method, we can specify the <code>obs_index</code> and <code>var_index</code> to use for naming the dimensions of the resulting object.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">query</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMAExperimentAxisQuery.html">SOMAExperimentAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  experiment <span class="op">=</span> <span class="va">experiment</span>,</span>
+<span>  measurement_name <span class="op">=</span> <span class="st">"RNA"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">query</span><span class="op">$</span><span class="fu">to_seurat</span><span class="op">(</span></span>
 <span>  X_layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="st">"counts"</span>, data <span class="op">=</span> <span class="st">"data"</span><span class="op">)</span>,</span>
 <span>  obs_index <span class="op">=</span> <span class="st">"obs_id"</span>,</span>
 <span>  var_index <span class="op">=</span> <span class="st">"var_id"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; An object of class Seurat </span></span>
-<span><span class="co">#&gt; 230 features across 26 samples within 1 assay </span></span>
+<span><span class="co">#&gt; 230 features across 80 samples within 1 assay </span></span>
 <span><span class="co">#&gt; Active assay: RNA (230 features, 0 variable features)</span></span>
 <span><span class="co">#&gt;  2 dimensional reductions calculated: pca, tsne</span></span></code></pre></div>
 </div>
-  </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
-
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
 
-      <footer><div class="copyright">
+    <footer><div class="pkgdown-footer-left">
   <p></p>
 <p>Developed by Aaron Wolen, Dirk Eddelbuettel, Paul Hoffman, John Kerl, TileDB, Inc..</p>
 </div>
 
-<div class="pkgdown">
+<div class="pkgdown-footer-right">
   <p></p>
 <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
 
   
-
 
   
 
