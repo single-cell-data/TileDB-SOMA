@@ -17,6 +17,9 @@ test_that("returns all coordinates by default", {
     measurement_name = "RNA"
   )
 
+  # Query object can be created from the SOMAExperiment axis_query() method
+  expect_equal(experiment$axis_query(measurement_name = "RNA"), query)
+
   # obs/var tables
   expect_true(is(query$obs(), "TableReadIter"))
   expect_true(is(query$var(), "TableReadIter"))
@@ -40,7 +43,7 @@ test_that("returns all coordinates by default", {
   expect_error(query$X(), "Must specify an X layer name")
   expect_error(query$X(c("a", "b")), "Must specify a single X layer name")
   expect_error(query$X("foo"), "The following layer does not exist: foo")
-  
+
   expect_true(is(query$X("counts"), "SOMASparseNDArrayRead"))
   expect_true(
     query$X("counts")$tables()$concat()$Equals(

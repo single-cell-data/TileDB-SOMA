@@ -40,6 +40,7 @@ observation index domain, \code{obs_id}. All observations for the
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-SOMAExperiment-axis_query}{\code{SOMAExperiment$axis_query()}}
 \item \href{#method-SOMAExperiment-clone}{\code{SOMAExperiment$clone()}}
 }
 }
@@ -71,6 +72,30 @@ observation index domain, \code{obs_id}. All observations for the
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperiment-axis_query"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperiment-axis_query}{}}}
+\subsection{Method \code{axis_query()}}{
+Subset and extract data from a \code{\link{SOMAMeasurement}} by
+querying the \code{obs}/\code{var} axes.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$axis_query(measurement_name, obs_query = NULL, var_query = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{measurement_name}}{The name of the measurement to query.}
+
+\item{\code{obs_query, var_query}}{An \code{\link{SOMAAxisQuery}} object for the obs/var
+axis.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{\link{SOMAExperimentAxisQuery}} object.
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAExperiment-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-clone}{}}}

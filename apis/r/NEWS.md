@@ -20,3 +20,4 @@
 * New vignettes describing SOMA objects, reading data from them, and querying SOMA experiments
 * Objects added to `SOMACollection`-based classes using the `add_new_*()` methods now pass through their parent context and platform config
 * `SOMAExperimentAxisQuery` gained a `to_sparse_matrix()` method for retrieving data as a named sparse matrix
+* `SOMAExperiment` gained `axis_query()` to construct a `SOMAExperimentAxisQuery` object
