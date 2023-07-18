@@ -44,6 +44,9 @@ using namespace tiledb;
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema) {
+    if (schema.array_type() != TILEDB_DENSE)
+        throw TileDBSOMAError("ArraySchema must be set to dense.");
+
     SOMAArray::create(ctx, uri, schema, "SOMADataFrame");
     return std::make_unique<SOMADataFrame>(
         TILEDB_READ, uri, ctx, std::vector<std::string>(), std::nullopt);
