@@ -1,5 +1,5 @@
 /**
- * @file   unit_soma_sparse_ndarray.cc
+ * @file   unit_soma_dense_ndarray.cc
  *
  * @section LICENSE
  *
@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file manages unit tests for the SOMASparseNDArray class
+ * This file manages unit tests for the SOMADenseNDArray class
  */
 
 #include <catch2/catch_template_test_macros.hpp>
@@ -59,7 +59,7 @@ const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 namespace {
 ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
     // Create schema
-    ArraySchema schema(ctx, TILEDB_SPARSE);
+    ArraySchema schema(ctx, TILEDB_DENSE);
 
     auto dim = Dimension::create<int64_t>(ctx, "d0", {0, 1000});
 
@@ -76,27 +76,25 @@ ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
 }
 };  // namespace
 
-TEST_CASE("SOMASparseNDArray: basic") {
+TEST_CASE("SOMADenseNDArray: basic") {
     auto ctx = std::make_shared<Context>();
-    std::string uri = "mem://unit-test-sparse-ndarray-basic";
+    std::string uri = "mem://unit-test-dense-ndarray-basic";
 
-    SOMASparseNDArray::create(ctx, uri, create_schema(*ctx));
+    SOMADenseNDArray::create(ctx, uri, create_schema(*ctx));
 
-    auto soma_sparse = SOMASparseNDArray::open(TILEDB_READ, ctx, uri);
+    auto soma_sparse = SOMADenseNDArray::open(TILEDB_READ, ctx, uri);
     REQUIRE(soma_sparse->uri() == uri);
     REQUIRE(soma_sparse->ctx() == ctx);
-    REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
-    REQUIRE(soma_sparse->is_sparse() == true);
+    REQUIRE(soma_sparse->type() == "SOMADenseNDArray");
+    REQUIRE(soma_sparse->is_sparse() == false);
     auto schema = soma_sparse->schema();
     REQUIRE(schema->has_attribute("a0"));
     REQUIRE(schema->domain().has_dimension("d0"));
     REQUIRE(soma_sparse->ndim() == 1);
-    REQUIRE(soma_sparse->nnz() == 0);
+    REQUIRE(soma_sparse->shape() == std::vector<int64_t>{1001});
     soma_sparse->close();
 
-    std::vector<int64_t> d0(10);
-    for (int j = 0; j < 10; j++)
-        d0[j] = j;
+    std::vector<int64_t> d0{1, 10};
     std::vector<int> a0(10, 1);
 
     auto array_buffer = std::make_shared<ArrayBuffers>();
@@ -112,7 +110,9 @@ TEST_CASE("SOMASparseNDArray: basic") {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
         auto a0span = arrbuf->at("a0")->data<int>();
-        REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
+        REQUIRE(
+            std::vector<int64_t>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10} ==
+            std::vector<int64_t>(d0span.begin(), d0span.end()));
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
     soma_sparse->close();

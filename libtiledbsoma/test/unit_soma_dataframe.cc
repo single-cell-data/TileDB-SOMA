@@ -85,6 +85,7 @@ TEST_CASE("SOMADataFrame: basic") {
     auto soma_dataframe = SOMADataFrame::open(TILEDB_READ, ctx, uri);
     REQUIRE(soma_dataframe->uri() == uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
+    REQUIRE(soma_dataframe->type() == "SOMADataFrame");
     auto schema = soma_dataframe->schema();
     REQUIRE(schema->has_attribute("a0"));
     REQUIRE(schema->domain().has_dimension("d0"));
