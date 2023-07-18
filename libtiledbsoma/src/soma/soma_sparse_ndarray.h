@@ -142,7 +142,7 @@ class SOMASparseNDArray : public SOMAObject {
      *
      * @return std::string
      */
-    std::string type() const {
+    const std::string type() const {
         return "SOMASparseNDArray";
     }
 
@@ -167,7 +167,7 @@ class SOMASparseNDArray : public SOMAObject {
      *
      * @return std::string URI
      */
-    const std::string& uri() const;
+    const std::string uri() const;
 
     /**
      * Return data schema, in the form of a TileDB ArraySchema.

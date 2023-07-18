@@ -50,6 +50,18 @@ class SOMAGroup {
     //===================================================================
 
     /**
+     * @brief Create a SOMAGroup object at the given URI.
+     *
+     * @param ctx TileDB context
+     * @param uri URI to create the SOMAGroup
+     * @param soma_type SOMACollection, SOMAMeasurement, or SOMAExperiment
+     */
+    static void create(
+        std::shared_ptr<Context> ctx,
+        std::string_view uri,
+        std::string soma_type);
+
+    /**
      * @brief Open a group at the specified URI and return SOMAGroup
      * object.
      *
@@ -128,7 +140,7 @@ class SOMAGroup {
     /**
      * Get the SOMAGroup URI.
      */
-    std::string uri() const;
+    const std::string uri() const;
 
     /**
      * Get the Context associated with the SOMAGroup.

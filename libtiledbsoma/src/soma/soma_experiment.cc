@@ -1,11 +1,11 @@
 /**
- * @file   tiledbsoma
+ * @file   soma_experiment.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,38 +27,33 @@
  *
  * @section DESCRIPTION
  *
- * This is the main import header for the C++ API
+ *   This file defines the SOMAExperiment class.
  */
 
-#ifndef __TILEDBSOMA__
-#define __TILEDBSOMA__
+#include "soma_experiment.h"
+#include "soma_collection.h"
+#include "soma_measurement.h"
 
-// TODO Uncomment after finishing Python and R bindings
-// #include "soma_collection.h"
-// #include "soma_dataframe.h"
-// #include "soma_dense_ndarray.h"
-// #include "soma_experiment.h"
-// #include "soma_measurement.h"
-// #include "soma_object.h"
-// #include "soma_sparse_ndarray.h"
+namespace tiledbsoma {
+using namespace tiledb;
 
-#include "utils/arrow_adapter.h"
-#include "utils/common.h"
-#include "utils/stats.h"
-#include "utils/version.h"
-#include "soma/logger_public.h"
-#include "soma/managed_query.h"
-#include "soma/array_buffers.h"
-#include "soma/column_buffer.h"
-#include "soma/soma_array.h"
-#include "soma/soma_collection.h"
-#include "soma/soma_dataframe.h"
-#include "soma/soma_group.h"
-#include "soma/soma_experiment.h"
-#include "soma/soma_measurement.h"
-#include "soma/soma_object.h"
-#include "soma/soma_dataframe.h"
-#include "soma/soma_dense_ndarray.h"
-#include "soma/soma_sparse_ndarray.h"
+//===================================================================
+//= public static
+//===================================================================
 
-#endif
+std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
+    std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema) {
+    std::string exp_uri(uri);
+
+    SOMAGroup::create(ctx, exp_uri, "SOMAExperiment");
+    SOMADataFrame::create(ctx, exp_uri + "/obs", schema);
+    SOMACollection::create(ctx, exp_uri + "/ms");
+
+    auto group = SOMAGroup::open(TILEDB_WRITE, ctx, exp_uri);
+    group->add_member(exp_uri + "/obs", false, "obs");
+    group->add_member(exp_uri + "/ms", false, "ms");
+    group->close();
+
+    return std::make_unique<SOMAExperiment>(TILEDB_READ, exp_uri, ctx);
+}
+}  // namespace tiledbsoma

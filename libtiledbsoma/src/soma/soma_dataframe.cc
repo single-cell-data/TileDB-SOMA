@@ -105,7 +105,7 @@ void SOMADataFrame::close() {
     array_->close();
 }
 
-const std::string& SOMADataFrame::uri() const {
+const std::string SOMADataFrame::uri() const {
     return array_->uri();
 }
 

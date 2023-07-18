@@ -56,12 +56,13 @@ class SOMAArray {
      * @param ctx TileDB context
      * @param uri URI to create the SOMAArray
      * @param schema TileDB ArraySchema
+     * @param soma_type SOMADataFrame, SOMADenseNDArray, or SOMASparseNDArray
      */
     static void create(
         std::shared_ptr<Context> ctx,
         std::string_view uri,
         ArraySchema schema,
-        std::string soma_object_type);
+        std::string soma_type);
 
     /**
      * @brief Open an array at the specified URI and return SOMAArray

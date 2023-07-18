@@ -45,11 +45,11 @@ void SOMAArray::create(
     std::shared_ptr<Context> ctx,
     std::string_view uri,
     ArraySchema schema,
-    std::string soma_object_type) {
+    std::string soma_type) {
     Array::create(std::string(uri), schema);
     auto array = Array(*ctx, std::string(uri), TILEDB_WRITE);
     array.put_metadata(
-        "soma_object_type", TILEDB_STRING_UTF8, 1, soma_object_type.c_str());
+        "soma_object_type", TILEDB_STRING_UTF8, 1, soma_type.c_str());
     array.close();
 }
 

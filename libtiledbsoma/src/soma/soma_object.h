@@ -54,14 +54,14 @@ class SOMAObject {
      *
      * @return std::string SOMA type
      */
-    virtual std::string type() const = 0;
+    virtual const std::string type() const = 0;
 
     /**
      * @brief Get URI of the SOMAObject.
      *
      * @return std::string URI
      */
-    virtual const std::string& uri() const = 0;
+    virtual const std::string uri() const = 0;
 
     /**
      * Get the context associated with the SOMAObject.
