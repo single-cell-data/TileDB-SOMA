@@ -82,17 +82,17 @@ TEST_CASE("SOMADenseNDArray: basic") {
 
     SOMADenseNDArray::create(ctx, uri, create_schema(*ctx));
 
-    auto soma_sparse = SOMADenseNDArray::open(TILEDB_READ, ctx, uri);
-    REQUIRE(soma_sparse->uri() == uri);
-    REQUIRE(soma_sparse->ctx() == ctx);
-    REQUIRE(soma_sparse->type() == "SOMADenseNDArray");
-    REQUIRE(soma_sparse->is_sparse() == false);
-    auto schema = soma_sparse->schema();
+    auto soma_dense = SOMADenseNDArray::open(TILEDB_READ, ctx, uri);
+    REQUIRE(soma_dense->uri() == uri);
+    REQUIRE(soma_dense->ctx() == ctx);
+    REQUIRE(soma_dense->type() == "SOMADenseNDArray");
+    REQUIRE(soma_dense->is_sparse() == false);
+    auto schema = soma_dense->schema();
     REQUIRE(schema->has_attribute("a0"));
     REQUIRE(schema->domain().has_dimension("d0"));
-    REQUIRE(soma_sparse->ndim() == 1);
-    REQUIRE(soma_sparse->shape() == std::vector<int64_t>{1001});
-    soma_sparse->close();
+    REQUIRE(soma_dense->ndim() == 1);
+    REQUIRE(soma_dense->shape() == std::vector<int64_t>{1001});
+    soma_dense->close();
 
     std::vector<int64_t> d0{1, 10};
     std::vector<int> a0(10, 1);
@@ -101,12 +101,12 @@ TEST_CASE("SOMADenseNDArray: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(*schema, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(*schema, "d0", d0));
 
-    soma_sparse->open(TILEDB_WRITE);
-    soma_sparse->write(array_buffer);
-    soma_sparse->close();
+    soma_dense->open(TILEDB_WRITE);
+    soma_dense->write(array_buffer);
+    soma_dense->close();
 
-    soma_sparse->open(TILEDB_READ);
-    while (auto batch = soma_sparse->read_next()) {
+    soma_dense->open(TILEDB_READ);
+    while (auto batch = soma_dense->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
         auto a0span = arrbuf->at("a0")->data<int>();
@@ -115,5 +115,5 @@ TEST_CASE("SOMADenseNDArray: basic") {
             std::vector<int64_t>(d0span.begin(), d0span.end()));
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
-    soma_sparse->close();
+    soma_dense->close();
 }

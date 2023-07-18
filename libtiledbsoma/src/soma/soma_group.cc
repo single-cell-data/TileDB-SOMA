@@ -41,6 +41,15 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
+void SOMAGroup::create(
+    std::shared_ptr<Context> ctx, std::string_view uri, std::string soma_type) {
+    Group::create(*ctx, std::string(uri));
+    auto group = Group(*ctx, std::string(uri), TILEDB_WRITE);
+    group.put_metadata(
+        "soma_object_type", TILEDB_STRING_UTF8, 1, soma_type.c_str());
+    group.close();
+}
+
 std::unique_ptr<SOMAGroup> SOMAGroup::open(
     tiledb_query_type_t mode,
     std::string_view uri,
@@ -98,7 +107,7 @@ void SOMAGroup::close() {
     group_->close();
 }
 
-std::string SOMAGroup::uri() const {
+const std::string SOMAGroup::uri() const {
     return group_->uri();
 }
 

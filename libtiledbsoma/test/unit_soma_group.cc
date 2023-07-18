@@ -154,10 +154,10 @@ TEST_CASE("SOMAGroup: basic") {
     auto ctx = std::make_shared<Context>();
 
     std::string uri_main_group = "mem://main-group";
-    Group::create(*ctx, uri_main_group);
+    SOMAGroup::create(ctx, uri_main_group, "NONE");
 
     std::string uri_sub_group = "mem://sub-group";
-    Group::create(*ctx, uri_sub_group);
+    SOMAGroup::create(ctx, uri_sub_group, "NONE");
 
     auto [uri_sub_array, expected_nnz] = create_array("mem://sub-array", *ctx);
 

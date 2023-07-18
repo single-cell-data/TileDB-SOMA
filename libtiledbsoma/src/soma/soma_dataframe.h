@@ -120,7 +120,7 @@ class SOMADataFrame : public SOMAObject {
         std::string_view uri,
         std::shared_ptr<Context> ctx,
         std::vector<std::string> column_names,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMADataFrame() = delete;
     SOMADataFrame(const SOMADataFrame&) = delete;
@@ -147,7 +147,7 @@ class SOMADataFrame : public SOMAObject {
      *
      * @return std::string
      */
-    std::string type() const {
+    const std::string type() const {
         return "SOMADataFrame";
     }
 
@@ -156,7 +156,7 @@ class SOMADataFrame : public SOMAObject {
      *
      * @return std::string URI
      */
-    const std::string& uri() const;
+    const std::string uri() const;
 
     /**
      * Get the Context associated with the SOMADataFrame.

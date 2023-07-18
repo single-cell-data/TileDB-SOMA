@@ -106,7 +106,7 @@ void SOMASparseNDArray::close() {
     array_->close();
 }
 
-const std::string& SOMASparseNDArray::uri() const {
+const std::string SOMASparseNDArray::uri() const {
     return array_->uri();
 }
 

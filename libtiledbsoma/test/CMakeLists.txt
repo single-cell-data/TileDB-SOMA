@@ -28,6 +28,7 @@ add_executable(unit_soma EXCLUDE_FROM_ALL
     unit_soma_dataframe.cc
     unit_soma_dense_ndarray.cc
     unit_soma_sparse_ndarray.cc
+    unit_soma_collection.cc
 # TODO: uncomment when thread_pool is enabled
 #    unit_thread_pool.cc
 )

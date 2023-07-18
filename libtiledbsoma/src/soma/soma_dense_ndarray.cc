@@ -106,7 +106,7 @@ void SOMADenseNDArray::close() {
     array_->close();
 }
 
-const std::string& SOMADenseNDArray::uri() const {
+const std::string SOMADenseNDArray::uri() const {
     return array_->uri();
 }
 
