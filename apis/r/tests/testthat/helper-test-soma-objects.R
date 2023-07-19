@@ -89,14 +89,44 @@ create_and_populate_sparse_nd_array <- function(uri, mode = NULL, ...) {
 #  |---------- X GROUP
 #  |-------------- counts ARRAY
 #  |-------------- logcounts ARRAY
+#' @param obsm_layers A named integer vector of layers to add to `obsm`; the
+#' names will be used to create new layers in `obsm` and the value will determine
+#' the number of dimensions (columns) to add. Names starting with `dense:` will
+#' be created as _dense_ arrays (eg. `dense:X_ica`). Pass `NULL` to prevent
+#' creation of `obsm` layers
+#' @param varm_layers A named integer vector of layers to add to `varm`; the
+#' names will be used to create new layers in `varm` and the value will determine
+#' the number of dimensions (columns) to add. Names starting with `dense:` will
+#' be created as _dense_ arrays (eg. `dense:ICs`). Pass `NULL` to prevent
+#' creation of `varm` layers
+#' @param obsp_layers A character vector of `obsp` layers; pass `NULL` to
+#' prevent creation of `obsp` layers
+#' @param varp_layers A character vector of `varp` layers; pass `NULL` to
+#' prevent creation of `varp` layers
+#'
 create_and_populate_experiment <- function(
   uri,
   n_obs,
   n_var,
   X_layer_names,
+  obsm_layers = NULL,
+  varm_layers = NULL,
+  obsp_layer_names = NULL,
+  varp_layer_names = NULL,
   config = NULL,
   mode = NULL
 ) {
+
+  stopifnot(
+    "'obsm_layers' must be a named integer vector" = is.null(obsm_layers) ||
+      (rlang::is_integerish(obsm_layers) && rlang::is_named(obsm_layers) && all(obsm_layers > 0L)),
+    "'varm_layers' must be a named integer vector" = is.null(varm_layers) ||
+      (rlang::is_integerish(varm_layers) && rlang::is_named(varm_layers) && all(varm_layers > 0L)),
+    "'obsp_layer_names' must be a character vector" = is.null(obsp_layer_names) ||
+      (is.character(obsp_layer_names) && all(nzchar(obsp_layer_names))),
+    "'varp_layer_names' must be a character vector" = is.null(varp_layer_names) ||
+      (is.character(varp_layer_names) && all(nzchar(varp_layer_names)))
+  )
 
   experiment <- SOMAExperimentCreate(uri, platform_config = config)
 
@@ -123,6 +153,106 @@ create_and_populate_experiment <- function(
     ms_rna$X$set(snda, name = layer_name)
   }
   ms_rna$X$close()
+
+  # Add obsm layers
+  if (rlang::is_integerish(obsm_layers)) {
+    obsm <- SOMACollectionCreate(file.path(ms_rna$uri, "obsm"))
+    for (layer in names(obsm_layers)) {
+      key <- gsub(pattern = '^dense:', replacement = '', x = layer)
+      shape <- c(n_obs, obsm_layers[layer])
+      if (grepl(pattern = '^dense:', x = layer)) {
+        obsm$add_new_dense_ndarray(
+          key = key,
+          type = arrow::int32(),
+          shape = shape
+        )
+        obsm$get(key)$write(create_dense_matrix_with_int_dims(
+          nrows = shape[1L],
+          ncols = shape[2L]
+        ))
+      } else {
+        obsm$add_new_sparse_ndarray(
+          key = key,
+          type = arrow::int32(),
+          shape = shape
+        )
+        obsm$get(key)$write(create_sparse_matrix_with_int_dims(
+          nrows = shape[1L],
+          ncols = shape[2L]
+        ))
+      }
+    }
+    obsm$close()
+    ms_rna$add_new_collection(obsm, "obsm")
+  }
+
+  # Add varm layers
+  if (rlang::is_integerish(varm_layers)) {
+    varm <- SOMACollectionCreate(file.path(ms_rna$uri, "varm"))
+    for (layer in names(varm_layers)) {
+      key <- gsub(pattern = '^dense:', replacement = '', x = layer)
+      shape <- c(n_var, varm_layers[layer])
+      if (grepl(pattern = '^dense:', x = layer)) {
+        varm$add_new_dense_ndarray(
+          key = key,
+          type = arrow::int32(),
+          shape = shape
+        )
+        varm$get(key)$write(create_dense_matrix_with_int_dims(
+          nrows = shape[1L],
+          ncols = shape[2L]
+        ))
+      } else {
+        varm$add_new_sparse_ndarray(
+          key = key,
+          type = arrow::int32(),
+          shape = shape
+        )
+        varm$get(key)$write(create_sparse_matrix_with_int_dims(
+          nrows = shape[1L],
+          ncols = shape[2L]
+        ))
+      }
+    }
+    varm$close()
+    ms_rna$add_new_collection(varm, "varm")
+  }
+
+  # Add obsp layers
+  if (is.character(obsp_layer_names)) {
+    obsp <- SOMACollectionCreate(file.path(ms_rna$uri, "obsp"))
+    for (layer in obsp_layer_names) {
+      obsp$add_new_sparse_ndarray(
+        key = layer,
+        type = arrow::int32(),
+        shape = c(n_obs, n_obs)
+      )
+      obsp$get(layer)$write(create_sparse_matrix_with_int_dims(
+        nrows = n_obs,
+        ncols = n_obs
+      ))
+    }
+    obsp$close()
+    ms_rna$add_new_collection(obsp, "obsp")
+  }
+
+  # Add varp layers
+  if (is.character(varp_layer_names)) {
+    varp <- SOMACollectionCreate(file.path(ms_rna$uri, "varp"))
+    for (layer in varp_layer_names) {
+      varp$add_new_sparse_ndarray(
+        key = layer,
+        type = arrow::int32(),
+        shape = c(n_var, n_var)
+      )
+      varp$get(layer)$write(create_sparse_matrix_with_int_dims(
+        nrows = n_var,
+        ncols = n_var
+      ))
+    }
+    varp$close()
+    ms_rna$add_new_collection(varp, "varp")
+  }
 
   ms_rna$close()
 

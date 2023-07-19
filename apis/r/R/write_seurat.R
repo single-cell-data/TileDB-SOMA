@@ -61,7 +61,7 @@ write_soma.Assay <- function(
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri),
@@ -221,7 +221,7 @@ write_soma.DimReduc <- function(
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be NULL" = is.null(uri),
     "'soma_parent' must be a SOMAMeasurement" = inherits(
@@ -355,7 +355,7 @@ write_soma.Graph <- function(
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'soma_parent' must be a SOMAMeasurement" = inherits(
       x = soma_parent,
@@ -411,7 +411,7 @@ write_soma.Seurat <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri)

@@ -344,22 +344,14 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
     #' @description Loads the query as a \code{\link[SeuratObject]{Seurat}} object
     #'
-    #' @template param-x-layers-v3
-    #' @template param-obs-index
-    #' @template param-var-index
-    #' @param obs_column_names Names of columns in \code{obs} to add as
-    #' cell-level meta data; by default, loads all columns
-    #' @template param-var-column-names
-    #' @param obsm_layers Names of arrays in \code{obsm} to load in as the
-    #' cell embeddings; pass \code{FALSE} to suppress loading in any
-    #' dimensional reductions; by default, loads all dimensional
-    #' reduction information
-    #' @param varm_layers Named vector of arrays in \code{varm} to load in as
-    #' the feature loadings; names must be names of array in \code{obsm} (eg.
-    #' \code{varm_layers = c(X_pca = 'PCs')}); will try to determine
-    #' \code{varm_layers} from \code{obsm_layers}
-    #' @param obsp_layers Names of arrays in \code{obsp} to load in as
-    #' \code{\link[SeuratObject]{Graph}s}; by default, loads all graphs
+    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
+    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
+    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names()}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}
+    #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers()}
+    #' @param varm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers(axis = 'varm')}
+    #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players()}
     #'
     #' @return A \code{\link[SeuratObject]{Seurat}} object
     #'
@@ -373,7 +365,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       varm_layers = NULL,
       obsp_layers = NULL
     ) {
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'obs_index' must be a single character value" = is.null(obs_index) ||
           (is_scalar_character(obs_index) && !is.na(obs_index)),
@@ -553,6 +545,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     },
     #' @description Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
     #'
+    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
+    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}
+    #'
     #' @return An \code{\link[SeuratObject]{Assay}} object
     #'
     to_seurat_assay = function(
@@ -562,7 +559,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       var_column_names = NULL
     ) {
       version <- 'v3'
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'X_layers' must be a named character vector" = is.character(X_layers) &&
           is_named(X_layers, allow_empty = FALSE),
@@ -643,6 +640,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param varm_layer Name of the array in \code{varm} to load as the
     #' feature loadings; by default, will try to determine \code{varm_layer}
     #' from \code{obsm_layer}
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
+    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
     #'
     #' @return A \code{\link[SeuratObject]{DimReduc}} object
     #'
@@ -652,7 +651,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obs_index = NULL,
       var_index = NULL
     ) {
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'obsm_layer' must be a single character value" = is_scalar_character(obsm_layer),
         "'varm_layer' must be a single character value" = is.null(varm_layer) ||
@@ -814,11 +813,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @description Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
     #'
     #' @param obsp_layer Name of array in \code{obsp} to load as the graph
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
     #'
     #' @return A \code{\link[SeuratObject]{Graph}} object
     #'
     to_seurat_graph = function(obsp_layer, obs_index = NULL) {
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'obsp_layer' must be a single character value" = is_scalar_character(obsp_layer),
         "'obs_index' must be a single character value" = is.null(obs_index) ||
@@ -858,6 +858,110 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       SeuratObject::DefaultAssay(mat) <- private$.measurement_name
       validObject(mat)
       return(mat)
+    },
+    #' @description Loads the query as a
+    #' \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+    #'
+    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers('sce')}
+    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}
+    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}
+    #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}
+    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce')}
+    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce', 'var')}
+    #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}
+    #' @param varp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}
+    #'
+    #' @return A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+    #'
+    to_single_cell_experiment = function(
+      X_layers = NULL,
+      obs_index = NULL,
+      var_index = NULL,
+      obs_column_names = NULL,
+      var_column_names = NULL,
+      obsm_layers = NULL,
+      # Omission of `varm_layers` parameter is purposeful as
+      # SCE objects do not support `varm_layers`
+      obsp_layers = NULL,
+      varp_layers = NULL
+    ) {
+      check_package('SingleCellExperiment', version = .MINIMUM_SCE_VERSION())
+      stopifnot(
+        "'X_layers' must be a character vector" = is_character_or_null(X_layers),
+        "'obs_index' must be a single character value" = is.null(obs_index) ||
+          (is_scalar_character(obs_index) && !is.na(obs_index)),
+        "'var_index' must be a single character value" = is.null(var_index) ||
+          (is_scalar_character(var_index) && !is.na(var_index)),
+        "'obs_column_names' must be a character vector" = is.null(obs_column_names) ||
+          is.character(obs_column_names) ||
+          is_scalar_logical(obs_column_names),
+        "'var_column_names' must be a character vector" = is.null(var_column_names) ||
+          is.character(var_column_names) ||
+          is_scalar_logical(var_column_names),
+        "'obsm_layers' must be a character vector" = is.null(obsm_layers) ||
+          is.character(obsm_layers) ||
+          is_scalar_logical(obsm_layers),
+        "'obsp_layers' must be a character vector" = is.null(obsp_layers) ||
+          is.character(obsp_layers) ||
+          is_scalar_logical(obsp_layers),
+        "'varp_layers' must be a character vector" = is.null(varp_layers) ||
+          is.character(varp_layers) ||
+          is_scalar_logical(varp_layers)
+      )
+      # Load in colData
+      obs <- private$.load_df('obs', index = obs_index, column_names = obs_column_names)
+      # Load in rowData
+      var <- private$.load_df('var', index = var_index, column_names = var_column_names)
+      # Check the layers
+      X_layers <- pad_names(X_layers %||% self$ms$X$names())
+      assert_subset(x = X_layers, y = self$ms$X$names(), type = 'X_layer')
+      # Read in the layers
+      layers <- lapply(
+        X = X_layers,
+        FUN = function(layer, var_ids, obs_ids) {
+          mat <- Matrix::t(self$to_sparse_matrix(
+            collection = 'X',
+            layer_name = layer
+          ))
+          dimnames(mat) <- list(var_ids, obs_ids)
+          return(mat)
+        },
+        var_ids = row.names(var),
+        obs_ids = row.names(obs)
+      )
+      names(layers) <- names(X_layers)
+      # Load in reduced dimensions
+      reduced_dims <- private$.load_sce_reduced_dims(
+        obsm_layers = obsm_layers,
+        obs_ids = row.names(obs)
+      )
+      # Load in the colPairs
+      col_pairs <- private$.load_sce_col_pairs(
+        obsp_layers = obsp_layers,
+        obs_ids = row.names(obs)
+      )
+      # Load in the rowPairs
+      row_pairs <- private$.load_sce_row_pairs(
+        varp_layers = varp_layers,
+        var_ids = row.names(var)
+      )
+      # Create the SingleCellExperiment object
+      sce <- SingleCellExperiment::SingleCellExperiment(
+        layers,
+        reducedDims = reduced_dims,
+        rowPairs = row_pairs,
+        colPairs = col_pairs,
+        mainExpName = private$.measurement_name
+      )
+      if (ncol(var)) {
+        SummarizedExperiment::rowData(sce) <- as(var, 'DataFrame')
+      }
+      if (ncol(obs)) {
+        SummarizedExperiment::colData(sce) <- as(obs, 'DataFrame')
+      }
+      # Validate and return
+      methods::validObject(sce)
+      return(sce)
     }
   ),
 
@@ -953,6 +1057,243 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       return(mat)
     },
+    # Helper methods to load aspects of a measurement for the ecosystems
+    # @description Load the `obs` or `var` data frames for usage with the ecosystems
+    # @param df_name Name of SOMADataFrame to load; choose from `"obs"` or `"var"`
+    # @param index Name of attribute in `df_name` to use as the row names for
+    # the resulting data frame. By default, uses `paste0(df_name, df$soma_join_ids)`;
+    # If provided, and `column_names` is `NULL`, `index` will be **excluded** from
+    # the resulting data frame
+    # @param column name The names of attributes in `df_name` to load; choose from:
+    # - `NULL` (default) or `TRUE`: loads all attributes **except** `index`
+    # - `FALSE` or `NA`: return a data frame the number of rows as present
+    # in `df_name` and zero columns
+    # - a character vector of names of attributes to load in
+    .load_df = function(df_name = c('obs', 'var'), index = NULL, column_names = NULL) {
+      stopifnot(
+        is.character(df_name),
+        is.null(index) || is_scalar_character(index),
+        is.null(column_names) || is.character(column_names) || is_scalar_logical(column_names)
+      )
+      df_name <- match.arg(arg = df_name)
+      switch(
+        EXPR = df_name,
+        obs = {
+          soma_df <- self$obs_df
+          soma_reader <- self$obs
+          soma_joinids <- self$obs_joinids()
+        },
+        var = {
+          soma_df <- self$var_df
+          soma_reader <- self$var
+          soma_joinids <- self$var_joinids()
+        }
+      )
+      attr_names <- soma_df$attrnames()
+      if (is.character(index)) {
+        index <- match.arg(arg = index, choices = attr_names)
+      }
+      if (isTRUE(column_names)) {
+        column_names <- NULL
+      }
+      column_names <- column_names %||% setdiff(attr_names, index)
+      attrs <- if (isFALSE(column_names) || rlang::is_na(column_names)) {
+        index
+      } else {
+        union(index, column_names)
+      }
+      df <- if (is.null(attrs)) {
+        NULL
+      } else {
+        as.data.frame(soma_reader(attrs)$concat()$to_data_frame())
+      }
+      ids <- if (is.null(index)) {
+        paste0(df_name, soma_joinids$as_vector())
+      } else {
+        df[[index]]
+      }
+      if (is.null(df)) {
+        df <- as.data.frame(matrix(nrow = length(ids), ncol = 0L))
+      }
+      row.names(df) <- ids
+      df <- if (isFALSE(column_names) || rlang::is_na(column_names)) {
+        df[, character(), drop = FALSE]
+      } else {
+        df[, column_names, drop = FALSE]
+      }
+      return(df)
+    },
+    .load_m_axis = function(layer, m_axis = c('obsm', 'varm'), type = "Embeddings") {
+      stopifnot(
+        is_scalar_character(layer),
+        is.character(m_axis),
+        is_scalar_character(type)
+      )
+      m_axis <- match.arg(arg = m_axis)
+      switch(
+        EXPR = m_axis,
+        obsm = {
+          soma_collection <- self$ms$obsm
+          soma_joinids <- self$obs_joinids()
+        },
+        varm = {
+          soma_collection <- self$ms$varm
+          soma_joinids <- self$var_joinids()
+        }
+      )
+      soma_axis <- soma_collection$get(layer)
+      warn_if_dense(m_axis, soma_axis)
+      mat <- self$to_sparse_matrix(collection = m_axis, layer_name = layer)
+      spdl::debug("Converting '{}' dgTMatrix to matrix", layer)
+      return(as.matrix(mat))
+    },
+    .load_p_axis = function(layer, p_axis = c('obsp', 'varp'), repr = c('C', 'T', 'R', 'D')) {
+      stopifnot(
+        is_scalar_character(layer),
+        is.character(p_axis),
+        is.character(repr)
+      )
+      p_axis <- match.arg(p_axis)
+      repr <- match.arg(repr)
+      mat <- self$to_sparse_matrix(collection = p_axis, layer_name = layer)
+      return(switch(
+        EXPR = repr,
+        C = {
+          spdl::debug("Converting '{}' TsparseMatrix to CsparseMatrix", layer)
+          as(mat, 'CsparseMatrix')
+        },
+        R = {
+          spdl::debug("Converting '{}' TsparseMatrix to RsparseMatrix", layer)
+          as(mat, 'RsparseMatrix')
+        },
+        D = {
+          spdl::debug("Converting '{}' TsparseMatrix to matrix", layer)
+          as.matrix(mat)
+        },
+        mat
+      ))
+    },
+    # Helper methods for loading SCE components
+    .load_sce_reduced_dims = function(obsm_layers, obs_ids) {
+      stopifnot(
+        is.null(obsm_layers) || is.character(obsm_layers) || is_scalar_logical(obsm_layers),
+        is.character(obs_ids)
+      )
+      if (isTRUE(obsm_layers)) {
+        obsm_layers <- NULL
+      }
+      ms_obsm <- tryCatch(expr = self$ms$obsm$names(), error = null)
+      skip_reduced_dims <- isFALSE(obsm_layers) || rlang::is_na(obsm_layers)
+      if (is.null(ms_obsm)) {
+        if (!skip_reduced_dims && !is.null(obsm_layers)) {
+          warning(
+            "Reduced dimensions requested but none were found, skipping",
+            call. = FALSE,
+            immediate. = TRUE
+          )
+        }
+        skip_reduced_dims <- TRUE
+      }
+      if (skip_reduced_dims) {
+        return(list())
+      }
+      obsm_layers <- obsm_layers %||% stats::setNames(
+        object = ms_obsm,
+        nm = .anndata_to_sce_reduced_dim(ms_obsm)
+      )
+      obsm_layers <- pad_names(obsm_layers)
+      assert_subset(x = obsm_layers, y = ms_obsm, type = 'cell embedding')
+      reduced_dims <- lapply(
+        X = seq_along(obsm_layers),
+        FUN = function(i) {
+          layer <- obsm_layers[i]
+          rd <- names(obsm_layers)[i]
+          mat <- private$.load_m_axis(layer = layer, type = "Reduced dimensions")
+          dimnames(mat) <- list(
+            obs_ids,
+            paste0(
+              switch(EXPR = rd, PCA = 'PC', ICA = 'IC', TSNE = 'tSNE', rd),
+              seq_len(ncol(mat))
+            )
+          )
+          return(mat)
+        }
+      )
+      return(stats::setNames(reduced_dims, nm = names(obsm_layers)))
+    },
+    .load_sce_col_pairs = function(obsp_layers, obs_ids) {
+      stopifnot(
+        is.null(obsp_layers) || is.character(obsp_layers) || is_scalar_logical(obsp_layers),
+        is.character(obs_ids)
+      )
+      if (isTRUE(obsp_layers)) {
+        obsp_layers <- NULL
+      }
+      ms_obsp <- tryCatch(expr = self$ms$obsp$names(), error = null)
+      skip_col_pairs <- isFALSE(obsp_layers) || rlang::is_na(obsp_layers)
+      if (is.null(ms_obsp)) {
+        if (!skip_col_pairs && !is.null(obsp_layers)) {
+          warning(
+            "colPairs requested but none were found, skipping",
+            call. = FALSE,
+            immediate. = TRUE
+          )
+        }
+        skip_col_pairs <- TRUE
+      }
+      if (skip_col_pairs) {
+        return(list())
+      }
+      obsp_layers <- obsp_layers %||% ms_obsp
+      obsp_layers <- pad_names(obsp_layers)
+      assert_subset(x = obsp_layers, y = ms_obsp, type = 'nearest neighbor graph')
+      col_pairs <- lapply(
+        X = obsp_layers,
+        FUN = function(layer) {
+          mat <- private$.load_p_axis(layer, repr = "T")
+          dimnames(mat) <- list(obs_ids, obs_ids)
+          return(.mat_to_hits(mat))
+        }
+      )
+      return(stats::setNames(col_pairs, names(obsp_layers)))
+    },
+    .load_sce_row_pairs = function(varp_layers, var_ids) {
+      stopifnot(
+        is.null(varp_layers) || is.character(varp_layers) || is_scalar_logical(varp_layers),
+        is.character(var_ids)
+      )
+      if (isTRUE(varp_layers)) {
+        varp_layers <- NULL
+      }
+      ms_varp <- tryCatch(expr = self$ms$varp$names(), error = null)
+      skip_row_pairs <- isFALSE(varp_layers) || rlang::is_na(varp_layers)
+      if (is.null(ms_varp)) {
+        if (!skip_row_pairs && !is.null(varp_layers)) {
+          warning(
+            "rowPairs requested but none were found, skipping",
+            call. = FALSE,
+            immediate. = TRUE
+          )
+        }
+        skip_row_pairs <- TRUE
+      }
+      if (skip_row_pairs) {
+        return(list())
+      }
+      varp_layers <- varp_layers %||% ms_varp
+      varp_layers <- pad_names(varp_layers)
+      assert_subset(x = varp_layers, y = ms_varp, type = 'feature network')
+      row_pairs <- lapply(
+        X = varp_layers,
+        FUN = function(layer) {
+          mat <- private$.load_p_axis(layer, p_axis = 'varp')
+          dimnames(mat) <- list(var_ids, var_ids)
+          return(.mat_to_hits(mat))
+        }
+      )
+      return(stats::setNames(row_pairs, names(varp_layers)))
+    },
+    # Helper methods for loading Seurat assays
     .to_seurat_assay_v3 = function(
       counts,
       data,
@@ -960,7 +1301,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       cells = NULL,
       features = NULL
     ) {
-      .check_seurat_installed()
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'data' must be a single character value" = is.null(data) ||
           is_scalar_character(data),

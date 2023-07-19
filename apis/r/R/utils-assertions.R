@@ -48,11 +48,43 @@ string_starts_with <- function(x, prefix) {
   grepl(prefix, x)
 }
 
-check_package <- function(package) {
-  if (requireNamespace(package, quietly = TRUE)) {
-    return(invisible())
+check_package <- function(package, version = NULL, quietly = FALSE) {
+  stopifnot(
+    is_scalar_character(package),
+    is.null(version) ||
+      is_scalar_character(version) ||
+      (inherits(version, 'numeric_version') && length(version) == 1L),
+    is_scalar_logical(quietly)
+  )
+  checks <- c(
+    installed = requireNamespace(package, quietly = TRUE),
+    version = ifelse(
+      test = is.null(version),
+      yes = TRUE,
+      no = tryCatch(
+        expr = utils::packageVersion(package) >= version,
+        error = function(...) {
+          return(FALSE)
+        }
+      )
+    )
+  )
+  if (isTRUE(quietly)) {
+    return(invisible(all(checks)))
   }
-  stop(paste0("Package '", package, "' must be installed"))
+  if (!checks['installed']) {
+    stop(sQuote(package), " must be installed", call. = FALSE)
+  }
+  if (!checks['version']) {
+    stop(
+      sQuote(package),
+      " must be version ",
+      version,
+      " or higher",
+      call. = FALSE
+    )
+  }
+  return(invisible(TRUE))
 }
 
 #' Assert all values of `x` are a subset of `y`. @param x,y vectors of values

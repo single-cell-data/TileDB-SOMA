@@ -349,7 +349,7 @@ write_soma.TsparseMatrix <- function(
     prefix = 'tiledbsoma',
     ...
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'x' must be a data frame" = is.data.frame(x),
     "'alt' must be a single character value" = is_scalar_character(alt),
