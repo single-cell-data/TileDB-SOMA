@@ -73,3 +73,6 @@ apis/r/.editorconfig
 .coverage
 coverage.xml
 coverage.info
+
+# Catch-all wildcard
+local-*

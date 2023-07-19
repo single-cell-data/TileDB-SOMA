@@ -167,13 +167,13 @@ validate_read_value_filter <- function(value_filter) {
 #' This is needed as we may receive (named or unnamed) list and/or plain vectors
 #' @noRd
 recursively_make_integer64 <- function(x) {
-    if (is.null(x) || is.character(x) || is.double(x) || is.factor(x) || is.ordered(x)) {
+    if (is.null(x) || is.character(x) || is.factor(x) || is.ordered(x)) {
         x 	# do nothing
     } else if (is.list(x)) {
         for (i in seq_along(x)) {
             x[[i]] <- recursively_make_integer64(x[[i]])
         }
-    } else if (is.integer(x)) {
+    } else if (is.integer(x) || is.double(x)) {
         x <- bit64::as.integer64(x)
     } else {
         warning("encountered ", class(x))
