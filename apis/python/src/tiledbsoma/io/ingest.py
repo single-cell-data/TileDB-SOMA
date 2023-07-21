@@ -907,7 +907,7 @@ def add_matrix_to_collection(
     # whereas storage URIs (for the same object) look like
     # tiledb://namespace/uuid.  When the caller passes a creation URI (which
     # they must) via exp.uri, we need to follow that.
-    extend_creation_uri: bool = exp.uri.startswith("tiledb://")
+    extend_creation_uri = exp.uri.startswith("tiledb://")
 
     with exp.ms[measurement_name] as meas:
         if extend_creation_uri:
