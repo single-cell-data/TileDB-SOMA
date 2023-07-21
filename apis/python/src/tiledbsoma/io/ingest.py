@@ -899,23 +899,38 @@ def add_matrix_to_collection(
     Lifecycle:
         Experimental.
     """
+
     ingestion_params = IngestionParams(ingest_mode)
+
+    # For local disk and S3, creation and storage URIs are identical.  For
+    # cloud, creation URIs look like tiledb://namespace/s3://bucket/path/to/obj
+    # whereas storage URIs (for the same object) look like
+    # tiledb://namespace/uuid.  When the caller passes a creation URI (which
+    # they must) via exp.uri, we need to follow that.
+    extend_creation_uri = exp.uri.startswith("tiledb://")
+
     with exp.ms[measurement_name] as meas:
+        if extend_creation_uri:
+            coll_uri = f"{exp.uri}/ms/{measurement_name}/{collection_name}"
+        else:
+            coll_uri = f"{meas.uri}/{collection_name}"
+
         if collection_name in meas:
             coll = cast(Collection[RawHandle], meas[collection_name])
         else:
             coll = _create_or_open_coll(
                 Collection,
-                f"{meas.uri}/{collection_name}",
+                coll_uri,
                 ingestion_params=ingestion_params,
                 context=context,
             )
             _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
         with coll:
-            uri = f"{coll.uri}/{matrix_name}"
+            matrix_uri = f"{coll_uri}/{matrix_name}"
+
             with _create_from_matrix(
                 SparseNDArray,
-                uri,
+                matrix_uri,
                 matrix_data,
                 ingestion_params=ingestion_params,
                 context=context,
