@@ -1543,6 +1543,7 @@ def _ingest_uns_ndarray(
             platform_config=platform_config,
         )
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
+    logging.log_io(msg, msg)
 
 
 # ----------------------------------------------------------------
