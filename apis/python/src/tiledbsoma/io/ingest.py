@@ -1513,7 +1513,7 @@ def _ingest_uns_ndarray(
         logging.log_io(msg, msg)
         return
     try:
-        soma_arr = _factory.open(arr_uri, "w", soma_type=DenseNDArray)
+        soma_arr = _factory.open(arr_uri, "w", soma_type=DenseNDArray, context=context)
     except DoesNotExistError:
         soma_arr = DenseNDArray.create(
             arr_uri,
