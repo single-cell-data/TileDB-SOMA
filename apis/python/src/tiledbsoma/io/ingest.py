@@ -1051,7 +1051,7 @@ def add_matrix_to_collection(
         Experimental.
     """
 
-    ingestion_params = IngestionParams(ingest_mode)
+    ingestion_params = IngestionParams(ingest_mode, None)
 
     # For local disk and S3, creation and storage URIs are identical.  For
     # cloud, creation URIs look like tiledb://namespace/s3://bucket/path/to/obj

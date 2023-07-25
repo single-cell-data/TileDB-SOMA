@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Sequence
 
@@ -7,8 +8,6 @@ from typing_extensions import Self
 
 import tiledbsoma
 import tiledbsoma.logging
-
-import json
 
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
 
@@ -68,7 +67,10 @@ class AxisAmbientLabelMapping:
         """TODO: docstring"""
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-
+    @classmethod
+    def fromJSON(cls, s: str) -> Self:
+        dikt = json.loads(s)
+        return cls(dikt["data"], dikt["field_name"])
 
 
 @dataclass
@@ -353,3 +355,15 @@ class ExperimentAmbientLabelMapping:
     def toJSON(self) -> str:
         """TODO: docstring"""
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+    @classmethod
+    def fromJSON(cls, s: str) -> Self:
+        dikt = json.loads(s)
+        obs_axis = AxisAmbientLabelMapping(
+            dikt["obs_axis"]["data"], dikt["obs_axis"]["field_name"]
+        )
+        var_axes = {
+            k: AxisAmbientLabelMapping(v["data"], v["field_name"])
+            for k, v in dikt["var_axes"].items()
+        }
+        return cls(obs_axis, var_axes)
