@@ -42,12 +42,20 @@ using namespace tiledb;
 //===================================================================
 
 std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
-    std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema) {
+    std::string_view uri,
+    ArraySchema schema,
+    std::map<std::string, std::string> platform_config) {
+    return SOMAExperiment::create(
+        uri, schema, std::make_shared<Context>(Config(platform_config)));
+}
+
+std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
+    std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
     std::string exp_uri(uri);
 
     SOMAGroup::create(ctx, exp_uri, "SOMAExperiment");
-    SOMADataFrame::create(ctx, exp_uri + "/obs", schema);
-    SOMACollection::create(ctx, exp_uri + "/ms");
+    SOMADataFrame::create(exp_uri + "/obs", schema, ctx);
+    SOMACollection::create(exp_uri + "/ms", ctx);
 
     auto group = SOMAGroup::open(TILEDB_WRITE, ctx, exp_uri);
     group->add_member(exp_uri + "/obs", false, "obs");

@@ -80,9 +80,9 @@ TEST_CASE("SOMASparseNDArray: basic") {
     auto ctx = std::make_shared<Context>();
     std::string uri = "mem://unit-test-sparse-ndarray-basic";
 
-    SOMASparseNDArray::create(ctx, uri, create_schema(*ctx));
+    SOMASparseNDArray::create(uri, create_schema(*ctx), ctx);
 
-    auto soma_sparse = SOMASparseNDArray::open(TILEDB_READ, ctx, uri);
+    auto soma_sparse = SOMASparseNDArray::open(uri, TILEDB_READ, ctx);
     REQUIRE(soma_sparse->uri() == uri);
     REQUIRE(soma_sparse->ctx() == ctx);
     REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
