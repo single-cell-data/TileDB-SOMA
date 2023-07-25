@@ -8,6 +8,8 @@ from typing_extensions import Self
 import tiledbsoma
 import tiledbsoma.logging
 
+import json
+
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
 
 
@@ -61,6 +63,12 @@ class AxisAmbientLabelMapping:
             data[index] = next_soma_joinid
             next_soma_joinid += 1
         return cls(data, index_field_name)
+
+    def toJSON(self) -> str:
+        """TODO: docstring"""
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+
 
 
 @dataclass
@@ -341,3 +349,7 @@ class ExperimentAmbientLabelMapping:
         print(f"obs:{len(self.obs_axis.data)}")
         for k, v in self.var_axes.items():
             print(f"{k}/var:{len(v.data)}")
+
+    def toJSON(self) -> str:
+        """TODO: docstring"""
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
