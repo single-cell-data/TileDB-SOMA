@@ -47,6 +47,8 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
@@ -178,6 +180,8 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h 
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.h 
   DESTINATION "include/tiledbsoma/soma"
 )
 

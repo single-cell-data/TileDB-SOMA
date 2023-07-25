@@ -54,5 +54,7 @@
 #include "soma/soma_group.h"
 #include "soma/soma_object.h"
 #include "soma/soma_dataframe.h"
+#include "soma/soma_dense_ndarray.h"
+#include "soma/soma_sparse_ndarray.h"
 
 #endif

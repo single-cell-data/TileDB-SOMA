@@ -1,5 +1,5 @@
 /**
- * @file   unit_soma_dataframe.cc
+ * @file   unit_soma_dense_ndarray.cc
  *
  * @section LICENSE
  *
@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file manages unit tests for the SOMADataFrame class
+ * This file manages unit tests for the SOMADenseNDArray class
  */
 
 #include <catch2/catch_template_test_macros.hpp>
@@ -76,24 +76,23 @@ ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
 }
 };  // namespace
 
-TEST_CASE("SOMADataFrame: basic") {
+TEST_CASE("SOMADenseNDArray: basic") {
     auto ctx = std::make_shared<Context>();
-    std::string uri = "mem://unit-test-dataframe-basic";
+    std::string uri = "mem://unit-test-dense-ndarray-basic";
 
-    SOMADataFrame::create(ctx, uri, create_schema(*ctx));
+    SOMADenseNDArray::create(ctx, uri, create_schema(*ctx));
 
-    auto soma_dataframe = SOMADataFrame::open(TILEDB_READ, ctx, uri);
-    REQUIRE(soma_dataframe->uri() == uri);
-    REQUIRE(soma_dataframe->ctx() == ctx);
-    REQUIRE(soma_dataframe->type() == "SOMADataFrame");
-    auto schema = soma_dataframe->schema();
+    auto soma_sparse = SOMADenseNDArray::open(TILEDB_READ, ctx, uri);
+    REQUIRE(soma_sparse->uri() == uri);
+    REQUIRE(soma_sparse->ctx() == ctx);
+    REQUIRE(soma_sparse->type() == "SOMADenseNDArray");
+    REQUIRE(soma_sparse->is_sparse() == false);
+    auto schema = soma_sparse->schema();
     REQUIRE(schema->has_attribute("a0"));
     REQUIRE(schema->domain().has_dimension("d0"));
-    std::vector<std::string> expected_index_column_names = {"d0"};
-    REQUIRE(
-        soma_dataframe->index_column_names() == expected_index_column_names);
-    REQUIRE(soma_dataframe->count() == 1);
-    soma_dataframe->close();
+    REQUIRE(soma_sparse->ndim() == 1);
+    REQUIRE(soma_sparse->shape() == std::vector<int64_t>{1001});
+    soma_sparse->close();
 
     std::vector<int64_t> d0{1, 10};
     std::vector<int> a0(10, 1);
@@ -102,12 +101,12 @@ TEST_CASE("SOMADataFrame: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(*schema, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(*schema, "d0", d0));
 
-    soma_dataframe->open(TILEDB_WRITE);
-    soma_dataframe->write(array_buffer);
-    soma_dataframe->close();
+    soma_sparse->open(TILEDB_WRITE);
+    soma_sparse->write(array_buffer);
+    soma_sparse->close();
 
-    soma_dataframe->open(TILEDB_READ);
-    while (auto batch = soma_dataframe->read_next()) {
+    soma_sparse->open(TILEDB_READ);
+    while (auto batch = soma_sparse->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
         auto a0span = arrbuf->at("a0")->data<int>();
@@ -116,5 +115,5 @@ TEST_CASE("SOMADataFrame: basic") {
             std::vector<int64_t>(d0span.begin(), d0span.end()));
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
-    soma_dataframe->close();
+    soma_sparse->close();
 }

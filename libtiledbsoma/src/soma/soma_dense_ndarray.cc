@@ -1,5 +1,5 @@
 /**
- * @file   soma_dataframe.cc
+ * @file   soma_dense_ndarray.cc
  *
  * @section LICENSE
  *
@@ -27,12 +27,10 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMADataFrame class.
+ *   This file defines the SOMADenseNDArray class.
  */
 
-#include "soma_dataframe.h"
-#include <tiledb/tiledb>
-#include "array_buffers.h"
+#include "soma_dense_ndarray.h"
 #include "soma_array.h"
 
 namespace tiledbsoma {
@@ -42,31 +40,34 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
+std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::create(
     std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema) {
-    SOMAArray::create(ctx, uri, schema, "SOMADataFrame");
-    return std::make_unique<SOMADataFrame>(
+    if (schema.array_type() != TILEDB_DENSE)
+        throw TileDBSOMAError("ArraySchema must be set to dense.");
+
+    SOMAArray::create(ctx, uri, schema, "SOMADenseNDArray");
+    return std::make_unique<SOMADenseNDArray>(
         TILEDB_READ, uri, ctx, std::vector<std::string>(), std::nullopt);
 }
 
-std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
+std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
     tiledb_query_type_t mode,
     std::string_view uri,
     std::vector<std::string> column_names,
     std::map<std::string, std::string> platform_config,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     auto ctx = std::make_shared<Context>(Config(platform_config));
-    return std::make_unique<SOMADataFrame>(
+    return std::make_unique<SOMADenseNDArray>(
         mode, uri, ctx, column_names, timestamp);
 }
 
-std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
+std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
     tiledb_query_type_t mode,
     std::shared_ptr<Context> ctx,
     std::string_view uri,
     std::vector<std::string> column_names,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_unique<SOMADataFrame>(
+    return std::make_unique<SOMADenseNDArray>(
         mode, uri, ctx, column_names, timestamp);
 }
 
@@ -74,7 +75,7 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
 //= public non-static
 //===================================================================
 
-SOMADataFrame::SOMADataFrame(
+SOMADenseNDArray::SOMADenseNDArray(
     tiledb_query_type_t mode,
     std::string_view uri,
     std::shared_ptr<Context> ctx,
@@ -93,7 +94,7 @@ SOMADataFrame::SOMADataFrame(
     array_->submit();
 }
 
-void SOMADataFrame::open(
+void SOMADenseNDArray::open(
     tiledb_query_type_t mode,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     array_->open(mode, timestamp);
@@ -101,35 +102,35 @@ void SOMADataFrame::open(
     array_->submit();
 }
 
-void SOMADataFrame::close() {
+void SOMADenseNDArray::close() {
     array_->close();
 }
 
-const std::string& SOMADataFrame::uri() const {
+const std::string& SOMADenseNDArray::uri() const {
     return array_->uri();
 }
 
-std::shared_ptr<Context> SOMADataFrame::ctx() {
+std::shared_ptr<Context> SOMADenseNDArray::ctx() {
     return array_->ctx();
 }
 
-std::shared_ptr<ArraySchema> SOMADataFrame::schema() const {
+std::shared_ptr<ArraySchema> SOMADenseNDArray::schema() const {
     return array_->schema();
 }
 
-const std::vector<std::string> SOMADataFrame::index_column_names() const {
-    return array_->dimension_names();
+std::vector<int64_t> SOMADenseNDArray::shape() const {
+    return array_->shape();
 }
 
-int64_t SOMADataFrame::count() const {
+int64_t SOMADenseNDArray::ndim() const {
     return array_->ndim();
 }
 
-std::optional<std::shared_ptr<ArrayBuffers>> SOMADataFrame::read_next() {
+std::optional<std::shared_ptr<ArrayBuffers>> SOMADenseNDArray::read_next() {
     return array_->read_next();
 }
 
-void SOMADataFrame::write(std::shared_ptr<ArrayBuffers> buffers) {
+void SOMADenseNDArray::write(std::shared_ptr<ArrayBuffers> buffers) {
     array_->reset();
     array_->submit();
     array_->write(buffers);
