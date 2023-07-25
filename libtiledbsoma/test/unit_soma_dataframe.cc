@@ -80,9 +80,9 @@ TEST_CASE("SOMADataFrame: basic") {
     auto ctx = std::make_shared<Context>();
     std::string uri = "mem://unit-test-dataframe-basic";
 
-    SOMADataFrame::create(ctx, uri, create_schema(*ctx));
+    SOMADataFrame::create(uri, create_schema(*ctx), ctx);
 
-    auto soma_dataframe = SOMADataFrame::open(TILEDB_READ, ctx, uri);
+    auto soma_dataframe = SOMADataFrame::open(uri, TILEDB_READ, ctx);
     REQUIRE(soma_dataframe->uri() == uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
     REQUIRE(soma_dataframe->type() == "SOMADataFrame");

@@ -50,11 +50,24 @@ class SOMAExperiment : public SOMACollection {
     /**
      * @brief Create a SOMAExperiment object at the given URI.
      *
-     * @param ctx TileDB context
      * @param uri URI to create the SOMAExperiment
+     * @param schema TileDB ArraySchema
+     * @param platform_config Optional config parameter dictionary
      */
     static std::unique_ptr<SOMAExperiment> create(
-        std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema);
+        std::string_view uri,
+        ArraySchema schema,
+        std::map<std::string, std::string> platform_config = {});
+
+    /**
+     * @brief Create a SOMAExperiment object at the given URI.
+     *
+     * @param uri URI to create the SOMAExperiment
+     * @param schema TileDB ArraySchema
+     * @param ctx TileDB context
+     */
+    static std::unique_ptr<SOMAExperiment> create(
+        std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
 
     //===================================================================
     //= public non-static

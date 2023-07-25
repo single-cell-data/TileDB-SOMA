@@ -52,13 +52,26 @@ class SOMADataFrame : public SOMAObject {
     /**
      * @brief Create a SOMADataFrame object at the given URI.
      *
-     * @param ctx TileDB context
      * @param uri URI to create the SOMADataFrame
      * @param schema TileDB ArraySchema
+     * @param platform_config Optional config parameter dictionary
      * @return std::unique_ptr<SOMADataFrame> opened in read mode
      */
     static std::unique_ptr<SOMADataFrame> create(
-        std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema);
+        std::string_view uri,
+        ArraySchema schema,
+        std::map<std::string, std::string> platform_config = {});
+
+    /**
+     * @brief Create a SOMADataFrame object at the given URI.
+     *
+     * @param uri URI to create the SOMADataFrame
+     * @param schema TileDB ArraySchema
+     * @param ctx TileDB context
+     * @return std::unique_ptr<SOMADataFrame> opened in read mode
+     */
+    static std::unique_ptr<SOMADataFrame> create(
+        std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
 
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.
@@ -75,10 +88,10 @@ class SOMADataFrame : public SOMAObject {
      * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
      */
     static std::unique_ptr<SOMADataFrame> open(
-        tiledb_query_type_t mode,
         std::string_view uri,
-        std::vector<std::string> column_names = {},
+        tiledb_query_type_t mode,
         std::map<std::string, std::string> platform_config = {},
+        std::vector<std::string> column_names = {},
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
@@ -96,9 +109,9 @@ class SOMADataFrame : public SOMAObject {
      * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
      */
     static std::unique_ptr<SOMADataFrame> open(
+        std::string_view uri,
         tiledb_query_type_t mode,
         std::shared_ptr<Context> ctx,
-        std::string_view uri,
         std::vector<std::string> column_names = {},
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 

@@ -42,16 +42,24 @@ using namespace tiledb;
 //===================================================================
 
 std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
-    std::shared_ptr<Context> ctx, std::string_view uri, ArraySchema schema) {
+    std::string_view uri,
+    ArraySchema schema,
+    std::map<std::string, std::string> platform_config) {
+    return SOMAMeasurement::create(
+        uri, schema, std::make_shared<Context>(Config(platform_config)));
+}
+
+std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
+    std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
     std::string exp_uri(uri);
 
     SOMAGroup::create(ctx, exp_uri, "SOMAMeasurement");
-    SOMADataFrame::create(ctx, exp_uri + "/var", schema);
-    SOMACollection::create(ctx, exp_uri + "/X");
-    SOMACollection::create(ctx, exp_uri + "/obsm");
-    SOMACollection::create(ctx, exp_uri + "/obsp");
-    SOMACollection::create(ctx, exp_uri + "/varm");
-    SOMACollection::create(ctx, exp_uri + "/varp");
+    SOMADataFrame::create(exp_uri + "/var", schema, ctx);
+    SOMACollection::create(exp_uri + "/X", ctx);
+    SOMACollection::create(exp_uri + "/obsm", ctx);
+    SOMACollection::create(exp_uri + "/obsp", ctx);
+    SOMACollection::create(exp_uri + "/varm", ctx);
+    SOMACollection::create(exp_uri + "/varp", ctx);
 
     auto group = SOMAGroup::open(TILEDB_WRITE, ctx, uri);
     group->add_member(exp_uri + "/var", false, "var");

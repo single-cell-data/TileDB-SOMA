@@ -58,10 +58,20 @@ class SOMACollection : public SOMAObject {
      * @brief Create a SOMACollection object at the given URI.
      *
      * @param ctx TileDB context
+     * @param platform_config Optional config parameter dictionary
+     */
+    static std::unique_ptr<SOMACollection> create(
+        std::string_view uri,
+        std::map<std::string, std::string> platform_config = {});
+
+    /**
+     * @brief Create a SOMACollection object at the given URI.
+     *
+     * @param ctx TileDB context
      * @param uri URI to create the SOMACollection
      */
     static std::unique_ptr<SOMACollection> create(
-        std::shared_ptr<Context> ctx, std::string_view uri);
+        std::string_view uri, std::shared_ptr<Context> ctx);
 
     /**
      * @brief Open a group at the specified URI and return SOMACollection
@@ -73,8 +83,8 @@ class SOMACollection : public SOMAObject {
      * @return std::unique_ptr<SOMACollection> SOMACollection
      */
     static std::unique_ptr<SOMACollection> open(
-        tiledb_query_type_t mode,
         std::string_view uri,
+        tiledb_query_type_t mode,
         std::map<std::string, std::string> platform_config = {});
 
     /**
@@ -87,9 +97,9 @@ class SOMACollection : public SOMAObject {
      * @return std::unique_ptr<SOMACollection> SOMACollection
      */
     static std::unique_ptr<SOMACollection> open(
+        std::string_view uri,
         tiledb_query_type_t mode,
-        std::shared_ptr<Context> ctx,
-        std::string_view uri);
+        std::shared_ptr<Context> ctx);
 
     //===================================================================
     //= public non-static

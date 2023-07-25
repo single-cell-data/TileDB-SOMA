@@ -80,9 +80,9 @@ TEST_CASE("SOMADenseNDArray: basic") {
     auto ctx = std::make_shared<Context>();
     std::string uri = "mem://unit-test-dense-ndarray-basic";
 
-    SOMADenseNDArray::create(ctx, uri, create_schema(*ctx));
+    SOMADenseNDArray::create(uri, create_schema(*ctx), ctx);
 
-    auto soma_dense = SOMADenseNDArray::open(TILEDB_READ, ctx, uri);
+    auto soma_dense = SOMADenseNDArray::open(uri, TILEDB_READ, ctx);
     REQUIRE(soma_dense->uri() == uri);
     REQUIRE(soma_dense->ctx() == ctx);
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");

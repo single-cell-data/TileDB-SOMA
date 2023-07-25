@@ -81,7 +81,7 @@ TEST_CASE("SOMACollection: basic") {
     auto ctx = std::make_shared<Context>();
     std::string uri = "mem://unit-test-collection-basic";
 
-    auto soma_collection = SOMACollection::create(ctx, uri);
+    auto soma_collection = SOMACollection::create(uri, ctx);
     REQUIRE(soma_collection->uri() == uri);
     REQUIRE(soma_collection->ctx() == ctx);
     REQUIRE(soma_collection->type() == "SOMACollection");
@@ -93,10 +93,10 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     std::string base_uri = "mem://unit-test-add-sparse-ndarray";
     std::string sub_uri = "mem://unit-test-add-sparse-ndarray/sub";
 
-    SOMACollection::create(ctx, base_uri);
+    SOMACollection::create(base_uri, ctx);
     auto schema = create_schema(*ctx, true);
 
-    auto soma_collection = SOMACollection::open(TILEDB_WRITE, ctx, base_uri);
+    auto soma_collection = SOMACollection::open(base_uri, TILEDB_WRITE, ctx);
     auto soma_sparse = soma_collection->add_new_sparse_ndarray(
         "sparse_ndarray", sub_uri, false, ctx, schema);
     REQUIRE(soma_sparse->uri() == sub_uri);
@@ -110,7 +110,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     soma_sparse->close();
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(TILEDB_READ, ctx, base_uri);
+    soma_collection = SOMACollection::open(base_uri, TILEDB_READ, ctx);
     std::map<std::string, std::string> expected_map{
         {"sparse_ndarray", sub_uri}};
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
@@ -122,10 +122,10 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     std::string base_uri = "mem://unit-test-add-dense-ndarray";
     std::string sub_uri = "mem://unit-test-add-dense-ndarray/sub";
 
-    SOMACollection::create(ctx, base_uri);
+    SOMACollection::create(base_uri, ctx);
     auto schema = create_schema(*ctx, false);
 
-    auto soma_collection = SOMACollection::open(TILEDB_WRITE, ctx, base_uri);
+    auto soma_collection = SOMACollection::open(base_uri, TILEDB_WRITE, ctx);
     auto soma_dense = soma_collection->add_new_dense_ndarray(
         "dense_ndarray", sub_uri, false, ctx, schema);
     REQUIRE(soma_dense->uri() == sub_uri);
@@ -138,7 +138,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     REQUIRE(soma_dense->shape() == std::vector<int64_t>{1001});
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(TILEDB_READ, ctx, base_uri);
+    soma_collection = SOMACollection::open(base_uri, TILEDB_READ, ctx);
     std::map<std::string, std::string> expected_map{{"dense_ndarray", sub_uri}};
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     soma_collection->close();
@@ -149,10 +149,10 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     std::string base_uri = "mem://unit-test-add-dataframe";
     std::string sub_uri = "mem://unit-test-add-dataframe/sub";
 
-    SOMACollection::create(ctx, base_uri);
+    SOMACollection::create(base_uri, ctx);
     auto schema = create_schema(*ctx, false);
 
-    auto soma_collection = SOMACollection::open(TILEDB_WRITE, ctx, base_uri);
+    auto soma_collection = SOMACollection::open(base_uri, TILEDB_WRITE, ctx);
     auto soma_dataframe = soma_collection->add_new_dataframe(
         "dataframe", sub_uri, false, ctx, schema);
     REQUIRE(soma_dataframe->uri() == sub_uri);
@@ -166,7 +166,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     REQUIRE(soma_dataframe->count() == 1);
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(TILEDB_READ, ctx, base_uri);
+    soma_collection = SOMACollection::open(base_uri, TILEDB_READ, ctx);
     std::map<std::string, std::string> expected_map{{"dataframe", sub_uri}};
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     soma_collection->close();
@@ -177,10 +177,10 @@ TEST_CASE("SOMACollection: add SOMACollection") {
     std::string base_uri = "mem://unit-test-add-collection";
     std::string sub_uri = "mem://unit-test-add-collection/sub";
 
-    SOMACollection::create(ctx, base_uri);
+    SOMACollection::create(base_uri, ctx);
     auto schema = create_schema(*ctx, false);
 
-    auto soma_collection = SOMACollection::open(TILEDB_WRITE, ctx, base_uri);
+    auto soma_collection = SOMACollection::open(base_uri, TILEDB_WRITE, ctx);
     auto soma_subcollection = soma_collection->add_new_collection(
         "subcollection", sub_uri, false, ctx);
     REQUIRE(soma_subcollection->uri() == sub_uri);
@@ -188,7 +188,7 @@ TEST_CASE("SOMACollection: add SOMACollection") {
     REQUIRE(soma_subcollection->type() == "SOMACollection");
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(TILEDB_READ, ctx, base_uri);
+    soma_collection = SOMACollection::open(base_uri, TILEDB_READ, ctx);
     std::map<std::string, std::string> expected_map{{"subcollection", sub_uri}};
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     soma_collection->close();
@@ -199,10 +199,10 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
     std::string base_uri = "mem://unit-test-add-measurement";
     std::string sub_uri = "mem://unit-test-add-measurement/sub";
 
-    SOMACollection::create(ctx, base_uri);
+    SOMACollection::create(base_uri, ctx);
     auto schema = create_schema(*ctx, false);
 
-    auto soma_collection = SOMACollection::open(TILEDB_WRITE, ctx, base_uri);
+    auto soma_collection = SOMACollection::open(base_uri, TILEDB_WRITE, ctx);
     auto soma_experiment = soma_collection->add_new_experiment(
         "experiment", sub_uri, false, ctx, schema);
     REQUIRE(soma_experiment->uri() == sub_uri);
@@ -211,7 +211,7 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
     soma_experiment->close();
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(TILEDB_READ, ctx, base_uri);
+    soma_collection = SOMACollection::open(base_uri, TILEDB_READ, ctx);
     std::map<std::string, std::string> expected_map{{"experiment", sub_uri}};
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     soma_collection->close();
@@ -222,10 +222,10 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
     std::string base_uri = "mem://unit-test-add-experiment";
     std::string sub_uri = "mem://unit-test-add-experiment/sub";
 
-    SOMACollection::create(ctx, base_uri);
+    SOMACollection::create(base_uri, ctx);
     auto schema = create_schema(*ctx, false);
 
-    auto soma_collection = SOMACollection::open(TILEDB_WRITE, ctx, base_uri);
+    auto soma_collection = SOMACollection::open(base_uri, TILEDB_WRITE, ctx);
     auto soma_measurement = soma_collection->add_new_measurement(
         "measurement", sub_uri, false, ctx, schema);
     REQUIRE(soma_measurement->uri() == sub_uri);
@@ -234,7 +234,7 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
     soma_measurement->close();
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(TILEDB_READ, ctx, base_uri);
+    soma_collection = SOMACollection::open(base_uri, TILEDB_READ, ctx);
     std::map<std::string, std::string> expected_map{{"measurement", sub_uri}};
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     soma_collection->close();
