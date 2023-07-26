@@ -35,6 +35,7 @@
 
 #include <tiledb/tiledb>
 
+#include "enums.h"
 #include "soma_dataframe.h"
 #include "soma_dense_ndarray.h"
 #include "soma_group.h"
@@ -57,7 +58,7 @@ class SOMACollection : public SOMAObject {
     /**
      * @brief Create a SOMACollection object at the given URI.
      *
-     * @param ctx TileDB context
+     * @param uri URI of the array
      * @param platform_config Optional config parameter dictionary
      */
     static std::unique_ptr<SOMACollection> create(
@@ -77,29 +78,27 @@ class SOMACollection : public SOMAObject {
      * @brief Open a group at the specified URI and return SOMACollection
      * object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
      * @param uri URI of the array
+     * @param mode read or write
      * @param platform_config Config parameter dictionary
      * @return std::unique_ptr<SOMACollection> SOMACollection
      */
     static std::unique_ptr<SOMACollection> open(
         std::string_view uri,
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::map<std::string, std::string> platform_config = {});
 
     /**
      * @brief Open a group at the specified URI and return SOMACollection
      * object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
-     * @param ctx TileDB context
      * @param uri URI of the array
+     * @param mode read or write
+     * @param ctx TileDB context
      * @return std::unique_ptr<SOMACollection> SOMACollection
      */
     static std::unique_ptr<SOMACollection> open(
-        std::string_view uri,
-        tiledb_query_type_t mode,
-        std::shared_ptr<Context> ctx);
+        std::string_view uri, OpenMode mode, std::shared_ptr<Context> ctx);
 
     //===================================================================
     //= public non-static
@@ -108,11 +107,13 @@ class SOMACollection : public SOMAObject {
     /**
      * @brief Construct a new SOMACollection object.
      *
+     * @param mode read or write
+     * @param uri URI of the array
      * @param ctx TileDB context
      * @param key key of the array
      */
     SOMACollection(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::string_view uri,
         std::shared_ptr<Context> ctx,
         std::optional<uint64_t> timestamp = std::nullopt);
@@ -125,10 +126,10 @@ class SOMACollection : public SOMAObject {
     /**
      * Open the SOMACollection object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param timestamp Timestamp
      */
-    void open(tiledb_query_type_t mode);
+    void open(OpenMode mode);
 
     /**
      * Closes the SOMACollection object.
@@ -157,12 +158,14 @@ class SOMACollection : public SOMAObject {
     std::shared_ptr<Context> ctx();
 
     /**
-     * Set an already existing SOMAObject with the given key.
+     * Set an already existing SOMAObject at uri to the given key.
      *
-     * @param key of member
-     * @param object SOMA object to add
+     * @param uri of member to add
+     * @param uri_type whether the given URI is automatic (default), absolute,
+     * or relative
+     * @param key to add
      */
-    void set(std::string_view uri, bool relative, const std::string& key);
+    void set(std::string_view uri, URIType uri_type, const std::string& key);
 
     /**
      * Get the SOMAObject associated with the key.
@@ -200,12 +203,13 @@ class SOMACollection : public SOMAObject {
      *
      * @param key of collection
      * @param uri of SOMACollection to add
-     * @param relative whether the given URI is relative
+     * @param uri_type whether the given URI is automatic (default), absolute,
+     * or relative
      */
     std::unique_ptr<SOMACollection> add_new_collection(
         std::string_view key,
         std::string_view uri,
-        bool relative,
+        URIType uri_type,
         std::shared_ptr<Context> ctx);
 
     /**
@@ -213,48 +217,43 @@ class SOMACollection : public SOMAObject {
      *
      * @param key of collection
      * @param uri of SOMAExperiment to add
-     * @param relative whether the given URI is relative
+     * @param uri_type whether the given URI is automatic (default), absolute,
+     * or relative
      */
     std::unique_ptr<SOMAExperiment> add_new_experiment(
         std::string_view key,
         std::string_view uri,
-        bool relative,
+        URIType uri_type,
         std::shared_ptr<Context> ctx,
         ArraySchema schema);
-    // std::string_view obs_uri,
-    // std::string_view ms_uri);
 
     /**
      * Create and add a SOMAMeasurement to the SOMACollection.
      *
      * @param key of collection
      * @param uri of SOMAMeasurement to add
-     * @param relative whether the given URI is relative
+     * @param uri_type whether the given URI is automatic (default), absolute,
+     * or relative
      */
     std::unique_ptr<SOMAMeasurement> add_new_measurement(
         std::string_view key,
         std::string_view uri,
-        bool relative,
+        URIType uri_type,
         std::shared_ptr<Context> ctx,
         ArraySchema schema);
-    // std::string_view var_uri,
-    // std::string_view X_uri,
-    // std::string_view obsm_uri,
-    // std::string_view obsp_uri,
-    // std::string_view varm_uri,
-    // std::string_view varp_uri);
 
     /**
      * Create and add a SOMADataFrame to the SOMACollection.
      *
      * @param key of dataframe
      * @param uri of SOMADataFrame to add
-     * @param relative whether the given URI is relative
+     * @param uri_type whether the given URI is automatic (default), absolute,
+     * or relative
      */
     std::unique_ptr<SOMADataFrame> add_new_dataframe(
         std::string_view key,
         std::string_view uri,
-        bool relative,
+        URIType uri_type,
         std::shared_ptr<Context> ctx,
         ArraySchema schema);
 
@@ -263,12 +262,13 @@ class SOMACollection : public SOMAObject {
      *
      * @param key of dense array
      * @param uri of SOMADenseNDArray to add
-     * @param relative whether the given URI is relative
+     * @param uri_type whether the given URI is automatic (default), absolute,
+     * or relative
      */
     std::unique_ptr<SOMADenseNDArray> add_new_dense_ndarray(
         std::string_view key,
         std::string_view uri,
-        bool relative,
+        URIType uri_type,
         std::shared_ptr<Context> ctx,
         ArraySchema schema);
 
@@ -277,12 +277,13 @@ class SOMACollection : public SOMAObject {
      *
      * @param key of sparse array
      * @param uri of SOMASparseNDArray to add
-     * @param relative whether the given URI is relative
+     * @param uri_type whether the given URI is automatic (default), absolute,
+     * or relative
      */
     std::unique_ptr<SOMASparseNDArray> add_new_sparse_ndarray(
         std::string_view key,
         std::string_view uri,
-        bool relative,
+        URIType uri_type,
         std::shared_ptr<Context> ctx,
         ArraySchema schema);
 

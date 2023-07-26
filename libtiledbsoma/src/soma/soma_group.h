@@ -39,6 +39,7 @@
 #include <tiledb/tiledb_experimental>
 
 #include "../utils/common.h"
+#include "enums.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -65,7 +66,7 @@ class SOMAGroup {
      * @brief Open a group at the specified URI and return SOMAGroup
      * object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param uri URI of the group
      * @param name Name of the group
      * @param platform_config Config parameter dictionary
@@ -73,7 +74,7 @@ class SOMAGroup {
      * @return std::unique_ptr<SOMAGroup> SOMAGroup
      */
     static std::unique_ptr<SOMAGroup> open(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::string_view uri,
         std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
@@ -83,7 +84,7 @@ class SOMAGroup {
      * @brief Open a group at the specified URI and return SOMAGroup
      * object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param ctx TileDB context
      * @param uri URI of the group
      * @param name Name of the group
@@ -91,7 +92,7 @@ class SOMAGroup {
      * @return std::unique_ptr<SOMAGroup> SOMAGroup
      */
     static std::unique_ptr<SOMAGroup> open(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::shared_ptr<Context> ctx,
         std::string_view uri,
         std::string_view name = "unnamed",
@@ -104,14 +105,14 @@ class SOMAGroup {
     /**
      * @brief Construct a new SOMAGroup object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param uri URI of the group
      * @param name Name of the group
      * @param ctx TileDB context
      * @param timestamp Timestamp
      */
     SOMAGroup(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::string_view uri,
         std::string_view name,
         std::shared_ptr<Context> ctx,
@@ -125,12 +126,10 @@ class SOMAGroup {
     /**
      * Open the SOMAGroup object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param timestamp Timestamp
      */
-    void open(
-        tiledb_query_type_t mode,
-        std::optional<uint64_t> timestamp = std::nullopt);
+    void open(OpenMode mode, std::optional<uint64_t> timestamp = std::nullopt);
 
     /**
      * Close the SOMAGroup object.
@@ -174,11 +173,12 @@ class SOMAGroup {
      * Add a named member to a SOMAGroup.
      *
      * @param uri of member to add
-     * @param relative is the URI relative to the SOMAGroup location
+     * @param uri_type whether the given URI is automatic (default), absolute,
+     * or relative
      * @param name of member
      */
     void add_member(
-        const std::string& uri, bool relative, const std::string& name);
+        const std::string& uri, URIType uri_type, const std::string& name);
 
     /**
      * Get the number of members in the SOMAGroup.

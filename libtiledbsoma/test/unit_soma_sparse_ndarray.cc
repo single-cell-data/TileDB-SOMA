@@ -82,7 +82,7 @@ TEST_CASE("SOMASparseNDArray: basic") {
 
     SOMASparseNDArray::create(uri, create_schema(*ctx), ctx);
 
-    auto soma_sparse = SOMASparseNDArray::open(uri, TILEDB_READ, ctx);
+    auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_sparse->uri() == uri);
     REQUIRE(soma_sparse->ctx() == ctx);
     REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
@@ -103,11 +103,11 @@ TEST_CASE("SOMASparseNDArray: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(*schema, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(*schema, "d0", d0));
 
-    soma_sparse->open(TILEDB_WRITE);
+    soma_sparse->open(OpenMode::write);
     soma_sparse->write(array_buffer);
     soma_sparse->close();
 
-    soma_sparse->open(TILEDB_READ);
+    soma_sparse->open(OpenMode::read);
     while (auto batch = soma_sparse->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();

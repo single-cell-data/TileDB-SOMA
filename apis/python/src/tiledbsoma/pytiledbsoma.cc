@@ -90,6 +90,15 @@ py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
  *
  */
 PYBIND11_MODULE(pytiledbsoma, m) {
+    py::enum_<OpenMode>(m, "OpenMode")
+        .value("read", OpenMode::read)
+        .value("write", OpenMode::write);
+
+    py::enum_<ResultOrder>(m, "ResultOrder")
+        .value("automatic", ResultOrder::automatic)
+        .value("rowmajor", ResultOrder::rowmajor)
+        .value("colmajor", ResultOrder::colmajor);
+
     tiledbpy::init_query_condition(m);
 
     m.doc() = "SOMA acceleration library";
@@ -137,7 +146,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                    py::object py_query_condition,
                    py::object py_schema,
                    std::string_view batch_size,
-                   std::string_view result_order,
+                   ResultOrder result_order,
                    std::map<std::string, std::string> platform_config,
                    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
                     // Handle optional args
@@ -181,7 +190,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     py::gil_scoped_release release;
 
                     auto reader = SOMAArray::open(
-                        TILEDB_READ,
+                        OpenMode::read,
                         uri,
                         name,
                         platform_config,
@@ -204,7 +213,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             "query_condition"_a = py::none(),
             "schema"_a = py::none(),
             "batch_size"_a = "auto",
-            "result_order"_a = "auto",
+            "result_order"_a = ResultOrder::automatic,
             "platform_config"_a = py::dict(),
             "timestamp"_a = py::none())
 
@@ -215,7 +224,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                py::object py_query_condition,
                py::object py_schema,
                std::string_view batch_size,
-               std::string_view result_order) {
+               ResultOrder result_order) {
                 // Handle optional args
                 std::vector<std::string> column_names;
                 if (column_names_in) {
@@ -268,7 +277,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             "query_condition"_a = py::none(),
             "schema"_a = py::none(),
             "batch_size"_a = "auto",
-            "result_order"_a = "auto")
+            "result_order"_a = ResultOrder::automatic)
 
         // After this are short functions expected to be invoked when the coords
         // are Python list/tuple, or NumPy arrays.  Arrow arrays are in this

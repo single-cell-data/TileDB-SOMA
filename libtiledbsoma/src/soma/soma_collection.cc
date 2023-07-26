@@ -50,21 +50,19 @@ std::unique_ptr<SOMACollection> SOMACollection::create(
 std::unique_ptr<SOMACollection> SOMACollection::create(
     std::string_view uri, std::shared_ptr<Context> ctx) {
     SOMAGroup::create(ctx, uri, "SOMACollection");
-    return std::make_unique<SOMACollection>(TILEDB_READ, uri, ctx);
+    return std::make_unique<SOMACollection>(OpenMode::read, uri, ctx);
 }
 
 std::unique_ptr<SOMACollection> SOMACollection::open(
     std::string_view uri,
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::map<std::string, std::string> platform_config) {
     return SOMACollection::open(
         uri, mode, std::make_shared<Context>(Config(platform_config)));
 }
 
 std::unique_ptr<SOMACollection> SOMACollection::open(
-    std::string_view uri,
-    tiledb_query_type_t mode,
-    std::shared_ptr<Context> ctx) {
+    std::string_view uri, OpenMode mode, std::shared_ptr<Context> ctx) {
     return std::make_unique<SOMACollection>(mode, uri, ctx);
 }
 
@@ -73,14 +71,14 @@ std::unique_ptr<SOMACollection> SOMACollection::open(
 //===================================================================
 
 SOMACollection::SOMACollection(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::string_view uri,
     std::shared_ptr<Context> ctx,
     std::optional<uint64_t> timestamp) {
     group_ = std::make_shared<SOMAGroup>(mode, uri, "", ctx, timestamp);
 }
 
-void SOMACollection::open(tiledb_query_type_t mode) {
+void SOMACollection::open(OpenMode mode) {
     group_->open(mode);
 }
 
@@ -97,8 +95,8 @@ std::shared_ptr<Context> SOMACollection::ctx() {
 }
 
 void SOMACollection::set(
-    std::string_view uri, bool relative, const std::string& key) {
-    group_->add_member(std::string(uri), relative, key);
+    std::string_view uri, URIType uri_type, const std::string& key) {
+    group_->add_member(std::string(uri), uri_type, key);
 }
 
 std::unique_ptr<SOMAObject> SOMACollection::get(const std::string& key) {
@@ -106,17 +104,17 @@ std::unique_ptr<SOMAObject> SOMACollection::get(const std::string& key) {
     std::string soma_object_type = this->type();
 
     if (soma_object_type.compare("SOMACollection") == 0)
-        return SOMACollection::open(member.uri(), TILEDB_READ);
+        return SOMACollection::open(member.uri(), OpenMode::read);
     else if (soma_object_type.compare("SOMAExperiment") == 0)
-        return SOMAExperiment::open(member.uri(), TILEDB_READ);
+        return SOMAExperiment::open(member.uri(), OpenMode::read);
     else if (soma_object_type.compare("SOMAMeasurement") == 0)
-        return SOMAMeasurement::open(member.uri(), TILEDB_READ);
+        return SOMAMeasurement::open(member.uri(), OpenMode::read);
     else if (soma_object_type.compare("SOMADataFrame") == 0)
-        return SOMADataFrame::open(member.uri(), TILEDB_READ);
+        return SOMADataFrame::open(member.uri(), OpenMode::read);
     else if (soma_object_type.compare("SOMASparseNDArray") == 0)
-        return SOMASparseNDArray::open(member.uri(), TILEDB_READ);
+        return SOMASparseNDArray::open(member.uri(), OpenMode::read);
     else if (soma_object_type.compare("SOMADenseNDArray") == 0)
-        return SOMADenseNDArray::open(member.uri(), TILEDB_READ);
+        return SOMADenseNDArray::open(member.uri(), OpenMode::read);
 
     throw TileDBSOMAError("Saw invalid SOMA object.");
 }
@@ -141,65 +139,65 @@ std::map<std::string, std::string> SOMACollection::member_to_uri_mapping()
 std::unique_ptr<SOMACollection> SOMACollection::add_new_collection(
     std::string_view key,
     std::string_view uri,
-    bool relative,
+    URIType uri_type,
     std::shared_ptr<Context> ctx) {
     auto member = SOMACollection::create(uri, ctx);
-    group_->add_member(std::string(uri), relative, std::string(key));
+    group_->add_member(std::string(uri), uri_type, std::string(key));
     return member;
 }
 
 std::unique_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     std::string_view key,
     std::string_view uri,
-    bool relative,
+    URIType uri_type,
     std::shared_ptr<Context> ctx,
     ArraySchema schema) {
     auto member = SOMAExperiment::create(uri, schema, ctx);
-    group_->add_member(std::string(uri), relative, std::string(key));
+    group_->add_member(std::string(uri), uri_type, std::string(key));
     return member;
 }
 
 std::unique_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     std::string_view key,
     std::string_view uri,
-    bool relative,
+    URIType uri_type,
     std::shared_ptr<Context> ctx,
     ArraySchema schema) {
     auto member = SOMAMeasurement::create(uri, schema, ctx);
-    group_->add_member(std::string(uri), relative, std::string(key));
+    group_->add_member(std::string(uri), uri_type, std::string(key));
     return member;
 }
 
 std::unique_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     std::string_view key,
     std::string_view uri,
-    bool relative,
+    URIType uri_type,
     std::shared_ptr<Context> ctx,
     ArraySchema schema) {
     auto member = SOMADataFrame::create(uri, schema, ctx);
-    group_->add_member(std::string(uri), relative, std::string(key));
+    group_->add_member(std::string(uri), uri_type, std::string(key));
     return member;
 }
 
 std::unique_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     std::string_view key,
     std::string_view uri,
-    bool relative,
+    URIType uri_type,
     std::shared_ptr<Context> ctx,
     ArraySchema schema) {
     auto member = SOMADenseNDArray::create(uri, schema, ctx);
-    group_->add_member(std::string(uri), relative, std::string(key));
+    group_->add_member(std::string(uri), uri_type, std::string(key));
     return member;
 }
 
 std::unique_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     std::string_view key,
     std::string_view uri,
-    bool relative,
+    URIType uri_type,
     std::shared_ptr<Context> ctx,
     ArraySchema schema) {
     auto member = SOMASparseNDArray::create(uri, schema, ctx);
-    group_->add_member(std::string(uri), relative, std::string(key));
+    group_->add_member(std::string(uri), uri_type, std::string(key));
     return member;
 }
 

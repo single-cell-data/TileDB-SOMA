@@ -82,7 +82,7 @@ TEST_CASE("SOMADataFrame: basic") {
 
     SOMADataFrame::create(uri, create_schema(*ctx), ctx);
 
-    auto soma_dataframe = SOMADataFrame::open(uri, TILEDB_READ, ctx);
+    auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_dataframe->uri() == uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
     REQUIRE(soma_dataframe->type() == "SOMADataFrame");
@@ -102,11 +102,11 @@ TEST_CASE("SOMADataFrame: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(*schema, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(*schema, "d0", d0));
 
-    soma_dataframe->open(TILEDB_WRITE);
+    soma_dataframe->open(OpenMode::write);
     soma_dataframe->write(array_buffer);
     soma_dataframe->close();
 
-    soma_dataframe->open(TILEDB_READ);
+    soma_dataframe->open(OpenMode::read);
     while (auto batch = soma_dataframe->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();

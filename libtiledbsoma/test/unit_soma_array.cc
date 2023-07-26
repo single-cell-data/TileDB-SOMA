@@ -126,13 +126,13 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
     for (auto i = 0; i < num_fragments; ++i) {
         auto frag_num = frags[i];
         auto soma_array = SOMAArray::open(
-            TILEDB_WRITE,
+            OpenMode::write,
             ctx,
             uri,
             "",
             {},
             "auto",
-            "auto",
+            ResultOrder::automatic,
             std::pair<uint64_t, uint64_t>(timestamp + i, timestamp + i));
 
         if (LOG_DEBUG_ENABLED()) {
@@ -219,13 +219,13 @@ TEST_CASE("SOMAArray: nnz") {
 
         // Get total cell num
         auto soma_array = SOMAArray::open(
-            TILEDB_READ,
+            OpenMode::read,
             ctx,
             uri,
             "",
             {},
             "auto",
-            "auto",
+            ResultOrder::automatic,
             std::pair<uint64_t, uint64_t>(
                 timestamp, timestamp + num_fragments - 1));
 
@@ -291,7 +291,14 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
         // Get total cell num at timestamp (0, 20)
         std::pair<uint64_t, uint64_t> timestamp{0, 20};
         auto soma_array = SOMAArray::open(
-            TILEDB_READ, ctx, uri, "nnz", {}, "auto", "auto", timestamp);
+            OpenMode::read,
+            ctx,
+            uri,
+            "nnz",
+            {},
+            "auto",
+            ResultOrder::automatic,
+            timestamp);
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -341,7 +348,13 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
 
         // Get total cell num
         auto soma_array = SOMAArray::open(
-            TILEDB_READ, ctx, uri, "nnz", {}, "auto", "auto");
+            OpenMode::read,
+            ctx,
+            uri,
+            "nnz",
+            {},
+            "auto",
+            ResultOrder::automatic);
 
         uint64_t nnz = soma_array->nnz();
         if (allow_duplicates) {
@@ -360,19 +373,19 @@ TEST_CASE("SOMAArray: metadata") {
     const auto& [uri, expected_nnz] = create_array(base_uri, ctx);
 
     auto soma_array = SOMAArray::open(
-        TILEDB_WRITE,
+        OpenMode::write,
         ctx,
         uri,
         "metadata_test",
         {},
         "auto",
-        "auto",
+        ResultOrder::automatic,
         std::pair<uint64_t, uint64_t>(1, 1));
     int32_t val = 100;
     soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_array->close();
 
-    soma_array->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(1, 1));
+    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
     REQUIRE(soma_array->has_metadata("md") == true);
     REQUIRE(soma_array->metadata_num() == 1);
 
@@ -389,11 +402,11 @@ TEST_CASE("SOMAArray: metadata") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
     soma_array->close();
 
-    soma_array->open(TILEDB_WRITE, std::pair<uint64_t, uint64_t>(2, 2));
+    soma_array->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
     soma_array->delete_metadata("md");
     soma_array->close();
 
-    soma_array->open(TILEDB_READ, std::pair<uint64_t, uint64_t>(3, 3));
+    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
     REQUIRE(soma_array->has_metadata("md") == false);
     REQUIRE(soma_array->metadata_num() == 0);
     soma_array->close();
@@ -411,7 +424,7 @@ TEST_CASE("SOMAArray: Test buffer size") {
     std::string base_uri = "mem://unit-test-array";
     auto [uri, expected_nnz] = create_array(base_uri, ctx);
     auto [expected_d0, expected_a0] = write_array(uri, ctx);
-    auto soma_array = SOMAArray::open(TILEDB_READ, ctx, uri);
+    auto soma_array = SOMAArray::open(OpenMode::read, ctx, uri);
 
     size_t loops = 0;
     soma_array->submit();

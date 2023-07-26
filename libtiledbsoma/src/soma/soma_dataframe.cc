@@ -53,32 +53,34 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
     SOMAArray::create(ctx, uri, schema, "SOMADataFrame");
-    return std::make_unique<SOMADataFrame>(
-        TILEDB_READ, uri, ctx, std::vector<std::string>(), std::nullopt);
+    return SOMADataFrame::open(uri, OpenMode::read, ctx);
 }
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     std::string_view uri,
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::map<std::string, std::string> platform_config,
     std::vector<std::string> column_names,
+    ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return SOMADataFrame::open(
         uri,
         mode,
         std::make_shared<Context>(Config(platform_config)),
         column_names,
+        result_order,
         timestamp);
 }
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     std::string_view uri,
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::shared_ptr<Context> ctx,
     std::vector<std::string> column_names,
+    ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMADataFrame>(
-        mode, uri, ctx, column_names, timestamp);
+        mode, uri, ctx, column_names, result_order, timestamp);
 }
 
 //===================================================================
@@ -86,10 +88,11 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
 //===================================================================
 
 SOMADataFrame::SOMADataFrame(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::string_view uri,
     std::shared_ptr<Context> ctx,
     std::vector<std::string> column_names,
+    ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     array_ = std::make_shared<SOMAArray>(
         mode,
@@ -98,15 +101,14 @@ SOMADataFrame::SOMADataFrame(
         ctx,
         column_names,
         "auto",  // batch_size,
-        "auto",  // result_order,
+        result_order,
         timestamp);
     array_->reset();
     array_->submit();
 }
 
 void SOMADataFrame::open(
-    tiledb_query_type_t mode,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     array_->open(mode, timestamp);
     array_->reset();
     array_->submit();

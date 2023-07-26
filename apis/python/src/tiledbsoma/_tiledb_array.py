@@ -108,8 +108,13 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         if query_condition:
             kwargs["query_condition"] = query_condition
         if result_order:
-            result_order_str = ResultOrder(result_order).value
-            kwargs["result_order"] = result_order_str
+            result_order_map = {
+                "auto": clib.ResultOrder.automatic,
+                "row-major": clib.ResultOrder.rowmajor,
+                "column-major": clib.ResultOrder.colmajor,
+            }
+            result_order_enum = result_order_map[ResultOrder(result_order).value]
+            kwargs["result_order"] = result_order_enum
         return clib.SOMAArray(
             self.uri,
             name=f"{self} reader",

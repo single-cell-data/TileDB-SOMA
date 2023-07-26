@@ -54,13 +54,13 @@ void SOMAArray::create(
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::string_view uri,
     std::string_view name,
     std::map<std::string, std::string> platform_config,
     std::vector<std::string> column_names,
     std::string_view batch_size,
-    std::string_view result_order,
+    ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     LOG_DEBUG(
         fmt::format("[SOMAArray] static method 'cfg' opening array '{}'", uri));
@@ -76,13 +76,13 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::shared_ptr<Context> ctx,
     std::string_view uri,
     std::string_view name,
     std::vector<std::string> column_names,
     std::string_view batch_size,
-    std::string_view result_order,
+    ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     LOG_DEBUG(
         fmt::format("[SOMAArray] static method 'ctx' opening array '{}'", uri));
@@ -102,7 +102,7 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
 //===================================================================
 
 SOMAArray::SOMAArray(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::string_view uri,
     std::string_view name,
     std::map<std::string, std::string> platform_config,
@@ -124,7 +124,7 @@ SOMAArray::SOMAArray(
     std::shared_ptr<Context> ctx,
     std::vector<std::string> column_names,
     std::string_view batch_size,
-    std::string_view result_order,
+    ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp)
     : ctx_(ctx)
     , uri_(util::rstrip_uri(uri))
@@ -142,9 +142,9 @@ std::shared_ptr<Context> SOMAArray::ctx() {
 };
 
 void SOMAArray::open(
-    tiledb_query_type_t mode,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    arr_->open(mode);
+    OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
+    arr_->open(tdb_mode);
     if (timestamp) {
         if (timestamp->first > timestamp->second) {
             throw std::invalid_argument("timestamp start > end");
@@ -152,7 +152,7 @@ void SOMAArray::open(
         arr_->set_open_timestamp_start(timestamp->first);
         arr_->set_open_timestamp_end(timestamp->second);
         arr_->close();
-        arr_->open(mode);
+        arr_->open(tdb_mode);
     }
 }
 
@@ -163,7 +163,7 @@ void SOMAArray::close() {
 void SOMAArray::reset(
     std::vector<std::string> column_names,
     std::string_view batch_size,
-    std::string_view result_order) {
+    ResultOrder result_order) {
     // Reset managed query
     mq_->reset();
 
@@ -173,17 +173,12 @@ void SOMAArray::reset(
 
     batch_size_ = batch_size;
 
-    result_order_ = "auto";
-    if (result_order != "auto") {  // default "auto" is set in soma_array.h
-        tiledb_layout_t layout;
-        if (result_order == "row-major") {
-            layout = TILEDB_ROW_MAJOR;
-        } else if (result_order == "column-major") {
-            layout = TILEDB_COL_MAJOR;
-        } else {
-            throw TileDBSOMAError(
-                fmt::format("Unknown result_order '{}'", result_order));
-        }
+    if (result_order !=
+        ResultOrder::automatic) {  // default ResultOrder::automatic is set in
+                                   // soma_array.h
+        tiledb_layout_t layout = (result_order == ResultOrder::rowmajor) ?
+                                     TILEDB_ROW_MAJOR :
+                                     TILEDB_COL_MAJOR;
         mq_->set_layout(layout);
         result_order_ = result_order;
     }
@@ -347,7 +342,7 @@ uint64_t SOMAArray::nnz_slow() {
         "counting cells...");
 
     auto sr = SOMAArray::open(
-        TILEDB_READ,
+        OpenMode::read,
         ctx_,
         uri_,
         "count_cells",

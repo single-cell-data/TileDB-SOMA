@@ -51,7 +51,7 @@ void SOMAGroup::create(
 }
 
 std::unique_ptr<SOMAGroup> SOMAGroup::open(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::string_view uri,
     std::string_view name,
     std::map<std::string, std::string> platform_config,
@@ -65,7 +65,7 @@ std::unique_ptr<SOMAGroup> SOMAGroup::open(
 }
 
 std::unique_ptr<SOMAGroup> SOMAGroup::open(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::shared_ptr<Context> ctx,
     std::string_view uri,
     std::string_view name,
@@ -78,7 +78,7 @@ std::unique_ptr<SOMAGroup> SOMAGroup::open(
 //===================================================================
 
 SOMAGroup::SOMAGroup(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::string_view uri,
     std::string_view name,
     std::shared_ptr<Context> ctx,
@@ -90,17 +90,20 @@ SOMAGroup::SOMAGroup(
     if (timestamp) {
         cfg["sm.group.timestamp_end"] = timestamp.value();
     }
-    group_ = std::make_unique<Group>(*ctx_, std::string(uri), mode, cfg);
+    group_ = std::make_unique<Group>(
+        *ctx_,
+        std::string(uri),
+        mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE,
+        cfg);
 }
 
-void SOMAGroup::open(
-    tiledb_query_type_t query_type, std::optional<uint64_t> timestamp) {
+void SOMAGroup::open(OpenMode query_type, std::optional<uint64_t> timestamp) {
     if (timestamp) {
         auto cfg = ctx_->config();
         cfg["sm.group.timestamp_end"] = timestamp.value();
         group_->set_config(cfg);
     }
-    group_->open(query_type);
+    group_->open(query_type == OpenMode::read ? TILEDB_READ : TILEDB_WRITE);
 }
 
 void SOMAGroup::close() {
@@ -133,7 +136,11 @@ bool SOMAGroup::has_member(const std::string& name) {
 }
 
 void SOMAGroup::add_member(
-    const std::string& uri, bool relative, const std::string& name) {
+    const std::string& uri, URIType uri_type, const std::string& name) {
+    bool relative = uri_type == URIType::relative;
+    if (uri_type == URIType::automatic) {
+        relative = uri.find("://") != std::string::npos;
+    }
     group_->add_member(uri, relative, name);
 }
 
