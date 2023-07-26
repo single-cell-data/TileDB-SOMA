@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import anndata as ad
 import pandas as pd
@@ -10,6 +10,7 @@ import tiledbsoma
 import tiledbsoma.logging
 
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
+from .signatures import Signature
 
 
 @dataclass
@@ -311,6 +312,27 @@ class ExperimentAmbientLabelMapping:
         )
 
     @classmethod
+    def pre_check(
+        cls,
+        experiment_uri: Optional[str],
+        h5ad_file_names: Sequence[str],
+        *,
+        measurement_name: str = "RNA",
+        obs_field_name: str = "obs_id",
+        var_field_name: str = "var_id",
+    ) -> Tuple[bool, Optional[str]]:
+        """TODO: docstring"""
+        signatures = {}
+        if experiment_uri is not None:
+            signature = Signature.fromSOMAExperiment(experiment_uri)
+            signatures[experiment_uri] = signature
+        for h5ad_file_name in h5ad_file_names:
+            signature = Signature.fromH5AD(h5ad_file_name)
+            signatures[h5ad_file_name] = signature
+
+        return Signature.compatible(signatures)
+
+    @classmethod
     def from_h5ad_appends_on_experiment(
         cls,
         experiment_uri: Optional[str],
@@ -321,6 +343,8 @@ class ExperimentAmbientLabelMapping:
         var_field_name: str,
     ) -> Self:
         """TODO: docstring"""
+
+        # TODO: call the pre-check method and raise if not OK
 
         if experiment_uri is not None and tiledbsoma.Experiment.exists(experiment_uri):
             registration_data = cls.from_isolated_soma_experiment(
