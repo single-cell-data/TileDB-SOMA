@@ -39,6 +39,7 @@
 
 #include <tiledb/tiledb>
 
+#include "enums.h"
 #include "managed_query.h"
 
 namespace tiledbsoma {
@@ -68,46 +69,48 @@ class SOMAArray {
      * @brief Open an array at the specified URI and return SOMAArray
      * object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param uri URI of the array
      * @param name Name of the array
      * @param platform_config Config parameter dictionary
      * @param column_names Columns to read
      * @param batch_size Read batch size
-     * @param result_order Read result order
+     * @param result_order Read result order: automatic (default), rowmajor, or
+     * colmajor
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
     static std::unique_ptr<SOMAArray> open(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::string_view uri,
         std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
-        std::string_view result_order = "auto",
+        ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open an array at the specified URI and return SOMAArray
      * object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param ctx TileDB context
      * @param uri URI of the array
      * @param name Name of the array
      * @param column_names Columns to read
      * @param batch_size Read batch size
-     * @param result_order Read result order
+     * @param result_order Read result order: automatic (default), rowmajor, or
+     * colmajor
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
     static std::unique_ptr<SOMAArray> open(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::shared_ptr<Context> ctx,
         std::string_view uri,
         std::string_view name = "unnamed",
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
-        std::string_view result_order = "auto",
+        ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     //===================================================================
@@ -139,23 +142,24 @@ class SOMAArray {
     /**
      * @brief Construct a new SOMAArray object
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param uri URI of the array
      * @param name name of the array
      * @param ctx TileDB context
      * @param column_names Columns to read
      * @param batch_size Batch size
-     * @param result_order Result order
+     * @param result_order Read result order: automatic (default), rowmajor, or
+     * colmajor
      * @param timestamp Timestamp
      */
     SOMAArray(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::string_view uri,
         std::string_view name,
         std::shared_ptr<Context> ctx,
         std::vector<std::string> column_names,
         std::string_view batch_size,
-        std::string_view result_order,
+        ResultOrder result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMAArray() = delete;
@@ -180,11 +184,11 @@ class SOMAArray {
     /**
      * Open the SOMAArray object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param timestamp Timestamp
      */
     void open(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
@@ -203,7 +207,7 @@ class SOMAArray {
     void reset(
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
-        std::string_view result_order = "auto");
+        ResultOrder result_order = ResultOrder::automatic);
 
     /**
      * @brief Set the dimension slice using one point
@@ -583,7 +587,7 @@ class SOMAArray {
     std::string batch_size_;
 
     // Result order
-    std::string result_order_;
+    ResultOrder result_order_;
 
     // Read timestamp range (start, end)
     std::optional<std::pair<uint64_t, uint64_t>> timestamp_;

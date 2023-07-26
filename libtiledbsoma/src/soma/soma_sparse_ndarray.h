@@ -34,6 +34,7 @@
 #define SOMA_SPARSE_NDARRAY
 
 #include <tiledb/tiledb>
+#include "enums.h"
 #include "soma_object.h"
 
 namespace tiledbsoma {
@@ -76,43 +77,49 @@ class SOMASparseNDArray : public SOMAObject {
     /**
      * @brief Open and return a SOMASparseNDArray object at the given URI.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param uri URI to create the SOMASparseNDArray
      * @param column_names A list of column names to use as user-defined index
      * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
      * exist in the schema, and at least one index column name is required.
      * @param platform_config Platform-specific options used to create this
-     * DataFrame
+     * SOMASparseNDArray
+     * @param result_order Read result order: automatic (default), rowmajor, or
+     * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
      * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
      */
     static std::unique_ptr<SOMASparseNDArray> open(
         std::string_view uri,
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::map<std::string, std::string> platform_config = {},
         std::vector<std::string> column_names = {},
+        ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open and return a SOMASparseNDArray object at the given URI.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param ctx TileDB context
      * @param uri URI to create the SOMASparseNDArray
      * @param schema TileDB ArraySchema
      * @param column_names A list of column names to use as user-defined index
      * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
      * exist in the schema, and at least one index column name is required.
+     * @param result_order Read result order: automatic (default), rowmajor, or
+     * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
      * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
      */
     static std::unique_ptr<SOMASparseNDArray> open(
         std::string_view uri,
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::shared_ptr<Context> ctx,
         std::vector<std::string> column_names = {},
+        ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     //===================================================================
@@ -122,27 +129,29 @@ class SOMASparseNDArray : public SOMAObject {
     /**
      * @brief Construct a new SOMASparseNDArray object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param uri URI of the array
      * @param ctx TileDB context
-     * @param column_names Columns to read
+     * @param result_order Read result order: automatic (default), rowmajor, or
+     * colmajor
      * @param timestamp Timestamp
      */
     SOMASparseNDArray(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::string_view uri,
         std::shared_ptr<Context> ctx,
         std::vector<std::string> column_names,
+        ResultOrder result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
     /**
      * Open the SOMASparseNDArray object.
      *
-     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param mode read or write
      * @param timestamp Timestamp
      */
     void open(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
@@ -219,8 +228,9 @@ class SOMASparseNDArray : public SOMAObject {
 
     /**
      * @brief Write ArrayBuffers data to the dataframe.
+     * @param buffers The ArrayBuffers to write
      */
-    void write(std::shared_ptr<ArrayBuffers>);
+    void write(std::shared_ptr<ArrayBuffers> buffers);
 
    private:
     //===================================================================

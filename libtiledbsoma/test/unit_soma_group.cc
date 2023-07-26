@@ -162,12 +162,12 @@ TEST_CASE("SOMAGroup: basic") {
     auto [uri_sub_array, expected_nnz] = create_array("mem://sub-array", *ctx);
 
     auto soma_group = SOMAGroup::open(
-        TILEDB_WRITE, ctx, uri_main_group, "metadata", 1);
-    soma_group->add_member(uri_sub_group, false, "subgroup");
-    soma_group->add_member(uri_sub_array, false, "subarray");
+        OpenMode::write, ctx, uri_main_group, "metadata", 1);
+    soma_group->add_member(uri_sub_group, URIType::absolute, "subgroup");
+    soma_group->add_member(uri_sub_array, URIType::absolute, "subarray");
     soma_group->close();
 
-    soma_group->open(TILEDB_READ, 1);
+    soma_group->open(OpenMode::read, 1);
     REQUIRE(soma_group->ctx() == ctx);
     REQUIRE(soma_group->uri() == uri_main_group);
     REQUIRE(soma_group->get_length() == 2);
@@ -178,11 +178,11 @@ TEST_CASE("SOMAGroup: basic") {
     REQUIRE(soma_group->get_member("subarray").type() == Object::Type::Array);
     soma_group->close();
 
-    soma_group->open(TILEDB_WRITE, 3);
+    soma_group->open(OpenMode::write, 3);
     soma_group->remove_member("subgroup");
     soma_group->close();
 
-    soma_group->open(TILEDB_READ, 4);
+    soma_group->open(OpenMode::read, 4);
     REQUIRE(soma_group->get_length() == 1);
     REQUIRE(soma_group->has_member("subgroup") == false);
     REQUIRE(soma_group->has_member("subarray") == true);
@@ -194,12 +194,12 @@ TEST_CASE("SOMAGroup: metadata") {
 
     std::string uri = "mem://unit-test-group";
     Group::create(*ctx, uri);
-    auto soma_group = SOMAGroup::open(TILEDB_WRITE, ctx, uri, "metadata", 1);
+    auto soma_group = SOMAGroup::open(OpenMode::write, ctx, uri, "metadata", 1);
     int32_t val = 100;
     soma_group->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_group->close();
 
-    soma_group->open(TILEDB_READ, 1);
+    soma_group->open(OpenMode::read, 1);
     REQUIRE(soma_group->has_metadata("md") == true);
     REQUIRE(soma_group->metadata_num() == 1);
 
@@ -216,11 +216,11 @@ TEST_CASE("SOMAGroup: metadata") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
     soma_group->close();
 
-    soma_group->open(TILEDB_WRITE, 2);
+    soma_group->open(OpenMode::write, 2);
     soma_group->delete_metadata("md");
     soma_group->close();
 
-    soma_group->open(TILEDB_READ, 3);
+    soma_group->open(OpenMode::read, 3);
     REQUIRE(soma_group->has_metadata("md") == false);
     REQUIRE(soma_group->metadata_num() == 0);
     soma_group->close();

@@ -61,15 +61,15 @@ std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
     SOMACollection::create(exp_uri + "/varm", ctx);
     SOMACollection::create(exp_uri + "/varp", ctx);
 
-    auto group = SOMAGroup::open(TILEDB_WRITE, ctx, uri);
-    group->add_member(exp_uri + "/var", false, "var");
-    group->add_member(exp_uri + "/X", false, "X");
-    group->add_member(exp_uri + "/obsm", false, "obsm");
-    group->add_member(exp_uri + "/obsp", false, "obsp");
-    group->add_member(exp_uri + "/varm", false, "varm");
-    group->add_member(exp_uri + "/varp", false, "varp");
+    auto group = SOMAGroup::open(OpenMode::write, ctx, uri);
+    group->add_member(exp_uri + "/var", URIType::absolute, "var");
+    group->add_member(exp_uri + "/X", URIType::absolute, "X");
+    group->add_member(exp_uri + "/obsm", URIType::absolute, "obsm");
+    group->add_member(exp_uri + "/obsp", URIType::absolute, "obsp");
+    group->add_member(exp_uri + "/varm", URIType::absolute, "varm");
+    group->add_member(exp_uri + "/varp", URIType::absolute, "varp");
     group->close();
 
-    return std::make_unique<SOMAMeasurement>(TILEDB_READ, uri, ctx);
+    return std::make_unique<SOMAMeasurement>(OpenMode::read, uri, ctx);
 }
 }  // namespace tiledbsoma

@@ -74,7 +74,7 @@ class SOMAExperiment : public SOMACollection {
     //===================================================================
 
     SOMAExperiment(
-        tiledb_query_type_t mode,
+        OpenMode mode,
         std::string_view uri,
         std::shared_ptr<Context> ctx,
         std::optional<uint64_t> timestamp = std::nullopt)

@@ -57,11 +57,11 @@ std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
     SOMADataFrame::create(exp_uri + "/obs", schema, ctx);
     SOMACollection::create(exp_uri + "/ms", ctx);
 
-    auto group = SOMAGroup::open(TILEDB_WRITE, ctx, exp_uri);
-    group->add_member(exp_uri + "/obs", false, "obs");
-    group->add_member(exp_uri + "/ms", false, "ms");
+    auto group = SOMAGroup::open(OpenMode::write, ctx, exp_uri);
+    group->add_member(exp_uri + "/obs", URIType::absolute, "obs");
+    group->add_member(exp_uri + "/ms", URIType::absolute, "ms");
     group->close();
 
-    return std::make_unique<SOMAExperiment>(TILEDB_READ, exp_uri, ctx);
+    return std::make_unique<SOMAExperiment>(OpenMode::read, exp_uri, ctx);
 }
 }  // namespace tiledbsoma

@@ -82,7 +82,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
 
     SOMADenseNDArray::create(uri, create_schema(*ctx), ctx);
 
-    auto soma_dense = SOMADenseNDArray::open(uri, TILEDB_READ, ctx);
+    auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_dense->uri() == uri);
     REQUIRE(soma_dense->ctx() == ctx);
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
@@ -101,11 +101,11 @@ TEST_CASE("SOMADenseNDArray: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(*schema, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(*schema, "d0", d0));
 
-    soma_dense->open(TILEDB_WRITE);
+    soma_dense->open(OpenMode::write);
     soma_dense->write(array_buffer);
     soma_dense->close();
 
-    soma_dense->open(TILEDB_READ);
+    soma_dense->open(OpenMode::read);
     while (auto batch = soma_dense->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
