@@ -12,25 +12,30 @@ import tiledbsoma.logging
 from tiledbsoma._arrow_types import df_to_arrow
 
 
+def _stringify_type(t: pa.DataType) -> str:
+    """
+    Turns an Arrow data type into a stringi more suitable for logging error messages to users in a
+    distributed-computing/distributed-logging environment.
+
+    As noted in the Signature class, we pre-check logic from the ingestor.  As detailed elsewhere,
+    Arrow string and large_string must map to TileDB string, which is large-only. Thus string and
+    large_string form an equivalence class. Similarly for Arrow binary and large_binary.
+    """
+    _EQUIVALENCES = {
+        "large_string": "string",
+        "large_binary": "binary",
+    }
+    str_t = str(t)
+    return _EQUIVALENCES.get(str_t, str_t)
+
+
 def _string_dict_from_arrow_schema(schema: pa.Schema) -> Dict[str, str]:
     """
     Converts an Arrow schema to a string/string dict, which is easier on the eyes,
     easier to convert from/to JSON for distributed logging, and easier to do del-key on.
     """
 
-    def stringify_type(t: pa.DataType) -> str:
-        retval = str(t)
-        # As noted in the Signature class, we pre-check logic from the ingestor.
-        # As detailed elsewhere, Arrow string and large_string must map to TileDB
-        # string, which is large-only. Thus string and large_string form an equivalence
-        # class. Similarly for Arrow binary and large_binary.
-        if retval == "large_string":
-            return "string"
-        if retval == "large_binary":
-            return "binary"
-        return retval
-
-    retval = {name: stringify_type(schema.field(name).type) for name in schema.names}
+    retval = {name: _stringify_type(schema.field(name).type) for name in schema.names}
 
     # The soma_joinid field is specific to SOMA data but does not exist in AnnData/H5AD.  When we
     # pre-check an AnnData/H5AD input to see if it's appendable to an existing SOMA experiment, we
