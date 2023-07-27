@@ -258,6 +258,76 @@ class ColumnBuffer {
         ColumnBuffer::to_bitmap(validity());
     }
 
+    /**
+     * @brief Add an optional enumeration vector,
+     *
+     */
+    void add_enumeration(const std::vector<std::string>& vec) {
+        enums_ = vec;
+        has_enumeration_ = true;
+    }
+
+    /**
+     * @brief Return true if the buffer contains enumeration.
+     */
+    bool has_enumeration() const {
+        return has_enumeration_;
+    }
+
+    /**
+     * @brief Return optional enumeration vector,
+     *
+     */
+    std::vector<std::string> get_enumeration() {
+        return enums_;
+    }
+
+    /**
+     * @brief Convert enumeration (aka dictionary)
+     *
+     */
+    void convert_enumeration() {
+        if (!has_enumeration_) {
+            throw TileDBSOMAError(
+                "[ColumnBuffer] No enumeration defined for " + name_);
+        }
+        const size_t n_vec = enums_.size(); // plus one for extra offset
+        enum_offsets_.resize(n_vec + 1);
+        enum_str_ = "";
+        uint32_t cumlen = 0;
+        for (size_t i = 0; i < n_vec; i++) {
+             std::string s(enums_[i]);
+             enum_str_ += s;
+             enum_offsets_[i] = cumlen;
+             cumlen += s.length();
+        }
+        enum_offsets_[n_vec] = cumlen;
+    }
+
+    /**
+     * @brief Return optional enumeration offsets vector
+     *
+     */
+    tcb::span<uint32_t> enum_offsets() {
+        if (!has_enumeration_) {
+            throw TileDBSOMAError(
+                "[ColumnBuffer] No enumeration defined for " + name_);
+        }
+        return tcb::span<uint32_t>(enum_offsets_.data(), enum_offsets_.size());
+    }
+
+    /**
+     * @brief Return optional enumeration string
+     *
+     */
+    tcb::span<char> enum_string() {
+        if (!has_enumeration_) {
+            throw TileDBSOMAError(
+                "[ColumnBuffer] No enumeration defined for " + name_);
+        }
+        return tcb::span<char>(enum_str_.data(), enum_str_.length());
+    }
+
    private:
     //===================================================================
     //= private static
@@ -315,6 +385,17 @@ class ColumnBuffer {
 
     // Validity buffer (optional).
     std::vector<uint8_t> validity_;
+
+    // True if the array has at least one enumerations
+    bool has_enumeration_ = false;
+
+    // Enumerations (optional)
+    std::vector<std::string> enums_;
+
+    // Enumerations (optional) as string and offsets
+    std::string enum_str_;
+    std::vector<uint32_t> enum_offsets_;
+
 };
 
 }  // namespace tiledbsoma
