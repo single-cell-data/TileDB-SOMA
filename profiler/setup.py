@@ -4,4 +4,5 @@ setup(
     name="soma-profiler",
     version="1.0",
     packages=find_packages(),
+    requires=["gitpython", "psutil"],
 )

@@ -3,129 +3,127 @@ import json
 import os
 import re
 import subprocess
-from datetime import date, datetime
+import sys
+from datetime import datetime
 from subprocess import PIPE
-from typing import Dict, Optional
+from sys import stderr
+from typing import Any, Dict, Optional
 
 import somacore
 
 import tiledbsoma
-from data import FileBasedProfileDB, ProfileData, ProfileDB
 
-TILEDB_STATS_FILE_PATH = "./tiledb_stats.txt"
+from .context_generator import host_context
+from .data import FileBasedProfileDB, ProfileData, ProfileDB
 
+GNU_TIME_FORMAT = (
+    'Command being timed: "%C"\n'
+    "User time (seconds): %U\n"
+    "System time (seconds): %S\n"
+    "Percent of CPU this job got: %P\n"
+    "Elapsed (wall clock) time (seconds): %e\n"
+    "Average shared text size (kbytes): %X\n"
+    "Average unshared data size (kbytes): %D\n"
+    "Average stack size (kbytes): %p\n"
+    "Average total size (kbytes): %K\n"
+    "Maximum resident set size (kbytes): %M\n"
+    "Average resident set size (kbytes): %t\n"
+    "Major (requiring I/O) page faults: %F\n"
+    "Minor (reclaiming a frame) page faults: %R\n"
+    "Voluntary context switches: %w\n"
+    "Involuntary context switches: %c\n"
+    "Swaps: %W\n"
+    "File system inputs: %I\n"
+    "File system outputs: %O\n"
+    "Socket messages sent: %s\n"
+    "Socket messages received: %r\n"
+    "Signals delivered: %k\n"
+    "Page size (bytes): %Z\n"
+    "Exit status: %x"
+)
 
-def read_context() -> Dict[str, str]:
-    """Run the context generator process and collects the JSON printed output"""
-    context_process = subprocess.Popen(
-        ["python", "context_generator.py"], stdout=PIPE, stderr=PIPE
-    )
-    stdout, stderr = context_process.communicate()
-    stats = json.loads(stdout.decode("utf-8"))
-    return stats
+GNU_TIME_OUTPUT_REGEXP = re.compile(
+    r".*Command being timed: \"(?P<command>.+)\"\n"
+    r"User time \(seconds\): (?P<user_time_sec>.+)\n"
+    r"System time \(seconds\): (?P<system_time_sec>.+)\n"
+    r"Percent of CPU this job got: (?P<pct_of_cpu>.+)%\n"
+    r"Elapsed \(wall clock\) time \(seconds\): (?P<elapsed_time_sec>.+)\n"
+    r"Average shared text size \(kbytes\): (?P<avg_shared_text_sz_kb>.+)\n"
+    r"Average unshared data size \(kbytes\): (?P<avg_unshared_text_sz_kb>.+)\n"
+    r"Average stack size \(kbytes\): (?P<avg_stack_sz_kb>.+)\n"
+    r"Average total size \(kbytes\): (?P<avg_total_sz_kb>.+)\n"
+    r"Maximum resident set size \(kbytes\): (?P<max_res_set_sz_kb>.+)\n"
+    r"Average resident set size \(kbytes\): (?P<avg_res_set_sz_kb>.+)\n"
+    r"Major \(requiring I/O\) page faults: (?P<major_page_faults>.+)\n"
+    r"Minor \(reclaiming a frame\) page faults: (?P<minor_page_faults>.+)\n"
+    r"Voluntary context switches: (?P<voluntary_context_switches>.+)\n"
+    r"Involuntary context switches: (?P<involuntary_context_switches>.+)\n"
+    r"Swaps: (?P<swaps>.+)\n"
+    r"File system inputs: (?P<file_system_inputs>.+)\n"
+    r"File system outputs: (?P<file_system_outputs>.+)\n"
+    r"Socket messages sent: (?P<socket_messages_sent>.+)\n"
+    r"Socket messages received: (?P<socket_messages_received>.+)\n"
+    r"Signals delivered: (?P<signals_delivered>.+)\n"
+    r"Page size \(bytes\): (?P<page_size_bytes>.+)\n"
+    r"Exit status: (?P<exit_status>.+)\n"
+    r".*"
+)
+
+# parameterize as cmd line arg
+TILEDB_STATS_FILE_PATH = "./tiledb_stats.json"
 
 
 def build_profile_data(
-    process: list[str], output: str, prof1: Optional[str], prof2: Optional[str]
+    stderr_: str, stdout_: str, prof1: Optional[str], prof2: Optional[str]
 ) -> ProfileData:
     """Parse the time utility output to extract performance and memory metrics"""
-    lines = output.split("\n")
-    lines = lines[-20:]
-    for idx, line in enumerate(lines):
-        perf_match = re.match(
-            "\s+(\d+\.\d+) real\s+(\d+\.\d+) user\s+(\d+\.\d+) sys\s*", line
-        )
-        if perf_match:
-            real_time = float(perf_match.groups()[0])
-            usr_time = float(perf_match.groups()[1])
-            sys_time = float(perf_match.groups()[2])
-            print(
-                f"real_time = {real_time} user_time = {usr_time} sys_time = {sys_time}"
-            )
-        max_resident_set_size_match = re.match(
-            "\s+(\d+)\s+maximum resident set size\s*", line
-        )
-        if max_resident_set_size_match:
-            max_resident_set_size = int(max_resident_set_size_match.groups()[0])
-            print(f"max_resident_set_size = {max_resident_set_size}")
-        page_reclaims_match = re.match("\s+(\d+)\s+page reclaims\s*", line)
-        if page_reclaims_match:
-            page_reclaims = int(page_reclaims_match.groups()[0])
-            print(f"page_reclaims = {page_reclaims}")
-        page_faults_match = re.match("\s+(\d+)\s+page faults\s*", line)
-        if page_faults_match:
-            page_faults = int(page_faults_match.groups()[0])
-            print(f"page_faults = {page_faults}")
-        cycles_elapsed_match = re.match("\s+(\d+)\s+cycles elapsed\s*", line)
-        if cycles_elapsed_match:
-            cycles_elapsed = int(cycles_elapsed_match.groups()[0])
-            print(f"cycles_elapsed = {cycles_elapsed}")
-        peak_memory_footprint_match = re.match(
-            "\s+(\d+)\s+peak memory footprint\s*", line
-        )
-        if peak_memory_footprint_match:
-            peak_memory_footprint = int(peak_memory_footprint_match.groups()[0])
-            print(f"peak_memory_footprint = {peak_memory_footprint}")
-    tiledb_stats = None
-    if os.path.isfile(TILEDB_STATS_FILE_PATH):
-        with open(TILEDB_STATS_FILE_PATH, "r") as f:
-            print("TileDB stats found")
-            tiledb_stats = f.read()
-    custom_out = [prof1, prof2]
-    context: Dict[str, str] = read_context()
-    data: ProfileData = ProfileData(
-        process=" ".join(process),
-        custom_out=custom_out,
-        rt=real_time,
-        ut=usr_time,
-        st=sys_time,
-        max_set_size=max_resident_set_size,
-        page_reclaims=page_reclaims,
-        page_faults=page_faults,
-        cycles_elapsed=cycles_elapsed,
-        peak_memory=peak_memory_footprint,
-        date=str(date.today()),
-        now=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-        tiledb_stats=tiledb_stats,
+    gnu_time_output_values = GNU_TIME_OUTPUT_REGEXP.search(stderr_)
+    assert gnu_time_output_values
+
+    gnu_time_output_values = gnu_time_output_values.groupdict()
+    # cast all dict int values
+    gnu_time_output_values.update(
+        {k: int(v) for k, v in gnu_time_output_values.items() if v.isdigit()}
+    )
+
+    data = ProfileData(
+        stdout=stdout_,
+        stderr=stderr_,
+        timestamp=datetime.utcnow().timestamp(),
+        tiledb_stats=read_tiledb_stats_output(),
         somacore_version=somacore.__version__,
         tiledbsoma_version=tiledbsoma.__version__,
-        context=context,
+        host_context=host_context(),
+        custom_out=[prof1, prof2],
+        **gnu_time_output_values,
     )
     return data
 
 
+def read_tiledb_stats_output() -> Dict[str, Any]:
+    if not os.path.isfile(TILEDB_STATS_FILE_PATH):
+        return {}
+
+    with open(TILEDB_STATS_FILE_PATH, "r") as f:
+        print("TileDB stats found", file=stderr)
+        return json.load(f)
+
+
 def main():
+    data_columns = ", ".join([a for a in dir(ProfileData) if a[0] != "_"])
     parser = argparse.ArgumentParser(
-        epilog="""The list of collected metrics by the generic profiler:
-         
-         process: The process and its parameters to be profile\n
-         custom_out: list of custom profilers to be stored\n
-         date\n
-         time\n
-           
-         rt: Real time\n
-         ut: User time\n
-         st: System time\n
-                        
-         max_set_size\n
-         page_reclaims\n
-         page_faults\n
-         cycles_elapsed\n
-         peak_memory\n
-         tiledb_stats\n
-         somacore_version\n
-         tiledbsoma_version\n
-                        
-         uname: uname -a\n
-         total_virtual_mem\n
-         total_physical_mem\n
-         swap_mem\n 
-         cpu_count\n
-         python_version\n
-             """
+        epilog=f"The list of collected metrics by the generic profiler: {data_columns}"
     )
     parser.add_argument(
-        "process", nargs="+", help="The main process and its arguments to run"
+        "command",
+        help="The command and its arguments to be profiled (as quoted, single-argument)",
+    )
+    parser.add_argument(
+        "-t",
+        "--gtime-cmd",
+        required=False,
+        default="/usr/bin/time",
+        help="Path to the gtime command",
     )
     parser.add_argument(
         "-p1",
@@ -151,15 +149,17 @@ def main():
         required=False,
         help="The flamegraph output produced by prof2",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(sys.argv[1:])
 
-    print(f"Process to be run: {args.process}")
-    # Running the main process using time -v to get detailed memory and time"""
+    print(f"Command to be run: {args.command}", file=stderr)
+    # Run the command, using `time -v` to get detailed memory and time"""
     p = subprocess.Popen(
-        ["/usr/bin/time", "-al"] + args.process, stdout=PIPE, stderr=PIPE
+        [args.gtime_cmd, "--format", GNU_TIME_FORMAT] + args.command.split(" "),
+        stdout=PIPE,
+        stderr=PIPE,
     )
 
-    print(f"Running main process, PID = {p.pid}")
+    print(f"Running command to be profiled, PID = {p.pid}", file=stderr)
     # Running additional profilers to extract flame graphs for the run
     p1 = None
     p2 = None
@@ -185,25 +185,24 @@ def main():
                 f"Third profiler {args.prof2} missing output flamegraph file location"
             )
 
-    stdout, stderr = p.communicate()
+    p_stdout, p_stderr = p.communicate()
     if p1 is not None:
         p1.wait()
     if p2 is not None:
         p2.wait()
 
-    o: str = stdout.decode("utf-8")
-    print(f"The benchmarked process output:\n {o}")
+    p_stdout = p_stdout.decode("utf-8")
+    print(f"The benchmarked process output:\n {p_stdout}", file=stderr)
     # Parse the generated output from the time utility
     data: ProfileData = build_profile_data(
-        args.process, stderr.decode("utf-8"), args.prof1_output, args.prof2_output
+        p_stderr.decode("utf-8"), p_stdout, args.prof1_output, args.prof2_output
     )
     # Add the run data to DB
     db: ProfileDB = FileBasedProfileDB()
-    db.add(data)
-    print("Printing DB:\n")
-    print(db)
+    db_record_file = db.add(data)
     db.close()
 
-
-if __name__ == "__main__":
-    main()
+    print(
+        f"{data.command_key=}, {data.command=}, {data.exit_status=}, {db_record_file=}",
+        file=stderr,
+    )

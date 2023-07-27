@@ -1,51 +1,63 @@
 import errno
+import glob
+import hashlib
+import json
 import os
-import pickle
-import re
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from attr import attrib, attrs
-
-"""This class represents the data stored per run"""
+import attr
 
 
-@attrs
+@attr.define
 class ProfileData:
-    process: str = attrib()
-    custom_out: List[Optional[str]] = attrib()
-    rt: float = attrib()
-    ut: float = attrib()
-    st: float = attrib()
-    max_set_size: int = attrib()
-    page_reclaims: int = attrib()
-    page_faults: int = attrib()
-    cycles_elapsed: int = attrib()
-    peak_memory: int = attrib()
-    tiledb_stats: Optional[str] = attrib()
-    date: str = attrib()
-    now: str = attrib()
-    somacore_version: str = attrib()
-    tiledbsoma_version: str = attrib()
-    context: Dict[str, str] = attrib()
-    print("Creating ProfileData")
+    """This class represents the data stored per run"""
+
+    command: str
+    timestamp: float
+    stdout: str
+    stderr: str
+    tiledb_stats: Dict[str, Any]
+    somacore_version: str
+    tiledbsoma_version: str
+    host_context: Dict[str, str]
+    user_time_sec: float
+    system_time_sec: float
+    pct_of_cpu: float
+    elapsed_time_sec: float
+    avg_shared_text_sz_kb: int
+    avg_unshared_text_sz_kb: int
+    avg_stack_sz_kb: int
+    avg_total_sz_kb: int
+    max_res_set_sz_kb: int
+    avg_res_set_sz_kb: int
+    major_page_faults: int
+    minor_page_faults: int
+    voluntary_context_switches: int
+    involuntary_context_switches: int
+    swaps: int
+    file_system_inputs: int
+    file_system_outputs: int
+    socket_messages_sent: int
+    socket_messages_received: int
+    signals_delivered: int
+    page_size_bytes: int
+    exit_status: int
+    custom_out: List[Optional[str]]
+
+    command_key: str = attr.field()
+
+    @command_key.default
+    def _command_key_factory(self):
+        return _command_key(self.command)
 
 
-def extract_key_from_filename(filename: str) -> str:
-    """Extracts DB key for stats from the corresponding filename"""
-    match = re.match("(.+)\.run", filename)
-    assert match
-    return match.groups()[0]
+DEFAULT_PROFILE_DB_PATH = "./profiling_db"
 
 
-PROFILE_PATH = "./profiling_runs"
-
-
-def improve_profileDB_key(process: str) -> str:
-    """Remove space characters from profileDB keys."""
-    name: str = process.replace(" ", "_").replace("/", "_").replace(".", "_")
-    print(f"Profiler key = {name}")
-    return name
+def _command_key(command: str) -> str:
+    """Remove space characters from profileDB command keys."""
+    return hashlib.md5(command.encode("utf-8")).hexdigest()
 
 
 class ProfileDB(ABC):
@@ -56,7 +68,7 @@ class ProfileDB(ABC):
         pass
 
     @abstractmethod
-    def find(self, process):
+    def find(self, command):
         pass
 
     @abstractmethod
@@ -70,10 +82,10 @@ class ProfileDB(ABC):
 
 class FileBasedProfileDB(ProfileDB):
     """Represents a file-based implementation of a ProfileDB
-    runs database. Each run is stored as a separate file under a subdirectory structured as `<process_name>/<timestamp>`.
+    runs database. Each run is stored as a separate file under a subdirectory structured as `<command>/<timestamp>`.
     """
 
-    def __init__(self, path: str = PROFILE_PATH):
+    def __init__(self, path: str = DEFAULT_PROFILE_DB_PATH):
         self.path = path
         if not os.path.exists(self.path):
             os.mkdir(self.path)
@@ -81,34 +93,39 @@ class FileBasedProfileDB(ProfileDB):
     def __str__(self):
         result = ""
         if os.path.exists(self.path):
-            for process in os.listdir(self.path):
+            for command_hash in glob.glob(self.path + "/*"):
+                with open(os.path.join(command_hash, "command.txt"), "r") as f:
+                    command = f.read()
+                n_runs = len(glob.glob(os.path.join(command_hash, "*.json")))
                 result += (
-                    f"{process}: "
-                    + str(len(os.listdir(f"{self.path}/{process}")))
-                    + "\n"
+                    f"[{command_hash.split('/')[-1]}] \"{command}\": {n_runs} runs\n"
                 )
             return result
         return ""
 
-    def find(self, process) -> List[ProfileData]:
-        key = improve_profileDB_key(process)
+    def find(self, command) -> List[ProfileData]:
+        key = _command_key(command)
         if not os.path.exists(f"{self.path}/{key}"):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), key)
-        dir_list = os.listdir(f"{self.path}/{key}")
         result = []
-        for filename in dir_list:
-            with open(f"{self.path}/{key}/{filename}", "rb") as file:
-                data: ProfileData = pickle.load(file)
-                result.append(data)
+        for filename in glob.glob(f"{self.path}/{key}/*.json"):
+            with open(filename, "r") as file:
+                result.append(ProfileData(**json.load(file)))
         return result
 
-    def add(self, data: ProfileData):
-        key = improve_profileDB_key(data.process)
+    def add(self, data: ProfileData) -> str:
+        key = _command_key(data.command)
         os.makedirs(f"{self.path}/{key}", exist_ok=True)
-        key2 = data.now
-        filename = f"{self.path}/{key}/{key2}.run"
-        with open(filename, "wb") as f:
-            pickle.dump(data, f)
+        with open(f"{self.path}/{key}/command.txt", "w") as f:
+            f.write(data.command.strip())
+
+        key2 = data.timestamp
+
+        filename = f"{self.path}/{key}/{key2}.json"
+        with open(filename, "w") as f:
+            json.dump(attr.asdict(data), f)
+
+        return filename
 
     def close(self):
         pass
