@@ -81,13 +81,11 @@ class AxisAmbientLabelMapping:
             next_soma_joinid += 1
         return cls(data, index_field_name)
 
-    def toJSON(self) -> str:
-        return json.dumps(
-            self, default=lambda o: attrs.asdict(o), sort_keys=True, indent=4
-        )
+    def to_json(self) -> str:
+        return json.dumps(self, default=attrs.asdict, sort_keys=True, indent=4)
 
     @classmethod
-    def fromJSON(cls, s: str) -> Self:
+    def from_json(cls, s: str) -> Self:
         dikt = json.loads(s)
         return cls(dikt["data"], dikt["field_name"])
 
@@ -389,13 +387,11 @@ class ExperimentAmbientLabelMapping:
         for k, v in self.var_axes.items():
             print(f"{k}/var:{len(v.data)}")
 
-    def toJSON(self) -> str:
-        return json.dumps(
-            self, default=lambda o: attrs.asdict(o), sort_keys=True, indent=4
-        )
+    def to_json(self) -> str:
+        return json.dumps(self, default=attrs.asdict, sort_keys=True, indent=4)
 
     @classmethod
-    def fromJSON(cls, s: str) -> Self:
+    def from_json(cls, s: str) -> Self:
         dikt = json.loads(s)
         obs_axis = AxisAmbientLabelMapping(
             dikt["obs_axis"]["data"], dikt["obs_axis"]["field_name"]
