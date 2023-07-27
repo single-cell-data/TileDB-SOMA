@@ -174,35 +174,141 @@ def test_axis_mappings(anndata1):
 
 
 def test_isolated_anndata_mappings(anndata1):
-    d1 = registration.ExperimentAmbientLabelMapping.from_isolated_anndata(
+    rd = registration.ExperimentAmbientLabelMapping.from_isolated_anndata(
         anndata1, measurement_name="RNA"
     )
-    assert d1.obs_axis.id_mapping_from_values([]).data == []
-    assert d1.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == [2, 1]
-    assert d1.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == [3, 4]
-    assert d1.var_axes["raw"].id_mapping_from_values(
+    assert rd.obs_axis.id_mapping_from_values([]).data == []
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == [2, 1]
+    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == [3, 4]
+    assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
     ).data == [6, 3, 4]
 
 
 def test_isolated_h5ad_mappings(h5ad1):
-    d1 = registration.ExperimentAmbientLabelMapping.from_isolated_h5ad(
+    rd = registration.ExperimentAmbientLabelMapping.from_isolated_h5ad(
         h5ad1,
         measurement_name="RNA",
     )
-    assert d1.obs_axis.id_mapping_from_values([]).data == []
-    assert d1.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == [2, 1]
-    assert d1.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == [3, 4]
-    assert d1.var_axes["raw"].id_mapping_from_values(
+    assert rd.obs_axis.id_mapping_from_values([]).data == []
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == [2, 1]
+    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == [3, 4]
+    assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
     ).data == [6, 3, 4]
 
 
 def test_isolated_soma_experiment_mappings(soma1):
-    d1 = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(soma1)
-    assert d1.obs_axis.id_mapping_from_values([]).data == []
-    assert d1.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == [2, 1]
-    assert d1.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == [3, 4]
-    assert d1.var_axes["raw"].id_mapping_from_values(
+    rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(soma1)
+    assert rd.obs_axis.id_mapping_from_values([]).data == []
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == [2, 1]
+    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == [3, 4]
+    assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
     ).data == [6, 3, 4]
+
+
+def test_multiples_without_experiment(h5ad1, h5ad2, h5ad3, h5ad4):
+    rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+        experiment_uri=None,
+        h5ad_file_names=[h5ad1, h5ad2, h5ad3, h5ad4],
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == [2, 8]
+    assert rd.var_axes["RNA"].id_mapping_from_values(["ESR1", "VEGFA"]).data == [2, 4]
+    assert rd.var_axes["raw"].id_mapping_from_values(
+        ["ZZZ3", "RAW2", "TP53", "VEGFA"]
+    ).data == [9, 6, 3, 4]
+
+    assert rd.obs_axis.data == {
+        "AAAT": 0,
+        "ACTG": 1,
+        "AGAG": 2,
+        "CAAT": 3,
+        "CCTG": 4,
+        "CGAG": 5,
+        "GAAT": 6,
+        "GCTG": 7,
+        "GGAG": 8,
+        "TAAT": 9,
+        "TCTG": 10,
+        "TGAG": 11,
+    }
+
+    assert rd.var_axes["RNA"].data == {
+        "AKT1": 0,
+        "APOE": 1,
+        "EGFR": 5,
+        "ESR1": 2,
+        "TP53": 3,
+        "VEGFA": 4,
+        "ZZZ3": 6,
+    }
+
+    assert rd.var_axes["raw"].data == {
+        "AKT1": 0,
+        "APOE": 1,
+        "ESR1": 2,
+        "TP53": 3,
+        "VEGFA": 4,
+        "RAW1": 5,
+        "RAW2": 6,
+        "EGFR": 7,
+        "RAW3": 8,
+        "ZZZ3": 9,
+    }
+
+
+def test_multiples_with_experiment(soma1, h5ad2, h5ad3, h5ad4):
+    rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+        experiment_uri=soma1,
+        h5ad_file_names=[h5ad2, h5ad3, h5ad4],
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == [2, 8]
+    assert rd.var_axes["RNA"].id_mapping_from_values(["ESR1", "VEGFA"]).data == [2, 4]
+    assert rd.var_axes["raw"].id_mapping_from_values(
+        ["ZZZ3", "RAW2", "TP53", "VEGFA"]
+    ).data == [9, 6, 3, 4]
+
+    assert rd.obs_axis.data == {
+        "AAAT": 0,
+        "ACTG": 1,
+        "AGAG": 2,
+        "CAAT": 3,
+        "CCTG": 4,
+        "CGAG": 5,
+        "GAAT": 6,
+        "GCTG": 7,
+        "GGAG": 8,
+        "TAAT": 9,
+        "TCTG": 10,
+        "TGAG": 11,
+    }
+
+    assert rd.var_axes["RNA"].data == {
+        "AKT1": 0,
+        "APOE": 1,
+        "EGFR": 5,
+        "ESR1": 2,
+        "TP53": 3,
+        "VEGFA": 4,
+        "ZZZ3": 6,
+    }
+
+    assert rd.var_axes["raw"].data == {
+        "AKT1": 0,
+        "APOE": 1,
+        "ESR1": 2,
+        "TP53": 3,
+        "VEGFA": 4,
+        "RAW1": 5,
+        "RAW2": 6,
+        "EGFR": 7,
+        "RAW3": 8,
+        "ZZZ3": 9,
+    }
