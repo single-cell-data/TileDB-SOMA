@@ -1,8 +1,8 @@
 import json
-from dataclasses import dataclass
 from typing import Any, Dict, Optional, Sequence
 
 import anndata as ad
+import attrs
 import pandas as pd
 from typing_extensions import Self
 
@@ -12,7 +12,7 @@ import tiledbsoma.logging
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
 
 
-@dataclass
+@attrs.define
 class AxisAmbientLabelMapping:
     """
     For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
@@ -82,7 +82,9 @@ class AxisAmbientLabelMapping:
         return cls(data, index_field_name)
 
     def toJSON(self) -> str:
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+        return json.dumps(
+            self, default=lambda o: attrs.asdict(o), sort_keys=True, indent=4
+        )
 
     @classmethod
     def fromJSON(cls, s: str) -> Self:
@@ -90,7 +92,7 @@ class AxisAmbientLabelMapping:
         return cls(dikt["data"], dikt["field_name"])
 
 
-@dataclass
+@attrs.define
 class ExperimentAmbientLabelMapping:
     """
     For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
@@ -388,7 +390,9 @@ class ExperimentAmbientLabelMapping:
             print(f"{k}/var:{len(v.data)}")
 
     def toJSON(self) -> str:
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+        return json.dumps(
+            self, default=lambda o: attrs.asdict(o), sort_keys=True, indent=4
+        )
 
     @classmethod
     def fromJSON(cls, s: str) -> Self:

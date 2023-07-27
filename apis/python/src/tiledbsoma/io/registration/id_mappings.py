@@ -1,7 +1,7 @@
-from dataclasses import dataclass
 from typing import Dict, List
 
 import anndata as ad
+import attrs
 import pandas as pd
 from typing_extensions import Self
 
@@ -9,7 +9,7 @@ import tiledbsoma
 import tiledbsoma.logging
 
 
-@dataclass
+@attrs.define
 class AxisIDMapping:
     """
     For a single to-be-appended AnnData/H5AD input in SOMA multi-file append-mode ingestion, this
@@ -30,7 +30,7 @@ class AxisIDMapping:
         return cls(list(range(n)))
 
 
-@dataclass
+@attrs.define
 class ExperimentIDMapping:
     """
     For a single to-be-appended AnnData/H5AD input in SOMA multi-file append-mode ingestion, this
