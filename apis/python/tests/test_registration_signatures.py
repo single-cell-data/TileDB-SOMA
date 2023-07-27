@@ -22,13 +22,13 @@ def canned_anndata(canned_h5ad_file):
 
 
 def test_signature_serdes(canned_h5ad_file, canned_anndata):
-    sig = signatures.Signature.fromH5AD(canned_h5ad_file.as_posix())
+    sig = signatures.Signature.from_h5ad(canned_h5ad_file.as_posix())
     text1 = sig.toJSON()
     assert "obs_schema" in text1
     assert "var_schema" in text1
     assert sig == signatures.Signature.fromJSON(text1)
 
-    sig = signatures.Signature.fromAnnData(canned_anndata)
+    sig = signatures.Signature.from_anndata(canned_anndata)
     text2 = sig.toJSON()
     assert sig == signatures.Signature.fromJSON(text2)
 
@@ -37,7 +37,7 @@ def test_signature_serdes(canned_h5ad_file, canned_anndata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     uri = tiledbsoma.io.from_anndata(output_path, canned_anndata, "RNA")
-    sig = signatures.Signature.fromSOMAExperiment(uri)
+    sig = signatures.Signature.from_soma_experiment(uri)
     text3 = sig.toJSON()
     assert sig == signatures.Signature.fromJSON(text3)
 
@@ -51,12 +51,12 @@ def test_compatible(canned_anndata):
     assert ok
     assert msg is None
 
-    sig1 = signatures.Signature.fromAnnData(canned_anndata)
+    sig1 = signatures.Signature.from_anndata(canned_anndata)
 
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     uri = tiledbsoma.io.from_anndata(output_path, canned_anndata, "RNA")
-    sig2 = signatures.Signature.fromSOMAExperiment(uri)
+    sig2 = signatures.Signature.from_soma_experiment(uri)
 
     # Check that single inputs result in zero incompatibility
     ok, msg = signatures.Signature.compatible({"anndata": sig1})
@@ -84,7 +84,7 @@ def test_compatible(canned_anndata):
     # Check incompatibility of modified AnnData
     adata3 = canned_anndata
     del adata3.obs["groups"]
-    sig3 = signatures.Signature.fromAnnData(adata3)
+    sig3 = signatures.Signature.from_anndata(adata3)
     ok, msg = signatures.Signature.compatible({"orig": sig1, "anndata3": sig3})
     assert not ok
     assert msg is not None

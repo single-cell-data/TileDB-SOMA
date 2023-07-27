@@ -110,7 +110,7 @@ class Signature:
     varm_dtypes: Dict[str, str]
 
     @classmethod
-    def fromAnnData(
+    def from_anndata(
         cls,
         adata: ad.AnnData,
         *,
@@ -175,7 +175,7 @@ class Signature:
         )
 
     @classmethod
-    def fromH5AD(
+    def from_h5ad(
         cls,
         h5ad_file_name: str,
         *,
@@ -184,13 +184,13 @@ class Signature:
         default_X_layer_name: str = "data",
     ) -> Self:
         """
-        See ``fromAnnData``.
+        See ``from_anndata``.
         """
         adata = ad.read_h5ad(h5ad_file_name, "r")
-        return cls.fromAnnData(adata, default_X_layer_name=default_X_layer_name)
+        return cls.from_anndata(adata, default_X_layer_name=default_X_layer_name)
 
     @classmethod
-    def fromSOMAExperiment(cls, uri: str, measurement_name: str = "RNA") -> Self:
+    def from_soma_experiment(cls, uri: str, measurement_name: str = "RNA") -> Self:
         """
         Constructs a pre-check signature from a SOMA experiment, which can be compared against
         another signature from AnnData/H5AD or SOMA experiment.
