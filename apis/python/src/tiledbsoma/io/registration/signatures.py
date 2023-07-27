@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 import anndata as ad
 import pandas as pd
@@ -246,23 +246,23 @@ class Signature:
             )
 
     @classmethod
-    def compatible(cls, signatures: Dict[str, Self]) -> Tuple[bool, Optional[str]]:
+    def check_compatible(cls, signatures: Dict[str, Self]) -> None:
         """
         Determines if any number of signatures from SOMA experiment or AnnData/H5AD will be safe
-        from schema-incompatibility at ingestion time. On success, the second argument is None; on
-        failure, the second argument can be used for reporting to the user.
+        from schema-incompatibility at ingestion time. On failure, a ``ValueError`` is raised
+        with user-suitable cause details.
         """
         if len(signatures) < 2:
-            return (True, None)
+            return
         items = list(signatures.items())
         namea, siga = items[0]
         for nameb, sigb in items[1:]:
-            if not siga.compatibleWith(sigb):
-                msg = f"Incompatible signatures {namea!r}, {nameb!r}:\n{siga.toJSON()}\n{sigb.toJSON()}"
-                return (False, msg)
-        return (True, None)
+            if not siga._compatible_with(sigb):
+                raise ValueError(
+                    f"Incompatible signatures {namea!r}, {nameb!r}:\n{siga.toJSON()}\n{sigb.toJSON()}"
+                )
 
-    def compatibleWith(self, other: Self) -> bool:
+    def _compatible_with(self, other: Self) -> bool:
         """
         Pairwise helper method for ``compatible``. Reasons for incompatibility are currently advised
         to be handled a level up by simply showing the user the failed signature pair.

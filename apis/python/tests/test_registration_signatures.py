@@ -47,9 +47,7 @@ def test_signature_serdes(canned_h5ad_file, canned_anndata):
 def test_compatible(canned_anndata):
 
     # Check that zero inputs result in zero incompatibility
-    ok, msg = signatures.Signature.compatible({})
-    assert ok
-    assert msg is None
+    signatures.Signature.check_compatible({})
 
     sig1 = signatures.Signature.from_anndata(canned_anndata)
 
@@ -59,32 +57,23 @@ def test_compatible(canned_anndata):
     sig2 = signatures.Signature.from_soma_experiment(uri)
 
     # Check that single inputs result in zero incompatibility
-    ok, msg = signatures.Signature.compatible({"anndata": sig1})
-    assert ok
-    assert msg is None
-
-    ok, msg = signatures.Signature.compatible({"experiment": sig2})
-    assert ok
-    assert msg is None
+    signatures.Signature.check_compatible({"anndata": sig1})  # no throw
+    signatures.Signature.check_compatible({"experiment": sig2})  # no throw
 
     # Check that AnnData/H5AD is compatible with itself; likewise with SOMA Experiment
-    ok, msg = signatures.Signature.compatible({"anndata": sig1, "same": sig1})
-    assert ok
-    assert msg is None
-
-    ok, msg = signatures.Signature.compatible({"experiment": sig2, "same": sig2})
-    assert ok
-    assert msg is None
+    signatures.Signature.check_compatible({"anndata": sig1, "same": sig1})  # no throw
+    signatures.Signature.check_compatible(
+        {"experiment": sig2, "same": sig2}
+    )  # no throw
 
     # Check compatibility of identical AnnData / SOMA experiment.
-    ok, msg = signatures.Signature.compatible({"anndata": sig1, "experiment": sig2})
-    assert ok
-    assert msg is None
+    signatures.Signature.check_compatible(
+        {"anndata": sig1, "experiment": sig2}
+    )  # no throw
 
     # Check incompatibility of modified AnnData
     adata3 = canned_anndata
     del adata3.obs["groups"]
     sig3 = signatures.Signature.from_anndata(adata3)
-    ok, msg = signatures.Signature.compatible({"orig": sig1, "anndata3": sig3})
-    assert not ok
-    assert msg is not None
+    with pytest.raises(ValueError):
+        signatures.Signature.check_compatible({"orig": sig1, "anndata3": sig3})
