@@ -306,12 +306,4 @@ class Signature:
     @classmethod
     def fromJSON(cls, s: str) -> Self:
         dikt = json.loads(s)
-        return cls(
-            dikt["obs_schema"],
-            dikt["var_schema"],
-            dikt["raw_var_schema"],
-            dikt["X_dtypes"],
-            dikt["raw_X_dtype"],
-            dikt["obsm_dtypes"],
-            dikt["varm_dtypes"],
-        )
+        return cls(**dikt)
