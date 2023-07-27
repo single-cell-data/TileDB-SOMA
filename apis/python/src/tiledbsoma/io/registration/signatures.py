@@ -75,7 +75,7 @@ def _string_dict_from_pandas_dataframe(
     return _string_dict_from_arrow_schema(arrow_schema)
 
 
-@attrs.define
+@attrs.define(kw_only=True)
 class Signature:
     """
     This is support for compatibility pre-check for append-mode SOMA ingestion.
