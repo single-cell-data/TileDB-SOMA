@@ -14,20 +14,30 @@ from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_value
 
 @dataclass
 class AxisAmbientLabelMapping:
-    """TODO: docstring"""
+    """
+    For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
+    class tracks the mapping of input-data ``obs`` or ``var`` ID-column name (barcode ID, gene
+    symbol) to SOMA join IDs for SOMA experiment ``obs`` or ``var``.
+
+    See module-level comments for more information.
+    """
 
     data: Dict[str, int]
     field_name: str
 
     def get_next_start_soma_joinid(self) -> int:
-        """TODO: docstring"""
+        """Once some number of input files have been registered for an ``obs`` or ``var``
+        axis, this returned the next as-yet-unused SOMA join ID for the axis."""
         if len(self.data) == 0:
             return 0
         else:
             return max(self.data.values()) + 1
 
     def id_mapping_from_values(self, input_ids: Sequence[Any]) -> AxisIDMapping:
-        """TODO: docstring"""
+        """Given registered label-to-SOMA-join-ID mappings for all registered input files for an
+        ``obs`` or ``var`` axis, and a list of input-file 0-up offsets, this returns an int-to-int
+        mapping from a single input file's ``obs`` or ``var`` axis to the registered SOMA join IDs.
+        """
         soma_joinids = []
         for i, input_id in enumerate(input_ids):
             if input_id not in self.data:
@@ -36,7 +46,11 @@ class AxisAmbientLabelMapping:
         return AxisIDMapping(soma_joinids)
 
     def id_mapping_from_dataframe(self, df: pd.DataFrame) -> AxisIDMapping:
-        """TODO: docstring"""
+        """Given registered label-to-SOMA-join-ID mappings for all registered input files for an
+        ``obs`` or ``var`` axis, and an input file's dataframe with its 0-up offsets, this returns
+        an int-to-int mapping from a single input file's ``obs`` or ``var`` axis to the registered
+        SOMA join IDs.
+        """
         values = get_dataframe_values(df, self.field_name)
         return self.id_mapping_from_values(values)
 
@@ -47,7 +61,11 @@ class AxisAmbientLabelMapping:
         *,
         index_field_name: Optional[str] = None,
     ) -> Self:
-        """TODO: docstring"""
+        """Factory method to compute an axis label-to-SOMA-join-ID mapping for a single dataframe in
+        isolation. This is used when a user is ingesting a single AnnData/H5AD to a single SOMA
+        experiment, not in append mode, but allowing us to still have the bulk of the ingestor code
+        to be non-duplicated between non-append mode and append mode.
+        """
         tiledbsoma.logging.logger.info("Registration: registering AnnData dataframe.")
 
         if index_field_name is None:
@@ -64,7 +82,6 @@ class AxisAmbientLabelMapping:
         return cls(data, index_field_name)
 
     def toJSON(self) -> str:
-        """TODO: docstring"""
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     @classmethod
@@ -75,6 +92,12 @@ class AxisAmbientLabelMapping:
 
 @dataclass
 class ExperimentAmbientLabelMapping:
+    """
+    For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
+    class contains an ``AxisAmbientLabelMapping`` for ``obs``, and an ``AxisAmbientLabelMapping``
+    for ``var`` in each measurement.
+    """
+
     obs_axis: AxisAmbientLabelMapping
     var_axes: Dict[str, AxisAmbientLabelMapping]
 
@@ -87,9 +110,8 @@ class ExperimentAmbientLabelMapping:
         var_field_name: str = "var_id",
     ) -> ExperimentIDMapping:
         """
-        TODO: docstring
-        TODO: make it very clear the ambients are for multiple AnnData inputs, but here we select
-        the ID mappings for only this one AnnData input.
+        Given label-to-SOMA-join-ID mappings for all to-be-appended input files, this selects
+        out the offset-to-SOMA-join-ID mappings for a single input file.
         """
         obs_axis = self.obs_axis.id_mapping_from_dataframe(adata.obs)
         var_axes = {}
@@ -115,7 +137,11 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: Optional[str] = None,
         var_field_name: Optional[str] = None,
     ) -> Self:
-        """TODO: docstring"""
+        """Factory method to compute an label-to-SOMA-join-ID mappings for a single input file in
+        isolation. This is used when a user is ingesting a single AnnData/H5AD to a single SOMA
+        experiment, not in append mode, but allowing us to still have the bulk of the ingestor code
+        to be non-duplicated between non-append mode and append mode.
+        """
         tiledbsoma.logging.logger.info("Registration: registering AnnData object.")
 
         obs_axis = AxisAmbientLabelMapping.from_isolated_dataframe(
@@ -158,7 +184,11 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: Optional[str] = None,
         var_field_name: Optional[str] = None,
     ) -> Self:
-        """TODO: docstring"""
+        """Factory method to compute label-to-SOMA-join-ID mappings for a single input file in
+        isolation. This is used when a user is ingesting a single AnnData/H5AD to a single SOMA
+        experiment, not in append mode, but allowing us to still have the bulk of the ingestor code
+        to be non-duplicated between non-append mode and append mode.
+        """
         adata = ad.read_h5ad(h5ad_file_name, "r")
         return cls.from_isolated_anndata(
             adata,
@@ -176,7 +206,11 @@ class ExperimentAmbientLabelMapping:
         var_field_name: str = "var_id",
         # XXX CTX/CFG
     ) -> Self:
-        """TODO: docstring"""
+        """Factory method to compute label-to-SOMA-join-ID mappings for a single SOMA experiment in
+        isolation. These are already committed to SOMA storage, so they are the unchangeable inputs
+        for a multi-file append-mode ingest to that experiment. The label-to-SOMA-join-ID mappings
+        for the input files will be computed on top of this foundation.
+        """
 
         obs_map = {}
         var_maps = {}
@@ -233,7 +267,7 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: str = "obs_id",
         var_field_name: str = "var_id",
     ) -> Self:
-        """TODO: docstring"""
+        """Extends registration data to one more AnnData input."""
         tiledbsoma.logging.logger.info("Registration: registering AnnData object.")
 
         obs_next_soma_joinid = previous.obs_axis.get_next_start_soma_joinid()
@@ -297,7 +331,7 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: str = "obs_id",
         var_field_name: str = "var_id",
     ) -> Self:
-        """TODO: docstring"""
+        """Extends registration data to one more H5AD input file."""
         tiledbsoma.logging.logger.info(f"Registration: registering {h5ad_file_name}.")
 
         adata = ad.read_h5ad(h5ad_file_name, "r")
@@ -320,9 +354,8 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: str,
         var_field_name: str,
     ) -> Self:
-        """TODO: docstring"""
-
-        # TODO: call the pre-check method and raise if not OK
+        """Extends registration data from the baseline, already-written SOMA
+        experiment to include multiple H5AD input files."""
 
         if experiment_uri is not None and tiledbsoma.Experiment.exists(experiment_uri):
             registration_data = cls.from_isolated_soma_experiment(
@@ -355,7 +388,6 @@ class ExperimentAmbientLabelMapping:
             print(f"{k}/var:{len(v.data)}")
 
     def toJSON(self) -> str:
-        """TODO: docstring"""
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     @classmethod
