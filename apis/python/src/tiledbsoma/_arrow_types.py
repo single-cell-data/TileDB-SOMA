@@ -168,6 +168,7 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     Also replace Numpy/Pandas-style nulls with Arrow-style nulls.
     """
     null_fields = set()
+    # Not for name, col in df.items() since we need df[k] on the left-hand sides
     for k in df:
         if df[k].dtype == "category":
             df[k] = df[k].astype(df[k].cat.categories.dtype)
