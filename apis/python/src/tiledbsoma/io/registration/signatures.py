@@ -249,8 +249,8 @@ class Signature:
     @classmethod
     def compatible(cls, signatures: Dict[str, Self]) -> Tuple[bool, Optional[str]]:
         """
-        Determines if two signatures from SOMA experiment or AnnData/H5AD will be safe from
-        schema-incompatibility at ingestion time. On success, the second argument is None; on
+        Determines if any number of signatures from SOMA experiment or AnnData/H5AD will be safe
+        from schema-incompatibility at ingestion time. On success, the second argument is None; on
         failure, the second argument can be used for reporting to the user.
         """
         if len(signatures) < 2:
