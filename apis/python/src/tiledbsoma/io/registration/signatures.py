@@ -11,6 +11,11 @@ import tiledbsoma
 import tiledbsoma.logging
 from tiledbsoma._arrow_types import df_to_arrow
 
+_EQUIVALENCES = {
+    "large_string": "string",
+    "large_binary": "binary",
+}
+
 
 def _stringify_type(t: pa.DataType) -> str:
     """
@@ -21,10 +26,6 @@ def _stringify_type(t: pa.DataType) -> str:
     Arrow string and large_string must map to TileDB string, which is large-only. Thus string and
     large_string form an equivalence class. Similarly for Arrow binary and large_binary.
     """
-    _EQUIVALENCES = {
-        "large_string": "string",
-        "large_binary": "binary",
-    }
     str_t = str(t)
     return _EQUIVALENCES.get(str_t, str_t)
 
@@ -259,7 +260,7 @@ class Signature:
         for nameb, sigb in items[1:]:
             if not siga._compatible_with(sigb):
                 raise ValueError(
-                    f"Incompatible signatures {namea!r}, {nameb!r}:\n{siga.toJSON()}\n{sigb.toJSON()}"
+                    f"Incompatible signatures {namea!r}, {nameb!r}:\n{siga.to_json()}\n{sigb.to_json()}"
                 )
 
     def _compatible_with(self, other: Self) -> bool:
@@ -272,7 +273,7 @@ class Signature:
         # "coming soon" we'll allow people the ability to do things like coercing one input's
         # float64 to another's float32 and the evolution will be toward more iffing, not less.  As
         # well, in that case, we'll need to also fine-grain the error-reporting to clearly spell out
-        # what we coudn't handle -- rather than just showing the user the two signatures' .toJSON()
+        # what we coudn't handle -- rather than just showing the user the two signatures' .to_json()
         # output as we do today.
 
         if self.obs_schema != other.obs_schema:
@@ -296,13 +297,11 @@ class Signature:
 
         return True
 
-    def toJSON(self) -> str:
+    def to_json(self) -> str:
         """Presents a signature as JSON which is suitable for distributed logging."""
-        return json.dumps(
-            self, default=lambda o: attrs.asdict(o), sort_keys=True, indent=4
-        )
+        return json.dumps(self, default=attrs.asdict, sort_keys=True, indent=4)
 
     @classmethod
-    def fromJSON(cls, s: str) -> Self:
+    def from_json(cls, s: str) -> Self:
         dikt = json.loads(s)
         return cls(**dikt)

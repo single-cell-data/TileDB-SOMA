@@ -23,14 +23,14 @@ def canned_anndata(canned_h5ad_file):
 
 def test_signature_serdes(canned_h5ad_file, canned_anndata):
     sig = signatures.Signature.from_h5ad(canned_h5ad_file.as_posix())
-    text1 = sig.toJSON()
+    text1 = sig.to_json()
     assert "obs_schema" in text1
     assert "var_schema" in text1
-    assert sig == signatures.Signature.fromJSON(text1)
+    assert sig == signatures.Signature.from_json(text1)
 
     sig = signatures.Signature.from_anndata(canned_anndata)
-    text2 = sig.toJSON()
-    assert sig == signatures.Signature.fromJSON(text2)
+    text2 = sig.to_json()
+    assert sig == signatures.Signature.from_json(text2)
 
     assert text1 == text2
 
@@ -38,8 +38,8 @@ def test_signature_serdes(canned_h5ad_file, canned_anndata):
     output_path = tempdir.name
     uri = tiledbsoma.io.from_anndata(output_path, canned_anndata, "RNA")
     sig = signatures.Signature.from_soma_experiment(uri)
-    text3 = sig.toJSON()
-    assert sig == signatures.Signature.fromJSON(text3)
+    text3 = sig.to_json()
+    assert sig == signatures.Signature.from_json(text3)
 
     assert text1 == text3
 
