@@ -1,8 +1,8 @@
 import json
-from dataclasses import dataclass
 from typing import Dict, Optional
 
 import anndata as ad
+import attrs
 import pandas as pd
 import pyarrow as pa
 from typing_extensions import Self
@@ -74,7 +74,7 @@ def _string_dict_from_pandas_dataframe(
     return _string_dict_from_arrow_schema(arrow_schema)
 
 
-@dataclass
+@attrs.define
 class Signature:
     """
     This is support for compatibility pre-check for append-mode SOMA ingestion.
@@ -298,7 +298,9 @@ class Signature:
 
     def toJSON(self) -> str:
         """Presents a signature as JSON which is suitable for distributed logging."""
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+        return json.dumps(
+            self, default=lambda o: attrs.asdict(o), sort_keys=True, indent=4
+        )
 
     @classmethod
     def fromJSON(cls, s: str) -> Self:
