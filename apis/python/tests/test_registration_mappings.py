@@ -157,7 +157,7 @@ def test_axis_mappings(anndata1):
     assert mapping.data == list(range(10))
 
     dictionary = registration.AxisAmbientLabelMapping(
-        {"a": 10, "b": 20, "c": 30}, "obs_id"
+        data={"a": 10, "b": 20, "c": 30}, field_name="obs_id"
     )
     assert dictionary.id_mapping_from_values(["a", "b", "c"]).data == [10, 20, 30]
     assert dictionary.id_mapping_from_values(["c", "a"]).data == [30, 10]

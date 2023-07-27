@@ -9,7 +9,7 @@ import tiledbsoma
 import tiledbsoma.logging
 
 
-@attrs.define
+@attrs.define(kw_only=True)
 class AxisIDMapping:
     """
     For a single to-be-appended AnnData/H5AD input in SOMA multi-file append-mode ingestion, this
@@ -27,10 +27,10 @@ class AxisIDMapping:
         important for uns arrays which we never grow on ingest --- rather, we
         sub-nest the entire recursive ``uns`` data structure.
         """
-        return cls(list(range(n)))
+        return cls(data=list(range(n)))
 
 
-@attrs.define
+@attrs.define(kw_only=True)
 class ExperimentIDMapping:
     """
     For a single to-be-appended AnnData/H5AD input in SOMA multi-file append-mode ingestion, this
@@ -58,11 +58,11 @@ class ExperimentIDMapping:
             "Registration: registering isolated AnnData object."
         )
 
-        obs_mapping = AxisIDMapping(list(range(len(adata.obs))))
+        obs_mapping = AxisIDMapping(data=list(range(len(adata.obs))))
         var_axes = {}
-        var_axes[measurement_name] = AxisIDMapping(list(range(len(adata.var))))
+        var_axes[measurement_name] = AxisIDMapping(data=list(range(len(adata.var))))
         if adata.raw is not None:
-            var_axes["raw"] = AxisIDMapping(list(range(len(adata.raw.var))))
+            var_axes["raw"] = AxisIDMapping(data=list(range(len(adata.raw.var))))
 
         return cls(obs_axis=obs_mapping, var_axes=var_axes)
 

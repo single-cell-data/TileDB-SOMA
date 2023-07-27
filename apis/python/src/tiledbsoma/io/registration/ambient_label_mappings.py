@@ -12,7 +12,7 @@ import tiledbsoma.logging
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
 
 
-@attrs.define
+@attrs.define(kw_only=True)
 class AxisAmbientLabelMapping:
     """
     For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
@@ -43,7 +43,7 @@ class AxisAmbientLabelMapping:
             if input_id not in self.data:
                 raise ValueError(f"input_id {input_id} not found in registration data")
             soma_joinids.append(self.data[input_id])
-        return AxisIDMapping(soma_joinids)
+        return AxisIDMapping(data=soma_joinids)
 
     def id_mapping_from_dataframe(self, df: pd.DataFrame) -> AxisIDMapping:
         """Given registered label-to-SOMA-join-ID mappings for all registered input files for an
@@ -79,7 +79,7 @@ class AxisAmbientLabelMapping:
         for index in df[index_field_name]:
             data[index] = next_soma_joinid
             next_soma_joinid += 1
-        return cls(data, index_field_name)
+        return cls(data=data, field_name=index_field_name)
 
     def to_json(self) -> str:
         return json.dumps(self, default=attrs.asdict, sort_keys=True, indent=4)
@@ -87,10 +87,10 @@ class AxisAmbientLabelMapping:
     @classmethod
     def from_json(cls, s: str) -> Self:
         dikt = json.loads(s)
-        return cls(dikt["data"], dikt["field_name"])
+        return cls(**dikt)
 
 
-@attrs.define
+@attrs.define(kw_only=True)
 class ExperimentAmbientLabelMapping:
     """
     For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
@@ -250,9 +250,9 @@ class ExperimentAmbientLabelMapping:
             )
 
         return cls(
-            obs_axis=AxisAmbientLabelMapping(obs_map, obs_field_name),
+            obs_axis=AxisAmbientLabelMapping(data=obs_map, field_name=obs_field_name),
             var_axes={
-                ms_name: AxisAmbientLabelMapping(data, var_field_name)
+                ms_name: AxisAmbientLabelMapping(data=data, field_name=var_field_name)
                 for ms_name, data in var_maps.items()
             },
         )
@@ -314,9 +314,9 @@ class ExperimentAmbientLabelMapping:
             f"Registration: accumulated to nobs={len(obs_map)} nvar={len(var_map)}."
         )
         return cls(
-            obs_axis=AxisAmbientLabelMapping(obs_map, obs_field_name),
+            obs_axis=AxisAmbientLabelMapping(data=obs_map, field_name=obs_field_name),
             var_axes={
-                ms_name: AxisAmbientLabelMapping(data, var_field_name)
+                ms_name: AxisAmbientLabelMapping(data=data, field_name=var_field_name)
                 for ms_name, data in var_maps.items()
             },
         )
@@ -365,10 +365,12 @@ class ExperimentAmbientLabelMapping:
             )
         else:
             registration_data = cls(
-                obs_axis=AxisAmbientLabelMapping({}, obs_field_name),
+                obs_axis=AxisAmbientLabelMapping(data={}, field_name=obs_field_name),
                 var_axes={
-                    measurement_name: AxisAmbientLabelMapping({}, var_field_name),
-                    "raw": AxisAmbientLabelMapping({}, var_field_name),
+                    measurement_name: AxisAmbientLabelMapping(
+                        data={}, field_name=var_field_name
+                    ),
+                    "raw": AxisAmbientLabelMapping(data={}, field_name=var_field_name),
                 },
             )
 
@@ -394,10 +396,10 @@ class ExperimentAmbientLabelMapping:
     def from_json(cls, s: str) -> Self:
         dikt = json.loads(s)
         obs_axis = AxisAmbientLabelMapping(
-            dikt["obs_axis"]["data"], dikt["obs_axis"]["field_name"]
+            data=dikt["obs_axis"]["data"], field_name=dikt["obs_axis"]["field_name"]
         )
         var_axes = {
-            k: AxisAmbientLabelMapping(v["data"], v["field_name"])
+            k: AxisAmbientLabelMapping(data=v["data"], field_name=v["field_name"])
             for k, v in dikt["var_axes"].items()
         }
-        return cls(obs_axis, var_axes)
+        return cls(obs_axis=obs_axis, var_axes=var_axes)
