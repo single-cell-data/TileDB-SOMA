@@ -41,8 +41,7 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> Dict[str, str]:
     # pre-check an AnnData/H5AD input to see if it's appendable to an existing SOMA experiment, we
     # must not punish the AnnData/H5AD input for it not having a soma_joinid column in its obs and
     # var.
-    if "soma_joinid" in retval:
-        del retval["soma_joinid"]
+    retval.pop("soma_joinid", None)
     return retval
 
 
