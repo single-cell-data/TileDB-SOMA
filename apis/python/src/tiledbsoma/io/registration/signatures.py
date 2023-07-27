@@ -271,6 +271,13 @@ class Signature:
         to be handled a level up by simply showing the user the failed signature pair.
         """
 
+        # Implementation note: _at present_ this could be implemented as `self == other`.  But
+        # "coming soon" we'll allow people the ability to do things like coercing one input's
+        # float64 to another's float32 and the evolution will be toward more iffing, not less.  As
+        # well, in that case, we'll need to also fine-grain the error-reporting to clearly spell out
+        # what we coudn't handle -- rather than just showing the user the two signatures' .toJSON()
+        # output as we do today.
+
         if self.obs_schema != other.obs_schema:
             return False
 
