@@ -65,6 +65,8 @@ Rcpp::List soma_array_reader(const std::string& uri,
     spdl::info("[soma_array_reader] Reading from {}", uri);
 
     std::map<std::string, std::string> platform_config = config_vector_to_map(config);
+    // to create a Context object:
+    //    std::make_shared<Context>(Config(platform_config)),
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {    // If we have column names, select them
@@ -151,10 +153,20 @@ Rcpp::List soma_array_reader(const std::string& uri,
         memcpy((void*) chldschemaxp, pp.second.get(), sizeof(ArrowSchema));
         memcpy((void*) chldarrayxp, pp.first.get(), sizeof(ArrowArray));
 
-        spdl::info("[soma_array_reader] Incoming name {} length {}", std::string(pp.second->name), pp.first->length);
+        spdl::info("[soma_array_reader] Incoming name {} length {}",
+                   std::string(pp.second->name), pp.first->length);
 
         schemaxp->children[i] = chldschemaxp;
         arrayxp->children[i] = chldarrayxp;
+
+        // if (buf->has_enumeration()) {
+        //     auto vec = buf->get_enumeration();
+        //     Rcpp::Rcout << names[i] << ": ";
+        //     for (auto& s: vec) {
+        //         Rcpp::Rcout << s << " ";
+        //     }
+        //     Rcpp::Rcout << std::endl;
+        // }
 
         if (pp.first->length > arrayxp->length) {
             spdl::debug("[soma_array_reader] Setting array length to {}", pp.first->length);
