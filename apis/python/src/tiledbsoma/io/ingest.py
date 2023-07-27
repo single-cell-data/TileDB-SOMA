@@ -46,6 +46,7 @@ from .. import (
     eta,
     logging,
 )
+from .._arrow_types import df_to_arrow
 from .._collection import AnyTileDBCollection
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -641,34 +642,6 @@ def _create_or_open_coll(
     return cls.create(uri, context=context)
 
 
-def _df_to_arrow(df: pd.DataFrame) -> pa.Table:
-    """
-    Categoricals are not yet well supported, so we must flatten.
-    Also replace Numpy/Pandas-style nulls with Arrow-style nulls.
-    """
-    null_fields = set()
-    for k in df:
-        if df[k].dtype == "category":
-            df[k] = df[k].astype(df[k].cat.categories.dtype)
-        if df[k].isnull().any():
-            if df[k].isnull().all():
-                df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k]))
-            else:
-                df[k].where(
-                    df[k].notnull(),
-                    pd.Series(pa.nulls(df[k].isnull().sum(), pa.infer_type(df[k]))),
-                    inplace=True,
-                )
-            null_fields.add(k)
-    arrow_table = pa.Table.from_pandas(df)
-    if null_fields:
-        md = arrow_table.schema.metadata
-        md.update(dict.fromkeys(null_fields, "nullable"))
-        arrow_table = arrow_table.replace_schema_metadata(md)
-
-    return arrow_table
-
-
 def _write_dataframe(
     df_uri: str,
     df: pd.DataFrame,
@@ -705,7 +678,7 @@ def _write_dataframe_impl(
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
-    arrow_table = _df_to_arrow(df)
+    arrow_table = df_to_arrow(df)
 
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
