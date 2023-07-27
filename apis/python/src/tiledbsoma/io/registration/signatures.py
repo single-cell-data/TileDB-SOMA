@@ -255,13 +255,11 @@ class Signature:
         """
         if len(signatures) < 2:
             return (True, None)
-        names = list(signatures.keys())
-        first_name = names[0]
-        for other_name in names[1:]:
-            siga = signatures[first_name]
-            sigb = signatures[other_name]
+        items = list(signatures.items())
+        namea, siga = items[0]
+        for nameb, sigb in items[1:]:
             if not siga.compatibleWith(sigb):
-                msg = f"Incompatible signatures {first_name!r}, {other_name!r}:\n{siga.toJSON()}\n{sigb.toJSON()}"
+                msg = f"Incompatible signatures {namea!r}, {nameb!r}:\n{siga.toJSON()}\n{sigb.toJSON()}"
                 return (False, msg)
         return (True, None)
 
