@@ -55,7 +55,7 @@ class SOMAMeasurement : public SOMACollection {
      * @param schema TileDB ArraySchema
      * @param platform_config Optional config parameter dictionary
      */
-    static std::unique_ptr<SOMAMeasurement> create(
+    static std::shared_ptr<SOMAMeasurement> create(
         std::string_view uri,
         ArraySchema schema,
         std::map<std::string, std::string> platform_config = {});
@@ -67,7 +67,7 @@ class SOMAMeasurement : public SOMACollection {
      * @param schema TileDB ArraySchema
      * @param ctx TileDB context
      */
-    static std::unique_ptr<SOMAMeasurement> create(
+    static std::shared_ptr<SOMAMeasurement> create(
         std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
 
     //===================================================================
@@ -101,24 +101,24 @@ class SOMAMeasurement : public SOMACollection {
     //===================================================================
 
     // Primary annotations on the variable axis
-    std::unique_ptr<SOMADataFrame> var_;
+    std::shared_ptr<SOMADataFrame> var_;
 
     // A collection of matrices, each containing measured feature values
-    std::unique_ptr<SOMACollection> X_;
+    std::shared_ptr<SOMACollection> X_;
 
     // A collection of dense matrices containing annotations of each obs row
-    std::unique_ptr<SOMACollection> obsm_;
+    std::shared_ptr<SOMACollection> obsm_;
 
     // A collection of sparse matrices containing pairwise annotations of each
     // obs row
-    std::unique_ptr<SOMACollection> obsp_;
+    std::shared_ptr<SOMACollection> obsp_;
 
     // A collection of dense matrices containing annotations of each var row
-    std::unique_ptr<SOMACollection> varm_;
+    std::shared_ptr<SOMACollection> varm_;
 
     // A collection of sparse matrices containing pairwise annotations of each
     // var row
-    std::unique_ptr<SOMACollection> varp_;
+    std::shared_ptr<SOMACollection> varp_;
 };
 }  // namespace tiledbsoma
 

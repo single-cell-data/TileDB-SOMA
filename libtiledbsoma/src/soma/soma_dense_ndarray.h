@@ -56,9 +56,9 @@ class SOMADenseNDArray : public SOMAObject {
      * @param uri URI to create the SOMADenseNDArray
      * @param schema TileDB ArraySchema
      * @param platform_config Optional config parameter dictionary
-     * @return std::unique_ptr<SOMADenseNDArray> opened in read mode
+     * @return std::shared_ptr<SOMADenseNDArray> opened in read mode
      */
-    static std::unique_ptr<SOMADenseNDArray> create(
+    static std::shared_ptr<SOMADenseNDArray> create(
         std::string_view uri,
         ArraySchema schema,
         std::map<std::string, std::string> platform_config = {});
@@ -69,9 +69,9 @@ class SOMADenseNDArray : public SOMAObject {
      * @param uri URI to create the SOMADenseNDArray
      * @param schema TileDB ArraySchema
      * @param ctx TileDB context
-     * @return std::unique_ptr<SOMADenseNDArray> opened in read mode
+     * @return std::shared_ptr<SOMADenseNDArray> opened in read mode
      */
-    static std::unique_ptr<SOMADenseNDArray> create(
+    static std::shared_ptr<SOMADenseNDArray> create(
         std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
 
     /**
@@ -88,9 +88,9 @@ class SOMADenseNDArray : public SOMAObject {
      * open this object. If unset, uses the timestamp provided by the context.
      * @param result_order Read result order: automatic (default), rowmajor, or
      * colmajor
-     * @return std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray
+     * @return std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray
      */
-    static std::unique_ptr<SOMADenseNDArray> open(
+    static std::shared_ptr<SOMADenseNDArray> open(
         std::string_view uri,
         OpenMode mode,
         std::map<std::string, std::string> platform_config = {},
@@ -112,9 +112,9 @@ class SOMADenseNDArray : public SOMAObject {
      * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray
+     * @return std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray
      */
-    static std::unique_ptr<SOMADenseNDArray> open(
+    static std::shared_ptr<SOMADenseNDArray> open(
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<Context> ctx,

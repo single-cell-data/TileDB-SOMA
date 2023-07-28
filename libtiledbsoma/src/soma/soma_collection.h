@@ -61,7 +61,7 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param platform_config Optional config parameter dictionary
      */
-    static std::unique_ptr<SOMACollection> create(
+    static std::shared_ptr<SOMACollection> create(
         std::string_view uri,
         std::map<std::string, std::string> platform_config = {});
 
@@ -71,7 +71,7 @@ class SOMACollection : public SOMAObject {
      * @param ctx TileDB context
      * @param uri URI to create the SOMACollection
      */
-    static std::unique_ptr<SOMACollection> create(
+    static std::shared_ptr<SOMACollection> create(
         std::string_view uri, std::shared_ptr<Context> ctx);
 
     /**
@@ -81,9 +81,9 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param mode read or write
      * @param platform_config Config parameter dictionary
-     * @return std::unique_ptr<SOMACollection> SOMACollection
+     * @return std::shared_ptr<SOMACollection> SOMACollection
      */
-    static std::unique_ptr<SOMACollection> open(
+    static std::shared_ptr<SOMACollection> open(
         std::string_view uri,
         OpenMode mode,
         std::map<std::string, std::string> platform_config = {});
@@ -95,9 +95,9 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param mode read or write
      * @param ctx TileDB context
-     * @return std::unique_ptr<SOMACollection> SOMACollection
+     * @return std::shared_ptr<SOMACollection> SOMACollection
      */
-    static std::unique_ptr<SOMACollection> open(
+    static std::shared_ptr<SOMACollection> open(
         std::string_view uri, OpenMode mode, std::shared_ptr<Context> ctx);
 
     //===================================================================
@@ -119,7 +119,7 @@ class SOMACollection : public SOMAObject {
         std::optional<uint64_t> timestamp = std::nullopt);
 
     SOMACollection() = delete;
-    SOMACollection(const SOMACollection&) = delete;
+    SOMACollection(const SOMACollection&) = default;
     SOMACollection(SOMACollection&&) = default;
     ~SOMACollection() = default;
 
@@ -135,6 +135,15 @@ class SOMACollection : public SOMAObject {
      * Closes the SOMACollection object.
      */
     void close();
+
+    /**
+     * Check if the SOMACollection is open.
+     *
+     * @return bool true if open
+     */
+    bool is_open() const {
+        return group_->is_open();
+    }
 
     /**
      * Return the constant "SOMACollection".
@@ -172,7 +181,7 @@ class SOMACollection : public SOMAObject {
      *
      * @param key of member
      */
-    std::unique_ptr<SOMAObject> get(const std::string& key);
+    std::shared_ptr<SOMAObject> get(const std::string& key);
 
     /**
      * Check if the SOMACollection contains the given key.
@@ -206,7 +215,7 @@ class SOMACollection : public SOMAObject {
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
      */
-    std::unique_ptr<SOMACollection> add_new_collection(
+    std::shared_ptr<SOMACollection> add_new_collection(
         std::string_view key,
         std::string_view uri,
         URIType uri_type,
@@ -220,7 +229,7 @@ class SOMACollection : public SOMAObject {
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
      */
-    std::unique_ptr<SOMAExperiment> add_new_experiment(
+    std::shared_ptr<SOMAExperiment> add_new_experiment(
         std::string_view key,
         std::string_view uri,
         URIType uri_type,
@@ -235,7 +244,7 @@ class SOMACollection : public SOMAObject {
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
      */
-    std::unique_ptr<SOMAMeasurement> add_new_measurement(
+    std::shared_ptr<SOMAMeasurement> add_new_measurement(
         std::string_view key,
         std::string_view uri,
         URIType uri_type,
@@ -250,7 +259,7 @@ class SOMACollection : public SOMAObject {
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
      */
-    std::unique_ptr<SOMADataFrame> add_new_dataframe(
+    std::shared_ptr<SOMADataFrame> add_new_dataframe(
         std::string_view key,
         std::string_view uri,
         URIType uri_type,
@@ -265,7 +274,7 @@ class SOMACollection : public SOMAObject {
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
      */
-    std::unique_ptr<SOMADenseNDArray> add_new_dense_ndarray(
+    std::shared_ptr<SOMADenseNDArray> add_new_dense_ndarray(
         std::string_view key,
         std::string_view uri,
         URIType uri_type,
@@ -280,7 +289,7 @@ class SOMACollection : public SOMAObject {
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
      */
-    std::unique_ptr<SOMASparseNDArray> add_new_sparse_ndarray(
+    std::shared_ptr<SOMASparseNDArray> add_new_sparse_ndarray(
         std::string_view key,
         std::string_view uri,
         URIType uri_type,
@@ -294,6 +303,9 @@ class SOMACollection : public SOMAObject {
 
     // SOMAGroup
     std::shared_ptr<SOMAGroup> group_;
+
+    // Members of the SOMACollection
+    std::map<std::string, std::shared_ptr<SOMAObject>> children_;
 };
 }  // namespace tiledbsoma
 

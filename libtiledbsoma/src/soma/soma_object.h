@@ -64,11 +64,21 @@ class SOMAObject {
     virtual const std::string uri() const = 0;
 
     /**
-     * Get the context associated with the SOMAObject.
+     * @brief Get the context associated with the SOMAObject.
      *
      * @return std::shared_ptr<Context>
      */
     virtual std::shared_ptr<Context> ctx() = 0;
+
+    /**
+     * @brief Close the SOMAObject.
+     */
+    virtual void close() = 0;
+
+    /**
+     * @brief Check if the SOMAObject is open.
+     */
+    virtual bool is_open() const = 0;
 };
 }  // namespace tiledbsoma
 

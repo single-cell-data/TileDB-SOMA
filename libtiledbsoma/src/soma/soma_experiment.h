@@ -54,7 +54,7 @@ class SOMAExperiment : public SOMACollection {
      * @param schema TileDB ArraySchema
      * @param platform_config Optional config parameter dictionary
      */
-    static std::unique_ptr<SOMAExperiment> create(
+    static std::shared_ptr<SOMAExperiment> create(
         std::string_view uri,
         ArraySchema schema,
         std::map<std::string, std::string> platform_config = {});
@@ -66,7 +66,7 @@ class SOMAExperiment : public SOMACollection {
      * @param schema TileDB ArraySchema
      * @param ctx TileDB context
      */
-    static std::unique_ptr<SOMAExperiment> create(
+    static std::shared_ptr<SOMAExperiment> create(
         std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
 
     //===================================================================
@@ -101,10 +101,10 @@ class SOMAExperiment : public SOMACollection {
     //===================================================================
 
     // Primary annotations on the observation axis
-    std::unique_ptr<SOMADataFrame> obs_;
+    std::shared_ptr<SOMADataFrame> obs_;
 
     // A collection of named measurements
-    std::unique_ptr<SOMACollection> ms_;
+    std::shared_ptr<SOMACollection> ms_;
 };
 }  // namespace tiledbsoma
 
