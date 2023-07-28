@@ -112,6 +112,29 @@ class SOMAArray {
     //===================================================================
     //= public non-static
     //===================================================================
+
+    /**
+     * @brief Construct a new SOMAArray object
+     *
+     * @param mode TILEDB_READ or TILEDB_WRITE
+     * @param uri URI of the array
+     * @param name name of the array
+     * @param platform_config Config parameter dictionary
+     * @param column_names Columns to read
+     * @param batch_size Batch size
+     * @param result_order Result order
+     * @param timestamp Timestamp
+     */
+    SOMAArray(
+        tiledb_query_type_t mode,
+        std::string_view uri,
+        std::string_view name,
+        std::map<std::string, std::string> platform_config,
+        std::vector<std::string> column_names,
+        std::string_view batch_size,
+        std::string_view result_order,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+
     /**
      * @brief Construct a new SOMAArray object
      *
@@ -535,6 +558,14 @@ class SOMAArray {
      * be opened in READ mode, otherwise the function will error out.
      */
     uint64_t metadata_num() const;
+
+    /**
+     * Validates input parameters before opening array.
+     */
+    void validate(
+        tiledb_query_type_t mode,
+        std::string_view name,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
    private:
     //===================================================================
