@@ -80,7 +80,7 @@ Rcpp::List soma_array_reader(const std::string& uri,
     auto sr = tdbs::SOMAArray::open(OpenMode::read,
 				    uri,
                                     "unnamed",         // name parameter could be added
-                                    platform_config,   // to add, done in iterated reader
+                                    platform_config,
                                     column_names,
                                     batch_size,
                                     tdb_result_order);
