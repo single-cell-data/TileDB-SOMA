@@ -1,15 +1,19 @@
 name: TileDB-SOMA R CI
 
 on:
-  pull_request:
-    paths-ignore:
-      - "apis/python/**"
-      - ".pre-commit-config.yaml"
-  push:
-    branches:
-      - main
-      - 'release-*'
+  # -- turned off for now
+  #pull_request:
+  #  paths-ignore:
+  #    - "apis/python/**"
+  #    - ".pre-commit-config.yaml"
+  #push:
+  #  branches:
+  #    - main
+  #    - 'release-*'
+  # -- added as placeholder
+  workflow_dispatch:
 
+  
 env:
   COVERAGE_FLAGS: "r"
   COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}

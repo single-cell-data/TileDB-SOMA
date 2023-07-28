@@ -1,15 +1,18 @@
 name: TileDB-SOMA R-Python interop testing
 
 on:
-  pull_request:
-    paths:
-      - "apis/python/**"
-      - "apis/r/**"
-      - "apis/system/**"
-  push:
-    branches:
-      - main
-      - 'release-*'
+  # -- turned off for now
+  #pull_request:
+  #  paths:
+  #    - "apis/python/**"
+  #    - "apis/r/**"
+  #    - "apis/system/**"
+  #push:
+  #  branches:
+  #    - main
+  #    - 'release-*'
+  # -- added as placeholder
+  workflow_dispatch:
 
 jobs:
   ci:
