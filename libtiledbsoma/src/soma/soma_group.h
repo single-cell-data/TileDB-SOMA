@@ -137,7 +137,7 @@ class SOMAGroup {
     void close();
 
     /**
-     * Check if the SOMAObject is open.
+     * Check if the SOMAGroup is open.
      *
      * @return bool true if open
      */

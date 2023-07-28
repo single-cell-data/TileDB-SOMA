@@ -84,7 +84,9 @@ void SOMACollection::open(OpenMode mode) {
 
 void SOMACollection::close() {
     for (auto mem : children_) {
-        mem.second->close();
+        if (mem.second->is_open()) {
+            mem.second->close();
+        }
     }
     group_->close();
 }

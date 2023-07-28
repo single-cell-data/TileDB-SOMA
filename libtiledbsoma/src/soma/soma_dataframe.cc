@@ -118,6 +118,10 @@ void SOMADataFrame::close() {
     array_->close();
 }
 
+bool SOMADataFrame::is_open() const {
+    return array_->is_open();
+}
+
 const std::string SOMADataFrame::uri() const {
     return array_->uri();
 }
