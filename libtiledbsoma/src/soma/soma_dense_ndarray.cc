@@ -40,7 +40,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::create(
+std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray::create(
     std::string_view uri,
     ArraySchema schema,
     std::map<std::string, std::string> platform_config) {
@@ -48,7 +48,7 @@ std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::create(
         uri, schema, std::make_shared<Context>(Config(platform_config)));
 }
 
-std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::create(
+std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray::create(
     std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
     if (schema.array_type() != TILEDB_DENSE)
         throw TileDBSOMAError("ArraySchema must be set to dense.");
@@ -57,7 +57,7 @@ std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::create(
     return SOMADenseNDArray::open(uri, OpenMode::read, ctx);
 }
 
-std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
+std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
     std::string_view uri,
     OpenMode mode,
     std::map<std::string, std::string> platform_config,
@@ -73,14 +73,14 @@ std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
         timestamp);
 }
 
-std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
+std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<Context> ctx,
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_unique<SOMADenseNDArray>(
+    return std::make_shared<SOMADenseNDArray>(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 

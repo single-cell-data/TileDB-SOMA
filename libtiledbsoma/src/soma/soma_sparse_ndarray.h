@@ -56,9 +56,9 @@ class SOMASparseNDArray : public SOMAObject {
      * @param uri URI to create the SOMASparseNDArray
      * @param schema TileDB ArraySchema
      * @param platform_config Optional config parameter dictionary
-     * @return std::unique_ptr<SOMASparseNDArray> opened in read mode
+     * @return std::shared_ptr<SOMASparseNDArray> opened in read mode
      */
-    static std::unique_ptr<SOMASparseNDArray> create(
+    static std::shared_ptr<SOMASparseNDArray> create(
         std::string_view uri,
         ArraySchema schema,
         std::map<std::string, std::string> platform_config = {});
@@ -69,9 +69,9 @@ class SOMASparseNDArray : public SOMAObject {
      * @param uri URI to create the SOMASparseNDArray
      * @param schema TileDB ArraySchema
      * @param ctx TileDB context
-     * @return std::unique_ptr<SOMASparseNDArray> opened in read mode
+     * @return std::shared_ptr<SOMASparseNDArray> opened in read mode
      */
-    static std::unique_ptr<SOMASparseNDArray> create(
+    static std::shared_ptr<SOMASparseNDArray> create(
         std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
 
     /**
@@ -88,9 +88,9 @@ class SOMASparseNDArray : public SOMAObject {
      * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
+     * @return std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray
      */
-    static std::unique_ptr<SOMASparseNDArray> open(
+    static std::shared_ptr<SOMASparseNDArray> open(
         std::string_view uri,
         OpenMode mode,
         std::map<std::string, std::string> platform_config = {},
@@ -112,9 +112,9 @@ class SOMASparseNDArray : public SOMAObject {
      * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
+     * @return std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray
      */
-    static std::unique_ptr<SOMASparseNDArray> open(
+    static std::shared_ptr<SOMASparseNDArray> open(
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<Context> ctx,

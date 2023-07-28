@@ -137,6 +137,15 @@ class SOMAGroup {
     void close();
 
     /**
+     * Check if the SOMAObject is open.
+     *
+     * @return bool true if open
+     */
+    bool is_open() const {
+        return group_->is_open();
+    }
+
+    /**
      * Get the SOMAGroup URI.
      */
     const std::string uri() const;

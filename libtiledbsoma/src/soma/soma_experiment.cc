@@ -41,7 +41,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
+std::shared_ptr<SOMAExperiment> SOMAExperiment::create(
     std::string_view uri,
     ArraySchema schema,
     std::map<std::string, std::string> platform_config) {
@@ -49,7 +49,7 @@ std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
         uri, schema, std::make_shared<Context>(Config(platform_config)));
 }
 
-std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
+std::shared_ptr<SOMAExperiment> SOMAExperiment::create(
     std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
     std::string exp_uri(uri);
 
@@ -62,6 +62,6 @@ std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
     group->add_member(exp_uri + "/ms", URIType::absolute, "ms");
     group->close();
 
-    return std::make_unique<SOMAExperiment>(OpenMode::read, exp_uri, ctx);
+    return std::make_shared<SOMAExperiment>(OpenMode::read, exp_uri, ctx);
 }
 }  // namespace tiledbsoma
