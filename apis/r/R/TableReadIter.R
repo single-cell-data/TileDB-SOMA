@@ -36,11 +36,6 @@ TableReadIter <- R6::R6Class(
     ## refined from base class
     soma_reader_transform = function(x) {
       at <- soma_array_to_arrow_table(x)
-      for (n in names(private$enums)) {     # DE::TEMP::FIXME start
-          if (!is.null(private$enums[[n]])) {
-              at[[n]] <- arrow::DictionaryArray$create(at[[n]]$as_vector(), private$enums[[n]])
-          }
-      }  # DE::TEMP::FIXME end
       at
     }
 
