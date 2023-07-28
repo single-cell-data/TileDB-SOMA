@@ -33,6 +33,19 @@ class ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema) {
         schema->release = nullptr;
+
+        struct ArrowSchema* dict = schema->dictionary;
+        if (dict != nullptr) {
+            if (dict->format != nullptr) {
+                free((void*)dict->format);
+                dict->format = nullptr;
+            }
+            if (dict->release != nullptr) {
+                delete dict;
+                dict = nullptr;
+            }
+        }
+
         LOG_TRACE("[ArrowAdapter] release_schema");
     }
 
@@ -52,6 +65,19 @@ class ArrowAdapter {
         if (array->buffers != nullptr) {
             free(array->buffers);
         }
+
+        struct ArrowArray* dict = array->dictionary;
+        if (dict != nullptr) {
+            if (dict->buffers != nullptr) {
+                free(dict->buffers);
+                dict->buffers = nullptr;
+            }
+            if (dict->release != nullptr) {
+                delete dict;
+                dict = nullptr;
+            }
+        }
+
         array->release = nullptr;
     }
 
