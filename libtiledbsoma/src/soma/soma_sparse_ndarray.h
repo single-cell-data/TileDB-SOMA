@@ -160,6 +160,13 @@ class SOMASparseNDArray : public SOMAObject {
     void close();
 
     /**
+     * Check if the SOMASparseNDArray is open.
+     *
+     * @return bool true if open
+     */
+    bool is_open() const;
+
+    /**
      * Returns the constant "SOMASparseNDArray".
      *
      * @return std::string

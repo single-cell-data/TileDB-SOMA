@@ -119,6 +119,10 @@ void SOMASparseNDArray::close() {
     array_->close();
 }
 
+bool SOMASparseNDArray::is_open() const {
+    return array_->is_open();
+}
+
 const std::string SOMASparseNDArray::uri() const {
     return array_->uri();
 }

@@ -119,6 +119,10 @@ void SOMADenseNDArray::close() {
     array_->close();
 }
 
+bool SOMADenseNDArray::is_open() const {
+    return array_->is_open();
+}
+
 const std::string SOMADenseNDArray::uri() const {
     return array_->uri();
 }

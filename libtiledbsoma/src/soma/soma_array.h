@@ -197,6 +197,15 @@ class SOMAArray {
     void close();
 
     /**
+     * Check if the SOMAArray is open.
+     *
+     * @return bool true if open
+     */
+    bool is_open() const {
+        return arr_->is_open();
+    }
+
+    /**
      * @brief Reset the state of this SOMAArray object to prepare for a
      * new query, while holding the array open.
      *

@@ -166,6 +166,13 @@ class SOMADataFrame : public SOMAObject {
     void close();
 
     /**
+     * Check if the SOMADataFrame is open.
+     *
+     * @return bool true if open
+     */
+    bool is_open() const;
+
+    /**
      * Return the constant "SOMADataFrame".
      *
      * @return std::string
