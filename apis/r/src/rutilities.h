@@ -81,3 +81,12 @@ inline std::map<std::string, std::string> config_vector_to_map(Rcpp::Nullable<Rc
 
     return platform_config;
 }
+
+inline ResultOrder get_tdb_result_order(std::string result_order){
+	std::map<std::string, ResultOrder> result_order_map{
+		{"auto", ResultOrder::automatic},
+		{"row", ResultOrder::rowmajor},
+		{"col", ResultOrder::colmajor}
+	};
+	return result_order_map[result_order];
+}
