@@ -107,8 +107,10 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
         spdl::info(tfm::format("[sr_setup] ts_end set to %ld", ts_end));
     }
 
-    auto ptr = new tdbs::SOMAArray(TILEDB_READ, uri, name, ctxptr, column_names, batch_size,
-                                   result_order, std::make_pair(ts_start, ts_end));
+    auto tdb_result_order = get_tdb_result_order(result_order);
+
+    auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, ctxptr, column_names, batch_size,
+                                   tdb_result_order, std::make_pair(ts_start, ts_end));
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = ptr->schema();
