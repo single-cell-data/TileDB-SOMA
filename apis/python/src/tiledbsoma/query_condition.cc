@@ -41,8 +41,8 @@
 
 // #include "util.h"
 #include <tiledb/tiledb> // C++
+#include <tiledbsoma/tiledbsoma>
 
-#include "tiledbsoma/logger_public.h"
 #define TPY_ERROR_LOC(m) throw tiledbsoma::TileDBSOMAError(m);
 
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 2
@@ -100,7 +100,7 @@ public:
 
   shared_ptr<QueryCondition> ptr() { return qc_; }
 
-  py::capsule __capsule__() { return py::capsule(&qc_, "qc", nullptr); }
+  py::capsule __capsule__() { return py::capsule(&qc_, "qc"); }
 
   PyQueryCondition
   combine(PyQueryCondition rhs,

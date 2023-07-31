@@ -4,7 +4,7 @@
 #
 # The MIT License
 #
-# Copyright (c) 2022 TileDB, Inc.
+# Copyright (c) 2022-2023 TileDB, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,6 @@ set(TILEDBSOMA_CMAKE_INPUTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cmake/inputs")
 # TileDB-SOMA Options
 option(TILEDBSOMA_BUILD_PYTHON "Build Python API bindings" ON)
 option(TILEDBSOMA_BUILD_CLI "Build tiledbsoma CLI tool" ON)
-option(TILEDBSOMA_BUILD_R "Build a static library (only) for R" OFF)
 option(TILEDBSOMA_BUILD_STATIC "Build a static library; otherwise, shared library" OFF)
 option(TILEDBSOMA_ENABLE_TESTING "Enable tests" ON)
 option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." ON)
@@ -66,18 +65,6 @@ option(TILEDB_VERBOSE "If true, sets default logging to verbose for TileDB" OFF)
 option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and sets a default prefix" ON)
 option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
-
-# NOTE: TILEDBSOMA_BUILD_R is added to INHERITED_CMAKE_ARGS in Superbuild.cmake
-# so the option is forwarded to the non-superbuild
-if(TILEDBSOMA_BUILD_R)
-  # Disable build targets when building for R
-  set(TILEDBSOMA_BUILD_PYTHON OFF)
-  set(TILEDBSOMA_BUILD_CLI OFF)
-  set(TILEDBSOMA_ENABLE_TESTING OFF)
-  set(TILEDBSOMA_BUILD_STATIC ON)
-
-  add_compile_options(-DR_BUILD)
-endif()
 
 # Enable compiler cache to speed up recompilation
 find_program(CCACHE_FOUND ccache)

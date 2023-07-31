@@ -5,10 +5,30 @@
 #' cells (aka a "multimodal dataset") with pre-defined fields: `obs` and `ms`
 #' (see _Active Bindings_ below for details). (lifecycle: experimental)
 #'
+#' @templateVar class SOMAExperiment
+#' @template section-add-object-to-collection
+#'
 #' @export
 SOMAExperiment <- R6::R6Class(
   classname = "SOMAExperiment",
   inherit = SOMACollectionBase,
+
+  public = list(
+    #' @description Subset and extract data from a [`SOMAMeasurement`] by
+    #' querying the `obs`/`var` axes.
+    #' @param measurement_name The name of the measurement to query.
+    #' @param obs_query,var_query An [`SOMAAxisQuery`] object for the obs/var
+    #' axis.
+    #' @return A [`SOMAExperimentAxisQuery`] object.
+    axis_query = function(measurement_name, obs_query = NULL, var_query = NULL) {
+      SOMAExperimentAxisQuery$new(
+        experiment = self,
+        measurement_name = measurement_name,
+        obs_query = obs_query,
+        var_query = var_query
+      )
+    }
+  ),
 
   active = list(
     #' @field obs a [`SOMADataFrame`] containing primary annotations on the

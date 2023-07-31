@@ -9,7 +9,7 @@ optionally be limited further to a specific atomic vector type
 (eg. \dQuote{\code{logical}})
 }
 \section{Super class}{
-\code{tiledbsoma::MappingBase} -> \code{ScalarMap}
+\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{ScalarMap}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

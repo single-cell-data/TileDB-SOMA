@@ -7,26 +7,33 @@ test_that("returns all coordinates by default", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA"
   )
 
+  # Query object can be created from the SOMAExperiment axis_query() method
+  expect_equal(experiment$axis_query(measurement_name = "RNA"), query)
+
   # obs/var tables
-  expect_true(query$obs()$Equals(experiment$obs$read()))
-  expect_true(query$var()$Equals(experiment$ms$get("RNA")$var$read()))
+  expect_true(is(query$obs(), "TableReadIter"))
+  expect_true(is(query$var(), "TableReadIter"))
+  expect_true(query$obs()$concat()$Equals(experiment$obs$read()$concat()))
+  expect_true(query$var()$concat()$Equals(experiment$ms$get("RNA")$var$read()$concat()))
 
   # obs/var joinids
   expect_equal(
     query$obs_joinids(),
-    arrow::concat_arrays(experiment$obs$read()$soma_joinid)
+    arrow::concat_arrays(experiment$obs$read()$concat()$soma_joinid)
   )
   expect_equal(
     query$var_joinids(),
-    arrow::concat_arrays(experiment$ms$get("RNA")$var$read()$soma_joinid)
+    arrow::concat_arrays(experiment$ms$get("RNA")$var$read()$concat()$soma_joinid)
   )
 
   expect_equal(query$n_obs, n_obs)
@@ -37,11 +44,14 @@ test_that("returns all coordinates by default", {
   expect_error(query$X(c("a", "b")), "Must specify a single X layer name")
   expect_error(query$X("foo"), "The following layer does not exist: foo")
 
+  expect_true(is(query$X("counts"), "SOMASparseNDArrayRead"))
   expect_true(
-    query$X("counts")$Equals(
-      experiment$ms$get("RNA")$X$get("counts")$read_arrow_table()
+    query$X("counts")$tables()$concat()$Equals(
+      experiment$ms$get("RNA")$X$get("counts")$read()$tables()$concat()
     )
   )
+
+  experiment$close()
 })
 
 test_that("querying by dimension coordinates", {
@@ -56,8 +66,10 @@ test_that("querying by dimension coordinates", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -69,22 +81,24 @@ test_that("querying by dimension coordinates", {
   expect_true(query$n_obs == diff(range(obs_slice)) + 1)
   expect_true(query$n_vars == diff(range(var_slice)) + 1)
 
-  expect_equal(query$obs()$soma_joinid$as_vector(), as.integer(obs_slice))
+  expect_equal(query$obs()$concat()$soma_joinid$as_vector(), as.integer(obs_slice))
   expect_equal(query$var_joinids()$as_vector(), as.integer(var_slice))
 
   expect_equal(
-    query$obs(column_names = "soma_joinid")$soma_joinid$as_vector(),
+    query$obs(column_names = "soma_joinid")$concat()$soma_joinid$as_vector(),
     as.integer(obs_slice)
   )
   expect_equal(
-    query$var(column_names = "soma_joinid")$soma_joinid$as_vector(),
+    query$var(column_names = "soma_joinid")$concat()$soma_joinid$as_vector(),
     as.integer(var_slice)
   )
 
-  raw_X <- experiment$ms$get("RNA")$X$get("counts")$read_arrow_table(
+  raw_X <- experiment$ms$get("RNA")$X$get("counts")$read(
     coords = list(obs_slice, var_slice)
-  )
-  expect_true(query$X("counts")$Equals(raw_X))
+  )$tables()$concat()
+  expect_true(query$X("counts")$tables()$concat()$Equals(raw_X))
+
+  experiment$close()
 })
 
 test_that("querying by value filters", {
@@ -99,8 +113,10 @@ test_that("querying by value filters", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   # TODO: simplify once tiledb-r supports membership expressions
   obs_value_filter <- paste0(
@@ -122,8 +138,10 @@ test_that("querying by value filters", {
   expect_true(query$n_obs == length(obs_label_values))
   expect_true(query$n_vars == length(var_label_values))
 
-  expect_equal(query$obs()$baz$as_vector(), obs_label_values)
-  expect_equal(query$var()$quux$as_vector(), var_label_values)
+  expect_equal(query$obs()$concat()$baz$as_vector(), obs_label_values)
+  expect_equal(query$var()$concat()$quux$as_vector(), var_label_values)
+
+  experiment$close()
 })
 
 test_that("querying by both coordinates and value filters", {
@@ -152,8 +170,10 @@ test_that("querying by both coordinates and value filters", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   # obs slice / var value filter
   query <- SOMAExperimentAxisQuery$new(
@@ -200,16 +220,18 @@ test_that("querying by both coordinates and value filters", {
   )
 
   # Determine expected results
-  obs_df <- experiment$obs$read()$to_data_frame()
+  obs_df <- experiment$obs$read()$concat()$to_data_frame()
   obs_hits <- obs_df$soma_joinid %in% as.integer(obs_slice) &
     obs_df$baz %in% obs_label_values
 
-  var_df <- experiment$ms$get("RNA")$var$read()$to_data_frame()
+  var_df <- experiment$ms$get("RNA")$var$read()$concat()$to_data_frame()
   var_hits <- var_df$soma_joinid %in% as.integer(var_slice) &
     var_df$quux %in% var_label_values
 
-  expect_equal(query$obs()$to_data_frame(), obs_df[obs_hits,])
-  expect_equal(query$var()$to_data_frame(), var_df[var_hits,])
+  expect_equivalent(query$obs()$concat()$to_data_frame(), obs_df[obs_hits,])
+  expect_equivalent(query$var()$concat()$to_data_frame(), var_df[var_hits,])
+
+  experiment$close()
 })
 
 test_that("queries with empty results", {
@@ -221,8 +243,10 @@ test_that("queries with empty results", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   # obs/var slice and value filter
   query <- SOMAExperimentAxisQuery$new(
@@ -234,10 +258,9 @@ test_that("queries with empty results", {
     var_query = SOMAAxisQuery$new(
       value_filter = "quux == 'does-not-exist'"
     )
-  )
-
-  expect_equal(query$obs()$num_rows, 0)
-  expect_equal(query$var()$num_rows, 0)
+    )
+  expect_equal(query$obs()$concat()$num_rows, 0)
+  expect_equal(query$var()$concat()$num_rows, 0)
 })
 
 test_that("retrieving query results in supported formats", {
@@ -249,8 +272,10 @@ test_that("retrieving query results in supported formats", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -265,6 +290,8 @@ test_that("retrieving query results in supported formats", {
   expect_true(is.list(res$X_layers))
   expect_true(is_arrow_table(res$X_layers[[1]]))
   expect_true(is_arrow_table(res$X_layers[[2]]))
+
+  experiment$close()
 })
 
 test_that("query result value indexer", {
@@ -279,8 +306,10 @@ test_that("query result value indexer", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -327,6 +356,8 @@ test_that("query result value indexer", {
     indexer$by_obs(c(1, 4, 2, 1000, "foo")),
     "'coords' must be a numeric vector or arrow Array"
   )
+
+  experiment$close()
 })
 
 test_that("query result value indexer upcast", {
@@ -341,8 +372,10 @@ test_that("query result value indexer upcast", {
     uri = uri,
     n_obs = n_obs,
     n_var = n_var,
-    X_layer_names = c("counts", "logcounts")
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
   )
+  on.exit(experiment$close())
 
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -389,4 +422,6 @@ test_that("query result value indexer upcast", {
     indexer$by_obs(c(1, 4, 2, 1000, "foo")),
     "'coords' must be a numeric vector or arrow Array"
   )
+
+  experiment$close()
 })

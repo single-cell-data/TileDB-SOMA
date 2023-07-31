@@ -4,7 +4,12 @@
 \alias{SOMACollectionCreate}
 \title{Create SOMA Collection}
 \usage{
-SOMACollectionCreate(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMACollectionCreate(
+  uri,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
@@ -12,6 +17,8 @@ SOMACollectionCreate(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
 }
 \description{
 Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)

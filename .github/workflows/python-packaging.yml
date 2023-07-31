@@ -1,15 +1,21 @@
+# Workflow to build distribution, and push to PyPI or TestPyPI
+
 name: TileDB-SOMA python sdist & wheels
 
 on:
-  # I.e. on request
+  # Trigger publication to TestPyPI via user workflow request:
+  #     gh workflow run python-packaging.yml --ref branch
+  # Specify the branch or other ref as required, allowing testing
+  # of PRs/branches.
   workflow_dispatch:
-  # Normally the smoke test only runs on merge to main.  To run it on a PR CI, uncomment `pull_request:`
-  # pull_request:
-  #   branches: [main]
-  # paths-ignore:
-  #   - 'apis/r/**'
+
+  # Trigger publication to PyPi via new release event.
   release:
     types: [published]
+  # Schedule wheel-build and smoke-test on a regular schedule.
+  #
+  # This will not publish to either PyPI or TestPyPI (see the conditionals
+  # guarding those steps below).
   schedule:
     - cron: "42 9 * * *"
 
@@ -18,18 +24,18 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-20.04
     steps:
-    - name: Checkout TileDB-SOMA
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0  # ensure we get all tags to inform package version determination
-    - name: Build sdist
-      run: python setup.py sdist
-      working-directory: ./apis/python
-    - name: Upload sdist artifact to GitHub Actions storage
-      uses: actions/upload-artifact@v3
-      with:
-        name: sdist
-        path: apis/python/dist/
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # ensure we get all tags to inform package version determination
+      - name: Build sdist
+        run: python setup.py sdist
+        working-directory: ./apis/python
+      - name: Upload sdist artifact to GitHub Actions storage
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdist
+          path: apis/python/dist/
 
   # This step builds wheels and uploads them to GitHub Actions storage.
   # See also https://github.com/single-cell-data/TileDB-SOMA/issues/700.
@@ -43,36 +49,47 @@ jobs:
     strategy:
       matrix:
         include:
-        - os: ubuntu-20.04
-          cibw_build: 'cp3*-manylinux_x86_64'
-          platform: manylinux2014
-        - os: macos-11
-          cibw_build: 'cp3*-macosx_x86_64'
-          platform: macosx
+          - os: ubuntu-20.04
+            cibw_build: 'cp3*-manylinux_x86_64'
+            platform: manylinux2014
+            wheel_name: manylinux2014
+          - os: macos-11
+            cibw_build: 'cp3*-macosx_x86_64'
+            cibw_archs_macos: x86_64
+            platform: macosx
+            wheel_name: macos-x86_64
+          - os: macos-12
+            cibw_build: 'cp3*-macosx_arm64'
+            cibw_archs_macos: arm64
+            platform: macosx
+            wheel_name: macos-arm64
     steps:
-    - name: Download sdist artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: sdist
-    - name: rename sdist
-      run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
-    - name: Build wheels
-      uses: pypa/cibuildwheel@v2.11.3
-      with:
-        package-dir: tiledbsoma.tar.gz
-      env:
-        CIBW_BUILD: ${{ matrix.cibw_build }}
-        CIBW_BUILD_VERBOSITY: 1
-        CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
-        # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
-        #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
-        #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
-        #   built for the wrong python version.
-    - name: Upload wheels-${{ matrix.platform }} to GitHub Actions storage
-      uses: actions/upload-artifact@v3
-      with:
-        name: wheels-${{ matrix.platform }}
-        path: ./wheelhouse/*.whl
+      - name: Download sdist artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: sdist
+      - name: rename sdist
+        run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.11.3
+        with:
+          package-dir: tiledbsoma.tar.gz
+        env:
+          CIBW_BUILD: ${{ matrix.cibw_build }}
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
+          # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
+          #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
+          #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
+          #   built for the wrong python version.
+          CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
+          CIBW_TEST_SKIP: "*_arm64"
+          CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
+      - name: Upload wheels-${{ matrix.wheel_name }} to GitHub Actions storage
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels-${{ matrix.wheel_name }}
+          path: ./wheelhouse/*.whl
 
   # This step locally tries out the built wheels, without publishing to PyPI
   smoke-test:
@@ -82,63 +99,112 @@ jobs:
     strategy:
       matrix:
         include:
-        - os: ubuntu-20.04
-          platform: manylinux2014
-          arch: x86_64
-          cc: gcc-11
-          cxx: g++-11
-        - os: macos-11
-          platform: macosx
-          arch: x86_64
-          cc: clang
-          cxx: clang++
+          - os: ubuntu-20.04
+            platform: manylinux2014
+            arch: x86_64
+            cc: gcc-11
+            cxx: g++-11
+          - os: macos-11
+            platform: macosx
+            arch: x86_64
+            cc: clang
+            cxx: clang++
+          # TODO: As of 2023-05-18 all we can do in GitHub Actions for MacOS arm64 is cross-compile the wheels
+          # for arm64, while actually running on x86 hardware. This means we can build the wheels but we cannot
+          # smoke-test them. This is pending MacOS arm64 runners for GitHub Actions which is tracked here:
+          #   https://github.com/github/roadmap/issues/528
+          # Any smoke-testing for arm64 wheels needs to be done manually by:
+          # * Download the whatever.zip file from GitHub Actions -> our instance -> Artifacts
+          # * unzip whatever.zip
+          # * pip install tiledbsoma-i.j.k-cp310-cp310-macosx_11_0_arm64.whl
+          #
+          #- os: macos-11
+          #  platform: macosx
+          #  arch: arm64
+          #  cc: clang
+          #  cxx: clang++
     steps:
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-    - name: Download artifacts
-      uses: actions/download-artifact@v3
-    - name: Install wheel
-      run: |
-        set -x
-        ls -lR
-        WHL=$(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
-        unzip -l $WHL
-        pip install wheel
-        pip install $WHL
-        echo "WHL=$WHL" >> $GITHUB_ENV
-    - name: Smoke test ${{ matrix.os }}
-      run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
-      # TODO: more thorough local smoke test
-    - name: Smoke test in docker
-      # Repeat test in stock ubuntu 20.04 docker image. This uses an older pip
-      # version with the old dependency solver. see issue #1051
-      if: ${{ matrix.platform == 'manylinux2014' }}
-      run: |
-        docker run -v $(pwd):/mnt ubuntu:20.04 bash -ec "
-          apt-get -qq update && apt-get install -y python3-pip python3-wheel
-          pip3 install /mnt/$WHL
-          python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
-        "
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+      - name: Install wheel
+        run: |
+          set -x
+          ls -lR
+          ls -lR wheels-*
+          WHL=$(find . -name 'tiledbsoma-*-cp38-cp38-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+          if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
+          unzip -l $WHL
+          pip install wheel
+          pip install $WHL
+          echo "WHL=$WHL" >> $GITHUB_ENV
+      - name: Smoke test ${{ matrix.os }}
+        run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
+        # TODO: more thorough local smoke test
+      - name: Smoke test in docker
+        # Repeat test in stock ubuntu 20.04 docker image. This uses an older pip
+        # version with the old dependency solver. see issue #1051
+        if: ${{ matrix.platform == 'manylinux2014' }}
+        run: |
+          docker run -v $(pwd):/mnt ubuntu:20.04 bash -ec "
+            apt-get -qq update && apt-get install -y python3-pip python3-wheel
+            pip3 install /mnt/$WHL
+            python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
+          "
 
+  # Publish to TestPyPI upon user workflow request
+  publish-to-test-pypi:
+    name: Publish package to TestPyPI
+    needs: smoke-test
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+      - name: Create dist
+        run: |
+          set -x
+          mkdir dist
+          cp sdist/tiledbsoma-*.tar.gz wheels-*/*.whl dist
+          ls -l dist
+      - name: Publish packages to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        continue-on-error: true
+        with:
+          password: ${{ secrets.TEST_PYPI_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+          packages_dir: dist
+          verbose: true
+
+  # Publish to PyPI upon release.
   publish-to-pypi:
     name: Publish package to PyPI
     needs: smoke-test
     runs-on: ubuntu-20.04
     if: github.event_name == 'release'
     steps:
-    - name: Publish packages to PyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_TOKEN }}
-        packages_dir: sdist, dist-wheel
-        verbose: true
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+      - name: Create dist
+        run: |
+          set -x
+          mkdir dist
+          cp sdist/tiledbsoma-*.tar.gz wheels-*/*.whl dist
+          ls -l dist
+      - name: Publish packages to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
+          packages_dir: dist
+          verbose: true
 
+  # File a bug report if anything fails
   create_issue_on_fail:
     runs-on: ubuntu-latest
-    needs: publish-to-pypi
+    needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
     if: failure() || cancelled()
     steps:
       - name: Checkout TileDB-SOMA `main`

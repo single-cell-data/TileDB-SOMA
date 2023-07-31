@@ -1,9 +1,12 @@
 spdl::set_level('warn')
 
 test_that("write_soma.data.frame mechanics", {
-  uri <- withr::local_tempdir("write-soma-data-frame")
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   skip_if_not_installed('datasets')
+
+  uri <- withr::local_tempdir("write-soma-data-frame")
   collection <- SOMACollectionCreate(uri)
+
   co2 <- get_data('CO2', package = 'datasets')
   expect_no_condition(sdf <- write_soma(co2, uri = 'co2', soma = collection))
   expect_s3_class(sdf, 'SOMADataFrame')
@@ -19,12 +22,16 @@ test_that("write_soma.data.frame mechanics", {
     setdiff(schema$names, c('soma_joinid', 'obs_id')),
     names(co2)
   )
+
+  collection$close()
 })
 
 test_that("write_soma dense matrix mechanics", {
-  uri <- withr::local_tempdir("write-soma-dense-matrix")
   skip_if_not_installed('datasets')
+
+  uri <- withr::local_tempdir("write-soma-dense-matrix")
   collection <- SOMACollectionCreate(uri)
+
   state77 <- get(x = 'state.x77', envir = getNamespace('datasets'))
   expect_no_condition(dmat <- write_soma(
     state77,
@@ -71,6 +78,8 @@ test_that("write_soma dense matrix mechanics", {
   expect_identical(emat$dimnames(), paste0('soma_dim_', c(0L, 1L)))
   expect_identical(emat$attrnames(), 'soma_data')
   expect_equal(emat$shape(), dim(knex))
+
+  collection$close()
 })
 
 test_that("write_soma sparse matrix mechanics", {
@@ -110,4 +119,6 @@ test_that("write_soma sparse matrix mechanics", {
   expect_identical(cmat$dimnames(), paste0('soma_dim_', c(0L, 1L)))
   expect_identical(cmat$attrnames(), 'soma_data')
   expect_equal(cmat$shape(), dim(state77))
+
+  collection$close()
 })

@@ -8,7 +8,7 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma.options._tiledb_create_options import TileDBCreateOptions
+import tiledbsoma.options._tiledb_create_options as tco
 
 HERE = Path(__file__).parent
 
@@ -27,7 +27,6 @@ def adata(h5ad_file):
 
 
 def test_platform_config(adata):
-
     # Set up anndata input path and tiledb-group output path
     with tempfile.TemporaryDirectory() as output_path:
         # Ingest
@@ -76,9 +75,11 @@ def test_platform_config(adata):
 
 def test__from_platform_config__admits_ignored_config_structure():
     try:
-        TileDBCreateOptions.from_platform_config(
+        tco.TileDBCreateOptions.from_platform_config(
             dict(
-                tiledb=dict(create=TileDBCreateOptions(), future_option=dict(foo="1")),
+                tiledb=dict(
+                    create=tco.TileDBCreateOptions(), future_option=dict(foo="1")
+                ),
                 not_tiledb=dict(read=dict(buffer_size="128")),
             )
         )
@@ -86,22 +87,64 @@ def test__from_platform_config__admits_ignored_config_structure():
         pytest.fail(f"unexpected exception {e}")
 
 
+def test__from_platform_config__admits_ignored_options():
+    tco.TileDBCreateOptions.from_platform_config(
+        {"tiledb": {"create": {"zzz_future_option": "hello"}}}
+    )
+
+
 def test__from_platform_config__admits_plain_dict():
-    tdb_create_options = TileDBCreateOptions.from_platform_config(
+    tdb_create_options = tco.TileDBCreateOptions.from_platform_config(
         {"tiledb": {"create": {"dims": {"soma_dim_0": {"tile": 6}}}}}
     )
     assert tdb_create_options.dim_tile("soma_dim_0") == 6
 
 
-def test__from_platform_config__admits_tiledb_create_options_object():
-    tdb_create_options = TileDBCreateOptions.from_platform_config(
+def test__from_platform_config__admits_create_options_in_dict_shallow():
+    tdb_create_options = tco.TileDBCreateOptions.from_platform_config(
+        {"tiledb": tco.TileDBCreateOptions(dims={"soma_dim_0": {"tile": 6}})}
+    )
+    assert tdb_create_options.dim_tile("soma_dim_0") == 6
+
+
+def test__from_platform_config__admits_create_options_in_dict_at_leaf():
+    tdb_create_options = tco.TileDBCreateOptions.from_platform_config(
         {
             "tiledb": {
-                "create": TileDBCreateOptions({"dims": {"soma_dim_0": {"tile": 6}}})
+                "create": tco.TileDBCreateOptions(dims={"soma_dim_0": {"tile": 6}})
             }
         }
     )
     assert tdb_create_options.dim_tile("soma_dim_0") == 6
+
+
+def test__from_platform_config__admits_create_options_at_root():
+    tdb_create_options = tco.TileDBCreateOptions.from_platform_config(
+        tco.TileDBCreateOptions(dims={"soma_dim_0": {"tile": 6}})
+    )
+    assert tdb_create_options.dim_tile("soma_dim_0") == 6
+
+
+def test_dig_platform_config():
+    # Normal.
+    assert tco._dig_platform_config(1, int, ("a", "b")) == 1
+    assert tco._dig_platform_config({"a": 2}, int, ("a", "b")) == 2
+    assert tco._dig_platform_config({"a": {"b": 3}}, int, ("a", "b")) == 3
+    assert tco._dig_platform_config(
+        {"a": {"b": {"config_data": "hello"}}}, int, ("a", "b")
+    ) == {"config_data": "hello"}
+
+    # Missing keys interpolated with empty dict.
+    assert tco._dig_platform_config({"x": "y"}, int, ("a", "b")) == {}
+    assert tco._dig_platform_config({"a": {"c": "hello"}}, int, ("a", "b")) == {}
+
+    # Unrecognized types (not at tip).
+    assert tco._dig_platform_config("hello", int, ("a", "b")) == {}
+    assert tco._dig_platform_config({"a": "hello"}, int, ("a", "b")) == {}
+
+    # Unrecognized type (at tip)
+    with pytest.raises(TypeError):
+        tco._dig_platform_config({"a": {"b": "invalid"}}, int, ("a", "b"))
 
 
 def test_SOMATileDBContext_evolve():

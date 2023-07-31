@@ -6,10 +6,11 @@
 """Implementation of a SOMA Measurement.
 """
 
+from typing import Union
+
 from somacore import measurement
 
 from ._collection import Collection, CollectionBase
-from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._sparse_nd_array import SparseNDArray
@@ -20,14 +21,27 @@ class Measurement(
     CollectionBase[AnyTileDBObject],
     measurement.Measurement[  # type: ignore[type-var]
         DataFrame,
-        Collection[NDArray],
+        Collection[
+            Union[SparseNDArray, DenseNDArray]
+        ],  # not just `NDArray` since that has no common `read`
         Collection[DenseNDArray],
         Collection[SparseNDArray],
         AnyTileDBObject,
     ],
 ):
-    """A :class:`Measurement` is a sub-element of a :class:`Experiment`, and is otherwise
-    a specialized :class:`Collection` with pre-defined fields.
+    """A set of observations defined by a dataframe, with measurements.
+
+    This is a common set of annotated variables (defined by the ``var``
+    dataframe) for which values (e.g., measurements or calculations) are stored
+    in sparse and dense ND arrays.
+
+    The observables are inherited from the parent ``Experiment``'s
+    ``obs`` dataframe. The ``soma_joinid`` of these observables (``obsid``),
+    along with those of the measurement's ``var`` dataframe (``varid``),
+    are the indices for all the other matrices stored in the measurement.
+
+    In most cases, users interact with a measurement via querying the experiment
+    which contains it, rather than directly accessing its fields.
 
     Attributes:
         var (DataFrame):

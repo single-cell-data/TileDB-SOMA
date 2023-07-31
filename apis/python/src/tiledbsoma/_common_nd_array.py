@@ -17,7 +17,10 @@ from typing_extensions import Self
 from . import _arrow_types, _util
 from ._tiledb_array import TileDBArray
 from ._types import OpenTimestamp
-from .options._soma_tiledb_context import SOMATileDBContext
+from .options._soma_tiledb_context import (
+    SOMATileDBContext,
+    _validate_soma_tiledb_context,
+)
 from .options._tiledb_create_options import TileDBCreateOptions
 
 
@@ -53,11 +56,13 @@ class NDArray(TileDBArray, somacore.NDArray):
                 N in the N-dimensional array.
 
                 For :class:`SparseNDArray` only, if a slot is None, then the maximum
-                possible int64 will be used.  This makes a :class:`SparseNDArray`
+                possible int32 will be used.  This makes a :class:`SparseNDArray`
                 growable.
             platform_config:
-                Platform-specific options used to create this Array,
-                provided via ``{"tiledb": {"create": ...}}`` nested keys.
+                Platform-specific options used to create this array.
+                This may be provided as settings in a dictionary, with options
+                located in the ``{'tiledb': {'create': ...}}`` key,
+                or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by
@@ -77,14 +82,7 @@ class NDArray(TileDBArray, somacore.NDArray):
         Lifecycle:
             Experimental.
         """
-        # Implementor note: we carefully say "maximum possible int64 size" rather than 2**63-1. The
-        # reason that the latter, while temptingly simple, is actually untrue is that tiledb core
-        # requires that the capacity, when rounded up to an exact multiple of the extent, needs to
-        # be representable as a signed 64-bit integer.  So in particular when a unit test (or anyone
-        # else) sets extent to a not-power-of-two number like 999 or 1000 then the create fails if
-        # the upper limit is exactly 2**63-1.
-
-        context = context or SOMATileDBContext()
+        context = _validate_soma_tiledb_context(context)
         schema = cls._build_tiledb_schema(
             type,
             shape,
@@ -101,6 +99,8 @@ class NDArray(TileDBArray, somacore.NDArray):
     @property
     def shape(self) -> Tuple[int, ...]:
         """Returns capacity of each dimension, always a list of length ``ndim``.
+        This will not necessarily match the bounds of occupied cells within the array.
+        Rather, it is the bounds outside of which no data may be written.
 
         Lifecycle:
             Experimental.
@@ -147,12 +147,12 @@ class NDArray(TileDBArray, somacore.NDArray):
                 domain=(0, dim_capacity - 1),
                 tile=dim_extent,
                 dtype=np.int64,
-                filters=create_options.dim_filters(
+                filters=create_options.dim_filters_tiledb(
                     dim_name,
                     [
                         dict(
                             _type="ZstdFilter",
-                            level=create_options.sparse_nd_array_dim_zstd_level(),
+                            level=create_options.sparse_nd_array_dim_zstd_level,
                         )
                     ],
                 ),
@@ -164,7 +164,7 @@ class NDArray(TileDBArray, somacore.NDArray):
             tiledb.Attr(
                 name="soma_data",
                 dtype=_arrow_types.tiledb_type_from_arrow_type(type),
-                filters=create_options.attr_filters("soma_data", ["ZstdFilter"]),
+                filters=create_options.attr_filters_tiledb("soma_data", ["ZstdFilter"]),
                 ctx=context.tiledb_ctx,
             )
         ]
@@ -177,10 +177,10 @@ class NDArray(TileDBArray, somacore.NDArray):
             domain=dom,
             attrs=attrs,
             sparse=is_sparse,
-            allows_duplicates=create_options.allows_duplicates(),
-            offsets_filters=create_options.offsets_filters(),
-            validity_filters=create_options.validity_filters(),
-            capacity=create_options.capacity(),
+            allows_duplicates=create_options.allows_duplicates,
+            offsets_filters=create_options.offsets_filters_tiledb(),
+            validity_filters=create_options.validity_filters_tiledb(),
+            capacity=create_options.capacity,
             tile_order=tile_order,
             cell_order=cell_order,
             ctx=context.tiledb_ctx,

@@ -189,6 +189,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         if isinstance(values, pa.SparseCOOTensor):
             data, coords = values.to_numpy()
             arr[tuple(c for c in coords.T)] = data
+            self._consolidate_and_vacuum_fragment_metadata()
             return self
 
         if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
@@ -199,6 +200,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
             arr[sp.row, sp.col] = sp.data
+            self._consolidate_and_vacuum_fragment_metadata()
             return self
 
         if isinstance(values, pa.Table):
@@ -209,6 +211,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 for n in range(coord_tbl.num_columns)
             )
             arr[coords] = data
+            self._consolidate_and_vacuum_fragment_metadata()
             return self
 
         raise TypeError(
@@ -216,7 +219,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         )
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArrayReader, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
         if super()._set_reader_coord(sr, dim_idx, dim, coord):
             return True
@@ -261,13 +264,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         int64 is returned for the capacity.
         """
         if dim_shape is None:
-            dim_capacity = 2**63
+            dim_capacity = 2**31 - 2  # Make this friendly for reads by tiledbsoma-r
             dim_extent = min(dim_capacity, create_options.dim_tile(dim_name, 2048))
-            # TileDB requires that each signed-64-bit-int domain slot, rounded up to
-            # a multiple of the tile extent in that slot, be representable as a
-            # signed 64-bit int. So if the tile extent is 999, say, that would
-            # exceed 2**63 - 1.
-            dim_capacity -= dim_extent
         else:
             if dim_shape <= 0:
                 raise ValueError(
@@ -289,7 +287,7 @@ class SparseNDArrayRead(somacore.SparseRead):
         Experimental.
     """
 
-    def __init__(self, sr: clib.SOMAArrayReader, shape: NTuple):
+    def __init__(self, sr: clib.SOMAArray, shape: NTuple):
         """
         Lifecycle:
             Experimental.

@@ -5,7 +5,7 @@
 \alias{write_soma.Assay}
 \alias{write_soma.DimReduc}
 \alias{write_soma.Graph}
-\title{Convert a \pkg{Seurat} Sub-Object to a SOMA Object}
+\title{Convert a \pkg{Seurat} Sub-Object to a SOMA Object, returned opened for write}
 \usage{
 \method{write_soma}{Assay}(
   x,
@@ -70,10 +70,10 @@ relative or aboslute}
 }
 \value{
 \code{Assay} method: a \code{\link{SOMAMeasurement}} with the
-data from \code{x}
+data from \code{x}, returned opened for write
 
 \code{DimReduc} and \code{Graph} methods: invisibly returns
-\code{soma_parent} with the values of \code{x} added to it
+\code{soma_parent}, opened for write, with the values of \code{x} added to it
 }
 \description{
 Various helpers to write \pkg{Seurat} sub-objects to SOMA objects.

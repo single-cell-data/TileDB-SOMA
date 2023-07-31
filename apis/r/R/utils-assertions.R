@@ -1,3 +1,6 @@
+#' @importFrom rlang is_scalar_integerish is_scalar_logical is_scalar_character
+NULL
+
 #' Check if object is empty
 #' @noRd
 is_empty <- function(x) {
@@ -15,14 +18,6 @@ is_named <- function(x, allow_empty = TRUE) {
 
 is_named_list <- function(x) {
   is.list(x) && is_named(x)
-}
-
-is_scalar_logical <- function(x) {
-  is.logical(x) && length(x) == 1
-}
-
-is_scalar_character <- function(x) {
-  is.character(x) && length(x) == 1
 }
 
 is_character_or_null <- function(x) {
@@ -53,11 +48,43 @@ string_starts_with <- function(x, prefix) {
   grepl(prefix, x)
 }
 
-check_package <- function(package) {
-  if (requireNamespace(package, quietly = TRUE)) {
-    return(invisible())
+check_package <- function(package, version = NULL, quietly = FALSE) {
+  stopifnot(
+    is_scalar_character(package),
+    is.null(version) ||
+      is_scalar_character(version) ||
+      (inherits(version, 'numeric_version') && length(version) == 1L),
+    is_scalar_logical(quietly)
+  )
+  checks <- c(
+    installed = requireNamespace(package, quietly = TRUE),
+    version = ifelse(
+      test = is.null(version),
+      yes = TRUE,
+      no = tryCatch(
+        expr = utils::packageVersion(package) >= version,
+        error = function(...) {
+          return(FALSE)
+        }
+      )
+    )
+  )
+  if (isTRUE(quietly)) {
+    return(invisible(all(checks)))
   }
-  stop(paste0("Package '", package, "' must be installed"))
+  if (!checks['installed']) {
+    stop(sQuote(package), " must be installed", call. = FALSE)
+  }
+  if (!checks['version']) {
+    stop(
+      sQuote(package),
+      " must be version ",
+      version,
+      " or higher",
+      call. = FALSE
+    )
+  }
+  return(invisible(TRUE))
 }
 
 #' Assert all values of `x` are a subset of `y`. @param x,y vectors of values
@@ -172,16 +199,43 @@ validate_read_value_filter <- function(value_filter) {
 #' This is needed as we may receive (named or unnamed) list and/or plain vectors
 #' @noRd
 recursively_make_integer64 <- function(x) {
-    if (is.null(x) || is.character(x) || is.double(x) || is.factor(x) || is.ordered(x)) {
+    if (is.null(x) || is.character(x) || is.factor(x) || is.ordered(x)) {
         x 	# do nothing
     } else if (is.list(x)) {
         for (i in seq_along(x)) {
             x[[i]] <- recursively_make_integer64(x[[i]])
         }
-    } else if (is.integer(x)) {
+    } else if (is.integer(x) || is.double(x)) {
         x <- bit64::as.integer64(x)
     } else {
         warning("encountered ", class(x))
     }
     x
+}
+
+#' Warn if using a SOMADenseNDArray
+#' @param collection_name name of the SOMA collection
+#' @param layer a SOMASparseNDArray or SOMADenseNDArray
+#' @return Invisible logical indicating if the layer is sparse
+#' @references https://github.com/single-cell-data/TileDB-SOMA/issues/1245
+#' @noRd
+
+warn_if_dense <- function(collection_name, layer) {
+  stopifnot(
+    is_scalar_character(collection_name),
+    inherits(layer, "SOMASparseNDArray") || inherits(layer, "SOMADenseNDArray")
+  )
+  is_sparse <- inherits(layer, "SOMASparseNDArray")
+  if (!is_sparse) {
+    msg1 <- sprintf(
+      "Values for '%s' are encoded as dense instead of sparse\n",
+      basename(layer$uri)
+    )
+    msg2 <- sprintf(
+      "  - all '%s' arrays should be saved as 'SOMASparseNDArrays'\n",
+      collection_name
+    )
+    warning(msg1, msg2, call. = FALSE, immediate. = TRUE)
+  }
+  invisible(is_sparse)
 }

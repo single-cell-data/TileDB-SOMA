@@ -21,7 +21,7 @@ from ._types import NTuple
 class TableReadIter(somacore.ReadIter[pa.Table]):
     """Iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements"""
 
-    def __init__(self, sr: clib.SOMAArrayReader):
+    def __init__(self, sr: clib.SOMAArray):
         self.sr = sr
 
     def __next__(self) -> pa.Table:
@@ -42,7 +42,7 @@ RT = TypeVar("RT")
 class SparseTensorReadIterBase(somacore.ReadIter[RT], metaclass=abc.ABCMeta):
     """Private implementation class"""
 
-    def __init__(self, sr: clib.SOMAArrayReader, shape: NTuple):
+    def __init__(self, sr: clib.SOMAArray, shape: NTuple):
         self.sr = sr
         self.shape = shape
 

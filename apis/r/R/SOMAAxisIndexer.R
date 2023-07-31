@@ -58,7 +58,7 @@ SOMAAxisIndexer <- R6::R6Class("SOMAAxisIndexer",
     .validate_coords = function(coords) {
       stopifnot(
         "'coords' must be a numeric vector or arrow Array" =
-          is.numeric(coords) || is_arrow_array(coords)
+          is.numeric(coords) || is_arrow_array(coords) || is_arrow_chunked_array(coords)
       )
       coords
     }

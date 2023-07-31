@@ -7,9 +7,9 @@
 filtering query results on attribute values.
 """
 import ast
-from dataclasses import dataclass, field
 from typing import Any, Callable, List, Tuple, Union
 
+import attrs
 import numpy as np
 import tiledb
 
@@ -23,7 +23,7 @@ QueryConditionNodeElem = Union[
 ]
 
 
-@dataclass
+@attrs.define
 class QueryCondition:
     """Class representing a TileDB query condition object for attribute filtering
     pushdown.
@@ -110,10 +110,10 @@ class QueryCondition:
     """
 
     expression: str
-    tree: ast.Expression = field(init=False, repr=False)
-    c_obj: clib.PyQueryCondition = field(init=False, repr=False)
+    tree: ast.Expression = attrs.field(init=False, repr=False)
+    c_obj: clib.PyQueryCondition = attrs.field(init=False, repr=False)
 
-    def __post_init__(self):
+    def __attrs_post_init__(self):
         try:
             self.tree = ast.parse(self.expression, mode="eval")
         except Exception as pex:
@@ -141,7 +141,7 @@ class QueryCondition:
         return query_attrs
 
 
-@dataclass
+@attrs.define
 class QueryConditionTree(ast.NodeVisitor):
     schema: tiledb.ArraySchema
     query_attrs: List[str]

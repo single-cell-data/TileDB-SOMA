@@ -23,7 +23,11 @@ add_executable(unit_soma EXCLUDE_FROM_ALL
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     unit_column_buffer.cc
     unit_managed_query.cc
-    unit_soma_array_reader.cc
+    unit_soma_array.cc
+    unit_soma_group.cc
+    unit_soma_dataframe.cc
+    unit_soma_dense_ndarray.cc
+    unit_soma_sparse_ndarray.cc
 # TODO: uncomment when thread_pool is enabled
 #    unit_thread_pool.cc
 )
@@ -37,8 +41,7 @@ target_link_libraries(unit_soma
 target_include_directories(unit_soma
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../external/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/external/include
     ${pybind11_INCLUDE_DIRS}
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
 )

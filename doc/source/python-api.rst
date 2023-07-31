@@ -18,17 +18,10 @@ Features:
 * Enables out-of-core access to data aggregations much larger than single-host main memory
 * Enables distributed computation over datasets
 
-The tiledbsoma module
----------------------
-.. automodule:: tiledbsoma
-   :members:
 
-The tiledbsoma.io module
-------------------------
-.. automodule:: tiledbsoma.io
-   :members:
+.. toctree:: 
+   :maxdepth: 2
 
-The tiledbsoma.logging module
------------------------------
-.. automodule:: tiledbsoma.logging
-   :members:
+   python-tiledbsoma
+   python-tiledbsoma-io
+   python-tiledbsoma-logging

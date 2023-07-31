@@ -99,8 +99,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // sr_setup
-Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri, Rcpp::CharacterVector config, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, const std::string& loglevel);
-RcppExport SEXP _tiledbsoma_sr_setup(SEXP uriSEXP, SEXP configSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP loglevelSEXP) {
+Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri, Rcpp::CharacterVector config, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, Rcpp::Nullable<Rcpp::Datetime> timestamp_end, const std::string& loglevel);
+RcppExport SEXP _tiledbsoma_sr_setup(SEXP uriSEXP, SEXP configSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP timestamp_endSEXP, SEXP loglevelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -110,29 +110,32 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> >::type qc(qcSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type dim_points(dim_pointsSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type dim_ranges(dim_rangesSEXP);
+    Rcpp::traits::input_parameter< std::string >::type batch_size(batch_sizeSEXP);
+    Rcpp::traits::input_parameter< std::string >::type result_order(result_orderSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::Datetime> >::type timestamp_end(timestamp_endSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type loglevel(loglevelSEXP);
-    rcpp_result_gen = Rcpp::wrap(sr_setup(uri, config, colnames, qc, dim_points, dim_ranges, loglevel));
+    rcpp_result_gen = Rcpp::wrap(sr_setup(uri, config, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamp_end, loglevel));
     return rcpp_result_gen;
 END_RCPP
 }
 // sr_complete
-bool sr_complete(Rcpp::XPtr<tdbs::SOMAArrayReader> sr);
+bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr);
 RcppExport SEXP _tiledbsoma_sr_complete(SEXP srSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArrayReader> >::type sr(srSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArray> >::type sr(srSEXP);
     rcpp_result_gen = Rcpp::wrap(sr_complete(sr));
     return rcpp_result_gen;
 END_RCPP
 }
 // sr_next
-Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArrayReader> sr);
+Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr);
 RcppExport SEXP _tiledbsoma_sr_next(SEXP srSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArrayReader> >::type sr(srSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArray> >::type sr(srSEXP);
     rcpp_result_gen = Rcpp::wrap(sr_next(sr));
     return rcpp_result_gen;
 END_RCPP
@@ -203,7 +206,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_check_arrow_schema_tag", (DL_FUNC) &_tiledbsoma_check_arrow_schema_tag, 1},
     {"_tiledbsoma_check_arrow_array_tag", (DL_FUNC) &_tiledbsoma_check_arrow_array_tag, 1},
     {"_tiledbsoma_shape", (DL_FUNC) &_tiledbsoma_shape, 2},
-    {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 7},
+    {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
     {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},
     {"_tiledbsoma_tiledbsoma_stats_enable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_enable, 0},

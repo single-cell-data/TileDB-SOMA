@@ -17,6 +17,7 @@ from ._exception import SOMAError
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 _WrapperType_co = TypeVar(
     "_WrapperType_co", bound=_tdb_handles.AnyWrapper, covariant=True
@@ -79,7 +80,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             Experimental.
         """
         del platform_config  # unused
-        context = context or SOMATileDBContext()
+        context = _validate_soma_tiledb_context(context)
         handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
             handle,
@@ -252,7 +253,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             Experimental.
         """
         check_type("uri", uri, (str,))
-        context = context or SOMATileDBContext()
+        context = _validate_soma_tiledb_context(context)
         try:
             with cls._wrapper_type.open(uri, "r", context, tiledb_timestamp) as hdl:
                 md_type = hdl.metadata.get(_constants.SOMA_OBJECT_TYPE_METADATA_KEY)

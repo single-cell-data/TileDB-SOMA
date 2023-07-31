@@ -19,7 +19,7 @@ pad_matrix(x, ...)
 
 \item{shape}{Target shape to pad out to}
 
-\item{sparse}{Return a \link[Matrix::TsparseMatrix-class]{sparse matrix}}
+\item{sparse}{Return a \link[Matrix:TsparseMatrix-class]{sparse matrix}}
 }
 \value{
 A matrix containing the data of \code{x} padded out to \code{shape}

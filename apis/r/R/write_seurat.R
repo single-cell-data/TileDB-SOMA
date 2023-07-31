@@ -2,7 +2,7 @@
 #'
 NULL
 
-#' Convert a \pkg{Seurat} Sub-Object to a SOMA Object
+#' Convert a \pkg{Seurat} Sub-Object to a SOMA Object, returned opened for write
 #'
 #' Various helpers to write \pkg{Seurat} sub-objects to SOMA objects.
 #'
@@ -23,7 +23,7 @@ NULL
 NULL
 
 #' @return \code{Assay} method: a \code{\link{SOMAMeasurement}} with the
-#' data from \code{x}
+#' data from \code{x}, returned opened for write
 #'
 #' @rdname write_soma_seurat_sub
 #'
@@ -61,7 +61,7 @@ write_soma.Assay <- function(
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri),
@@ -71,6 +71,7 @@ write_soma.Assay <- function(
     ),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
+
   # Create a proper URI
   uri <- uri %||% gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
   uri <- .check_soma_uri(
@@ -78,6 +79,7 @@ write_soma.Assay <- function(
     soma_parent = soma_parent,
     relative = relative
   )
+
   # Create the measurement
   ms <- SOMAMeasurementCreate(
     uri = uri,
@@ -89,12 +91,20 @@ write_soma.Assay <- function(
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
+
   # Write `X` matrices
-  for (slot in c('counts', 'data', 'scale.data')) {
-    mat <- SeuratObject::GetAssayData(object = x, slot = slot)
-    if (SeuratObject::IsMatrixEmpty(mat)) {
-      next
+  for (slot in c("counts", "data", "scale.data")) {
+    mat <- SeuratObject::GetAssayData(x, slot = slot)
+    if (SeuratObject::IsMatrixEmpty(mat)) next
+
+    # Skip 'data' slot if it's identical to 'counts'
+    if (slot == "data") {
+      if (identical(mat, SeuratObject::GetAssayData(x, slot = "counts"))) {
+        spdl::info("Skipping 'data' slot because it's identical to 'counts'")
+        next
+      }
     }
+
     if (!identical(x = dim(mat), y = dim(x))) {
       spdl::info("Padding layer {} to match dimensions of assay", sQuote(slot))
       mat <- pad_matrix(
@@ -130,6 +140,8 @@ write_soma.Assay <- function(
       }
     )
   }
+  ms$X$close()
+
   # Write feature-level meta data
   var_df <- .df_index(
     x = x[[]],
@@ -146,6 +158,7 @@ write_soma.Assay <- function(
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
+
   # Return
   if (class(x)[1L] != 'Assay') {
     warning(
@@ -153,7 +166,8 @@ write_soma.Assay <- function(
         strwrap(paste0(
           "Extended assays (eg. ",
           class(x)[1L],
-          ") cannot be written to SOMAs at this time"
+          ") are not fully supported; core Assay data has been written but ",
+          "additional slots have been skipped"
         )),
         collapse = '\n'
       ),
@@ -171,7 +185,7 @@ write_soma.Assay <- function(
 #' (eg. \code{nrow(assay)})
 #'
 #' @return \code{DimReduc} and \code{Graph} methods: invisibly returns
-#' \code{soma_parent} with the values of \code{x} added to it
+#' \code{soma_parent}, opened for write, with the values of \code{x} added to it
 #'
 #' @rdname write_soma_seurat_sub
 #'
@@ -207,7 +221,7 @@ write_soma.DimReduc <- function(
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be NULL" = is.null(uri),
     "'soma_parent' must be a SOMAMeasurement" = inherits(
@@ -222,6 +236,7 @@ write_soma.DimReduc <- function(
   )
   key <- tolower(gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x)))
   key <- switch(EXPR = key, pc = 'pca', ic = 'ica', key)
+
   # Create a group for `obsm,`
   if (!'obsm' %in% soma_parent$names()) {
     soma_parent$obsm <- SOMACollectionCreate(
@@ -229,9 +244,12 @@ write_soma.DimReduc <- function(
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
+  } else {
+    soma_parent$obsm$open("WRITE", internal_use_only = "allowed_use")
   }
   embed <- paste0('X_', key)
   spdl::info("Adding embeddings as {}", sQuote(embed))
+
   # Always write reductions as sparse arrays
   soma_parent$obsm$set(
     object = write_soma(
@@ -245,8 +263,11 @@ write_soma.DimReduc <- function(
     ),
     name = embed
   )
+  soma_parent$obsm$close()
+
   # Add feature loadings
   loadings <- SeuratObject::Loadings(x)
+
   # Check feature info
   if (!SeuratObject::IsMatrixEmpty(loadings)) {
     finfo <- vapply_lgl(X = list(fidx, nfeatures), FUN = is.null)
@@ -279,6 +300,7 @@ write_soma.DimReduc <- function(
       loadings <- methods::new('matrix')
     }
   }
+
   # Write feature loadings
   if (!SeuratObject::IsMatrixEmpty(loadings)) {
     ldgs <- switch(EXPR = key, pca = 'PCs', ica = 'ICs', paste0(toupper(key), 's'))
@@ -308,6 +330,7 @@ write_soma.DimReduc <- function(
       ),
       name = ldgs
     )
+    soma_parent$varm$close()
   }
   return(invisible(soma_parent))
 }
@@ -332,7 +355,7 @@ write_soma.Graph <- function(
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'soma_parent' must be a SOMAMeasurement" = inherits(
       x = soma_parent,
@@ -360,10 +383,11 @@ write_soma.Graph <- function(
     ),
     name = uri
   )
+  soma_parent$obsp$close()
   return(invisible(soma_parent))
 }
 
-#' Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
+#' Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA, returned opened for write
 #'
 #' @inheritParams write_soma
 #' @param x A \code{\link[SeuratObject]{Seurat}} object
@@ -387,7 +411,7 @@ write_soma.Seurat <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri)
@@ -397,6 +421,7 @@ write_soma.Seurat <- function(
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
+
   # Write cell-level meta data (obs)
   spdl::info("Adding cell-level meta data")
   obs_df <- .df_index(
@@ -413,6 +438,7 @@ write_soma.Seurat <- function(
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
+
   # Write assays
   experiment$add_new_collection(
     object = SOMACollectionCreate(
@@ -443,6 +469,7 @@ write_soma.Seurat <- function(
       }
     )
   }
+
   # Write dimensional reductions (obsm/varm)
   for (reduc in SeuratObject::Reductions(x)) {
     measurement <- SeuratObject::DefaultAssay(x[[reduc]])
@@ -508,6 +535,7 @@ write_soma.Seurat <- function(
       error = err_to_warn
     )
   }
+
   # Write graphs (obsp)
   for (obsp in SeuratObject::Graphs(x)) {
     measurement <- SeuratObject::DefaultAssay(x[[obsp]])
@@ -540,6 +568,7 @@ write_soma.Seurat <- function(
       error = err_to_warn
     )
   }
+
   # TODO: Write images
   if (length(SeuratObject::Images(x))) {
     warning(
@@ -548,5 +577,6 @@ write_soma.Seurat <- function(
       immediate. = TRUE
     )
   }
-  return(experiment)
+  experiment$close()
+  return(experiment$uri)
 }

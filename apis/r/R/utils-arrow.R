@@ -18,6 +18,10 @@ is_arrow_array <- function(x) {
   is_arrow_object(x) && inherits(x, "Array")
 }
 
+is_arrow_chunked_array <- function(x) {
+  is_arrow_object(x) && inherits(x, "ChunkedArray")
+}
+
 is_arrow_table <- function(x) {
   is_arrow_object(x) && inherits(x, "Table")
 }
@@ -177,4 +181,11 @@ arrow_schema_from_tiledb_schema <- function(x) {
     lapply(tiledb::attrs(x), arrow_field_from_tiledb_attr)
   )
   arrow::schema(fields)
+}
+
+#' Validate external pointer to ArrowArray
+#' @noRd
+check_arrow_pointers <- function(arrlst) {
+    stopifnot("First argument must be an external pointer to ArrowArray" = check_arrow_array_tag(arrlst[[1]]),
+              "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
 }

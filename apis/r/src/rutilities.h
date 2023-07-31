@@ -53,19 +53,19 @@ inline std::vector<int64_t> getInt64Vector(Rcpp::NumericVector vec) {
 
 // Applies (named list of) vectors of points to the named dimensions
 void apply_dim_points(
-    tdbs::SOMAArrayReader* sr,
+    tdbs::SOMAArray* sr,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
         name2dim,
     Rcpp::List lst);
 
 // Applies (named list of) matrices of points to the named dimensions
 void apply_dim_ranges(
-    tdbs::SOMAArrayReader* sr,
+    tdbs::SOMAArray* sr,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
         name2dim,
     Rcpp::List lst);
 
-// Convert R config vector to map<string,string> suitable for SOMAArrayReader
+// Convert R config vector to map<string,string> suitable for SOMAArray
 inline std::map<std::string, std::string> config_vector_to_map(Rcpp::Nullable<Rcpp::CharacterVector> config) {
     std::map<std::string, std::string> platform_config;
 
@@ -75,7 +75,7 @@ inline std::map<std::string, std::string> config_vector_to_map(Rcpp::Nullable<Rc
         size_t n = confvec.length();
         for (size_t i = 0; i<n; i++) {
             platform_config.emplace(std::make_pair(std::string(namesvec[i]), std::string(confvec[i])));
-            spdl::debug("[config_vector_to_map] adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
+            spdl::trace("[config_vector_to_map] adding '{}' = '{}'", std::string(namesvec[i]), std::string(confvec[i]));
         }
     }
 

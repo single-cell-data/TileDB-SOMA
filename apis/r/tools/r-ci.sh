@@ -37,7 +37,7 @@ COVERAGE_FLAGS=${COVERAGE_FLAGS:-"r"}
 COVERAGE_TOKEN=${COVERAGE_TOKEN:-""}
 
 R_BUILD_ARGS=${R_BUILD_ARGS-"--no-build-vignettes --no-manual"}
-R_CHECK_ARGS=${R_CHECK_ARGS-"--no-vignettes --no-manual --as-cran"}
+R_CHECK_ARGS=${R_CHECK_ARGS-"--no-manual --as-cran"}
 R_CHECK_INSTALL_ARGS=${R_CHECK_INSTALL_ARGS-"--install-args=--install-tests"}
 _R_CHECK_TESTS_NLINES_=0
 
@@ -195,6 +195,7 @@ BootstrapLinuxOptions() {
     #    InstallPandoc 'linux/debian/x86_64'
     #fi
     if [[ "${USE_BSPM}" != "FALSE" ]]; then
+        echo "options(bspm.sudo = TRUE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
         echo "suppressMessages(bspm::enable())" | sudo tee --append /etc/R/Rprofile.site >/dev/null
         echo "options(bspm.version.check=FALSE)" | sudo tee --append /etc/R/Rprofile.site >/dev/null
     fi

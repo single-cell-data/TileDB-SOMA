@@ -1,7 +1,6 @@
 test_that("SOMASparseNDArray creation", {
   uri <- withr::local_tempdir("sparse-ndarray")
-  ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
-  ndarray$create(arrow::int32(), shape = c(10, 10))
+  ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
   expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
@@ -10,33 +9,37 @@ test_that("SOMASparseNDArray creation", {
   expect_equal(tiledb::datatype(ndarray$attributes()$soma_data), "INT32")
 
   mat <- create_sparse_matrix_with_int_dims(10, 10)
+  vals <- as.vector(t(as.matrix(mat)))
+  vals <- vals[ vals != 0 ] # needed below for comparison
   ndarray$write(mat)
+  ndarray$close()
 
-  tbl <- ndarray$read_arrow_table(result_order = "COL_MAJOR")
+  ndarray <- SOMASparseNDArrayOpen(uri)
+
+  tbl <- ndarray$read(result_order = "COL_MAJOR")$tables()$concat()
   expect_true(is_arrow_table(tbl))
   expect_equal(tbl$ColumnNames(), c("soma_dim_0", "soma_dim_1", "soma_data"))
-
   expect_identical(
     as.numeric(tbl$GetColumnByName("soma_data")),
     ## need to convert to Csparsematrix first to get x values sorted appropriately
     as.numeric(as(mat, "CsparseMatrix")@x)
   )
 
-  # Subset both dims
-  tbl <- ndarray$read_arrow_table(
+  ## Subset both dims
+  tbl <- ndarray$read(
     coords = list(soma_dim_0=0, soma_dim_1=0:2),
     result_order = "COL_MAJOR"
-  )
+  )$tables()$concat()
   expect_identical(
     as.numeric(tbl$GetColumnByName("soma_data")),
     as.numeric(mat[1, 1:3])
   )
 
-  # Subset both dims, unnamed
-  tbl <- ndarray$read_arrow_table(
+  ## Subset both dims, unnamed
+  tbl <- ndarray$read(
     coords = list(0, 0:2),
     result_order = "COL_MAJOR"
-  )
+  )$tables()$concat()
   expect_identical(
     as.numeric(tbl$GetColumnByName("soma_data")),
     as.numeric(mat[1, 1:3])
@@ -65,37 +68,75 @@ test_that("SOMASparseNDArray creation", {
   expect_equal(shape(uri), c(10,10))
   ## shape with config, expected breakge as 'bad key' used
   expect_error(shape(uri, c(sm.encryption_key="Nope", sm.encryption_type="AES_256_GCM")))
-  
+
+  ndarray$close()
+
 })
 
 test_that("SOMASparseNDArray read_sparse_matrix", {
+  uri <- withr::local_tempdir("sparse-ndarray-3")
+  ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
+
+  # For this test, write 9x9 data into 10x10 array. Leaving the last row & column
+  # empty touches corner cases with setting dims() correctly
+  mat <- create_sparse_matrix_with_int_dims(10, 10)
+  ndarray$write(mat)
+  expect_equal(as.numeric(ndarray$shape()), c(10, 10))
+  ndarray$close()
+
+  # read_sparse_matrix
+  ndarray <- SOMASparseNDArrayOpen(uri)
+  mat2 <- ndarray$read()$sparse_matrix(zero_based = T)$concat()
+  expect_true(inherits(mat2, "matrixZeroBasedView"))
+  expect_s4_class(mat2$get_one_based_matrix(), "sparseMatrix")
+  expect_equal(mat2$dim(), c(10, 10))
+  expect_equal(mat2$nrow(), 10)
+  expect_equal(mat2$ncol(), 10)
+  ## not sure why all.equal(mat, mat2) does not pass
+  expect_true(all.equal(as.numeric(mat[1:9, 1:9]), as.numeric(mat2$take(0:8, 0:8)$get_one_based_matrix())))
+  expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
+
+  ndarray <- SOMASparseNDArrayOpen(uri)
+
+  ndarray$close()
+})
+
+test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   uri <- withr::local_tempdir("sparse-ndarray")
-  ndarray <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
-  ndarray$create(arrow::int32(), shape = c(10, 10))
+  ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
   # For this test, write 9x9 data into 10x10 array. Leaving the last row & column
   # empty touches corner cases with setting dims() correctly
   mat <- create_sparse_matrix_with_int_dims(9, 9)
   ndarray$write(mat)
   expect_equal(as.numeric(ndarray$shape()), c(10, 10))
+  ndarray$close()
 
   # read_sparse_matrix
-  mat2 <- ndarray$read_sparse_matrix(repr="T")
-  expect_s4_class(mat2, "sparseMatrix")
-  expect_equal(nrow(mat2), 10)
-  expect_equal(ncol(mat2), 10)
+  ndarray <- SOMASparseNDArrayOpen(uri)
+  mat2 <- ndarray$read()$sparse_matrix(zero_based=T)$concat()
+  expect_true(inherits(mat2, "matrixZeroBasedView"))
+  expect_s4_class(mat2$get_one_based_matrix(), "sparseMatrix")
+  expect_equal(mat2$dim(), c(10, 10))
+  expect_equal(mat2$nrow(), 10)
+  expect_equal(mat2$ncol(), 10)
   ## not sure why all.equal(mat, mat2) does not pass
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9,1:9])))
-  expect_equal(sum(mat), sum(mat2))
+  expect_true(all.equal(as.numeric(mat), as.numeric(mat2$take(0:8,0:8)$get_one_based_matrix())))
+  expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
+
+  ndarray <- SOMASparseNDArrayOpen(uri)
 
   # repeat with iterated reader
-  ndarray$read_sparse_matrix(repr="T", iterated=TRUE)
-  mat2 <- ndarray$read_next()
-  expect_s4_class(mat2, "sparseMatrix")
-  expect_equal(nrow(mat2), 10)
-  expect_equal(ncol(mat2), 10)
-  expect_true(all.equal(as.numeric(mat), as.numeric(mat2[1:9,1:9])))
-  expect_equal(sum(mat), sum(mat2))
+  iterator <- ndarray$read()$sparse_matrix(zero_based = T)
+  mat2 <- iterator$read_next()
+  expect_true(inherits(mat2, "matrixZeroBasedView"))
+  expect_s4_class(mat2$get_one_based_matrix(), "sparseMatrix")
+  expect_equal(mat2$dim(), c(10, 10))
+  expect_equal(mat2$nrow(), 10)
+  expect_equal(mat2$ncol(), 10)
+  expect_true(all.equal(as.numeric(mat), as.numeric(mat2$take(0:8,0:8)$get_one_based_matrix())))
+  expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
+  ndarray$close()
 })
 
 test_that("SOMASparseNDArray creation with duplicates", {
@@ -228,6 +269,8 @@ test_that("platform_config is respected", {
   expect_equal(tiledb::tiledb_filter_type(a1), "BITSHUFFLE")
   expect_equal(tiledb::tiledb_filter_type(a2), "ZSTD")
   expect_equal(tiledb::tiledb_filter_get_option(a2, "COMPRESSION_LEVEL"), 9)
+
+  snda$close()
 })
 
 test_that("platform_config defaults", {
@@ -263,4 +306,72 @@ test_that("platform_config defaults", {
   expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
   expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
 
+  snda$close()
+})
+
+test_that("SOMASparseNDArray timestamped ops", {
+  uri <- withr::local_tempdir("soma-sparse-nd-array-timestamps")
+
+  # t=10: create 2x2 array and write 1 into top-left entry
+  t10 <- Sys.time()
+  snda <- SOMASparseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2))
+  snda$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
+  snda$close()
+  Sys.sleep(1.0)
+
+  # t=20: write 1 into bottom-right entry
+  t20 <- Sys.time()
+  snda <- SOMASparseNDArrayOpen(uri=uri, mode="WRITE")
+  snda$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
+  snda$close()
+
+  # read with no timestamp args and see both writes
+  snda <- SOMASparseNDArrayOpen(uri=uri)
+  expect_equal(sum(snda$read()$sparse_matrix()$concat()), 2)
+  snda$close()
+
+  # read @ t=15 and see only the first write
+  snda <- SOMASparseNDArrayOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t10))
+  expect_equal(sum(snda$read()$sparse_matrix()$concat()), 1)
+  snda$close()
+})
+
+test_that("SOMASparseNDArray compatibility with shape >= 2^31 - 1", {
+  uri <- create_and_populate_32bit_sparse_nd_array(
+    uri = withr::local_tempdir("soma-32bit-sparse-nd-array")
+  )
+
+  # Coords for all non-zero entries in the array
+  all_coords <- bit64::as.integer64(c(0, 2^31 - 2, 2^31 - 1))
+  # Coords within R Matrix limits
+  safe_coords <- all_coords[1:2]
+
+  snda <- SOMASparseNDArrayOpen(uri, mode = "READ")
+
+  expect_silent(snda$read())
+  expect_silent(snda$read()$tables())
+
+  # Arrow table contains all data
+  tbl <- snda$read()$tables()$concat()
+  expect_identical(tbl$soma_data$as_vector(), c(1L, 2L, 3L))
+  expect_identical(tbl$soma_dim_0$as_vector(), as.integer(all_coords))
+
+  # Warning upon creation of SparseReadIter
+  expect_warning(
+    snda_reader <- snda$read()$sparse_matrix(),
+    "Array's shape exceeds"
+  )
+
+  # Error when attempting to create a sparse matrix with coordinates >= 2^31-1
+  expect_error(
+    snda_reader$concat(),
+    "Query contains 0-based coordinates outside"
+  )
+
+  # Sparse matrix can be created from coordinates within [0, 2^31 - 1]
+  suppressWarnings(
+    mat <- snda$read(list(safe_coords, safe_coords))$sparse_matrix()$concat()
+  )
+  expect_identical(dim(mat), as.integer(c(2^31 - 1, 2^31 - 1)))
+  expect_length(mat@i, 2)
 })

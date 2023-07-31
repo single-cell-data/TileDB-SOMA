@@ -1,8 +1,8 @@
 test_that("Stats generation", {
     uri <- tempfile()
-    create_and_populate_soma_dataframe(uri)
+    sdf <- create_and_populate_soma_dataframe(uri, mode = "READ")
+    on.exit(sdf$close())
 
-    sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
     tiledbsoma_stats_enable()
     arr <- sdf$read()
     txt <- tiledbsoma_stats_dump()

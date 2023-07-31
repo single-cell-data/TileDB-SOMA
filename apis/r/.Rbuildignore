@@ -17,9 +17,17 @@
 
 # build artifacts with libtiledbsoma
 src/include
-src/libtiledbsoma
 tiledbsoma/libtiledbsoma.tar.gz.current
+tiledb.tar.gz
+tiledbsoma.tar.gz
+
+# subdirectories of soft-linked libtiledbsoma
+src/libtiledbsoma/build
+src/libtiledbsoma/test
 
 # vscode
 ^\.vscode$
 ^\.devcontainer$
+^data-raw$
+^doc$
+^Meta$

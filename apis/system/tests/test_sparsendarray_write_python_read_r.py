@@ -24,8 +24,8 @@ class TestSparseNDArrayWritePythonReadR(TestWritePythonReadR):
         return f"""
         library("tiledbsoma")
         soma_ndarray <- SOMASparseNDArrayOpen("{self.uri}")
-        table <- soma_ndarray$read_arrow_table()
-        M <- soma_ndarray$read_sparse_matrix()
+        table <- soma_ndarray$read()$tables()$concat()
+        M <-  soma_ndarray$read()$sparse_matrix(zero_based=T)$concat()$get_one_based_matrix()
         df <- as.data.frame(table)
         """
 

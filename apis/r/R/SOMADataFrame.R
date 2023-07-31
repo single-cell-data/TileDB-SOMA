@@ -20,7 +20,15 @@ SOMADataFrame <- R6::R6Class(
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
-    create = function(schema, index_column_names, platform_config=NULL) {
+    #' @template param-platform-config
+    #' @param internal_use_only Character value to signal this is a 'permitted' call,
+    #' as `create()` is considered internal and should not be called directly.
+    create = function(schema, index_column_names = c("soma_joinid"), platform_config = NULL, internal_use_only = NULL) {
+      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
+        stop(paste("Use of the create() method is for internal use only. Consider using a",
+                   "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
+      }
+
       schema <- private$validate_schema(schema, index_column_names)
 
       attr_column_names <- setdiff(schema$names, index_column_names)
@@ -119,6 +127,7 @@ SOMADataFrame <- R6::R6Class(
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()
       self
     },
@@ -130,7 +139,7 @@ SOMADataFrame <- R6::R6Class(
     #' schema for `values` must match the schema for the `SOMADataFrame`.
     #'
     write = function(values) {
-      on.exit(self$close())
+      private$check_open_for_write()
 
       # Prevent downcasting of int64 to int32 when materializing a column
       op <- options(arrow.int64_downcast = FALSE)
@@ -152,7 +161,6 @@ SOMADataFrame <- R6::R6Class(
       )
 
       df <- as.data.frame(values)[schema_names]
-      private$open("WRITE")
       arr <- self$object
       arr[] <- df
     },
@@ -170,13 +178,15 @@ SOMADataFrame <- R6::R6Class(
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return An [`arrow::Table`].
+    #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
     read = function(coords = NULL,
                     column_names = NULL,
                     value_filter = NULL,
                     result_order = "auto",
                     iterated = FALSE,
-                    log_level = "warn") {
+                    log_level = "auto") {
+
+      private$check_open_for_read()
 
       result_order <- match_query_layout(result_order)
       uri <- self$uri
@@ -205,30 +215,17 @@ SOMADataFrame <- R6::R6Class(
           value_filter <- parsed@ptr
       }
 
-      if (isFALSE(iterated)) {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-          rl <- soma_array_reader(uri = uri,
-                                  colnames = column_names,   # NULL dealt with by soma_array_reader()
-                                  qc = value_filter,         # idem
-                                  dim_points = coords,       # idem
-                                  loglevel = log_level,      # idem
-                                  config = cfg)
-          private$soma_reader_transform(rl)
-      } else {
-          ## should we error if this isn't null?
-          if (!is.null(private$soma_reader_pointer)) {
-              warning("Reader pointer not null, skipping")
-              rl <- NULL
-          } else {
-              private$soma_reader_setup()
-              rl <- list()
-              while (!self$read_complete()) {
-                  ## soma_reader_transform() applied inside read_next()
-                  rl <- c(rl, self$read_next())
-              }
-          }
-          invisible(rl)
-      }
+      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      sr <- sr_setup(uri = self$uri,
+                     config = cfg,
+                     colnames = column_names,
+                     qc = value_filter,
+                     dim_points = coords,
+                     timestamp_end = private$tiledb_timestamp,
+                     loglevel = log_level)
+
+      TableReadIter$new(sr)
+
     }
 
   ),
@@ -265,11 +262,6 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
-    },
-
-    ## refined from base class
-    soma_reader_transform = function(x) {
-      arrow::as_arrow_table(arrow::RecordBatch$import_from_c(x[[1]], x[[2]]))
     }
 
   )

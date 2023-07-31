@@ -2,7 +2,7 @@
 % Please edit documentation in R/write_seurat.R
 \name{write_soma.Seurat}
 \alias{write_soma.Seurat}
-\title{Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA}
+\title{Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA, returned opened for write}
 \usage{
 \method{write_soma}{Seurat}(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
 }
@@ -19,10 +19,11 @@ configuration}}
 \item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
 }
 \value{
-A \code{\link{SOMAExperiment}} with the data from \code{x}
+The URI to the resulting \code{\link{SOMAExperiment}} generated from
+the data contained in \code{x}, returned opened for write
 }
 \description{
-Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
+Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA, returned opened for write
 }
 \section{Writing Cell-Level Meta Data}{
 

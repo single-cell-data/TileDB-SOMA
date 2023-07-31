@@ -1,4 +1,7 @@
-// Work in progress
+// we currently get deprecation warnings by default which are noisy
+#ifndef TILEDB_NO_API_DEPRECATION_WARNINGS
+#define TILEDB_NO_API_DEPRECATION_WARNINGS
+#endif
 
 #include <Rcpp.h>               // for R interface to C++
 #include <nanoarrow.h>          // for C interface to Arrow
@@ -13,13 +16,15 @@
 #include <tiledbsoma/tiledbsoma>
 
 #include "rutilities.h"         // local declarations
-#include "xptr-utils.h"         // xptr taggging utilities
+#include "xptr-utils.h"         // xptr taggging utilitie
+Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children);
+Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children);
 
 namespace tdbs = tiledbsoma;
 
-//' Iterator-Style Access to SOMA Array via SOMAArrayReader
+//' Iterator-Style Access to SOMA Array via SOMAArray
 //'
-//' The `sr_*` functions provide low-level access to an instance of the SOMAArrayReader
+//' The `sr_*` functions provide low-level access to an instance of the SOMAArray
 //' class so that iterative access over parts of a (large) array is possible.
 //' \describe{
 //'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
@@ -37,39 +42,42 @@ namespace tdbs = tiledbsoma;
 //' dimension(s). Each dimension can be one entry in the list.
 //' @param dim_ranges Optional named list with two-column matrix where each row select a range
 //' for the given dimension. Each dimension can be one entry in the list.
+//' @param batch_size Optional argument for size of data batches, defaults to \sQuote{auto}
+//' @param result_order Optional argument for query result order, defaults to \sQuote{auto}
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 //' which lets prior setting prevail, any other value is set as new logging level.
-//' @param sr An external pointer to a TileDB SOMAArrayReader object
+//' @param timestamp_end Optional POSIXct (i.e. Datetime) type for end of interval for which
+//' data is considered.
+//' @param sr An external pointer to a TileDB SOMAArray object
 //'
-//' @return \code{sr_setup} returns an external pointer to a SOMAArrayReader. \code{sr_complete}
+//' @return \code{sr_setup} returns an external pointer to a SOMAArray. \code{sr_complete}
 //' returns a boolean, and \code{sr_next} returns an Arrow array helper object.
 //'
 //' @examples
 //' \dontrun{
+//' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 //' ctx <- tiledb::tiledb_ctx()
-//' uri <- "test/soco/pbmc3k_processed/obs"
-//' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="warn")
+//' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)))
 //' rl <- data.frame()
 //' while (!sr_complete(sr)) {
-//'     sr |>
-//'         sr_next() |>
-//'         as_arrow_table() |>
-//'         collect() |>
-//'         as.data.frame() |>
-//'         data.table() -> D
-//'     rl <- rbind(rl, D)
+//'   dat <- sr_next(sr)
+//'   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
+//'   rl <- rbind(rl, as.data.frame(rb))
 //' }
 //' summary(rl)
 //' }
 //' @export
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
-                                           Rcpp::CharacterVector config,
-                                           Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                                           Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                                           Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                                           Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                                           const std::string& loglevel = "auto") {
+Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
+                                     Rcpp::CharacterVector config,
+                                     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                                     std::string batch_size = "auto",
+                                     std::string result_order = "auto",
+                                     Rcpp::Nullable<Rcpp::Datetime> timestamp_end = R_NilValue,
+                                     const std::string& loglevel = "auto") {
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -80,8 +88,6 @@ Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
-    std::string_view batch_size = "auto";
-    std::string_view result_order = "auto";
 
     std::shared_ptr<tiledb::Context> ctxptr = nullptr;
 
@@ -94,7 +100,15 @@ Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
     }
 
-    auto ptr = new tdbs::SOMAArrayReader(uri, name, ctxptr, column_names, batch_size, result_order);
+    std::uint64_t ts_start = 0; 		// beginning of time aka the epoch (force double signature)
+    std::uint64_t ts_end = std::numeric_limits<uint64_t>::max(); 	// max if unset
+    if (!timestamp_end.isNull()) {
+        ts_end = Rcpp::as<Rcpp::Datetime>(timestamp_end).getFractionalTimestamp() * 1e3; // in msec
+        spdl::info(tfm::format("[sr_setup] ts_end set to %ld", ts_end));
+    }
+
+    auto ptr = new tdbs::SOMAArray(TILEDB_READ, uri, name, ctxptr, column_names, batch_size,
+                                   result_order, std::make_pair(ts_start, ts_end));
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = ptr->schema();
@@ -129,32 +143,50 @@ Rcpp::XPtr<tdbs::SOMAArrayReader> sr_setup(const std::string& uri,
     }
 
     ptr->submit();
-    Rcpp::XPtr<tdbs::SOMAArrayReader> xptr = make_xptr<tdbs::SOMAArrayReader>(ptr);
+    Rcpp::XPtr<tdbs::SOMAArray> xptr = make_xptr<tdbs::SOMAArray>(ptr);
     return xptr;
 }
 
 //' @rdname sr_setup
 //' @export
 // [[Rcpp::export]]
-bool sr_complete(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
-   check_xptr_tag<tdbs::SOMAArrayReader>(sr);
-   size_t nobs = sr->total_num_cells();
+bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
+   check_xptr_tag<tdbs::SOMAArray>(sr);
    bool complt = sr->is_complete(true);
-   bool res = complt && nobs > 0; // completed transfer if query status complete and data shipped
-   spdl::debug("[sr_complete] Complete query test {} (compl {} nobs {})", res, complt, nobs);
+   bool initial = sr->is_initial_read();
+   bool res = complt && !initial; // completed transfer if query status complete and query ran once
+   spdl::debug("[sr_complete] Complete query test {} (compl {} initial {})", res, complt, initial);
    return res;
 }
+
+Rcpp::List create_empty_arrow_table() {
+    Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
+    Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
+    schemaxp = schema_setup_struct(schemaxp, 0);
+    arrayxp = array_setup_struct(arrayxp, 0);
+    arrayxp->length = 0;
+    Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
+                                       Rcpp::Named("schema") = schemaxp);
+    return as;
+}
+
 
 //' @rdname sr_setup
 //' @export
 // [[Rcpp::export]]
-Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
-   check_xptr_tag<tdbs::SOMAArrayReader>(sr);
+Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
+   check_xptr_tag<tdbs::SOMAArray>(sr);
 
    if (sr_complete(sr)) {
        spdl::trace("[sr_next] complete {} num_cells {}",
                    sr->is_complete(true), sr->total_num_cells());
-       return Rcpp::List::create(R_NilValue, R_NilValue);
+       return create_empty_arrow_table();
+   }
+
+   if (!sr->is_initial_read() && sr->total_num_cells() == 0) {
+       spdl::trace("[sr_next] is_initial_read {} num_cells {}",
+                   sr->is_initial_read(), sr->total_num_cells());
+       return create_empty_arrow_table();
    }
 
    auto sr_data = sr->read_next();
@@ -165,11 +197,8 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArrayReader> sr) {
    auto ncol = names.size();
    Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
    Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
-   ArrowSchemaInitFromType((ArrowSchema*)R_ExternalPtrAddr(schemaxp), NANOARROW_TYPE_STRUCT);
-   ArrowSchemaAllocateChildren((ArrowSchema*)R_ExternalPtrAddr(schemaxp), ncol);
-   ArrowArrayInitFromType((ArrowArray*)R_ExternalPtrAddr(arrayxp), NANOARROW_TYPE_STRUCT);
-   ArrowArrayAllocateChildren((ArrowArray*)R_ExternalPtrAddr(arrayxp), ncol);
-
+   schemaxp = schema_setup_struct(schemaxp, ncol);
+   arrayxp = array_setup_struct(arrayxp, ncol);
    arrayxp->length = 0;
 
    for (size_t i=0; i<ncol; i++) {

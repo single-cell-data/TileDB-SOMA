@@ -46,6 +46,41 @@ null <- function(...) {
   return(NULL)
 }
 
+#' Pad Names of a Character Vector
+#'
+#' Fill in missing names of a vector using missing values of said vector
+#'
+#' @param x A character vector
+#'
+#' @return \code{x} with any missing names set to the values of \code{x}; see
+#' examples for more details
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+#' @examples
+#' x1 <- c("a", "b", "c")
+#' pad_names(x1) # returns c(a = "a", b = "b", c = "c")
+#'
+#' x2 <- c(a = "x", b = "y", c = "z")
+#' pad_names(x2) # returns c(a = "x", b = "y", c = "z")
+#'
+#' x3 <- c(a = "x", "y", c = "z")
+#' pad_names(x3) # returns c(a = "x", y = "y", c = "z")
+#'
+pad_names <- function(x) {
+  stopifnot(
+    is.character(x)
+  )
+  if (is.null(names(x))) {
+    return(stats::setNames(nm = x))
+  }
+  unnamed <- !nzchar(names(x))
+  names(x)[unnamed] <- x[unnamed]
+  return(x)
+}
+
 # For use in read-only R6 active bindings
 read_only_error <- function(field_name) {
   stop(
@@ -58,30 +93,10 @@ SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY <- "soma_encoding_version"
 SOMA_ENCODING_VERSION <- "1"
 
-check_arrow_pointers <- function(arrlst) {
-    stopifnot("First argument must be an external pointer to ArrowArray" = check_arrow_array_tag(arrlst[[1]]),
-              "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
-}
-
-##' @noRd
-arrow_to_dt <- function(arrlst) {
-    check_arrow_pointers(arrlst)
-    rb <- dplyr::collect(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
-    data.table(as.data.frame(rb))
-}
-
-##' @noRd
-as_arrow_table <- function(arrlst) {
-    check_arrow_pointers(arrlst)
-    arrow::as_arrow_table(arrow::RecordBatch$import_from_c(arrlst[[1]], arrlst[[2]]))
-}
-
 #' @importFrom Matrix as.matrix
 #' @importFrom arrow RecordBatch
 #' @import R6 methods utils
 ##' @importFrom Rcpp evalCpp
-##' @importFrom data.table data.table
-##' @importFrom dplyr collect
 ##' @importFrom spdl setup
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL

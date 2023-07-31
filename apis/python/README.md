@@ -4,12 +4,14 @@ This is a Python implementation of the [SOMA API specification](https://github.c
 
 # Installation
 
-## Using pip
+TileDB-SOMA is available on [PyPI](https://pypi.org/project/tiledbsoma/) and [Conda](https://anaconda.org/tiledb/tiledbsoma-py), and can be installed via `pip` or `mamba` as indicated below.
 
-This code is hosted at [PyPI](https://pypi.org/project/tiledbsoma/), so you can install using `pip`:
+```bash
+python -m pip install tiledbsoma
+```
 
-```shell
-$ python -m pip install tiledbsoma
+```bash
+mamba install -c conda-forge -c tiledb tiledbsoma-py
 ```
 
 To install a specific version:

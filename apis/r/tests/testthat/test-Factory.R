@@ -1,23 +1,41 @@
 test_that("DataFrame Factory", {
     uri <- tempfile()
 
-    # check that straight use of new() errors, but 'with handshake' passes
+    # Check that straight use of new() errors, but 'with handshake' passes
     expect_error(SOMADataFrame$new(uri))
     expect_silent(d1 <- SOMADataFrame$new(uri, internal_use_only = "allowed_use"))
 
-    # check creation of a DF
+    # Check creation of a DF
+    asch <- create_arrow_schema(foo_first=FALSE)
+    expect_silent(d2 <- SOMADataFrameCreate(uri, schema = asch))
+    tbl <- arrow::arrow_table(soma_joinid = 1L:10L, foo = 1L:10L, bar = sqrt(1:10),
+                              baz = letters[1:10], schema = asch)
+    d2$write(tbl)
+
+    # Check opening to read
+    expect_silent(d3 <- SOMADataFrameOpen(uri))
+    expect_silent(chk <- d3$read()$concat())
+    expect_equal(tbl, chk)
+})
+
+test_that("DataFrame Factory with specified index_column_names", {
+    uri <- tempfile()
+
+    # Check creation of a DF
     asch <- create_arrow_schema()
-    expect_error(d2 <- SOMADataFrameCreate(uri, asch)) # misses ind col name
-    expect_error(d2 <- SOMADataFrameCreate(uri, index_column_names = "foo")) # misses scheme
+    expect_error(d2 <- SOMADataFrameCreate(uri, index_column_names = "foo")) # misses schema
     expect_silent(d2 <- SOMADataFrameCreate(uri, schema = asch, index_column_names = "foo"))
     tbl <- arrow::arrow_table(foo = 1L:10L, soma_joinid = 1L:10L, bar = sqrt(1:10),
                               baz = letters[1:10], schema = asch)
     d2$write(tbl)
 
-    # check opening to read
+    # Check opening to read
     expect_silent(d3 <- SOMADataFrameOpen(uri))
-    expect_silent(chk <- d3$read())
+    expect_equal(d3$mode(), "READ")
+    expect_silent(chk <- d3$read()$concat())
     expect_equal(tbl, chk)
+    d3$close()
+    expect_equal(d3$mode(), "CLOSED")
 })
 
 test_that("SparseNDArray Factory", {
@@ -36,13 +54,17 @@ test_that("SparseNDArray Factory", {
 
     # check opening to read
     expect_silent(s3 <- SOMASparseNDArrayOpen(uri))
-    expect_silent(chk <- s3$read_arrow_table(result_order = "COL_MAJOR"))
-    expect_identical(
-        as.numeric(chk$GetColumnByName("soma_data")),
-        ## need to convert to Csparsematrix first to get x values sorted appropriately
-        as.numeric(as(mat, "CsparseMatrix")@x)
-    )
-
+    expect_equal(s3$mode(), "READ")
+    
+    #TODO test when sr_setup has an argument "result_order"
+    #expect_silent(chk <- s3$read(result_order = "COL_MAJOR")$tables()$concat())
+    #expect_identical(
+    #    as.numeric(chk$GetColumnByName("soma_data")),
+    #    ## need to convert to Csparsematrix first to get x values sorted appropriately
+    #    as.numeric(as(mat, "CsparseMatrix")@x)
+    #)
+    s3$close()
+    expect_equal(s3$mode(), "CLOSED")
 })
 
 test_that("SparseNDArray Factory", {
@@ -61,8 +83,11 @@ test_that("SparseNDArray Factory", {
 
     # check opening to read
     expect_silent(s3 <- SOMADenseNDArrayOpen(uri))
+    expect_equal(s3$mode(), "READ")
     expect_silent(chk <- s3$read_dense_matrix())
     expect_equal(mat, chk)
+    s3$close()
+    expect_equal(s3$mode(), "CLOSED")
 })
 
 test_that("Collection Factory", {
@@ -77,6 +102,9 @@ test_that("Collection Factory", {
 
     # check opening to read
     expect_silent(s3 <- SOMACollectionOpen(uri))
+    expect_equal(s3$mode(), "READ")
+    s3$close()
+    expect_equal(s3$mode(), "CLOSED")
 })
 
 test_that("Measurement Factory", {
@@ -91,6 +119,9 @@ test_that("Measurement Factory", {
 
     # check opening to read
     expect_silent(s3 <- SOMAMeasurementOpen(uri))
+    expect_equal(s3$mode(), "READ")
+    s3$close()
+    expect_equal(s3$mode(), "CLOSED")
 })
 
 test_that("Experiment Factory", {
@@ -105,4 +136,7 @@ test_that("Experiment Factory", {
 
     # check opening to read
     expect_silent(s3 <- SOMAExperimentOpen(uri))
+    expect_equal(s3$mode(), "READ")
+    s3$close()
+    expect_equal(s3$mode(), "CLOSED")
 })

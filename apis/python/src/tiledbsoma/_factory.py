@@ -31,6 +31,7 @@ from ._exception import SOMAError
 from ._funcs import typeguard_ignore
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 _Obj = TypeVar("_Obj", bound="_tiledb_object.AnyTileDBObject")
 _Wrapper = TypeVar("_Wrapper", bound=_tdb_handles.AnyWrapper)
@@ -109,7 +110,7 @@ def open(
     Lifecycle:
         Experimental.
     """
-    context = context or SOMATileDBContext()
+    context = _validate_soma_tiledb_context(context)
     obj = _open_internal(_tdb_handles.open, uri, mode, context, tiledb_timestamp)
     try:
         if soma_type:

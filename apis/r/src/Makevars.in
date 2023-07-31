@@ -1,15 +1,22 @@
 CXX_STD = CXX17
 
 ## We need the TileDB Headers, and for macOS aka Darwin need to set minimum version 10.14 for macOS
-PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ -DR_BUILD @cxx17_macos@ -Iinclude
+PKG_CPPFLAGS = -I. -I../inst/include/ @tiledb_include@ @cxx17_macos@
 
 ## We also need the TileDB library
-PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@ lib/libtiledbsoma.a
+PKG_LIBS = @cxx17_macos@ @tiledb_libs@ @tiledb_rpath@
 
 all: $(SHLIB)
-        # if we are
-        #  - not on Window NT (a tip from data.table)
-        #  - on macOS aka Darwin which needs this
-        #  - the library is present (implying non-system library use)
-        # then let us call install_name_tool
-	if [ "$(OS)" != "Windows_NT" ] && [ `uname -s` = 'Darwin' ] && [ -f ../inst/tiledb/lib/libtiledb.dylib ] && [ -f tiledbsoma.so ]; then install_name_tool -change libz.1.dylib @rpath/libz.1.dylib ../inst/tiledb/lib/libtiledb.dylib; install_name_tool -add_rpath @loader_path/../tiledb/lib tiledbsoma.so; fi
+        # On macOS aka Darwin we call install_name_tool
+        # Case one: If we had a downloaded TileDB Core artifact, adjust zlib path and add to @rpath
+        # Case two: If we see the system libraries (on macOS) ensure /usr/local/lib rpath is considered
+	@if [ `uname -s` = 'Darwin' ] && [ -f tiledbsoma.so ]; then \
+	    if [ -f ../inst/tiledb/lib/libtiledb.dylib ] ; then \
+	        install_name_tool -change libz.1.dylib @rpath/libz.1.dylib ../inst/tiledb/lib/libtiledb.dylib; \
+	        install_name_tool -add_rpath @loader_path/../tiledb/lib tiledbsoma.so; \
+	        install_name_tool -add_rpath @loader_path/../tiledbsoma/lib tiledbsoma.so; \
+	    fi; \
+	    if [ -f /usr/local/lib/libtiledb.dylib -a -f /usr/local/lib/libtiledbsoma.dylib ] ; then \
+	        install_name_tool -add_rpath /usr/local/lib tiledbsoma.so; \
+	    fi; \
+	fi

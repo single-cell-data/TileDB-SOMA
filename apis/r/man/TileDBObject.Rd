@@ -15,9 +15,6 @@ TileDBGroup classes. (lifecycle: experimental)
 \item{\code{tiledbsoma_ctx}}{SOMATileDBContext}
 
 \item{\code{uri}}{The URI of the TileDB object.}
-
-\item{\code{object}}{Access the underlying TileB object directly (either a
-\code{\link[tiledb:tiledb_array]{tiledb::tiledb_array}} or \code{\link[tiledb:tiledb_group]{tiledb::tiledb_group}}).}
 }
 \if{html}{\out{</div>}}
 }
@@ -26,9 +23,10 @@ TileDBGroup classes. (lifecycle: experimental)
 \itemize{
 \item \href{#method-TileDBObject-new}{\code{TileDBObject$new()}}
 \item \href{#method-TileDBObject-class}{\code{TileDBObject$class()}}
+\item \href{#method-TileDBObject-is_open}{\code{TileDBObject$is_open()}}
+\item \href{#method-TileDBObject-mode}{\code{TileDBObject$mode()}}
 \item \href{#method-TileDBObject-print}{\code{TileDBObject$print()}}
 \item \href{#method-TileDBObject-exists}{\code{TileDBObject$exists()}}
-\item \href{#method-TileDBObject-get_tiledb_config}{\code{TileDBObject$get_tiledb_config()}}
 \item \href{#method-TileDBObject-clone}{\code{TileDBObject$clone()}}
 }
 }
@@ -42,7 +40,7 @@ Create a new TileDB object. (lifecycle: experimental)
   uri,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  mode = "READ",
+  tiledb_timestamp = NULL,
   internal_use_only = NULL
 )}\if{html}{\out{</div>}}
 }
@@ -56,10 +54,10 @@ Create a new TileDB object. (lifecycle: experimental)
 
 \item{\code{tiledbsoma_ctx}}{Optional SOMATileDBContext}
 
-\item{\code{mode}}{One of "READ" or "WRITE"}
+\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) with TileDB timestamp}
 
-\item{\code{internal_use_only}}{Character value to signal 'permitted' call as
-\code{new()} is considered internal and should not be called directly}
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{new()} is considered internal and should not be called directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -73,6 +71,33 @@ Print the name of the R6 class.
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$class()}\if{html}{\out{</div>}}
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBObject-is_open"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBObject-is_open}{}}}
+\subsection{Method \code{is_open()}}{
+Determine if the object is open for reading or writing
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$is_open()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+\code{TRUE} if the object is open, otherwise \code{FALSE}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBObject-mode"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBObject-mode}{}}}
+\subsection{Method \code{mode()}}{
+Get the mode of the object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$mode()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+If the object is closed, returns \dQuote{\code{CLOSED}};
+otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBObject-print"></a>}}
@@ -95,25 +120,6 @@ Check if the object exists. (lifecycle: experimental)
 
 \subsection{Returns}{
 \verb{TRUE`` if the object exists, }FALSE` otherwise.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBObject-get_tiledb_config"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBObject-get_tiledb_config}{}}}
-\subsection{Method \code{get_tiledb_config()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$get_tiledb_config(param = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{param}}{Parameter name from \code{self$platform_config} to fetch}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-SOMATileDBContext
 }
 }
 \if{html}{\out{<hr>}}

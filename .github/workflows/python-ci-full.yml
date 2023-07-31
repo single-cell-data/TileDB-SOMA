@@ -5,7 +5,9 @@ name: TileDB-SOMA Python CI (Full)
 # releases.
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'release-*'
   release:
     types: [published]
   # You can also invoke this workflow manually from
@@ -39,5 +41,3 @@ jobs:
       report_codecov: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
       run_lint: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
     secrets: inherit
-
-

@@ -4,7 +4,7 @@
 \alias{sr_setup}
 \alias{sr_complete}
 \alias{sr_next}
-\title{Iterator-Style Access to SOMA Array via SOMAArrayReader}
+\title{Iterator-Style Access to SOMA Array via SOMAArray}
 \usage{
 sr_setup(
   uri,
@@ -13,6 +13,9 @@ sr_setup(
   qc = NULL,
   dim_points = NULL,
   dim_ranges = NULL,
+  batch_size = "auto",
+  result_order = "auto",
+  timestamp_end = NULL,
   loglevel = "auto"
 )
 
@@ -37,17 +40,24 @@ dimension(s). Each dimension can be one entry in the list.}
 \item{dim_ranges}{Optional named list with two-column matrix where each row select a range
 for the given dimension. Each dimension can be one entry in the list.}
 
+\item{batch_size}{Optional argument for size of data batches, defaults to \sQuote{auto}}
+
+\item{result_order}{Optional argument for query result order, defaults to \sQuote{auto}}
+
+\item{timestamp_end}{Optional POSIXct (i.e. Datetime) type for end of interval for which
+data is considered.}
+
 \item{loglevel}{Character value with the desired logging level, defaults to \sQuote{auto}
 which lets prior setting prevail, any other value is set as new logging level.}
 
-\item{sr}{An external pointer to a TileDB SOMAArrayReader object}
+\item{sr}{An external pointer to a TileDB SOMAArray object}
 }
 \value{
-\code{sr_setup} returns an external pointer to a SOMAArrayReader. \code{sr_complete}
+\code{sr_setup} returns an external pointer to a SOMAArray. \code{sr_complete}
 returns a boolean, and \code{sr_next} returns an Arrow array helper object.
 }
 \description{
-The \verb{sr_*} functions provide low-level access to an instance of the SOMAArrayReader
+The \verb{sr_*} functions provide low-level access to an instance of the SOMAArray
 class so that iterative access over parts of a (large) array is possible.
 \describe{
 \item{\code{sr_setup}}{instantiates and by default also submits a query}
@@ -57,18 +67,14 @@ class so that iterative access over parts of a (large) array is possible.
 }
 \examples{
 \dontrun{
+uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 ctx <- tiledb::tiledb_ctx()
-uri <- "test/soco/pbmc3k_processed/obs"
-sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)), loglevel="warn")
+sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)))
 rl <- data.frame()
 while (!sr_complete(sr)) {
-    sr |>
-        sr_next() |>
-        as_arrow_table() |>
-        collect() |>
-        as.data.frame() |>
-        data.table() -> D
-    rl <- rbind(rl, D)
+  dat <- sr_next(sr)
+  rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
+  rl <- rbind(rl, as.data.frame(rb))
 }
 summary(rl)
 }

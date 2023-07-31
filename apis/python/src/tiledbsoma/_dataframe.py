@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -23,6 +23,7 @@ from ._read_iters import TableReadIter
 from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
@@ -159,8 +160,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 possible values for the column's datatype.  This makes a
                 :class:`DataFrame` growable.
             platform_config:
-                Platform-specific options used to create this
-                DataFrame, provided via ``{"tiledb": {"create": ...}}`` nested keys.
+                Platform-specific options used to create this array.
+                This may be provided as settings in a dictionary, with options
+                located in the ``{'tiledb': {'create': ...}}`` key,
+                or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
             tiledb_timestamp:
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by
@@ -199,7 +202,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        context = context or SOMATileDBContext()
+        context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
         tdb_schema = _build_tiledb_schema(
             schema,
@@ -350,7 +353,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return TableReadIter(sr)
 
     def write(
-        self, values: pa.Table, platform_config: Optional[Mapping[str, Any]] = None
+        self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None
     ) -> Self:
         """Writes an `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
         to the persistent object. As duplicate index values are not allowed, index values already
@@ -400,11 +403,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
         dim_cols_tuple = tuple(dim_cols_list)
         self._handle.writer[dim_cols_tuple] = attr_cols_map
+        self._consolidate_and_vacuum_fragment_metadata()
 
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArrayReader, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
 
         if coord is None:
@@ -476,7 +480,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def _set_reader_coord_by_py_seq_or_np_array(
         self,
-        sr: clib.SOMAArrayReader,
+        sr: clib.SOMAArray,
         dim_idx: int,
         dim: tiledb.Dim,
         coord: object,
@@ -542,7 +546,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return True
 
     def _set_reader_coord_by_numeric_slice(
-        self, sr: clib.SOMAArrayReader, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
+        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
     ) -> bool:
 
         try:
@@ -696,12 +700,12 @@ def _build_tiledb_schema(
             domain=slot_domain,
             tile=extent,
             dtype=dtype,
-            filters=tiledb_create_options.dim_filters(
+            filters=tiledb_create_options.dim_filters_tiledb(
                 index_column_name,
                 [
                     dict(
                         _type="ZstdFilter",
-                        level=tiledb_create_options.dataframe_dim_zstd_level(),
+                        level=tiledb_create_options.dataframe_dim_zstd_level,
                     )
                 ],
             ),
@@ -721,7 +725,9 @@ def _build_tiledb_schema(
                 schema.field(attr_name).type
             ),
             nullable=metadata.get(attr_name.encode("utf-8")) == b"nullable",
-            filters=tiledb_create_options.attr_filters(attr_name, ["ZstdFilter"]),
+            filters=tiledb_create_options.attr_filters_tiledb(
+                attr_name, ["ZstdFilter"]
+            ),
             ctx=context.tiledb_ctx,
         )
         attrs.append(attr)
@@ -732,10 +738,10 @@ def _build_tiledb_schema(
         domain=dom,
         attrs=attrs,
         sparse=True,
-        allows_duplicates=tiledb_create_options.allows_duplicates(),
-        offsets_filters=tiledb_create_options.offsets_filters(),
-        validity_filters=tiledb_create_options.validity_filters(),
-        capacity=tiledb_create_options.capacity(),
+        allows_duplicates=tiledb_create_options.allows_duplicates,
+        offsets_filters=tiledb_create_options.offsets_filters_tiledb(),
+        validity_filters=tiledb_create_options.validity_filters_tiledb(),
+        capacity=tiledb_create_options.capacity,
         cell_order=cell_order,
         # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
         # col-major tile order: so we write ``X`` with row-major tile order.
@@ -790,7 +796,7 @@ def _fill_out_slot_domain(
         # Here the slot_domain isn't specified by the user; we're setting it.
         # The SOMA spec disallows negative soma_joinid.
         if index_column_name == SOMA_JOINID:
-            slot_domain = (0, slot_domain[1])
+            slot_domain = (0, 2**31 - 2)  # R-friendly, which 2**63-1 is not
     elif np.issubdtype(dtype, NPFloating):
         finfo = np.finfo(cast(NPFloating, dtype))
         slot_domain = finfo.min, finfo.max

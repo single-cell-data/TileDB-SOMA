@@ -7,7 +7,9 @@ on:
       - "apis/r/**"
       - "apis/system/**"
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'release-*'
 
 jobs:
   ci:
@@ -36,9 +38,8 @@ jobs:
       - name: MkVars
         run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
-      - name: Copy libtiledbsoma
-        ## we build 'as in an R package' with all sources within apis/r/
-        run: cd apis/r && ./copy_source.sh
+      - name: Build and install libtiledbsoma
+        run: sudo scripts/bld --prefix=/usr/local && sudo ldconfig
 
       - name: Install R-tiledbsoma
         run: |

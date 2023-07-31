@@ -2,61 +2,21 @@
 
 ## This allow for standard CRAN override preference for both a settable R_HOME
 ## with fallback to query R in $PATH for the value it has so it works both
-## explicitly or implicitly from the running R instance
+## explicitly, implicitly from the running R instance or by pointing at alternate
+## build when multiple R versions are installed (as CRAN does and some users do)
 : ${R_HOME=`R RHOME`}
 if test -z "${R_HOME}"; then
     echo Could not determine R_HOME.
     exit 1
 fi
 
-### for single-cell-data/apis/r repo, consider completing sources
-if test -f src/lib/libtiledbsoma.a; then
-    echo "** static library present"
-else
-    echo "** no static library present"
-    ## check for cmake, needed to build from source
-    have_cmake=`which cmake`
-    if [ "x${have_cmake}" = "x" ]; then
-        echo "** cmake is required, but not in the path, exiting"
-        exit 1
-    fi
-    if ! test -d src/libtiledbsoma; then
-        cd src
-        tar -xzf ../libtiledbsoma.tar.gz
-        echo "** library sources unpacked"
-        cd ..
-    fi
-    if test -d src/libtiledbsoma; then
-        ## else with sources build by hand
-        cd src
-        mkdir -p build
-        cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=. -DOVERRIDE_INSTALL_PREFIX=OFF -DTILEDBSOMA_BUILD_R=ON > cmake_log.txt
-        cmake --build build -j 2 >> cmake_log.txt
-        cmake --build build --target install-libtiledbsoma >> cmake_log.txt
-        rm -rf build
-        ## handle different distro library install paths
-        ## TODO: figure out how to tell cmake to use lib/ in all cases
-        if test -d lib64; then
-            mv lib64 lib
-        elif test -d lib/x86_64-linux-gnu; then
-            mv lib/x86_64-linux-gnu lib
-        fi
-        cd ..
-        echo "** static library made"
-
-    fi
-fi
-
-## look for tiledb core library and either use system library or download build
-have_tiledb="false"
-
-## check for pkg-config and use it to inquire about tiledb build options
+## Check for pkg-config and use it to inquire about tiledb and tiledbsoma build options
 pkg-config --version >/dev/null 2>&1
 if [ $? -eq 0 ]; then
-    pkg-config --exists tiledb
+    pkg-config --exists tiledb tiledbsoma
     if [ $? -eq 0 ]; then
-        pkgcflags=`pkg-config --cflags tiledb`
-        pkglibs=`pkg-config --libs tiledb`
+        pkgcflags=`pkg-config --cflags tiledb tiledbsoma`
+        pkglibs=`pkg-config --libs tiledb tiledbsoma`
 
         ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
         sed -e "s|@tiledb_include@|$pkgcflags |" \
@@ -65,11 +25,31 @@ if [ $? -eq 0 ]; then
             -e "s|@cxx17_macos@||" \
             src/Makevars.in > src/Makevars
 
-        have_tiledb="true"
         echo "** updated src/Makevars for system library via pkg-config"
+
+        ## we can exit now as we have a working setup
+        exit 0
     fi
 fi
 
-if [ x"${have_tiledb}" = x"false" ]; then
-    ${R_HOME}/bin/Rscript tools/get_tarball.R
-fi
+## If we are still here `pkg-config` alone did not work.
+
+## Download tiledb pre-made
+${R_HOME}/bin/Rscript tools/get_tarball.R
+
+## Check for cmake and git
+${R_HOME}/bin/Rscript tools/check_cmake_and_git.R
+
+## Make libtiledbsoma library using cmake (and an added git dependency)
+tools/build_libtiledbsoma.sh
+
+pkgincl="-I../inst/tiledb/include -I../inst/tiledbsoma/include"
+pkglibs="-ltiledb -L../inst/tiledb/lib -ltiledbsoma -L../inst/tiledbsoma/lib"
+rpath="-Wl,-rpath,'\$\$ORIGIN/../tiledb/lib' -Wl,-rpath,'\$\$ORIGIN/../tiledbsoma/lib'"
+macosver=`${R_HOME}/bin/Rscript -e 'if (Sys.info()["machine"] == "x86_64" && Sys.info()["sysname"] == "Darwin") cat("-mmacosx-version-min=10.14") else cat("")'`
+
+sed -e "s|@tiledb_include@|$pkgincl |" \
+    -e "s|@tiledb_libs@|$pkglibs|" \
+    -e "s|@tiledb_rpath@|$rpath|" \
+    -e "s|@cxx17_macos@|$macosver|" \
+    src/Makevars.in > src/Makevars

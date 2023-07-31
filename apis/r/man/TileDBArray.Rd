@@ -8,11 +8,21 @@ Base class for representing an individual TileDB array.
 (lifecycle: experimental)
 }
 \section{Super class}{
-\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
+}
+\section{Active bindings}{
+\if{html}{\out{<div class="r6-active-bindings">}}
+\describe{
+\item{\code{object}}{Access the underlying TileB object directly (either a
+\code{\link[tiledb:tiledb_array]{tiledb::tiledb_array}} or \code{\link[tiledb:tiledb_group]{tiledb::tiledb_group}}).}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-TileDBArray-open}{\code{TileDBArray$open()}}
+\item \href{#method-TileDBArray-close}{\code{TileDBArray$close()}}
 \item \href{#method-TileDBArray-print}{\code{TileDBArray$print()}}
 \item \href{#method-TileDBArray-tiledb_array}{\code{TileDBArray$tiledb_array()}}
 \item \href{#method-TileDBArray-get_metadata}{\code{TileDBArray$get_metadata()}}
@@ -28,9 +38,6 @@ Base class for representing an individual TileDB array.
 \item \href{#method-TileDBArray-colnames}{\code{TileDBArray$colnames()}}
 \item \href{#method-TileDBArray-index_column_names}{\code{TileDBArray$index_column_names()}}
 \item \href{#method-TileDBArray-fragment_count}{\code{TileDBArray$fragment_count()}}
-\item \href{#method-TileDBArray-set_query}{\code{TileDBArray$set_query()}}
-\item \href{#method-TileDBArray-reset_query}{\code{TileDBArray$reset_query()}}
-\item \href{#method-TileDBArray-close}{\code{TileDBArray$close()}}
 \item \href{#method-TileDBArray-clone}{\code{TileDBArray$clone()}}
 }
 }
@@ -39,11 +46,48 @@ Base class for representing an individual TileDB array.
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-get_tiledb_config'><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-open"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-open}{}}}
+\subsection{Method \code{open()}}{
+Open the SOMA object for read or write.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$open(mode = c("READ", "WRITE"), internal_use_only = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mode}}{Mode to open in; defaults to \code{READ}.}
+
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{open()} is considered internal and should not be called directly.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The object, invisibly
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-close"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-close}{}}}
+\subsection{Method \code{close()}}{
+Close the SOMA object.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$close()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The object, invisibly
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-print"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-print}{}}}
@@ -80,16 +124,13 @@ A \code{\link[tiledb:tiledb_array]{tiledb::tiledb_array}} object.
 \subsection{Method \code{get_metadata()}}{
 Retrieve metadata from the TileDB array. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$get_metadata(key = NULL, prefix = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$get_metadata(key = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{key}}{The name of the metadata attribute to retrieve.}
-
-\item{\code{prefix}}{Filter metadata using an optional prefix. Ignored if \code{key}
-is not NULL.}
 }
 \if{html}{\out{</div>}}
 }
@@ -160,7 +201,10 @@ A named list of \code{\link[tiledb:tiledb_dim]{tiledb::tiledb_dim}} objects
 \if{html}{\out{<a id="method-TileDBArray-shape"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-shape}{}}}
 \subsection{Method \code{shape()}}{
-Retrieve the shape, i.e. the length of each dimension (lifecycle: experimental)
+Retrieve the shape, i.e. the capacity of each dimension.
+This will not necessarily match the bounds of occupied cells within the
+array.  Rather, it is the bounds outside of which no data may be written.
+(lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$shape()}\if{html}{\out{</div>}}
 }
@@ -257,64 +301,6 @@ Get number of fragments in the array (lifecycle: experimental)
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$fragment_count()}\if{html}{\out{</div>}}
 }
 
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-set_query"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-set_query}{}}}
-\subsection{Method \code{set_query()}}{
-Set dimension values to slice from the array. (lifecycle: experimental)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$set_query(dims = NULL, attr_filter = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dims}}{a named list of character vectors. Each name must correspond
-to an array dimension. The character vectors within each element are used
-to set the arrays selected ranges for each corresponding dimension.}
-
-\item{\code{attr_filter}}{a TileDB query condition for attribute filtering.
-pushdown.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-reset_query"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-reset_query}{}}}
-\subsection{Method \code{reset_query()}}{
-Reset the query. By default both dimension ranges and
-attribute filters are cleared. (lifecycle: experimental)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$reset_query(dims = TRUE, attr_filter = TRUE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dims}}{Clear the defined dimension ranges?}
-
-\item{\code{attr_filter}}{Clear the defined attribute filters?}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-NULL
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-close"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-close}{}}}
-\subsection{Method \code{close()}}{
-Close the SOMA object.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$close()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-The object, invisibly
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-clone"></a>}}

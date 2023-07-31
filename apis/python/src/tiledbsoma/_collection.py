@@ -40,8 +40,13 @@ from ._exception import SOMAError, is_does_not_exist_error
 from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject, TileDBObject
 from ._types import OpenTimestamp
-from ._util import is_relative_uri, make_relative_path, uri_joinpath
+from ._util import (
+    is_relative_uri,
+    make_relative_path,
+    uri_joinpath,
+)
 from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
@@ -90,8 +95,11 @@ class CollectionBase(
             uri:
                 The location to create this SOMA collection at.
             platform_config:
-                Optional call-specific options to use when
-                creating this collection. (Currently unused.)
+                Platform-specific options used to create this collection.
+                This may be provided as settings in a dictionary, with options
+                located in the ``{'tiledb': {'create': ...}}`` key,
+                or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
+                (Currently unused for collections.)
             context:
                 If provided, the :class:`SOMATileDBContext` to use when creating and
                 opening this collection.
@@ -107,7 +115,7 @@ class CollectionBase(
         Lifecycle:
             Experimental.
         """
-        context = context or SOMATileDBContext()
+        context = _validate_soma_tiledb_context(context)
         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         cls._set_create_metadata(handle)

@@ -4,14 +4,15 @@
 \alias{TileDBCreateOptions}
 \title{TileDBCreateOptions}
 \description{
-Provides strongly-typed access and default values for `platform_config` options stored under the
-"tiledb"->"create" mapping keys.
-}
-\details{
+Provides strongly-typed access and default values for
+\code{platform_config} options stored under the \dQuote{tiledb}
+\eqn{\rightarrow} \dQuote{create} mapping keys.
+
 Intended for internal use only.
 }
+\keyword{internal}
 \section{Super class}{
-\code{tiledbsoma::MappingBase} -> \code{TileDBCreateOptions}
+\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{TileDBCreateOptions}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -57,21 +58,34 @@ Intended for internal use only.
 \if{html}{\out{<a id="method-TileDBCreateOptions-new"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBCreateOptions-new}{}}}
 \subsection{Method \code{new()}}{
+Create a \code{TileDBCreateOptions} object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$new(platform_config)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
+object}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBCreateOptions-cell_tile_orders"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBCreateOptions-cell_tile_orders}{}}}
 \subsection{Method \code{cell_tile_orders()}}{
+Returns the cell and tile orders that should be used.
+If neither \code{cell_order} nor \code{tile_order} is present, only in this
+case will we use the default values provided.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$cell_tile_orders()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-a list keyed by `"cell_order"` and `"tile_order"`, where either
+a list keyed by \dQuote{\code{cell_order}} and
+\dQuote{\code{tile_order}}, where either value or both may be \code{NULL}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -82,6 +96,15 @@ a list keyed by `"cell_order"` and `"tile_order"`, where either
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$dim_tile(dim_name, default = .default_tile_extent())}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{dim_name}}{Name of dimension to get tiling for}
+
+\item{\code{default}}{Default tiling if \code{dim_name} is not set}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 int
 }
@@ -142,6 +165,13 @@ int
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$offsets_filters(default = .default_offsets_filters())}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{default}}{Default offset filters to use if not currently set}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 list of tiledb.Filter
 }
@@ -154,6 +184,13 @@ list of tiledb.Filter
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$validity_filters(default = .default_validity_filters())}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{default}}{Default validity filters to use if not currently set}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 list of tiledb.Filter
 }
@@ -166,6 +203,15 @@ list of tiledb.Filter
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$dim_filters(dim_name, default = list())}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{dim_name}}{Name of dimension to get filters for}
+
+\item{\code{default}}{Default filters to use for if not currently set}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 list of tiledb.Filter
 }
@@ -178,6 +224,15 @@ list of tiledb.Filter
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$attr_filters(attr_name, default = list())}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{attr_name}}{Name of attribute}
+
+\item{\code{default}}{Default filters to use if not currently set}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 list of tiledb.Filter
 }
@@ -204,8 +259,6 @@ bool
 
 \subsection{Returns}{
 int
-return Named list of character
-return Named list of character
 }
 }
 \if{html}{\out{<hr>}}
@@ -216,6 +269,16 @@ return Named list of character
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$.dim(dim_name)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{dim_name}}{Name of dimensions}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Named list of character
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBCreateOptions-.attr"></a>}}
@@ -225,6 +288,16 @@ return Named list of character
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$.attr(attr_name)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{attr_name}}{Name of attribute}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Named list of character
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBCreateOptions-.build_filters"></a>}}
@@ -234,6 +307,17 @@ return Named list of character
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$.build_filters(items)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{items}}{A list of filters; see \code{$.build_filter()} for details
+about entries in \code{items}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A list of tiledb filters.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBCreateOptions-.build_filter"></a>}}
@@ -243,6 +327,17 @@ return Named list of character
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$.build_filter(item)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{item}}{THe name of a filter or a list with the name and arguments
+for a filter (eg. \code{list(name = "ZSTD", COMPRESSION_LEVEL = -1)})}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A tiledb filter.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBCreateOptions-clone"></a>}}

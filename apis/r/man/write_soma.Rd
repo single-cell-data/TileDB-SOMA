@@ -19,7 +19,8 @@ configuration}}
 \item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
 }
 \value{
-A \code{\link{SOMAExperiment}} with the data from \code{x}
+The URI to the resulting \code{\link{SOMAExperiment}} generated from
+the data contained in \code{x}, returned opened for write
 }
 \description{
 Convert \R objects to their appropriate SOMA counterpart

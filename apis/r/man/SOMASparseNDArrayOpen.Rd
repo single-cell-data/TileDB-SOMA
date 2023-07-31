@@ -4,14 +4,24 @@
 \alias{SOMASparseNDArrayOpen}
 \title{Open SOMA Sparse Nd Array}
 \usage{
-SOMASparseNDArrayOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMASparseNDArrayOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
 
+\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
+
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
 }
 \description{
 Factory function to open a SOMASparseNDArray for reading, (lifecycle: experimental)

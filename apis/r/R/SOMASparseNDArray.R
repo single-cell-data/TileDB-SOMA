@@ -19,85 +19,13 @@
 #' the object are overwritten and new index values are added. (lifecycle: experimental)
 #'
 #' @export
-#' @importFrom bit64 as.integer64
-
 SOMASparseNDArray <- R6::R6Class(
   classname = "SOMASparseNDArray",
-  inherit = SOMAArrayBase,
+  inherit = SOMANDArrayBase,
 
   public = list(
 
-    #' @description Create a SOMASparseNDArray named with the URI. (lifecycle: experimental)
-    #' @param type an [Arrow type][arrow::data-type] defining the type of each element in the array.
-    #' @param shape a vector of integers defining the shape of the array.
-    create = function(type, shape, platform_config=NULL) {
-      stopifnot(
-        "'type' must be a valid Arrow type" =
-          is_arrow_data_type(type),
-        "'shape' must be a vector of positive integers" =
-          is.vector(shape) && all(shape > 0)
-      )
-
-      # Parse the tiledb/create/ subkeys of the platform_config into a handy,
-      # typed, queryable data structure.
-      tiledb_create_options <- TileDBCreateOptions$new(platform_config)
-
-      # create array dimensions
-      tdb_dims <- vector(mode = "list", length = length(shape))
-      for (i in seq_along(shape)) {
-        dim_name <- paste0("soma_dim_", i - 1L)
-        tile_extent <- tiledb_create_options$dim_tile(dim_name)
-        tile_extent <- bit64::as.integer64(min(c(shape[i], tile_extent)))
-
-        tdb_dims[[i]] <- tiledb::tiledb_dim(
-          name = dim_name,
-          domain = bit64::as.integer64(c(0L, shape[i] - 1L)),
-          tile = tile_extent,
-          type = "INT64"
-        )
-        tiledb::filter_list(tdb_dims[[i]]) <- tiledb::tiledb_filter_list(
-          tiledb_create_options$dim_filters(
-            dim_name,
-            # Default to use if there is nothing specified in tiledb-create options
-            # in the platform config:
-            list(list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level()))
-          )
-        )
-      }
-
-      # create array attribute
-      tdb_attr <- tiledb::tiledb_attr(
-        name = "soma_data",
-        type = tiledb_type_from_arrow_type(type),
-        filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters(
-          "soma_data",
-          # Default to use if there is nothing specified in tiledb-create options
-          # in the platform config:
-          list(list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level()))
-        ))
-      )
-
-      # array schema
-      cell_tile_orders <- tiledb_create_options$cell_tile_orders()
-      tdb_schema <- tiledb::tiledb_array_schema(
-        domain = tiledb::tiledb_domain(tdb_dims),
-        attrs = tdb_attr,
-        sparse = TRUE,
-        cell_order = cell_tile_orders["cell_order"],
-        tile_order = cell_tile_orders["tile_order"],
-        capacity=tiledb_create_options$capacity(),
-        allows_dups=tiledb_create_options$allows_duplicates(),
-        offsets_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$offsets_filters()),
-        validity_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$validity_filters())
-      )
-
-      # create array
-      tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
-      private$write_object_type_metadata()
-      self
-    },
-
-    #' @description Read as an 'arrow::Table' (lifecycle: experimental)
+    #' @description Reads a user-defined slice of the \code{SOMASparseNDArray}
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
@@ -105,101 +33,28 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param iterated Option boolean indicated whether data is read in call (when
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return An [`arrow::Table`].
-    read_arrow_table = function(
+    #' @return \link{SOMASparseNDArrayRead}
+    read = function(
       coords = NULL,
       result_order = "auto",
-      iterated = FALSE,
-      log_level = "warn"
+      log_level = "auto"
     ) {
-      uri <- self$uri
-
+      private$check_open_for_read()
       result_order <- map_query_layout(match_query_layout(result_order))
 
       if (!is.null(coords)) {
-          ## ensure coords is a named list, use to select dim points
-          stopifnot("'coords' must be a list" = is.list(coords),
-                    "'coords' must be a list of vectors or integer64" =
-                        all(vapply_lgl(coords, is_vector_or_int64)),
-                    "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
-                        (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
-                        (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
-                    )
-
-          ## if unnamed (and test for length has passed in previous statement) set names
-          if (is.null(names(coords))) names(coords) <- self$dimnames()
-
-          ## convert integer to integer64 to match dimension type
-          coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+        coords <- private$.convert_coords(coords)
       }
 
-      if (isFALSE(iterated)) {
-          cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-          rl <- soma_array_reader(uri = uri,
-                                  dim_points = coords,        # NULL dealt with by soma_array_reader()
-                                  result_order = result_order,
-                                  loglevel = log_level,       # idem
-                                  config = cfg)
-          private$soma_reader_transform(rl)
-      } else {
-          ## should we error if this isn't null?
-          if (!is.null(self$soma_reader_pointer)) {
-              warning("Reader pointer not null, skipping")
-              rl <- NULL
-          } else {
-              private$soma_reader_setup()
-              private$sparse_repr <- "" # no sparse matrix transformation
-              rl <- list()
-              while (!self$read_complete()) {
-                  ## soma_reader_transform() applied inside read_next()
-                  rl <- c(rl, self$read_next())
-              }
-          }
-          invisible(rl)
-      }
-    },
+      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      sr <- sr_setup(uri = self$uri,
+                     config = cfg,
+                     dim_points = coords,
+                     result_order = result_order,
+                     timestamp_end = private$tiledb_timestamp,
+                     loglevel = log_level)
 
-    #' @description Read as a sparse matrix (lifecycle: experimental)
-    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
-    #' length equal to the number of values to read. If `NULL`, all values are
-    #' read. List elements can be named when specifying a subset of dimensions.
-    #' @template param-result-order
-    #' @param repr Optional one-character code for sparse matrix representation type
-    #' @param iterated Option boolean indicated whether data is read in call (when
-    #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return A `matrix` object
-    read_sparse_matrix = function(
-      coords = NULL,
-      result_order = "auto",
-      repr = c("C", "T", "R"),
-      iterated = FALSE,
-      log_level = "warn"
-    ) {
-      repr <- match.arg(repr)
-      dims <- self$dimensions()
-      attr <- self$attributes()
-      stopifnot("Array must have two dimensions" = length(dims) == 2,
-                "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
-                    all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
-                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
-
-      if (isFALSE(iterated)) {
-          tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-          Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                               j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                               x = as.numeric(tbl$GetColumnByName("soma_data")),
-                               dims = as.integer(self$shape()), repr = repr)
-      } else {
-          ## should we error if this isn't null?
-          if (!is.null(self$soma_reader_pointer)) {
-              warning("pointer not null, skipping")
-          } else {
-              private$soma_reader_setup()
-              private$sparse_repr <- repr
-          }
-          invisible(NULL)
-      }
+      SOMASparseNDArrayRead$new(sr, shape = self$shape())
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
@@ -220,7 +75,7 @@ SOMASparseNDArray <- R6::R6Class(
         x = values@x
       )
       colnames(coo) <- c(self$dimnames(), self$attrnames())
-      private$write_coo_dataframe(coo)
+      private$.write_coo_dataframe(coo)
     },
 
     #' @description Retrieve number of non-zero elements (lifecycle: experimental)
@@ -232,33 +87,46 @@ SOMASparseNDArray <- R6::R6Class(
   ),
 
   private = list(
+    .is_sparse = TRUE,
 
-    # @description Ingest COO-formatted dataframe into the TileDB array. (lifecycle: experimental)
-    # @param x A [`data.frame`].
-    write_coo_dataframe = function(values) {
+    # Given a user-specified shape along a particular dimension, returns a named
+    # list containing name, capacity, and extent elements. If no shape is
+    # provided the .Machine$integer.max - 1 is used.
+    .dim_capacity_and_extent = function(name, shape = NULL, create_options) {
+      out <- list(name = name, capacity = NULL, extent = NULL)
+
+      if (is.null(shape)) {
+        out$capacity <- .Machine$integer.max - 1
+        out$extent <- min(out$capacity, create_options$dim_tile(name))
+      } else {
+        stopifnot(
+          "'shape' must be a positive scalar integer" =
+            rlang::is_scalar_integerish(shape) && shape > 0
+        )
+        out$capacity <- shape
+        out$extent <- min(shape, create_options$dim_tile(name))
+      }
+
+      out
+    },
+
+    # @description Ingest COO-formatted dataframe into the TileDB array.
+    # (lifecycle: experimental)
+    # @param values A [`data.frame`].
+    .write_coo_dataframe = function(values) {
+      private$check_open_for_write()
+
       stopifnot(is.data.frame(values))
       # private$log_array_ingestion()
-      on.exit(self$close())
-      private$open("WRITE")
       arr <- self$object
+      if (!is.null(private$tiledb_timestamp)) {
+          arr@timestamp <- private$tiledb_timestamp
+      }
       arr[] <- values
     },
 
-    ## refined from base class
-    soma_reader_transform = function(x) {
-      tbl <- as_arrow_table(x)
-      if (private$sparse_repr == "") {
-          tbl
-      } else {
-          Matrix::sparseMatrix(i = 1 + as.numeric(tbl$GetColumnByName("soma_dim_0")),
-                               j = 1 + as.numeric(tbl$GetColumnByName("soma_dim_1")),
-                               x = as.numeric(tbl$GetColumnByName("soma_data")),
-                               dims = as.integer(self$shape()), repr = private$sparse_repr)
-      }
-    },
-
-    ## internal 'repr' state variable, by default 'unset'
-    sparse_repr = ""
+    # Internal marking of one or zero based matrices for iterated reads
+    zero_based = NA
 
   )
 )

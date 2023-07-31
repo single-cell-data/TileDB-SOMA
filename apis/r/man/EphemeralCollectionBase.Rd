@@ -8,20 +8,20 @@
 }
 \keyword{internal}
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{EphemeralCollectionBase}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{EphemeralCollectionBase}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
+\item{\code{uri}}{\dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}}
+
+\item{\code{soma_type}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}}
+
 \item{\code{platform_config}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}}
 
 \item{\code{tiledbsoma_ctx}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}}
 
-\item{\code{uri}}{\dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}}
-
 \item{\code{object}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}}
-
-\item{\code{soma_type}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}}
 }
 \if{html}{\out{</div>}}
 }
@@ -29,16 +29,19 @@
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-EphemeralCollectionBase-new}{\code{EphemeralCollectionBase$new()}}
-\item \href{#method-EphemeralCollectionBase-exists}{\code{EphemeralCollectionBase$exists()}}
-\item \href{#method-EphemeralCollectionBase-get_tiledb_config}{\code{EphemeralCollectionBase$get_tiledb_config()}}
-\item \href{#method-EphemeralCollectionBase-print}{\code{EphemeralCollectionBase$print()}}
 \item \href{#method-EphemeralCollectionBase-create}{\code{EphemeralCollectionBase$create()}}
+\item \href{#method-EphemeralCollectionBase-open}{\code{EphemeralCollectionBase$open()}}
+\item \href{#method-EphemeralCollectionBase-close}{\code{EphemeralCollectionBase$close()}}
+\item \href{#method-EphemeralCollectionBase-exists}{\code{EphemeralCollectionBase$exists()}}
+\item \href{#method-EphemeralCollectionBase-print}{\code{EphemeralCollectionBase$print()}}
+\item \href{#method-EphemeralCollectionBase-get_tiledb_config}{\code{EphemeralCollectionBase$get_tiledb_config()}}
+\item \href{#method-EphemeralCollectionBase-length}{\code{EphemeralCollectionBase$length()}}
+\item \href{#method-EphemeralCollectionBase-names}{\code{EphemeralCollectionBase$names()}}
 \item \href{#method-EphemeralCollectionBase-set}{\code{EphemeralCollectionBase$set()}}
 \item \href{#method-EphemeralCollectionBase-get}{\code{EphemeralCollectionBase$get()}}
 \item \href{#method-EphemeralCollectionBase-remove}{\code{EphemeralCollectionBase$remove()}}
-\item \href{#method-EphemeralCollectionBase-get_metadata}{\code{EphemeralCollectionBase$get_metadata()}}
 \item \href{#method-EphemeralCollectionBase-set_metadata}{\code{EphemeralCollectionBase$set_metadata()}}
-\item \href{#method-EphemeralCollectionBase-close}{\code{EphemeralCollectionBase$close()}}
+\item \href{#method-EphemeralCollectionBase-get_metadata}{\code{EphemeralCollectionBase$get_metadata()}}
 \item \href{#method-EphemeralCollectionBase-add_new_collection}{\code{EphemeralCollectionBase$add_new_collection()}}
 \item \href{#method-EphemeralCollectionBase-add_new_dataframe}{\code{EphemeralCollectionBase$add_new_dataframe()}}
 \item \href{#method-EphemeralCollectionBase-add_new_dense_ndarray}{\code{EphemeralCollectionBase$add_new_dense_ndarray()}}
@@ -50,8 +53,8 @@
 <details open><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-length'><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-names'><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_data_frame"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_data_frame'><code>tiledbsoma::TileDBGroup$to_data_frame()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_list"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_list'><code>tiledbsoma::TileDBGroup$to_list()</code></a></span></li>
 </ul>
@@ -75,6 +78,52 @@ Create an ephemeral collection
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-EphemeralCollectionBase-create"></a>}}
+\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-create}{}}}
+\subsection{Method \code{create()}}{
+Create a new, empty ephemeral collection
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$create()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Returns a new ephemeral collection of class \code{class(self)}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-EphemeralCollectionBase-open"></a>}}
+\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-open}{}}}
+\subsection{Method \code{open()}}{
+\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$open(mode)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mode}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-EphemeralCollectionBase-close"></a>}}
+\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-close}{}}}
+\subsection{Method \code{close()}}{
+\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$close()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Invisibly returns \code{NULL}
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-exists"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-exists}{}}}
 \subsection{Method \code{exists()}}{
@@ -86,6 +135,20 @@ Create an ephemeral collection
 \subsection{Returns}{
 Returns \code{FALSE} as ephemeral collections do not
 exist on-disk
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-EphemeralCollectionBase-print"></a>}}
+\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-print}{}}}
+\subsection{Method \code{print()}}{
+Special method for printing object representation to console
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$print()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Prints details about the ephemeral collection and invisibly
+returns itself
 }
 }
 \if{html}{\out{<hr>}}
@@ -110,30 +173,29 @@ on-disk configuration
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-EphemeralCollectionBase-print"></a>}}
-\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-print}{}}}
-\subsection{Method \code{print()}}{
-Special method for printing object representation to console
+\if{html}{\out{<a id="method-EphemeralCollectionBase-length"></a>}}
+\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-length}{}}}
+\subsection{Method \code{length()}}{
+Retrieve the number of items in the collection
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$print()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$length()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Prints details about the ephemeral collection and invisibly
-returns itself
+The length of the collection
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-EphemeralCollectionBase-create"></a>}}
-\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-create}{}}}
-\subsection{Method \code{create()}}{
-Create a new, empty ephemeral collection
+\if{html}{\out{<a id="method-EphemeralCollectionBase-names"></a>}}
+\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-names}{}}}
+\subsection{Method \code{names()}}{
+Retrieve the names of members. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$create()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$names()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Returns a new ephemeral collection of class \code{class(self)}
+A \code{character} vector of member names.
 }
 }
 \if{html}{\out{<hr>}}
@@ -204,26 +266,6 @@ Remove objects from an ephemeral collection
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-EphemeralCollectionBase-get_metadata"></a>}}
-\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-get_metadata}{}}}
-\subsection{Method \code{get_metadata()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$get_metadata(key = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{key}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-An empty list
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-set_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-set_metadata}{}}}
 \subsection{Method \code{set_metadata()}}{
@@ -244,16 +286,23 @@ An empty list
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-EphemeralCollectionBase-close"></a>}}
-\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-close}{}}}
-\subsection{Method \code{close()}}{
+\if{html}{\out{<a id="method-EphemeralCollectionBase-get_metadata"></a>}}
+\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-get_metadata}{}}}
+\subsection{Method \code{get_metadata()}}{
 \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$close()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$get_metadata(key = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{key}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
-Invisibly returns \code{NULL}
+An empty list
 }
 }
 \if{html}{\out{<hr>}}

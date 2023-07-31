@@ -40,9 +40,9 @@
 #include <catch2/matchers/catch_matchers_vector.hpp>
 #include <random>
 
-#include <tiledbsoma/util.h>
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
+#include "utils/util.h"
 
 using namespace tiledb;
 using namespace tiledbsoma;
@@ -122,7 +122,7 @@ TEST_CASE("ManagedQuery: Basic execution test") {
     auto [array, d0, a0, _] = create_array(uri, ctx);
 
     auto mq = ManagedQuery(array);
-    mq.submit();
+    mq.submit_read();
 
     auto results = mq.results();
     REQUIRE(mq.results_complete());
@@ -142,7 +142,7 @@ TEST_CASE("ManagedQuery: Select test") {
     auto mq = ManagedQuery(array);
     mq.select_columns({"a0"});
     mq.select_points<std::string>("d0", {"a"});
-    mq.submit();
+    mq.submit_read();
 
     auto results = mq.results();
     REQUIRE(mq.results_complete());
@@ -164,7 +164,7 @@ TEST_CASE("ManagedQuery: Validity test") {
     auto [array, d0, a0, a0_valids] = create_array(uri, ctx);
 
     auto mq = ManagedQuery(array);
-    mq.submit();
+    mq.submit_read();
 
     auto results = mq.results();
     REQUIRE(mq.results_complete());

@@ -4,14 +4,26 @@
 \alias{SOMAMeasurementOpen}
 \title{Open SOMA Measurement}
 \usage{
-SOMAMeasurementOpen(uri, platform_config = NULL, tiledbsoma_ctx = NULL)
+SOMAMeasurementOpen(
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+)
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
 
+\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
+
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{optional SOMATileDBContext}
+
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp. In READ mode, defaults
+to the current time. If non-NULL, then all members accessed through the collection object
+inherit the timestamp.}
 }
 \description{
 Factory function to open a SOMAMeasurement for reading, (lifecycle: experimental)

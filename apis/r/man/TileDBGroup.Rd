@@ -10,13 +10,15 @@ A \code{TileDBArray} or \code{TileDBGroup}.
 Base class for interacting with TileDB groups (lifecycle: experimental)
 }
 \section{Super class}{
-\code{tiledbsoma::TileDBObject} -> \code{TileDBGroup}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBGroup}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-TileDBGroup-print}{\code{TileDBGroup$print()}}
 \item \href{#method-TileDBGroup-create}{\code{TileDBGroup$create()}}
+\item \href{#method-TileDBGroup-open}{\code{TileDBGroup$open()}}
+\item \href{#method-TileDBGroup-close}{\code{TileDBGroup$close()}}
 \item \href{#method-TileDBGroup-set}{\code{TileDBGroup$set()}}
 \item \href{#method-TileDBGroup-get}{\code{TileDBGroup$get()}}
 \item \href{#method-TileDBGroup-remove}{\code{TileDBGroup$remove()}}
@@ -26,7 +28,6 @@ Base class for interacting with TileDB groups (lifecycle: experimental)
 \item \href{#method-TileDBGroup-to_data_frame}{\code{TileDBGroup$to_data_frame()}}
 \item \href{#method-TileDBGroup-get_metadata}{\code{TileDBGroup$get_metadata()}}
 \item \href{#method-TileDBGroup-set_metadata}{\code{TileDBGroup$set_metadata()}}
-\item \href{#method-TileDBGroup-close}{\code{TileDBGroup$close()}}
 \item \href{#method-TileDBGroup-clone}{\code{TileDBGroup$clone()}}
 }
 }
@@ -35,8 +36,9 @@ Base class for interacting with TileDB groups (lifecycle: experimental)
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-get_tiledb_config'><code>tiledbsoma::TileDBObject$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -56,9 +58,53 @@ Print summary of the group. (lifecycle: experimental)
 \subsection{Method \code{create()}}{
 Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$create()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$create(internal_use_only = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{create()} is considered internal and should not be called directly.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBGroup-open"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBGroup-open}{}}}
+\subsection{Method \code{open()}}{
+Open the SOMA object for read or write.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$open(mode = c("READ", "WRITE"), internal_use_only = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mode}}{Mode to open in; defaults to \code{READ}.}
+
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
+as \code{open()} is considered internal and should not be called directly.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The object, invisibly
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBGroup-close"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBGroup-close}{}}}
+\subsection{Method \code{close()}}{
+Close the SOMA object.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$close()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The object, invisibly
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBGroup-set"></a>}}
@@ -89,7 +135,8 @@ default), the object's URI is assumed to be relative unless it is a
 \if{html}{\out{<a id="method-TileDBGroup-get"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBGroup-get}{}}}
 \subsection{Method \code{get()}}{
-Retrieve a group member by name. (lifecycle: experimental)
+Retrieve a group member by name. If the member isn't already
+open, it is opened in the same mode as the parent. (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$get(name)}\if{html}{\out{</div>}}
 }
@@ -98,6 +145,8 @@ Retrieve a group member by name. (lifecycle: experimental)
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{name}}{The name of the member.}
+
+\item{\code{mode}}{Mode to open in}
 }
 \if{html}{\out{</div>}}
 }
@@ -204,19 +253,6 @@ Add list of metadata. (lifecycle: experimental)
 }
 \subsection{Returns}{
 NULL
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBGroup-close"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBGroup-close}{}}}
-\subsection{Method \code{close()}}{
-Close the SOMA object.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBGroup$close()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-The object, invisibly
 }
 }
 \if{html}{\out{<hr>}}

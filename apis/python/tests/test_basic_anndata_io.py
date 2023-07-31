@@ -32,6 +32,13 @@ def h5ad_file_extended(request):
 
 
 @pytest.fixture
+def h5ad_file_uns_string_array(request):
+    # This has uns["louvain_colors"] with dtype.char == "U"
+    input_path = HERE.parent / "testdata/pbmc3k.h5ad"
+    return input_path
+
+
+@pytest.fixture
 def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
@@ -63,6 +70,8 @@ def test_import_anndata(adata, ingest_modes, X_kind):
     orig = adata
     metakey = _constants.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
     all2d = (slice(None), slice(None))  # keystroke-saver
+
+    adata.layers["plus1"] = adata.X + 1
 
     for ingest_mode in ingest_modes:
         uri = tiledbsoma.io.from_anndata(
@@ -124,21 +133,22 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         assert exp.ms["RNA"].X.metadata.get(metakey) == "SOMACollection"
 
         # Check X/data (dense in the H5AD)
-        if X_kind == tiledbsoma.SparseNDArray:
-            assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
-            table = exp.ms["RNA"].X["data"].read(coords=all2d).tables().concat()
-            if have_ingested:
-                assert table.shape[0] == orig.X.shape[0] * orig.X.shape[1]
+        for key in ["data", "plus1"]:
+            if X_kind == tiledbsoma.SparseNDArray:
+                assert exp.ms["RNA"].X[key].metadata.get(metakey) == "SOMASparseNDArray"
+                table = exp.ms["RNA"].X[key].read(coords=all2d).tables().concat()
+                if have_ingested:
+                    assert table.shape[0] == orig.X.shape[0] * orig.X.shape[1]
+                else:
+                    assert table.shape[0] == 0
             else:
-                assert table.shape[0] == 0
-        else:
-            assert exp.ms["RNA"].X["data"].metadata.get(metakey) == "SOMADenseNDArray"
-            if have_ingested:
-                matrix = exp.ms["RNA"].X["data"].read(coords=all2d)
-                assert matrix.size == orig.X.size
-            else:
-                with pytest.raises(ValueError):
-                    exp.ms["RNA"].X["data"].read(coords=all2d)
+                assert exp.ms["RNA"].X[key].metadata.get(metakey) == "SOMADenseNDArray"
+                if have_ingested:
+                    matrix = exp.ms["RNA"].X[key].read(coords=all2d)
+                    assert matrix.size == orig.X.size
+                else:
+                    with pytest.raises(ValueError):
+                        exp.ms["RNA"].X[key].read(coords=all2d)
 
         # Check raw/X/data (sparse)
         assert exp.ms["raw"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
@@ -317,6 +327,7 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended):
         assert set(uns) == {
             "draw_graph",
             "louvain",
+            "louvain_colors",
             "neighbors",
             "pca",
             "rank_genes_groups",
@@ -338,6 +349,25 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended):
         assert np.array_equal(got_pca_variance, original.uns["pca"]["variance"])
 
 
+def test_ingest_uns_string_array(h5ad_file_uns_string_array):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    tiledbsoma.io.from_h5ad(
+        output_path,
+        h5ad_file_uns_string_array,
+        measurement_name="RNA",
+    )
+
+    with tiledbsoma.Experiment.open(output_path) as exp:
+        with tiledbsoma.DataFrame.open(
+            exp.ms["RNA"]["uns"]["louvain_colors"].uri
+        ) as df:
+            contents = df.read().concat()["values"]
+            assert len(contents) == 8
+            assert contents[0].as_py() == "#1f77b4"
+
+
 def test_add_matrix_to_collection(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
@@ -346,9 +376,12 @@ def test_add_matrix_to_collection(adata):
     exp = tiledbsoma.Experiment.open(uri)
     with _factory.open(output_path) as exp_r:
         assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
-
+        with pytest.raises(tiledbsoma.SOMAError):
+            tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)  # not open for read
     with _factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
+    with pytest.raises(tiledbsoma.SOMAError):
+        tiledbsoma.io.add_X_layer(exp, "RNA", "data3", adata.X)  # closed
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].X.keys())) == ["data", "data2"]
 

@@ -1,4 +1,4 @@
-# tiledbsoma development version
+# tiledbsoma 0.0.0.*
 
 ## Changes
 
@@ -16,3 +16,9 @@
 * Add Seurat outgestors for `SOMAExperimentAxisQuery` objects
 * Numeric coordinates passed to SOMADataFrame$read() are now automatically upcast to int64 when necessary
 * Add ingestors to read data from `Seurat` objects
+* Add methods for listing and accessing bundled datasets, which now includes a `SOMAExperiment` containing the pbmc_small dataset from the SeuratObject package
+* New vignettes describing SOMA objects, reading data from them, and querying SOMA experiments
+* Objects added to `SOMACollection`-based classes using the `add_new_*()` methods now pass through their parent context and platform config
+* `SOMAExperimentAxisQuery` gained a `to_sparse_matrix()` method for retrieving data as a named sparse matrix
+* `SOMAExperiment` gained `axis_query()` to construct a `SOMAExperimentAxisQuery` object
+* Add SingleCellExperiment outgestor for `SOMAExperimentAxisQuery` objects

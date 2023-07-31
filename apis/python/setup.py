@@ -247,6 +247,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages("src"),
@@ -282,14 +283,15 @@ setuptools.setup(
         # It' not preferable to pin to an RC dependency, so we only do this
         # when we must, which is for 3.11.
         "numba==0.56.4; python_version<'3.11'",
-        "numba==0.57.0rc1; python_version=='3.11'",
-        "numpy>=1.18,<1.24",
+        "numba==0.57; python_version=='3.11'",
+        "numpy>=1.18,<1.24; python_version<'3.11'",
+        "numpy>=1.18,<1.25; python_version=='3.11'",
         "pandas",
         "pyarrow>=9.0.0",
         "scanpy>=1.9.2",
         "scipy",
-        "somacore==1.0.1",
-        "tiledb==0.21.*",
+        "somacore==1.0.3",
+        "tiledb~=0.22.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={

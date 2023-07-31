@@ -1,0 +1,25 @@
+template:
+  bootstrap: 5
+
+reference:
+- title: TileDB-SOMA
+  contents:
+  - matches(".*")
+
+## Cf https://pkgdown.r-lib.org/articles/customise.html
+navbar:
+  components:
+    articles:
+      text: Vignettes
+      menu:
+      - text: SOMA Introduction
+      - text: SOMA Objects Overview
+        href: articles/soma-objects.html
+      - text: Reading From SOMA Objects
+        href: articles/soma-reading.html
+      - text: Querying a SOMA Experiment
+        href: articles/soma-experiment-queries.html
+      - text: -------
+      - text: SOMA Configuration
+      - text: Using PlatformConfig
+        href: articles/UsingPlatformConfig.html

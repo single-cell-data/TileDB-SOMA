@@ -11,7 +11,8 @@
 #' configuration}
 #' @param tiledbsoma_ctx Optional \code{\link{SOMATileDBContext}}
 #'
-#' @return A \code{\link{SOMAExperiment}} with the data from \code{x}
+#' @return The URI to the resulting \code{\link{SOMAExperiment}} generated from
+#' the data contained in \code{x}, returned opened for write
 #'
 #' @section Known methods:
 #' \itemize{
@@ -38,7 +39,7 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #' relative or aboslute
 #'
 #' @return The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
-#' \link[tiledbsoma:SOMADataFrame]{data frame}
+#' \link[tiledbsoma:SOMADataFrame]{data frame}, returned opened for write
 #'
 #' @name write_soma_objects
 #' @rdname write_soma_objects
@@ -348,7 +349,7 @@ write_soma.TsparseMatrix <- function(
     prefix = 'tiledbsoma',
     ...
 ) {
-  .check_seurat_installed()
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'x' must be a data frame" = is.data.frame(x),
     "'alt' must be a single character value" = is_scalar_character(alt),
@@ -375,6 +376,8 @@ write_soma.TsparseMatrix <- function(
   return(x)
 }
 
+#' @importFrom tools R_user_dir
+#'
 .check_soma_uri <- function(
   uri,
   soma_parent = NULL,
@@ -391,7 +394,7 @@ write_soma.TsparseMatrix <- function(
       warning("uri", call. = FALSE, immediate. = TRUE)
       uri <- basename(uri)
     }
-    uri <- file_path(soma_parent$uri %||% user_dir(), uri)
+    uri <- file_path(soma_parent$uri %||% R_user_dir('tiledbsoma'), uri)
   } else if (!is_remote_uri(uri)) {
     dir.create(dirname(uri), recursive = TRUE)
   }

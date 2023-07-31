@@ -25,10 +25,10 @@ def src_matrix(request):
 @pytest.mark.parametrize(
     "tdb_create_options",
     [
-        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=10000)),
-        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=100000)),
-        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=10000)),
-        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=100000)),
+        TileDBCreateOptions(write_X_chunked=False, goal_chunk_nnz=10000),
+        TileDBCreateOptions(write_X_chunked=False, goal_chunk_nnz=100000),
+        TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=10000),
+        TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=100000),
     ],
 )
 @pytest.mark.parametrize(
@@ -56,7 +56,7 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
         soma.DenseNDArray,
         tmp_path.as_posix(),
         src_matrix,
-        platform_config=tdb_create_options,
+        platform_config={"tiledb": {"create": tdb_create_options}},
     ).close()
     with _factory.open(tmp_path.as_posix()) as snda:
         assert snda.ndim == src_matrix.ndim
@@ -72,10 +72,10 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
 @pytest.mark.parametrize(
     "tdb_create_options",
     [
-        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=10000)),
-        TileDBCreateOptions(dict(write_X_chunked=False, goal_chunk_nnz=100000)),
-        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=10000)),
-        TileDBCreateOptions(dict(write_X_chunked=True, goal_chunk_nnz=100000)),
+        TileDBCreateOptions(write_X_chunked=False, goal_chunk_nnz=10000),
+        TileDBCreateOptions(write_X_chunked=False, goal_chunk_nnz=100000),
+        TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=10000),
+        TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=100000),
     ],
 )
 @pytest.mark.parametrize(
@@ -107,7 +107,7 @@ def test_io_create_from_matrix_Sparse_nd_array(
         soma.SparseNDArray,
         tmp_path.as_posix(),
         src_matrix,
-        platform_config=tdb_create_options,
+        platform_config={"tiledb": {"create": tdb_create_options}},
     ).close()
 
     with _factory.open(tmp_path.as_posix()) as snda:
