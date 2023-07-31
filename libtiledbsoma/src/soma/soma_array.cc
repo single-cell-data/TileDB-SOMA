@@ -108,7 +108,7 @@ SOMAArray::SOMAArray(
     std::map<std::string, std::string> platform_config,
     std::vector<std::string> column_names,
     std::string_view batch_size,
-    std::string_view result_order,
+    ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp)
     : uri_(util::rstrip_uri(uri))
     , timestamp_(timestamp) {
@@ -118,7 +118,7 @@ SOMAArray::SOMAArray(
 }
 
 SOMAArray::SOMAArray(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::string_view uri,
     std::string_view name,
     std::shared_ptr<Context> ctx,
@@ -488,13 +488,14 @@ uint64_t SOMAArray::metadata_num() const {
 }
 
 void SOMAArray::validate(
-    tiledb_query_type_t mode,
+    OpenMode mode,
     std::string_view name,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     // Validate parameters
+    auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
     try {
         LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));
-        arr_ = std::make_shared<Array>(*ctx_, uri_, mode);
+        arr_ = std::make_shared<Array>(*ctx_, uri_, tdb_mode);
         if (timestamp) {
             if (timestamp->first > timestamp->second) {
                 throw std::invalid_argument("timestamp start > end");
@@ -502,7 +503,7 @@ void SOMAArray::validate(
             arr_->set_open_timestamp_start(timestamp->first);
             arr_->set_open_timestamp_end(timestamp->second);
             arr_->close();
-            arr_->open(mode);
+            arr_->open(tdb_mode);
             LOG_DEBUG(fmt::format(
                 "[SOMAArray] timestamp_start = {}",
                 arr_->open_timestamp_start()));
