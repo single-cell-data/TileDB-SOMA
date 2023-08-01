@@ -5,6 +5,7 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 from scipy import sparse
+from somacore import options
 
 import tiledbsoma as soma
 from tiledbsoma import _factory
@@ -219,6 +220,72 @@ def test_experiment_query_combo(soma_experiment):
     ) as query:
         assert query.obs().concat()["label"].to_pylist() == obs_label_values
         assert query.var().concat()["label"].to_pylist() == var_label_values
+
+
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_experiment_query_batch_size(soma_experiment):
+    """
+    batch_size is currently not supported by this implementation of SOMA.
+    This test merely verifies that the batch_size parameter is accepted
+    but as a no-op.
+    """
+    with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
+        tbls = query.obs(batch_size=options.BatchSize(count=100))
+        assert len(list(tbls)) == 1  # batch_size currently not implemented
+
+
+@pytest.mark.parametrize("n_obs,n_vars", [(10, 10)])
+def test_experiment_query_partitions(soma_experiment):
+    """
+    partitions is currently not supported by this implementation of SOMA.
+    This test checks if a ValueError is raised if a partitioning is requested.
+    """
+    with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
+        with pytest.raises(ValueError):
+            query.obs(partitions=options.IOfN(i=0, n=3)).concat()
+
+        with pytest.raises(ValueError):
+            query.var(partitions=options.IOfN(i=0, n=3)).concat()
+
+        with pytest.raises(ValueError):
+            query.X("raw", partitions=options.IOfN(i=0, n=3)).concat()
+
+
+@pytest.mark.parametrize("n_obs,n_vars", [(10, 10)])
+def test_experiment_query_result_order(soma_experiment):
+    with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
+        # Since obs is 1-dimensional, row-major and column-major should be the same
+        obs_data_row_major = (
+            query.obs(result_order="row-major").concat()["label"].to_numpy()
+        )
+        obs_data_col_major = (
+            query.obs(result_order="column-major").concat()["label"].to_numpy()
+        )
+        assert np.array_equal(obs_data_row_major, obs_data_col_major)
+        assert np.array_equal(np.sort(obs_data_row_major), obs_data_row_major)
+        assert np.array_equal(np.sort(obs_data_col_major), obs_data_col_major)
+
+        # The same for var
+        var_data_row_major = (
+            query.var(result_order="row-major").concat()["label"].to_numpy()
+        )
+        var_data_col_major = (
+            query.var(result_order="column-major").concat()["label"].to_numpy()
+        )
+        assert np.array_equal(var_data_row_major, var_data_col_major)
+        assert np.array_equal(np.sort(var_data_row_major), var_data_row_major)
+        assert np.array_equal(np.sort(var_data_col_major), var_data_col_major)
+
+        X_tbl = query.X("raw", result_order="row-major").tables().concat()
+        row = X_tbl["soma_dim_0"].to_numpy()
+        data_row_major = X_tbl["soma_data"].to_numpy()
+        assert np.array_equal(np.sort(row), row)
+
+        X_tbl = query.X("raw", result_order="column-major").tables().concat()
+        col = X_tbl["soma_dim_1"].to_numpy()
+        data_col_major = X_tbl["soma_data"].to_numpy()
+        assert np.array_equal(np.sort(col), col)
+        assert not np.array_equal(data_row_major, data_col_major)
 
 
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
