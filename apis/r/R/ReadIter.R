@@ -1,12 +1,14 @@
 #' SOMA Read Iterator Base class
 #'
 #' Class that allows for read iteration of SOMA reads.
+#' @keywords internal
+#' @export
 
 ReadIter <- R6::R6Class(
   classname = "ReadIter",
 
   public = list(
-                
+
     #' @description Create (lifecycle: experimental)
     #' @param sr soma read pointer
     initialize = function(sr) {
@@ -39,7 +41,7 @@ ReadIter <- R6::R6Class(
           }
       }
     },
-    
+
     #' @description  Concatenate remainder of iterator
     # to be refined in derived classes
     concat = function() {

@@ -3,9 +3,7 @@
 #' Context map for TileDB-backed SOMA objects
 #'
 #' @export
-#'
-#' @noMd
-#'
+
 SOMATileDBContext <- R6::R6Class(
   classname = 'SOMATileDBContext',
   inherit = SOMAContextBase,

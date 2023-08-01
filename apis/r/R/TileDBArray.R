@@ -3,6 +3,7 @@
 #' @description Base class for representing an individual TileDB array.
 #' (lifecycle: experimental)
 #'
+#' @keywords internal
 #' @export
 TileDBArray <- R6::R6Class(
   classname = "TileDBArray",

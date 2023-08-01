@@ -5,6 +5,7 @@
 #' result. Coordinates outside of the query result will return
 #' [`arrow::null()`].
 #' @keywords internal
+#' @export
 SOMAAxisIndexer <- R6::R6Class("SOMAAxisIndexer",
   public = list(
 

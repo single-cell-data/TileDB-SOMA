@@ -5,6 +5,7 @@
 #' (lifecycle: experimental)
 #'
 #' @keywords internal
+#' @export
 #' @importFrom bit64 as.integer64
 
 SOMANDArrayBase <- R6::R6Class(
