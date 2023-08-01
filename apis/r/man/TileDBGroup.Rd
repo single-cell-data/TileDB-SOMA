@@ -9,6 +9,7 @@ A \code{TileDBArray} or \code{TileDBGroup}.
 \description{
 Base class for interacting with TileDB groups (lifecycle: experimental)
 }
+\keyword{internal}
 \section{Super class}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBGroup}
 }

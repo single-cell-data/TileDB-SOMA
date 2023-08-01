@@ -7,6 +7,7 @@
 Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 (lifecycle: experimental)
 }
+\keyword{internal}
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMANDArrayBase}
 }

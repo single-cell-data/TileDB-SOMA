@@ -109,7 +109,7 @@ The keys of the map
 }
 
 \subsection{Returns}{
-A `list` containing the map values
+A \code{list} containing the map values
 }
 }
 \if{html}{\out{<hr>}}
@@ -166,7 +166,7 @@ the entry for \code{key}}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\[chainable\] Invisibly returns \code{self} with
+[chainable] Invisibly returns \code{self} with
 \code{value} added as \code{key}
 }
 }
@@ -186,7 +186,7 @@ the entry for \code{key}}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\[chainable\] Invisibly returns \code{self} with the values
+[chainable] Invisibly returns \code{self} with the values
 of \code{...} added to the map
 }
 }
@@ -206,7 +206,7 @@ of \code{...} added to the map
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\[chainable\] Invisibly returns \code{self} with \code{key}
+[chainable] Invisibly returns \code{self} with \code{key}
 removed from the map
 }
 }
@@ -226,7 +226,7 @@ removed from the map
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\[chainable\] Invisibly returns \code{self} with the value
+[chainable] Invisibly returns \code{self} with the value
 of \code{map}
 }
 }
@@ -263,7 +263,7 @@ The map as a list
 }
 
 \subsection{Returns}{
-\[chainable\] Prints information about the map to \code{stdout}
+[chainable] Prints information about the map to \code{stdout}
 and invisibly returns \code{self}
 }
 }
