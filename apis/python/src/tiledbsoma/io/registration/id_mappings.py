@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import anndata as ad
 import attrs
@@ -19,7 +19,8 @@ class AxisIDMapping:
     See module-level comments for more information.
     """
 
-    data: List[int]
+    # Tuple not List so this can't be modified by accident when passed into some function somewhere
+    data: Tuple[int, ...]
 
     @classmethod
     def identity(cls, n: int) -> Self:
@@ -27,7 +28,7 @@ class AxisIDMapping:
         important for uns arrays which we never grow on ingest --- rather, we
         sub-nest the entire recursive ``uns`` data structure.
         """
-        return cls(data=list(range(n)))
+        return cls(data=tuple(range(n)))
 
 
 @attrs.define(kw_only=True)
@@ -58,11 +59,11 @@ class ExperimentIDMapping:
             "Registration: registering isolated AnnData object."
         )
 
-        obs_mapping = AxisIDMapping(data=list(range(len(adata.obs))))
+        obs_mapping = AxisIDMapping(data=tuple(range(len(adata.obs))))
         var_axes = {}
-        var_axes[measurement_name] = AxisIDMapping(data=list(range(len(adata.var))))
+        var_axes[measurement_name] = AxisIDMapping(data=tuple(range(len(adata.var))))
         if adata.raw is not None:
-            var_axes["raw"] = AxisIDMapping(data=list(range(len(adata.raw.var))))
+            var_axes["raw"] = AxisIDMapping(data=tuple(range(len(adata.raw.var))))
 
         return cls(obs_axis=obs_mapping, var_axes=var_axes)
 

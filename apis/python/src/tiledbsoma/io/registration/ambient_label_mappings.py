@@ -43,7 +43,7 @@ class AxisAmbientLabelMapping:
             if input_id not in self.data:
                 raise ValueError(f"input_id {input_id} not found in registration data")
             soma_joinids.append(self.data[input_id])
-        return AxisIDMapping(data=soma_joinids)
+        return AxisIDMapping(data=tuple(soma_joinids))
 
     def id_mapping_from_dataframe(self, df: pd.DataFrame) -> AxisIDMapping:
         """Given registered label-to-SOMA-join-ID mappings for all registered input files for an

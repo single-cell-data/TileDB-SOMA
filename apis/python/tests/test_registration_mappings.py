@@ -154,35 +154,35 @@ def soma1(tmp_path, h5ad1):
 
 def test_axis_mappings(anndata1):
     mapping = registration.AxisIDMapping.identity(10)
-    assert mapping.data == list(range(10))
+    assert mapping.data == tuple(range(10))
 
     dictionary = registration.AxisAmbientLabelMapping(
         data={"a": 10, "b": 20, "c": 30}, field_name="obs_id"
     )
-    assert dictionary.id_mapping_from_values(["a", "b", "c"]).data == [10, 20, 30]
-    assert dictionary.id_mapping_from_values(["c", "a"]).data == [30, 10]
-    assert dictionary.id_mapping_from_values([]).data == []
+    assert dictionary.id_mapping_from_values(["a", "b", "c"]).data == (10, 20, 30)
+    assert dictionary.id_mapping_from_values(["c", "a"]).data == (30, 10)
+    assert dictionary.id_mapping_from_values([]).data == ()
 
     d = registration.AxisAmbientLabelMapping.from_isolated_dataframe(
         anndata1.obs,
         index_field_name="obs_id",
     )
-    assert d.id_mapping_from_values([]).data == []
-    assert d.id_mapping_from_values(["AAAT", "AGAG"]).data == [0, 2]
+    assert d.id_mapping_from_values([]).data == ()
+    assert d.id_mapping_from_values(["AAAT", "AGAG"]).data == (0, 2)
     keys = list(anndata1.obs.index)
-    assert d.id_mapping_from_values(keys).data == list(range(len(keys)))
+    assert d.id_mapping_from_values(keys).data == tuple(range(len(keys)))
 
 
 def test_isolated_anndata_mappings(anndata1):
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_anndata(
         anndata1, measurement_name="RNA"
     )
-    assert rd.obs_axis.id_mapping_from_values([]).data == []
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == [2, 1]
-    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == [3, 4]
+    assert rd.obs_axis.id_mapping_from_values([]).data == ()
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
+    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == (3, 4)
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
-    ).data == [6, 3, 4]
+    ).data == (6, 3, 4)
 
 
 def test_isolated_h5ad_mappings(h5ad1):
@@ -190,22 +190,22 @@ def test_isolated_h5ad_mappings(h5ad1):
         h5ad1,
         measurement_name="RNA",
     )
-    assert rd.obs_axis.id_mapping_from_values([]).data == []
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == [2, 1]
-    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == [3, 4]
+    assert rd.obs_axis.id_mapping_from_values([]).data == ()
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
+    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == (3, 4)
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
-    ).data == [6, 3, 4]
+    ).data == (6, 3, 4)
 
 
 def test_isolated_soma_experiment_mappings(soma1):
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(soma1)
-    assert rd.obs_axis.id_mapping_from_values([]).data == []
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == [2, 1]
-    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == [3, 4]
+    assert rd.obs_axis.id_mapping_from_values([]).data == ()
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
+    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == (3, 4)
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
-    ).data == [6, 3, 4]
+    ).data == (6, 3, 4)
 
 
 def test_multiples_without_experiment(h5ad1, h5ad2, h5ad3, h5ad4):
@@ -216,11 +216,11 @@ def test_multiples_without_experiment(h5ad1, h5ad2, h5ad3, h5ad4):
         obs_field_name="obs_id",
         var_field_name="var_id",
     )
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == [2, 8]
-    assert rd.var_axes["RNA"].id_mapping_from_values(["ESR1", "VEGFA"]).data == [2, 4]
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == (2, 8)
+    assert rd.var_axes["RNA"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (2, 4)
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["ZZZ3", "RAW2", "TP53", "VEGFA"]
-    ).data == [9, 6, 3, 4]
+    ).data == (9, 6, 3, 4)
 
     assert rd.obs_axis.data == {
         "AAAT": 0,
@@ -269,11 +269,11 @@ def test_multiples_with_experiment(soma1, h5ad2, h5ad3, h5ad4):
         obs_field_name="obs_id",
         var_field_name="var_id",
     )
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == [2, 8]
-    assert rd.var_axes["RNA"].id_mapping_from_values(["ESR1", "VEGFA"]).data == [2, 4]
+    assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == (2, 8)
+    assert rd.var_axes["RNA"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (2, 4)
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["ZZZ3", "RAW2", "TP53", "VEGFA"]
-    ).data == [9, 6, 3, 4]
+    ).data == (9, 6, 3, 4)
 
     assert rd.obs_axis.data == {
         "AAAT": 0,
