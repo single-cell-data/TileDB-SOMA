@@ -68,10 +68,7 @@ class AxisAmbientLabelMapping:
         """
         tiledbsoma.logging.logger.info("Registration: registering AnnData dataframe.")
 
-        if index_field_name is None:
-            index_field_name = df.index.name
-        if index_field_name is None:
-            index_field_name = "index"
+        index_field_name = index_field_name or df.index.name or "index"
         df = df.reset_index()
 
         data = {}
