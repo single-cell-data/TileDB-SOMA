@@ -1,3 +1,7 @@
+"""
+Test join-id registrations for ingesting multiple AnnData objects into a single SOMA Experiment.
+"""
+
 import math
 import random
 from typing import Optional, Sequence
@@ -9,10 +13,6 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io.registration as registration
-
-"""
-Test join-id registrations for ingesting multiple AnnData objects into a single SOMA Experiment.
-"""
 
 
 def _create_anndata(

@@ -16,7 +16,7 @@ Essential ideas:
   we will expect total input to have data for 300 cells. In particular, as multiple inputs
   are appended to a SOMA experiment, ``obs`` will grow taller.
 
-- The input ``var`` must also havesome (user-specified) column containing string identifiers.
+- The input ``var`` must also have some (user-specified) column containing string identifiers.
   Nominally these are Ensembl IDs like ENSG00000142208, or HGNC IDs like AKT1. Nominally
   these will be the same for all input files, although it's to be expected that one input file
   may have data for some infrequently expressed genes that don't appear in other input files.
