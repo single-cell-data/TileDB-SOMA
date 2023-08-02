@@ -40,7 +40,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
+std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
     std::string_view uri,
     ArraySchema schema,
     std::map<std::string, std::string> platform_config) {
@@ -48,7 +48,7 @@ std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
         uri, schema, std::make_shared<Context>(Config(platform_config)));
 }
 
-std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
+std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
     std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
     if (schema.array_type() != TILEDB_SPARSE)
         throw TileDBSOMAError("ArraySchema must be set to sparse.");
@@ -57,7 +57,7 @@ std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
     return SOMASparseNDArray::open(uri, OpenMode::read, ctx);
 }
 
-std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
+std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::string_view uri,
     OpenMode mode,
     std::map<std::string, std::string> platform_config,
@@ -73,14 +73,14 @@ std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
         timestamp);
 }
 
-std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
+std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<Context> ctx,
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_shared<SOMASparseNDArray>(
+    return std::make_unique<SOMASparseNDArray>(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 

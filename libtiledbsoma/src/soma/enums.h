@@ -33,8 +33,14 @@
 #ifndef SOMA_ENUMS
 #define SOMA_ENUMS
 
-enum class OpenMode { read, write };
-enum class ResultOrder { automatic, rowmajor, colmajor };
-enum class URIType { automatic, absolute, relative };
+/** Defines whether the SOMAObject should be opened in read or write mode */
+enum class OpenMode { read = 0, write };
+
+/** Defines whether the result should be opened in row-major or column-major
+ * order */
+enum class ResultOrder { automatic = 0, rowmajor, colmajor };
+
+/** Defines whether the SOMAGroup URI is absolute or relative */
+enum class URIType { automatic = 0, absolute, relative };
 
 #endif  // SOMA_ENUMS

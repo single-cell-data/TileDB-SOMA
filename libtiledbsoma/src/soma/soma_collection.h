@@ -61,7 +61,7 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param platform_config Optional config parameter dictionary
      */
-    static std::shared_ptr<SOMACollection> create(
+    static std::unique_ptr<SOMACollection> create(
         std::string_view uri,
         std::map<std::string, std::string> platform_config = {});
 
@@ -71,7 +71,7 @@ class SOMACollection : public SOMAObject {
      * @param ctx TileDB context
      * @param uri URI to create the SOMACollection
      */
-    static std::shared_ptr<SOMACollection> create(
+    static std::unique_ptr<SOMACollection> create(
         std::string_view uri, std::shared_ptr<Context> ctx);
 
     /**
@@ -83,7 +83,7 @@ class SOMACollection : public SOMAObject {
      * @param platform_config Config parameter dictionary
      * @return std::shared_ptr<SOMACollection> SOMACollection
      */
-    static std::shared_ptr<SOMACollection> open(
+    static std::unique_ptr<SOMACollection> open(
         std::string_view uri,
         OpenMode mode,
         std::map<std::string, std::string> platform_config = {});
@@ -97,7 +97,7 @@ class SOMACollection : public SOMAObject {
      * @param ctx TileDB context
      * @return std::shared_ptr<SOMACollection> SOMACollection
      */
-    static std::shared_ptr<SOMACollection> open(
+    static std::unique_ptr<SOMACollection> open(
         std::string_view uri, OpenMode mode, std::shared_ptr<Context> ctx);
 
     //===================================================================

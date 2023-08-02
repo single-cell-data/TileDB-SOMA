@@ -58,7 +58,7 @@ class SOMADenseNDArray : public SOMAObject {
      * @param platform_config Optional config parameter dictionary
      * @return std::shared_ptr<SOMADenseNDArray> opened in read mode
      */
-    static std::shared_ptr<SOMADenseNDArray> create(
+    static std::unique_ptr<SOMADenseNDArray> create(
         std::string_view uri,
         ArraySchema schema,
         std::map<std::string, std::string> platform_config = {});
@@ -71,7 +71,7 @@ class SOMADenseNDArray : public SOMAObject {
      * @param ctx TileDB context
      * @return std::shared_ptr<SOMADenseNDArray> opened in read mode
      */
-    static std::shared_ptr<SOMADenseNDArray> create(
+    static std::unique_ptr<SOMADenseNDArray> create(
         std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
 
     /**
@@ -90,7 +90,7 @@ class SOMADenseNDArray : public SOMAObject {
      * colmajor
      * @return std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray
      */
-    static std::shared_ptr<SOMADenseNDArray> open(
+    static std::unique_ptr<SOMADenseNDArray> open(
         std::string_view uri,
         OpenMode mode,
         std::map<std::string, std::string> platform_config = {},
@@ -114,7 +114,7 @@ class SOMADenseNDArray : public SOMAObject {
      * open this object. If unset, uses the timestamp provided by the context.
      * @return std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray
      */
-    static std::shared_ptr<SOMADenseNDArray> open(
+    static std::unique_ptr<SOMADenseNDArray> open(
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<Context> ctx,
