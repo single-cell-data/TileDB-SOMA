@@ -400,7 +400,7 @@ def from_anndata(
                                 SparseNDArray,
                                 _util.uri_joinpath(obsm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
-                                    anndata.obsm[key]
+                                    key, anndata.obsm[key]
                                 ),
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
@@ -431,7 +431,7 @@ def from_anndata(
                                 SparseNDArray,
                                 _util.uri_joinpath(varm.uri, key),
                                 conversions.to_tiledb_supported_array_type(
-                                    anndata.varm[key]
+                                    key, anndata.varm[key]
                                 ),
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
@@ -460,7 +460,7 @@ def from_anndata(
                                 SparseNDArray,
                                 _util.uri_joinpath(obsp.uri, key),
                                 conversions.to_tiledb_supported_array_type(
-                                    anndata.obsp[key]
+                                    key, anndata.obsp[key]
                                 ),
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
@@ -489,7 +489,7 @@ def from_anndata(
                                 SparseNDArray,
                                 _util.uri_joinpath(varp.uri, key),
                                 conversions.to_tiledb_supported_array_type(
-                                    anndata.varp[key]
+                                    key, anndata.varp[key]
                                 ),
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
