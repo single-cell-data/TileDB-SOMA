@@ -42,7 +42,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::shared_ptr<SOMADataFrame> SOMADataFrame::create(
+std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri,
     ArraySchema schema,
     std::map<std::string, std::string> platform_config) {
@@ -50,13 +50,13 @@ std::shared_ptr<SOMADataFrame> SOMADataFrame::create(
         uri, schema, std::make_shared<Context>(Config(platform_config)));
 }
 
-std::shared_ptr<SOMADataFrame> SOMADataFrame::create(
+std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
     SOMAArray::create(ctx, uri, schema, "SOMADataFrame");
     return SOMADataFrame::open(uri, OpenMode::read, ctx);
 }
 
-std::shared_ptr<SOMADataFrame> SOMADataFrame::open(
+std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     std::string_view uri,
     OpenMode mode,
     std::map<std::string, std::string> platform_config,
@@ -72,14 +72,14 @@ std::shared_ptr<SOMADataFrame> SOMADataFrame::open(
         timestamp);
 }
 
-std::shared_ptr<SOMADataFrame> SOMADataFrame::open(
+std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<Context> ctx,
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_shared<SOMADataFrame>(
+    return std::make_unique<SOMADataFrame>(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 

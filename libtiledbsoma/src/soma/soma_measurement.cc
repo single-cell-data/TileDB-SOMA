@@ -41,7 +41,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::shared_ptr<SOMAMeasurement> SOMAMeasurement::create(
+std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
     std::string_view uri,
     ArraySchema schema,
     std::map<std::string, std::string> platform_config) {
@@ -49,7 +49,7 @@ std::shared_ptr<SOMAMeasurement> SOMAMeasurement::create(
         uri, schema, std::make_shared<Context>(Config(platform_config)));
 }
 
-std::shared_ptr<SOMAMeasurement> SOMAMeasurement::create(
+std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
     std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
     std::string exp_uri(uri);
 
@@ -70,6 +70,6 @@ std::shared_ptr<SOMAMeasurement> SOMAMeasurement::create(
     group->add_member(exp_uri + "/varp", URIType::absolute, "varp");
     group->close();
 
-    return std::make_shared<SOMAMeasurement>(OpenMode::read, uri, ctx);
+    return std::make_unique<SOMAMeasurement>(OpenMode::read, uri, ctx);
 }
 }  // namespace tiledbsoma

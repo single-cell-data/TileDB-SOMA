@@ -58,7 +58,7 @@ class SOMADataFrame : public SOMAObject {
      * @param platform_config Optional config parameter dictionary
      * @return std::shared_ptr<SOMADataFrame> opened in read mode
      */
-    static std::shared_ptr<SOMADataFrame> create(
+    static std::unique_ptr<SOMADataFrame> create(
         std::string_view uri,
         ArraySchema schema,
         std::map<std::string, std::string> platform_config = {});
@@ -71,7 +71,7 @@ class SOMADataFrame : public SOMAObject {
      * @param ctx TileDB context
      * @return std::shared_ptr<SOMADataFrame> opened in read mode
      */
-    static std::shared_ptr<SOMADataFrame> create(
+    static std::unique_ptr<SOMADataFrame> create(
         std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
 
     /**
@@ -90,7 +90,7 @@ class SOMADataFrame : public SOMAObject {
      * open this object. If unset, uses the timestamp provided by the context.
      * @return std::shared_ptr<SOMADataFrame> SOMADataFrame
      */
-    static std::shared_ptr<SOMADataFrame> open(
+    static std::unique_ptr<SOMADataFrame> open(
         std::string_view uri,
         OpenMode mode,
         std::map<std::string, std::string> platform_config = {},
@@ -114,7 +114,7 @@ class SOMADataFrame : public SOMAObject {
      * open this object. If unset, uses the timestamp provided by the context.
      * @return std::shared_ptr<SOMADataFrame> SOMADataFrame
      */
-    static std::shared_ptr<SOMADataFrame> open(
+    static std::unique_ptr<SOMADataFrame> open(
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<Context> ctx,
