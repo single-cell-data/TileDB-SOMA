@@ -40,6 +40,9 @@ jobs:
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 
+      - name: Temporarily install tiledb-r 0.20.2 from testing
+        run: sudo Rscript -e 'install.packages("tiledb", repos = c("https://cloud.r-project.org", "https://tiledb-inc.r-universe.dev"))'
+
       - name: CMake
         uses: lukka/get-cmake@latest
 
