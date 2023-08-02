@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
+import tiledb
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
@@ -60,6 +61,7 @@ from ..options import SOMATileDBContext
 from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
+from .registration import signatures
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 DenseMatrix = Union[NPNDArray, h5py.Dataset]
@@ -820,6 +822,100 @@ def _create_from_matrix(
         _util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
     )
     return soma_ndarray
+
+
+def update_obs(
+    exp: Experiment,
+    new_data: pd.DataFrame,
+    *,
+    default_index_name: str = "obs_id",
+    # XXX filters tiledb_create_options: TileDBCreateOptions,
+) -> None:
+    """
+    TO DO: WRITE ME
+
+    Lifecycle:
+        Experimental.
+    """
+    _update_dataframe(exp.obs, new_data, default_index_name)
+
+
+def update_var(
+    exp: Experiment,
+    measurement_name: str,
+    new_data: pd.DataFrame,
+    *,
+    default_index_name: str = "var_id",
+    # XXX filters tiledb_create_options: TileDBCreateOptions,
+) -> None:
+    """
+    TO DO: WRITE ME
+
+    Lifecycle:
+        Experimental.
+    """
+    # TODO: check measurement exists
+    _update_dataframe(exp.ms[measurement_name].var, new_data, default_index_name)
+
+
+def _update_dataframe(
+    sdf: DataFrame,
+    new_data: pd.DataFrame,
+    default_index_name: str,
+) -> None:
+    """
+    TO DO: WRITE ME
+
+    Lifecycle:
+        Experimental.
+    """
+    if sdf.closed or sdf.mode != "w":
+        raise SOMAError(f"DataFrame must be open for write: {sdf.uri}")
+    old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)
+    new_sig = signatures._string_dict_from_pandas_dataframe(
+        new_data, default_index_name
+    )
+
+    old_keys = set(old_sig.keys())
+    new_keys = set(new_sig.keys())
+
+    drop_keys = old_keys.difference(new_keys)
+    add_keys = new_keys.difference(old_keys)
+    common_keys = old_keys.intersection(new_keys)
+
+    print("DROPS  ", list(drop_keys))
+    print("ADDS   ", list(add_keys))
+    print("COMMON ", list(common_keys))
+
+    msgs = []
+    for key in common_keys:
+        old_type = old_sig[key]
+        new_type = new_sig[key]
+        if old_type != new_type:
+            msgs.append(f"{key} type {old_type} != {new_type}")
+    if msgs:
+        msg = ", ".join(msgs)
+        raise ValueError(f"unsupported type updates: {msg}")
+
+    # xxx adds
+    # xxx drops
+    # xxx changes
+    # XXX
+
+    se = tiledb.ArraySchemaEvolution(sdf.context.tiledb_ctx)
+    for drop_key in drop_keys:
+        se.drop_attribute(drop_key)
+
+    # XXX
+    # se.add_attribute(
+    #    tiledb.Attr(
+    #        name=add_key,
+    #        dtype=xxx type me up,
+    #        filters=xxx type me up,
+    #    )
+    # )
+
+    se.array_evolve(uri=sdf.uri)
 
 
 def add_X_layer(
