@@ -26,7 +26,10 @@ def decategoricalize_obs_or_var(obs_or_var: pd.DataFrame) -> pd.DataFrame:
     """Performs a typecast into types that TileDB can persist."""
     if len(obs_or_var.columns) > 0:
         return pd.DataFrame.from_dict(
-            {k: to_tiledb_supported_array_type(v) for k, v in obs_or_var.items()},
+            {
+                str(k): to_tiledb_supported_array_type(str(k), v)
+                for k, v in obs_or_var.items()
+            },
         )
     else:
         return obs_or_var
@@ -39,7 +42,7 @@ def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
     return cast(_DT, np.dtype("float32")) if dtype == np.dtype("float16") else dtype
 
 
-def to_tiledb_supported_array_type(x: _MT) -> _MT:
+def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     """Converts datatypes unrepresentable by TileDB into datatypes it can represent.
     E.g., categorical strings -> string.
 
@@ -63,7 +66,7 @@ def to_tiledb_supported_array_type(x: _MT) -> _MT:
     if cat_dtype.kind in ("f", "u", "i"):
         if x.hasnans and cat_dtype.kind == "i":
             raise ValueError(
-                "Categorical array contains NaN -- unable to convert to TileDB array."
+                f"Categorical column {name!r} contains NaN -- unable to convert to TileDB array."
             )
         # More mysterious spurious mypy errors.
         target_dtype = _to_tiledb_supported_dtype(cat_dtype)  # type: ignore[arg-type]
