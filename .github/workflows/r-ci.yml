@@ -37,6 +37,12 @@ jobs:
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
 
+      - name: Install 'old' tiledb-r to satisfy its dependencies
+        run: cd apis/r && tools/r-ci.sh tiledb-r
+
+      - name: Install new tiledb-r 0.20.2
+        run: cd apis/r && Rscript -e 'if (Sys.info()[["sysname"]] == "Linux") bspm::disable(); install.packages("tiledb", repos = c("https://tiledb-inc.r-universe.dev", "https://cloud.r-project.org"))'
+
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 
@@ -47,12 +53,12 @@ jobs:
       #  run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
       #- name: Build and install libtiledbsoma
-      #  run: sudo scripts/bld --prefix=/usr/local 
+      #  run: sudo scripts/bld --prefix=/usr/local
 
       #- name: Call ldconfig
       #  if: ${{ matrix.os == 'ubuntu-latest' }}
       #  run: sudo ldconfig
-        
+
       - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests
