@@ -2,12 +2,11 @@
 #'
 #' An R6 mapping type that is limited to scalar atomic vector types only; can
 #' optionally be limited further to a specific atomic vector type
-#' (eg. \dQuote{\code{logical}})
+#' (eg. \dQuote{\code{logical}}).
 #'
+#' @keywords internal
 #' @export
-#'
-#' @noMd
-#'
+
 ScalarMap <- R6::R6Class(
   classname = 'ScalarMap',
   inherit = MappingBase,

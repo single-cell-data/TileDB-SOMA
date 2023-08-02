@@ -66,7 +66,7 @@ namespace tdbs = tiledbsoma;
 //' }
 //' summary(rl)
 //' }
-//' @export
+//' @noRd
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
                                      Rcpp::CharacterVector config,
@@ -147,8 +147,6 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
     return xptr;
 }
 
-//' @rdname sr_setup
-//' @export
 // [[Rcpp::export]]
 bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    check_xptr_tag<tdbs::SOMAArray>(sr);
@@ -171,8 +169,6 @@ Rcpp::List create_empty_arrow_table() {
 }
 
 
-//' @rdname sr_setup
-//' @export
 // [[Rcpp::export]]
 Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    check_xptr_tag<tdbs::SOMAArray>(sr);

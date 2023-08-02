@@ -11,6 +11,7 @@ SOMA Read Iterator Base class
 \details{
 Class that allows for read iteration of SOMA reads.
 }
+\keyword{internal}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{

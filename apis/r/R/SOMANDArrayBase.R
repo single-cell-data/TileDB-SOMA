@@ -4,6 +4,7 @@
 #' Adds NDArray-specific functionality to the [`SOMAArrayBase`] class.
 #' (lifecycle: experimental)
 #'
+#' @keywords internal
 #' @export
 #' @importFrom bit64 as.integer64
 

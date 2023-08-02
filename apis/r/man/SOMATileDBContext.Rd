@@ -134,7 +134,7 @@ the entry for \code{key}}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\[chainable\] Invisibly returns \code{self} with
+[chainable] Invisibly returns \code{self} with
 \code{value} added as \code{key}
 }
 }

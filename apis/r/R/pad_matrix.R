@@ -8,10 +8,7 @@
 #'
 #' @return A matrix containing the data of \code{x} padded out to \code{shape}
 #'
-#' @keywords internal
-#'
-#' @export
-#'
+#' @noRd
 pad_matrix <- function(x, ...) {
   UseMethod(generic = 'pad_matrix', object = x)
 }
@@ -25,12 +22,8 @@ pad_matrix <- function(x, ...) {
 #' row/column names
 #'
 #' @importFrom Matrix sparseMatrix
-#'
-#' @noRd
-#'
 #' @method pad_matrix default
-#' @export
-#'
+#' @noRd
 pad_matrix.default <- function(x, rownames = NULL, colnames = NULL, ...) {
   stopifnot(
     inherits(x, "Matrix"),
@@ -75,10 +68,9 @@ pad_matrix.default <- function(x, rownames = NULL, colnames = NULL, ...) {
 
 #' @param sparse Return a \link[Matrix:TsparseMatrix-class]{sparse matrix}
 #' @rdname pad_matrix
-#'
 #' @method pad_matrix matrix
-#' @export
-#'
+#' @noRd
+
 pad_matrix.matrix <- function(x, rowidx, colidx, shape, sparse = FALSE, ...) {
   stopifnot(
     rlang::is_integerish(shape, n = 2L, finite = TRUE) && all(shape > 0L),

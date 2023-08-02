@@ -2,6 +2,7 @@
 #'
 #' @description
 #' Intermediate type to choose result format when reading a sparse array
+#' @keywords internal
 #' @export
 
 SOMASparseNDArrayRead <- R6::R6Class(

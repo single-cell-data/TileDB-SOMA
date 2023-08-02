@@ -6,6 +6,7 @@
 \description{
 Intermediate type to choose result format when reading a sparse array
 }
+\keyword{internal}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{

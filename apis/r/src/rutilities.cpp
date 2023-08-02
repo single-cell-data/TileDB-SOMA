@@ -274,34 +274,38 @@ Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t 
 
 // formerly stats.cpp
 
-//' TileDB Statistics interface
+//' TileDB SOMA statistics
 //'
-//' The functions `tiledbsoma_stats_enable`, `tiledbsoma_stats_disable`, `tiledbsoma_stats_reset`
-//' and `tiledbsoma_stats_dump` expose the TileDB Core functionality for performance measurements
-//' and statistics.  The first three just turn on, off or reset, the fourth returns a JSON string.
-//' For convenience the function `tiledbsoma_stats_show` displays the information on the console.
+//' These functions expose the TileDB Core functionality for performance measurements
+//' and statistics.
 //'
+//' - `tiledbsoma_stats_enable()`/`tiledbsoma_stats_disable()`: Enable and disable TileDB's internal statistics.
+//' - `tiledbsoma_stats_reset()`: Reset all statistics to 0.
+//' - `tiledbsoma_stats_dump()`: Dump all statistics to a JSON string.
+//' - `tiledbsoma_stats_show()`: Print all statistics to the console.
+//'
+//' @name tiledbsoma_stats
 //' @export
 // [[Rcpp::export]]
 void tiledbsoma_stats_enable() {
     tiledbsoma::stats::enable();
 }
 
-//' @rdname tiledbsoma_stats_enable
+//' @rdname tiledbsoma_stats
 //' @export
 // [[Rcpp::export]]
 void tiledbsoma_stats_disable() {
     tiledbsoma::stats::disable();
 }
 
-//' @rdname tiledbsoma_stats_enable
+//' @rdname tiledbsoma_stats
 //' @export
 // [[Rcpp::export]]
 void tiledbsoma_stats_reset() {
     tiledbsoma::stats::reset();
 }
 
-//' @rdname tiledbsoma_stats_enable
+//' @rdname tiledbsoma_stats
 //' @export
 // [[Rcpp::export]]
 std::string tiledbsoma_stats_dump() {
@@ -310,17 +314,19 @@ std::string tiledbsoma_stats_dump() {
 
 // formerly version.cpp
 
-//' libtiledbsoma version information
+//' libtiledbsoma version
 //'
 //' Returns a string with version information for libtiledbsoma and the linked TileDB Embedded library.
+//' @noRd
 // [[Rcpp::export]]
 std::string libtiledbsoma_version() {
     return tiledbsoma::version::as_string();
 }
 
-//' TileDB Embedded Version interface
+//' TileDB embedded version
 //'
-//' This gets the version of the TileDB Embedded library that is currently in use.
+//' Gets the version of the TileDB Embedded library that is currently in use.
+//' @noRd
 // [[Rcpp::export]]
 Rcpp::IntegerVector tiledb_embedded_version() {
     std::tuple<int, int, int> triple = tiledbsoma::version::embedded_version_triple();

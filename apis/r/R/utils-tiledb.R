@@ -22,9 +22,10 @@ map_query_layout <- function(layout) {
     )
 }
 
-#' Display Package Versions
+#' Display package versions
 #'
-#' This helperfunction prints package information suitable for assisting with bug reports.
+#' Print version information for \pkg{tiledb} (R package), libtiledbsoma, and
+#' TileDB embedded, suitable for assisting with bug reports.
 #'
 #' @export
 #' @importFrom utils packageVersion
@@ -38,7 +39,7 @@ show_package_versions <- function() {
         sep="")
 }
 
-#' @rdname tiledbsoma_stats_enable
+#' @rdname tiledbsoma_stats
 #' @export
 tiledbsoma_stats_show <- function() {
     cat(tiledbsoma_stats_dump(), "\n")

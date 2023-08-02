@@ -16,8 +16,6 @@ get_column_types <- function(uri, colnames) {
     .Call(`_tiledbsoma_get_column_types`, uri, colnames)
 }
 
-#' @rdname soma_array_reader
-#' @export
 nnz <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_nnz`, uri, config)
 }
@@ -32,8 +30,6 @@ check_arrow_array_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }
 
-#' @rdname soma_array_reader
-#' @export
 shape <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_shape`, uri, config)
 }
@@ -82,63 +78,65 @@ shape <- function(uri, config = NULL) {
 #' }
 #' summary(rl)
 #' }
-#' @export
+#' @noRd
 sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamp_end = NULL, loglevel = "auto") {
     .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamp_end, loglevel)
 }
 
-#' @rdname sr_setup
-#' @export
 sr_complete <- function(sr) {
     .Call(`_tiledbsoma_sr_complete`, sr)
 }
 
-#' @rdname sr_setup
-#' @export
 sr_next <- function(sr) {
     .Call(`_tiledbsoma_sr_next`, sr)
 }
 
-#' TileDB Statistics interface
+#' TileDB SOMA statistics
 #'
-#' The functions `tiledbsoma_stats_enable`, `tiledbsoma_stats_disable`, `tiledbsoma_stats_reset`
-#' and `tiledbsoma_stats_dump` expose the TileDB Core functionality for performance measurements
-#' and statistics.  The first three just turn on, off or reset, the fourth returns a JSON string.
-#' For convenience the function `tiledbsoma_stats_show` displays the information on the console.
+#' These functions expose the TileDB Core functionality for performance measurements
+#' and statistics.
 #'
+#' - `tiledbsoma_stats_enable()`/`tiledbsoma_stats_disable()`: Enable and disable TileDB's internal statistics.
+#' - `tiledbsoma_stats_reset()`: Reset all statistics to 0.
+#' - `tiledbsoma_stats_dump()`: Dump all statistics to a JSON string.
+#' - `tiledbsoma_stats_show()`: Print all statistics to the console.
+#'
+#' @name tiledbsoma_stats
 #' @export
 tiledbsoma_stats_enable <- function() {
     invisible(.Call(`_tiledbsoma_tiledbsoma_stats_enable`))
 }
 
-#' @rdname tiledbsoma_stats_enable
+#' @rdname tiledbsoma_stats
 #' @export
 tiledbsoma_stats_disable <- function() {
     invisible(.Call(`_tiledbsoma_tiledbsoma_stats_disable`))
 }
 
-#' @rdname tiledbsoma_stats_enable
+#' @rdname tiledbsoma_stats
 #' @export
 tiledbsoma_stats_reset <- function() {
     invisible(.Call(`_tiledbsoma_tiledbsoma_stats_reset`))
 }
 
-#' @rdname tiledbsoma_stats_enable
+#' @rdname tiledbsoma_stats
 #' @export
 tiledbsoma_stats_dump <- function() {
     .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
 }
 
-#' libtiledbsoma version information
+#' libtiledbsoma version
 #'
 #' Returns a string with version information for libtiledbsoma and the linked TileDB Embedded library.
+#' @noRd
 libtiledbsoma_version <- function() {
     .Call(`_tiledbsoma_libtiledbsoma_version`)
 }
 
-#' TileDB Embedded Version interface
+#' TileDB embedded version
 #'
-#' This gets the version of the TileDB Embedded library that is currently in use.
+#' Gets the version of the TileDB Embedded library that is currently in use.
+#' @noRd
 tiledb_embedded_version <- function() {
     .Call(`_tiledbsoma_tiledb_embedded_version`)
 }

@@ -66,7 +66,6 @@ this in the class.
 \item \href{#method-SOMAExperimentAxisQuery-to_seurat_reduction}{\code{SOMAExperimentAxisQuery$to_seurat_reduction()}}
 \item \href{#method-SOMAExperimentAxisQuery-to_seurat_graph}{\code{SOMAExperimentAxisQuery$to_seurat_graph()}}
 \item \href{#method-SOMAExperimentAxisQuery-to_single_cell_experiment}{\code{SOMAExperimentAxisQuery$to_single_cell_experiment()}}
-\item \href{#method-SOMAExperimentAxisQuery-to_sce}{\code{SOMAExperimentAxisQuery$to_sce()}}
 \item \href{#method-SOMAExperimentAxisQuery-clone}{\code{SOMAExperimentAxisQuery$clone()}}
 }
 }
@@ -391,49 +390,6 @@ Loads the query as a
 \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_single_cell_experiment(
-  X_layers = NULL,
-  obs_index = NULL,
-  var_index = NULL,
-  obs_column_names = NULL,
-  var_column_names = NULL,
-  obsm_layers = NULL,
-  obsp_layers = NULL,
-  varp_layers = NULL
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{X_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers('sce')}}
-
-\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}}
-
-\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}}
-
-\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce')}}
-
-\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce', 'var')}}
-
-\item{\code{obsm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}}
-
-\item{\code{obsp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}}
-
-\item{\code{varp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_sce"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_sce}{}}}
-\subsection{Method \code{to_sce()}}{
-Convenience method for \code{$to_single_cell_experiment()}
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_sce(
   X_layers = NULL,
   obs_index = NULL,
   var_index = NULL,

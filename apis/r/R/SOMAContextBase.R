@@ -5,11 +5,8 @@
 #' context options
 #'
 #' @keywords internal
-#'
 #' @export
-#'
-#' @noMd
-#'
+
 SOMAContextBase <- R6::R6Class(
   classname = 'SOMAContextBase',
   inherit = ScalarMap,

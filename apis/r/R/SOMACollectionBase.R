@@ -2,6 +2,9 @@
 #'
 #' @description Base class for objects containing persistent collection of SOMA
 #' objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
+#' @keywords internal
+#' @export
+
 SOMACollectionBase <- R6::R6Class(
   classname = "SOMACollectionBase",
   inherit = TileDBGroup,

@@ -5,11 +5,8 @@
 #' getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 #'
 #' @keywords internal
-#'
 #' @export
-#'
-#' @noMd
-#'
+
 MappingBase <- R6::R6Class(
   classname = 'MappingBase',
   lock_class = TRUE,

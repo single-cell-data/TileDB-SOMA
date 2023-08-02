@@ -2,10 +2,11 @@
 % Please edit documentation in R/utils-tiledb.R
 \name{show_package_versions}
 \alias{show_package_versions}
-\title{Display Package Versions}
+\title{Display package versions}
 \usage{
 show_package_versions()
 }
 \description{
-This helperfunction prints package information suitable for assisting with bug reports.
+Print version information for \pkg{tiledb} (R package), libtiledbsoma, and
+TileDB embedded, suitable for assisting with bug reports.
 }

@@ -25,7 +25,7 @@
 #' z <- soma_array_reader(uri)
 #' arrow::RecordBatch$import_from_c(z$array_data, z$schema)
 #' }
-#' @export
+#' @noRd
 soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL,
                               batch_size = "auto", result_order = "auto", loglevel = "auto",
                               config = NULL) {
