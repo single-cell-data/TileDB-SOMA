@@ -11,7 +11,7 @@ if test -z "${R_HOME}"; then
 fi
 
 # Temporary
-${R_HOME}/bin/Rscript tools/get_tarball.R -e 'if (packageVersion("tiledb") != "0.20.2") install.packages("tiledb", repos = c("https://tiledb-inc.r-universe.dev", "https://cloud.r-project.org"))'
+${R_HOME}/bin/Rscript -e 'if (packageVersion("tiledb") != "0.20.2") install.packages("tiledb", repos = c("https://tiledb-inc.r-universe.dev", "https://cloud.r-project.org"))'
 
 ## Check for pkg-config and use it to inquire about tiledb and tiledbsoma build options
 pkg-config --version >/dev/null 2>&1
