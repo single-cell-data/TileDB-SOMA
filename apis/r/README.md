@@ -1,9 +1,6 @@
 # Overview
 
-This is the R implementation of the [SOMA API specification](https://github.com/single-cell-data/SOMA).
-
-This `main` branch implements the [updated specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).
-Please also see the `main-old` branch for an implementation of the [original specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md).
+This is the R implementation of the [SOMA API specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md).
 
 # Installation
 
@@ -27,7 +24,7 @@ The r-universe repo serves macOS binaries and the source package for other Unix-
 To install the very latest tiledbsoma development version (our `main` branch), use [`remotes::install_github()`](https://cran.r-project.org/web/packages/remotes/readme/README.html):
 
 ```r
-remotes::install_github("https://github.com/single-cell-data/TileDB-SOMA", subdir="apis/r")
+remotes::install_github("https://github.com/single-cell-data/TileDB-SOMA", subdir = "apis/r")
 ```
 
 ### Requirements
@@ -63,3 +60,5 @@ Please see [https://github.com/single-cell-data/TileDB-SOMA/issues](https://gith
 # Information for developers
 
 Please see the [TileDB-SOMA wiki](https://github.com/single-cell-data/TileDB-SOMA/wiki).
+
+This `main` branch implements the [updated specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md). Please also see the `main-old` branch for an implementation of the [original specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main-old/spec/specification.md).
