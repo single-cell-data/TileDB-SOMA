@@ -21,7 +21,7 @@ test_that("Write SummarizedExperiment mechanics", {
   expect_identical(experiment$ms$names(), 'airway')
   expect_s3_class(ms <- experiment$ms$get('airway'), 'SOMAMeasurement')
 
-  expect_identical(ms$X$names(), assayNames(se))
+  expect_identical(ms$X$names(), SummarizedExperiment::assayNames(se))
 
   expect_error(ms$obsm)
   expect_error(ms$varm)
