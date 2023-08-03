@@ -55,7 +55,9 @@ LinkingTo:
     Rcpp,
     RcppSpdlog
 Additional_repositories: https://ghrr.github.io/drat
-Remotes: bioc::release/SingleCellExperiment
+Remotes:
+  bioc::release/SingleCellExperiment,
+  github::tiledb-inc/TileDB-R@0.20.2
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests:
