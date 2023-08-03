@@ -351,7 +351,7 @@ write_soma.TsparseMatrix <- function(
 ) {
   check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
-    "'x' must be a data frame" = is.data.frame(x),
+    "'x' must be a data frame" = is.data.frame(x) || inherits(x, 'DataFrame'),
     "'alt' must be a single character value" = is_scalar_character(alt),
     "'axis' must be a single character value" = is_scalar_character(axis),
     "'prefix' must be a single character value" = is_scalar_character(prefix)
