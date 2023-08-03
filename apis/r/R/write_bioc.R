@@ -1,3 +1,5 @@
+#' @rdname write_soma_objects
+#'
 #' @method write_soma DataFrame
 #' @export
 #'
@@ -12,7 +14,26 @@ write_soma.DataFrame <- function(
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  .NotYetImplemented()
+  # Check for compound non-atomic/factor types
+  for (i in names(x)) {
+    if (!(is.atomic(x[[i]]) || is.factor(x[[i]]))) {
+      stop("All columns in DataFrames must be atomic or factors", call. = FALSE)
+    }
+  }
+  index <- attr(x, which = 'index')
+  x <- as.data.frame(x)
+  attr(x, which = 'index') <- index
+  return(write_soma(
+    x = x,
+    uri = uri,
+    soma_parent = soma_parent,
+    df_index = df_index,
+    index_column_names = index_column_names,
+    ...,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    relative = relative
+  ))
 }
 
 #' @method write_soma SingleCellExperiment
@@ -25,6 +46,7 @@ write_soma.SingleCellExperiment <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
+  check_package('SingleCellExperiment', version = .MINIMUM_SCE_VERSION())
   uri <- NextMethod()
   experiment <- SOMAExperimentOpen(
     uri = uri,
@@ -34,18 +56,129 @@ write_soma.SingleCellExperiment <- function(
   )
   on.exit(expr = experiment$close(), add = TRUE)
   .NotYetImplemented()
+  # TODO: Write feature-level meta data
+  # TODO: Write reduced dimensions
+  # TODO: Write nearest-neighbor graphs
+  # TODO: Write coexpression networks
+  # TODO: Add alternate experiments
   return(experiment$uri)
 }
 
+#' Write a \code{\link[SummarizedExperiment:SummarizedExperiment-class]{SummarizedExperiment}}
+#' object to a SOMA
+#'
+#' @inheritParams write_soma
+#' @param ms_name Name for resulting measurement
+#'
+#' @inherit write_soma return
+#'
+#' @section Writing `colData`:
+#' `colData` is written out as a
+#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{`obs`} at
+#' the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level
+#'
+#' @section Writing Assay Matrices:
+#' Each \link[SummarizedExperiment:assay]{assay matrix} is written out as a
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} within the `X` group of
+#' \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`. Names
+#' for assay matrices within `X` are taken from the
+#' \link[SummarizedExperiment:assayNames]{assay names}. Assay matrices are
+#' transposed (samples as rows) prior to writing
+#'
+#' @section Writing `rowData`:
+#' `rowData` is written out as a
+#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{`var`} at
+#' the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level
+#'
 #' @method write_soma SummarizedExperiment
 #' @export
 #'
 write_soma.SummarizedExperiment <- function(
   x,
   uri,
+  ms_name,
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
-  .NotYetImplemented()
+  check_package('SummarizedExperiment', '1.28.0')
+  stopifnot(
+    "'uri' must be a single character value" = is.null(uri) ||
+      is_scalar_character(uri),
+    "'ms_name' must be a single character value" = is_scalar_character(ms_name) &&
+      nzchar(ms_name) &&
+      !is.na(ms_name)
+  )
+  experiment <- SOMAExperimentCreate(
+    uri = uri,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  on.exit(experiment$close(), add = TRUE)
+  # Write cell-level meta data (obs)
+  spdl::info("Adding colData")
+  obs_df <- .df_index(SummarizedExperiment::colData(x), axis = 'obs')
+  obs_df[[attr(obs_df, 'index')]] <- colnames(x)
+  experiment$obs <- write_soma(
+    x = obs_df,
+    uri = 'obs',
+    soma_parent = experiment,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+
+  # Write assays
+  spdl::info("Writing assays")
+  experiment$add_new_collection(
+    object = SOMACollectionCreate(
+      file_path(experiment$uri, 'ms'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    ),
+    key = 'ms'
+  )
+  ms_uri <- .check_soma_uri(uri = ms_name, soma_parent = experiment$ms)
+  ms <- SOMAMeasurementCreate(
+    uri = ms_uri,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  ms$X <- SOMACollectionCreate(
+    uri = file.path(ms$uri, 'X'),
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  for (assay in SummarizedExperiment::assayNames(x)) {
+    spdl::info("Adding {} assay", assay)
+    ms$X$set(
+      object = write_soma(
+        x = SummarizedExperiment::assay(x, assay),
+        uri = assay,
+        soma_parent = ms$X,
+        sparse = TRUE,
+        transpose = TRUE,
+        platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx
+      ),
+      name = assay
+    )
+  }
+  ms$X$close()
+
+  # Write feature-level meta data
+  spdl::info("Adding rowData")
+  var_df <- .df_index(SummarizedExperiment::rowData(x), axis = 'var')
+  var_df[[attr(var_df, 'index')]] <- rownames(x)
+  ms$var <- write_soma(
+    x = var_df,
+    uri = 'var',
+    soma_parent = ms,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+
+  ms$close()
+  experiment$ms$set(object = ms, name = ms_name)
+
+  return(experiment$uri)
 }
