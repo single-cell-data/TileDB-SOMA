@@ -1,4 +1,6 @@
-# tiledbsoma 0.0.0.*
+# tiledbsoma 1.4.0
+
+This is the initial release of the tiledbsoma R package.
 
 ## Changes
 
