@@ -303,8 +303,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     array.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
 
-                    auto coords = array.attr("to_pylist")();
-
+                    auto coords = array.attr("tolist")();
                     int data_index = arrow_array.n_buffers - 1;
 
                     if (!strcmp(arrow_schema.format, "l")) {
@@ -340,18 +339,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     } else if (
                         !strcmp(arrow_schema.format, "u") ||
                         !strcmp(arrow_schema.format, "z")) {
-                        // // TODO: partitioning is not supported for string/bytes
-                        // // dims
-                        // const char* data = (const char*)(arrow_array
-                        //                                      .buffers[2]);
-                        // const uint32_t*
-                        //     offsets = (const uint32_t*)(arrow_array.buffers[1]);
-
-                        // for (int32_t i = 0; i < arrow_array.length; i++) {
-                        //     auto value = std::string{
-                        //         data + offsets[i], offsets[i + 1] - offsets[i]};
-                        //     reader.set_dim_point(dim, value);
-                        // }
                         reader.set_dim_points(
                             dim, coords.cast<std::vector<std::string>>());
                     } else if (
@@ -359,11 +346,11 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                         !strcmp(arrow_schema.format, "tsm:") ||
                         !strcmp(arrow_schema.format, "tsu:") ||
                         !strcmp(arrow_schema.format, "tsn:")) {
+                        // convert the Arrow Array to int64
+                        auto pa = py::module::import("pyarrow");
+                        coords = array.attr("cast")(pa.attr("int64")()).attr("tolist")();
                         reader.set_dim_points(
                             dim, coords.cast<std::vector<int64_t>>());
-
-                        // TODO:
-                        // (pa.bool_(),) * 2,
                     } else if (
                         !strcmp(arrow_schema.format, "U") ||
                         !strcmp(arrow_schema.format, "Z")) {
