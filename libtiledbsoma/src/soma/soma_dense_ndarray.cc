@@ -30,8 +30,10 @@
  *   This file defines the SOMADenseNDArray class.
  */
 
-#include "soma_dense_ndarray.h"
+#include <filesystem>
+
 #include "soma_array.h"
+#include "soma_dense_ndarray.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -95,10 +97,11 @@ SOMADenseNDArray::SOMADenseNDArray(
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    std::string array_name = std::filesystem::path(uri).filename();
     array_ = std::make_shared<SOMAArray>(
         mode,
         uri,
-        uri,  // label used when debugging
+        array_name,  // label used when debugging
         ctx,
         column_names,
         "auto",  // batch_size,
