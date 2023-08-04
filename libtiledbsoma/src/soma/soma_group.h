@@ -70,7 +70,7 @@ class SOMAGroup {
      * @param uri URI of the group
      * @param name Name of the group
      * @param platform_config Config parameter dictionary
-     * @param timestamp Pair indicating timestamp start and end
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAGroup> SOMAGroup
      */
     static std::unique_ptr<SOMAGroup> open(
@@ -88,7 +88,7 @@ class SOMAGroup {
      * @param ctx TileDB context
      * @param uri URI of the group
      * @param name Name of the group
-     * @param timestamp Pair indicating timestamp start and end
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAGroup> SOMAGroup
      */
     static std::unique_ptr<SOMAGroup> open(
@@ -109,7 +109,7 @@ class SOMAGroup {
      * @param uri URI of the group
      * @param name Name of the group
      * @param ctx TileDB context
-     * @param timestamp Pair indicating timestamp start and end
+     * @param timestamp Optional pair indicating timestamp start and end
      */
     SOMAGroup(
         OpenMode mode,
@@ -127,7 +127,7 @@ class SOMAGroup {
      * Open the SOMAGroup object.
      *
      * @param mode read or write
-     * @param timestamp Pair indicating timestamp start and end
+     * @param timestamp Optional pair indicating timestamp start and end
      */
     void open(
         OpenMode mode,

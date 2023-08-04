@@ -81,7 +81,7 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param mode read or write
      * @param platform_config Config parameter dictionary
-     * @param timestamp Pair indicating timestamp start and end
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::shared_ptr<SOMACollection> SOMACollection
      */
     static std::unique_ptr<SOMACollection> open(
@@ -97,7 +97,7 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param mode read or write
      * @param ctx TileDB context
-     * @param timestamp Pair indicating timestamp start and end
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::shared_ptr<SOMACollection> SOMACollection
      */
     static std::unique_ptr<SOMACollection> open(
@@ -117,7 +117,7 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param ctx TileDB context
      * @param key key of the array
-     * @param timestamp Pair indicating timestamp start and end
+     * @param timestamp Optional pair indicating timestamp start and end
      */
     SOMACollection(
         OpenMode mode,
