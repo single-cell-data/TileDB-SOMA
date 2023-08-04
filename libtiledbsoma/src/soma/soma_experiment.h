@@ -77,7 +77,7 @@ class SOMAExperiment : public SOMACollection {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<Context> ctx,
-        std::optional<uint64_t> timestamp = std::nullopt)
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt)
         : SOMACollection(mode, uri, ctx, timestamp) {
     }
 

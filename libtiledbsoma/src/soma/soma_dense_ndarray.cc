@@ -98,7 +98,7 @@ SOMADenseNDArray::SOMADenseNDArray(
     array_ = std::make_shared<SOMAArray>(
         mode,
         uri,
-        "unnamed",  // name
+        uri,  // label used when debugging
         ctx,
         column_names,
         "auto",  // batch_size,
