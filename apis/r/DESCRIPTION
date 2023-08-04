@@ -40,7 +40,7 @@ Imports:
     Matrix,
     stats,
     bit64,
-    tiledb (>= 0.20.2),
+    tiledb (>= 0.20.3),
     arrow,
     utils,
     fs,
