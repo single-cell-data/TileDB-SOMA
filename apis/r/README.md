@@ -13,6 +13,8 @@ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev',
                                          'https://cloud.r-project.org'))
 ```
 
+System prerequisites include `cmake` and `git`.
+
 ```bash
 mamba install -c conda-forge -c tiledb r-tiledbsoma
 ```
