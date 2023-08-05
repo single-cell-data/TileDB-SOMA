@@ -81,12 +81,14 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param mode read or write
      * @param platform_config Config parameter dictionary
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::shared_ptr<SOMACollection> SOMACollection
      */
     static std::unique_ptr<SOMACollection> open(
         std::string_view uri,
         OpenMode mode,
-        std::map<std::string, std::string> platform_config = {});
+        std::map<std::string, std::string> platform_config = {},
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open a group at the specified URI and return SOMACollection
@@ -95,10 +97,14 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param mode read or write
      * @param ctx TileDB context
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::shared_ptr<SOMACollection> SOMACollection
      */
     static std::unique_ptr<SOMACollection> open(
-        std::string_view uri, OpenMode mode, std::shared_ptr<Context> ctx);
+        std::string_view uri,
+        OpenMode mode,
+        std::shared_ptr<Context> ctx,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -111,12 +117,13 @@ class SOMACollection : public SOMAObject {
      * @param uri URI of the array
      * @param ctx TileDB context
      * @param key key of the array
+     * @param timestamp Optional pair indicating timestamp start and end
      */
     SOMACollection(
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<Context> ctx,
-        std::optional<uint64_t> timestamp = std::nullopt);
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
     SOMACollection() = delete;
     SOMACollection(const SOMACollection&) = default;

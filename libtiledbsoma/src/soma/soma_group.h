@@ -70,7 +70,7 @@ class SOMAGroup {
      * @param uri URI of the group
      * @param name Name of the group
      * @param platform_config Config parameter dictionary
-     * @param timestamp Timestamp
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAGroup> SOMAGroup
      */
     static std::unique_ptr<SOMAGroup> open(
@@ -78,7 +78,7 @@ class SOMAGroup {
         std::string_view uri,
         std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
-        std::optional<uint64_t> timestamp = std::nullopt);
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open a group at the specified URI and return SOMAGroup
@@ -88,7 +88,7 @@ class SOMAGroup {
      * @param ctx TileDB context
      * @param uri URI of the group
      * @param name Name of the group
-     * @param timestamp Timestamp
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAGroup> SOMAGroup
      */
     static std::unique_ptr<SOMAGroup> open(
@@ -96,7 +96,7 @@ class SOMAGroup {
         std::shared_ptr<Context> ctx,
         std::string_view uri,
         std::string_view name = "unnamed",
-        std::optional<uint64_t> timestamp = std::nullopt);
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -109,14 +109,14 @@ class SOMAGroup {
      * @param uri URI of the group
      * @param name Name of the group
      * @param ctx TileDB context
-     * @param timestamp Timestamp
+     * @param timestamp Optional pair indicating timestamp start and end
      */
     SOMAGroup(
         OpenMode mode,
         std::string_view uri,
         std::string_view name,
         std::shared_ptr<Context> ctx,
-        std::optional<uint64_t> timestamp = std::nullopt);
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMAGroup() = delete;
     SOMAGroup(const SOMAGroup&) = delete;
@@ -127,9 +127,11 @@ class SOMAGroup {
      * Open the SOMAGroup object.
      *
      * @param mode read or write
-     * @param timestamp Timestamp
+     * @param timestamp Optional pair indicating timestamp start and end
      */
-    void open(OpenMode mode, std::optional<uint64_t> timestamp = std::nullopt);
+    void open(
+        OpenMode mode,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * Close the SOMAGroup object.

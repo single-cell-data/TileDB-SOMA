@@ -77,6 +77,7 @@ class SOMAArray {
      * @param batch_size Read batch size
      * @param result_order Read result order: automatic (default), rowmajor, or
      * colmajor
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
     static std::unique_ptr<SOMAArray> open(
@@ -101,6 +102,7 @@ class SOMAArray {
      * @param batch_size Read batch size
      * @param result_order Read result order: automatic (default), rowmajor, or
      * colmajor
+     * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
     static std::unique_ptr<SOMAArray> open(

@@ -30,10 +30,12 @@
  *   This file defines the SOMADataFrame class.
  */
 
-#include "soma_dataframe.h"
+#include <filesystem>
+
 #include <tiledb/tiledb>
 #include "array_buffers.h"
 #include "soma_array.h"
+#include "soma_dataframe.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -94,10 +96,11 @@ SOMADataFrame::SOMADataFrame(
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    std::string array_name = std::filesystem::path(uri).filename();
     array_ = std::make_shared<SOMAArray>(
         mode,
         uri,
-        "unnamed",  // name
+        array_name,  // label used when debugging
         ctx,
         column_names,
         "auto",  // batch_size,
