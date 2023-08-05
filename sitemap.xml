@@ -163,43 +163,19 @@
     <loc>/reference/TileDBObject.html</loc>
   </url>
   <url>
-    <loc>/reference/arrow_table_to_dense.html</loc>
-  </url>
-  <url>
-    <loc>/reference/arrow_table_to_sparse.html</loc>
-  </url>
-  <url>
     <loc>/reference/example-datasets.html</loc>
   </url>
   <url>
     <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/libtiledbsoma_version.html</loc>
-  </url>
-  <url>
     <loc>/reference/matrixZeroBasedView.html</loc>
-  </url>
-  <url>
-    <loc>/reference/pad_matrix.html</loc>
   </url>
   <url>
     <loc>/reference/show_package_versions.html</loc>
   </url>
   <url>
-    <loc>/reference/soma_array_reader.html</loc>
-  </url>
-  <url>
-    <loc>/reference/soma_array_to_arrow_table.html</loc>
-  </url>
-  <url>
-    <loc>/reference/sr_setup.html</loc>
-  </url>
-  <url>
-    <loc>/reference/tiledb_embedded_version.html</loc>
-  </url>
-  <url>
-    <loc>/reference/tiledbsoma_stats_enable.html</loc>
+    <loc>/reference/tiledbsoma_stats.html</loc>
   </url>
   <url>
     <loc>/reference/write_soma.Seurat.html</loc>

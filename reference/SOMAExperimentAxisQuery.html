@@ -54,7 +54,7 @@ this in the class.
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -188,6 +188,7 @@ this in the class.</p>
 <li><p><a href="#method-SOMAExperimentAxisQuery-to_seurat_assay"><code>SOMAExperimentAxisQuery$to_seurat_assay()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-to_seurat_reduction"><code>SOMAExperimentAxisQuery$to_seurat_reduction()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-to_seurat_graph"><code>SOMAExperimentAxisQuery$to_seurat_graph()</code></a></p></li>
+<li><p><a href="#method-SOMAExperimentAxisQuery-to_single_cell_experiment"><code>SOMAExperimentAxisQuery$to_single_cell_experiment()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-clone"><code>SOMAExperimentAxisQuery$clone()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-SOMAExperimentAxisQuery-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
@@ -381,51 +382,38 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 <div class="section">
 <h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>X_layers</code></dt>
-<dd><p>A named character of X layers to add to the Seurat assay,
-where the names are the names of Seurat slots and the values are the names
-of layers within <code>X</code>; names should be one of:</p><ul><li><p>“<code>counts</code>” to add the layer as <code>counts</code></p></li>
+<dd><p>A named character of X layers to add to the Seurat assay where the names are the names of Seurat slots and the values are the names of layers within <code>X</code>; names should be one of: </p><ul><li><p>“<code>counts</code>” to add the layer as <code>counts</code></p></li>
 <li><p>“<code>data</code>” to add the layer as <code>data</code></p></li>
 <li><p>“<code>scale.data</code>” to add the layer as <code>scale.data</code></p></li>
-</ul><p>At least one of “<code>counts</code>” or “<code>data</code>” is required</p></dd>
+</ul> At least one of “<code>counts</code>” or “<code>data</code>” is required</dd>
 
 
 <dt><code>obs_index</code></dt>
-<dd><p>Name of column in <code>obs</code> to add as cell names; uses
-<code>paste0("cell", obs_joinids())</code> by default</p></dd>
+<dd><p>Name of column in <code>obs</code> to add as cell names; uses <code>paste0("cell", obs_joinids())</code> by default</p></dd>
 
 
 <dt><code>var_index</code></dt>
-<dd><p>Name of column in <code>var</code> to add as feature names; uses
-<code>paste0("feature", var_joinids())</code> by default</p></dd>
+<dd><p>Name of column in <code>var</code> to add as feature names; uses <code>paste0("feature", var_joinids())</code> by default</p></dd>
 
 
 <dt><code>obs_column_names</code></dt>
-<dd><p>Names of columns in <code>obs</code> to add as
-cell-level meta data; by default, loads all columns</p></dd>
+<dd><p>Names of columns in <code>obs</code> to add as cell-level meta data; by default, loads all columns</p></dd>
 
 
 <dt><code>var_column_names</code></dt>
-<dd><p>Names of columns in <code>var</code> to add as
-feature-level meta data; by default, loads all columns</p></dd>
+<dd><p>Names of columns in <code>var</code> to add as feature-level meta data; by default, loads all columns</p></dd>
 
 
 <dt><code>obsm_layers</code></dt>
-<dd><p>Names of arrays in <code>obsm</code> to load in as the
-cell embeddings; pass <code>FALSE</code> to suppress loading in any
-dimensional reductions; by default, loads all dimensional
-reduction information</p></dd>
+<dd><p>Names of arrays in <code>obsm</code> to add as the cell embeddings; pass <code>FALSE</code> to suppress loading in any dimensional reductions; by default, loads all dimensional reduction information</p></dd>
 
 
 <dt><code>varm_layers</code></dt>
-<dd><p>Named vector of arrays in <code>varm</code> to load in as
-the feature loadings; names must be names of array in <code>obsm</code> (eg.
-<code>varm_layers = c(X_pca = 'PCs')</code>); will try to determine
-<code>varm_layers</code> from <code>obsm_layers</code></p></dd>
+<dd><p>Named vector of arrays in <code>varm</code> to load in as the feature loadings; names must be names of arrays in <code>obsm</code> (eg. <code>varm_layers = c(X_pca = "PCs")</code>); pass <code>FALSE</code> to suppress loading in any feature loadings; will try to determine <code>varm_layers</code> from <code>obsm_layers</code></p></dd>
 
 
 <dt><code>obsp_layers</code></dt>
-<dd><p>Names of arrays in <code>obsp</code> to load in as
-<code><a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a>s</code>; by default, loads all graphs</p></dd>
+<dd><p>Names of arrays in <code>obsp</code> to load in as <code><a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a>s</code>; by default, loads all graphs</p></dd>
 
 
 </dl><p></p></div>
@@ -450,27 +438,22 @@ the feature loadings; names must be names of array in <code>obsm</code> (eg.
 <div class="section">
 <h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>X_layers</code></dt>
-<dd><p>A named character of X layers to add to the Seurat assay,
-where the names are the names of Seurat slots and the values are the names
-of layers within <code>X</code>; names should be one of:</p><ul><li><p>“<code>counts</code>” to add the layer as <code>counts</code></p></li>
+<dd><p>A named character of X layers to add to the Seurat assay where the names are the names of Seurat slots and the values are the names of layers within <code>X</code>; names should be one of: </p><ul><li><p>“<code>counts</code>” to add the layer as <code>counts</code></p></li>
 <li><p>“<code>data</code>” to add the layer as <code>data</code></p></li>
 <li><p>“<code>scale.data</code>” to add the layer as <code>scale.data</code></p></li>
-</ul><p>At least one of “<code>counts</code>” or “<code>data</code>” is required</p></dd>
+</ul> At least one of “<code>counts</code>” or “<code>data</code>” is required</dd>
 
 
 <dt><code>obs_index</code></dt>
-<dd><p>Name of column in <code>obs</code> to add as cell names; uses
-<code>paste0("cell", obs_joinids())</code> by default</p></dd>
+<dd><p>Name of column in <code>obs</code> to add as cell names; uses <code>paste0("cell", obs_joinids())</code> by default</p></dd>
 
 
 <dt><code>var_index</code></dt>
-<dd><p>Name of column in <code>var</code> to add as feature names; uses
-<code>paste0("feature", var_joinids())</code> by default</p></dd>
+<dd><p>Name of column in <code>var</code> to add as feature names; uses <code>paste0("feature", var_joinids())</code> by default</p></dd>
 
 
 <dt><code>var_column_names</code></dt>
-<dd><p>Names of columns in <code>var</code> to add as
-feature-level meta data; by default, loads all columns</p></dd>
+<dd><p>Names of columns in <code>var</code> to add as feature-level meta data; by default, loads all columns</p></dd>
 
 
 </dl><p></p></div>
@@ -507,13 +490,11 @@ from <code>obsm_layer</code></p></dd>
 
 
 <dt><code>obs_index</code></dt>
-<dd><p>Name of column in <code>obs</code> to add as cell names; uses
-<code>paste0("cell", obs_joinids())</code> by default</p></dd>
+<dd><p>Name of column in <code>obs</code> to add as cell names; uses <code>paste0("cell", obs_joinids())</code> by default</p></dd>
 
 
 <dt><code>var_index</code></dt>
-<dd><p>Name of column in <code>var</code> to add as feature names; uses
-<code>paste0("feature", var_joinids())</code> by default</p></dd>
+<dd><p>Name of column in <code>var</code> to add as feature names; uses <code>paste0("feature", var_joinids())</code> by default</p></dd>
 
 
 </dl><p></p></div>
@@ -537,8 +518,7 @@ from <code>obsm_layer</code></p></dd>
 
 
 <dt><code>obs_index</code></dt>
-<dd><p>Name of column in <code>obs</code> to add as cell names; uses
-<code>paste0("cell", obs_joinids())</code> by default</p></dd>
+<dd><p>Name of column in <code>obs</code> to add as cell names; uses <code>paste0("cell", obs_joinids())</code> by default</p></dd>
 
 
 </dl><p></p></div>
@@ -548,15 +528,73 @@ from <code>obsm_layer</code></p></dd>
 <p>A <code><a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a></code> object</p>
 </div>
 
-</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
-<p>The objects of this class are cloneable with this method.</p><div class="section">
+</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_single_cell_experiment"></a><div class="section">
+<h3 id="method-to-single-cell-experiment-">Method <code>to_single_cell_experiment()</code><a class="anchor" aria-label="anchor" href="#method-to-single-cell-experiment-"></a></h3>
+<p>Loads the query as a
+<code><a href="https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html" class="external-link">SingleCellExperiment</a></code> object</p><div class="section">
 <h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_single_cell_experiment</span><span class="op">(</span></span>
+<span>  X_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  obs_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  var_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  obs_column_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  var_column_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  obsm_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  obsp_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  varp_layers <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>X_layers</code></dt>
+<dd><p>A character vector of X layers to add as assays in the main experiment; may optionally be named to set the name of the resulting assay (eg. <code>X_layers = c(counts = "raw")</code> will load in X layer “<code>raw</code>” as assay “<code>counts</code>”); by default, loads in all X layers</p></dd>
+
+
+<dt><code>obs_index</code></dt>
+<dd><p>Name of column in <code>obs</code> to add as cell names; uses <code>paste0("cell", obs_joinids())</code> by default</p></dd>
+
+
+<dt><code>var_index</code></dt>
+<dd><p>Name of column in <code>var</code> to add as feature names; uses <code>paste0("feature", var_joinids())</code> by default</p></dd>
+
+
+<dt><code>obs_column_names</code></dt>
+<dd><p>Names of columns in <code>obs</code> to add as <code>colData</code>; by default, loads all columns</p></dd>
+
+
+<dt><code>var_column_names</code></dt>
+<dd><p>Names of columns in <code>var</code> to add as <code>rowData</code>; by default, loads all columns</p></dd>
+
+
+<dt><code>obsm_layers</code></dt>
+<dd><p>Names of arrays in <code>obsm</code> to add as the reduced dimensions; pass <code>FALSE</code> to suppress loading in any reduced dimensions; by default, loads all reduced dimensions</p></dd>
+
+
+<dt><code>obsp_layers</code></dt>
+<dd><p>Names of arrays in <code>obsp</code> to load in as <code><a href="https://rdrr.io/pkg/S4Vectors/man/Hits-class.html" class="external-link">SelfHits</a></code>; by default, loads all graphs</p></dd>
+
+
+<dt><code>varp_layers</code></dt>
+<dd><p>Names of arrays in <code>varp</code> to load in as <code><a href="https://rdrr.io/pkg/S4Vectors/man/Hits-class.html" class="external-link">SelfHits</a></code>; by default, loads all networks</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<p>A <code><a href="https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html" class="external-link">SingleCellExperiment</a></code> object</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-clone"></a><div class="section">
+<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
+<p>The objects of this class are cloneable with this method.</p><div class="section">
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
