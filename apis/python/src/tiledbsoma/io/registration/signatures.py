@@ -10,6 +10,7 @@ from typing_extensions import Self
 import tiledbsoma
 import tiledbsoma.logging
 from tiledbsoma._arrow_types import df_to_arrow
+from tiledbsoma.options import SOMATileDBContext
 
 _EQUIVALENCES = {
     "large_string": "string",
@@ -190,13 +191,18 @@ class Signature:
         return cls.from_anndata(adata, default_X_layer_name=default_X_layer_name)
 
     @classmethod
-    def from_soma_experiment(cls, uri: str, measurement_name: str = "RNA") -> Self:
+    def from_soma_experiment(
+        cls,
+        uri: str,
+        measurement_name: str = "RNA",
+        context: Optional[SOMATileDBContext] = None,
+    ) -> Self:
         """
         Constructs a pre-check signature from a SOMA experiment, which can be compared against
         another signature from AnnData/H5AD or SOMA experiment.
         """
 
-        with tiledbsoma.Experiment.open(uri) as exp:
+        with tiledbsoma.Experiment.open(uri, context=context) as exp:
 
             obs_schema = _string_dict_from_arrow_schema(exp.obs.schema)
 

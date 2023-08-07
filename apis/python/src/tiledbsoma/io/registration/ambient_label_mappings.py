@@ -8,6 +8,7 @@ from typing_extensions import Self
 
 import tiledbsoma
 import tiledbsoma.logging
+from tiledbsoma.options import SOMATileDBContext
 
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
 
@@ -201,7 +202,7 @@ class ExperimentAmbientLabelMapping:
         *,
         obs_field_name: str = "obs_id",
         var_field_name: str = "var_id",
-        # XXX CTX/CFG
+        context: Optional[SOMATileDBContext] = None,
     ) -> Self:
         """Factory method to compute label-to-SOMA-join-ID mappings for a single SOMA experiment in
         isolation. These are already committed to SOMA storage, so they are the unchangeable inputs
@@ -222,7 +223,7 @@ class ExperimentAmbientLabelMapping:
                 f"Registration: starting with experiment {experiment_uri}"
             )
 
-            with tiledbsoma.Experiment.open(experiment_uri) as exp:
+            with tiledbsoma.Experiment.open(experiment_uri, context=context) as exp:
                 for batch in exp.obs.read(column_names=["soma_joinid", obs_field_name]):
                     obs_ids = [e.as_py() for e in batch[1]]
                     soma_joinids = [e.as_py() for e in batch[0]]
@@ -346,6 +347,7 @@ class ExperimentAmbientLabelMapping:
         measurement_name: str,
         obs_field_name: str,
         var_field_name: str,
+        context: Optional[SOMATileDBContext] = None,
     ) -> Self:
         """Extends registration data from the baseline, already-written SOMA
         experiment to include multiple H5AD input files."""
@@ -355,6 +357,7 @@ class ExperimentAmbientLabelMapping:
                 experiment_uri,
                 obs_field_name=obs_field_name,
                 var_field_name=var_field_name,
+                context=context,
             )
         else:
             registration_data = cls(
