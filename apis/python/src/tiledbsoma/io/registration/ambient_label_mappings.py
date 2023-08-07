@@ -268,14 +268,14 @@ class ExperimentAmbientLabelMapping:
         tiledbsoma.logging.logger.info("Registration: registering AnnData object.")
 
         obs_next_soma_joinid = previous.obs_axis.get_next_start_soma_joinid()
-        obs_map = previous.obs_axis.data
+        obs_map = dict(previous.obs_axis.data)
         obs_ids = get_dataframe_values(adata.obs, obs_field_name)
         for obs_id in obs_ids:
             if obs_id not in obs_map:
                 obs_map[obs_id] = obs_next_soma_joinid
                 obs_next_soma_joinid += 1
 
-        var_map = previous.var_axes[measurement_name].data
+        var_map = dict(previous.var_axes[measurement_name].data)
         var_next_soma_joinid = previous.var_axes[
             measurement_name
         ].get_next_start_soma_joinid()
@@ -289,7 +289,7 @@ class ExperimentAmbientLabelMapping:
 
         if adata.raw is None:
             if "raw" in previous.var_axes:
-                var_maps["raw"] = previous.var_axes["raw"].data
+                var_maps["raw"] = dict(previous.var_axes["raw"].data)
 
         else:
             # One input may not have a raw while the next may have one
