@@ -381,10 +381,11 @@ class ExperimentAmbientLabelMapping:
         tiledbsoma.logging.logger.info("Registration: complete.")
         return registration_data
 
-    def show(self) -> None:
-        print(f"obs:{len(self.obs_axis.data)}")
+    def __str__(self) -> str:
+        lines = [f"obs:{len(self.obs_axis.data)}"]
         for k, v in self.var_axes.items():
-            print(f"{k}/var:{len(v.data)}")
+            lines.append(f"{k}/var:{len(v.data)}")
+        return "\n".join(lines)
 
     def to_json(self) -> str:
         return json.dumps(self, default=attrs.asdict, sort_keys=True, indent=4)

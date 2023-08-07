@@ -73,10 +73,7 @@ def get_dataframe_values(df: pd.DataFrame, field_name: str) -> List[str]:
     ``obs`` or ``var`` dataframe."""
     if field_name in df:
         return [str(e) for e in df[field_name]]
-    if field_name == df.index.name:
+    if df.index.name in (field_name, "index", None):
         return list(df.index)
-    if df.index.name is None:
-        return list(df.index)
-    if df.index.name == "index":
-        return list(df.index)
+
     raise ValueError(f"could not find field name {field_name} in dataframe")
