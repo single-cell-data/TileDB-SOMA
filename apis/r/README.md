@@ -11,8 +11,8 @@ package for other Unix-like platforms.
 
 ```r
 install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev',
-                                          'https://cloud.r-project.org'))
- ```
+                                         'https://cloud.r-project.org'))
+```
 
 Installing from source on Unix-like platforms requires `cmake` and `git`.
 
