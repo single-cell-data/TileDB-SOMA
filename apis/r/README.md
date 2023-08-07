@@ -14,18 +14,15 @@ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev',
                                           'https://cloud.r-project.org'))
  ```
 
-Installing on Unix-like platforms without binaries requires `cmake` and `git`.
+Installing from source on Unix-like platforms requires `cmake` and `git`.
 
 Alternatively, tiledbsoma can be installed directly from [Conda](https://anaconda.org/tiledb/r-tiledbsoma), which serves binaries for multiple architectures.
 
- ```bash
- mamba install -c conda-forge -c tiledb r-tiledbsoma
- ```
+```bash
+mamba install -c conda-forge -c tiledb r-tiledbsoma
+```
 
 *Note, we're using `mamba` here as a drop-in replacement for `conda` to accelerate the install process.*
-
-The r-universe repo serves macOS binaries and the source package for other Unix-like platforms. The
-conda channel serves binaries for multiple architectures.
 
 ## From source
 
