@@ -312,124 +312,59 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     array.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
 
+                    auto coords = array.attr("tolist")();
                     int data_index = arrow_array.n_buffers - 1;
 
                     if (!strcmp(arrow_schema.format, "l")) {
-                        tcb::span<int64_t> data{
-                            (int64_t*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<int64_t>>());
                     } else if (!strcmp(arrow_schema.format, "i")) {
-                        tcb::span<int32_t> data{
-                            (int32_t*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<int32_t>>());
                     } else if (!strcmp(arrow_schema.format, "s")) {
-                        tcb::span<int16_t> data{
-                            (int16_t*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<int16_t>>());
                     } else if (!strcmp(arrow_schema.format, "c")) {
-                        tcb::span<int8_t> data{
-                            (int8_t*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<int8_t>>());
                     } else if (!strcmp(arrow_schema.format, "L")) {
-                        tcb::span<uint64_t> data{
-                            (uint64_t*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<uint64_t>>());
                     } else if (!strcmp(arrow_schema.format, "I")) {
-                        tcb::span<uint32_t> data{
-                            (uint32_t*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<uint32_t>>());
                     } else if (!strcmp(arrow_schema.format, "S")) {
-                        tcb::span<uint16_t> data{
-                            (uint16_t*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<uint16_t>>());
                     } else if (!strcmp(arrow_schema.format, "C")) {
-                        tcb::span<uint8_t> data{
-                            (uint8_t*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<uint8_t>>());
                     } else if (!strcmp(arrow_schema.format, "f")) {
-                        tcb::span<float> data{
-                            (float*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<float>>());
                     } else if (!strcmp(arrow_schema.format, "g")) {
-                        tcb::span<double> data{
-                            (double*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
+                            dim, coords.cast<std::vector<double>>());
                     } else if (
                         !strcmp(arrow_schema.format, "u") ||
                         !strcmp(arrow_schema.format, "z")) {
-                        // TODO: partitioning is not supported for string/bytes
-                        // dims
-                        const char* data = (const char*)(arrow_array
-                                                             .buffers[2]);
-                        const uint32_t*
-                            offsets = (const uint32_t*)(arrow_array.buffers[1]);
-
-                        for (int32_t i = 0; i < arrow_array.length; i++) {
-                            auto value = std::string{
-                                data + offsets[i], offsets[i + 1] - offsets[i]};
-                            reader.set_dim_point(dim, value);
-                        }
-
+                        reader.set_dim_points(
+                            dim, coords.cast<std::vector<std::string>>());
                     } else if (
                         !strcmp(arrow_schema.format, "tss:") ||
                         !strcmp(arrow_schema.format, "tsm:") ||
                         !strcmp(arrow_schema.format, "tsu:") ||
                         !strcmp(arrow_schema.format, "tsn:")) {
-                        tcb::span<int64_t> data{
-                            (int64_t*)arrow_array.buffers[data_index],
-                            (uint64_t)arrow_array.length};
+                        // convert the Arrow Array to int64
+                        auto pa = py::module::import("pyarrow");
+                        coords = array.attr("cast")(pa.attr("int64")()).attr("tolist")();
                         reader.set_dim_points(
-                            dim, data, partition_index, partition_count);
-
-                        // TODO:
-                        // (pa.bool_(),) * 2,
-
+                            dim, coords.cast<std::vector<int64_t>>());
                     } else if (
                         !strcmp(arrow_schema.format, "U") ||
                         !strcmp(arrow_schema.format, "Z")) {
-                        // TODO: partitioning is not supported for string/bytes
-                        // dims
-                        const char* data = (const char*)(arrow_array
-                                                             .buffers[2]);
-                        const uint64_t*
-                            offsets = (const uint64_t*)(arrow_array.buffers[1]);
-
-                        for (int64_t i = 0; i < arrow_array.length; i++) {
-                            auto value = std::string{
-                                data + offsets[i], offsets[i + 1] - offsets[i]};
-                            reader.set_dim_point(dim, value);
-                        }
-
+                        reader.set_dim_points(
+                            dim, coords.cast<std::vector<std::string>>());
                     } else {
                         throw TileDBSOMAError(fmt::format(
                             "[pytiledbsoma] set_dim_points: type={} not "
