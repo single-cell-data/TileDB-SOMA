@@ -675,21 +675,26 @@ def test_experiment_query_column_names(soma_experiment):
         assert set(ad.obs.keys()) == {"soma_joinid", "label"}
         assert set(ad.var.keys()) == {"soma_joinid", "label"}
 
+
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
-def test_experiment_query_mp_disjoint_arrow_coords(soma_experiment):  
+def test_experiment_query_mp_disjoint_arrow_coords(soma_experiment):
     """
-    Verify Pyarrow join ids that are offset are correctly handled. 
-    """   
-    all_ids = pa.array(range(30))
-    slices = [all_ids[i * 10:i * 10 + 10]
-              for i in range(3)] 
-    
+    Verify Pyarrow join ids that are offset are correctly handled.
+    """
+    pa.array(range(30))
+    slices = [
+        pa.array(range(10)),
+        pa.array(range(10, 20)),
+        pa.array(range(20, 30)),
+    ]
+
     for ids in slices:
         with soma_experiment.axis_query(
             "RNA",
             obs_query=soma.AxisQuery(coords=(ids,)),
         ) as query:
             assert query.obs_joinids() == ids
+
 
 """
 Fixture support & utility functions below.
