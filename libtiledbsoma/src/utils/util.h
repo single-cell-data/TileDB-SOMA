@@ -40,8 +40,7 @@
 
 namespace tiledbsoma::util {
 
-using VarlenBufferPair =
-    std::pair<std::vector<std::byte>, std::vector<uint64_t>>;
+using VarlenBufferPair = std::pair<std::string, std::vector<uint64_t>>;
 
 template <typename T>
 VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow = true);

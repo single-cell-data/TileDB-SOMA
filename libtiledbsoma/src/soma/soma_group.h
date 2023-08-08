@@ -269,18 +269,8 @@ class SOMAGroup {
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    MetadataValue get_metadata(const std::string& key) const;
-
-    /**
-     * @brief Given an index, get the associated value datatype, number of
-     * values, and value in binary form. The group must be opened in READ mode,
-     * otherwise the function will error out.
-     *
-     * @param index The index used to get the metadata.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
-     * uint32_t, const void*>)
-     */
-    MetadataValue get_metadata(uint64_t index) const;
+    std::map<std::string, MetadataValue> get_metadata();
+    std::optional<MetadataValue> get_metadata(const std::string& key);
 
     /**
      * Check if the key exists in metadata from an open group. The group must
@@ -303,6 +293,11 @@ class SOMAGroup {
     //= private non-static
     //===================================================================
 
+    /**
+     * Fills the metadata cache upon opening the array.
+     */
+    void fill_metadata_cache();
+
     // TileDB context
     std::shared_ptr<Context> ctx_;
 
@@ -313,7 +308,10 @@ class SOMAGroup {
     std::string name_;
 
     // TileDBGroup associated with the SOMAGroup
-    std::unique_ptr<Group> group_;
+    std::shared_ptr<Group> group_;
+
+    // Metadata cache
+    std::map<std::string, MetadataValue> metadata_;
 };
 
 }  // namespace tiledbsoma

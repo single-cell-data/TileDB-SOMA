@@ -117,3 +117,45 @@ TEST_CASE("SOMASparseNDArray: basic") {
     }
     soma_sparse->close();
 }
+
+TEST_CASE("SOMASparseNDArray: metadata") {
+    auto ctx = std::make_shared<Context>();
+
+    std::string uri = "mem://unit-test-sparse-ndarray";
+    SOMASparseNDArray::create(uri, create_schema(*ctx), ctx);
+    auto soma_sparse = SOMASparseNDArray::open(
+        uri,
+        OpenMode::write,
+        ctx,
+        {},
+        ResultOrder::automatic,
+        std::pair<uint64_t, uint64_t>(1, 1));
+    int32_t val = 100;
+    soma_sparse->set_metadata("md", TILEDB_INT32, 1, &val);
+    soma_sparse->close();
+
+    soma_sparse->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
+    REQUIRE(soma_sparse->metadata_num() == 2);
+    REQUIRE(soma_sparse->has_metadata("soma_object_type") == true);
+    REQUIRE(soma_sparse->has_metadata("md") == true);
+
+    auto mdval = soma_sparse->get_metadata("md");
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    soma_sparse->close();
+
+    soma_sparse->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    // Metadata should also be retrievable in write mode
+    mdval = soma_sparse->get_metadata("md");
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    soma_sparse->delete_metadata("md");
+    mdval = soma_sparse->get_metadata("md");
+    REQUIRE(!mdval.has_value());
+    soma_sparse->close();
+
+    soma_sparse->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
+    REQUIRE(soma_sparse->has_metadata("md") == false);
+    REQUIRE(soma_sparse->metadata_num() == 1);
+    soma_sparse->close();
+}

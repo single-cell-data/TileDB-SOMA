@@ -42,15 +42,14 @@ VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow) {
         nbytes += elem.size();
     }
 
-    std::vector<std::byte> result(nbytes);
+    std::string result;
     std::vector<uint64_t> offsets(data.size() + 1);
     size_t offset = 0;
     size_t idx = 0;
 
     for (auto& elem : data) {
-        std::memcpy(result.data() + offset, elem.data(), elem.size());
+        result += elem;
         offsets[idx++] = offset;
-
         offset += elem.size();
     }
     offsets[idx] = offset;

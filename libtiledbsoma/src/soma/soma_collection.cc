@@ -85,8 +85,9 @@ SOMACollection::SOMACollection(
     group_ = std::make_shared<SOMAGroup>(mode, uri, "", ctx, timestamp);
 }
 
-void SOMACollection::open(OpenMode mode) {
-    group_->open(mode);
+void SOMACollection::open(
+    OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    group_->open(mode, timestamp);
 }
 
 void SOMACollection::close() {

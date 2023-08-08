@@ -197,7 +197,7 @@ TEST_CASE("SOMAGroup: metadata") {
     auto ctx = std::make_shared<Context>();
 
     std::string uri = "mem://unit-test-group";
-    Group::create(*ctx, uri);
+    SOMAGroup::create(ctx, uri, "NONE");
     auto soma_group = SOMAGroup::open(
         OpenMode::write,
         ctx,
@@ -209,28 +209,27 @@ TEST_CASE("SOMAGroup: metadata") {
     soma_group->close();
 
     soma_group->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
+    REQUIRE(soma_group->metadata_num() == 2);
+    REQUIRE(soma_group->has_metadata("soma_object_type") == true);
     REQUIRE(soma_group->has_metadata("md") == true);
-    REQUIRE(soma_group->metadata_num() == 1);
 
-    auto mdval = soma_group->get_metadata(0);
-    REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
-    REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
-    REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
-
-    mdval = soma_group->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
-    REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
-    REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
+    auto mdval = soma_group->get_metadata("md");
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_group->close();
 
     soma_group->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    // Metadata should also be retrievable in write mode
+    mdval = soma_group->get_metadata("md");
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_group->delete_metadata("md");
+    mdval = soma_group->get_metadata("md");
+    REQUIRE(!mdval.has_value());
     soma_group->close();
 
     soma_group->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
     REQUIRE(soma_group->has_metadata("md") == false);
-    REQUIRE(soma_group->metadata_num() == 0);
+    REQUIRE(soma_group->metadata_num() == 1);
     soma_group->close();
 }
