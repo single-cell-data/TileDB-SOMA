@@ -47,7 +47,7 @@ from .. import (
     eta,
     logging,
 )
-from .._arrow_types import df_to_arrow
+from .._arrow_types import df_to_arrow, tiledb_type_from_arrow_type
 from .._collection import AnyTileDBCollection
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -829,7 +829,7 @@ def update_obs(
     new_data: pd.DataFrame,
     *,
     default_index_name: str = "obs_id",
-    # XXX filters tiledb_create_options: TileDBCreateOptions,
+    platform_config: Optional[PlatformConfig] = None,
 ) -> None:
     """
     TO DO: WRITE ME
@@ -837,7 +837,12 @@ def update_obs(
     Lifecycle:
         Experimental.
     """
-    _update_dataframe(exp.obs, new_data, default_index_name)
+    _update_dataframe(
+        exp.obs,
+        new_data,
+        default_index_name=default_index_name,
+        platform_config=platform_config,
+    )
 
 
 def update_var(
@@ -846,6 +851,7 @@ def update_var(
     new_data: pd.DataFrame,
     *,
     default_index_name: str = "var_id",
+    platform_config: Optional[PlatformConfig] = None,
     # XXX filters tiledb_create_options: TileDBCreateOptions,
 ) -> None:
     """
@@ -855,13 +861,20 @@ def update_var(
         Experimental.
     """
     # TODO: check measurement exists
-    _update_dataframe(exp.ms[measurement_name].var, new_data, default_index_name)
+    _update_dataframe(
+        exp.ms[measurement_name].var,
+        new_data,
+        default_index_name=default_index_name,
+        platform_config=platform_config,
+    )
 
 
 def _update_dataframe(
     sdf: DataFrame,
     new_data: pd.DataFrame,
+    *,
     default_index_name: str,
+    platform_config: Optional[PlatformConfig],
 ) -> None:
     """
     TO DO: WRITE ME
@@ -883,9 +896,7 @@ def _update_dataframe(
     add_keys = new_keys.difference(old_keys)
     common_keys = old_keys.intersection(new_keys)
 
-    print("DROPS  ", list(drop_keys))
-    print("ADDS   ", list(add_keys))
-    print("COMMON ", list(common_keys))
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
 
     msgs = []
     for key in common_keys:
@@ -897,23 +908,27 @@ def _update_dataframe(
         msg = ", ".join(msgs)
         raise ValueError(f"unsupported type updates: {msg}")
 
-    # xxx adds
-    # xxx drops
-    # xxx changes
-    # XXX
-
     se = tiledb.ArraySchemaEvolution(sdf.context.tiledb_ctx)
     for drop_key in drop_keys:
         se.drop_attribute(drop_key)
 
-    # XXX
-    # se.add_attribute(
-    #    tiledb.Attr(
-    #        name=add_key,
-    #        dtype=xxx type me up,
-    #        filters=xxx type me up,
-    #    )
-    # )
+    arrow_table = df_to_arrow(new_data)
+    arrow_schema = arrow_table.schema.remove_metadata()
+
+    for add_key in add_keys:
+        # Don't directly use the new dataframe's dtypes. Go through the
+        # to-Arrow-schema logic, and back, as this recapitulates the original
+        # schema-creation logic.
+        atype = arrow_schema.field(add_key).type
+        dtype = tiledb_type_from_arrow_type(atype)
+        filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
+        se.add_attribute(
+            tiledb.Attr(
+                name=add_key,
+                dtype=dtype,
+                filters=filters,
+            )
+        )
 
     se.array_evolve(uri=sdf.uri)
 
