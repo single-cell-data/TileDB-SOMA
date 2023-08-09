@@ -93,6 +93,11 @@ class IngestionParams:
             self.error_if_already_exists = False
             self.skip_existing_nonempty_domain = True
 
+        elif ingest_mode == "update":
+            self.write_schema_no_data = False
+            self.error_if_already_exists = False
+            self.skip_existing_nonempty_domain = False
+
         else:
             raise SOMAError(
                 f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
@@ -701,7 +706,7 @@ def _write_dataframe_impl(
                     _util.format_elapsed(s, f"SKIPPED {soma_df.uri}"),
                 )
                 return soma_df
-        else:
+        elif ingestion_params.error_if_already_exists:
             raise SOMAError(f"{soma_df.uri} already exists")
 
     if ingestion_params.write_schema_no_data:
@@ -828,11 +833,36 @@ def update_obs(
     exp: Experiment,
     new_data: pd.DataFrame,
     *,
-    default_index_name: str = "obs_id",
+    context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig] = None,
+    default_index_name: str = "obs_id",
 ) -> None:
     """
-    TO DO: WRITE ME
+    Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
+    ``obs`` to incorporate the changes.
+
+    All columns present in current SOMA-experiment storage but absent from the new
+    dataframe will be dropped.  All columns absent in current SOMA-experiment storage
+    but present in the new dataframe will be added. Any columns present in both
+    will be left alone, with the exception that if the new dataframe has a different
+    type for the column, the entire update will raise a ``ValueError`` exception.
+
+    Args:
+        exp: The :class:`SOMAExperiment` whose ``obs`` is to be updated. Must
+        be opened for write.
+
+        new_data: a Pandas dataframe with the desired contents.
+
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Platform-specific options used to update this array, provided
+        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+
+        default_index_name: What to call the ``new_data`` index column if it is
+        nameless in Pandas, or has name ``"index"``.
+
+    Returns:
+        None
 
     Lifecycle:
         Experimental.
@@ -840,8 +870,9 @@ def update_obs(
     _update_dataframe(
         exp.obs,
         new_data,
-        default_index_name=default_index_name,
+        context=context,
         platform_config=platform_config,
+        default_index_name=default_index_name,
     )
 
 
@@ -850,22 +881,53 @@ def update_var(
     measurement_name: str,
     new_data: pd.DataFrame,
     *,
-    default_index_name: str = "var_id",
+    context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig] = None,
-    # XXX filters tiledb_create_options: TileDBCreateOptions,
+    default_index_name: str = "var_id",
 ) -> None:
     """
-    TO DO: WRITE ME
+    Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
+    specified measurement's ``var`` to incorporate the changes.
+
+    All columns present in current SOMA-experiment storage but absent from the new
+    dataframe will be dropped.  All columns absent in current SOMA-experiment storage
+    but present in the new dataframe will be added. Any columns present in both
+    will be left alone, with the exception that if the new dataframe has a different
+    type for the column, the entire update will raise a ``ValueError`` exception.
+
+    Args:
+        exp: The :class:`SOMAExperiment` whose ``var`` is to be updated. Must
+        be opened for write.
+
+        measurement_name: Specifies which measurement's ``var`` within the experiment
+        is to be updated.
+
+        new_data: a Pandas dataframe with the desired contents.
+
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Platform-specific options used to update this array, provided
+        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+
+        default_index_name: What to call the ``new_data`` index column if it is
+        nameless in Pandas, or has name ``"index"``.
+
+    Returns:
+        None
 
     Lifecycle:
         Experimental.
     """
-    # TODO: check measurement exists
+    if measurement_name not in exp.ms:
+        raise ValueError(
+            f"cannot find measurement name {measurement_name} within experiment at {exp.uri}"
+        )
     _update_dataframe(
         exp.ms[measurement_name].var,
         new_data,
-        default_index_name=default_index_name,
+        context=context,
         platform_config=platform_config,
+        default_index_name=default_index_name,
     )
 
 
@@ -873,14 +935,12 @@ def _update_dataframe(
     sdf: DataFrame,
     new_data: pd.DataFrame,
     *,
-    default_index_name: str,
+    context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig],
+    default_index_name: str,
 ) -> None:
     """
-    TO DO: WRITE ME
-
-    Lifecycle:
-        Experimental.
+    See ``update_obs`` and ``update_var``. This is common helper code shared by both.
     """
     if sdf.closed or sdf.mode != "w":
         raise SOMAError(f"DataFrame must be open for write: {sdf.uri}")
@@ -931,6 +991,15 @@ def _update_dataframe(
         )
 
     se.array_evolve(uri=sdf.uri)
+
+    _write_dataframe(
+        df_uri=sdf.uri,
+        df=new_data,
+        id_column_name=default_index_name,
+        ingestion_params=IngestionParams("update"),
+        context=context,
+        platform_config=platform_config,
+    )
 
 
 def add_X_layer(
