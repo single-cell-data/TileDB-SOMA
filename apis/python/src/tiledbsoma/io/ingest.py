@@ -878,8 +878,8 @@ def update_obs(
 
 def update_var(
     exp: Experiment,
-    measurement_name: str,
     new_data: pd.DataFrame,
+    measurement_name: str,
     *,
     context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig] = None,
