@@ -36,18 +36,79 @@ write_soma.DataFrame <- function(
   ))
 }
 
+#' @rdname write_soma_objects
+#'
+#' @method write_soma Hits
+#' @export
+#'
+write_soma.Hits <- function(
+  x,
+  uri,
+  soma_parent,
+  sparse = TRUE,
+  type = NULL,
+  transpose = FALSE,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
+  return(write_soma(
+    x = .hits_to_mat(x),
+    uri = uri,
+    soma_parent = soma_parent,
+    sparse = sparse,
+    type = type,
+    transpose = transpose,
+    ...,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    relative = relative
+  ))
+}
+
+#' Write a \code{\link[SingleCellExperiment:SingleCellExperiment-class]{SingleCellExperiment}}
+#' object to a SOMA
+#'
+#' @inheritParams write_soma
+#' @param ms_name Name for resulting measurement; defaults to
+#' \code{\link[SingleCellExperiment]{mainExpName}(x)}
+#'
+#' @inherit write_soma return
+#'
+#' @inherit write_soma.SummarizedExperiment sections
+#'
+#' @section Writing Reduced Dimensions:
+#' blah
+#'
+#' @section writing Column Pairs:
+#' blah
+#'
+#' @section Writing Row Pairs:
+#' blah
+#'
 #' @method write_soma SingleCellExperiment
 #' @export
 #'
 write_soma.SingleCellExperiment <- function(
   x,
   uri,
+  ms_name = NULL,
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
   check_package('SingleCellExperiment', version = .MINIMUM_SCE_VERSION())
-  uri <- NextMethod()
+  ms_name <- ms_name %||% SingleCellExperiment::mainExpName(x)
+  uri <- NextMethod(
+    'write_soma',
+    x,
+    uri = uri,
+    ms_name = ms_name,
+    ...,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
   experiment <- SOMAExperimentOpen(
     uri = uri,
     mode = 'WRITE',
@@ -55,11 +116,99 @@ write_soma.SingleCellExperiment <- function(
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   on.exit(expr = experiment$close(), add = TRUE)
-  .NotYetImplemented()
-  # TODO: Write feature-level meta data
-  # TODO: Write reduced dimensions
-  # TODO: Write nearest-neighbor graphs
-  # TODO: Write coexpression networks
+  ms <- experiment$ms$get(ms_name)
+
+    # Write reduced dimensions
+  spdl::info("Adding reduced dimensions")
+  obsm <- tryCatch(
+    expr = ms$obsm,
+    error = function(...) {
+      return(NULL)
+    }
+  )
+  if (is.null(obsm)) {
+    ms$obsm <- SOMACollectionCreate(
+      uri = file.path(ms$uri, 'obsm'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+    obsm <- ms$obsm
+  }
+  for (rd in SingleCellExperiment::reducedDimNames(x)) {
+    spdl::info("Adding reduced dimension {}", rd)
+    obsm$set(
+      object = write_soma(
+        x = SingleCellExperiment::reducedDim(x, rd),
+        uri = rd,
+        soma_parent = obsm,
+        sparse = TRUE,
+        platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx
+      ),
+      name = rd
+    )
+  }
+
+  # Write nearest-neighbor graphs
+  obsp <- tryCatch(
+    expr = ms$obsp,
+    error = function(...) {
+      return(NULL)
+    }
+  )
+  if (is.null(obsp)) {
+    ms$obsp <- SOMACollectionCreate(
+      uri = file.path(ms$uri, 'obsp'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+    obsp <- ms$obsp
+  }
+  for (cp in SingleCellExperiment::colPairNames(x)) {
+    spdl::info("Adding colPair {}", cp)
+    obsp$set(
+      object = write_soma(
+        x = SingleCellExperiment::colPair(x, cp),
+        uri = cp,
+        soma_parent = obsp,
+        sparse = TRUE,
+        platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx
+      ),
+      name = cp
+    )
+  }
+
+  # Write coexpression networks
+  varp <- tryCatch(
+    expr = ms$varp,
+    error = function(...) {
+      return(NULL)
+    }
+  )
+  if (is.null(varp)) {
+    ms$varp <- SOMACollectionCreate(
+      uri = file.path(ms$uri, 'varp'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+    varp <- ms$varp
+  }
+  for (rp in SingleCellExperiment::rowPairNames(x)) {
+    spdl::info("Adding rowPair {}", rp)
+    varp$set(
+      object = write_soma(
+        x = SingleCellExperiment::rowPair(x, rp),
+        uri = rp,
+        soma_parent = varp,
+        sparse = TRUE,
+        platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx
+      ),
+      name = rp
+    )
+  }
+
   # TODO: Add alternate experiments
   return(experiment$uri)
 }
@@ -115,6 +264,7 @@ write_soma.SummarizedExperiment <- function(
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   on.exit(experiment$close(), add = TRUE)
+
   # Write cell-level meta data (obs)
   spdl::info("Adding colData")
   obs_df <- .df_index(SummarizedExperiment::colData(x), axis = 'obs')
@@ -168,7 +318,9 @@ write_soma.SummarizedExperiment <- function(
   # Write feature-level meta data
   spdl::info("Adding rowData")
   var_df <- .df_index(SummarizedExperiment::rowData(x), axis = 'var')
-  var_df[[attr(var_df, 'index')]] <- rownames(x)
+  if (!is.null(rownames(x))) {
+    var_df[[attr(var_df, 'index')]] <- rownames(x)
+  }
   ms$var <- write_soma(
     x = var_df,
     uri = 'var',

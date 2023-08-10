@@ -2,6 +2,7 @@
 % Please edit documentation in R/write_bioc.R, R/write_soma.R
 \name{write_soma.DataFrame}
 \alias{write_soma.DataFrame}
+\alias{write_soma.Hits}
 \alias{write_soma_objects}
 \alias{write_soma.data.frame}
 \alias{write_soma.matrix}
@@ -15,6 +16,19 @@
   soma_parent,
   df_index = NULL,
   index_column_names = "soma_joinid",
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+)
+
+\method{write_soma}{Hits}(
+  x,
+  uri,
+  soma_parent,
+  sparse = TRUE,
+  type = NULL,
+  transpose = FALSE,
   ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
