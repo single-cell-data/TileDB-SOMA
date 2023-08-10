@@ -31,6 +31,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
+import tiledb
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
@@ -46,7 +47,7 @@ from .. import (
     eta,
     logging,
 )
-from .._arrow_types import df_to_arrow
+from .._arrow_types import df_to_arrow, tiledb_type_from_arrow_type
 from .._collection import AnyTileDBCollection
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -60,6 +61,7 @@ from ..options import SOMATileDBContext
 from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
+from .registration import signatures
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 DenseMatrix = Union[NPNDArray, h5py.Dataset]
@@ -90,6 +92,11 @@ class IngestionParams:
             self.write_schema_no_data = False
             self.error_if_already_exists = False
             self.skip_existing_nonempty_domain = True
+
+        elif ingest_mode == "update":
+            self.write_schema_no_data = False
+            self.error_if_already_exists = False
+            self.skip_existing_nonempty_domain = False
 
         else:
             raise SOMAError(
@@ -699,7 +706,7 @@ def _write_dataframe_impl(
                     _util.format_elapsed(s, f"SKIPPED {soma_df.uri}"),
                 )
                 return soma_df
-        else:
+        elif ingestion_params.error_if_already_exists:
             raise SOMAError(f"{soma_df.uri} already exists")
 
     if ingestion_params.write_schema_no_data:
@@ -820,6 +827,179 @@ def _create_from_matrix(
         _util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
     )
     return soma_ndarray
+
+
+def update_obs(
+    exp: Experiment,
+    new_data: pd.DataFrame,
+    *,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig] = None,
+    default_index_name: str = "obs_id",
+) -> None:
+    """
+    Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
+    ``obs`` to incorporate the changes.
+
+    All columns present in current SOMA-experiment storage but absent from the new
+    dataframe will be dropped.  All columns absent in current SOMA-experiment storage
+    but present in the new dataframe will be added. Any columns present in both
+    will be left alone, with the exception that if the new dataframe has a different
+    type for the column, the entire update will raise a ``ValueError`` exception.
+
+    Args:
+        exp: The :class:`SOMAExperiment` whose ``obs`` is to be updated. Must
+        be opened for write.
+
+        new_data: a Pandas dataframe with the desired contents.
+
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Platform-specific options used to update this array, provided
+        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+
+        default_index_name: What to call the ``new_data`` index column if it is
+        nameless in Pandas, or has name ``"index"``.
+
+    Returns:
+        None
+
+    Lifecycle:
+        Experimental.
+    """
+    _update_dataframe(
+        exp.obs,
+        new_data,
+        context=context,
+        platform_config=platform_config,
+        default_index_name=default_index_name,
+    )
+
+
+def update_var(
+    exp: Experiment,
+    new_data: pd.DataFrame,
+    measurement_name: str,
+    *,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig] = None,
+    default_index_name: str = "var_id",
+) -> None:
+    """
+    Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
+    specified measurement's ``var`` to incorporate the changes.
+
+    All columns present in current SOMA-experiment storage but absent from the new
+    dataframe will be dropped.  All columns absent in current SOMA-experiment storage
+    but present in the new dataframe will be added. Any columns present in both
+    will be left alone, with the exception that if the new dataframe has a different
+    type for the column, the entire update will raise a ``ValueError`` exception.
+
+    Args:
+        exp: The :class:`SOMAExperiment` whose ``var`` is to be updated. Must
+        be opened for write.
+
+        measurement_name: Specifies which measurement's ``var`` within the experiment
+        is to be updated.
+
+        new_data: a Pandas dataframe with the desired contents.
+
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Platform-specific options used to update this array, provided
+        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+
+        default_index_name: What to call the ``new_data`` index column if it is
+        nameless in Pandas, or has name ``"index"``.
+
+    Returns:
+        None
+
+    Lifecycle:
+        Experimental.
+    """
+    if measurement_name not in exp.ms:
+        raise ValueError(
+            f"cannot find measurement name {measurement_name} within experiment at {exp.uri}"
+        )
+    _update_dataframe(
+        exp.ms[measurement_name].var,
+        new_data,
+        context=context,
+        platform_config=platform_config,
+        default_index_name=default_index_name,
+    )
+
+
+def _update_dataframe(
+    sdf: DataFrame,
+    new_data: pd.DataFrame,
+    *,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig],
+    default_index_name: str,
+) -> None:
+    """
+    See ``update_obs`` and ``update_var``. This is common helper code shared by both.
+    """
+    if sdf.closed or sdf.mode != "w":
+        raise SOMAError(f"DataFrame must be open for write: {sdf.uri}")
+    old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)
+    new_sig = signatures._string_dict_from_pandas_dataframe(
+        new_data, default_index_name
+    )
+
+    old_keys = set(old_sig.keys())
+    new_keys = set(new_sig.keys())
+
+    drop_keys = old_keys.difference(new_keys)
+    add_keys = new_keys.difference(old_keys)
+    common_keys = old_keys.intersection(new_keys)
+
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+
+    msgs = []
+    for key in common_keys:
+        old_type = old_sig[key]
+        new_type = new_sig[key]
+        if old_type != new_type:
+            msgs.append(f"{key} type {old_type} != {new_type}")
+    if msgs:
+        msg = ", ".join(msgs)
+        raise ValueError(f"unsupported type updates: {msg}")
+
+    se = tiledb.ArraySchemaEvolution(sdf.context.tiledb_ctx)
+    for drop_key in drop_keys:
+        se.drop_attribute(drop_key)
+
+    arrow_table = df_to_arrow(new_data)
+    arrow_schema = arrow_table.schema.remove_metadata()
+
+    for add_key in add_keys:
+        # Don't directly use the new dataframe's dtypes. Go through the
+        # to-Arrow-schema logic, and back, as this recapitulates the original
+        # schema-creation logic.
+        atype = arrow_schema.field(add_key).type
+        dtype = tiledb_type_from_arrow_type(atype)
+        filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
+        se.add_attribute(
+            tiledb.Attr(
+                name=add_key,
+                dtype=dtype,
+                filters=filters,
+            )
+        )
+
+    se.array_evolve(uri=sdf.uri)
+
+    _write_dataframe(
+        df_uri=sdf.uri,
+        df=new_data,
+        id_column_name=default_index_name,
+        ingestion_params=IngestionParams("update"),
+        context=context,
+        platform_config=platform_config,
+    )
 
 
 def add_X_layer(
