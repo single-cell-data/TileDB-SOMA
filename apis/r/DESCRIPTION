@@ -56,7 +56,8 @@ LinkingTo:
     RcppSpdlog
 Additional_repositories:
     https://ghrr.github.io/drat,
-    https://mojaveazure.r-universe.dev
+    https://mojaveazure.r-universe.dev,
+    https://mojaveazure.r-universe.dev/bin/linux/jammy/4.3
 Remotes: bioc::release/SingleCellExperiment
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
