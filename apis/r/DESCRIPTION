@@ -54,10 +54,10 @@ Imports:
 LinkingTo:
     Rcpp,
     RcppSpdlog
-Additional_repositories: https://ghrr.github.io/drat
-Remotes: 
-    bioc::release/SingleCellExperiment,
-    bioc::release/airway
+Additional_repositories:
+    https://ghrr.github.io/drat,
+    https://mojaveazure.r-universe.dev
+Remotes: bioc::release/SingleCellExperiment
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests:
@@ -66,12 +66,12 @@ Suggests:
     withr,
     testthat (>= 3.0.0),
     pbmc3k.tiledb,
+    pbmc3k.sce,
     SeuratObject (>= 4.1.0),
     datasets,
     SingleCellExperiment (>= 1.20.0),
     SummarizedExperiment (>= 1.28.0),
-    S4Vectors,
-    airway
+    S4Vectors
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix
