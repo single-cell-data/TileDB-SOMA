@@ -37,12 +37,9 @@ jobs:
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
 
-      - name: Install 'old' tiledb-r to satisfy its dependencies
-        run: cd apis/r && tools/r-ci.sh tiledb-r
-
-      - name: Install new tiledb-r 0.20.2
-        run: cd apis/r && Rscript -e 'if (Sys.info()[["sysname"]] == "Linux") bspm::disable(); install.packages("tiledb", repos = c("https://tiledb-inc.r-universe.dev", "https://cloud.r-project.org"))'
-
+      - name: Install BioConductor package SingleCellExperiment
+        run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
+        
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 

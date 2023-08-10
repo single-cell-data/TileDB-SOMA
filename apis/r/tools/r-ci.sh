@@ -17,7 +17,7 @@ set -e
 
 CRAN=${CRAN:-"https://cloud.r-project.org"}
 OS=$(uname -s)
-RVER=${RVER:-"4.3.0"}
+RVER=${RVER:-"4.3.1"}
 
 ## Optional drat repos, unset by default
 DRAT_REPOS=${DRAT_REPOS:-""}
@@ -301,6 +301,17 @@ RInstall() {
     sudo Rscript -e 'install.packages(commandArgs(TRUE))' "$@"
 }
 
+BiocInstall() {
+    if [[ "" == "$*" ]]; then
+        echo "No arguments to bioc_install"
+        exit 1
+    fi
+
+    echo "Installing R Bioconductor package(s): $@"
+    Rscript -e 'if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager")'
+    Rscript -e "BiocManager::install(commandArgs(TRUE), update=FALSE)" "$@"
+}
+
 RBinaryInstall() {
     if [[ -z "$#" ]]; then
         echo "No arguments to r_binary_install"
@@ -449,6 +460,11 @@ case $COMMAND in
     ## Install an R dependency from CRAN
     "install_r"|"r_install")
         RInstall "$@"
+        ;;
+    ##
+    ## Install an R dependency from Bioconductor
+    "install_bioc"|"bioc_install")
+        BiocInstall "$@"
         ;;
     ##
     ## Install an R dependency as a binary (via c2d4u PPA)
