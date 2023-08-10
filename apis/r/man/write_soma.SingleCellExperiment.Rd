@@ -31,12 +31,33 @@ configuration}}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
-the data contained in \code{x}, returned opened for write
+the data contained in \code{x}
 }
 \description{
 Write a \code{\link[SingleCellExperiment:SingleCellExperiment-class]{SingleCellExperiment}}
 object to a SOMA
 }
+\section{Writing Reduced Dimensions}{
+
+Reduced dimensions are written out as
+\link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the \code{obsm} group
+of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names \code{ms_name}
+}
+
+\section{Writing Column Pairs}{
+
+Column-wise relationship matrices are written out as
+\link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the \code{obsp} group
+of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names \code{ms_name}
+}
+
+\section{Writing Row Pairs}{
+
+Row-wise relationship matrices are written out as
+\link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the \code{varp} group
+of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names \code{ms_name}
+}
+
 \section{Writing \code{colData}}{
 
 \code{colData} is written out as a

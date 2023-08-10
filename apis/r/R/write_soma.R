@@ -12,16 +12,16 @@
 #' @param tiledbsoma_ctx Optional \code{\link{SOMATileDBContext}}
 #'
 #' @return The URI to the resulting \code{\link{SOMAExperiment}} generated from
-#' the data contained in \code{x}, returned opened for write
+#' the data contained in \code{x}
 #'
 #' @section Known methods:
 #' \itemize{
 #'  \item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}
+#'  \item \link[tiledbsoma:write_soma.SummarizedExperiment]{Writing SummarizedExperiment objects}
+#'  \item \link[tiledbsoma:write_soma.SingleCellExperiment]{Writing SingleCellExperiment objects}
 #' }
 #'
 #' @export
-#'
-#' @noMd
 #'
 write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL) {
   UseMethod(generic = 'write_soma', object = x)

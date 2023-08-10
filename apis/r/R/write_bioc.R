@@ -74,18 +74,22 @@ write_soma.Hits <- function(
 #' @param ms_name Name for resulting measurement; defaults to
 #' \code{\link[SingleCellExperiment]{mainExpName}(x)}
 #'
-#' @inherit write_soma return
-#'
-#' @inherit write_soma.SummarizedExperiment sections
+#' @inherit write_soma.SummarizedExperiment return sections
 #'
 #' @section Writing Reduced Dimensions:
-#' blah
+#' Reduced dimensions are written out as
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the `obsm` group
+#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`
 #'
-#' @section writing Column Pairs:
-#' blah
+#' @section Writing Column Pairs:
+#' Column-wise relationship matrices are written out as
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the `obsp` group
+#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`
 #'
 #' @section Writing Row Pairs:
-#' blah
+#' Row-wise relationship matrices are written out as
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the `varp` group
+#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`
 #'
 #' @method write_soma SingleCellExperiment
 #' @export
@@ -118,7 +122,7 @@ write_soma.SingleCellExperiment <- function(
   on.exit(expr = experiment$close(), add = TRUE)
   ms <- experiment$ms$get(ms_name)
 
-    # Write reduced dimensions
+  # Write reduced dimensions
   spdl::info("Adding reduced dimensions")
   obsm <- tryCatch(
     expr = ms$obsm,

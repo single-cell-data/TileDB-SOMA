@@ -20,7 +20,7 @@ configuration}}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
-the data contained in \code{x}, returned opened for write
+the data contained in \code{x}
 }
 \description{
 Convert \R objects to their appropriate SOMA counterpart
@@ -30,7 +30,9 @@ function and methods can be written for it to provide a high-level
 \section{Known methods}{
 
 \itemize{
- \item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}
+\item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}
+\item \link[tiledbsoma:write_soma.SummarizedExperiment]{Writing SummarizedExperiment objects}
+\item \link[tiledbsoma:write_soma.SingleCellExperiment]{Writing SingleCellExperiment objects}
 }
 }
 
