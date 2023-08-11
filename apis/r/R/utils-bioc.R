@@ -6,6 +6,41 @@
   return(toupper(gsub(pattern = '^X_', replacement = '', x = x)))
 }
 
+#' \code{S4Vectors::Hits} to Matrix
+#'
+#' Re-implement \pkg{SingleCellExperiment}'s internal \code{.hits2mat}
+#' function. This version returns a \code{TsparseMatrix} instead of
+#' a \code{CsparseMatrix}
+#'
+#' @param hits A \code{Hits} object
+#'
+#' @return A \code{TsparseMatrix} representation of \code{hits}
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+.hits_to_mat <- function(hits) {
+  stopifnot(
+    "S4Vectors must be installed" = requireNamespace('S4Vectors', quietly = TRUE),
+    "'hits' must be a 'Hits' object" = inherits(hits, 'Hits')
+  )
+  meta_cols <- S4Vectors::mcols(hits)
+  x <- if (ncol(meta_cols)) {
+    meta_cols[[1L]]
+  } else {
+    rep.int(TRUE, times = length(hits))
+  }
+  return(Matrix::sparseMatrix(
+    i = S4Vectors::queryHits(hits),
+    j = S4Vectors::subjectHits(hits),
+    x = x,
+    repr = 'T',
+    dims = rep.int(S4Vectors::nnode(hits), times = 2L),
+    use.last.ij = TRUE
+  ))
+}
+
 #' Matrix to \code{S4Vectors::SelfHits}
 #'
 #' Re-implement \pkg{SingleCellExperiment}'s internal \code{.mat2hits}

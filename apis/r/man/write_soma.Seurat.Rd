@@ -20,7 +20,7 @@ configuration}}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
-the data contained in \code{x}, returned opened for write
+the data contained in \code{x}
 }
 \description{
 Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA, returned opened for write

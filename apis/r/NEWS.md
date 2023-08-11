@@ -1,3 +1,10 @@
+# In Development
+
+## Changes
+
+* Add support for writing `SummarizedExperiment` and `SingleCellExperiment` object to SOMAs
+
+
 # tiledbsoma 1.4.0
 
 This is the initial release of the tiledbsoma R package.
