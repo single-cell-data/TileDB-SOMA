@@ -128,6 +128,7 @@ class IngestionParams:
             self.write_schema_no_data = False
             self.error_if_already_exists = False
             self.skip_existing_nonempty_domain = False
+            self.appending = False
 
         else:
             raise SOMAError(
@@ -1025,6 +1026,7 @@ def update_obs(
         context=context,
         platform_config=platform_config,
         default_index_name=default_index_name,
+        measurement_name="N/A for obs",
     )
 
 
@@ -1077,6 +1079,7 @@ def update_var(
     _update_dataframe(
         exp.ms[measurement_name].var,
         new_data,
+        measurement_name=measurement_name,
         context=context,
         platform_config=platform_config,
         default_index_name=default_index_name,
@@ -1087,6 +1090,7 @@ def _update_dataframe(
     sdf: DataFrame,
     new_data: pd.DataFrame,
     *,
+    measurement_name: str,
     context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig],
     default_index_name: str,
@@ -1148,9 +1152,10 @@ def _update_dataframe(
         df_uri=sdf.uri,
         df=new_data,
         id_column_name=default_index_name,
-        ingestion_params=IngestionParams("update"),
+        ingestion_params=IngestionParams("update", label_mapping=None),
         context=context,
         platform_config=platform_config,
+        axis_mapping=AxisIDMapping.identity(new_data.shape[0]),
     )
 
 
