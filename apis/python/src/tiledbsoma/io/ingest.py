@@ -182,7 +182,30 @@ def from_h5ad(
         X_kind: Which type of matrix is used to store dense X data from the
             H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
 
-        XXX TYPE UP ON-LINE HELP FOR REGISTRATION MAPPING
+        registration_mapping: Does not need to be supplied when ingesting a single
+          H5AD/AnnData object into a single :class:`Experiment`. When multiple inputs
+          are to be ingested into a single experiment, there are two steps. First:
+
+              import tiledbsoma.io.registration as reg
+              rd = reg.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+                  experiment_uri,
+                  h5ad_file_names,
+                  measurement_name="RNA",
+                  obs_field_name="obs_id",
+                  var_field_name="var_id",
+                  context=context,
+              )
+
+          Once that's been done, the data ingests per se may be done in any order,
+          or in parallel, via for each ``h5ad_file_name``:
+
+              tiledbsoma.io.from_h5ad(
+                  experiment_uri,
+                  h5ad_file_name,
+                  measurement_name="RNA",
+                  ingest_mode="write",
+                  registration_mapping=rd,
+              )
 
     Returns:
         The URI of the newly created experiment.
@@ -242,42 +265,8 @@ def from_anndata(
 ) -> str:
     """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
-    Measurement data is stored in a :class:`Measurement` in the experiment's
-    ``ms`` field, with the key provided by ``measurement_name``. Data elements
-    are available at the standard fields (``var``, ``X``, etc.). Unstructured
-    data from ``uns`` is partially supported (structured arrays and non-numeric
-    NDArrays are skipped), and is available at the measurement's ``uns`` key
-    (i.e., at ``your_experiment.ms[measurement_name]["uns"]``).
-
-    Args:
-        experiment_uri: The experiment to create or update.
-
-        input_path: A path to an input H5AD file.
-
-        measurement_name: The name of the measurement to store data in.
-
-        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
-
-        platform_config:
-            Platform-specific options used to create this array, provided in the form
-            ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}``.
-
-        ingest_mode: The ingestion type to perform:
-            - ``write``: Writes all data, creating new layers if the SOMA already exists.
-            - ``resume``: Adds data to an existing SOMA, skipping writing data
-              that was previously written. Useful for continuing after a partial
-              or interrupted ingestion operation.
-            - ``schema_only``: Creates groups and the array schema, without
-              writing any data to the array. Useful to prepare for appending
-              multiple H5AD files to a single SOMA.
-
-        X_kind: Which type of matrix is used to store dense X data from the
-            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
-
-        XXX TYPE UP ON-LINE HELP FOR REGISTRATION MAPPING
-
-    Returns:
-        The URI of the newly created experiment.
+    Usage is the same as ``from_h5ad`` except that you can use this function when the AnnData object
+    is already loaded into memory.
 
     Lifecycle:
         Experimental.
@@ -1497,7 +1486,8 @@ def _write_matrix_to_sparseNDArray(
         soma_dim_0 = mat_coo.row + base if base > 0 and axis == 0 else mat_coo.row
         soma_dim_1 = mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col
 
-        # XXX COMMENT
+        # Apply registration mappings: e.g. columns 0,1,2,3 in an AnnData file might
+        # have been assigned gene-ID labels 22,197,438,988.
         soma_dim_0 = [axis_0_mapping.data[e] for e in soma_dim_0]
         soma_dim_1 = [axis_1_mapping.data[e] for e in soma_dim_1]
 
