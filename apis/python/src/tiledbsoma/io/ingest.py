@@ -61,13 +61,7 @@ from ..options import SOMATileDBContext
 from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
 from . import conversions
-from .registration import (
-    AxisIDMapping,
-    ExperimentAmbientLabelMapping,
-    ExperimentIDMapping,
-    get_dataframe_values,
-    signatures,
-)
+from .registration import signatures
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 DenseMatrix = Union[NPNDArray, h5py.Dataset]
@@ -82,53 +76,27 @@ class IngestionParams:
     write_schema_no_data: bool
     error_if_already_exists: bool
     skip_existing_nonempty_domain: bool
-    appending: bool
 
-    def __init__(
-        self,
-        ingest_mode: str,
-        label_mapping: Optional[ExperimentAmbientLabelMapping],
-    ) -> None:
+    def __init__(self, ingest_mode: str) -> None:
+        if ingest_mode == "write":
+            self.write_schema_no_data = False
+            self.error_if_already_exists = True
+            self.skip_existing_nonempty_domain = False
 
-        if ingest_mode == "schema_only":
+        elif ingest_mode == "schema_only":
             self.write_schema_no_data = True
             self.error_if_already_exists = True
             self.skip_existing_nonempty_domain = False
-            self.appending = False
-
-        elif ingest_mode == "write":
-            if label_mapping is None:
-                self.write_schema_no_data = False
-                self.error_if_already_exists = True
-                self.skip_existing_nonempty_domain = False
-                self.appending = False
-            else:
-                # append mode, but, the user supplying non-null registration information suffices
-                # for us to understand "append"
-                self.write_schema_no_data = False
-                self.error_if_already_exists = False
-                self.skip_existing_nonempty_domain = False
-                self.appending = True
 
         elif ingest_mode == "resume":
-            if label_mapping is None:
-                self.write_schema_no_data = False
-                self.error_if_already_exists = False
-                self.skip_existing_nonempty_domain = True
-                self.appending = False
-            else:
-                # resume-append mode, but, the user supplying non-null registration information
-                # suffices for us to understand "resume-append"
-                self.write_schema_no_data = False
-                self.error_if_already_exists = False
-                self.skip_existing_nonempty_domain = True
-                self.appending = True
+            self.write_schema_no_data = False
+            self.error_if_already_exists = False
+            self.skip_existing_nonempty_domain = True
 
         elif ingest_mode == "update":
             self.write_schema_no_data = False
             self.error_if_already_exists = False
             self.skip_existing_nonempty_domain = False
-            self.appending = False
 
         else:
             raise SOMAError(
@@ -147,7 +115,6 @@ def from_h5ad(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
-    registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
 ) -> str:
     """Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
 
@@ -181,8 +148,6 @@ def from_h5ad(
 
         X_kind: Which type of matrix is used to store dense X data from the
             H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
-
-        XXX TYPE UP ON-LINE HELP FOR REGISTRATION MAPPING
 
     Returns:
         The URI of the newly created experiment.
@@ -218,7 +183,6 @@ def from_h5ad(
         ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
         X_kind=X_kind,
-        registration_mapping=registration_mapping,
     )
 
     logging.log_io(
@@ -238,7 +202,6 @@ def from_anndata(
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
-    registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
 ) -> str:
     """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
@@ -274,8 +237,6 @@ def from_anndata(
         X_kind: Which type of matrix is used to store dense X data from the
             H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
 
-        XXX TYPE UP ON-LINE HELP FOR REGISTRATION MAPPING
-
     Returns:
         The URI of the newly created experiment.
 
@@ -288,28 +249,7 @@ def from_anndata(
         )
 
     # Map the user-level ingest mode to a set of implementation-level boolean flags
-    ingestion_params = IngestionParams(ingest_mode, registration_mapping)
-
-    # For single ingest (no append):
-    #
-    # * obs, var, X, etc array indices map 1-1 to soma_joinid, soma_dim_0, soma_dim_1, etc.
-    #
-    # * There is no need to look at a particular barcode column etc.
-    #
-    # For append mode:
-    #
-    # * We require for mappings to be pre-computed and passed in
-    #
-    # * The mappings are from obs-label/var-label to soma_joinid, soma_dim_0, soma_dim_1
-    #   for all the H5AD/AnnData objects being ingested
-    #
-    # * Here we select out the renumberings for the obs, var, X, etc array indices
-    if registration_mapping is None:
-        jidmaps = ExperimentIDMapping.from_isolated_anndata(anndata, measurement_name)
-    else:
-        jidmaps = registration_mapping.id_mappings_for_anndata(anndata)
-
-    # XXX append-mode fail-fast pre-checks go here
+    ingestion_params = IngestionParams(ingest_mode)
 
     if not isinstance(anndata, ad.AnnData):
         raise TypeError(
@@ -348,7 +288,6 @@ def from_anndata(
         platform_config=platform_config,
         context=context,
         ingestion_params=ingestion_params,
-        axis_mapping=jidmaps.obs_axis,
     ) as obs:
         _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
@@ -403,9 +342,6 @@ def from_anndata(
                 platform_config=platform_config,
                 context=context,
                 ingestion_params=ingestion_params,
-                # XXX CHECK EXISTENCE OF THE LAYER -- FATAL IF NOT PRESENT
-                # XXX HAVE CHECKED THIS EARLY FOR FAIL-FAST
-                axis_mapping=jidmaps.var_axes[measurement_name],
             ) as var:
                 _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
 
@@ -434,8 +370,6 @@ def from_anndata(
                     ingestion_params=ingestion_params,
                     platform_config=platform_config,
                     context=context,
-                    axis_0_mapping=jidmaps.obs_axis,
-                    axis_1_mapping=jidmaps.var_axes[measurement_name],
                 ) as data:
                     _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
@@ -447,8 +381,6 @@ def from_anndata(
                         ingestion_params=ingestion_params,
                         platform_config=platform_config,
                         context=context,
-                        axis_0_mapping=jidmaps.obs_axis,
-                        axis_1_mapping=jidmaps.var_axes[measurement_name],
                     ) as layer_data:
                         _maybe_set(
                             x, layer_name, layer_data, use_relative_uri=use_relative_uri
@@ -468,7 +400,6 @@ def from_anndata(
                             measurement, "obsm", obsm, use_relative_uri=use_relative_uri
                         )
                         for key in anndata.obsm.keys():
-                            num_cols = anndata.obsm[key].shape[1]
                             with _create_from_matrix(
                                 # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
                                 # consider a use-dense flag at the tiledbsoma.io API
@@ -481,8 +412,6 @@ def from_anndata(
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
                                 context=context,
-                                axis_0_mapping=jidmaps.obs_axis,
-                                axis_1_mapping=AxisIDMapping.identity(num_cols),
                             ) as arr:
                                 _maybe_set(
                                     obsm, key, arr, use_relative_uri=use_relative_uri
@@ -502,7 +431,6 @@ def from_anndata(
                             measurement, "varm", varm, use_relative_uri=use_relative_uri
                         )
                         for key in anndata.varm.keys():
-                            num_cols = anndata.varm[key].shape[1]
                             with _create_from_matrix(
                                 # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
                                 # consider a use-dense flag at the tiledbsoma.io API
@@ -515,8 +443,6 @@ def from_anndata(
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
                                 context=context,
-                                axis_0_mapping=jidmaps.var_axes[measurement_name],
-                                axis_1_mapping=AxisIDMapping.identity(num_cols),
                             ) as darr:
                                 _maybe_set(
                                     varm,
@@ -546,8 +472,6 @@ def from_anndata(
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
                                 context=context,
-                                axis_0_mapping=jidmaps.obs_axis,
-                                axis_1_mapping=jidmaps.obs_axis,
                             ) as sarr:
                                 _maybe_set(
                                     obsp,
@@ -577,8 +501,6 @@ def from_anndata(
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
                                 context=context,
-                                axis_0_mapping=jidmaps.var_axes[measurement_name],
-                                axis_1_mapping=jidmaps.var_axes[measurement_name],
                             ) as sarr:
                                 _maybe_set(
                                     varp,
@@ -611,7 +533,6 @@ def from_anndata(
                             ingestion_params=ingestion_params,
                             platform_config=platform_config,
                             context=context,
-                            axis_mapping=jidmaps.var_axes["raw"],
                         ) as var:
                             _maybe_set(
                                 raw_measurement,
@@ -641,8 +562,6 @@ def from_anndata(
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
                                 context=context,
-                                axis_0_mapping=jidmaps.obs_axis,
-                                axis_1_mapping=jidmaps.var_axes["raw"],
                             ) as rm_x_data:
                                 _maybe_set(
                                     rm_x,
@@ -731,8 +650,6 @@ def _create_or_open_collection(
 
 
 # Spellings compatible with 1.2.7:
-
-
 @overload
 def _create_or_open_coll(
     cls: Type[Experiment],
@@ -776,53 +693,9 @@ def _create_or_open_coll(
 ) -> Any:
     return cls._create_or_open_collection(
         uri,
-        ingestion_params=IngestionParams(ingest_mode="write", label_mapping=None),
+        ingestion_params=IngestionParams(ingest_mode="write"),
         context=context,
     )
-
-
-def _extract_new_values_for_append(
-    df_uri: str,
-    arrow_table: pa.Table,
-    id_column_name: str,
-    context: Optional[SOMATileDBContext] = None,
-) -> pa.Table:
-    """
-    For append mode: mostly we just go ahead and write the data, except var.
-    Nominally:
-
-    * Cell IDs (obs IDs) are distinct per input
-      o This means "obs grows down"
-    * Gene IDs (var IDs) are almost all the same per input
-      o This means "var gets stacked"
-    * X is obs x var
-      o This means "X grows down"
-    * obsm is obs x M, and varm is var x N
-      o This means means they "grow down"
-    * obsp is obs x obs, and varp is var x var
-      o This means means they _would_ grow block-diagonally -- but
-        (for biological reasons) we disallow append of obsp and varp
-
-    Reviewing the above, we can see that "just write the data" is almost always the right way to
-    append -- except for var. There, if there are 100 H5ADs appending into a single SOMA experiment,
-    we don't want 100 TileDB fragment-layers of mostly the same data -- we just want to write the
-    _new_ genes not yet seen before (if any).
-    """
-    try:
-        with _factory.open(
-            df_uri, "r", soma_type=DataFrame, context=context
-        ) as previous_soma_dataframe:
-            previous_table = previous_soma_dataframe.read().concat()
-            previous_df = previous_table.to_pandas()
-            previous_join_ids = set(
-                list(int(e) for e in get_dataframe_values(previous_df, SOMA_JOINID))
-            )
-            mask = [
-                e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]
-            ]
-            return arrow_table.filter(mask)
-    except DoesNotExistError:
-        return arrow_table
 
 
 def _write_dataframe(
@@ -833,25 +706,17 @@ def _write_dataframe(
     ingestion_params: IngestionParams,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
-    axis_mapping: AxisIDMapping,
 ) -> DataFrame:
-
-    _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {df_uri}")
+    df[SOMA_JOINID] = np.arange(len(df), dtype=np.int64)
 
     df.reset_index(inplace=True)
     if id_column_name is not None:
         df.rename(columns={"index": id_column_name}, inplace=True)
-        id_column_name = "index"
-
-    df[SOMA_JOINID] = np.asarray(axis_mapping.data)
-
     df.set_index(SOMA_JOINID, inplace=True)
 
     return _write_dataframe_impl(
         df,
         df_uri,
-        id_column_name,
         ingestion_params=ingestion_params,
         platform_config=platform_config,
         context=context,
@@ -861,7 +726,6 @@ def _write_dataframe(
 def _write_dataframe_impl(
     df: pd.DataFrame,
     df_uri: str,
-    id_column_name: Optional[str],
     *,
     ingestion_params: IngestionParams,
     platform_config: Optional[PlatformConfig] = None,
@@ -871,18 +735,6 @@ def _write_dataframe_impl(
     logging.log_io(None, f"START  WRITING {df_uri}")
 
     arrow_table = df_to_arrow(df)
-
-    # Don't many-layer the almost-always-repeated var dataframe.
-    # And for obs, if there are duplicate values for whatever reason, don't write them
-    # when appending.
-    if ingestion_params.appending:
-        if id_column_name is None:
-            # Nominally, nil id_column_name only happens for uns append and we do not append uns,
-            # which is a concern for our caller. This is a second-level check.
-            raise ValueError("internal coding error: id_column_name unspecified")
-        arrow_table = _extract_new_values_for_append(
-            df_uri, arrow_table, id_column_name, context
-        )
 
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
@@ -940,11 +792,9 @@ def create_from_matrix(
         cls,
         uri,
         matrix,
-        ingestion_params=IngestionParams(ingest_mode, None),
+        ingestion_params=IngestionParams(ingest_mode),
         platform_config=platform_config,
         context=context,
-        axis_0_mapping=AxisIDMapping.identity(matrix.shape[0]),
-        axis_1_mapping=AxisIDMapping.identity(matrix.shape[1]),
     )
 
 
@@ -957,8 +807,6 @@ def _create_from_matrix(
     ingestion_params: IngestionParams,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
-    axis_0_mapping: AxisIDMapping,
-    axis_1_mapping: AxisIDMapping,
 ) -> _NDArr:
     """
     Internal helper for user-facing ``create_from_matrix``.
@@ -1001,7 +849,6 @@ def _create_from_matrix(
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
-        # XXX JIDMAP -- non-appendable -- fail early
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
@@ -1020,8 +867,6 @@ def _create_from_matrix(
             ),
             context=context,
             ingestion_params=ingestion_params,
-            axis_0_mapping=axis_0_mapping,
-            axis_1_mapping=axis_1_mapping,
         )
     else:
         raise TypeError(f"unknown array type {type(soma_ndarray)}")
@@ -1077,7 +922,6 @@ def update_obs(
         context=context,
         platform_config=platform_config,
         default_index_name=default_index_name,
-        measurement_name="N/A for obs",
     )
 
 
@@ -1130,7 +974,6 @@ def update_var(
     _update_dataframe(
         exp.ms[measurement_name].var,
         new_data,
-        measurement_name=measurement_name,
         context=context,
         platform_config=platform_config,
         default_index_name=default_index_name,
@@ -1141,7 +984,6 @@ def _update_dataframe(
     sdf: DataFrame,
     new_data: pd.DataFrame,
     *,
-    measurement_name: str,
     context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig],
     default_index_name: str,
@@ -1203,10 +1045,9 @@ def _update_dataframe(
         df_uri=sdf.uri,
         df=new_data,
         id_column_name=default_index_name,
-        ingestion_params=IngestionParams("update", label_mapping=None),
+        ingestion_params=IngestionParams("update"),
         context=context,
         platform_config=platform_config,
-        axis_mapping=AxisIDMapping.identity(new_data.shape[0]),
     )
 
 
@@ -1261,7 +1102,7 @@ def add_matrix_to_collection(
         Experimental.
     """
 
-    ingestion_params = IngestionParams(ingest_mode, None)
+    ingestion_params = IngestionParams(ingest_mode)
 
     # For local disk and S3, creation and storage URIs are identical.  For
     # cloud, creation URIs look like tiledb://namespace/s3://bucket/path/to/obj
@@ -1295,8 +1136,6 @@ def add_matrix_to_collection(
                 matrix_data,
                 ingestion_params=ingestion_params,
                 context=context,
-                axis_0_mapping=AxisIDMapping.identity(matrix_data.shape[0]),
-                axis_1_mapping=AxisIDMapping.identity(matrix_data.shape[1]),
             ) as sparse_nd_array:
                 _maybe_set(
                     coll,
@@ -1482,32 +1321,15 @@ def _write_matrix_to_sparseNDArray(
     tiledb_create_options: TileDBCreateOptions,
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
-    axis_0_mapping: AxisIDMapping,
-    axis_1_mapping: AxisIDMapping,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
-    def _coo_to_table(
-        mat_coo: sp.coo_matrix,
-        axis_0_mapping: AxisIDMapping,
-        axis_1_mapping: AxisIDMapping,
-        axis: int = 0,
-        base: int = 0,
-    ) -> pa.Table:
-
-        soma_dim_0 = mat_coo.row + base if base > 0 and axis == 0 else mat_coo.row
-        soma_dim_1 = mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col
-
-        # XXX COMMENT
-        soma_dim_0 = [axis_0_mapping.data[e] for e in soma_dim_0]
-        soma_dim_1 = [axis_1_mapping.data[e] for e in soma_dim_1]
-
+    def _coo_to_table(mat_coo: sp.coo_matrix, axis: int = 0, base: int = 0) -> pa.Table:
         pydict = {
             "soma_data": mat_coo.data,
-            "soma_dim_0": soma_dim_0,
-            "soma_dim_1": soma_dim_1,
+            "soma_dim_0": mat_coo.row + base if base > 0 and axis == 0 else mat_coo.row,
+            "soma_dim_1": mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col,
         }
-
         return pa.Table.from_pydict(pydict)
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
@@ -1538,9 +1360,7 @@ def _write_matrix_to_sparseNDArray(
 
     # Write all at once?
     if not tiledb_create_options.write_X_chunked:
-        soma_ndarray.write(
-            _coo_to_table(sp.coo_matrix(matrix), axis_0_mapping, axis_1_mapping)
-        )
+        soma_ndarray.write(_coo_to_table(sp.coo_matrix(matrix)))
         return
 
     # Or, write in chunks, striding across the most efficient slice axis
@@ -1611,9 +1431,7 @@ def _write_matrix_to_sparseNDArray(
             % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
         )
 
-        soma_ndarray.write(
-            _coo_to_table(chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i)
-        )
+        soma_ndarray.write(_coo_to_table(chunk_coo, stride_axis, i))
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -1774,7 +1592,6 @@ def _ingest_uns_node(
         return
 
     if isinstance(value, pd.DataFrame):
-        num_cols = value.shape[1]
         with _write_dataframe(
             _util.uri_joinpath(coll.uri, key),
             value,
@@ -1782,7 +1599,6 @@ def _ingest_uns_node(
             platform_config=platform_config,
             context=context,
             ingestion_params=ingestion_params,
-            axis_mapping=AxisIDMapping.identity(num_cols),
         ) as df:
             _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
         return
@@ -1865,7 +1681,6 @@ def _ingest_uns_string_array(
     with _write_dataframe_impl(
         df,
         df_uri,
-        None,
         ingestion_params=ingestion_params,
         platform_config=platform_config,
         context=context,
