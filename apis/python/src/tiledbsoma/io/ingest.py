@@ -267,7 +267,7 @@ def from_anndata(
     logging.log_io(None, f"START  WRITING {experiment_uri}")
 
     # Must be done first, to create the parent directory.
-    experiment = _create_or_open_coll(
+    experiment = _create_or_open_collection(
         Experiment, experiment_uri, ingestion_params=ingestion_params, context=context
     )
 
@@ -294,7 +294,7 @@ def from_anndata(
     # to append "/ms" so that is what we do here.
     experiment_ms_uri = f"{experiment_uri}/ms"
 
-    with _create_or_open_coll(
+    with _create_or_open_collection(
         Collection[Measurement],
         experiment_ms_uri,
         ingestion_params=ingestion_params,
@@ -305,7 +305,7 @@ def from_anndata(
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS/meas
         measurement_uri = _util.uri_joinpath(experiment_ms_uri, measurement_name)
-        with _create_or_open_coll(
+        with _create_or_open_collection(
             Measurement,
             measurement_uri,
             ingestion_params=ingestion_params,
@@ -342,7 +342,7 @@ def from_anndata(
             # MS/meas/X/DATA
 
             measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
-            with _create_or_open_coll(
+            with _create_or_open_collection(
                 Collection,
                 measurement_X_uri,
                 ingestion_params=ingestion_params,
@@ -383,7 +383,7 @@ def from_anndata(
                 # MS/meas/OBSM,VARM,OBSP,VARP
                 if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
                     obsm_uri = _util.uri_joinpath(measurement_uri, "obsm")
-                    with _create_or_open_coll(
+                    with _create_or_open_collection(
                         Collection,
                         obsm_uri,
                         ingestion_params=ingestion_params,
@@ -414,7 +414,7 @@ def from_anndata(
 
                 if len(anndata.varm.keys()) > 0:  # do not create an empty collection
                     _util.uri_joinpath(measurement_uri, "varm")
-                    with _create_or_open_coll(
+                    with _create_or_open_collection(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varm"),
                         ingestion_params=ingestion_params,
@@ -446,7 +446,7 @@ def from_anndata(
 
                 if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
                     _util.uri_joinpath(measurement_uri, "obsp")
-                    with _create_or_open_coll(
+                    with _create_or_open_collection(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "obsp"),
                         ingestion_params=ingestion_params,
@@ -475,7 +475,7 @@ def from_anndata(
 
                 if len(anndata.varp.keys()) > 0:  # do not create an empty collection
                     _util.uri_joinpath(measurement_uri, "obsp")
-                    with _create_or_open_coll(
+                    with _create_or_open_collection(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varp"),
                         ingestion_params=ingestion_params,
@@ -506,7 +506,7 @@ def from_anndata(
                 # MS/RAW
                 if anndata.raw is not None:
                     raw_uri = _util.uri_joinpath(experiment_ms_uri, "raw")
-                    with _create_or_open_coll(
+                    with _create_or_open_collection(
                         Measurement,
                         raw_uri,
                         ingestion_params=ingestion_params,
@@ -535,7 +535,7 @@ def from_anndata(
                             )
 
                         raw_X_uri = _util.uri_joinpath(raw_uri, "X")
-                        with _create_or_open_coll(
+                        with _create_or_open_collection(
                             Collection,
                             raw_X_uri,
                             ingestion_params=ingestion_params,
@@ -589,6 +589,61 @@ def _maybe_set(
 
 
 @overload
+def _create_or_open_collection(
+    cls: Type[Experiment],
+    uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    context: Optional[SOMATileDBContext],
+) -> Experiment:
+    ...
+
+
+@overload
+def _create_or_open_collection(
+    cls: Type[Measurement],
+    uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    context: Optional[SOMATileDBContext],
+) -> Measurement:
+    ...
+
+
+@overload
+def _create_or_open_collection(
+    cls: Type[Collection[_TDBO]],
+    uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    context: Optional[SOMATileDBContext],
+) -> Collection[_TDBO]:
+    ...
+
+
+@typeguard_ignore
+def _create_or_open_collection(
+    cls: Type[Any],
+    uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    context: Optional[SOMATileDBContext],
+) -> Any:
+    try:
+        thing = cls.open(uri, "w", context=context)
+    except DoesNotExistError:
+        pass  # This is always OK; make a new one.
+    else:
+        # It already exists. Are we resuming?
+        if ingestion_params.error_if_already_exists:
+            raise SOMAError(f"{uri} already exists")
+        return thing
+
+    return cls.create(uri, context=context)
+
+
+# Spellings compatible with 1.2.7:
+@overload
 def _create_or_open_coll(
     cls: Type[Experiment],
     uri: str,
@@ -629,17 +684,11 @@ def _create_or_open_coll(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
 ) -> Any:
-    try:
-        thing = cls.open(uri, "w", context=context)
-    except DoesNotExistError:
-        pass  # This is always OK; make a new one.
-    else:
-        # It already exists. Are we resuming?
-        if ingestion_params.error_if_already_exists:
-            raise SOMAError(f"{uri} already exists")
-        return thing
-
-    return cls.create(uri, context=context)
+    return cls._create_or_open_collection(
+        uri,
+        ingestion_params=IngestionParams(ingest_mode="write"),
+        context=context,
+    )
 
 
 def _write_dataframe(
@@ -891,7 +940,7 @@ def add_matrix_to_collection(
         if collection_name in meas:
             coll = cast(Collection[RawHandle], meas[collection_name])
         else:
-            coll = _create_or_open_coll(
+            coll = _create_or_open_collection(
                 Collection,
                 coll_uri,
                 ingestion_params=ingestion_params,
@@ -1305,7 +1354,7 @@ def _ingest_uns_dict(
     use_relative_uri: Optional[bool],
 ) -> None:
 
-    with _create_or_open_coll(
+    with _create_or_open_collection(
         Collection,
         _util.uri_joinpath(parent.uri, parent_key),
         ingestion_params=ingestion_params,
