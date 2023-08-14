@@ -299,11 +299,11 @@ check_arrow_schema_data_types <- function(from, to) {
 #' @noRd
 extract_levels <- function(arrtbl) {
     stopifnot("Argument must be an Arrow Table object" = is_arrow_table(arrtbl))
-    nm <- names(AT) 		# we go over the table column by column
+    nm <- names(arrtbl) 	# we go over the table column by column
     reslst <- vector(mode = "list", length = length(nm))
     names(reslst) <- nm		# and fill a named list, entries default to NULL
     for (n in nm) {
-        if (inherits(infer_type(arrtbl[[n]]), "DictionaryType")) {
+        if (inherits(arrow::infer_type(arrtbl[[n]]), "DictionaryType")) {
             # levels() extracts the enumeration levels from the factor vector we have
             reslst[[n]] <- levels(arrtbl[[n]]$as_vector())
         }
