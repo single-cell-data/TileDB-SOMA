@@ -986,7 +986,6 @@ def _create_from_matrix(
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
-        # XXX test the dense append case
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
