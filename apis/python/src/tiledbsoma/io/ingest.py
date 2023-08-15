@@ -279,6 +279,11 @@ def from_anndata(
     # Map the user-level ingest mode to a set of implementation-level boolean flags
     ingestion_params = IngestionParams(ingest_mode, registration_mapping)
 
+    if not isinstance(anndata, ad.AnnData):
+        raise TypeError(
+            "Second argument is not an AnnData object -- did you want from_h5ad?"
+        )
+
     # For single ingest (no append):
     #
     # * obs, var, X, etc array indices map 1-1 to soma_joinid, soma_dim_0, soma_dim_1, etc.
@@ -297,13 +302,6 @@ def from_anndata(
         jidmaps = ExperimentIDMapping.from_isolated_anndata(anndata, measurement_name)
     else:
         jidmaps = registration_mapping.id_mappings_for_anndata(anndata)
-
-    # XXX append-mode fail-fast pre-checks go here
-
-    if not isinstance(anndata, ad.AnnData):
-        raise TypeError(
-            "Second argument is not an AnnData object -- did you want from_h5ad?"
-        )
 
     context = _validate_soma_tiledb_context(context)
 
