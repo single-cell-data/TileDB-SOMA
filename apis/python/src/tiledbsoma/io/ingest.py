@@ -390,8 +390,7 @@ def from_anndata(
                 platform_config=platform_config,
                 context=context,
                 ingestion_params=ingestion_params,
-                # XXX CHECK EXISTENCE OF THE LAYER -- FATAL IF NOT PRESENT
-                # XXX HAVE CHECKED THIS EARLY FOR FAIL-FAST
+                # Layer existence is pre-checked in the registration phase
                 axis_mapping=jidmaps.var_axes[measurement_name],
             ) as var:
                 _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
@@ -987,7 +986,7 @@ def _create_from_matrix(
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
-        # XXX JIDMAP -- non-appendable -- fail early
+        # XXX test the dense append case
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
