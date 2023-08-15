@@ -800,7 +800,7 @@ def _extract_new_values_for_append(
             previous_table = previous_soma_dataframe.read().concat()
             previous_df = previous_table.to_pandas()
             previous_join_ids = set(
-                list(int(e) for e in get_dataframe_values(previous_df, SOMA_JOINID))
+                int(e) for e in get_dataframe_values(previous_df, SOMA_JOINID)
             )
             mask = [
                 e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]
