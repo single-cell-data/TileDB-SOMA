@@ -279,6 +279,9 @@ def from_anndata(
     # Map the user-level ingest mode to a set of implementation-level boolean flags
     ingestion_params = IngestionParams(ingest_mode, registration_mapping)
 
+    if ingestion_params.appending and X_kind == DenseNDArray:
+        raise ValueError("dense X is not supported for append mode")
+
     if not isinstance(anndata, ad.AnnData):
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
