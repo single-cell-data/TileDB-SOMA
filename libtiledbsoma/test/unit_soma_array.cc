@@ -455,7 +455,7 @@ TEST_CASE("SOMAArray: Enumeration") {
 
     Array::create(uri, schema);
 
-    auto soma_array = SOMAArray::open(TILEDB_READ, ctx, uri);
+    auto soma_array = SOMAArray::open(OpenMode::read, ctx, uri);
     auto attr_to_enum = soma_array->get_attr_to_enum_mapping();
     REQUIRE(attr_to_enum.size() == 1);
     REQUIRE(attr_to_enum.at("a").name() == "rbg");
