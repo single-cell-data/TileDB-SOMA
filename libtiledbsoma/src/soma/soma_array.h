@@ -39,7 +39,6 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
-
 #include "enums.h"
 #include "managed_query.h"
 
@@ -492,8 +491,7 @@ class SOMAArray {
      */
     std::vector<std::string> dimension_names() const;
 
-     * @brief Get the Enumeration associated with the given name from the
-     * ArraySchema.
+    /**
      * @brief Get the mapping of attributes to Enumerations.
      *
      * @return std::map<std::string, Enumeration>
@@ -600,8 +598,14 @@ class SOMAArray {
     std::optional<MetadataValue> get_metadata(const std::string& key);
 
     /**
+<<<<<<< HEAD
      * Get a mapping of all metadata keys with its associated value datatype,
      * number of values, and value in binary form.
+=======
+     * @brief Given an index, get the associated value datatype, number of
+     * values, and value in binary form. The array must be opened in READ
+     * mode, otherwise the function will error out.
+>>>>>>> `to_varlen_buffers` Returns `std::string`
      *
      * @return std::map<std::string, MetadataValue>
      */
