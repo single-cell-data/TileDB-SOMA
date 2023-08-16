@@ -150,10 +150,10 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         }
         std::vector<int> a0(num_cells_per_fragment, frag_num);
 
-        auto tdb_array = std::make_shared<Array>(*ctx, uri, TILEDB_READ);
         auto array_buffer = std::make_shared<ArrayBuffers>();
-        array_buffer->emplace("a0", ColumnBuffer::create(tdb_array, "a0", a0));
-        array_buffer->emplace("d0", ColumnBuffer::create(tdb_array, "d0", d0));
+        auto tdb_arr = std::make_shared<Array>(*ctx, uri, TILEDB_READ);
+        array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
+        array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
 
         // Write data to array
         soma_array->submit();
@@ -455,7 +455,7 @@ TEST_CASE("SOMAArray: Enumeration") {
 
     Array::create(uri, schema);
 
-    auto soma_array = SOMAArray::open(TILEDB_READ, ctx, uri);
+    auto soma_array = SOMAArray::open(OpenMode::read, ctx, uri);
     auto attr_to_enum = soma_array->get_attr_to_enum_mapping();
     REQUIRE(attr_to_enum.size() == 1);
     REQUIRE(attr_to_enum.at("a").name() == "rbg");

@@ -39,7 +39,10 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+<<<<<<< HEAD
 
+=======
+>>>>>>> `to_varlen_buffers` Returns `std::string`
 #include "enums.h"
 #include "managed_query.h"
 
@@ -492,8 +495,7 @@ class SOMAArray {
      */
     std::vector<std::string> dimension_names() const;
 
-     * @brief Get the Enumeration associated with the given name from the
-     * ArraySchema.
+    /**
      * @brief Get the mapping of attributes to Enumerations.
      *
      * @return std::map<std::string, Enumeration>
