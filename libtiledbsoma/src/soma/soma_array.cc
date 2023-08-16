@@ -459,7 +459,6 @@ std::vector<int64_t> SOMAArray::shape() {
     return result;
 }
 
-<<<<<<< HEAD
 uint64_t SOMAArray::ndim() const {
     return this->schema().get()->domain().ndim();
 }
@@ -471,10 +470,8 @@ std::vector<std::string> SOMAArray::dimension_names() const {
         result.push_back(dim.name());
     }
     return result;
+}
 
-Enumeration SOMAArray::get_enum(std::string name) {
-    return ArrayExperimental::get_enumeration(*ctx_, *arr_, name);
-=======
 std::map<std::string, Enumeration> SOMAArray::get_attr_to_enum_mapping() {
     std::map<std::string, Enumeration> result;
     for (uint32_t i = 0; i < arr_->schema().attribute_num(); ++i) {
@@ -487,7 +484,6 @@ std::map<std::string, Enumeration> SOMAArray::get_attr_to_enum_mapping() {
         }
     }
     return result;
->>>>>>> Add `get_attr_to_enum_mapping` Function
 }
 
 std::optional<std::string> SOMAArray::get_enum_label_on_attr(
