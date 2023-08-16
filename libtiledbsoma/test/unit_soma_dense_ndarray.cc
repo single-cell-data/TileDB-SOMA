@@ -98,8 +98,9 @@ TEST_CASE("SOMADenseNDArray: basic") {
     std::vector<int> a0(10, 1);
 
     auto array_buffer = std::make_shared<ArrayBuffers>();
-    array_buffer->emplace("a0", ColumnBuffer::create(*schema, "a0", a0));
-    array_buffer->emplace("d0", ColumnBuffer::create(*schema, "d0", d0));
+    auto tdb_arr = std::make_shared<Array>(*ctx, uri, TILEDB_READ);
+    array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
+    array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
 
     soma_dense->open(OpenMode::write);
     soma_dense->write(array_buffer);

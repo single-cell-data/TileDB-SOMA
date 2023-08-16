@@ -38,13 +38,8 @@
 #include <future>
 
 #include <tiledb/tiledb>
-
-<<<<<<< HEAD
-#include "enums.h"
-=======
 #include <tiledb/tiledb_experimental>
-
->>>>>>> [c++] Support `Enumeration` in C++ Codebase
+#include "enums.h"
 #include "managed_query.h"
 
 namespace tiledbsoma {
@@ -62,7 +57,8 @@ class SOMAArray {
      * @param ctx TileDB context
      * @param uri URI to create the SOMAArray
      * @param schema TileDB ArraySchema
-     * @param soma_type SOMADataFrame, SOMADenseNDArray, or SOMASparseNDArray
+     * @param soma_type SOMADataFrame, SOMADenseNDArray, or
+     * SOMASparseNDArray
      */
     static void create(
         std::shared_ptr<Context> ctx,
@@ -80,8 +76,8 @@ class SOMAArray {
      * @param platform_config Config parameter dictionary
      * @param column_names Columns to read
      * @param batch_size Read batch size
-     * @param result_order Read result order: automatic (default), rowmajor, or
-     * colmajor
+     * @param result_order Read result order: automatic (default), rowmajor,
+     * or colmajor
      * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
@@ -105,8 +101,8 @@ class SOMAArray {
      * @param name Name of the array
      * @param column_names Columns to read
      * @param batch_size Read batch size
-     * @param result_order Read result order: automatic (default), rowmajor, or
-     * colmajor
+     * @param result_order Read result order: automatic (default), rowmajor,
+     * or colmajor
      * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
@@ -155,8 +151,8 @@ class SOMAArray {
      * @param ctx TileDB context
      * @param column_names Columns to read
      * @param batch_size Batch size
-     * @param result_order Read result order: automatic (default), rowmajor, or
-     * colmajor
+     * @param result_order Read result order: automatic (default), rowmajor,
+     * or colmajor
      * @param timestamp Timestamp
      */
     SOMAArray(
@@ -240,8 +236,8 @@ class SOMAArray {
     }
 
     /**
-     * @brief Set the dimension slice using multiple points, with support for
-     * partitioning.
+     * @brief Set the dimension slice using multiple points, with support
+     * for partitioning.
      *
      * @tparam T
      * @param dim
@@ -335,12 +331,14 @@ class SOMAArray {
 
     /**
      * @brief Select columns names to query (dim and attr). If the
-     * `if_not_empty` parameter is `true`, the column will be selected iff the
-     * list of selected columns is empty. This prevents a `select_columns` call
-     * from changing an empty list (all columns) to a subset of columns.
+     * `if_not_empty` parameter is `true`, the column will be selected iff
+     * the list of selected columns is empty. This prevents a
+     * `select_columns` call from changing an empty list (all columns) to a
+     * subset of columns.
      *
      * @param names Vector of column names
-     * @param if_not_empty Prevent changing an "empty" selection of all columns
+     * @param if_not_empty Prevent changing an "empty" selection of all
+     * columns
      */
     void select_columns(
         const std::vector<std::string>& names, bool if_not_empty = false) {
@@ -354,8 +352,8 @@ class SOMAArray {
     void submit();
 
     /**
-     * @brief Read the next chunk of results from the query. If all results have
-     * already been read, std::nullopt is returned.
+     * @brief Read the next chunk of results from the query. If all results
+     * have already been read, std::nullopt is returned.
      *
      * An example use model:
      *
@@ -394,8 +392,9 @@ class SOMAArray {
      *
      *   auto schema = *soma_array->schema();
      *   auto array_buffer = std::make_shared<ArrayBuffers>();
-     *   array_buffer->emplace("att", ColumnBuffer::create(schema, "att", att));
-     *   array_buffer->emplace("dim", ColumnBuffer::create(schema, "dim", dim));
+     *   array_buffer->emplace("att", ColumnBuffer::create(schema, "att",
+     * att)); array_buffer->emplace("dim", ColumnBuffer::create(schema,
+     * "dim", dim));
      *
      *   std::vector<int> x(10, 1);
      *   writer->submit();
@@ -413,8 +412,8 @@ class SOMAArray {
      * complete.
      *
      * If `query_status_only` is false, return true if the query status
-     * is complete or if the query is empty (no ranges have been added to the
-     * query).
+     * is complete or if the query is empty (no ranges have been added to
+     * the query).
      *
      * @param query_status_only Query complete mode.
      * @return true if the query is complete, as described above
@@ -492,8 +491,7 @@ class SOMAArray {
      */
     std::vector<std::string> dimension_names() const;
 
-     * @brief Get the Enumeration associated with the given name from the
-     * ArraySchema.
+    /**
      * @brief Get the mapping of attributes to Enumerations.
      *
      * @return std::map<std::string, Enumeration>
@@ -549,10 +547,12 @@ class SOMAArray {
 
     /**
      * @brief Given a key, get the associated value datatype, number of
-     * values, and value in binary form. The array must be opened in READ mode,
+     * values, and value in binary form. The array must be opened in READ
+     mode,
      * otherwise the function will error out.
      *
-     * The value may consist of more than one items of the same datatype. Keys
+     * The value may consist of more than one items of the same datatype.
+     Keys
      * that do not exist in the metadata will be return NULL for the value.
      *
      * **Example:**
@@ -568,7 +568,8 @@ class SOMAArray {
      int32_t*)std::get<MetadataInfo::value>(meta_val));
      * @endcode
      *
-     * @param key The key of the metadata item to be retrieved. UTF-8 encodings
+     * @param key The key of the metadata item to be retrieved. UTF-8
+     encodings
      *     are acceptable.
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
@@ -577,8 +578,8 @@ class SOMAArray {
 
     /**
      * @brief Given an index, get the associated value datatype, number of
-     * values, and value in binary form. The array must be opened in READ mode,
-     * otherwise the function will error out.
+     * values, and value in binary form. The array must be opened in READ
+     * mode, otherwise the function will error out.
      *
      * @param index The index used to get the metadata.
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
@@ -587,11 +588,11 @@ class SOMAArray {
     MetadataValue get_metadata(uint64_t index) const;
 
     /**
-     * Check if the key exists in metadata from an open array. The array must
-     * be opened in READ mode, otherwise the function will error out.
+     * Check if the key exists in metadata from an open array. The array
+     * must be opened in READ mode, otherwise the function will error out.
      *
-     * @param key The key of the metadata item to be checked. UTF-8 encodings
-     *     are acceptable.
+     * @param key The key of the metadata item to be checked. UTF-8
+     * encodings are acceptable.
      * @return true if the key exists, else false.
      */
     bool has_metadata(const std::string& key);
