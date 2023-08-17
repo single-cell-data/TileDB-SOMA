@@ -237,13 +237,11 @@ class QueryConditionTree(ast.NodeVisitor):
 
         att = self.get_att_from_node(att)
         val = self.get_val_from_node(val)
-
         enum_label = self.array.attr(att).enum_label
         if enum_label is not None:
             dt = self.array.enum(enum_label).dtype
         else:
             dt = self.array.attr(att).dtype
-
         dtype = "string" if dt.kind in "SUa" else dt.name
         val = self.cast_val_to_dtype(val, dtype)
 
