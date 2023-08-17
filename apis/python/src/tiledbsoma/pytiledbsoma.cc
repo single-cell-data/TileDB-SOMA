@@ -200,7 +200,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                    std::string_view name,
                    std::optional<std::vector<std::string>> column_names_in,
                    py::object py_query_condition,
-                   py::object py_schema,
                    std::string_view batch_size,
                    ResultOrder result_order,
                    std::map<std::string, std::string> platform_config,
@@ -222,7 +221,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                             // Column names will be updated with columns present
                             // in the query condition
                             auto new_column_names =
-                                init_pyqc(py_schema, column_names)
+                                init_pyqc(uri, column_names)
                                     .cast<std::vector<std::string>>();
 
                             // Update the column_names list if it was not empty,
@@ -267,7 +266,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             "name"_a = "unnamed",
             "column_names"_a = py::none(),
             "query_condition"_a = py::none(),
-            "schema"_a = py::none(),
             "batch_size"_a = "auto",
             "result_order"_a = ResultOrder::automatic,
             "platform_config"_a = py::dict(),
@@ -278,7 +276,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             [](SOMAArray& reader,
                std::optional<std::vector<std::string>> column_names_in,
                py::object py_query_condition,
-               py::object py_schema,
                std::string_view batch_size,
                ResultOrder result_order) {
                 // Handle optional args
@@ -298,7 +295,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                         // Column names will be updated with columns present in
                         // the query condition
                         auto new_column_names =
-                            init_pyqc(py_schema, column_names)
+                            init_pyqc(reader.uri(), column_names)
                                 .cast<std::vector<std::string>>();
 
                         // Update the column_names list if it was not empty,
@@ -331,7 +328,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             py::kw_only(),
             "column_names"_a = py::none(),
             "query_condition"_a = py::none(),
-            "schema"_a = py::none(),
             "batch_size"_a = "auto",
             "result_order"_a = ResultOrder::automatic)
 

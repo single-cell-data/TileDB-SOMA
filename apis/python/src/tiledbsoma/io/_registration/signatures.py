@@ -36,9 +36,13 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> Dict[str, str]:
     Converts an Arrow schema to a string/string dict, which is easier on the eyes,
     easier to convert from/to JSON for distributed logging, and easier to do del-key on.
     """
-
-    retval = {name: _stringify_type(schema.field(name).type) for name in schema.names}
-
+    retval = {}
+    for name in schema.names:
+        arrow_type = schema.field(name).type
+        if pa.types.is_dictionary(arrow_type):
+            arrow_type = arrow_type.index_type
+        retval[name] = _stringify_type(arrow_type)
+    
     # The soma_joinid field is specific to SOMA data but does not exist in AnnData/H5AD.  When we
     # pre-check an AnnData/H5AD input to see if it's appendable to an existing SOMA experiment, we
     # must not punish the AnnData/H5AD input for it not having a soma_joinid column in its obs and
@@ -241,7 +245,7 @@ class Signature:
                     varm_dtypes[varm_layer_name] = str(
                         varm.schema.field("soma_data").type
                     )
-
+                    
             return cls(
                 obs_schema=obs_schema,
                 var_schema=var_schema,
