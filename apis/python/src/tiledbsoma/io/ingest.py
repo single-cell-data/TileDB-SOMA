@@ -1177,7 +1177,7 @@ def _write_dataframe_impl(
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
     except DoesNotExistError:
-        enums = {}
+        enums: Dict[str, Union[Sequence[Any], np.ndarray[Any, Any]]] = {}
         col_to_enums = {}
         for att in arrow_table.schema:
             if pa.types.is_dictionary(att.type):
@@ -1187,7 +1187,7 @@ def _write_dataframe_impl(
                 else:
                     enums[att.name] = cat
                 col_to_enums[att.name] = att.name
-                
+
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
