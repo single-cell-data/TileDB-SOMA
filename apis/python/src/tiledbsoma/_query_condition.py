@@ -128,8 +128,8 @@ class QueryCondition:
                 "(Is this an empty expression?)"
             )
 
-    def init_query_condition(self, schema: tiledb.ArraySchema, query_attrs: List[str]):
-        qctree = QueryConditionTree(schema, query_attrs)
+    def init_query_condition(self, uri: str, query_attrs: List[str]):
+        qctree = QueryConditionTree(tiledb.open(uri), query_attrs)
         self.c_obj = qctree.visit(self.tree.body)
 
         if not isinstance(self.c_obj, clib.PyQueryCondition):
@@ -143,7 +143,7 @@ class QueryCondition:
 
 @attrs.define
 class QueryConditionTree(ast.NodeVisitor):
-    schema: tiledb.ArraySchema
+    array: tiledb.Array
     query_attrs: List[str]
 
     def visit_BitOr(self, node):
@@ -237,8 +237,13 @@ class QueryConditionTree(ast.NodeVisitor):
 
         att = self.get_att_from_node(att)
         val = self.get_val_from_node(val)
-
-        dt = self.schema.attr(att).dtype
+        
+        enum_label = self.array.attr(att).enum_label
+        if enum_label is not None:
+            dt = self.array.enum(enum_label).dtype
+        else:
+            dt = self.array.attr(att).dtype
+            
         dtype = "string" if dt.kind in "SUa" else dt.name
         val = self.cast_val_to_dtype(val, dtype)
 
@@ -318,8 +323,8 @@ class QueryConditionTree(ast.NodeVisitor):
                 f"Incorrect type for attribute name: {ast.dump(node)}"
             )
 
-        if not self.schema.has_attr(att):
-            if self.schema.domain.has_dim(att):
+        if not self.array.schema.has_attr(att):
+            if self.array.schema.domain.has_dim(att):
                 raise tiledb.TileDBError(
                     f"`{att}` is a dimension. QueryConditions currently only "
                     "work on attributes."
