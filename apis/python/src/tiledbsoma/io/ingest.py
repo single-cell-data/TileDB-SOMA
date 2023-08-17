@@ -13,6 +13,7 @@ import math
 import time
 from typing import (
     Any,
+    Dict,
     List,
     Mapping,
     Optional,
@@ -739,7 +740,7 @@ def _write_dataframe_impl(
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
     except DoesNotExistError:
-        enums = {}
+        enums: Dict[str, Union[Sequence[Any], np.ndarray[Any, Any]]] = {}
         col_to_enums = {}
         for att in arrow_table.schema:
             if pa.types.is_dictionary(att.type):
@@ -749,7 +750,7 @@ def _write_dataframe_impl(
                 else:
                     enums[att.name] = cat
                 col_to_enums[att.name] = att.name
-                
+                            
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
@@ -1024,6 +1025,7 @@ def _update_dataframe(
     for key in common_keys:
         old_type = old_sig[key]
         new_type = new_sig[key]
+        
         if old_type != new_type:
             msgs.append(f"{key} type {old_type} != {new_type}")
     if msgs:
