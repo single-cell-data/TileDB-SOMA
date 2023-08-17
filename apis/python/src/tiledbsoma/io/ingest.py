@@ -655,7 +655,7 @@ def _create_or_open_coll(
     cls: Type[Experiment],
     uri: str,
     *,
-    ingestion_params: IngestionParams,
+    ingest_mode: str,
     context: Optional[SOMATileDBContext],
 ) -> Experiment:
     ...
@@ -666,7 +666,7 @@ def _create_or_open_coll(
     cls: Type[Measurement],
     uri: str,
     *,
-    ingestion_params: IngestionParams,
+    ingest_mode: str,
     context: Optional[SOMATileDBContext],
 ) -> Measurement:
     ...
@@ -677,7 +677,7 @@ def _create_or_open_coll(
     cls: Type[Collection[_TDBO]],
     uri: str,
     *,
-    ingestion_params: IngestionParams,
+    ingest_mode: str,
     context: Optional[SOMATileDBContext],
 ) -> Collection[_TDBO]:
     ...
@@ -688,12 +688,13 @@ def _create_or_open_coll(
     cls: Type[Any],
     uri: str,
     *,
-    ingestion_params: IngestionParams,
+    ingest_mode: str,
     context: Optional[SOMATileDBContext],
 ) -> Any:
-    return cls._create_or_open_collection(
+    return _create_or_open_collection(
+        cls,
         uri,
-        ingestion_params=IngestionParams(ingest_mode="write"),
+        ingestion_params=IngestionParams(ingest_mode=ingest_mode),
         context=context,
     )
 
