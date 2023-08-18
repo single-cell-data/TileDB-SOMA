@@ -1,4 +1,3 @@
-import math
 import pathlib
 import tempfile
 from pathlib import Path
