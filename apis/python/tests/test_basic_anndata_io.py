@@ -1,6 +1,7 @@
 import pathlib
 import tempfile
 from pathlib import Path
+from typing import Optional
 
 import anndata
 import numpy as np
@@ -411,6 +412,134 @@ def test_add_matrix_to_collection(adata):
         tiledbsoma.io.add_matrix_to_collection(
             exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"]
         )
+    with _factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
+
+
+# This tests tiledbsoma.io._create_or_open_coll -> tiledbsoma.io._create_or_open_collection
+# compatibility. As a rule we do not offer any backward-compatibility assurances for non-public
+# modules or methods -- those whose names start with an underscore.  For this single case we are
+# making an exception. For future code-imitation purposes, please be aware this is a pattern to be
+# avoided in the future, not imitated.
+def test_add_matrix_to_collection_1_2_7(adata):
+    def add_X_layer(
+        exp: tiledbsoma.Experiment,
+        measurement_name: str,
+        X_layer_name: str,
+        X_layer_data,  # E.g. a scipy.csr_matrix from scanpy analysis
+        ingest_mode: str = "write",
+        use_relative_uri: Optional[bool] = None,
+    ) -> None:
+        if exp.closed or exp.mode != "w":
+            raise tiledbsoma.SOMAError(f"Experiment must be open for write: {exp.uri}")
+        add_matrix_to_collection(
+            exp,
+            measurement_name,
+            "X",
+            X_layer_name,
+            X_layer_data,
+            use_relative_uri=use_relative_uri,
+        )
+
+    def add_matrix_to_collection(
+        exp: tiledbsoma.Experiment,
+        measurement_name: str,
+        collection_name: str,
+        matrix_name: str,
+        matrix_data,  # E.g. a scipy.csr_matrix from scanpy analysis
+        ingest_mode: str = "write",
+        use_relative_uri: Optional[bool] = None,
+        context: Optional[tiledbsoma.SOMATileDBContext] = None,
+    ) -> None:
+        # For local disk and S3, creation and storage URIs are identical.  For
+        # cloud, creation URIs look like tiledb://namespace/s3://bucket/path/to/obj
+        # whereas storage URIs (for the same object) look like
+        # tiledb://namespace/uuid.  When the caller passes a creation URI (which
+        # they must) via exp.uri, we need to follow that.
+        extend_creation_uri = exp.uri.startswith("tiledb://")
+
+        with exp.ms[measurement_name] as meas:
+            if extend_creation_uri:
+                coll_uri = f"{exp.uri}/ms/{measurement_name}/{collection_name}"
+            else:
+                coll_uri = f"{meas.uri}/{collection_name}"
+
+            if collection_name in meas:
+                coll = meas[collection_name]
+            else:
+                coll = tiledbsoma.io.ingest._create_or_open_coll(
+                    tiledbsoma.Collection,
+                    coll_uri,
+                    ingest_mode=ingest_mode,
+                    context=context,
+                )
+                tiledbsoma.io.ingest._maybe_set(
+                    meas, collection_name, coll, use_relative_uri=use_relative_uri
+                )
+            with coll:
+                matrix_uri = f"{coll_uri}/{matrix_name}"
+
+                with tiledbsoma.io.ingest.create_from_matrix(
+                    tiledbsoma.SparseNDArray,
+                    matrix_uri,
+                    matrix_data,
+                    context=context,
+                ) as sparse_nd_array:
+                    tiledbsoma.io.ingest._maybe_set(
+                        coll,
+                        matrix_name,
+                        sparse_nd_array,
+                        use_relative_uri=use_relative_uri,
+                    )
+
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    uri = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    exp = tiledbsoma.Experiment.open(uri)
+    with _factory.open(output_path) as exp_r:
+        assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
+        with pytest.raises(tiledbsoma.SOMAError):
+            add_X_layer(exp, "RNA", "data2", adata.X)  # not open for read
+    with _factory.open(output_path, "w") as exp:
+        add_X_layer(exp, "RNA", "data2", adata.X)
+    with pytest.raises(tiledbsoma.SOMAError):
+        add_X_layer(exp, "RNA", "data3", adata.X)  # closed
+    with _factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].X.keys())) == ["data", "data2"]
+
+    with _factory.open(output_path, "w") as exp:
+        with pytest.raises(KeyError):
+            add_X_layer(exp, "nonesuch", "data3", adata.X)
+
+    with _factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
+            list(adata.obsm.keys())
+        )
+
+    with _factory.open(output_path, "w") as exp:
+        add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"])
+    with _factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
+            list(adata.obsm.keys()) + ["X_pcb"]
+        )
+
+    with _factory.open(output_path, "w") as exp:
+        # It's nonsense biologically to add this to varp, but as a fake-test unit-test case, we can
+        # use varp to test adding to a not-yet-existing collection.
+        add_matrix_to_collection(exp, "RNA", "varp", "X_pcb", adata.obsm["X_pca"])
+    with _factory.open(output_path) as exp_r:
+        assert sorted(list(exp_r.ms["RNA"].varp.keys())) == sorted(
+            list(adata.varp.keys()) + ["X_pcb"]
+        )
+
+    with _factory.open(output_path, "w") as exp:
+        with pytest.raises(KeyError):
+            add_matrix_to_collection(
+                exp, "nonesuch", "obsm", "X_pcc", adata.obsm["X_pca"]
+            )
+
+        add_matrix_to_collection(exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
