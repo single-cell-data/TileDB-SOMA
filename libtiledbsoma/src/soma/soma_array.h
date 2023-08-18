@@ -546,18 +546,8 @@ class SOMAArray {
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    MetadataValue get_metadata(const std::string& key) const;
-
-    /**
-     * @brief Given an index, get the associated value datatype, number of
-     * values, and value in binary form. The array must be opened in READ mode,
-     * otherwise the function will error out.
-     *
-     * @param index The index used to get the metadata.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
-     * uint32_t, const void*>)
-     */
-    MetadataValue get_metadata(uint64_t index) const;
+    std::map<std::string, MetadataValue> get_metadata();
+    std::optional<MetadataValue> get_metadata(const std::string& key);
 
     /**
      * Check if the key exists in metadata from an open array. The array must
@@ -588,6 +578,11 @@ class SOMAArray {
     //= private non-static
     //===================================================================
 
+    /**
+     * Fills the metadata cache upon opening the array.
+     */
+    void fill_metadata_cache();
+
     // TileDB context
     std::shared_ptr<Context> ctx_;
 
@@ -599,6 +594,9 @@ class SOMAArray {
 
     // Result order
     ResultOrder result_order_;
+
+    // Metadata cache
+    std::map<std::string, MetadataValue> metadata_;
 
     // Read timestamp range (start, end)
     std::optional<std::pair<uint64_t, uint64_t>> timestamp_;

@@ -32,7 +32,6 @@
 
 #include <filesystem>
 
-#include "soma_array.h"
 #include "soma_dense_ndarray.h"
 
 namespace tiledbsoma {
