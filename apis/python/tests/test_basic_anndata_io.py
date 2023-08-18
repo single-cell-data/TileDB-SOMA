@@ -1,3 +1,4 @@
+import math
 import pathlib
 import tempfile
 from pathlib import Path
@@ -713,3 +714,17 @@ def test_X_none(h5ad_file_X_none):
         assert exp.obs.count == 2638
         assert exp.ms["RNA"].var.count == 1838
         assert list(exp.ms["RNA"].X.keys()) == []
+        
+# There exist in the wild AnnData files with categorical-int columns where the "not in the category"
+# is indicated by the presence of floating-point math.NaN in cells. Here we test that we can ingest
+# this.
+def test_obs_with_categorical_int_nan_enumeration(tmp_path, adata):
+    output_path = tmp_path.as_uri()
+
+    # Currently getting float not int here, failing to repro the problem
+    s = pd.Series(list(range(len(adata.obs))))
+    s[0] = math.nan
+    adata.obs["categ_int_nan"] = s
+
+    output_path = tmp_path.as_posix()
+    tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
