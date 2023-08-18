@@ -100,10 +100,10 @@ SOMAGroup::SOMAGroup(
         mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE,
         cfg);
 
-    fill_metadata_cache();
+    fill_caches();
 }
 
-void SOMAGroup::fill_metadata_cache() {
+void SOMAGroup::fill_caches() {
     std::shared_ptr<Group> grp;
     if (group_->query_type() == TILEDB_WRITE) {
         grp = std::make_shared<Group>(*ctx_, uri_, TILEDB_READ);
@@ -121,6 +121,15 @@ void SOMAGroup::fill_metadata_cache() {
         MetadataValue mdval(value_type, value_num, value);
         std::pair<std::string, const MetadataValue> mdpair(key, mdval);
         metadata_.insert(mdpair);
+    }
+
+    for (uint64_t i = 0; i < grp->member_count(); ++i) {
+        auto mem = grp->member(i);
+        member_to_uri_[mem.name().value()] = mem.uri();
+    }
+
+    if (group_->query_type() == TILEDB_WRITE) {
+        grp->close();
     }
 }
 
@@ -175,6 +184,7 @@ void SOMAGroup::add_member(
         relative = uri.find("://") != std::string::npos;
     }
     group_->add_member(uri, relative, name);
+    member_to_uri_[name] = uri;
 }
 
 uint64_t SOMAGroup::get_length() const {
@@ -186,12 +196,7 @@ void SOMAGroup::remove_member(const std::string& name) {
 }
 
 std::map<std::string, std::string> SOMAGroup::member_to_uri_mapping() const {
-    std::map<std::string, std::string> result;
-    for (uint64_t i = 0; i < this->get_length(); ++i) {
-        auto mem = this->get_member(i);
-        result[mem.name().value()] = mem.uri();
-    }
-    return result;
+    return member_to_uri_;
 }
 
 void SOMAGroup::set_metadata(
