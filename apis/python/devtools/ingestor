@@ -24,7 +24,6 @@ import tiledbsoma._exception
 import tiledbsoma._types
 import tiledbsoma._util
 import tiledbsoma.io
-import tiledbsoma.io.registration  # TODO: temporary on issue 1278 until we decide what is/isn't public API
 import tiledbsoma.logging
 from tiledbsoma.options import SOMATileDBContext
 
@@ -293,7 +292,7 @@ def ingest_one(
 
     rd = None
     if appending:
-        rd = tiledbsoma.io.registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+        rd = tiledbsoma.io.register(
             experiment_uri=output_path,
             h5ad_file_names=[input_path],
             measurement_name=measurement_name,

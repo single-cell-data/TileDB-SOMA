@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 import tiledbsoma.io
-import tiledbsoma.io.registration as registration
+import tiledbsoma.io._registration as registration
 
 
 def _create_anndata(
