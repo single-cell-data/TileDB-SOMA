@@ -234,12 +234,14 @@ inline void registerXptrFinalizer(SEXP s, R_CFinalizer_t f, bool onexit = true) 
 // Finalizer helper with void f(SEXP) signature
 void SOMAArrayFinalizer(SEXP sx) {
     spdl::debug(tfm::format("[SOMAArrayFinalizer] entered"));
+    if (sx == R_NilValue || sx == NULL || R_ExternalPtrAddr(sx) == NULL) return;
     Rcpp::XPtr<tdbs::SOMAArray> xp(sx);
-    spdl::debug(tfm::format("[SOMAArrayFinalizer] instantiated"));
+    //spdl::trace(tfm::format("[SOMAArrayFinalizer] instantiated"));
+    if (xp == R_NilValue) return;
     check_xptr_tag<tdbs::SOMAArray>(xp);
-    spdl::debug(tfm::format("[SOMAArrayFinalizer] checked"));
+    //spdl::trace(tfm::format("[SOMAArrayFinalizer] checked"));
     std::shared_ptr<tiledb::Context> ctx = xp->ctx();
-    spdl::debug(tfm::format("[SOMAArrayFinalizer] referenced once"));
+    //spdl::trace(tfm::format("[SOMAArrayFinalizer] referenced once"));
     if (ctx == nullptr) return;
     std::shared_ptr<tiledb_ctx_t> ctx_cptr = ctx->ptr();
     if (ctx_cptr == nullptr) return;
@@ -249,7 +251,9 @@ void SOMAArrayFinalizer(SEXP sx) {
     if (ptr == nullptr) return;
     tiledb_ctx_free(&ptr);
     ptr = nullptr;
-    spdl::debug(tfm::format("[SOMAArrayFinalizer] freed"));
+    ctx_cptr.reset();
+    ctx.reset();
+    spdl::debug(tfm::format("[SOMAArrayFinalizer] done"));
 }
 
 // [[Rcpp::export]]
