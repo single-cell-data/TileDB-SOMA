@@ -764,7 +764,7 @@ def _create_or_open_coll(
     return _create_or_open_collection(
         cls,
         uri,
-        ingestion_params=IngestionParams(ingest_mode=ingest_mode),
+        ingestion_params=IngestionParams(ingest_mode=ingest_mode, label_mapping=None),
         context=context,
     )
 
