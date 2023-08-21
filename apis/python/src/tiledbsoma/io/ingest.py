@@ -13,7 +13,6 @@ import math
 import time
 from typing import (
     Any,
-    ContextManager,
     List,
     Mapping,
     Optional,
@@ -25,7 +24,6 @@ from typing import (
     cast,
     overload,
 )
-from unittest import mock
 
 import anndata as ad
 import h5py
@@ -34,7 +32,6 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
-from anndata._core import file_backing
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
@@ -107,42 +104,6 @@ class IngestionParams:
             )
 
 
-# This trick lets us ingest H5AD with "r" (backed mode) from S3 URIs.  While h5ad
-# supports any file-like object, AnnData specifically wants only an `os.PathLike`
-# object. The only thing it does with the PathLike is to use it to get the filename.
-class _FSPathWrapper:
-    """Tricks anndata into thinking a file-like object is an ``os.PathLike``.
-
-    While h5ad supports any file-like object, anndata specifically wants
-    an ``os.PathLike object``, which it uses *exclusively* to get the "filename"
-    of the opened file.
-
-    We need to provide ``__fspath__`` as a real class method, so simply
-    setting ``some_file_obj.__fspath__ = lambda: "some/path"`` won't work,
-    so here we just proxy all attributes except ``__fspath__``.
-    """
-
-    def __init__(self, obj: object, path: Path) -> None:
-        self._obj = obj
-        self._path = path
-
-    def __fspath__(self) -> Path:
-        return self._path
-
-    def __getattr__(self, name: str) -> object:
-        return getattr(self._obj, name)
-
-
-def _hack_patch_anndata() -> ContextManager[object]:
-    """Part Two of the ``_FSPathWrapper`` trick."""
-
-    @file_backing.AnnDataFileManager.filename.setter
-    def filename(self, filename: Path) -> None:
-        self._filename = filename
-
-    return mock.patch.object(file_backing.AnnDataFileManager, "filename", filename)
-
-
 # ----------------------------------------------------------------
 def from_h5ad(
     experiment_uri: str,
@@ -207,21 +168,22 @@ def from_h5ad(
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
 
-    with tiledb.VFS(ctx=context.tiledb_ctx).open(input_path) as input_handle:
-        logging.log_io(None, f"START  READING {input_path}")
-        with _hack_patch_anndata():
-            anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), "r")
-        logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
-        uri = from_anndata(
-            experiment_uri,
-            anndata,
-            measurement_name,
-            context=context,
-            platform_config=platform_config,
-            ingest_mode=ingest_mode,
-            use_relative_uri=use_relative_uri,
-            X_kind=X_kind,
-        )
+    logging.log_io(None, f"START  READING {input_path}")
+
+    anndata = ad.read_h5ad(input_path, backed="r")
+
+    logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
+
+    uri = from_anndata(
+        experiment_uri,
+        anndata,
+        measurement_name,
+        context=context,
+        platform_config=platform_config,
+        ingest_mode=ingest_mode,
+        use_relative_uri=use_relative_uri,
+        X_kind=X_kind,
+    )
 
     logging.log_io(
         None, _util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path} {uri}")
