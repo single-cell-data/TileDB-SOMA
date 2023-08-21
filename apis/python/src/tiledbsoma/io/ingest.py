@@ -136,6 +136,30 @@ class IngestionParams:
             )
 
 
+def register(
+    experiment_uri: Optional[str],
+    h5ad_file_names: Sequence[str],
+    *,
+    measurement_name: str,
+    obs_field_name: str,
+    var_field_name: str,
+    append_obsm_varm: bool = False,
+    context: Optional[SOMATileDBContext] = None,
+) -> ExperimentAmbientLabelMapping:
+    """Extends registration data from the baseline, already-written SOMA
+    experiment to include multiple H5AD input files. See ``from_h5ad`` and
+    ``from_anndata`` on-line help."""
+    return ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+        experiment_uri=experiment_uri,
+        h5ad_file_names=h5ad_file_names,
+        measurement_name=measurement_name,
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+        append_obsm_varm=append_obsm_varm,
+        context=context,
+    )
+
+
 # ----------------------------------------------------------------
 def from_h5ad(
     experiment_uri: str,
@@ -186,8 +210,8 @@ def from_h5ad(
           H5AD/AnnData object into a single :class:`Experiment`. When multiple inputs
           are to be ingested into a single experiment, there are two steps. First:
 
-              import tiledbsoma.io.registration as reg
-              rd = reg.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+              import tiledbsoma.io
+              rd = tiledbsoma.io.register(
                   experiment_uri,
                   h5ad_file_names,
                   measurement_name="RNA",

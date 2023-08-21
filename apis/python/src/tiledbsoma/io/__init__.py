@@ -4,6 +4,7 @@ from .ingest import (
     create_from_matrix,
     from_anndata,
     from_h5ad,
+    register,
     to_anndata,
     to_h5ad,
 )
@@ -16,4 +17,5 @@ __all__ = (
     "from_h5ad",
     "to_anndata",
     "to_h5ad",
+    "register",
 )
