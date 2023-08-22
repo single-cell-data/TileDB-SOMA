@@ -136,8 +136,8 @@ class _FSPathWrapper:
 def _hack_patch_anndata() -> ContextManager[object]:
     """Part Two of the ``_FSPathWrapper`` trick."""
 
-    @file_backing.AnnDataFileManager.filename.setter
-    def filename(self, filename: Path) -> None:
+    @file_backing.AnnDataFileManager.filename.setter  # type: ignore
+    def filename(self: file_backing.AnnDataFileManager, filename: Path) -> None:
         self._filename = filename
 
     return mock.patch.object(file_backing.AnnDataFileManager, "filename", filename)
