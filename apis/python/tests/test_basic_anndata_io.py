@@ -219,16 +219,16 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
     tempdir1 = tempfile.TemporaryDirectory()
     output_path1 = tempdir1.name
     tiledbsoma.io.from_h5ad(
-        output_path1, resume_mode_h5ad_file, "RNA", ingest_mode="write"
+        output_path1, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write"
     )
 
     tempdir2 = tempfile.TemporaryDirectory()
     output_path2 = tempdir2.name
     tiledbsoma.io.from_h5ad(
-        output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="write"
+        output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write"
     )
     tiledbsoma.io.from_h5ad(
-        output_path2, resume_mode_h5ad_file, "RNA", ingest_mode="resume"
+        output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="resume"
     )
 
     exp1 = _factory.open(output_path1)
@@ -274,7 +274,7 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
 
     tiledbsoma.io.from_h5ad(
         output_path,
-        h5ad_file_extended,
+        h5ad_file_extended.as_posix(),
         measurement_name="RNA",
         use_relative_uri=use_relative_uri,
     )
@@ -356,7 +356,7 @@ def test_ingest_uns_string_array(h5ad_file_uns_string_array):
 
     tiledbsoma.io.from_h5ad(
         output_path,
-        h5ad_file_uns_string_array,
+        h5ad_file_uns_string_array.as_posix(),
         measurement_name="RNA",
     )
 
