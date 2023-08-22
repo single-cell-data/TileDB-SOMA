@@ -1,7 +1,8 @@
 """
 Support for soma_joinid remapping for append-mode ingestion.
 
-This is an internal-use class; none of it is user-facing API.
+This is an internal-use class; none of it is user-facing API. The user-facing API is
+``tiledbsoma.io.register``.
 
 The SOMA experiment ``obs``, ``var``, ``X``, etc. are indexed by soma_joinid.  Input AnnData/H5AD
 ``obs`` and ``var`` are indexed by an index column; ``X` et al. are indexed zero-up by row numbers

@@ -5,7 +5,7 @@ import anndata as ad
 import pytest
 
 import tiledbsoma.io
-import tiledbsoma.io.registration.signatures as signatures
+import tiledbsoma.io._registration.signatures as signatures
 
 HERE = Path(__file__).parent
 
