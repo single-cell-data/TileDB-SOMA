@@ -63,9 +63,13 @@ SOMASparseNDArray <- R6::R6Class(
     #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
     #' names are ignored because `SOMANDArray`'s use integer indexing.
     #'
-    write = function(values) {
+    write = function(values, bbox = NULL) {
       stopifnot(
-        "'values' must be a matrix" = is_matrix(values)
+        "'values' must be a matrix" = is_matrix(values),
+        is.null(bbox) || length(bbox) == length(dim(values)),
+        is.null(bbox) ||
+          (is_integerish(bbox) || bit64::is.integer64(bbox)) ||
+          (is.list(bbox) && vapply_lgl(bbox, function(x, n) length(x) == n, n = length(dim(values))))
       )
       # coerce to a TsparseMatrix, which uses 0-based COO indexing
       values <- as(values, Class = "TsparseMatrix")
@@ -74,7 +78,76 @@ SOMASparseNDArray <- R6::R6Class(
         j = bit64::as.integer64(values@j),
         x = values@x
       )
-      colnames(coo) <- c(self$dimnames(), self$attrnames())
+      dnames <- self$dimnames()
+      colnames(coo) <- c(dnames, self$attrnames())
+      ranges <- sapply(
+        X = dnames,
+        FUN = function(x) {
+          return(range(coo[[x]]))
+        },
+        simplify = FALSE,
+        USE.NAMES = TRUE
+      )
+      bbox <- bbox %||% ranges
+      if (is.null(names(bbox))) {
+        names(bbox) <- dnames
+      }
+      if (!is_named(bbox, allow_empty = FALSE)) {
+        idx <- which(!nzchar(names(bbox)))
+        names(bbox)[idx] <- dnames[idx]
+      }
+      bbox <- bbox[dnames]
+      if (length(bbox) != length(dnames)) {
+        stop("dnames")
+      }
+      if (is_integerish(bbox) || bit64::is.integer64(bbox)) {
+        bbox <- sapply(
+          X = names(bbox),
+          FUN = function(x) {
+            return(sort(c(min(ranges[[x]]), bbox[[x]])))
+          },
+          simplify = FALSE
+        )
+      }
+      for (x in dnames) {
+        xrange <- bbox[[x]]
+        if (any(is.na(xrange))) {
+          stop(
+            "Ranges in the bounding box must be finite (offending: ",
+            sQuote(x),
+            ")",
+            call. = FALSE
+          )
+        }
+        if (!(is_integerish(xrange) || bit64::is.integer64(xrange))) {
+          stop(
+            "Ranges in the bounding box must be integers",
+            call. = FALSE
+          )
+        }
+        xrange <- sort(bit64::as.integer64(xrange))
+        if (length(xrange) != 2L) {
+          stop(
+            "Ranges in the bounding box must be two 64-bit integers",
+            call. = FALSE
+          )
+        }
+        if (xrange[1L] < 0 || xrange[1L] > min(ranges[[x]])) {
+          stop(
+            "Ranges in the bounding box must be positive and less than the lowest value being added",
+            call. = FALSE
+          )
+        }
+        if (xrange[2L] < min(ranges[[x]])) {
+          stop(
+            "Ranges in the bounding box must be greater than the largest value being added",
+            call. = FALSE
+          )
+        }
+        bbox[[x]] <- xrange
+      }
+      names(bbox) <- paste0(names(bbox), '_DOMAIN')
+      self$set_metadata(bbox)
       private$.write_coo_dataframe(coo)
     },
 
