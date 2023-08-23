@@ -140,15 +140,20 @@ TileDBArray <- R6::R6Class(
       ))
     },
 
-    used_shape = function() {
+    used_shape = function(simplify = FALSE, index1 = TRUE) {
+      stopifnot(
+        isTRUE(simplify) || isFALSE(simplify),
+        isTRUE(index1) || isFALSE(index1)
+      )
       dims <- self$dimnames()
-      utilized <- bit64::integer64(length = length(dims))
+      utilized <- vector(mode = 'list', length = length(dims))
+      names(utilized) <- dims
       for (i in seq_along(along.with = utilized)) {
         key <- paste0(dims[i], '_DOMAIN')
-        utilized[i] <- self$get_metadata(key) %||% bit64::NA_integer64_
+        utilized[[i]] <- self$get_metadata(key) %||% bit64::NA_integer64_
       }
       if (any(is.na(utilized))) {
-        ned <- self$non_empty_domain()
+        ned <- self$non_empty_domain(index1 = FALSE)
         idx <- which(is.na(utilized))
         msg <- paste(
           strwrap(paste0(
@@ -162,7 +167,20 @@ TileDBArray <- R6::R6Class(
           paste(sQuote(dims[idx]), collapse = '\n- ')
         )
         spdl::warn(msg)
-        utilized[idx] <- ned[idx]
+        utilized[[idx]] <- c(bit64::as.integer64(0L), ned[idx])
+      }
+      if (index1) {
+        for (i in seq_along(utilized)) {
+          utilized[[i]] <- utilized[[i]] + 1L
+        }
+      }
+      if (simplify) {
+        tmp <- utilized
+        utilized <- bit64::integer64(length(utilized))
+        names(utilized) <- names(tmp)
+        for (i in seq_along(utilized)) {
+          utilized[i] <- tmp[[i]][2L]
+        }
       }
       return(utilized)
     },
