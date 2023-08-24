@@ -51,8 +51,6 @@ class SOMAObject {
 
     /**
      * @brief Return a constant string describing the type of the object.
-     *
-     * @return std::string SOMA type
      */
     virtual const std::string type() const = 0;
 
@@ -94,11 +92,11 @@ class SOMAObject {
      *
      * @note The writes will take effect only upon closing the array.
      */
-    void set_metadata(
+    virtual void set_metadata(
         const std::string& key,
         tiledb_datatype_t value_type,
         uint32_t value_num,
-        const void* value);
+        const void* value) = 0;
 
     /**
      * Delete a metadata key-value item from an open SOMAObject. The
@@ -112,7 +110,7 @@ class SOMAObject {
      * @note If the key does not exist, this will take no effect
      *     (i.e., the function will not error out).
      */
-    void delete_metadata(const std::string& key);
+    virtual void delete_metadata(const std::string& key) = 0;
 
     /**
      * @brief Given a key, get the associated value datatype, number of
@@ -120,7 +118,7 @@ class SOMAObject {
      *
      * The value may consist of more than one items of the same datatype.
      Keys
-     * that do not exist in the metadata will be return NULL for the value.
+     * that do not exist in the metadata will return std::nullopt for the value.
      *
      * **Example:**
      * @code{.cpp}
@@ -138,12 +136,18 @@ class SOMAObject {
      * @param key The key of the metadata item to be retrieved. UTF-8
      encodings
      *     are acceptable.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
-     * uint32_t, const void*>)
+     * @return std::optional<MetadataValue>
      */
-    std::map<std::string, MetadataValue> get_metadata();
+    virtual std::optional<MetadataValue> get_metadata(
+        const std::string& key) = 0;
 
-    std::optional<MetadataValue> get_metadata(const std::string& key);
+    /**
+     * Get a mapping of all metadata keys with its associated value datatype,
+     * number of values, and value in binary form.
+     *
+     * @return std::map<std::string, MetadataValue>
+     */
+    virtual std::map<std::string, MetadataValue> get_metadata() = 0;
 
     /**
      * Check if the key exists in metadata from an open SOMAObject.
@@ -152,13 +156,13 @@ class SOMAObject {
      *     are acceptable.
      * @return true if the key exists, else false.
      */
-    bool has_metadata(const std::string& key);
+    virtual bool has_metadata(const std::string& key) = 0;
 
     /**
      * Return then number of metadata items in an open SOMAObject. The group
      * must be opened in READ mode, otherwise the function will error out.
      */
-    uint64_t metadata_num() const;
+    virtual uint64_t metadata_num() const = 0;
 };
 }  // namespace tiledbsoma
 
