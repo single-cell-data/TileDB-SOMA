@@ -294,9 +294,9 @@ class SOMAGroup {
     //===================================================================
 
     /**
-     * Fills the metadata cache upon opening the array.
+     * Fills the metadata and member-to-uri caches upon opening the array.
      */
-    void fill_metadata_cache();
+    void fill_caches();
 
     // TileDB context
     std::shared_ptr<Context> ctx_;
@@ -312,6 +312,9 @@ class SOMAGroup {
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
+
+    // Member-to-URI cache
+    std::map<std::string, std::string> member_to_uri_;
 };
 
 }  // namespace tiledbsoma

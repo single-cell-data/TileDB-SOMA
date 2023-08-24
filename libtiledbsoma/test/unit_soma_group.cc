@@ -171,18 +171,20 @@ TEST_CASE("SOMAGroup: basic") {
     soma_group->add_member(uri_sub_array, URIType::absolute, "subarray");
     soma_group->close();
 
+    std::map<std::string, std::string> expected_map{
+        {"subgroup", uri_sub_group}, {"subarray", uri_sub_array}};
+
     soma_group->open(OpenMode::read, std::pair<uint64_t, uint64_t>(0, 2));
     REQUIRE(soma_group->ctx() == ctx);
     REQUIRE(soma_group->uri() == uri_main_group);
     REQUIRE(soma_group->get_length() == 2);
-    std::map<std::string, std::string> expected_map{
-        {"subgroup", uri_sub_group}, {"subarray", uri_sub_array}};
     REQUIRE(expected_map == soma_group->member_to_uri_mapping());
     REQUIRE(soma_group->get_member("subgroup").type() == Object::Type::Group);
     REQUIRE(soma_group->get_member("subarray").type() == Object::Type::Array);
     soma_group->close();
 
     soma_group->open(OpenMode::write, std::pair<uint64_t, uint64_t>(0, 3));
+    REQUIRE(expected_map == soma_group->member_to_uri_mapping());
     soma_group->remove_member("subgroup");
     soma_group->close();
 
