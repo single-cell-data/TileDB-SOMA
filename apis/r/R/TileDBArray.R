@@ -140,7 +140,7 @@ TileDBArray <- R6::R6Class(
       ))
     },
 
-    used_shape = function(simplify = FALSE, index1 = TRUE) {
+    used_shape = function(simplify = FALSE, index1 = FALSE) {
       stopifnot(
         isTRUE(simplify) || isFALSE(simplify),
         isTRUE(index1) || isFALSE(index1)
@@ -152,9 +152,10 @@ TileDBArray <- R6::R6Class(
         key <- paste0(dims[i], '_DOMAIN')
         utilized[[i]] <- self$get_metadata(key) %||% bit64::NA_integer64_
       }
-      if (any(is.na(utilized))) {
+      if (any(vapply_lgl(utilized, rlang::is_na))) {
         ned <- self$non_empty_domain(index1 = FALSE)
-        idx <- which(is.na(utilized))
+        ned[!ned] <- NA_integer_
+        idx <- which(vapply_lgl(utilized, rlang::is_na))
         msg <- paste(
           strwrap(paste0(
             "The following dimensions have no bounding box, non-empty domain used instead:\n",
@@ -162,12 +163,15 @@ TileDBArray <- R6::R6Class(
           )),
           collapse = '\n'
         )
-        msg <- paste(
-          "The following dimensions have no bounding box, non-empty domain used instead:\n-",
-          paste(sQuote(dims[idx]), collapse = '\n- ')
-        )
         spdl::warn(msg)
-        utilized[[idx]] <- c(bit64::as.integer64(0L), ned[idx])
+        warning(msg)
+        for (j in idx) {
+          utilized[[j]] <- if (rlang::is_na(ned[j])) {
+            ned[j]
+          } else {
+            c(bit64::as.integer64(0L), ned[j])
+          }
+        }
       }
       if (index1) {
         for (i in seq_along(utilized)) {
@@ -185,7 +189,7 @@ TileDBArray <- R6::R6Class(
       return(utilized)
     },
 
-    non_empty_domain = function(index1 = TRUE) {
+    non_empty_domain = function(index1 = FALSE) {
       dims <- self$dimnames()
       ned <- bit64::integer64(length = length(dims))
       for (i in seq_along(along.with = ned)) {
