@@ -750,7 +750,7 @@ def _write_dataframe_impl(
                 else:
                     enums[att.name] = cat
                 col_to_enums[att.name] = att.name
-                            
+
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
