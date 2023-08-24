@@ -375,3 +375,68 @@ test_that("SOMASparseNDArray compatibility with shape >= 2^31 - 1", {
   expect_identical(dim(mat), as.integer(c(2^31 - 1, 2^31 - 1)))
   expect_length(mat@i, 2)
 })
+
+test_that("SOMASparseNDArray bounding box", {
+  uri <- withr::local_tempdir("sparse-ndarray-bbox")
+  nrows <- 100L
+  ncols <- 500L
+  ndarray <- SOMASparseNDArrayCreate(uri, type = arrow::int32(), shape = c(nrows, ncols))
+
+  mat <- create_sparse_matrix_with_int_dims(nrows, ncols)
+  ndarray$write(mat)
+  ndarray$close()
+
+  ndarray <- SOMASparseNDArrayOpen(uri)
+  dnames <- ndarray$dimnames()
+
+  expect_true(all(paste0(dnames, '_DOMAIN') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  for (i in seq_along(dnames)) {
+    expect_s3_class(xrange <- ndarray$get_metadata(paste0(dnames[i], '_DOMAIN')), 'integer64')
+    expect_equal(xrange, bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
+  }
+
+  expect_type(bbox <- ndarray$used_shape(index1 = TRUE), 'list')
+  expect_length(bbox, length(dim(mat)))
+  expect_equal(names(bbox), dnames)
+  expect_true(all(vapply(bbox, length, integer(1L)) == 2L))
+  for (i in seq_along(bbox)) {
+    expect_equal(bbox[[i]], bit64::as.integer64(c(1L, dim(mat)[i])))
+  }
+
+  expect_type(bbox0 <- ndarray$used_shape(index1 = FALSE), 'list')
+  expect_length(bbox0, length(dim(mat)))
+  expect_equal(names(bbox0), dnames)
+  expect_true(all(vapply(bbox0, length, integer(1L)) == 2L))
+  for (i in seq_along(bbox0)) {
+    expect_equal(bbox0[[i]], bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
+  }
+
+  expect_s3_class(bboxS <- ndarray$used_shape(simplify = TRUE), 'integer64')
+  expect_length(bboxS, length(dim(mat)))
+  expect_equal(names(bboxS), dnames)
+  for (i in seq_along(bboxS)) {
+    # Use [[ to remove name from sliced vector
+    expect_equal(bboxS[[i]], bit64::as.integer64(dim(mat)[i] - 1L))
+  }
+})
+
+test_that("SOMASparseNDArray without bounding box", {
+  uri <- withr::local_tempdir("sparse-ndarray-no-bbox")
+  nrows <- 100L
+  ncols <- 500L
+  ndarray <- SOMASparseNDArrayCreate(uri, type = arrow::int32(), shape = c(nrows, ncols))
+
+  ndarray$close()
+
+  ndarray <- SOMASparseNDArrayOpen(uri)
+  dnames <- ndarray$dimnames()
+
+  expect_false(all(paste0(dnames, '_DOMAIN') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+
+  expect_warning(bbox <- ndarray$used_shape())
+  expect_type(bbox, 'list')
+  expect_equal(names(bbox), dnames)
+  expect_true(all(vapply(bbox, length, integer(1L)) == 1L))
+  expect_true(all(vapply(bbox, rlang::is_na, logical(1L))))
+  expect_true(all(vapply(bbox, inherits, logical(1L), what = 'integer64')))
+})
