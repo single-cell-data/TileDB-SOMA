@@ -101,8 +101,8 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
         # they're not all wrapped in std::optional<>.
         kwargs: Dict[str, object] = {}
-        if schema:
-            kwargs["schema"] = schema
+        # if schema:
+        #     kwargs["schema"] = schema
         if column_names:
             kwargs["column_names"] = column_names
         if query_condition:

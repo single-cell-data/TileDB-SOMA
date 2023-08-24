@@ -1025,6 +1025,7 @@ def _update_dataframe(
     for key in common_keys:
         old_type = old_sig[key]
         new_type = new_sig[key]
+        
         if old_type != new_type:
             msgs.append(f"{key} type {old_type} != {new_type}")
     if msgs:
