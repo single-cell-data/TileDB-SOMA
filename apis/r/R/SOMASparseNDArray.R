@@ -62,6 +62,8 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param values Any `matrix`-like object coercible to a
     #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
     #' names are ignored because `SOMANDArray`'s use integer indexing.
+    #' @param bbox A vector of integers describing the upper bounds of each
+    #' dimension of `values`. Generally should be `NULL`.
     #'
     write = function(values, bbox = NULL) {
       stopifnot(
