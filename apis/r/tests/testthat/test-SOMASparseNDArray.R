@@ -441,7 +441,7 @@ test_that("SOMASparseNDArray without bounding box", {
   expect_true(all(vapply(bbox, inherits, logical(1L), what = 'integer64')))
 })
 
-test_that("SOMASparseNDArray without failed bounding box", {
+test_that("SOMASparseNDArray with failed bounding box", {
   uri <- withr::local_tempdir("sparse-ndarray-failed-bbox")
   nrows <- 100L
   ncols <- 500L
