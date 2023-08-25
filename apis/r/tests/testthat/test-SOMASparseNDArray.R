@@ -472,3 +472,76 @@ test_that("SOMASparseNDArray with failed bounding box", {
     expect_equal(bbox[[i]], bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
   }
 })
+
+test_that("SOMASparseNDArray bounding box implicitly-stored values", {
+  uri <- withr::local_tempdir("sparse-ndarray-bbox-implicit")
+  nrows <- 100L
+  ncols <- 500L
+  ndarray <- SOMASparseNDArrayCreate(uri, type = arrow::int32(), shape = c(nrows, ncols))
+
+  mat <- create_sparse_matrix_with_int_dims(nrows, ncols)
+  mat[1, ] <- mat[nrows, ] <- mat[, 1L] <- mat[, ncols] <- 0
+  ndarray$write(mat)
+  ndarray$close()
+
+  ndarray <- SOMASparseNDArrayOpen(uri)
+  dnames <- ndarray$dimnames()
+
+  expect_true(all(paste0(dnames, '_DOMAIN') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  for (i in seq_along(dnames)) {
+    expect_s3_class(xrange <- ndarray$get_metadata(paste0(dnames[i], '_DOMAIN')), 'integer64')
+    expect_equal(xrange, bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
+  }
+
+  expect_type(bbox <- ndarray$used_shape(index1 = TRUE), 'list')
+  expect_length(bbox, length(dim(mat)))
+  expect_equal(names(bbox), dnames)
+  expect_true(all(vapply(bbox, length, integer(1L)) == 2L))
+  for (i in seq_along(bbox)) {
+    expect_equal(bbox[[i]], bit64::as.integer64(c(1L, dim(mat)[i])))
+  }
+
+  expect_type(bbox0 <- ndarray$used_shape(index1 = FALSE), 'list')
+  expect_length(bbox0, length(dim(mat)))
+  expect_equal(names(bbox0), dnames)
+  expect_true(all(vapply(bbox0, length, integer(1L)) == 2L))
+  for (i in seq_along(bbox0)) {
+    expect_equal(bbox0[[i]], bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
+  }
+
+  expect_s3_class(bboxS <- ndarray$used_shape(simplify = TRUE), 'integer64')
+  expect_length(bboxS, length(dim(mat)))
+  expect_equal(names(bboxS), dnames)
+  for (i in seq_along(bboxS)) {
+    # Use [[ to remove name from sliced vector
+    expect_equal(bboxS[[i]], bit64::as.integer64(dim(mat)[i] - 1L))
+  }
+
+  ranges <- bit64::integer64(2L)
+  for (i in seq_along(ranges)) {
+    s <- c('i', 'j')[i]
+    ranges[i] <- bit64::as.integer64(max(range(slot(mat, s))))
+  }
+  expect_equal(ndarray$non_empty_domain(), ranges)
+  expect_true(all(ndarray$non_empty_domain() < ndarray$used_shape(simplify = TRUE)))
+})
+
+test_that("Bounding box assertions", {
+  uri <- withr::local_tempdir("bbox-assertions")
+  nrows <- 100L
+  ncols <- 500L
+  ndarray <- SOMASparseNDArrayCreate(uri, type = arrow::int32(), shape = c(nrows, ncols))
+
+  mat <- create_sparse_matrix_with_int_dims(nrows, ncols)
+
+  expect_error(ndarray$write(mat, bbox = TRUE))
+  expect_error(ndarray$write(mat, bbox = c(TRUE, TRUE)))
+  expect_error(ndarray$write(mat, bbox = c(nrows, ncols) + 0.1))
+  expect_error(ndarray$write(mat, bbox = list(nrows, ncols)))
+  expect_error(ndarray$write(mat, bbox = list(TRUE, TRUE)))
+  expect_error(ndarray$write(mat, bbox = c(a = nrows, b = ncols)))
+  expect_error(ndarray$write(mat, bbox = list(c(TRUE, FALSE), c('a', 'b'))))
+  expect_error(ndarray$write(mat, bbox = c(nrows, ncols) / 2L))
+  expect_error(ndarray$write(mat, bbox = list(c(20L, nrows), c(20L, ncols))))
+  expect_error(ndarray$write(mat, bbox = list(c(-20L, nrows), c(-20L, ncols))))
+})
