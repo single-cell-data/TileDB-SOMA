@@ -1,4 +1,5 @@
 test_that("SOMADenseNDArray creation", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("dense-ndarray")
 
   ndarray <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(10, 5))
@@ -77,6 +78,7 @@ test_that("SOMADenseNDArray creation", {
 })
 
 test_that("platform_config is respected", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dense-nd-array")
 
   # Set tiledb create options
@@ -177,6 +179,7 @@ test_that("platform_config is respected", {
 })
 
 test_that("platform_config defaults", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dense-nd-array")
 
   # Set tiledb create options
@@ -213,6 +216,7 @@ test_that("platform_config defaults", {
 })
 
 test_that("SOMADenseNDArray timestamped ops", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dense-nd-array-timestamps")
 
   t10 <- Sys.time()

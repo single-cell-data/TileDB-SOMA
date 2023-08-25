@@ -1,4 +1,5 @@
 test_that("SOMAAxisQuery", {
+  skip_if(!extended_tests())
   query <- SOMAAxisQuery$new()
   expect_null(query$value_filter)
   expect_null(query$coords)

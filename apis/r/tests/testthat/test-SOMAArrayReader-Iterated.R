@@ -1,4 +1,5 @@
 test_that("Iterated Interface from SOMAArrayReader", {
+    skip_if(!extended_tests())
     skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
                                                 # see https://ghrr.github.io/drat/
     library(arrow)
@@ -15,6 +16,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
     config <- tiledb::config(ctx)
     sr <- sr_setup(uri, config = as.character(config), loglevel = "warn")
     expect_true(inherits(sr, "externalptr"))
+    sr_finalize(sr)
 
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
@@ -28,8 +30,12 @@ test_that("Iterated Interface from SOMAArrayReader", {
     expect_equal(nrow(rl), 4848644)
     expect_equal(ncol(rl), 3)
 
+    rm(sr)
+    gc()
+
     sr <- sr_setup(uri, config=as.character(config), dim_points=list(soma_dim_0=as.integer64(1)))
     expect_true(inherits(sr, "externalptr"))
+    sr_finalize(sr)
 
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
@@ -43,8 +49,12 @@ test_that("Iterated Interface from SOMAArrayReader", {
     expect_equal(nrow(rl), 1838)
     expect_equal(ncol(rl), 3)
 
+    rm(sr)
+    gc()
+
     sr <- sr_setup(uri, config=as.character(config), dim_range=list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
     expect_true(inherits(sr, "externalptr"))
+    sr_finalize(sr)
 
     rl <- data.frame()
     while (!tiledbsoma:::sr_complete(sr)) {
@@ -65,10 +75,15 @@ test_that("Iterated Interface from SOMAArrayReader", {
     expect_false(tiledbsoma:::sr_complete(sr))
     dat <- sr_next(sr)
     expect_true(tiledbsoma:::sr_complete(sr))
+
+    rm(sr)
+    gc()
+
 })
 
 
 test_that("Iterated Interface from SOMA Classes", {
+    skip_if(!extended_tests())
     skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
 
     tdir <- tempfile()
@@ -102,6 +117,7 @@ test_that("Iterated Interface from SOMA Classes", {
         expect_equal(dat$num_rows, 2238732)
 
         rm(iterator)
+        gc()
 
         # Test $read_next()
         iterator <- switch(tc,
@@ -127,12 +143,14 @@ test_that("Iterated Interface from SOMA Classes", {
         expect_warning(iterator$read_next()) # returns NULL with warning
         expect_warning(iterator$read_next()) # returns NULL with warning
 
-        rm(sdf)
+        rm(iterator, sdf)
+        gc()
     }
 
 })
 
 test_that("Iterated Interface from SOMA Sparse Matrix", {
+    skip_if(!extended_tests())
     skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
 
     tdir <- tempfile()
@@ -165,10 +183,11 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     expect_equal(nnzTotal, 2238732)
 
     rm(sdf)
-
+    gc()
 })
 
 test_that("Dimension Point and Ranges Bounds", {
+    skip_if(!extended_tests())
     ctx <- tiledbsoma::SOMATileDBContext$new()
     config <- as.character(tiledb::config(ctx$context()))
     human_experiment <- load_dataset("soma-exp-pbmc-small", tiledbsoma_ctx = ctx)
@@ -179,15 +198,19 @@ test_that("Dimension Point and Ranges Bounds", {
     coords <- list(soma_dim_0=bit64::as.integer64(0:5),
                    soma_dim_1=bit64::as.integer64(0:5))
     sr <- sr_setup(uri = X$uri, config = config, dim_points = coords)
+    sr_finalize(sr)
     chunk <- sr_next(sr)
     at <- arrow::as_arrow_table(arrow::RecordBatch$import_from_c(chunk$array_data, chunk$schema))
     expect_equal(at$num_rows, 5)
     expect_equal(at$num_columns, 3)
+    rm(sr)
+    gc()
 
     ## 'good case' with suitable dim ranges
     ranges <- list(soma_dim_0=matrix(bit64::as.integer64(c(1,4)),1),
                    soma_dim_1=matrix(bit64::as.integer64(c(1,4)),1))
     sr <- sr_setup(uri = X$uri, config = config, dim_ranges = ranges)
+    sr_finalize(sr)
     chunk <- sr_next(sr)
     at <- arrow::as_arrow_table(arrow::RecordBatch$import_from_c(chunk$array_data, chunk$schema))
     expect_equal(at$num_rows, 2)
@@ -202,5 +225,7 @@ test_that("Dimension Point and Ranges Bounds", {
     ranges <- list(soma_dim_0=matrix(bit64::as.integer64(c(91,94)),1),
                    soma_dim_1=matrix(bit64::as.integer64(c(1,4)),1))
     expect_error(sr_setup(uri = X$uri, config = config, dim_ranges = ranges))
+    rm(sr)
+    gc()
 
 })

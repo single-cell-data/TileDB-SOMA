@@ -1,4 +1,5 @@
 test_that("Basic mechanics", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
@@ -102,9 +103,13 @@ test_that("Basic mechanics", {
   expect_true(tiledb::is.sparse(sch))
   expect_false(tiledb::allows_dups(sch))
   sdf$close()
+
+  rm(sdf, tbl0, tbl1, rb0, rb1)
+  gc()
 })
 
 test_that("Basic mechanics with default index_column_names", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-soma-joinid")
   asch <- create_arrow_schema(foo_first=FALSE)
 
@@ -147,10 +152,13 @@ test_that("Basic mechanics with default index_column_names", {
     as.list(tbl0),
     ignore_attr = TRUE
   )
+
+  rm(sdf, tbl0)
+  gc()
 })
 
 test_that("creation with all supported dimension data types", {
-
+  skip_if(!extended_tests())
   sch <- arrow::schema(
     arrow::field("int8", arrow::int8(), nullable = FALSE),
     arrow::field("int16", arrow::int16(), nullable = FALSE),
@@ -181,9 +189,13 @@ test_that("creation with all supported dimension data types", {
     expect_true(sdf$exists())
     sdf$close()
   }
+
+  rm(sdf, tbl0)
+  gc()
 })
 
 test_that("int64 values are stored correctly", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- arrow::schema(
     arrow::field("foo", arrow::int32(), nullable = FALSE),
@@ -205,37 +217,46 @@ test_that("int64 values are stored correctly", {
   # verify int64_downcast option was restored
   expect_equal(getOption("arrow.int64_downcast"), orig_downcast_value)
   sdf$close()
+
+  rm(sdf, tbl0, tbl1)
+  gc()
 })
 
 test_that("SOMADataFrame read", {
-    uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
+  skip_if(!extended_tests())
+  uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 
-    sdf <- SOMADataFrameOpen(uri)
-    z <- sdf$read()$concat()
-    expect_equal(z$num_rows, 2638L)
-    expect_equal(z$num_columns, 6L)
-    sdf$close()
+  sdf <- SOMADataFrameOpen(uri)
+  z <- sdf$read()$concat()
+  expect_equal(z$num_rows, 2638L)
+  expect_equal(z$num_columns, 6L)
+  sdf$close()
 
-    columns <- c("n_counts", "n_genes", "louvain")
-    sdf <- SOMADataFrameOpen(uri)
-    z <- sdf$read(column_names=columns)$concat()
-    expect_equal(z$num_columns, 3L)
-    expect_equal(z$ColumnNames(), columns)
-    sdf$close()
+  columns <- c("n_counts", "n_genes", "louvain")
+  sdf <- SOMADataFrameOpen(uri)
+  z <- sdf$read(column_names=columns)$concat()
+  expect_equal(z$num_columns, 3L)
+  expect_equal(z$ColumnNames(), columns)
+  sdf$close()
 
-    columns <- c("n_counts", "does_not_exist")
-    sdf <- SOMADataFrameOpen(uri)
-    expect_error(sdf$read(column_names=columns))
-    sdf$close()
+  columns <- c("n_counts", "does_not_exist")
+  sdf <- SOMADataFrameOpen(uri)
+  expect_error(sdf$read(column_names=columns))
+  sdf$close()
 
-    coords <- bit64::as.integer64(seq(100, 109))
-    sdf <- SOMADataFrameOpen(uri)
-    z <- sdf$read(coords = list(soma_joinid=coords))$concat()
-    expect_equal(z$num_rows, 10L)
-    sdf$close()
+  coords <- bit64::as.integer64(seq(100, 109))
+  sdf <- SOMADataFrameOpen(uri)
+  z <- sdf$read(coords = list(soma_joinid=coords))$concat()
+  expect_equal(z$num_rows, 10L)
+  sdf$close()
+
+  rm(sdf, z)
+  gc()
+
 })
 
 test_that("soma_ prefix is reserved", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
@@ -252,6 +273,7 @@ test_that("soma_ prefix is reserved", {
 })
 
 test_that("soma_joinid is added on creation", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
@@ -264,6 +286,7 @@ test_that("soma_joinid is added on creation", {
 })
 
 test_that("soma_joinid validations", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
@@ -281,6 +304,7 @@ test_that("soma_joinid validations", {
 })
 
 test_that("platform_config is respected", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
 
   # Set Arrow schema
@@ -376,6 +400,7 @@ test_that("platform_config is respected", {
 })
 
 test_that("platform_config defaults", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
 
   # Set Arrow schema
@@ -410,6 +435,7 @@ test_that("platform_config defaults", {
 })
 
 test_that("Metadata", {
+  skip_if(!extended_tests())
   uri <- file.path(withr::local_tempdir(), "sdf-metadata")
   asch <- create_arrow_schema()
   sdf <- SOMADataFrameCreate(uri, asch)
@@ -435,6 +461,7 @@ test_that("Metadata", {
 })
 
 test_that("SOMADataFrame timestamped ops", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-timestamps")
 
   sch <- arrow::schema(arrow::field("soma_joinid", arrow::int64(), nullable=FALSE),
