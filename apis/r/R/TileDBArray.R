@@ -144,7 +144,7 @@ TileDBArray <- R6::R6Class(
     #'  explicitly written.
     #' @param simplify Return a vector of [`bit64:integer64`]s containing only
     #' the upper bounds.
-    #' @param index1 Return the used shape with 1-based indices.
+    #' @param index1 Return the used shape with 1-based indices (0-based indices are returned by default)
     #' @return A list containing the lower and upper bounds for the used shape.
     #' If `simplify = TRUE`, returns a vector of only the upper bounds.
     used_shape = function(simplify = FALSE, index1 = FALSE) {
