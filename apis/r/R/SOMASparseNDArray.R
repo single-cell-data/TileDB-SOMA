@@ -68,10 +68,10 @@ SOMASparseNDArray <- R6::R6Class(
     write = function(values, bbox = NULL) {
       stopifnot(
         "'values' must be a matrix" = is_matrix(values),
-        is.null(bbox) || length(bbox) == length(dim(values)),
-        is.null(bbox) ||
+        "'bbox' must contain two entries" = is.null(bbox) || length(bbox) == length(dim(values)),
+        "'bbox' must be a vector of two integers or a list with each entry containg two integers" = is.null(bbox) ||
           (is_integerish(bbox) || bit64::is.integer64(bbox)) ||
-          (is.list(bbox) && vapply_lgl(bbox, function(x, n) length(x) == n, n = length(dim(values))))
+          (is.list(bbox) && all(vapply_lgl(bbox, function(x, n) length(x) == 2L)))
       )
       # coerce to a TsparseMatrix, which uses 0-based COO indexing
       values <- as(values, Class = "TsparseMatrix")
@@ -90,7 +90,15 @@ SOMASparseNDArray <- R6::R6Class(
         simplify = FALSE,
         USE.NAMES = TRUE
       )
-      bbox <- bbox %||% ranges
+      bbox <- bbox %||% setNames(
+        lapply(
+          X = dim(x = values) - 1L,
+          FUN = function(x) {
+            bit64::as.integer64(c(0L, x))
+          }
+        ),
+        nm = dnames
+      )
       if (is.null(names(bbox))) {
         names(bbox) <- dnames
       }
@@ -102,9 +110,8 @@ SOMASparseNDArray <- R6::R6Class(
         idx <- which(!nzchar(names(bbox)))
         names(bbox)[idx] <- dnames[idx]
       }
-      bbox <- bbox[dnames]
-      if (length(bbox) != length(dnames)) {
-        stop("dnames")
+      if (!identical(sort(names(bbox)), sort(dnames))) {
+        stop("The names of 'bbox' must be the names of the array")
       }
       if (is_integerish(bbox) || bit64::is.integer64(bbox)) {
         bbox <- sapply(
@@ -127,7 +134,9 @@ SOMASparseNDArray <- R6::R6Class(
         }
         if (!(is_integerish(xrange) || bit64::is.integer64(xrange))) {
           stop(
-            "Ranges in the bounding box must be integers",
+            "Ranges in the bounding box must be integers (offending: ",
+            sQuote(x),
+            ")",
             call. = FALSE
           )
         }
@@ -140,13 +149,17 @@ SOMASparseNDArray <- R6::R6Class(
         }
         if (xrange[1L] < 0 || xrange[1L] > min(ranges[[x]])) {
           stop(
-            "Ranges in the bounding box must be positive and less than the lowest value being added",
+            "Ranges in the bounding box must be greater than zero and less than the lowest value being added (offending: ",
+            sQuote(x),
+            ")",
             call. = FALSE
           )
         }
-        if (xrange[2L] < min(ranges[[x]])) {
+        if (xrange[2L] < max(ranges[[x]])) {
           stop(
-            "Ranges in the bounding box must be greater than the largest value being added",
+            "Ranges in the bounding box must be greater than the largest value being added (offending: ",
+            sQuote(x),
+            ")",
             call. = FALSE
           )
         }
