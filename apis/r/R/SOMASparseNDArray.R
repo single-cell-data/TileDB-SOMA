@@ -95,6 +95,10 @@ SOMASparseNDArray <- R6::R6Class(
         names(bbox) <- dnames
       }
       if (!is_named(bbox, allow_empty = FALSE)) {
+        # Determine which indexes of `bbox` are unnamed (incl empty strings "")
+        # Python equivalent:
+        # bbox = pandas.Series([[0, 99], [0, 299]], index=["soma_dim_0", ""])
+        # [i for i, key in enumerate(bbox.keys()) if not len(key)]
         idx <- which(!nzchar(names(bbox)))
         names(bbox)[idx] <- dnames[idx]
       }
