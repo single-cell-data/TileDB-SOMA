@@ -143,7 +143,7 @@ SOMASparseNDArray <- R6::R6Class(
         xrange <- sort(bit64::as.integer64(xrange))
         if (length(xrange) != 2L) {
           stop(
-            "Ranges in the bounding box must be two 64-bit integers",
+            "Ranges in the bounding box must consist of two integerish values",
             call. = FALSE
           )
         }
