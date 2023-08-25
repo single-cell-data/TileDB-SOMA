@@ -440,3 +440,35 @@ test_that("SOMASparseNDArray without bounding box", {
   expect_true(all(vapply(bbox, rlang::is_na, logical(1L))))
   expect_true(all(vapply(bbox, inherits, logical(1L), what = 'integer64')))
 })
+
+test_that("SOMASparseNDArray without failed bounding box", {
+  uri <- withr::local_tempdir("sparse-ndarray-failed-bbox")
+  nrows <- 100L
+  ncols <- 500L
+  ndarray <- SOMASparseNDArrayCreate(uri, type = arrow::int32(), shape = c(nrows, ncols))
+
+  mat <- create_sparse_matrix_with_int_dims(nrows, ncols, repr = "T")
+  coo <- data.frame(
+    i = bit64::as.integer64(slot(mat, "i")),
+    j = bit64::as.integer64(slot(mat, "j")),
+    x = slot(mat, "x")
+  )
+  names(coo) <- c(ndarray$dimnames(), ndarray$attrnames())
+  ndarray$.__enclos_env__$private$.write_coo_dataframe(coo)
+
+  ndarray$close()
+
+  ndarray <- SOMASparseNDArrayOpen(uri)
+  dnames <- ndarray$dimnames()
+
+  expect_false(all(paste0(dnames, '_DOMAIN') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+
+  expect_warning(bbox <- ndarray$used_shape())
+  expect_type(bbox, 'list')
+  expect_equal(names(bbox), dnames)
+  expect_true(all(vapply(bbox, length, integer(1L)) == 2L))
+  expect_true(all(vapply(bbox, inherits, logical(1L), what = 'integer64')))
+  for (i in seq_along(bbox)) {
+    expect_equal(bbox[[i]], bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
+  }
+})
