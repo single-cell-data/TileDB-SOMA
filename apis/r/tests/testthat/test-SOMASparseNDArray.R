@@ -531,6 +531,7 @@ test_that("Bounding box assertions", {
   nrows <- 100L
   ncols <- 500L
   ndarray <- SOMASparseNDArrayCreate(uri, type = arrow::int32(), shape = c(nrows, ncols))
+  on.exit(ndarray$close())
 
   mat <- create_sparse_matrix_with_int_dims(nrows, ncols)
 
