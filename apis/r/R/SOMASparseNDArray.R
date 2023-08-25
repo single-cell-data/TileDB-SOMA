@@ -47,14 +47,14 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      sr <- sr_setup(uri = self$uri,
+      rl <- sr_setup(uri = self$uri,
                      config = cfg,
                      dim_points = coords,
                      result_order = result_order,
                      timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
 
-      SOMASparseNDArrayRead$new(sr, shape = self$shape())
+      SOMASparseNDArrayRead$new(rl$sr, shape = self$shape())
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: experimental)

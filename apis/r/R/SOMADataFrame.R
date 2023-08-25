@@ -209,7 +209,7 @@ SOMADataFrame <- R6::R6Class(
       }
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      sr <- sr_setup(uri = self$uri,
+      rl <- sr_setup(uri = self$uri,
                      config = cfg,
                      colnames = column_names,
                      qc = value_filter,
@@ -217,7 +217,7 @@ SOMADataFrame <- R6::R6Class(
                      timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
 
-      TableReadIter$new(sr)
+      TableReadIter$new(rl)
     },
 
     #' @description Update (lifecycle: experimental)

@@ -69,16 +69,18 @@ namespace tdbs = tiledbsoma;
 //' }
 //' @noRd
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
-                                     Rcpp::CharacterVector config,
-                                     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                                     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                                     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                                     Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                                     std::string batch_size = "auto",
-                                     std::string result_order = "auto",
-                                     Rcpp::Nullable<Rcpp::Datetime> timestamp_end = R_NilValue,
-                                     const std::string& loglevel = "auto") {
+Rcpp::List sr_setup(const std::string& uri,
+                    Rcpp::CharacterVector config,
+                    Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                    Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                    Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                    Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                    std::string batch_size = "auto",
+                    std::string result_order = "auto",
+                    Rcpp::Nullable<Rcpp::Datetime> timestamp_end = R_NilValue,
+                    const std::string& loglevel = "auto") {
+
+    //Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -89,7 +91,15 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
+
     std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
+    tiledb::Config cfg(platform_config);
+    spdl::debug("[sr_setup] creating ctx object with supplied config");
+    std::shared_ptr<tiledb::Context> ctxptr = std::make_shared<tiledb::Context>(cfg);
+
+    ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
+    Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p);
+
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
     }
@@ -141,7 +151,8 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     ptr->submit();
     Rcpp::XPtr<tdbs::SOMAArray> xptr = make_xptr<tdbs::SOMAArray>(ptr);
-    return xptr;
+    return Rcpp::List::create(Rcpp::Named("sr") = xptr,
+                              Rcpp::Named("ctx") = ctx_wrap_xptr);
 }
 
 // [[Rcpp::export]]
@@ -234,30 +245,43 @@ inline void registerXptrFinalizer(SEXP s, R_CFinalizer_t f, bool onexit = true) 
 // Finalizer helper with void f(SEXP) signature
 void SOMAArrayFinalizer(SEXP sx) {
     spdl::debug(tfm::format("[SOMAArrayFinalizer] entered"));
-    if (sx == R_NilValue || sx == NULL || R_ExternalPtrAddr(sx) == NULL) return;
-    Rcpp::XPtr<tdbs::SOMAArray> xp(sx);
-    //spdl::trace(tfm::format("[SOMAArrayFinalizer] instantiated"));
-    if (xp == R_NilValue) return;
-    check_xptr_tag<tdbs::SOMAArray>(xp);
-    //spdl::trace(tfm::format("[SOMAArrayFinalizer] checked"));
-    std::shared_ptr<tiledb::Context> ctx = xp->ctx();
-    //spdl::trace(tfm::format("[SOMAArrayFinalizer] referenced once"));
-    if (ctx == nullptr) return;
-    std::shared_ptr<tiledb_ctx_t> ctx_cptr = ctx->ptr();
-    if (ctx_cptr == nullptr) return;
-    spdl::debug(tfm::format("[SOMAArrayFinalizer] count on ctx %d cptr %d",
-                            ctx.use_count(), ctx_cptr.use_count()));
-    tiledb_ctx_t* ptr = ctx_cptr.get();
-    if (ptr == nullptr) return;
-    //tiledb_ctx_free(&ptr);
-    ptr = nullptr;
-    ctx_cptr.reset();
-    ctx.reset();
+    // if (sx == R_NilValue || sx == NULL || R_ExternalPtrAddr(sx) == NULL) return;
+    // Rcpp::XPtr<tdbs::SOMAArray> xp(sx);
+    // //spdl::trace(tfm::format("[SOMAArrayFinalizer] instantiated"));
+    // if (xp == R_NilValue) return;
+    // check_xptr_tag<tdbs::SOMAArray>(xp);
+    // //spdl::trace(tfm::format("[SOMAArrayFinalizer] checked"));
+    // std::shared_ptr<tiledb::Context> ctx = xp->ctx();
+    // //spdl::trace(tfm::format("[SOMAArrayFinalizer] referenced once"));
+    // if (ctx == nullptr) return;
+    // std::shared_ptr<tiledb_ctx_t> ctx_cptr = ctx->ptr();
+    // if (ctx_cptr == nullptr) return;
+    // spdl::debug(tfm::format("[SOMAArrayFinalizer] count on ctx %d cptr %d",
+    //                         ctx.use_count(), ctx_cptr.use_count()));
+    // tiledb_ctx_t* ptr = ctx_cptr.get();
+    // if (ptr == nullptr) return;
+    // tiledb_ctx_free(&ptr);
+    // ptr = nullptr;
+    // ctx_cptr.reset();
+    // ctx.reset();
     spdl::debug(tfm::format("[SOMAArrayFinalizer] done"));
 }
-
-// [[Rcpp::export]]
-void sr_finalize(Rcpp::XPtr<tdbs::SOMAArray> sr) {
-   check_xptr_tag<tdbs::SOMAArray>(sr);
-   registerXptrFinalizer(sr, SOMAArrayFinalizer);
+// Finalizer helper with void f(SEXP) signature
+void ContextWrapperFinalizer(SEXP sx) {
+    spdl::debug(tfm::format("[ContextWrapperFinalizer] entered"));
+    if (sx == R_NilValue || sx == NULL || R_ExternalPtrAddr(sx) == NULL) return;
+    Rcpp::XPtr<ctx_wrap_t> xp(sx);
+    if (xp == R_NilValue) return;
+    // check_xptr_tag<tdbs::SOMAArray>(xp);
+    std::shared_ptr<tiledb::Context> ctx = xp->ctxptr;
+    ctx.reset();
+    spdl::debug(tfm::format("[ContextWrapperFinalizer] done"));
 }
+
+// // [ [ Rcpp::export]]
+// void sr_finalize(Rcpp::XPtr<tdbs::SOMAArray> sr, Rcpp::XPtr<ctx_wrap_t> cw) {
+//     spdl::debug(tfm::format("[sr_finalize] entered"));
+//     check_xptr_tag<tdbs::SOMAArray>(sr);
+//     // not yet tagges
+//     registerXptrFinalizer(sr, SOMAArrayFinalizer);
+// }
