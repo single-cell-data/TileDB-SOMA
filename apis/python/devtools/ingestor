@@ -292,7 +292,7 @@ def ingest_one(
 
     rd = None
     if appending:
-        rd = tiledbsoma.io.register(
+        rd = tiledbsoma.io.register_h5ads(
             experiment_uri=output_path,
             h5ad_file_names=[input_path],
             measurement_name=measurement_name,
