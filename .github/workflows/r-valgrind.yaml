@@ -1,8 +1,6 @@
 name: r-valgrind
 
 on:
-  # push may be too frequent but needed during PR
-  push:
   # allows for 'as needed', can be complemented by scheduled runs
   workflow_dispatch:
 
