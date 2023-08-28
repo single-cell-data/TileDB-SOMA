@@ -139,9 +139,9 @@ class IngestionParams:
             )
 
 
-# The tiledbsoma.io._registration package is private. This is the sole user-facing
-# API entrypoint for append-mode soma_joinid registration.
-def register(
+# The tiledbsoma.io._registration package is private. These are the two sole user-facing API
+# entrypoints for append-mode soma_joinid registration.
+def register_h5ads(
     experiment_uri: Optional[str],
     h5ad_file_names: Sequence[str],
     *,
@@ -157,6 +157,30 @@ def register(
     return ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
         experiment_uri=experiment_uri,
         h5ad_file_names=h5ad_file_names,
+        measurement_name=measurement_name,
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+        append_obsm_varm=append_obsm_varm,
+        context=context,
+    )
+
+
+def register_anndatas(
+    experiment_uri: Optional[str],
+    adatas: Sequence[ad.AnnData],
+    *,
+    measurement_name: str,
+    obs_field_name: str,
+    var_field_name: str,
+    append_obsm_varm: bool = False,
+    context: Optional[SOMATileDBContext] = None,
+) -> ExperimentAmbientLabelMapping:
+    """Extends registration data from the baseline, already-written SOMA
+    experiment to include multiple H5AD input files. See ``from_h5ad`` and
+    ``from_anndata`` on-line help."""
+    return ExperimentAmbientLabelMapping.from_anndata_appends_on_experiment(
+        experiment_uri=experiment_uri,
+        adatas=adatas,
         measurement_name=measurement_name,
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
@@ -251,7 +275,7 @@ def from_h5ad(
           are to be ingested into a single experiment, there are two steps. First:
 
               import tiledbsoma.io
-              rd = tiledbsoma.io.register(
+              rd = tiledbsoma.io.register_h5ads(
                   experiment_uri,
                   h5ad_file_names,
                   measurement_name="RNA",
@@ -712,6 +736,117 @@ def from_anndata(
     return experiment.uri
 
 
+def append_obs(
+    obs_uri: str,
+    new_obs: pd.DataFrame,
+    *,
+    registration_mapping: ExperimentAmbientLabelMapping,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig] = None,
+) -> str:
+    """
+    Writes new rows to an existing ``obs`` dataframe. (This is distinct from ``update_obs``
+    which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns.)
+
+    Example:
+
+        rd = tiledbsoma.io.register_anndatas(
+            exp_uri,
+            [new_anndata],
+            measurement_name="RNA",
+            obs_field_name="obs_id",
+            var_field_name="var_id",
+        )
+
+        with tiledbsoma.Experiment.open(exp_uri, "w") as exp:
+            tiledbsoma.io.append_obs(
+                exp.obs.uri, new_anndata.obs, registration_mapping=rd,
+            )
+
+    Lifecycle:
+        Experimental.
+    """
+    # Map the user-level ingest mode to a set of implementation-level boolean flags.
+    # See comments in from_anndata.
+    ingestion_params = IngestionParams("write", registration_mapping)
+    jidmap = registration_mapping.obs_axis.id_mapping_from_dataframe(new_obs)
+    context = _validate_soma_tiledb_context(context)
+
+    s = _util.get_start_stamp()
+    logging.log_io_same(f"Start  writing obs for {obs_uri}")
+
+    with _write_dataframe(
+        obs_uri,
+        conversions.decategoricalize_obs_or_var(new_obs),
+        id_column_name="obs_id",
+        platform_config=platform_config,
+        context=context,
+        ingestion_params=ingestion_params,
+        axis_mapping=jidmap,
+    ):
+        logging.log_io_same(
+            _util.format_elapsed(s, f"Finish writing obs for {obs_uri}")
+        )
+    return obs_uri
+
+
+def append_var(
+    var_uri: str,
+    new_var: pd.DataFrame,
+    measurement_name: str,
+    *,
+    registration_mapping: ExperimentAmbientLabelMapping,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig] = None,
+) -> str:
+    """
+    Writes new rows to an existing ``obs`` dataframe. (This is distinct from ``update_obs``
+    which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns.)
+
+    Example:
+
+        rd = tiledbsoma.io.register_anndatas(
+            exp_uri,
+            [new_anndata],
+            measurement_name="RNA",
+            obs_field_name="obs_id",
+            var_field_name="var_id",
+        )
+
+        with tiledbsoma.Experiment.open(exp_uri, "w") as exp:
+            tiledbsoma.io.append_var(
+                exp.ms["RNA"].var.uri, a2.var, measurement_name="RNA", registration_mapping=rd,
+            )
+
+    Lifecycle:
+        Experimental.
+    """
+    # Map the user-level ingest mode to a set of implementation-level boolean flags.
+    # See comments in from_anndata.
+    ingestion_params = IngestionParams("write", registration_mapping)
+    jidmap = registration_mapping.var_axes[measurement_name].id_mapping_from_dataframe(
+        new_var
+    )
+    context = _validate_soma_tiledb_context(context)
+
+    s = _util.get_start_stamp()
+    logging.log_io_same(f"Start  writing var for {var_uri}")
+
+    with _write_dataframe(
+        var_uri,
+        conversions.decategoricalize_obs_or_var(new_var),
+        id_column_name="var_id",
+        platform_config=platform_config,
+        context=context,
+        ingestion_params=ingestion_params,
+        axis_mapping=jidmap,
+    ):
+        logging.log_io_same(
+            _util.format_elapsed(s, f"Finish writing var for {var_uri}")
+        )
+    return var_uri
+
+
 def _maybe_set(
     coll: AnyTileDBCollection,
     key: str,
@@ -1093,7 +1228,8 @@ def update_obs(
 ) -> None:
     """
     Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
-    ``obs`` to incorporate the changes.
+    entire ``obs`` to incorporate the changes. (This is distinct from ``append_obs``
+    which adds new rows, while allowing no schema/column changes.)
 
     All columns present in current SOMA-experiment storage but absent from the new
     dataframe will be dropped.  All columns absent in current SOMA-experiment storage
@@ -1142,7 +1278,8 @@ def update_var(
 ) -> None:
     """
     Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
-    specified measurement's ``var`` to incorporate the changes.
+    specified measurement's entire ``var`` to incorporate the changes. (This is distinct
+    from ``append_var`` which adds new rows, while allowing no schema/column changes.)
 
     All columns present in current SOMA-experiment storage but absent from the new
     dataframe will be dropped.  All columns absent in current SOMA-experiment storage
