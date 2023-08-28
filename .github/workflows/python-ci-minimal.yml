@@ -11,6 +11,7 @@ on:
   push:
     paths-ignore:
       - 'apis/r/**'
+      - '.github/workflows/**'
 
 jobs:
   build:
