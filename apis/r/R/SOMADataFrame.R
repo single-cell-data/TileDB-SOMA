@@ -229,13 +229,24 @@ SOMADataFrame <- R6::R6Class(
           (is_arrow_table(values) || is_arrow_record_batch(values))
       )
 
-      # TODO: Check number of rows in values matches number of rows in array
-      # TODO: Retrieve existing soma_joinids from array and add to values
-      # rather than assuming 0:nrow(values) - 1 is correct
+      # Retrieve existing soma_joinids from array to:
+      # - validate number of rows in values matches number of rows in array
+      # - add original soma_joinids to values if not present
+      spdl::debug("[SOMADataFrame update]: Retrieving existing soma_joinids")
+      private$reopen(mode = "READ")
+      joinids <- self$read(column_names = "soma_joinid")$concat()$soma_joinid
+      if (length(joinids) != nrow(values)) {
+        stop(
+          "Number of rows in 'values' must match number of rows in array:\n",
+          "  - Number of rows in array: ", length(joinids), "\n",
+          "  - Number of rows in 'values': ", nrow(values),
+          call. = FALSE
+        )
+      }
 
       # Add soma_joinid column if not present
       if (!"soma_joinid" %in% colnames(values)) {
-        values$soma_joinid <- bit64::seq.integer64(0L, nrow(values) - 1L)
+        values$soma_joinid <- joinids
       }
       private$validate_schema(
         schema = values$schema,
@@ -285,8 +296,7 @@ SOMADataFrame <- R6::R6Class(
       se <- tiledb::tiledb_array_schema_evolution_array_evolve(se, self$uri)
 
       # Reopen array for writing with new schema
-      self$close()
-      self$open("WRITE", internal_use_only = "allowed_use")
+      private$reopen(mode = "WRITE")
       spdl::info("[SOMADataFrame update]: Writing new data")
       self$write(values)
     }

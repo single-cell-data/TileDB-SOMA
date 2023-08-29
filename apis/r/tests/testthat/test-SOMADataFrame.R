@@ -544,4 +544,12 @@ test_that("SOMADataFrame can be updated", {
     SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
     "Schemas are incompatible"
   )
+  tbl0 <- tbl1
+
+  # Error if the number of rows changes
+  tbl0 <- tbl0$Slice(offset = 1, length = tbl0$num_rows - 1)
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    "Number of rows in 'values' must match number of rows in array"
+  )
 })
