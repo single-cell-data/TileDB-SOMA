@@ -433,12 +433,7 @@ test_that("SOMASparseNDArray without bounding box", {
 
   expect_false(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
-  expect_warning(bbox <- ndarray$used_shape())
-  expect_type(bbox, 'list')
-  expect_equal(names(bbox), dnames)
-  expect_true(all(vapply(bbox, length, integer(1L)) == 1L))
-  expect_true(all(vapply(bbox, rlang::is_na, logical(1L))))
-  expect_true(all(vapply(bbox, inherits, logical(1L), what = 'integer64')))
+  expect_error(ndarray$used_shape())
 })
 
 test_that("SOMASparseNDArray with failed bounding box", {
@@ -463,14 +458,7 @@ test_that("SOMASparseNDArray with failed bounding box", {
 
   expect_false(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
-  expect_warning(bbox <- ndarray$used_shape())
-  expect_type(bbox, 'list')
-  expect_equal(names(bbox), dnames)
-  expect_true(all(vapply(bbox, length, integer(1L)) == 2L))
-  expect_true(all(vapply(bbox, inherits, logical(1L), what = 'integer64')))
-  for (i in seq_along(bbox)) {
-    expect_equal(bbox[[i]], bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
-  }
+  expect_error(ndarray$used_shape())
 })
 
 test_that("SOMASparseNDArray bounding box implicitly-stored values", {

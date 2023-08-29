@@ -160,25 +160,10 @@ TileDBArray <- R6::R6Class(
         utilized[[i]] <- self$get_metadata(key) %||% bit64::NA_integer64_
       }
       if (any(vapply_lgl(utilized, rlang::is_na))) {
-        ned <- self$non_empty_domain(index1 = FALSE)
-        ned[!ned] <- NA_integer_
-        idx <- which(vapply_lgl(utilized, rlang::is_na))
-        msg <- paste(
-          strwrap(paste0(
-            "The following dimensions have no bounding box, non-empty domain used instead:\n",
-            paste(sQuote(dims[idx]), collapse = ', ')
-          )),
-          collapse = '\n'
+        stop(
+          "This array was not written with bounding box support; for an approximation, please use `$non_empty_domain()` instead",
+          call. = FALSE
         )
-        spdl::warn(msg)
-        warning(msg)
-        for (j in idx) {
-          utilized[[j]] <- if (rlang::is_na(ned[j])) {
-            ned[j]
-          } else {
-            c(bit64::as.integer64(0L), ned[j])
-          }
-        }
       }
       if (index1) {
         for (i in seq_along(utilized)) {
