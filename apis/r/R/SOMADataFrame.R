@@ -94,16 +94,9 @@ SOMADataFrame <- R6::R6Class(
 
       for (field_name in attr_column_names) {
         field <- schema$GetFieldByName(field_name)
-        field_type <- tiledb_type_from_arrow_type(field$type)
-
-        tdb_attrs[[field_name]] <- tiledb::tiledb_attr(
-          name = field_name,
-          type = field_type,
-          nullable = field$nullable,
-          ncells = if (field_type == "ASCII") NA_integer_ else 1L,
-          filter_list = tiledb::tiledb_filter_list(
-            tiledb_create_options$attr_filters(field_name)
-          )
+        tdb_attrs[[field_name]] <- tiledb_attr_from_arrow_field(
+          schema$GetFieldByName(field_name),
+          tiledb_create_options = tiledb_create_options
         )
       }
 

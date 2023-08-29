@@ -172,6 +172,36 @@ arrow_field_from_tiledb_attr <- function(x) {
   )
 }
 
+#' Create a TileDB attribute from an Arrow field
+#' @return a [`tiledb::tiledb_attr-class`]
+#' @noRd
+tiledb_attr_from_arrow_field <- function(field, tiledb_create_options) {
+  stopifnot(
+    is_arrow_field(field),
+    inherits(tiledb_create_options, "TileDBCreateOptions")
+  )
+
+  # Default zstd filter to use if none is specified in platform config
+  default_zstd_filter <- list(
+    name = "ZSTD",
+    COMPRESSION_LEVEL = tiledb_create_options$dataframe_dim_zstd_level()
+  )
+
+  field_type <- tiledb_type_from_arrow_type(field$type)
+  tiledb::tiledb_attr(
+    name = field$name,
+    type = field_type,
+    nullable = field$nullable,
+    ncells = if (field_type == "ASCII") NA_integer_ else 1L,
+    filter_list = tiledb::tiledb_filter_list(
+      tiledb_create_options$attr_filters(
+        attr_name = field$name,
+        default = list(default_zstd_filter)
+      )
+    )
+  )
+}
+
 #' Create an Arrow schema from a TileDB array schema
 #' @noRd
 arrow_schema_from_tiledb_schema <- function(x) {
