@@ -263,6 +263,7 @@ SOMADataFrame <- R6::R6Class(
       # Drop columns
       se <- tiledb::tiledb_array_schema_evolution()
       for (drop_col in drop_cols) {
+        spdl::info("[SOMADataFrame update]: dropping column '{}'", drop_col)
         se <- tiledb::tiledb_array_schema_evolution_drop_attribute(
           object = se,
           attrname = drop_col
@@ -271,6 +272,7 @@ SOMADataFrame <- R6::R6Class(
 
       # Add columns
       for (add_col in add_cols) {
+        spdl::info("[SOMADataFrame update]: adding column '{}'", add_col)
         se <- tiledb::tiledb_array_schema_evolution_add_attribute(
           object = se,
           attr = tiledb_attr_from_arrow_field(
@@ -285,6 +287,7 @@ SOMADataFrame <- R6::R6Class(
       # Reopen array for writing with new schema
       self$close()
       self$open("WRITE", internal_use_only = "allowed_use")
+      spdl::info("[SOMADataFrame update]: Writing new data")
       self$write(values)
     }
 
