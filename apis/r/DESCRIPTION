@@ -1,6 +1,6 @@
 Package: tiledbsoma
 Type: Package
-Title: TileDB SOMA
+Title: 'TileDB' Stack of Matrices, Annotated ('SOMA')
 Description: Interface for working with 'TileDB'-based Stack of Matrices,
     Annotated ('SOMA'): an open data model for representing annotated matrices,
     like those commonly used for single cell data analysis.
