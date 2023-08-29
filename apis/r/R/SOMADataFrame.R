@@ -234,14 +234,31 @@ SOMADataFrame <- R6::R6Class(
     #'
     #' @param values A `data.frame`, [`arrow::Table`], or
     #' [`arrow::RecordBatch`].
-    update = function(values) {
+    #' @param row_index_name An optional scalar character. If provided, and if
+    #' the `values` argument is a `data.frame` with row names, then the row
+    #' names will be extracted and added as a new column to the `data.frame`
+    #' prior to performing the update. The name of this new column will be set
+    #' to the value specified by `row_index_name`.
+
+    update = function(values, row_index_name = NULL) {
       private$check_open_for_write()
       stopifnot(
         "'values' must be a data.frame, Arrow Table or RecordBatch" =
           is.data.frame(values) || is_arrow_table(values) || is_arrow_record_batch(values)
       )
 
-      if (is.data.frame(values)) values <- arrow::as_arrow_table(values)
+      if (is.data.frame(values)) {
+        if (!is.null(row_index_name)) {
+          stopifnot(
+            "'row_index_name' must be NULL or a scalar character vector" =
+              is_scalar_character(row_index_name),
+            "'row_index_name' conflicts with an existing column name" =
+              !row_index_name %in% colnames(values)
+          )
+          values[[row_index_name]] <- rownames(values)
+        }
+        values <- arrow::as_arrow_table(values)
+      }
 
       # Retrieve existing soma_joinids from array to:
       # - validate number of rows in values matches number of rows in array

@@ -553,3 +553,32 @@ test_that("SOMADataFrame can be updated", {
     "Number of rows in 'values' must match number of rows in array"
   )
 })
+
+test_that("SOMADataFrame can be updated from a data frame", {
+  uri <- withr::local_tempdir("soma-dataframe-update")
+  sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
+
+  # Retrieve the table from disk
+  df0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()$to_data_frame()
+  df0$soma_joinid <- bit64::as.integer64(df0$soma_joinid)
+
+  # Convert a column to row names to test that it can be recovered
+  df0 <- as.data.frame(df0)
+  rownames(df0) <- df0$baz
+  df0$baz <- NULL
+  df0$bar <- NULL
+
+  # Update to drop 'bar' from the array and retrieve baz values from row names
+  expect_silent(
+    SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "baz")
+  )
+
+  df1 <- SOMADataFrameOpen(uri)$read()$concat()$to_data_frame()
+  expect_setequal(colnames(df1), c("foo", "soma_joinid", "baz"))
+
+  # Error if row_index_name conflicts with an existing column name
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(df0, row_index_name = "foo"),
+    "'row_index_name' conflicts with an existing column name"
+  )
+})
