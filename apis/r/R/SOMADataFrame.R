@@ -260,11 +260,23 @@ SOMADataFrame <- R6::R6Class(
         new_schema[common_cols]
       )
 
+      # Drop columns
       se <- tiledb::tiledb_array_schema_evolution()
       for (drop_col in drop_cols) {
         se <- tiledb::tiledb_array_schema_evolution_drop_attribute(
           object = se,
           attrname = drop_col
+        )
+      }
+
+      # Add columns
+      for (add_col in add_cols) {
+        se <- tiledb::tiledb_array_schema_evolution_add_attribute(
+          object = se,
+          attr = tiledb_attr_from_arrow_field(
+            field = new_schema$GetFieldByName(add_col),
+            tiledb_create_options = tiledb_create_options
+          )
         )
       }
 

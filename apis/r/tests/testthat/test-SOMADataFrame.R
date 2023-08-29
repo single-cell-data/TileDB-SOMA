@@ -415,7 +415,12 @@ test_that("platform_config defaults", {
   cfg <- PlatformConfig$new()
 
   # Create the SOMADataFrame
-  sdf <- SOMADataFrameCreate(uri=uri, schema=asch, index_column_names=c("soma_joinid"), platform_config = cfg)
+  sdf <- SOMADataFrameCreate(
+    uri = uri,
+    schema = asch,
+    index_column_names = c("soma_joinid"),
+    platform_config = cfg
+  )
 
   # Read back and check the array schema against the tiledb create options
   arr <- tiledb::tiledb_array(uri)
@@ -503,7 +508,7 @@ test_that("SOMADataFrame timestamped ops", {
 })
 
 test_that("SOMADataFrame can be updated", {
-  uri <- withr::local_tempdir("soma-dataframe-update-3")
+  uri <- withr::local_tempdir("soma-dataframe-update")
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
 
   # Retrieve the table from disk
@@ -518,5 +523,14 @@ test_that("SOMADataFrame can be updated", {
   # Verify attribute was removed on disk
   sdf <- SOMADataFrameOpen(uri, "READ")
   tbl1 <- sdf$read()$concat()
+  expect_true(tbl1$Equals(tbl0))
+
+  # # Add a new column and update
+  tbl0$bar <- sample(c(TRUE, FALSE), nrow(tbl0), replace = TRUE)
+  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")
+  sdf$update(tbl0)
+
+  # Verify attribute was added on disk
+  tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat()
   expect_true(tbl1$Equals(tbl0))
 })
