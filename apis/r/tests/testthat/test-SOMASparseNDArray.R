@@ -389,9 +389,9 @@ test_that("SOMASparseNDArray bounding box", {
   ndarray <- SOMASparseNDArrayOpen(uri)
   dnames <- ndarray$dimnames()
 
-  expect_true(all(paste0(dnames, '_DOMAIN') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  expect_true(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
   for (i in seq_along(dnames)) {
-    expect_s3_class(xrange <- ndarray$get_metadata(paste0(dnames[i], '_DOMAIN')), 'integer64')
+    expect_s3_class(xrange <- ndarray$get_metadata(paste0(dnames[i], '_domain')), 'integer64')
     expect_equal(xrange, bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
   }
 
@@ -431,7 +431,7 @@ test_that("SOMASparseNDArray without bounding box", {
   ndarray <- SOMASparseNDArrayOpen(uri)
   dnames <- ndarray$dimnames()
 
-  expect_false(all(paste0(dnames, '_DOMAIN') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  expect_false(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
   expect_warning(bbox <- ndarray$used_shape())
   expect_type(bbox, 'list')
@@ -461,7 +461,7 @@ test_that("SOMASparseNDArray with failed bounding box", {
   ndarray <- SOMASparseNDArrayOpen(uri)
   dnames <- ndarray$dimnames()
 
-  expect_false(all(paste0(dnames, '_DOMAIN') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  expect_false(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
   expect_warning(bbox <- ndarray$used_shape())
   expect_type(bbox, 'list')
@@ -487,9 +487,9 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
   ndarray <- SOMASparseNDArrayOpen(uri)
   dnames <- ndarray$dimnames()
 
-  expect_true(all(paste0(dnames, '_DOMAIN') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  expect_true(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
   for (i in seq_along(dnames)) {
-    expect_s3_class(xrange <- ndarray$get_metadata(paste0(dnames[i], '_DOMAIN')), 'integer64')
+    expect_s3_class(xrange <- ndarray$get_metadata(paste0(dnames[i], '_domain')), 'integer64')
     expect_equal(xrange, bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
   }
 

@@ -165,7 +165,7 @@ SOMASparseNDArray <- R6::R6Class(
         }
         bbox[[x]] <- xrange
       }
-      names(bbox) <- paste0(names(bbox), '_DOMAIN')
+      names(bbox) <- paste0(names(bbox), '_domain')
       self$set_metadata(bbox)
       private$.write_coo_dataframe(coo)
     },

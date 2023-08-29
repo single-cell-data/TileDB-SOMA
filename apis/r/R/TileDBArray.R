@@ -156,7 +156,7 @@ TileDBArray <- R6::R6Class(
       utilized <- vector(mode = 'list', length = length(dims))
       names(utilized) <- dims
       for (i in seq_along(along.with = utilized)) {
-        key <- paste0(dims[i], '_DOMAIN')
+        key <- paste0(dims[i], '_domain')
         utilized[[i]] <- self$get_metadata(key) %||% bit64::NA_integer64_
       }
       if (any(vapply_lgl(utilized, rlang::is_na))) {
