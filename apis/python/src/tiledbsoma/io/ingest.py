@@ -1124,6 +1124,7 @@ def update_obs(
     _update_dataframe(
         exp.obs,
         new_data,
+        "update_obs",
         context=context,
         platform_config=platform_config,
         default_index_name=default_index_name,
@@ -1180,6 +1181,7 @@ def update_var(
     _update_dataframe(
         exp.ms[measurement_name].var,
         new_data,
+        "update_var",
         measurement_name=measurement_name,
         context=context,
         platform_config=platform_config,
@@ -1190,6 +1192,7 @@ def update_var(
 def _update_dataframe(
     sdf: DataFrame,
     new_data: pd.DataFrame,
+    caller_name: str,
     *,
     measurement_name: str,
     context: Optional[SOMATileDBContext] = None,
@@ -1205,6 +1208,26 @@ def _update_dataframe(
     new_sig = signatures._string_dict_from_pandas_dataframe(
         new_data, default_index_name
     )
+
+    with DataFrame.open(
+        sdf.uri, mode="r", context=context, platform_config=platform_config
+    ) as sdf_r:
+
+        # Until we someday support deletes, this is the correct check on the existing,
+        # contiguous soma join IDs compared to the new contiguous ones about to be created.
+        old_jids = sorted(
+            [
+                e.as_py()
+                for e in sdf_r.read(column_names=["soma_joinid"]).concat()[
+                    "soma_joinid"
+                ]
+            ]
+        )
+        new_jids = list(range(len(new_data)))
+        if old_jids != new_jids:
+            raise ValueError(
+                f"{caller_name}: old and new data must have the same row count; got {len(old_jids)} != {len(new_jids)}",
+            )
 
     old_keys = set(old_sig.keys())
     new_keys = set(new_sig.keys())
