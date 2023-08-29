@@ -7,6 +7,11 @@
 #'
 #' @templateVar class SOMAExperiment
 #' @template section-add-object-to-collection
+ #' @param row_index_name An optional scalar character. If provided, and if
+#' the `values` argument is a `data.frame` with row names, then the row
+#' names will be extracted and added as a new column to the `data.frame`
+#' prior to performing the update. The name of this new column will be set
+#' to the value specified by `row_index_name`.
 #'
 #' @export
 SOMAExperiment <- R6::R6Class(
@@ -27,6 +32,30 @@ SOMAExperiment <- R6::R6Class(
         obs_query = obs_query,
         var_query = var_query
       )
+    },
+
+    #' @description Update the obs [`SOMADataFrame`] to add or remove columns.
+    #' See [`SOMADataFrame$update()`][`SOMADataFrame`] for details.
+    #' @param values A `data.frame`, [`arrow::Table`], or
+    #' [`arrow::RecordBatch`].
+    update_obs = function(values, row_index_name = NULL) {
+      self$obs$update(values, row_index_name)
+    },
+
+    #' @description Update the var `SOMADataFrame` to add or remove columns.
+    #' See [`SOMADataFrame$update()`][`SOMADataFrame`] for details.
+    #' @param values A `data.frame`, [`arrow::Table`], or
+    #' [`arrow::RecordBatch`].
+    #' @param measurement_name The name of the [`SOMAMeasurement`] whose `var`
+    #' will be updated.
+    update_var = function(values, measurement_name, row_index_name = NULL) {
+      stopifnot(
+        "Must specify a single measurement name" =
+          is_scalar_character(measurement_name),
+        "Measurement does not exist in the experiment" =
+          measurement_name %in% self$ms$names()
+      )
+      self$ms$get(measurement_name)$var$update(values, row_index_name)
     }
   ),
 
