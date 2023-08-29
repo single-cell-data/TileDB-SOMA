@@ -225,7 +225,62 @@ SOMADataFrame <- R6::R6Class(
                      loglevel = log_level)
 
       TableReadIter$new(sr)
+    },
 
+    #' @description Update (lifecycle: experimental)
+    #' @param values An [`arrow::Table`] or [`arrow::RecordBatch`].
+    update = function(values) {
+      private$check_open_for_write()
+      stopifnot(
+        "'values' must be an Arrow Table or RecordBatch" =
+          (is_arrow_table(values) || is_arrow_record_batch(values))
+      )
+
+      # TODO: Check number of rows in values matches number of rows in array
+      # TODO: Retrieve existing soma_joinids from array and add to values
+      # rather than assuming 0:nrow(values) - 1 is correct
+
+      # Add soma_joinid column if not present
+      if (!"soma_joinid" %in% colnames(values)) {
+        values$soma_joinid <- bit64::seq.integer64(0L, nrow(values) - 1L)
+      }
+      private$validate_schema(
+        schema = values$schema,
+        index_column_names = self$dimnames()
+      )
+
+      old_schema <- self$schema()
+      new_schema <- values$schema
+
+      old_cols <- old_schema$names
+      new_cols <- new_schema$names
+
+      drop_cols <- setdiff(old_cols, new_cols)
+      add_cols <- setdiff(new_cols, old_cols)
+      common_cols <- intersect(old_cols, new_cols)
+
+      tiledb_create_options <- TileDBCreateOptions$new(self$platform_config)
+
+      # Check compatibility of new/old data types in common columns
+      check_arrow_schema_data_types(
+        old_schema[common_cols],
+        new_schema[common_cols]
+      )
+
+      se <- tiledb::tiledb_array_schema_evolution()
+      for (drop_col in drop_cols) {
+        se <- tiledb::tiledb_array_schema_evolution_drop_attribute(
+          object = se,
+          attrname = drop_col
+        )
+      }
+
+      se <- tiledb::tiledb_array_schema_evolution_array_evolve(se, self$uri)
+
+      # Reopen array for writing with new schema
+      self$close()
+      self$open("WRITE", internal_use_only = "allowed_use")
+      self$write(values)
     }
 
   ),
