@@ -1,5 +1,5 @@
 /**
- * @file   pytiledbsoma.cc
+ * @file   soma_array.cc
  *
  * @section LICENSE
  *
@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the a pybind11 api into SOMA C++ library.
+ * This file defines the SOMAArray bindings.
  */
 
 #include <pybind11/numpy.h>
