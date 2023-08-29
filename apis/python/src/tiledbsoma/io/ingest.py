@@ -1216,12 +1216,8 @@ def _update_dataframe(
         # Until we someday support deletes, this is the correct check on the existing,
         # contiguous soma join IDs compared to the new contiguous ones about to be created.
         old_jids = sorted(
-            [
-                e.as_py()
-                for e in sdf_r.read(column_names=["soma_joinid"]).concat()[
-                    "soma_joinid"
-                ]
-            ]
+            e.as_py()
+            for e in sdf_r.read(column_names=["soma_joinid"]).concat()["soma_joinid"]
         )
         new_jids = list(range(len(new_data)))
         if old_jids != new_jids:
