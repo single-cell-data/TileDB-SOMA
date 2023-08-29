@@ -221,6 +221,17 @@ SOMADataFrame <- R6::R6Class(
     },
 
     #' @description Update (lifecycle: experimental)
+    #' @details
+    #' Update the existing `SOMADataFrame` to add or remove columns based on the
+    #' input:
+    #' - columns present in the current the `SOMADataFrame` but absent from the
+    #'   new `values` will be dropped
+    #' - columns absent in current `SOMADataFrame` but present in the new
+    #'   `values` will be added
+    #' - any columns present in both will be left alone, with the exception that
+    #'   if `values` has a different type for the column, the entire update
+    #'   will because attribute types cannot be changed
+    #'
     #' @param values A `data.frame`, [`arrow::Table`], or
     #' [`arrow::RecordBatch`].
     update = function(values) {
