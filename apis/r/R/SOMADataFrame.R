@@ -221,13 +221,16 @@ SOMADataFrame <- R6::R6Class(
     },
 
     #' @description Update (lifecycle: experimental)
-    #' @param values An [`arrow::Table`] or [`arrow::RecordBatch`].
+    #' @param values A `data.frame`, [`arrow::Table`], or
+    #' [`arrow::RecordBatch`].
     update = function(values) {
       private$check_open_for_write()
       stopifnot(
-        "'values' must be an Arrow Table or RecordBatch" =
-          (is_arrow_table(values) || is_arrow_record_batch(values))
+        "'values' must be a data.frame, Arrow Table or RecordBatch" =
+          is.data.frame(values) || is_arrow_table(values) || is_arrow_record_batch(values)
       )
+
+      if (is.data.frame(values)) values <- arrow::as_arrow_table(values)
 
       # Retrieve existing soma_joinids from array to:
       # - validate number of rows in values matches number of rows in array
