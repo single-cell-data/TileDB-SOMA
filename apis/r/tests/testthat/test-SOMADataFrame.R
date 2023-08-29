@@ -524,10 +524,24 @@ test_that("SOMADataFrame can be updated", {
 
   # # Add a new column and update
   tbl0$bar <- sample(c(TRUE, FALSE), nrow(tbl0), replace = TRUE)
-  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")
-  sdf$update(tbl0)
+  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0)
 
   # Verify attribute was added on disk
   tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat()
   expect_true(tbl1$Equals(tbl0))
+
+  # Error if attempting to drop an array dimension
+  tbl0$foo <- NULL # drop the indexed dimension
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    "The following indexed field does not exist"
+  )
+  tbl0 <- tbl1
+
+  # Error on incompatible schema updates
+  tbl0$baz <- tbl0$baz$cast(target_type = arrow::int32()) # string to int
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    "Schemas are incompatible"
+  )
 })
