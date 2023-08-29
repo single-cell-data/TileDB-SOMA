@@ -15,11 +15,14 @@ TileDBArray <- R6::R6Class(
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `open()` is considered internal and should not be called directly.
     #' @return The object, invisibly
-    open = function(mode=c("READ", "WRITE"), internal_use_only = NULL) {
+    open = function(mode = c("READ", "WRITE"), internal_use_only = NULL) {
       mode <- match.arg(mode)
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the open() method is for internal use only. Consider using a",
-                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
+        stop(
+          "Use of the open() method is for internal use only.\n",
+          "  - Consider using a factory method as e.g. 'SOMADataFrameOpen()'.",
+          call. = FALSE
+        )
       }
 
       private$.mode <- mode
@@ -285,6 +288,18 @@ TileDBArray <- R6::R6Class(
   ),
 
   private = list(
+
+    # Reopen the array in a different mode
+    reopen = function(mode = c("READ", "WRITE")) {
+      mode <- match.arg(mode)
+      if (private$.mode == mode) {
+        return(invisible(self))
+      }
+      self$close()
+      invisible(
+        self$open(mode = mode, internal_use_only = "allowed_use")
+      )
+    },
 
     # Internal pointer to the TileDB array.
     #
