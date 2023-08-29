@@ -55,7 +55,7 @@ https://github.com/tiledb-inc/tiledb
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
--- apis/r/src/nanaarrow.{h,cc}/ -------------------------------------------------------------
+-- apis/r/src/nanoarrow.{h,cc}/ -------------------------------------------------------------
 The nanoarrow package was written by Dewey Dunnington and other and released at
 https://github.com/apache/arrow-nanoarrow
 
