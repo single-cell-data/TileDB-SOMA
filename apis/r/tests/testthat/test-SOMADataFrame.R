@@ -512,17 +512,14 @@ test_that("SOMADataFrame can be updated", {
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
 
   # Retrieve the table from disk
-  sdf <- SOMADataFrameOpen(uri, "READ")
-  tbl0 <- sdf$read()$concat()
+  tbl0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
 
   # Remove a column and update
   tbl0$bar <- NULL
-  sdf <- SOMADataFrameOpen(uri, "WRITE")
-  sdf$update(tbl0)
+  sdf <- SOMADataFrameOpen(uri, "WRITE")$update(tbl0)
 
   # Verify attribute was removed on disk
-  sdf <- SOMADataFrameOpen(uri, "READ")
-  tbl1 <- sdf$read()$concat()
+  tbl1 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
   expect_true(tbl1$Equals(tbl0))
 
   # # Add a new column and update
