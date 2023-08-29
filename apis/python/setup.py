@@ -255,7 +255,14 @@ setuptools.setup(
     ext_modules=[
         Pybind11Extension(
             "tiledbsoma.pytiledbsoma",
-            ["src/tiledbsoma/pytiledbsoma.cc"],
+            ["src/tiledbsoma/soma_array.cc",
+             "src/tiledbsoma/soma_dataframe.cc",
+             "src/tiledbsoma/soma_dense_ndarray.cc",
+             "src/tiledbsoma/soma_sparse_ndarray.cc",
+             "src/tiledbsoma/soma_collection.cc",
+             "src/tiledbsoma/soma_experiment.cc",
+             "src/tiledbsoma/soma_measurement.cc",
+             "src/tiledbsoma/pytiledbsoma.cc"],
             include_dirs=INC_DIRS,
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"],
