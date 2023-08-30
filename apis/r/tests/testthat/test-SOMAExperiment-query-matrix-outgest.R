@@ -1,4 +1,5 @@
 test_that("matrix outgest with all results", {
+  skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
   experiment <- load_dataset("soma-exp-pbmc-small")
@@ -62,6 +63,7 @@ test_that("matrix outgest with all results", {
 })
 
 test_that("matrix outgest with filtered results", {
+  skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   # Subset the pbmc_small object to match the filtered results
   pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
@@ -139,6 +141,7 @@ test_that("matrix outgest with filtered results", {
 })
 
 test_that("matrix outgest assertions", {
+  skip_if(!extended_tests())
   experiment <- load_dataset("soma-exp-pbmc-small")
 
   query <- SOMAExperimentAxisQuery$new(
@@ -214,6 +217,7 @@ test_that("matrix outgest assertions", {
 })
 
 test_that("matrix outgest with implicitly-stored axes", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("matrix-implicit")
   set.seed(seed = 42L)
   n_obs <- 15L

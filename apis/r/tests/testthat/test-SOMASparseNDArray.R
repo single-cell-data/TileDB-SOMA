@@ -1,4 +1,5 @@
 test_that("SOMASparseNDArray creation", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("sparse-ndarray")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
@@ -74,6 +75,7 @@ test_that("SOMASparseNDArray creation", {
 })
 
 test_that("SOMASparseNDArray read_sparse_matrix", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("sparse-ndarray-3")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
@@ -102,6 +104,7 @@ test_that("SOMASparseNDArray read_sparse_matrix", {
 })
 
 test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("sparse-ndarray")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
@@ -140,6 +143,7 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
 })
 
 test_that("SOMASparseNDArray creation with duplicates", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("sparse-ndarray")
 
   set.seed(42)
@@ -174,6 +178,7 @@ test_that("SOMASparseNDArray creation with duplicates", {
 })
 
 test_that("platform_config is respected", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-sparse-nd-array")
 
   # Set tiledb create options
@@ -274,6 +279,7 @@ test_that("platform_config is respected", {
 })
 
 test_that("platform_config defaults", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-sparse-nd-array")
 
   # Set tiledb create options
@@ -310,6 +316,7 @@ test_that("platform_config defaults", {
 })
 
 test_that("SOMASparseNDArray timestamped ops", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-sparse-nd-array-timestamps")
 
   # t=10: create 2x2 array and write 1 into top-left entry
@@ -337,6 +344,7 @@ test_that("SOMASparseNDArray timestamped ops", {
 })
 
 test_that("SOMASparseNDArray compatibility with shape >= 2^31 - 1", {
+  skip_if(!extended_tests())
   uri <- create_and_populate_32bit_sparse_nd_array(
     uri = withr::local_tempdir("soma-32bit-sparse-nd-array")
   )
