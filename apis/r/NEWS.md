@@ -3,6 +3,7 @@
 ## Changes
 
 * Add support for writing `SummarizedExperiment` and `SingleCellExperiment` object to SOMAs
+* Add support for bounding boxes for sparse arrays
 
 
 # tiledbsoma 1.4.0
