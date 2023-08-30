@@ -2055,6 +2055,8 @@ def to_anndata(
     X_layer_name: str = "data",
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
+    # XXX optional dict from obsm names to widths
+    # XXX optional dict from varm names to widths
 ) -> ad.AnnData:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
     format. Choice of matrix formats is following what we often see in input
@@ -2118,7 +2120,6 @@ def to_anndata(
     if "obsm" in measurement:
         for key in measurement.obsm.keys():
             obsm[key] = _extract_obsm_or_varm(measurement.obsm[key], "obsm", key, nobs)
-
     varm = {}
     if "varm" in measurement:
         for key in measurement.varm.keys():
@@ -2189,3 +2190,124 @@ def _extract_obsm_or_varm(
     return conversions.csr_from_tiledb_df(
         matrix, num_rows, num_rows_times_width // num_rows
     ).toarray()
+
+
+# ----------------------------------------------------------------
+#            shape = measurement.obsm[key].shape
+#            if len(shape) != 2:
+#                raise ValueError(f"expected shape == 2; got {shape}")
+#            if isinstance(measurement.obsm[key], DenseNDArray):
+#                obj = cast(DenseNDArray, measurement.obsm[key])
+#                matrix = obj.read().to_numpy()
+#                # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
+#                obsm[key] = matrix
+#            else:
+#                # obsp is nobs x nobs.
+#                # obsm is nobs x some number -- number of PCA components, etc.
+#                matrix = measurement.obsm[key].read().tables().concat().to_pandas()
+#                nobs_times_width, coo_column_count = matrix.shape
+#                if coo_column_count != 3:
+#                    raise SOMAError(
+#                        f"internal error: expect COO width of 3; got {coo_column_count}"
+#                    )
+#                if nobs_times_width % nobs != 0:
+#                    raise SOMAError(
+#                        f"internal error: encountered non-rectangular obsm[{key}]: {nobs} does not divide {nobs_times_width}"
+#                    )
+#                obsm[key] = conversions.csr_from_tiledb_df(
+#                    matrix, nobs, nobs_times_width // nobs
+#                ).toarray()
+#
+#            shape = measurement.varm[key].shape
+#            if len(shape) != 2:
+#                raise ValueError(f"expected shape == 2; got {shape}")
+#            if isinstance(measurement.varm[key], DenseNDArray):
+#                obj = cast(DenseNDArray, measurement.varm[key])
+#                matrix = obj.read().to_numpy()
+#                # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
+#                varm[key] = matrix
+#            else:
+#                # varp is nvar x nvar.
+#                # varm is nvar x some number -- number of PCs, etc.
+#                matrix = measurement.varm[key].read().tables().concat().to_pandas()
+#                nvar_times_width, coo_column_count = matrix.shape
+#                if coo_column_count != 3:
+#                    raise SOMAError(
+#                        f"internal error: expect COO width of 3; got {coo_column_count}"
+#                    )
+#                if nvar_times_width % nvar != 0:
+#                    raise SOMAError(
+#                        f"internal error: encountered non-rectangular varm[{key}]: {nvar} does not divide {nvar_times_width}"
+#                    )
+#                varm[key] = conversions.csr_from_tiledb_df(
+#                    matrix, nvar, nvar_times_width // nvar
+#                ).toarray()
+
+
+#def _extract_obsm_or_varm(
+#    soma_nd_array: Union[SparseNDArray, DenseNDArray],
+#    collection_name: str,
+#    element_name: str,
+#    num_rows: int,
+#    num_cols: Optional[int],
+#) -> Union[SparseMatrix, DenseMatrix]:
+#    """
+#    This is a helper function for ``to_anndata`` of ``obsm`` and ``varm`` elements.
+#    """
+#
+#    # SOMA shape is capacity/domain -- not what AnnData wants.
+#    # But here do check the array is truly 2D.
+#    shape = soma_nd_array.shape
+#    if len(shape) != 2:
+#        raise ValueError(
+#            f"expected len(shape) == 2; got {shape} for {collection_name}[{element_name}]"
+#        )
+#
+#    if isinstance(soma_nd_array, DenseNDArray):
+#        obj = soma_nd_array
+#        matrix = obj.read().to_numpy()
+#        # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
+#        return matrix
+#
+#    # Problem to solve: whereas for other sparse arrays we have:
+#    #
+#    # * X    matrices are always nobs x nvar
+#    # * obsp matrices are always nobs x nobs
+#    # * varp matrices are always nvar x nvar
+#    #
+#    # but:
+#    #
+#    # * obsm is nobs x some number -- number of PCA components, etc.
+#    # * varm is nvar x some number -- number of PCs, etc.
+#    #
+#    # Three ways to get the number of columns for obsm/varm sparse matrices:
+#    #
+#    # * Explicit user specification
+#    # * Bounding-box metadata, if present
+#    # * Try arithmetic on nnz / nrows, for densely occupied sparse matrices
+#    # Beyond that, we have to throw.
+#
+#    matrix = soma_nd_array.read().tables().concat().to_pandas()
+#
+#    if num_cols is None:
+#        try:
+#            used_shape = soma_nd_array.used_shape()
+#            num_cols = used_shape[1][1] + 1
+#        except SOMAError:
+#            pass
+#
+#    if num_cols is None:
+#        nrows_times_width, coo_column_count = matrix.shape
+#
+#        if coo_column_count != 3:
+#            raise SOMAError(
+#                f"internal error: expect COO width of 3; got {coo_column_count}"  # for XXX
+#            )
+#
+#        # if nrows_times_width % nobs == 0:
+#        # num_cols = 999  # xxx / yyy
+#
+#    if num_cols is None:
+#        raise SOMAError("XXX new error message goes here")
+#
+#    return conversions.csr_from_tiledb_df(matrix, num_rows, num_cols).toarray()

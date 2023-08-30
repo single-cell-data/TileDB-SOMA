@@ -363,4 +363,7 @@ def _check_metadata_type(key: str, obj: object) -> None:
         raise TypeError(f"metadata keys must be strings, not {type(key)}")
     if isinstance(obj, (bytes, float, int, str)):
         return
+    if isinstance(obj, (list, tuple)):
+        # Will raise a TypeError if it can't convert the contents.
+        np.array(obj)
     raise TypeError(f"cannot store {type(obj)} instance as metadata")
