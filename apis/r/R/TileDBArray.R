@@ -158,7 +158,7 @@ TileDBArray <- R6::R6Class(
       for (i in seq_along(along.with = utilized)) {
         key <- paste0(dims[i], '_domain')
         dom <- bit64::integer64(2L)
-        names(dom) <- c('_lo', '_hi')
+        names(dom) <- c('_lower', '_upper')
         for (type in names(dom)) {
           dom[type] <- self$get_metadata(paste0(key, type)) %||% bit64::NA_integer64_
           if (any(is.na(dom))) {

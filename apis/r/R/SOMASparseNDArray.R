@@ -171,7 +171,7 @@ SOMASparseNDArray <- R6::R6Class(
       for (i in seq_along(bbox)) {
         bbox_flat[[index]] <- bbox[[i]][1L]
         bbox_flat[[index + 1L]] <- bbox[[i]][2L]
-        names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c('_lo', '_hi'))
+        names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c('_lower', '_upper'))
         index <- index + 2L
       }
       self$set_metadata(bbox_flat)

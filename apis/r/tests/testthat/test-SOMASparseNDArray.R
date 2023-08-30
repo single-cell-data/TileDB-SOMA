@@ -390,7 +390,7 @@ test_that("SOMASparseNDArray bounding box", {
   dnames <- ndarray$dimnames()
   bbox_names <- vector('character', length(dnames) * 2L)
   for (i in seq_along(bbox_names)) {
-    type <- c('_hi', '_lo')[(i %% 2) + 1L]
+    type <- c('_upper', '_lower')[(i %% 2) + 1L]
     bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
   }
 
@@ -441,7 +441,7 @@ test_that("SOMASparseNDArray without bounding box", {
   dnames <- ndarray$dimnames()
   bbox_names <- vector('character', length(dnames) * 2L)
   for (i in seq_along(bbox_names)) {
-    type <- c('_hi', '_lo')[(i %% 2) + 1L]
+    type <- c('_upper', '_lower')[(i %% 2) + 1L]
     bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
   }
 
@@ -471,7 +471,7 @@ test_that("SOMASparseNDArray with failed bounding box", {
   dnames <- ndarray$dimnames()
   bbox_names <- vector('character', length(dnames) * 2L)
   for (i in seq_along(bbox_names)) {
-    type <- c('_hi', '_lo')[(i %% 2) + 1L]
+    type <- c('_upper', '_lower')[(i %% 2) + 1L]
     bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
   }
 
@@ -495,7 +495,7 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
   dnames <- ndarray$dimnames()
   bbox_names <- vector('character', length(dnames) * 2L)
   for (i in seq_along(bbox_names)) {
-    type <- c('_hi', '_lo')[(i %% 2) + 1L]
+    type <- c('_upper', '_lower')[(i %% 2) + 1L]
     bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
   }
 
