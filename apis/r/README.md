@@ -26,7 +26,7 @@ mamba install -c conda-forge -c tiledb r-tiledbsoma
 
 ## From source
 
-To install the very latest tiledbsoma development version (our `main` branch), use [`remotes::install_github()`](https://cran.r-project.org/web/packages/remotes/readme/README.html):
+To install the very latest tiledbsoma development version (our `main` branch), use [`remotes::install_github()`](https://cran.r-project.org/package=remotes/readme/README.html):
 
 ```r
 remotes::install_github("https://github.com/single-cell-data/TileDB-SOMA", subdir = "apis/r")
