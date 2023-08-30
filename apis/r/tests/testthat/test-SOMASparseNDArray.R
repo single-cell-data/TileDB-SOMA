@@ -388,11 +388,20 @@ test_that("SOMASparseNDArray bounding box", {
 
   ndarray <- SOMASparseNDArrayOpen(uri)
   dnames <- ndarray$dimnames()
+  bbox_names <- vector('character', length(dnames) * 2L)
+  for (i in seq_along(bbox_names)) {
+    type <- c('_hi', '_lo')[(i %% 2) + 1L]
+    bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
+  }
 
-  expect_true(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
-  for (i in seq_along(dnames)) {
-    expect_s3_class(xrange <- ndarray$get_metadata(paste0(dnames[i], '_domain')), 'integer64')
-    expect_equal(xrange, bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
+  expect_true(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  for (i in seq_along(bbox_names)) {
+    expect_s3_class(x <- ndarray$get_metadata(bbox_names[i]), 'integer64')
+    if (i %% 2) {
+      expect_equal(x, bit64::as.integer64(0L))
+    } else {
+      expect_equal(x, bit64::as.integer64(dim(mat)[ceiling(i / 2)] - 1L))
+    }
   }
 
   expect_type(bbox <- ndarray$used_shape(index1 = TRUE), 'list')
@@ -430,8 +439,13 @@ test_that("SOMASparseNDArray without bounding box", {
 
   ndarray <- SOMASparseNDArrayOpen(uri)
   dnames <- ndarray$dimnames()
+  bbox_names <- vector('character', length(dnames) * 2L)
+  for (i in seq_along(bbox_names)) {
+    type <- c('_hi', '_lo')[(i %% 2) + 1L]
+    bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
+  }
 
-  expect_false(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  expect_false(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
   expect_error(ndarray$used_shape())
 })
@@ -455,8 +469,13 @@ test_that("SOMASparseNDArray with failed bounding box", {
 
   ndarray <- SOMASparseNDArrayOpen(uri)
   dnames <- ndarray$dimnames()
+  bbox_names <- vector('character', length(dnames) * 2L)
+  for (i in seq_along(bbox_names)) {
+    type <- c('_hi', '_lo')[(i %% 2) + 1L]
+    bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
+  }
 
-  expect_false(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  expect_false(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
   expect_error(ndarray$used_shape())
 })
@@ -474,11 +493,20 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
 
   ndarray <- SOMASparseNDArrayOpen(uri)
   dnames <- ndarray$dimnames()
+  bbox_names <- vector('character', length(dnames) * 2L)
+  for (i in seq_along(bbox_names)) {
+    type <- c('_hi', '_lo')[(i %% 2) + 1L]
+    bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
+  }
 
-  expect_true(all(paste0(dnames, '_domain') %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
-  for (i in seq_along(dnames)) {
-    expect_s3_class(xrange <- ndarray$get_metadata(paste0(dnames[i], '_domain')), 'integer64')
-    expect_equal(xrange, bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
+  expect_true(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
+  for (i in seq_along(bbox_names)) {
+    expect_s3_class(x <- ndarray$get_metadata(bbox_names[i]), 'integer64')
+    if (i %% 2) {
+      expect_equal(x, bit64::as.integer64(0L))
+    } else {
+      expect_equal(x, bit64::as.integer64(dim(mat)[ceiling(i / 2)] - 1L))
+    }
   }
 
   expect_type(bbox <- ndarray$used_shape(index1 = TRUE), 'list')

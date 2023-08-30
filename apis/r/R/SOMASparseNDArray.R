@@ -166,7 +166,15 @@ SOMASparseNDArray <- R6::R6Class(
         bbox[[x]] <- xrange
       }
       names(bbox) <- paste0(names(bbox), '_domain')
-      self$set_metadata(bbox)
+      bbox_flat <- vector(mode = 'list', length = length(x = bbox) * 2L)
+      index <- 1L
+      for (i in seq_along(bbox)) {
+        bbox_flat[[index]] <- bbox[[i]][1L]
+        bbox_flat[[index + 1L]] <- bbox[[i]][2L]
+        names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c('_lo', '_hi'))
+        index <- index + 2L
+      }
+      self$set_metadata(bbox_flat)
       private$.write_coo_dataframe(coo)
     },
 
