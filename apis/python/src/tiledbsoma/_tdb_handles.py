@@ -353,7 +353,10 @@ def _check_metadata_type(key: str, obj: object) -> None:
     """Pre-checks that a metadata entry can be stored in an array.
 
     These checks are reproduced from the TileDB Python metadata-setting methods,
-    but are slightly more restrictive than what TileDB allows in general.
+    but are slightly more restrictive than what TileDB allows in general:
+    TileDB allows (some) arrays as metadata values, but the SOMA spec does not
+    allow arrays of any kind.
+
     We have to pre-check since we don't write metadata changes until closing.
     """
     if not isinstance(key, str):
