@@ -57,8 +57,8 @@ class Tracker:
         y = np.array(self.chunk_percents)
         A = np.vstack([x, np.ones(len(x))]).T
         m, b = np.linalg.lstsq(A, y, rcond=None)[0]
-        # Solve for x where y == 100
-        done_cumu_seconds = (100.0 - b) / m
+        # Solve for x where y == 100.
+        done_cumu_seconds = (100.0 - b) / m if m > 0 else 0
 
         return float(done_cumu_seconds) - self.cumulative_seconds[-1]
 
