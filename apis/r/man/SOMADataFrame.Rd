@@ -180,8 +180,11 @@ new \code{values} will be dropped
 \code{values} will be added
 \item any columns present in both will be left alone, with the exception that
 if \code{values} has a different type for the column, the entire update
-will because attribute types cannot be changed
+will fail because attribute types cannot be changed
 }
+
+Furthermore, \code{values} must contain the same number of rows as the current
+\code{SOMADataFrame}
 }
 
 }

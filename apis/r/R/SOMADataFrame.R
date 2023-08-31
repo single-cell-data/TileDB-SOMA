@@ -230,7 +230,10 @@ SOMADataFrame <- R6::R6Class(
     #'   `values` will be added
     #' - any columns present in both will be left alone, with the exception that
     #'   if `values` has a different type for the column, the entire update
-    #'   will because attribute types cannot be changed
+    #'   will fail because attribute types cannot be changed
+    #'
+    #' Furthermore, `values` must contain the same number of rows as the current
+    #' `SOMADataFrame`.
     #'
     #' @param values A `data.frame`, [`arrow::Table`], or
     #' [`arrow::RecordBatch`].
