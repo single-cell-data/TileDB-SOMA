@@ -49,7 +49,7 @@ Get the index of the given \code{obs} coordinates.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{coords}}{vector or \code{\link[arrow:array]{arrow::Array}} of numeric coordinates.}
+\item{\code{coords}}{vector or \code{\link[arrow:array-class]{arrow::Array}} of numeric coordinates.}
 }
 \if{html}{\out{</div>}}
 }
@@ -66,7 +66,7 @@ Get the index of the given \code{var} coordinates.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{coords}}{vector or \code{\link[arrow:array]{arrow::Array}} of numeric coordinates.}
+\item{\code{coords}}{vector or \code{\link[arrow:array-class]{arrow::Array}} of numeric coordinates.}
 }
 \if{html}{\out{</div>}}
 }

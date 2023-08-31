@@ -111,8 +111,8 @@ See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table]{arrow::Table}}, or
-\code{\link[arrow:RecordBatch]{arrow::RecordBatch}}.}
+\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table-class]{arrow::Table}}, or
+\code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}.}
 
 \item{\code{row_index_name}}{An optional scalar character. If provided, and if
 the \code{values} argument is a \code{data.frame} with row names, then the row
@@ -136,8 +136,8 @@ See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table]{arrow::Table}}, or
-\code{\link[arrow:RecordBatch]{arrow::RecordBatch}}.}
+\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table-class]{arrow::Table}}, or
+\code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}.}
 
 \item{\code{measurement_name}}{The name of the \code{\link{SOMAMeasurement}} whose \code{var}
 will be updated.}

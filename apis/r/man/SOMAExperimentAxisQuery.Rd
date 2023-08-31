@@ -117,7 +117,7 @@ Retrieve obs \link{TableReadIter}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-var"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-var}{}}}
 \subsection{Method \code{var()}}{
-Retrieve var \code{\link[arrow:Table]{arrow::Table}}
+Retrieve var \code{\link[arrow:Table-class]{arrow::Table}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$var(column_names = NULL)}\if{html}{\out{</div>}}
 }
@@ -134,7 +134,7 @@ Retrieve var \code{\link[arrow:Table]{arrow::Table}}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-obs_joinids"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-obs_joinids}{}}}
 \subsection{Method \code{obs_joinids()}}{
-Retrieve \code{soma_joinids} as an \code{\link[arrow:array]{arrow::Array}} for \code{obs}.
+Retrieve \code{soma_joinids} as an \code{\link[arrow:array-class]{arrow::Array}} for \code{obs}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$obs_joinids()}\if{html}{\out{</div>}}
 }
@@ -144,7 +144,7 @@ Retrieve \code{soma_joinids} as an \code{\link[arrow:array]{arrow::Array}} for \
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-var_joinids"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-var_joinids}{}}}
 \subsection{Method \code{var_joinids()}}{
-Retrieve \code{soma_joinids} as an \code{\link[arrow:array]{arrow::Array}} for \code{var}.
+Retrieve \code{soma_joinids} as an \code{\link[arrow:array-class]{arrow::Array}} for \code{var}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$var_joinids()}\if{html}{\out{</div>}}
 }
@@ -172,7 +172,7 @@ Retrieves an \code{X} layer as a link{SOMASparseNDArrayRead}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-read}{}}}
 \subsection{Method \code{read()}}{
 Reads the entire query result as a list of
-\code{\link[arrow:Table]{arrow::Table}}s. This is a low-level routine intended to be used by
+\code{\link[arrow:Table-class]{arrow::Table}}s. This is a low-level routine intended to be used by
 loaders for other in-core formats, such as \code{Seurat}, which can be created
 from the resulting Tables.
 \subsection{Usage}{

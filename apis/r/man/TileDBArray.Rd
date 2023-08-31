@@ -171,7 +171,7 @@ Retrieve the array schema as an Arrow schema (lifecycle: experimental)
 }
 
 \subsection{Returns}{
-A \code{\link[arrow:Schema]{arrow::schema}} object
+A \code{\link[arrow:schema]{arrow::schema}} object
 }
 }
 \if{html}{\out{<hr>}}
@@ -229,7 +229,7 @@ explicitly written.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{simplify}}{Return a vector of \code{\link{bit64:integer64}}s containing only
+\item{\code{simplify}}{Return a vector of \code{\link[bit64:bit64-package]{bit64::integer64}}s containing only
 the upper bounds.}
 
 \item{\code{index1}}{Return the used shape with 1-based indices (0-based indices are returned by default)}
