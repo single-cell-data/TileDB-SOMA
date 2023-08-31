@@ -203,8 +203,8 @@ def test_metadata_marshalling_OK(soma_object, test_value):
 
 
 @pytest.mark.parametrize(
-    "test_value",
-    [[1, 2, 3], ["a", "b", "c"], {"a": False}],
+    "bad_value",
+    [["a", "b", "c"], {"a": False}, [1, 2, 3], np.arange(10)],
 )
 def test_metadata_marshalling_FAIL(soma_object, bad_value):
     """Verify that unsupported metadata types raise an error immediately."""
