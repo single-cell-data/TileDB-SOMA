@@ -78,18 +78,21 @@ test_that("Update obs and var", {
   # obs: drop an existing column and add a new one
   tbl_obs0$qux <- tbl_obs0$bar
   tbl_obs0$bar <- NULL
+  exp$close()
 
   exp <- SOMAExperimentOpen(uri, "WRITE")
   exp$update_obs(tbl_obs0)
 
   expect_equal(
-    SOMAExperimentOpen(uri)$obs$read()$concat(),
+    temp <- SOMAExperimentOpen(uri)$obs$read()$concat(),
     tbl_obs0
   )
+  temp$close()
 
   # var: drop an existing column and add a new one
   tbl_var0$qux <- tbl_var0$quux
   tbl_var0$quux <- NULL
+  exp$close()
 
   exp <- SOMAExperimentOpen(uri, "WRITE")
   exp$update_var(tbl_var0, measurement_name = "RNA")
@@ -98,4 +101,5 @@ test_that("Update obs and var", {
     SOMAExperimentOpen(uri)$ms$get("RNA")$var$read()$concat(),
     tbl_var0
   )
+  exp$close()
 })

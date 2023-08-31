@@ -559,9 +559,11 @@ test_that("SOMADataFrame can be updated", {
 test_that("SOMADataFrame can be updated from a data frame", {
   uri <- withr::local_tempdir("soma-dataframe-update")
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
+  on.exit(sdf$close())
 
   # Retrieve the table from disk
   df0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()$to_data_frame()
+  on.exit(df0$close())
   df0$soma_joinid <- bit64::as.integer64(df0$soma_joinid)
 
   # Convert a column to row names to test that it can be recovered
@@ -572,10 +574,12 @@ test_that("SOMADataFrame can be updated from a data frame", {
 
   # Update to drop 'bar' from the array and retrieve baz values from row names
   expect_silent(
-    SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "baz")
+    df1 <- SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "baz")
   )
+  df1$close()
 
   df1 <- SOMADataFrameOpen(uri)$read()$concat()$to_data_frame()
+  on.exit(df1$close())
   expect_setequal(colnames(df1), c("foo", "soma_joinid", "baz"))
 
   # Error if row_index_name conflicts with an existing column name
