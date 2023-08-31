@@ -81,6 +81,7 @@ test_that("TileDB classes can be converted to Arrow equivalents", {
   expect_equal(names(arrow_schema), c("dim0", "dim1", "attr0", "attr1"))
 })
 
+# #1651 CI debug start
 test_that("Validating arrow data type compatibility", {
   expect_false(check_arrow_data_types(arrow::int32(), arrow::float32()))
   expect_true(check_arrow_data_types(arrow::int32(), arrow::int32()))

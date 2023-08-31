@@ -414,6 +414,7 @@ test_that("platform_config defaults", {
   # Set tiledb create options
   cfg <- PlatformConfig$new()
 
+  # #1651 CI debug start
   # Create the SOMADataFrame
   sdf <- SOMADataFrameCreate(
     uri = uri,
@@ -507,6 +508,7 @@ test_that("SOMADataFrame timestamped ops", {
 
 })
 
+# #1651 CI debug start
 test_that("SOMADataFrame can be updated", {
   uri <- withr::local_tempdir("soma-dataframe-update")
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)

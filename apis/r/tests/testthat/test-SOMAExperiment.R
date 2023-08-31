@@ -61,6 +61,7 @@ test_that("Configured SOMAExperiment", {
   expect_equal(experiment$platform_config$get('tiledb', 'create', 'tile_order'), 'col-major')
 })
 
+# #1651 CI debug start
 test_that("Update obs and var", {
   # Update mechanics are tested more thoroughly in the SOMADataFrame tests
   uri <- withr::local_tempdir("soma-experiment-update")
