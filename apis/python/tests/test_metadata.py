@@ -1,6 +1,7 @@
 import math
 from typing import Any, Dict
 
+import numpy as np
 import pyarrow as pa
 import pytest
 
@@ -202,13 +203,13 @@ def test_metadata_marshalling_OK(soma_object, test_value):
 
 
 @pytest.mark.parametrize(
-    "test_value",
-    [["a", "b", "c"], {"a": False}],
+    "bad_value",
+    [["a", "b", "c"], {"a": False}, [1, 2, 3], np.arange(10)],
 )
-def test_metadata_marshalling_FAIL(soma_object, test_value):
-    """Test the various data type marshalling we expect to FAIL"""
+def test_metadata_marshalling_FAIL(soma_object, bad_value):
+    """Verify that unsupported metadata types raise an error immediately."""
 
     with pytest.raises(TypeError):
-        soma_object.metadata["test_value"] = test_value
+        soma_object.metadata["test_value"] = bad_value
 
     assert "test_value" not in soma_object.metadata
