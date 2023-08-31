@@ -315,9 +315,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         retval = []
         with tiledb.open(self.uri, ctx=self.context.tiledb_ctx):
             for i in range(20):
-                lower_key = f"soma_dim_{i}_lower"
+                lower_key = f"soma_dim_{i}_domain_lower"
                 lower_val = self.metadata.get(lower_key)
-                upper_key = f"soma_dim_{i}_upper"
+                upper_key = f"soma_dim_{i}_domain_upper"
                 upper_val = self.metadata.get(upper_key)
                 if lower_val is None or upper_val is None:
                     break
@@ -359,8 +359,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         """
         new_bounding_box = {}
         for i, slotmax in enumerate(maxes):
-            lower_key = f"soma_dim_{i}_lower"
-            upper_key = f"soma_dim_{i}_upper"
+            lower_key = f"soma_dim_{i}_domain_lower"
+            upper_key = f"soma_dim_{i}_domain_upper"
             old_lower = self.metadata.get(lower_key)
             old_upper = self.metadata.get(upper_key)
 
