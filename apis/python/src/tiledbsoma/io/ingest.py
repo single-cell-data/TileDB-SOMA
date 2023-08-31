@@ -1502,6 +1502,7 @@ def _find_sparse_chunk_size(
             The stride axis, across which to find a chunk.
         goal_chunk_nnz:
             Desired number of non-zero array entries for the chunk.
+
     """
     chunk_size = 1
     sum_nnz = 0

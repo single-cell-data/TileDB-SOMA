@@ -192,10 +192,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             data, coords = values.to_numpy()
             arr[tuple(c for c in coords.T)] = data
 
-            # Write bounding-box metadata
-            #nr, nc = values.shape
-            #self._compute_bounding_box_metadata([nr - 1, nc - 1])
-            # self._set_bounding_box_metadata(bounding_box)
+            # Write bounding-box metadata. Note COO can be N-dimensional.
+            maxes = [e - 1 for e in values.shape]
+            bounding_box = self._compute_bounding_box_metadata(maxes)
+            self._set_bounding_box_metadata(bounding_box)
 
             # Consolidate non-bulk data
             self._consolidate_and_vacuum_fragment_metadata()
@@ -211,10 +211,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             sp = values.to_scipy().tocoo()
             arr[sp.row, sp.col] = sp.data
 
-            # Write bounding-box metadata
-            #nr, nc = values.shape
-            #self._compute_bounding_box_metadata([nr - 1, nc - 1])
-            # self._set_bounding_box_metadata(bounding_box)
+            # Write bounding-box metadata. Note CSR and CSC are necessarily 2-dimensional.
+            nr, nc = values.shape
+            bounding_box = self._compute_bounding_box_metadata([nr - 1, nc - 1])
+            self._set_bounding_box_metadata(bounding_box)
 
             # Consolidate non-bulk data
             self._consolidate_and_vacuum_fragment_metadata()
@@ -233,9 +233,13 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # Write bounding-box metadata
             maxes = []
             for i in range(coord_tbl.num_columns):
-                maxes.append(max(values.column(f"soma_dim_{i}").to_pylist()))
-            self._compute_bounding_box_metadata(maxes)
-            # self._set_bounding_box_metadata(bounding_box)
+                coords = values.column(f"soma_dim_{i}").to_pylist()
+                if coords:
+                    maxes.append(max(coords))
+                else:  # completely empty X
+                    maxes.append(0)
+            bounding_box = self._compute_bounding_box_metadata(maxes)
+            self._set_bounding_box_metadata(bounding_box)
 
             # Consolidate non-bulk data
             self._consolidate_and_vacuum_fragment_metadata()
@@ -318,14 +322,23 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 if lower_val is None or upper_val is None:
                     break
                 retval.append((lower_val, upper_val))
-        if retval:
-            return tuple(retval)
-        raise SOMAError(
-            f"Array {self.uri} was not written with bounding box support. "
-            + "For an approximation, please use `non_empty_domain()` instead",
-        )
+        if not retval:
+            raise SOMAError(
+                f"Array {self.uri} was not written with bounding box support. "
+                + "For an approximation, please use `non_empty_domain()` instead",
+            )
 
-    def non_empty_domain(self) -> Tuple[int, ...]:
+        # In the unlikely event that a previous data update succeeded but the
+        # subsequent metadata update did not, take the union of the core non-empty domain
+        # (which is done as part of the data update) and the metadata bounding box.
+        ned = self.non_empty_domain()
+        for i, nedslot in enumerate(ned):
+            ned_lower, ned_upper = nedslot
+            bbox_lower, bbox_upper = retval[i]
+            retval[i] = (min(ned_lower, bbox_lower), max(ned_upper, bbox_upper))
+        return tuple(retval)
+
+    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
         """
         Retrieves the non-empty domain for each dimension, namely the smallest and
         largest indices in each dimension for which the sparse array has data occupied.
@@ -341,7 +354,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         maxes: Sequence[int],
     ) -> Dict[str, int]:
         """
-        This creates or updates the bounding box. The former applies to initial ingest;
+        This computes a bounding box for create or update. The former applies to initial ingest;
         the latter applies to append mode.
         """
         new_bounding_box = {}
@@ -367,9 +380,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     def _set_bounding_box_metadata(
         self,
-        bounding_box: Dict[str, Tuple[int, int]],
+        bounding_box: Dict[str, int],
     ) -> None:
-        """XXX write me."""
+        """Writes the bounding box to metadata storage."""
         self.metadata.update(bounding_box)
 
 
