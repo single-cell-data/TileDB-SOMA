@@ -28,7 +28,7 @@ Class that allows for read iteration of SOMA reads.
 \subsection{Method \code{new()}}{
 Create (lifecycle: experimental)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ReadIter$new(sr, enums = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ReadIter$new(sr)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

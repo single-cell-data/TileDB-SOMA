@@ -91,6 +91,7 @@ Rcpp::List sr_setup(const std::string& uri,
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
 
+
     std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
     tiledb::Config cfg(platform_config);
     spdl::debug("[sr_setup] creating ctx object with supplied config");
@@ -102,7 +103,6 @@ Rcpp::List sr_setup(const std::string& uri,
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
     }
-    std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
 
     std::uint64_t ts_start = 0; 		// beginning of time aka the epoch (force double signature)
     std::uint64_t ts_end = std::numeric_limits<uint64_t>::max(); 	// max if unset
