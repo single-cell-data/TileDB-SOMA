@@ -151,19 +151,28 @@ TileDBArray <- R6::R6Class(
     #' @return A list containing the lower and upper bounds for the used shape.
     #' If `simplify = TRUE`, returns a vector of only the upper bounds.
     used_shape = function(simplify = FALSE, index1 = FALSE) {
+      cat("HELLO\n")
       stopifnot(
         isTRUE(simplify) || isFALSE(simplify),
         isTRUE(index1) || isFALSE(index1)
       )
       dims <- self$dimnames()
+      cat("DIMS\n")
+      print(dims)
       utilized <- vector(mode = 'list', length = length(dims))
       names(utilized) <- dims
+      cat("UTILIZED\n")
+      print(utilized)
       for (i in seq_along(along.with = utilized)) {
+        cat("-- i", i, "\n")
         key <- paste0(dims[i], '_domain')
         dom <- bit64::integer64(2L)
         names(dom) <- c('_lower', '_upper')
         for (type in names(dom)) {
-          dom[type] <- self$get_metadata(paste0(key, type)) %||% bit64::NA_integer64_
+          cat("-- i", i, "TYPE", type, "\n")
+          tkey <- paste0(key, type)
+          cat("-- i", i, "TKEY", tkey, "\n")
+          dom[type] <- self$get_metadata(tkey) %||% bit64::NA_integer64_
           if (any(is.na(dom))) {
             dom <- bit64::NA_integer64_
           }
@@ -171,6 +180,8 @@ TileDBArray <- R6::R6Class(
         }
         # utilized[[i]] <- self$get_metadata(key) %||% bit64::NA_integer64_
       }
+      cat("UTILIZED\n")
+      print(utilized)
       if (any(vapply_lgl(utilized, rlang::is_na))) {
         stop(
           "This array was not written with bounding box support; for an approximation, please use `$non_empty_domain()` instead",
