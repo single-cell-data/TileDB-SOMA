@@ -41,6 +41,8 @@ observation index domain, \code{obs_id}. All observations for the
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-SOMAExperiment-axis_query}{\code{SOMAExperiment$axis_query()}}
+\item \href{#method-SOMAExperiment-update_obs}{\code{SOMAExperiment$update_obs()}}
+\item \href{#method-SOMAExperiment-update_var}{\code{SOMAExperiment$update_var()}}
 \item \href{#method-SOMAExperiment-clone}{\code{SOMAExperiment$clone()}}
 }
 }
@@ -94,6 +96,59 @@ axis.}
 }
 \subsection{Returns}{
 A \code{\link{SOMAExperimentAxisQuery}} object.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperiment-update_obs"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperiment-update_obs}{}}}
+\subsection{Method \code{update_obs()}}{
+Update the obs \code{\link{SOMADataFrame}} to add or remove columns.
+See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$update_obs(values, row_index_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table]{arrow::Table}}, or
+\code{\link[arrow:RecordBatch]{arrow::RecordBatch}}.}
+
+\item{\code{row_index_name}}{An optional scalar character. If provided, and if
+the \code{values} argument is a \code{data.frame} with row names, then the row
+names will be extracted and added as a new column to the \code{data.frame}
+prior to performing the update. The name of this new column will be set
+to the value specified by \code{row_index_name}.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperiment-update_var"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperiment-update_var}{}}}
+\subsection{Method \code{update_var()}}{
+Update the var \code{SOMADataFrame} to add or remove columns.
+See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$update_var(values, measurement_name, row_index_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table]{arrow::Table}}, or
+\code{\link[arrow:RecordBatch]{arrow::RecordBatch}}.}
+
+\item{\code{measurement_name}}{The name of the \code{\link{SOMAMeasurement}} whose \code{var}
+will be updated.}
+
+\item{\code{row_index_name}}{An optional scalar character. If provided, and if
+the \code{values} argument is a \code{data.frame} with row names, then the row
+names will be extracted and added as a new column to the \code{data.frame}
+prior to performing the update. The name of this new column will be set
+to the value specified by \code{row_index_name}.}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}

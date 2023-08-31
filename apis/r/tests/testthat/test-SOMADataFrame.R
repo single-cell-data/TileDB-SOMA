@@ -5,7 +5,7 @@ test_that("Basic mechanics", {
 
   expect_error(
     SOMADataFrameCreate(uri, asch, index_column_names = "qux"),
-    "The following field does not exist: qux"
+    "The following indexed field does not exist: qux"
   )
 
   sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
@@ -116,7 +116,7 @@ test_that("Basic mechanics with default index_column_names", {
   sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
     sdf$create(asch, index_column_names = "qux", internal_use_only = "allowed_use"),
-    "The following field does not exist: qux"
+    "The following indexed field does not exist: qux"
   )
 
   sdf$create(asch, internal_use_only = "allowed_use")
@@ -415,7 +415,12 @@ test_that("platform_config defaults", {
   cfg <- PlatformConfig$new()
 
   # Create the SOMADataFrame
-  sdf <- SOMADataFrameCreate(uri=uri, schema=asch, index_column_names=c("soma_joinid"), platform_config = cfg)
+  sdf <- SOMADataFrameCreate(
+    uri = uri,
+    schema = asch,
+    index_column_names = c("soma_joinid"),
+    platform_config = cfg
+  )
 
   # Read back and check the array schema against the tiledb create options
   arr <- tiledb::tiledb_array(uri)
@@ -500,4 +505,80 @@ test_that("SOMADataFrame timestamped ops", {
   expect_equal(as.data.frame(sdf$read()$concat()), d1)  # read between t10 and t20 sees only first write
   sdf$close()
 
+})
+
+test_that("SOMADataFrame can be updated", {
+  uri <- withr::local_tempdir("soma-dataframe-update")
+  sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
+
+  # Retrieve the table from disk
+  tbl0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
+
+  # Remove a column and update
+  tbl0$bar <- NULL
+  sdf <- SOMADataFrameOpen(uri, "WRITE")$update(tbl0)
+
+  # Verify attribute was removed on disk
+  tbl1 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
+  expect_true(tbl1$Equals(tbl0))
+
+  # # Add a new column and update
+  tbl0$bar <- sample(c(TRUE, FALSE), nrow(tbl0), replace = TRUE)
+  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0)
+
+  # Verify attribute was added on disk
+  tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat()
+  expect_true(tbl1$Equals(tbl0))
+
+  # Error if attempting to drop an array dimension
+  tbl0$foo <- NULL # drop the indexed dimension
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    "The following indexed field does not exist"
+  )
+  tbl0 <- tbl1
+
+  # Error on incompatible schema updates
+  tbl0$baz <- tbl0$baz$cast(target_type = arrow::int32()) # string to int
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    "Schemas are incompatible"
+  )
+  tbl0 <- tbl1
+
+  # Error if the number of rows changes
+  tbl0 <- tbl0$Slice(offset = 1, length = tbl0$num_rows - 1)
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    "Number of rows in 'values' must match number of rows in array"
+  )
+})
+
+test_that("SOMADataFrame can be updated from a data frame", {
+  uri <- withr::local_tempdir("soma-dataframe-update")
+  sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
+
+  # Retrieve the table from disk
+  df0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()$to_data_frame()
+  df0$soma_joinid <- bit64::as.integer64(df0$soma_joinid)
+
+  # Convert a column to row names to test that it can be recovered
+  df0 <- as.data.frame(df0)
+  rownames(df0) <- df0$baz
+  df0$baz <- NULL
+  df0$bar <- NULL
+
+  # Update to drop 'bar' from the array and retrieve baz values from row names
+  expect_silent(
+    SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "baz")
+  )
+
+  df1 <- SOMADataFrameOpen(uri)$read()$concat()$to_data_frame()
+  expect_setequal(colnames(df1), c("foo", "soma_joinid", "baz"))
+
+  # Error if row_index_name conflicts with an existing column name
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(df0, row_index_name = "foo"),
+    "'row_index_name' conflicts with an existing column name"
+  )
 })

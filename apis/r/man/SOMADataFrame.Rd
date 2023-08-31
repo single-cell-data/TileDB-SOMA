@@ -18,6 +18,7 @@ row and is intended to act as a join key for other objects, such as
 \item \href{#method-SOMADataFrame-create}{\code{SOMADataFrame$create()}}
 \item \href{#method-SOMADataFrame-write}{\code{SOMADataFrame$write()}}
 \item \href{#method-SOMADataFrame-read}{\code{SOMADataFrame$read()}}
+\item \href{#method-SOMADataFrame-update}{\code{SOMADataFrame$update()}}
 \item \href{#method-SOMADataFrame-clone}{\code{SOMADataFrame$clone()}}
 }
 }
@@ -145,6 +146,47 @@ more information.}
 \subsection{Returns}{
 arrow::\link[arrow]{Table} or \link{TableReadIter}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-update"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-update}{}}}
+\subsection{Method \code{update()}}{
+Update (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$update(values, row_index_name = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table]{arrow::Table}}, or
+\code{\link[arrow:RecordBatch]{arrow::RecordBatch}}.}
+
+\item{\code{row_index_name}}{An optional scalar character. If provided, and if
+the \code{values} argument is a \code{data.frame} with row names, then the row
+names will be extracted and added as a new column to the \code{data.frame}
+prior to performing the update. The name of this new column will be set
+to the value specified by \code{row_index_name}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+Update the existing \code{SOMADataFrame} to add or remove columns based on the
+input:
+\itemize{
+\item columns present in the current the \code{SOMADataFrame} but absent from the
+new \code{values} will be dropped
+\item columns absent in current \code{SOMADataFrame} but present in the new
+\code{values} will be added
+\item any columns present in both will be left alone, with the exception that
+if \code{values} has a different type for the column, the entire update
+will fail because attribute types cannot be changed
+}
+
+Furthermore, \code{values} must contain the same number of rows as the current
+\code{SOMADataFrame}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-clone"></a>}}

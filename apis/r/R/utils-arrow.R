@@ -172,6 +172,36 @@ arrow_field_from_tiledb_attr <- function(x) {
   )
 }
 
+#' Create a TileDB attribute from an Arrow field
+#' @return a [`tiledb::tiledb_attr-class`]
+#' @noRd
+tiledb_attr_from_arrow_field <- function(field, tiledb_create_options) {
+  stopifnot(
+    is_arrow_field(field),
+    inherits(tiledb_create_options, "TileDBCreateOptions")
+  )
+
+  # Default zstd filter to use if none is specified in platform config
+  default_zstd_filter <- list(
+    name = "ZSTD",
+    COMPRESSION_LEVEL = tiledb_create_options$dataframe_dim_zstd_level()
+  )
+
+  field_type <- tiledb_type_from_arrow_type(field$type)
+  tiledb::tiledb_attr(
+    name = field$name,
+    type = field_type,
+    nullable = field$nullable,
+    ncells = if (field_type == "ASCII") NA_integer_ else 1L,
+    filter_list = tiledb::tiledb_filter_list(
+      tiledb_create_options$attr_filters(
+        attr_name = field$name,
+        default = list(default_zstd_filter)
+      )
+    )
+  )
+}
+
 #' Create an Arrow schema from a TileDB array schema
 #' @noRd
 arrow_schema_from_tiledb_schema <- function(x) {
@@ -188,4 +218,78 @@ arrow_schema_from_tiledb_schema <- function(x) {
 check_arrow_pointers <- function(arrlst) {
     stopifnot("First argument must be an external pointer to ArrowArray" = check_arrow_array_tag(arrlst[[1]]),
               "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
+}
+
+#' Validate compatibility of Arrow data types
+#'
+#' For most data types, this is a simple equality check but it also provides
+#' allowances for certain comparisons:
+#'
+#' - string and large_string
+#'
+#' @param from an [`arrow::DataType`]
+#' @param to an [`arrow::DataType`]
+#' @return a logical indicating whether the data types are compatible
+#' @noRd
+check_arrow_data_types <- function(from, to) {
+  stopifnot(
+    "'from' and 'to' must both be Arrow DataTypes"
+      = is_arrow_data_type(from) && is_arrow_data_type(to)
+  )
+
+  is_string <- function(x) {
+    x$ToString() %in% c("string", "large_string")
+  }
+
+  compatible <- if (is_string(from) && is_string(to)) {
+    TRUE
+  } else {
+    from$Equals(to)
+  }
+
+  compatible
+}
+
+#' Validate compatibility of Arrow schemas
+#'
+#' This is essentially a vectorized version of [`check_arrow_data_types`] that
+#' checks the compatibility of each field in the schemas.
+#' @param from an [`arrow::Schema`]
+#' @param to an [`arrow::Schema`] with the same set of fields as `from`
+#' @return `TRUE` if the schemas are compatible, otherwise an error is thrown
+#' @noRd
+check_arrow_schema_data_types <- function(from, to) {
+  stopifnot(
+    "'from' and 'to' must both be Arrow Schemas"
+      = is_arrow_schema(from) && is_arrow_schema(to),
+    "'from' and 'to' must have the same number of fields"
+      = length(from) == length(to),
+    "'from' and 'to' must have the same field names"
+      = identical(sort(names(from)), sort(names(to)))
+  )
+
+  fields <- names(from)
+  msgs <- character(0L)
+  for (field in fields) {
+    from_type <- from[[field]]$type
+    to_type <- to[[field]]$type
+    if (!check_arrow_data_types(from_type, to_type)) {
+      msg <- sprintf(
+        "  - field '%s': %s != %s\n",
+        field,
+        from_type$ToString(),
+        to_type$ToString()
+      )
+      msgs <- c(msgs, msg)
+    }
+  }
+
+  if (length(msgs) > 0L) {
+    stop(
+      "Schemas are incompatible:\n",
+      string_collapse(msgs, sep = "\n"),
+      call. = FALSE
+    )
+  }
+  return(TRUE)
 }

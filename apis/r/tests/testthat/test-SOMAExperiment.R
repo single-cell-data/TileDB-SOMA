@@ -60,3 +60,41 @@ test_that("Configured SOMAExperiment", {
   expect_equal(experiment$platform_config$get('tiledb', 'create', 'cell_order'), 'row-major')
   expect_equal(experiment$platform_config$get('tiledb', 'create', 'tile_order'), 'col-major')
 })
+
+test_that("Update obs and var", {
+  # Update mechanics are tested more thoroughly in the SOMADataFrame tests
+  uri <- withr::local_tempdir("soma-experiment-update")
+  create_and_populate_experiment(
+    uri = uri,
+    n_obs = 20L,
+    n_var = 10L,
+    X_layer_names = c("counts", "logcounts")
+  )
+  exp <- SOMAExperimentOpen(uri)
+  tbl_obs0 <- exp$obs$read()$concat()
+  tbl_var0 <- exp$ms$get("RNA")$var$read()$concat()
+
+  # obs: drop an existing column and add a new one
+  tbl_obs0$qux <- tbl_obs0$bar
+  tbl_obs0$bar <- NULL
+
+  exp <- SOMAExperimentOpen(uri, "WRITE")
+  exp$update_obs(tbl_obs0)
+
+  expect_equal(
+    SOMAExperimentOpen(uri)$obs$read()$concat(),
+    tbl_obs0
+  )
+
+  # var: drop an existing column and add a new one
+  tbl_var0$qux <- tbl_var0$quux
+  tbl_var0$quux <- NULL
+
+  exp <- SOMAExperimentOpen(uri, "WRITE")
+  exp$update_var(tbl_var0, measurement_name = "RNA")
+
+  expect_equal(
+    SOMAExperimentOpen(uri)$ms$get("RNA")$var$read()$concat(),
+    tbl_var0
+  )
+})
