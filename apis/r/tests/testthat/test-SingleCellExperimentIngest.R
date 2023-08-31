@@ -1,4 +1,5 @@
 test_that("Write SingleCellExperiment mechanics", {
+  skip_if(covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
   skip_if_not_installed('pbmc3k.sce')
 
@@ -64,6 +65,7 @@ test_that("Write SingleCellExperiment mechanics", {
 })
 
 test_that("SingleCellExperiment mainExpName mechanics", {
+  skip_if(covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
   skip_if_not_installed('pbmc3k.sce')
 

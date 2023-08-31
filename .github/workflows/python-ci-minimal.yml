@@ -11,7 +11,7 @@ on:
   push:
     paths-ignore:
       - 'apis/r/**'
-
+    
 jobs:
   build:
     strategy:

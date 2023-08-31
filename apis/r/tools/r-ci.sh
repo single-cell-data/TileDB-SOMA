@@ -381,7 +381,7 @@ Coverage() {
     ## assumes that the Rutter PPAs are in fact known, which is a given here
     AptGetInstall r-cran-covr
 
-    Rscript -e "covr::codecov(type = '${COVERAGE_TYPE}', quiet = FALSE, token = '${COVERAGE_TOKEN}', flags = '${COVERAGE_FLAGS}')"
+    COVR="true" Rscript -e "covr::codecov(type = '${COVERAGE_TYPE}', quiet = FALSE, token = '${COVERAGE_TOKEN}', flags = '${COVERAGE_FLAGS}')"
 }
 
 RunTests() {

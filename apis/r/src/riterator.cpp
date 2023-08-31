@@ -249,7 +249,7 @@ void SOMAArrayFinalizer(SEXP sx) {
                             ctx.use_count(), ctx_cptr.use_count()));
     tiledb_ctx_t* ptr = ctx_cptr.get();
     if (ptr == nullptr) return;
-    tiledb_ctx_free(&ptr);
+    //tiledb_ctx_free(&ptr);
     ptr = nullptr;
     ctx_cptr.reset();
     ctx.reset();
