@@ -2067,6 +2067,9 @@ def to_anndata(
     * ``obsm``,``varm`` arrays as ``numpy.ndarray``
     * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
 
+    The ``obsm_varm_width_hints`` is optional. If provided, it should be of the form
+    ``{"obsm":{"X_tSNE":2}}`` to aid with export errors.
+
     Lifecycle:
         Experimental.
     """
@@ -2206,6 +2209,8 @@ def _extract_obsm_or_varm(
     # * Try arithmetic on nnz / num_rows, for densely occupied sparse matrices
     # Beyond that, we have to throw.
 
+    description = f'{collection_name}["{element_name}"]'
+
     num_cols = width_configs.get(element_name, None)
 
     if num_cols is None:
@@ -2220,7 +2225,7 @@ def _extract_obsm_or_varm(
 
         if coo_column_count != 3:
             raise SOMAError(
-                f"internal error: expect COO width of 3; got {coo_column_count}"  # for XXX
+                f"internal error: expect COO width of 3; got {coo_column_count} for {description}"
             )
 
         if num_rows_times_width % num_rows == 0:
@@ -2228,7 +2233,7 @@ def _extract_obsm_or_varm(
 
     if num_cols is None:
         raise SOMAError(
-            f'could not determine outgest width for {collection_name}["{element_name}"]: please try to_anndata\'s obsm_varm_width_hints option'
+            f"could not determine outgest width for {description}: please try to_anndata's obsm_varm_width_hints option"
         )
 
     return conversions.csr_from_tiledb_df(matrix, num_rows, num_cols).toarray()
