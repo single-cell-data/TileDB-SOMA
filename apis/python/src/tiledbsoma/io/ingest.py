@@ -1650,10 +1650,11 @@ def _write_matrix_to_sparseNDArray(
             chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
                 matrix, i, stride_axis, goal_chunk_nnz
             )
-        if chunk_size == -1 and i > 0:  # completely empty array; nothing to write
-            break
-        else:
-            chunk_size = 1
+        if chunk_size == -1:  # completely empty array; nothing to write
+            if i > 0:
+                break
+            else:
+                chunk_size = 1
 
         i2 = i + chunk_size
 
