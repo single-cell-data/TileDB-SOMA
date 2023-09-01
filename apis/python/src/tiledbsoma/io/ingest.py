@@ -858,6 +858,77 @@ def append_var(
     return sdf.uri
 
 
+def append_X(
+    X_uri: str,
+    measurement_name: str,
+    X_layer_name: str,
+    new_X: Union[Matrix, h5py.Dataset],
+    obs_ids: Sequence[str],
+    var_ids: Sequence[str],
+    *,
+    registration_mapping: ExperimentAmbientLabelMapping,
+    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig] = None,
+) -> str:
+    """
+    Appends new data to an existing ``X`` matrix. Nominally to be used in conjunction
+    with ``update_obs`` and ``update_var``, as an itemized alternative to doing
+    ``from_anndata`` with a registration mapping supplied.
+
+    Example:
+
+        rd = tiledbsoma.io.register_anndatas(
+            exp_uri,
+            [new_anndata],
+            measurement_name="RNA",
+            obs_field_name="obs_id",
+            var_field_name="var_id",
+        )
+
+
+        with tiledbsoma.Experiment.open(exp_uri) as exp:
+            tiledbsoma.io.append_X(
+                exp.ms[measurement_name].X[X_layer_name].uri,
+                measurement_name=measurement_name,
+                X_layer_name=X_layer_name,
+                new_X=adata.X,
+                obs_ids=new_anndata.obs.index,
+                var_ids=new_anndata.var.index,
+                registration_mapping=rd,
+            )
+
+    Lifecycle:
+        Experimental.
+    """
+    # Map the user-level ingest mode to a set of implementation-level boolean flags.
+    # See comments in from_anndata.
+    ingestion_params = IngestionParams("write", registration_mapping)
+    context = _validate_soma_tiledb_context(context)
+
+    s = _util.get_start_stamp()
+    logging.log_io_same(f"Start  writing var for {X_uri}")
+
+    # XXX check ms name & xl name for existences
+    axis_0_mapping = registration_mapping.obs_axis.id_mapping_from_values(obs_ids)
+    axis_1_mapping = registration_mapping.var_axes[
+        measurement_name
+    ].id_mapping_from_values(var_ids)
+
+    with _create_from_matrix(
+        X_kind,
+        X_uri,
+        new_X,
+        ingestion_params=ingestion_params,
+        platform_config=platform_config,
+        context=context,
+        axis_0_mapping=axis_0_mapping,
+        axis_1_mapping=axis_1_mapping,
+    ):
+        logging.log_io_same(_util.format_elapsed(s, f"Finish writing X for {X_uri}"))
+    return X_uri
+
+
 def _maybe_set(
     coll: AnyTileDBCollection,
     key: str,
