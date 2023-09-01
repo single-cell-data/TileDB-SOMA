@@ -232,7 +232,7 @@ explicitly written.
 \item{\code{simplify}}{Return a vector of \code{\link{bit64:integer64}}s containing only
 the upper bounds.}
 
-\item{\code{index1}}{Return the used shape with 1-based indices.}
+\item{\code{index1}}{Return the used shape with 1-based indices (0-based indices are returned by default)}
 }
 \if{html}{\out{</div>}}
 }

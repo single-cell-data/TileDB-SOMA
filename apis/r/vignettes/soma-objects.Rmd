@@ -71,7 +71,7 @@ experiment$obs$schema()
 
 Note that `soma_joinid` is a field that exists in every `SOMADataFrame` and acts as a join key for other objects in the dataset.
 
-Again, when a SOMA object is accessed, only a pointer is returned and no data is read into memory. To load the data in memory, we call `read()$concat()`, which returns an [Arrow Table](https://arrow.apache.org/docs/r/reference/Table.html) and is easily converted to a data frame by appending `$to_data_frame()`.
+Again, when a SOMA object is accessed, only a pointer is returned and no data is read into memory. To load the data in memory, we call `read()$concat()`, which returns an [Arrow Table](https://arrow.apache.org/docs/r/reference/table.html) and is easily converted to a data frame by appending `$to_data_frame()`.
 
 ```{r}
 experiment$obs$read()$concat()

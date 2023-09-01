@@ -1491,7 +1491,7 @@ def _find_sparse_chunk_size(
     matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
 ) -> int:
     """Given a sparse matrix and a start index, return a step size, on the stride axis,
-    which will achieve the cumulative nnz desired.
+    which will achieve the cumulative nnz desired. If the array is entirely empty, returns -1.
 
     Args:
         matrix:
@@ -1529,7 +1529,7 @@ def _find_sparse_chunk_size(
         chunk_size += 1
 
     if sum_nnz == 0:  # completely empty sparse array (corner case)
-        return 1
+        return -1
 
     if sum_nnz > goal_chunk_nnz:
         return chunk_size
@@ -1650,6 +1650,11 @@ def _write_matrix_to_sparseNDArray(
             chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
                 matrix, i, stride_axis, goal_chunk_nnz
             )
+        if chunk_size == -1:  # completely empty array; nothing to write
+            if i > 0:
+                break
+            else:
+                chunk_size = 1
 
         i2 = i + chunk_size
 
@@ -2112,58 +2117,12 @@ def to_anndata(
     obsm = {}
     if "obsm" in measurement:
         for key in measurement.obsm.keys():
-            shape = measurement.obsm[key].shape
-            if len(shape) != 2:
-                raise ValueError(f"expected shape == 2; got {shape}")
-            if isinstance(measurement.obsm[key], DenseNDArray):
-                obj = cast(DenseNDArray, measurement.obsm[key])
-                matrix = obj.read().to_numpy()
-                # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
-                obsm[key] = matrix
-            else:
-                # obsp is nobs x nobs.
-                # obsm is nobs x some number -- number of PCA components, etc.
-                matrix = measurement.obsm[key].read().tables().concat().to_pandas()
-                nobs_times_width, coo_column_count = matrix.shape
-                if coo_column_count != 3:
-                    raise SOMAError(
-                        f"internal error: expect COO width of 3; got {coo_column_count}"
-                    )
-                if nobs_times_width % nobs != 0:
-                    raise SOMAError(
-                        f"internal error: encountered non-rectangular obsm[{key}]: {nobs} does not divide {nobs_times_width}"
-                    )
-                obsm[key] = conversions.csr_from_tiledb_df(
-                    matrix, nobs, nobs_times_width // nobs
-                ).toarray()
+            obsm[key] = _extract_obsm_or_varm(measurement.obsm[key], "obsm", key, nobs)
 
     varm = {}
     if "varm" in measurement:
         for key in measurement.varm.keys():
-            shape = measurement.varm[key].shape
-            if len(shape) != 2:
-                raise ValueError(f"expected shape == 2; got {shape}")
-            if isinstance(measurement.varm[key], DenseNDArray):
-                obj = cast(DenseNDArray, measurement.varm[key])
-                matrix = obj.read().to_numpy()
-                # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python 3.8
-                varm[key] = matrix
-            else:
-                # varp is nvar x nvar.
-                # varm is nvar x some number -- number of PCs, etc.
-                matrix = measurement.varm[key].read().tables().concat().to_pandas()
-                nvar_times_width, coo_column_count = matrix.shape
-                if coo_column_count != 3:
-                    raise SOMAError(
-                        f"internal error: expect COO width of 3; got {coo_column_count}"
-                    )
-                if nvar_times_width % nvar != 0:
-                    raise SOMAError(
-                        f"internal error: encountered non-rectangular varm[{key}]: {nvar} does not divide {nvar_times_width}"
-                    )
-                varm[key] = conversions.csr_from_tiledb_df(
-                    matrix, nvar, nvar_times_width // nvar
-                ).toarray()
+            varm[key] = _extract_obsm_or_varm(measurement.varm[key], "varm", key, nvar)
 
     obsp = {}
     if "obsp" in measurement:
@@ -2191,3 +2150,42 @@ def to_anndata(
     logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))
 
     return anndata
+
+
+def _extract_obsm_or_varm(
+    soma_nd_array: Union[SparseNDArray, DenseNDArray],
+    collection_name: str,
+    element_name: str,
+    num_rows: int,
+) -> Union[SparseMatrix, DenseMatrix]:
+    """
+    This is a helper function for ``to_anndata`` of ``obsm`` and ``varm`` elements.
+    """
+
+    shape = soma_nd_array.shape
+    if len(shape) != 2:
+        raise ValueError(f"expected shape == 2; got {shape}")
+
+    if isinstance(soma_nd_array, DenseNDArray):
+        matrix = soma_nd_array.read().to_numpy()
+        # The spelling ``sp.csr_array`` is more idiomatic but doesn't exist until Python
+        # 3.8 and we still support Python 3.7
+        return matrix
+
+    # obsp is nobs x nobs.
+    # varp is nvar x nvar.
+    # obsm is nobs x some number -- number of PCA components, etc.
+    # varm is nvar x some number -- number of PCs, etc.
+    matrix = soma_nd_array.read().tables().concat().to_pandas()
+    num_rows_times_width, coo_column_count = matrix.shape
+    if coo_column_count != 3:
+        raise SOMAError(
+            f"internal error: expect COO width of 3; got {coo_column_count}"
+        )
+    if num_rows_times_width % num_rows != 0:
+        raise SOMAError(
+            f"internal error: encountered non-rectangular {collection_name}[{element_name}]: {num_rows} does not divide {num_rows_times_width}"
+        )
+    return conversions.csr_from_tiledb_df(
+        matrix, num_rows, num_rows_times_width // num_rows
+    ).toarray()

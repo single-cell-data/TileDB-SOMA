@@ -27,7 +27,7 @@ experiment <- load_dataset("soma-exp-pbmc-small")
 
 ## SOMA DataFrame
 
-We'll start with the `obs` dataframe. Simply calling the `read()$concat()` method will load all of the data in memory as an [Arrow Table](https://arrow.apache.org/docs/r/reference/Table.html).
+We'll start with the `obs` dataframe. Simply calling the `read()$concat()` method will load all of the data in memory as an [Arrow Table](https://arrow.apache.org/docs/r/reference/table.html).
 
 
 ```{r}

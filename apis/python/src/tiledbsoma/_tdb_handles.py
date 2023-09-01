@@ -24,7 +24,6 @@ from typing import (
 )
 
 import attrs
-import numpy as np
 import tiledb
 from somacore import options
 from typing_extensions import Literal, Self
@@ -353,14 +352,15 @@ class MetadataWrapper(MutableMapping[str, Any]):
 def _check_metadata_type(key: str, obj: object) -> None:
     """Pre-checks that a metadata entry can be stored in an array.
 
-    These checks are reproduced from the TileDB Python metadata-setting methods.
-    We have to do this since we don't commit our changes until the very end.
+    These checks are reproduced from the TileDB Python metadata-setting methods,
+    but are slightly more restrictive than what TileDB allows in general:
+    TileDB allows (some) arrays as metadata values, but the SOMA spec does not
+    allow arrays of any kind.
+
+    We have to pre-check since we don't write metadata changes until closing.
     """
     if not isinstance(key, str):
         raise TypeError(f"metadata keys must be strings, not {type(key)}")
-    if isinstance(obj, (bytes, float, int, str, np.ndarray)):
+    if isinstance(obj, (bytes, float, int, str)):
         return
-    if isinstance(obj, (list, tuple)):
-        # Will raise a TypeError if it can't convert the contents.
-        np.array(obj)
     raise TypeError(f"cannot store {type(obj)} instance as metadata")

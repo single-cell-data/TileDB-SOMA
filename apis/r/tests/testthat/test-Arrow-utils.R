@@ -80,5 +80,3 @@ test_that("TileDB classes can be converted to Arrow equivalents", {
   expect_equal(length(arrow_schema$fields), 4)
   expect_equal(names(arrow_schema), c("dim0", "dim1", "attr0", "attr1"))
 })
-
-# touch

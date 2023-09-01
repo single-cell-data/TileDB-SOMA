@@ -1,4 +1,5 @@
 test_that("returns all coordinates by default", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment-query-all")
   n_obs <- 20L
   n_var <- 10L
@@ -55,6 +56,7 @@ test_that("returns all coordinates by default", {
 })
 
 test_that("querying by dimension coordinates", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment-query-coords")
   n_obs <- 1001L
   n_var <- 99L
@@ -102,6 +104,7 @@ test_that("querying by dimension coordinates", {
 })
 
 test_that("querying by value filters", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment-query-value-filters")
   n_obs <- 1001L
   n_var <- 99L
@@ -145,6 +148,7 @@ test_that("querying by value filters", {
 })
 
 test_that("querying by both coordinates and value filters", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment-query-coords-and-value-filters")
 
   n_obs <- 1001L
@@ -235,6 +239,7 @@ test_that("querying by both coordinates and value filters", {
 })
 
 test_that("queries with empty results", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment-query-empty-results")
   n_obs <- 1001L
   n_var <- 99L
@@ -264,6 +269,7 @@ test_that("queries with empty results", {
 })
 
 test_that("retrieving query results in supported formats", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment-query-results-formats1")
   n_obs <- 1001L
   n_var <- 99L
@@ -295,6 +301,7 @@ test_that("retrieving query results in supported formats", {
 })
 
 test_that("query result value indexer", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment-query-results-indexer")
   n_obs <- 1001L
   n_var <- 99L
@@ -361,6 +368,7 @@ test_that("query result value indexer", {
 })
 
 test_that("query result value indexer upcast", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment-query-results-indexer-upcast")
   n_obs <- 1001L
   n_var <- 99L

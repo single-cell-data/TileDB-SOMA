@@ -20,3 +20,7 @@ all: $(SHLIB)
 	        install_name_tool -add_rpath /usr/local/lib tiledbsoma.so; \
 	    fi; \
 	fi
+        # If we built without system libraries ("case 2" in configure) then we can remove libraries
+        # and headers used during the compilation; only ../tiledb/lib/ with the shared library is needed
+	@if [ -d ../inst/tiledb/lib64 ]; then rm -rf ../inst/tiledb/lib64; fi
+	@if [ -d ../inst/tiledb/include ]; then rm -rf ../inst/tiledb/include; fi
