@@ -543,8 +543,15 @@ def test_append_dataframes_only_with_experiment(soma1, h5ad2):
 
     with tiledbsoma.Experiment.open(soma1, "w") as exp1:
         tiledbsoma.io.append_obs(
-            exp1.obs.uri,
+            exp1,
             adata2.obs,
+            registration_mapping=rd,
+        )
+
+        tiledbsoma.io.append_var(
+            exp1,
+            adata2.var,
+            measurement_name="RNA",
             registration_mapping=rd,
         )
 

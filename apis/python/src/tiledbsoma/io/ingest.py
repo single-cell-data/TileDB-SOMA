@@ -737,7 +737,7 @@ def from_anndata(
 
 
 def append_obs(
-    obs_uri: str,
+    exp: Experiment,
     new_obs: pd.DataFrame,
     *,
     registration_mapping: ExperimentAmbientLabelMapping,
@@ -760,23 +760,26 @@ def append_obs(
 
         with tiledbsoma.Experiment.open(exp_uri, "w") as exp:
             tiledbsoma.io.append_obs(
-                exp.obs.uri, new_anndata.obs, registration_mapping=rd,
+                exp, new_anndata.obs, registration_mapping=rd,
             )
 
     Lifecycle:
         Experimental.
     """
+    if exp.closed or exp.mode != "w":
+        raise SOMAError(f"Experiment must be open for write: {exp.uri}")
+
     # Map the user-level ingest mode to a set of implementation-level boolean flags.
     # See comments in from_anndata.
+    context = _validate_soma_tiledb_context(context)
     ingestion_params = IngestionParams("write", registration_mapping)
     jidmap = registration_mapping.obs_axis.id_mapping_from_dataframe(new_obs)
-    context = _validate_soma_tiledb_context(context)
 
     s = _util.get_start_stamp()
-    logging.log_io_same(f"Start  writing obs for {obs_uri}")
+    logging.log_io_same(f"Start  writing obs for {exp.obs.uri}")
 
     with _write_dataframe(
-        obs_uri,
+        exp.obs.uri,
         conversions.decategoricalize_obs_or_var(new_obs),
         id_column_name="obs_id",
         platform_config=platform_config,
@@ -785,13 +788,13 @@ def append_obs(
         axis_mapping=jidmap,
     ):
         logging.log_io_same(
-            _util.format_elapsed(s, f"Finish writing obs for {obs_uri}")
+            _util.format_elapsed(s, f"Finish writing obs for {exp.obs.uri}")
         )
-    return obs_uri
+    return exp.obs.uri
 
 
 def append_var(
-    var_uri: str,
+    exp: Experiment,
     new_var: pd.DataFrame,
     measurement_name: str,
     *,
@@ -815,25 +818,33 @@ def append_var(
 
         with tiledbsoma.Experiment.open(exp_uri, "w") as exp:
             tiledbsoma.io.append_var(
-                exp.ms["RNA"].var.uri, a2.var, measurement_name="RNA", registration_mapping=rd,
+                exp, a2.var, measurement_name="RNA", registration_mapping=rd,
             )
 
     Lifecycle:
         Experimental.
     """
+    if exp.closed or exp.mode != "w":
+        raise SOMAError(f"Experiment must be open for write: {exp.uri}")
+    if measurement_name not in exp.ms:
+        raise SOMAError(
+            f"Experiment {exp.uri} has no measurement named {measurement_name}"
+        )
+    sdf = exp.ms[measurement_name].var
+
     # Map the user-level ingest mode to a set of implementation-level boolean flags.
     # See comments in from_anndata.
+    context = _validate_soma_tiledb_context(context)
     ingestion_params = IngestionParams("write", registration_mapping)
     jidmap = registration_mapping.var_axes[measurement_name].id_mapping_from_dataframe(
         new_var
     )
-    context = _validate_soma_tiledb_context(context)
 
     s = _util.get_start_stamp()
-    logging.log_io_same(f"Start  writing var for {var_uri}")
+    logging.log_io_same(f"Start  writing var for {sdf.uri}")
 
     with _write_dataframe(
-        var_uri,
+        sdf.uri,
         conversions.decategoricalize_obs_or_var(new_var),
         id_column_name="var_id",
         platform_config=platform_config,
@@ -842,9 +853,9 @@ def append_var(
         axis_mapping=jidmap,
     ):
         logging.log_io_same(
-            _util.format_elapsed(s, f"Finish writing var for {var_uri}")
+            _util.format_elapsed(s, f"Finish writing var for {sdf.uri}")
         )
-    return var_uri
+    return sdf.uri
 
 
 def _maybe_set(
