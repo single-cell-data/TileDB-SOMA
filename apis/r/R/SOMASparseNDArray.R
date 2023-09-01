@@ -53,7 +53,7 @@ SOMASparseNDArray <- R6::R6Class(
                      result_order = result_order,
                      timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
-
+      private$ctx_ptr <- rl$ctx
       SOMASparseNDArrayRead$new(rl$sr, shape = self$shape())
     },
 
@@ -226,7 +226,10 @@ SOMASparseNDArray <- R6::R6Class(
     },
 
     # Internal marking of one or zero based matrices for iterated reads
-    zero_based = NA
+    zero_based = NA,
+
+    # Internal variable to hold onto context returned by sr_setup
+    ctx_ptr = NULL
 
   )
 )

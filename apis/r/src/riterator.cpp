@@ -19,7 +19,6 @@
 #include "xptr-utils.h"         // xptr taggging utilitie
 Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children);
 Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children);
-void sr_finalize(Rcpp::XPtr<tdbs::SOMAArray> sr);
 
 namespace tdbs = tiledbsoma;
 
@@ -236,52 +235,3 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
                                       Rcpp::Named("schema") = schemaxp);
    return as;
 }
-
-// Helper function to register a finalizer -- eg for debugging purposes
-// R_Finalizer_t is 'typedef void (*R_CFinalizer_t)(SEXP);'
-inline void registerXptrFinalizer(SEXP s, R_CFinalizer_t f, bool onexit = true) {
-    R_RegisterCFinalizerEx(s, f, onexit ? TRUE : FALSE);
-}
-// Finalizer helper with void f(SEXP) signature
-void SOMAArrayFinalizer(SEXP sx) {
-    spdl::debug(tfm::format("[SOMAArrayFinalizer] entered"));
-    // if (sx == R_NilValue || sx == NULL || R_ExternalPtrAddr(sx) == NULL) return;
-    // Rcpp::XPtr<tdbs::SOMAArray> xp(sx);
-    // //spdl::trace(tfm::format("[SOMAArrayFinalizer] instantiated"));
-    // if (xp == R_NilValue) return;
-    // check_xptr_tag<tdbs::SOMAArray>(xp);
-    // //spdl::trace(tfm::format("[SOMAArrayFinalizer] checked"));
-    // std::shared_ptr<tiledb::Context> ctx = xp->ctx();
-    // //spdl::trace(tfm::format("[SOMAArrayFinalizer] referenced once"));
-    // if (ctx == nullptr) return;
-    // std::shared_ptr<tiledb_ctx_t> ctx_cptr = ctx->ptr();
-    // if (ctx_cptr == nullptr) return;
-    // spdl::debug(tfm::format("[SOMAArrayFinalizer] count on ctx %d cptr %d",
-    //                         ctx.use_count(), ctx_cptr.use_count()));
-    // tiledb_ctx_t* ptr = ctx_cptr.get();
-    // if (ptr == nullptr) return;
-    // tiledb_ctx_free(&ptr);
-    // ptr = nullptr;
-    // ctx_cptr.reset();
-    // ctx.reset();
-    spdl::debug(tfm::format("[SOMAArrayFinalizer] done"));
-}
-// Finalizer helper with void f(SEXP) signature
-void ContextWrapperFinalizer(SEXP sx) {
-    spdl::debug(tfm::format("[ContextWrapperFinalizer] entered"));
-    if (sx == R_NilValue || sx == NULL || R_ExternalPtrAddr(sx) == NULL) return;
-    Rcpp::XPtr<ctx_wrap_t> xp(sx);
-    if (xp == R_NilValue) return;
-    // check_xptr_tag<tdbs::SOMAArray>(xp);
-    std::shared_ptr<tiledb::Context> ctx = xp->ctxptr;
-    ctx.reset();
-    spdl::debug(tfm::format("[ContextWrapperFinalizer] done"));
-}
-
-// // [ [ Rcpp::export]]
-// void sr_finalize(Rcpp::XPtr<tdbs::SOMAArray> sr, Rcpp::XPtr<ctx_wrap_t> cw) {
-//     spdl::debug(tfm::format("[sr_finalize] entered"));
-//     check_xptr_tag<tdbs::SOMAArray>(sr);
-//     // not yet tagges
-//     registerXptrFinalizer(sr, SOMAArrayFinalizer);
-// }

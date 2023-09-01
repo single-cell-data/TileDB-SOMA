@@ -216,8 +216,8 @@ SOMADataFrame <- R6::R6Class(
                      dim_points = coords,
                      timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
-
-      TableReadIter$new(rl)
+      private$ctx_ptr <- rl$ctx
+      TableReadIter$new(rl$sr)
     },
 
     #' @description Update (lifecycle: experimental)
@@ -369,7 +369,9 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
-    }
+    },
 
+    # Internal variable to hold onto context returned by sr_setup
+    ctx_ptr = NULL
   )
 )

@@ -11,9 +11,8 @@ ReadIter <- R6::R6Class(
 
     #' @description Create (lifecycle: experimental)
     #' @param sr soma read pointer
-    initialize = function(rl) {
-      private$soma_reader_pointer <- rl$sr
-      private$ctx_pointer <- rl$ctx
+    initialize = function(sr) {
+      private$soma_reader_pointer <- sr
     },
 
     #' @description Check if iterated read is complete or not. (lifecycle: experimental)
@@ -55,32 +54,12 @@ ReadIter <- R6::R6Class(
 
     # Internal 'external pointer' object used for iterated reads
     soma_reader_pointer = NULL,
-    ctx_pointer = NULL,
+    #ctx_pointer = NULL,
 
     # to be refined in derived classes
     soma_reader_transform = function(x) {
       .NotYetImplemented()
-    },
-
-    finalize = function() {
-      spdl::debug("[finalizer] Entered")
-      if (!is.null(private$soma_reader_pointer)) {
-        spdl::debug("[finalizer] Calling sr_finalize")
-        sr_finalize(private$soma_reader_pointer)
-        private$soma_reader_pointer <- NULL
-      }
     }
-
-    ## finalize = function() {
-    ##   spdl::debug("[finalizer] Entered")
-    ##   if (!is.null(private$soma_reader_pointer)) {
-    ##     #spdl::debug("[finalizer] Calling sr_finalize")
-    ##     #sr_finalize(private$soma_reader_pointer, private$ctx_pointer)
-    ##     private$soma_reader_pointer <- NULL
-    ##     private$ctx_pointer <- NULL
-    ##   }
-    ## }
-
 
   )
 )

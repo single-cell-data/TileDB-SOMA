@@ -140,16 +140,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sr_finalize
-void sr_finalize(Rcpp::XPtr<tdbs::SOMAArray> sr);
-RcppExport SEXP _tiledbsoma_sr_finalize(SEXP srSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArray> >::type sr(srSEXP);
-    sr_finalize(sr);
-    return R_NilValue;
-END_RCPP
-}
 // tiledbsoma_stats_enable
 void tiledbsoma_stats_enable();
 RcppExport SEXP _tiledbsoma_tiledbsoma_stats_enable() {
@@ -219,7 +209,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
     {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},
-    {"_tiledbsoma_sr_finalize", (DL_FUNC) &_tiledbsoma_sr_finalize, 1},
     {"_tiledbsoma_tiledbsoma_stats_enable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_enable, 0},
     {"_tiledbsoma_tiledbsoma_stats_disable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_disable, 0},
     {"_tiledbsoma_tiledbsoma_stats_reset", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_reset, 0},
