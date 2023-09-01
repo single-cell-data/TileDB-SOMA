@@ -25,4 +25,18 @@ make
 
 make install-libtiledbsoma
 
+cd ${cwd}
+
 rm -rf src/libtiledbsoma/build-lib
+
+## Case of RedHat and related distros
+if [ -d inst/tiledbsoma/lib64 ]; then
+    ## we can assume lib/ exists as the libtiledb.so.* is already there
+    mv -f inst/tiledbsoma/lib64/* inst/tiledbsoma/lib/
+fi
+
+## Case of the extra shared library
+if [ -f inst/tiledbsoma/lib/libtiledb.so.* ]; then
+    ## not needed as inst/tiledb/lib/libtiledb.so.* is linked instead
+    rm -f inst/tiledbsoma/lib/libtiledb.so.*
+fi

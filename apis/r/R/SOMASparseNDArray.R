@@ -62,10 +62,16 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param values Any `matrix`-like object coercible to a
     #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
     #' names are ignored because `SOMANDArray`'s use integer indexing.
+    #' @param bbox A vector of integers describing the upper bounds of each
+    #' dimension of `values`. Generally should be `NULL`.
     #'
-    write = function(values) {
+    write = function(values, bbox = NULL) {
       stopifnot(
-        "'values' must be a matrix" = is_matrix(values)
+        "'values' must be a matrix" = is_matrix(values),
+        "'bbox' must contain two entries" = is.null(bbox) || length(bbox) == length(dim(values)),
+        "'bbox' must be a vector of two integers or a list with each entry containg two integers" = is.null(bbox) ||
+          (is_integerish(bbox) || bit64::is.integer64(bbox)) ||
+          (is.list(bbox) && all(vapply_lgl(bbox, function(x, n) length(x) == 2L)))
       )
       # coerce to a TsparseMatrix, which uses 0-based COO indexing
       values <- as(values, Class = "TsparseMatrix")
@@ -74,7 +80,101 @@ SOMASparseNDArray <- R6::R6Class(
         j = bit64::as.integer64(values@j),
         x = values@x
       )
-      colnames(coo) <- c(self$dimnames(), self$attrnames())
+      dnames <- self$dimnames()
+      colnames(coo) <- c(dnames, self$attrnames())
+      ranges <- sapply(
+        X = dnames,
+        FUN = function(x) {
+          return(range(coo[[x]]))
+        },
+        simplify = FALSE,
+        USE.NAMES = TRUE
+      )
+      bbox <- bbox %||% setNames(
+        lapply(
+          X = dim(x = values) - 1L,
+          FUN = function(x) {
+            bit64::as.integer64(c(0L, x))
+          }
+        ),
+        nm = dnames
+      )
+      if (is.null(names(bbox))) {
+        names(bbox) <- dnames
+      }
+      if (!is_named(bbox, allow_empty = FALSE)) {
+        # Determine which indexes of `bbox` are unnamed (incl empty strings "")
+        # Python equivalent:
+        # bbox = pandas.Series([[0, 99], [0, 299]], index=["soma_dim_0", ""])
+        # [i for i, key in enumerate(bbox.keys()) if not len(key)]
+        idx <- which(!nzchar(names(bbox)))
+        names(bbox)[idx] <- dnames[idx]
+      }
+      if (!identical(sort(names(bbox)), sort(dnames))) {
+        stop("The names of 'bbox' must be the names of the array")
+      }
+      if (is_integerish(bbox) || bit64::is.integer64(bbox)) {
+        bbox <- sapply(
+          X = names(bbox),
+          FUN = function(x) {
+            return(sort(c(min(ranges[[x]]), bbox[[x]])))
+          },
+          simplify = FALSE
+        )
+      }
+      for (x in dnames) {
+        xrange <- bbox[[x]]
+        if (any(is.na(xrange))) {
+          stop(
+            "Ranges in the bounding box must be finite (offending: ",
+            sQuote(x),
+            ")",
+            call. = FALSE
+          )
+        }
+        if (!(is_integerish(xrange) || bit64::is.integer64(xrange))) {
+          stop(
+            "Ranges in the bounding box must be integers (offending: ",
+            sQuote(x),
+            ")",
+            call. = FALSE
+          )
+        }
+        xrange <- sort(bit64::as.integer64(xrange))
+        if (length(xrange) != 2L) {
+          stop(
+            "Ranges in the bounding box must consist of two integerish values",
+            call. = FALSE
+          )
+        }
+        if (xrange[1L] < 0 || xrange[1L] > min(ranges[[x]])) {
+          stop(
+            "Ranges in the bounding box must be greater than zero and less than the lowest value being added (offending: ",
+            sQuote(x),
+            ")",
+            call. = FALSE
+          )
+        }
+        if (xrange[2L] < max(ranges[[x]])) {
+          stop(
+            "Ranges in the bounding box must be greater than the largest value being added (offending: ",
+            sQuote(x),
+            ")",
+            call. = FALSE
+          )
+        }
+        bbox[[x]] <- xrange
+      }
+      names(bbox) <- paste0(names(bbox), '_domain')
+      bbox_flat <- vector(mode = 'list', length = length(x = bbox) * 2L)
+      index <- 1L
+      for (i in seq_along(bbox)) {
+        bbox_flat[[index]] <- bbox[[i]][1L]
+        bbox_flat[[index + 1L]] <- bbox[[i]][2L]
+        names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c('_lower', '_upper'))
+        index <- index + 2L
+      }
+      self$set_metadata(bbox_flat)
       private$.write_coo_dataframe(coo)
     },
 

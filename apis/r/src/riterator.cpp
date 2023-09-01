@@ -19,6 +19,7 @@
 #include "xptr-utils.h"         // xptr taggging utilitie
 Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children);
 Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children);
+void sr_finalize(Rcpp::XPtr<tdbs::SOMAArray> sr);
 
 namespace tdbs = tiledbsoma;
 
@@ -88,14 +89,7 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
-
-    std::shared_ptr<tiledb::Context> ctxptr = nullptr;
-
     std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
-    tiledb::Config cfg(platform_config);
-    spdl::debug("[sr_setup] creating ctx object with supplied config");
-    ctxptr = std::make_shared<tiledb::Context>(cfg);
-
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
     }
@@ -109,7 +103,8 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
-    auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, ctxptr, column_names, batch_size,
+    auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, platform_config,
+                                   column_names, batch_size,
                                    tdb_result_order, std::make_pair(ts_start, ts_end));
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
@@ -151,12 +146,12 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
 // [[Rcpp::export]]
 bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
-   check_xptr_tag<tdbs::SOMAArray>(sr);
-   bool complt = sr->is_complete(true);
-   bool initial = sr->is_initial_read();
-   bool res = complt && !initial; // completed transfer if query status complete and query ran once
-   spdl::debug("[sr_complete] Complete query test {} (compl {} initial {})", res, complt, initial);
-   return res;
+    check_xptr_tag<tdbs::SOMAArray>(sr);
+    bool complt = sr->is_complete(true);
+    bool initial = sr->is_initial_read();
+    bool res = complt && !initial; // completed transfer if query status complete and query ran once
+    spdl::debug("[sr_complete] Complete query test {} (compl {} initial {})", res, complt, initial);
+    return res;
 }
 
 Rcpp::List create_empty_arrow_table() {
@@ -229,4 +224,40 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
                                       Rcpp::Named("schema") = schemaxp);
    return as;
+}
+
+// Helper function to register a finalizer -- eg for debugging purposes
+// R_Finalizer_t is 'typedef void (*R_CFinalizer_t)(SEXP);'
+inline void registerXptrFinalizer(SEXP s, R_CFinalizer_t f, bool onexit = true) {
+    R_RegisterCFinalizerEx(s, f, onexit ? TRUE : FALSE);
+}
+// Finalizer helper with void f(SEXP) signature
+void SOMAArrayFinalizer(SEXP sx) {
+    spdl::debug(tfm::format("[SOMAArrayFinalizer] entered"));
+    if (sx == R_NilValue || sx == NULL || R_ExternalPtrAddr(sx) == NULL) return;
+    Rcpp::XPtr<tdbs::SOMAArray> xp(sx);
+    //spdl::trace(tfm::format("[SOMAArrayFinalizer] instantiated"));
+    if (xp == R_NilValue) return;
+    check_xptr_tag<tdbs::SOMAArray>(xp);
+    //spdl::trace(tfm::format("[SOMAArrayFinalizer] checked"));
+    std::shared_ptr<tiledb::Context> ctx = xp->ctx();
+    //spdl::trace(tfm::format("[SOMAArrayFinalizer] referenced once"));
+    if (ctx == nullptr) return;
+    std::shared_ptr<tiledb_ctx_t> ctx_cptr = ctx->ptr();
+    if (ctx_cptr == nullptr) return;
+    spdl::debug(tfm::format("[SOMAArrayFinalizer] count on ctx %d cptr %d",
+                            ctx.use_count(), ctx_cptr.use_count()));
+    tiledb_ctx_t* ptr = ctx_cptr.get();
+    if (ptr == nullptr) return;
+    tiledb_ctx_free(&ptr);
+    ptr = nullptr;
+    ctx_cptr.reset();
+    ctx.reset();
+    spdl::debug(tfm::format("[SOMAArrayFinalizer] done"));
+}
+
+// [[Rcpp::export]]
+void sr_finalize(Rcpp::XPtr<tdbs::SOMAArray> sr) {
+   check_xptr_tag<tdbs::SOMAArray>(sr);
+   registerXptrFinalizer(sr, SOMAArrayFinalizer);
 }

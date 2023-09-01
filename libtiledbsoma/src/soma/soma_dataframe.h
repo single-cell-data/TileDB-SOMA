@@ -292,12 +292,18 @@ class SOMADataFrame : public SOMAObject {
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    std::map<std::string, MetadataValue> get_metadata() {
-        return array_->get_metadata();
-    }
-
     std::optional<MetadataValue> get_metadata(const std::string& key) {
         return array_->get_metadata(key);
+    }
+
+    /**
+     * Get a mapping of all metadata keys with its associated value datatype,
+     * number of values, and value in binary form.
+     *
+     * @return std::map<std::string, MetadataValue>
+     */
+    std::map<std::string, MetadataValue> get_metadata() {
+        return array_->get_metadata();
     }
 
     /**

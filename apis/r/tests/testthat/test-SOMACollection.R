@@ -1,5 +1,6 @@
 
 test_that("SOMACollection basics", {
+  skip_if(!extended_tests())
   uri <- file.path(withr::local_tempdir(), "new-collection")
 
   # Create an empty collection
@@ -67,6 +68,7 @@ test_that("SOMACollection basics", {
 })
 
 test_that("SOMACollection timestamped ops", {
+  skip_if(!extended_tests())
   # Create a collection @ t0
   uri <- file.path(withr::local_tempdir(), "timestamped-collection")
   collection <- SOMACollectionCreate(uri)
@@ -108,6 +110,7 @@ test_that("SOMACollection timestamped ops", {
 })
 
 test_that("Platform config and context are respected by add_ methods", {
+  skip_if(!extended_tests())
   uri <- file.path(withr::local_tempdir(), "new-collection")
 
   # Set params in the config and context

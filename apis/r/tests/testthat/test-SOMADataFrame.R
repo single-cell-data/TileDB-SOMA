@@ -1,10 +1,11 @@
 test_that("Basic mechanics", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
   expect_error(
     SOMADataFrameCreate(uri, asch, index_column_names = "qux"),
-    "The following field does not exist: qux"
+    "The following indexed field does not exist: qux"
   )
 
   sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
@@ -102,16 +103,20 @@ test_that("Basic mechanics", {
   expect_true(tiledb::is.sparse(sch))
   expect_false(tiledb::allows_dups(sch))
   sdf$close()
+
+  rm(sdf, tbl0, tbl1, rb0, rb1)
+  gc()
 })
 
 test_that("Basic mechanics with default index_column_names", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-soma-joinid")
   asch <- create_arrow_schema(foo_first=FALSE)
 
   sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
     sdf$create(asch, index_column_names = "qux", internal_use_only = "allowed_use"),
-    "The following field does not exist: qux"
+    "The following indexed field does not exist: qux"
   )
 
   sdf$create(asch, internal_use_only = "allowed_use")
@@ -147,10 +152,13 @@ test_that("Basic mechanics with default index_column_names", {
     as.list(tbl0),
     ignore_attr = TRUE
   )
+
+  rm(sdf, tbl0)
+  gc()
 })
 
 test_that("creation with all supported dimension data types", {
-
+  skip_if(!extended_tests())
   sch <- arrow::schema(
     arrow::field("int8", arrow::int8(), nullable = FALSE),
     arrow::field("int16", arrow::int16(), nullable = FALSE),
@@ -181,9 +189,13 @@ test_that("creation with all supported dimension data types", {
     expect_true(sdf$exists())
     sdf$close()
   }
+
+  rm(sdf, tbl0)
+  gc()
 })
 
 test_that("int64 values are stored correctly", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- arrow::schema(
     arrow::field("foo", arrow::int32(), nullable = FALSE),
@@ -205,37 +217,46 @@ test_that("int64 values are stored correctly", {
   # verify int64_downcast option was restored
   expect_equal(getOption("arrow.int64_downcast"), orig_downcast_value)
   sdf$close()
+
+  rm(sdf, tbl0, tbl1)
+  gc()
 })
 
 test_that("SOMADataFrame read", {
-    uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
+  skip_if(!extended_tests())
+  uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 
-    sdf <- SOMADataFrameOpen(uri)
-    z <- sdf$read()$concat()
-    expect_equal(z$num_rows, 2638L)
-    expect_equal(z$num_columns, 6L)
-    sdf$close()
+  sdf <- SOMADataFrameOpen(uri)
+  z <- sdf$read()$concat()
+  expect_equal(z$num_rows, 2638L)
+  expect_equal(z$num_columns, 6L)
+  sdf$close()
 
-    columns <- c("n_counts", "n_genes", "louvain")
-    sdf <- SOMADataFrameOpen(uri)
-    z <- sdf$read(column_names=columns)$concat()
-    expect_equal(z$num_columns, 3L)
-    expect_equal(z$ColumnNames(), columns)
-    sdf$close()
+  columns <- c("n_counts", "n_genes", "louvain")
+  sdf <- SOMADataFrameOpen(uri)
+  z <- sdf$read(column_names=columns)$concat()
+  expect_equal(z$num_columns, 3L)
+  expect_equal(z$ColumnNames(), columns)
+  sdf$close()
 
-    columns <- c("n_counts", "does_not_exist")
-    sdf <- SOMADataFrameOpen(uri)
-    expect_error(sdf$read(column_names=columns))
-    sdf$close()
+  columns <- c("n_counts", "does_not_exist")
+  sdf <- SOMADataFrameOpen(uri)
+  expect_error(sdf$read(column_names=columns))
+  sdf$close()
 
-    coords <- bit64::as.integer64(seq(100, 109))
-    sdf <- SOMADataFrameOpen(uri)
-    z <- sdf$read(coords = list(soma_joinid=coords))$concat()
-    expect_equal(z$num_rows, 10L)
-    sdf$close()
+  coords <- bit64::as.integer64(seq(100, 109))
+  sdf <- SOMADataFrameOpen(uri)
+  z <- sdf$read(coords = list(soma_joinid=coords))$concat()
+  expect_equal(z$num_rows, 10L)
+  sdf$close()
+
+  rm(sdf, z)
+  gc()
+
 })
 
 test_that("soma_ prefix is reserved", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
@@ -252,6 +273,7 @@ test_that("soma_ prefix is reserved", {
 })
 
 test_that("soma_joinid is added on creation", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
@@ -264,6 +286,7 @@ test_that("soma_joinid is added on creation", {
 })
 
 test_that("soma_joinid validations", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
@@ -281,6 +304,7 @@ test_that("soma_joinid validations", {
 })
 
 test_that("platform_config is respected", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
 
   # Set Arrow schema
@@ -376,6 +400,7 @@ test_that("platform_config is respected", {
 })
 
 test_that("platform_config defaults", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
 
   # Set Arrow schema
@@ -390,7 +415,12 @@ test_that("platform_config defaults", {
   cfg <- PlatformConfig$new()
 
   # Create the SOMADataFrame
-  sdf <- SOMADataFrameCreate(uri=uri, schema=asch, index_column_names=c("soma_joinid"), platform_config = cfg)
+  sdf <- SOMADataFrameCreate(
+    uri = uri,
+    schema = asch,
+    index_column_names = c("soma_joinid"),
+    platform_config = cfg
+  )
 
   # Read back and check the array schema against the tiledb create options
   arr <- tiledb::tiledb_array(uri)
@@ -410,6 +440,7 @@ test_that("platform_config defaults", {
 })
 
 test_that("Metadata", {
+  skip_if(!extended_tests())
   uri <- file.path(withr::local_tempdir(), "sdf-metadata")
   asch <- create_arrow_schema()
   sdf <- SOMADataFrameCreate(uri, asch)
@@ -435,6 +466,7 @@ test_that("Metadata", {
 })
 
 test_that("SOMADataFrame timestamped ops", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-timestamps")
 
   sch <- arrow::schema(arrow::field("soma_joinid", arrow::int64(), nullable=FALSE),
@@ -473,4 +505,80 @@ test_that("SOMADataFrame timestamped ops", {
   expect_equal(as.data.frame(sdf$read()$concat()), d1)  # read between t10 and t20 sees only first write
   sdf$close()
 
+})
+
+test_that("SOMADataFrame can be updated", {
+  uri <- withr::local_tempdir("soma-dataframe-update")
+  sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
+
+  # Retrieve the table from disk
+  tbl0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
+
+  # Remove a column and update
+  tbl0$bar <- NULL
+  sdf <- SOMADataFrameOpen(uri, "WRITE")$update(tbl0)
+
+  # Verify attribute was removed on disk
+  tbl1 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
+  expect_true(tbl1$Equals(tbl0))
+
+  # # Add a new column and update
+  tbl0$bar <- sample(c(TRUE, FALSE), nrow(tbl0), replace = TRUE)
+  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0)
+
+  # Verify attribute was added on disk
+  tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat()
+  expect_true(tbl1$Equals(tbl0))
+
+  # Error if attempting to drop an array dimension
+  tbl0$foo <- NULL # drop the indexed dimension
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    "The following indexed field does not exist"
+  )
+  tbl0 <- tbl1
+
+  # Error on incompatible schema updates
+  tbl0$baz <- tbl0$baz$cast(target_type = arrow::int32()) # string to int
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    "Schemas are incompatible"
+  )
+  tbl0 <- tbl1
+
+  # Error if the number of rows changes
+  tbl0 <- tbl0$Slice(offset = 1, length = tbl0$num_rows - 1)
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    "Number of rows in 'values' must match number of rows in array"
+  )
+})
+
+test_that("SOMADataFrame can be updated from a data frame", {
+  uri <- withr::local_tempdir("soma-dataframe-update")
+  sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
+
+  # Retrieve the table from disk
+  df0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()$to_data_frame()
+  df0$soma_joinid <- bit64::as.integer64(df0$soma_joinid)
+
+  # Convert a column to row names to test that it can be recovered
+  df0 <- as.data.frame(df0)
+  rownames(df0) <- df0$baz
+  df0$baz <- NULL
+  df0$bar <- NULL
+
+  # Update to drop 'bar' from the array and retrieve baz values from row names
+  expect_silent(
+    SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "baz")
+  )
+
+  df1 <- SOMADataFrameOpen(uri)$read()$concat()$to_data_frame()
+  expect_setequal(colnames(df1), c("foo", "soma_joinid", "baz"))
+
+  # Error if row_index_name conflicts with an existing column name
+  expect_error(
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(df0, row_index_name = "foo"),
+    "'row_index_name' conflicts with an existing column name"
+  )
 })

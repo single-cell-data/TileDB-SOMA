@@ -1,4 +1,5 @@
 test_that("DataFrame Factory", {
+    skip_if(!extended_tests())
     uri <- tempfile()
 
     # Check that straight use of new() errors, but 'with handshake' passes
@@ -19,6 +20,7 @@ test_that("DataFrame Factory", {
 })
 
 test_that("DataFrame Factory with specified index_column_names", {
+    skip_if(!extended_tests())
     uri <- tempfile()
 
     # Check creation of a DF
@@ -39,6 +41,7 @@ test_that("DataFrame Factory with specified index_column_names", {
 })
 
 test_that("SparseNDArray Factory", {
+    skip_if(!extended_tests())
     uri <- tempfile()
 
     # check that straight use of new() errors, but 'with handshake' passes
@@ -55,7 +58,7 @@ test_that("SparseNDArray Factory", {
     # check opening to read
     expect_silent(s3 <- SOMASparseNDArrayOpen(uri))
     expect_equal(s3$mode(), "READ")
-    
+
     #TODO test when sr_setup has an argument "result_order"
     #expect_silent(chk <- s3$read(result_order = "COL_MAJOR")$tables()$concat())
     #expect_identical(
@@ -68,6 +71,7 @@ test_that("SparseNDArray Factory", {
 })
 
 test_that("SparseNDArray Factory", {
+    skip_if(!extended_tests())
     uri <- tempfile()
 
     # check that straight use of new() errors, but 'with handshake' passes
@@ -91,6 +95,7 @@ test_that("SparseNDArray Factory", {
 })
 
 test_that("Collection Factory", {
+    skip_if(!extended_tests())
     uri <- tempfile()
 
     # check that straight use of new() errors, but 'with handshake' passes
@@ -108,6 +113,7 @@ test_that("Collection Factory", {
 })
 
 test_that("Measurement Factory", {
+    skip_if(!extended_tests())
     uri <- tempfile()
 
     # check that straight use of new() errors, but 'with handshake' passes
@@ -125,6 +131,7 @@ test_that("Measurement Factory", {
 })
 
 test_that("Experiment Factory", {
+    skip_if(!extended_tests())
     uri <- tempfile()
 
     # check that straight use of new() errors, but 'with handshake' passes

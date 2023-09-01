@@ -32,6 +32,8 @@ Base class for representing an individual TileDB array.
 \item \href{#method-TileDBArray-tiledb_schema}{\code{TileDBArray$tiledb_schema()}}
 \item \href{#method-TileDBArray-dimensions}{\code{TileDBArray$dimensions()}}
 \item \href{#method-TileDBArray-shape}{\code{TileDBArray$shape()}}
+\item \href{#method-TileDBArray-used_shape}{\code{TileDBArray$used_shape()}}
+\item \href{#method-TileDBArray-non_empty_domain}{\code{TileDBArray$non_empty_domain()}}
 \item \href{#method-TileDBArray-ndim}{\code{TileDBArray$ndim()}}
 \item \href{#method-TileDBArray-attributes}{\code{TileDBArray$attributes()}}
 \item \href{#method-TileDBArray-dimnames}{\code{TileDBArray$dimnames()}}
@@ -212,6 +214,54 @@ array.  Rather, it is the bounds outside of which no data may be written.
 
 \subsection{Returns}{
 A named vector of dimension length (and the same type as the dimension)
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-used_shape"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-used_shape}{}}}
+\subsection{Method \code{used_shape()}}{
+Retrieve the range of indexes for a dimension that were
+explicitly written.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$used_shape(simplify = FALSE, index1 = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{simplify}}{Return a vector of \code{\link{bit64:integer64}}s containing only
+the upper bounds.}
+
+\item{\code{index1}}{Return the used shape with 1-based indices (0-based indices are returned by default)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A list containing the lower and upper bounds for the used shape.
+If \code{simplify = TRUE}, returns a vector of only the upper bounds.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-non_empty_domain"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-non_empty_domain}{}}}
+\subsection{Method \code{non_empty_domain()}}{
+Retrieve the non-empty domain for each dimension. This
+method calls \code{\link[tiledb:tiledb_array_get_non_empty_domain_from_name]{tiledb::tiledb_array_get_non_empty_domain_from_name}} for
+each dimension in the array.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$non_empty_domain(index1 = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{index1}}{Return the non-empty domain with 1-based indices.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A vector of \code{\link[bit64:bit64-package]{bit64::integer64}}s with one entry for
+each dimension.
 }
 }
 \if{html}{\out{<hr>}}

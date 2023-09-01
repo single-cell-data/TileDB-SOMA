@@ -1,4 +1,5 @@
 test_that("Ephemeral Colelction mechanics", {
+  skip_if(!extended_tests())
   # Create a new collection
   uri <- withr::local_tempdir('ephemeral-collection')
   expect_warning(EphemeralCollection$new(uri = uri))

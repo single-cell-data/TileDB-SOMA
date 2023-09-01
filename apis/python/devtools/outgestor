@@ -62,7 +62,7 @@ def main():
         "--var-id-name",
         help="Which var column name to use as index for outgested andata",
         type=str,
-        default="obs_id",
+        default="var_id",
     )
     parser.add_argument(
         "paths",

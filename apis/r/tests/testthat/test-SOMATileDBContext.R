@@ -1,4 +1,5 @@
 test_that("SOMATileDBContext mechanics", {
+  skip_if(!extended_tests())
   ctx <- SOMATileDBContext$new()
   expect_true(length(ctx) >= 1L)
   expect_identical(length(ctx), ctx$length())
@@ -13,6 +14,7 @@ test_that("SOMATileDBContext mechanics", {
 })
 
 test_that("SOMATileDBContext SOMA mechanics", {
+  skip_if(!extended_tests())
   ctx <- SOMATileDBContext$new()
   ntiledb <- length(x = ctx$.__enclos_env__$private$.tiledb_ctx_names())
   expect_no_condition(ctx$set('member_uris_are_relative', TRUE))
@@ -38,6 +40,7 @@ test_that("SOMATileDBContext SOMA mechanics", {
 })
 
 test_that("SOMATileDBContext TileDB mechanics", {
+  skip_if(!extended_tests())
   ctx <- SOMATileDBContext$new()
   tiledb_names <- ctx$.__enclos_env__$private$.tiledb_ctx_names()
   expect_identical(ctx$keys(), tiledb_names)
@@ -58,6 +61,7 @@ test_that("SOMATileDBContext TileDB mechanics", {
 })
 
 test_that("SOMATileDBContext SOMA + TileDB mechanics", {
+  skip_if(!extended_tests())
   ctx <- SOMATileDBContext$new()
   tiledb_names <- ctx$.__enclos_env__$private$.tiledb_ctx_names()
   expect_error(ctx <- SOMATileDBContext$new(c(
