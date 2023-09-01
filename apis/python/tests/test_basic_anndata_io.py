@@ -135,21 +135,26 @@ def test_import_anndata(adata, ingest_modes, X_kind):
 
         # Check X/data (dense in the H5AD)
         for key in ["data", "plus1"]:
+            X = exp.ms["RNA"].X[key]
             if X_kind == tiledbsoma.SparseNDArray:
-                assert exp.ms["RNA"].X[key].metadata.get(metakey) == "SOMASparseNDArray"
-                table = exp.ms["RNA"].X[key].read(coords=all2d).tables().concat()
+                assert X.metadata.get(metakey) == "SOMASparseNDArray"
+                table = X.read(coords=all2d).tables().concat()
                 if have_ingested:
                     assert table.shape[0] == orig.X.shape[0] * orig.X.shape[1]
                 else:
                     assert table.shape[0] == 0
+                # Only sparse arrays have used_shape
+                if ingest_mode != "schema_only":
+                    # E.g. AnnData X shape is (80,20). We expect used_shape ((0,79),(0,19)).
+                    assert X.used_shape() == tuple([(0, e - 1) for e in orig.shape])
             else:
-                assert exp.ms["RNA"].X[key].metadata.get(metakey) == "SOMADenseNDArray"
+                assert X.metadata.get(metakey) == "SOMADenseNDArray"
                 if have_ingested:
-                    matrix = exp.ms["RNA"].X[key].read(coords=all2d)
+                    matrix = X.read(coords=all2d)
                     assert matrix.size == orig.X.size
                 else:
                     with pytest.raises(ValueError):
-                        exp.ms["RNA"].X[key].read(coords=all2d)
+                        X.read(coords=all2d)
 
         # Check raw/X/data (sparse)
         assert exp.ms["raw"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"

@@ -1491,7 +1491,7 @@ def _find_sparse_chunk_size(
     matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
 ) -> int:
     """Given a sparse matrix and a start index, return a step size, on the stride axis,
-    which will achieve the cumulative nnz desired. If the array is entirely empty, returns -1.
+    which will achieve the cumulative nnz desired.
 
     Args:
         matrix:
@@ -1529,7 +1529,7 @@ def _find_sparse_chunk_size(
         chunk_size += 1
 
     if sum_nnz == 0:  # completely empty sparse array (corner case)
-        return -1
+        return 1
 
     if sum_nnz > goal_chunk_nnz:
         return chunk_size
