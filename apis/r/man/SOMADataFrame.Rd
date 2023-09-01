@@ -69,7 +69,7 @@ Create (lifecycle: experimental)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{schema}}{an \code{\link[arrow:Schema]{arrow::schema}}.}
+\item{\code{schema}}{an \code{\link[arrow:schema]{arrow::schema}}.}
 
 \item{\code{index_column_names}}{A vector of column names to use as user-defined
 index columns.  All named columns must exist in the schema, and at least
@@ -96,7 +96,7 @@ Write (lifecycle: experimental)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{An \code{\link[arrow:Table]{arrow::Table}} or \code{\link[arrow:RecordBatch]{arrow::RecordBatch}}
+\item{\code{values}}{An \code{\link[arrow:Table-class]{arrow::Table}} or \code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}
 containing all columns, including any index columns. The
 schema for \code{values} must match the schema for the \code{SOMADataFrame}.}
 }
@@ -159,8 +159,8 @@ Update (lifecycle: experimental)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table]{arrow::Table}}, or
-\code{\link[arrow:RecordBatch]{arrow::RecordBatch}}.}
+\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table-class]{arrow::Table}}, or
+\code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}.}
 
 \item{\code{row_index_name}}{An optional scalar character. If provided, and if
 the \code{values} argument is a \code{data.frame} with row names, then the row
@@ -180,11 +180,11 @@ new \code{values} will be dropped
 \code{values} will be added
 \item any columns present in both will be left alone, with the exception that
 if \code{values} has a different type for the column, the entire update
-will fail because attribute types cannot be changed
+will fail because attribute types cannot be changed.
 }
 
 Furthermore, \code{values} must contain the same number of rows as the current
-\code{SOMADataFrame}
+\code{SOMADataFrame}.
 }
 
 }

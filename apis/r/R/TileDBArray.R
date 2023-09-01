@@ -145,7 +145,7 @@ TileDBArray <- R6::R6Class(
 
     #' @description Retrieve the range of indexes for a dimension that were
     #'  explicitly written.
-    #' @param simplify Return a vector of [`bit64:integer64`]s containing only
+    #' @param simplify Return a vector of [`bit64::integer64`]s containing only
     #' the upper bounds.
     #' @param index1 Return the used shape with 1-based indices (0-based indices are returned by default)
     #' @return A list containing the lower and upper bounds for the used shape.

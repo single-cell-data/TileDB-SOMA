@@ -98,7 +98,7 @@ read. List elements can be named when specifying a subset of dimensions.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-An \code{\link[arrow:Table]{arrow::Table}}.
+An \code{\link[arrow:Table-class]{arrow::Table}}.
 }
 }
 \if{html}{\out{<hr>}}

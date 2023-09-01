@@ -16,3 +16,9 @@ extended_tests <- function() {
     ## could add if pre-release number ie 1.4.3.1 instead of 1.4.3
     Sys.getenv("CI", "") != ""
 }
+
+covr_tests <- function() {
+    ## check if coverage is flagged
+    ## could add if pre-release number ie 1.4.3.1 instead of 1.4.3
+    Sys.getenv("COVR", "") != ""
+}
