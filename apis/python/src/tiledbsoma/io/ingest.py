@@ -859,7 +859,7 @@ def append_var(
 
 
 def append_X(
-    X_uri: str,
+    exp: Experiment,
     measurement_name: str,
     X_layer_name: str,
     new_X: Union[Matrix, h5py.Dataset],
@@ -901,15 +901,26 @@ def append_X(
     Lifecycle:
         Experimental.
     """
+    if exp.closed or exp.mode != "w":
+        raise SOMAError(f"Experiment must be open for write: {exp.uri}")
+    if measurement_name not in exp.ms:
+        raise SOMAError(
+            f"Experiment {exp.uri} has no measurement named {measurement_name}"
+        )
+    if X_layer_name not in exp.ms[measurement_name].X:
+        raise SOMAError(
+            f"Experiment {exp.uri} has no X layer named {X_layer_name} in measurement {measurement_name}"
+        )
+    X = exp.ms[measurement_name].X[X_layer_name]
+
     # Map the user-level ingest mode to a set of implementation-level boolean flags.
     # See comments in from_anndata.
     ingestion_params = IngestionParams("write", registration_mapping)
     context = _validate_soma_tiledb_context(context)
 
     s = _util.get_start_stamp()
-    logging.log_io_same(f"Start  writing var for {X_uri}")
+    logging.log_io_same(f"Start  writing var for {X.uri}")
 
-    # XXX check ms name & xl name for existences
     axis_0_mapping = registration_mapping.obs_axis.id_mapping_from_values(obs_ids)
     axis_1_mapping = registration_mapping.var_axes[
         measurement_name
@@ -917,7 +928,7 @@ def append_X(
 
     with _create_from_matrix(
         X_kind,
-        X_uri,
+        X.uri,
         new_X,
         ingestion_params=ingestion_params,
         platform_config=platform_config,
@@ -925,8 +936,8 @@ def append_X(
         axis_0_mapping=axis_0_mapping,
         axis_1_mapping=axis_1_mapping,
     ):
-        logging.log_io_same(_util.format_elapsed(s, f"Finish writing X for {X_uri}"))
-    return X_uri
+        logging.log_io_same(_util.format_elapsed(s, f"Finish writing X for {X.uri}"))
+    return X.uri
 
 
 def _maybe_set(
