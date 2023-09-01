@@ -532,3 +532,57 @@ def test_multiples_with_experiment(soma1, h5ad2, h5ad3, h5ad4):
         "RAW3": 8,
         "ZZZ3": 9,
     }
+
+
+def test_append_dataframes_only_with_experiment(soma1, h5ad2):
+    rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+        experiment_uri=soma1,
+        h5ad_file_names=[h5ad2],
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+
+    adata2 = ad.read_h5ad(h5ad2)
+
+    with tiledbsoma.Experiment.open(soma1, "w") as exp1:
+        tiledbsoma.io.append_obs(
+            exp1.obs.uri,
+            adata2.obs,
+            registration_mapping=rd,
+        )
+
+    expect_obs_soma_joinids = list(range(6))
+    expect_var_soma_joinids = list(range(5))
+
+    expect_obs_obs_ids = [
+        "AAAT",
+        "ACTG",
+        "AGAG",
+        "CAAT",
+        "CCTG",
+        "CGAG",
+    ]
+
+    expect_var_var_ids = [
+        "AKT1",
+        "APOE",
+        "ESR1",
+        "TP53",
+        "VEGFA",
+    ]
+
+    with tiledbsoma.Experiment.open(soma1) as exp:
+        obs = exp.obs.read().concat()
+        var = exp.ms["RNA"].var.read().concat()
+
+        actual_obs_soma_joinids = obs["soma_joinid"].to_pylist()
+        actual_obs_obs_ids = obs["obs_id"].to_pylist()
+
+        actual_var_soma_joinids = var["soma_joinid"].to_pylist()
+        actual_var_var_ids = var["var_id"].to_pylist()
+
+        assert actual_obs_soma_joinids == expect_obs_soma_joinids
+        assert actual_var_soma_joinids == expect_var_soma_joinids
+        assert actual_obs_obs_ids == expect_obs_obs_ids
+        assert actual_var_var_ids == expect_var_var_ids
