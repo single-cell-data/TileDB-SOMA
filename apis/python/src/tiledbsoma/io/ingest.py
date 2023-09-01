@@ -860,9 +860,9 @@ def append_var(
 
 def append_X(
     exp: Experiment,
+    new_X: Union[Matrix, h5py.Dataset],
     measurement_name: str,
     X_layer_name: str,
-    new_X: Union[Matrix, h5py.Dataset],
     obs_ids: Sequence[str],
     var_ids: Sequence[str],
     *,
@@ -889,12 +889,12 @@ def append_X(
 
         with tiledbsoma.Experiment.open(exp_uri) as exp:
             tiledbsoma.io.append_X(
-                exp.ms[measurement_name].X[X_layer_name].uri,
+                exp,
+                new_X=adata.X,
                 measurement_name=measurement_name,
                 X_layer_name=X_layer_name,
-                new_X=adata.X,
-                obs_ids=new_anndata.obs.index,
-                var_ids=new_anndata.var.index,
+                obs_ids=list(new_anndata.obs.index),
+                var_ids=list(new_anndata.var.index),
                 registration_mapping=rd,
             )
 
