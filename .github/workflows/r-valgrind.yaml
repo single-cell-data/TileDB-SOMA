@@ -24,6 +24,6 @@ jobs:
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
       - name: Check Package under valgrind
         # we unsetting environment variable CI for non-extended set of tests
-        run: cd apis/r && CI="" R CMD check --use-valgrind --no-vignettes --no-manual $(ls -1tr *.tar.gz | tail -1)
+        run: cd apis/r && CI="" VALGRIND_OPTS="-s --leak-check=full --max-threads=1024" R CMD check --use-valgrind --no-vignettes --no-manual $(ls -1tr *.tar.gz | tail -1)
       - name: Display Test Output
         run: cd apis/r/tiledbsoma.Rcheck/tests && cat testthat.Rout
