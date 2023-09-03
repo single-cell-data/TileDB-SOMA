@@ -91,10 +91,6 @@ sr_next <- function(sr) {
     .Call(`_tiledbsoma_sr_next`, sr)
 }
 
-sr_finalize <- function(sr) {
-    invisible(.Call(`_tiledbsoma_sr_finalize`, sr))
-}
-
 #' TileDB SOMA statistics
 #'
 #' These functions expose the TileDB Core functionality for performance measurements

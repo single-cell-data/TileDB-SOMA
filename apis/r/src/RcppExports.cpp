@@ -99,7 +99,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // sr_setup
-Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri, Rcpp::CharacterVector config, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, Rcpp::Nullable<Rcpp::Datetime> timestamp_end, const std::string& loglevel);
+Rcpp::List sr_setup(const std::string& uri, Rcpp::CharacterVector config, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, Rcpp::Nullable<Rcpp::Datetime> timestamp_end, const std::string& loglevel);
 RcppExport SEXP _tiledbsoma_sr_setup(SEXP uriSEXP, SEXP configSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP timestamp_endSEXP, SEXP loglevelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -138,16 +138,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArray> >::type sr(srSEXP);
     rcpp_result_gen = Rcpp::wrap(sr_next(sr));
     return rcpp_result_gen;
-END_RCPP
-}
-// sr_finalize
-void sr_finalize(Rcpp::XPtr<tdbs::SOMAArray> sr);
-RcppExport SEXP _tiledbsoma_sr_finalize(SEXP srSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArray> >::type sr(srSEXP);
-    sr_finalize(sr);
-    return R_NilValue;
 END_RCPP
 }
 // tiledbsoma_stats_enable
@@ -219,7 +209,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
     {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},
-    {"_tiledbsoma_sr_finalize", (DL_FUNC) &_tiledbsoma_sr_finalize, 1},
     {"_tiledbsoma_tiledbsoma_stats_enable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_enable, 0},
     {"_tiledbsoma_tiledbsoma_stats_disable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_disable, 0},
     {"_tiledbsoma_tiledbsoma_stats_reset", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_reset, 0},

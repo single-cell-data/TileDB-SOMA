@@ -51,6 +51,7 @@ inline std::vector<int64_t> getInt64Vector(Rcpp::NumericVector vec) {
     return num;
 }
 
+
 // Applies (named list of) vectors of points to the named dimensions
 void apply_dim_points(
     tdbs::SOMAArray* sr,
@@ -90,3 +91,10 @@ inline ResultOrder get_tdb_result_order(std::string result_order){
 	};
 	return result_order_map[result_order];
 }
+
+struct ContextWrapper {
+    //ContextWrapper(std::shared_ptr<tiledb::Context> ctx_ptr_) : ctxptr(std::move(ctx_ptr_)) {}
+    ContextWrapper(std::shared_ptr<tiledb::Context> ctx_ptr_) : ctxptr(ctx_ptr_) {}
+    std::shared_ptr<tiledb::Context> ctxptr;
+};
+typedef struct ContextWrapper ctx_wrap_t;
