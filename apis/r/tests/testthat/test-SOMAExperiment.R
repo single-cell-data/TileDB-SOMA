@@ -1,4 +1,5 @@
 test_that("Basic mechanics", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment")
 
   experiment <- SOMAExperimentCreate(uri)
@@ -36,6 +37,7 @@ test_that("Basic mechanics", {
 })
 
 test_that("Configured SOMAExperiment", {
+  skip_if(!extended_tests())
   cfg <- PlatformConfig$new()
   cfg$set(
     'tiledb',
@@ -62,6 +64,7 @@ test_that("Configured SOMAExperiment", {
 })
 
 test_that("Update obs and var", {
+  skip_if(!extended_tests())
   # Update mechanics are tested more thoroughly in the SOMADataFrame tests
   uri <- withr::local_tempdir("soma-experiment-update")
   create_and_populate_experiment(

@@ -508,6 +508,7 @@ test_that("SOMADataFrame timestamped ops", {
 })
 
 test_that("SOMADataFrame can be updated", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-update")
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
 
@@ -555,6 +556,7 @@ test_that("SOMADataFrame can be updated", {
 })
 
 test_that("SOMADataFrame can be updated from a data frame", {
+  skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-update")
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
 

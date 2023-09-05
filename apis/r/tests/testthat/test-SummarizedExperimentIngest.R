@@ -1,5 +1,5 @@
 test_that("Write SummarizedExperiment mechanics", {
-  skip_if_not_installed('SummarizedExperiment', '1.28.0')
+  suppressMessages(skip_if_not_installed('SummarizedExperiment', '1.28.0'))
   skip_if_not_installed('pbmc3k.sce')
 
   se <- get_data('pbmc3k.final', package = 'pbmc3k.sce')
