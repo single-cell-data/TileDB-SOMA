@@ -7,6 +7,8 @@ from .ingest import (
     register,
     to_anndata,
     to_h5ad,
+    update_obs,
+    update_var,
 )
 
 __all__ = (
@@ -18,4 +20,6 @@ __all__ = (
     "to_anndata",
     "to_h5ad",
     "register",
+    "update_obs",
+    "update_var",
 )
