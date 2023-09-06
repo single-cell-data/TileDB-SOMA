@@ -6,7 +6,7 @@
 """
 Implementation of SOMA SparseNDArray.
 """
-from typing import Optional, Sequence, Tuple, Union, cast
+from typing import Dict, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -21,6 +21,7 @@ from . import _util
 # This package's pybind11 code
 from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
+from ._exception import SOMAError
 from ._read_iters import (
     SparseCOOTensorReadIter,
     TableReadIter,
@@ -187,8 +188,16 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         arr = self._handle.writer
 
         if isinstance(values, pa.SparseCOOTensor):
+            # Write bulk data
             data, coords = values.to_numpy()
             arr[tuple(c for c in coords.T)] = data
+
+            # Write bounding-box metadata. Note COO can be N-dimensional.
+            maxes = [e - 1 for e in values.shape]
+            bounding_box = self._compute_bounding_box_metadata(maxes)
+            self._set_bounding_box_metadata(bounding_box)
+
+            # Consolidate non-bulk data
             self._consolidate_and_vacuum_fragment_metadata()
             return self
 
@@ -197,13 +206,22 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 raise ValueError(
                     f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray"
                 )
+            # Write bulk data
             # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
             arr[sp.row, sp.col] = sp.data
+
+            # Write bounding-box metadata. Note CSR and CSC are necessarily 2-dimensional.
+            nr, nc = values.shape
+            bounding_box = self._compute_bounding_box_metadata([nr - 1, nc - 1])
+            self._set_bounding_box_metadata(bounding_box)
+
+            # Consolidate non-bulk data
             self._consolidate_and_vacuum_fragment_metadata()
             return self
 
         if isinstance(values, pa.Table):
+            # Write bulk data
             data = values.column("soma_data").to_numpy()
             coord_tbl = values.drop(["soma_data"])
             coords = tuple(
@@ -211,6 +229,19 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 for n in range(coord_tbl.num_columns)
             )
             arr[coords] = data
+
+            # Write bounding-box metadata
+            maxes = []
+            for i in range(coord_tbl.num_columns):
+                coords = values.column(f"soma_dim_{i}").to_pylist()
+                if coords:
+                    maxes.append(max(coords))
+                else:  # completely empty X
+                    maxes.append(0)
+            bounding_box = self._compute_bounding_box_metadata(maxes)
+            self._set_bounding_box_metadata(bounding_box)
+
+            # Consolidate non-bulk data
             self._consolidate_and_vacuum_fragment_metadata()
             return self
 
@@ -275,6 +306,84 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
 
         return (dim_capacity, dim_extent)
+
+    def used_shape(self) -> Tuple[Tuple[int, int], ...]:
+        """
+        Retrieve the range of indexes for a dimension that were explicitly written.
+        Compare this to ``shape`` which returns the available/writable capacity.
+        """
+        retval = []
+        with tiledb.open(self.uri, ctx=self.context.tiledb_ctx):
+            for i in range(20):
+                lower_key = f"soma_dim_{i}_domain_lower"
+                lower_val = self.metadata.get(lower_key)
+                upper_key = f"soma_dim_{i}_domain_upper"
+                upper_val = self.metadata.get(upper_key)
+                if lower_val is None or upper_val is None:
+                    break
+                retval.append((lower_val, upper_val))
+        if not retval:
+            raise SOMAError(
+                f"Array {self.uri} was not written with bounding box support. "
+                + "For an approximation, please use `non_empty_domain()` instead",
+            )
+
+        # In the unlikely event that a previous data update succeeded but the
+        # subsequent metadata update did not, take the union of the core non-empty domain
+        # (which is done as part of the data update) and the metadata bounding box.
+        ned = self.non_empty_domain()
+        for i, nedslot in enumerate(ned):
+            ned_lower, ned_upper = nedslot
+            bbox_lower, bbox_upper = retval[i]
+            retval[i] = (min(ned_lower, bbox_lower), max(ned_upper, bbox_upper))
+        return tuple(retval)
+
+    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
+        """
+        Retrieves the non-empty domain for each dimension, namely the smallest and
+        largest indices in each dimension for which the sparse array has data occupied.
+        This is nominally the same as ``used_shape``, but if for example the
+        leading/trailing rows/columns of the sparse array are entirely unoccupied, this
+        function will return a tighter range.
+        """
+        with tiledb.open(self.uri, ctx=self.context.tiledb_ctx) as A:
+            return A.nonempty_domain()  # type: ignore
+
+    def _compute_bounding_box_metadata(
+        self,
+        maxes: Sequence[int],
+    ) -> Dict[str, int]:
+        """
+        This computes a bounding box for create or update. The former applies to initial ingest;
+        the latter applies to append mode.
+        """
+        new_bounding_box = {}
+        for i, slotmax in enumerate(maxes):
+            lower_key = f"soma_dim_{i}_domain_lower"
+            upper_key = f"soma_dim_{i}_domain_upper"
+            old_lower = self.metadata.get(lower_key)
+            old_upper = self.metadata.get(upper_key)
+
+            if old_lower is None:
+                new_lower = 0
+            else:
+                new_lower = min(0, old_lower)
+
+            if old_upper is None:
+                new_upper = slotmax
+            else:
+                new_upper = max(slotmax, old_upper)
+
+            new_bounding_box[lower_key] = new_lower
+            new_bounding_box[upper_key] = new_upper
+        return new_bounding_box
+
+    def _set_bounding_box_metadata(
+        self,
+        bounding_box: Dict[str, int],
+    ) -> None:
+        """Writes the bounding box to metadata storage."""
+        self.metadata.update(bounding_box)
 
 
 class SparseNDArrayRead(somacore.SparseRead):

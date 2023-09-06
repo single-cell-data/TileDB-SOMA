@@ -119,3 +119,45 @@ TEST_CASE("SOMADataFrame: basic") {
     }
     soma_dataframe->close();
 }
+
+TEST_CASE("SOMADataFrame: metadata") {
+    auto ctx = std::make_shared<Context>();
+
+    std::string uri = "mem://unit-test-collection";
+    SOMADataFrame::create(uri, create_schema(*ctx), ctx);
+    auto soma_dataframe = SOMADataFrame::open(
+        uri,
+        OpenMode::write,
+        ctx,
+        {},
+        ResultOrder::automatic,
+        std::pair<uint64_t, uint64_t>(1, 1));
+    int32_t val = 100;
+    soma_dataframe->set_metadata("md", TILEDB_INT32, 1, &val);
+    soma_dataframe->close();
+
+    soma_dataframe->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
+    REQUIRE(soma_dataframe->metadata_num() == 2);
+    REQUIRE(soma_dataframe->has_metadata("soma_object_type") == true);
+    REQUIRE(soma_dataframe->has_metadata("md") == true);
+
+    auto mdval = soma_dataframe->get_metadata("md");
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    soma_dataframe->close();
+
+    soma_dataframe->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    // Metadata should also be retrievable in write mode
+    mdval = soma_dataframe->get_metadata("md");
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    soma_dataframe->delete_metadata("md");
+    mdval = soma_dataframe->get_metadata("md");
+    REQUIRE(!mdval.has_value());
+    soma_dataframe->close();
+
+    soma_dataframe->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
+    REQUIRE(soma_dataframe->has_metadata("md") == false);
+    REQUIRE(soma_dataframe->metadata_num() == 1);
+    soma_dataframe->close();
+}

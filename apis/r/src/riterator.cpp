@@ -68,16 +68,18 @@ namespace tdbs = tiledbsoma;
 //' }
 //' @noRd
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
-                                     Rcpp::CharacterVector config,
-                                     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                                     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                                     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                                     Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                                     std::string batch_size = "auto",
-                                     std::string result_order = "auto",
-                                     Rcpp::Nullable<Rcpp::Datetime> timestamp_end = R_NilValue,
-                                     const std::string& loglevel = "auto") {
+Rcpp::List sr_setup(const std::string& uri,
+                    Rcpp::CharacterVector config,
+                    Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                    Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                    Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                    Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                    std::string batch_size = "auto",
+                    std::string result_order = "auto",
+                    Rcpp::Nullable<Rcpp::Datetime> timestamp_end = R_NilValue,
+                    const std::string& loglevel = "auto") {
+
+    //Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -89,12 +91,13 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
 
-    std::shared_ptr<tiledb::Context> ctxptr = nullptr;
-
     std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
     tiledb::Config cfg(platform_config);
     spdl::debug("[sr_setup] creating ctx object with supplied config");
-    ctxptr = std::make_shared<tiledb::Context>(cfg);
+    std::shared_ptr<tiledb::Context> ctxptr = std::make_shared<tiledb::Context>(cfg);
+
+    ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
+    Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p);
 
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
@@ -109,7 +112,8 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
-    auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, ctxptr, column_names, batch_size,
+    auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, platform_config,
+                                   column_names, batch_size,
                                    tdb_result_order, std::make_pair(ts_start, ts_end));
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
@@ -146,17 +150,18 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     ptr->submit();
     Rcpp::XPtr<tdbs::SOMAArray> xptr = make_xptr<tdbs::SOMAArray>(ptr);
-    return xptr;
+    return Rcpp::List::create(Rcpp::Named("sr") = xptr,
+                              Rcpp::Named("ctx") = ctx_wrap_xptr);
 }
 
 // [[Rcpp::export]]
 bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
-   check_xptr_tag<tdbs::SOMAArray>(sr);
-   bool complt = sr->is_complete(true);
-   bool initial = sr->is_initial_read();
-   bool res = complt && !initial; // completed transfer if query status complete and query ran once
-   spdl::debug("[sr_complete] Complete query test {} (compl {} initial {})", res, complt, initial);
-   return res;
+    check_xptr_tag<tdbs::SOMAArray>(sr);
+    bool complt = sr->is_complete(true);
+    bool initial = sr->is_initial_read();
+    bool res = complt && !initial; // completed transfer if query status complete and query ran once
+    spdl::debug("[sr_complete] Complete query test {} (compl {} initial {})", res, complt, initial);
+    return res;
 }
 
 Rcpp::List create_empty_arrow_table() {

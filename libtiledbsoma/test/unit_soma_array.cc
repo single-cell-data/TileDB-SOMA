@@ -386,29 +386,28 @@ TEST_CASE("SOMAArray: metadata") {
     soma_array->close();
 
     soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
+    REQUIRE(soma_array->metadata_num() == 2);
+    REQUIRE(soma_array->has_metadata("soma_object_type") == true);
     REQUIRE(soma_array->has_metadata("md") == true);
-    REQUIRE(soma_array->metadata_num() == 1);
 
-    auto mdval = soma_array->get_metadata(0);
-    REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
-    REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
-    REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
-
-    mdval = soma_array->get_metadata("md");
-    REQUIRE(std::get<MetadataInfo::key>(mdval) == "md");
-    REQUIRE(std::get<MetadataInfo::dtype>(mdval) == TILEDB_INT32);
-    REQUIRE(std::get<MetadataInfo::num>(mdval) == 1);
-    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(mdval)) == 100);
+    auto mdval = soma_array->get_metadata("md");
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_array->close();
 
     soma_array->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    // Metadata should also be retrievable in write mode
+    mdval = soma_array->get_metadata("md");
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_array->delete_metadata("md");
+    mdval = soma_array->get_metadata("md");
+    REQUIRE(!mdval.has_value());
     soma_array->close();
 
     soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
     REQUIRE(soma_array->has_metadata("md") == false);
-    REQUIRE(soma_array->metadata_num() == 0);
+    REQUIRE(soma_array->metadata_num() == 1);
     soma_array->close();
 }
 

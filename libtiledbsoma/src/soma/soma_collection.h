@@ -136,7 +136,8 @@ class SOMACollection : public SOMAObject {
      * @param mode read or write
      * @param timestamp Timestamp
      */
-    void open(OpenMode mode);
+    void open(
+        OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
     /**
      * Closes the SOMACollection object.
@@ -302,6 +303,102 @@ class SOMACollection : public SOMAObject {
         URIType uri_type,
         std::shared_ptr<Context> ctx,
         ArraySchema schema);
+
+    /**
+     * Set metadata key-value items to a SOMACollection. The SOMACollection must
+     * opened in WRITE mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be added. UTF-8 encodings
+     *     are acceptable.
+     * @param value_type The datatype of the value.
+     * @param value_num The value may consist of more than one items of the
+     *     same datatype. This argument indicates the number of items in the
+     *     value component of the metadata.
+     * @param value The metadata value in binary form.
+     *
+     * @note The writes will take effect only upon closing the array.
+     */
+    void set_metadata(
+        const std::string& key,
+        tiledb_datatype_t value_type,
+        uint32_t value_num,
+        const void* value) {
+        group_->set_metadata(key, value_type, value_num, value);
+    }
+
+    /**
+     * Delete a metadata key-value item from an open SOMACollection. The
+     * SOMACollection must be opened in WRITE mode, otherwise the function will
+     * error out.
+     *
+     * @param key The key of the metadata item to be deleted.
+     *
+     * @note The writes will take effect only upon closing the group.
+     *
+     * @note If the key does not exist, this will take no effect
+     *     (i.e., the function will not error out).
+     */
+    void delete_metadata(const std::string& key) {
+        group_->delete_metadata(key);
+    }
+
+    /**
+     * @brief Given a key, get the associated value datatype, number of
+     * values, and value in binary form.
+     *
+     * The value may consist of more than one items of the same datatype. Keys
+     * that do not exist in the metadata will be return NULL for the value.
+     *
+     * **Example:**
+     * @code{.cpp}
+     * // Open the group for reading
+     * tiledbsoma::SOMAGroup soma_group = SOMAGroup::open(TILEDB_READ,
+     "s3://bucket-name/group-name");
+     * tiledbsoma::MetadataValue meta_val = soma_group->get_metadata("key");
+     * std::string key = std::get<MetadataInfo::key>(meta_val);
+     * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
+     * uint32_t num = std::get<MetadataInfo::num>(meta_val);
+     * const void* value = *((const
+     int32_t*)std::get<MetadataInfo::value>(meta_val));
+     * @endcode
+     *
+     * @param key The key of the metadata item to be retrieved. UTF-8 encodings
+     *     are acceptable.
+     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
+     * uint32_t, const void*>)
+     */
+    std::optional<MetadataValue> get_metadata(const std::string& key) {
+        return group_->get_metadata(key);
+    }
+
+    /**
+     * Get a mapping of all metadata keys with its associated value datatype,
+     * number of values, and value in binary form.
+     *
+     * @return std::map<std::string, MetadataValue>
+     */
+    std::map<std::string, MetadataValue> get_metadata() {
+        return group_->get_metadata();
+    }
+
+    /**
+     * Check if the key exists in metadata from an open SOMACollection.
+     *
+     * @param key The key of the metadata item to be checked. UTF-8 encodings
+     *     are acceptable.
+     * @return true if the key exists, else false.
+     */
+    bool has_metadata(const std::string& key) {
+        return group_->has_metadata(key);
+    }
+
+    /**
+     * Return then number of metadata items in an open SOMACollection. The group
+     * must be opened in READ mode, otherwise the function will error out.
+     */
+    uint64_t metadata_num() const {
+        return group_->metadata_num();
+    }
 
    protected:
     //===================================================================

@@ -1,4 +1,5 @@
 test_that("Arrow Interface from SOMAArrayReader", {
+    skip_if(!extended_tests())
     library(arrow)
     library(tiledb)
 
@@ -30,19 +31,23 @@ test_that("Arrow Interface from SOMAArrayReader", {
     expect_equal(tb3$num_columns, 6)
 
     # read a subset of rows and columns
-    tb4 <- soma_array_reader(uri = uri,
+    tb4 <- soma_array_to_arrow_table(soma_array_reader(uri = uri,
                 colnames = c("obs_id", "percent_mito", "n_counts", "louvain"),
                 dim_ranges = list(soma_joinid = rbind(bit64::as.integer64(c(1000, 1004)),
                                                   bit64::as.integer64(c(2000, 2004)))),
-                dim_points=list(soma_joinid = bit64::as.integer64(seq(0, 100, by = 20)))) |>
-        soma_array_to_arrow_table()
+                dim_points=list(soma_joinid = bit64::as.integer64(seq(0, 100, by = 20)))))
+
 
     expect_equal(tb4$num_rows, 16)
     expect_equal(tb4$num_columns, 4)
+
+    rm(z, tb, rb, tb1, arr, tb2, tb3, tb4)
+    gc()
 })
 
 
 test_that("SOMAArrayReader result order", {
+    skip_if(!extended_tests())
     uri <- withr::local_tempdir("soma-dense-ndarray")
     ndarray <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(4, 4))
 
@@ -50,15 +55,12 @@ test_that("SOMAArrayReader result order", {
     ndarray$write(M)
     ndarray$close()
 
-    M1 <- soma_array_reader(uri = uri, result_order = "auto") |>
-        soma_array_to_arrow_table()
+    M1 <- soma_array_to_arrow_table(soma_array_reader(uri = uri, result_order = "auto"))
     expect_equal(M, matrix(M1$soma_data, 4, 4, byrow = TRUE))
 
-    M2 <- soma_array_reader(uri = uri, result_order = "row-major") |>
-        soma_array_to_arrow_table()
+    M2 <- soma_array_to_arrow_table(soma_array_reader(uri = uri, result_order = "row-major"))
     expect_equal(M, matrix(M2$soma_data, 4, 4, byrow = TRUE))
 
-    M3 <- soma_array_reader(uri = uri, result_order = "column-major") |>
-        soma_array_to_arrow_table()
+    M3 <- soma_array_to_arrow_table(soma_array_reader(uri = uri, result_order = "column-major"))
     expect_equal(M, matrix(M3$soma_data, 4, 4, byrow = FALSE))
 })

@@ -15,11 +15,14 @@ TileDBArray <- R6::R6Class(
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `open()` is considered internal and should not be called directly.
     #' @return The object, invisibly
-    open = function(mode=c("READ", "WRITE"), internal_use_only = NULL) {
+    open = function(mode = c("READ", "WRITE"), internal_use_only = NULL) {
       mode <- match.arg(mode)
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the open() method is for internal use only. Consider using a",
-                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
+        stop(
+          "Use of the open() method is for internal use only.\n",
+          "  - Consider using a factory method as e.g. 'SOMADataFrameOpen()'.",
+          call. = FALSE
+        )
       }
 
       private$.mode <- mode
@@ -140,6 +143,78 @@ TileDBArray <- R6::R6Class(
       ))
     },
 
+    #' @description Retrieve the range of indexes for a dimension that were
+    #'  explicitly written.
+    #' @param simplify Return a vector of [`bit64::integer64`]s containing only
+    #' the upper bounds.
+    #' @param index1 Return the used shape with 1-based indices (0-based indices are returned by default)
+    #' @return A list containing the lower and upper bounds for the used shape.
+    #' If `simplify = TRUE`, returns a vector of only the upper bounds.
+    used_shape = function(simplify = FALSE, index1 = FALSE) {
+      stopifnot(
+        isTRUE(simplify) || isFALSE(simplify),
+        isTRUE(index1) || isFALSE(index1)
+      )
+      dims <- self$dimnames()
+      utilized <- vector(mode = 'list', length = length(dims))
+      names(utilized) <- dims
+      for (i in seq_along(along.with = utilized)) {
+        key <- paste0(dims[i], '_domain')
+        dom <- bit64::integer64(2L)
+        names(dom) <- c('_lower', '_upper')
+        for (type in names(dom)) {
+          dom[type] <- self$get_metadata(paste0(key, type)) %||% bit64::NA_integer64_
+          if (any(is.na(dom))) {
+            dom <- bit64::NA_integer64_
+          }
+          utilized[[i]] <- unname(dom)
+        }
+        # utilized[[i]] <- self$get_metadata(key) %||% bit64::NA_integer64_
+      }
+      if (any(vapply_lgl(utilized, rlang::is_na))) {
+        stop(
+          "This array was not written with bounding box support; for an approximation, please use `$non_empty_domain()` instead",
+          call. = FALSE
+        )
+      }
+      if (index1) {
+        for (i in seq_along(utilized)) {
+          utilized[[i]] <- utilized[[i]] + 1L
+        }
+      }
+      if (simplify) {
+        tmp <- utilized
+        utilized <- bit64::integer64(length(utilized))
+        names(utilized) <- names(tmp)
+        for (i in seq_along(utilized)) {
+          utilized[i] <- tmp[[i]][2L]
+        }
+      }
+      return(utilized)
+    },
+
+    #' @description Retrieve the non-empty domain for each dimension. This
+    #' method calls [`tiledb::tiledb_array_get_non_empty_domain_from_name`] for
+    #' each dimension in the array.
+    #' @param index1 Return the non-empty domain with 1-based indices.
+    #' @return A vector of [`bit64::integer64`]s with one entry for
+    #' each dimension.
+    non_empty_domain = function(index1 = FALSE) {
+      dims <- self$dimnames()
+      ned <- bit64::integer64(length = length(dims))
+      for (i in seq_along(along.with = ned)) {
+        dom <- max(tiledb::tiledb_array_get_non_empty_domain_from_name(
+          self$object,
+          name = dims[i]
+        ))
+        if (isTRUE(x = index1)) {
+          dom <- dom + 1L
+        }
+        ned[i] <- dom
+      }
+      return(ned)
+    },
+
     #' @description Retrieve number of dimensions (lifecycle: experimental)
     #' @return A scalar with the number of dimensions
     ndim = function() {
@@ -213,6 +288,18 @@ TileDBArray <- R6::R6Class(
   ),
 
   private = list(
+
+    # Reopen the array in a different mode
+    reopen = function(mode = c("READ", "WRITE")) {
+      mode <- match.arg(mode)
+      if (private$.mode == mode) {
+        return(invisible(self))
+      }
+      self$close()
+      invisible(
+        self$open(mode = mode, internal_use_only = "allowed_use")
+      )
+    },
 
     # Internal pointer to the TileDB array.
     #

@@ -107,7 +107,7 @@ jobs:
       shell: bash
       run: |
         mkdir -p test/soco
-        ./apis/python/devtools/ingestor --soco -o test/soco -n data/pbmc3k_processed.h5ad data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad
+        ./apis/python/devtools/ingestor --debug --soco -o test/soco -n data/pbmc3k_processed.h5ad data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad
 
     - name: Run pytests
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src

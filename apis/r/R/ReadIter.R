@@ -54,6 +54,7 @@ ReadIter <- R6::R6Class(
 
     # Internal 'external pointer' object used for iterated reads
     soma_reader_pointer = NULL,
+    #ctx_pointer = NULL,
 
     # to be refined in derived classes
     soma_reader_transform = function(x) {

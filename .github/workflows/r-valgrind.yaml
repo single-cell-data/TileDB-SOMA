@@ -1,0 +1,29 @@
+name: r-valgrind
+
+on:
+  # allows for 'as needed' manual trigger
+  workflow_dispatch:
+  # use a regular nighly build as well (time is UTC)
+  schedule:
+    - cron: "23 4 * * *"
+
+jobs:
+  r-valgrind:
+    runs-on: ubuntu-latest
+    container:
+      image: rocker/r2u:latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: SessionInfo
+        run: R -q -e 'sessionInfo()'
+      - name: System Dependencies
+        run: apt update -qq && apt install --yes --no-install-recommends valgrind cmake git
+      - name: Package Dependencies
+        run: cd apis/r && R -q -e 'remotes::install_deps(".", dependencies=TRUE)'
+      - name: Build Package
+        run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
+      - name: Check Package under valgrind
+        # we unsetting environment variable CI for non-extended set of tests
+        run: cd apis/r && CI="" VALGRIND_OPTS="-s --leak-check=full --max-threads=1024" R CMD check --use-valgrind --no-vignettes --no-manual $(ls -1tr *.tar.gz | tail -1)
+      - name: Display Test Output
+        run: cd apis/r/tiledbsoma.Rcheck/tests && cat testthat.Rout

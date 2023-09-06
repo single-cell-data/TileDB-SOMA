@@ -1,6 +1,7 @@
 ##spdl::set_level('warn')
 
 test_that("Write Assay mechanics", {
+  skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   uri <- withr::local_tempdir("write-assay")
@@ -134,6 +135,7 @@ test_that("Write Assay mechanics", {
 })
 
 test_that("Write DimReduc mechanics", {
+  skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   uri <- withr::local_tempdir("write-reduction")
@@ -195,6 +197,7 @@ test_that("Write DimReduc mechanics", {
 })
 
 test_that("Write Graph mechanics", {
+  skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   uri <- withr::local_tempdir("write-graph")
@@ -322,6 +325,7 @@ test_that("Write Graph mechanics", {
 })
 
 test_that("Write DimReduc mechanics", {
+  skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   uri <- withr::local_tempdir("write-reduction-2")
   collection <- SOMACollectionCreate(uri)
@@ -380,6 +384,7 @@ test_that("Write DimReduc mechanics", {
 })
 
 test_that("Write Graph mechanics", {
+  skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   uri <- withr::local_tempdir("write-graph")
   collection <- SOMACollectionCreate(uri)

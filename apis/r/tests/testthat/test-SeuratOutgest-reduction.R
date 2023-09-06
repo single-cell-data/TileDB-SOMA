@@ -1,4 +1,5 @@
 test_that("Load reduction from ExperimentQuery mechanics", {
+  skip_if(!extended_tests()  || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   uri <- withr::local_tempdir("reduc-experiment-query-whole")
   n_obs <- 20L
@@ -196,6 +197,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
 })
 
 test_that("Load reduction from sliced ExperimentQuery", {
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   uri <- withr::local_tempdir("reduction-experiment-query-sliced")
   n_obs <- 1001L
@@ -322,6 +324,7 @@ test_that("Load reduction from sliced ExperimentQuery", {
 })
 
 test_that("Load reduction from indexed ExperimentQuery", {
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   uri <- withr::local_tempdir("reduction-experiment-query-value-filters")
   n_obs <- 1001L

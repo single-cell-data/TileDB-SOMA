@@ -1,4 +1,5 @@
 test_that("Load SCE object from ExperimentQuery mechanics", {
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
   uri <- withr::local_tempdir("sce-experiment-query-whole")
   n_obs <- 20L
@@ -194,6 +195,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
 })
 
 test_that("Load SCE object from sliced ExperimentQuery", {
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
   uri <- withr::local_tempdir("sce-experiment-query-sliced")
   n_obs <- 1001L
@@ -271,6 +273,7 @@ test_that("Load SCE object from sliced ExperimentQuery", {
 })
 
 test_that("Load SCE object from indexed ExperimentQuery", {
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
   uri <- withr::local_tempdir("sce-experiment-query-value-filters")
   n_obs <- 1001L

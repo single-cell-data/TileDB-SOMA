@@ -40,6 +40,11 @@ def main():
         "--debug", help="increase output verbosity", action="store_true"
     )
     parser.add_argument(
+        "--append",
+        help="Append the inputs to the existing SOMA experiment",
+        action="store_true",
+    )
+    parser.add_argument(
         "--ingest-mode",
         help="""Write mode (the default) writes all data, creating new layers if the soma already exists.
 
@@ -187,6 +192,7 @@ using `--platform-config-file pc.json`.
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
+                appending=args.append,
             )
     else:
         if len(args.paths) == 0:
@@ -202,6 +208,7 @@ using `--platform-config-file pc.json`.
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
+                appending=args.append,
             )
         elif len(args.paths) == 1:
             input_path = args.paths[0]
@@ -219,6 +226,7 @@ using `--platform-config-file pc.json`.
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
+                appending=args.append,
             )
         elif len(args.paths) == 2:
             input_path = args.paths[0]
@@ -233,6 +241,7 @@ using `--platform-config-file pc.json`.
                 write_soco=write_soco,
                 soco_dir=soco_dir,
                 measurement_name=args.measurement_name,
+                appending=args.append,
             )
         else:
             parser.print_help(file=sys.stderr)
@@ -251,6 +260,7 @@ def ingest_one(
     write_soco: bool,
     soco_dir: str,
     measurement_name: str,
+    appending: bool,
 ):
     # This will be a very common command-line thing to do since the arg is `--ingest-mode` not
     # `--ingest_mode`. Let's be kind and supportive about it.
@@ -280,6 +290,17 @@ def ingest_one(
 
     exp_name = os.path.splitext(os.path.basename(output_path))[0]
 
+    rd = None
+    if appending:
+        rd = tiledbsoma.io.register(
+            experiment_uri=output_path,
+            h5ad_file_names=[input_path],
+            measurement_name=measurement_name,
+            obs_field_name="obs_id",
+            var_field_name="var_id",
+            context=context,
+        )
+
     uri = tiledbsoma.io.from_h5ad(
         output_path,
         input_path,
@@ -288,6 +309,7 @@ def ingest_one(
         context=context,
         platform_config=platform_config,
         use_relative_uri=use_relative_uri,
+        registration_mapping=rd,
     )
 
     if write_soco:

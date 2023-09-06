@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import datetime
+import functools
 import time
 from typing import Any, Dict, Optional, Union
 
@@ -15,7 +16,8 @@ from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
 
-def _build_default_tiledb_ctx() -> tiledb.Ctx:
+@functools.lru_cache(maxsize=None)
+def _default_global_ctx() -> tiledb.Ctx:
     """Build a TileDB context starting with reasonable defaults,
     and overriding and updating with user-provided config options.
     """
@@ -45,7 +47,7 @@ class SOMATileDBContext:
         Experimental.
     """
 
-    tiledb_ctx: tiledb.Ctx = _build_default_tiledb_ctx()
+    tiledb_ctx: tiledb.Ctx = attrs.field(factory=_default_global_ctx)
 
     timestamp_ms: Optional[int] = attrs.field(
         default=None, converter=_maybe_timestamp_ms, alias="timestamp"

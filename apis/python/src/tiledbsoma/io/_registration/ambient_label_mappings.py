@@ -260,9 +260,22 @@ class ExperimentAmbientLabelMapping:
         measurement_name: str,
         obs_field_name: str = "obs_id",
         var_field_name: str = "var_id",
+        append_obsm_varm: bool = False,
     ) -> Self:
         """Extends registration data to one more AnnData input."""
         tiledbsoma.logging.logger.info("Registration: registering AnnData object.")
+
+        # Pre-checks
+        if not append_obsm_varm:
+            if len(adata.obsm) > 0 or len(adata.varm) > 0:
+                raise ValueError(
+                    "append-mode ingest of obsm and varm is only supported via explicit opt-in. Please drop them from the inputs, or retry with append_obsm_varm=True."
+                )
+
+        if len(adata.obsp) > 0 or len(adata.varp) > 0:
+            raise ValueError(
+                "append-mode ingest of obsp and varp is not supported. Please retry without them."
+            )
 
         obs_next_soma_joinid = previous.obs_axis.get_next_start_soma_joinid()
         obs_map = dict(previous.obs_axis.data)
@@ -324,6 +337,7 @@ class ExperimentAmbientLabelMapping:
         measurement_name: str,
         obs_field_name: str = "obs_id",
         var_field_name: str = "var_id",
+        append_obsm_varm: bool = False,
     ) -> Self:
         """Extends registration data to one more H5AD input file."""
         tiledbsoma.logging.logger.info(f"Registration: registering {h5ad_file_name}.")
@@ -336,6 +350,7 @@ class ExperimentAmbientLabelMapping:
             measurement_name=measurement_name,
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
+            append_obsm_varm=append_obsm_varm,
         )
 
     @classmethod
@@ -347,12 +362,20 @@ class ExperimentAmbientLabelMapping:
         measurement_name: str,
         obs_field_name: str,
         var_field_name: str,
+        append_obsm_varm: bool = False,
         context: Optional[SOMATileDBContext] = None,
     ) -> Self:
         """Extends registration data from the baseline, already-written SOMA
         experiment to include multiple H5AD input files."""
 
         if experiment_uri is not None and tiledbsoma.Experiment.exists(experiment_uri):
+            # Pre-check
+            with tiledbsoma.Experiment.open(experiment_uri) as exp:
+                if measurement_name not in exp.ms:
+                    raise ValueError(
+                        f"cannot append: target measurement {measurement_name} is not in experiment {experiment_uri}"
+                    )
+
             registration_data = cls.from_isolated_soma_experiment(
                 experiment_uri,
                 obs_field_name=obs_field_name,
@@ -375,6 +398,7 @@ class ExperimentAmbientLabelMapping:
                 h5ad_file_name,
                 registration_data,
                 measurement_name=measurement_name,
+                append_obsm_varm=append_obsm_varm,
             )
 
         tiledbsoma.logging.logger.info("Registration: complete.")

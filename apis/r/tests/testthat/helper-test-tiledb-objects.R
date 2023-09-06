@@ -10,3 +10,15 @@ create_empty_test_array <- function(uri) {
   tiledb::tiledb_array_create(uri, schema)
   return(uri)
 }
+
+extended_tests <- function() {
+    ## check if at CI, if so extended test
+    ## could add if pre-release number ie 1.4.3.1 instead of 1.4.3
+    Sys.getenv("CI", "") != ""
+}
+
+covr_tests <- function() {
+    ## check if coverage is flagged
+    ## could add if pre-release number ie 1.4.3.1 instead of 1.4.3
+    Sys.getenv("COVR", "") != ""
+}

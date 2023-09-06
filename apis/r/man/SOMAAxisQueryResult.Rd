@@ -9,12 +9,12 @@ Access \code{\link{SOMAExperimentAxisQuery}} results.
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{obs}}{\code{\link[arrow:Table]{arrow::Table}} containing \code{obs} query slice.}
+\item{\code{obs}}{\code{\link[arrow:Table-class]{arrow::Table}} containing \code{obs} query slice.}
 
-\item{\code{var}}{\code{\link[arrow:Table]{arrow::Table}} containing \code{var} query slice.
+\item{\code{var}}{\code{\link[arrow:Table-class]{arrow::Table}} containing \code{var} query slice.
 \code{measurement_name}.}
 
-\item{\code{X_layers}}{named list of \code{\link[arrow:Table]{arrow::Table}}s for each \code{X} layer.}
+\item{\code{X_layers}}{named list of \code{\link[arrow:Table-class]{arrow::Table}}s for each \code{X} layer.}
 }
 \if{html}{\out{</div>}}
 }
@@ -37,9 +37,9 @@ Create a new \code{SOMAAxisQueryResult} object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{obs, var}}{\code{\link[arrow:Table]{arrow::Table}} containing \code{obs} or \code{var} query slice.}
+\item{\code{obs, var}}{\code{\link[arrow:Table-class]{arrow::Table}} containing \code{obs} or \code{var} query slice.}
 
-\item{\code{X_layers}}{named list of \code{\link[arrow:Table]{arrow::Table}}s, one for each \code{X} layer.}
+\item{\code{X_layers}}{named list of \code{\link[arrow:Table-class]{arrow::Table}}s, one for each \code{X} layer.}
 }
 \if{html}{\out{</div>}}
 }

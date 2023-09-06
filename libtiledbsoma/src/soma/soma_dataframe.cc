@@ -34,7 +34,6 @@
 
 #include <tiledb/tiledb>
 #include "array_buffers.h"
-#include "soma_array.h"
 #include "soma_dataframe.h"
 
 namespace tiledbsoma {
