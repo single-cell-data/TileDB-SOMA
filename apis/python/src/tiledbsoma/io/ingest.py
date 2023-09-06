@@ -314,6 +314,7 @@ def from_h5ad(
 
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
+    
 
     with tiledb.VFS(ctx=context.tiledb_ctx).open(input_path) as input_handle:
         logging.log_io(None, f"START  READING {input_path}")
@@ -350,7 +351,7 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
-) -> str:
+):
     """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
     Usage is the same as ``from_h5ad`` except that you can use this function when the AnnData object
@@ -1214,6 +1215,8 @@ def _write_dataframe_impl(
             _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),
         )
         return soma_df
+    
+    print(arrow_table)
 
     soma_df.write(arrow_table)
     logging.log_io(

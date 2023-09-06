@@ -244,7 +244,7 @@ class Signature:
                     varm_dtypes[varm_layer_name] = str(
                         varm.schema.field("soma_data").type
                     )
-                    
+
             return cls(
                 obs_schema=obs_schema,
                 var_schema=var_schema,
