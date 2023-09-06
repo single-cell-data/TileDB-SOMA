@@ -3,7 +3,6 @@
 import os
 
 import pytest
-import tiledb
 
 import tiledbsoma.pytiledbsoma as clib
 from tiledbsoma._exception import SOMAError
@@ -109,9 +108,7 @@ def test_query_condition_select_columns():
 
     qc = QueryCondition(condition)
 
-    sr = clib.SOMAArray(
-        uri, query_condition=qc, column_names=["n_genes"]
-    )
+    sr = clib.SOMAArray(uri, query_condition=qc, column_names=["n_genes"])
     sr.submit()
     arrow_table = sr.read_next()
 

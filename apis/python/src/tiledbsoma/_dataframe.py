@@ -134,9 +134,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
-        enumerations: Optional[
-            Dict[str, Union[Sequence[Any], np.ndarray[Any, Any]]]
-        ] = None,
+        enumerations: Optional[Dict[str, Union[Sequence[Any], np.ndarray]]] = None,
         ordered_enumerations: Optional[Sequence[str]] = None,
         column_to_enumerations: Optional[dict[str, str]] = None,
     ) -> "DataFrame":

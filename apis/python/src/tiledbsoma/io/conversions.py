@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pandas._typing as pdt
 import scipy.sparse as sp
-from pandas.api.types import infer_dtype, is_categorical_dtype
+from pandas.api.types import is_categorical_dtype
 
 from .._funcs import typeguard_ignore
 from .._types import NPNDArray, PDSeries
