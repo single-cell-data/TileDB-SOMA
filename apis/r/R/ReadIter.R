@@ -11,10 +11,8 @@ ReadIter <- R6::R6Class(
 
     #' @description Create (lifecycle: experimental)
     #' @param sr soma read pointer
-    #' @param enums An optional list with enumeration information
-    initialize = function(sr, enumlst=NULL) {
+    initialize = function(sr) {
       private$soma_reader_pointer <- sr
-      private$enums <- enumlst
     },
 
     #' @description Check if iterated read is complete or not. (lifecycle: experimental)
@@ -56,13 +54,11 @@ ReadIter <- R6::R6Class(
 
     # Internal 'external pointer' object used for iterated reads
     soma_reader_pointer = NULL,
-    #ctx_pointer = NULL,
 
     # to be refined in derived classes
     soma_reader_transform = function(x) {
       .NotYetImplemented()
-    },
+    }
 
-    enums = NULL
   )
 )
