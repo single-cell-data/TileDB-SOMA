@@ -35,8 +35,6 @@ Create (lifecycle: experimental)
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{sr}}{soma read pointer}
-
-\item{\code{enums}}{An optional list with enumeration information}
 }
 \if{html}{\out{</div>}}
 }

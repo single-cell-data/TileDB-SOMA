@@ -221,20 +221,7 @@ SOMADataFrame <- R6::R6Class(
                      timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
-
-      arr <- tiledb::tiledb_array(self$uri)
-      enumvec <- tiledb::tiledb_array_has_enumeration(arr)
-      enumlst <- vector(mode="list", length=length(enumvec))
-      names(enumlst) <- names(enumvec)
-      attrs <- tiledb::attrs(tiledb::schema(arr))
-      arr <- tiledb::tiledb_array_open(arr, "READ")
-      for (n in names(enumvec)) {
-          if (enumvec[[n]]) {
-              enumlst[[n]] <- tiledb::tiledb_attribute_get_enumeration(attr=attrs[[n]], arr)
-          }
-      }
-
-      TableReadIter$new(rl$sr, enumlst)
+      TableReadIter$new(rl$sr)
     },
 
     #' @description Update (lifecycle: experimental)
