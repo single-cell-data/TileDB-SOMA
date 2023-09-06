@@ -574,18 +574,15 @@ class SOMAArray {
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    MetadataValue get_metadata(const std::string& key) const;
+    std::optional<MetadataValue> get_metadata(const std::string& key);
 
     /**
-     * @brief Given an index, get the associated value datatype, number of
-     * values, and value in binary form. The array must be opened in READ
-     * mode, otherwise the function will error out.
+     * Get a mapping of all metadata keys with its associated value datatype,
+     * number of values, and value in binary form.
      *
-     * @param index The index used to get the metadata.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
-     * uint32_t, const void*>)
+     * @return std::map<std::string, MetadataValue>
      */
-    MetadataValue get_metadata(uint64_t index) const;
+    std::map<std::string, MetadataValue> get_metadata();
 
     /**
      * Check if the key exists in metadata from an open array. The array
