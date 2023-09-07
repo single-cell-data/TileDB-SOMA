@@ -410,7 +410,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             col = values.column(name)
             n = len(col)
             cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
-            if pa.types.is_dictionary(col.type):
+            if pa.types.is_dictionary(col.type) and col.num_chunks != 0:
                 cols_map[name] = col.chunk(0).indices.to_pandas()
             else:
                 cols_map[name] = col.to_pandas()
