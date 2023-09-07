@@ -33,7 +33,6 @@ import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
 import tiledb
-from pandas.api.types import is_categorical_dtype
 
 _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
     pa.string(): "U1",
@@ -192,7 +191,8 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     # So, we cast and reconstruct.
     for key in df:
         column = df[key]
-        if is_categorical_dtype(column.dtype):
+
+        if isinstance(column.dtype, pd.CategoricalDtype):
             if hasattr(column.values, "categories"):
                 categories = column.values.categories
 
