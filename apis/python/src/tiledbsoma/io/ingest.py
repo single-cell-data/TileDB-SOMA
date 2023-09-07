@@ -350,7 +350,7 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
-):
+) -> str:
     """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
     Usage is the same as ``from_h5ad`` except that you can use this function when the AnnData object

@@ -194,9 +194,9 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
         column = df[key]
         if is_categorical_dtype(column.dtype):
             df[key] = pd.core.arrays.categorical.Categorical(
-                values=column.values,
-                categories=column.values.categories,
-                ordered=bool(column.values.ordered),
+                values=column,
+                categories=column.categories,
+                ordered=bool(column.ordered),
             )
 
     arrow_table = pa.Table.from_pandas(df)
