@@ -33,6 +33,7 @@ import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
 import tiledb
+from pandas.api.types import is_categorical_dtype
 
 _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
     pa.string(): "U1",
@@ -183,6 +184,21 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
                     inplace=True,
                 )
             null_fields.add(k)
+
+    # For categoricals, it's possible to get
+    #   TypeError: Object of type bool_ is not JSON serializable
+    # deep within library functions. Debugging reveals that this happens when
+    # the df[key].values.ordered is of type np.bool_ rather than Python bool.
+    # So, we cast and reconstruct.
+    for key in df:
+        column = df[key]
+        if is_categorical_dtype(column.dtype):
+            df[key] = pd.core.arrays.categorical.Categorical(
+                values=column.values,
+                categories=column.values.categories,
+                ordered=bool(column.values.ordered),
+            )
+
     arrow_table = pa.Table.from_pandas(df)
     if null_fields:
         md = arrow_table.schema.metadata

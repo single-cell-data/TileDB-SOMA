@@ -637,7 +637,7 @@ def test_obs_with_categorical_int_nan_enumeration(
     tmp_path, h5ad_file_categorical_int_nan
 ):
     output_path = tmp_path.as_uri()
-    
+
     tiledbsoma.io.from_h5ad(
         output_path, h5ad_file_categorical_int_nan, measurement_name="RNA"
     )
