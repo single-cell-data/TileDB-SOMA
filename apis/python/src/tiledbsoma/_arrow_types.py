@@ -197,7 +197,7 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
                 categories = column.values.categories
 
             if hasattr(column.values, "ordered"):
-                ordered = column.values.ordered
+                ordered = bool(column.values.ordered)
 
             df[key] = pd.Categorical(
                 values=column, categories=categories, ordered=ordered
