@@ -314,7 +314,6 @@ def from_h5ad(
 
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.from_h5ad {input_path}")
-    
 
     with tiledb.VFS(ctx=context.tiledb_ctx).open(input_path) as input_handle:
         logging.log_io(None, f"START  READING {input_path}")
@@ -1206,7 +1205,7 @@ def _write_dataframe_impl(
             _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),
         )
         return soma_df
-    
+
     soma_df.write(arrow_table)
     logging.log_io(
         f"Wrote   {soma_df.uri}",
