@@ -192,7 +192,7 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     # So, we cast and reconstruct.
     for key in df:
         column = df[key]
-        if is_categorical_dtype(column.dtype):
+        if isinstance(column.dtype, pd.CategoricalDtype):
             if hasattr(column.values, "categories"):
                 categories = column.values.categories
 
