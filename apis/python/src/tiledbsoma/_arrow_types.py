@@ -192,11 +192,15 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     # So, we cast and reconstruct.
     for key in df:
         column = df[key]
-        if is_categorical_dtype(column.dtype):
-            df[key] = pd.core.arrays.categorical.Categorical(
-                values=column.values,
-                categories=column.values.categories,
-                ordered=bool(column.values.ordered),
+        if isinstance(column.dtype, pd.CategoricalDtype):
+            if hasattr(column.values, "categories"):
+                categories = column.values.categories
+
+            if hasattr(column.values, "ordered"):
+                ordered = column.values.ordered
+
+            df[key] = pd.Categorical(
+                values=column, categories=categories, ordered=ordered
             )
 
     arrow_table = pa.Table.from_pandas(df)

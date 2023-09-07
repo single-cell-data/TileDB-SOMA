@@ -13,6 +13,7 @@ import pandas as pd
 import pyarrow as pa
 import somacore
 import tiledb
+from numpy.typing import NDArray
 from somacore import options
 from typing_extensions import Self
 
@@ -134,9 +135,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
-        enumerations: Optional[Dict[str, Union[Sequence[Any], np.ndarray]]] = None,
+        enumerations: Optional[Dict[str, Union[Sequence[Any], NDArray[Any]]]] = None,
         ordered_enumerations: Optional[Sequence[str]] = None,
-        column_to_enumerations: Optional[dict[str, str]] = None,
+        column_to_enumerations: Optional[Dict[str, str]] = None,
     ) -> "DataFrame":
         """Creates the data structure on disk/S3/cloud.
 
@@ -689,9 +690,9 @@ def _build_tiledb_schema(
     schema: pa.Schema,
     index_column_names: Sequence[str],
     domain: Optional[Sequence[Optional[Tuple[Any, Any]]]],
-    enumerations: dict[str, Any],
+    enumerations: Dict[str, Any],
     ordered_enumerations: Sequence[str],
-    column_to_enumerations: dict[str, str],
+    column_to_enumerations: Dict[str, str],
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
