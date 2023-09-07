@@ -701,9 +701,9 @@ def _build_tiledb_schema(
     schema: pa.Schema,
     index_column_names: Sequence[str],
     domain: Optional[Sequence[Optional[Tuple[Any, Any]]]],
-    enumerations: dict[str, Any],
+    enumerations: Dict[str, Any],
     ordered_enumerations: Sequence[str],
-    column_to_enumerations: dict[str, str],
+    column_to_enumerations: Dict[str, str],
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:

@@ -33,7 +33,6 @@ import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
 import tiledb
-from pandas.api.types import is_categorical_dtype
 
 _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
     pa.string(): "U1",
