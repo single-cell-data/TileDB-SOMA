@@ -193,6 +193,7 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     for key in df:
         column = df[key]
         if is_categorical_dtype(column.dtype):
+            column = column.astype("category")
             df[key] = pd.core.arrays.categorical.Categorical(
                 values=column,
                 categories=column.categories,
