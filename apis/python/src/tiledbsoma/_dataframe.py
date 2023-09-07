@@ -137,7 +137,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         tiledb_timestamp: Optional[OpenTimestamp] = None,
         enumerations: Optional[Dict[str, Union[Sequence[Any], np.ndarray]]] = None,
         ordered_enumerations: Optional[Sequence[str]] = None,
-        column_to_enumerations: Optional[dict[str, str]] = None,
+        column_to_enumerations: Optional[Dict[str, str]] = None,
     ) -> "DataFrame":
         """Creates the data structure on disk/S3/cloud.
 
