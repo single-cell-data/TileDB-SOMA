@@ -1207,8 +1207,6 @@ def _write_dataframe_impl(
         )
         return soma_df
     
-    print(arrow_table)
-
     soma_df.write(arrow_table)
     logging.log_io(
         f"Wrote   {soma_df.uri}",
