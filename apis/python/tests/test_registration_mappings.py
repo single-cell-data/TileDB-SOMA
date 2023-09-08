@@ -532,3 +532,108 @@ def test_multiples_with_experiment(soma1, h5ad2, h5ad3, h5ad4):
         "RAW3": 8,
         "ZZZ3": 9,
     }
+
+
+def test_append_items_with_experiment(soma1, h5ad2):
+    rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+        experiment_uri=soma1,
+        h5ad_file_names=[h5ad2],
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+
+    adata2 = ad.read_h5ad(h5ad2)
+
+    with tiledbsoma.Experiment.open(soma1, "w") as exp1:
+        tiledbsoma.io.append_obs(
+            exp1,
+            adata2.obs,
+            registration_mapping=rd,
+        )
+
+        tiledbsoma.io.append_var(
+            exp1,
+            adata2.var,
+            measurement_name="RNA",
+            registration_mapping=rd,
+        )
+
+        tiledbsoma.io.append_X(
+            exp1,
+            adata2.X,
+            measurement_name="RNA",
+            X_layer_name="data",
+            obs_ids=list(adata2.obs.index),
+            var_ids=list(adata2.var.index),
+            registration_mapping=rd,
+        )
+
+    expect_obs_soma_joinids = list(range(6))
+    expect_var_soma_joinids = list(range(5))
+
+    expect_obs_obs_ids = [
+        "AAAT",
+        "ACTG",
+        "AGAG",
+        "CAAT",
+        "CCTG",
+        "CGAG",
+    ]
+
+    expect_var_var_ids = [
+        "AKT1",
+        "APOE",
+        "ESR1",
+        "TP53",
+        "VEGFA",
+    ]
+
+    with tiledbsoma.Experiment.open(soma1) as exp:
+        obs = exp.obs.read().concat()
+        var = exp.ms["RNA"].var.read().concat()
+        exp.ms["RNA"].X["data"].read().tables().concat()
+
+        actual_obs_soma_joinids = obs["soma_joinid"].to_pylist()
+        actual_obs_obs_ids = obs["obs_id"].to_pylist()
+
+        actual_var_soma_joinids = var["soma_joinid"].to_pylist()
+        actual_var_var_ids = var["var_id"].to_pylist()
+
+        assert actual_obs_soma_joinids == expect_obs_soma_joinids
+        assert actual_var_soma_joinids == expect_var_soma_joinids
+        assert actual_obs_obs_ids == expect_obs_obs_ids
+        assert actual_var_var_ids == expect_var_var_ids
+
+        actual_X = exp.ms["RNA"].X["data"].read().tables().concat().to_pandas()
+
+        expect_X = pd.DataFrame(
+            {
+                "soma_dim_0": np.asarray(
+                    [0, 0, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5], dtype=np.int64
+                ),
+                "soma_dim_1": np.asarray(
+                    [1, 3, 0, 2, 4, 1, 3, 2, 4, 1, 3, 2, 4], dtype=np.int64
+                ),
+                "soma_data": np.asarray(
+                    [
+                        101.0,
+                        103.0,
+                        110.0,
+                        112.0,
+                        114.0,
+                        121.0,
+                        123.0,
+                        201.0,
+                        203.0,
+                        210.0,
+                        212.0,
+                        221.0,
+                        223.0,
+                    ],
+                    dtype=np.float64,
+                ),
+            }
+        )
+
+        assert all(actual_X == expect_X)

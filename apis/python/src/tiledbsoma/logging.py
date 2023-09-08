@@ -51,6 +51,10 @@ def _set_level(level: int) -> None:
         logger.addHandler(logging.StreamHandler())
 
 
+def log_io_same(message: str) -> None:
+    log_io(message, message)
+
+
 def log_io(info_message: Optional[str], debug_message: str) -> None:
     """Data-ingestion timeframes range widely.
     Some folks won't want details for smaller uploads; some will want details for larger ones.

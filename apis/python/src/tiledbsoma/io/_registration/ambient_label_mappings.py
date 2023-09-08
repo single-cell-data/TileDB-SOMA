@@ -329,6 +329,77 @@ class ExperimentAmbientLabelMapping:
         )
 
     @classmethod
+    def _acquire_experiment_mappings(
+        cls,
+        experiment_uri: Optional[str],
+        *,
+        measurement_name: str,
+        obs_field_name: str,
+        var_field_name: str,
+        context: Optional[SOMATileDBContext] = None,
+    ) -> Self:
+        """Acquires label-to-ID mappings from the baseline, already-written SOMA experiment."""
+
+        if experiment_uri is not None and tiledbsoma.Experiment.exists(experiment_uri):
+            # Pre-check
+            with tiledbsoma.Experiment.open(experiment_uri) as exp:
+                if measurement_name not in exp.ms:
+                    raise ValueError(
+                        f"cannot append: target measurement {measurement_name} is not in experiment {experiment_uri}"
+                    )
+            registration_data = cls.from_isolated_soma_experiment(
+                experiment_uri,
+                obs_field_name=obs_field_name,
+                var_field_name=var_field_name,
+                context=context,
+            )
+        else:
+            registration_data = cls(
+                obs_axis=AxisAmbientLabelMapping(data={}, field_name=obs_field_name),
+                var_axes={
+                    measurement_name: AxisAmbientLabelMapping(
+                        data={}, field_name=var_field_name
+                    ),
+                    "raw": AxisAmbientLabelMapping(data={}, field_name=var_field_name),
+                },
+            )
+        return registration_data
+
+    @classmethod
+    def from_anndata_appends_on_experiment(
+        cls,
+        experiment_uri: Optional[str],
+        adatas: Sequence[ad.AnnData],
+        *,
+        measurement_name: str,
+        obs_field_name: str,
+        var_field_name: str,
+        append_obsm_varm: bool = False,
+        context: Optional[SOMATileDBContext] = None,
+    ) -> Self:
+        """Extends registration data from the baseline, already-written SOMA
+        experiment to include multiple H5AD input files."""
+
+        registration_data = cls._acquire_experiment_mappings(
+            experiment_uri,
+            measurement_name=measurement_name,
+            obs_field_name=obs_field_name,
+            var_field_name=var_field_name,
+            context=context,
+        )
+
+        for adata in adatas:
+            registration_data = cls.from_anndata_append_on_experiment(
+                adata,
+                registration_data,
+                measurement_name=measurement_name,
+                append_obsm_varm=append_obsm_varm,
+            )
+
+        tiledbsoma.logging.logger.info("Registration: complete.")
+        return registration_data
+
+    @classmethod
     def from_h5ad_append_on_experiment(
         cls,
         h5ad_file_name: str,
@@ -368,30 +439,13 @@ class ExperimentAmbientLabelMapping:
         """Extends registration data from the baseline, already-written SOMA
         experiment to include multiple H5AD input files."""
 
-        if experiment_uri is not None and tiledbsoma.Experiment.exists(experiment_uri):
-            # Pre-check
-            with tiledbsoma.Experiment.open(experiment_uri) as exp:
-                if measurement_name not in exp.ms:
-                    raise ValueError(
-                        f"cannot append: target measurement {measurement_name} is not in experiment {experiment_uri}"
-                    )
-
-            registration_data = cls.from_isolated_soma_experiment(
-                experiment_uri,
-                obs_field_name=obs_field_name,
-                var_field_name=var_field_name,
-                context=context,
-            )
-        else:
-            registration_data = cls(
-                obs_axis=AxisAmbientLabelMapping(data={}, field_name=obs_field_name),
-                var_axes={
-                    measurement_name: AxisAmbientLabelMapping(
-                        data={}, field_name=var_field_name
-                    ),
-                    "raw": AxisAmbientLabelMapping(data={}, field_name=var_field_name),
-                },
-            )
+        registration_data = cls._acquire_experiment_mappings(
+            experiment_uri,
+            measurement_name=measurement_name,
+            obs_field_name=obs_field_name,
+            var_field_name=var_field_name,
+            context=context,
+        )
 
         for h5ad_file_name in h5ad_file_names:
             registration_data = cls.from_h5ad_append_on_experiment(
