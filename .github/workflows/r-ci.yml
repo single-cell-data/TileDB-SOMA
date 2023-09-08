@@ -43,6 +43,14 @@ jobs:
 
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
+
+      - name: Install rc version of tiledb-r (macOS)
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+
+      - name: Install rc version of tiledb-r (linux)
+        if: ${{ matrix.os != 'macOS-latest' }}
+        run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"      
         
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
