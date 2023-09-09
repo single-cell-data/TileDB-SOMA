@@ -56,7 +56,10 @@ jobs:
       run: python -m pip -v install pre-commit && pre-commit run -a -v
 
     - name: Check C++ Format
-      run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h")
+      run: |
+        which clang-format
+        clang-format --version
+        ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h")
 
   build:
     runs-on: ${{ inputs.os }}
