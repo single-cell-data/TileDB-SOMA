@@ -291,15 +291,15 @@ class ColumnBuffer {
             throw TileDBSOMAError(
                 "[ColumnBuffer] No enumeration defined for " + name_);
         }
-        const size_t n_vec = enums_.size(); // plus one for extra offset
+        const size_t n_vec = enums_.size();  // plus one for extra offset
         enum_offsets_.resize(n_vec + 1);
         enum_str_ = "";
         uint32_t cumlen = 0;
         for (size_t i = 0; i < n_vec; i++) {
-             std::string s(enums_[i]);
-             enum_str_ += s;
-             enum_offsets_[i] = cumlen;
-             cumlen += s.length();
+            std::string s(enums_[i]);
+            enum_str_ += s;
+            enum_offsets_[i] = cumlen;
+            cumlen += s.length();
         }
         enum_offsets_[n_vec] = cumlen;
     }
@@ -395,7 +395,6 @@ class ColumnBuffer {
     // Enumerations (optional) as string and offsets
     std::string enum_str_;
     std::vector<uint32_t> enum_offsets_;
-
 };
 
 }  // namespace tiledbsoma

@@ -650,7 +650,6 @@ class SOMAArray {
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t nnz_slow();
-
 };
 
 }  // namespace tiledbsoma
