@@ -31,10 +31,10 @@
  */
 
 #include "managed_query.h"
-#include "logger_public.h"
-#include "utils/common.h"
 #include <tiledb/array_experimental.h>
 #include <tiledb/attribute_experimental.h>
+#include "logger_public.h"
+#include "utils/common.h"
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -43,9 +43,10 @@ using namespace tiledb;
 //= public non-static
 //===================================================================
 
-ManagedQuery::ManagedQuery(std::shared_ptr<Array> array,
-                           std::shared_ptr<Context> ctx,
-                           std::string_view name)
+ManagedQuery::ManagedQuery(
+    std::shared_ptr<Array> array,
+    std::shared_ptr<Context> ctx,
+    std::string_view name)
     : array_(array)
     , ctx_(ctx)
     , name_(name)
@@ -215,17 +216,21 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
 
     // Visit all attributes and retrieve enumeration vectors
     auto attribute_map = schema_->attributes();
-    for (auto& nmit: attribute_map) {
+    for (auto& nmit : attribute_map) {
         auto attrname = nmit.first;
         auto attribute = nmit.second;
-        auto enumname = AttributeExperimental::get_enumeration_name(*ctx_, attribute);
+        auto enumname = AttributeExperimental::get_enumeration_name(
+            *ctx_, attribute);
         if (enumname != std::nullopt) {
-            auto enumeration = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname.value());
+            auto enumeration = ArrayExperimental::get_enumeration(
+                *ctx_, *array_, enumname.value());
             auto enumvec = enumeration.as_vector<std::string>();
             auto colbuf = buffers_->at(attrname);
             colbuf->add_enumeration(enumvec);
-            LOG_DEBUG(fmt::format("[ManagedQuery] got Enumeration '{}' for attribute '{}'",
-                                  enumname.value(), attrname));
+            LOG_DEBUG(fmt::format(
+                "[ManagedQuery] got Enumeration '{}' for attribute '{}'",
+                enumname.value(),
+                attrname));
         }
     }
     return buffers_;

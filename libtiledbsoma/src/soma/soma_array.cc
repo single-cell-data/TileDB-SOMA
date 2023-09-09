@@ -31,9 +31,9 @@
  */
 
 #include "soma_array.h"
+#include <tiledb/array_experimental.h>
 #include "../utils/util.h"
 #include "logger_public.h"
-#include <tiledb/array_experimental.h>
 namespace tiledbsoma {
 using namespace tiledb;
 

@@ -160,34 +160,35 @@ class ArrowAdapter {
             ArrowSchema* dict_sch = new ArrowSchema;
             ArrowArray* dict_arr = new ArrowArray;
 
-            dict_sch->format = (const char*)malloc(sizeof(char) * 2);			// mandatory, 'u' as 32bit indexing
+            dict_sch->format = (const char*)malloc(
+                sizeof(char) * 2);  // mandatory, 'u' as 32bit indexing
             strcpy((char*)dict_sch->format, "u");
-            dict_sch->name = nullptr; 		        // optional in dictionary
-            dict_sch->metadata = nullptr;               // optional
-            dict_sch->flags = 0;                        // optional
-            dict_sch->n_children = 0;                   // mandatory
-            dict_sch->children = nullptr;               // optional
-            dict_sch->dictionary = nullptr;             // optional
-            dict_sch->release = &release_schema; 	// mandatory
-            dict_sch->private_data = nullptr;           // optional
+            dict_sch->name = nullptr;             // optional in dictionary
+            dict_sch->metadata = nullptr;         // optional
+            dict_sch->flags = 0;                  // optional
+            dict_sch->n_children = 0;             // mandatory
+            dict_sch->children = nullptr;         // optional
+            dict_sch->dictionary = nullptr;       // optional
+            dict_sch->release = &release_schema;  // mandatory
+            dict_sch->private_data = nullptr;     // optional
 
-            const int n_buf = 3; 			// always variable here
+            const int n_buf = 3;  // always variable here
 
             const int64_t n_vec = enumvec.size();
-            dict_arr->length = n_vec;                    // mandatory
-            dict_arr->null_count = 0;                    // mandatory
-            dict_arr->offset = 0;                        // mandatory
-            dict_arr->n_buffers = n_buf;  	         // mandatory
-            dict_arr->n_children = 0;                    // mandatory
-            dict_arr->buffers = nullptr;                 // mandatory
-            dict_arr->children = nullptr;                // optional
-            dict_arr->dictionary = nullptr;              // optional
-            dict_arr->release = &release_array;    	 // release from parent
-            dict_arr->private_data = nullptr;  	         // optional here
+            dict_arr->length = n_vec;            // mandatory
+            dict_arr->null_count = 0;            // mandatory
+            dict_arr->offset = 0;                // mandatory
+            dict_arr->n_buffers = n_buf;         // mandatory
+            dict_arr->n_children = 0;            // mandatory
+            dict_arr->buffers = nullptr;         // mandatory
+            dict_arr->children = nullptr;        // optional
+            dict_arr->dictionary = nullptr;      // optional
+            dict_arr->release = &release_array;  // release from parent
+            dict_arr->private_data = nullptr;    // optional here
 
             column->convert_enumeration();
             dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buf);
-            dict_arr->buffers[0] = nullptr;  	      // validity: none here
+            dict_arr->buffers[0] = nullptr;  // validity: none here
             dict_arr->buffers[1] = column->enum_offsets().data();
             dict_arr->buffers[2] = column->enum_string().data();
 
