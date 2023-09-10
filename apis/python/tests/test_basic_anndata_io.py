@@ -649,6 +649,7 @@ def test_obs_with_categorical_int_nan_enumeration(
         output_path, h5ad_file_categorical_int_nan, measurement_name="RNA"
     )
 
+
 def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
     adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
     assert 1 == 1
