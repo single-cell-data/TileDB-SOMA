@@ -60,3 +60,28 @@ ann.obsp = None
 ann.X = scipy.sparse.csc_matrix(ann.X)
 ann.write_h5ad('pbmc-small-x-csc.h5ad')
 ```
+
+# Sparsely occupied `obsm`
+
+For testing https://github.com/single-cell-data/TileDB-SOMA/pull/1650, we force a zero into an
+`obsm` matrix so that when stored as sparse, it will not have full `nnz`:
+
+```
+>>> import anndata as ad
+
+>>> adata = ad.read_h5ad('pbmc3k.h5ad')
+
+>>> adata.obsm
+AxisArrays with keys: X_pca, X_tsne, X_umap, X_draw_graph_fr
+
+>>> o = adata.obsm["X_pca"]
+
+>>> o.shape
+(2638, 50)
+
+>>> o[0][0] = 0
+
+>>> adata.obsm["X_pca"] = o
+
+>>> adata.write_h5ad('pbmc3k-with-obsm-zero.h5ad')
+```
