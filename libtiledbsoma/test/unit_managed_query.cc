@@ -118,10 +118,10 @@ TEST_CASE("ManagedQuery: Basic execution test") {
     }
 
     std::string uri = "mem://unit-test-array";
-    auto ctx = Context();
-    auto [array, d0, a0, _] = create_array(uri, ctx);
+    auto ctx = std::make_shared<Context>();
+    auto [array, d0, a0, _] = create_array(uri, *ctx);
 
-    auto mq = ManagedQuery(array);
+    auto mq = ManagedQuery(array, ctx);
     mq.submit_read();
 
     auto results = mq.results();
@@ -136,10 +136,10 @@ TEST_CASE("ManagedQuery: Basic execution test") {
 
 TEST_CASE("ManagedQuery: Select test") {
     std::string uri = "mem://unit-test-array";
-    auto ctx = Context();
-    auto [array, d0, a0, _] = create_array(uri, ctx);
+    auto ctx = std::make_shared<Context>();
+    auto [array, d0, a0, _] = create_array(uri, *ctx);
 
-    auto mq = ManagedQuery(array);
+    auto mq = ManagedQuery(array, ctx);
     mq.select_columns({"a0"});
     mq.select_points<std::string>("d0", {"a"});
     mq.submit_read();
@@ -160,10 +160,10 @@ TEST_CASE("ManagedQuery: Select test") {
 
 TEST_CASE("ManagedQuery: Validity test") {
     std::string uri = "mem://unit-test-array";
-    auto ctx = Context();
-    auto [array, d0, a0, a0_valids] = create_array(uri, ctx);
+    auto ctx = std::make_shared<Context>();
+    auto [array, d0, a0, a0_valids] = create_array(uri, *ctx);
 
-    auto mq = ManagedQuery(array);
+    auto mq = ManagedQuery(array, ctx);
     mq.submit_read();
 
     auto results = mq.results();
