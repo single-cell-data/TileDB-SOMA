@@ -110,6 +110,7 @@ jobs:
         mkdir -p test
         cd test
         tar zxf soco.tgz
+        rm -f soco.tgz
         cd ..
 
         echo pwd
