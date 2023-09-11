@@ -111,6 +111,8 @@ jobs:
         cd test
         tar zxf soco.tgz
         cd ..
+        ls -l test
+        ls -l test/soco
 
     - name: Run pytests
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
