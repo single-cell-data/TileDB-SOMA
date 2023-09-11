@@ -111,7 +111,12 @@ jobs:
         cd test
         tar zxf soco.tgz
         cd ..
+
+        echo pwd
+        pwd
+        echo ls -l test
         ls -l test
+        echo ls -l test/soco
         ls -l test/soco
 
     - name: Run pytests
