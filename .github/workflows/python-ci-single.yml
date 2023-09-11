@@ -140,6 +140,8 @@ jobs:
         ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed
         echo ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed/obs
         ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed/obs
+        echo ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed/obs/*
+        ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed/obs/*
         echo
         PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml libtiledbsoma/test
 
