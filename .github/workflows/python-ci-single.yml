@@ -118,7 +118,7 @@ jobs:
     - name: Run libtiledbsoma unit tests
       run: ctest --test-dir build/libtiledbsoma -C Release --verbose
 
-    - name: Run pytests
+    - name: Run pytests for C++
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
       # instead of copy we `pip install`ed to site-packages above. That's needed for the code
       # coverage analysis to work.
@@ -136,7 +136,27 @@ jobs:
         echo ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed/obs
         ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed/obs
         echo
-        PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests libtiledbsoma/test
+        PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml libtiledbsoma/test
+
+    - name: Run pytests for Python
+      # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
+      # instead of copy we `pip install`ed to site-packages above. That's needed for the code
+      # coverage analysis to work.
+      run: |
+        echo pwd
+        pwd
+        echo ls -l test
+        ls -l test
+        echo ls -l test/soco
+        ls -l test/soco
+        echo ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco
+        ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco
+        echo ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed
+        ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed
+        echo ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed/obs
+        ls -l /home/runner/work/TileDB-SOMA/TileDB-SOMA/libtiledbsoma/test/../../test/soco/pbmc3k_processed/obs
+        echo
+        PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests
 
     - name: Report coverage to Codecov
       if: inputs.report_codecov
