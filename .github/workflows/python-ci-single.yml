@@ -103,11 +103,14 @@ jobs:
     - name: Show XCode version
       run: clang --version
 
-    - name: Generate test data
+    - name: Obtain test data
       shell: bash
       run: |
+        rm -rf test/soco
         mkdir -p test/soco
-        ./apis/python/devtools/ingestor --debug --soco -o test/soco -n data/pbmc3k_processed.h5ad data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad
+        cd test
+        tar zxf soco.tgz
+        cd ..
 
     - name: Run pytests
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
