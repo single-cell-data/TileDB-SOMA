@@ -107,7 +107,7 @@ jobs:
       shell: bash
       run: |
         rm -rf test/soco
-        mkdir -p test/soco
+        mkdir -p test
         cd test
         tar zxf soco.tgz
         cd ..
