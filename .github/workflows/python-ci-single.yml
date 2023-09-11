@@ -108,7 +108,11 @@ jobs:
       run: |
         mkdir -p test/soco
         ./apis/python/devtools/ingestor --debug --soco -o test/soco -n data/pbmc3k_processed.h5ad data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad
+        echo pwd
+        pwd
+        echo ls -l test
         ls -l test
+        echo ls -l test/soco
         ls -l test/soco
 
     - name: Run pytests
