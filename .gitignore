@@ -16,7 +16,7 @@ core/obj/*
 core/lib/*
 core/include/temp
 core/src/temp
-test/*
+test/soco
 test/inputs/arrays/read_compatibility_test*
 Doxyfile.log
 doxyfile.inc
