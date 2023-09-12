@@ -504,17 +504,27 @@ def from_anndata(
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
 
-                with _create_from_matrix(
-                    X_kind,
-                    _util.uri_joinpath(measurement_X_uri, "data"),
-                    anndata.X,
-                    ingestion_params=ingestion_params,
-                    platform_config=platform_config,
-                    context=context,
-                    axis_0_mapping=jidmaps.obs_axis,
-                    axis_1_mapping=jidmaps.var_axes[measurement_name],
-                ) as data:
-                    _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
+                # Some AnnData objects have no X at all.
+                has_X = True
+                try:
+                    anndata.X
+                except (NameError, KeyError):
+                    # We need to check both -- different exception types occur dependinng
+                    # on whether the anndata object is read in backing mode or not.
+                    has_X = False
+
+                if has_X:
+                    with _create_from_matrix(
+                        X_kind,
+                        _util.uri_joinpath(measurement_X_uri, "data"),
+                        anndata.X,
+                        ingestion_params=ingestion_params,
+                        platform_config=platform_config,
+                        context=context,
+                        axis_0_mapping=jidmaps.obs_axis,
+                        axis_1_mapping=jidmaps.var_axes[measurement_name],
+                    ) as data:
+                        _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
                 for layer_name, layer in anndata.layers.items():
                     with _create_from_matrix(
