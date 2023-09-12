@@ -508,7 +508,9 @@ def from_anndata(
                 has_X = True
                 try:
                     anndata.X
-                except NameError:
+                except (NameError, KeyError):
+                    # We need to check both -- different exception types occur dependinng
+                    # on whether the anndata object is read in backing mode or not.
                     has_X = False
 
                 if has_X:

@@ -47,6 +47,18 @@ def h5ad_file_uns_string_array(request):
 
 
 @pytest.fixture
+def h5ad_file_X_empty(request):
+    input_path = HERE.parent / "testdata/xempty.h5ad"
+    return input_path
+
+
+@pytest.fixture
+def h5ad_file_X_none(request):
+    input_path = HERE.parent / "testdata/xnone.h5ad"
+    return input_path
+
+
+@pytest.fixture
 def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
@@ -674,3 +686,30 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
         exp, "RNA", obsm_varm_width_hints={"obsm": {"X_pca": 50}}
     )
     assert try3.obsm["X_pca"].shape == (2638, 50)
+
+
+def test_X_empty(h5ad_file_X_empty):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+    tiledbsoma.io.from_h5ad(
+        output_path, h5ad_file_X_empty.as_posix(), measurement_name="RNA"
+    )
+
+    with tiledbsoma.Experiment.open(output_path) as exp:
+        assert exp.obs.count == 2638
+        assert exp.ms["RNA"].var.count == 1838
+        assert "data" in exp.ms["RNA"].X
+        assert exp.ms["RNA"].X["data"].nnz == 0
+
+
+def test_X_none(h5ad_file_X_none):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+    tiledbsoma.io.from_h5ad(
+        output_path, h5ad_file_X_none.as_posix(), measurement_name="RNA"
+    )
+
+    with tiledbsoma.Experiment.open(output_path) as exp:
+        assert exp.obs.count == 2638
+        assert exp.ms["RNA"].var.count == 1838
+        assert list(exp.ms["RNA"].X.keys()) == []
