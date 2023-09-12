@@ -106,9 +106,8 @@ jobs:
     - name: Obtain test data
       shell: bash
       run: |
-        rm -rf test/soco
-        mkdir -p test
         cd test
+        rm -rf soco
         tar zxf soco.tgz
         cd ..
 
