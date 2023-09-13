@@ -329,6 +329,23 @@ class ColumnBuffer {
         return tcb::span<char>(enum_str_.data(), enum_str_.length());
     }
 
+    /**
+     * @brief Add an optional enumeration ordered flag
+     *
+     */
+    void add_is_ordered_enumeration() {
+        is_ordered_ = true;
+    }
+
+    /**
+     * @brief Return true if the buffer contains enumeration.
+     */
+    bool is_ordered_enumeration() const {
+        return is_ordered_;
+    }
+
+
+
    private:
     //===================================================================
     //= private static
@@ -391,6 +408,9 @@ class ColumnBuffer {
     // Enumerations (optional) as string and offsets
     std::string enum_str_;
     std::vector<uint32_t> enum_offsets_;
+
+    // Enumerations (optional) ordered stats
+    bool is_ordered_ = false;
 };
 
 }  // namespace tiledbsoma
