@@ -146,7 +146,9 @@ def arrow_type_from_tiledb_dtype(
         return pa.from_numpy_dtype(tiledb_dtype)
 
 
-def tiledb_schema_to_arrow(tdb_schema: tiledb.ArraySchema) -> pa.Schema:
+def tiledb_schema_to_arrow(
+    tdb_schema: tiledb.ArraySchema, uri: str, ctx: tiledb.ctx.Ctx
+) -> pa.Schema:
     arrow_schema_dict = {}
     dom = tdb_schema.domain
     for i in range(dom.ndim):
@@ -156,12 +158,36 @@ def tiledb_schema_to_arrow(tdb_schema: tiledb.ArraySchema) -> pa.Schema:
             name = "unnamed"
         arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(dim.dtype)
 
+    has_any_enums = False
+    for i in range(tdb_schema.nattr):
+        attr = tdb_schema.attr(i)
+        if attr.enum_label is not None:
+            has_any_enums = True
+
+    A = None
+    if has_any_enums:
+        A = tiledb.open(uri, ctx=ctx)
     for i in range(tdb_schema.nattr):
         attr = tdb_schema.attr(i)
         name = attr.name
         if name == "":
             name = "unnamed"
-        arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(attr.dtype, attr.isascii)
+        if attr.enum_label is not None:
+            assert A is not None  # mypy
+            info = A.enum(name)
+            arrow_schema_dict[name] = pa.dictionary(
+                index_type=arrow_type_from_tiledb_dtype(attr.dtype),
+                value_type=arrow_type_from_tiledb_dtype(
+                    tiledb.datatypes.DataType.from_tiledb(info.type).np_dtype
+                ),
+                ordered=info.ordered,
+            )
+        else:
+            arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(
+                attr.dtype, attr.isascii
+            )
+    if A is not None:
+        A.close()
 
     return pa.schema(arrow_schema_dict)
 
