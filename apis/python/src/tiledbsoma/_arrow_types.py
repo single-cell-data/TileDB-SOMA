@@ -158,12 +158,15 @@ def tiledb_schema_to_arrow(
             name = "unnamed"
         arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(dim.dtype)
 
+    # If there are any enumerated-type columns, we'll need to open the array once to get
+    # some information from there. If not, we'll need to open the array zero times.
     has_any_enums = False
     for i in range(tdb_schema.nattr):
         attr = tdb_schema.attr(i)
         if attr.enum_label is not None:
             has_any_enums = True
 
+    # Open the array only if we'll need it for enum infos
     A = None
     if has_any_enums:
         A = tiledb.open(uri, ctx=ctx)
@@ -172,8 +175,8 @@ def tiledb_schema_to_arrow(
         name = attr.name
         if name == "":
             name = "unnamed"
-        if attr.enum_label is not None:
-            assert A is not None  # mypy
+        if attr.enum_label is not None:  # enumerated
+            assert A is not None  # to make mypy happy
             info = A.enum(name)
             arrow_schema_dict[name] = pa.dictionary(
                 index_type=arrow_type_from_tiledb_dtype(attr.dtype),
@@ -182,7 +185,7 @@ def tiledb_schema_to_arrow(
                 ),
                 ordered=info.ordered,
             )
-        else:
+        else:  # non-enumerated
             arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(
                 attr.dtype, attr.isascii
             )
