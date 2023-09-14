@@ -201,19 +201,25 @@ class SOMATileDBContext:
         Args:
             tiledb_config:
                 A dictionary of parameters for `tiledb.Config() <https://tiledb-inc-tiledb.readthedocs-hosted.com/projects/tiledb-py/en/stable/python-api.html#config>`_.
+                To remove a parameter from the existing config, provide ``None``
+                as the value.
             tiledb_ctx:
                 A TileDB Context to replace the current context with.
             timestamp:
                 A timestamp to replace the current timestamp with.
                 Explicitly passing ``None`` will remove the timestamp.
+                For details, see the description of ``timestamp``
+                in :meth:`__init__`.
 
         Lifecycle:
             Experimental.
 
         Examples:
-            >>> context.replace(timestamp=0)
-
-            >>> context.replace(tiledb_config={"vfs.s3.region": "us-east-2"})
+            >>> context.replace(timestamp=1_512_658_800_000)  # UNIX millis
+            >>> new_region_context = context.replace(
+            ...     tiledb_config={"vfs.s3.region": "us-east-2"})
+            >>> back_to_default_context = new_region_context.replace(
+            ...     tiledb_config={"vfs.s3.region": None})
         """
         with self._lock:
             if tiledb_config is not None:
@@ -222,10 +228,9 @@ class SOMATileDBContext:
                         "Either tiledb_config or tiledb_ctx may be provided"
                         " to replace(), but not both."
                     )
-                new_config = dict()
                 new_config = self._internal_tiledb_config()
                 new_config.update(tiledb_config)
-                tiledb_config = new_config
+                tiledb_config = {k: v for (k, v) in new_config.items() if v is not None}
             if timestamp is _SENTINEL:
                 # Keep the existing timestamp if not overridden.
                 timestamp = self._timestamp_ms

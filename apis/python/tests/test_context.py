@@ -35,6 +35,13 @@ def test_lazy_replace_config():
         mock_ctx.assert_not_called()
 
 
+def test_delete_config_entry():
+    context = stc.SOMATileDBContext(tiledb_config={"hither": "yon"})
+    new_context = context.replace(tiledb_config={"hither": None})
+    # We've removed the only non-default entry; this should work.
+    assert new_context.tiledb_config == stc._default_config({})
+
+
 def test_shared_ctx():
     """Verifies that one global context is shared by default."""
     ctx = stc.SOMATileDBContext()
