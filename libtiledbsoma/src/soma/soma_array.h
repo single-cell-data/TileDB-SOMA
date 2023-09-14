@@ -513,69 +513,6 @@ class SOMAArray {
     bool attr_has_enum(std::string attr_name);
 
     /**
-     * @brief Get the mapping of attributes to Enumerations.
-     *
-     * @return std::map<std::string, Enumeration>
-     */
-    std::map<std::string, Enumeration> get_attr_to_enum_mapping();
-
-    /**
-     * @brief Get the Enumeration name associated with the given Attr.
-     *
-     * @return std::optional<std::string> The enumeration name if one exists.
-     */
-    std::optional<std::string> get_enum_label_on_attr(std::string attr_name);
-
-    /**
-     * @brief Check if the given attribute has an associated enumeration.
-     *
-     * @return bool
-     */
-    bool attr_has_enum(std::string attr_name);
-
-    /**
-     * @brief Get the mapping of attributes to Enumerations.
-     *
-     * @return std::map<std::string, Enumeration>
-     */
-    std::map<std::string, Enumeration> get_attr_to_enum_mapping();
-
-    /**
-     * @brief Get the Enumeration name associated with the given Attr.
-     *
-     * @return std::optional<std::string> The enumeration name if one exists.
-     */
-    std::optional<std::string> get_enum_label_on_attr(std::string attr_name);
-
-    /**
-     * @brief Check if the given attribute has an associated enumeration.
-     *
-     * @return bool
-     */
-    bool attr_has_enum(std::string attr_name);
-
-    /**
-     * @brief Get the mapping of attributes to Enumerations.
-     *
-     * @return std::map<std::string, Enumeration>
-     */
-    std::map<std::string, Enumeration> get_attr_to_enum_mapping();
-
-    /**
-     * @brief Get the Enumeration name associated with the given Attr.
-     *
-     * @return std::optional<std::string> The enumeration name if one exists.
-     */
-    std::optional<std::string> get_enum_label_on_attr(std::string attr_name);
-
-    /**
-     * @brief Check if the given attribute has an associated enumeration.
-     *
-     * @return bool
-     */
-    bool attr_has_enum(std::string attr_name);
-
-    /**
      * Set metadata key-value items to an open array. The array must
      * opened in WRITE mode, otherwise the function will error out.
      *

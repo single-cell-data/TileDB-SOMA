@@ -472,10 +472,6 @@ std::vector<std::string> SOMAArray::dimension_names() const {
     return result;
 }
 
-Enumeration SOMAArray::get_enum(std::string name) {
-    return ArrayExperimental::get_enumeration(*ctx_, *arr_, name);
-}
-
 std::map<std::string, Enumeration> SOMAArray::get_attr_to_enum_mapping() {
     std::map<std::string, Enumeration> result;
     for (uint32_t i = 0; i < arr_->schema().attribute_num(); ++i) {
