@@ -283,17 +283,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     def column_to_enumeration(self, name: str) -> str:
         return str(self._soma_reader().get_enum_label_on_attr(name))
 
-    def enumeration(self, name: str) -> Tuple[Any, ...]:
-        """Doc place holder.
-
-        Returns:
-            Tuple[Any, ...]: _description_
-        """
-        return tuple(self._soma_reader().get_enum(name))
-
-    def column_to_enumeration(self, name: str) -> str:
-        return str(self._soma_reader().get_enum_label_on_attr(name))
-
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
         return self.count

@@ -146,30 +146,6 @@ def test_dataframe_with_enumeration(tmp_path):
         assert sdf.enumeration("bar") == enums["enmr2"]
 
 
-def test_dataframe_with_enumeration(tmp_path):
-    schema = pa.schema(
-        [
-            pa.field("foo", pa.dictionary(pa.int64(), pa.large_string())),
-            pa.field("bar", pa.dictionary(pa.int64(), pa.large_string())),
-        ]
-    )
-    enums = {"enmr1": ("a", "bb", "ccc"), "enmr2": ("cat", "dog")}
-
-    with soma.DataFrame.create(
-        tmp_path.as_posix(),
-        schema=schema,
-        enumerations=enums,
-        column_to_enumerations={"foo": "enmr1", "bar": "enmr2"},
-    ) as sdf:
-        data = {}
-        data["soma_joinid"] = [0, 1, 2, 3, 4]
-        data["foo"] = [2, 1, 2, 1, 0]
-        data["bar"] = [0, 1, 1, 0, 1]
-        sdf.write(pa.Table.from_pydict(data))
-        assert sdf.enumeration("foo") == enums["enmr1"]
-        assert sdf.enumeration("bar") == enums["enmr2"]
-
-
 @pytest.fixture
 def simple_data_frame(tmp_path):
     """

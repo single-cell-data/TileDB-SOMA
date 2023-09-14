@@ -77,24 +77,6 @@ def h5ad_file_X_none(request):
 
 
 @pytest.fixture
-def h5ad_file_categorical_int_nan(request):
-    # This has obs["categ_int_nan"] as a categorical int but with math.nan as a
-    # "not-in-the-category" indicator. Such H5AD files do arise in the wild.
-    #
-    # Reference:
-    #   import anndata as ad
-    #   import pandas  as pd
-    #   import math
-    #   adata = adata.read_h5ad("whatever.h5ad")
-    #   s = pd.Series(list(range(80)), dtype="category")
-    #   s[0] = math.nan
-    #   adata.obs["categ_int_nan"] = s
-    #   adata.write_h5ad("categorical_int_nan.h5ad")
-    input_path = HERE.parent / "testdata/categorical_int_nan.h5ad"
-    return input_path
-
-
-@pytest.fixture
 def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
@@ -749,7 +731,8 @@ def test_X_none(h5ad_file_X_none):
         assert exp.obs.count == 2638
         assert exp.ms["RNA"].var.count == 1838
         assert list(exp.ms["RNA"].X.keys()) == []
-        
+
+
 # There exist in the wild AnnData files with categorical-int columns where the "not in the category"
 # is indicated by the presence of floating-point math.NaN in cells. Here we test that we can ingest
 # this.
@@ -761,60 +744,3 @@ def test_obs_with_categorical_int_nan_enumeration(
     tiledbsoma.io.from_h5ad(
         output_path, h5ad_file_categorical_int_nan, measurement_name="RNA"
     )
-
-
-def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
-    adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
-    assert 1 == 1
-
-    # This data file is prepared such that obsm["X_pca"] has shape (2638, 50)
-    # but its [0][0] element is a 0, so when it's stored as sparse, its nnz
-    # is not 2638*50=131900.
-    ado = adata.obsm["X_pca"]
-    assert ado.shape == (2638, 50)
-
-    output_path = tmp_path.as_posix()
-    tiledbsoma.io.from_anndata(output_path, adata, "RNA")
-
-    exp = tiledbsoma.Experiment.open(output_path)
-
-    # Verify the bounding box on the SOMA SparseNDArray
-    with tiledb.open(exp.ms["RNA"].obsm["X_pca"].uri) as so:
-        assert so.meta["soma_dim_0_domain_lower"] == 0
-        assert so.meta["soma_dim_0_domain_upper"] == 2637
-        assert so.meta["soma_dim_1_domain_lower"] == 0
-        assert so.meta["soma_dim_1_domain_upper"] == 49
-
-    # With the bounding box present, all is well for outgest to AnnData format.
-    try1 = tiledbsoma.io.to_anndata(exp, "RNA")
-    assert try1.obsm["X_pca"].shape == (2638, 50)
-
-    # Now remove the bounding box to simulate reading older data that lacks a bounding box.
-    with tiledb.open(exp.ms["RNA"].obsm["X_pca"].uri, "w") as so:
-        del so.meta["soma_dim_0_domain_lower"]
-        del so.meta["soma_dim_0_domain_upper"]
-        del so.meta["soma_dim_1_domain_lower"]
-        del so.meta["soma_dim_1_domain_upper"]
-
-    # Re-open to simulate opening afresh a bounding-box-free array.
-    exp = tiledbsoma.Experiment.open(output_path)
-
-    with tiledb.open(exp.ms["RNA"].obsm["X_pca"].uri) as so:
-        with pytest.raises(KeyError):
-            so.meta["soma_dim_0_domain_lower"]
-        with pytest.raises(KeyError):
-            so.meta["soma_dim_0_domain_upper"]
-        with pytest.raises(KeyError):
-            so.meta["soma_dim_1_domain_lower"]
-        with pytest.raises(KeyError):
-            so.meta["soma_dim_1_domain_upper"]
-        assert so.meta["soma_object_type"] == "SOMASparseNDArray"
-
-    # Now try the remaining options for outgest.
-    with pytest.raises(tiledbsoma.SOMAError):
-        tiledbsoma.io.to_anndata(exp, "RNA")
-
-    try3 = tiledbsoma.io.to_anndata(
-        exp, "RNA", obsm_varm_width_hints={"obsm": {"X_pca": 50}}
-    )
-    assert try3.obsm["X_pca"].shape == (2638, 50)
