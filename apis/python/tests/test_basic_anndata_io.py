@@ -47,6 +47,24 @@ def h5ad_file_uns_string_array(request):
 
 
 @pytest.fixture
+def h5ad_file_categorical_int_nan(request):
+    # This has obs["categ_int_nan"] as a categorical int but with math.nan as a
+    # "not-in-the-category" indicator. Such H5AD files do arise in the wild.
+    #
+    # Reference:
+    #   import anndata as ad
+    #   import pandas  as pd
+    #   import math
+    #   adata = adata.read_h5ad("whatever.h5ad")
+    #   s = pd.Series(list(range(80)), dtype="category")
+    #   s[0] = math.nan
+    #   adata.obs["categ_int_nan"] = s
+    #   adata.write_h5ad("categorical_int_nan.h5ad")
+    input_path = HERE.parent / "testdata/categorical_int_nan.h5ad"
+    return input_path
+
+
+@pytest.fixture
 def h5ad_file_X_empty(request):
     input_path = HERE.parent / "testdata/xempty.h5ad"
     return input_path
