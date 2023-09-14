@@ -18,7 +18,9 @@ def test_lazy_init():
     """Verifies we don't construct a Ctx until we have to."""
     with mock.patch.object(tiledb, "Ctx", wraps=tiledb.Ctx) as mock_ctx:
         context = stc.SOMATileDBContext(tiledb_config={})
-        assert context.tiledb_config == stc._default_config({})
+        assert context.tiledb_config == {
+            "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3
+        }
         mock_ctx.assert_not_called()
         assert context._tiledb_ctx is None
         # Invoke the @property twice to ensure we only build one Ctx.
@@ -31,15 +33,24 @@ def test_lazy_replace_config():
     with mock.patch.object(tiledb, "Ctx", wraps=tiledb.Ctx) as mock_ctx:
         context = stc.SOMATileDBContext()
         new_context = context.replace(tiledb_config={"hello": "goodbye"})
-        assert new_context.tiledb_config == stc._default_config({"hello": "goodbye"})
+        assert new_context.tiledb_config == {
+            "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3,
+            "hello": "goodbye",
+        }
         mock_ctx.assert_not_called()
 
 
 def test_delete_config_entry():
     context = stc.SOMATileDBContext(tiledb_config={"hither": "yon"})
+    assert context.tiledb_config == {
+        "hither": "yon",
+        "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3,
+    }
     new_context = context.replace(tiledb_config={"hither": None})
     # We've removed the only non-default entry; this should work.
-    assert new_context.tiledb_config == stc._default_config({})
+    assert new_context.tiledb_config == {
+        "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3
+    }
 
 
 def test_shared_ctx():
