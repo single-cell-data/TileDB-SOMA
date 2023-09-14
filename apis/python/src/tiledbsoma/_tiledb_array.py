@@ -63,7 +63,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         Lifecycle:
             Experimental.
         """
-        return tiledb_schema_to_arrow(self._tiledb_array_schema())
+        return tiledb_schema_to_arrow(self._tiledb_array_schema(), self.uri, self._ctx)
 
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """Returns the TileDB array schema, for internal use."""
