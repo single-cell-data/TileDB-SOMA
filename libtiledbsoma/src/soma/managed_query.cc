@@ -225,6 +225,9 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
             auto enumeration = ArrayExperimental::get_enumeration(
                 *ctx_, *array_, enumname.value());
             auto enumvec = enumeration.as_vector<std::string>();
+            if (!buffers_->contains(attrname)) {
+                continue;
+            }
             auto colbuf = buffers_->at(attrname);
             colbuf->add_enumeration(enumvec);
             LOG_DEBUG(fmt::format(

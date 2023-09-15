@@ -86,7 +86,8 @@ class ArrowAdapter {
      *
      * @return auto [Arrow array, Arrow schema]
      */
-    static auto to_arrow(std::shared_ptr<ColumnBuffer> column) {
+    static auto to_arrow(
+        std::shared_ptr<ColumnBuffer> column, bool use_enum = false) {
         std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
         std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
 
@@ -153,8 +154,10 @@ class ArrowAdapter {
             column->data_to_bitmap();
         }
 
-        // If we have an enumeration, fill a dictionary
-        if (column->has_enumeration()) {
+        // If we have an enumeration, fill a dictionary.
+        // The Python callpath handles this separately. The R callpath needs us
+        // to do this. TODO: uniformize this at the callsites.
+        if (column->has_enumeration() && use_enum) {
             auto enumvec = column->get_enumeration();
 
             ArrowSchema* dict_sch = new ArrowSchema;
