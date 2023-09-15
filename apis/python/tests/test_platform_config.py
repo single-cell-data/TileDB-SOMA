@@ -66,8 +66,11 @@ def test_platform_config(adata):
             assert x_arr.attr("soma_data").filters == [tiledb.NoOpFilter()]
             assert x_arr.dim("soma_dim_0").tile == 6
             assert x_arr.dim("soma_dim_0").filters == [tiledb.ZstdFilter(level=2)]
-            assert x_arr.dim("soma_dim_1").filters == []
-
+            # As of 2.17.0 this is the default when empty filter-list, or none at all,
+            # is requested. Those who want truly no filtering can request a no-op filter.
+            assert list(x_arr.dim("soma_dim_1").filters) == [
+                tiledb.ZstdFilter(level=-1)
+            ]
             var_df = exp.ms["RNA"].var
             var_arr = var_df._handle.reader
             assert var_arr.dim("soma_joinid").filters == [tiledb.ZstdFilter(level=1)]
