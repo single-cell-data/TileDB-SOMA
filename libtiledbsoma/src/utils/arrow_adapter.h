@@ -86,7 +86,8 @@ class ArrowAdapter {
      *
      * @return auto [Arrow array, Arrow schema]
      */
-    static auto to_arrow(std::shared_ptr<ColumnBuffer> column, bool use_enum=false) {
+    static auto to_arrow(
+        std::shared_ptr<ColumnBuffer> column, bool use_enum = false) {
         std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
         std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
 
