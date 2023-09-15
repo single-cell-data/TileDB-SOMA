@@ -227,10 +227,15 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
             auto enumvec = enumeration.as_vector<std::string>();
             auto colbuf = buffers_->at(attrname);
             colbuf->add_enumeration(enumvec);
+            bool is_ordered = enumeration.ordered();
+            if (is_ordered) {
+                colbuf->add_is_ordered_enumeration();
+            }
             LOG_DEBUG(fmt::format(
-                "[ManagedQuery] got Enumeration '{}' for attribute '{}'",
+                "[ManagedQuery] got Enumeration '{}' for attribute '{}' ({})",
                 enumname.value(),
-                attrname));
+                attrname,
+                is_ordered ? "ordered" : "not ordered"));
         }
     }
     return buffers_;
