@@ -63,7 +63,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         Lifecycle:
             Experimental.
         """
-        return tiledb_schema_to_arrow(self._tiledb_array_schema())
+        return tiledb_schema_to_arrow(self._tiledb_array_schema(), self.uri, self._ctx)
 
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """Returns the TileDB array schema, for internal use."""
@@ -101,8 +101,8 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
         # they're not all wrapped in std::optional<>.
         kwargs: Dict[str, object] = {}
-        if schema:
-            kwargs["schema"] = schema
+        # if schema:
+        #     kwargs["schema"] = schema
         if column_names:
             kwargs["column_names"] = column_names
         if query_condition:

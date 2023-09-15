@@ -95,6 +95,9 @@ def tiledb_type_from_arrow_type(
     Raises:
         TypeError: if the type is unsupported.
     """
+    if pa.types.is_dictionary(t):
+        t = t.index_type
+
     arrow_to_tdb = _ARROW_TO_TDB_DIM if is_indexed_column else _ARROW_TO_TDB_ATTR
     if t in arrow_to_tdb:
         arrow_type = arrow_to_tdb[t]
@@ -142,7 +145,9 @@ def arrow_type_from_tiledb_dtype(
         return pa.from_numpy_dtype(tiledb_dtype)
 
 
-def tiledb_schema_to_arrow(tdb_schema: tiledb.ArraySchema) -> pa.Schema:
+def tiledb_schema_to_arrow(
+    tdb_schema: tiledb.ArraySchema, uri: str, ctx: tiledb.ctx.Ctx
+) -> pa.Schema:
     arrow_schema_dict = {}
     dom = tdb_schema.domain
     for i in range(dom.ndim):
@@ -152,12 +157,32 @@ def tiledb_schema_to_arrow(tdb_schema: tiledb.ArraySchema) -> pa.Schema:
             name = "unnamed"
         arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(dim.dtype)
 
+    # If there are any enumerated-type columns, we'll need to open the array once to get
+    # some information from there. If not, we'll need to open the array zero times.
+    # Open the array only if we'll need it for enum infos.
+    A = None
     for i in range(tdb_schema.nattr):
         attr = tdb_schema.attr(i)
         name = attr.name
         if name == "":
             name = "unnamed"
-        arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(attr.dtype, attr.isascii)
+        if attr.enum_label is not None:  # enumerated
+            if A is None:
+                A = tiledb.open(uri, ctx=ctx)
+            info = A.enum(name)
+            arrow_schema_dict[name] = pa.dictionary(
+                index_type=arrow_type_from_tiledb_dtype(attr.dtype),
+                value_type=arrow_type_from_tiledb_dtype(
+                    tiledb.datatypes.DataType.from_tiledb(info.type).np_dtype
+                ),
+                ordered=info.ordered,
+            )
+        else:  # non-enumerated
+            arrow_schema_dict[name] = arrow_type_from_tiledb_dtype(
+                attr.dtype, attr.isascii
+            )
+    if A is not None:
+        A.close()
 
     return pa.schema(arrow_schema_dict)
 
@@ -170,8 +195,6 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     null_fields = set()
     # Not for name, col in df.items() since we need df[k] on the left-hand sides
     for k in df:
-        if df[k].dtype == "category":
-            df[k] = df[k].astype(df[k].cat.categories.dtype)
         if df[k].isnull().any():
             if df[k].isnull().all():
                 df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k]))
@@ -182,6 +205,25 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
                     inplace=True,
                 )
             null_fields.add(k)
+
+    # For categoricals, it's possible to get
+    #   TypeError: Object of type bool_ is not JSON serializable
+    # deep within library functions. Debugging reveals that this happens when
+    # the df[key].values.ordered is of type np.bool_ rather than Python bool.
+    # So, we cast and reconstruct.
+    for key in df:
+        column = df[key]
+        if isinstance(column.dtype, pd.CategoricalDtype):
+            if hasattr(column.values, "categories"):
+                categories = column.values.categories
+
+            if hasattr(column.values, "ordered"):
+                ordered = bool(column.values.ordered)
+
+            df[key] = pd.Categorical(
+                values=column, categories=categories, ordered=ordered
+            )
+
     arrow_table = pa.Table.from_pandas(df)
     if null_fields:
         md = arrow_table.schema.metadata

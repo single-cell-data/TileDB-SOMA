@@ -47,6 +47,24 @@ def h5ad_file_uns_string_array(request):
 
 
 @pytest.fixture
+def h5ad_file_categorical_int_nan(request):
+    # This has obs["categ_int_nan"] as a categorical int but with math.nan as a
+    # "not-in-the-category" indicator. Such H5AD files do arise in the wild.
+    #
+    # Reference:
+    #   import anndata as ad
+    #   import pandas  as pd
+    #   import math
+    #   adata = adata.read_h5ad("whatever.h5ad")
+    #   s = pd.Series(list(range(80)), dtype="category")
+    #   s[0] = math.nan
+    #   adata.obs["categ_int_nan"] = s
+    #   adata.write_h5ad("categorical_int_nan.h5ad")
+    input_path = HERE.parent / "testdata/categorical_int_nan.h5ad"
+    return input_path
+
+
+@pytest.fixture
 def h5ad_file_X_empty(request):
     input_path = HERE.parent / "testdata/xempty.h5ad"
     return input_path
@@ -713,3 +731,16 @@ def test_X_none(h5ad_file_X_none):
         assert exp.obs.count == 2638
         assert exp.ms["RNA"].var.count == 1838
         assert list(exp.ms["RNA"].X.keys()) == []
+
+
+# There exist in the wild AnnData files with categorical-int columns where the "not in the category"
+# is indicated by the presence of floating-point math.NaN in cells. Here we test that we can ingest
+# this.
+def test_obs_with_categorical_int_nan_enumeration(
+    tmp_path, h5ad_file_categorical_int_nan
+):
+    output_path = tmp_path.as_uri()
+
+    tiledbsoma.io.from_h5ad(
+        output_path, h5ad_file_categorical_int_nan, measurement_name="RNA"
+    )
