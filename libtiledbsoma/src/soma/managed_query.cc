@@ -229,7 +229,7 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
             colbuf->add_enumeration(enumvec);
             bool is_ordered = enumeration.ordered();
             if (is_ordered) {
-              colbuf->add_is_ordered_enumeration();
+                colbuf->add_is_ordered_enumeration();
             }
             LOG_DEBUG(fmt::format(
                 "[ManagedQuery] got Enumeration '{}' for attribute '{}' ({})",

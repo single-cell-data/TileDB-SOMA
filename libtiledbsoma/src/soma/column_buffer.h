@@ -343,8 +343,6 @@ class ColumnBuffer {
         return is_ordered_;
     }
 
-
-
    private:
     //===================================================================
     //= private static
