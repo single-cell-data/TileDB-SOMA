@@ -156,9 +156,6 @@ class ArrowAdapter {
         // If we have an enumeration, fill a dictionary
         if (column->has_enumeration()) {
             auto enumvec = column->get_enumeration();
-            if (column->is_ordered_enumeration()) {
-                schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
-            }
 
             ArrowSchema* dict_sch = new ArrowSchema;
             ArrowArray* dict_arr = new ArrowArray;
