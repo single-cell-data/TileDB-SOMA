@@ -129,9 +129,9 @@ py::object to_table(SOMAArray& sr, std::shared_ptr<ArrayBuffers> array_buffers) 
             arrays.append(to_array(column));
         }else{
             arrays.append(pa_dict_from_arrays(
-                to_array(column), 
-                get_enum(sr, name), 
-                py::none(), 
+                to_array(column),
+                get_enum(sr, name),
+                py::none(),
                 get_enum_is_ordered(sr, name)));
         }
     }
@@ -640,11 +640,11 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 
         .def_property_readonly("shape", &SOMAArray::shape)
-        
+
         .def("get_enum", get_enum)
 
         .def("get_enum_is_ordered", get_enum_is_ordered)
-        
+
         .def("get_enum_label_on_attr", &SOMAArray::get_enum_label_on_attr);
 }
 }  // namespace tiledbsoma
