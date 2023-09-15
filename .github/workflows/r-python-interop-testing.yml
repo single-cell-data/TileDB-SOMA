@@ -45,6 +45,7 @@ jobs:
       - name: Install R-tiledbsoma
         run: |
           cd apis/r
+          grep -C5 tiledb DESCRIPTION
           R CMD build --no-build-vignettes --no-manual .
           FILE=$(ls -1t *.tar.gz | head -n 1)
           R CMD INSTALL $FILE
