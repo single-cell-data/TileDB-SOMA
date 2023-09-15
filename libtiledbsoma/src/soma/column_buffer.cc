@@ -42,11 +42,7 @@ using namespace tiledb;
 
 std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     std::shared_ptr<Array> array, std::string_view name) {
-    return ColumnBuffer::create(array->schema(), name);
-}
-
-std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
-    ArraySchema schema, std::string_view name) {
+    auto schema = array->schema();
     auto name_str = std::string(name);  // string for TileDB API
 
     if (schema.has_attribute(name_str)) {
@@ -54,6 +50,14 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
         auto type = attr.type();
         bool is_var = attr.cell_val_num() == TILEDB_VAR_NUM;
         bool is_nullable = attr.nullable();
+        auto enum_name = AttributeExperimental::get_enumeration_name(
+            schema.context(), attr);
+        std::optional<Enumeration> enumeration = std::nullopt;
+        if (enum_name.has_value()) {
+            enumeration = std::make_optional<Enumeration>(
+                ArrayExperimental::get_enumeration(
+                    schema.context(), *array, *enum_name));
+        }
 
         if (!is_var && attr.cell_val_num() != 1) {
             throw TileDBSOMAError(
@@ -61,7 +65,8 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
                 name_str);
         }
 
-        return ColumnBuffer::alloc(schema, name_str, type, is_var, is_nullable);
+        return ColumnBuffer::alloc(
+            schema, name_str, type, is_var, is_nullable, enumeration);
 
     } else if (schema.domain().has_dimension(name_str)) {
         auto dim = schema.domain().dimension(name_str);
@@ -76,7 +81,8 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
                 name_str);
         }
 
-        return ColumnBuffer::alloc(schema, name_str, type, is_var, false);
+        return ColumnBuffer::alloc(
+            schema, name_str, type, is_var, false, std::nullopt);
     }
 
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
@@ -109,13 +115,15 @@ ColumnBuffer::ColumnBuffer(
     size_t num_cells,
     size_t num_bytes,
     bool is_var,
-    bool is_nullable)
+    bool is_nullable,
+    std::optional<Enumeration> enumeration)
     : name_(name)
     , type_(type)
     , type_size_(tiledb::impl::type_size(type))
     , num_cells_(0)
     , is_var_(is_var)
-    , is_nullable_(is_nullable) {
+    , is_nullable_(is_nullable)
+    , enumeration_(enumeration) {
     LOG_DEBUG(fmt::format(
         "[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}",
         name,
@@ -192,7 +200,8 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     std::string_view name,
     tiledb_datatype_t type,
     bool is_var,
-    bool is_nullable) {
+    bool is_nullable,
+    std::optional<Enumeration> enumeration) {
     // Set number of bytes for the data buffer. Override with a value from
     // the config if present.
     auto num_bytes = DEFAULT_ALLOC_BYTES;
@@ -224,7 +233,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
                                 num_bytes / tiledb::impl::type_size(type);
 
     return std::make_shared<ColumnBuffer>(
-        name, type, num_cells, num_bytes, is_var, is_nullable);
+        name, type, num_cells, num_bytes, is_var, is_nullable, enumeration);
 }
 
 }  // namespace tiledbsoma

@@ -103,20 +103,28 @@ jobs:
     - name: Show XCode version
       run: clang --version
 
-    - name: Generate test data
+    - name: Obtain test data
       shell: bash
       run: |
-        mkdir -p test/soco
-        ./apis/python/devtools/ingestor --debug --soco -o test/soco -n data/pbmc3k_processed.h5ad data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad
-
-    - name: Run pytests
-      # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
-      # instead of copy we `pip install`ed to site-packages above. That's needed for the code
-      # coverage analysis to work.
-      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests libtiledbsoma/test
+        cd test
+        rm -rf soco
+        tar zxf soco.tgz
+        cd ..
 
     - name: Run libtiledbsoma unit tests
       run: ctest --test-dir build/libtiledbsoma -C Release --verbose
+
+    - name: Run pytests for C++
+      # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
+      # instead of copy we `pip install`ed to site-packages above. That's needed for the code
+      # coverage analysis to work.
+      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml libtiledbsoma/test
+
+    - name: Run pytests for Python
+      # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
+      # instead of copy we `pip install`ed to site-packages above. That's needed for the code
+      # coverage analysis to work.
+      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests
 
     - name: Report coverage to Codecov
       if: inputs.report_codecov

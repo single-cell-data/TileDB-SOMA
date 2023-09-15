@@ -33,9 +33,28 @@ def h5ad_file_extended(request):
 
 
 @pytest.fixture
+def h5ad_file_with_obsm_holes(request):
+    # This has zeroes in an obsm matrix so nnz is not num_rows * num_cols
+    input_path = HERE.parent / "testdata/pbmc3k-with-obsm-zero.h5ad"
+    return input_path
+
+
+@pytest.fixture
 def h5ad_file_uns_string_array(request):
     # This has uns["louvain_colors"] with dtype.char == "U"
     input_path = HERE.parent / "testdata/pbmc3k.h5ad"
+    return input_path
+
+
+@pytest.fixture
+def h5ad_file_X_empty(request):
+    input_path = HERE.parent / "testdata/xempty.h5ad"
+    return input_path
+
+
+@pytest.fixture
+def h5ad_file_X_none(request):
+    input_path = HERE.parent / "testdata/xnone.h5ad"
     return input_path
 
 
@@ -610,3 +629,87 @@ def test_null_obs(adata, tmp_path: Path):
         #   of the Pandas data frame
         for k in adata.obs:
             assert obs.attr(k).isnullable == adata.obs[k].isnull().any()
+
+
+def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
+    adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
+    assert 1 == 1
+
+    # This data file is prepared such that obsm["X_pca"] has shape (2638, 50)
+    # but its [0][0] element is a 0, so when it's stored as sparse, its nnz
+    # is not 2638*50=131900.
+    ado = adata.obsm["X_pca"]
+    assert ado.shape == (2638, 50)
+
+    output_path = tmp_path.as_posix()
+    tiledbsoma.io.from_anndata(output_path, adata, "RNA")
+
+    exp = tiledbsoma.Experiment.open(output_path)
+
+    # Verify the bounding box on the SOMA SparseNDArray
+    with tiledb.open(exp.ms["RNA"].obsm["X_pca"].uri) as so:
+        assert so.meta["soma_dim_0_domain_lower"] == 0
+        assert so.meta["soma_dim_0_domain_upper"] == 2637
+        assert so.meta["soma_dim_1_domain_lower"] == 0
+        assert so.meta["soma_dim_1_domain_upper"] == 49
+
+    # With the bounding box present, all is well for outgest to AnnData format.
+    try1 = tiledbsoma.io.to_anndata(exp, "RNA")
+    assert try1.obsm["X_pca"].shape == (2638, 50)
+
+    # Now remove the bounding box to simulate reading older data that lacks a bounding box.
+    with tiledb.open(exp.ms["RNA"].obsm["X_pca"].uri, "w") as so:
+        del so.meta["soma_dim_0_domain_lower"]
+        del so.meta["soma_dim_0_domain_upper"]
+        del so.meta["soma_dim_1_domain_lower"]
+        del so.meta["soma_dim_1_domain_upper"]
+
+    # Re-open to simulate opening afresh a bounding-box-free array.
+    exp = tiledbsoma.Experiment.open(output_path)
+
+    with tiledb.open(exp.ms["RNA"].obsm["X_pca"].uri) as so:
+        with pytest.raises(KeyError):
+            so.meta["soma_dim_0_domain_lower"]
+        with pytest.raises(KeyError):
+            so.meta["soma_dim_0_domain_upper"]
+        with pytest.raises(KeyError):
+            so.meta["soma_dim_1_domain_lower"]
+        with pytest.raises(KeyError):
+            so.meta["soma_dim_1_domain_upper"]
+        assert so.meta["soma_object_type"] == "SOMASparseNDArray"
+
+    # Now try the remaining options for outgest.
+    with pytest.raises(tiledbsoma.SOMAError):
+        tiledbsoma.io.to_anndata(exp, "RNA")
+
+    try3 = tiledbsoma.io.to_anndata(
+        exp, "RNA", obsm_varm_width_hints={"obsm": {"X_pca": 50}}
+    )
+    assert try3.obsm["X_pca"].shape == (2638, 50)
+
+
+def test_X_empty(h5ad_file_X_empty):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+    tiledbsoma.io.from_h5ad(
+        output_path, h5ad_file_X_empty.as_posix(), measurement_name="RNA"
+    )
+
+    with tiledbsoma.Experiment.open(output_path) as exp:
+        assert exp.obs.count == 2638
+        assert exp.ms["RNA"].var.count == 1838
+        assert "data" in exp.ms["RNA"].X
+        assert exp.ms["RNA"].X["data"].nnz == 0
+
+
+def test_X_none(h5ad_file_X_none):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+    tiledbsoma.io.from_h5ad(
+        output_path, h5ad_file_X_none.as_posix(), measurement_name="RNA"
+    )
+
+    with tiledbsoma.Experiment.open(output_path) as exp:
+        assert exp.obs.count == 2638
+        assert exp.ms["RNA"].var.count == 1838
+        assert list(exp.ms["RNA"].X.keys()) == []

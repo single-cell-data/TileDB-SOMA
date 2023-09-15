@@ -14,6 +14,7 @@ import time
 from typing import (
     Any,
     ContextManager,
+    Dict,
     List,
     Mapping,
     Optional,
@@ -503,17 +504,27 @@ def from_anndata(
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
 
-                with _create_from_matrix(
-                    X_kind,
-                    _util.uri_joinpath(measurement_X_uri, "data"),
-                    anndata.X,
-                    ingestion_params=ingestion_params,
-                    platform_config=platform_config,
-                    context=context,
-                    axis_0_mapping=jidmaps.obs_axis,
-                    axis_1_mapping=jidmaps.var_axes[measurement_name],
-                ) as data:
-                    _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
+                # Some AnnData objects have no X at all.
+                has_X = True
+                try:
+                    anndata.X
+                except (NameError, KeyError):
+                    # We need to check both -- different exception types occur dependinng
+                    # on whether the anndata object is read in backing mode or not.
+                    has_X = False
+
+                if has_X:
+                    with _create_from_matrix(
+                        X_kind,
+                        _util.uri_joinpath(measurement_X_uri, "data"),
+                        anndata.X,
+                        ingestion_params=ingestion_params,
+                        platform_config=platform_config,
+                        context=context,
+                        axis_0_mapping=jidmaps.obs_axis,
+                        axis_1_mapping=jidmaps.var_axes[measurement_name],
+                    ) as data:
+                        _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
                 for layer_name, layer in anndata.layers.items():
                     with _create_from_matrix(
@@ -1759,7 +1770,7 @@ def _find_sparse_chunk_size(
         chunk_size += 1
 
     if sum_nnz == 0:  # completely empty sparse array (corner case)
-        return 1
+        return -1
 
     if sum_nnz > goal_chunk_nnz:
         return chunk_size
@@ -2285,6 +2296,7 @@ def to_anndata(
     X_layer_name: str = "data",
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
+    obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
 ) -> ad.AnnData:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
     format. Choice of matrix formats is following what we often see in input
@@ -2294,6 +2306,9 @@ def to_anndata(
     * ``obs``,``var`` as ``pandas.dataframe``
     * ``obsm``,``varm`` arrays as ``numpy.ndarray``
     * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
+
+    The ``obsm_varm_width_hints`` is optional. If provided, it should be of the form
+    ``{"obsm":{"X_tSNE":2}}`` to aid with export errors.
 
     Lifecycle:
         Experimental.
@@ -2344,15 +2359,24 @@ def to_anndata(
     else:
         raise TypeError(f"Unexpected NDArray type {type(X_data)}")
 
+    if obsm_varm_width_hints is None:
+        obsm_varm_width_hints = {}
+
     obsm = {}
     if "obsm" in measurement:
+        obsm_width_hints = obsm_varm_width_hints.get("obsm", {})
         for key in measurement.obsm.keys():
-            obsm[key] = _extract_obsm_or_varm(measurement.obsm[key], "obsm", key, nobs)
+            obsm[key] = _extract_obsm_or_varm(
+                measurement.obsm[key], "obsm", key, nobs, obsm_width_hints
+            )
 
     varm = {}
     if "varm" in measurement:
+        varm_width_hints = obsm_varm_width_hints.get("obsm", {})
         for key in measurement.varm.keys():
-            varm[key] = _extract_obsm_or_varm(measurement.varm[key], "varm", key, nvar)
+            varm[key] = _extract_obsm_or_varm(
+                measurement.varm[key], "varm", key, nvar, varm_width_hints
+            )
 
     obsp = {}
     if "obsp" in measurement:
@@ -2387,11 +2411,14 @@ def _extract_obsm_or_varm(
     collection_name: str,
     element_name: str,
     num_rows: int,
+    width_configs: Dict[str, int],
 ) -> Union[SparseMatrix, DenseMatrix]:
     """
     This is a helper function for ``to_anndata`` of ``obsm`` and ``varm`` elements.
     """
 
+    # SOMA shape is capacity/domain -- not what AnnData wants.
+    # But here do check the array is truly 2D.
     shape = soma_nd_array.shape
     if len(shape) != 2:
         raise ValueError(f"expected shape == 2; got {shape}")
@@ -2402,20 +2429,51 @@ def _extract_obsm_or_varm(
         # 3.8 and we still support Python 3.7
         return matrix
 
-    # obsp is nobs x nobs.
-    # varp is nvar x nvar.
-    # obsm is nobs x some number -- number of PCA components, etc.
-    # varm is nvar x some number -- number of PCs, etc.
     matrix = soma_nd_array.read().tables().concat().to_pandas()
-    num_rows_times_width, coo_column_count = matrix.shape
-    if coo_column_count != 3:
+
+    # Problem to solve: whereas for other sparse arrays we have:
+    #
+    # * X    matrices are always nobs x nvar
+    # * obsp matrices are always nobs x nobs
+    # * varp matrices are always nvar x nvar
+    #
+    # but:
+    #
+    # * obsm is nobs x some number -- number of PCA components, etc.
+    # * varm is nvar x some number -- number of PCs, etc.
+    #
+    # Three ways to get the number of columns for obsm/varm sparse matrices:
+    #
+    # * Explicit user specification
+    # * Bounding-box metadata, if present
+    # * Try arithmetic on nnz / num_rows, for densely occupied sparse matrices
+    # Beyond that, we have to throw.
+
+    description = f'{collection_name}["{element_name}"]'
+
+    num_cols = width_configs.get(element_name, None)
+
+    if num_cols is None:
+        try:
+            used_shape = soma_nd_array.used_shape()
+            num_cols = used_shape[1][1] + 1
+        except SOMAError:
+            pass  # We tried; moving on to next option
+
+    if num_cols is None:
+        num_rows_times_width, coo_column_count = matrix.shape
+
+        if coo_column_count != 3:
+            raise SOMAError(
+                f"internal error: expect COO width of 3; got {coo_column_count} for {description}"
+            )
+
+        if num_rows_times_width % num_rows == 0:
+            num_cols = num_rows_times_width // coo_column_count
+
+    if num_cols is None:
         raise SOMAError(
-            f"internal error: expect COO width of 3; got {coo_column_count}"
+            f"could not determine outgest width for {description}: please try to_anndata's obsm_varm_width_hints option"
         )
-    if num_rows_times_width % num_rows != 0:
-        raise SOMAError(
-            f"internal error: encountered non-rectangular {collection_name}[{element_name}]: {num_rows} does not divide {num_rows_times_width}"
-        )
-    return conversions.csr_from_tiledb_df(
-        matrix, num_rows, num_rows_times_width // num_rows
-    ).toarray()
+
+    return conversions.csr_from_tiledb_df(matrix, num_rows, num_cols).toarray()
