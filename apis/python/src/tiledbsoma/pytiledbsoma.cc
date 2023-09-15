@@ -365,7 +365,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                         arrow_array_ptr, arrow_schema_ptr);
 
                     auto coords = array.attr("tolist")();
-                    int data_index = arrow_array.n_buffers - 1;
 
                     if (!strcmp(arrow_schema.format, "l")) {
                         reader.set_dim_points(
