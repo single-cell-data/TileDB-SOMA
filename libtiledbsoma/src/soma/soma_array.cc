@@ -31,9 +31,9 @@
  */
 
 #include "soma_array.h"
+#include <tiledb/array_experimental.h>
 #include "../utils/util.h"
 #include "logger_public.h"
-
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -562,7 +562,9 @@ void SOMAArray::validate(
             LOG_DEBUG(fmt::format(
                 "[SOMAArray] timestamp_end = {}", arr_->open_timestamp_end()));
         }
-        mq_ = std::make_unique<ManagedQuery>(arr_, name);
+        LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
+        ArrayExperimental::load_all_enumerations(*ctx_, *(arr_.get()));
+        mq_ = std::make_unique<ManagedQuery>(arr_, ctx_, name);
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
             fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));

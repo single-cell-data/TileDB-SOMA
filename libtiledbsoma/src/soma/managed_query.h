@@ -59,7 +59,9 @@ class ManagedQuery {
      * @param name Name of the array
      */
     ManagedQuery(
-        std::shared_ptr<Array> array, std::string_view name = "unnamed");
+        std::shared_ptr<Array> array,
+        std::shared_ptr<Context> ctx,
+        std::string_view name = "unnamed");
 
     ManagedQuery() = delete;
     ManagedQuery(const ManagedQuery&) = delete;
@@ -419,6 +421,9 @@ class ManagedQuery {
 
     // TileDB array being queried.
     std::shared_ptr<Array> array_;
+
+    // TileDB context object
+    std::shared_ptr<Context> ctx_;
 
     // Name displayed in log messages
     std::string name_;

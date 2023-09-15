@@ -4,14 +4,16 @@
 #' @param uri URI for the TileDB object
 #' @param schema schema Arrow schema argument passed on to DataFrame$create()
 #' @param index_column_names Index column names passed on to DataFrame$create()
+#' @param levels Optional list of enumeration (aka factor) levels
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMADataFrameCreate <- function(uri, schema, index_column_names = c("soma_joinid"),
+                                levels = NULL,
                                 platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
     sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp, internal_use_only = "allowed_use")
-    sdf$create(schema, index_column_names=index_column_names, platform_config=platform_config, internal_use_only = "allowed_use")
+    sdf$create(schema, index_column_names=index_column_names, levels=levels, platform_config=platform_config, internal_use_only = "allowed_use")
 
     sdf
 }

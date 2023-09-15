@@ -33,6 +33,19 @@ class ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema) {
         schema->release = nullptr;
+
+        struct ArrowSchema* dict = schema->dictionary;
+        if (dict != nullptr) {
+            if (dict->format != nullptr) {
+                free((void*)dict->format);
+                dict->format = nullptr;
+            }
+            if (dict->release != nullptr) {
+                delete dict;
+                dict = nullptr;
+            }
+        }
+
         LOG_TRACE("[ArrowAdapter] release_schema");
     }
 
@@ -52,6 +65,19 @@ class ArrowAdapter {
         if (array->buffers != nullptr) {
             free(array->buffers);
         }
+
+        struct ArrowArray* dict = array->dictionary;
+        if (dict != nullptr) {
+            if (dict->buffers != nullptr) {
+                free(dict->buffers);
+                dict->buffers = nullptr;
+            }
+            if (dict->release != nullptr) {
+                delete dict;
+                dict = nullptr;
+            }
+        }
+
         array->release = nullptr;
     }
 
@@ -125,6 +151,49 @@ class ArrowAdapter {
         /* Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow boolean. */
         if (column->type() == TILEDB_BOOL) {
             column->data_to_bitmap();
+        }
+
+        // If we have an enumeration, fill a dictionary
+        if (column->has_enumeration()) {
+            auto enumvec = column->get_enumeration();
+
+            ArrowSchema* dict_sch = new ArrowSchema;
+            ArrowArray* dict_arr = new ArrowArray;
+
+            dict_sch->format = (const char*)malloc(
+                sizeof(char) * 2);  // mandatory, 'u' as 32bit indexing
+            strcpy((char*)dict_sch->format, "u");
+            dict_sch->name = nullptr;             // optional in dictionary
+            dict_sch->metadata = nullptr;         // optional
+            dict_sch->flags = 0;                  // optional
+            dict_sch->n_children = 0;             // mandatory
+            dict_sch->children = nullptr;         // optional
+            dict_sch->dictionary = nullptr;       // optional
+            dict_sch->release = &release_schema;  // mandatory
+            dict_sch->private_data = nullptr;     // optional
+
+            const int n_buf = 3;  // always variable here
+
+            const int64_t n_vec = enumvec.size();
+            dict_arr->length = n_vec;            // mandatory
+            dict_arr->null_count = 0;            // mandatory
+            dict_arr->offset = 0;                // mandatory
+            dict_arr->n_buffers = n_buf;         // mandatory
+            dict_arr->n_children = 0;            // mandatory
+            dict_arr->buffers = nullptr;         // mandatory
+            dict_arr->children = nullptr;        // optional
+            dict_arr->dictionary = nullptr;      // optional
+            dict_arr->release = &release_array;  // release from parent
+            dict_arr->private_data = nullptr;    // optional here
+
+            column->convert_enumeration();
+            dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buf);
+            dict_arr->buffers[0] = nullptr;  // validity: none here
+            dict_arr->buffers[1] = column->enum_offsets().data();
+            dict_arr->buffers[2] = column->enum_string().data();
+
+            schema->dictionary = dict_sch;
+            array->dictionary = dict_arr;
         }
 
         return std::pair(std::move(array), std::move(schema));

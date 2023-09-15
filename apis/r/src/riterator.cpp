@@ -91,6 +91,7 @@ Rcpp::List sr_setup(const std::string& uri,
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
 
+
     std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
     tiledb::Config cfg(platform_config);
     spdl::debug("[sr_setup] creating ctx object with supplied config");
@@ -121,7 +122,7 @@ Rcpp::List sr_setup(const std::string& uri,
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim: dims) {
-        spdl::debug("[soma_array_reader] Dimension {} type {} domain {} extent {}",
+        spdl::debug("[sr_setup] Dimension {} type {} domain {} extent {}",
                     dim.name(), tiledb::impl::to_str(dim.type()),
                     dim.domain_to_str(), dim.tile_extent_to_str());
         name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
@@ -129,7 +130,7 @@ Rcpp::List sr_setup(const std::string& uri,
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        spdl::debug("[soma_array_reader] Applying query condition") ;
+        spdl::debug("[sr_setup] Applying query condition") ;
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         ptr->set_condition(*qcxp);
     }
