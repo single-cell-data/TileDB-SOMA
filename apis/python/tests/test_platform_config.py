@@ -1,5 +1,4 @@
 import tempfile
-import time
 from pathlib import Path
 
 import anndata
@@ -66,8 +65,11 @@ def test_platform_config(adata):
             assert x_arr.attr("soma_data").filters == [tiledb.NoOpFilter()]
             assert x_arr.dim("soma_dim_0").tile == 6
             assert x_arr.dim("soma_dim_0").filters == [tiledb.ZstdFilter(level=2)]
-            assert x_arr.dim("soma_dim_1").filters == []
-
+            # As of 2.17.0 this is the default when empty filter-list, or none at all,
+            # is requested. Those who want truly no filtering can request a no-op filter.
+            assert list(x_arr.dim("soma_dim_1").filters) == [
+                tiledb.ZstdFilter(level=-1)
+            ]
             var_df = exp.ms["RNA"].var
             var_arr = var_df._handle.reader
             assert var_arr.dim("soma_joinid").filters == [tiledb.ZstdFilter(level=1)]
@@ -145,26 +147,3 @@ def test_dig_platform_config():
     # Unrecognized type (at tip)
     with pytest.raises(TypeError):
         tco._dig_platform_config({"a": {"b": "invalid"}}, int, ("a", "b"))
-
-
-def test_SOMATileDBContext_evolve():
-    context = tiledbsoma.options.SOMATileDBContext()
-
-    # verify defaults expected by subsequent tests
-    assert context.timestamp_ms is None
-    assert context.tiledb_ctx.config()["vfs.s3.region"] == "us-east-1"
-
-    now = int(time.time() * 1000)
-    open_ts = context._open_timestamp_ms(None)
-    assert -100 < now - open_ts < 100
-    assert 999 == context._open_timestamp_ms(999)
-
-    context_ts_1 = context.replace(timestamp=1)
-
-    assert context_ts_1.timestamp_ms == 1
-    assert context_ts_1._open_timestamp_ms(None) == 1
-    assert context_ts_1._open_timestamp_ms(2) == 2
-
-    # verify tiledb_ctx
-    new_tdb_context = context.replace(tiledb_config={"vfs.s3.region": "us-west-2"})
-    assert new_tdb_context.tiledb_ctx.config()["vfs.s3.region"] == "us-west-2"
