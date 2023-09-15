@@ -31,6 +31,7 @@ SUPPORTED_ARROW_TYPES = [
     (pa.binary(), pa.large_binary()),
     (pa.large_string(),) * 2,
     (pa.large_binary(),) * 2,
+    (pa.dictionary(pa.int32(), pa.string()), pa.int32()),
 ]
 
 
@@ -56,7 +57,6 @@ UNSUPPORTED_ARROW_TYPES = [
     pa.large_list(pa.bool_()),
     pa.map_(pa.string(), pa.int32()),
     pa.struct([("f1", pa.int32()), ("f2", pa.string())]),
-    pa.dictionary(pa.int32(), pa.string()),
 ]
 
 

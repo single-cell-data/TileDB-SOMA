@@ -49,6 +49,50 @@ using namespace py::literals;
 
 namespace tiledbsoma {
 
+py::tuple get_enum(SOMAArray& sr, std::string attr_name){
+    auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
+    if(attr_to_enmrs.count(attr_name) == 0)
+        throw TileDBSOMAError("Given attribute does not have enumeration");
+
+    Enumeration enmr(attr_to_enmrs.at(attr_name));
+
+    switch (enmr.type()) {
+        case TILEDB_UINT8:
+            return py::tuple(py::cast(enmr.as_vector<uint8_t>()));
+        case TILEDB_INT8:
+            return py::tuple(py::cast(enmr.as_vector<int8_t>()));
+        case TILEDB_UINT16:
+            return py::tuple(py::cast(enmr.as_vector<uint16_t>()));
+        case TILEDB_INT16:
+            return py::tuple(py::cast(enmr.as_vector<int16_t>()));
+        case TILEDB_UINT32:
+            return py::tuple(py::cast(enmr.as_vector<uint32_t>()));
+        case TILEDB_INT32:
+            return py::tuple(py::cast(enmr.as_vector<int32_t>()));
+        case TILEDB_UINT64:
+            return py::tuple(py::cast(enmr.as_vector<uint64_t>()));
+        case TILEDB_INT64:
+            return py::tuple(py::cast(enmr.as_vector<int64_t>()));
+        case TILEDB_FLOAT32:
+            return py::tuple(py::cast(enmr.as_vector<float>()));
+        case TILEDB_FLOAT64:
+            return py::tuple(py::cast(enmr.as_vector<double>()));
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return py::tuple(py::cast(enmr.as_vector<std::string>()));
+        default:
+            throw TileDBSOMAError("Unsupported enumeration type.");
+    }
+}
+
+bool get_enum_is_ordered(SOMAArray& sr, std::string attr_name){
+    auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
+    if(attr_to_enmrs.count(attr_name) == 0)
+        throw TileDBSOMAError("Given attribute does not have enumeration");
+    return attr_to_enmrs.at(attr_name).ordered();
+}
+
 /**
  * @brief Convert ColumnBuffer to Arrow array.
  *
@@ -69,9 +113,10 @@ py::object to_array(std::shared_ptr<ColumnBuffer> column_buffer) {
  * @param cbs ArrayBuffers
  * @return py::object
  */
-py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
+py::object to_table(SOMAArray& sr, std::shared_ptr<ArrayBuffers> array_buffers) {
     auto pa = py::module::import("pyarrow");
     auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
+    auto pa_dict_from_arrays = pa.attr("DictionaryArray").attr("from_arrays");
 
     py::list names;
     py::list arrays;
@@ -79,10 +124,21 @@ py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
     for (auto& name : array_buffers->names()) {
         auto column = array_buffers->at(name);
         names.append(name);
-        arrays.append(to_array(column));
+
+        if(sr.get_attr_to_enum_mapping().count(name) == 0){
+            arrays.append(to_array(column));
+        }else{
+            arrays.append(pa_dict_from_arrays(
+                to_array(column), 
+                get_enum(sr, name), 
+                py::none(), 
+                get_enum_is_ordered(sr, name)));
+        }
     }
 
-    return pa_table_from_arrays(arrays, names);
+    auto pa_table = pa_table_from_arrays(arrays, names);
+
+    return pa_table;
 }
 
 /**
@@ -144,7 +200,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                    std::string_view name,
                    std::optional<std::vector<std::string>> column_names_in,
                    py::object py_query_condition,
-                   py::object py_schema,
                    std::string_view batch_size,
                    ResultOrder result_order,
                    std::map<std::string, std::string> platform_config,
@@ -166,7 +221,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                             // Column names will be updated with columns present
                             // in the query condition
                             auto new_column_names =
-                                init_pyqc(py_schema, column_names)
+                                init_pyqc(uri, column_names)
                                     .cast<std::vector<std::string>>();
 
                             // Update the column_names list if it was not empty,
@@ -211,7 +266,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             "name"_a = "unnamed",
             "column_names"_a = py::none(),
             "query_condition"_a = py::none(),
-            "schema"_a = py::none(),
             "batch_size"_a = "auto",
             "result_order"_a = ResultOrder::automatic,
             "platform_config"_a = py::dict(),
@@ -222,7 +276,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             [](SOMAArray& reader,
                std::optional<std::vector<std::string>> column_names_in,
                py::object py_query_condition,
-               py::object py_schema,
                std::string_view batch_size,
                ResultOrder result_order) {
                 // Handle optional args
@@ -242,7 +295,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                         // Column names will be updated with columns present in
                         // the query condition
                         auto new_column_names =
-                            init_pyqc(py_schema, column_names)
+                            init_pyqc(reader.uri(), column_names)
                                 .cast<std::vector<std::string>>();
 
                         // Update the column_names list if it was not empty,
@@ -275,7 +328,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             py::kw_only(),
             "column_names"_a = py::none(),
             "query_condition"_a = py::none(),
-            "schema"_a = py::none(),
             "batch_size"_a = "auto",
             "result_order"_a = ResultOrder::automatic)
 
@@ -579,7 +631,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                 if (buffers.has_value()) {
                     // Acquire python GIL before accessing python objects
                     py::gil_scoped_acquire acquire;
-                    return to_table(*buffers);
+                    return to_table(reader, *buffers);
                 }
 
                 // No data was read, the query is complete, return nullopt
@@ -588,6 +640,12 @@ PYBIND11_MODULE(pytiledbsoma, m) {
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 
-        .def_property_readonly("shape", &SOMAArray::shape);
+        .def_property_readonly("shape", &SOMAArray::shape)
+        
+        .def("get_enum", get_enum)
+
+        .def("get_enum_is_ordered", get_enum_is_ordered)
+        
+        .def("get_enum_label_on_attr", &SOMAArray::get_enum_label_on_attr);
 }
 }  // namespace tiledbsoma
