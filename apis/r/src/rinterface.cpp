@@ -148,7 +148,7 @@ Rcpp::List soma_array_reader(const std::string& uri,
         auto buf = sr_data->get()->at(names[i]);
 
         // this is pair of array and schema pointer
-        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
+        auto pp = tdbs::ArrowAdapter::to_arrow(buf, true);
 
         memcpy((void*) chldschemaxp, pp.second.get(), sizeof(ArrowSchema));
         memcpy((void*) chldarrayxp, pp.first.get(), sizeof(ArrowArray));
