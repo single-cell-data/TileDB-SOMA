@@ -2,10 +2,11 @@ name: TileDB-SOMA R-Python interop testing
 
 on:
   pull_request:
-    paths:
-      - "apis/python/**"
-      - "apis/r/**"
-      - "apis/system/**"
+    # Temp force run all
+    #paths:
+    #  - "apis/python/**"
+    #  - "apis/r/**"
+    #  - "apis/system/**"
   push:
     branches:
       - main
