@@ -2,7 +2,8 @@ name: TileDB-SOMA R-Python interop testing
 
 on:
   pull_request:
-    # Temp force run all
+    # TODO: leave this enabled for pre-merge signal for now. At some point we may want to go back to
+    # only having this signal post-merge.
     #paths:
     #  - "apis/python/**"
     #  - "apis/r/**"
@@ -53,11 +54,12 @@ jobs:
       - name: Install R-tiledbsoma
         run: |
           cd apis/r
-          grep -C5 tiledb DESCRIPTION
           R CMD build --no-build-vignettes --no-manual .
           FILE=$(ls -1t *.tar.gz | head -n 1)
           R CMD INSTALL $FILE
-          Rscript -e 'tiledbsoma::show_package_versions()'
+
+      - name: Show R package versions
+        run: Rscript -e 'tiledbsoma::show_package_versions()'
 
       - name: Install testing prereqs
         run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools
@@ -70,12 +72,12 @@ jobs:
           cache-dependency-path: ./apis/python/setup.py
 
       - name: Install tiledbsoma
-        run: |
-          python -m pip -v install -e apis/python
-          python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
+        run: python -m pip -v install -e apis/python
 
-      - name: Show package versions
-        run: python scripts/show-versions.py
+      - name: Show Python package versions
+        run: |
+          python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
+          python scripts/show-versions.py
 
       - name: Interop Tests
         run: python -m pytest apis/system/tests/
