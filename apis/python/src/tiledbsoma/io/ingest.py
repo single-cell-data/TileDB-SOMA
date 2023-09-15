@@ -504,17 +504,27 @@ def from_anndata(
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
 
-                with _create_from_matrix(
-                    X_kind,
-                    _util.uri_joinpath(measurement_X_uri, "data"),
-                    anndata.X,
-                    ingestion_params=ingestion_params,
-                    platform_config=platform_config,
-                    context=context,
-                    axis_0_mapping=jidmaps.obs_axis,
-                    axis_1_mapping=jidmaps.var_axes[measurement_name],
-                ) as data:
-                    _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
+                # Some AnnData objects have no X at all.
+                has_X = True
+                try:
+                    anndata.X
+                except (NameError, KeyError):
+                    # We need to check both -- different exception types occur dependinng
+                    # on whether the anndata object is read in backing mode or not.
+                    has_X = False
+
+                if has_X:
+                    with _create_from_matrix(
+                        X_kind,
+                        _util.uri_joinpath(measurement_X_uri, "data"),
+                        anndata.X,
+                        ingestion_params=ingestion_params,
+                        platform_config=platform_config,
+                        context=context,
+                        axis_0_mapping=jidmaps.obs_axis,
+                        axis_1_mapping=jidmaps.var_axes[measurement_name],
+                    ) as data:
+                        _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
 
                 for layer_name, layer in anndata.layers.items():
                     with _create_from_matrix(
@@ -1167,11 +1177,23 @@ def _write_dataframe_impl(
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
     except DoesNotExistError:
+        enums: Dict[str, Union[Sequence[Any], np.ndarray[Any, Any]]] = {}
+        col_to_enums = {}
+        for att in arrow_table.schema:
+            if pa.types.is_dictionary(att.type):
+                cat = df[att.name].cat.categories
+                if pa.types.is_string(att.type.value_type):
+                    enums[att.name] = np.array(cat, dtype="U")
+                else:
+                    enums[att.name] = cat
+                col_to_enums[att.name] = att.name
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
             platform_config=platform_config,
             context=context,
+            enumerations=enums,
+            column_to_enumerations=col_to_enums,
         )
     else:
         if ingestion_params.skip_existing_nonempty_domain:
@@ -1458,7 +1480,6 @@ def _update_dataframe(
 
     old_keys = set(old_sig.keys())
     new_keys = set(new_sig.keys())
-
     drop_keys = old_keys.difference(new_keys)
     add_keys = new_keys.difference(old_keys)
     common_keys = old_keys.intersection(new_keys)
@@ -1469,6 +1490,7 @@ def _update_dataframe(
     for key in common_keys:
         old_type = old_sig[key]
         new_type = new_sig[key]
+
         if old_type != new_type:
             msgs.append(f"{key} type {old_type} != {new_type}")
     if msgs:
@@ -1760,7 +1782,7 @@ def _find_sparse_chunk_size(
         chunk_size += 1
 
     if sum_nnz == 0:  # completely empty sparse array (corner case)
-        return 1
+        return -1
 
     if sum_nnz > goal_chunk_nnz:
         return chunk_size

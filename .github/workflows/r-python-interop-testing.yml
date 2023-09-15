@@ -2,10 +2,12 @@ name: TileDB-SOMA R-Python interop testing
 
 on:
   pull_request:
-    paths:
-      - "apis/python/**"
-      - "apis/r/**"
-      - "apis/system/**"
+    # TODO: leave this enabled for pre-merge signal for now. At some point we may want to go back to
+    # only having this signal post-merge.
+    #paths:
+    #  - "apis/python/**"
+    #  - "apis/r/**"
+    #  - "apis/system/**"
   push:
     branches:
       - main
@@ -39,6 +41,14 @@ jobs:
       - name: MkVars
         run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
+      - name: Install r-universe build of tiledb-r (macOS)"
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+
+      - name: Install r-universe build of tiledb-r (linux)"
+        if: ${{ matrix.os != 'macOS-latest' }}
+        run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
+
       - name: Build and install libtiledbsoma
         run: sudo scripts/bld --prefix=/usr/local && sudo ldconfig
 
@@ -48,6 +58,9 @@ jobs:
           R CMD build --no-build-vignettes --no-manual .
           FILE=$(ls -1t *.tar.gz | head -n 1)
           R CMD INSTALL $FILE
+
+      - name: Show R package versions
+        run: Rscript -e 'tiledbsoma::show_package_versions()'
 
       - name: Install testing prereqs
         run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools
@@ -62,8 +75,10 @@ jobs:
       - name: Install tiledbsoma
         run: python -m pip -v install -e apis/python
 
-      - name: Show package versions
-        run: python scripts/show-versions.py
+      - name: Show Python package versions
+        run: |
+          python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
+          python scripts/show-versions.py
 
       - name: Interop Tests
         run: python -m pytest apis/system/tests/
