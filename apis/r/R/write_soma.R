@@ -93,6 +93,7 @@ write_soma.data.frame <- function(
   relative = TRUE
 ) {
   stopifnot(
+    "'x' must be named" = is_named(x, allow_empty = FALSE),
     "'df_index' must be a single character value" = is.null(df_index) ||
       is_scalar_character(df_index),
     "'index_column_names' must be a character vector" = is.character(index_column_names)
@@ -124,6 +125,11 @@ write_soma.data.frame <- function(
       call. = FALSE
     )
   }
+  # Check enumerations
+  enumerations <- sapply(x, FUN = levels, simplify = FALSE, USE.NAMES = TRUE)
+  if (all(vapply_lgl(enumerations, is.null))) {
+    enumerations <- NULL
+  }
   # Check `df_index`
   df_index <- df_index %||% attr(x = x, which = 'index')
   if (is.null(df_index)) {
@@ -154,6 +160,7 @@ write_soma.data.frame <- function(
     uri = uri,
     schema = tbl$schema,
     index_column_names = index_column_names,
+    levels = enumerations,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
