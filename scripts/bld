@@ -84,5 +84,5 @@ rm -rf build
 mkdir -p build
 cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
 cmake --build build -j ${nproc}
-sudo cmake --build build --target install-libtiledbsoma
+cmake --build build --target install-libtiledbsoma
 cmake --build build/libtiledbsoma --target build_tests -j ${nproc}
