@@ -68,7 +68,6 @@ NULL
 #'  \item a column \dQuote{\code{soma_joinid}} will be automatically
 #'   added going from \code{[0, nrow(x) - 1]} encoded as
 #'   \link[bit64:integer64]{64-bit integers}
-#'  \item all factor columns will be coerced to characters
 #  \item all columns not containing \link[base:is.atomic]{atomic} types
 #   (excluding \link[base:factor]{factors}, \code{\link[base]{complex}es},
 #   and \code{\link[base]{raw}s}) will be removed
@@ -108,9 +107,6 @@ write_soma.data.frame <- function(
   remove <- vector(mode = 'logical', length = ncol(x))
   for (i in seq_len(ncol(x))) {
     col <- names(x)[i]
-    if (is.factor(x[[col]])) {
-      x[[col]] <- as.character(x[[col]])
-    }
     remove[i] <- !inherits(
       x = try(expr = arrow::infer_type(x[[col]]), silent = TRUE),
       what = 'DataType'

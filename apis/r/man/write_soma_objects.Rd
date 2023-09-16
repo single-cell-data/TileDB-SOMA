@@ -140,7 +140,6 @@ either option is already present in \code{x}
 \item a column \dQuote{\code{soma_joinid}} will be automatically
 added going from \code{[0, nrow(x) - 1]} encoded as
 \link[bit64:integer64]{64-bit integers}
-\item all factor columns will be coerced to characters
 }
 The array type for each column will be determined by
 \code{\link[arrow:infer_type]{arrow::infer_type}()}; if any column contains
