@@ -571,4 +571,8 @@ void SOMAArray::validate(
     }
 }
 
+std::optional<std::pair<uint64_t, uint64_t>> SOMAArray::timestamp() {
+    return timestamp_;
+}
+
 }  // namespace tiledbsoma

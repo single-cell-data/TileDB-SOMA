@@ -7,7 +7,7 @@
 filtering query results on attribute values.
 """
 import ast
-from typing import Any, Callable, List, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import attrs
 import numpy as np
@@ -15,6 +15,7 @@ import tiledb
 
 from . import pytiledbsoma as clib
 from ._exception import SOMAError
+from ._types import OpenTimestamp
 
 # In Python 3.7, a boolean literal like `True` is of type `ast.NameConstant`.
 # Above that, it's of type `ast.Constant`.
@@ -128,8 +129,16 @@ class QueryCondition:
                 "(Is this an empty expression?)"
             )
 
-    def init_query_condition(self, uri: str, query_attrs: List[str]):
-        qctree = QueryConditionTree(tiledb.open(uri), query_attrs)
+    def init_query_condition(
+        self,
+        uri: str,
+        query_attrs: List[str],
+        config: Optional[dict],
+        timestamps: Optional[Tuple[OpenTimestamp, OpenTimestamp]],
+    ):
+        qctree = QueryConditionTree(
+            tiledb.open(uri, ctx=tiledb.Ctx(config), timestamp=timestamps), query_attrs
+        )
         self.c_obj = qctree.visit(self.tree.body)
 
         if not isinstance(self.c_obj, clib.PyQueryCondition):
