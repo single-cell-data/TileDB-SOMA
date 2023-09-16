@@ -26,6 +26,93 @@ test_that("write_soma.data.frame mechanics", {
   collection$close()
 })
 
+test_that("write_soma.data.frame enumerations", {
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  skip_if_not_installed('datasets')
+
+  uri <- withr::local_tempdir("write-soma-data-frame-enumerations")
+  collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close(), add = TRUE)
+
+  co2 <- get_data('CO2', package = 'datasets')
+  expect_no_condition(sdf <- write_soma(co2, uri = 'co2', soma = collection))
+  expect_s3_class(sdf, 'SOMADataFrame')
+  expect_true(sdf$exists())
+  expect_identical(sdf$uri, file.path(collection$uri, 'co2'))
+  sdf$close()
+  expect_no_condition(sdf <- SOMADataFrameOpen(sdf$uri))
+
+  expect_s3_class(schema <- sdf$schema(), 'Schema')
+  expect_equal(schema$num_fields - 2L, ncol(co2))
+  expect_identical(
+    setdiff(schema$names, c('soma_joinid', 'obs_id')),
+    names(co2)
+  )
+
+  expect_s3_class(tbl <- sdf$read()$concat(), 'Table')
+  expect_equal(ncol(tbl), schema$num_fields)
+  expect_identical(
+    sort(names(tbl)),
+    sort(schema$names)
+  )
+
+  expect_s3_class(df <- as.data.frame(tbl), 'data.frame')
+  for (i in names(co2)) {
+    if (is.factor(co2[[i]])) {
+      expect_true(is.factor(df[[i]]))
+    } else {
+      expect_equal(class(df[[i]]), class(co2[[i]]))
+    }
+  }
+})
+
+test_that("write_soma.data.frame no enumerations", {
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  skip_if_not_installed('datasets')
+
+  uri <- withr::local_tempdir("write-soma-data-frame-factorless")
+  collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close(), add = TRUE)
+
+  co2 <- get_data('CO2', package = 'datasets')
+  for (i in names(co2)) {
+    if (is.factor(co2[[i]])) {
+      co2[[i]] <- as.vector(co2[[i]])
+    }
+  }
+
+  expect_no_condition(sdf <- write_soma(co2, uri = 'co2', soma = collection))
+  expect_s3_class(sdf, 'SOMADataFrame')
+  expect_true(sdf$exists())
+  expect_identical(sdf$uri, file.path(collection$uri, 'co2'))
+  sdf$close()
+  expect_no_condition(sdf <- SOMADataFrameOpen(sdf$uri))
+
+  expect_s3_class(schema <- sdf$schema(), 'Schema')
+  expect_equal(schema$num_fields - 2L, ncol(co2))
+  expect_identical(
+    setdiff(schema$names, c('soma_joinid', 'obs_id')),
+    names(co2)
+  )
+
+  expect_s3_class(tbl <- sdf$read()$concat(), 'Table')
+  expect_equal(ncol(tbl), schema$num_fields)
+  expect_identical(
+    sort(names(tbl)),
+    sort(schema$names)
+  )
+
+  expect_s3_class(df <- as.data.frame(tbl), 'data.frame')
+  for (i in names(co2)) {
+    if (is.factor(co2[[i]])) {
+      expect_false(is.factor(df[[i]]))
+      expect_type(df[[i]], 'character')
+    } else {
+      expect_equal(class(df[[i]]), class(co2[[i]]))
+    }
+  }
+})
+
 test_that("write_soma dense matrix mechanics", {
   skip_if_not_installed('datasets')
 
