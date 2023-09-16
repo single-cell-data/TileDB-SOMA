@@ -178,9 +178,9 @@ class SOMAArray {
     const std::string& uri() const;
 
     /**
-     * @brief Get URI of the SOMAArray.
+     * @brief Get Ctx of the SOMAArray.
      *
-     * @return std::string URI
+     * @return std::shared_ptr<Context>
      */
     std::shared_ptr<Context> ctx();
 
@@ -607,6 +607,11 @@ class SOMAArray {
         OpenMode mode,
         std::string_view name,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp);
+
+    /**
+     * Return optional timestamp pair SOMAArray was opened with.
+     */
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp();
 
    private:
     //===================================================================

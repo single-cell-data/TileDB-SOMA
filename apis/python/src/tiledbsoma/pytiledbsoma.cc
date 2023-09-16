@@ -221,7 +221,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                             // Column names will be updated with columns present
                             // in the query condition
                             auto new_column_names =
-                                init_pyqc(uri, column_names)
+                                init_pyqc(uri, column_names, platform_config, timestamp)
                                     .cast<std::vector<std::string>>();
 
                             // Update the column_names list if it was not empty,
@@ -292,10 +292,15 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                         "init_query_condition");
 
                     try {
+                        // Convert TileDB::Config to std::unordered map for pybind11 passing
+                        std::unordered_map<std::string, std::string> cfg;
+                        for (const auto& it : reader.ctx()->config()) {
+                            cfg[it.first] = it.second;
+                        }
                         // Column names will be updated with columns present in
                         // the query condition
                         auto new_column_names =
-                            init_pyqc(reader.uri(), column_names)
+                            init_pyqc(reader.uri(), column_names, cfg, reader.timestamp())
                                 .cast<std::vector<std::string>>();
 
                         // Update the column_names list if it was not empty,
