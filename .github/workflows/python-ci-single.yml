@@ -112,7 +112,7 @@ jobs:
         cd ..
 
     - name: Run libtiledbsoma unit tests
-      run: ctest --test-dir build/libtiledbsoma -C Release --verbose
+      run: ctest --output-on-failure --test-dir build/libtiledbsoma -C Release --verbose
 
     - name: Run pytests for C++
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
