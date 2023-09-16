@@ -172,9 +172,12 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         _util.check_type("values", values, (pa.Tensor,))
 
-        del platform_config  # Currently unused.
         self._handle.writer[coords] = values.to_numpy()
-        self._consolidate_and_vacuum_fragment_metadata()
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(
+            platform_config
+        )
+        if tiledb_create_options.consolidate_and_vacuum:
+            self._consolidate_and_vacuum()
         return self
 
     @classmethod
