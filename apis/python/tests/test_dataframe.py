@@ -827,31 +827,86 @@ def test_write_categorical_types(tmp_path):
     schema = pa.schema(
         [
             ("soma_joinid", pa.int64()),
-            ("A", pa.dictionary(pa.int64(), pa.large_string())),
-            ("B", pa.dictionary(pa.int64(), pa.large_string())),
-            ("C", pa.large_string()),
+            ("string-ordered", pa.dictionary(pa.int8(), pa.large_string())),
+            ("string-unordered", pa.dictionary(pa.int8(), pa.large_string())),
+            ("string-compat", pa.large_string()),
+            ("int-ordered", pa.dictionary(pa.int8(), pa.int8())),
+            ("int-unordered", pa.dictionary(pa.int8(), pa.int8())),
+            ("int-compat", pa.int64()),
+            # RuntimeError: Unsupported enumeration type.
+            # ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_())),
+            # ("bool-unordered", pa.dictionary(pa.int8(), pa.bool_())),
+            # ("bool-compat", pa.bool_()),
         ]
     )
     with soma.DataFrame.create(
         tmp_path.as_posix(),
         schema=schema,
         index_column_names=["soma_joinid"],
-        enumerations={"bao": ["b", "a"], "bau": ["b", "a"]},
-        ordered_enumerations=["bao"],
-        column_to_enumerations={"A": "bao", "B": "bau"},
+        enumerations={
+            "enum-string-ordered": ["b", "a"],
+            "enum-string-unordered": ["b", "a"],
+            "enum-int-ordered": [888888888, 777777777],
+            "enum-int-unordered": [888888888, 777777777],
+            # "enum-bool-ordered": [True, False],
+            # "enum-bool-unordered": [True, False],
+        },
+        ordered_enumerations=[
+            "enum-string-ordered",
+            "enum-int-ordered",
+            "enum-bool-ordered",
+        ],
+        column_to_enumerations={
+            "string-ordered": "enum-string-ordered",
+            "string-unordered": "enum-string-unordered",
+            "int-ordered": "enum-int-ordered",
+            "int-unordered": "enum-int-unordered",
+            # "bool-ordered": "enum-bool-ordered",
+            # "bool-unordered": "enum-bool-unordered",
+        },
     ) as sdf:
         df = pd.DataFrame(
             data={
                 "soma_joinid": [0, 1, 2, 3],
-                "A": pd.Categorical(
+                "string-ordered": pd.Categorical(
                     ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
                 ),
-                "B": pd.Categorical(
+                "string-unordered": pd.Categorical(
                     ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
                 ),
-                "C": pd.Categorical(
+                "string-compat": pd.Categorical(
                     ["a", "b", "a", "b"], ordered=False, categories=["a", "b"]
                 ),
+                "int-ordered": pd.Categorical(
+                    [777777777, 888888888, 777777777, 888888888],
+                    ordered=True,
+                    categories=[888888888, 777777777],
+                ),
+                "int-unordered": pd.Categorical(
+                    [777777777, 888888888, 777777777, 888888888],
+                    ordered=False,
+                    categories=[888888888, 777777777],
+                ),
+                "int-compat": pd.Categorical(
+                    [777777777, 888888888, 777777777, 888888888],
+                    ordered=False,
+                    categories=[777777777, 888888888],
+                ),
+                # "bool-ordered": pd.Categorical(
+                # [True, False, True, False],
+                # ordered=True,
+                # categories=[False, True],
+                # ),
+                # "bool-unordered": pd.Categorical(
+                # [True, False, True, False],
+                # ordered=False,
+                # categories=[False, True],
+                # ),
+                # "bool-compat": pd.Categorical(
+                # [True, False, True, False],
+                # ordered=False,
+                # categories=[True, False],
+                # ),
             }
         )
         sdf.write(pa.Table.from_pandas(df))
