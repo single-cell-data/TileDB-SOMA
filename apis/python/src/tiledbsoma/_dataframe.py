@@ -419,12 +419,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 else:
                     # Schema is non-categorical but the user is writing categorical.
                     # Simply decategoricalize for them.
-                    pvalues = []
-                    for chunk in col.chunks:
-                        pvalues += [
-                            chunk.dictionary[i.as_py()].as_py() for i in chunk.indices
-                        ]
-                    cols_map[name] = pd.Series(pvalues)
+                    cols_map[name] = pa.chunked_array(
+                        [chunk.dictionary_decode() for chunk in col.chunks]
+                    )
             else:
                 cols_map[name] = col.to_pandas()
 
