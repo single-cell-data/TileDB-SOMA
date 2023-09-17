@@ -36,7 +36,7 @@
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
+//#include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace tiledbsoma {
 
@@ -60,16 +60,17 @@ const std::string FILE_LOGGER = "tiledbsoma-file";
 
 Logger::Logger() {
     logger_ = spdlog::get(CONSOLE_LOGGER);
-    if (logger_ == nullptr) {
-        logger_ = spdlog::stdout_color_mt(CONSOLE_LOGGER);
-#if !defined(_WIN32)
-        // change color of critical messages
-        auto console_sink = static_cast<spdlog::sinks::stdout_color_sink_mt*>(
-            logger_->sinks().back().get());
-        console_sink->set_color(
-            spdlog::level::critical, console_sink->red_bold);
-#endif
-    }
+    //    if (logger_ == nullptr) {
+    //        logger_ = spdlog::stdout_color_mt(CONSOLE_LOGGER);
+    //#if !defined(_WIN32)
+    //        // change color of critical messages
+    //        auto console_sink =
+    //        static_cast<spdlog::sinks::stdout_color_sink_mt*>(
+    //            logger_->sinks().back().get());
+    //        console_sink->set_color(
+    //            spdlog::level::critical, console_sink->red_bold);
+    //#endif
+    //    }
     logger_->set_pattern(LOG_PATTERN);
     set_level("INFO");
 }
