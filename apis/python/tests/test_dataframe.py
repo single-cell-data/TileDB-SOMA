@@ -833,10 +833,9 @@ def test_write_categorical_types(tmp_path):
             ("int-ordered", pa.dictionary(pa.int8(), pa.int8())),
             ("int-unordered", pa.dictionary(pa.int8(), pa.int8())),
             ("int-compat", pa.int64()),
-            # RuntimeError: Unsupported enumeration type.
-            # ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_())),
-            # ("bool-unordered", pa.dictionary(pa.int8(), pa.bool_())),
-            # ("bool-compat", pa.bool_()),
+            ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_())),
+            ("bool-unordered", pa.dictionary(pa.int8(), pa.bool_())),
+            ("bool-compat", pa.bool_()),
         ]
     )
     with soma.DataFrame.create(
@@ -848,8 +847,8 @@ def test_write_categorical_types(tmp_path):
             "enum-string-unordered": ["b", "a"],
             "enum-int-ordered": [888888888, 777777777],
             "enum-int-unordered": [888888888, 777777777],
-            # "enum-bool-ordered": [True, False],
-            # "enum-bool-unordered": [True, False],
+            "enum-bool-ordered": [True, False],
+            "enum-bool-unordered": [True, False],
         },
         ordered_enumerations=[
             "enum-string-ordered",
@@ -861,8 +860,8 @@ def test_write_categorical_types(tmp_path):
             "string-unordered": "enum-string-unordered",
             "int-ordered": "enum-int-ordered",
             "int-unordered": "enum-int-unordered",
-            # "bool-ordered": "enum-bool-ordered",
-            # "bool-unordered": "enum-bool-unordered",
+            "bool-ordered": "enum-bool-ordered",
+            "bool-unordered": "enum-bool-unordered",
         },
     ) as sdf:
         df = pd.DataFrame(
@@ -892,21 +891,21 @@ def test_write_categorical_types(tmp_path):
                     ordered=False,
                     categories=[777777777, 888888888],
                 ),
-                # "bool-ordered": pd.Categorical(
-                # [True, False, True, False],
-                # ordered=True,
-                # categories=[False, True],
-                # ),
-                # "bool-unordered": pd.Categorical(
-                # [True, False, True, False],
-                # ordered=False,
-                # categories=[False, True],
-                # ),
-                # "bool-compat": pd.Categorical(
-                # [True, False, True, False],
-                # ordered=False,
-                # categories=[True, False],
-                # ),
+                "bool-ordered": pd.Categorical(
+                    [True, False, True, False],
+                    ordered=True,
+                    categories=[False, True],
+                ),
+                "bool-unordered": pd.Categorical(
+                    [True, False, True, False],
+                    ordered=False,
+                    categories=[True, False],
+                ),
+                "bool-compat": pd.Categorical(
+                    [True, False, True, False],
+                    ordered=False,
+                    categories=[True, False],
+                ),
             }
         )
         sdf.write(pa.Table.from_pandas(df))
