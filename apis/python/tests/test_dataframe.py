@@ -829,6 +829,7 @@ def test_write_categorical_types(tmp_path):
             ("soma_joinid", pa.int64()),
             ("A", pa.dictionary(pa.int64(), pa.large_string())),
             ("B", pa.dictionary(pa.int64(), pa.large_string())),
+            ("C", pa.large_string()),
         ]
     )
     with soma.DataFrame.create(
@@ -847,6 +848,9 @@ def test_write_categorical_types(tmp_path):
                 ),
                 "B": pd.Categorical(
                     ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
+                ),
+                "C": pd.Categorical(
+                    ["a", "b", "a", "b"], ordered=False, categories=["a", "b"]
                 ),
             }
         )
