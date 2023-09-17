@@ -56,22 +56,22 @@ void LOG_SET_FILE(const std::string& logfile);
 bool LOG_DEBUG_ENABLED();
 
 /** Logs a trace message. */
-__attribute__((visibility("default"))) void LOG_TRACE(const std::string& msg);
+__attribute__((visibility("default"))) void LOG_TRACE(std::string const& msg);
 
 /** Logs a debug message. */
-__attribute__((visibility("default"))) void LOG_DEBUG(const std::string& msg);
+__attribute__((visibility("default"))) void LOG_DEBUG(std::string const& msg);
 
 /** Logs an info message. */
-__attribute__((visibility("default"))) void LOG_INFO(const std::string& msg);
+__attribute__((visibility("default"))) void LOG_INFO(std::string const& msg);
 
 /** Logs a warning. */
-__attribute__((visibility("default"))) void LOG_WARN(const std::string& msg);
+__attribute__((visibility("default"))) void LOG_WARN(std::string const& msg);
 
 /** Logs an error. */
-void LOG_ERROR(const std::string& msg);
+void LOG_ERROR(std::string const& msg);
 
 /** Logs a critical error and exits with a non-zero status. */
-void LOG_FATAL(const std::string& msg);
+void LOG_FATAL(std::string const& msg);
 
 /** Convert TileDB timestamp (in ms) to human readable timestamp. */
 std::string asc_timestamp(uint64_t timestamp_ms);
