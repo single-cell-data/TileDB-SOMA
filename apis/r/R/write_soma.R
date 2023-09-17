@@ -68,7 +68,6 @@ NULL
 #'  \item a column \dQuote{\code{soma_joinid}} will be automatically
 #'   added going from \code{[0, nrow(x) - 1]} encoded as
 #'   \link[bit64:integer64]{64-bit integers}
-#'  \item all factor columns will be coerced to characters
 #  \item all columns not containing \link[base:is.atomic]{atomic} types
 #   (excluding \link[base:factor]{factors}, \code{\link[base]{complex}es},
 #   and \code{\link[base]{raw}s}) will be removed
@@ -94,6 +93,7 @@ write_soma.data.frame <- function(
   relative = TRUE
 ) {
   stopifnot(
+    "'x' must be named" = is_named(x, allow_empty = FALSE),
     "'df_index' must be a single character value" = is.null(df_index) ||
       is_scalar_character(df_index),
     "'index_column_names' must be a character vector" = is.character(index_column_names)
@@ -108,9 +108,6 @@ write_soma.data.frame <- function(
   remove <- vector(mode = 'logical', length = ncol(x))
   for (i in seq_len(ncol(x))) {
     col <- names(x)[i]
-    if (is.factor(x[[col]])) {
-      x[[col]] <- as.character(x[[col]])
-    }
     remove[i] <- !inherits(
       x = try(expr = arrow::infer_type(x[[col]]), silent = TRUE),
       what = 'DataType'
@@ -127,6 +124,11 @@ write_soma.data.frame <- function(
       ),
       call. = FALSE
     )
+  }
+  # Check enumerations
+  enumerations <- sapply(x, FUN = levels, simplify = FALSE, USE.NAMES = TRUE)
+  if (all(vapply_lgl(enumerations, is.null))) {
+    enumerations <- NULL
   }
   # Check `df_index`
   df_index <- df_index %||% attr(x = x, which = 'index')
@@ -158,6 +160,7 @@ write_soma.data.frame <- function(
     uri = uri,
     schema = tbl$schema,
     index_column_names = index_column_names,
+    levels = enumerations,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
