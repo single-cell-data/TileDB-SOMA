@@ -50,7 +50,7 @@ namespace tiledbsoma {
 // text to log...
 // %$ : end color range
 const std::string LOG_PATTERN =
-    "%^[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v%$";
+    "[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v";
 const std::string CONSOLE_LOGGER = "tiledbsoma";
 const std::string FILE_LOGGER = "tiledbsoma-file";
 
