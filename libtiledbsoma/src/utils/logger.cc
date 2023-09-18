@@ -68,9 +68,9 @@ Logger::Logger() {
             logger_->sinks().back().get());
         console_sink->set_color(
             spdlog::level::critical, console_sink->red_bold);
+        logger_->set_pattern(LOG_PATTERN);
 #endif
     }
-    logger_->set_pattern(LOG_PATTERN);
     set_level("INFO");
 }
 
