@@ -43,14 +43,14 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python_version }}
-        cache: pip
-        cache-dependency-path: ./.github/workflows/python-ci-single.yml
+        #cache: pip
+        #cache-dependency-path: ./.github/workflows/python-ci-single.yml
 
-    - name: Restore pre-commit cache
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pre-commit
-        key: pre-commit-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('.github/workflows/python-ci-single.yml') }}
+#    - name: Restore pre-commit cache
+#      uses: actions/cache@v3
+#      with:
+#        path: ~/.cache/pre-commit
+#        key: pre-commit-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('.github/workflows/python-ci-single.yml') }}
 
     - name: Run pre-commit hooks on all files
       run: python -m pip -v install pre-commit && pre-commit run -a -v
@@ -77,16 +77,16 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python_version }}
-        cache: pip
-        cache-dependency-path: ./apis/python/setup.py
+        #cache: pip
+        #cache-dependency-path: ./apis/python/setup.py
 
-    - name: Cache native libraries
-      uses: actions/cache@v3
-      with:
-        path: |
-          build
-          dist
-        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
+#    - name: Cache native libraries
+#      uses: actions/cache@v3
+#      with:
+#        path: |
+#          build
+#          dist
+#        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
     - name: Install testing prereqs
       run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools
