@@ -894,7 +894,7 @@ def test_write_categorical_types(tmp_path):
                 "bool-ordered": pd.Categorical(
                     [True, False, True, False],
                     ordered=True,
-                    categories=[False, True],
+                    categories=[True, False],
                 ),
                 "bool-unordered": pd.Categorical(
                     [True, False, True, False],
