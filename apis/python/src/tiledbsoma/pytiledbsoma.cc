@@ -81,6 +81,8 @@ py::tuple get_enum(SOMAArray& sr, std::string attr_name){
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return py::tuple(py::cast(enmr.as_vector<std::string>()));
+        case TILEDB_BOOL:
+            return py::tuple(py::cast(enmr.as_vector<bool>()));
         default:
             throw TileDBSOMAError("Unsupported enumeration type.");
     }
