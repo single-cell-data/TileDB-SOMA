@@ -24,12 +24,16 @@ jobs:
           - runs-on: ubuntu-22.04
             cc: gcc-11
             cxx: g++-11
+          - runs-on: macos-12
+            cc: clang
+            cxx: clang++
     uses: ./.github/workflows/python-ci-single.yml
     with:
       os: ${{ matrix.os }}
       python_version: ${{ matrix.python-version }}
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
+      is_mac: ${{ contains(matrix.os, 'macos') }}
       report_codecov: ${{ matrix.python-version == '3.10' }}
       run_lint: ${{ matrix.python-version == '3.10' }}
     secrets: inherit
