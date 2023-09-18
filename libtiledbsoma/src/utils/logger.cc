@@ -36,7 +36,7 @@
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/basic_file_sink.h>
-//#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace tiledbsoma {
 
@@ -50,7 +50,7 @@ namespace tiledbsoma {
 // text to log...
 // %$ : end color range
 const std::string LOG_PATTERN =
-    "[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v";
+    "%^[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v%$";
 const std::string CONSOLE_LOGGER = "tiledbsoma";
 const std::string FILE_LOGGER = "tiledbsoma-file";
 
@@ -195,32 +195,32 @@ bool LOG_DEBUG_ENABLED() {
 }
 
 /** Logs a trace message. */
-void LOG_TRACE(std::string const& msg) {
+void LOG_TRACE(const std::string& msg) {
     global_logger().trace(msg.c_str());
 }
 
 /** Logs a debug message. */
-void LOG_DEBUG(std::string const& msg) {
+void LOG_DEBUG(const std::string& msg) {
     global_logger().debug(msg.c_str());
 }
 
 /** Logs an info message. */
-void LOG_INFO(std::string const& msg) {
+void LOG_INFO(const std::string& msg) {
     global_logger().info(msg.c_str());
 }
 
 /** Logs a warning. */
-void LOG_WARN(std::string const& msg) {
+void LOG_WARN(const std::string& msg) {
     global_logger().warn(msg.c_str());
 }
 
 /** Logs an error. */
-void LOG_ERROR(std::string const& msg) {
+void LOG_ERROR(const std::string& msg) {
     global_logger().error(msg.c_str());
 }
 
 /** Logs a critical error and exits with a non-zero status. */
-void LOG_FATAL(std::string const& msg) {
+void LOG_FATAL(const std::string& msg) {
     global_logger().critical(msg.c_str());
     exit(1);
 }
