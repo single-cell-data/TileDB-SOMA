@@ -54,7 +54,7 @@ this in the class.
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -238,7 +238,7 @@ axis.</p></dd>
 
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-var"></a><div class="section">
 <h3 id="method-var-">Method <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var()</a></code><a class="anchor" aria-label="anchor" href="#method-var-"></a></h3>
-<p>Retrieve var <code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code></p><div class="section">
+<p>Retrieve var <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code></p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">var</span><span class="op">(</span>column_names <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -254,7 +254,7 @@ axis.</p></dd>
 
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-obs_joinids"></a><div class="section">
 <h3 id="method-obs-joinids-">Method <code>obs_joinids()</code><a class="anchor" aria-label="anchor" href="#method-obs-joinids-"></a></h3>
-<p>Retrieve <code>soma_joinids</code> as an <code><a href="https://arrow.apache.org/docs/r/reference/array.html" class="external-link">arrow::Array</a></code> for <code>obs</code>.</p><div class="section">
+<p>Retrieve <code>soma_joinids</code> as an <code><a href="https://arrow.apache.org/docs/r/reference/array-class.html" class="external-link">arrow::Array</a></code> for <code>obs</code>.</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">obs_joinids</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -262,7 +262,7 @@ axis.</p></dd>
 
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-var_joinids"></a><div class="section">
 <h3 id="method-var-joinids-">Method <code>var_joinids()</code><a class="anchor" aria-label="anchor" href="#method-var-joinids-"></a></h3>
-<p>Retrieve <code>soma_joinids</code> as an <code><a href="https://arrow.apache.org/docs/r/reference/array.html" class="external-link">arrow::Array</a></code> for <code>var</code>.</p><div class="section">
+<p>Retrieve <code>soma_joinids</code> as an <code><a href="https://arrow.apache.org/docs/r/reference/array-class.html" class="external-link">arrow::Array</a></code> for <code>var</code>.</p><div class="section">
 <h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">var_joinids</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -287,7 +287,7 @@ axis.</p></dd>
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-read"></a><div class="section">
 <h3 id="method-read-">Method <code>read()</code><a class="anchor" aria-label="anchor" href="#method-read-"></a></h3>
 <p>Reads the entire query result as a list of
-<code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code>s. This is a low-level routine intended to be used by
+<code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code>s. This is a low-level routine intended to be used by
 loaders for other in-core formats, such as <code>Seurat</code>, which can be created
 from the resulting Tables.</p><div class="section">
 <h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
@@ -531,7 +531,7 @@ from <code>obsm_layer</code></p></dd>
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_single_cell_experiment"></a><div class="section">
 <h3 id="method-to-single-cell-experiment-">Method <code>to_single_cell_experiment()</code><a class="anchor" aria-label="anchor" href="#method-to-single-cell-experiment-"></a></h3>
 <p>Loads the query as a
-<code><a href="https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html" class="external-link">SingleCellExperiment</a></code> object</p><div class="section">
+<code>SingleCellExperiment</code> object</p><div class="section">
 <h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_single_cell_experiment</span><span class="op">(</span></span>
 <span>  X_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -572,18 +572,18 @@ from <code>obsm_layer</code></p></dd>
 
 
 <dt><code>obsp_layers</code></dt>
-<dd><p>Names of arrays in <code>obsp</code> to load in as <code><a href="https://rdrr.io/pkg/S4Vectors/man/Hits-class.html" class="external-link">SelfHits</a></code>; by default, loads all graphs</p></dd>
+<dd><p>Names of arrays in <code>obsp</code> to load in as <code>SelfHits</code>; by default, loads all graphs</p></dd>
 
 
 <dt><code>varp_layers</code></dt>
-<dd><p>Names of arrays in <code>varp</code> to load in as <code><a href="https://rdrr.io/pkg/S4Vectors/man/Hits-class.html" class="external-link">SelfHits</a></code>; by default, loads all networks</p></dd>
+<dd><p>Names of arrays in <code>varp</code> to load in as <code>SelfHits</code>; by default, loads all networks</p></dd>
 
 
 </dl><p></p></div>
 </div>
 <div class="section">
 <h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
-<p>A <code><a href="https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html" class="external-link">SingleCellExperiment</a></code> object</p>
+<p>A <code>SingleCellExperiment</code> object</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-clone"></a><div class="section">

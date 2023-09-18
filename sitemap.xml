@@ -172,6 +172,9 @@
     <loc>/reference/matrixZeroBasedView.html</loc>
   </url>
   <url>
+    <loc>/reference/set_log_level.html</loc>
+  </url>
+  <url>
     <loc>/reference/show_package_versions.html</loc>
   </url>
   <url>
@@ -179,6 +182,12 @@
   </url>
   <url>
     <loc>/reference/write_soma.Seurat.html</loc>
+  </url>
+  <url>
+    <loc>/reference/write_soma.SingleCellExperiment.html</loc>
+  </url>
+  <url>
+    <loc>/reference/write_soma.SummarizedExperiment.html</loc>
   </url>
   <url>
     <loc>/reference/write_soma.html</loc>

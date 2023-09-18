@@ -16,7 +16,7 @@ SOMASparseNDArray.  (lifecycle: experimental)"><!-- mathjax --><script src="http
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,6 +84,7 @@ row and is intended to act as a join key for other objects, such as
 <ul><li><p><a href="#method-SOMADataFrame-create"><code>SOMADataFrame$create()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-write"><code>SOMADataFrame$write()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-read"><code>SOMADataFrame$read()</code></a></p></li>
+<li><p><a href="#method-SOMADataFrame-update"><code>SOMADataFrame$update()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-clone"><code>SOMADataFrame$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
@@ -100,6 +101,7 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href="TileDBArray.html#method-get_metadata"><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href="TileDBArray.html#method-index_column_names"><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href="TileDBArray.html#method-ndim"><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href="TileDBArray.html#method-non_empty_domain"><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href="TileDBArray.html#method-open"><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href="TileDBArray.html#method-print"><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href="TileDBArray.html#method-schema"><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
@@ -107,6 +109,7 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href="TileDBArray.html#method-shape"><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href="TileDBArray.html#method-tiledb_array"><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href="TileDBArray.html#method-tiledb_schema"><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="used_shape"><a href="TileDBArray.html#method-used_shape"><code>tiledbsoma::TileDBArray$used_shape()</code></a></span></li>
 </ul></details></p><hr><a id="method-SOMADataFrame-create"></a><div class="section">
 <h3 id="method-create-">Method <code>create()</code><a class="anchor" aria-label="anchor" href="#method-create-"></a></h3>
 <p>Create (lifecycle: experimental)</p><div class="section">
@@ -114,6 +117,7 @@ row and is intended to act as a join key for other objects, such as
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span></span>
 <span>  <span class="va">schema</span>,</span>
 <span>  index_column_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"soma_joinid"</span><span class="op">)</span>,</span>
+<span>  levels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  internal_use_only <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
@@ -122,13 +126,17 @@ row and is intended to act as a join key for other objects, such as
 <div class="section">
 <h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>schema</code></dt>
-<dd><p>an <code><a href="https://arrow.apache.org/docs/r/reference/Schema.html" class="external-link">arrow::schema</a></code>.</p></dd>
+<dd><p>an <code><a href="https://arrow.apache.org/docs/r/reference/schema.html" class="external-link">arrow::schema</a></code>.</p></dd>
 
 
 <dt><code>index_column_names</code></dt>
 <dd><p>A vector of column names to use as user-defined
 index columns.  All named columns must exist in the schema, and at least
 one index column name is required.</p></dd>
+
+
+<dt><code>levels</code></dt>
+<dd><p>Optional list of enumeration (aka factor) levels</p></dd>
 
 
 <dt><code>platform_config</code></dt>
@@ -154,7 +162,7 @@ as <code>create()</code> is considered internal and should not be called directl
 <div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>values</code></dt>
-<dd><p>An <code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code> or <code><a href="https://arrow.apache.org/docs/r/reference/RecordBatch.html" class="external-link">arrow::RecordBatch</a></code>
+<dd><p>An <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code> or <code><a href="https://arrow.apache.org/docs/r/reference/RecordBatch-class.html" class="external-link">arrow::RecordBatch</a></code>
 containing all columns, including any index columns. The
 schema for <code>values</code> must match the schema for the <code>SOMADataFrame</code>.</p></dd>
 
@@ -213,18 +221,57 @@ more information.</p></dd>
 </div>
 <div class="section">
 <h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
-<p>arrow::<a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">Table</a> or <a href="TableReadIter.html">TableReadIter</a></p>
+<p>arrow::<a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">Table</a> or <a href="TableReadIter.html">TableReadIter</a></p>
 </div>
 
-</div><p></p><hr><a id="method-SOMADataFrame-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
-<p>The objects of this class are cloneable with this method.</p><div class="section">
+</div><p></p><hr><a id="method-SOMADataFrame-update"></a><div class="section">
+<h3 id="method-update-">Method <code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code><a class="anchor" aria-label="anchor" href="#method-update-"></a></h3>
+<p>Update (lifecycle: experimental)</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">update</span><span class="op">(</span><span class="va">values</span>, row_index_name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>values</code></dt>
+<dd><p>A <code>data.frame</code>, <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code>, or
+<code><a href="https://arrow.apache.org/docs/r/reference/RecordBatch-class.html" class="external-link">arrow::RecordBatch</a></code>.</p></dd>
+
+
+<dt><code>row_index_name</code></dt>
+<dd><p>An optional scalar character. If provided, and if
+the <code>values</code> argument is a <code>data.frame</code> with row names, then the row
+names will be extracted and added as a new column to the <code>data.frame</code>
+prior to performing the update. The name of this new column will be set
+to the value specified by <code>row_index_name</code>.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h4>
+<p>Update the existing <code>SOMADataFrame</code> to add or remove columns based on the
+input:</p><ul><li><p>columns present in the current the <code>SOMADataFrame</code> but absent from the
+new <code>values</code> will be dropped</p></li>
+<li><p>columns absent in current <code>SOMADataFrame</code> but present in the new
+<code>values</code> will be added</p></li>
+<li><p>any columns present in both will be left alone, with the exception that
+if <code>values</code> has a different type for the column, the entire update
+will fail because attribute types cannot be changed.</p></li>
+</ul><p>Furthermore, <code>values</code> must contain the same number of rows as the current
+<code>SOMADataFrame</code>.</p>
+</div>
+
+
+</div><p></p><hr><a id="method-SOMADataFrame-clone"></a><div class="section">
+<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
+<p>The objects of this class are cloneable with this method.</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

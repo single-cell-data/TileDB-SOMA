@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,7 +100,7 @@
 <code class="sourceCode R"><span><span class="va">experiment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">load_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small"</span><span class="op">)</span></span>
 <span><span class="va">experiment</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmpIzPAEL/soma-exp-pbmc-small </span></span>
+<span><span class="co">#&gt;   uri: /tmp/Rtmp9aoU8F/soma-exp-pbmc-small </span></span>
 <span><span class="co">#&gt;   arrays: obs </span></span>
 <span><span class="co">#&gt;   groups: ms</span></span></code></pre></div>
 </div>
@@ -112,7 +112,7 @@
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/RtmpIzPAEL/soma-exp-pbmc-small/ms </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/Rtmp9aoU8F/soma-exp-pbmc-small/ms </span></span>
 <span><span class="co">#&gt;   groups: RNA</span></span></code></pre></div>
 <p>Now we can construct our query object.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -130,7 +130,7 @@
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="va">n_vars</span></span>
 <span><span class="co">#&gt; [1] 230</span></span></code></pre></div>
-<p>We can also extract any data component from the experiment. Here we’ll read in the <code>obs</code> data frame from the query using <code>obs()</code> which returns an iterator of <code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code>. The iterator is useful when the data is too large to load in memory allowing to stream the data in chunks. This applies to <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var()</a></code> as well.</p>
+<p>We can also extract any data component from the experiment. Here we’ll read in the <code>obs</code> data frame from the query using <code>obs()</code> which returns an iterator of <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code>. The iterator is useful when the data is too large to load in memory allowing to stream the data in chunks. This applies to <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var()</a></code> as well.</p>
 <p>To load the data in memory you can concatenate all chunks of the iterator as shown below.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span><span class="op">)</span></span>
@@ -350,7 +350,7 @@
 <span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_complete</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>We can also access the expression via <code>X()</code>.</p>
-<p>Similarly to <code>obs()</code> and <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var()</a></code>, <code>X()</code> is intended for iteration, but in this case we have access to two different iterators, and thus <code>X()</code> returns a reader that gives you access to an iterator for <code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code> and one for <code>Matrix::sparse_matrix</code>.</p>
+<p>Similarly to <code>obs()</code> and <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var()</a></code>, <code>X()</code> is intended for iteration, but in this case we have access to two different iterators, and thus <code>X()</code> returns a reader that gives you access to an iterator for <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code> and one for <code>Matrix::sparse_matrix</code>.</p>
 <p>Let’s take a look at the Arrow Table iterator:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">reader</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span>layer_name <span class="op">=</span> <span class="st">"counts"</span><span class="op">)</span></span>
@@ -430,7 +430,7 @@
 <span><span class="co">#&gt; 25 GGCATATGCTTATC        126</span></span>
 <span><span class="co">#&gt; 26 CATTACACCAACTG        316</span></span></code></pre></div>
 <p>As well as the X matrix in two different formats:</p>
-<p><code><a href="https://arrow.apache.org/docs/r/reference/Table.html" class="external-link">arrow::Table</a></code></p>
+<p><code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span><span class="st">"counts"</span><span class="op">)</span><span class="op">$</span><span class="fu">tables</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Table</span></span>

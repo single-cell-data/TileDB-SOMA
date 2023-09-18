@@ -16,7 +16,7 @@ cells (aka a "multimodal dataset") with pre-defined fields: obs and ms
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,6 +111,8 @@ observation index domain, <code>obs_id</code>. All observations for the
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 
 <ul><li><p><a href="#method-SOMAExperiment-axis_query"><code>SOMAExperiment$axis_query()</code></a></p></li>
+<li><p><a href="#method-SOMAExperiment-update_obs"><code>SOMAExperiment$update_obs()</code></a></p></li>
+<li><p><a href="#method-SOMAExperiment-update_var"><code>SOMAExperiment$update_var()</code></a></p></li>
 <li><p><a href="#method-SOMAExperiment-clone"><code>SOMAExperiment$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
@@ -160,15 +162,72 @@ axis.</p></dd>
 <p>A <code><a href="SOMAExperimentAxisQuery.html">SOMAExperimentAxisQuery</a></code> object.</p>
 </div>
 
-</div><p></p><hr><a id="method-SOMAExperiment-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
-<p>The objects of this class are cloneable with this method.</p><div class="section">
+</div><p></p><hr><a id="method-SOMAExperiment-update_obs"></a><div class="section">
+<h3 id="method-update-obs-">Method <code>update_obs()</code><a class="anchor" aria-label="anchor" href="#method-update-obs-"></a></h3>
+<p>Update the obs <code><a href="SOMADataFrame.html">SOMADataFrame</a></code> to add or remove columns.
+See <code><a href="SOMADataFrame.html">SOMADataFrame$update()</a></code> for details.</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperiment</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperiment</span><span class="op">$</span><span class="fu">update_obs</span><span class="op">(</span><span class="va">values</span>, row_index_name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>values</code></dt>
+<dd><p>A <code>data.frame</code>, <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code>, or
+<code><a href="https://arrow.apache.org/docs/r/reference/RecordBatch-class.html" class="external-link">arrow::RecordBatch</a></code>.</p></dd>
+
+
+<dt><code>row_index_name</code></dt>
+<dd><p>An optional scalar character. If provided, and if
+the <code>values</code> argument is a <code>data.frame</code> with row names, then the row
+names will be extracted and added as a new column to the <code>data.frame</code>
+prior to performing the update. The name of this new column will be set
+to the value specified by <code>row_index_name</code>.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-SOMAExperiment-update_var"></a><div class="section">
+<h3 id="method-update-var-">Method <code>update_var()</code><a class="anchor" aria-label="anchor" href="#method-update-var-"></a></h3>
+<p>Update the var <code>SOMADataFrame</code> to add or remove columns.
+See <code><a href="SOMADataFrame.html">SOMADataFrame$update()</a></code> for details.</p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperiment</span><span class="op">$</span><span class="fu">update_var</span><span class="op">(</span><span class="va">values</span>, <span class="va">measurement_name</span>, row_index_name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>values</code></dt>
+<dd><p>A <code>data.frame</code>, <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code>, or
+<code><a href="https://arrow.apache.org/docs/r/reference/RecordBatch-class.html" class="external-link">arrow::RecordBatch</a></code>.</p></dd>
+
+
+<dt><code>measurement_name</code></dt>
+<dd><p>The name of the <code><a href="SOMAMeasurement.html">SOMAMeasurement</a></code> whose <code>var</code>
+will be updated.</p></dd>
+
+
+<dt><code>row_index_name</code></dt>
+<dd><p>An optional scalar character. If provided, and if
+the <code>values</code> argument is a <code>data.frame</code> with row names, then the row
+names will be extracted and added as a new column to the <code>data.frame</code>
+prior to performing the update. The name of this new column will be set
+to the value specified by <code>row_index_name</code>.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-SOMAExperiment-clone"></a><div class="section">
+<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
+<p>The objects of this class are cloneable with this method.</p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperiment</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
