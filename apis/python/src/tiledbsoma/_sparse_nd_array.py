@@ -183,9 +183,11 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         Lifecycle:
             Experimental.
         """
-        del platform_config  # Currently unused.
 
         arr = self._handle.writer
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(
+            platform_config
+        )
 
         if isinstance(values, pa.SparseCOOTensor):
             # Write bulk data
@@ -197,8 +199,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             bounding_box = self._compute_bounding_box_metadata(maxes)
             self._set_bounding_box_metadata(bounding_box)
 
-            # Consolidate non-bulk data
-            self._consolidate_and_vacuum_fragment_metadata()
+            if tiledb_create_options.consolidate_and_vacuum:
+                # Consolidate non-bulk data
+                self._consolidate_and_vacuum()
             return self
 
         if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
@@ -216,8 +219,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             bounding_box = self._compute_bounding_box_metadata([nr - 1, nc - 1])
             self._set_bounding_box_metadata(bounding_box)
 
-            # Consolidate non-bulk data
-            self._consolidate_and_vacuum_fragment_metadata()
+            if tiledb_create_options.consolidate_and_vacuum:
+                # Consolidate non-bulk data
+                self._consolidate_and_vacuum()
             return self
 
         if isinstance(values, pa.Table):
@@ -241,8 +245,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             bounding_box = self._compute_bounding_box_metadata(maxes)
             self._set_bounding_box_metadata(bounding_box)
 
-            # Consolidate non-bulk data
-            self._consolidate_and_vacuum_fragment_metadata()
+            if tiledb_create_options.consolidate_and_vacuum:
+                # Consolidate non-bulk data
+                self._consolidate_and_vacuum()
             return self
 
         raise TypeError(
