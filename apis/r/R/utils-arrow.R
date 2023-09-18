@@ -30,6 +30,10 @@ is_arrow_schema <- function(x) {
   is_arrow_object(x) && inherits(x, "Schema")
 }
 
+is_arrow_dictionary <- function(x) {
+  is_arrow_object(x) && inherits(x, "Field") && inherits(x$type, "DictionaryType")
+}
+
 #' Convert Arrow types to supported TileDB type
 #' List of TileDB types supported in R: https://github.com/TileDB-Inc/TileDB-R/blob/8014da156b5fee5b4cc221d57b4aa7d388abc968/inst/tinytest/test_dim.R#L97-L121
 #'
@@ -317,15 +321,19 @@ check_arrow_schema_data_types <- function(from, to) {
 
 #' Extract levels from dictionaries
 #' @noRd
-extract_levels <- function(arrtbl) {
+extract_levels <- function(arrtbl, exclude_cols=c("soma_joinid")) {
     stopifnot("Argument must be an Arrow Table object" = is_arrow_table(arrtbl))
-    nm <- names(arrtbl) 	# we go over the table column by column
+    nm <- names(arrtbl)                 # we go over the table column by column
+    nm <- nm[-match(exclude_cols, nm)]  # but skip soma_joinid etc as in exclude_cols
     reslst <- vector(mode = "list", length = length(nm))
     names(reslst) <- nm		# and fill a named list, entries default to NULL
     for (n in nm) {
-        if (inherits(arrow::infer_type(arrtbl[[n]]), "DictionaryType")) {
+        inftp <- arrow::infer_type(arrtbl[[n]])
+        if (inherits(inftp, "DictionaryType")) {
             # levels() extracts the enumeration levels from the factor vector we have
             reslst[[n]] <- levels(arrtbl[[n]]$as_vector())
+            # set 'ordered' attribute
+            attr(reslst[[n]], "ordered") <- inftp$ordered
         }
     }
     reslst
