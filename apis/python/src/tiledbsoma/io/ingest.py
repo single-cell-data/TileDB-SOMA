@@ -2481,6 +2481,10 @@ def to_anndata(
             matrix = measurement.varp[key].read().tables().concat().to_pandas()
             varp[key] = conversions.csr_from_tiledb_df(matrix, nvar, nvar)
 
+    uns = {}
+    if "uns" in measurement:
+        uns = _extract_uns(cast(Collection[Any], measurement["uns"]))
+
     anndata = ad.AnnData(
         X=X_csr if X_csr is not None else X_ndarray,
         obs=obs_df,
@@ -2489,6 +2493,7 @@ def to_anndata(
         varm=varm,
         obsp=obsp,
         varp=varp,
+        uns=uns,
         dtype=X_dtype,
     )
 
@@ -2568,3 +2573,26 @@ def _extract_obsm_or_varm(
         )
 
     return conversions.csr_from_tiledb_df(matrix, num_rows, num_cols).toarray()
+
+
+def _extract_uns(
+    collection: Collection[Any],
+) -> Dict[str, Any]:
+    """
+    This is a helper function for ``to_anndata`` of ``uns`` elements.
+    """
+
+    # TODO: logio style
+    extracted = {}
+    for key, element in collection.items():
+        if isinstance(element, Collection):
+            extracted[key] = _extract_uns(element)
+        elif isinstance(element, DataFrame):
+            extracted[key] = element.read().concat().to_pandas()
+        elif isinstance(element, SparseNDArray):
+            extracted[key] = element.read().tables().concat().to_pandas()
+        elif isinstance(element, DenseNDArray):
+            extracted[key] = element.read().to_numpy()
+        else:
+            print("SKIPPING", element.soma_type)
+    return extracted
