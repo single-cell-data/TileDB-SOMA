@@ -38,8 +38,6 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#include <spdlog/spdlog.h>
-
 namespace tiledbsoma {
 
 /** Set log level for global logger and optionally set a logfile. */
