@@ -6,7 +6,7 @@
 import ctypes
 import os
 import sys
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pyarrow as pa
 import tiledb
@@ -194,7 +194,9 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         cls._set_create_metadata(handle)
         return handle
 
-    def _consolidate_and_vacuum_fragment_metadata(self) -> None:
+    def _consolidate_and_vacuum(
+        self, modes: List[str] = ["fragment_meta", "commits"]
+    ) -> None:
         """
         This post-ingestion helper consolidates and vacuums fragment metadata and commit files --
         this is quick to do, and positively impacts query performance.  It does _not_ consolidate
@@ -202,12 +204,31 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         discretion.
         """
 
-        for mode in ["fragment_meta", "commits"]:
+        for mode in modes:
+            self._consolidate(modes=[mode])
+            self._vacuum(modes=[mode])
 
+    def _consolidate(self, modes: List[str] = ["fragment_meta", "commits"]) -> None:
+        """
+        This post-ingestion helper consolidates by default fragment metadata and commit files --
+        this is quick to do, and positively impacts query performance.
+        """
+
+        for mode in modes:
             cfg = self._ctx.config()
             cfg["sm.consolidation.mode"] = mode
-            cfg["sm.vacuum.mode"] = mode
             ctx = tiledb.Ctx(cfg)
 
             tiledb.consolidate(self.uri, ctx=ctx)
+
+    def _vacuum(self, modes: List[str] = ["fragment_meta", "commits"]) -> None:
+        """
+        This post-ingestion helper vacuums by default fragment metadata and commit files. Vacuuming is not multi-process safe and requires coordination that nothing is currently reading the files that will be vacuumed.
+        """
+
+        for mode in modes:
+            cfg = self._ctx.config()
+            cfg["sm.vacuum.mode"] = mode
+            ctx = tiledb.Ctx(cfg)
+
             tiledb.vacuum(self.uri, ctx=ctx)

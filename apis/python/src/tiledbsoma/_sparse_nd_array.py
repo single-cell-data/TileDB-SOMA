@@ -182,14 +182,20 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         Lifecycle:
             Experimental.
         """
-        del platform_config  # Currently unused.
 
         arr = self._handle.writer
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(
+            platform_config
+        )
 
         if isinstance(values, pa.SparseCOOTensor):
             data, coords = values.to_numpy()
             arr[tuple(c for c in coords.T)] = data
-            self._consolidate_and_vacuum_fragment_metadata()
+
+            if tiledb_create_options.consolidate_and_vacuum:
+                # Consolidate non-bulk data
+                self._consolidate_and_vacuum()
+
             return self
 
         if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
@@ -200,7 +206,11 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
             arr[sp.row, sp.col] = sp.data
-            self._consolidate_and_vacuum_fragment_metadata()
+
+            if tiledb_create_options.consolidate_and_vacuum:
+                # Consolidate non-bulk data
+                self._consolidate_and_vacuum()
+
             return self
 
         if isinstance(values, pa.Table):
@@ -211,7 +221,11 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 for n in range(coord_tbl.num_columns)
             )
             arr[coords] = data
-            self._consolidate_and_vacuum_fragment_metadata()
+
+            if tiledb_create_options.consolidate_and_vacuum:
+                # Consolidate non-bulk data
+                self._consolidate_and_vacuum()
+
             return self
 
         raise TypeError(

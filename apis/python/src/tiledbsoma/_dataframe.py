@@ -6,9 +6,10 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import somacore
 import tiledb
@@ -379,9 +380,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
-        del platform_config  # unused
-        dim_cols_map = {}
-        attr_cols_map = {}
+        dim_cols_map: Dict[str, pd.DataFrame] = {}
+        attr_cols_map: Dict[str, pd.DataFrame] = {}
+
         dim_names_set = self.index_column_names
         n = None
 
@@ -403,14 +404,17 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
         dim_cols_tuple = tuple(dim_cols_list)
         self._handle.writer[dim_cols_tuple] = attr_cols_map
-        self._consolidate_and_vacuum_fragment_metadata()
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(
+            platform_config
+        )
+        if tiledb_create_options.consolidate_and_vacuum:
+            self._consolidate_and_vacuum()
 
         return self
 
     def _set_reader_coord(
         self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
-
         if coord is None:
             return True  # No constraint; select all in this dimension
 
@@ -548,7 +552,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     def _set_reader_coord_by_numeric_slice(
         self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
     ) -> bool:
-
         try:
             lo_hi = _util.slice_to_numeric_range(coord, dim.domain)
         except _util.NonNumericDimensionError:
