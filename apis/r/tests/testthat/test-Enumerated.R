@@ -76,7 +76,13 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
     expect_true(is.data.frame(et))
 
     ett <- data.frame(soma_joinid=bit64::as.integer64(seq(1, nrow(et))), et)
-    sch <- arrow::as_schema(nanoarrow::infer_nanoarrow_schema(ett))
+    ## quick write with tiledb-r so that we get a schema from the manifested array
+    ## there should possibly be a helper function to create the schema from a data.frame
+    turi <- tempfile()
+    tiledb::fromDataFrame(ett, turi, col_index="soma_joinid")
+    tsch <- tiledb::schema(turi)
+
+    sch <- tiledbsoma:::arrow_schema_from_tiledb_schema(tsch)
     att <- arrow::as_arrow_table(ett)
     sdf <- SOMADataFrameCreate(uri, sch, levels=tiledbsoma:::extract_levels(att))
     expect_true(inherits(sdf, "SOMADataFrame"))
