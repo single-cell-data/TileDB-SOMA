@@ -5,8 +5,6 @@
 #include <pybind11/pytypes.h>
 #include <pybind11/stl.h>
 
-// #include "query_condition.cc"
-
 using namespace tiledbsoma;
 
 namespace tiledbsoma {
@@ -24,6 +22,8 @@ void init_soma_sparse_ndarray(py::module &);
 void init_soma_collection(py::module &);
 
 PYBIND11_MODULE(pytiledbsoma, m) {
+    py::module::import("tiledb.cc");
+
   py::enum_<OpenMode>(m, "OpenMode")
       .value("read", OpenMode::read)
       .value("write", OpenMode::write);
@@ -32,8 +32,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
       .value("automatic", ResultOrder::automatic)
       .value("rowmajor", ResultOrder::rowmajor)
       .value("colmajor", ResultOrder::colmajor);
-
-  // tiledbpy::init_query_condition(m);
 
   m.doc() = "SOMA acceleration library";
 

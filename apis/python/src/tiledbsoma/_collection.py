@@ -239,9 +239,9 @@ class CollectionBase(
             uri,
         )
 
-    @_funcs.forwards_kwargs_to(
-        DataFrame.create, exclude=("context", "tiledb_timestamp")
-    )
+    # @_funcs.forwards_kwargs_to(
+    #     DataFrame.create, exclude=("context", "tiledb_timestamp")
+    # )
     def add_new_dataframe(
         self, key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> DataFrame:
