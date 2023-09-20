@@ -85,6 +85,9 @@ _GIT_DESCRIPTION_RE = r"^(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % (
 
 
 def readGitVersion():
+    # NOTE: this will fail if on a fork with unsynchronized tags.
+    #       use `git fetch --tags upstream`
+    #       and `git push --tags <your fork>`
     try:
         proc = subprocess.Popen(
             ("git", "describe", "--long", "--tags", "--match", "[0-9]*.*"),
