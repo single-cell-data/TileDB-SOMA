@@ -65,7 +65,7 @@ void ManagedQuery::reset() {
     }
 
     subarray_range_set_ = false;
-    subarray_range_empty_ = true;
+    subarray_range_empty_ = {};
     columns_.clear();
     results_complete_ = true;
     total_num_cells_ = 0;
