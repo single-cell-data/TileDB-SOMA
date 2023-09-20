@@ -19,7 +19,7 @@ find_package(Spdlog_EP REQUIRED)
 
 find_package(Catch_EP REQUIRED)
 
-add_executable(unit_soma EXCLUDE_FROM_ALL
+add_executable(unit_soma
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     unit_column_buffer.cc
     unit_managed_query.cc
