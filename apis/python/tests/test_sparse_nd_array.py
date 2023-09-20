@@ -1100,3 +1100,32 @@ def test_timestamped_ops(tmp_path):
             [0, 0],
         ]
         assert a.nnz == 1
+
+
+def test_empty_indexed_read(tmp_path):
+    """
+    Verify that queries expected to return empty results actually
+    work. There are edge cases around SparseTensors, which are unable
+    to represent empty arrays.
+    """
+    shape = (10, 100)
+    soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.uint16(), shape=shape
+    ).close()
+
+    data = create_random_tensor("coo", shape, np.float64, 1.0)
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as a:
+        a.write(data)
+
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
+        coords = [slice(None), slice(None)]
+        assert sum(len(t) for t in a.read(coords).tables()) == 1000
+
+        coords = [[3], [4]]
+        assert sum(len(t) for t in a.read(coords).tables()) == 1
+
+        coords = [[3], []]
+        assert sum(len(t) for t in a.read(coords).tables()) == 0
+
+        coords = [[], [4]]
+        assert sum(len(t) for t in a.read(coords).tables()) == 0
