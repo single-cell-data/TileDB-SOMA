@@ -45,6 +45,45 @@ using namespace tiledb;
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri,
+    struct ArrowSchema* schema,
+    std::shared_ptr<Context> ctx,
+    std::optional<std::vector<std::string>> index_column_names,
+    std::optional<struct ArrowArray*> domain,
+    std::optional<std::map<std::string, std::string>> platform_config,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    // TODO convert the arrow schema to a tiledb schema
+    // index column names are dimnesions and the others are attributes
+    ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
+    Domain tdb_dom(*ctx);
+
+    // add dimensions TODO DOMAIN AND TILE
+    if (index_column_names.has_value()) {
+        for (auto index_column : *index_column_names) {
+            for (int64_t i = 0; i < schema->n_children; ++i) {
+                auto child = schema->children[i];
+                if (child->name == index_column) {
+                    auto typeinfo = arrow_type_to_tiledb(child);
+                    // auto attr = Attribute(*ctx, child->name, typeinfo.type);
+                    tdb_dom.add_dimension(Dimension::create(
+                        *ctx, child->name, typeinfo.type, dim_domain, tile_extent));
+                }
+            }
+        }
+    }
+
+    // TODO add attrs
+    // remember enums
+
+    tdb_schema.set_domain(tdb_dom);
+    // tdb_schema.add_attribute(attr1)
+    //     .add_attribute(attr2);
+
+    SOMAArray::create(ctx, uri, tdb_schema, "SOMADataFrame");
+    return SOMADataFrame::open(uri, OpenMode::read, ctx);
+}
+
+std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
+    std::string_view uri,
     ArraySchema schema,
     std::map<std::string, std::string> platform_config) {
     return SOMADataFrame::create(
