@@ -262,67 +262,6 @@ class ArrowAdapter {
             tiledb::impl::type_to_str(datatype)));
     }
 };
-
-// TileDB type information
-struct TypeInfo {
-    tiledb_datatype_t type;
-    uint64_t elem_size;
-    uint32_t cell_val_num;
-
-    // is this represented as "Arrow large"
-    bool arrow_large;
-};
-
-TypeInfo arrow_type_to_tiledb(ArrowSchema* arw_schema) {
-    auto fmt = std::string(arw_schema->format);
-    bool large = false;
-    if (fmt == "+l") {
-        large = false;
-        assert(arw_schema->n_children == 1);
-        arw_schema = arw_schema->children[0];
-    } else if (fmt == "+L") {
-        large = true;
-        assert(arw_schema->n_children == 1);
-        arw_schema = arw_schema->children[0];
-    }
-
-    if (fmt == "i")
-        return {TILEDB_INT32, 4, 1, large};
-    else if (fmt == "l")
-        return {TILEDB_INT64, 8, 1, large};
-    else if (fmt == "f")
-        return {TILEDB_FLOAT32, 4, 1, large};
-    else if (fmt == "g")
-        return {TILEDB_FLOAT64, 8, 1, large};
-    else if (fmt == "B")
-        return {TILEDB_BLOB, 1, 1, large};
-    else if (fmt == "c")
-        return {TILEDB_INT8, 1, 1, large};
-    else if (fmt == "C")
-        return {TILEDB_UINT8, 1, 1, large};
-    else if (fmt == "s")
-        return {TILEDB_INT16, 2, 1, large};
-    else if (fmt == "S")
-        return {TILEDB_UINT16, 2, 1, large};
-    else if (fmt == "I")
-        return {TILEDB_UINT32, 4, 1, large};
-    else if (fmt == "L")
-        return {TILEDB_UINT64, 8, 1, large};
-    // this is kind of a hack
-    // technically 'tsn:' is timezone-specific, which we don't support
-    // however, the blank (no suffix) base is interconvertible w/ np.datetime64
-    else if (fmt == "tsn:")
-        return {TILEDB_DATETIME_NS, 8, 1, large};
-    else if (fmt == "z" || fmt == "Z")
-        return {TILEDB_CHAR, 1, TILEDB_VAR_NUM, fmt == "Z"};
-    else if (fmt == "u" || fmt == "U")
-        return {TILEDB_STRING_UTF8, 1, TILEDB_VAR_NUM, fmt == "U"};
-    else
-        throw tiledb::TileDBError(
-            "[TileDB-Arrow]: Unknown or unsupported Arrow format string '" +
-            fmt + "'");
-};
-
 };  // namespace tiledbsoma
 
 #endif

@@ -22,6 +22,7 @@ import subprocess
 import sys
 from typing import Optional
 
+import pyarrow as pa
 import setuptools
 import setuptools.command.build_ext
 import wheel.bdist_wheel
@@ -192,6 +193,7 @@ INC_DIRS = [
     ),  # since pytiledbsoma.cc does #include of query_condition.cc
     str(libtiledbsoma_dir.parent / "build/externals/install/include"),
     str(tiledb_dir / "include"),
+    pa.get_include(),
 ]
 
 LIB_DIRS = [

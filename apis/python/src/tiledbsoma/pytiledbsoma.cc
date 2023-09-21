@@ -22,8 +22,6 @@ void init_soma_sparse_ndarray(py::module &);
 void init_soma_collection(py::module &);
 
 PYBIND11_MODULE(pytiledbsoma, m) {
-    py::module::import("tiledb.cc");
-
   py::enum_<OpenMode>(m, "OpenMode")
       .value("read", OpenMode::read)
       .value("write", OpenMode::write);

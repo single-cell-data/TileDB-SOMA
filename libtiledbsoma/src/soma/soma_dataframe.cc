@@ -43,40 +43,130 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
+// TileDB type information
+struct TypeInfo {
+    tiledb_datatype_t type;
+    uint64_t elem_size;
+    uint32_t cell_val_num;
+
+    // is this represented as "Arrow large"
+    bool arrow_large;
+};
+
+TypeInfo arrow_type_to_tiledb(ArrowSchema* arw_schema) {
+    auto fmt = std::string(arw_schema->format);
+    bool large = false;
+    if (fmt == "+l") {
+        large = false;
+        assert(arw_schema->n_children == 1);
+        arw_schema = arw_schema->children[0];
+    } else if (fmt == "+L") {
+        large = true;
+        assert(arw_schema->n_children == 1);
+        arw_schema = arw_schema->children[0];
+    }
+
+    if (fmt == "i")
+        return {TILEDB_INT32, 4, 1, large};
+    else if (fmt == "l")
+        return {TILEDB_INT64, 8, 1, large};
+    else if (fmt == "f")
+        return {TILEDB_FLOAT32, 4, 1, large};
+    else if (fmt == "g")
+        return {TILEDB_FLOAT64, 8, 1, large};
+    else if (fmt == "B")
+        return {TILEDB_BLOB, 1, 1, large};
+    else if (fmt == "c")
+        return {TILEDB_INT8, 1, 1, large};
+    else if (fmt == "C")
+        return {TILEDB_UINT8, 1, 1, large};
+    else if (fmt == "s")
+        return {TILEDB_INT16, 2, 1, large};
+    else if (fmt == "S")
+        return {TILEDB_UINT16, 2, 1, large};
+    else if (fmt == "I")
+        return {TILEDB_UINT32, 4, 1, large};
+    else if (fmt == "L")
+        return {TILEDB_UINT64, 8, 1, large};
+    // this is kind of a hack
+    // technically 'tsn:' is timezone-specific, which we don't support
+    // however, the blank (no suffix) base is interconvertible w/
+    // np.datetime64
+    else if (fmt == "tsn:")
+        return {TILEDB_DATETIME_NS, 8, 1, large};
+    else if (fmt == "z" || fmt == "Z")
+        return {TILEDB_CHAR, 1, TILEDB_VAR_NUM, fmt == "Z"};
+    else if (fmt == "u" || fmt == "U")
+        return {TILEDB_STRING_UTF8, 1, TILEDB_VAR_NUM, fmt == "U"};
+    else
+        throw tiledb::TileDBError(
+            "[TileDB-Arrow]: Unknown or unsupported Arrow format string '" +
+            fmt + "'");
+};
+
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri,
-    struct ArrowSchema* schema,
-    std::shared_ptr<Context> ctx,
-    std::optional<std::vector<std::string>> index_column_names,
-    std::optional<struct ArrowArray*> domain,
-    std::optional<std::map<std::string, std::string>> platform_config,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    // TODO convert the arrow schema to a tiledb schema
+    ArrowSchema* schema,
+    std::vector<std::string> index_column_names,
+    std::map<std::string, std::string> platform_config,
+    std::optional<std::shared_ptr<ArrowArray>> domain) {
     // index column names are dimnesions and the others are attributes
-    ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
-    Domain tdb_dom(*ctx);
 
-    // add dimensions TODO DOMAIN AND TILE
-    if (index_column_names.has_value()) {
-        for (auto index_column : *index_column_names) {
-            for (int64_t i = 0; i < schema->n_children; ++i) {
-                auto child = schema->children[i];
-                if (child->name == index_column) {
-                    auto typeinfo = arrow_type_to_tiledb(child);
-                    // auto attr = Attribute(*ctx, child->name, typeinfo.type);
-                    tdb_dom.add_dimension(Dimension::create(
-                        *ctx, child->name, typeinfo.type, dim_domain, tile_extent));
-                }
-            }
+    auto ctx = std::make_shared<Context>(Config(platform_config));
+
+    if (domain.has_value()) {
+        if ((size_t)(*domain)->length != index_column_names.size()) {
+            throw TileDBSOMAError(
+                "if domain is specified, it must have the same length as "
+                "index_column_names");
         }
     }
 
-    // TODO add attrs
-    // remember enums
+    ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
+    Domain tdb_dom(*ctx);
 
+    for (auto index_column : index_column_names) {
+        for (int64_t i = 0; i < schema->n_children; ++i) {
+            auto child = schema->children[i];
+            if (child->name == index_column) {
+                ;
+                // auto typeinfo = arrow_type_to_tiledb(child);
+                // // domain
+                // // if domain is empty, use full extent
+                // // else grab domain from arrow array
+                // if(domain.has_value()){
+                //     void* slot_domain = domain->children[i].buffers[0];
+                // }else{
+                //     slot_domain = 1;
+                // }
+
+                // // tile extent
+
+                // tdb_dom.add_dimension(Dimension::create(
+                //     *ctx,
+                //     child->name,
+                //     typeinfo.type,
+                //     {1, 10},  // slot_domain,
+                //     1         // tile_extent
+                //     ));
+            }
+        }
+    }
     tdb_schema.set_domain(tdb_dom);
-    // tdb_schema.add_attribute(attr1)
-    //     .add_attribute(attr2);
+
+    for (int64_t i = 0; i < schema->n_children; ++i) {
+        auto child = schema->children[i];
+        if (std::find(
+                index_column_names.begin(),
+                index_column_names.end(),
+                child->name) == index_column_names.end()) {
+            auto typeinfo = arrow_type_to_tiledb(child);
+            auto attr = Attribute(*ctx, child->name, typeinfo.type);
+            tdb_schema.add_attribute(attr);
+        }
+    }
+
+    // remember enums
 
     SOMAArray::create(ctx, uri, tdb_schema, "SOMADataFrame");
     return SOMADataFrame::open(uri, OpenMode::read, ctx);

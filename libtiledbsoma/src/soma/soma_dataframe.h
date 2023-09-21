@@ -54,38 +54,10 @@ class SOMADataFrame : public SOMAObject {
 
     static std::unique_ptr<SOMADataFrame> create(
         std::string_view uri,
-        struct ArrowSchema* schema,
-        std::shared_ptr<Context> ctx,
-        std::optional<std::vector<std::string>> index_column_names,
-        std::optional<struct ArrowArray*> domain,
-        std::optional<std::map<std::string, std::string>> platform_config,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
-
-    /**
-     * @brief Create a SOMADataFrame object at the given URI.
-     *
-     * @param uri URI to create the SOMADataFrame
-     * @param schema ArrowSchema
-     * @param platform_config Optional config parameter dictionary
-     * @return std::shared_ptr<SOMADataFrame> opened in read mode
-     */
-    static std::unique_ptr<SOMADataFrame> create(
-        std::string_view uri,
-        struct ArrowSchema* schema,
-        std::map<std::string, std::string> platform_config = {});
-
-    /**
-     * @brief Create a SOMADataFrame object at the given URI.
-     *
-     * @param uri URI to create the SOMADataFrame
-     * @param schema ArrowSchema
-     * @param ctx TileDB context
-     * @return std::shared_ptr<SOMADataFrame> opened in read mode
-     */
-    static std::unique_ptr<SOMADataFrame> create(
-        std::string_view uri,
-        struct ArrowSchema* schema,
-        std::shared_ptr<Context> ctx);
+        ArrowSchema* schema,
+        std::vector<std::string> index_column_names,
+        std::map<std::string, std::string> platform_config = {},
+        std::optional<std::shared_ptr<ArrowArray>> domain = std::nullopt);
 
     /**
      * @brief Create a SOMADataFrame object at the given URI.

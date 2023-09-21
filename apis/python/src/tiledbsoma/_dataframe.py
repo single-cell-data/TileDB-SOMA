@@ -6,30 +6,25 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Dict, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
-import pandas as pd
 import pyarrow as pa
-import somacore
 import tiledb
 from numpy.typing import NDArray
 from somacore import options
-from typing_extensions import Self
+
 import tiledbsoma.pytiledbsoma as pts
 
 from . import _arrow_types, _util
-from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
-from ._query_condition import QueryCondition
-from ._read_iters import TableReadIter
-from ._tiledb_array import TileDBArray
-from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
+from ._types import NPFloating, NPInteger, OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
+
 
 class DataFrame(pts.SOMADataFrame):
     """:class:`DataFrame` is a multi-column table with a user-defined schema. The
@@ -211,23 +206,33 @@ class DataFrame(pts.SOMADataFrame):
             Experimental.
         """
         context = _validate_soma_tiledb_context(context)
-        schema = _canonicalize_schema(schema, index_column_names)
-        tdb_schema = _build_tiledb_schema(
-            schema,
-            index_column_names,
-            domain,
-            enumerations or {},
-            ordered_enumerations or [],
-            column_to_enumerations or {},
-            TileDBCreateOptions.from_platform_config(platform_config),
-            context,
-        )
+        # schema = _canonicalize_schema(schema, index_column_names)
+        # _build_tiledb_schema(
+        #     schema,
+        #     index_column_names,
+        #     domain,
+        #     enumerations or {},
+        #     ordered_enumerations or [],
+        #     column_to_enumerations or {},
+        #     TileDBCreateOptions.from_platform_config(platform_config),
+        #     context,
+        # )
         # handle = cls._create_internal(uri, tdb_schema, context, tiledb_timestamp)
         # return cls(
         #     handle,
         #     _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         # )
-        return super().create(uri, tdb_schema, {})
+        
+        from pyarrow.cffi import ffi
+        import gc
+        
+        c_schema = ffi.new("struct ArrowSchema*")
+        ptr_schema = int(ffi.cast("uintptr_t", c_schema))
+        gc.collect()
+        schema._export_to_c(ptr_schema)
+        
+        return super().create(uri, ptr_schema, index_column_names, {}, domain)
+
 
 #     def keys(self) -> Tuple[str, ...]:
 #         """Returns the names of the columns when read back as a dataframe.
