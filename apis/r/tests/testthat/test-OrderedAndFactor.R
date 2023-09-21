@@ -79,20 +79,34 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
     ## quick write with tiledb-r so that we get a schema from the manifested array
     ## there should possibly be a helper function to create the schema from a data.frame
     turi <- tempfile()
-    tiledb::fromDataFrame(ett, turi, col_index="soma_joinid")
+    expect_silent(tiledb::fromDataFrame(ett, turi, col_index="soma_joinid"))
+
     tsch <- tiledb::schema(turi)
+    expect_true(inherits(tsch, "tiledb_array_schema"))
 
     sch <- tiledbsoma:::arrow_schema_from_tiledb_schema(tsch)
+    expect_true(inherits(sch, "Schema"))
+
     att <- arrow::as_arrow_table(ett)
-    sdf <- SOMADataFrameCreate(uri, sch, levels=tiledbsoma:::extract_levels(att))
+    expect_true(inherits(att, "Table"))
+
+    lvls <- tiledbsoma:::extract_levels(att)
+    expect_true(is.list(lvls))
+    expect_equal(length(lvls), ncol(et))  # et, not ett or tsch or sch as no soma_joinid
+    expect_equal(names(lvls), colnames(et))
+
+    sdf <- SOMADataFrameCreate(uri, sch, levels=lvls)
     expect_true(inherits(sdf, "SOMADataFrame"))
+
     sdf$write(att)
 
+    op <- getOption("arrow.int64_downcast")
+    options("arrow.int64_downcast"=FALSE) # else it becomes int
     ndf <- SOMADataFrameOpen(uri)$read()$concat()
     expect_true(inherits(ndf, "Table"))
 
-    ## first column comes back as numeric
-    ntt <- tibble::as_tibble(ndf)
-    ntt$soma_joinid <- bit64::as.integer64(ntt$soma_joinid)
-    expect_equivalent(ntt, tibble::as_tibble(ett))
+    expect_equivalent(tibble::as_tibble(ndf), tibble::as_tibble(att))
+
+    options("arrow.int64_downcast"=op)
+
 })
