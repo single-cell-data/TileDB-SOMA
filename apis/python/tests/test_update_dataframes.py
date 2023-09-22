@@ -58,8 +58,14 @@ def test_add(adata):
     new_obs = adata.obs
     new_var = adata.var
 
+    # boolean
     new_obs["is_g1"] = new_obs["groups"] == "g1"
+    # int
     new_obs["seq"] = np.arange(new_obs.shape[0], dtype=np.int32)
+    # categorical of string
+    new_obs["parity"] = pd.Categorical(
+        np.asarray([["even", "odd"][e % 2] for e in range(len(new_obs))])
+    )
 
     new_var["vst.mean.sq"] = new_var["vst.mean"] ** 2
 
