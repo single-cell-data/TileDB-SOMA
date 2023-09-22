@@ -351,7 +351,8 @@ SOMADataFrame <- R6::R6Class(
       stopifnot(
         "'schema' must be a valid Arrow schema" =
           is_arrow_schema(schema),
-        is.character(index_column_names) && length(index_column_names) > 0,
+        "'index_column_names' must be a non-empty character vector" =
+            is.character(index_column_names) && length(index_column_names) > 0,
         "All 'index_column_names' must be defined in the 'schema'" =
           assert_subset(index_column_names, schema$names, "indexed field"),
         "Column names must not start with reserved prefix 'soma_'" =
