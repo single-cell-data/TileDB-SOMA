@@ -295,8 +295,12 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
                 if (domain.size() != 0) {
                     // EXTRACT THIS FROM THE DOMAIN ARROW TABLE
                     auto dom = domain[i];
-                    auto d = domain->children[0].buffers[0];
-                    // slot_domain = domain->children[i].buffers[0];
+                    // auto d = dom->buffers[0];
+                    std::cout << dom->length << std::endl;
+                    std::cout << dom->null_count << std::endl;
+                    std::cout << dom->n_buffers << std::endl;
+                    std::cout << dom->n_children << std::endl;
+
                     // slot_domain = nullptr;
                     // tile_extent = nullptr;
                     ;
