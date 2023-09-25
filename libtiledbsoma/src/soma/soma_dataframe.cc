@@ -107,7 +107,7 @@ TypeInfo arrow_type_to_tiledb(ArrowSchema* arw_schema) {
 };
 
 template <typename T>
-std::vector<std::byte> __aux_schema_get_full_domain(T min, T max) {
+std::vector<std::byte> __convert_domain_as_bytes(T min, T max) {
     std::byte* min_ptr = reinterpret_cast<std::byte*>(&min);
     std::byte* max_ptr = reinterpret_cast<std::byte*>(&max);
     std::vector<std::byte> slot_domain(min_ptr, min_ptr + sizeof(T));
@@ -116,7 +116,7 @@ std::vector<std::byte> __aux_schema_get_full_domain(T min, T max) {
 }
 
 template <typename T>
-std::vector<std::byte> __aux_schema_get_extent(T tile) {
+std::vector<std::byte> __convert_tile_as_bytes(T tile) {
     std::byte* tile_ptr = reinterpret_cast<std::byte*>(&tile);
     return std::vector<std::byte>(tile_ptr, tile_ptr + sizeof(T));
 }
@@ -124,53 +124,50 @@ std::vector<std::byte> __aux_schema_get_extent(T tile) {
 std::vector<std::byte> _schema_get_full_domain(ArrowSchema* arw_schema) {
     auto datatype = arrow_type_to_tiledb(arw_schema).type;
     switch (datatype) {
-            // case TILEDB_STRING_ASCII:
-            //     break;
-
         case TILEDB_FLOAT32: {
             float min = std::numeric_limits<float>::min();
             float max = std::numeric_limits<float>::max();
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         case TILEDB_FLOAT64: {
             double min = std::numeric_limits<double>::min();
             double max = std::numeric_limits<double>::max();
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         case TILEDB_UINT8: {
             uint8_t min = std::numeric_limits<uint8_t>::min();
             uint8_t max = std::numeric_limits<uint8_t>::max();
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         case TILEDB_INT8: {
             int8_t min = std::numeric_limits<int8_t>::min();
             int8_t max = std::numeric_limits<int8_t>::max();
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         case TILEDB_UINT16: {
             uint16_t min = std::numeric_limits<uint16_t>::min();
             uint16_t max = std::numeric_limits<uint16_t>::max();
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         case TILEDB_INT16: {
             int16_t min = std::numeric_limits<int16_t>::min();
             int16_t max = std::numeric_limits<int16_t>::max();
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         case TILEDB_UINT32: {
             uint32_t min = std::numeric_limits<uint32_t>::min();
             uint32_t max = std::numeric_limits<uint32_t>::max();
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         case TILEDB_INT32: {
             int32_t min = std::numeric_limits<int32_t>::min();
             int32_t max = std::numeric_limits<int32_t>::max();
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         case TILEDB_UINT64: {
             uint64_t min = std::numeric_limits<uint64_t>::min();
             uint64_t max = std::numeric_limits<uint64_t>::max();
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         case TILEDB_INT64:
         case TILEDB_DATETIME_YEAR:
@@ -194,13 +191,85 @@ std::vector<std::byte> _schema_get_full_domain(ArrowSchema* arw_schema) {
                 min = std::numeric_limits<int64_t>::min();
                 max = std::numeric_limits<int64_t>::max();
             }
-            return __aux_schema_get_full_domain(min, max);
+            return __convert_domain_as_bytes(min, max);
         }
         default:
             throw tiledb::TileDBError(
                 "[TileDB-Arrow]: Unsupported TileDB type for dimension)");
     }
 };
+
+std::vector<std::byte> _schema_get_domain_from_buffer(
+    const void* buffer, tiledb_datatype_t datatype) {
+    switch (datatype) {
+        case TILEDB_FLOAT32: {
+            float min = ((float*)buffer)[0];
+            float max = ((float*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        case TILEDB_FLOAT64: {
+            double min = ((double*)buffer)[0];
+            double max = ((double*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        case TILEDB_UINT8: {
+            uint8_t min = ((uint8_t*)buffer)[0];
+            uint8_t max = ((uint8_t*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        case TILEDB_INT8: {
+            int8_t min = ((int8_t*)buffer)[0];
+            int8_t max = ((int8_t*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        case TILEDB_UINT16: {
+            uint16_t min = ((uint16_t*)buffer)[0];
+            uint16_t max = ((uint16_t*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        case TILEDB_INT16: {
+            int16_t min = ((int16_t*)buffer)[0];
+            int16_t max = ((int16_t*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        case TILEDB_UINT32: {
+            uint32_t min = ((uint32_t*)buffer)[0];
+            uint32_t max = ((uint32_t*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        case TILEDB_INT32: {
+            int32_t min = ((int32_t*)buffer)[0];
+            int32_t max = ((int32_t*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        case TILEDB_UINT64: {
+            uint64_t min = ((uint64_t*)buffer)[0];
+            uint64_t max = ((uint64_t*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        case TILEDB_INT64:
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS: {
+            int64_t min = ((int64_t*)buffer)[0];
+            int64_t max = ((int64_t*)buffer)[1];
+            return __convert_domain_as_bytes(min, max);
+        }
+        default:
+            throw tiledb::TileDBError(
+                "[TileDB-Arrow]: Unsupported TileDB type for dimension)");
+    }
+}
 
 std::vector<std::byte> _schema_get_extent(ArrowSchema* arw_schema) {
     auto datatype = arrow_type_to_tiledb(arw_schema).type;
@@ -210,39 +279,39 @@ std::vector<std::byte> _schema_get_extent(ArrowSchema* arw_schema) {
 
         case TILEDB_FLOAT32: {
             float tile = 2048;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         case TILEDB_FLOAT64: {
             double tile = 2048;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         case TILEDB_UINT8: {
             uint8_t tile = 64;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         case TILEDB_INT8: {
             int8_t tile = 64;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         case TILEDB_UINT16: {
             uint16_t tile = 2048;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         case TILEDB_INT16: {
             int16_t tile = 2048;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         case TILEDB_UINT32: {
             uint32_t tile = 2048;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         case TILEDB_INT32: {
             int32_t tile = 2048;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         case TILEDB_UINT64: {
             uint64_t tile = 2048;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         case TILEDB_INT64:
         case TILEDB_DATETIME_YEAR:
@@ -259,7 +328,7 @@ std::vector<std::byte> _schema_get_extent(ArrowSchema* arw_schema) {
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS: {
             int64_t tile = 2048;
-            return __aux_schema_get_extent(tile);
+            return __convert_tile_as_bytes(tile);
         }
         default:
             throw tiledb::TileDBError(
@@ -284,26 +353,21 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
     Domain tdb_dom(*ctx);
 
-    for (auto index_column : index_column_names) {
-        for (int64_t i = 0; i < schema->n_children; ++i) {
-            auto child = schema->children[i];
-            if (child->name == index_column) {
+    for (size_t name_idx = 0; name_idx < index_column_names.size();
+         ++name_idx) {
+        for (int64_t schema_idx = 0; schema_idx < schema->n_children;
+             ++schema_idx) {
+            auto child = schema->children[schema_idx];
+            if (child->name == index_column_names[name_idx]) {
                 auto typeinfo = arrow_type_to_tiledb(child);
                 std::vector<std::byte> slot_domain;
                 std::vector<std::byte> tile_extent;
 
                 if (domain.size() != 0) {
-                    // EXTRACT THIS FROM THE DOMAIN ARROW TABLE
-                    auto dom = domain[i];
-                    // auto d = dom->buffers[0];
-                    std::cout << dom->length << std::endl;
-                    std::cout << dom->null_count << std::endl;
-                    std::cout << dom->n_buffers << std::endl;
-                    std::cout << dom->n_children << std::endl;
-
-                    // slot_domain = nullptr;
-                    // tile_extent = nullptr;
-                    ;
+                    auto data_buffer = domain[name_idx]->buffers[1];
+                    slot_domain = _schema_get_domain_from_buffer(
+                        data_buffer, typeinfo.type);
+                    tile_extent = _schema_get_extent(child);
                 } else {
                     slot_domain = _schema_get_full_domain(child);
                     tile_extent = _schema_get_extent(child);

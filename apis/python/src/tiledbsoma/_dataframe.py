@@ -236,11 +236,16 @@ class DataFrame(pts.SOMADataFrame):
             # for sch, dom in zip(schema, domain):
                 dtype = schema[schema.get_field_index(dim_name)].type
                 arr = pa.array(dom, type=dtype)
+                print(arr, dtype)
                 c_domain = ffi.new("struct ArrowArray*")
                 ptr_domain = int(ffi.cast("uintptr_t", c_domain))
                 gc.collect()
                 arr._export_to_c(ptr_domain)
                 ptrs_domain.append(ptr_domain)
+        
+        print(ptrs_domain)
+        
+        # CHECK DOMAIN AND INDEX COL NAME SIZE
 
         return super().create(uri, ptr_schema, index_column_names, {}, ptrs_domain)
     
