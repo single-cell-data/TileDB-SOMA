@@ -613,6 +613,30 @@ test_that("SOMADataFrame can be updated", {
   expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
   expect_s3_class(tbl1$GetColumnByName("frobo")$as_vector(), 'factor')
 
+  # Add a new enum where levels aren't in appearance- or alphabetical-order
+  tbl0 <- tbl1
+  tbl0$rlvl <- factor(
+    rep_len(c("red", "blue", "green"), nrow(tbl0)),
+    levels = c("green", "red", "blue")
+  )
+  expect_identical(
+    levels(tbl0$GetColumnByName("rlvl")$as_vector()),
+    c("green", "red", "blue")
+  )
+  expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
+
+  # Verify unordered enum was added on disk
+  expect_s3_class(
+    tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat(),
+    "Table"
+  )
+  expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
+  expect_s3_class(tbl1$GetColumnByName("rlvl")$as_vector(), 'factor')
+  expect_identical(
+    levels(tbl1$GetColumnByName("rlvl")$as_vector()),
+    c("green", "red", "blue")
+  )
+
   # Add a new ordered and update
   tbl0 <- tbl1
   tbl0$ordered <- ordered(sample(c("g1", "g2", "g3"), nrow(tbl0), replace = TRUE))
