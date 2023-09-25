@@ -601,6 +601,36 @@ test_that("SOMADataFrame can be updated", {
   tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat()
   expect_true(tbl1$Equals(tbl0))
 
+  # Add a new enum and update
+  tbl0$frobo <- factor(sample(letters[1:3], nrow(tbl0), replace = TRUE))
+  expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
+
+  # Verify enum was added on disk
+  expect_s3_class(
+    tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat(),
+    "Table"
+  )
+  expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
+  expect_s3_class(tbl1$GetColumnByName("frobo")$as_vector(), 'factor')
+
+  # Add a new ordered and update
+  tbl0 <- tbl1
+  tbl0$ordered <- ordered(sample(c("g1", "g2", "g3"), nrow(tbl0), replace = TRUE))
+  expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
+
+  # Verify ordered was added on disk
+  expect_s3_class(
+    tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat(),
+    "Table"
+  )
+  # TODO: read ordered enums
+  # expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
+  # expect_s3_class(
+  #   tbl1$GetColumnByName("ordered")$as_vector(),
+  #   c("ordered", "factor"),
+  #   exact = TRUE
+  # )
+
   # Error if attempting to drop an array dimension
   tbl0$foo <- NULL # drop the indexed dimension
   expect_error(

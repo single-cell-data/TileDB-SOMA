@@ -327,38 +327,28 @@ SOMADataFrame <- R6::R6Class(
       for (add_col in add_cols) {
         spdl::info("[SOMADataFrame update]: adding column '{}'", add_col)
 
-        if (xxx is enum) {
+        col_type <- new_schema$GetFieldByName(add_col)$type
+        attr <- tiledb_attr_from_arrow_field(
+          field = new_schema$GetFieldByName(add_col),
+          tiledb_create_options = tiledb_create_options
+        )
 
-            se <- tiledb::tiledb_array_schema_evolution_add_attribute(
-              object = se,
-              attr = tiledb_attr_from_arrow_field(
-                field = new_schema$GetFieldByName(add_col),
-                tiledb_create_options = tiledb_create_options
-              )
-            )
-
-# XXX ENUMS
-#        enum_label = None
-#        if pa.types.is_dictionary(arrow_table.schema.field(add_key).type):
-#            enum_label = add_key
-#            ordered = atype.ordered
-#            dt = cast(pd.CategoricalDtype, new_data[add_key].dtype)
-#            values = dt.categories
-#            se.add_enumeration(tiledb.Enumeration(add_key, ordered, list(values)))
-
-        } else {
-
-            se <- tiledb::tiledb_array_schema_evolution_add_attribute(
-              object = se,
-              attr = tiledb_attr_from_arrow_field(
-                field = new_schema$GetFieldByName(add_col),
-                tiledb_create_options = tiledb_create_options
-              )
-            )
-
-          }
+        if (inherits(col_type, "DictionaryType")) {
+          spdl::debug(
+            "[SOMADataFrame update]: adding column '{}' as an enumerated type",
+            add_col
+          )
+          se <- tiledb::tiledb_array_schema_evolution_add_enumeration(
+            object = se,
+            name = add_col,
+            enums = levels(values$GetColumnByName(add_col)$as_vector()),
+            ordered = col_type$ordered
+          )
+          attr <- tiledb::tiledb_attribute_set_enumeration_name(attr, add_col)
         }
 
+        se <- tiledb::tiledb_array_schema_evolution_add_attribute(se, attr)
+      }
 
       se <- tiledb::tiledb_array_schema_evolution_array_evolve(se, self$uri)
 
