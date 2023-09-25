@@ -272,15 +272,13 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     ArrowSchema* schema,
     std::vector<std::string> index_column_names,
     std::map<std::string, std::string> platform_config,
-    std::optional<std::shared_ptr<ArrowArray>> domain) {
+    std::vector<ArrowArray*> domain) {
     auto ctx = std::make_shared<Context>(Config(platform_config));
 
-    if (domain.has_value()) {
-        if ((size_t)(*domain)->length != index_column_names.size()) {
-            throw TileDBSOMAError(
-                "if domain is specified, it must have the same length as "
-                "index_column_names");
-        }
+    if (domain.size() != index_column_names.size()) {
+        throw TileDBSOMAError(
+            "if domain is specified, it must have the same length as "
+            "index_column_names");
     }
 
     ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
@@ -294,8 +292,10 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
                 std::vector<std::byte> slot_domain;
                 std::vector<std::byte> tile_extent;
 
-                if (domain.has_value()) {
+                if (domain.size() != 0) {
                     // EXTRACT THIS FROM THE DOMAIN ARROW TABLE
+                    auto dom = domain[i];
+                    auto d = domain->children[0].buffers[0];
                     // slot_domain = domain->children[i].buffers[0];
                     // slot_domain = nullptr;
                     // tile_extent = nullptr;

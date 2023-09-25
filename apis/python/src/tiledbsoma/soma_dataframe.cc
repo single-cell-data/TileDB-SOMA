@@ -7,30 +7,34 @@
 #include <tiledbsoma/tiledbsoma>
 
 using namespace tiledbsoma;
-
 namespace py = pybind11;
 
+namespace tiledbsoma {
+
 static std::unique_ptr<SOMADataFrame> create(
-        std::string_view uri, 
-        uintptr_t schema_ptr, 
-        std::vector<std::string> index_column_names, 
-        std::map<std::string, std::string> platform_config, 
-        py::object pydomain){
+    std::string_view uri, 
+    uintptr_t schema_ptr, 
+    std::vector<std::string> index_column_names, 
+    std::map<std::string, std::string> platform_config, 
+    py::list pydomain){
+    std::vector<ArrowArray*> domain;
+    for(auto dom : pydomain){
+        domain.push_back((ArrowArray*)dom.cast<uintptr_t>());
+    }
+    
     return SOMADataFrame::create(
-        uri, (ArrowSchema*)schema_ptr, index_column_names, platform_config, std::nullopt //TODO domain
-    );
+        uri, (ArrowSchema*)schema_ptr, index_column_names, platform_config, 
+        domain);
 }
 
-
-namespace tiledbsoma {
 void init_soma_dataframe(py::module &m) {
     py::class_<SOMADataFrame>(m, "SOMADataFrame")
 
     .def_static("create", py::overload_cast<std::string_view,
-        uintptr_t, // pointer to arrow schema
+        uintptr_t,
         std::vector<std::string>,
         std::map<std::string, std::string>,
-        py::object>(create))
+        py::list>(create))
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::map<std::string, std::string>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::shared_ptr<Context>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
 

@@ -57,7 +57,7 @@ class SOMADataFrame : public SOMAObject {
         ArrowSchema* schema,
         std::vector<std::string> index_column_names,
         std::map<std::string, std::string> platform_config = {},
-        std::optional<std::shared_ptr<ArrowArray>> domain = std::nullopt);
+        std::vector<ArrowArray*> domain = {});
 
     /**
      * @brief Create a SOMADataFrame object at the given URI.
