@@ -74,6 +74,8 @@ TypeInfo arrow_type_to_tiledb(ArrowSchema* arw_schema) {
         return {TILEDB_FLOAT32, 4, 1, large};
     else if (fmt == "g")
         return {TILEDB_FLOAT64, 8, 1, large};
+    else if (fmt == "b")
+        return {TILEDB_BOOL, 1, 1, large};
     else if (fmt == "B")
         return {TILEDB_BLOB, 1, 1, large};
     else if (fmt == "c")
@@ -104,14 +106,173 @@ TypeInfo arrow_type_to_tiledb(ArrowSchema* arw_schema) {
             fmt + "'");
 };
 
+template <typename T>
+std::vector<std::byte> __aux_schema_get_full_domain(T min, T max) {
+    std::byte* min_ptr = reinterpret_cast<std::byte*>(&min);
+    std::byte* max_ptr = reinterpret_cast<std::byte*>(&max);
+    std::vector<std::byte> slot_domain(min_ptr, min_ptr + sizeof(T));
+    slot_domain.insert(slot_domain.end(), max_ptr, max_ptr + sizeof(T));
+    return slot_domain;
+}
+
+template <typename T>
+std::vector<std::byte> __aux_schema_get_extent(T tile) {
+    std::byte* tile_ptr = reinterpret_cast<std::byte*>(&tile);
+    return std::vector<std::byte>(tile_ptr, tile_ptr + sizeof(T));
+}
+
+std::vector<std::byte> _schema_get_full_domain(ArrowSchema* arw_schema) {
+    auto datatype = arrow_type_to_tiledb(arw_schema).type;
+    switch (datatype) {
+            // case TILEDB_STRING_ASCII:
+            //     break;
+
+        case TILEDB_FLOAT32: {
+            float min = std::numeric_limits<float>::min();
+            float max = std::numeric_limits<float>::max();
+            return __aux_schema_get_full_domain(min, max);
+        }
+        case TILEDB_FLOAT64: {
+            double min = std::numeric_limits<double>::min();
+            double max = std::numeric_limits<double>::max();
+            return __aux_schema_get_full_domain(min, max);
+        }
+        case TILEDB_UINT8: {
+            uint8_t min = std::numeric_limits<uint8_t>::min();
+            uint8_t max = std::numeric_limits<uint8_t>::max();
+            return __aux_schema_get_full_domain(min, max);
+        }
+        case TILEDB_INT8: {
+            int8_t min = std::numeric_limits<int8_t>::min();
+            int8_t max = std::numeric_limits<int8_t>::max();
+            return __aux_schema_get_full_domain(min, max);
+        }
+        case TILEDB_UINT16: {
+            uint16_t min = std::numeric_limits<uint16_t>::min();
+            uint16_t max = std::numeric_limits<uint16_t>::max();
+            return __aux_schema_get_full_domain(min, max);
+        }
+        case TILEDB_INT16: {
+            int16_t min = std::numeric_limits<int16_t>::min();
+            int16_t max = std::numeric_limits<int16_t>::max();
+            return __aux_schema_get_full_domain(min, max);
+        }
+        case TILEDB_UINT32: {
+            uint32_t min = std::numeric_limits<uint32_t>::min();
+            uint32_t max = std::numeric_limits<uint32_t>::max();
+            return __aux_schema_get_full_domain(min, max);
+        }
+        case TILEDB_INT32: {
+            int32_t min = std::numeric_limits<int32_t>::min();
+            int32_t max = std::numeric_limits<int32_t>::max();
+            return __aux_schema_get_full_domain(min, max);
+        }
+        case TILEDB_UINT64: {
+            uint64_t min = std::numeric_limits<uint64_t>::min();
+            uint64_t max = std::numeric_limits<uint64_t>::max();
+            return __aux_schema_get_full_domain(min, max);
+        }
+        case TILEDB_INT64:
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS: {
+            int64_t min, max;
+            if (strcmp(arw_schema->name, "soma_joinid") == 0) {
+                min = std::numeric_limits<uint32_t>::min();
+                max = std::numeric_limits<uint32_t>::max();
+            } else {
+                min = std::numeric_limits<int64_t>::min();
+                max = std::numeric_limits<int64_t>::max();
+            }
+            return __aux_schema_get_full_domain(min, max);
+        }
+        default:
+            throw tiledb::TileDBError(
+                "[TileDB-Arrow]: Unsupported TileDB type for dimension)");
+    }
+};
+
+std::vector<std::byte> _schema_get_extent(ArrowSchema* arw_schema) {
+    auto datatype = arrow_type_to_tiledb(arw_schema).type;
+    switch (datatype) {
+            // case TILEDB_STRING_ASCII:
+            //     break;
+
+        case TILEDB_FLOAT32: {
+            float tile = 2048;
+            return __aux_schema_get_extent(tile);
+        }
+        case TILEDB_FLOAT64: {
+            double tile = 2048;
+            return __aux_schema_get_extent(tile);
+        }
+        case TILEDB_UINT8: {
+            uint8_t tile = 64;
+            return __aux_schema_get_extent(tile);
+        }
+        case TILEDB_INT8: {
+            int8_t tile = 64;
+            return __aux_schema_get_extent(tile);
+        }
+        case TILEDB_UINT16: {
+            uint16_t tile = 2048;
+            return __aux_schema_get_extent(tile);
+        }
+        case TILEDB_INT16: {
+            int16_t tile = 2048;
+            return __aux_schema_get_extent(tile);
+        }
+        case TILEDB_UINT32: {
+            uint32_t tile = 2048;
+            return __aux_schema_get_extent(tile);
+        }
+        case TILEDB_INT32: {
+            int32_t tile = 2048;
+            return __aux_schema_get_extent(tile);
+        }
+        case TILEDB_UINT64: {
+            uint64_t tile = 2048;
+            return __aux_schema_get_extent(tile);
+        }
+        case TILEDB_INT64:
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS: {
+            int64_t tile = 2048;
+            return __aux_schema_get_extent(tile);
+        }
+        default:
+            throw tiledb::TileDBError(
+                "[TileDB-Arrow]: Unsupported TileDB type for dimension)");
+    }
+};
+
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri,
     ArrowSchema* schema,
     std::vector<std::string> index_column_names,
     std::map<std::string, std::string> platform_config,
     std::optional<std::shared_ptr<ArrowArray>> domain) {
-    // index column names are dimnesions and the others are attributes
-
     auto ctx = std::make_shared<Context>(Config(platform_config));
 
     if (domain.has_value()) {
@@ -129,26 +290,27 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
         for (int64_t i = 0; i < schema->n_children; ++i) {
             auto child = schema->children[i];
             if (child->name == index_column) {
-                ;
-                // auto typeinfo = arrow_type_to_tiledb(child);
-                // // domain
-                // // if domain is empty, use full extent
-                // // else grab domain from arrow array
-                // if(domain.has_value()){
-                //     void* slot_domain = domain->children[i].buffers[0];
-                // }else{
-                //     slot_domain = 1;
-                // }
+                auto typeinfo = arrow_type_to_tiledb(child);
+                std::vector<std::byte> slot_domain;
+                std::vector<std::byte> tile_extent;
 
-                // // tile extent
+                if (domain.has_value()) {
+                    // EXTRACT THIS FROM THE DOMAIN ARROW TABLE
+                    // slot_domain = domain->children[i].buffers[0];
+                    // slot_domain = nullptr;
+                    // tile_extent = nullptr;
+                    ;
+                } else {
+                    slot_domain = _schema_get_full_domain(child);
+                    tile_extent = _schema_get_extent(child);
+                }
 
-                // tdb_dom.add_dimension(Dimension::create(
-                //     *ctx,
-                //     child->name,
-                //     typeinfo.type,
-                //     {1, 10},  // slot_domain,
-                //     1         // tile_extent
-                //     ));
+                tdb_dom.add_dimension(Dimension::create(
+                    *ctx,
+                    child->name,
+                    typeinfo.type,
+                    slot_domain.data(),
+                    tile_extent.data()));
             }
         }
     }
@@ -170,7 +332,7 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
 
     SOMAArray::create(ctx, uri, tdb_schema, "SOMADataFrame");
     return SOMADataFrame::open(uri, OpenMode::read, ctx);
-}
+}  // namespace tiledbsoma
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri,
