@@ -240,7 +240,12 @@ class DataFrame(pts.SOMADataFrame):
                 gc.collect()
                 arr._export_to_c(ptr_domain)
                 ptrs_domain.append(ptr_domain)
-        
+    
+        if enumerations is not None:
+            names = list(enumerations.keys())
+            enmrs = list(enumerations.values())
+            rb = pa.RecordBatch.from_arrays(enmrs, names=names)
+            print(rb)
         
         # CHECK DOMAIN AND INDEX COL NAME SIZE
 

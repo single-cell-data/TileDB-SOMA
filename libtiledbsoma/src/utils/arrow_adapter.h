@@ -275,69 +275,6 @@ class ArrowAdapter {
             tiledb::impl::type_to_str(datatype)));
     }
 
-    static ArraySchema arrow_schema_to_tiledb_schema(
-        std::shared_ptr<Context> ctx,
-        ArrowSchema* schema,
-        std::vector<std::string> index_column_names,
-        std::vector<ArrowArray*> domain) {
-        if (domain.size() != index_column_names.size()) {
-            throw TileDBSOMAError(
-                "if domain is specified, it must have the same length as "
-                "index_column_names");
-        }
-
-        ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
-        Domain tdb_dom(*ctx);
-
-        for (size_t name_idx = 0; name_idx < index_column_names.size();
-             ++name_idx) {
-            for (int64_t schema_idx = 0; schema_idx < schema->n_children;
-                 ++schema_idx) {
-                auto child = schema->children[schema_idx];
-                if (child->name == index_column_names[name_idx]) {
-                    auto typeinfo = arrow_type_to_tiledb(child);
-                    std::vector<std::byte> slot_domain;
-                    std::vector<std::byte> tile_extent;
-
-                    if (domain.size() != 0) {
-                        auto data_buffer = domain[name_idx]->buffers[1];
-                        auto dim_info = _schema_get_dim_from_buffer(
-                            data_buffer, typeinfo.type);
-                        slot_domain = std::get<0>(dim_info);
-                        tile_extent = std::get<1>(dim_info);
-                    } else {
-                        auto dim_info = _schema_get_default_dim(child);
-                        slot_domain = std::get<0>(dim_info);
-                        tile_extent = std::get<1>(dim_info);
-                    }
-
-                    tdb_dom.add_dimension(Dimension::create(
-                        *ctx,
-                        child->name,
-                        typeinfo.type,
-                        slot_domain.data(),
-                        tile_extent.data()));
-                }
-            }
-        }
-        tdb_schema.set_domain(tdb_dom);
-
-        for (int64_t i = 0; i < schema->n_children; ++i) {
-            auto child = schema->children[i];
-            if (std::find(
-                    index_column_names.begin(),
-                    index_column_names.end(),
-                    child->name) == index_column_names.end()) {
-                auto typeinfo = arrow_type_to_tiledb(child);
-                auto attr = Attribute(*ctx, child->name, typeinfo.type);
-                tdb_schema.add_attribute(attr);
-            }
-        }
-
-        // remember enums
-        return tdb_schema;
-    }
-
     static TypeInfo arrow_type_to_tiledb(ArrowSchema* arw_schema) {
         auto fmt = std::string(arw_schema->format);
         bool large = false;
@@ -576,6 +513,98 @@ class ArrowAdapter {
                 throw TileDBError(
                     "[TileDB-Arrow]: Unsupported TileDB type for dimension)");
         }
+    }
+
+    static ArraySchema arrow_schema_to_tiledb_schema(
+        std::shared_ptr<Context> ctx,
+        ArrowSchema* schema,
+        std::vector<std::string> index_column_names,
+        std::vector<ArrowArray*> domain = {}
+        // ArrowArray* enumerations = nullptr
+    ) {
+        if (domain.size() != index_column_names.size()) {
+            throw TileDBSOMAError(
+                "if domain is specified, it must have the same length as "
+                "index_column_names");
+        }
+
+        ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
+        Domain tdb_dom(*ctx);
+
+        for (size_t name_idx = 0; name_idx < index_column_names.size();
+             ++name_idx) {
+            for (int64_t schema_idx = 0; schema_idx < schema->n_children;
+                 ++schema_idx) {
+                auto child = schema->children[schema_idx];
+                if (child->name == index_column_names[name_idx]) {
+                    auto typeinfo = arrow_type_to_tiledb(child);
+                    std::vector<std::byte> slot_domain;
+                    std::vector<std::byte> tile_extent;
+
+                    if (domain.size() != 0) {
+                        auto data_buffer = domain[name_idx]->buffers[1];
+                        auto dim_info = _schema_get_dim_from_buffer(
+                            data_buffer, typeinfo.type);
+                        slot_domain = std::get<0>(dim_info);
+                        tile_extent = std::get<1>(dim_info);
+                    } else {
+                        auto dim_info = _schema_get_default_dim(child);
+                        slot_domain = std::get<0>(dim_info);
+                        tile_extent = std::get<1>(dim_info);
+                    }
+
+                    tdb_dom.add_dimension(Dimension::create(
+                        *ctx,
+                        child->name,
+                        typeinfo.type,
+                        slot_domain.data(),
+                        tile_extent.data()));
+                }
+            }
+        }
+        tdb_schema.set_domain(tdb_dom);
+
+        // enums to schema
+        //         std::vector<int> values = {1, 2, 3};
+        // auto dict_dtype = arrow_type_to_tiledb(child);
+        // auto enmr = Enumeration::create(
+        //     *ctx,
+        //     child->name,
+        //     dict_dtype.type,
+        //     dict_dtype.cell_val_num,
+        //     child->flags | ARROW_FLAG_DICTIONARY_ORDERED,
+        //     dict->buffers[1],
+        //     dict->length * dict_dtype.elem_size,
+        //     dict->buffers[1],
+        //     dict->offset);
+        //     ArraySchemaExperimental::add_enumeration(
+        //         *ctx, tdb_schema, enmr);
+
+        for (int64_t i = 0; i < schema->n_children; ++i) {
+            auto child = schema->children[i];
+            if (std::find(
+                    index_column_names.begin(),
+                    index_column_names.end(),
+                    child->name) == index_column_names.end()) {
+                auto typeinfo = arrow_type_to_tiledb(child);
+                auto attr = Attribute(*ctx, child->name, typeinfo.type);
+
+                if (child->flags | ARROW_FLAG_NULLABLE) {
+                    attr.set_nullable(true);
+                }
+
+                auto dict = child->dictionary;
+                if (dict != nullptr) {
+                    AttributeExperimental::set_enumeration_name(
+                        *ctx, attr, child->name);
+                }
+                // filters
+
+                tdb_schema.add_attribute(attr);
+            }
+        }
+
+        return tdb_schema;
     }
 };
 };  // namespace tiledbsoma
