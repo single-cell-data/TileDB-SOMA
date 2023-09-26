@@ -148,6 +148,9 @@ class ArrowAdapter {
             column->validity_to_bitmap();
             array->buffers[0] = column->validity().data();
         }
+        if (column->is_ordered()) {
+            schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
+        }
 
         /* Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow boolean. */
         if (column->type() == TILEDB_BOOL) {
