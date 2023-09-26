@@ -4,6 +4,7 @@
 
 * Add support for writing `SummarizedExperiment` and `SingleCellExperiment` object to SOMAs
 * Add support for bounding boxes for sparse arrays
+* Add support for creating `SOMADataFrames` with `ordered()` columns
 
 
 # tiledbsoma 1.4.0
