@@ -33,6 +33,7 @@
 #include <filesystem>
 
 #include <tiledb/tiledb>
+#include "../utils/arrow_adapter.h"
 #include "array_buffers.h"
 #include "soma_dataframe.h"
 
@@ -42,6 +43,19 @@ using namespace tiledb;
 //===================================================================
 //= public static
 //===================================================================
+
+std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
+    std::string_view uri,
+    ArrowSchema* schema,
+    std::map<std::string, std::string> platform_config,
+    std::vector<std::string> index_column_names,
+    std::vector<ArrowArray*> domain) {
+    auto ctx = std::make_shared<Context>(Config(platform_config));
+    ArraySchema tdb_schema = ArrowAdapter::arrow_schema_to_tiledb_schema(
+        ctx, schema, index_column_names, domain);
+    SOMAArray::create(ctx, uri, tdb_schema, "SOMADataFrame");
+    return SOMADataFrame::open(uri, OpenMode::read, ctx);
+}
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri,
