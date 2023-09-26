@@ -291,7 +291,6 @@ test_that("explicit casting of ordered factors to regular factors", {
   expect_identical(levels(ord), levels(df$ord))
 })
 
-
 test_that("SOMADataFrame read", {
   skip_if(!extended_tests())
   uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
@@ -639,7 +638,7 @@ test_that("SOMADataFrame can be updated", {
 
   # Add a new ordered and update
   tbl0 <- tbl1
-  tbl0$ordered <- ordered(sample(c("g1", "g2", "g3"), nrow(tbl0), replace = TRUE))
+  tbl0$ord <- ordered(sample(c("g1", "g2", "g3"), nrow(tbl0), replace = TRUE))
   expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
 
   # Verify ordered was added on disk
@@ -647,13 +646,14 @@ test_that("SOMADataFrame can be updated", {
     tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat(),
     "Table"
   )
-  # TODO: read ordered enums
-  # expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
-  # expect_s3_class(
-  #   tbl1$GetColumnByName("ordered")$as_vector(),
-  #   c("ordered", "factor"),
-  #   exact = TRUE
-  # )
+
+  # Read ordered enums
+  expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
+  expect_s3_class(
+    tbl1$GetColumnByName("ord")$as_vector(),
+    c("ordered", "factor"),
+    exact = TRUE
+  )
 
   # Error if attempting to drop an array dimension
   tbl0$foo <- NULL # drop the indexed dimension
