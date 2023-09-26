@@ -34,6 +34,7 @@
 #define SOMA_SPARSE_NDARRAY
 
 #include <tiledb/tiledb>
+#include "../utils/arrow_adapter.h"
 #include "enums.h"
 #include "soma_array.h"
 #include "soma_object.h"
@@ -50,6 +51,25 @@ class SOMASparseNDArray : public SOMAObject {
     //===================================================================
     //= public static
     //===================================================================
+
+    /**
+     * @brief Create a SOMASparseNDArray object at the given URI.
+     *
+     * @param uri URI to create the SOMASparseNDArray
+     * @param schema ArrowSchema*
+     * @param platform_config Optional config parameter dictionary
+     * @param index_column_names Optional Vector of column names to use
+     * @param domain Optional Vector of ArrowArray* specifying the domain of
+     * each index column. If not provided, the domain will use the min and max
+     * possible values for the column's datatype
+     * @return std::shared_ptr<SOMASparseNDArray> opened in read mode
+     */
+    static std::unique_ptr<SOMASparseNDArray> create(
+        std::string_view uri,
+        ArrowSchema* schema,
+        std::map<std::string, std::string> platform_config = {},
+        std::vector<std::string> index_column_names = {},
+        std::vector<ArrowArray*> domain = {});
 
     /**
      * @brief Create a SOMASparseNDArray object at the given URI.

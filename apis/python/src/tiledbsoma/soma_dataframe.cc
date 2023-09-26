@@ -21,9 +21,8 @@ static std::unique_ptr<SOMADataFrame> create(
     for(auto dom : pydomain){
         domain.push_back((ArrowArray*)dom.cast<uintptr_t>());
     }
-
     return SOMADataFrame::create(
-        uri, (ArrowSchema*)schema_ptr, index_column_names, platform_config, 
+        uri, (ArrowSchema*)schema_ptr, platform_config, index_column_names, 
         domain);
 }
 

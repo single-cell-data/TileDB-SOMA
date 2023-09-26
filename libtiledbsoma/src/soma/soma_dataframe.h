@@ -52,11 +52,23 @@ class SOMADataFrame : public SOMAObject {
     //= public static
     //===================================================================
 
+    /**
+     * @brief Create a SOMADataFrame object at the given URI.
+     *
+     * @param uri URI to create the SOMADataFrame
+     * @param schema ArrowSchema*
+     * @param platform_config Optional config parameter dictionary
+     * @param index_column_names Optional Vector of column names to use
+     * @param domain Optional Vector of ArrowArray* specifying the domain of
+     * each index column. If not provided, the domain will use the min and max
+     * possible values for the column's datatype
+     * @return std::shared_ptr<SOMADataFrame> opened in read mode
+     */
     static std::unique_ptr<SOMADataFrame> create(
         std::string_view uri,
         ArrowSchema* schema,
-        std::vector<std::string> index_column_names,
         std::map<std::string, std::string> platform_config = {},
+        std::vector<std::string> index_column_names = {},
         std::vector<ArrowArray*> domain = {});
 
     /**

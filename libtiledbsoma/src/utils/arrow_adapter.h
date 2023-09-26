@@ -14,6 +14,19 @@
 
 namespace tiledbsoma {
 
+struct TypeInfo {
+    tiledb_datatype_t type;
+    uint64_t elem_size;
+    uint32_t cell_val_num;
+
+    // is this represented as "Arrow large"
+    bool arrow_large;
+};
+
+using DimInfo = std::tuple<std::vector<std::byte>, std::vector<std::byte>>;
+
+const int TILE_EXTENT_DEFAULT = 2048;
+
 /**
  * @brief The ArrowBuffer holds a shared pointer to a ColumnBuffer, which
  * manages the lifetime of a ColumnBuffer used to back an Arrow array.
@@ -325,15 +338,6 @@ class ArrowAdapter {
         return tdb_schema;
     }
 
-    struct TypeInfo {
-        tiledb_datatype_t type;
-        uint64_t elem_size;
-        uint32_t cell_val_num;
-
-        // is this represented as "Arrow large"
-        bool arrow_large;
-    };
-
     static TypeInfo arrow_type_to_tiledb(ArrowSchema* arw_schema) {
         auto fmt = std::string(arw_schema->format);
         bool large = false;
@@ -405,32 +409,31 @@ class ArrowAdapter {
     template <typename T>
     static std::tuple<std::vector<std::byte>, std::vector<std::byte>>
     __convert_dim_info_as_bytes(T min, T max) {
-        T tile = std::min((T)2048, (T)(max - min + 1));
+        T tile = std::min((T)TILE_EXTENT_DEFAULT, (T)(max - min + 1));
         return std::make_tuple(
             __convert_domain_as_bytes(min, max), __convert_tile_as_bytes(tile));
     }
-
-    using dim_info_t =
-        std::tuple<std::vector<std::byte>, std::vector<std::byte>>;
 
     template <typename T>
-    static dim_info_t __convert_dim_info_as_bytes(T min, T max, T tile) {
+    static DimInfo __convert_dim_info_as_bytes(T min, T max, T tile) {
         return std::make_tuple(
             __convert_domain_as_bytes(min, max), __convert_tile_as_bytes(tile));
     }
 
-    static dim_info_t _schema_get_default_dim(ArrowSchema* arw_schema) {
+    static DimInfo _schema_get_default_dim(ArrowSchema* arw_schema) {
         auto datatype = arrow_type_to_tiledb(arw_schema).type;
         switch (datatype) {
             case TILEDB_FLOAT32: {
                 float min = std::numeric_limits<float>::min();
                 float max = std::numeric_limits<float>::max();
-                return __convert_dim_info_as_bytes(min, max, (float)2048);
+                return __convert_dim_info_as_bytes(
+                    min, max, (float)TILE_EXTENT_DEFAULT);
             }
             case TILEDB_FLOAT64: {
                 double min = std::numeric_limits<double>::min();
                 double max = std::numeric_limits<double>::max();
-                return __convert_dim_info_as_bytes(min, max, (double)2048);
+                return __convert_dim_info_as_bytes(
+                    min, max, (double)TILE_EXTENT_DEFAULT);
             }
             case TILEDB_UINT8: {
                 uint8_t min = std::numeric_limits<uint8_t>::min();
@@ -445,27 +448,32 @@ class ArrowAdapter {
             case TILEDB_UINT16: {
                 uint16_t min = std::numeric_limits<uint16_t>::min();
                 uint16_t max = std::numeric_limits<uint16_t>::max();
-                return __convert_dim_info_as_bytes(min, max, (uint16_t)2048);
+                return __convert_dim_info_as_bytes(
+                    min, max, (uint16_t)TILE_EXTENT_DEFAULT);
             }
             case TILEDB_INT16: {
                 int16_t min = std::numeric_limits<int16_t>::min();
                 int16_t max = std::numeric_limits<int16_t>::max();
-                return __convert_dim_info_as_bytes(min, max, (int16_t)2048);
+                return __convert_dim_info_as_bytes(
+                    min, max, (int16_t)TILE_EXTENT_DEFAULT);
             }
             case TILEDB_UINT32: {
                 uint32_t min = std::numeric_limits<uint32_t>::min();
                 uint32_t max = std::numeric_limits<uint32_t>::max();
-                return __convert_dim_info_as_bytes(min, max, (uint32_t)2048);
+                return __convert_dim_info_as_bytes(
+                    min, max, (uint32_t)TILE_EXTENT_DEFAULT);
             }
             case TILEDB_INT32: {
                 int32_t min = std::numeric_limits<int32_t>::min();
                 int32_t max = std::numeric_limits<int32_t>::max();
-                return __convert_dim_info_as_bytes(min, max, (int32_t)2048);
+                return __convert_dim_info_as_bytes(
+                    min, max, (int32_t)TILE_EXTENT_DEFAULT);
             }
             case TILEDB_UINT64: {
                 uint64_t min = std::numeric_limits<uint64_t>::min();
                 uint64_t max = std::numeric_limits<uint64_t>::max();
-                return __convert_dim_info_as_bytes(min, max, (uint64_t)2048);
+                return __convert_dim_info_as_bytes(
+                    min, max, (uint64_t)TILE_EXTENT_DEFAULT);
             }
             case TILEDB_INT64:
             case TILEDB_DATETIME_YEAR:
@@ -489,15 +497,16 @@ class ArrowAdapter {
                     min = std::numeric_limits<int64_t>::min();
                     max = std::numeric_limits<int64_t>::max();
                 }
-                return __convert_dim_info_as_bytes(min, max, (int64_t)2048);
+                return __convert_dim_info_as_bytes(
+                    min, max, (int64_t)TILE_EXTENT_DEFAULT);
             }
             default:
-                throw tiledb::TileDBError(
+                throw TileDBError(
                     "[TileDB-Arrow]: Unsupported TileDB type for dimension)");
         }
     };
 
-    static dim_info_t _schema_get_dim_from_buffer(
+    static DimInfo _schema_get_dim_from_buffer(
         const void* buffer, tiledb_datatype_t datatype) {
         switch (datatype) {
             case TILEDB_FLOAT32: {
@@ -564,7 +573,7 @@ class ArrowAdapter {
                 return __convert_dim_info_as_bytes(min, max);
             }
             default:
-                throw tiledb::TileDBError(
+                throw TileDBError(
                     "[TileDB-Arrow]: Unsupported TileDB type for dimension)");
         }
     }
