@@ -97,6 +97,11 @@ SOMADataFrame <- R6::R6Class(
         field <- schema$GetFieldByName(field_name)
         field_type <- tiledb_type_from_arrow_type(field$type)
 
+        # Check if the field is ordered and mark it as such
+        if (!is.null(x = levels[[field_name]]) && isTRUE(field$type$ordered)) {
+          attr(levels[[field_name]], 'ordered') <- attr(levels[[field_name]], 'ordered', TRUE) %||% TRUE
+        }
+
         tdb_attrs[[field_name]] <- tiledb::tiledb_attr(
           name = field_name,
           type = field_type,
