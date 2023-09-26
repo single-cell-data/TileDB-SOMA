@@ -99,7 +99,7 @@ SOMADataFrame <- R6::R6Class(
 
         # Check if the field is ordered and mark it as such
         if (!is.null(x = levels[[field_name]]) && isTRUE(field$type$ordered)) {
-          attr(levels[[field_name]], 'ordered') <- attr(levels[[field_name]], 'ordered', TRUE) %||% TRUE
+          attr(levels[[field_name]], 'ordered') <- attr(levels[[field_name]], 'ordered', exact = TRUE) %||% TRUE
         }
 
         tdb_attrs[[field_name]] <- tiledb::tiledb_attr(
