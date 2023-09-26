@@ -53,10 +53,12 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
         auto enum_name = AttributeExperimental::get_enumeration_name(
             schema.context(), attr);
         std::optional<Enumeration> enumeration = std::nullopt;
+        bool is_ordered = false;
         if (enum_name.has_value()) {
-            enumeration = std::make_optional<Enumeration>(
-                ArrayExperimental::get_enumeration(
-                    schema.context(), *array, *enum_name));
+            auto enmr = ArrayExperimental::get_enumeration(
+                schema.context(), *array, *enum_name);
+            is_ordered = enmr.ordered();
+            enumeration = std::make_optional<Enumeration>(enmr);
         }
 
         if (!is_var && attr.cell_val_num() != 1) {
@@ -66,7 +68,13 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
         }
 
         return ColumnBuffer::alloc(
-            schema, name_str, type, is_var, is_nullable, enumeration);
+            schema,
+            name_str,
+            type,
+            is_var,
+            is_nullable,
+            enumeration,
+            is_ordered);
 
     } else if (schema.domain().has_dimension(name_str)) {
         auto dim = schema.domain().dimension(name_str);
@@ -82,7 +90,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
         }
 
         return ColumnBuffer::alloc(
-            schema, name_str, type, is_var, false, std::nullopt);
+            schema, name_str, type, is_var, false, std::nullopt, false);
     }
 
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
@@ -116,14 +124,16 @@ ColumnBuffer::ColumnBuffer(
     size_t num_bytes,
     bool is_var,
     bool is_nullable,
-    std::optional<Enumeration> enumeration)
+    std::optional<Enumeration> enumeration,
+    bool is_ordered)
     : name_(name)
     , type_(type)
     , type_size_(tiledb::impl::type_size(type))
     , num_cells_(0)
     , is_var_(is_var)
     , is_nullable_(is_nullable)
-    , enumeration_(enumeration) {
+    , enumeration_(enumeration)
+    , is_ordered_(is_ordered) {
     LOG_DEBUG(fmt::format(
         "[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}",
         name,
@@ -201,7 +211,8 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     tiledb_datatype_t type,
     bool is_var,
     bool is_nullable,
-    std::optional<Enumeration> enumeration) {
+    std::optional<Enumeration> enumeration,
+    bool is_ordered) {
     // Set number of bytes for the data buffer. Override with a value from
     // the config if present.
     auto num_bytes = DEFAULT_ALLOC_BYTES;
@@ -233,7 +244,14 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
                                 num_bytes / tiledb::impl::type_size(type);
 
     return std::make_shared<ColumnBuffer>(
-        name, type, num_cells, num_bytes, is_var, is_nullable, enumeration);
+        name,
+        type,
+        num_cells,
+        num_bytes,
+        is_var,
+        is_nullable,
+        enumeration,
+        is_ordered);
 }
 
 }  // namespace tiledbsoma
