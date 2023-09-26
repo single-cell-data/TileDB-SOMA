@@ -6,6 +6,7 @@
 
 #include <Rcpp.h>               // for R interface to C++
 #include <nanoarrow.h>          // for C interface to Arrow
+#include <RcppInt64>            // for fromInteger64
 
 // We get these via nanoarrow and must cannot include carrow.h again
 #define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
@@ -26,7 +27,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
         bool suitable = false;
         if (tp == TILEDB_UINT64) {
             Rcpp::NumericVector payload = lst[nm];
-            std::vector<int64_t> iv = getInt64Vector(payload);
+            std::vector<int64_t> iv = Rcpp::fromInteger64(payload, false);
             std::vector<uint64_t> uv(iv.size());
             const std::pair<uint64_t,uint64_t> pr = dm->domain<uint64_t>();
             for (size_t i=0; i<iv.size(); i++) {
@@ -39,7 +40,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
             }
         } else if (tp == TILEDB_INT64) {
             Rcpp::NumericVector payload = lst[nm];
-            std::vector<int64_t> iv = getInt64Vector(payload);
+            std::vector<int64_t> iv = Rcpp::fromInteger64(payload, false);
             const std::pair<int64_t,int64_t> pr = dm->domain<int64_t>();
             for (size_t i=0; i<iv.size(); i++) {
                 if (iv[i] >= pr.first && iv[i] <= pr.second) {
@@ -103,8 +104,8 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
             std::vector<std::pair<uint64_t, uint64_t>> vp(mm.nrow());
             const std::pair<uint64_t,uint64_t> pr = dm->domain<uint64_t>();
             for (int i=0; i<mm.nrow(); i++) {
-                uint64_t l = static_cast<uint64_t>(makeScalarInteger64(lo[i]));
-                uint64_t h = static_cast<uint64_t>(makeScalarInteger64(hi[i]));
+                uint64_t l = static_cast<uint64_t>(Rcpp::fromInteger64(lo[i]));
+                uint64_t h = static_cast<uint64_t>(Rcpp::fromInteger64(hi[i]));
                 vp[i] = std::make_pair(std::max(l,pr.first), std::min(h, pr.second));
                 spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, l, h) ;
                 suitable = l < pr.second && h > pr.first; // lower must be less than max, higher more than min
@@ -112,8 +113,8 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
             if (suitable) sr->set_dim_ranges<uint64_t>(nm, vp);
         } else if (tp == TILEDB_INT64) {
             Rcpp::NumericMatrix mm = lst[nm];
-            std::vector<int64_t> lo = getInt64Vector(mm.column(0));
-            std::vector<int64_t> hi = getInt64Vector(mm.column(1));
+            std::vector<int64_t> lo = Rcpp::fromInteger64(mm.column(0), false);
+            std::vector<int64_t> hi = Rcpp::fromInteger64(mm.column(1), false);
             std::vector<std::pair<int64_t, int64_t>> vp(mm.nrow());
             const std::pair<int64_t,int64_t> pr = dm->domain<int64_t>();
             for (int i=0; i<mm.nrow(); i++) {
