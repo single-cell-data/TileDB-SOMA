@@ -228,7 +228,7 @@ test_that("creation with ordered factors", {
   uri <- withr::local_tempdir("soma-dataframe-ordered")
   n <- 10L
   df <- data.frame(
-    soma_joinid = bit64::as.integer64(seq_len(length.out = n) - 1L),
+    soma_joinid = bit64::seq.integer64(from = 0L, to = n - 1L),
     int = seq_len(length.out = n),
     bool = rep_len(c(TRUE, FALSE), length.out = n),
     ord = ordered(rep_len(c("g1", "g2", "g3"), length.out = n))
@@ -259,7 +259,7 @@ test_that("explicit casting of ordered factors to regular factors", {
   uri <- withr::local_tempdir("soma-dataframe-unordered")
   n <- 10L
   df <- data.frame(
-    soma_joinid = bit64::as.integer64(seq_len(length.out = n) - 1L),
+    soma_joinid = bit64::seq.integer64(from = 0L, to = n - 1L),
     int = seq_len(length.out = n),
     bool = rep_len(c(TRUE, FALSE), length.out = n),
     ord = ordered(rep_len(c("g1", "g2", "g3"), length.out = n))
@@ -610,7 +610,11 @@ test_that("SOMADataFrame can be updated", {
     "Table"
   )
   expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
-  expect_s3_class(tbl1$GetColumnByName("frobo")$as_vector(), 'factor')
+  expect_s3_class(
+    tbl1$GetColumnByName("frobo")$as_vector(),
+    "factor",
+    exact = TRUE
+  )
 
   # Add a new enum where levels aren't in appearance- or alphabetical-order
   tbl0 <- tbl1
@@ -630,7 +634,11 @@ test_that("SOMADataFrame can be updated", {
     "Table"
   )
   expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
-  expect_s3_class(tbl1$GetColumnByName("rlvl")$as_vector(), 'factor')
+  expect_s3_class(
+    tbl1$GetColumnByName("rlvl")$as_vector(),
+    "factor",
+    exact = TRUE
+  )
   expect_identical(
     levels(tbl1$GetColumnByName("rlvl")$as_vector()),
     c("green", "red", "blue")
@@ -707,4 +715,81 @@ test_that("SOMADataFrame can be updated from a data frame", {
     SOMADataFrameOpen(uri, mode = "WRITE")$update(df0, row_index_name = "foo"),
     "'row_index_name' conflicts with an existing column name"
   )
+})
+
+test_that("missing levels in enums", {
+  skip_if_not_installed("tiledb", "0.21.0")
+  skip_if(!extended_tests())
+  uri <- withr::local_tempdir("soma-dataframe-missing-levels")
+  n <- 10L
+  df <- data.frame(
+    soma_joinid = bit64::seq.integer64(from = 0L, to = n - 1L),
+    int = seq_len(length.out = n),
+    enum = factor(
+      x = rep_len(c("g1", "g2", "g3"), length.out = n),
+      levels = c("g1", "g3")
+    )
+  )
+  expect_true(any(is.na(df$enum)))
+
+  # Create SOMADataFrame w/ missing enum levels
+  tbl <- arrow::as_arrow_table(df)
+  lvls <- sapply(
+    setdiff(names(df), "soma_joinid"),
+    function(x) levels(df[[x]]),
+    simplify = FALSE,
+    USE.NAMES = TRUE
+  )
+  sdf <- SOMADataFrameCreate(uri, tbl$schema, levels = lvls)
+  on.exit(sdf$close())
+  sdf$write(tbl)
+  sdf$close()
+
+  # Test missingness is preserved
+  expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
+  expect_true(tiledb::tiledb_array_has_enumeration(sdf$object)["enum"])
+  expect_s4_class(
+    attr <- tiledb::attrs(sdf$tiledb_schema())$enum,
+    "tiledb_attr"
+  )
+  expect_identical(
+    tiledb::tiledb_attribute_get_enumeration(attr, sdf$object),
+    levels(df$enum)
+  )
+  expect_true(tiledb::tiledb_attribute_get_nullable(attr))
+
+  # Test reading preserves missingness
+  expect_identical(sdf$object[]$enum, df$enum)
+  tbl0 <- sdf$read()$concat()
+  expect_identical(tbl0$enum$as_vector(), df$enum)
+  sdf$close()
+
+  # Update w/ missing enum levels
+  tbl0$miss <- factor(
+    rep_len(letters[1:3], length.out = n),
+    levels = c("b", "a")
+  )
+  expect_true(any(is.na(tbl0$miss$as_vector())))
+  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")
+  expect_no_condition(sdf$update(tbl0))
+  sdf$close()
+
+  # Test missingness is preserved when updating
+  expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
+  expect_true(tiledb::tiledb_array_has_enumeration(sdf$object)["miss"])
+  expect_s4_class(
+    attr <- tiledb::attrs(sdf$tiledb_schema())$miss,
+    "tiledb_attr"
+  )
+  expect_identical(
+    tiledb::tiledb_attribute_get_enumeration(attr, sdf$object),
+    levels(tbl0$miss$as_vector())
+  )
+  expect_true(tiledb::tiledb_attribute_get_nullable(attr))
+
+  # Test reading preserves updated missingness
+  expect_identical(sdf$object[]$miss, tbl0$miss$as_vector())
+  tbl1 <- sdf$read()$concat()
+  expect_identical(tbl1$miss$as_vector(), tbl0$miss$as_vector())
+  sdf$close()
 })
