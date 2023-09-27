@@ -271,7 +271,13 @@ setuptools.setup(
         "anndata < 0.9; python_version<'3.8'",
         "anndata; python_version>='3.8'",
         "attrs>=22.2",
-        "numba~=0.58.0",
+        "numba~=0.58.0; python_version>='3.8'",
+        # Older numba version needed for Python3.7.
+        # This older numba version was also incompatble with newer numpy
+        # versions, and the old pip solver (<=2020) needed us to explicate
+        # that constraint here (issue #1051).
+        "numba==0.56.4; python_version<'3.8'",
+        "numpy>=1.18,<1.24; python_version<'3.8'",
         "pandas",
         "pyarrow>=9.0.0",
         "scanpy>=1.9.2",
