@@ -1131,8 +1131,11 @@ def _write_dataframe(
 
     df.reset_index(inplace=True)
     if id_column_name is not None:
-        df.rename(columns={"index": id_column_name}, inplace=True)
-        id_column_name = "index"
+        if id_column_name in df:
+            if "index" in df:
+                df.drop(columns=["index"], inplace=True)
+        else:
+            df.rename(columns={"index": id_column_name}, inplace=True)
 
     df[SOMA_JOINID] = np.asarray(axis_mapping.data)
 

@@ -70,7 +70,11 @@ def _string_dict_from_pandas_dataframe(
     df = df.head(1)  # since reset_index can be expensive on full data
     if df.index.name is None or df.index.name == "index":
         df.reset_index(inplace=True)
-        df.rename(columns={"index": default_index_name}, inplace=True)
+        if default_index_name in df:
+            if "index" in df:
+                df.drop(columns=["index"], inplace=True)
+        else:
+            df.rename(columns={"index": default_index_name}, inplace=True)
     else:
         df.reset_index(inplace=True)
 
