@@ -26,7 +26,8 @@ def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
 
-def test_no_change(adata):
+@pytest.mark.parametrize("readback", [False, True])
+def test_no_change(adata, readback):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
@@ -35,9 +36,16 @@ def test_no_change(adata):
         o1 = exp.obs.schema
         v1 = exp.ms["RNA"].var.schema
 
+        if readback:
+            new_obs = exp.obs.read().concat().to_pandas()
+            new_var = exp.ms["RNA"].var.read().concat().to_pandas()
+        else:
+            new_obs = adata.obs
+            new_var = adata.var
+
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
-        tiledbsoma.io.update_obs(exp, adata.obs)
-        tiledbsoma.io.update_var(exp, adata.var, "RNA")
+        tiledbsoma.io.update_obs(exp, new_obs)
+        tiledbsoma.io.update_var(exp, new_var, "RNA")
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
@@ -47,7 +55,8 @@ def test_no_change(adata):
     assert v1 == v2
 
 
-def test_add(adata):
+@pytest.mark.parametrize("readback", [False, True])
+def test_add(adata, readback):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
@@ -55,8 +64,12 @@ def test_add(adata):
     with tiledbsoma.Experiment.open(output_path) as exp:
         exp.ms["RNA"].var.schema
 
-    new_obs = adata.obs
-    new_var = adata.var
+        if readback:
+            new_obs = exp.obs.read().concat().to_pandas()
+            new_var = exp.ms["RNA"].var.read().concat().to_pandas()
+        else:
+            new_obs = adata.obs
+            new_var = adata.var
 
     new_obs["is_g1"] = new_obs["groups"] == "g1"
     new_obs["seq"] = np.arange(new_obs.shape[0], dtype=np.int32)
@@ -76,7 +89,8 @@ def test_add(adata):
     assert v2.field("vst.mean.sq").type == pa.float64()
 
 
-def test_drop(adata):
+@pytest.mark.parametrize("readback", [False, True])
+def test_drop(adata, readback):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
@@ -84,8 +98,12 @@ def test_drop(adata):
     with tiledbsoma.Experiment.open(output_path) as exp:
         exp.ms["RNA"].var.schema
 
-    new_obs = adata.obs
-    new_var = adata.var
+        if readback:
+            new_obs = exp.obs.read().concat().to_pandas()
+            new_var = exp.ms["RNA"].var.read().concat().to_pandas()
+        else:
+            new_obs = adata.obs
+            new_var = adata.var
 
     del new_obs["groups"]
     del new_var["vst.mean"]
@@ -104,7 +122,8 @@ def test_drop(adata):
         v2.field("vst.mean")
 
 
-def test_change(adata):
+@pytest.mark.parametrize("readback", [False, True])
+def test_change(adata, readback):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
@@ -113,8 +132,12 @@ def test_change(adata):
         o1 = exp.obs.schema
         v1 = exp.ms["RNA"].var.schema
 
-    new_obs = adata.obs
-    new_var = adata.var
+        if readback:
+            new_obs = exp.obs.read().concat().to_pandas()
+            new_var = exp.ms["RNA"].var.read().concat().to_pandas()
+        else:
+            new_obs = adata.obs
+            new_var = adata.var
 
     new_obs["groups"] = np.arange(new_obs.shape[0], dtype=np.int16)
     new_var["vst.mean"] = np.arange(new_var.shape[0], dtype=np.int32)
@@ -133,8 +156,9 @@ def test_change(adata):
     assert v1 == v2
 
 
+@pytest.mark.parametrize("readback", [False, True])
 @pytest.mark.parametrize("shift_and_exc", [[0, None], [1, ValueError]])
-def test_change_counts(adata, shift_and_exc):
+def test_change_counts(adata, readback, shift_and_exc):
     shift, exc = shift_and_exc
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
@@ -144,8 +168,15 @@ def test_change_counts(adata, shift_and_exc):
         o1 = exp.obs.schema
         v1 = exp.ms["RNA"].var.schema
 
-    old_nobs = len(adata.obs)
-    old_nvar = len(adata.var)
+        if readback:
+            old_obs = exp.obs.read().concat().to_pandas()
+            old_var = exp.ms["RNA"].var.read().concat().to_pandas()
+        else:
+            old_obs = adata.obs
+            old_var = adata.var
+
+    old_nobs = len(old_obs)
+    old_nvar = len(old_var)
 
     new_nobs = old_nobs + shift
     new_nvar = old_nvar + shift
