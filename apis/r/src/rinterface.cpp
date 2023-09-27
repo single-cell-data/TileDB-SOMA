@@ -1,5 +1,6 @@
 #include <Rcpp.h>               // for R interface to C++
 #include <nanoarrow.h>          // for C interface to Arrow
+#include <RcppInt64>            // for fromInteger64
 
 // we currently get deprecation warnings by default which are noisy
 #ifndef TILEDB_NO_API_DEPRECATION_WARNINGS
@@ -233,5 +234,5 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
 Rcpp::NumericVector shape(const std::string& uri,
                           Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
-    return makeInteger64(sr->shape());
+    return Rcpp::toInteger64(sr->shape());
 }
