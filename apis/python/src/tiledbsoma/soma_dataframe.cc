@@ -23,8 +23,24 @@ static std::unique_ptr<SOMADataFrame> create(
         *((ArrowArray*)domains_ptr), *((ArrowArray*)extents_ptr));
 }
 
-static void write(SOMADataFrame& dataframe, uintptr_t array_ptr){
+static void write(SOMADataFrame& dataframe, uintptr_t schema_ptr, uintptr_t array_ptr){
+    ArrowSchema arrow_schema = *((ArrowSchema*)schema_ptr);
     ArrowArray arrow_array = *((ArrowArray*)array_ptr);
+    auto schema = dataframe.schema();
+    auto array_buffer = std::make_shared<ArrayBuffers>();
+
+    for(int64_t i = 0; i < arrow_array.n_children; ++i){
+        auto child = arrow_schema.children[i];
+        auto name = child->name;
+        auto typeinfo = ArrowAdapter::arrow_type_to_tiledb(child);
+        array_buffer->emplace(name, 
+            ColumnBuffer::create(
+                *schema, 
+                name, 
+                arrow_array.children[i]->buffers[1], 
+                arrow_array.children[i]->length * typeinfo.elem_size)); 
+    }
+    dataframe.write(array_buffer);
 }
 
 void init_soma_dataframe(py::module &m) {
@@ -38,6 +54,7 @@ void init_soma_dataframe(py::module &m) {
         uintptr_t>(create))
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::map<std::string, std::string>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::shared_ptr<Context>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
+    .def_static("exists", &SOMADataFrame::exists)
 
     .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def("close", &SOMADataFrame::close)
@@ -47,6 +64,7 @@ void init_soma_dataframe(py::module &m) {
     .def("ctx", &SOMADataFrame::ctx)
     .def("schema", &SOMADataFrame::schema)
     .def("index_column_names", &SOMADataFrame::index_column_names)
+    .def("count", &SOMADataFrame::count)
     .def("read_next", &SOMADataFrame::read_next)
     .def("write", write)
     .def("set_metadata", &SOMADataFrame::set_metadata)

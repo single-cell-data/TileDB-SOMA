@@ -78,6 +78,11 @@ class SOMAObject {
      */
     virtual bool is_open() const = 0;
 
+    // /**
+    //  * @brief Check if the SOMAObject is exists.
+    //  */
+    // virtual static bool exists() const = 0;
+
     /**
      * Set metadata key-value items to a SOMAObject. The SOMAObject must
      * opened in WRITE mode, otherwise the function will error out.

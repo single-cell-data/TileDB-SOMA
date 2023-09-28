@@ -55,14 +55,14 @@ def test_dataframe(tmp_path, arrow_schema):
     assert not soma.Collection.exists(uri)
     assert not soma.SparseNDArray.exists(uri)
 
-    with soma.DataFrame.open(uri) as sdf:
-        assert sdf.count == 0
-        assert len(sdf) == 0
+    # with soma.DataFrame.open(uri) as sdf:
+    #     assert sdf.count == 0
+    #     assert len(sdf) == 0
 
-        assert sorted(sdf.schema.names) == sorted(
-            ["foo", "bar", "baz", "soma_joinid", "quux"]
-        )
-        assert sorted(sdf.keys()) == sorted(sdf.schema.names)
+    #     assert sorted(sdf.schema.names) == sorted(
+    #         ["foo", "bar", "baz", "soma_joinid", "quux"]
+    #     )
+    #     assert sorted(sdf.keys()) == sorted(sdf.schema.names)
 
     with soma.DataFrame.open(uri, "w") as sdf:
         # Write

@@ -371,9 +371,15 @@ class ArrowAdapter {
                     tdb_dom.add_dimension(dim);
                 } else {
                     auto attr = Attribute(*ctx, child->name, typeinfo.type);
-                    if (child->flags | ARROW_FLAG_NULLABLE) {
-                        attr.set_nullable(true);
-                    }
+                    // std::cout << "child->flags: " << child->flags <<
+                    // std::endl; std::cout << "ARROW_FLAG_NULLABLE: " <<
+                    // ARROW_FLAG_NULLABLE
+                    //           << std::endl;
+                    // std::cout << child->flags | ARROW_FLAG_NULLABLE
+                    //                                 << std::endl;
+                    // if (child->flags | ARROW_FLAG_NULLABLE) {
+                    //     attr.set_nullable(true);
+                    // }
                     tdb_schema.add_attribute(attr);
                 }
             }

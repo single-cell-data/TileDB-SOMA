@@ -144,6 +144,11 @@ class SOMADataFrame : public SOMAObject {
         ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
+    /**
+     * @brief Check if the SOMADataFrame exists at the URI.
+     */
+    static bool exists(std::string_view uri);
+
     //===================================================================
     //= public non-static
     //===================================================================

@@ -30,12 +30,12 @@
  *   This file defines the SOMADataFrame class.
  */
 
+#include "soma_dataframe.h"
+#include <exception>
 #include <filesystem>
-
 #include <tiledb/tiledb>
 #include "../utils/arrow_adapter.h"
 #include "array_buffers.h"
-#include "soma_dataframe.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -97,6 +97,15 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMADataFrame>(
         mode, uri, ctx, column_names, result_order, timestamp);
+}
+
+bool SOMADataFrame::exists(std::string_view uri) {
+    try {
+        SOMADataFrame::open(uri, OpenMode::read);
+    } catch (std::exception& e) {
+        return false;
+    }
+    return true;
 }
 
 //===================================================================

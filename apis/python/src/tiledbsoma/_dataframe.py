@@ -56,6 +56,7 @@ class DataFrame():
         column_to_enumerations: Optional[Dict[str, str]] = None,
     ) -> "DataFrame":
         context = _validate_soma_tiledb_context(context)
+        schema = _canonicalize_schema(schema, index_column_names)
 
         c_schema = ffi.new("struct ArrowSchema*")
         ptr_schema = int(ffi.cast("uintptr_t", c_schema))
@@ -82,16 +83,20 @@ class DataFrame():
         ext._export_to_c(ptr_extents)
     
         # CHECK DOMAIN AND INDEX COL NAME SIZE
-        soma_dataframe = pts.SOMADataFrame.create(uri, ptr_schema,      
-            index_column_names, platform_config or {}, ptr_domain, ptr_extents)
+        soma_dataframe = DataFrame(pts.SOMADataFrame.create(uri, ptr_schema,      
+            index_column_names, platform_config or {}, ptr_domain, ptr_extents))
         
-        return DataFrame(soma_dataframe)
+        return soma_dataframe
     
         # TODO delete pointers
     
     @classmethod
-    def open(self, uri):
-        return pts.SOMADataFrame.open(uri, pts.OpenMode.read, {}, [], pts.ResultOrder.automatic, None)
+    def open(self, uri, mode="r"):
+        return DataFrame(pts.SOMADataFrame.open(uri, pts.OpenMode.read if mode == "r" else pts.OpenMode.write, {}, [], pts.ResultOrder.automatic, None))
+    
+    @classmethod
+    def exists(self, uri):
+        return pts.SOMADataFrame.exists(uri)
     
     def close(self):
         return self._soma_dataframe.close()
@@ -99,12 +104,18 @@ class DataFrame():
     def write(
         self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None):
         c_values = ffi.new("struct ArrowArray*")
-        ptr_values = int(ffi.cast("uintptr_t", c_values))
+        ptr_array = int(ffi.cast("uintptr_t", c_values))
         gc.collect()
         rb = pa.RecordBatch.from_arrays(
             [col.chunks[0] for col in values], names=values.schema.names)
-        rb._export_to_c(ptr_values)
-        self._soma_dataframe.write(ptr_values)
+        rb._export_to_c(ptr_array)
+        
+        c_schema = ffi.new("struct ArrowSchema*")
+        ptr_schema = int(ffi.cast("uintptr_t", c_schema))
+        gc.collect()
+        values.schema._export_to_c(ptr_schema)
+        
+        self._soma_dataframe.write(ptr_schema, ptr_array)
     
     def read(self):
         return self._soma_dataframe.read_next()
@@ -118,8 +129,20 @@ class DataFrame():
         return self._soma_dataframe.uri()
     
     @property
+    def schema(self):
+        return self._soma_dataframe.schema()
+    
+    @property
     def index_column_names(self):
         return self._soma_dataframe.index_column_names()
+    
+    @property
+    def count(self):
+        return self._soma_dataframe.count()
+
+    def __len__(self) -> int:
+        """Returns the number of rows in the dataframe. Same as ``df.count``."""
+        return self._soma_dataframe.count()
     
     def __enter__(self) -> Self:
         return self
@@ -545,70 +568,70 @@ class DataFrame():
 #         return False
 
 
-# def _canonicalize_schema(
-#     schema: pa.Schema, index_column_names: Sequence[str]
-# ) -> pa.Schema:
-#     """Turns an Arrow schema into the canonical version and checks for errors.
+def _canonicalize_schema(
+    schema: pa.Schema, index_column_names: Sequence[str]
+) -> pa.Schema:
+    """Turns an Arrow schema into the canonical version and checks for errors.
 
-#     Returns a schema, which may be modified by the addition of required columns
-#     (e.g. ``soma_joinid``).
-#     """
-#     _util.check_type("schema", schema, (pa.Schema,))
-#     if not index_column_names:
-#         raise ValueError("DataFrame requires one or more index columns")
+    Returns a schema, which may be modified by the addition of required columns
+    (e.g. ``soma_joinid``).
+    """
+    _util.check_type("schema", schema, (pa.Schema,))
+    if not index_column_names:
+        raise ValueError("DataFrame requires one or more index columns")
 
-#     if SOMA_JOINID in schema.names:
-#         if schema.field(SOMA_JOINID).type != pa.int64():
-#             raise ValueError(f"{SOMA_JOINID} field must be of type Arrow int64")
-#     else:
-#         # add SOMA_JOINID
-#         schema = schema.append(pa.field(SOMA_JOINID, pa.int64()))
+    if SOMA_JOINID in schema.names:
+        if schema.field(SOMA_JOINID).type != pa.int64():
+            raise ValueError(f"{SOMA_JOINID} field must be of type Arrow int64")
+    else:
+        # add SOMA_JOINID
+        schema = schema.append(pa.field(SOMA_JOINID, pa.int64()))
 
-#     # verify no illegal use of soma_ prefix
-#     for field_name in schema.names:
-#         if field_name.startswith("soma_") and field_name != SOMA_JOINID:
-#             raise ValueError(
-#                 f"DataFrame schema may not contain fields with name prefix ``soma_``: got ``{field_name}``"
-#             )
+    # verify no illegal use of soma_ prefix
+    for field_name in schema.names:
+        if field_name.startswith("soma_") and field_name != SOMA_JOINID:
+            raise ValueError(
+                f"DataFrame schema may not contain fields with name prefix ``soma_``: got ``{field_name}``"
+            )
 
-#     # verify that all index_column_names are present in the schema
-#     schema_names_set = set(schema.names)
-#     for index_column_name in index_column_names:
-#         if index_column_name.startswith("soma_") and index_column_name != SOMA_JOINID:
-#             raise ValueError(
-#                 f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"'
-#             )
-#         if index_column_name not in schema_names_set:
-#             schema_names_string = "{}".format(list(schema_names_set))
-#             raise ValueError(
-#                 f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}"
-#             )
-#         dtype = schema.field(index_column_name).type
-#         if not pa.types.is_dictionary(dtype) and dtype not in [
-#             pa.int8(),
-#             pa.uint8(),
-#             pa.int16(),
-#             pa.uint16(),
-#             pa.int32(),
-#             pa.uint32(),
-#             pa.int64(),
-#             pa.uint64(),
-#             pa.float32(),
-#             pa.float64(),
-#             pa.binary(),
-#             pa.large_binary(),
-#             pa.string(),
-#             pa.large_string(),
-#             pa.timestamp("s"),
-#             pa.timestamp("ms"),
-#             pa.timestamp("us"),
-#             pa.timestamp("ns"),
-#         ]:
-#             raise TypeError(
-#                 f"Unsupported index type {schema.field(index_column_name).type}"
-#             )
+    # verify that all index_column_names are present in the schema
+    schema_names_set = set(schema.names)
+    for index_column_name in index_column_names:
+        if index_column_name.startswith("soma_") and index_column_name != SOMA_JOINID:
+            raise ValueError(
+                f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"'
+            )
+        if index_column_name not in schema_names_set:
+            schema_names_string = "{}".format(list(schema_names_set))
+            raise ValueError(
+                f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}"
+            )
+        dtype = schema.field(index_column_name).type
+        if not pa.types.is_dictionary(dtype) and dtype not in [
+            pa.int8(),
+            pa.uint8(),
+            pa.int16(),
+            pa.uint16(),
+            pa.int32(),
+            pa.uint32(),
+            pa.int64(),
+            pa.uint64(),
+            pa.float32(),
+            pa.float64(),
+            pa.binary(),
+            pa.large_binary(),
+            pa.string(),
+            pa.large_string(),
+            pa.timestamp("s"),
+            pa.timestamp("ms"),
+            pa.timestamp("us"),
+            pa.timestamp("ns"),
+        ]:
+            raise TypeError(
+                f"Unsupported index type {schema.field(index_column_name).type}"
+            )
 
-#     return schema
+    return schema
 
 
 # def _build_tiledb_schema(
