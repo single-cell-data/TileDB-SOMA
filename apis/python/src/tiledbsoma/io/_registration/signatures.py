@@ -72,7 +72,11 @@ def _string_dict_from_pandas_dataframe(
         df.reset_index(inplace=True)
         if default_index_name in df:
             if "index" in df:
-                df.drop(columns=["index"], inplace=True)
+                # Avoid the warning:
+                # "A value is trying to be set on a copy of a slice from a DataFrame"
+                # which would occur if we did:
+                # df.drop(columns=["index"], inplace=True)
+                df = df.drop(columns=["index"])
         else:
             df.rename(columns={"index": default_index_name}, inplace=True)
     else:

@@ -71,8 +71,14 @@ def test_add(adata, readback):
             new_obs = adata.obs
             new_var = adata.var
 
+    # boolean
     new_obs["is_g1"] = new_obs["groups"] == "g1"
+    # int
     new_obs["seq"] = np.arange(new_obs.shape[0], dtype=np.int32)
+    # categorical of string
+    new_obs["parity"] = pd.Categorical(
+        np.asarray([["even", "odd"][e % 2] for e in range(len(new_obs))])
+    )
 
     new_var["vst.mean.sq"] = new_var["vst.mean"] ** 2
 
@@ -83,9 +89,15 @@ def test_add(adata, readback):
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
         v2 = exp.ms["RNA"].var.schema
+        obs = exp.obs.read().concat().to_pandas()
 
     assert o2.field("is_g1").type == pa.bool_()
     assert o2.field("seq").type == pa.int32()
+    assert o2.field("parity").type == pa.dictionary(
+        index_type=pa.int8(), value_type=pa.string(), ordered=False
+    )
+    assert obs["parity"][0] == "even"
+    assert obs["parity"][1] == "odd"
     assert v2.field("vst.mean.sq").type == pa.float64()
 
 

@@ -1513,12 +1513,24 @@ def _update_dataframe(
         # schema-creation logic.
         atype = arrow_schema.field(add_key).type
         dtype = tiledb_type_from_arrow_type(atype)
+
+        enum_label: Optional[str] = None
+        if pa.types.is_dictionary(arrow_table.schema.field(add_key).type):
+            enum_label = add_key
+            dt = cast(pd.CategoricalDtype, new_data[add_key].dtype)
+            se.add_enumeration(
+                tiledb.Enumeration(
+                    name=add_key, ordered=atype.ordered, values=list(dt.categories)
+                )
+            )
+
         filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
         se.add_attribute(
             tiledb.Attr(
                 name=add_key,
                 dtype=dtype,
                 filters=filters,
+                enum_label=enum_label,
             )
         )
 
