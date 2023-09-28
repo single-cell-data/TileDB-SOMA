@@ -112,6 +112,7 @@ class ColumnBuffer {
      * @param is_var Column type is variable length
      * @param is_nullable Column can contain null values
      * @param enumeration Optional Enumeration associated with column
+     * @param is_ordered Optional Enumeration is ordered
      */
     ColumnBuffer(
         std::string_view name,
@@ -120,7 +121,8 @@ class ColumnBuffer {
         size_t num_bytes,
         bool is_var = false,
         bool is_nullable = false,
-        std::optional<Enumeration> enumeration = std::nullopt);
+        std::optional<Enumeration> enumeration = std::nullopt,
+        bool is_ordered = false);
 
     ColumnBuffer() = delete;
     ColumnBuffer(const ColumnBuffer&) = delete;
@@ -328,6 +330,13 @@ class ColumnBuffer {
         return tcb::span<char>(enum_str_.data(), enum_str_.length());
     }
 
+    /**
+     * @brief Return true if the buffer contains an ordered enumeration.
+     */
+    bool is_ordered() const {
+        return is_ordered_;
+    }
+
    private:
     //===================================================================
     //= private static
@@ -342,6 +351,7 @@ class ColumnBuffer {
      * @param is_var True if variable length data
      * @param is_nullable True if nullable data
      * @param enumeration Optional Enumeration associated with column
+     * @param is_ordered Optional Enumeration is ordered
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> alloc(
@@ -350,7 +360,8 @@ class ColumnBuffer {
         tiledb_datatype_t type,
         bool is_var,
         bool is_nullable,
-        std::optional<Enumeration> enumeration);
+        std::optional<Enumeration> enumeration,
+        bool is_ordered);
 
     //===================================================================
     //= private non-static
@@ -395,6 +406,7 @@ class ColumnBuffer {
     // Enumerations (optional) as string and offsets
     std::string enum_str_;
     std::vector<uint32_t> enum_offsets_;
+    bool is_ordered_ = false;
 };
 
 }  // namespace tiledbsoma
