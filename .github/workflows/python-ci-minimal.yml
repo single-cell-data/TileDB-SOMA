@@ -18,7 +18,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-22.04, macos-12]
-        python-version: ['3.10', '3.7']
+        python-version: ['3.10', '3.8']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
