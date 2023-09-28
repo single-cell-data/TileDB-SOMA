@@ -147,7 +147,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         schema = self._handle.schema
         sr = self._soma_reader(schema=schema, result_order=result_order)
         self._set_reader_coords(sr, coords)
-        sr.submit()
         return SparseNDArrayRead(sr, schema.shape)
 
     def write(

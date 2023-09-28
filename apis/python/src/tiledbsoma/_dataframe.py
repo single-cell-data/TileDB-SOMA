@@ -371,7 +371,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # TODO: platform_config
         # TODO: batch_size
 
-        sr.submit()
         return TableReadIter(sr)
 
     def write(

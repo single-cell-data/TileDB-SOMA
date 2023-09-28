@@ -19,7 +19,6 @@ if VERBOSE:
 
 def pandas_query(uri, condition):
     sr = clib.SOMAArray(uri)
-    sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
 
@@ -29,7 +28,6 @@ def pandas_query(uri, condition):
 def soma_query(uri, condition):
     qc = QueryCondition(condition)
     sr = clib.SOMAArray(uri, query_condition=qc)
-    sr.submit()
     arrow_table = sr.read_next()
     assert sr.results_complete()
 
@@ -109,7 +107,6 @@ def test_query_condition_select_columns():
     qc = QueryCondition(condition)
 
     sr = clib.SOMAArray(uri, query_condition=qc, column_names=["n_genes"])
-    sr.submit()
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -124,7 +121,6 @@ def test_query_condition_all_columns():
     qc = QueryCondition(condition)
 
     sr = clib.SOMAArray(uri, query_condition=qc)
-    sr.submit()
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -139,7 +135,6 @@ def test_query_condition_reset():
     qc = QueryCondition(condition)
 
     sr = clib.SOMAArray(uri, query_condition=qc)
-    sr.submit()
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -152,7 +147,6 @@ def test_query_condition_reset():
     qc = QueryCondition(condition)
     sr.reset(column_names=["percent_mito"], query_condition=qc)
 
-    sr.submit()
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -220,7 +214,6 @@ def test_eval_error_conditions(malformed_condition):
     with pytest.raises(RuntimeError):
         qc = QueryCondition(malformed_condition)
         sr = clib.SOMAArray(uri, query_condition=qc)
-        sr.submit()
         sr.read_next()
 
 

@@ -465,7 +465,7 @@ class ManagedQuery {
     // A collection of ColumnBuffers attached to the query
     std::shared_ptr<ArrayBuffers> buffers_;
 
-    // True if the query has been submitted and the results have not been read
+    // True if the query has been submitted
     bool query_submitted_ = false;
 };
 
