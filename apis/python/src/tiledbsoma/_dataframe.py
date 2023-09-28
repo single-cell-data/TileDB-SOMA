@@ -229,27 +229,26 @@ class DataFrame(pts.SOMADataFrame):
         schema._export_to_c(ptr_schema)
 
         domain = [(0, 100)]
-
-        ptrs_domain = []
-        if domain is not None:
-            for dim_name, dom in zip(index_column_names, domain):
-                dtype = schema[schema.get_field_index(dim_name)].type
-                arr = pa.array(dom, type=dtype)
-                c_domain = ffi.new("struct ArrowArray*")
-                ptr_domain = int(ffi.cast("uintptr_t", c_domain))
-                gc.collect()
-                arr._export_to_c(ptr_domain)
-                ptrs_domain.append(ptr_domain)
+        extents = [(1,)]
     
-        if enumerations is not None:
-            names = list(enumerations.keys())
-            enmrs = list(enumerations.values())
-            rb = pa.RecordBatch.from_arrays(enmrs, names=names)
-            print(rb)
-        
-        # CHECK DOMAIN AND INDEX COL NAME SIZE
+        ptr_domain = 0
+        ptr_extents = 0
 
-        return super().create(uri, ptr_schema, index_column_names, {}, ptrs_domain)
+        dom = pa.RecordBatch.from_arrays(domain, names=index_column_names)
+        c_domain = ffi.new("struct ArrowArray*")
+        ptr_domain = int(ffi.cast("uintptr_t", c_domain))
+        gc.collect()
+        dom._export_to_c(ptr_domain)
+        
+        ext = pa.RecordBatch.from_arrays(extents, names=index_column_names)
+        c_ex = ffi.new("struct ArrowArray*")
+        ptr_extents = int(ffi.cast("uintptr_t", c_ex))
+        gc.collect()
+        ext._export_to_c(ptr_extents)
+    
+        # CHECK DOMAIN AND INDEX COL NAME SIZE
+        return super().create(uri, ptr_schema, index_column_names, dict(), 
+                              ptr_domain, ptr_extents)
     
         # TODO delete pointers
 

@@ -43,13 +43,14 @@ using namespace tiledb;
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
     std::string_view uri,
-    ArrowSchema* schema,
+    ArrowSchema& schema,
     std::map<std::string, std::string> platform_config,
     std::vector<std::string> index_column_names,
-    std::vector<ArrowArray*> domain) {
+    ArrowArray& domains,
+    ArrowArray& extents) {
     auto ctx = std::make_shared<Context>(Config(platform_config));
     ArraySchema tdb_schema = ArrowAdapter::arrow_schema_to_tiledb_schema(
-        ctx, schema, index_column_names, domain);
+        ctx, schema, index_column_names, domains, extents);
     SOMAArray::create(ctx, uri, tdb_schema, "SOMASparseNDArray");
     return SOMASparseNDArray::open(uri, OpenMode::read, ctx);
 }
