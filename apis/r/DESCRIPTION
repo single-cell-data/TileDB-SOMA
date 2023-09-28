@@ -34,7 +34,7 @@ Imports:
     Matrix,
     stats,
     bit64,
-    tiledb (>= 0.21.0),
+    tiledb (>= 0.21.1),
     arrow,
     utils,
     fs,
@@ -48,7 +48,8 @@ Imports:
     tibble
 LinkingTo:
     Rcpp,
-    RcppSpdlog
+    RcppSpdlog,
+    RcppInt64
 Additional_repositories: https://ghrr.github.io/drat
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
