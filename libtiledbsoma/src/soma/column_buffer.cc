@@ -41,6 +41,45 @@ using namespace tiledb;
 //===================================================================
 
 std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
+    ArraySchema& schema, std::string_view name) {
+    auto name_str = std::string(name);  // string for TileDB API
+
+    if (schema.has_attribute(name_str)) {
+        auto attr = schema.attribute(name_str);
+        auto type = attr.type();
+        bool is_var = attr.cell_val_num() == TILEDB_VAR_NUM;
+        bool is_nullable = attr.nullable();
+
+        if (!is_var && attr.cell_val_num() != 1) {
+            throw TileDBSOMAError(
+                "[ColumnBuffer] Values per cell > 1 is not supported: " +
+                name_str);
+        }
+
+        return ColumnBuffer::alloc(
+            schema, name_str, type, is_var, is_nullable, std::nullopt);
+
+    } else if (schema.domain().has_dimension(name_str)) {
+        auto dim = schema.domain().dimension(name_str);
+        auto type = dim.type();
+        bool is_var = dim.cell_val_num() == TILEDB_VAR_NUM ||
+                      dim.type() == TILEDB_STRING_ASCII ||
+                      dim.type() == TILEDB_STRING_UTF8;
+
+        if (!is_var && dim.cell_val_num() != 1) {
+            throw TileDBSOMAError(
+                "[ColumnBuffer] Values per cell > 1 is not supported: " +
+                name_str);
+        }
+
+        return ColumnBuffer::alloc(
+            schema, name_str, type, is_var, false, std::nullopt);
+    }
+
+    throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
+}
+
+std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     std::shared_ptr<Array> array, std::string_view name) {
     auto schema = array->schema();
     auto name_str = std::string(name);  // string for TileDB API

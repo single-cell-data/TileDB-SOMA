@@ -396,7 +396,6 @@ class SOMAArray {
      * att)); array_buffer->emplace("dim", ColumnBuffer::create(schema,
      * "dim", dim));
      *
-     *   std::vector<int> x(10, 1);
      *   writer->submit();
      *   writer->write(array_buffer);
      *   writer->close();

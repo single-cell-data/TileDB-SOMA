@@ -614,6 +614,10 @@ class CollectionBase(
     @classmethod
     def _check_allows_child(cls, key: str, child_cls: type) -> None:
         real_child = _real_class(child_cls)
+        
+        if issubclass(real_child, DataFrame):
+            return
+            
         if not issubclass(real_child, TileDBObject):
             raise TypeError(
                 f"only TileDB objects can be added as children of {cls}, not {child_cls}"

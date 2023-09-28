@@ -70,6 +70,9 @@ class ColumnBuffer {
     static std::shared_ptr<ColumnBuffer> create(
         std::shared_ptr<Array> array, std::string_view name);
 
+    static std::shared_ptr<ColumnBuffer> create(
+        ArraySchema& schema, std::string_view name);
+
     /**
      * @brief Create a ColumnBuffer from a schema, column name, and data.
      *
@@ -89,6 +92,30 @@ class ColumnBuffer {
         column_buff->data_.assign(
             reinterpret_cast<std::byte*>(data.data()),
             reinterpret_cast<std::byte*>(data.data() + data.size()));
+        return column_buff;
+    }
+
+    /**
+     * @brief Create a ColumnBuffer from a schema, column name, data pointer,
+     * and size. THIS DOES NOT SUPPORT ENUMERATIONS.
+     *
+     * @param schema TileDB schema
+     * @param name TileDB dimension or attribute name
+     * @param data Pointer to the beginning of the data
+     * @param data_size Size of the data in bytes
+     * @return ColumnBuffer
+     */
+    static std::shared_ptr<ColumnBuffer> create(
+        ArraySchema schema,
+        std::string_view name,
+        const void* data,
+        uint64_t data_size) {
+        auto column_buff = ColumnBuffer::create(schema, name);
+        column_buff->num_cells_ = data_size;
+        column_buff->data_.resize(data_size);
+        column_buff->data_.assign(
+            reinterpret_cast<const std::byte*>(data),
+            reinterpret_cast<const std::byte*>(data) + data_size);
         return column_buff;
     }
 

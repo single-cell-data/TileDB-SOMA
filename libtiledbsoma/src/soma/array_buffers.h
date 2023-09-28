@@ -37,6 +37,7 @@
 
 #include <tiledb/tiledb>
 
+#include "../utils/arrow_adapter.h"
 #include "../utils/common.h"
 #include "../utils/logger.h"
 #include "column_buffer.h"
@@ -51,6 +52,24 @@ class ArrayBuffers {
     ArrayBuffers(const ArrayBuffers&) = delete;
     ArrayBuffers(ArrayBuffers&&) = default;
     ~ArrayBuffers() = default;
+
+    static std::shared_ptr<ArrayBuffers> from_arrow(
+        ArraySchema& schema,
+        ArrowSchema& arrow_schema,
+        ArrowArray& arrow_array) {
+        auto array_buffer = std::make_shared<ArrayBuffers>();
+        for (int64_t i = 0; i < arrow_array.n_children; ++i) {
+            auto name = arrow_schema.children[i]->name;
+            auto data = arrow_array.children[i]->buffers[1];
+            auto typeinfo = ArrowAdapter::arrow_type_to_tiledb(
+                arrow_schema.children[i]);
+            auto data_size = arrow_array.children[i]->length *
+                             typeinfo.elem_size;
+            array_buffer->emplace(
+                name, ColumnBuffer::create(schema, name, data, data_size));
+        }
+        return array_buffer;
+    }
 
     /**
      * @brief Return the buffer with the given name.

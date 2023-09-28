@@ -23,6 +23,10 @@ static std::unique_ptr<SOMADataFrame> create(
         *((ArrowArray*)domains_ptr), *((ArrowArray*)extents_ptr));
 }
 
+static void write(SOMADataFrame& dataframe, uintptr_t array_ptr){
+    ArrowArray arrow_array = *((ArrowArray*)array_ptr);
+}
+
 void init_soma_dataframe(py::module &m) {
     py::class_<SOMADataFrame>(m, "SOMADataFrame")
 
@@ -44,7 +48,7 @@ void init_soma_dataframe(py::module &m) {
     .def("schema", &SOMADataFrame::schema)
     .def("index_column_names", &SOMADataFrame::index_column_names)
     .def("read_next", &SOMADataFrame::read_next)
-    .def("write", &SOMADataFrame::write)
+    .def("write", write)
     .def("set_metadata", &SOMADataFrame::set_metadata)
     .def("delete_metadata", &SOMADataFrame::delete_metadata)
     .def("get_metadata", 
