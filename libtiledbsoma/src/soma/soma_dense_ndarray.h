@@ -65,10 +65,11 @@ class SOMADenseNDArray : public SOMAObject {
      */
     static std::unique_ptr<SOMADenseNDArray> create(
         std::string_view uri,
-        ArrowSchema* schema,
-        std::map<std::string, std::string> platform_config = {},
-        std::vector<std::string> index_column_names = {},
-        std::vector<ArrowArray*> domain = {});
+        ArrowSchema& schema,
+        std::map<std::string, std::string> platform_config,
+        std::vector<std::string> index_column_names,
+        ArrowArray& domains,
+        ArrowArray& extents);
 
     /**
      * @brief Create a SOMADenseNDArray object at the given URI.

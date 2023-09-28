@@ -23,10 +23,6 @@ struct TypeInfo {
     bool arrow_large;
 };
 
-using DimInfo = std::tuple<std::vector<std::byte>, std::vector<std::byte>>;
-
-const int TILE_EXTENT_DEFAULT = 2048;
-
 /**
  * @brief The ArrowBuffer holds a shared pointer to a ColumnBuffer, which
  * manages the lifetime of a ColumnBuffer used to back an Arrow array.
@@ -275,69 +271,6 @@ class ArrowAdapter {
             tiledb::impl::type_to_str(datatype)));
     }
 
-    static ArraySchema arrow_schema_to_tiledb_schema(
-        std::shared_ptr<Context> ctx,
-        ArrowSchema* schema,
-        std::vector<std::string> index_column_names,
-        std::vector<ArrowArray*> domain) {
-        if (domain.size() != index_column_names.size()) {
-            throw TileDBSOMAError(
-                "if domain is specified, it must have the same length as "
-                "index_column_names");
-        }
-
-        ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
-        Domain tdb_dom(*ctx);
-
-        for (size_t name_idx = 0; name_idx < index_column_names.size();
-             ++name_idx) {
-            for (int64_t schema_idx = 0; schema_idx < schema->n_children;
-                 ++schema_idx) {
-                auto child = schema->children[schema_idx];
-                if (child->name == index_column_names[name_idx]) {
-                    auto typeinfo = arrow_type_to_tiledb(child);
-                    std::vector<std::byte> slot_domain;
-                    std::vector<std::byte> tile_extent;
-
-                    if (domain.size() != 0) {
-                        auto data_buffer = domain[name_idx]->buffers[1];
-                        auto dim_info = _schema_get_dim_from_buffer(
-                            data_buffer, typeinfo.type);
-                        slot_domain = std::get<0>(dim_info);
-                        tile_extent = std::get<1>(dim_info);
-                    } else {
-                        auto dim_info = _schema_get_default_dim(child);
-                        slot_domain = std::get<0>(dim_info);
-                        tile_extent = std::get<1>(dim_info);
-                    }
-
-                    tdb_dom.add_dimension(Dimension::create(
-                        *ctx,
-                        child->name,
-                        typeinfo.type,
-                        slot_domain.data(),
-                        tile_extent.data()));
-                }
-            }
-        }
-        tdb_schema.set_domain(tdb_dom);
-
-        for (int64_t i = 0; i < schema->n_children; ++i) {
-            auto child = schema->children[i];
-            if (std::find(
-                    index_column_names.begin(),
-                    index_column_names.end(),
-                    child->name) == index_column_names.end()) {
-                auto typeinfo = arrow_type_to_tiledb(child);
-                auto attr = Attribute(*ctx, child->name, typeinfo.type);
-                tdb_schema.add_attribute(attr);
-            }
-        }
-
-        // remember enums
-        return tdb_schema;
-    }
-
     static TypeInfo arrow_type_to_tiledb(ArrowSchema* arw_schema) {
         auto fmt = std::string(arw_schema->format);
         bool large = false;
@@ -391,191 +324,151 @@ class ArrowAdapter {
                 fmt + "'");
     };
 
-    template <typename T>
-    static std::vector<std::byte> __convert_domain_as_bytes(T min, T max) {
-        std::byte* min_ptr = reinterpret_cast<std::byte*>(&min);
-        std::byte* max_ptr = reinterpret_cast<std::byte*>(&max);
-        std::vector<std::byte> slot_domain(min_ptr, min_ptr + sizeof(T));
-        slot_domain.insert(slot_domain.end(), max_ptr, max_ptr + sizeof(T));
-        return slot_domain;
-    }
+    static ArraySchema arrow_schema_to_tiledb_schema(
+        std::shared_ptr<Context> ctx,
+        ArrowSchema& schema,
+        std::vector<std::string> index_column_names,
+        ArrowArray& domains,
+        ArrowArray& extents) {
+        if (domains.n_children != (int64_t)index_column_names.size()) {
+            throw TileDBSOMAError(
+                "if domain is specified, it must have the same length as "
+                "index_column_names");
+        }
 
-    template <typename T>
-    static std::vector<std::byte> __convert_tile_as_bytes(T tile) {
-        std::byte* tile_ptr = reinterpret_cast<std::byte*>(&tile);
-        return std::vector<std::byte>(tile_ptr, tile_ptr + sizeof(T));
-    }
+        ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
+        Domain tdb_dom(*ctx);
 
-    template <typename T>
-    static std::tuple<std::vector<std::byte>, std::vector<std::byte>>
-    __convert_dim_info_as_bytes(T min, T max) {
-        T tile = std::min((T)TILE_EXTENT_DEFAULT, (T)(max - min + 1));
-        return std::make_tuple(
-            __convert_domain_as_bytes(min, max), __convert_tile_as_bytes(tile));
-    }
+        auto platform_config = ctx->config();
 
-    template <typename T>
-    static DimInfo __convert_dim_info_as_bytes(T min, T max, T tile) {
-        return std::make_tuple(
-            __convert_domain_as_bytes(min, max), __convert_tile_as_bytes(tile));
-    }
+        for (size_t col_idx = 0; col_idx < index_column_names.size();
+             ++col_idx) {
+            for (int64_t schema_idx = 0; schema_idx < schema.n_children;
+                 ++schema_idx) {
+                auto child = schema.children[schema_idx];
+                auto typeinfo = arrow_type_to_tiledb(child);
+                if (child->name == index_column_names[col_idx]) {
+                    auto dim = Dimension::create(
+                        *ctx,
+                        child->name,
+                        typeinfo.type,
+                        domains.children[col_idx]->buffers[1],
+                        extents.children[col_idx]->buffers[1]);
 
-    static DimInfo _schema_get_default_dim(ArrowSchema* arw_schema) {
-        auto datatype = arrow_type_to_tiledb(arw_schema).type;
-        switch (datatype) {
-            case TILEDB_FLOAT32: {
-                float min = std::numeric_limits<float>::min();
-                float max = std::numeric_limits<float>::max();
-                return __convert_dim_info_as_bytes(
-                    min, max, (float)TILE_EXTENT_DEFAULT);
-            }
-            case TILEDB_FLOAT64: {
-                double min = std::numeric_limits<double>::min();
-                double max = std::numeric_limits<double>::max();
-                return __convert_dim_info_as_bytes(
-                    min, max, (double)TILE_EXTENT_DEFAULT);
-            }
-            case TILEDB_UINT8: {
-                uint8_t min = std::numeric_limits<uint8_t>::min();
-                uint8_t max = std::numeric_limits<uint8_t>::max();
-                return __convert_dim_info_as_bytes(min, max, (uint8_t)64);
-            }
-            case TILEDB_INT8: {
-                int8_t min = std::numeric_limits<int8_t>::min();
-                int8_t max = std::numeric_limits<int8_t>::max();
-                return __convert_dim_info_as_bytes(min, max, (int8_t)64);
-            }
-            case TILEDB_UINT16: {
-                uint16_t min = std::numeric_limits<uint16_t>::min();
-                uint16_t max = std::numeric_limits<uint16_t>::max();
-                return __convert_dim_info_as_bytes(
-                    min, max, (uint16_t)TILE_EXTENT_DEFAULT);
-            }
-            case TILEDB_INT16: {
-                int16_t min = std::numeric_limits<int16_t>::min();
-                int16_t max = std::numeric_limits<int16_t>::max();
-                return __convert_dim_info_as_bytes(
-                    min, max, (int16_t)TILE_EXTENT_DEFAULT);
-            }
-            case TILEDB_UINT32: {
-                uint32_t min = std::numeric_limits<uint32_t>::min();
-                uint32_t max = std::numeric_limits<uint32_t>::max();
-                return __convert_dim_info_as_bytes(
-                    min, max, (uint32_t)TILE_EXTENT_DEFAULT);
-            }
-            case TILEDB_INT32: {
-                int32_t min = std::numeric_limits<int32_t>::min();
-                int32_t max = std::numeric_limits<int32_t>::max();
-                return __convert_dim_info_as_bytes(
-                    min, max, (int32_t)TILE_EXTENT_DEFAULT);
-            }
-            case TILEDB_UINT64: {
-                uint64_t min = std::numeric_limits<uint64_t>::min();
-                uint64_t max = std::numeric_limits<uint64_t>::max();
-                return __convert_dim_info_as_bytes(
-                    min, max, (uint64_t)TILE_EXTENT_DEFAULT);
-            }
-            case TILEDB_INT64:
-            case TILEDB_DATETIME_YEAR:
-            case TILEDB_DATETIME_MONTH:
-            case TILEDB_DATETIME_WEEK:
-            case TILEDB_DATETIME_DAY:
-            case TILEDB_DATETIME_HR:
-            case TILEDB_DATETIME_MIN:
-            case TILEDB_DATETIME_SEC:
-            case TILEDB_DATETIME_MS:
-            case TILEDB_DATETIME_US:
-            case TILEDB_DATETIME_NS:
-            case TILEDB_DATETIME_PS:
-            case TILEDB_DATETIME_FS:
-            case TILEDB_DATETIME_AS: {
-                int64_t min, max;
-                if (strcmp(arw_schema->name, "soma_joinid") == 0) {
-                    min = std::numeric_limits<uint32_t>::min();
-                    max = std::numeric_limits<uint32_t>::max();
+                    Filter filter(*ctx, TILEDB_FILTER_ZSTD);
+                    if (platform_config.contains("dataframe_dim_zstd_level")) {
+                        auto level = std::stoi(
+                            platform_config.get("dataframe_dim_zstd_level"));
+                        filter.set_option(TILEDB_COMPRESSION_LEVEL, level);
+                    } else {
+                        filter.set_option(TILEDB_COMPRESSION_LEVEL, 3);
+                    }
+
+                    FilterList filter_list(*ctx);
+                    filter_list.add_filter(filter);
+                    dim.set_filter_list(filter_list);
+
+                    tdb_dom.add_dimension(dim);
                 } else {
-                    min = std::numeric_limits<int64_t>::min();
-                    max = std::numeric_limits<int64_t>::max();
+                    auto attr = Attribute(*ctx, child->name, typeinfo.type);
+                    if (child->flags | ARROW_FLAG_NULLABLE) {
+                        attr.set_nullable(true);
+                    }
+                    tdb_schema.add_attribute(attr);
                 }
-                return __convert_dim_info_as_bytes(
-                    min, max, (int64_t)TILE_EXTENT_DEFAULT);
             }
-            default:
-                throw TileDBError(
-                    "[TileDB-Arrow]: Unsupported TileDB type for dimension)");
         }
-    };
 
-    static DimInfo _schema_get_dim_from_buffer(
-        const void* buffer, tiledb_datatype_t datatype) {
-        switch (datatype) {
-            case TILEDB_FLOAT32: {
-                float min = ((float*)buffer)[0];
-                float max = ((float*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max);
-            }
-            case TILEDB_FLOAT64: {
-                double min = ((double*)buffer)[0];
-                double max = ((double*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max);
-            }
-            case TILEDB_UINT8: {
-                uint8_t min = ((uint8_t*)buffer)[0];
-                uint8_t max = ((uint8_t*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max, (uint8_t)64);
-            }
-            case TILEDB_INT8: {
-                int8_t min = ((int8_t*)buffer)[0];
-                int8_t max = ((int8_t*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max, (int8_t)64);
-            }
-            case TILEDB_UINT16: {
-                uint16_t min = ((uint16_t*)buffer)[0];
-                uint16_t max = ((uint16_t*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max);
-            }
-            case TILEDB_INT16: {
-                int16_t min = ((int16_t*)buffer)[0];
-                int16_t max = ((int16_t*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max);
-            }
-            case TILEDB_UINT32: {
-                uint32_t min = ((uint32_t*)buffer)[0];
-                uint32_t max = ((uint32_t*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max);
-            }
-            case TILEDB_INT32: {
-                int32_t min = ((int32_t*)buffer)[0];
-                int32_t max = ((int32_t*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max);
-            }
-            case TILEDB_UINT64: {
-                uint64_t min = ((uint64_t*)buffer)[0];
-                uint64_t max = ((uint64_t*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max);
-            }
-            case TILEDB_INT64:
-            case TILEDB_DATETIME_YEAR:
-            case TILEDB_DATETIME_MONTH:
-            case TILEDB_DATETIME_WEEK:
-            case TILEDB_DATETIME_DAY:
-            case TILEDB_DATETIME_HR:
-            case TILEDB_DATETIME_MIN:
-            case TILEDB_DATETIME_SEC:
-            case TILEDB_DATETIME_MS:
-            case TILEDB_DATETIME_US:
-            case TILEDB_DATETIME_NS:
-            case TILEDB_DATETIME_PS:
-            case TILEDB_DATETIME_FS:
-            case TILEDB_DATETIME_AS: {
-                int64_t min = ((int64_t*)buffer)[0];
-                int64_t max = ((int64_t*)buffer)[1];
-                return __convert_dim_info_as_bytes(min, max);
-            }
-            default:
-                throw TileDBError(
-                    "[TileDB-Arrow]: Unsupported TileDB type for dimension)");
+        tdb_schema.set_domain(tdb_dom);
+
+        if (platform_config.contains("offsets_filters")) {
+            auto filter_list = _get_filterlist_from_config_option(
+                ctx, platform_config.get("offsets_filters"));
+            tdb_schema.set_offsets_filter_list(filter_list);
+        } else {
+            FilterList filter_list(*ctx);
+            filter_list.add_filter(Filter(*ctx, TILEDB_FILTER_DOUBLE_DELTA));
+            filter_list.add_filter(
+                Filter(*ctx, TILEDB_FILTER_BIT_WIDTH_REDUCTION));
+            filter_list.add_filter(Filter(*ctx, TILEDB_FILTER_ZSTD));
+            tdb_schema.set_offsets_filter_list(filter_list);
         }
+
+        if (platform_config.contains("validity_filters")) {
+            auto filter_list = _get_filterlist_from_config_option(
+                ctx, platform_config.get("validity_filters"));
+            tdb_schema.set_validity_filter_list(filter_list);
+        }
+
+        if (platform_config.contains("tile_order")) {
+            auto order = _get_order_from_config_option(
+                platform_config.get("tile_order"));
+            tdb_schema.set_tile_order(order);
+        }
+
+        if (platform_config.contains("cell_order")) {
+            auto order = _get_order_from_config_option(
+                platform_config.get("cell_order"));
+            tdb_schema.set_cell_order(order);
+        }
+
+        if (platform_config.contains("capacity")) {
+            tdb_schema.set_capacity(std::stoi(platform_config.get("capacity")));
+        }
+
+        if (platform_config.contains("allows_duplicates")) {
+            bool allows_duplicates;
+            std::istringstream(platform_config.get("allows_duplicates")) >>
+                std::boolalpha >> allows_duplicates;
+            tdb_schema.set_allows_dups(allows_duplicates);
+        }
+
+        tdb_schema.check();
+
+        return tdb_schema;
+    }
+
+    static FilterList _get_filterlist_from_config_option(
+        std::shared_ptr<Context> ctx, std::string filters) {
+        std::map<std::string, tiledb_filter_type_t> token_to_filter = {
+            {"GzipFilter", TILEDB_FILTER_GZIP},
+            {"ZstdFilter", TILEDB_FILTER_ZSTD},
+            {"LZ4Filter", TILEDB_FILTER_LZ4},
+            {"Bzip2Filter", TILEDB_FILTER_BZIP2},
+            {"RleFilter", TILEDB_FILTER_RLE},
+            {"DeltaFilter", TILEDB_FILTER_DELTA},
+            {"DoubleDeltaFilter", TILEDB_FILTER_DOUBLE_DELTA},
+            {"BitWidthReductionFilter", TILEDB_FILTER_BIT_WIDTH_REDUCTION},
+            {"BitShuffleFilter", TILEDB_FILTER_BITSHUFFLE},
+            {"ByteShuffleFilter", TILEDB_FILTER_BYTESHUFFLE},
+            {"PositiveDeltaFilter", TILEDB_FILTER_POSITIVE_DELTA},
+            {"ChecksumMD5Filter", TILEDB_FILTER_CHECKSUM_MD5},
+            {"ChecksumSHA256Filter", TILEDB_FILTER_CHECKSUM_SHA256},
+            {"DictionaryFilter", TILEDB_FILTER_DICTIONARY},
+            {"FloatScaleFilter", TILEDB_FILTER_SCALE_FLOAT},
+            {"XORFilter", TILEDB_FILTER_XOR},
+            {"WebpFilter", TILEDB_FILTER_WEBP},
+            {"NoOpFilter", TILEDB_FILTER_NONE}};
+
+        FilterList filter_list(*ctx);
+        std::istringstream ss(filters);
+        std::string filter_tokenized;
+
+        while (std::getline(ss, filter_tokenized, ',')) {
+            filter_list.add_filter(
+                Filter(*ctx, token_to_filter[filter_tokenized]));
+        }
+        return filter_list;
+    }
+
+    static tiledb_layout_t _get_order_from_config_option(std::string order) {
+        std::map<std::string, tiledb_layout_t> token_to_order = {
+            {"row-major", TILEDB_ROW_MAJOR},
+            {"R", TILEDB_ROW_MAJOR},
+            {"col-major", TILEDB_COL_MAJOR},
+            {"C", TILEDB_COL_MAJOR},
+            {"hilbert", TILEDB_HILBERT}};
+        return token_to_order[order];
     }
 };
 };  // namespace tiledbsoma
