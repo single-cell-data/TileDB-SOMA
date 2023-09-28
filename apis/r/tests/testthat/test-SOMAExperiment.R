@@ -80,7 +80,6 @@ test_that("Update obs and var", {
   # obs: drop an existing column and add a new one
   tbl_obs0$qux <- tbl_obs0$bar
   tbl_obs0$bar <- NULL
-  # tbl_0bs0$baz <- xxx enum
 
   exp <- SOMAExperimentOpen(uri, "WRITE")
   exp$update_obs(tbl_obs0)
