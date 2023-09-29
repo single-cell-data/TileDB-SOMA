@@ -17,28 +17,50 @@ static std::unique_ptr<SOMADataFrame> create(
     std::vector<std::string> index_column_names, 
     std::map<std::string, std::string> platform_config, 
     uintptr_t domains_ptr,
-    uintptr_t extents_ptr){
+    uintptr_t extents_ptr)
+{
     return SOMADataFrame::create(
         uri, *((ArrowSchema*)schema_ptr), platform_config, index_column_names, 
         *((ArrowArray*)domains_ptr), *((ArrowArray*)extents_ptr));
 }
 
-static void write(SOMADataFrame& dataframe, uintptr_t schema_ptr, uintptr_t array_ptr){
+static void write(SOMADataFrame& dataframe, 
+    uintptr_t schema_ptr, 
+    uintptr_t array_ptr)
+{
     ArrowSchema arrow_schema = *((ArrowSchema*)schema_ptr);
     ArrowArray arrow_array = *((ArrowArray*)array_ptr);
-    auto schema = dataframe.schema();
     auto array_buffer = std::make_shared<ArrayBuffers>();
 
+    // for(uint32_t i = 0; i < dataframe.schema()->domain().ndim(); ++i){
+    //     std::cout << dataframe.schema()->domain().dimension(i).name() << " ";
+    // } std::cout << std::endl;
+    // for(uint32_t i = 0; i < dataframe.schema()->attribute_num(); ++i){
+    //     std::cout << dataframe.schema()->attribute(i).name() << " ";
+    // } std::cout << std::endl;
+
     for(int64_t i = 0; i < arrow_array.n_children; ++i){
-        auto child = arrow_schema.children[i];
-        auto name = child->name;
-        auto typeinfo = ArrowAdapter::arrow_type_to_tiledb(child);
-        array_buffer->emplace(name, 
+        auto schema_child = arrow_schema.children[i];
+        auto array_child = arrow_array.children[0]; // TODO DEAL WITH STRINGS
+        auto schema = dataframe.schema();
+        auto typeinfo = ArrowAdapter::arrow_type_to_tiledb(schema_child);
+
+        std::vector<int64_t> data;
+        data.assign(
+            (const int64_t*)array_child->buffers[1],
+            (const int64_t*)array_child->buffers[1] + 5
+        );
+        std::cout << schema_child->name << std::endl;
+        for(auto d : data)
+            std::cout << d << " ";
+        std::cout << std::endl;
+
+        array_buffer->emplace(schema_child->name, 
             ColumnBuffer::create(
                 *schema, 
-                name, 
-                arrow_array.children[i]->buffers[1], 
-                arrow_array.children[i]->length * typeinfo.elem_size)); 
+                schema_child->name, 
+                array_child->buffers[1], 
+                5)); 
     }
     dataframe.write(array_buffer);
 }

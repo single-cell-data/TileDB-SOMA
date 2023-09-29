@@ -543,7 +543,7 @@ void SOMAArray::validate(
     std::string_view name,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     // Validate parameters
-    auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
+    auto tdb_mode = (mode == OpenMode::read) ? TILEDB_WRITE : TILEDB_WRITE;
 
     try {
         LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));

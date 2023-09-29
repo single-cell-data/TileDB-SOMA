@@ -63,7 +63,7 @@ class DataFrame():
         gc.collect()
         schema._export_to_c(ptr_schema)
 
-        domain = [(0, 100)]
+        domain = [(0, 100000)]
         extents = [(1,)]
         platform_config = {}
     
@@ -92,7 +92,9 @@ class DataFrame():
     
     @classmethod
     def open(self, uri, mode="r"):
-        return DataFrame(pts.SOMADataFrame.open(uri, pts.OpenMode.read if mode == "r" else pts.OpenMode.write, {}, [], pts.ResultOrder.automatic, None))
+        df = DataFrame(pts.SOMADataFrame.open(uri, pts.OpenMode.read if mode == "r" else pts.OpenMode.write, {}, [], pts.ResultOrder.automatic, None))
+        print(df)
+        return df
     
     @classmethod
     def exists(self, uri):
@@ -109,6 +111,9 @@ class DataFrame():
         rb = pa.RecordBatch.from_arrays(
             [col.chunks[0] for col in values], names=values.schema.names)
         rb._export_to_c(ptr_array)
+        
+        print(rb)
+        print(rb.to_pandas())
         
         c_schema = ffi.new("struct ArrowSchema*")
         ptr_schema = int(ffi.cast("uintptr_t", c_schema))
