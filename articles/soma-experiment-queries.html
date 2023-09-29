@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.3.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,7 +100,7 @@
 <code class="sourceCode R"><span><span class="va">experiment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">load_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small"</span><span class="op">)</span></span>
 <span><span class="va">experiment</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/Rtmp9aoU8F/soma-exp-pbmc-small </span></span>
+<span><span class="co">#&gt;   uri: /tmp/RtmpV7WLlK/soma-exp-pbmc-small </span></span>
 <span><span class="co">#&gt;   arrays: obs </span></span>
 <span><span class="co">#&gt;   groups: ms</span></span></code></pre></div>
 </div>
@@ -112,7 +112,7 @@
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmp9aoU8F/soma-exp-pbmc-small/ms </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpV7WLlK/soma-exp-pbmc-small/ms </span></span>
 <span><span class="co">#&gt;   groups: RNA</span></span></code></pre></div>
 <p>Now we can construct our query object.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -150,168 +150,21 @@
 <p>As a reminder <code>arrow:Table</code> can be easily cast into a <code>tibble</code></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obs</span><span class="op">$</span><span class="fu">to_data_frame</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    soma_joinid    orig.ident nCount_RNA nFeature_RNA RNA_snn_res.0.8</span></span>
-<span><span class="co">#&gt; 1            0 SeuratProject         70           47               0</span></span>
-<span><span class="co">#&gt; 2            1 SeuratProject         85           52               0</span></span>
-<span><span class="co">#&gt; 3            2 SeuratProject         87           50               1</span></span>
-<span><span class="co">#&gt; 4            3 SeuratProject        127           56               0</span></span>
-<span><span class="co">#&gt; 5            4 SeuratProject        173           53               0</span></span>
-<span><span class="co">#&gt; 6            5 SeuratProject         70           48               0</span></span>
-<span><span class="co">#&gt; 7            6 SeuratProject         64           36               0</span></span>
-<span><span class="co">#&gt; 8            7 SeuratProject         72           45               0</span></span>
-<span><span class="co">#&gt; 9            8 SeuratProject         52           36               0</span></span>
-<span><span class="co">#&gt; 10           9 SeuratProject        100           41               0</span></span>
-<span><span class="co">#&gt; 11          10 SeuratProject         62           31               0</span></span>
-<span><span class="co">#&gt; 12          11 SeuratProject        191           61               0</span></span>
-<span><span class="co">#&gt; 13          12 SeuratProject        101           41               0</span></span>
-<span><span class="co">#&gt; 14          13 SeuratProject         51           26               0</span></span>
-<span><span class="co">#&gt; 15          14 SeuratProject         99           45               0</span></span>
-<span><span class="co">#&gt; 16          15 SeuratProject        168           44               0</span></span>
-<span><span class="co">#&gt; 17          16 SeuratProject         67           33               0</span></span>
-<span><span class="co">#&gt; 18          17 SeuratProject        135           45               0</span></span>
-<span><span class="co">#&gt; 19          18 SeuratProject         79           43               0</span></span>
-<span><span class="co">#&gt; 20          19 SeuratProject        109           41               0</span></span>
-<span><span class="co">#&gt; 21          20 SeuratProject        298           65               1</span></span>
-<span><span class="co">#&gt; 22          21 SeuratProject        406           74               1</span></span>
-<span><span class="co">#&gt; 23          22 SeuratProject        213           48               1</span></span>
-<span><span class="co">#&gt; 24          23 SeuratProject        231           49               1</span></span>
-<span><span class="co">#&gt; 25          24 SeuratProject        463           77               1</span></span>
-<span><span class="co">#&gt; 26          25 SeuratProject         87           42               1</span></span>
-<span><span class="co">#&gt; 27          26 SeuratProject        327           62               1</span></span>
-<span><span class="co">#&gt; 28          27 SeuratProject        224           50               1</span></span>
-<span><span class="co">#&gt; 29          28 SeuratProject        361           76               1</span></span>
-<span><span class="co">#&gt; 30          29 SeuratProject        353           80               1</span></span>
-<span><span class="co">#&gt; 31          30 SeuratProject        246           59               0</span></span>
-<span><span class="co">#&gt; 32          31 SeuratProject        115           51               0</span></span>
-<span><span class="co">#&gt; 33          32 SeuratProject        189           53               0</span></span>
-<span><span class="co">#&gt; 34          33 SeuratProject        187           61               0</span></span>
-<span><span class="co">#&gt; 35          34 SeuratProject        156           48               0</span></span>
-<span><span class="co">#&gt; 36          35 SeuratProject        164           47               0</span></span>
-<span><span class="co">#&gt; 37          36 SeuratProject        221           67               0</span></span>
-<span><span class="co">#&gt; 38          37 SeuratProject        151           59               0</span></span>
-<span><span class="co">#&gt; 39          38 SeuratProject        126           53               0</span></span>
-<span><span class="co">#&gt; 40          39 SeuratProject        316           65               0</span></span>
-<span><span class="co">#&gt; 41          40 SeuratProject        156           60               0</span></span>
-<span><span class="co">#&gt; 42          41 SeuratProject        139           61               0</span></span>
-<span><span class="co">#&gt; 43          42 SeuratProject        108           44               0</span></span>
-<span><span class="co">#&gt; 44          43 SeuratProject         41           32               0</span></span>
-<span><span class="co">#&gt; 45          44 SeuratProject        146           47               0</span></span>
-<span><span class="co">#&gt; 46          45 SeuratProject        104           40               0</span></span>
-<span><span class="co">#&gt; 47          46 SeuratProject        126           48               0</span></span>
-<span><span class="co">#&gt; 48          47 SeuratProject         94           55               0</span></span>
-<span><span class="co">#&gt; 49          48 SeuratProject        204           52               0</span></span>
-<span><span class="co">#&gt; 50          49 SeuratProject         99           45               0</span></span>
-<span><span class="co">#&gt; 51          50 SeuratProject        371           75               1</span></span>
-<span><span class="co">#&gt; 52          51 SeuratProject        387           83               1</span></span>
-<span><span class="co">#&gt; 53          52 SeuratProject        139           50               1</span></span>
-<span><span class="co">#&gt; 54          53 SeuratProject         99           42               1</span></span>
-<span><span class="co">#&gt; 55          54 SeuratProject        443           77               1</span></span>
-<span><span class="co">#&gt; 56          55 SeuratProject        417           75               0</span></span>
-<span><span class="co">#&gt; 57          56 SeuratProject        502           81               1</span></span>
-<span><span class="co">#&gt; 58          57 SeuratProject        324           76               1</span></span>
-<span><span class="co">#&gt; 59          58 SeuratProject        292           71               1</span></span>
-<span><span class="co">#&gt; 60          59 SeuratProject        443           81               0</span></span>
-<span><span class="co">#&gt; 61          60 SeuratProject        787           88               0</span></span>
-<span><span class="co">#&gt; 62          61 SeuratProject        612           69               1</span></span>
-<span><span class="co">#&gt; 63          62 SeuratProject        286           68               0</span></span>
-<span><span class="co">#&gt; 64          63 SeuratProject        462           86               1</span></span>
-<span><span class="co">#&gt; 65          64 SeuratProject        872           96               1</span></span>
-<span><span class="co">#&gt; 66          65 SeuratProject        709           94               1</span></span>
-<span><span class="co">#&gt; 67          66 SeuratProject        745           84               1</span></span>
-<span><span class="co">#&gt; 68          67 SeuratProject        328           72               1</span></span>
-<span><span class="co">#&gt; 69          68 SeuratProject        389           73               1</span></span>
-<span><span class="co">#&gt; 70          69 SeuratProject        754           83               0</span></span>
-<span><span class="co">#&gt; 71          70 SeuratProject        212           38               0</span></span>
-<span><span class="co">#&gt; 72          71 SeuratProject        172           29               0</span></span>
-<span><span class="co">#&gt; 73          72 SeuratProject        168           37               0</span></span>
-<span><span class="co">#&gt; 74          73 SeuratProject        210           33               0</span></span>
-<span><span class="co">#&gt; 75          74 SeuratProject        228           39               0</span></span>
-<span><span class="co">#&gt; 76          75 SeuratProject        527           47               0</span></span>
-<span><span class="co">#&gt; 77          76 SeuratProject        202           30               0</span></span>
-<span><span class="co">#&gt; 78          77 SeuratProject        157           29               0</span></span>
-<span><span class="co">#&gt; 79          78 SeuratProject        150           30               0</span></span>
-<span><span class="co">#&gt; 80          79 SeuratProject        233           76               1</span></span>
-<span><span class="co">#&gt;    letter.idents groups RNA_snn_res.1         obs_id</span></span>
-<span><span class="co">#&gt; 1              A     g2             0 ATGCCAGAACGACT</span></span>
-<span><span class="co">#&gt; 2              A     g1             0 CATGGCCTGTGCAT</span></span>
-<span><span class="co">#&gt; 3              B     g2             0 GAACCTGATGAACC</span></span>
-<span><span class="co">#&gt; 4              A     g2             0 TGACTGGATTCTCA</span></span>
-<span><span class="co">#&gt; 5              A     g2             0 AGTCAGACTGCACA</span></span>
-<span><span class="co">#&gt; 6              A     g1             0 TCTGATACACGTGT</span></span>
-<span><span class="co">#&gt; 7              A     g1             0 TGGTATCTAAACAG</span></span>
-<span><span class="co">#&gt; 8              A     g1             0 GCAGCTCTGTTTCT</span></span>
-<span><span class="co">#&gt; 9              A     g1             0 GATATAACACGCAT</span></span>
-<span><span class="co">#&gt; 10             A     g1             0 AATGTTGACAGTCA</span></span>
-<span><span class="co">#&gt; 11             A     g2             2 AGGTCATGAGTGTC</span></span>
-<span><span class="co">#&gt; 12             A     g1             2 AGAGATGATCTCGC</span></span>
-<span><span class="co">#&gt; 13             A     g2             2 GGGTAACTCTAGTG</span></span>
-<span><span class="co">#&gt; 14             A     g2             2 CATGAGACACGGGA</span></span>
-<span><span class="co">#&gt; 15             A     g2             2 TACGCCACTCCGAA</span></span>
-<span><span class="co">#&gt; 16             A     g1             2 CTAAACCTGTGCAT</span></span>
-<span><span class="co">#&gt; 17             A     g2             2 GTAAGCACTCATTC</span></span>
-<span><span class="co">#&gt; 18             A     g1             2 TTGGTACTGAATCC</span></span>
-<span><span class="co">#&gt; 19             A     g1             2 CATCATACGGAGCA</span></span>
-<span><span class="co">#&gt; 20             A     g2             2 TACATCACGCTAAC</span></span>
-<span><span class="co">#&gt; 21             B     g1             1 TTACCATGAATCGC</span></span>
-<span><span class="co">#&gt; 22             B     g1             1 ATAGGAGAAACAGA</span></span>
-<span><span class="co">#&gt; 23             B     g2             1 GCGCACGACTTTAC</span></span>
-<span><span class="co">#&gt; 24             B     g2             1 ACTCGCACGAAAGT</span></span>
-<span><span class="co">#&gt; 25             B     g1             1 ATTACCTGCCTTAT</span></span>
-<span><span class="co">#&gt; 26             B     g2             1 CCCAACTGCAATCG</span></span>
-<span><span class="co">#&gt; 27             B     g2             1 AAATTCGAATCACG</span></span>
-<span><span class="co">#&gt; 28             B     g2             1 CCATCCGATTCGCC</span></span>
-<span><span class="co">#&gt; 29             B     g2             1 TCCACTCTGAGCTT</span></span>
-<span><span class="co">#&gt; 30             B     g1             1 CATCAGGATGCACA</span></span>
-<span><span class="co">#&gt; 31             A     g1             0 CTAAACCTCTGACA</span></span>
-<span><span class="co">#&gt; 32             A     g1             2 GATAGAGAAGGGTG</span></span>
-<span><span class="co">#&gt; 33             A     g1             0 CTAACGGAACCGAT</span></span>
-<span><span class="co">#&gt; 34             A     g2             0 AGATATACCCGTAA</span></span>
-<span><span class="co">#&gt; 35             A     g1             0 TACTCTGAATCGAC</span></span>
-<span><span class="co">#&gt; 36             A     g1             0 GCGCATCTTGCTCC</span></span>
-<span><span class="co">#&gt; 37             A     g2             0 GTTGACGATATCGG</span></span>
-<span><span class="co">#&gt; 38             A     g1             0 ACAGGTACTGGTGT</span></span>
-<span><span class="co">#&gt; 39             A     g1             0 GGCATATGCTTATC</span></span>
-<span><span class="co">#&gt; 40             A     g2             0 CATTACACCAACTG</span></span>
-<span><span class="co">#&gt; 41             A     g1             0 TAGGGACTGAACTC</span></span>
-<span><span class="co">#&gt; 42             A     g2             2 GCTCCATGAGAAGT</span></span>
-<span><span class="co">#&gt; 43             A     g2             0 TACAATGATGCTAG</span></span>
-<span><span class="co">#&gt; 44             A     g2             0 CTTCATGACCGAAT</span></span>
-<span><span class="co">#&gt; 45             A     g1             2 CTGCCAACAGGAGC</span></span>
-<span><span class="co">#&gt; 46             A     g2             2 TTGCATTGAGCTAC</span></span>
-<span><span class="co">#&gt; 47             A     g1             0 AAGCAAGAGCTTAG</span></span>
-<span><span class="co">#&gt; 48             A     g2             0 CGGCACGAACTCAG</span></span>
-<span><span class="co">#&gt; 49             A     g1             0 GGTGGAGATTACTC</span></span>
-<span><span class="co">#&gt; 50             A     g2             0 GGCCGATGTACTCT</span></span>
-<span><span class="co">#&gt; 51             B     g1             1 CGTAGCCTGTATGC</span></span>
-<span><span class="co">#&gt; 52             B     g2             1 TGAGCTGAATGCTG</span></span>
-<span><span class="co">#&gt; 53             B     g2             2 CCTATAACGAGACG</span></span>
-<span><span class="co">#&gt; 54             B     g2             1 ATAAGTTGGTACGT</span></span>
-<span><span class="co">#&gt; 55             B     g1             1 AAGCGACTTTGACG</span></span>
-<span><span class="co">#&gt; 56             A     g1             1 ACCAGTGAATACCG</span></span>
-<span><span class="co">#&gt; 57             B     g1             1 ATTGCACTTGCTTT</span></span>
-<span><span class="co">#&gt; 58             B     g1             1 CTAGGTGATGGTTG</span></span>
-<span><span class="co">#&gt; 59             B     g2             1 GCACTAGACCTTTA</span></span>
-<span><span class="co">#&gt; 60             A     g1             0 CATGCGCTAGTCAC</span></span>
-<span><span class="co">#&gt; 61             A     g1             2 TTGAGGACTACGCA</span></span>
-<span><span class="co">#&gt; 62             B     g1             1 ATACCACTCTAAGC</span></span>
-<span><span class="co">#&gt; 63             A     g1             2 CATATAGACTAAGC</span></span>
-<span><span class="co">#&gt; 64             B     g1             1 TTTAGCTGTACTCT</span></span>
-<span><span class="co">#&gt; 65             B     g1             2 GACATTCTCCACCT</span></span>
-<span><span class="co">#&gt; 66             B     g2             1 ACGTGATGCCATGA</span></span>
-<span><span class="co">#&gt; 67             B     g2             1 ATTGTAGATTCCCG</span></span>
-<span><span class="co">#&gt; 68             B     g1             1 GATAGAGATCACGA</span></span>
-<span><span class="co">#&gt; 69             B     g1             1 AATGCGTGGACGGA</span></span>
-<span><span class="co">#&gt; 70             A     g1             2 GCGTAAACACGGTT</span></span>
-<span><span class="co">#&gt; 71             A     g2             0 ATTCAGCTCATTGG</span></span>
-<span><span class="co">#&gt; 72             A     g1             0 GGCATATGGGGAGT</span></span>
-<span><span class="co">#&gt; 73             A     g2             0 ATCATCTGACACCA</span></span>
-<span><span class="co">#&gt; 74             A     g2             0 GTCATACTTCGCCT</span></span>
-<span><span class="co">#&gt; 75             A     g1             0 TTACGTACGTTCAG</span></span>
-<span><span class="co">#&gt; 76             A     g1             0 GAGTTGTGGTAGCT</span></span>
-<span><span class="co">#&gt; 77             A     g2             0 GACGCTCTCTCTCG</span></span>
-<span><span class="co">#&gt; 78             A     g1             0 AGTCTTACTTCGGA</span></span>
-<span><span class="co">#&gt; 79             A     g2             0 GGAACACTTCAGAC</span></span>
-<span><span class="co">#&gt; 80             B     g1             1 CTTGATTGATCTTC</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 80 × 9</span></span></span>
+<span><span class="co">#&gt;    soma_joinid orig.ident  nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents</span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>           0 SeuratProj…         70           47 0               A            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>           1 SeuratProj…         85           52 0               A            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>           2 SeuratProj…         87           50 1               B            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>           3 SeuratProj…        127           56 0               A            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>           4 SeuratProj…        173           53 0               A            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>           5 SeuratProj…         70           48 0               A            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>           6 SeuratProj…         64           36 0               A            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>           7 SeuratProj…         72           45 0               A            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>           8 SeuratProj…         52           36 0               A            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>           9 SeuratProj…        100           41 0               A            </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 70 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: groups &lt;chr&gt;, RNA_snn_res.1 &lt;chr&gt;, obs_id &lt;chr&gt;</span></span></span></code></pre></div>
 <p>Alternatively, you can use the iterator, which retrieves data in chunks that are smaller than the <code>soma.init_buffer_bytes</code> context field. You can use the iterator’s method <code>$read_next()</code> to load a chunk in memory.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span><span class="op">)</span></span>
@@ -402,33 +255,20 @@
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obs</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span>column_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"obs_id"</span>, <span class="st">"nCount_RNA"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">obs</span><span class="op">$</span><span class="fu">to_data_frame</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            obs_id nCount_RNA</span></span>
-<span><span class="co">#&gt; 1  TGACTGGATTCTCA        127</span></span>
-<span><span class="co">#&gt; 2  AGTCAGACTGCACA        173</span></span>
-<span><span class="co">#&gt; 3  AGAGATGATCTCGC        191</span></span>
-<span><span class="co">#&gt; 4  GGGTAACTCTAGTG        101</span></span>
-<span><span class="co">#&gt; 5  CTAAACCTGTGCAT        168</span></span>
-<span><span class="co">#&gt; 6  TTGGTACTGAATCC        135</span></span>
-<span><span class="co">#&gt; 7  TACATCACGCTAAC        109</span></span>
-<span><span class="co">#&gt; 8  TTACCATGAATCGC        298</span></span>
-<span><span class="co">#&gt; 9  ATAGGAGAAACAGA        406</span></span>
-<span><span class="co">#&gt; 10 GCGCACGACTTTAC        213</span></span>
-<span><span class="co">#&gt; 11 ACTCGCACGAAAGT        231</span></span>
-<span><span class="co">#&gt; 12 ATTACCTGCCTTAT        463</span></span>
-<span><span class="co">#&gt; 13 AAATTCGAATCACG        327</span></span>
-<span><span class="co">#&gt; 14 CCATCCGATTCGCC        224</span></span>
-<span><span class="co">#&gt; 15 TCCACTCTGAGCTT        361</span></span>
-<span><span class="co">#&gt; 16 CATCAGGATGCACA        353</span></span>
-<span><span class="co">#&gt; 17 CTAAACCTCTGACA        246</span></span>
-<span><span class="co">#&gt; 18 GATAGAGAAGGGTG        115</span></span>
-<span><span class="co">#&gt; 19 CTAACGGAACCGAT        189</span></span>
-<span><span class="co">#&gt; 20 AGATATACCCGTAA        187</span></span>
-<span><span class="co">#&gt; 21 TACTCTGAATCGAC        156</span></span>
-<span><span class="co">#&gt; 22 GCGCATCTTGCTCC        164</span></span>
-<span><span class="co">#&gt; 23 GTTGACGATATCGG        221</span></span>
-<span><span class="co">#&gt; 24 ACAGGTACTGGTGT        151</span></span>
-<span><span class="co">#&gt; 25 GGCATATGCTTATC        126</span></span>
-<span><span class="co">#&gt; 26 CATTACACCAACTG        316</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 26 × 2</span></span></span>
+<span><span class="co">#&gt;    obs_id         nCount_RNA</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> TGACTGGATTCTCA        127</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> AGTCAGACTGCACA        173</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> AGAGATGATCTCGC        191</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> GGGTAACTCTAGTG        101</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> CTAAACCTGTGCAT        168</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> TTGGTACTGAATCC        135</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> TACATCACGCTAAC        109</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> TTACCATGAATCGC        298</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ATAGGAGAAACAGA        406</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> GCGCACGACTTTAC        213</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 16 more rows</span></span></span></code></pre></div>
 <p>As well as the X matrix in two different formats:</p>
 <p><code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
