@@ -432,7 +432,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 if name not in dim_names_set:
                     attr = self._handle.schema.attr(name)
                     if attr.enum_label is not None:
-                        raise ValueError(f"Categorical column {name} must be presented with categorical data")
+                        raise ValueError(
+                            f"Categorical column {name} must be presented with categorical data"
+                        )
 
                 cols_map[name] = col.to_pandas()
 
