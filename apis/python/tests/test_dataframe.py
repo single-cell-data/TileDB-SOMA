@@ -164,7 +164,6 @@ def simple_data_frame(tmp_path):
     with soma.DataFrame.create(
         tmp_path.as_posix(), schema=schema, index_column_names=index_column_names
     ) as sdf:
-
         data = {
             "index": [0, 1, 2, 3],
             "soma_joinid": [10, 11, 12, 13],
@@ -1039,7 +1038,6 @@ def test_create_platform_config_overrides(
 @pytest.mark.parametrize("allows_duplicates", [False, True])
 @pytest.mark.parametrize("consolidate", [False, True])
 def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
-
     uri = tmp_path.as_posix()
 
     platform_config = {"tiledb": {"create": {"allows_duplicates": allows_duplicates}}}

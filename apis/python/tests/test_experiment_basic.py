@@ -10,7 +10,6 @@ from tiledbsoma import _factory
 
 # ----------------------------------------------------------------
 def create_and_populate_obs(uri: str) -> soma.DataFrame:
-
     obs_arrow_schema = pa.schema(
         [
             ("foo", pa.int32()),
@@ -21,7 +20,6 @@ def create_and_populate_obs(uri: str) -> soma.DataFrame:
 
     # TODO: indexing option ...
     with soma.DataFrame.create(uri, schema=obs_arrow_schema) as obs:
-
         pydict = {}
         pydict["soma_joinid"] = [0, 1, 2, 3, 4]
         pydict["foo"] = [10, 20, 30, 40, 50]
@@ -35,7 +33,6 @@ def create_and_populate_obs(uri: str) -> soma.DataFrame:
 
 # ----------------------------------------------------------------
 def create_and_populate_var(uri: str) -> soma.DataFrame:
-
     var_arrow_schema = pa.schema(
         [
             ("quux", pa.large_string()),
@@ -44,7 +41,6 @@ def create_and_populate_var(uri: str) -> soma.DataFrame:
     )
 
     with soma.DataFrame.create(uri, schema=var_arrow_schema) as var:
-
         pydict = {}
         pydict["soma_joinid"] = [0, 1, 2, 3]
         pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
@@ -70,7 +66,6 @@ def create_and_populate_sparse_nd_array(uri: str) -> soma.SparseNDArray:
     with soma.SparseNDArray.create(
         uri, type=pa.int64(), shape=[nr, nc]
     ) as sparse_nd_array:
-
         tensor = pa.SparseCOOTensor.from_numpy(
             data=np.asarray([7, 8, 9]),
             coords=[[0, 2], [3, 1], [4, 2]],

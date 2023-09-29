@@ -45,7 +45,6 @@ def test_signature_serdes(canned_h5ad_file, canned_anndata):
 
 
 def test_compatible(canned_anndata):
-
     # Check that zero inputs result in zero incompatibility
     signatures.Signature.check_compatible({})
 
