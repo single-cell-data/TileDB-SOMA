@@ -3,7 +3,6 @@ import pytest
 
 import tiledbsoma as soma
 
-
 # Checking that objects _do_ exist is already done (thoroughly) in other tests. Here
 # we primarily focus on the negative cases.
 
@@ -109,7 +108,6 @@ def test_tiledbobject_exists_cross_types(tmp_path, name1, name2):
         assert cls1.exists(uri1)
 
     else:
-
         uri1 = (tmp_path / name1).as_posix()
         uri2 = (tmp_path / name2).as_posix()
 

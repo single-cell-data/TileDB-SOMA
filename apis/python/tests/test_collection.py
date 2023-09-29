@@ -17,7 +17,6 @@ from tiledbsoma.options import SOMATileDBContext
 
 # ----------------------------------------------------------------
 def create_and_populate_dataframe(path: str) -> soma.DataFrame:
-
     arrow_schema = pa.schema(
         [
             ("foo", pa.int32()),
@@ -45,7 +44,6 @@ def create_and_populate_sparse_nd_array(path: str) -> soma.SparseNDArray:
     with soma.SparseNDArray.create(
         path, type=pa.int64(), shape=(nr, nc)
     ) as sparse_nd_array:
-
         tensor = pa.SparseCOOTensor.from_numpy(
             data=np.asarray([7, 8, 9]),
             coords=[[0, 1], [2, 3], [3, 4]],
