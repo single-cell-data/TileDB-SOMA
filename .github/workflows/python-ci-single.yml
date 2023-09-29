@@ -80,13 +80,14 @@ jobs:
         cache: pip
         cache-dependency-path: ./apis/python/setup.py
 
-    - name: Cache native libraries
-      uses: actions/cache@v3
-      with:
-        path: |
-          build
-          dist
-        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
+# Experiment for MacOS CI false negatives ...
+#    - name: Cache native libraries
+#      uses: actions/cache@v3
+#      with:
+#        path: |
+#          build
+#          dist
+#        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
     - name: Install testing prereqs
       run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools
