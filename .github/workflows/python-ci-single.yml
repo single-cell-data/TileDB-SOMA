@@ -98,6 +98,16 @@ jobs:
         CC: ${{ inputs.cc }}
         CXX: ${{ inputs.cxx }}
 
+    - name: Install somacore branch
+      if: ${{contains(github.event.head_commit.message, 'overwrite classes to make queries use C++ re-indexer') }}
+      run: |
+          pip uninstall somacore
+          git clone git@github.com:single-cell-data/SOMA.git soma
+          cd ./SOMA
+          git checkout cpp_reindexer_overwrites
+          pip install ./
+          python -c 'import somacore; print(somacore.__version__)'
+
     - name: Show package versions
       run: python scripts/show-versions.py
 
