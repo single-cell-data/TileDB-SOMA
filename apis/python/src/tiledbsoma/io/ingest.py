@@ -79,6 +79,7 @@ Matrix = Union[DenseMatrix, SparseMatrix]
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
 
+
 # ----------------------------------------------------------------
 class IngestionParams:
     """Maps from user-level ingest modes to a set of implementation-level boolean flags."""
@@ -93,7 +94,6 @@ class IngestionParams:
         ingest_mode: str,
         label_mapping: Optional[ExperimentAmbientLabelMapping],
     ) -> None:
-
         if ingest_mode == "schema_only":
             self.write_schema_no_data = True
             self.error_if_already_exists = True
@@ -1125,7 +1125,6 @@ def _write_dataframe(
     context: Optional[SOMATileDBContext] = None,
     axis_mapping: AxisIDMapping,
 ) -> DataFrame:
-
     _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
@@ -1468,7 +1467,6 @@ def _update_dataframe(
     with DataFrame.open(
         sdf.uri, mode="r", context=context, platform_config=platform_config
     ) as sdf_r:
-
         # Until we someday support deletes, this is the correct check on the existing,
         # contiguous soma join IDs compared to the new contiguous ones about to be created.
         old_jids = sorted(
@@ -1831,7 +1829,6 @@ def _write_matrix_to_sparseNDArray(
         axis: int = 0,
         base: int = 0,
     ) -> pa.Table:
-
         soma_dim_0 = mat_coo.row + base if base > 0 and axis == 0 else mat_coo.row
         soma_dim_1 = mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col
 
@@ -2058,7 +2055,6 @@ def _ingest_uns_dict(
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
 ) -> None:
-
     with _create_or_open_collection(
         Collection,
         _util.uri_joinpath(parent.uri, parent_key),
@@ -2092,7 +2088,6 @@ def _ingest_uns_node(
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
 ) -> None:
-
     if isinstance(value, np.generic):
         # This is some kind of numpy scalar value. Metadata entries
         # only accept native Python types, so unwrap it.

@@ -17,7 +17,7 @@ from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject
 
 
-class Measurement(
+class Measurement(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnyTileDBObject],
     measurement.Measurement[  # type: ignore[type-var]
         DataFrame,

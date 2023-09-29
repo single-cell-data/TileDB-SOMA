@@ -195,7 +195,7 @@ def test_metadata_marshalling_OK(soma_object, test_value):
     assert "test_value" in soma_object.metadata
 
     val = soma_object.metadata["test_value"]
-    if type(test_value) is float and math.isnan(test_value):
+    if isinstance(test_value, float) and math.isnan(test_value):
         # By definition, NaN != NaN, so we can't just compare
         assert math.isnan(val)
     else:
