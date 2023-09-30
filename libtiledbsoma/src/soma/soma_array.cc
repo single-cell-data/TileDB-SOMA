@@ -216,6 +216,9 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
         return std::nullopt;
     }
 
+    // Submit the query
+    mq_->submit_read();
+
     // Return empty buffers on first read
     if (mq_->is_empty_query()) {
         if (first_read_next_) {
@@ -225,9 +228,6 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
             return std::nullopt;
         }
     }
-
-    // Submit the query
-    mq_->submit_read();
 
     // Return the results, possibly incomplete
     return mq_->results();
