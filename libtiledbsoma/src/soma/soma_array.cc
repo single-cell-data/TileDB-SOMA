@@ -223,6 +223,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     if (mq_->is_empty_query()) {
         if (first_read_next_) {
             first_read_next_ = false;
+            return mq_->submit_read();
         } else {
             return std::nullopt;
         }
