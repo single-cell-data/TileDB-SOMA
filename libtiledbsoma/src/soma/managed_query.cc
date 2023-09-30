@@ -95,7 +95,7 @@ void ManagedQuery::select_columns(
     }
 }
 
-void ManagedQuery::submit_read() {
+void ManagedQuery::setup_read() {
     // If the query is complete, return so we do not submit it again
     auto status = query_->query_status();
     if (status == Query::Status::COMPLETE) {
@@ -151,7 +151,7 @@ void ManagedQuery::submit_write() {
     query_->submit();
 }
 
-std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
+std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
     if (is_empty_query()) {
         return buffers_;
     }

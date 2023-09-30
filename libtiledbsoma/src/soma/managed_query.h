@@ -272,16 +272,10 @@ class ManagedQuery {
     }
 
     /**
-     * @brief Submit the read query.
+     * @brief Configure query and allocate result buffers for reads.
      *
      */
-    void submit_read();
-
-    /**
-     * @brief Submit the write query.
-     *
-     */
-    void submit_write();
+    void setup_read();
 
     /**
      * @brief Check if the query is complete.
@@ -370,11 +364,17 @@ class ManagedQuery {
     }
 
     /**
-     * @brief Return results from the query.
+     * @brief Submit and return results from the query.
      *
      * @return std::shared_ptr<ArrayBuffers>
      */
-    std::shared_ptr<ArrayBuffers> results();
+    std::shared_ptr<ArrayBuffers> submit_read();
+
+    /**
+     * @brief Submit the write query.
+     *
+     */
+    void submit_write();
 
     /**
      * @brief Get the schema of the array.
