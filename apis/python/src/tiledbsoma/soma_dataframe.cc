@@ -16,12 +16,10 @@ static std::unique_ptr<SOMADataFrame> create(
     uintptr_t schema_ptr, 
     std::vector<std::string> index_column_names, 
     std::map<std::string, std::string> platform_config, 
-    uintptr_t domains_ptr,
-    uintptr_t extents_ptr)
+    uintptr_t ptr_dom_and_exts)
 {
     return SOMADataFrame::create(
-        uri, *((ArrowSchema*)schema_ptr), platform_config, index_column_names, 
-        *((ArrowArray*)domains_ptr), *((ArrowArray*)extents_ptr));
+        uri, *((ArrowSchema*)schema_ptr), platform_config, index_column_names, *((ArrowArray*)ptr_dom_and_exts));
 }
 
 static void write(SOMADataFrame& dataframe, 
@@ -72,7 +70,6 @@ void init_soma_dataframe(py::module &m) {
         uintptr_t,
         std::vector<std::string>,
         std::map<std::string, std::string>,
-        uintptr_t,
         uintptr_t>(create))
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::map<std::string, std::string>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::shared_ptr<Context>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))

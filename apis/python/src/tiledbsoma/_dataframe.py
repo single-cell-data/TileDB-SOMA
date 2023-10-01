@@ -68,12 +68,6 @@ class DataFrame():
         platform_config = {}
     
         ptr_dom_and_exts = 0
-
-        # c_domain = ffi.new("struct ArrowArray*")
-        # ptr_domain = int(ffi.cast("uintptr_t", c_domain))
-        # gc.collect()
-        # dom._export_to_c(ptr_domain)
-        
         domain_and_extents = pa.StructArray.from_arrays(
             [pa.array(domains), pa.array(extents)], 
             names=["domains", "extents"])

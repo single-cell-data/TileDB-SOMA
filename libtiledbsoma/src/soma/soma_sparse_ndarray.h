@@ -69,8 +69,7 @@ class SOMASparseNDArray : public SOMAObject {
         ArrowSchema& schema,
         std::map<std::string, std::string> platform_config,
         std::vector<std::string> index_column_names,
-        ArrowArray& domains,
-        ArrowArray& extents);
+        ArrowArray& domains_and_extents);
 
     /**
      * @brief Create a SOMASparseNDArray object at the given URI.

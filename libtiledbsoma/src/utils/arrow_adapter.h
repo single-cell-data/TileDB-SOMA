@@ -328,12 +328,14 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx,
         ArrowSchema& schema,
         std::vector<std::string> index_column_names,
-        ArrowArray& domains,
-        ArrowArray& extents) {
-        if (domains.n_children != (int64_t)index_column_names.size()) {
+        ArrowArray& domains_and_extents) {
+        ArrowArray* domains = domains_and_extents.children[0];
+        ArrowArray* extents = domains_and_extents.children[1];
+
+        if (domains->n_children != (int64_t)index_column_names.size()) {
             throw TileDBSOMAError(
-                "if domain is specified, it must have the same length as "
-                "index_column_names");
+                "if domains_and_extents are specified, it must have the same "
+                "length as index_column_names");
         }
 
         ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
@@ -352,8 +354,8 @@ class ArrowAdapter {
                         *ctx,
                         child->name,
                         typeinfo.type,
-                        domains.children[col_idx]->buffers[1],
-                        extents.children[col_idx]->buffers[1]);
+                        domains->children[col_idx]->buffers[1],
+                        extents->children[col_idx]->buffers[1]);
 
                     Filter filter(*ctx, TILEDB_FILTER_ZSTD);
                     if (platform_config.contains("dataframe_dim_zstd_level")) {
