@@ -63,28 +63,30 @@ class DataFrame():
         gc.collect()
         schema._export_to_c(ptr_schema)
 
-        domain = [(0, 100000)]
+        domains = [(0, 100000)]
         extents = [(1,)]
         platform_config = {}
     
-        ptr_domain = 0
-        ptr_extents = 0
+        ptr_dom_and_exts = 0
 
-        dom = pa.RecordBatch.from_arrays(domain, names=index_column_names)
-        c_domain = ffi.new("struct ArrowArray*")
-        ptr_domain = int(ffi.cast("uintptr_t", c_domain))
-        gc.collect()
-        dom._export_to_c(ptr_domain)
+        # c_domain = ffi.new("struct ArrowArray*")
+        # ptr_domain = int(ffi.cast("uintptr_t", c_domain))
+        # gc.collect()
+        # dom._export_to_c(ptr_domain)
         
-        ext = pa.RecordBatch.from_arrays(extents, names=index_column_names)
-        c_ex = ffi.new("struct ArrowArray*")
-        ptr_extents = int(ffi.cast("uintptr_t", c_ex))
+        domain_and_extents = pa.StructArray.from_arrays(
+            [pa.array(domains), pa.array(extents)], 
+            names=["domains", "extents"])
+        c_dom_and_exts = ffi.new("struct ArrowArray*")
+        ptr_dom_and_exts = int(ffi.cast("uintptr_t", c_dom_and_exts))
         gc.collect()
-        ext._export_to_c(ptr_extents)
+        domain_and_extents._export_to_c(ptr_dom_and_exts)
+        
+        print(domain_and_extents)
     
         # CHECK DOMAIN AND INDEX COL NAME SIZE
         soma_dataframe = DataFrame(pts.SOMADataFrame.create(uri, ptr_schema,      
-            index_column_names, platform_config or {}, ptr_domain, ptr_extents))
+            index_column_names, platform_config or {}, ptr_dom_and_exts))
         
         return soma_dataframe
     
