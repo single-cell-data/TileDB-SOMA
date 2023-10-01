@@ -211,7 +211,7 @@ void SOMAArray::reset(
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
-    // If the query is complete, return `std::nullopt`.
+    // If the query is complete, return `std::nullopt`
     if (mq_->is_complete(true)) {
         return std::nullopt;
     }
@@ -228,6 +228,8 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
             return std::nullopt;
         }
     }
+
+    first_read_next_ = false;
 
     // Return the results, possibly incomplete
     return mq_->submit_read();
