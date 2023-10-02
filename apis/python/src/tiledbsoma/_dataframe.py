@@ -388,6 +388,11 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 containing all columns, including the index columns. The schema for the values must
                 match the schema for the :class:`DataFrame`.
 
+                If a column is of categorical type in the schema and a flattened/non-categorical
+                column is presented for data on write, a ``ValueError`` is raised.  If a column is
+                of non-categorical type in the schema and a categorical column is presented for data
+                on write, the data are auto-flattened on behalf of the user.
+
         Raises:
             TypeError:
                 If the ``values`` parameter is an unsupported type.
