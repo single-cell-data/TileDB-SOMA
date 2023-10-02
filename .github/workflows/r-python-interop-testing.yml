@@ -81,8 +81,7 @@ jobs:
           python scripts/show-versions.py
 
       - name: Update Packages
-        if: ${{ matrix.os != 'macOS-latest' }}
-        run: sudo apt update -qq && sudo apt upgrade -y
+        run: Rscript -e 'update.packages(ask=FALSE)'
 
       - name: Interop Tests
         run: python -m pytest apis/system/tests/

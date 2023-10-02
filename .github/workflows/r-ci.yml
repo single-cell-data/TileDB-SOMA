@@ -55,8 +55,7 @@ jobs:
       #  run: sudo ldconfig
       #
       - name: Update Packages
-        if: ${{ matrix.os != 'macOS-latest' }}
-        run: sudo apt update -qq && sudo apt upgrade -y
+        run: Rscript -e 'update.packages(ask=FALSE)'
 
       - name: Test
         if: ${{ matrix.covr == 'no' }}
