@@ -67,6 +67,9 @@ jobs:
       #  if: ${{ matrix.os == 'ubuntu-latest' }}
       #  run: sudo ldconfig
 
+      - name: Update packages
+        run: Rscript -e 'update.packages(ask=FALSE)'
+
       - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests
