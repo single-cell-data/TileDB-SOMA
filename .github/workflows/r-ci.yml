@@ -53,6 +53,10 @@ jobs:
       #- name: Call ldconfig
       #  if: ${{ matrix.os == 'ubuntu-latest' }}
       #  run: sudo ldconfig
+      #
+      - name: Update Packages
+        if: ${{ matrix.os != 'macOS-latest' }}
+        run: sudo apt update -qq && sudo apt upgrade -y
 
       - name: Test
         if: ${{ matrix.covr == 'no' }}
