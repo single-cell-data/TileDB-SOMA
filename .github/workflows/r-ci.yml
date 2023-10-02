@@ -78,6 +78,10 @@ jobs:
         run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
         if: failure()
 
+      - name: View Test Output
+        run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00check.log
+        if: failure()
+
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}
         run: cd apis/r && tools/r-ci.sh coverage
