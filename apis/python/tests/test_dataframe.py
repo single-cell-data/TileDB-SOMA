@@ -139,16 +139,16 @@ def test_dataframe_with_enumeration(tmp_path, downgrade):
     ) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
-          data["foo"] = ["a", "bb", "ccc", "bb", "a"]
-          data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
-          with pytest.raises(ValueError):
-              sdf.write(pa.Table.from_pydict(data))
+        data["foo"] = ["a", "bb", "ccc", "bb", "a"]
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        with pytest.raises(ValueError):
+            sdf.write(pa.Table.from_pydict(data))
 
-          data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
-          data["bar"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
-          sdf.write(pa.Table.from_pydict(data))
-          assert sdf.enumeration("foo") == enums["enmr1"]
-          assert sdf.enumeration("bar") == enums["enmr2"]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
+        data["bar"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
+        sdf.write(pa.Table.from_pydict(data))
+        assert sdf.enumeration("foo") == enums["enmr1"]
+        assert sdf.enumeration("bar") == enums["enmr2"]
 
 
 @pytest.fixture
