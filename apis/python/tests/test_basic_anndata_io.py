@@ -744,3 +744,77 @@ def test_obs_with_categorical_int_nan_enumeration(
     tiledbsoma.io.from_h5ad(
         output_path, h5ad_file_categorical_int_nan, measurement_name="RNA"
     )
+
+
+@pytest.mark.parametrize("obs_id_name", ["obs_id", "cells_are_great"])
+@pytest.mark.parametrize("var_id_name", ["var_id", "genes_are_nice_too"])
+@pytest.mark.parametrize("indexify_obs", [True, False])
+@pytest.mark.parametrize("indexify_var", [True, False])
+def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var):
+    obs_ids = ["AAAT", "CATG", "CTGA", "TCTG", "TGAG", "TTTG"]
+    var_ids = ["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"]
+
+    n_obs = len(obs_ids)
+    n_var = len(var_ids)
+
+    obs = pd.DataFrame(
+        data={
+            obs_id_name: np.asarray(obs_ids),
+            "cell_type": pd.Categorical(
+                [["B cell", "T cell"][e % 2] for e in range(n_obs)],
+                categories=["B cell", "T cell"],
+                ordered=True,
+            ),
+        },
+        index=np.arange(n_obs).astype(str),
+    )
+    if indexify_obs:
+        obs.set_index(obs_id_name, inplace=True)
+
+    var = pd.DataFrame(
+        data={
+            var_id_name: np.asarray(var_ids),
+            "counter": np.asarray(range(n_var), dtype=np.float32),
+        },
+        index=np.arange(n_var).astype(str),
+    )
+    if indexify_var:
+        var.set_index(var_id_name, inplace=True)
+
+    X = np.zeros([n_obs, n_var])
+    for i in range(n_obs):
+        for j in range(n_var):
+            if (i + j) % 2 == 1:
+                X[i, j] = 100 + 10 * i + j
+
+    adata = anndata.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+
+    uri = tmp_path.as_posix()
+
+    # Implicitly, a check for no-throw
+    tiledbsoma.io.from_anndata(
+        uri,
+        adata,
+        measurement_name="RNA",
+        obs_id_name=obs_id_name,
+        var_id_name=var_id_name,
+    )
+
+    with tiledbsoma.Experiment.open(uri) as exp:
+        assert obs_id_name in exp.obs.keys()
+        assert var_id_name in exp.ms["RNA"].var.keys()
+
+        # Implicitly, a check for no-throw
+        bdata = tiledbsoma.io.to_anndata(
+            exp,
+            measurement_name="RNA",
+            obs_id_name=obs_id_name,
+            var_id_name=var_id_name,
+        )
+
+        soma_obs = exp.obs.read(column_names=[obs_id_name]).concat().to_pandas()
+        soma_var = (
+            exp.ms["RNA"].var.read(column_names=[var_id_name]).concat().to_pandas()
+        )
+        assert list(bdata.obs.index) == list(soma_obs[obs_id_name])
+        assert list(bdata.var.index) == list(soma_var[var_id_name])
