@@ -411,23 +411,27 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             n = len(col)
 
             cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
-            if pa.types.is_dictionary(col.type) and col.num_chunks != 0:
-                if name in dim_names_set:
-                    # Dims are never categorical. Decategoricalize for them.
-                    cols_map[name] = pa.chunked_array(
-                        [chunk.dictionary_decode() for chunk in col.chunks]
-                    )
-                else:
-                    attr = self._handle.schema.attr(name)
-                    if attr.enum_label is not None:
-                        # Normal case: writing categorical data to categorical schema.
-                        cols_map[name] = col.chunk(0).indices.to_pandas()
-                    else:
-                        # Schema is non-categorical but the user is writing categorical.
-                        # Simply decategoricalize for them.
+            if pa.types.is_dictionary(col.type):
+                if col.num_chunks != 0:
+                    if name in dim_names_set:
+                        # Dims are never categorical. Decategoricalize for them.
                         cols_map[name] = pa.chunked_array(
                             [chunk.dictionary_decode() for chunk in col.chunks]
                         )
+                    else:
+                        attr = self._handle.schema.attr(name)
+                        if attr.enum_label is not None:
+                            # Normal case: writing categorical data to categorical schema.
+                            cols_map[name] = col.chunk(0).indices.to_pandas()
+                        else:
+                            # Schema is non-categorical but the user is writing categorical.
+                            # Simply decategoricalize for them.
+                            cols_map[name] = pa.chunked_array(
+                                [chunk.dictionary_decode() for chunk in col.chunks]
+                            )
+                else:
+                    cols_map[name] = col.to_pandas()
+
             else:
                 if name not in dim_names_set:
                     attr = self._handle.schema.attr(name)
