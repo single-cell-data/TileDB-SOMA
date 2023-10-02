@@ -41,15 +41,25 @@ jobs:
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
 
-      # Given propagation delay for binaries at https://r2u.stat.illinois.edu/ubuntu/pool/dists/jammy/main/
-      - name: Install r-universe build of tiledb-r (macOS)
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+      # The next two stanzas are necessary given propagation delay for binaries at
+      # https://r2u.stat.illinois.edu/ which may lack binaries (for short periods of usually a day)
+      # when sources have been updated. The default installation could switch to installation from
+      # sources --- but that would require installing all build dependencies. To see what the most
+      # recent binary is run e.g.  docker run --rm -ti rocker/r2u bash -c 'apt update -qq &&
+      # apt-cache show r-cran-tiledb' Using the r-universe builds (as below) is a suitable fallback
+      # as they update more frequently than CRAN.
 
-      # Given propagation delay for binaries at https://r2u.stat.illinois.edu/ubuntu/pool/dists/jammy/main/
-      - name: Install r-universe build of tiledb-r (linux)
-        if: ${{ matrix.os != 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"  
+      # Uncomment these next two stanzas as needed whenever we've just released a new tiledb-r for
+      # which source is available but binaries are not yet:
+
+      #- name: Install r-universe build of tiledb-r (macOS)
+      #  if: ${{ matrix.os == 'macOS-latest' }}
+      #  run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+
+      #   docker run --rm -ti rocker/r2u Rscript -e 'install.packages("tiledb")'
+      #- name: Install r-universe build of tiledb-r (linux)
+      #  if: ${{ matrix.os != 'macOS-latest' }}
+      #  run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"  
        
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
