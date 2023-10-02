@@ -80,5 +80,9 @@ jobs:
           python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
           python scripts/show-versions.py
 
+      - name: Update Packages
+        if: ${{ matrix.os != 'macOS-latest' }}
+        run: sudo apt update -qq && sudo apt upgrade -y
+
       - name: Interop Tests
         run: python -m pytest apis/system/tests/
