@@ -751,7 +751,6 @@ def test_obs_with_categorical_int_nan_enumeration(
 @pytest.mark.parametrize("indexify_obs", [True, False])
 @pytest.mark.parametrize("indexify_var", [True, False])
 def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var):
-
     obs_ids = ["AAAT", "CATG", "CTGA", "TCTG", "TGAG", "TTTG"]
     var_ids = ["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"]
 
