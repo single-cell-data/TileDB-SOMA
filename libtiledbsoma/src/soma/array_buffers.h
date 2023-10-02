@@ -63,10 +63,14 @@ class ArrayBuffers {
             auto data = arrow_array.children[i]->buffers[1];
             auto typeinfo = ArrowAdapter::arrow_type_to_tiledb(
                 arrow_schema.children[i]);
-            auto data_size = arrow_array.children[i]->length *
-                             typeinfo.elem_size;
             array_buffer->emplace(
-                name, ColumnBuffer::create(schema, name, data, data_size));
+                name,
+                ColumnBuffer::create(
+                    schema,
+                    name,
+                    data,
+                    arrow_array.children[i]->length,
+                    typeinfo.elem_size));
         }
         return array_buffer;
     }

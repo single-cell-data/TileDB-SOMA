@@ -43,22 +43,23 @@ static void write(SOMADataFrame& dataframe,
         auto schema = dataframe.schema();
         auto typeinfo = ArrowAdapter::arrow_type_to_tiledb(schema_child);
 
-        std::vector<int64_t> data;
-        data.assign(
-            (const int64_t*)array_child->buffers[1],
-            (const int64_t*)array_child->buffers[1] + 5
-        );
-        std::cout << schema_child->name << std::endl;
-        for(auto d : data)
-            std::cout << d << " ";
-        std::cout << std::endl;
+        // std::vector<int64_t> data;
+        // data.assign(
+        //     (const int64_t*)array_child->buffers[1],
+        //     (const int64_t*)array_child->buffers[1] + 5
+        // );
+        // std::cout << "DF " << schema_child->name << std::endl;
+        // for(auto d : data)
+        //     std::cout << d << " ";
+        // std::cout << std::endl;
 
         array_buffer->emplace(schema_child->name, 
             ColumnBuffer::create(
                 *schema, 
                 schema_child->name, 
                 array_child->buffers[1], 
-                5)); 
+                array_child->length,
+                typeinfo.elem_size)); 
     }
     dataframe.write(array_buffer);
 }

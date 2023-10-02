@@ -109,21 +109,21 @@ class ColumnBuffer {
         ArraySchema schema,
         std::string_view name,
         const void* data,
-        uint64_t data_size) {
-        std::cout << name << std::endl;
-        std::vector<int64_t> print_data;
-        print_data.resize(5);
-        print_data.assign((int64_t*)data, (int64_t*)data + 5);
-        for (auto d : print_data)
-            std::cout << d << " ";
-        std::cout << std::endl;
+        uint64_t num_cells,
+        uint64_t elem_size) {
+        // std::cout << "BF " << name << std::endl;
+        // std::vector<int64_t> print_data;
+        // print_data.assign((const int64_t*)data, (const int64_t*)data + 5);
+        // for (auto d : print_data)
+        //     std::cout << d << " ";
+        // std::cout << std::endl;
 
         auto column_buff = ColumnBuffer::create(schema, name);
-        column_buff->num_cells_ = data_size;
-        column_buff->data_.resize(data_size);
+        column_buff->num_cells_ = num_cells;
+        column_buff->data_.resize(num_cells);
         column_buff->data_.assign(
             reinterpret_cast<const std::byte*>(data),
-            reinterpret_cast<const std::byte*>(data) + 5 * 64);
+            reinterpret_cast<const std::byte*>(data) + num_cells * elem_size);
         return column_buff;
     }
 

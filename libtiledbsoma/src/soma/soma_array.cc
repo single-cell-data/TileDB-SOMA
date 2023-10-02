@@ -459,6 +459,11 @@ std::vector<int64_t> SOMAArray::shape() {
     return result;
 }
 
+std::vector<std::pair<std::string, std::pair<int64_t, int64_t>>>
+SOMAArray::nonempty_domain() {
+    return arr_->non_empty_domain<int64_t>();
+}
+
 uint64_t SOMAArray::ndim() const {
     return this->schema().get()->domain().ndim();
 }

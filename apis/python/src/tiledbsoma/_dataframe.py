@@ -63,21 +63,19 @@ class DataFrame():
         gc.collect()
         schema._export_to_c(ptr_schema)
 
-        domains = [(0, 100000)]
+        domain = [(0, 100000)]
         extents = [(1,)]
         platform_config = {}
     
         ptr_dom_and_exts = 0
         domain_and_extents = pa.StructArray.from_arrays(
-            [pa.array(domains), pa.array(extents)], 
-            names=["domains", "extents"])
+            [pa.array(domain), pa.array(extents)], 
+            names=["domain", "extents"])
         c_dom_and_exts = ffi.new("struct ArrowArray*")
         ptr_dom_and_exts = int(ffi.cast("uintptr_t", c_dom_and_exts))
         gc.collect()
         domain_and_extents._export_to_c(ptr_dom_and_exts)
         
-        print(domain_and_extents)
-    
         # CHECK DOMAIN AND INDEX COL NAME SIZE
         soma_dataframe = DataFrame(pts.SOMADataFrame.create(uri, ptr_schema,      
             index_column_names, platform_config or {}, ptr_dom_and_exts))
@@ -108,8 +106,8 @@ class DataFrame():
             [col.chunks[0] for col in values], names=values.schema.names)
         rb._export_to_c(ptr_array)
         
-        print(rb)
-        print(rb.to_pandas())
+        # print(rb)
+        # print(rb.to_pandas())
         
         c_schema = ffi.new("struct ArrowSchema*")
         ptr_schema = int(ffi.cast("uintptr_t", c_schema))
