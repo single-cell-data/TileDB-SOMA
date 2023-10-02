@@ -391,7 +391,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 If a column is of categorical type in the schema and a flattened/non-categorical
                 column is presented for data on write, a ``ValueError`` is raised.  If a column is
                 of non-categorical type in the schema and a categorical column is presented for data
-                on write, the data are auto-flattened on behalf of the user.
+                on write, the data are written as an array of category values, and the category-type
+                information is not saved.
 
         Raises:
             TypeError:

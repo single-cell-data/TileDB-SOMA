@@ -122,8 +122,7 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     assert sdf.index_column_names == ("bar",)
 
 
-@pytest.mark.parametrize("downgrade", [False, True])
-def test_dataframe_with_enumeration(tmp_path, downgrade):
+def test_dataframe_with_enumeration(tmp_path):
     schema = pa.schema(
         [
             pa.field("foo", pa.dictionary(pa.int64(), pa.large_string())),
