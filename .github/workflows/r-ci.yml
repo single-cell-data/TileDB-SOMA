@@ -67,12 +67,19 @@ jobs:
       #  if: ${{ matrix.os == 'ubuntu-latest' }}
       #  run: sudo ldconfig
 
+      - name: Update packages
+        run: Rscript -e 'update.packages(ask=FALSE)'
+
       - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests
 
       - name: View Install Output
         run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
+        if: failure()
+
+      - name: View Test Output
+        run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00check.log
         if: failure()
 
       - name: Coverage

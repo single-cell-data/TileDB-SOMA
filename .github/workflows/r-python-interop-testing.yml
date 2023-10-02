@@ -80,5 +80,8 @@ jobs:
           python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
           python scripts/show-versions.py
 
+      - name: Update Packages
+        run: Rscript -e 'update.packages(ask=FALSE)'
+
       - name: Interop Tests
         run: python -m pytest apis/system/tests/
