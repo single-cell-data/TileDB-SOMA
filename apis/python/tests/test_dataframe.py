@@ -130,7 +130,6 @@ def test_dataframe_with_enumeration(tmp_path):
         ]
     )
     enums = {"enmr1": ("a", "bb", "ccc"), "enmr2": ("cat", "dog")}
-
     with soma.DataFrame.create(
         tmp_path.as_posix(),
         schema=schema,
@@ -139,8 +138,13 @@ def test_dataframe_with_enumeration(tmp_path):
     ) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
-        data["foo"] = [2, 1, 2, 1, 0]
-        data["bar"] = [0, 1, 1, 0, 1]
+        data["foo"] = ["a", "bb", "ccc", "bb", "a"]
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        with pytest.raises(ValueError):
+            sdf.write(pa.Table.from_pydict(data))
+
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
+        data["bar"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
         sdf.write(pa.Table.from_pydict(data))
         assert sdf.enumeration("foo") == enums["enmr1"]
         assert sdf.enumeration("bar") == enums["enmr2"]
