@@ -616,11 +616,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                 const std::vector<std::pair<float, float>>&)>(
                 &SOMAArray::set_dim_ranges))
 
-        .def(
-            "submit",
-            &SOMAArray::submit,
-            py::call_guard<py::gil_scoped_release>())
-
         .def("results_complete", &SOMAArray::results_complete)
 
         .def(

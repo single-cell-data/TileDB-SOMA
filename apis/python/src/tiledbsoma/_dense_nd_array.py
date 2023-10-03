@@ -115,8 +115,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         self._set_reader_coords(sr, coords)
 
-        sr.submit()
-
         arrow_tables = []
         while True:
             arrow_table_piece = sr.read_next()

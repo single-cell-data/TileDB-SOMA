@@ -156,7 +156,6 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
 
         // Write data to array
-        soma_array->submit();
         soma_array->write(array_buffer);
         soma_array->close();
     }
@@ -237,7 +236,6 @@ TEST_CASE("SOMAArray: nnz") {
         REQUIRE(shape[0] == std::numeric_limits<int64_t>::max());
 
         // Check that data from SOMAArray::read_next matches expected data
-        soma_array->submit();
         while (auto batch = soma_array->read_next()) {
             auto arrbuf = batch.value();
             REQUIRE(arrbuf->names() == std::vector<std::string>({"d0", "a0"}));
@@ -426,7 +424,6 @@ TEST_CASE("SOMAArray: Test buffer size") {
     auto soma_array = SOMAArray::open(OpenMode::read, ctx, uri);
 
     size_t loops = 0;
-    soma_array->submit();
     while (auto batch = soma_array->read_next())
         ++loops;
     REQUIRE(loops == 10);
