@@ -74,7 +74,6 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
 
     # check multiple read paths
     with soma.DenseNDArray.open(tmp_path.as_posix()) as b:
-
         t = b.read((slice(None),) * ndim, result_order="row-major")
         assert t.equals(pa.Tensor.from_numpy(data))
 
@@ -313,7 +312,6 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
     with soma.DenseNDArray.create(
         tmp_path.as_posix(), type=pa.int64(), shape=shape
     ) as a:
-
         npa = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
 
         write_coords = tuple(slice(0, dim_len) for dim_len in shape)

@@ -214,7 +214,6 @@ class Signature:
         """
 
         with tiledbsoma.Experiment.open(uri, context=context) as exp:
-
             obs_schema = _string_dict_from_arrow_schema(exp.obs.schema)
 
             var_schema = _string_dict_from_arrow_schema(

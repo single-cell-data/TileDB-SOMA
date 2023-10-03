@@ -17,7 +17,7 @@ from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
 
 
-class Experiment(
+class Experiment(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnyTileDBObject],
     experiment.Experiment[  # type: ignore[type-var]
         DataFrame,

@@ -64,7 +64,7 @@ class _CachedElement:
     """The reified object, if it has been opened."""
 
 
-class CollectionBase(
+class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     TileDBObject[_tdb_handles.GroupWrapper],
     somacore.collection.BaseCollection[CollectionElementType],
 ):
@@ -628,7 +628,7 @@ class CollectionBase(
 AnyTileDBCollection = CollectionBase[Any]
 
 
-class Collection(
+class Collection(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[CollectionElementType], somacore.Collection[CollectionElementType]
 ):
     """:class:`Collection` is a persistent container of named SOMA objects, stored as

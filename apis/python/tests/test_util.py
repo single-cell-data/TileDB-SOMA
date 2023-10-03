@@ -10,7 +10,6 @@ from tiledbsoma._util import (
 
 
 def test_uri_joinpath_file():
-
     assert uri_joinpath("/A/", "B") == "/A/B"
     assert uri_joinpath("/A/", "/B") == "/B"
     assert uri_joinpath("/A/B", "C") == "/A/B/C"
