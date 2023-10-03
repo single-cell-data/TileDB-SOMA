@@ -1229,6 +1229,27 @@ def _write_dataframe_impl(
             raise SOMAError(f"{soma_df.uri} already exists")
 
     if ingestion_params.write_schema_no_data:
+        # Write enumeration values to the schema. Typically this would be done
+        # on the first write, but because this is schema-only mode, we never call
+        # DataFrame.write()
+        for col_info in arrow_table.schema:
+            name = col_info.name
+            col = arrow_table.column(name)
+
+            if soma_df._handle.schema.has_attr(name):
+                attr = soma_df._handle.schema.attr(name)
+                if attr.enum_label is not None and col.num_chunks != 0:
+                    if not pa.types.is_dictionary(col_info.type):
+                        raise ValueError(
+                            f"Expected dictionary type for enumerated attribute {name} but saw {col_info.type}"
+                        )
+
+                    ordered = col_info.type.ordered
+                    vals = col.chunk(0).dictionary.tolist()
+                    se = tiledb.ArraySchemaEvolution(soma_df.context.tiledb_ctx)
+                    se.extend_enumeration(tiledb.Enumeration(name, ordered, vals))
+                    se.array_evolve(uri=df_uri)
+
         logging.log_io(
             f"Wrote schema {soma_df.uri}",
             _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),

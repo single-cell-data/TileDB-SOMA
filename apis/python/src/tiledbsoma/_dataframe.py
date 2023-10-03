@@ -21,7 +21,6 @@ from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
-from ._tdb_handles import ArrayWrapper
 from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
@@ -121,20 +120,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         a given slot, meaning use the largest possible domain. For string/bytes types,
         it must be ``None``.
     """
-
-    __slots__ = ("_enumerations_written",)
-
-    def __init__(
-        self,
-        handle: ArrayWrapper,
-        *,
-        _dont_call_this_use_create_or_open_instead: str = "unset",
-    ):
-        self._enumerations_written = False
-        super().__init__(
-            handle,
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
 
     @classmethod
     def create(
@@ -417,15 +402,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         dim_names_set = self.index_column_names
         n = None
 
-        dictionary_found = False
-
         for col_info in values.schema:
             name = col_info.name
             col = values.column(name)
             n = len(col)
 
-            # Add enumerations to the ArraySchema on first write
-            if not self._enumerations_written and self._handle.schema.has_attr(name):
+            if self._handle.schema.has_attr(name):
                 attr = self._handle.schema.attr(name)
 
                 # Add the enumeration values to the TileDB Array from ArrowArray
@@ -435,31 +417,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                             f"Expected dictionary type for enumerated attribute {name} but saw {col_info.type}"
                         )
 
-                    dictionary_found = True
-
-                    se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
-                    se.drop_attribute(name)
-                    se.drop_enumeration(name)
-                    se.array_evolve(uri=self.uri)
-
                     ordered = col_info.type.ordered
                     vals = col.chunk(0).dictionary.tolist()
-                    enmr = tiledb.Enumeration(name, ordered, vals)
                     se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
-                    se.add_enumeration(enmr)
-                    se.add_attribute(attr)
-                    se.array_evolve(uri=self.uri)
-
-                # Keep the original ordering of ArraySchema attributes. If we
-                # don't do this step, the attributes with enumerated values will
-                # all get shuffled to the end.
-                elif dictionary_found:
-                    se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
-                    se.drop_attribute(name)
-                    se.array_evolve(uri=self.uri)
-
-                    se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
-                    se.add_attribute(attr)
+                    se.extend_enumeration(tiledb.Enumeration(name, ordered, vals))
                     se.array_evolve(uri=self.uri)
 
             cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
@@ -511,8 +472,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         )
         if tiledb_create_options.consolidate_and_vacuum:
             self._consolidate_and_vacuum()
-
-        self._enumerations_written = True
 
         return self
 
@@ -834,12 +793,20 @@ def _build_tiledb_schema(
         has_enum = pa.types.is_dictionary(pa_attr.type)
 
         if has_enum:
-            is_integer = pa.types.is_integer(pa_attr.type.value_type)
+            pa.types.is_integer(pa_attr.type.value_type)
+            enmr_dtype: np.dtype[Any]
+            vtype = pa_attr.type.value_type
+            if pa.types.is_large_string(vtype) or pa.types.is_string(vtype):
+                enmr_dtype = np.dtype("U")
+            elif pa.types.is_large_binary(vtype) or pa.types.is_binary(vtype):
+                enmr_dtype = np.dtype("S")
+            else:
+                enmr_dtype = np.dtype(vtype.to_pandas_dtype())
             enums.append(
                 tiledb.Enumeration(
-                    attr_name,
-                    pa_attr.type.ordered,
-                    [0 if is_integer else " "],
+                    name=attr_name,
+                    ordered=pa_attr.type.ordered,
+                    dtype=enmr_dtype,
                 )
             )
 
