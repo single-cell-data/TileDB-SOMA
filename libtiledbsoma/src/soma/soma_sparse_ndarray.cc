@@ -107,14 +107,12 @@ SOMASparseNDArray::SOMASparseNDArray(
         result_order,
         timestamp);
     array_->reset();
-    array_->submit();
 }
 
 void SOMASparseNDArray::open(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     array_->open(mode, timestamp);
     array_->reset();
-    array_->submit();
 }
 
 void SOMASparseNDArray::close() {

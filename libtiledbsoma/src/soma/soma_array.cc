@@ -210,38 +210,29 @@ void SOMAArray::reset(
     submitted_ = false;
 }
 
-void SOMAArray::submit() {
-    // Submit the query
-    if (mq_->query_type() == TILEDB_READ) {
-        mq_->submit_read();
-    } else {
-        mq_->reset();
-    }
-    submitted_ = true;
-}
-
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
-    if (!submitted_) {
-        throw TileDBSOMAError(
-            "[SOMAArray] submit must be called before read_next");
-    }
-
-    // Always return results from the first call to read_next()
-    if (first_read_next_) {
-        first_read_next_ = false;
-        return mq_->results();
-    }
-
-    // If the query is complete, return `std::nullopt`.
-    if (mq_->is_complete()) {
+    // If the query is complete, return `std::nullopt`
+    if (mq_->is_complete(true)) {
         return std::nullopt;
     }
 
-    // Submit the query
-    mq_->submit_read();
+    // Configure query and allocate result buffers
+    mq_->setup_read();
+
+    // Continue to submit the empty query on first read to return empty results
+    if (mq_->is_empty_query()) {
+        if (first_read_next_) {
+            first_read_next_ = false;
+            return mq_->submit_read();
+        } else {
+            return std::nullopt;
+        }
+    }
+
+    first_read_next_ = false;
 
     // Return the results, possibly incomplete
-    return mq_->results();
+    return mq_->submit_read();
 }
 
 void SOMAArray::write(std::shared_ptr<ArrayBuffers> buffers) {
@@ -373,7 +364,6 @@ uint64_t SOMAArray::nnz_slow() {
         batch_size_,
         result_order_,
         timestamp_);
-    sr->submit();
 
     uint64_t total_cell_num = 0;
     while (auto batch = sr->read_next()) {

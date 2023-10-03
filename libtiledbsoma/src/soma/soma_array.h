@@ -346,19 +346,12 @@ class SOMAArray {
     }
 
     /**
-     * @brief Submit the query
-     *
-     */
-    void submit();
-
-    /**
      * @brief Read the next chunk of results from the query. If all results
      * have already been read, std::nullopt is returned.
      *
      * An example use model:
      *
      *   auto reader = SOMAArray::open(TILEDB_READ, uri);
-     *   reader->submit();
      *   while (auto batch = x_data->read_next()) {
      *       ...process batch ...
      *   }
@@ -397,7 +390,6 @@ class SOMAArray {
      * "dim", dim));
      *
      *   std::vector<int> x(10, 1);
-     *   writer->submit();
      *   writer->write(array_buffer);
      *   writer->close();
      *

@@ -21,7 +21,6 @@ def test_soma_array_obs():
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
     sr = clib.SOMAArray(uri)
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -35,7 +34,6 @@ def test_soma_array_var():
     name = "var"
     uri = os.path.join(SOMA_URI, "ms/RNA", name)
     sr = clib.SOMAArray(uri)
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -49,7 +47,6 @@ def test_soma_array_var_x_data():
     name = "X/data"
     uri = os.path.join(SOMA_URI, "ms/RNA", name)
     sr = clib.SOMAArray(uri)
-    sr.submit()
 
     # iterate read batches until all results have been processed
     total_num_rows = 0
@@ -78,7 +75,6 @@ def test_soma_array_dim_points():
 
     sr.set_dim_points_int64("soma_joinid", obs_id_points)
 
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -97,7 +93,6 @@ def test_soma_array_empty_dim_points():
 
     sr.set_dim_points_int64("soma_joinid", obs_id_points)
 
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -116,7 +111,6 @@ def test_soma_array_dim_points_arrow_array():
 
     sr.set_dim_points_arrow("soma_joinid", obs_id_points)
 
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -138,7 +132,6 @@ def test_soma_array_dim_ranges():
 
     sr.set_dim_ranges_int64("soma_joinid", obs_id_ranges)
 
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -163,7 +156,6 @@ def test_soma_array_dim_mixed():
     sr.set_dim_points_int64("soma_joinid", obs_id_points)
     sr.set_dim_ranges_int64("soma_joinid", obs_id_ranges)
 
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -190,7 +182,6 @@ def test_soma_array_obs_slice_x():
     sr.set_dim_points_int64("soma_joinid", obs_id_points)
     sr.set_dim_ranges_int64("soma_joinid", obs_id_ranges)
 
-    sr.submit()
     obs = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -205,7 +196,6 @@ def test_soma_array_obs_slice_x():
 
     # slice X/data read with obs.soma_joinid column
     sr.set_dim_points_arrow("soma_dim_0", obs.column("soma_joinid"))
-    sr.submit()
 
     # iterate read batches until all results have been processed
     total_num_rows = 0
@@ -228,7 +218,6 @@ def test_soma_array_column_names():
     uri = os.path.join(SOMA_URI, name)
     sr = clib.SOMAArray(uri, column_names=["soma_joinid", "louvain"])
 
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -253,7 +242,6 @@ def test_soma_array_reset():
     uri = os.path.join(SOMA_URI, name)
     sr = clib.SOMAArray(uri, column_names=["soma_joinid", "louvain"])
 
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)
@@ -267,7 +255,6 @@ def test_soma_array_reset():
     obs_id_points = pa.array([0, 2, 4, 6, 8])
     sr.set_dim_points_arrow("soma_joinid", obs_id_points)
 
-    sr.submit()
     arrow_table = sr.read_next()
 
     # test that all results are present in the arrow table (no incomplete queries)

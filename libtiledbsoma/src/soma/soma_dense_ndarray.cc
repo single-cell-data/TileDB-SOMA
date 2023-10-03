@@ -107,14 +107,12 @@ SOMADenseNDArray::SOMADenseNDArray(
         result_order,
         timestamp);
     array_->reset();
-    array_->submit();
 }
 
 void SOMADenseNDArray::open(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     array_->open(mode, timestamp);
     array_->reset();
-    array_->submit();
 }
 
 void SOMADenseNDArray::close() {
@@ -150,8 +148,6 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMADenseNDArray::read_next() {
 }
 
 void SOMADenseNDArray::write(std::shared_ptr<ArrayBuffers> buffers) {
-    array_->reset();
-    array_->submit();
     array_->write(buffers);
 }
 

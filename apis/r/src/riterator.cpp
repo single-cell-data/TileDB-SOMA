@@ -149,7 +149,6 @@ Rcpp::List sr_setup(const std::string& uri,
         apply_dim_ranges(ptr, name2dim, lst);
     }
 
-    ptr->submit();
     Rcpp::XPtr<tdbs::SOMAArray> xptr = make_xptr<tdbs::SOMAArray>(ptr);
     return Rcpp::List::create(Rcpp::Named("sr") = xptr,
                               Rcpp::Named("ctx") = ctx_wrap_xptr);
