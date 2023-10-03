@@ -95,14 +95,7 @@ void ManagedQuery::select_columns(
     }
 }
 
-void ManagedQuery::submit_read() {
-    // Throw error if submit is called again before reading the results
-    if (query_submitted_) {
-        throw TileDBSOMAError(fmt::format(
-            "[ManagedQuery][{}] read results before calling submit again",
-            name_));
-    }
-
+void ManagedQuery::setup_read() {
     // If the query is complete, return so we do not submit it again
     auto status = query_->query_status();
     if (status == Query::Status::COMPLETE) {
@@ -152,32 +145,18 @@ void ManagedQuery::submit_read() {
         buffers_->emplace(name, ColumnBuffer::create(array_, name));
         buffers_->at(name)->attach(*query_);
     }
-
-    // Submit query
-    LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Submit query", name_));
-
-    // Do not submit if the query contains only empty ranges
-    if (!is_empty_query()) {
-        query_->submit();
-    }
-    query_submitted_ = true;
 }
 
 void ManagedQuery::submit_write() {
     query_->submit();
 }
 
-std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
+std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
     if (is_empty_query()) {
-        query_submitted_ = false;
         return buffers_;
     }
 
-    if (!query_submitted_) {
-        throw TileDBSOMAError(fmt::format(
-            "[ManagedQuery][{}] submit query before reading results", name_));
-    }
-    query_submitted_ = false;
+    query_->submit();
 
     // Poll status until query is not INPROGRESS
     Query::Status status;

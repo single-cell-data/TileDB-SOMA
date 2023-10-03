@@ -106,14 +106,12 @@ SOMADataFrame::SOMADataFrame(
         result_order,
         timestamp);
     array_->reset();
-    array_->submit();
 }
 
 void SOMADataFrame::open(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     array_->open(mode, timestamp);
     array_->reset();
-    array_->submit();
 }
 
 void SOMADataFrame::close() {
@@ -149,8 +147,6 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMADataFrame::read_next() {
 }
 
 void SOMADataFrame::write(std::shared_ptr<ArrayBuffers> buffers) {
-    array_->reset();
-    array_->submit();
     array_->write(buffers);
 }
 

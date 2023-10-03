@@ -118,8 +118,6 @@ Rcpp::List soma_array_reader(const std::string& uri,
         apply_dim_ranges(sr.get(), name2dim, lst);
     }
 
-    sr->submit();
-
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
     auto sr_data = sr->read_next();
     if (!sr->results_complete()) {
@@ -198,7 +196,6 @@ Rcpp::CharacterVector get_column_types(const std::string& uri,
                                        const std::vector<std::string>& colnames) {
 
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri);
-    sr->submit();
     auto sr_data = sr->read_next();
     size_t n = colnames.size();
     Rcpp::CharacterVector vs(n);
