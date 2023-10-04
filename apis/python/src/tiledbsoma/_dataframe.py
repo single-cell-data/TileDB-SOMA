@@ -68,8 +68,6 @@ class DataFrame():
         
         domain = domain or [None] * len(index_column_names)
         
-        print("index_column_names: ", index_column_names)
-        
         for i in range(len(index_column_names)):
             dim_domain = domain[i]
             dim_name = index_column_names[i]

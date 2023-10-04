@@ -30,13 +30,6 @@ static void write(SOMADataFrame& dataframe,
     ArrowArray arrow_array = *((ArrowArray*)array_ptr);
     auto array_buffer = std::make_shared<ArrayBuffers>();
 
-    // for(uint32_t i = 0; i < dataframe.schema()->domain().ndim(); ++i){
-    //     std::cout << dataframe.schema()->domain().dimension(i).name() << " ";
-    // } std::cout << std::endl;
-    // for(uint32_t i = 0; i < dataframe.schema()->attribute_num(); ++i){
-    //     std::cout << dataframe.schema()->attribute(i).name() << " ";
-    // } std::cout << std::endl;
-
     for(int64_t i = 0; i < arrow_array.n_children; ++i){
         auto schema_child = arrow_schema.children[i];
         auto array_child = arrow_array.children[i]; // TODO DEAL WITH STRINGS
