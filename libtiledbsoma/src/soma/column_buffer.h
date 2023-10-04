@@ -111,12 +111,12 @@ class ColumnBuffer {
         const void* data,
         uint64_t num_cells,
         uint64_t elem_size) {
-        // std::cout << "BF " << name << std::endl;
-        // std::vector<int64_t> print_data;
-        // print_data.assign((const int64_t*)data, (const int64_t*)data + 5);
-        // for (auto d : print_data)
-        //     std::cout << d << " ";
-        // std::cout << std::endl;
+        std::cout << "BF " << name << std::endl;
+        std::vector<int64_t> print_data;
+        print_data.assign((const int64_t*)data, (const int64_t*)data + 5);
+        for (auto d : print_data)
+            std::cout << d << " ";
+        std::cout << std::endl;
 
         auto column_buff = ColumnBuffer::create(schema, name);
         column_buff->num_cells_ = num_cells;

@@ -55,6 +55,9 @@ class DataFrame():
         ordered_enumerations: Optional[Sequence[str]] = None,
         column_to_enumerations: Optional[Dict[str, str]] = None,
     ) -> "DataFrame":
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(
+            platform_config
+        )
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
 
@@ -62,20 +65,40 @@ class DataFrame():
         ptr_schema = int(ffi.cast("uintptr_t", c_schema))
         gc.collect()
         schema._export_to_c(ptr_schema)
-
-        domain = [(0, 100000)]
-        extents = [(1,)]
+        
+        domain = domain or [None] * len(index_column_names)
+        
+        print("index_column_names: ", index_column_names)
+        
+        for i in range(len(index_column_names)):
+            dim_domain = domain[i]
+            dim_name = index_column_names[i]
+            pa_type = schema.field(dim_name).type
+            dim_dtype = _arrow_types.tiledb_type_from_arrow_type(
+                pa_type, is_indexed_column=True
+            )
+            domain[i] = _fill_out_slot_domain(dim_domain, dim_name, pa_type, dim_dtype)
+                    
+        extents = []
+        for dim_name, dim_domain in zip(index_column_names, domain):
+            pa_type = schema.field(dim_name).type
+            dim_dtype = _arrow_types.tiledb_type_from_arrow_type(
+                pa_type, is_indexed_column=True
+            )
+            
+            extents.append(_find_extent_for_domain(dim_name, tiledb_create_options, dim_dtype, dim_domain))
+                    
         platform_config = {}
     
         ptr_dom_and_exts = 0
         domain_and_extents = pa.StructArray.from_arrays(
-            [pa.array(domain), pa.array(extents)], 
+            [pa.array(domain), pa.array([extents])], 
             names=["domain", "extents"])
         c_dom_and_exts = ffi.new("struct ArrowArray*")
         ptr_dom_and_exts = int(ffi.cast("uintptr_t", c_dom_and_exts))
         gc.collect()
         domain_and_extents._export_to_c(ptr_dom_and_exts)
-        
+                
         # CHECK DOMAIN AND INDEX COL NAME SIZE
         soma_dataframe = DataFrame(pts.SOMADataFrame.create(uri, ptr_schema,      
             index_column_names, platform_config or {}, ptr_dom_and_exts))
@@ -106,8 +129,8 @@ class DataFrame():
             [col.chunks[0] for col in values], names=values.schema.names)
         rb._export_to_c(ptr_array)
         
-        # print(rb)
-        # print(rb.to_pandas())
+        print(rb)
+        print(rb.to_pandas())
         
         c_schema = ffi.new("struct ArrowSchema*")
         ptr_schema = int(ffi.cast("uintptr_t", c_schema))
@@ -740,141 +763,141 @@ def _canonicalize_schema(
 #     )
 
 
-# def _fill_out_slot_domain(
-#     slot_domain: Optional[Tuple[Any, Any]],
-#     index_column_name: str,
-#     pa_type: pa.DataType,
-#     dtype: Any,
-# ) -> Tuple[Any, Any]:
-#     """Helper function for _build_tiledb_schema. Given a user-specified domain for a
-#     dimension slot -- which may be ``None``, or a two-tuple of which either element
-#     may be ``None`` -- return either what the user specified (if adequate) or
-#     sensible type-inferred values appropriate to the datatype.
-#     """
-#     if slot_domain is not None:
-#         # User-specified; go with it when possible
-#         if (
-#             pa_type == pa.string()
-#             or pa_type == pa.large_string()
-#             or pa_type == pa.binary()
-#             or pa_type == pa.large_binary()
-#         ):
-#             # TileDB Embedded won't raise an error if the user asks for, say
-#             # domain=[("a", "z")].  But it will simply _ignore_ the request and
-#             # use [("", "")]. The decision here is to explicitly reject an
-#             # unsupported operation.
-#             raise ValueError(
-#                 "TileDB str and bytes index-column types do not support domain specfication"
-#             )
-#         if index_column_name == SOMA_JOINID:
-#             lo = slot_domain[0]
-#             hi = slot_domain[1]
-#             if lo is not None and lo < 0:
-#                 raise ValueError(
-#                     f"soma_joinid indices cannot be negative; got lower bound {lo}"
-#                 )
-#             if hi is not None and hi < 0:
-#                 raise ValueError(
-#                     f"soma_joinid indices cannot be negative; got upper bound {hi}"
-#                 )
+def _fill_out_slot_domain(
+    slot_domain: Optional[Tuple[Any, Any]],
+    index_column_name: str,
+    pa_type: pa.DataType,
+    dtype: Any,
+) -> Tuple[Any, Any]:
+    """Helper function for _build_tiledb_schema. Given a user-specified domain for a
+    dimension slot -- which may be ``None``, or a two-tuple of which either element
+    may be ``None`` -- return either what the user specified (if adequate) or
+    sensible type-inferred values appropriate to the datatype.
+    """
+    if slot_domain is not None:
+        # User-specified; go with it when possible
+        if (
+            pa_type == pa.string()
+            or pa_type == pa.large_string()
+            or pa_type == pa.binary()
+            or pa_type == pa.large_binary()
+        ):
+            # TileDB Embedded won't raise an error if the user asks for, say
+            # domain=[("a", "z")].  But it will simply _ignore_ the request and
+            # use [("", "")]. The decision here is to explicitly reject an
+            # unsupported operation.
+            raise ValueError(
+                "TileDB str and bytes index-column types do not support domain specfication"
+            )
+        if index_column_name == SOMA_JOINID:
+            lo = slot_domain[0]
+            hi = slot_domain[1]
+            if lo is not None and lo < 0:
+                raise ValueError(
+                    f"soma_joinid indices cannot be negative; got lower bound {lo}"
+                )
+            if hi is not None and hi < 0:
+                raise ValueError(
+                    f"soma_joinid indices cannot be negative; got upper bound {hi}"
+                )
 
-#     elif isinstance(dtype, str):
-#         slot_domain = None, None
-#     elif np.issubdtype(dtype, NPInteger):
-#         iinfo = np.iinfo(cast(NPInteger, dtype))
-#         slot_domain = iinfo.min, iinfo.max - 1
-#         # Here the slot_domain isn't specified by the user; we're setting it.
-#         # The SOMA spec disallows negative soma_joinid.
-#         if index_column_name == SOMA_JOINID:
-#             slot_domain = (0, 2**31 - 2)  # R-friendly, which 2**63-1 is not
-#     elif np.issubdtype(dtype, NPFloating):
-#         finfo = np.finfo(cast(NPFloating, dtype))
-#         slot_domain = finfo.min, finfo.max
+    elif isinstance(dtype, str):
+        slot_domain = None, None
+    elif np.issubdtype(dtype, NPInteger):
+        iinfo = np.iinfo(cast(NPInteger, dtype))
+        slot_domain = iinfo.min, iinfo.max - 1
+        # Here the slot_domain isn't specified by the user; we're setting it.
+        # The SOMA spec disallows negative soma_joinid.
+        if index_column_name == SOMA_JOINID:
+            slot_domain = (0, 2**31 - 2)  # R-friendly, which 2**63-1 is not
+    elif np.issubdtype(dtype, NPFloating):
+        finfo = np.finfo(cast(NPFloating, dtype))
+        slot_domain = finfo.min, finfo.max
 
-#     # The `iinfo.min+1` is necessary as of tiledb core 2.15 / tiledb-py 0.21.1 since
-#     # `iinfo.min` maps to `NaT` (not a time), resulting in
-#     #   TypeError: invalid domain extent, domain cannot be safely cast to dtype dtype('<M8[s]')
-#     #
-#     # The `iinfo.max-delta` is necessary since with iinfo.min being bumped by 1, without subtracting
-#     # we would get
-#     #   tiledb.cc.TileDBError: [TileDB::Dimension] Error: Tile extent check failed; domain max
-#     #   expanded to multiple of tile extent exceeds max value representable by domain type. Reduce
-#     #   domain max by 1 tile extent to allow for expansion.
-#     elif dtype == "datetime64[s]":
-#         iinfo = np.iinfo(cast(NPInteger, np.int64))
-#         slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
-#             iinfo.max - 1000000, "s"
-#         )
-#     elif dtype == "datetime64[ms]":
-#         iinfo = np.iinfo(cast(NPInteger, np.int64))
-#         slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
-#             iinfo.max - 1000000, "ms"
-#         )
-#     elif dtype == "datetime64[us]":
-#         iinfo = np.iinfo(cast(NPInteger, np.int64))
-#         slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
-#             iinfo.max - 1000000, "us"
-#         )
-#     elif dtype == "datetime64[ns]":
-#         iinfo = np.iinfo(cast(NPInteger, np.int64))
-#         slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
-#             iinfo.max - 1000000, "ns"
-#         )
+    # The `iinfo.min+1` is necessary as of tiledb core 2.15 / tiledb-py 0.21.1 since
+    # `iinfo.min` maps to `NaT` (not a time), resulting in
+    #   TypeError: invalid domain extent, domain cannot be safely cast to dtype dtype('<M8[s]')
+    #
+    # The `iinfo.max-delta` is necessary since with iinfo.min being bumped by 1, without subtracting
+    # we would get
+    #   tiledb.cc.TileDBError: [TileDB::Dimension] Error: Tile extent check failed; domain max
+    #   expanded to multiple of tile extent exceeds max value representable by domain type. Reduce
+    #   domain max by 1 tile extent to allow for expansion.
+    elif dtype == "datetime64[s]":
+        iinfo = np.iinfo(cast(NPInteger, np.int64))
+        slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
+            iinfo.max - 1000000, "s"
+        )
+    elif dtype == "datetime64[ms]":
+        iinfo = np.iinfo(cast(NPInteger, np.int64))
+        slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
+            iinfo.max - 1000000, "ms"
+        )
+    elif dtype == "datetime64[us]":
+        iinfo = np.iinfo(cast(NPInteger, np.int64))
+        slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
+            iinfo.max - 1000000, "us"
+        )
+    elif dtype == "datetime64[ns]":
+        iinfo = np.iinfo(cast(NPInteger, np.int64))
+        slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
+            iinfo.max - 1000000, "ns"
+        )
 
-#     else:
-#         raise TypeError(f"Unsupported dtype {dtype}")
+    else:
+        raise TypeError(f"Unsupported dtype {dtype}")
 
-#     return slot_domain
+    return slot_domain
 
 
-# def _find_extent_for_domain(
-#     index_column_name: str,
-#     tiledb_create_options: TileDBCreateOptions,
-#     dtype: Any,
-#     slot_domain: Tuple[Any, Any],
-# ) -> Any:
-#     """Helper function for _build_tiledb_schema. Returns a tile extent that is
-#     small enough for the index-column type, and that also fits within the
-#     user-specified slot domain (if any).
-#     """
+def _find_extent_for_domain(
+    index_column_name: str,
+    tiledb_create_options: TileDBCreateOptions,
+    dtype: Any,
+    slot_domain: Tuple[Any, Any],
+) -> Any:
+    """Helper function for _build_tiledb_schema. Returns a tile extent that is
+    small enough for the index-column type, and that also fits within the
+    user-specified slot domain (if any).
+    """
 
-#     # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
-#     extent = tiledb_create_options.dim_tile(index_column_name)
-#     if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
-#         extent = 64
+    # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
+    extent = tiledb_create_options.dim_tile(index_column_name)
+    if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
+        extent = 64
 
-#     if isinstance(dtype, str):
-#         return extent
+    if isinstance(dtype, str):
+        return extent
 
-#     lo, hi = slot_domain
-#     if lo is None or hi is None:
-#         return extent
+    lo, hi = slot_domain
+    if lo is None or hi is None:
+        return extent
 
-#     if np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating):
-#         return min(extent, hi - lo + 1)
+    if np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating):
+        return min(extent, hi - lo + 1)
 
-#     if dtype == "datetime64[s]":
-#         ilo = int(lo.astype("int64"))
-#         ihi = int(hi.astype("int64"))
-#         iextent = min(extent, ihi - ilo + 1)
-#         return np.datetime64(iextent, "s")
+    if dtype == "datetime64[s]":
+        ilo = int(lo.astype("int64"))
+        ihi = int(hi.astype("int64"))
+        iextent = min(extent, ihi - ilo + 1)
+        return np.datetime64(iextent, "s")
 
-#     if dtype == "datetime64[ms]":
-#         ilo = int(lo.astype("int64"))
-#         ihi = int(hi.astype("int64"))
-#         iextent = min(extent, ihi - ilo + 1)
-#         return np.datetime64(iextent, "ms")
+    if dtype == "datetime64[ms]":
+        ilo = int(lo.astype("int64"))
+        ihi = int(hi.astype("int64"))
+        iextent = min(extent, ihi - ilo + 1)
+        return np.datetime64(iextent, "ms")
 
-#     if dtype == "datetime64[us]":
-#         ilo = int(lo.astype("int64"))
-#         ihi = int(hi.astype("int64"))
-#         iextent = min(extent, ihi - ilo + 1)
-#         return np.datetime64(iextent, "us")
+    if dtype == "datetime64[us]":
+        ilo = int(lo.astype("int64"))
+        ihi = int(hi.astype("int64"))
+        iextent = min(extent, ihi - ilo + 1)
+        return np.datetime64(iextent, "us")
 
-#     if dtype == "datetime64[ns]":
-#         ilo = int(lo.astype("int64"))
-#         ihi = int(hi.astype("int64"))
-#         iextent = min(extent, ihi - ilo + 1)
-#         return np.datetime64(iextent, "ns")
+    if dtype == "datetime64[ns]":
+        ilo = int(lo.astype("int64"))
+        ihi = int(hi.astype("int64"))
+        iextent = min(extent, ihi - ilo + 1)
+        return np.datetime64(iextent, "ns")
 
-#     return extent
+    return extent

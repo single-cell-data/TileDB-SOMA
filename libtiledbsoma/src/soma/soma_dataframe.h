@@ -238,9 +238,9 @@ class SOMADataFrame : public SOMAObject {
     /**
      * Return the number of rows in the SOMADataFrame.
      *
-     * @return int64_t
+     * @return uint64_t
      */
-    int64_t count() const;
+    uint64_t count() const;
 
     /**
      * @brief Read the next chunk of results from the query. If all results have

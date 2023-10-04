@@ -245,9 +245,10 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
 }
 
 void SOMAArray::write(std::shared_ptr<ArrayBuffers> buffers) {
-    if (mq_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
-    }
+    // if (mq_->query_type() != TILEDB_WRITE) {
+    //     throw TileDBSOMAError("[SOMAArray] array must be opened in write
+    //     mode");
+    // }
 
     for (auto col_name : buffers->names()) {
         mq_->set_column_data(col_name, buffers->at(col_name));
@@ -459,11 +460,6 @@ std::vector<int64_t> SOMAArray::shape() {
     return result;
 }
 
-std::vector<std::pair<std::string, std::pair<int64_t, int64_t>>>
-SOMAArray::nonempty_domain() {
-    return arr_->non_empty_domain<int64_t>();
-}
-
 uint64_t SOMAArray::ndim() const {
     return this->schema().get()->domain().ndim();
 }
@@ -548,7 +544,7 @@ void SOMAArray::validate(
     std::string_view name,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     // Validate parameters
-    auto tdb_mode = (mode == OpenMode::read) ? TILEDB_WRITE : TILEDB_WRITE;
+    auto tdb_mode = (mode == OpenMode::read) ? TILEDB_READ : TILEDB_WRITE;
 
     try {
         LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));

@@ -39,19 +39,19 @@ static void write(SOMADataFrame& dataframe,
 
     for(int64_t i = 0; i < arrow_array.n_children; ++i){
         auto schema_child = arrow_schema.children[i];
-        auto array_child = arrow_array.children[0]; // TODO DEAL WITH STRINGS
+        auto array_child = arrow_array.children[i]; // TODO DEAL WITH STRINGS
         auto schema = dataframe.schema();
         auto typeinfo = ArrowAdapter::arrow_type_to_tiledb(schema_child);
 
-        // std::vector<int64_t> data;
-        // data.assign(
-        //     (const int64_t*)array_child->buffers[1],
-        //     (const int64_t*)array_child->buffers[1] + 5
-        // );
-        // std::cout << "DF " << schema_child->name << std::endl;
-        // for(auto d : data)
-        //     std::cout << d << " ";
-        // std::cout << std::endl;
+        std::vector<int64_t> data;
+        data.assign(
+            (const int64_t*)array_child->buffers[1],
+            (const int64_t*)array_child->buffers[1] + 5
+        );
+        std::cout << "DF " << schema_child->name << " " << schema_child->format << " " << array_child->length << std::endl;
+        for(auto d : data)
+            std::cout << d << " ";
+        std::cout << std::endl;
 
         array_buffer->emplace(schema_child->name, 
             ColumnBuffer::create(

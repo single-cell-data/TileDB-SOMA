@@ -163,9 +163,8 @@ const std::vector<std::string> SOMADataFrame::index_column_names() const {
     return array_->dimension_names();
 }
 
-int64_t SOMADataFrame::count() const {
-    auto ned = array_->nonempty_domain();
-    return ned[0].second.second - ned[0].second.first;
+uint64_t SOMADataFrame::count() const {
+    return array_->nnz();
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMADataFrame::read_next() {

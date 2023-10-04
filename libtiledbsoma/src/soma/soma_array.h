@@ -477,18 +477,6 @@ class SOMAArray {
     std::vector<int64_t> shape();
 
     /**
-     * @brief Get the nonempty domain - tightest hyper-rectangle * that
-     contains
-     * all the non-empty cells.
-     *
-     * @return std::vector<std::pair<std::string, std::pair<int64_t,
-     int64_t>>>
-     * Nonemoty domain.
-     */
-    std::vector<std::pair<std::string, std::pair<int64_t, int64_t>>>
-    nonempty_domain();
-
-    /**
      * @brief Get the number of dimensions.
      *
      * @return uint64_t Number of dimensions.
