@@ -425,7 +425,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             n = len(col)
 
             # Add enumerations to the ArraySchema on first write
-            if self._first_write and name not in dim_names_set:
+            if self._first_write and self._handle.schema.has_attr(name):
                 attr = self._handle.schema.attr(name)
 
                 # Add the enumeration values to the TileDB Array from ArrowArray
