@@ -434,10 +434,11 @@ class QueryConditionTree(ast.NodeVisitor):
 
         create_fn_name = f"create_{dtype}"
 
-        if not hasattr(clib.PyQueryCondition, create_fn_name):
+        try:
+            return getattr(clib.PyQueryCondition, create_fn_name)
+        except AttributeError as ae:
             raise tiledb.TileDBError(f"PyQueryCondition.{create_fn_name}() not found.")
 
-        return getattr(clib.PyQueryCondition, create_fn_name)
 
     def visit_BinOp(self, node: ast.BinOp) -> clib.PyQueryCondition:
         try:
