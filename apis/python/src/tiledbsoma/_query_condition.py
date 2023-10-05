@@ -240,8 +240,9 @@ class QueryConditionTree(ast.NodeVisitor):
             else:
                 dt = self.array.schema.attr_or_dim_dtype(variable)
 
-            # sdf.read(column_names=["foo"], value_filter='bar == 999') should result in bar being
-            # added to the column names. See also https://github.com/single-cell-data/TileDB-SOMA/issues/755
+            # sdf.read(column_names=["foo"], value_filter='bar == 999') should
+            # result in bar being added to the column names. See also
+            # https://github.com/single-cell-data/TileDB-SOMA/issues/755
             att = self.get_att_from_node(node.left)
             if att not in self.query_attrs:
                 self.query_attrs.append(att)
@@ -354,6 +355,9 @@ class QueryConditionTree(ast.NodeVisitor):
                 )
             raise tiledb.TileDBError(f"Attribute `{att}` not found in schema.")
 
+        # sdf.read(column_names=["foo"], value_filter='bar == 999') should
+        # result in bar being added to the column names. See also
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/755
         if att not in self.query_attrs:
             self.query_attrs.append(att)
 
