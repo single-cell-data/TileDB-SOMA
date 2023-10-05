@@ -52,7 +52,7 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     ArrowArray& domains_and_extents) {
     auto ctx = std::make_shared<Context>(Config(platform_config));
     ArraySchema tdb_schema = ArrowAdapter::arrow_schema_to_tiledb_schema(
-        ctx, schema, false, index_column_names, domains_and_extents);
+        ctx, schema, true, index_column_names, domains_and_extents);
     SOMAArray::create(ctx, uri, tdb_schema, "SOMADataFrame");
     return SOMADataFrame::open(uri, OpenMode::read, ctx);
 }
@@ -173,7 +173,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMADataFrame::read_next() {
 
 void SOMADataFrame::write(std::shared_ptr<ArrayBuffers> buffers) {
     array_->reset();
-    array_->submit();
+    // array_->submit();
     array_->write(buffers);
 }
 

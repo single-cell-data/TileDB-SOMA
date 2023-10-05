@@ -22,6 +22,45 @@ static std::unique_ptr<SOMADataFrame> create(
         uri, *((ArrowSchema*)schema_ptr), platform_config, index_column_names, *((ArrowArray*)ptr_dom_and_exts));
 }
 
+/**
+ * @brief Convert ColumnBuffer to Arrow array.
+ *
+ * @param column_buffer ColumnBuffer
+ * @return py::object Arrow array
+ */
+py::object df_to_array(std::shared_ptr<ColumnBuffer> column_buffer) {
+    auto pa = py::module::import("pyarrow");
+    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
+
+    auto [array, schema] = ArrowAdapter::to_arrow(column_buffer);
+    return pa_array_import(py::capsule(array.get()), py::capsule(schema.get()));
+}
+
+/**
+ * @brief Convert ArrayBuffers to Arrow table.
+ *
+ * @param cbs ArrayBuffers
+ * @return py::object
+ */
+py::object df_to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
+    auto pa = py::module::import("pyarrow");
+    auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
+    auto pa_dict_from_arrays = pa.attr("DictionaryArray").attr("from_arrays");
+
+    py::list names;
+    py::list arrays;
+
+    for (auto& name : array_buffers->names()) {
+        auto column = array_buffers->at(name);
+        names.append(name);
+        arrays.append(df_to_array(column));
+    }
+
+    auto pa_table = pa_table_from_arrays(arrays, names);
+
+    return pa_table;
+}
+
 static void write(SOMADataFrame& dataframe, 
     uintptr_t schema_ptr, 
     uintptr_t array_ptr)
@@ -57,6 +96,25 @@ static void write(SOMADataFrame& dataframe,
     dataframe.write(array_buffer);
 }
 
+// TODO RETURN POINTERS, CONSTURCT PYARROW TABLE IN PYTHON CODE
+static std::optional<py::object> read_next(SOMADataFrame& dataframe){
+    // Release python GIL before reading data
+    py::gil_scoped_release release;
+
+    // Try to read more data
+    auto buffers = dataframe.read_next();
+
+    // If more data was read, convert it to an arrow table and return
+    if (buffers.has_value()) {
+        // Acquire python GIL before accessing python objects
+        py::gil_scoped_acquire acquire;
+        return df_to_table(*buffers);
+    }
+
+    // No data was read, the query is complete, return nullopt
+    return std::nullopt;
+}
+
 void init_soma_dataframe(py::module &m) {
     py::class_<SOMADataFrame>(m, "SOMADataFrame")
 
@@ -78,7 +136,7 @@ void init_soma_dataframe(py::module &m) {
     .def("schema", &SOMADataFrame::schema)
     .def("index_column_names", &SOMADataFrame::index_column_names)
     .def("count", &SOMADataFrame::count)
-    .def("read_next", &SOMADataFrame::read_next)
+    .def("read_next", read_next)
     .def("write", write)
     .def("set_metadata", &SOMADataFrame::set_metadata)
     .def("delete_metadata", &SOMADataFrame::delete_metadata)
