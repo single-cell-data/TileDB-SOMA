@@ -122,7 +122,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         it must be ``None``.
     """
 
-    __slots__ = "_first_write"
+    __slots__ = ("_enumerations_written",)
 
     def __init__(
         self,
@@ -130,7 +130,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ):
-        self._first_write = True
+        self._enumerations_written = False
         super().__init__(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -425,7 +425,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             n = len(col)
 
             # Add enumerations to the ArraySchema on first write
-            if self._first_write and self._handle.schema.has_attr(name):
+            if not self._enumerations_written and self._handle.schema.has_attr(name):
                 attr = self._handle.schema.attr(name)
 
                 # Add the enumeration values to the TileDB Array from ArrowArray
@@ -512,7 +512,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         if tiledb_create_options.consolidate_and_vacuum:
             self._consolidate_and_vacuum()
 
-        self._first_write = False
+        self._enumerations_written = True
 
         return self
 
