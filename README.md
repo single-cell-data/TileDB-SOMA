@@ -34,7 +34,7 @@ Intended to be used for single-cell data, TileDB-SOMA provides Python and R APIs
 TileDB-SOMA provides interoperability with existing single-cell toolkits:
 
 * Load and create [AnnData](https://anndata.readthedocs.io/en/latest/) objects.
-* Load and create [Seurat](https://satijalab.org/seurat/) objects. *Coming soon*.
+* Load and create [Seurat](https://satijalab.org/seurat/) objects.
 
 TileDB-SOMA provides interoperability with existing Python or R data structures:
 
