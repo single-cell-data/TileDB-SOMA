@@ -17,7 +17,7 @@ jobs:
       - name: SessionInfo
         run: R -q -e 'sessionInfo()'
       - name: System Dependencies
-        run: apt update -qq && apt install --yes --no-install-recommends valgrind cmake git
+        run: apt update -qq && apt upgrade --yes && apt install --yes --no-install-recommends valgrind cmake git
       - name: Package Dependencies
         run: cd apis/r && R -q -e 'remotes::install_deps(".", dependencies=TRUE)'
       - name: Build Package
