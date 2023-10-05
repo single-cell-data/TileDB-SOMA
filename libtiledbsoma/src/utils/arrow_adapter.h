@@ -327,6 +327,7 @@ class ArrowAdapter {
     static ArraySchema arrow_schema_to_tiledb_schema(
         std::shared_ptr<Context> ctx,
         ArrowSchema& schema,
+        bool sparse,
         std::vector<std::string> index_column_names,
         ArrowArray& domains_and_extents) {
         ArrowArray* domains = domains_and_extents.children[0];
@@ -338,7 +339,7 @@ class ArrowAdapter {
                 "length as index_column_names");
         }
 
-        ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
+        ArraySchema tdb_schema(*ctx, sparse ? TILEDB_SPARSE : TILEDB_DENSE);
         Domain tdb_dom(*ctx);
 
         auto platform_config = ctx->config();
