@@ -27,7 +27,8 @@ def pandas_query(uri, condition):
 
 def soma_query(uri, condition):
     qc = QueryCondition(condition)
-    sr = clib.SOMAArray(uri, query_condition=qc)
+    sr = clib.SOMAArray(uri)
+    sr.set_condition(qc)
     arrow_table = sr.read_next()
     assert sr.results_complete()
 
@@ -106,7 +107,8 @@ def test_query_condition_select_columns():
 
     qc = QueryCondition(condition)
 
-    sr = clib.SOMAArray(uri, query_condition=qc, column_names=["n_genes"])
+    sr = clib.SOMAArray(uri, column_names=["n_genes"])
+    sr.set_condition(qc)
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -120,7 +122,8 @@ def test_query_condition_all_columns():
 
     qc = QueryCondition(condition)
 
-    sr = clib.SOMAArray(uri, query_condition=qc)
+    sr = clib.SOMAArray(uri)
+    sr.set_condition(qc)
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -134,7 +137,8 @@ def test_query_condition_reset():
 
     qc = QueryCondition(condition)
 
-    sr = clib.SOMAArray(uri, query_condition=qc)
+    sr = clib.SOMAArray(uri)
+    sr.set_condition(qc)
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -145,7 +149,8 @@ def test_query_condition_reset():
     # ---------------------------------------------------------------
     condition = "percent_mito < 0.02"
     qc = QueryCondition(condition)
-    sr.reset(column_names=["percent_mito"], query_condition=qc)
+    sr.reset(column_names=["percent_mito"])
+    sr.set_condition(qc)
 
     arrow_table = sr.read_next()
 
@@ -213,7 +218,8 @@ def test_eval_error_conditions(malformed_condition):
     #
     with pytest.raises(RuntimeError):
         qc = QueryCondition(malformed_condition)
-        sr = clib.SOMAArray(uri, query_condition=qc)
+        sr = clib.SOMAArray(uri)
+        sr.set_condition(qc)
         sr.read_next()
 
 

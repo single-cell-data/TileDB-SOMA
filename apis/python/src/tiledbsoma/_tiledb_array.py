@@ -105,8 +105,6 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         #     kwargs["schema"] = schema
         if column_names:
             kwargs["column_names"] = column_names
-        if query_condition:
-            kwargs["query_condition"] = query_condition
         if result_order:
             result_order_map = {
                 "auto": clib.ResultOrder.automatic,
@@ -115,13 +113,19 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
             }
             result_order_enum = result_order_map[ResultOrder(result_order).value]
             kwargs["result_order"] = result_order_enum
-        return clib.SOMAArray(
+
+        soma_array = clib.SOMAArray(
             self.uri,
             name=f"{self} reader",
             platform_config=self._ctx.config().dict(),
             timestamp=(0, self.tiledb_timestamp_ms),
             **kwargs,
         )
+
+        if query_condition:
+            soma_array.set_condition(query_condition)
+
+        return soma_array
 
     def _set_reader_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
         """Parses the given coords and sets them on the SOMA Reader."""
