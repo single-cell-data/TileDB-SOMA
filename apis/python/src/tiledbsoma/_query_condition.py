@@ -131,12 +131,11 @@ class QueryCondition:
 
     def init_query_condition(
         self,
+        ctx: tiledb.Ctx,
         uri: str,
-        query_attrs: List[str],
-        config: Optional[dict],
+        query_attrs: Optional[List[str]],
         timestamps: Optional[Tuple[OpenTimestamp, OpenTimestamp]],
     ):
-        ctx = tiledb.Ctx(config)
         qctree = QueryConditionTree(
             ctx, tiledb.open(uri, ctx=ctx, timestamp=timestamps), query_attrs
         )
