@@ -2190,16 +2190,42 @@ def _ingest_uns_string_array(
     However, ``SOMADataFrame`` _requires_ that soma_joinid be present, either
     as an index column, or as a data column. The former is less confusing.
     """
-    if len(value.shape) != 1:
+
+    if len(value.shape) == 1:
+        helper = _ingest_uns_1d_string_array
+    elif len(value.shape) == 2:
+        helper = _ingest_uns_2d_string_array
+    else:
         msg = (
             f"Skipped {coll.uri}[{key!r}]"
-            f" (uns object): string-array is not one-dimensional"
+            f" (uns object): string array is neither one-dimensional nor two-dimensional"
         )
         logging.log_io(msg, msg)
         return
 
+    helper(
+        coll=coll,
+        key=key,
+        value=value,
+        platform_config=platform_config,
+        context=context,
+        use_relative_uri=use_relative_uri,
+        ingestion_params=ingestion_params,
+    )
+
+
+def _ingest_uns_1d_string_array(
+    coll: AnyTileDBCollection,
+    key: str,
+    value: NPNDArray,
+    platform_config: Optional[PlatformConfig],
+    context: Optional[SOMATileDBContext],
+    *,
+    use_relative_uri: Optional[bool],
+    ingestion_params: IngestionParams,
+) -> None:
+    """Helper for ``_ingest_uns_string_array``"""
     n = len(value)
-    df_uri = _util.uri_joinpath(coll.uri, key)
     df = pd.DataFrame(
         data={
             "soma_joinid": np.arange(n, dtype=np.int64),
@@ -2208,6 +2234,38 @@ def _ingest_uns_string_array(
     )
     df.set_index("soma_joinid", inplace=True)
 
+    df_uri = _util.uri_joinpath(coll.uri, key)
+    with _write_dataframe_impl(
+        df,
+        df_uri,
+        None,
+        ingestion_params=ingestion_params,
+        platform_config=platform_config,
+        context=context,
+    ) as soma_df:
+        _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
+
+
+def _ingest_uns_2d_string_array(
+    coll: AnyTileDBCollection,
+    key: str,
+    value: NPNDArray,
+    platform_config: Optional[PlatformConfig],
+    context: Optional[SOMATileDBContext],
+    *,
+    use_relative_uri: Optional[bool],
+    ingestion_params: IngestionParams,
+) -> None:
+    """Helper for ``_ingest_uns_string_array``"""
+    num_rows, num_cols = value.shape
+    data: Dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
+    for j in range(num_cols):
+        column_name = f"values_{str(j)}"
+        data[column_name] = [str(e) if e else "" for e in value[:, j]]
+    df = pd.DataFrame(data=data)
+    df.set_index("soma_joinid", inplace=True)
+
+    df_uri = _util.uri_joinpath(coll.uri, key)
     with _write_dataframe_impl(
         df,
         df_uri,
