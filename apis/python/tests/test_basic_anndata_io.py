@@ -40,8 +40,9 @@ def h5ad_file_with_obsm_holes(request):
 
 
 @pytest.fixture
-def h5ad_file_uns_string_array(request):
-    # This has uns["louvain_colors"] with dtype.char == "U"
+def h5ad_file_uns_string_arrays(request):
+    # This has uns["louvain_colors"] with dtype.char == "U".
+    # It also has uns["more_colors"] in the form '[[...]]', as often occurs in the wild.
     input_path = HERE.parent / "testdata/pbmc3k.h5ad"
     return input_path
 
@@ -392,13 +393,13 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended):
         assert np.array_equal(got_pca_variance, original.uns["pca"]["variance"])
 
 
-def test_ingest_uns_string_array(h5ad_file_uns_string_array):
+def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
     tiledbsoma.io.from_h5ad(
         output_path,
-        h5ad_file_uns_string_array.as_posix(),
+        h5ad_file_uns_string_arrays.as_posix(),
         measurement_name="RNA",
     )
 
@@ -406,9 +407,16 @@ def test_ingest_uns_string_array(h5ad_file_uns_string_array):
         with tiledbsoma.DataFrame.open(
             exp.ms["RNA"]["uns"]["louvain_colors"].uri
         ) as df:
-            contents = df.read().concat()["values"]
-            assert len(contents) == 8
-            assert contents[0].as_py() == "#1f77b4"
+            contents = df.read().concat()
+            assert contents.shape == (8, 2)
+            assert len(contents["values"]) == 8
+            assert contents["values"][0].as_py() == "#1f77b4"
+
+        with tiledbsoma.DataFrame.open(exp.ms["RNA"]["uns"]["more_colors"].uri) as df:
+            contents = df.read().concat()
+            assert contents.shape == (8, 2)
+            assert len(contents["values_0"]) == 8
+            assert contents["values_0"][0].as_py() == "#1f77b4"
 
 
 def test_add_matrix_to_collection(adata):
