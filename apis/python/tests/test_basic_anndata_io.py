@@ -77,12 +77,6 @@ def h5ad_file_X_none(request):
     input_path = HERE.parent / "testdata/x-none.h5ad"
     return input_path
 
-@pytest.fixture
-def h5ad_file_X_missing(request):
-    """adata.X is not an attribute within adata"""
-    input_path = HERE.parent / "testdata/x-missing.h5ad"
-    return input_path
-
 
 @pytest.fixture
 def adata(h5ad_file):
