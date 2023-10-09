@@ -153,7 +153,7 @@ private:
   }
 }; // namespace tiledbpy
 
-void init_query_condition(py::module &m) {
+void load_query_condition(py::module &m) {
   py::class_<PyQueryCondition>(m, "PyQueryCondition", py::module_local())
       .def(py::init<py::object>(), py::arg("ctx") = py::none())
 
