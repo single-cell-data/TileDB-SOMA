@@ -66,14 +66,17 @@ def h5ad_file_categorical_int_nan(request):
 
 @pytest.fixture
 def h5ad_file_X_empty(request):
-    """adata.X is a zero-cell matrix"""
+    """adata.X is a zero-cell sparse matrix"""
     input_path = HERE.parent / "testdata/x-empty.h5ad"
     return input_path
 
 
 @pytest.fixture
 def h5ad_file_X_none(request):
-    """adata.X has Python value None"""
+    """
+    adata.X has Python value None if read in non-backed mode; if read in backed
+    mode, adata.X is not present as an attribute of adata.
+    """
     input_path = HERE.parent / "testdata/x-none.h5ad"
     return input_path
 
