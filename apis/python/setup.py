@@ -269,7 +269,9 @@ setuptools.setup(
     install_requires=[
         # Needed for Python 3.7 which anndata 0.9 doesn't support but we do
         "anndata < 0.9; python_version<'3.8'",
-        "anndata; python_version>='3.8'",
+        # Temporary until we align with a compatibility issue in AnnData 0.10.0.
+        # This is tracked in https://github.com/single-cell-data/TileDB-SOMA/issues/1765.
+        "anndata=~0.9.0; python_version>='3.8'",
         "attrs>=22.2",
         "numba~=0.58.0; python_version>='3.8'",
         # Older numba version needed for Python3.7.
