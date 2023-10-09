@@ -2256,7 +2256,10 @@ def _ingest_uns_2d_string_array(
     use_relative_uri: Optional[bool],
     ingestion_params: IngestionParams,
 ) -> None:
-    """Helper for ``_ingest_uns_string_array``"""
+    """Helper for ``_ingest_uns_string_array``. Even if the 2D array is 1xN or Nx1, we
+    must nonetheless keep this as 2D rather than flattening to length-N 1D. That's because
+    this ``uns`` data is solely of interest for AnnData ingest/outgest, and it must go
+    back out the way it came in."""
     num_rows, num_cols = value.shape
     data: Dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
     for j in range(num_cols):
