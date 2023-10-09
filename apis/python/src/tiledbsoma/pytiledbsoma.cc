@@ -157,7 +157,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .value("rowmajor", ResultOrder::rowmajor)
         .value("colmajor", ResultOrder::colmajor);
 
-    tiledbpy::init_query_condition(m);
+    tiledbpy::load_query_condition(m);
 
     m.doc() = "SOMA acceleration library";
 
