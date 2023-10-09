@@ -512,9 +512,7 @@ def from_anndata(
 
                 # Some AnnData objects have no X at all. This might be a missing attribute
                 # anndata.X; it might be anndata.X present, but with value None.
-                has_X = True
                 try:
-                    anndata.X
                     has_X = anndata.X is not None
                 except (NameError, KeyError):
                     # We need to check both -- different exception types occur dependinng
