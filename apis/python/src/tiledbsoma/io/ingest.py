@@ -2263,7 +2263,7 @@ def _ingest_uns_2d_string_array(
     num_rows, num_cols = value.shape
     data: Dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
     for j in range(num_cols):
-        column_name = f"values_{str(j)}"
+        column_name = f"values_{j}"
         data[column_name] = [str(e) if e else "" for e in value[:, j]]
     df = pd.DataFrame(data=data)
     df.set_index("soma_joinid", inplace=True)
