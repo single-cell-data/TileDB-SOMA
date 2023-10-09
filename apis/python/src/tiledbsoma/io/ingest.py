@@ -2483,7 +2483,13 @@ def to_anndata(
 
     uns = {}
     if "uns" in measurement:
+        s = _util.get_start_stamp()
+        logging.log_io(None, f'Start  writing uns for {measurement["uns"].uri}')
         uns = _extract_uns(cast(Collection[Any], measurement["uns"]))
+        logging.log_io(
+            None,
+            _util.format_elapsed(s, f'Finish writing uns for {measurement["uns"].uri}'),
+        )
 
     anndata = ad.AnnData(
         X=X_csr if X_csr is not None else X_ndarray,
@@ -2582,13 +2588,13 @@ def _extract_uns(
     This is a helper function for ``to_anndata`` of ``uns`` elements.
     """
 
-    # TODO: logio style
     extracted = {}
     for key, element in collection.items():
         if isinstance(element, Collection):
             extracted[key] = _extract_uns(element)
         elif isinstance(element, DataFrame):
             extracted[key] = element.read().concat().to_pandas()
+            # TODO: back to 1D/2D if this was from-string above
         elif isinstance(element, SparseNDArray):
             extracted[key] = element.read().tables().concat().to_pandas()
         elif isinstance(element, DenseNDArray):
