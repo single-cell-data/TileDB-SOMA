@@ -510,10 +510,10 @@ def from_anndata(
                 #   chunkwise into memory.
                 # Using the latter allows us to ingest larger .h5ad files without OOMing.
 
-                # Some AnnData objects have no X at all.
-                has_X = True
+                # Some AnnData objects have no X at all. This might be a missing attribute
+                # anndata.X; it might be anndata.X present, but with value None.
                 try:
-                    anndata.X
+                    has_X = anndata.X is not None
                 except (NameError, KeyError):
                     # We need to check both -- different exception types occur dependinng
                     # on whether the anndata object is read in backing mode or not.
