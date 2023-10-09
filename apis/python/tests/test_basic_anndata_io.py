@@ -66,13 +66,21 @@ def h5ad_file_categorical_int_nan(request):
 
 @pytest.fixture
 def h5ad_file_X_empty(request):
-    input_path = HERE.parent / "testdata/xempty.h5ad"
+    """adata.X is a zero-cell matrix"""
+    input_path = HERE.parent / "testdata/x-empty.h5ad"
     return input_path
 
 
 @pytest.fixture
 def h5ad_file_X_none(request):
-    input_path = HERE.parent / "testdata/xnone.h5ad"
+    """adata.X has Python value None"""
+    input_path = HERE.parent / "testdata/x-none.h5ad"
+    return input_path
+
+@pytest.fixture
+def h5ad_file_X_missing(request):
+    """adata.X is not an attribute within adata"""
+    input_path = HERE.parent / "testdata/x-missing.h5ad"
     return input_path
 
 
