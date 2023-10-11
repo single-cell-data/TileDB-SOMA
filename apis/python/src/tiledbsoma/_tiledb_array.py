@@ -123,7 +123,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         )
 
         if query_condition:
-            soma_array.set_condition(query_condition)
+            soma_array.set_condition(query_condition, self._tiledb_array_schema())
 
         return soma_array
 

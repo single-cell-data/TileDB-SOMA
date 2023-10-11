@@ -131,14 +131,11 @@ class QueryCondition:
 
     def init_query_condition(
         self,
-        ctx: tiledb.Ctx,
-        uri: str,
+        schema: tiledb.ArraySchema,
+        enum_to_dtype: dict,
         query_attrs: Optional[List[str]],
-        timestamps: Optional[Tuple[OpenTimestamp, OpenTimestamp]],
     ):
-        qctree = QueryConditionTree(
-            ctx, tiledb.open(uri, ctx=ctx, timestamp=timestamps), query_attrs
-        )
+        qctree = QueryConditionTree(schema, enum_to_dtype, query_attrs)
         self.c_obj = qctree.visit(self.tree.body)
 
         if not isinstance(self.c_obj, clib.PyQueryCondition):
@@ -152,8 +149,8 @@ class QueryCondition:
 
 @attrs.define
 class QueryConditionTree(ast.NodeVisitor):
-    ctx: tiledb.Ctx
-    array: tiledb.Array
+    schema: tiledb.ArraySchema
+    enum_to_dtype: dict
     query_attrs: List[str]
 
     def visit_BitOr(self, node):
@@ -230,14 +227,14 @@ class QueryConditionTree(ast.NodeVisitor):
             variable = node.left.id
             values = [self.get_val_from_node(val) for val in self.visit(rhs)]
 
-            if self.array.schema.has_attr(variable):
-                enum_label = self.array.attr(variable).enum_label
+            if self.schema.has_attr(variable):
+                enum_label = self.schema.attr(variable).enum_label
                 if enum_label is not None:
-                    dt = self.array.enum(enum_label).dtype
+                    dt = self.enum_to_dtype[enum_label]
                 else:
-                    dt = self.array.attr(variable).dtype
+                    dt = self.schema.attr(variable).dtype
             else:
-                dt = self.array.schema.attr_or_dim_dtype(variable)
+                dt = self.schema.attr_or_dim_dtype(variable)
 
             # sdf.read(column_names=["foo"], value_filter='bar == 999') should
             # result in bar being added to the column names. See also
@@ -248,7 +245,7 @@ class QueryConditionTree(ast.NodeVisitor):
 
             dtype = "string" if dt.kind in "SUa" else dt.name
             op = clib.TILEDB_IN if isinstance(operator, ast.In) else clib.TILEDB_NOT_IN
-            result = self.create_pyqc(dtype)(self.ctx, node.left.id, values, op)
+            result = self.create_pyqc(dtype)(node.left.id, values, op)
 
         return result
 
@@ -262,11 +259,11 @@ class QueryConditionTree(ast.NodeVisitor):
 
         att = self.get_att_from_node(att)
         val = self.get_val_from_node(val)
-        enum_label = self.array.attr(att).enum_label
+        enum_label = self.schema.attr(att).enum_label
         if enum_label is not None:
-            dt = self.array.enum(enum_label).dtype
+            dt = self.enum_to_dtype[enum_label]
         else:
-            dt = self.array.attr(att).dtype
+            dt = self.schema.attr(att).dtype
         dtype = "string" if dt.kind in "SUa" else dt.name
         val = self.cast_val_to_dtype(val, dtype)
 
@@ -346,8 +343,8 @@ class QueryConditionTree(ast.NodeVisitor):
                 f"Incorrect type for attribute name: {ast.dump(node)}"
             )
 
-        if not self.array.schema.has_attr(att):
-            if self.array.schema.domain.has_dim(att):
+        if not self.schema.has_attr(att):
+            if self.schema.domain.has_dim(att):
                 raise tiledb.TileDBError(
                     f"`{att}` is a dimension. QueryConditions currently only "
                     "work on attributes."

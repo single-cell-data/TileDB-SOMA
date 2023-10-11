@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import os
-
 import pytest
+import tiledb
 
 import tiledbsoma.pytiledbsoma as clib
 from tiledbsoma._exception import SOMAError
@@ -28,7 +28,8 @@ def pandas_query(uri, condition):
 def soma_query(uri, condition):
     qc = QueryCondition(condition)
     sr = clib.SOMAArray(uri)
-    sr.set_condition(qc)
+    schema = tiledb.open(uri).schema
+    sr.set_condition(qc, schema)
     arrow_table = sr.read_next()
     assert sr.results_complete()
 
@@ -106,9 +107,10 @@ def test_query_condition_select_columns():
     condition = "percent_mito > 0.02"
 
     qc = QueryCondition(condition)
+    schema = tiledb.open(uri).schema
 
     sr = clib.SOMAArray(uri, column_names=["n_genes"])
-    sr.set_condition(qc)
+    sr.set_condition(qc, schema)
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -121,9 +123,10 @@ def test_query_condition_all_columns():
     condition = "percent_mito > 0.02"
 
     qc = QueryCondition(condition)
+    schema = tiledb.open(uri).schema
 
     sr = clib.SOMAArray(uri)
-    sr.set_condition(qc)
+    sr.set_condition(qc, schema)
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -136,9 +139,10 @@ def test_query_condition_reset():
     condition = "percent_mito > 0.02"
 
     qc = QueryCondition(condition)
+    schema = tiledb.open(uri).schema
 
     sr = clib.SOMAArray(uri)
-    sr.set_condition(qc)
+    sr.set_condition(qc, schema)
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -150,7 +154,7 @@ def test_query_condition_reset():
     condition = "percent_mito < 0.02"
     qc = QueryCondition(condition)
     sr.reset(column_names=["percent_mito"])
-    sr.set_condition(qc)
+    sr.set_condition(qc, schema)
 
     arrow_table = sr.read_next()
 
@@ -218,8 +222,9 @@ def test_eval_error_conditions(malformed_condition):
     #
     with pytest.raises(RuntimeError):
         qc = QueryCondition(malformed_condition)
+        schema = tiledb.open(uri).schema
         sr = clib.SOMAArray(uri)
-        sr.set_condition(qc)
+        sr.set_condition(qc, schema)
         sr.read_next()
 
 
