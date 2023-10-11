@@ -1929,12 +1929,16 @@ def _write_matrix_to_sparseNDArray(
             else:
                 chunk_size = 1
 
+        # Don't display something like '0..100000 out of 98765' as this looks wrong.
+        # Cap the part after the '..' at the dim_max_size.
         i2 = i + chunk_size
+        if i2 > dim_max_size:
+            i2 = dim_max_size
 
         coords[stride_axis] = slice(i, i2)
         chunk_coo = sp.coo_matrix(matrix[tuple(coords)])
 
-        chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
+        chunk_percent = min(100, 100 * i2 / dim_max_size)
 
         if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
             chunk_bounds = matrix_bounds
@@ -1946,8 +1950,15 @@ def _write_matrix_to_sparseNDArray(
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
                     "... %7.3f%% done" % chunk_percent,
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d"
-                    % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
+                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
+                    % (
+                        i,
+                        i2 - 1,
+                        dim_max_size,
+                        chunk_percent,
+                        chunk_coo.nnz,
+                        tiledb_create_options.goal_chunk_nnz,
+                    ),
                 )
                 i = i2
                 continue
@@ -1955,8 +1966,15 @@ def _write_matrix_to_sparseNDArray(
         # Print doubly inclusive lo..hi like 0..17 and 18..31.
         logging.log_io(
             None,
-            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
-            % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
+            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
+            % (
+                i,
+                i2 - 1,
+                dim_max_size,
+                chunk_percent,
+                chunk_coo.nnz,
+                tiledb_create_options.goal_chunk_nnz,
+            ),
         )
 
         soma_ndarray.write(
