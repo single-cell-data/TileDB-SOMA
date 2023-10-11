@@ -15,7 +15,6 @@ import tiledb
 
 from . import pytiledbsoma as clib
 from ._exception import SOMAError
-from ._types import OpenTimestamp
 
 # In Python 3.7, a boolean literal like `True` is of type `ast.NameConstant`.
 # Above that, it's of type `ast.Constant`.
