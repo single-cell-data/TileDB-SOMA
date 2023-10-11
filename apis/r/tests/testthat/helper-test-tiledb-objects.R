@@ -19,7 +19,7 @@ extended_tests <- function() {
     macos <- Sys.info()["sysname"] == "Darwin"
     ## check for possible override of 'force' or 'Force'
     ci_override <- tolower(Sys.getenv("CI", "")) == "force"
-    ## run extended tests if CI is set, or if on macOS and 'force' has not been set
+    ## run extended tests if CI is set, and if either not macOS or 'force' has been set
     ## (ie setting 'force' will enable on macOS too)
     ci_set && (!macos || ci_override)
 }
