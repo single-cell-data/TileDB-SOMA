@@ -36,18 +36,7 @@ import pyarrow as pa
 import scipy.sparse as sp
 import tiledb
 from anndata._core import file_backing
-from packaging import version
-
-# * When the user provides AnnData in non-backed mode, e.g. adata =
-#   ad.read_h5ad('foo.h5ad'), we have matrices like scipy.csr_matrix.
-# * When the user provides AnnData in backed mode, e.g. adata =
-#   ad.read_h5ad('foo.h5ad', 'r'), we have matrices like SparseDataset.
-# * AnnData 0.10.0 split SparseDataset into CSCDataSet and CSRDataSet.
-if version.parse(ad.__version__) < version.parse("0.10.0"):
-    from anndata._core.sparse_dataset import SparseDataset
-else:
-    from anndata._core.sparse_dataset import CSCDataSet, CSRDataSet
-
+from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 
 from .. import (
@@ -84,10 +73,7 @@ from ._registration import (
     signatures,
 )
 
-if version.parse(ad.__version__) < version.parse("0.10.0"):
-    SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
-else:
-    SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, CSCDataSet, CSRDataSet]
+SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 DenseMatrix = Union[NPNDArray, h5py.Dataset]
 Matrix = Union[DenseMatrix, SparseMatrix]
 _NDArr = TypeVar("_NDArr", bound=NDArray)
