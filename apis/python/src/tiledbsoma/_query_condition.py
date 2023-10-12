@@ -136,8 +136,9 @@ class QueryCondition:
         config: Optional[dict],
         timestamps: Optional[Tuple[OpenTimestamp, OpenTimestamp]],
     ):
+        ctx = tiledb.Ctx(config)
         qctree = QueryConditionTree(
-            tiledb.open(uri, ctx=tiledb.Ctx(config), timestamp=timestamps), query_attrs
+            ctx, tiledb.open(uri, ctx=ctx, timestamp=timestamps), query_attrs
         )
         self.c_obj = qctree.visit(self.tree.body)
 
@@ -152,6 +153,7 @@ class QueryCondition:
 
 @attrs.define
 class QueryConditionTree(ast.NodeVisitor):
+    ctx: tiledb.Ctx
     array: tiledb.Array
     query_attrs: List[str]
 
@@ -188,6 +190,9 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_In(self, node):
         return node
 
+    def visit_NotIn(self, node):
+        return node
+
     def visit_List(self, node):
         return list(node.elts)
 
@@ -216,23 +221,35 @@ class QueryConditionTree(ast.NodeVisitor):
                     self.visit(lhs), self.visit(op), self.visit(rhs)
                 )
                 result = result.combine(value, clib.TILEDB_AND)
-        elif isinstance(operator, ast.In):
+        elif isinstance(operator, (ast.In, ast.NotIn)):
             rhs = node.comparators[0]
             if not isinstance(rhs, ast.List):
                 raise tiledb.TileDBError(
                     "`in` operator syntax must be written as `attr in ['l', 'i', 's', 't']`"
                 )
 
-            consts = self.visit(rhs)
-            result = self.aux_visit_Compare(
-                self.visit(node.left), clib.TILEDB_EQ, consts[0]
-            )
+            variable = node.left.id
+            values = [self.get_val_from_node(val) for val in self.visit(rhs)]
 
-            for val in consts[1:]:
-                value = self.aux_visit_Compare(
-                    self.visit(node.left), clib.TILEDB_EQ, val
-                )
-                result = result.combine(value, clib.TILEDB_OR)
+            if self.array.schema.has_attr(variable):
+                enum_label = self.array.attr(variable).enum_label
+                if enum_label is not None:
+                    dt = self.array.enum(enum_label).dtype
+                else:
+                    dt = self.array.attr(variable).dtype
+            else:
+                dt = self.array.schema.attr_or_dim_dtype(variable)
+
+            # sdf.read(column_names=["foo"], value_filter='bar == 999') should
+            # result in bar being added to the column names. See also
+            # https://github.com/single-cell-data/TileDB-SOMA/issues/755
+            att = self.get_att_from_node(node.left)
+            if att not in self.query_attrs:
+                self.query_attrs.append(att)
+
+            dtype = "string" if dt.kind in "SUa" else dt.name
+            op = clib.TILEDB_IN if isinstance(operator, ast.In) else clib.TILEDB_NOT_IN
+            result = self.create_pyqc(dtype)(self.ctx, node.left.id, values, op)
 
         return result
 
@@ -338,6 +355,9 @@ class QueryConditionTree(ast.NodeVisitor):
                 )
             raise tiledb.TileDBError(f"Attribute `{att}` not found in schema.")
 
+        # sdf.read(column_names=["foo"], value_filter='bar == 999') should
+        # result in bar being added to the column names. See also
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/755
         if att not in self.query_attrs:
             self.query_attrs.append(att)
 
@@ -404,6 +424,22 @@ class QueryConditionTree(ast.NodeVisitor):
             raise tiledb.TileDBError(f"PyQueryCondition.{init_fn_name}() not found.")
 
         return getattr(pyqc, init_fn_name)
+
+    def create_pyqc(self, dtype: str) -> Callable:
+        if dtype != "string":
+            if np.issubdtype(dtype, np.datetime64):
+                dtype = "int64"
+            elif np.issubdtype(dtype, bool):
+                dtype = "uint8"
+
+        create_fn_name = f"create_{dtype}"
+
+        try:
+            return getattr(clib.PyQueryCondition, create_fn_name)
+        except AttributeError as ae:
+            raise tiledb.TileDBError(
+                f"PyQueryCondition.{create_fn_name}() not found."
+            ) from ae
 
     def visit_BinOp(self, node: ast.BinOp) -> clib.PyQueryCondition:
         try:
