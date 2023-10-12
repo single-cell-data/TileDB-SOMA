@@ -183,6 +183,37 @@ def test_experiment_query_value_filter(soma_experiment):
 
 
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_experiment_query_value_filter2(soma_experiment):
+    """Test query by value filter"""
+    obs_label_values = ["3", "7", "38", "99"]
+    var_label_values = ["18", "34", "67"]
+    with soma_experiment.axis_query(
+        "RNA",
+        obs_query=soma.AxisQuery(value_filter=f"label not in {obs_label_values}"),
+        var_query=soma.AxisQuery(value_filter=f"label not in {var_label_values}"),
+    ) as query:
+        assert query.n_obs == soma_experiment.obs.count - len(obs_label_values)
+        assert query.n_vars == soma_experiment.ms["RNA"].var.count - len(
+            var_label_values
+        )
+        all_obs_values = set(
+            soma_experiment.obs.read(column_names=["label"])
+            .concat()
+            .to_pandas()["label"]
+        )
+        all_var_values = set(
+            soma_experiment.ms["RNA"]
+            .var.read(column_names=["label"])
+            .concat()
+            .to_pandas()["label"]
+        )
+        qry_obs_values = set(query.obs().concat()["label"].to_pylist())
+        qry_var_values = set(query.var().concat()["label"].to_pylist())
+        assert qry_obs_values == all_obs_values.difference(set(obs_label_values))
+        assert qry_var_values == all_var_values.difference(set(var_label_values))
+
+
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_combo(soma_experiment):
     """Test query by combinations of coords and value_filter"""
     obs_label_values = ["3", "7", "38", "99"]
