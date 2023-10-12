@@ -1777,30 +1777,89 @@ def _find_sparse_chunk_size(
         goal_chunk_nnz:
             Desired number of non-zero array entries for the chunk.
     """
-    chunk_size = 1
+    if isinstance(matrix, (sp.csr_matrix, sp.csc_matrix)):
+        return _find_sparse_chunk_size_non_backed(
+            matrix=matrix,
+            start_index=start_index,
+            axis=axis,
+            goal_chunk_nnz=goal_chunk_nnz,
+        )
+
+    else:
+        return _find_sparse_chunk_size_backed(
+            matrix=matrix,
+            start_index=start_index,
+            axis=axis,
+            goal_chunk_nnz=goal_chunk_nnz,
+        )
+
+
+def _find_sparse_chunk_size_non_backed(
+    matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
+) -> int:
+    """Helper routine for ``_find_sparse_chunk_size`` for when we're operating on AnnData
+    matrices in non-backed mode. Here, unlike in backed mode, it's performant to exactly
+    sum up nnz values from all matrix rows.
+    """
+    chunk_size = 0
+    sum_nnz = 0
+    coords: List[Union[slice, int]] = [slice(None), slice(None)]
+    for index in range(start_index, matrix.shape[axis]):
+        coords[axis] = index
+        candidate_sum_nnz = sum_nnz + matrix[tuple(coords)].nnz
+        if candidate_sum_nnz > goal_chunk_nnz:
+            break
+        sum_nnz = candidate_sum_nnz
+        chunk_size += 1
+        # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
+        # logging.logger.trace(
+        #     f"non-backed: index={index} chunk_size={chunk_size} sum_nnz={sum_nnz} goal_nnz={goal_chunk_nnz}"
+        # )
+
+    return chunk_size
+
+
+def _find_sparse_chunk_size_backed(
+    matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
+) -> int:
+    """Helper routine for ``_find_sparse_chunk_size`` for when we're operating on AnnData
+    matrices in backed mode.
+
+    Empirically we find:
+
+    * If the input matrix is sp.csr_matrix or sp.csc_matrix then getting all these nnz values is
+      quick.
+
+    * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which happens with
+      out-of-core anndata reads -- then getting all these nnz values is prohibitively expensive.
+
+    * It turns out that getting a sample is quite sufficient. We do this regardless of whether
+      the matrix is anndata._core.sparse_dataset.SparseDataset or not.
+
+    * The max_rows is manually defined after running experiments with 60GB .h5ad files.
+    """
+    chunk_size = 0
     sum_nnz = 0
     coords: List[Union[slice, int]] = [slice(None), slice(None)]
 
-    # Empirically we find:
-    # * If the input matrix is sp.csr_matrix or sp.csc_matrix then getting all these nnz values is
-    #   quick.
-    # * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which happens with
-    #   out-of-core anndata reads -- then getting all these nnz values is prohibitively expensive.
-    # * It turns out that getting a sample is quite sufficient. We do this regardless of whether
-    #   the matrix is anndata._core.sparse_dataset.SparseDataset or not.
-    # * The max_rows is manually defined after running experiments with 60GB .h5ad files.
-    count = 0
-    max_rows = 100
+    num_sample_rows = 0
+    max_sample_rows = 100
 
     for index in range(start_index, matrix.shape[axis]):
-        count += 1
         coords[axis] = index
-        sum_nnz += matrix[tuple(coords)].nnz
-        if sum_nnz > goal_chunk_nnz:
+        candidate_sum_nnz = sum_nnz + matrix[tuple(coords)].nnz
+        candidate_num_sample_rows = num_sample_rows + 1
+        if candidate_sum_nnz > goal_chunk_nnz:
             break
-        if count > max_rows:
+        if candidate_num_sample_rows > max_sample_rows:
             break
+        num_sample_rows = candidate_num_sample_rows
+        sum_nnz = candidate_sum_nnz
         chunk_size += 1
+        # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
+        # logging.logger.trace(
+        #     f"non-backed: index={index} chunk_size={chunk_size} sum_nnz={sum_nnz} goal_nnz={goal_chunk_nnz}"
+        # )
 
     if sum_nnz == 0:  # completely empty sparse array (corner case)
         return -1
@@ -1810,10 +1869,10 @@ def _find_sparse_chunk_size(
 
     # Solve the equation:
     #
-    # sum_nnz              count
+    # sum_nnz              num_sample_rows
     # -------          =  -------
     # goal_chunk_nnz       result
-    chunk_size = int(count * goal_chunk_nnz / sum_nnz)
+    chunk_size = int(num_sample_rows * goal_chunk_nnz / sum_nnz)
     if chunk_size < 1:
         chunk_size = 1
     return chunk_size
@@ -1937,6 +1996,57 @@ def _write_matrix_to_sparseNDArray(
 
         coords[stride_axis] = slice(i, i2)
         chunk_coo = sp.coo_matrix(matrix[tuple(coords)])
+
+        # As noted above, we support reading AnnData in backed mode which
+        # provides opportunities as well as challenges.
+        #
+        # * Backed mode is crucial for our ability to ingest larger H5AD files
+        #   -- those whose file sizes complete with host RAM.
+        # * Semantics of AnnData backed-mode matrices is such that it is
+        #   prohibitive (i.e. it ruins performance, and by a significant amount)
+        #   to compute row nnz for every row -- which is precisely the
+        #   information that any chunk-sizing algorithm requires.
+        # * Therefore we use a sampling algorithm to estimate the chunk size
+        #   (row-count) to satisfy a goal chunk nnz value. However, the nnz
+        #   values in the sample do not always well represent the values in the
+        #   population.
+        #
+        # Therefore as a performance optimization we do the following:
+        #
+        # * Use a sample of a small number of rows (100 as of this writing)
+        #   to estimate a chunk size that satisfies the goal chunk nnz.
+        # * Acquire the full chunk nnz (which is much more performant at the
+        #   AnnData level than getting each of the individual row nnz values)
+        # * Adapt that downard.
+        #
+        # In a future C++-only matrix-writer implementation where buffer sizes
+        # are exposed to the implementation langauge -- a benefit we do not
+        # enjoy here in Python -- it will be easier to simply fill buffers and
+        # send them off, with simplified logic.
+        num_tries = 0
+        max_tries = 20
+        while chunk_coo.nnz > tiledb_create_options.goal_chunk_nnz:
+            num_tries += 1
+            # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
+            # logging.logger.trace(
+            #    f"Adapt: {num_tries}/{max_tries} {chunk_coo.nnz}/{tiledb_create_options.goal_chunk_nnz}"
+            # )
+            if num_tries > max_tries:
+                raise SOMAError(
+                    f"Unable to accommodate goal_chunk_nnz {goal_chunk_nnz}. "
+                    + "This may be reduced in TileDBCreateOptions."
+                )
+
+            ratio = chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz
+            chunk_size = int(math.floor(0.9 * (i2 - i) / ratio))
+            if chunk_size < 1:
+                raise SOMAError(
+                    f"Unable to accommodate a single row at goal_chunk_nnz {goal_chunk_nnz}. "
+                    + "This may be reduced in TileDBCreateOptions."
+                )
+            i2 = i + chunk_size
+            coords[stride_axis] = slice(i, i2)
+            chunk_coo = sp.coo_matrix(matrix[tuple(coords)])
 
         chunk_percent = min(100, 100 * i2 / dim_max_size)
 
