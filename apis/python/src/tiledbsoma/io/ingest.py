@@ -1786,24 +1786,22 @@ def _find_sparse_chunk_size(
             It simplifies the internal API to simply pass it in unconditionally.
     """
     if isinstance(matrix, (sp.csr_matrix, sp.csc_matrix)):
-        x = _find_sparse_chunk_size_non_backed(
+        return _find_sparse_chunk_size_non_backed(
             matrix=matrix,
             start_index=start_index,
             axis=axis,
             goal_chunk_nnz=goal_chunk_nnz,
             mean_nnz=mean_nnz,
         )
-        return x
 
     else:
-        x = _find_sparse_chunk_size_backed(
+        return _find_sparse_chunk_size_backed(
             matrix=matrix,
             start_index=start_index,
             axis=axis,
             goal_chunk_nnz=goal_chunk_nnz,
             mean_nnz=mean_nnz,
         )
-        return x
 
 
 def _find_sparse_chunk_size_non_backed(
@@ -1836,18 +1834,20 @@ def _find_sparse_chunk_size_non_backed(
 
 def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
     """Helper for _find_sparse_chunk_size_backed"""
-    # This takes about as long but uses more RAM:
-    #   total_nnz = matrix[:, :].nnz
-    # So instead we break it up. Testing over a variety of H5AD sizes
-    # shows that the performance is fine here.
     extent = matrix.shape[axis]
     if extent == 0:
         return 0
 
+    # Dense inputs don't have a .nnz
     if isinstance(matrix, (np.ndarray, h5py._hl.dataset.Dataset)):
         nr, nc = matrix.shape
         total = nr * nc
         return int(total // matrix.shape[axis])
+
+    # This takes about as long but uses more RAM:
+    #   total_nnz = matrix[:, :].nnz
+    # So instead we break it up. Testing over a variety of H5AD sizes
+    # shows that the performance is fine here.
     coords: List[slice] = [slice(None), slice(None)]  # type: ignore [unreachable]
     bsz = 1000
     total_nnz = 0
@@ -1871,15 +1871,18 @@ def _find_sparse_chunk_size_backed(
     Empirically we find:
 
     * If the input matrix is sp.csr_matrix or sp.csc_matrix then getting all
-      these nnz values is quick.
+      these nnz values is quick.  This happens when the input is AnnData via
+      anndata.read_h5ad(name_of_h5ad) without the second backing-mode argument.
 
     * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which
       happens with out-of-core anndata reads -- then getting all these nnz
-      values is prohibitively expensive.
+      values is prohibitively expensive.  This happens when the input is AnnData
+      via anndata.read_h5ad(name_of_h5ad, "r") with the second backing-mode
+      argument, which is necessary for being able to ingest larger H5AD files.
 
-    Say there are 100,000 rows, each with possibly quite different nnz values. Then in the
-    non-backed case we simply check each row's nnz value. But for the backed case, that absolutely
-    tanks performance.
+    Say there are 100,000 rows, each with possibly quite different nnz values.
+    Then in the non-backed case we simply check each row's nnz value. But for
+    the backed case, that absolutely tanks performance.
 
     Another option is getting a sample of nnz values and using them as an
     estimator for nnz values of other rows. This often works, but there's enough
@@ -1891,15 +1894,15 @@ def _find_sparse_chunk_size_backed(
     matrix[0,:].nnz, matrix[1,:].nnz, ...  matrix[9999,:].nnz, it's quite quick
     to ask for matrix[0:9999,:].nnz.
 
-    This is our way to thread the needle on good runtime performance with
-    the AnnData backed-matrix API, while respecting remote resource limits:
+    This is our way to thread the needle on good runtime performance with the
+    AnnData backed-matrix API, while respecting remote resource limits:
 
     * Get the mean nnz for the entire matrix, along the desired axis.
       This needs to be computed only once, so we take it as an argument.
 
     * Set our intial estimate of chunk size to be the goal_chunk_nnz
-      over the mean_nnz. E.g. if our goal is 100M nnz per chunk, and the
-      matrix has average 4000 nnz per row, then we try chunk size to be
+      over the mean_nnz. E.g. if our goal is 100M nnz per chunk, and the matrix
+      has average 4000 nnz per row, then we try chunk size to be
       100,000,000/4,000 = 25,000.
 
     * While tasking for the nnzs of each of those 25,000 rows is prohibitively
@@ -1914,15 +1917,15 @@ def _find_sparse_chunk_size_backed(
       That second guess may not be quite right either, so we try a few times.
       Experiments across a variety of file sizes shows that we converge to
       between 70% and 100% of goal chunk nnz usually on the first try, and
-      occasionally on the second and maybe the third. Again, _exact_
-      counting of each row's nnz is prohibitively expensive, so we adapt our
-      algorithm to the constraints presented to us.
+      occasionally on the second and maybe the third. Again, _exact_ counting of
+      each row's nnz is prohibitively expensive, so we adapt our algorithm to
+      the constraints presented to us.
 
     Minor details on the basic theme:
 
     * We aim for between 70% and 100% of goal chunk nnz. Over is bad;
-      under is less bad -- we do want to not make too many small requests
-      of remote services, though.
+      under is less bad -- we do want to not make too many small requests of
+      remote services, though.
 
     * On the very last bit of the matrix, there can be no sizing up --
       if there are only 7 rows remaining, that's that, end of story.
