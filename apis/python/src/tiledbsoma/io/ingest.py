@@ -1762,7 +1762,11 @@ def _read_nonempty_domain(arr: TileDBArray) -> Any:
 
 
 def _find_sparse_chunk_size(
-    matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
+    matrix: SparseMatrix,
+    start_index: int,
+    axis: int,
+    goal_chunk_nnz: int,
+    mean_nnz: int,
 ) -> int:
     """Given a sparse matrix and a start index, return a step size, on the stride axis,
     which will achieve the cumulative nnz desired.
@@ -1776,26 +1780,38 @@ def _find_sparse_chunk_size(
             The stride axis, across which to find a chunk.
         goal_chunk_nnz:
             Desired number of non-zero array entries for the chunk.
+        mean_nnz:
+            Mean nnz along the desired axis. This is necessary for the backed
+            case, and not needed in the non-backed case but easy to compute.
+            It simplifies the internal API to simply pass it in unconditionally.
     """
     if isinstance(matrix, (sp.csr_matrix, sp.csc_matrix)):
-        return _find_sparse_chunk_size_non_backed(
+        x = _find_sparse_chunk_size_non_backed(
             matrix=matrix,
             start_index=start_index,
             axis=axis,
             goal_chunk_nnz=goal_chunk_nnz,
+            mean_nnz=mean_nnz,
         )
+        return x
 
     else:
-        return _find_sparse_chunk_size_backed(
+        x = _find_sparse_chunk_size_backed(
             matrix=matrix,
             start_index=start_index,
             axis=axis,
             goal_chunk_nnz=goal_chunk_nnz,
+            mean_nnz=mean_nnz,
         )
+        return x
 
 
 def _find_sparse_chunk_size_non_backed(
-    matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
+    matrix: SparseMatrix,
+    start_index: int,
+    axis: int,
+    goal_chunk_nnz: int,
+    mean_nnz: int,
 ) -> int:
     """Helper routine for ``_find_sparse_chunk_size`` for when we're operating on AnnData
     matrices in non-backed mode. Here, unlike in backed mode, it's performant to exactly
@@ -1815,66 +1831,163 @@ def _find_sparse_chunk_size_non_backed(
         # logging.logger.trace(
         #     f"non-backed: index={index} chunk_size={chunk_size} sum_nnz={sum_nnz} goal_nnz={goal_chunk_nnz}"
         # )
-
     return chunk_size
 
 
+def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
+    """Helper for _find_sparse_chunk_size_backed"""
+    # This takes about as long but uses more RAM:
+    #   total_nnz = matrix[:, :].nnz
+    # So instead we break it up. Testing over a variety of H5AD sizes
+    # shows that the performance is fine here.
+    extent = matrix.shape[axis]
+    if extent == 0:
+        return 0
+
+    if isinstance(matrix, (np.ndarray, h5py._hl.dataset.Dataset)):
+        nr, nc = matrix.shape
+        total = nr * nc
+        return int(total // matrix.shape[axis])
+    coords: List[slice] = [slice(None), slice(None)]  # type: ignore [unreachable]
+    bsz = 1000
+    total_nnz = 0
+    for lo in range(0, extent, bsz):
+        hi = min(extent, lo + bsz)
+        coords[axis] = slice(lo, hi)
+        total_nnz += matrix[tuple(coords)].nnz
+    return int(math.ceil(total_nnz / extent))
+
+
 def _find_sparse_chunk_size_backed(
-    matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
+    matrix: SparseMatrix,
+    start_index: int,
+    axis: int,
+    goal_chunk_nnz: int,
+    mean_nnz: int,
 ) -> int:
-    """Helper routine for ``_find_sparse_chunk_size`` for when we're operating on AnnData
-    matrices in backed mode.
+    """Helper routine for ``_find_sparse_chunk_size`` for when we're operating
+    on AnnData matrices in backed mode.
 
     Empirically we find:
 
-    * If the input matrix is sp.csr_matrix or sp.csc_matrix then getting all these nnz values is
-      quick.
+    * If the input matrix is sp.csr_matrix or sp.csc_matrix then getting all
+      these nnz values is quick.
 
-    * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which happens with
-      out-of-core anndata reads -- then getting all these nnz values is prohibitively expensive.
+    * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which
+      happens with out-of-core anndata reads -- then getting all these nnz
+      values is prohibitively expensive.
 
-    * It turns out that getting a sample is quite sufficient. We do this regardless of whether
-      the matrix is anndata._core.sparse_dataset.SparseDataset or not.
+    Say there are 100,000 rows, each with possibly quite different nnz values. Then in the
+    non-backed case we simply check each row's nnz value. But for the backed case, that absolutely
+    tanks performance.
 
-    * The max_rows is manually defined after running experiments with 60GB .h5ad files.
+    Another option is getting a sample of nnz values and using them as an
+    estimator for nnz values of other rows. This often works, but there's enough
+    diversity in the row nnzs that this estimator can result in us sending
+    too-big chunks to remote services.
+
+    It turns out, though, as a peculiarity of AnnData backed matrices, that
+    while it's prohibitively expensive to ask the 1000 questions
+    matrix[0,:].nnz, matrix[1,:].nnz, ...  matrix[9999,:].nnz, it's quite quick
+    to ask for matrix[0:9999,:].nnz.
+
+    This is our way to thread the needle on good runtime performance with
+    the AnnData backed-matrix API, while respecting remote resource limits:
+
+    * Get the mean nnz for the entire matrix, along the desired axis.
+      This needs to be computed only once, so we take it as an argument.
+
+    * Set our intial estimate of chunk size to be the goal_chunk_nnz
+      over the mean_nnz. E.g. if our goal is 100M nnz per chunk, and the
+      matrix has average 4000 nnz per row, then we try chunk size to be
+      100,000,000/4,000 = 25,000.
+
+    * While tasking for the nnzs of each of those 25,000 rows is prohibitively
+      expensive, we can quickly ask for the nnz of the continguous region of
+      25,000 rows.
+
+    * Now, those 25,000 rows' sum nnz may or may not be reflective of the mean.
+      If the guess is too high -- if those 25,000 rows' nnz is over the goal --
+      we must reduce it; if it's too low, we must raise it. In either case we
+      just divide by the overshoot/undershoot ratio. E.g. if the goal was 100M
+      but the chunk nnz was 125M, then we divide 25,000 by 1.25 and try again.
+      That second guess may not be quite right either, so we try a few times.
+      Experiments across a variety of file sizes shows that we converge to
+      between 70% and 100% of goal chunk nnz usually on the first try, and
+      occasionally on the second and maybe the third. Again, _exact_
+      counting of each row's nnz is prohibitively expensive, so we adapt our
+      algorithm to the constraints presented to us.
+
+    Minor details on the basic theme:
+
+    * We aim for between 70% and 100% of goal chunk nnz. Over is bad;
+      under is less bad -- we do want to not make too many small requests
+      of remote services, though.
+
+    * On the very last bit of the matrix, there can be no sizing up --
+      if there are only 7 rows remaining, that's that, end of story.
     """
-    chunk_size = 0
-    sum_nnz = 0
-    coords: List[Union[slice, int]] = [slice(None), slice(None)]
 
-    num_sample_rows = 0
-    max_sample_rows = 100
+    # Parameters as noted above and below.
+    lower_ratio = 0.7
+    upper_ratio = 1.0
+    adjustment_ratio = 0.95
+    max_iterations = 5
 
-    for index in range(start_index, matrix.shape[axis]):
-        coords[axis] = index
-        candidate_sum_nnz = sum_nnz + matrix[tuple(coords)].nnz
-        candidate_num_sample_rows = num_sample_rows + 1
-        if candidate_sum_nnz > goal_chunk_nnz:
-            break
-        if candidate_num_sample_rows > max_sample_rows:
-            break
-        num_sample_rows = candidate_num_sample_rows
-        sum_nnz = candidate_sum_nnz
-        chunk_size += 1
-        # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
-        # logging.logger.trace(
-        #     f"non-backed: index={index} chunk_size={chunk_size} sum_nnz={sum_nnz} goal_nnz={goal_chunk_nnz}"
-        # )
-
-    if sum_nnz == 0:  # completely empty sparse array (corner case)
+    if mean_nnz == 0:  # completely empty sparse array (corner case)
         return -1
 
-    if sum_nnz > goal_chunk_nnz:
+    # This is num_rows or num_cols.
+    extent = int(matrix.shape[axis])
+
+    # Initial guess of chunk size.
+    chunk_size = max(1, int(math.floor(goal_chunk_nnz / mean_nnz)))
+    if chunk_size > extent:
+        chunk_size = extent
+
+    # This is just matrix[0:m, :] or matrix[:, 0:m], but spelt out flexibly
+    # given that the axis (0 or 1) is a variable.
+    coords: List[slice] = [slice(None), slice(None)]
+    coords[axis] = slice(start_index, start_index + chunk_size)
+    chunk_nnz = int(matrix[tuple(coords)].nnz)
+
+    # End of matrix, end of story.
+    if start_index + chunk_size >= extent:
         return chunk_size
 
-    # Solve the equation:
-    #
-    # sum_nnz              num_sample_rows
-    # -------          =  -------
-    # goal_chunk_nnz       result
-    chunk_size = int(num_sample_rows * goal_chunk_nnz / sum_nnz)
-    if chunk_size < 1:
-        chunk_size = 1
+    # Compare initial estimate chunk nnz against the goal
+    ratio = chunk_nnz / goal_chunk_nnz
+
+    # Close enough to full capacity without going over; not worth tweaking
+    if ratio > lower_ratio and ratio <= upper_ratio:
+        return chunk_size
+
+    # This is a corner case, with artificially low goal_chunk_nnz far below
+    # remote resource requirements. In this case, keep estimate to avoid the
+    # iteration loop below.
+    if chunk_size == 1:
+        return chunk_size
+
+    # Small chunk: try to enlarge for efficiency.
+    # Large chunk: must split for local/remote resource limits.
+    # In either case, we divide by the ration of actual vs goal.
+    for i in range(max_iterations):
+        # Omitting the adjustment ratio would mean our next try would be likely
+        # to be say 1.000002x the goal, resulting in an unnecessary extra
+        # iteration.  Since the "just-right zone" is between 0.7 and 1.0 times
+        # the goal, don't aim for the very edge of that zone: aim well within
+        # it.
+        chunk_size = max(1, int(adjustment_ratio * math.floor(chunk_size / ratio)))
+        coords[axis] = slice(start_index, start_index + chunk_size)
+        chunk_nnz = matrix[tuple(coords)].nnz
+        ratio = chunk_nnz / goal_chunk_nnz
+        if ratio > lower_ratio and ratio <= upper_ratio:
+            return chunk_size
+
+    # If the result is still smallish, so be it -- we have tried hard enough.
+    # If the result is too large despite efforts, let remote resource-limit
+    # errors be the hard fail, rather than trying to hard-enforce one of our
+    # own.
     return chunk_size
 
 
@@ -1959,6 +2072,7 @@ def _write_matrix_to_sparseNDArray(
 
     eta_tracker = eta.Tracker()
     goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz
+    mean_nnz = _find_mean_nnz(matrix, stride_axis)
 
     coords = [slice(None), slice(None)]
     i = 0
@@ -1980,7 +2094,7 @@ def _write_matrix_to_sparseNDArray(
             chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[non_stride_axis]))
         else:
             chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
-                matrix, i, stride_axis, goal_chunk_nnz
+                matrix, i, stride_axis, goal_chunk_nnz, mean_nnz
             )
         if chunk_size == -1:  # completely empty array; nothing to write
             if i > 0:
