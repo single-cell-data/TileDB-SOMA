@@ -6,10 +6,21 @@
 """
 Implementation of SOMA SparseNDArray.
 """
-from typing import Dict, Optional, Sequence, Tuple, Union, cast
+from typing import (
+    Dict,
+    Iterator,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+    overload,
+)
 
 import numpy as np
 import pyarrow as pa
+import scipy.sparse
 import somacore
 import tiledb
 from somacore import options
@@ -25,6 +36,7 @@ from ._exception import SOMAError
 from ._read_iters import (
     SparseCOOTensorReadIter,
     TableReadIter,
+    scipy_sparse_iter,
 )
 from ._types import NTuple
 from .options._tiledb_create_options import TileDBCreateOptions
@@ -146,8 +158,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         schema = self._handle.schema
         sr = self._soma_reader(schema=schema, result_order=result_order)
-        self._set_reader_coords(sr, coords)
-        return SparseNDArrayRead(sr, schema.shape)
+        return SparseNDArrayRead(sr, schema.shape, self, coords, result_order)
 
     def write(
         self,
@@ -400,13 +411,23 @@ class SparseNDArrayRead(somacore.SparseRead):
         Experimental.
     """
 
-    def __init__(self, sr: clib.SOMAArray, shape: NTuple):
+    def __init__(
+        self,
+        sr: clib.SOMAArray,
+        shape: NTuple,
+        array: SparseNDArray,
+        coords: options.SparseDFCoords,
+        result_order: options.ResultOrderStr,  # TODO: remove when property is available in clib.SOMAArray
+    ):
         """
         Lifecycle:
             Experimental.
         """
         self.sr = sr
         self.shape = shape
+        self.array = array
+        self.coords = coords
+        self.result_order = result_order
 
     def coos(self, shape: Optional[NTuple] = None) -> SparseCOOTensorReadIter:
         """
@@ -422,6 +443,7 @@ class SparseNDArrayRead(somacore.SparseRead):
         """
         if shape is not None and (len(shape) != len(self.shape)):
             raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
+        self.array._set_reader_coords(self.sr, self.coords)
         return SparseCOOTensorReadIter(self.sr, shape or self.shape)
 
     def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
@@ -442,4 +464,83 @@ class SparseNDArrayRead(somacore.SparseRead):
         Lifecycle:
             Experimental.
         """
+        self.array._set_reader_coords(self.sr, self.coords)
         return TableReadIter(self.sr)
+
+    @overload
+    def to_scipy(
+        self,
+        axis: Literal[0, 1] = 0,
+        step: Optional[int] = None,
+        compress: Literal[False] = False,
+        reindex_sparse_axis: bool = True,
+    ) -> Iterator[scipy.sparse.coo_matrix]:
+        ...
+
+    @overload
+    def to_scipy(
+        self,
+        axis: Literal[0],
+        step: Optional[int] = None,
+        compress: Literal[True] = True,
+        reindex_sparse_axis: bool = True,
+    ) -> Iterator[scipy.sparse.csr_matrix]:
+        ...
+
+    @overload
+    def to_scipy(
+        self,
+        axis: Literal[1],
+        step: Optional[int] = None,
+        compress: bool = True,
+        reindex_sparse_axis: bool = True,
+    ) -> Iterator[scipy.sparse.csc_matrix]:
+        ...
+
+    def to_scipy(
+        self,
+        axis: Literal[0, 1] = 0,
+        step: Optional[int] = None,
+        compress: bool = True,
+        reindex_sparse_axis: bool = True,
+    ) -> Iterator[
+        Union[scipy.sparse.coo_matrix, scipy.sparse.csr_matrix, scipy.sparse.csc_matrix]
+    ]:
+        """
+        Returns an iterator of `SciPy sparse matrix` over a 2D SparseNDArray.
+
+        Args:
+            axis:
+                The axis (0 or 1) across which to step. If `compress` is True, the
+                axis also determines which dimension is compressed, which in turn
+                determines the return type. If compressed==True and axis==0, a CSR
+                matrix is returned. If compressed==True and axis==1, a CSC matrix
+                is returned.
+            step:
+                Number of rows or columns to return in each iterator step.
+            compress:
+                If True, a CSC or CSR matrix is returned. If False, a COO matrix is returned.
+            reindex_sparse_axis:
+                If False (default), the sparse axis will also be reindexed from soma_joinid
+                to zero-based indices. If True, the sparse axis values will remain joinids.
+
+        Lifecycle:
+            Experimental.
+        """
+
+        if (axis == 0 and self.result_order == options.ResultOrder.COLUMN_MAJOR) or (
+            axis == 1 and self.result_order == options.ResultOrder.ROW_MAJOR
+        ):
+            # NB: this check can move into the iterator once we have access to result_order
+            raise ValueError(
+                "read result_order and axis are incompatible - recommend using result_order AUTO"
+            )
+
+        if step is None:
+            # Default heuristic based upon most datasets having far larger cardinality
+            # on the obs/0 dimension.
+            step = 2**8 if axis == 1 else 2**16
+
+        return scipy_sparse_iter(
+            self.sr, self.coords, axis, step, compress, reindex_sparse_axis
+        )
