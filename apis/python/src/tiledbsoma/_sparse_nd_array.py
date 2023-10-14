@@ -528,17 +528,16 @@ class SparseNDArrayRead(somacore.SparseRead):
             Experimental.
         """
 
+        # NB: this check can move down into the iterator once we have access to result_order in SOMAArray
         if (axis == 0 and self.result_order == options.ResultOrder.COLUMN_MAJOR) or (
             axis == 1 and self.result_order == options.ResultOrder.ROW_MAJOR
         ):
-            # NB: this check can move into the iterator once we have access to result_order
             raise ValueError(
                 "read result_order and axis are incompatible - recommend using result_order AUTO"
             )
 
         if step is None:
-            # Default heuristic based upon most datasets having far larger cardinality
-            # on the obs/0 dimension.
+            # Default heuristic based upon most datasets having much larger cardinality on the soma_dim_0 (obs) dimension.
             step = 2**8 if axis == 1 else 2**16
 
         return scipy_sparse_iter(
