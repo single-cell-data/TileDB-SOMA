@@ -13,7 +13,9 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _constants, _tdb_handles
+from . import pytiledbsoma as clib
 from ._exception import SOMAError
+from ._tdb_handles import DataFrameWrapper
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
@@ -81,7 +83,10 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
-        handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
+        if mode == "r" and clib.SOMADataFrame.exists(uri):
+            handle = DataFrameWrapper.open(uri, mode, context, tiledb_timestamp)
+        else:
+            handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",

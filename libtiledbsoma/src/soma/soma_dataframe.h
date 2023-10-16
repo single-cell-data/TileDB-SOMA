@@ -34,6 +34,7 @@
 #define SOMA_DATAFRAME
 
 #include <tiledb/tiledb>
+#include "../utils/arrow_adapter.h"
 #include "enums.h"
 #include "soma_array.h"
 #include "soma_object.h"
@@ -166,6 +167,18 @@ class SOMADataFrame : public SOMAObject {
      */
     void close();
 
+    void reset(
+        std::vector<std::string> column_names = {},
+        std::string_view batch_size = "auto",
+        ResultOrder result_order = ResultOrder::automatic) {
+        array_->reset(column_names, batch_size, result_order);
+    }
+
+    /**
+     * @brief Check if the SOMADataFrame exists at the URI.
+     */
+    static bool exists(std::string_view uri);
+
     /**
      * Check if the SOMADataFrame is open.
      *
@@ -197,6 +210,13 @@ class SOMADataFrame : public SOMAObject {
     std::shared_ptr<Context> ctx();
 
     /**
+     * Return optional timestamp pair SOMADataFrame was opened with.
+     */
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp() {
+        return array_->timestamp();
+    }
+
+    /**
      * Return the data schema, in the form of a TileDB ArraySchema.
      *
      * @return std::shared_ptr<ArraySchema>
@@ -211,17 +231,114 @@ class SOMADataFrame : public SOMAObject {
     const std::vector<std::string> index_column_names() const;
 
     /**
-     * Return the number of rows in the SOMADataFrame.
+     * Return the number of dimnesions.
+     *
+     * @return int64_t
+     */
+    int64_t ndim() const;
+
+    /**
+     * Return the number of rows.
      *
      * @return int64_t
      */
     int64_t count() const;
 
     /**
+     * Retrieves the non-empty domain from the array. This is the union of the
+     * non-empty domains of the array fragments.
+     *
+     * @return int64_t
+     */
+    template <typename T>
+    std::pair<T, T> non_empty_domain(const std::string& name) {
+        return array_->non_empty_domain<T>(name);
+    };
+
+    /**
+     * Retrieves the non-empty domain from the array on the given dimension.
+     * This is the union of the non-empty domains of the array fragments.
+     * Applicable only to var-sized dimensions.
+     */
+    std::pair<std::string, std::string> non_empty_domain_var(
+        const std::string& name) {
+        return array_->non_empty_domain_var(name);
+    };
+
+    /**
      * @brief Read the next chunk of results from the query. If all results have
      * already been read, std::nullopt is returned.
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
+
+    /**
+     * @brief Set the dimension slice using one point
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param dim
+     * @param point
+     */
+    template <typename T>
+    void set_dim_point(const std::string& dim, const T& point) {
+        array_->set_dim_point(dim, point);
+    }
+
+    /**
+     * @brief Set the dimension slice using multiple points, with support
+     * for partitioning.
+     *
+     * @tparam T
+     * @param dim
+     * @param points
+     */
+    template <typename T>
+    void set_dim_points(
+        const std::string& dim,
+        const tcb::span<T> points,
+        int partition_index,
+        int partition_count) {
+        array_->set_dim_points(dim, points, partition_index, partition_count);
+    }
+
+    /**
+     * @brief Set the dimension slice using multiple points
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param dim
+     * @param points
+     */
+    template <typename T>
+    void set_dim_points(const std::string& dim, const std::vector<T>& points) {
+        array_->set_dim_points(dim, points);
+    }
+
+    /**
+     * @brief Set the dimension slice using multiple ranges
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param dim
+     * @param ranges
+     */
+    template <typename T>
+    void set_dim_ranges(
+        const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
+        array_->set_dim_ranges(dim, ranges);
+    }
+
+    /**
+     * @brief Set a query condition.
+     *
+     * @param qc Query condition
+     */
+    void set_condition(QueryCondition& qc) {
+        array_->set_condition(qc);
+    }
 
     /**
      * @brief Write data to the dataframe.

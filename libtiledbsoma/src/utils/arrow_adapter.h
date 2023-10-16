@@ -46,6 +46,9 @@ class ArrowAdapter {
     static std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
     to_arrow(std::shared_ptr<ColumnBuffer> column);
 
+    static std::unique_ptr<ArrowSchema> tiledb_schema_to_arrow_schema(
+        std::shared_ptr<ArraySchema> tiledb_schema);
+
     /**
      * @brief Get Arrow format string from TileDB datatype.
      *
