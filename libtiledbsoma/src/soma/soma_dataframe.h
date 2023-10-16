@@ -240,6 +240,7 @@ class SOMADataFrame : public SOMAObject {
      *
      * @return int64_t
      */
+    int64_t ndim() const;
     int64_t count() const;
 
     /**

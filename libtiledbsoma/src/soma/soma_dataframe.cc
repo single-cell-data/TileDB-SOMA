@@ -160,6 +160,10 @@ int64_t SOMADataFrame::count() const {
     return array_->nnz();
 }
 
+int64_t SOMADataFrame::count() const {
+    return array_->nnz();
+}
+
 std::optional<std::shared_ptr<ArrayBuffers>> SOMADataFrame::read_next() {
     return array_->read_next();
 }

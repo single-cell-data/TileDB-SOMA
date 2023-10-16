@@ -34,6 +34,8 @@ from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
+from . import pytiledbsoma as clib
+
 _Obj = TypeVar("_Obj", bound="_tiledb_object.AnyTileDBObject")
 _Wrapper = TypeVar("_Wrapper", bound=_tdb_handles.AnyWrapper)
 
@@ -220,6 +222,7 @@ def _type_name_to_cls(type_name: str) -> Type["_tiledb_object.AnyTileDBObject"]:
             _sparse_nd_array.SparseNDArray,
         )
     }
+    type_map["somadataframe"] = _dataframe.DataFrame
     try:
         return type_map[type_name.lower()]
     except KeyError as ke:

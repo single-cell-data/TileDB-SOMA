@@ -308,6 +308,33 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         self.initial_contents = {
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
+        
+class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
+    @classmethod
+    def _opener(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: int,
+    ) -> tiledb.Array:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        return clib.SOMADataFrame.open(
+            uri,
+            open_mode,
+            {k: str(v) for k, v in context.tiledb_config.items()},
+            [],
+            clib.ResultOrder.automatic,
+            (0, timestamp),
+        )
+
+    @property
+    def schema(self) -> tiledb.ArraySchema:
+        return self._handle.schema
+    
+    @property
+    def meta(self):
+        return self._handle.meta
 
 
 class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
