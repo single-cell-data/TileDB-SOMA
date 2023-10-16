@@ -540,7 +540,8 @@ class SparseNDArrayRead(somacore.SparseRead):
             step:
                 Number of rows or columns to return in each iterator step.
             compress:
-                If True, a CSC or CSR matrix is returned. If False, a COO matrix is returned.
+                If True, a CSC or CSR matrix is returned, dependent on the value of the
+                `axis` argument. If False, a COO matrix is returned.
             reindex_sparse_axis:
                 If False (default), the sparse axis will also be reindexed from soma_joinid
                 to zero-based indices. If True, the sparse axis values will remain joinids.
@@ -557,6 +558,8 @@ class SparseNDArrayRead(somacore.SparseRead):
                 the iterator is requested for an array that does not have a dimensionality of 2.
 
         Examples:
+            A simple example iterating over the first 10000 elements:
+
             >>> import tiledbsoma
             >>> with tiledbsoma.open("a_sparse_nd_array") as X:
             ...     for (obs_coords, var_coords), matrix in X.read(coords=(slice(9999),)).scipy(
@@ -569,6 +572,9 @@ class SparseNDArrayRead(somacore.SparseRead):
                     with 13760197 stored elements in Compressed Sparse Row format>
             <2x60664 sparse matrix of type '<class 'numpy.float32'>'
                     with 3417 stored elements in Compressed Sparse Row format>
+
+            To stride over the second dimension, returning a CSC matrix, specify `axis=1`.
+            To iterate over COO matrices, on either axis, specify `compress=False`.
 
         Lifecycle:
             Experimental.
