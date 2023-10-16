@@ -11,7 +11,6 @@ from __future__ import annotations
 from typing import (
     Dict,
     Iterator,
-    Literal,
     Optional,
     Sequence,
     Tuple,
@@ -28,7 +27,7 @@ import somacore
 import tiledb
 from somacore import options
 from somacore.options import PlatformConfig
-from typing_extensions import Self
+from typing_extensions import Literal, Self
 
 from . import _util
 

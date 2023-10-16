@@ -11,7 +11,6 @@ import abc
 from typing import (
     Iterator,
     List,
-    Literal,
     Optional,
     Sequence,
     Tuple,
@@ -28,6 +27,7 @@ import scipy.sparse as sparse
 import somacore
 from somacore import options
 from somacore.query._eager_iter import EagerIterator
+from typing_extensions import Literal
 
 # This package's pybind11 code
 import tiledbsoma.pytiledbsoma as clib
