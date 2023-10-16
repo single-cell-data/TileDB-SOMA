@@ -154,10 +154,11 @@ def _reify_handle(hdl: _Wrapper) -> "_tiledb_object.TileDBObject[_Wrapper]":
     typename = _read_soma_type(hdl)
     cls = _type_name_to_cls(typename)
     if cls._wrapper_type != type(hdl):
-        raise SOMAError(
-            f"cannot open {hdl.uri!r}: a {type(hdl._handle)}"
-            f" cannot be converted to a {typename}"
-        )
+        if typename == "SOMADataFrame" and cls != _dataframe.DataFrame:
+            raise SOMAError(
+                f"cannot open {hdl.uri!r}: a {type(hdl._handle)}"
+                f" cannot be converted to a {typename}"
+            )
     return cast(
         _tiledb_object.TileDBObject[_Wrapper],
         cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
@@ -208,6 +209,7 @@ def _type_name_to_cls(type_name: str) -> Type["_tiledb_object.AnyTileDBObject"]:
             _sparse_nd_array.SparseNDArray,
         )
     }
+    type_map["somadataframe"] = _dataframe.DataFrame
     try:
         return type_map[type_name.lower()]
     except KeyError as ke:

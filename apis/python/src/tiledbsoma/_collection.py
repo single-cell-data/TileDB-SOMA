@@ -33,11 +33,13 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
+from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, is_does_not_exist_error
 from ._sparse_nd_array import SparseNDArray
+from ._tdb_handles import DataFrameWrapper
 from ._tiledb_object import AnyTileDBObject, TileDBObject
 from ._types import OpenTimestamp
 from ._util import (
@@ -425,9 +427,16 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             raise KeyError(err_str) from None
         if entry.soma is None:
             from . import _factory  # Delayed binding to resolve circular import.
+            from ._tdb_handles import Wrapper
+
+            wrapper: type[Wrapper[Any | Any | Any]]
+            if self.mode == "r" and clib.SOMADataFrame.exists(entry.entry.uri):
+                wrapper = DataFrameWrapper
+            else:
+                wrapper = entry.entry.wrapper_type
 
             entry.soma = _factory._open_internal(
-                entry.entry.wrapper_type.open,
+                wrapper.open,
                 entry.entry.uri,
                 self.mode,
                 self.context,

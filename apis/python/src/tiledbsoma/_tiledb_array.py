@@ -65,7 +65,12 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         Lifecycle:
             Experimental.
         """
-        return tiledb_schema_to_arrow(self._tiledb_array_schema(), self.uri, self._ctx)
+        if isinstance(self._tiledb_array_schema(), tiledb.ArraySchema):
+            return tiledb_schema_to_arrow(
+                self._tiledb_array_schema(), self.uri, self._ctx
+            )
+        else:
+            return self._tiledb_array_schema()
 
     def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
         """
@@ -88,19 +93,16 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
 
     def _tiledb_dim_names(self) -> Tuple[str, ...]:
         """Reads the dimension names from the schema: for example, ['obs_id', 'var_id']."""
-        schema = self._handle.schema
-        return tuple(schema.domain.dim(i).name for i in range(schema.domain.ndim))
+        return self._handle.dim_names
 
     def _tiledb_attr_names(self) -> Tuple[str, ...]:
         """Reads the attribute names from the schema:
         for example, the list of column names in a dataframe.
         """
-        schema = self._handle.schema
-        return tuple(schema.attr(i).name for i in range(schema.nattr))
+        return self._handle.attr_names
 
     def _tiledb_domain(self) -> Tuple[Tuple[Any, Any], ...]:
-        schema = self._handle.schema
-        return tuple(schema.domain.dim(i).domain for i in range(0, schema.domain.ndim))
+        return self._handle.domain
 
     def _soma_reader(
         self,
@@ -147,14 +149,20 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
                 f"coords type {type(coords)} must be a regular sequence,"
                 " not str or bytes"
             )
-        schema = self._handle.schema
-        if len(coords) > schema.domain.ndim:
+
+        if len(coords) > self._handle.ndim:
             raise ValueError(
                 f"coords ({len(coords)} elements) must be shorter than ndim"
-                f" ({schema.domain.ndim})"
+                f" ({self._handle.ndim})"
             )
         for i, coord in enumerate(coords):
-            dim = self._handle.schema.domain.dim(i)
+            schema = self._handle.schema
+
+            if isinstance(schema, tiledb.ArraySchema):
+                dim = self._handle.schema.domain.dim(i)
+            else:
+                dim = self._handle.schema.field(i)
+
             if not self._set_reader_coord(sr, i, dim, coord):
                 raise TypeError(
                     f"coord type {type(coord)} for dimension {dim.name}"
@@ -173,7 +181,6 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         Returns:
             True if successful, False if unrecognized.
         """
-        del dim_idx  # Unused.
         if coord is None:
             return True  # No constraint; select all in this dimension
 
@@ -183,7 +190,11 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         if isinstance(coord, slice):
             _util.validate_slice(coord)
             try:
-                lo_hi = _util.slice_to_numeric_range(coord, dim.domain)
+                if isinstance(dim, tiledb.Dim):
+                    dom = dim.domain
+                else:
+                    dom = self._handle.domain[dim_idx]
+                lo_hi = _util.slice_to_numeric_range(coord, dom)
             except _util.NonNumericDimensionError:
                 return False  # We only handle numeric dimensions here.
             if lo_hi:
