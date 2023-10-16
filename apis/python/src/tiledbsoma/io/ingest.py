@@ -79,6 +79,16 @@ Matrix = Union[DenseMatrix, SparseMatrix]
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
 
+# Arrays of strings from AnnData's uns are stored in SOMA as SOMADataFrame,
+# since SOMA ND arrays are necessarily arrays *of numbers*. This is okay since
+# the one and only job of SOMA uns is to faithfully ingest from AnnData and
+# outgest back. These are parameters common to ingest and outgest of these.
+_UNS_OUTGEST_HINT_KEY = "soma_uns_outgest_hint"
+_UNS_OUTGEST_HINT_1D = "array_1d"
+_UNS_OUTGEST_HINT_2D = "array_2d"
+_UNS_OUTGEST_COLUMN_NAME_1D = "values"
+_UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
+
 
 # ----------------------------------------------------------------
 class IngestionParams:
@@ -2120,7 +2130,8 @@ def _ingest_uns_node(
         return
 
     if isinstance(value, pd.DataFrame):
-        num_cols = value.shape[1]
+        ####num_cols = value.shape[1]
+        num_rows = value.shape[0]
         with _write_dataframe(
             _util.uri_joinpath(coll.uri, key),
             value,
@@ -2128,7 +2139,8 @@ def _ingest_uns_node(
             platform_config=platform_config,
             context=context,
             ingestion_params=ingestion_params,
-            axis_mapping=AxisIDMapping.identity(num_cols),
+            ####axis_mapping=AxisIDMapping.identity(num_cols),
+            axis_mapping=AxisIDMapping.identity(num_rows),
         ) as df:
             _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
         return
@@ -2226,10 +2238,15 @@ def _ingest_uns_1d_string_array(
 ) -> None:
     """Helper for ``_ingest_uns_string_array``"""
     n = len(value)
+    # An array like ["a", "b", "c"] becomes a DataFrame like
+    # soma_joinid value
+    # 0           a
+    # 1           b
+    # 2           c
     df = pd.DataFrame(
         data={
-            "soma_joinid": np.arange(n, dtype=np.int64),
-            "values": [str(e) if e else "" for e in value],
+            SOMA_JOINID: np.arange(n, dtype=np.int64),
+            _UNS_OUTGEST_COLUMN_NAME_1D: [str(e) if e else "" for e in value],
         }
     )
     df.set_index("soma_joinid", inplace=True)
@@ -2244,6 +2261,8 @@ def _ingest_uns_1d_string_array(
         context=context,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
+        # TODO: comment
+        soma_df.metadata[_UNS_OUTGEST_HINT_KEY] = _UNS_OUTGEST_HINT_1D
 
 
 def _ingest_uns_2d_string_array(
@@ -2262,6 +2281,10 @@ def _ingest_uns_2d_string_array(
     back out the way it came in."""
     num_rows, num_cols = value.shape
     data: Dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
+    # An array like [["a", "b", "c"], ["d", "e", "f"]] becomes a DataFrame like
+    # soma_joinid values_0 values_1 values_2
+    # 0           a        b        c
+    # 1           d        e        f
     for j in range(num_cols):
         column_name = f"values_{j}"
         data[column_name] = [str(e) if e else "" for e in value[:, j]]
@@ -2278,6 +2301,8 @@ def _ingest_uns_2d_string_array(
         context=context,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
+        # TODO: comment
+        soma_df.metadata[_UNS_OUTGEST_HINT_KEY] = _UNS_OUTGEST_HINT_2D
 
 
 def _ingest_uns_ndarray(
@@ -2588,17 +2613,72 @@ def _extract_uns(
     This is a helper function for ``to_anndata`` of ``uns`` elements.
     """
 
-    extracted = {}
+    extracted: Dict[str, Any] = {}
     for key, element in collection.items():
         if isinstance(element, Collection):
             extracted[key] = _extract_uns(element)
         elif isinstance(element, DataFrame):
-            extracted[key] = element.read().concat().to_pandas()
-            # TODO: back to 1D/2D if this was from-string above
+            hint = element.metadata.get(_UNS_OUTGEST_HINT_KEY)
+            pdf = element.read().concat().to_pandas()
+            if hint is None:
+                extracted[key] = pdf
+            elif hint == _UNS_OUTGEST_HINT_1D:
+                extracted[key] = _outgest_uns_1d_string_array(pdf, element.uri)
+            elif hint == _UNS_OUTGEST_HINT_2D:
+                extracted[key] = _outgest_uns_2d_string_array(pdf, element.uri)
+            else:
+                msg = (
+                    f"Warning: uns {collection.uri}[{key!r}] has "
+                    + "{_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame"
+                )
+                logging.log_io_same(msg)
+                extracted[key] = pdf
         elif isinstance(element, SparseNDArray):
             extracted[key] = element.read().tables().concat().to_pandas()
         elif isinstance(element, DenseNDArray):
             extracted[key] = element.read().to_numpy()
         else:
             print("SKIPPING", element.soma_type)
+
+    # Primitives got set on the SOMA-experiment uns metadata.
+    for key, value in collection.metadata.items():
+        if not key.startswith("soma_"):
+            extracted[key] = value
+
     return extracted
+
+
+def _outgest_uns_1d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPNDArray:
+    """Helper methods for _extract_uns"""
+    num_rows, num_cols = pdf.shape
+    # An array like ["a", "b", "c"] had become a DataFrame like
+    # soma_joinid value
+    # 0           a
+    # 1           b
+    if num_cols != 2:
+        raise SOMAError(f"Expected 2 columns in {uri_for_logging}; got {num_cols}")
+    for column_name in [SOMA_JOINID, _UNS_OUTGEST_COLUMN_NAME_1D]:
+        if column_name not in pdf:
+            raise SOMAError(f"Expected {column_name} column in {uri_for_logging}")
+    return np.asarray(list(pdf[_UNS_OUTGEST_COLUMN_NAME_1D]))
+
+
+def _outgest_uns_2d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPNDArray:
+    """Helper methods for _extract_uns"""
+    num_rows, num_cols = pdf.shape
+    if num_cols < 2:
+        raise SOMAError(f"Expected 2 columns in {uri_for_logging}; got {num_cols}")
+    if SOMA_JOINID not in pdf:
+        raise SOMAError(f"Expected {SOMA_JOINID} column in {uri_for_logging}")
+    num_cols -= 1
+    columns = []
+    # An array like [["a", "b", "c"], ["d", "e", "f"]] had become a DataFrame like
+    # soma_joinid values_0 values_1 values_2
+    # 0           a        b        c
+    # 1           d        e        f
+    for i in range(num_cols):
+        column_name = _UNS_OUTGEST_COLUMN_PREFIX_2D + str(i)
+        if column_name not in pdf:
+            raise SOMAError(f"Expected {column_name} column in {uri_for_logging}")
+        columns.append(list(pdf[column_name]))
+    return np.asarray(columns).transpose()

@@ -831,3 +831,74 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         )
         assert list(bdata.obs.index) == list(soma_obs[obs_id_name])
         assert list(bdata.var.index) == list(soma_var[var_id_name])
+
+
+def test_uns_io(tmp_path):
+    obs = pd.DataFrame(
+        data={"obs_id": np.asarray(["a", "b", "c"])},
+        index=np.arange(3).astype(str),
+    )
+    var = pd.DataFrame(
+        data={"var_id": np.asarray(["x", "y"])},
+        index=np.arange(2).astype(str),
+    )
+    X = np.zeros([3, 2])
+
+    uns = {
+        # These are stored in SOMA as metadata
+        "int_scalar": 7,
+        "float_scalar": 8.5,
+        "string_scalar": "hello",
+        # These are stored in SOMA as SOMADataFrame
+        "pd_df_indexed": pd.DataFrame(
+            data={"column_1": np.asarray(["d", "e", "f"])},
+            index=np.arange(3).astype(str),
+        ),
+        "pd_df_nonindexed": pd.DataFrame(
+            data={"column_1": np.asarray(["g", "h", "i"])},
+        ),
+        # These are stored in SOMA as SOMA ND arrays
+        "np_ndarray_1d": np.asarray([1, 2, 3]),
+        "np_ndarray_2d": np.asarray([[1, 2, 3], [4, 5, 6]]),
+        # This are stored in SOMA as a SOMACollection
+        "strings": {
+            # This are stored in SOMA as a SOMADataFrame, since SOMA ND arrays are necessarily
+            # arrays *of numbers*. This is okay since the one and only job of SOMA uns is to
+            # faithfully ingest from AnnData and outgest back.
+            "string_np_ndarray_1d": np.asarray(["j", "k", "l"]),
+            "string_np_ndarray_2d": np.asarray([["m", "n", "o"], ["p", "q", "r"]]),
+        },
+    }
+    adata = anndata.AnnData(
+        obs=obs,
+        var=var,
+        X=X,
+        uns=uns,
+        dtype=X.dtype,
+    )
+
+    soma_uri = tmp_path.as_posix()
+
+    tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name="RNA")
+
+    with tiledbsoma.Experiment.open(soma_uri) as exp:
+        bdata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+
+    # Keystroke-savers
+    a = adata.uns
+    b = bdata.uns
+
+    assert a["int_scalar"] == b["int_scalar"]
+    assert a["float_scalar"] == b["float_scalar"]
+    assert a["string_scalar"] == b["string_scalar"]
+
+    assert all(a["pd_df_indexed"]["column_1"] == b["pd_df_indexed"]["column_1"])
+    assert all(a["pd_df_nonindexed"]["column_1"] == b["pd_df_nonindexed"]["column_1"])
+
+    assert (a["np_ndarray_1d"] == b["np_ndarray_1d"]).all()
+    assert (a["np_ndarray_2d"] == b["np_ndarray_2d"]).all()
+
+    sa = a["strings"]
+    sb = b["strings"]
+    assert (sa["string_np_ndarray_1d"] == sb["string_np_ndarray_1d"]).all()
+    assert (sa["string_np_ndarray_2d"] == sb["string_np_ndarray_2d"]).all()
