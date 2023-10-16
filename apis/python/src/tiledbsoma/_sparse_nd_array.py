@@ -6,6 +6,8 @@
 """
 Implementation of SOMA SparseNDArray.
 """
+from __future__ import annotations
+
 from typing import (
     Dict,
     Iterator,
@@ -158,7 +160,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         schema = self._handle.schema
         sr = self._soma_reader(schema=schema, result_order=result_order)
-        return SparseNDArrayRead(sr, schema.shape, self, coords, result_order)
+        assert tuple(sr.shape) == schema.shape
+        return SparseNDArrayRead(sr, self, coords, result_order)
 
     def write(
         self,
@@ -414,9 +417,9 @@ class SparseNDArrayRead(somacore.SparseRead):
     def __init__(
         self,
         sr: clib.SOMAArray,
-        shape: NTuple,
+        # shape: NTuple,
         array: SparseNDArray,
-        coords: options.SparseDFCoords,
+        coords: options.SparseNDCoords,
         result_order: options.ResultOrderStr,  # TODO: remove when property is available in clib.SOMAArray
     ):
         """
@@ -424,7 +427,7 @@ class SparseNDArrayRead(somacore.SparseRead):
             Experimental.
         """
         self.sr = sr
-        self.shape = shape
+        self.shape = tuple(sr.shape)
         self.array = array
         self.coords = coords
         self.result_order = result_order
@@ -468,7 +471,7 @@ class SparseNDArrayRead(somacore.SparseRead):
         return TableReadIter(self.sr)
 
     @overload
-    def to_scipy(
+    def scipy(
         self,
         axis: Literal[0, 1] = 0,
         step: Optional[int] = None,
@@ -478,7 +481,7 @@ class SparseNDArrayRead(somacore.SparseRead):
         ...
 
     @overload
-    def to_scipy(
+    def scipy(
         self,
         axis: Literal[0],
         step: Optional[int] = None,
@@ -488,7 +491,7 @@ class SparseNDArrayRead(somacore.SparseRead):
         ...
 
     @overload
-    def to_scipy(
+    def scipy(
         self,
         axis: Literal[1],
         step: Optional[int] = None,
@@ -497,7 +500,7 @@ class SparseNDArrayRead(somacore.SparseRead):
     ) -> Iterator[scipy.sparse.csc_matrix]:
         ...
 
-    def to_scipy(
+    def scipy(
         self,
         axis: Literal[0, 1] = 0,
         step: Optional[int] = None,

@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+import operator
 import pathlib
 import sys
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
@@ -1129,3 +1132,161 @@ def test_empty_indexed_read(tmp_path):
 
         coords = [[], [4]]
         assert sum(len(t) for t in a.read(coords).tables()) == 0
+
+
+@pytest.fixture
+def a_random_sparse_nd_array(tmp_path, shape: Tuple[int, ...], density: float) -> str:
+    uri = tmp_path.as_posix()
+    dtype = np.float32
+    with soma.SparseNDArray.create(
+        uri, type=pa.from_numpy_dtype(dtype), shape=shape
+    ) as a:
+        a.write(create_random_tensor("table", shape, dtype, density))
+    return uri
+
+
+@pytest.mark.parametrize(
+    # specify coords using SOMA semantics, ie. closed range
+    # use density to keep the sparse array size "reasonable"
+    "density,shape,coords",
+    [
+        (0.1, (1_000, 100), ()),
+        (0.1, (1_000, 100), (None,)),
+        (0.1, (1_000, 100), (slice(None),)),
+        (0.1, (1_000, 100), (slice(10, 20),)),
+        (0.1, (1_000, 100), (None, slice(10, 20))),
+        (0.1, (1_000, 100), (slice(10, 20), slice(2, 33))),
+        (0.1, (1_000, 100), (1,)),
+        (0.1, (1_000, 100), (None, 3)),
+        (0.1, (1_000, 100), (10, 3)),
+        (0.1, (1_000, 100), (slice(None), 1)),
+        (0.1, (1_000, 100), ([3, 99, 101, 102, 77, 0],)),
+        (0.1, (1_000, 100), (slice(500), [3, 99, 33, 77, 0])),
+        (0.1, (1_000, 100), (np.arange(0, 101),)),
+        (0.1, (1_000, 100), (np.arange(0, 1000), [0, 10, 20])),
+        (0.1, (1_000, 100), (np.arange(0, 1000), slice(2, 99))),
+        (0.01, (10_101, 389), ()),
+        (0.01, (10_101, 389), (None,)),
+        (0.01, (10_101, 389), (slice(None),)),
+        (0.01, (10_101, 389), (slice(33, 1048),)),
+        (0.01, (10_101, 389), (slice(33, 1048), slice(45, 333))),
+    ],
+)
+@pytest.mark.parametrize("step", [9, 77, 243, 1001, 2**16])
+def test_scipy_iter_reindexed(
+    a_random_sparse_nd_array: str, coords: Tuple[Any, ...], step: int
+) -> None:
+    """
+    Verify that simple use of scipy iterator works.
+    """
+
+    def _slice_sp(
+        coo: sparse.coo_matrix, _coords: Tuple[Any, ...]
+    ) -> sparse.coo_matrix:
+        """
+        Slice from the COO, accomodating conversion from closed range to half-open range
+        slices, plus quirks of scipy.sparse which can't slice on multiple dimensions in
+        all cases (but handles it fine if you slice one dim at a time).
+        """
+        csr = coo.tocsr()
+        for i, c in enumerate(_coords):
+            if isinstance(c, slice) and c.stop is not None:
+                c = slice(c.start, c.stop + 1)
+            if c is None:
+                c = slice(None)
+            _coord = tuple([slice(None)] * (i) + [c])
+            csr = operator.getitem(csr, _coord)
+        return csr.tocoo()
+
+    # these are not pytest params to speed up tests (by reducing the number of SOMA arrays created)
+    for axis, compress, reindex_sparse_axis in [
+        (a, c, ri) for a in (1, 0) for c in (False, True) for ri in (True, False)
+    ]:
+        minor_axis = 1 - axis
+        with soma.open(a_random_sparse_nd_array, mode="r") as A:
+            truth_coo_tbl = A.read().tables().concat()
+            truth_coo = sparse.coo_matrix(
+                (
+                    truth_coo_tbl.column(2).to_numpy(),
+                    (
+                        truth_coo_tbl.column(0).to_numpy(),
+                        truth_coo_tbl.column(1).to_numpy(),
+                    ),
+                ),
+                shape=A.shape,
+            )
+            truth_coo = _slice_sp(truth_coo, coords)
+
+            results = []
+            for joinids, sp in A.read(coords).scipy(
+                axis=axis,
+                compress=compress,
+                step=step,
+                reindex_sparse_axis=reindex_sparse_axis,
+            ):
+                # check for expected type
+                assert len(joinids) == 2 and isinstance(joinids, tuple)
+                assert all(isinstance(j, np.ndarray) for j in joinids)
+                if not compress:
+                    assert isinstance(sp, sparse.coo_matrix)
+                elif axis == 0:
+                    assert isinstance(sp, sparse.csr_matrix)
+                else:
+                    assert isinstance(sp, sparse.csc_matrix)
+
+                # check for expected shape
+                assert len(joinids[axis]) == min(step, sp.shape[axis])
+                assert (
+                    not reindex_sparse_axis
+                    or len(joinids[minor_axis]) == sp.shape[minor_axis]
+                )
+
+                # internal layout (dups, ordering, etc)
+                assert sp.has_canonical_format
+                if compress:
+                    sp.check_format(full_check=True)
+
+                # sanity check coordinates
+                if not reindex_sparse_axis:
+                    if not compress:
+                        minor = sp.col if axis == 0 else sp.row
+                    else:
+                        minor = sp.indices
+                    assert np.isin(minor, joinids[minor_axis]).all()
+
+                results.append(sp)
+
+            # check vs ground truth - only implemented if reindex_sparse_axis == True
+            if reindex_sparse_axis:
+                stacked = (
+                    sparse.vstack(results) if axis == 0 else sparse.hstack(results)
+                )
+                assert (
+                    truth_coo.dtype == stacked.dtype
+                    and truth_coo.shape == stacked.shape
+                    and (truth_coo != stacked.tocoo()).nnz == 0
+                )
+
+
+@pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
+def test_scipy_iter_error_checks(
+    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+) -> None:
+    with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        with pytest.raises(soma.SOMAError):
+            A.read().scipy(axis=2)
+
+        with pytest.raises(ValueError):
+            A.read(result_order=soma.ResultOrder.ROW_MAJOR).scipy(axis=1)
+
+        with pytest.raises(ValueError):
+            A.read(result_order=soma.ResultOrder.COLUMN_MAJOR).scipy(axis=0)
+
+
+@pytest.mark.parametrize("density,shape", [(0.1, (4, 8, 16))])
+def test_scipy_iter_not_2D(
+    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+) -> None:
+    with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        with pytest.raises(soma.SOMAError):
+            A.read().scipy()

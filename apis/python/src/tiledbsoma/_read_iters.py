@@ -8,9 +8,18 @@
 from __future__ import annotations
 
 import abc
-from typing import Iterator, Literal, Optional, Sequence, Tuple, TypeVar, Union
+from typing import (
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
-import numba
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -91,26 +100,32 @@ class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
         return pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=self.shape)
 
 
-# TODO: when we can access the schema via SOMAArray, remove this hard-wire
-# (even though it is safe given the SOMA spec hard-wires the names)
-_SparseNDArrayAxisNames = ("soma_dim_0", "soma_dim_1")
+_Sparse2DArrayAxisNames = ("soma_dim_0", "soma_dim_1")
+IJDType = Tuple[
+    Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]], npt.NDArray[np.generic]
+]
 
 
 def scipy_sparse_iter(
     sr: clib.SOMAArray,
-    coords: options.SparseDFCoords,
+    coords: options.SparseNDCoords,
     axis: Literal[0, 1],
     step: int,
     compress: bool,
     reindex_sparse_axis: bool,
 ) -> Iterator[Union[sparse.csr_matrix, sparse.csc_matrix, sparse.coo_matrix]]:
-    # setup
+    """
+    Private.
 
-    shape = sr.shape
-    if len(shape) != 2 or len(coords) > 2:
-        raise SOMAError("SciPy spmatrix iterator compatible only with 2D arrays")
+    Iterator over SparseNDArray producing sequence of scipy sparse matrix.
+    """
+    if len(sr.shape) != 2 or len(coords) > 2 or axis not in [0, 1]:
+        raise SOMAError("SciPy sparse matrix iterator compatible only with 2D arrays")
 
-    # TODO: need to add error checks for result_order and column_names compat.
+    shape = cast(Tuple[int, int], tuple(sr.shape))
+
+    # TODO: need to add error checks for result_order once we can access it from the
+    # SOMAArray reader.
 
     # normalize params tuple
     coords = tuple(coords[i] if i < len(coords) else None for i in range(2))
@@ -129,137 +144,113 @@ def scipy_sparse_iter(
     if reindex_sparse_axis:
         minor_axis_indexer = pd.Index(minor_coords)
 
-    # TODO tighten up typing.  Could split this into two generator functions
-    def _generate() -> Iterator[sparse.spmatrix]:
+    def _sorted_partitioned_arrow_table_reader() -> (
+        Iterator[Tuple[npt.NDArray[np.int64], IJDType]]
+    ):
         for major_coords, coo_tbl in EagerIterator(
             _partitioned_arrow_table_reader(sr, coords, minor_coords, step, major_axis)
         ):
+            ij = [
+                coo_tbl.column(0).to_numpy(),  # copies if multi-chunk
+                coo_tbl.column(1).to_numpy(),
+            ]  # copies if multi-chunk
+            d = coo_tbl.column(2).to_numpy()  # copies if multi-chunk
+
+            # Reindex major axis
+            ij[major_axis] = pd.Index(major_coords).get_indexer(ij[major_axis])  # type: ignore[no-untyped-call]
+
+            # Optionally, reindex minor axis
+            if minor_axis_indexer is not None:
+                ij[minor_axis] = minor_axis_indexer.get_indexer(ij[minor_axis])  # type: ignore[no-untyped-call]
+
             # Arrow table multi-column sort
-            st = coo_tbl.sort_by(
+            coo_tbl = pa.Table.from_pydict(
+                {"soma_dim_0": ij[0], "soma_dim_1": ij[1], "soma_data": d}
+            ).sort_by(
                 [
-                    (_SparseNDArrayAxisNames[major_axis], "ascending"),
-                    (_SparseNDArrayAxisNames[minor_axis], "ascending"),
+                    (f"soma_dim_{major_axis}", "ascending"),
+                    (f"soma_dim_{minor_axis}", "ascending"),
+                    # (_Sparse2DArrayAxisNames[major_axis], "ascending"),
+                    # (_Sparse2DArrayAxisNames[minor_axis], "ascending"),
                 ]
             )
 
-            _sp_shape = list(shape)
-            _sp_shape[major_axis] = len(major_coords)
-            if reindex_sparse_axis:
-                _sp_shape[minor_axis] = len(minor_coords)
-            sp_shape = tuple(_sp_shape)
+            yield major_coords, (
+                (coo_tbl.column(0).to_numpy(), coo_tbl.column(1).to_numpy()),
+                coo_tbl.column(2).to_numpy(),
+            )
 
-            if not compress:
-                i = st.column("soma_dim_0").to_numpy()  # copies if multi-chunk
-                j = st.column("soma_dim_1").to_numpy()  # copies if multi-chunk
-                d = st.column("soma_data").to_numpy()  # copies if multi-chunk
-                indices = [i, j]
+    def _mk_shape(
+        major_coords: npt.NDArray[np.int64], minor_coords: npt.NDArray[np.int64]
+    ) -> Tuple[int, int]:
+        """Make shape of this iterator step"""
+        assert len(shape) == 2
+        _sp_shape: List[int] = list(shape)
+        _sp_shape[major_axis] = len(major_coords)
+        if reindex_sparse_axis:
+            _sp_shape[minor_axis] = len(minor_coords)
+        return cast(Tuple[int, int], tuple(_sp_shape))
 
-                # reindex major axis
-                indices[major_axis] = pd.Index(major_coords).get_indexer(indices[major_axis])  # type: ignore[no-untyped-call]
+    def _coo_reader() -> Iterator[sparse.coo_matrix]:
+        """Uncompressed variants"""
+        assert not compress
+        for major_coords, ((i, j), d) in _sorted_partitioned_arrow_table_reader():
+            sp = sparse.coo_matrix(
+                (d, (i, j)), shape=_mk_shape(major_coords, minor_coords)
+            )
 
-                # optionally reindex minor axis
-                if minor_axis_indexer is not None:
-                    indices[minor_axis] = minor_axis_indexer.get_indexer(  # type: ignore[no-untyped-call]
-                        indices[minor_axis]
-                    )
+            # SOMA disallows duplicates
+            sp.has_canonical_format = True
 
-                i, j = indices
-                sp = sparse.coo_matrix((d, (i, j)), shape=sp_shape)
+            _res = (major_coords, minor_coords)
+            yield (_res[major_axis], _res[minor_axis]), sp
 
-                # SOMA disallows duplicates
-                sp.has_canonical_format = True
-
-            else:
-                j = st.column(minor_axis).to_numpy()  # copies if multi-chunk
-                d = st.column("soma_data").to_numpy()  # copies if multi-chunk
-                indptr = _create_indptr(
-                    major_coords,
-                    tuple(c.to_numpy() for c in st.column(major_axis).iterchunks()),
+    def _cs_reader() -> Iterator[Union[sparse.csr_matrix, sparse.csc_matrix]]:
+        """Compressed sparse variants"""
+        assert compress
+        for major_coords, ((i, j), d) in _sorted_partitioned_arrow_table_reader():
+            cls = sparse.csr_matrix if axis == 0 else sparse.csc_matrix
+            sp = cls(
+                sparse.coo_matrix(
+                    (d, (i, j)), shape=_mk_shape(major_coords, minor_coords)
                 )
+            )
+            _res = (major_coords, minor_coords)
+            yield (_res[major_axis], _res[minor_axis]), sp
 
-                # optional: reindex the minor dimension
-                if minor_axis_indexer is not None:
-                    j = minor_axis_indexer.get_indexer(j)  # type: ignore[no-untyped-call]
-
-                # hack to bypass https://github.com/scipy/scipy/issues/11496
-                cls = sparse.csr_matrix if axis == 0 else sparse.csc_matrix
-                sp = cls((0, 0), dtype=d.dtype)
-                sp.data = d
-                sp.indices = j
-                sp.indptr = indptr
-                sp._shape = sp_shape
-
-                # XXX debugging - move to unit tests
-                sp.check_format()
-                assert sp.has_canonical_format
-
-            # debugging - move to unit test
-            assert sp.has_canonical_format
-
-            yield (major_coords, minor_coords), sp
-
-    return _generate()
-
-
-@numba.jit(nopython=True, nogil=True)  # type: ignore[misc]  # See https://github.com/numba/numba/issues/7424
-def _create_indptr(
-    index: npt.NDArray[np.int64], coords: Tuple[npt.NDArray[np.int64]]
-) -> npt.NDArray[np.int64]:
-    """
-    Generate indptr. Assumes/knows that both index and coords are monotonically increasing.
-    Note: numba does not recognize Arrow types, so use numpy (w/ attention to minimal copy).
-    """
-    indptr = np.empty((len(index) + 1,), dtype=np.int64)
-
-    # count nnz for each row
-    c: int = 0  # the coords item
-    n: int = 0  # the element in the coord item
-    for i in range(len(index)):
-        cnt: int = 0  # the nnz per index
-        while c < len(coords) and coords[c][n] == index[i]:
-            # coord = coords[c]
-            while n < len(coords[c]) and coords[c][n] == index[i]:
-                cnt += 1
-                n += 1
-            if n == len(coords[c]):
-                c += 1
-                n = 0
-
-        indptr[i] = cnt
-
-    # accumulate nnz to create indptr
-    cumsum = 0
-    for i in range(len(index)):
-        tmp = indptr[i]
-        indptr[i] = cumsum
-        cumsum += tmp
-    indptr[len(index)] = cumsum
-
-    return indptr
+    return _cs_reader() if compress else _coo_reader()
 
 
 def _coords_strider(
-    coords: options.SparseDFCoord, length: int, stride: int
+    coords: options.SparseNDCoord, length: int, stride: int
 ) -> Iterator[npt.NDArray[np.int64]]:
     """
     Private.
 
     Iterate over major coordinates, in stride sized steps, materializing each step as an
     ndarray of coordinate values. Will be sorted in ascending order.
+
+    NB: SOMA slices are _closed_ (i.e., inclusive of both range start and stop)
     """
-    # convert to either a slice or ndarray
-    if coords is None:
-        coords = slice(None)
+    # normalize coord to either a slice or ndarray
+    if coords is None or (isinstance(coords, slice) and coords == slice(None)):
+        coords = slice(0, length - 1)
+    elif isinstance(coords, slice):
+        if coords == slice(None):
+            coords = slice(0, length - 1)
     elif isinstance(coords, Sequence):
         coords = np.array(coords).astype(np.int64)
-    elif isinstance(coords, pa.Array) or isinstance(coords, pa.ChunkedArray):
+    elif isinstance(coords, (pa.Array, pa.ChunkedArray)):
         coords = coords.to_numpy()
+    elif isinstance(coords, int):
+        coords = np.array([coords], dtype=np.int64)
+    elif not isinstance(coords, np.ndarray):
+        raise TypeError("Unsupported slice coordinate type")
 
     if isinstance(coords, slice):
         _util.validate_slice(coords)  # NB: this enforces step == 1, assumed below
-        start, stop, _step = coords.indices(length)
+        start, stop, _step = coords.indices(length - 1)
         assert _step == 1
-        # NB: SOMA slices are inclusive - add one to stop
         yield from (
             np.arange(i, min(i + stride, stop + 1), dtype=np.int64)
             for i in range(start, stop + 1, stride)
@@ -267,15 +258,13 @@ def _coords_strider(
 
     else:
         assert isinstance(coords, np.ndarray) and coords.dtype == np.int64
-        sorted_coords = np.sort(coords)
-        for i in range(0, len(sorted_coords), stride):
-            yield sorted_coords[i : i + stride]
+        for i in range(0, len(coords), stride):
+            yield cast(npt.NDArray[np.int64], coords[i : i + stride])
 
 
-# reader - yields tables with complete reads on major axis
 def _partitioned_arrow_table_reader(
     sr: clib.SOMAArray,
-    coords: options.SparseDFCoords,
+    coords: options.SparseNDCoords,
     minor_coords: npt.NDArray[np.int64],
     step: int,
     major_axis: int,
@@ -293,7 +282,7 @@ def _partitioned_arrow_table_reader(
 
     for coord_chunk in _coords_strider(coords[major_axis], sr.shape[major_axis], step):
         sr.reset()
-        sr.set_dim_points_int64(_SparseNDArrayAxisNames[major_axis], coord_chunk)
-        sr.set_dim_points_int64(_SparseNDArrayAxisNames[minor_axis], minor_coords)
+        sr.set_dim_points_int64(_Sparse2DArrayAxisNames[major_axis], coord_chunk)
+        sr.set_dim_points_int64(_Sparse2DArrayAxisNames[minor_axis], minor_coords)
         tbl = pa.concat_tables(arrow_table_reader())
         yield coord_chunk, tbl

@@ -85,6 +85,9 @@ def test_experiment_query_all(soma_experiment):
         assert query.X("raw").tables().concat() == pa.concat_tables(
             query.X("raw").tables()
         )
+        assert sparse.vstack(
+            sp for _, sp in query.X("raw").scipy(axis=0, reindex_sparse_axis=False)
+        ).shape == (query.n_obs, query.n_vars)
 
         # read as anndata
         ad = query.to_anndata("raw")
