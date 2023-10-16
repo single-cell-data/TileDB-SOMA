@@ -154,7 +154,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     std::string sub_uri = "mem://unit-test-add-dataframe/sub";
 
     SOMACollection::create(base_uri, ctx);
-    auto schema = create_schema(*ctx, false);
+    auto schema = create_schema(*ctx, true);
 
     std::map<std::string, std::string> expected_map{{"dataframe", sub_uri}};
 
@@ -170,11 +170,11 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     std::vector<std::string> expected_index_column_names = {"d0"};
     REQUIRE(
         soma_dataframe->index_column_names() == expected_index_column_names);
-    REQUIRE(soma_dataframe->count() == 1);
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_dataframe->count() == 0);
     soma_collection->close();
 }
 

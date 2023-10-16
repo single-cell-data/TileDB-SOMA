@@ -33,6 +33,8 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
+from . import pytiledbsoma as clib
+
 RawHandle = Union[tiledb.Array, tiledb.Group]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
@@ -49,7 +51,10 @@ def open(
     if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
     if obj_type == "array":
-        return ArrayWrapper.open(uri, mode, context, timestamp)
+        if mode == "r" and clib.SOMADataFrame.exists(uri):
+            return DataFrameWrapper.open(uri, mode, context, timestamp)
+        else:
+            return ArrayWrapper.open(uri, mode, context, timestamp)
     if obj_type == "group":
         return GroupWrapper.open(uri, mode, context, timestamp)
     raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
@@ -245,6 +250,33 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         self.initial_contents = {
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
+        
+class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
+    @classmethod
+    def _opener(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: int,
+    ) -> tiledb.Array:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        return clib.SOMADataFrame.open(
+            uri,
+            open_mode,
+            {k: str(v) for k, v in context.tiledb_config.items()},
+            [],
+            clib.ResultOrder.automatic,
+            (0, timestamp),
+        )
+
+    @property
+    def schema(self) -> tiledb.ArraySchema:
+        return self._handle.schema
+    
+    @property
+    def meta(self):
+        return self._handle.meta
 
 
 class _DictMod(enum.Enum):

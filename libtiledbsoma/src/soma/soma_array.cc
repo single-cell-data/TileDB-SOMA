@@ -49,7 +49,10 @@ void SOMAArray::create(
     Array::create(std::string(uri), schema);
     auto array = Array(*ctx, std::string(uri), TILEDB_WRITE);
     array.put_metadata(
-        "soma_object_type", TILEDB_STRING_UTF8, 1, soma_type.c_str());
+        "soma_object_type",
+        TILEDB_STRING_UTF8,
+        soma_type.length(),
+        soma_type.c_str());
     array.close();
 }
 

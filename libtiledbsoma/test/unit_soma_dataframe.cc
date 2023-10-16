@@ -59,7 +59,7 @@ const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 namespace {
 ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
     // Create schema
-    ArraySchema schema(ctx, TILEDB_DENSE);
+    ArraySchema schema(ctx, TILEDB_SPARSE);
 
     auto dim = Dimension::create<int64_t>(ctx, "d0", {0, 1000});
 
@@ -92,10 +92,12 @@ TEST_CASE("SOMADataFrame: basic") {
     std::vector<std::string> expected_index_column_names = {"d0"};
     REQUIRE(
         soma_dataframe->index_column_names() == expected_index_column_names);
-    REQUIRE(soma_dataframe->count() == 1);
+    REQUIRE(soma_dataframe->count() == 0);
     soma_dataframe->close();
 
-    std::vector<int64_t> d0{1, 10};
+    std::vector<int64_t> d0(10);
+    for (int j = 0; j < 10; j++)
+        d0[j] = j;
     std::vector<int> a0(10, 1);
 
     auto array_buffer = std::make_shared<ArrayBuffers>();
@@ -103,18 +105,16 @@ TEST_CASE("SOMADataFrame: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
 
-    soma_dataframe->open(OpenMode::write);
+    soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
     soma_dataframe->write(array_buffer);
     soma_dataframe->close();
 
-    soma_dataframe->open(OpenMode::read);
+    soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
     while (auto batch = soma_dataframe->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
         auto a0span = arrbuf->at("a0")->data<int>();
-        REQUIRE(
-            std::vector<int64_t>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10} ==
-            std::vector<int64_t>(d0span.begin(), d0span.end()));
+        REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
     soma_dataframe->close();
