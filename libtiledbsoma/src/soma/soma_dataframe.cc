@@ -105,17 +105,32 @@ SOMADataFrame::SOMADataFrame(
         "auto",  // batch_size,
         result_order,
         timestamp);
-    array_->reset();
 }
 
 void SOMADataFrame::open(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     array_->open(mode, timestamp);
-    array_->reset();
 }
 
 void SOMADataFrame::close() {
     array_->close();
+}
+
+bool SOMADataFrame::exists(std::string_view uri) {
+    try {
+        auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read);
+        auto soma_object_type = soma_dataframe->get_metadata(
+            "soma_object_type");
+
+        if (!soma_object_type.has_value())
+            return false;
+
+        return std::string((const char*)std::get<MetadataInfo::value>(
+                   *soma_object_type)) == "SOMADataFrame";
+    } catch (std::exception& e) {
+        return false;
+    }
+    return true;
 }
 
 bool SOMADataFrame::is_open() const {
@@ -138,8 +153,12 @@ const std::vector<std::string> SOMADataFrame::index_column_names() const {
     return array_->dimension_names();
 }
 
-int64_t SOMADataFrame::count() const {
+int64_t SOMADataFrame::ndim() const {
     return array_->ndim();
+}
+
+int64_t SOMADataFrame::count() const {
+    return array_->nnz();
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMADataFrame::read_next() {

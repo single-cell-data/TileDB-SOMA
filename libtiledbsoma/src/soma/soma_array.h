@@ -496,6 +496,16 @@ class SOMAArray {
     uint64_t ndim() const;
 
     /**
+     * Retrieves the non-empty domain from the array on the given dimension.
+     * This is the union of the non-empty domains of the array fragments.
+     * Applicable only to var-sized dimensions.
+     */
+    std::pair<std::string, std::string> non_empty_domain_var(
+        const std::string& name) {
+        return arr_->non_empty_domain_var(name);
+    };
+
+    /**
      * @brief Get the name of each dimensions.
      *
      * @return std::vector<std::string> Name of each dimensions.
