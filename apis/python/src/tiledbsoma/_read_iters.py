@@ -100,7 +100,6 @@ class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
         return pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=self.shape)
 
 
-_Sparse2DArrayAxisNames = ("soma_dim_0", "soma_dim_1")
 IJDType = Tuple[
     Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]], npt.NDArray[np.generic]
 ]
@@ -175,8 +174,6 @@ def scipy_sparse_iter(
                 [
                     (f"soma_dim_{major_axis}", "ascending"),
                     (f"soma_dim_{minor_axis}", "ascending"),
-                    # (_Sparse2DArrayAxisNames[major_axis], "ascending"),
-                    # (_Sparse2DArrayAxisNames[minor_axis], "ascending"),
                 ]
             )
 
@@ -287,7 +284,7 @@ def _partitioned_arrow_table_reader(
 
     for coord_chunk in _coords_strider(coords[major_axis], sr.shape[major_axis], step):
         sr.reset()
-        sr.set_dim_points_int64(_Sparse2DArrayAxisNames[major_axis], coord_chunk)
-        sr.set_dim_points_int64(_Sparse2DArrayAxisNames[minor_axis], minor_coords)
+        sr.set_dim_points_int64(f"soma_dim_{major_axis}", coord_chunk)
+        sr.set_dim_points_int64(f"soma_dim_{minor_axis}", minor_coords)
         tbl = pa.concat_tables(arrow_table_reader())
         yield coord_chunk, tbl
