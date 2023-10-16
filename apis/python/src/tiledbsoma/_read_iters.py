@@ -113,7 +113,12 @@ def scipy_sparse_iter(
     step: int,
     compress: bool,
     reindex_sparse_axis: bool,
-) -> Iterator[Union[sparse.csr_matrix, sparse.csc_matrix, sparse.coo_matrix]]:
+) -> Iterator[
+    Tuple[
+        Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
+        Union[sparse.csr_matrix, sparse.csc_matrix, sparse.coo_matrix],
+    ]
+]:
     """
     Private.
 

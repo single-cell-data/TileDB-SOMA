@@ -21,6 +21,7 @@ from typing import (
 )
 
 import numpy as np
+import numpy.typing as npt
 import pyarrow as pa
 import scipy.sparse
 import somacore
@@ -158,9 +159,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         self._check_open_read()
         _util.check_unpartitioned(partitions)
 
-        schema = self._handle.schema
-        sr = self._soma_reader(schema=schema, result_order=result_order)
-        assert tuple(sr.shape) == schema.shape
+        sr = self._soma_reader(schema=self._handle.schema, result_order=result_order)
         return SparseNDArrayRead(sr, self, coords, result_order)
 
     def write(
@@ -417,7 +416,6 @@ class SparseNDArrayRead(somacore.SparseRead):
     def __init__(
         self,
         sr: clib.SOMAArray,
-        # shape: NTuple,
         array: SparseNDArray,
         coords: options.SparseNDCoords,
         result_order: options.ResultOrderStr,  # TODO: remove when property is available in clib.SOMAArray
@@ -477,7 +475,11 @@ class SparseNDArrayRead(somacore.SparseRead):
         step: Optional[int] = None,
         compress: Literal[False] = False,
         reindex_sparse_axis: bool = True,
-    ) -> Iterator[scipy.sparse.coo_matrix]:
+    ) -> Iterator[
+        Tuple[
+            Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]], scipy.sparse.coo_matrix
+        ]
+    ]:
         ...
 
     @overload
@@ -487,7 +489,11 @@ class SparseNDArrayRead(somacore.SparseRead):
         step: Optional[int] = None,
         compress: Literal[True] = True,
         reindex_sparse_axis: bool = True,
-    ) -> Iterator[scipy.sparse.csr_matrix]:
+    ) -> Iterator[
+        Tuple[
+            Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]], scipy.sparse.csr_matrix
+        ]
+    ]:
         ...
 
     @overload
@@ -497,7 +503,11 @@ class SparseNDArrayRead(somacore.SparseRead):
         step: Optional[int] = None,
         compress: bool = True,
         reindex_sparse_axis: bool = True,
-    ) -> Iterator[scipy.sparse.csc_matrix]:
+    ) -> Iterator[
+        Tuple[
+            Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]], scipy.sparse.csc_matrix
+        ]
+    ]:
         ...
 
     def scipy(
@@ -507,10 +517,19 @@ class SparseNDArrayRead(somacore.SparseRead):
         compress: bool = True,
         reindex_sparse_axis: bool = True,
     ) -> Iterator[
-        Union[scipy.sparse.coo_matrix, scipy.sparse.csr_matrix, scipy.sparse.csc_matrix]
+        Tuple[
+            Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
+            Union[
+                scipy.sparse.csr_matrix,
+                scipy.sparse.csc_matrix,
+                scipy.sparse.coo_matrix,
+            ],
+        ]
     ]:
         """
-        Returns an iterator of `SciPy sparse matrix` over a 2D SparseNDArray.
+        Returns an iterator of
+        `SciPy sparse matrix` <https://docs.scipy.org/doc/scipy/reference/sparse.html>
+        over a 2D SparseNDArray.
 
         Args:
             axis:
@@ -527,11 +546,36 @@ class SparseNDArrayRead(somacore.SparseRead):
                 If False (default), the sparse axis will also be reindexed from soma_joinid
                 to zero-based indices. If True, the sparse axis values will remain joinids.
 
+        Yields:
+            The iterator will yield a tuple of:
+                (obs_coords, var_coords), SciPy sparse matrix
+            where the first element is a tuple containing the soma_joinid values for the
+            matrix dimensions.
+
+        Raises:
+            SOMAError
+                If the requested `axis` is in conflict with the read `result_order`, or if
+                the iterator is requested for an array that does not have a dimensionality of 2.
+
+        Examples:
+            >>> import tiledbsoma
+            >>> with tiledbsoma.open("a_sparse_nd_array") as X:
+            ...     for (obs_coords, var_coords), matrix in X.read(coords=(slice(9999),)).scipy(
+            ...         axis=0, compress=True, step=4999
+            ...     ):
+            ...         print(repr(matrix))
+            <4999x60664 sparse matrix of type '<class 'numpy.float32'>'
+                    with 11509741 stored elements in Compressed Sparse Row format>
+            <4999x60664 sparse matrix of type '<class 'numpy.float32'>'
+                    with 13760197 stored elements in Compressed Sparse Row format>
+            <2x60664 sparse matrix of type '<class 'numpy.float32'>'
+                    with 3417 stored elements in Compressed Sparse Row format>
+
         Lifecycle:
             Experimental.
         """
 
-        # NB: this check can move down into the iterator once we have access to result_order in SOMAArray
+        # NB: this error check can move down into the iterator once we have access to result_order in SOMAArray
         if (axis == 0 and self.result_order == options.ResultOrder.COLUMN_MAJOR) or (
             axis == 1 and self.result_order == options.ResultOrder.ROW_MAJOR
         ):
