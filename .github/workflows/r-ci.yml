@@ -80,6 +80,9 @@ jobs:
       - name: Update Packages
         run: Rscript -e 'update.packages(ask=FALSE)'
 
+      - name: Pin TileDB-R
+        run: Rscript -e 'remotes::install_github(repo="TileDB-Inc/TileDB-R@0.20.3")'
+
       - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests
