@@ -6,17 +6,16 @@
 """Implementation of a SOMA Experiment.
 """
 
-from typing import Any
-
+from typing import Any, Optional
 from somacore import experiment
+from somacore import query
 
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._measurement import Measurement
 from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
-
-
+from .IntIndexer import indexer_map_locations
 class Experiment(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnyTileDBObject],
     experiment.Experiment[  # type: ignore[type-var]
@@ -43,7 +42,6 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
             A collection of named measurements.
 
     Example:
-        >>> import tiledbsoma
         >>> with tiledbsoma.open("/path/to/experiment") as exp:
         ...     # While users can interact directly with an Experiment's fields:
         ...     obs_df = exp.obs
@@ -74,3 +72,26 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         # TileDB Cloud UI to detect that they are SOMA datasets.
         handle.metadata["dataset_type"] = "soma"
         return super()._set_create_metadata(handle)
+
+    # in tiledbsoma
+    def axis_query(
+            self,
+            measurement_name: str,
+            *,
+            obs_query: Optional[query.AxisQuery] = None,
+            var_query: Optional[query.AxisQuery] = None,
+    ) -> "query.ExperimentAxisQuery[Self]":
+        """Creates an axis query over this experiment.
+
+
+        Lifecycle: maturing
+        """
+        # mypy doesn't quite understand descriptors so it issues a spurious
+        # error here.
+        return query.ExperimentAxisQuery(  # type: ignore[type-var]
+            self,
+            measurement_name,
+            obs_query=obs_query or query.AxisQuery(),
+            var_query=var_query or query.AxisQuery(),
+            index_factory=indexer_map_locations
+        )

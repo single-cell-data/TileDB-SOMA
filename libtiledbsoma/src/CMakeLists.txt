@@ -50,6 +50,7 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 # Common object library
 # ###########################################################
 add_library(TILEDB_SOMA_OBJECTS OBJECT
+  ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.cc
@@ -67,9 +68,8 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
 
-  # TODO: uncomment when thread_pool is enabled
-  # ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
-  # ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
 )
 
 message(STATUS "Building TileDB without deprecation warnings")
@@ -87,6 +87,9 @@ set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/vendor
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/khash
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include
   $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
@@ -197,7 +200,8 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.h 
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.h 
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.h 
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.h
   DESTINATION "include/tiledbsoma/soma"
 )
 
@@ -213,10 +217,11 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h
+
   DESTINATION "include/tiledbsoma/utils"
 )
 
-install(FILES 
+install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span/span.hpp
   DESTINATION "include/tiledbsoma/soma/span"
 )
@@ -294,6 +299,7 @@ if(TILEDBSOMA_BUILD_CLI)
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/external/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/khash
     ${TILEDB_SOMA_EXPORT_HEADER_DIR}
     ${pybind11_INCLUDE_DIRS}
   )
