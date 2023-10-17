@@ -42,7 +42,7 @@ def test_no_change(adata, readback):
         else:
             new_obs = adata.obs
             new_var = adata.var
-
+    
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         tiledbsoma.io.update_obs(exp, new_obs)
         tiledbsoma.io.update_var(exp, new_var, "RNA")
