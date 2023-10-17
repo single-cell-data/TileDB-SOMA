@@ -96,51 +96,30 @@ bool get_enum_is_ordered(SOMAArray& sr, std::string attr_name){
 }
 
 /**
- * @brief Convert ColumnBuffer to Arrow array.
- *
- * @param column_buffer ColumnBuffer
- * @return py::object Arrow array
- */
-py::object to_array(std::shared_ptr<ColumnBuffer> column_buffer) {
-    auto pa = py::module::import("pyarrow");
-    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
-
-    auto [array, schema] = ArrowAdapter::to_arrow(column_buffer);
-    return pa_array_import(py::capsule(array.get()), py::capsule(schema.get()));
-}
-
-/**
  * @brief Convert ArrayBuffers to Arrow table.
  *
  * @param cbs ArrayBuffers
  * @return py::object
  */
-py::object to_table(SOMAArray& sr, std::shared_ptr<ArrayBuffers> array_buffers) {
+py::object to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
     auto pa = py::module::import("pyarrow");
     auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
-    auto pa_dict_from_arrays = pa.attr("DictionaryArray").attr("from_arrays");
+    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
+    auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
 
+    py::list array_list;
     py::list names;
-    py::list arrays;
 
     for (auto& name : array_buffers->names()) {
         auto column = array_buffers->at(name);
+        auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(column);
+        auto array = pa_array_import(py::capsule(pa_array.get()), 
+                                     py::capsule(pa_schema.get()));
+        array_list.append(array);
         names.append(name);
-
-        if(sr.get_attr_to_enum_mapping().count(name) == 0){
-            arrays.append(to_array(column));
-        }else{
-            arrays.append(pa_dict_from_arrays(
-                to_array(column),
-                get_enum(sr, name),
-                py::none(),
-                get_enum_is_ordered(sr, name)));
-        }
     }
 
-    auto pa_table = pa_table_from_arrays(arrays, names);
-
-    return pa_table;
+    return pa_table_from_arrays(array_list, names);
 }
 
 /**
@@ -148,7 +127,7 @@ py::object to_table(SOMAArray& sr, std::shared_ptr<ArrayBuffers> array_buffers) 
  *
  */
 void init_soma_array(py::module &m) {
-    tiledbpy::init_query_condition(m);
+    tiledbpy::load_query_condition(m);
 
     m.doc() = "SOMA acceleration library";
 
@@ -415,10 +394,10 @@ void init_soma_array(py::module &m) {
                         reader.set_dim_points(
                             dim, coords.cast<std::vector<std::string>>());
                     } else {
-                        throw TileDBSOMAError(fmt::format(
+                        throw TileDBSOMAError(
                             "[pytiledbsoma] set_dim_points: type={} not "
-                            "supported",
-                            arrow_schema.format));
+                            "supported" + 
+                            std::string(arrow_schema.format));
                     }
 
                     // Release arrow schema
@@ -623,7 +602,7 @@ void init_soma_array(py::module &m) {
                 if (buffers.has_value()) {
                     // Acquire python GIL before accessing python objects
                     py::gil_scoped_acquire acquire;
-                    return to_table(reader, *buffers);
+                    return to_table(*buffers);
                 }
 
                 // No data was read, the query is complete, return nullopt
