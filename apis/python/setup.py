@@ -40,6 +40,7 @@ sys.path.insert(0, str(this_dir))
 
 import version  # noqa E402
 
+
 # tiledb_dir and libtiledbsoma_dir may be specified by either environment variable
 # or command-line argument. If both are provided, the latter wins.
 
@@ -186,6 +187,7 @@ INC_DIRS = [
     "dist_links/libtiledbsoma/external/include",
     "../../build/externals/install/include",
     str(libtiledbsoma_dir / "include"),
+    str(libtiledbsoma_dir / "include/tiledbsoma/soma/"),
     str(
         "./src/tiledbsoma"
     ),  # since pytiledbsoma.cc does #include of query_condition.cc
