@@ -49,52 +49,6 @@ class ArrowAdapter {
     static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
 
-    static std::unique_ptr<ArrowSchema> tiledb_schema_to_arrow_schema(
-        std::shared_ptr<ArraySchema> tiledb_schema) {
-        auto ndim = tiledb_schema->domain().ndim();
-        auto nattr = tiledb_schema->attribute_num();
-
-        std::unique_ptr<ArrowSchema>
-            arrow_schema = std::make_unique<ArrowSchema>();
-        arrow_schema->format = "+s";
-        arrow_schema->n_children = ndim + nattr;
-        arrow_schema->release = &release_schema;
-        arrow_schema->children = (ArrowSchema**)malloc(
-            sizeof(ArrowSchema*) * arrow_schema->n_children);
-
-        ArrowSchema* child;
-
-        for (uint32_t i = 0; i < ndim; ++i) {
-            auto dim = tiledb_schema->domain().dimension(i);
-            child = arrow_schema->children[i] = (ArrowSchema*)malloc(
-                sizeof(ArrowSchema));
-            child->format = to_arrow_format(dim.type()).data();
-            child->name = strdup(dim.name().c_str());
-            child->metadata = nullptr;
-            child->flags = 0;
-            child->n_children = 0;
-            child->dictionary = nullptr;
-            child->children = nullptr;
-            child->release = &release_schema;
-        }
-
-        for (uint32_t i = 0; i < nattr; ++i) {
-            auto attr = tiledb_schema->attribute(i);
-            child = arrow_schema->children[ndim + i] = (ArrowSchema*)malloc(
-                sizeof(ArrowSchema));
-            child->format = to_arrow_format(attr.type()).data();
-            child->name = strdup(attr.name().c_str());
-            child->metadata = nullptr;
-            child->flags = attr.nullable() ? ARROW_FLAG_NULLABLE : 0;
-            child->n_children = 0;
-            child->dictionary = nullptr;
-            child->children = nullptr;
-            child->release = &release_schema;
-        }
-
-        return arrow_schema;
-    }
-
     /**
      * @brief Get Arrow format string from TileDB datatype.
      *
