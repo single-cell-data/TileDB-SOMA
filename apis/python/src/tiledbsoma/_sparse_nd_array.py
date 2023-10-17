@@ -543,8 +543,8 @@ class SparseNDArrayRead(somacore.SparseRead):
                 If True, a CSC or CSR matrix is returned, dependent on the value of the
                 `axis` argument. If False, a COO matrix is returned.
             reindex_sparse_axis:
-                If False (default), the sparse axis will also be reindexed from soma_joinid
-                to zero-based indices. If True, the sparse axis values will remain joinids.
+                If True (default), the sparse axis will also be reindexed from soma_joinid
+                to zero-based indices. If False, the sparse axis values will remain joinids.
 
         Yields:
             The iterator will yield a tuple of:
