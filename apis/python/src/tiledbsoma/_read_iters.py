@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import abc
+import concurrent.futures
 from typing import (
     Iterator,
     List,
@@ -148,11 +149,16 @@ def scipy_sparse_iter(
     if reindex_sparse_axis:
         minor_axis_indexer = pd.Index(minor_coords)
 
-    def _sorted_partitioned_arrow_table_reader() -> (
-        Iterator[Tuple[npt.NDArray[np.int64], IJDType]]
-    ):
+    # our thread pool
+    pool: Optional[concurrent.futures.Executor] = None
+
+    # This is implemented as a set of stacked generators, to make the code a bit more
+    # readable, and to enable injection of parallelism where it helps.
+
+    def _reindexed_tbl_reader() -> Iterator[Tuple[npt.NDArray[np.int64], pa.Table]]:
+        """Read stepped tables and reindex them"""
         for major_coords, coo_tbl in EagerIterator(
-            _partitioned_arrow_table_reader(sr, coords, minor_coords, step, major_axis)
+            _stepped_tbl_reader(sr, coords, minor_coords, step, major_axis), pool=pool
         ):
             ij = [
                 coo_tbl.column(0).to_numpy(),  # copies if multi-chunk
@@ -167,16 +173,20 @@ def scipy_sparse_iter(
             if minor_axis_indexer is not None:
                 ij[minor_axis] = minor_axis_indexer.get_indexer(ij[minor_axis])  # type: ignore[no-untyped-call]
 
-            # Arrow table multi-column sort
-            coo_tbl = pa.Table.from_pydict(
+            yield major_coords, pa.Table.from_pydict(
                 {"soma_dim_0": ij[0], "soma_dim_1": ij[1], "soma_data": d}
-            ).sort_by(
+            )
+
+    def _sorted_tbl_reader() -> Iterator[Tuple[npt.NDArray[np.int64], IJDType]]:
+        """Read reindexed tables and sort them. Yield as ((i,j),d)"""
+        print(pool)
+        for major_coords, coo_tbl in EagerIterator(_reindexed_tbl_reader(), pool=pool):
+            coo_tbl = coo_tbl.sort_by(
                 [
                     (f"soma_dim_{major_axis}", "ascending"),
                     (f"soma_dim_{minor_axis}", "ascending"),
                 ]
             )
-
             yield major_coords, (
                 (coo_tbl.column(0).to_numpy(), coo_tbl.column(1).to_numpy()),
                 coo_tbl.column(2).to_numpy(),
@@ -196,7 +206,7 @@ def scipy_sparse_iter(
     def _coo_reader() -> Iterator[sparse.coo_matrix]:
         """Uncompressed variants"""
         assert not compress
-        for major_coords, ((i, j), d) in _sorted_partitioned_arrow_table_reader():
+        for major_coords, ((i, j), d) in EagerIterator(_sorted_tbl_reader(), pool=pool):
             sp = sparse.coo_matrix(
                 (d, (i, j)), shape=_mk_shape(major_coords, minor_coords)
             )
@@ -210,7 +220,7 @@ def scipy_sparse_iter(
     def _cs_reader() -> Iterator[Union[sparse.csr_matrix, sparse.csc_matrix]]:
         """Compressed sparse variants"""
         assert compress
-        for major_coords, ((i, j), d) in _sorted_partitioned_arrow_table_reader():
+        for major_coords, ((i, j), d) in EagerIterator(_sorted_tbl_reader(), pool=pool):
             cls = sparse.csr_matrix if axis == 0 else sparse.csc_matrix
             sp = cls(
                 sparse.coo_matrix(
@@ -220,7 +230,9 @@ def scipy_sparse_iter(
             _res = (major_coords, minor_coords)
             yield (_res[major_axis], _res[minor_axis]), sp
 
-    return _cs_reader() if compress else _coo_reader()
+    with concurrent.futures.ThreadPoolExecutor() as _pool:
+        pool = _pool
+        yield from _cs_reader() if compress else _coo_reader()
 
 
 def _coords_strider(
@@ -264,7 +276,7 @@ def _coords_strider(
             yield cast(npt.NDArray[np.int64], coords[i : i + stride])
 
 
-def _partitioned_arrow_table_reader(
+def _stepped_tbl_reader(
     sr: clib.SOMAArray,
     coords: options.SparseNDCoords,
     minor_coords: npt.NDArray[np.int64],

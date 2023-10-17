@@ -1274,13 +1274,13 @@ def test_scipy_iter_error_checks(
 ) -> None:
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
         with pytest.raises(soma.SOMAError):
-            A.read().scipy(axis=2)
+            next(A.read().scipy(axis=2))
 
         with pytest.raises(ValueError):
-            A.read(result_order=soma.ResultOrder.ROW_MAJOR).scipy(axis=1)
+            next(A.read(result_order=soma.ResultOrder.ROW_MAJOR).scipy(axis=1))
 
         with pytest.raises(ValueError):
-            A.read(result_order=soma.ResultOrder.COLUMN_MAJOR).scipy(axis=0)
+            next(A.read(result_order=soma.ResultOrder.COLUMN_MAJOR).scipy(axis=0))
 
 
 @pytest.mark.parametrize("density,shape", [(0.1, (4, 8, 16))])
@@ -1289,4 +1289,4 @@ def test_scipy_iter_not_2D(
 ) -> None:
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
         with pytest.raises(soma.SOMAError):
-            A.read().scipy()
+            next(A.read().scipy())
