@@ -1757,7 +1757,7 @@ def _write_matrix_to_denseNDArray(
 
 def _read_nonempty_domain(arr: TileDBArray) -> Any:
     try:
-        return arr._handle.reader.nonempty_domain()
+        return arr._handle.nonempty_domain()
     except SOMAError:
         # This means that we're open in write-only mode.
         # Reopen the array in read mode.
@@ -1765,7 +1765,7 @@ def _read_nonempty_domain(arr: TileDBArray) -> Any:
 
     cls = type(arr)
     with cls.open(arr.uri, "r", platform_config=None, context=arr.context) as readarr:
-        return readarr._handle.reader.nonempty_domain()
+        return readarr._handle.nonempty_domain()
 
 
 def _find_sparse_chunk_size(
