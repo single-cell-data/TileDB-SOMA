@@ -179,7 +179,6 @@ def scipy_sparse_iter(
 
     def _sorted_tbl_reader() -> Iterator[Tuple[npt.NDArray[np.int64], IJDType]]:
         """Read reindexed tables and sort them. Yield as ((i,j),d)"""
-        print(pool)
         for major_coords, coo_tbl in EagerIterator(_reindexed_tbl_reader(), pool=pool):
             coo_tbl = coo_tbl.sort_by(
                 [
