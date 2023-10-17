@@ -36,7 +36,7 @@ class ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema);
     static void release_array(struct ArrowArray* array);
-
+    
     /**
      * @brief Convert ColumnBuffer to an Arrow array.
      *
