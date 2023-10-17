@@ -530,6 +530,9 @@ class SparseNDArrayRead(somacore.SparseRead):
         `SciPy sparse matrix` <https://docs.scipy.org/doc/scipy/reference/sparse.html>
         over a 2D SparseNDArray.
 
+        This iterator will produce sparse matrices containing
+        _complete_ row (or column) slices of the array on each step.
+
         Args:
             axis:
                 The axis (0 or 1) across which to step. If `compress` is True, the
