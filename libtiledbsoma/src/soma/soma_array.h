@@ -346,6 +346,15 @@ class SOMAArray {
     }
 
     /**
+     * @brief Returns the column names set by the query.
+     *
+     * @return std::vector<std::string>
+     */
+    std::vector<std::string> column_names() {
+        return mq_->column_names();
+    }
+
+    /**
      * @brief Read the next chunk of results from the query. If all results
      * have already been read, std::nullopt is returned.
      *

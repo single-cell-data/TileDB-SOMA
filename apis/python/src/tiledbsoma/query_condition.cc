@@ -65,7 +65,16 @@ private:
   shared_ptr<QueryCondition> qc_;
 
 public:
-  PyQueryCondition() = delete;
+  PyQueryCondition(){
+    try {
+      // create one global context for all query conditions
+      static Context context = Context();
+      ctx_ = context;
+      qc_ = shared_ptr<QueryCondition>(new QueryCondition(ctx_));
+    } catch (TileDBError &e) {
+      TPY_ERROR_LOC(e.what());
+    }
+  }
 
   PyQueryCondition(py::object ctx) {
     (void)ctx;
@@ -104,9 +113,9 @@ public:
 
   template <typename T>
   static PyQueryCondition
-  create(py::object pyctx, const std::string &field_name,
+  create(const std::string &field_name,
          const std::vector<T> &values, tiledb_query_condition_op_t op) {
-    auto pyqc = PyQueryCondition(pyctx);
+    auto pyqc = PyQueryCondition();
 
     const Context ctx = std::as_const(pyqc.ctx_);
 
@@ -153,7 +162,7 @@ private:
   }
 }; // namespace tiledbpy
 
-void init_query_condition(py::module &m) {
+void load_query_condition(py::module &m) {
   py::class_<PyQueryCondition>(m, "PyQueryCondition", py::module_local())
       .def(py::init<py::object>(), py::arg("ctx") = py::none())
 
@@ -218,57 +227,57 @@ void init_query_condition(py::module &m) {
       .def_static(
           "create_string",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<std::string> &,
+              const std::string &, const std::vector<std::string> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_uint64",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<uint64_t> &,
+              const std::string &, const std::vector<uint64_t> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_int64",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<int64_t> &,
+              const std::string &, const std::vector<int64_t> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_uint32",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<uint32_t> &,
+              const std::string &, const std::vector<uint32_t> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_int32",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<int32_t> &,
+              const std::string &, const std::vector<int32_t> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_uint16",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<uint16_t> &,
+              const std::string &, const std::vector<uint16_t> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_int8",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<int8_t> &,
+              const std::string &, const std::vector<int8_t> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_uint16",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<uint16_t> &,
+              const std::string &, const std::vector<uint16_t> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_int8",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<int8_t> &,
+              const std::string &, const std::vector<int8_t> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_float32",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<float> &,
+              const std::string &, const std::vector<float> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
       .def_static(
           "create_float64",
           static_cast<PyQueryCondition (*)(
-              py::object, const std::string &, const std::vector<double> &,
+              const std::string &, const std::vector<double> &,
               tiledb_query_condition_op_t)>(&PyQueryCondition::create))
 
       .def("__capsule__", &PyQueryCondition::__capsule__);
