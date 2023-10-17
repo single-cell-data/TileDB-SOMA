@@ -88,6 +88,15 @@ class ManagedQuery {
         const std::vector<std::string>& names, bool if_not_empty = false);
 
     /**
+     * @brief Returns the column names set by the query.
+     *
+     * @return std::vector<std::string>
+     */
+    std::vector<std::string> column_names() {
+        return columns_;
+    }
+
+    /**
      * @brief Select dimension ranges to query.
      *
      * @tparam T Dimension type
