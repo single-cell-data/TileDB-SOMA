@@ -33,8 +33,6 @@ from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
-from . import pytiledbsoma as clib
-
 _Obj = TypeVar("_Obj", bound="_tiledb_object.AnyTileDBObject")
 _Wrapper = TypeVar("_Wrapper", bound=_tdb_handles.AnyWrapper)
 

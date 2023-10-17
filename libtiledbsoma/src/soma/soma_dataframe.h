@@ -231,12 +231,29 @@ class SOMADataFrame : public SOMAObject {
     const std::vector<std::string> index_column_names() const;
 
     /**
-     * Return the number of dimnesions SOMADataFrame.
+     * Return the number of dimnesions.
      *
      * @return int64_t
      */
     int64_t ndim() const;
+
+    /**
+     * Return the number of rows.
+     *
+     * @return int64_t
+     */
     int64_t count() const;
+
+    /**
+     * Retrieves the non-empty domain from the array. This is the union of the
+     * non-empty domains of the array fragments.
+     *
+     * @return int64_t
+     */
+    template <typename T>
+    std::pair<T, T> non_empty_domain(const std::string& name) {
+        return array_->non_empty_domain<T>(name);
+    };
 
     /**
      * Retrieves the non-empty domain from the array on the given dimension.
