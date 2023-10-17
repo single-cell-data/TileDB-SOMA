@@ -266,6 +266,15 @@ class SOMADataFrame : public SOMAObject {
     };
 
     /**
+     * @brief Get the mapping of attributes to Enumerations.
+     *
+     * @return std::map<std::string, Enumeration>
+     */
+    std::map<std::string, Enumeration> get_attr_to_enum_mapping() {
+        return array_->get_attr_to_enum_mapping();
+    };
+
+    /**
      * @brief Read the next chunk of results from the query. If all results have
      * already been read, std::nullopt is returned.
      */

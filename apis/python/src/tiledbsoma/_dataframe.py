@@ -406,9 +406,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         attr_cols_map: Dict[str, pd.DataFrame] = {}
         dim_names_set = self.index_column_names
         n = None
-
-        for col_info in values.schema:
-            name = col_info.name
+    
+        for name in values.schema.names:
             col = values.column(name)
             n = len(col)
 
