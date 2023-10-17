@@ -241,6 +241,12 @@ class SOMADataFrame : public SOMAObject {
      * @return int64_t
      */
     int64_t ndim() const;
+
+    /**
+     * Return the number of rows.
+     *
+     * @return int64_t
+     */
     int64_t count() const;
 
     /**

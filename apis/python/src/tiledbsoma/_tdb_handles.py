@@ -308,7 +308,8 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         self.initial_contents = {
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
-        
+
+
 class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
     @classmethod
     def _opener(
@@ -317,7 +318,7 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
         mode: options.OpenMode,
         context: SOMATileDBContext,
         timestamp: int,
-    ) -> tiledb.Array:
+    ) -> clib.SOMADataFrame:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
         return clib.SOMADataFrame.open(
             uri,
@@ -329,12 +330,63 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
         )
 
     @property
-    def schema(self) -> tiledb.ArraySchema:
+    def schema(self) -> pa.Schema:
         return self._handle.schema
-    
+
     @property
-    def meta(self):
-        return self._handle.meta
+    def meta(self) -> Dict[str, str]:
+        return dict(self._handle.meta)
+
+    @property
+    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+        result = []
+        for name in self._handle.index_column_names:
+            dtype = self._handle.schema.field(name).type
+            if pa.types.is_timestamp(dtype):
+                dom = self._handle.domain(name)
+                np_dtype = dtype.to_pandas_dtype()
+                result.append(
+                    (
+                        np_dtype.type(dom[0], dtype.unit),
+                        np_dtype.type(dom[1], dtype.unit),
+                    )
+                )
+            else:
+                result.append(self._handle.domain(name))
+        return tuple(result)
+
+    @property
+    def ndim(self) -> int:
+        return int(self._handle.ndim)
+
+    def nonempty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
+        result = []
+        for name in self._handle.index_column_names:
+            dtype = self._handle.schema.field(name).type
+            if pa.types.is_timestamp(dtype):
+                ned = self._handle.nonempty_domain(name)
+                np_dtype = dtype.to_pandas_dtype()
+                result.append(
+                    (
+                        np_dtype.type(ned[0], dtype.unit),
+                        np_dtype.type(ned[1], dtype.unit),
+                    )
+                )
+            else:
+                result.append(self._handle.domain(name))
+        return None if len(result) == 0 else tuple(result)
+
+    @property
+    def attr_names(self) -> Tuple[str, ...]:
+        result = []
+        for field in self.schema:
+            if field.name not in self._handle.index_column_names:
+                result.append(field.name)
+        return tuple(result)
+
+    @property
+    def dim_names(self) -> Tuple[str, ...]:
+        return tuple(self._handle.index_column_names)
 
 
 class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):

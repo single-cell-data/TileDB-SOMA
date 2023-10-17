@@ -13,13 +13,13 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _constants, _tdb_handles
+from . import pytiledbsoma as clib
 from ._exception import SOMAError
+from ._tdb_handles import DataFrameWrapper
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
-from ._tdb_handles import DataFrameWrapper
-from . import pytiledbsoma as clib
 
 _WrapperType_co = TypeVar(
     "_WrapperType_co", bound=_tdb_handles.AnyWrapper, covariant=True

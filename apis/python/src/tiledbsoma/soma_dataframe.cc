@@ -81,7 +81,7 @@ void load_soma_dataframe(py::module &m) {
                         column_names = new_column_names;
                     }
                 } catch (const std::exception& e) {
-                    throw TileDBSOMAError(e.what());
+                    TPY_ERROR_LOC(e.what());
                 }   
                 qc = py_query_condition.attr("c_obj")
                     .cast<PyQueryCondition>()
@@ -155,7 +155,7 @@ void load_soma_dataframe(py::module &m) {
         case TILEDB_STRING_ASCII: 
             return py::cast(soma_df.non_empty_domain_var(name));
         default:
-            throw TileDBSOMAError("Unsupported dtype for nonempty domain.");
+            TPY_ERROR_LOC("Unsupported dtype for nonempty domain.");
         }
     })
     .def("domain", [](SOMADataFrame& soma_df, std::string name, py::dtype dtype) {
@@ -199,7 +199,7 @@ void load_soma_dataframe(py::module &m) {
             return py::cast(std::make_pair("", ""));
         }
         default:
-            throw TileDBSOMAError("Unsupported dtype for Dimension's domain");
+            TPY_ERROR_LOC("Unsupported dtype for Dimension's domain");
         }
     })
     .def_property_readonly("count", &SOMADataFrame::count)
@@ -319,7 +319,7 @@ void load_soma_dataframe(py::module &m) {
                     reader.set_dim_points(
                         dim, coords.cast<std::vector<std::string>>());
                 } else {
-                    throw TileDBSOMAError(
+                    TPY_ERROR_LOC(
                         "[pytiledbsoma] set_dim_points: type={} not "
                         "supported" + 
                         std::string(arrow_schema.format));
@@ -333,6 +333,10 @@ void load_soma_dataframe(py::module &m) {
         "py_arrow_array"_a,
         "partition_index"_a = 0,
         "partition_count"_a = 1)
+<<<<<<< HEAD
+=======
+
+>>>>>>> d09f5eae (Add Methods to `DataFrameWrapper` and `ArrayWrapper`)
     .def(
         "set_dim_points_string_or_bytes",
         static_cast<void (SOMADataFrame::*)(
