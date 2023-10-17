@@ -266,3 +266,5 @@ SOMADataFrame <- R6::R6Class(
 
   )
 )
+
+# commit to test R CI for release-1.4
