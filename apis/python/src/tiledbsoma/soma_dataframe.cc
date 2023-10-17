@@ -13,20 +13,6 @@ using namespace py::literals;
 namespace tiledbsoma {
 
 /**
- * @brief Convert ColumnBuffer to Arrow array.
- *
- * @param column_buffer ColumnBuffer
- * @return py::object Arrow array
- */
-py::object df_to_array(std::shared_ptr<ColumnBuffer> column_buffer) {
-    auto pa = py::module::import("pyarrow");
-    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
-
-    auto [array, schema] = ArrowAdapter::to_arrow(column_buffer);
-    return pa_array_import(py::capsule(array.get()), py::capsule(schema.get()));
-}
-
-/**
  * @brief Convert ArrayBuffers to Arrow table.
  *
  * @param cbs ArrayBuffers
@@ -35,18 +21,21 @@ py::object df_to_array(std::shared_ptr<ColumnBuffer> column_buffer) {
 py::object df_to_table(std::shared_ptr<ArrayBuffers> array_buffers) {
     auto pa = py::module::import("pyarrow");
     auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
-    auto pa_dict_from_arrays = pa.attr("DictionaryArray").attr("from_arrays");
+    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
 
+    py::list array_list;
     py::list names;
-    py::list arrays;
 
     for (auto& name : array_buffers->names()) {
         auto column = array_buffers->at(name);
+        auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(column);
+        auto array = pa_array_import(py::capsule(pa_array.get()), 
+                                     py::capsule(pa_schema.get()));
+        array_list.append(array);
         names.append(name);
-        arrays.append(df_to_array(column));
     }
 
-    return pa_table_from_arrays(arrays, names);
+    return pa_table_from_arrays(array_list, names);
 }
 
 static std::optional<py::object> read_next(SOMADataFrame& dataframe){
@@ -193,7 +182,7 @@ void init_soma_dataframe(py::module &m) {
     .def_property_readonly("schema", [](SOMADataFrame& soma_df) -> py::object {
         auto pa = py::module::import("pyarrow");
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
-        return pa_schema_import(py::capsule(ArrowAdapter::tiledb_schema_to_arrow_schema(soma_df.schema()).get()));
+        return pa_schema_import(py::capsule(ArrowAdapter::tiledb_schema_to_arrow_schema(soma_df.schema())));
     })
     .def_property_readonly("timestamp", &SOMADataFrame::timestamp)
     .def_property_readonly("index_column_names", &SOMADataFrame::index_column_names)
@@ -407,10 +396,10 @@ void init_soma_dataframe(py::module &m) {
                     reader.set_dim_points(
                         dim, coords.cast<std::vector<std::string>>());
                 } else {
-                    throw TileDBSOMAError(fmt::format(
+                    throw TileDBSOMAError(
                         "[pytiledbsoma] set_dim_points: type={} not "
-                        "supported",
-                        arrow_schema.format));
+                        "supported" + 
+                        std::string(arrow_schema.format));
                 }
 
                 // Release arrow schema
