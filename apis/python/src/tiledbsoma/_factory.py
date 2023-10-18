@@ -153,12 +153,14 @@ def _reify_handle(hdl: _Wrapper) -> "_tiledb_object.TileDBObject[_Wrapper]":
     """Picks out the appropriate SOMA class for a handle and wraps it."""
     typename = _read_soma_type(hdl)
     cls = _type_name_to_cls(typename)
-    if cls._wrapper_type != type(hdl):
-        if typename == "SOMADataFrame" and cls != _dataframe.DataFrame:
-            raise SOMAError(
-                f"cannot open {hdl.uri!r}: a {type(hdl._handle)}"
-                f" cannot be converted to a {typename}"
-            )
+    if cls._wrapper_type != type(hdl) and not (
+        typename == "SOMADataFrame"
+        and isinstance(hdl, _tdb_handles.DataFrameWrapper)
+    ):
+        raise SOMAError(
+            f"cannot open {hdl.uri!r}: a {type(hdl._handle)}"
+            f" cannot be converted to a {typename}"
+        )
     return cast(
         _tiledb_object.TileDBObject[_Wrapper],
         cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
