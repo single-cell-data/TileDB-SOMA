@@ -1,3 +1,35 @@
+/**
+ * @file   soma_dataframe.cc
+ *
+ * @section LICENSE
+ *
+ * The MIT License
+ *
+ * @copyright Copyright (c) 2023 TileDB, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * @section DESCRIPTION
+ *
+ * This file defines the SOMADataFrame bindings.
+ */
+
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
@@ -6,7 +38,8 @@
 
 #include <tiledbsoma/tiledbsoma>
 
-using namespace tiledbsoma;
+#include "common.h"
+
 namespace py = pybind11;
 using namespace py::literals;
 
@@ -177,12 +210,61 @@ void init_soma_dataframe(py::module &m) {
         return soma_df.is_open();
     })
     .def("reset", &SOMADataFrame::reset)
+
+    .def("set_condition", 
+        [](SOMADataFrame& reader, 
+            py::object py_query_condition,
+            py::object pa_schema){  
+                auto column_names = reader.column_names();
+                // Handle query condition based on
+                // TileDB-Py::PyQuery::set_attr_cond()
+                QueryCondition* qc = nullptr;
+                if (!py_query_condition.is(py::none())) {
+                py::object init_pyqc = py_query_condition.attr(
+                    "init_query_condition");   
+                try {
+                    // Column names will be updated with columns present
+                    // in the query condition
+                    auto new_column_names =
+                        init_pyqc(pa_schema, column_names)
+                            .cast<std::vector<std::string>>();   
+                    // Update the column_names list if it was not empty,
+                    // otherwise continue selecting all columns with an
+                    // empty column_names list
+                    if (!column_names.empty()) {
+                        column_names = new_column_names;
+                    }
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }   
+                qc = py_query_condition.attr("c_obj")
+                    .cast<PyQueryCondition>()
+                    .ptr()
+                    .get();
+                reader.reset(column_names);
+
+                // Release python GIL after we're done accessing python
+                // objects
+                py::gil_scoped_release release;   
+                // Set query condition if present
+                if (qc) {
+                    reader.set_condition(*qc);
+                }
+            }
+        }, 
+        "py_query_condition"_a,
+        "py_schema"_a)
+
     .def("type", &SOMADataFrame::type)
     .def("uri", &SOMADataFrame::uri)
     .def_property_readonly("schema", [](SOMADataFrame& soma_df) -> py::object {
         auto pa = py::module::import("pyarrow");
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
-        return pa_schema_import(py::capsule(ArrowAdapter::tiledb_schema_to_arrow_schema(soma_df.schema())));
+        auto schema = soma_df.schema();
+        auto attr_to_enum = soma_df.get_attr_to_enum_mapping();
+        auto tdb_schema = 
+            ArrowAdapter::tiledb_schema_to_arrow_schema(schema, attr_to_enum);
+        return pa_schema_import(py::capsule(tdb_schema.get()));
     })
     .def_property_readonly("timestamp", &SOMADataFrame::timestamp)
     .def_property_readonly("index_column_names", &SOMADataFrame::index_column_names)
@@ -236,7 +318,7 @@ void init_soma_dataframe(py::module &m) {
             return py::cast(soma_df.non_empty_domain_var(name));
         }
         default:
-            throw std::invalid_argument("Unsupported dtype for nonempty domain.");
+            throw TileDBSOMAError("Unsupported dtype for nonempty domain.");
         }
     })
     .def("domain", [](SOMADataFrame& soma_df, std::string name) -> py::tuple {
@@ -299,18 +381,45 @@ void init_soma_dataframe(py::module &m) {
         return py::make_tuple("", "");
         }
         default:
-        throw std::invalid_argument("Unsupported dtype for Dimension's domain");
+        throw TileDBSOMAError("Unsupported dtype for Dimension's domain");
         }
     })
     .def_property_readonly("ndim", &SOMADataFrame::ndim)
     .def_property_readonly("count", &SOMADataFrame::count)
-    .def("read_next", read_next)
+    .def("read_next", [](SOMADataFrame& dataframe){
+        // Release GIL when reading data
+        py::gil_scoped_release release;
+        auto buffers = dataframe.read_next();
+        py::gil_scoped_acquire acquire;
+
+        return to_table(buffers);
+    })
     
     .def("set_metadata", &SOMADataFrame::set_metadata)
     .def("delete_metadata", &SOMADataFrame::delete_metadata)
     .def("get_metadata", 
         py::overload_cast<const std::string&>(&SOMADataFrame::get_metadata))
-    .def_property_readonly("meta", meta)
+    .def_property_readonly("meta", [](SOMADataFrame&soma_dataframe) -> py::dict {
+        py::dict results;
+            
+            for (auto const& [key, val] : soma_dataframe.get_metadata()){
+                tiledb_datatype_t tdb_type = std::get<MetadataInfo::dtype>(val);
+                uint32_t value_num = std::get<MetadataInfo::num>(val);
+                const void *value = std::get<MetadataInfo::value>(val);
+
+                if(tdb_type == TILEDB_STRING_UTF8){
+                    results[py::str(key)] = py::str(std::string((const char*)value, value_num));
+                }else if(tdb_type == TILEDB_STRING_ASCII){
+                    results[py::str(key)] = py::bytes(std::string((const char*)value, value_num));
+                }else{
+                    py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+                    results[py::str(key)] = py::array(value_type, value_num, value);
+                }
+            }
+
+            return results;
+        }
+    )
     .def("has_metadata", &SOMADataFrame::has_metadata)
     .def("metadata_num", &SOMADataFrame::metadata_num)
     .def(

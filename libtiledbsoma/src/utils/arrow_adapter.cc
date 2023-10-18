@@ -187,7 +187,7 @@ std::unique_ptr<ArrowSchema> tiledb_schema_to_arrow_schema(
     std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = "+s";
     arrow_schema->n_children = ndim + nattr;
-    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->release = &release_schema;
     arrow_schema->children = (ArrowSchema**)malloc(
         sizeof(ArrowSchema*) * arrow_schema->n_children);
 
@@ -196,20 +196,20 @@ std::unique_ptr<ArrowSchema> tiledb_schema_to_arrow_schema(
     for (uint32_t i = 0; i < ndim; ++i) {
         auto dim = tiledb_schema->domain().dimension(i);
         child = arrow_schema->children[i] = new ArrowSchema;
-        child->format = ArrowAdapter::to_arrow_format(dim.type()).data();
+        child->format = to_arrow_format(dim.type()).data();
         child->name = strdup(dim.name().c_str());
         child->metadata = nullptr;
         child->flags = 0;
         child->n_children = 0;
         child->dictionary = nullptr;
         child->children = nullptr;
-        child->release = &ArrowAdapter::release_schema;
+        child->release = &release_schema;
     }
 
     for (uint32_t i = 0; i < nattr; ++i) {
         auto attr = tiledb_schema->attribute(i);
         child = arrow_schema->children[ndim + i] = new ArrowSchema;
-        child->format = ArrowAdapter::to_arrow_format(attr.type()).data();
+        child->format = to_arrow_format(attr.type()).data();
         child->name = strdup(attr.name().c_str());
         child->metadata = nullptr;
         child->flags = attr.nullable() ? ARROW_FLAG_NULLABLE : 0;
@@ -222,18 +222,17 @@ std::unique_ptr<ArrowSchema> tiledb_schema_to_arrow_schema(
             dict->format = (const char*)malloc(
                 sizeof(char) * 2);  // mandatory, 'u' as 32bit indexing
             strcpy((char*)dict->format, "u");
-            // dict->format = ArrowAdapter::to_arrow_format(enmr.type()).data();
             dict->name = strdup(enmr.name().c_str());
             dict->metadata = nullptr;
             dict->flags = 0;
             dict->n_children = 0;
             dict->children = nullptr;
             dict->dictionary = nullptr;
-            dict->release = &ArrowAdapter::release_schema;
+            dict->release = &release_schema;
             dict->private_data = nullptr;
             child->dictionary = dict;
         }
-        child->release = &ArrowAdapter::release_schema;
+        child->release = &release_schema;
     }
 
     /* Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow boolean. */

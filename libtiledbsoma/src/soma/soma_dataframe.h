@@ -350,6 +350,15 @@ class SOMADataFrame : public SOMAObject {
     }
 
     /**
+     * @brief Returns the column names set by the query.
+     *
+     * @return std::vector<std::string>
+     */
+    std::vector<std::string> column_names() {
+        return array_->column_names();
+    }
+
+    /**
      * @brief Write data to the dataframe.
      * @param buffers The ArrayBuffers to write
      */
