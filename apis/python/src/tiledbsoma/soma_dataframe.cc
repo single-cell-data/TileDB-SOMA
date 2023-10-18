@@ -260,7 +260,11 @@ void init_soma_dataframe(py::module &m) {
     .def_property_readonly("schema", [](SOMADataFrame& soma_df) -> py::object {
         auto pa = py::module::import("pyarrow");
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
-        return pa_schema_import(py::capsule(ArrowAdapter::tiledb_schema_to_arrow_schema(soma_df.schema())));
+        auto schema = soma_df.schema();
+        auto attr_to_enum = soma_df.get_attr_to_enum_mapping();
+        auto tdb_schema = 
+            ArrowAdapter::tiledb_schema_to_arrow_schema(schema, attr_to_enum);
+        return pa_schema_import(py::capsule(tdb_schema.get()));
     })
     .def_property_readonly("timestamp", &SOMADataFrame::timestamp)
     .def_property_readonly("index_column_names", &SOMADataFrame::index_column_names)
