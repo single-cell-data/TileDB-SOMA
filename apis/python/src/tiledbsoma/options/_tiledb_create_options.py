@@ -143,6 +143,9 @@ class TileDBCreateOptions:
     attrs: Mapping[str, _ColumnConfig] = attrs_.field(
         factory=dict, converter=_normalize_columns
     )
+    consolidate_and_vacuum: bool = attrs_.field(
+        validator=vld.instance_of(bool), default=False
+    )
 
     @classmethod
     def from_platform_config(
