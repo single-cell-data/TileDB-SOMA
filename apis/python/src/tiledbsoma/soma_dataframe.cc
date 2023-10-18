@@ -333,10 +333,6 @@ void load_soma_dataframe(py::module &m) {
         "py_arrow_array"_a,
         "partition_index"_a = 0,
         "partition_count"_a = 1)
-<<<<<<< HEAD
-=======
-
->>>>>>> d09f5eae (Add Methods to `DataFrameWrapper` and `ArrayWrapper`)
     .def(
         "set_dim_points_string_or_bytes",
         static_cast<void (SOMADataFrame::*)(

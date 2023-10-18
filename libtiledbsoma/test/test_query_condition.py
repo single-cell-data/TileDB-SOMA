@@ -9,6 +9,7 @@ import tiledbsoma.pytiledbsoma as clib
 from tiledbsoma._arrow_types import tiledb_schema_to_arrow
 from tiledbsoma._exception import SOMAError
 from tiledbsoma._query_condition import QueryCondition
+from tiledbsoma._arrow_types import tiledb_schema_to_arrow
 
 VERBOSE = False
 
@@ -30,7 +31,8 @@ def pandas_query(uri, condition):
 def soma_query(uri, condition):
     qc = QueryCondition(condition)
     sr = clib.SOMAArray(uri)
-    schema = tiledb_schema_to_arrow(tiledb.open(uri).schema, uri, tiledb.default_ctx())
+    schema = tiledb_schema_to_arrow(
+        tiledb.open(uri).schema, uri, tiledb.default_ctx())
     sr.set_condition(qc, schema)
     arrow_table = sr.read_next()
     assert sr.results_complete()
