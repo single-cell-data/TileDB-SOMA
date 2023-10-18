@@ -11,6 +11,7 @@ import abc
 import concurrent.futures
 from typing import (
     TYPE_CHECKING,
+    Dict,
     Iterator,
     List,
     Optional,
@@ -251,15 +252,27 @@ def sparse_stepped_table_iter(
     coords: options.SparseNDCoords,
     axis: int,
     step: int,
+    result_order: Optional[options.ResultOrderStr] = None,
 ) -> Iterator[pa.Table]:
     """Stepped iterator for Arrow Table"""
     ndim = len(sr.shape)
     if axis < 0 or axis >= ndim:
         raise ValueError("Axis argument must specify a dimension value.")
 
+    # TODO: DRY this. Currently a copy/paste from the Array base class.
+    kwargs: Dict[str, object] = {}
+    if result_order:
+        result_order_map = {
+            "auto": clib.ResultOrder.automatic,
+            "row-major": clib.ResultOrder.rowmajor,
+            "column-major": clib.ResultOrder.colmajor,
+        }
+        result_order_enum = result_order_map[options.ResultOrder(result_order).value]
+        kwargs["result_order"] = result_order_enum
+
     coords = tuple(coords[i] if i < len(coords) else None for i in range(ndim))
     for coord_chunk in _coords_strider(coords[axis], sr.shape[axis], step):
-        sr.reset()
+        sr.reset(**kwargs)
         step_coords = [*coords]
         step_coords[axis] = coord_chunk
         array._set_reader_coords(sr, step_coords)
