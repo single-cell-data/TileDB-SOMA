@@ -10,6 +10,7 @@ from __future__ import annotations
 import abc
 import concurrent.futures
 from typing import (
+    TYPE_CHECKING,
     Iterator,
     List,
     Optional,
@@ -36,6 +37,9 @@ import tiledbsoma.pytiledbsoma as clib
 from . import _util
 from ._exception import SOMAError
 from ._types import NTuple
+
+if TYPE_CHECKING:
+    from . import SparseNDArray
 
 
 class TableReadIter(somacore.ReadIter[pa.Table]):
@@ -234,6 +238,37 @@ def scipy_sparse_iter(
         yield from _cs_reader() if compress else _coo_reader()
 
 
+def _arrow_table_reader(sr: clib.SOMAArray) -> Iterator[pa.Table]:
+    tbl = sr.read_next()
+    while tbl is not None:
+        yield tbl
+        tbl = sr.read_next()
+
+
+def sparse_stepped_table_iter(
+    array: "SparseNDArray",
+    sr: clib.SOMAArray,
+    coords: options.SparseNDCoords,
+    axis: int,
+    step: int,
+) -> Iterator[pa.Table]:
+    """Stepped iterator for Arrow Table"""
+    ndim = len(sr.shape)
+    if axis < 0 or axis >= ndim:
+        raise ValueError("Axis argument must specify a dimension value.")
+
+    coords = tuple(coords[i] if i < len(coords) else None for i in range(ndim))
+    for coord_chunk in _coords_strider(coords[axis], sr.shape[axis], step):
+        sr.reset()
+        step_coords = [*coords]
+        step_coords[axis] = coord_chunk
+        array._set_reader_coords(sr, step_coords)
+        tbl = pa.concat_tables(_arrow_table_reader(sr))
+        if not len(tbl):
+            continue
+        yield tbl
+
+
 def _coords_strider(
     coords: options.SparseNDCoord, length: int, stride: int
 ) -> Iterator[npt.NDArray[np.int64]]:
@@ -287,15 +322,9 @@ def _stepped_tbl_reader(
     """
     minor_axis: int = 1 - major_axis
 
-    def arrow_table_reader() -> Iterator[pa.Table]:
-        tbl = sr.read_next()
-        while tbl is not None:
-            yield tbl
-            tbl = sr.read_next()
-
     for coord_chunk in _coords_strider(coords[major_axis], sr.shape[major_axis], step):
         sr.reset()
         sr.set_dim_points_int64(f"soma_dim_{major_axis}", coord_chunk)
         sr.set_dim_points_int64(f"soma_dim_{minor_axis}", minor_coords)
-        tbl = pa.concat_tables(arrow_table_reader())
+        tbl = pa.concat_tables(_arrow_table_reader(sr))
         yield coord_chunk, tbl

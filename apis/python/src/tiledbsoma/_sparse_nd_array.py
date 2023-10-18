@@ -39,6 +39,7 @@ from ._read_iters import (
     SparseCOOTensorReadIter,
     TableReadIter,
     scipy_sparse_iter,
+    sparse_stepped_table_iter,
 )
 from ._types import NTuple
 from .options._tiledb_create_options import TileDBCreateOptions
@@ -466,6 +467,40 @@ class SparseNDArrayRead(somacore.SparseRead):
         """
         self.array._set_reader_coords(self.sr, self.coords)
         return TableReadIter(self.sr)
+
+    def stepped_tables(
+        self,
+        axis: int = 0,
+        step: Optional[int] = None,
+    ) -> Iterator[pa.Table]:
+        """
+        PROTOTYPE
+
+        Returns an iterator of Arrow Table, with complete (non-ragged) reads on the
+        indicated axis.
+
+        Arguments:
+            axis:
+                The axis (0 or 1) across which to return complete reads, i.e.,
+                the dimension which will be non-ragged.
+            step:
+                Number of coordinates to return in each iterator step.
+
+        Raises:
+            ValueError
+                If the axis argument does not match the array shape.
+
+        Lifecycle:
+            Experimental.
+
+        """
+        if step is None:
+            # Default heuristic based upon most datasets having much larger cardinality on the soma_dim_0 (obs) dimension.
+            step = 2**8 if axis == 1 else 2**16
+
+        return sparse_stepped_table_iter(
+            self.array, self.sr, self.coords, axis=axis, step=step
+        )
 
     @overload
     def scipy(
