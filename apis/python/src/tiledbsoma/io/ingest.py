@@ -1890,7 +1890,7 @@ def _find_sparse_chunk_size_backed(
     too-big chunks to remote services.
 
     It turns out, though, as a peculiarity of AnnData backed matrices, that
-    while it's prohibitively expensive to ask the 1000 questions
+    while it's prohibitively expensive to ask the 10,000 questions
     matrix[0,:].nnz, matrix[1,:].nnz, ...  matrix[9999,:].nnz, it's quite quick
     to ask for matrix[0:9999,:].nnz.
 
@@ -2151,7 +2151,7 @@ def _write_matrix_to_sparseNDArray(
             if num_tries > max_tries:
                 raise SOMAError(
                     f"Unable to accommodate goal_chunk_nnz {goal_chunk_nnz}. "
-                    + "This may be reduced in TileDBCreateOptions."
+                    "This may be reduced in TileDBCreateOptions."
                 )
 
             ratio = chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz
@@ -2159,7 +2159,7 @@ def _write_matrix_to_sparseNDArray(
             if chunk_size < 1:
                 raise SOMAError(
                     f"Unable to accommodate a single row at goal_chunk_nnz {goal_chunk_nnz}. "
-                    + "This may be reduced in TileDBCreateOptions."
+                    "This may be reduced in TileDBCreateOptions."
                 )
             i2 = i + chunk_size
             coords[stride_axis] = slice(i, i2)
