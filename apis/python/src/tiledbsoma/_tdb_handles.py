@@ -329,13 +329,24 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
             (0, timestamp),
         )
 
+    # Covariant types should normally not be in parameters, but this is for
+    # internal use only so it's OK.
+    def _do_initial_reads(self, reader: _RawHdl_co) -> None:  # type: ignore[misc]
+        """Final setup step before returning the Handle.
+
+        This is passed a raw TileDB object opened in read mode, since writers
+        will need to retrieve data from the backing store on setup.
+        """
+        # non–attrs-managed field
+        self.metadata = MetadataWrapper(self, dict(reader.meta))
+        
     @property
     def schema(self) -> pa.Schema:
         return self._handle.schema
 
     @property
-    def meta(self) -> Dict[str, str]:
-        return dict(self._handle.meta)
+    def meta(self) -> Dict[str, Any]:
+        return MetadataWrapper(self, dict(self._handle.meta)) 
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
@@ -373,7 +384,7 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
                     )
                 )
             else:
-                result.append(self._handle.domain(name))
+                result.append(self._handle.nonempty_domain(name))
         return None if len(result) == 0 else tuple(result)
 
     @property

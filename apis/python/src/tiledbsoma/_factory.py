@@ -220,7 +220,6 @@ def _type_name_to_cls(type_name: str) -> Type["_tiledb_object.AnyTileDBObject"]:
             _sparse_nd_array.SparseNDArray,
         )
     }
-    type_map["somadataframe"] = _dataframe.DataFrame
     try:
         return type_map[type_name.lower()]
     except KeyError as ke:
