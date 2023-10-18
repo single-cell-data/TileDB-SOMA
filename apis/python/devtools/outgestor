@@ -35,6 +35,9 @@ def main():
         "-q", "--quiet", help="decrease output verbosity", action="store_true"
     )
     parser.add_argument(
+        "-d", "--debug", help="increase output verbosity", action="store_true"
+    )
+    parser.add_argument(
         "-o",
         help="Specify output directory to contain the somas: default ./anndata-readback-tiledbsoma",
         type=str,
@@ -101,8 +104,9 @@ def main():
         if not os.path.exists(outdir):
             os.mkdir(outdir)
 
-    verbose = not args.quiet
-    if verbose:
+    if args.debug:
+        tiledbsoma.logging.debug()
+    elif not args.quiet:
         tiledbsoma.logging.info()
 
     soma = tiledbsoma.Experiment.open(input_path)
