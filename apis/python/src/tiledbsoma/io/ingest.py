@@ -2130,7 +2130,6 @@ def _ingest_uns_node(
         return
 
     if isinstance(value, pd.DataFrame):
-        ####num_cols = value.shape[1]
         num_rows = value.shape[0]
         with _write_dataframe(
             _util.uri_joinpath(coll.uri, key),
@@ -2139,7 +2138,6 @@ def _ingest_uns_node(
             platform_config=platform_config,
             context=context,
             ingestion_params=ingestion_params,
-            ####axis_mapping=AxisIDMapping.identity(num_cols),
             axis_mapping=AxisIDMapping.identity(num_rows),
         ) as df:
             _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
@@ -2261,7 +2259,10 @@ def _ingest_uns_1d_string_array(
         context=context,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
-        # TODO: comment
+        # Since ND arrays in the SOMA data model are arrays _of number_,
+        # we write these as dataframes. The metadata hint reminds us to
+        # convert back to numpy.ndarray on outgest, since the numpy
+        # data model supports ND arrays of string.
         soma_df.metadata[_UNS_OUTGEST_HINT_KEY] = _UNS_OUTGEST_HINT_1D
 
 
@@ -2301,7 +2302,10 @@ def _ingest_uns_2d_string_array(
         context=context,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
-        # TODO: comment
+        # Since ND arrays in the SOMA data model are arrays _of number_,
+        # we write these as dataframes. The metadata hint reminds us to
+        # convert back to numpy.ndarray on outgest, since the numpy
+        # data model supports ND arrays of string.
         soma_df.metadata[_UNS_OUTGEST_HINT_KEY] = _UNS_OUTGEST_HINT_2D
 
 
@@ -2638,7 +2642,9 @@ def _extract_uns(
         elif isinstance(element, DenseNDArray):
             extracted[key] = element.read().to_numpy()
         else:
-            print("SKIPPING", element.soma_type)
+            logging.log_io_same(
+                f"Skipping uns key {key} with unhandled type {element.soma_type}"
+            )
 
     # Primitives got set on the SOMA-experiment uns metadata.
     for key, value in collection.metadata.items():
