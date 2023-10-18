@@ -187,9 +187,6 @@ INC_DIRS = [
     "dist_links/libtiledbsoma/external/include",
     "../../build/externals/install/include",
     str(libtiledbsoma_dir / "include"),
-    str(
-        "./src/tiledbsoma"
-    ),  # since pytiledbsoma.cc does #include of query_condition.cc
     str(libtiledbsoma_dir.parent / "build/externals/install/include"),
     str(tiledb_dir / "include"),
     pa.get_include(),
@@ -261,6 +258,8 @@ setuptools.setup(
         Pybind11Extension(
             "tiledbsoma.pytiledbsoma",
             [
+                "src/tiledbsoma/common.cc",
+                "src/tiledbsoma/query_condition.cc",
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_dataframe.cc",
                 "src/tiledbsoma/pytiledbsoma.cc",
