@@ -8,6 +8,7 @@ import tiledb
 import tiledbsoma.pytiledbsoma as clib
 from tiledbsoma._exception import SOMAError
 from tiledbsoma._query_condition import QueryCondition
+from tiledbsoma._arrow_types import tiledb_schema_to_arrow
 
 VERBOSE = False
 
@@ -29,7 +30,8 @@ def pandas_query(uri, condition):
 def soma_query(uri, condition):
     qc = QueryCondition(condition)
     sr = clib.SOMAArray(uri)
-    schema = tiledb.open(uri).schema
+    schema = tiledb_schema_to_arrow(
+        tiledb.open(uri).schema, uri, tiledb.default_ctx())
     sr.set_condition(qc, schema)
     arrow_table = sr.read_next()
     assert sr.results_complete()
@@ -107,10 +109,11 @@ def test_query_condition_select_columns():
     uri = os.path.join(SOMA_URI, "obs")
     condition = "percent_mito > 0.02"
 
-    qc = QueryCondition(condition)
-    schema = tiledb.open(uri).schema
-
     sr = clib.SOMAArray(uri, column_names=["n_genes"])
+    
+    qc = QueryCondition(condition)
+    schema = tiledb_schema_to_arrow(
+        tiledb.open(uri).schema, uri, tiledb.default_ctx())
     sr.set_condition(qc, schema)
     arrow_table = sr.read_next()
 
@@ -124,7 +127,8 @@ def test_query_condition_all_columns():
     condition = "percent_mito > 0.02"
 
     qc = QueryCondition(condition)
-    schema = tiledb.open(uri).schema
+    schema = tiledb_schema_to_arrow(
+        tiledb.open(uri).schema, uri, tiledb.default_ctx())
 
     sr = clib.SOMAArray(uri)
     sr.set_condition(qc, schema)
@@ -140,7 +144,8 @@ def test_query_condition_reset():
     condition = "percent_mito > 0.02"
 
     qc = QueryCondition(condition)
-    schema = tiledb.open(uri).schema
+    schema = tiledb_schema_to_arrow(
+        tiledb.open(uri).schema, uri, tiledb.default_ctx())
 
     sr = clib.SOMAArray(uri)
     sr.set_condition(qc, schema)

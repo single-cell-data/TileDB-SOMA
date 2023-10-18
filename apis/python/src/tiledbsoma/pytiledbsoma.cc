@@ -15,8 +15,9 @@ using namespace py::literals;
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
-void init_soma_array(py::module &);
-void init_soma_dataframe(py::module &);
+void load_soma_array(py::module &);
+void load_soma_dataframe(py::module &);
+void load_query_condition(py::module &);
 
 PYBIND11_MODULE(pytiledbsoma, m) {
   py::enum_<OpenMode>(m, "OpenMode")
@@ -64,8 +65,9 @@ PYBIND11_MODULE(pytiledbsoma, m) {
       },
       "Print TileDB internal statistics. Lifecycle: experimental.");
 
-  init_soma_array(m);
-  init_soma_dataframe(m);
+  load_soma_array(m);
+  load_soma_dataframe(m);
+  load_query_condition(m);
 }
 
-}; // namespace libtiledbcpp
+}; 
