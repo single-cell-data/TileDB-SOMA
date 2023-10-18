@@ -1,4 +1,4 @@
-include RELEASE-VERSION version.py
+include RELEASE-VERSION version.py py.typed
 include src/tiledbsoma/*.cc
 graft dist_links
 prune dist_links/libtiledbsoma/test/__pycache__
