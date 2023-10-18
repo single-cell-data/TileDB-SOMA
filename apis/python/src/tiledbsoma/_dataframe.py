@@ -358,7 +358,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         sr = self._handle._handle
         sr.reset(column_names or [], "auto", to_clib_result_order[result_order])
-        
+
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), self._handle.schema)
 
@@ -406,7 +406,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         attr_cols_map: Dict[str, pd.DataFrame] = {}
         dim_names_set = self.index_column_names
         n = None
-    
+
         for name in values.schema.names:
             col = values.column(name)
             n = len(col)

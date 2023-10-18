@@ -78,10 +78,10 @@ def test_collection_basic(tmp_path):
     assert len(readback_collection) == 2
 
     with readback_collection["sdf"] as sdf:
-        assert len(sdf._handle.reader.df[:]) == 5
+        assert len(sdf.read().concat()) == 5
 
     with readback_collection["snda"] as snda:
-        assert len(snda._handle.reader.df[:]) == 3
+        assert len(snda.read().tables().concat()) == 3
 
 
 @pytest.fixture(

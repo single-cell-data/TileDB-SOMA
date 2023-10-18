@@ -223,12 +223,17 @@ class QueryConditionTree(ast.NodeVisitor):
 
             variable = node.left.id
             values = [self.get_val_from_node(val) for val in self.visit(rhs)]
-            
+
             dt = self.schema.field(variable).type
             if pa.types.is_dictionary(dt):
                 dt = dt.value_type
-                
-            if pa.types.is_string(dt) or pa.types.is_large_string(dt) or pa.types.is_binary(dt) or pa.types.is_large_binary(dt):
+
+            if (
+                pa.types.is_string(dt)
+                or pa.types.is_large_string(dt)
+                or pa.types.is_binary(dt)
+                or pa.types.is_large_binary(dt)
+            ):
                 dtype = "string"
             else:
                 dtype = np.dtype(dt.to_pandas_dtype()).name
@@ -260,7 +265,12 @@ class QueryConditionTree(ast.NodeVisitor):
         if pa.types.is_dictionary(dt):
             dt = dt.value_type
 
-        if pa.types.is_string(dt) or pa.types.is_large_string(dt) or pa.types.is_binary(dt) or pa.types.is_large_binary(dt):
+        if (
+            pa.types.is_string(dt)
+            or pa.types.is_large_string(dt)
+            or pa.types.is_binary(dt)
+            or pa.types.is_large_binary(dt)
+        ):
             dtype = "string"
         else:
             dtype = np.dtype(dt.to_pandas_dtype()).name
@@ -319,9 +329,7 @@ class QueryConditionTree(ast.NodeVisitor):
 
             if isinstance(att_node, ast.Call):
                 if not isinstance(att_node.func, ast.Name):
-                    raise SOMAError(
-                        f"Unrecognized expression {att_node.func}."
-                    )
+                    raise SOMAError(f"Unrecognized expression {att_node.func}.")
                 att_node = att_node.args[0]
 
             if isinstance(att_node, ast.Name):
@@ -338,9 +346,7 @@ class QueryConditionTree(ast.NodeVisitor):
                     f"Incorrect type for attribute name: {ast.dump(att_node)}"
                 )
         else:
-            raise SOMAError(
-                f"Incorrect type for attribute name: {ast.dump(node)}"
-            )
+            raise SOMAError(f"Incorrect type for attribute name: {ast.dump(node)}")
 
         if not att not in self.schema:
             raise SOMAError(f"`{att}` not found in schema.")
@@ -363,9 +369,7 @@ class QueryConditionTree(ast.NodeVisitor):
             if node.func.id == "val":
                 val_node = node.args[0]
             else:
-                raise SOMAError(
-                    f"Incorrect type for cast value: {node.func.id}"
-                )
+                raise SOMAError(f"Incorrect type for cast value: {node.func.id}")
 
         if isinstance(val_node, ast.Constant) or isinstance(val_node, ast.NameConstant):
             val = val_node.value
@@ -427,9 +431,7 @@ class QueryConditionTree(ast.NodeVisitor):
         try:
             return getattr(clib.PyQueryCondition, create_fn_name)
         except AttributeError as ae:
-            raise SOMAError(
-                f"PyQueryCondition.{create_fn_name}() not found."
-            ) from ae
+            raise SOMAError(f"PyQueryCondition.{create_fn_name}() not found.") from ae
 
     def visit_BinOp(self, node: ast.BinOp) -> clib.PyQueryCondition:
         try:
@@ -450,9 +452,7 @@ class QueryConditionTree(ast.NodeVisitor):
         try:
             op = self.visit(node.op)
         except KeyError:
-            raise SOMAError(
-                f"Unsupported Boolean operator: {ast.dump(node.op)}."
-            )
+            raise SOMAError(f"Unsupported Boolean operator: {ast.dump(node.op)}.")
 
         result = self.visit(node.values[0])
         for value in node.values[1:]:
