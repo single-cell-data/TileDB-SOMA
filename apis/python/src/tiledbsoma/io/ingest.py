@@ -79,6 +79,16 @@ Matrix = Union[DenseMatrix, SparseMatrix]
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
 
+# Arrays of strings from AnnData's uns are stored in SOMA as SOMADataFrame,
+# since SOMA ND arrays are necessarily arrays *of numbers*. This is okay since
+# the one and only job of SOMA uns is to faithfully ingest from AnnData and
+# outgest back. These are parameters common to ingest and outgest of these.
+_UNS_OUTGEST_HINT_KEY = "soma_uns_outgest_hint"
+_UNS_OUTGEST_HINT_1D = "array_1d"
+_UNS_OUTGEST_HINT_2D = "array_2d"
+_UNS_OUTGEST_COLUMN_NAME_1D = "values"
+_UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
+
 
 # ----------------------------------------------------------------
 class IngestionParams:
@@ -1762,7 +1772,11 @@ def _read_nonempty_domain(arr: TileDBArray) -> Any:
 
 
 def _find_sparse_chunk_size(
-    matrix: SparseMatrix, start_index: int, axis: int, goal_chunk_nnz: int
+    matrix: SparseMatrix,
+    start_index: int,
+    axis: int,
+    goal_chunk_nnz: int,
+    mean_nnz: int,
 ) -> int:
     """Given a sparse matrix and a start index, return a step size, on the stride axis,
     which will achieve the cumulative nnz desired.
@@ -1776,46 +1790,217 @@ def _find_sparse_chunk_size(
             The stride axis, across which to find a chunk.
         goal_chunk_nnz:
             Desired number of non-zero array entries for the chunk.
+        mean_nnz:
+            Mean nnz along the desired axis. This is necessary for the backed
+            case, and not needed in the non-backed case but easy to compute.
+            It simplifies the internal API to simply pass it in unconditionally.
     """
-    chunk_size = 1
+    if isinstance(matrix, (sp.csr_matrix, sp.csc_matrix)):
+        return _find_sparse_chunk_size_non_backed(
+            matrix=matrix,
+            start_index=start_index,
+            axis=axis,
+            goal_chunk_nnz=goal_chunk_nnz,
+            mean_nnz=mean_nnz,
+        )
+
+    else:
+        return _find_sparse_chunk_size_backed(
+            matrix=matrix,
+            start_index=start_index,
+            axis=axis,
+            goal_chunk_nnz=goal_chunk_nnz,
+            mean_nnz=mean_nnz,
+        )
+
+
+def _find_sparse_chunk_size_non_backed(
+    matrix: SparseMatrix,
+    start_index: int,
+    axis: int,
+    goal_chunk_nnz: int,
+    mean_nnz: int,
+) -> int:
+    """Helper routine for ``_find_sparse_chunk_size`` for when we're operating on AnnData
+    matrices in non-backed mode. Here, unlike in backed mode, it's performant to exactly
+    sum up nnz values from all matrix rows.
+    """
+    chunk_size = 0
     sum_nnz = 0
     coords: List[Union[slice, int]] = [slice(None), slice(None)]
-
-    # Empirically we find:
-    # * If the input matrix is sp.csr_matrix or sp.csc_matrix then getting all these nnz values is
-    #   quick.
-    # * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which happens with
-    #   out-of-core anndata reads -- then getting all these nnz values is prohibitively expensive.
-    # * It turns out that getting a sample is quite sufficient. We do this regardless of whether
-    #   the matrix is anndata._core.sparse_dataset.SparseDataset or not.
-    # * The max_rows is manually defined after running experiments with 60GB .h5ad files.
-    count = 0
-    max_rows = 100
-
     for index in range(start_index, matrix.shape[axis]):
-        count += 1
         coords[axis] = index
-        sum_nnz += matrix[tuple(coords)].nnz
-        if sum_nnz > goal_chunk_nnz:
+        candidate_sum_nnz = sum_nnz + matrix[tuple(coords)].nnz
+        if candidate_sum_nnz > goal_chunk_nnz:
             break
-        if count > max_rows:
-            break
+        sum_nnz = candidate_sum_nnz
         chunk_size += 1
+        # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
+        # logging.logger.trace(
+        #     f"non-backed: index={index} chunk_size={chunk_size} sum_nnz={sum_nnz} goal_nnz={goal_chunk_nnz}"
+        # )
+    return chunk_size
 
-    if sum_nnz == 0:  # completely empty sparse array (corner case)
+
+def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
+    """Helper for _find_sparse_chunk_size_backed"""
+    extent = matrix.shape[axis]
+    if extent == 0:
+        return 0
+
+    # Dense inputs don't have a .nnz
+    if isinstance(matrix, (np.ndarray, h5py._hl.dataset.Dataset)):
+        nr, nc = matrix.shape
+        total = nr * nc
+        return int(total // matrix.shape[axis])
+
+    # This takes about as long but uses more RAM:
+    #   total_nnz = matrix[:, :].nnz
+    # So instead we break it up. Testing over a variety of H5AD sizes
+    # shows that the performance is fine here.
+    coords: List[slice] = [slice(None), slice(None)]  # type: ignore [unreachable]
+    bsz = 1000
+    total_nnz = 0
+    for lo in range(0, extent, bsz):
+        hi = min(extent, lo + bsz)
+        coords[axis] = slice(lo, hi)
+        total_nnz += matrix[tuple(coords)].nnz
+    return int(math.ceil(total_nnz / extent))
+
+
+def _find_sparse_chunk_size_backed(
+    matrix: SparseMatrix,
+    start_index: int,
+    axis: int,
+    goal_chunk_nnz: int,
+    mean_nnz: int,
+) -> int:
+    """Helper routine for ``_find_sparse_chunk_size`` for when we're operating
+    on AnnData matrices in backed mode.
+
+    Empirically we find:
+
+    * If the input matrix is sp.csr_matrix or sp.csc_matrix then getting all
+      these nnz values is quick.  This happens when the input is AnnData via
+      anndata.read_h5ad(name_of_h5ad) without the second backing-mode argument.
+
+    * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which
+      happens with out-of-core anndata reads -- then getting all these nnz
+      values is prohibitively expensive.  This happens when the input is AnnData
+      via anndata.read_h5ad(name_of_h5ad, "r") with the second backing-mode
+      argument, which is necessary for being able to ingest larger H5AD files.
+
+    Say there are 100,000 rows, each with possibly quite different nnz values.
+    Then in the non-backed case we simply check each row's nnz value. But for
+    the backed case, that absolutely tanks performance.
+
+    Another option is getting a sample of nnz values and using them as an
+    estimator for nnz values of other rows. This often works, but there's enough
+    diversity in the row nnzs that this estimator can result in us sending
+    too-big chunks to remote services.
+
+    It turns out, though, as a peculiarity of AnnData backed matrices, that
+    while it's prohibitively expensive to ask the 10,000 questions
+    matrix[0,:].nnz, matrix[1,:].nnz, ...  matrix[9999,:].nnz, it's quite quick
+    to ask for matrix[0:9999,:].nnz.
+
+    This is our way to thread the needle on good runtime performance with the
+    AnnData backed-matrix API, while respecting remote resource limits:
+
+    * Get the mean nnz for the entire matrix, along the desired axis.
+      This needs to be computed only once, so we take it as an argument.
+
+    * Set our intial estimate of chunk size to be the goal_chunk_nnz
+      over the mean_nnz. E.g. if our goal is 100M nnz per chunk, and the matrix
+      has average 4000 nnz per row, then we try chunk size to be
+      100,000,000/4,000 = 25,000.
+
+    * While tasking for the nnzs of each of those 25,000 rows is prohibitively
+      expensive, we can quickly ask for the nnz of the continguous region of
+      25,000 rows.
+
+    * Now, those 25,000 rows' sum nnz may or may not be reflective of the mean.
+      If the guess is too high -- if those 25,000 rows' nnz is over the goal --
+      we must reduce it; if it's too low, we must raise it. In either case we
+      just divide by the overshoot/undershoot ratio. E.g. if the goal was 100M
+      but the chunk nnz was 125M, then we divide 25,000 by 1.25 and try again.
+      That second guess may not be quite right either, so we try a few times.
+      Experiments across a variety of file sizes shows that we converge to
+      between 70% and 100% of goal chunk nnz usually on the first try, and
+      occasionally on the second and maybe the third. Again, _exact_ counting of
+      each row's nnz is prohibitively expensive, so we adapt our algorithm to
+      the constraints presented to us.
+
+    Minor details on the basic theme:
+
+    * We aim for between 70% and 100% of goal chunk nnz. Over is bad;
+      under is less bad -- we do want to not make too many small requests of
+      remote services, though.
+
+    * On the very last bit of the matrix, there can be no sizing up --
+      if there are only 7 rows remaining, that's that, end of story.
+    """
+
+    # Parameters as noted above and below.
+    lower_ratio = 0.7
+    upper_ratio = 1.0
+    adjustment_ratio = 0.95
+    max_iterations = 5
+
+    if mean_nnz == 0:  # completely empty sparse array (corner case)
         return -1
 
-    if sum_nnz > goal_chunk_nnz:
+    # This is num_rows or num_cols.
+    extent = int(matrix.shape[axis])
+
+    # Initial guess of chunk size.
+    chunk_size = max(1, int(math.floor(goal_chunk_nnz / mean_nnz)))
+    if chunk_size > extent:
+        chunk_size = extent
+
+    # This is just matrix[0:m, :] or matrix[:, 0:m], but spelt out flexibly
+    # given that the axis (0 or 1) is a variable.
+    coords: List[slice] = [slice(None), slice(None)]
+    coords[axis] = slice(start_index, start_index + chunk_size)
+    chunk_nnz = int(matrix[tuple(coords)].nnz)
+
+    # End of matrix, end of story.
+    if start_index + chunk_size >= extent:
         return chunk_size
 
-    # Solve the equation:
-    #
-    # sum_nnz              count
-    # -------          =  -------
-    # goal_chunk_nnz       result
-    chunk_size = int(count * goal_chunk_nnz / sum_nnz)
-    if chunk_size < 1:
-        chunk_size = 1
+    # Compare initial estimate chunk nnz against the goal
+    ratio = chunk_nnz / goal_chunk_nnz
+
+    # Close enough to full capacity without going over; not worth tweaking
+    if ratio > lower_ratio and ratio <= upper_ratio:
+        return chunk_size
+
+    # This is a corner case, with artificially low goal_chunk_nnz far below
+    # remote resource requirements. In this case, keep estimate to avoid the
+    # iteration loop below.
+    if chunk_size == 1:
+        return chunk_size
+
+    # Small chunk: try to enlarge for efficiency.
+    # Large chunk: must split for local/remote resource limits.
+    # In either case, we divide by the ration of actual vs goal.
+    for i in range(max_iterations):
+        # Omitting the adjustment ratio would mean our next try would be likely
+        # to be say 1.000002x the goal, resulting in an unnecessary extra
+        # iteration.  Since the "just-right zone" is between 0.7 and 1.0 times
+        # the goal, don't aim for the very edge of that zone: aim well within
+        # it.
+        chunk_size = max(1, int(adjustment_ratio * math.floor(chunk_size / ratio)))
+        coords[axis] = slice(start_index, start_index + chunk_size)
+        chunk_nnz = matrix[tuple(coords)].nnz
+        ratio = chunk_nnz / goal_chunk_nnz
+        if ratio > lower_ratio and ratio <= upper_ratio:
+            return chunk_size
+
+    # If the result is still smallish, so be it -- we have tried hard enough.
+    # If the result is too large despite efforts, let remote resource-limit
+    # errors be the hard fail, rather than trying to hard-enforce one of our
+    # own.
     return chunk_size
 
 
@@ -1900,6 +2085,7 @@ def _write_matrix_to_sparseNDArray(
 
     eta_tracker = eta.Tracker()
     goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz
+    mean_nnz = _find_mean_nnz(matrix, stride_axis)
 
     coords = [slice(None), slice(None)]
     i = 0
@@ -1921,7 +2107,7 @@ def _write_matrix_to_sparseNDArray(
             chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[non_stride_axis]))
         else:
             chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
-                matrix, i, stride_axis, goal_chunk_nnz
+                matrix, i, stride_axis, goal_chunk_nnz, mean_nnz
             )
         if chunk_size == -1:  # completely empty array; nothing to write
             if i > 0:
@@ -1929,12 +2115,67 @@ def _write_matrix_to_sparseNDArray(
             else:
                 chunk_size = 1
 
+        # Don't display something like '0..100000 out of 98765' as this looks wrong.
+        # Cap the part after the '..' at the dim_max_size.
         i2 = i + chunk_size
+        if i2 > dim_max_size:
+            i2 = dim_max_size
 
         coords[stride_axis] = slice(i, i2)
         chunk_coo = sp.coo_matrix(matrix[tuple(coords)])
 
-        chunk_percent = min(100, 100 * (i2 - 1) / dim_max_size)
+        # As noted above, we support reading AnnData in backed mode which
+        # provides opportunities as well as challenges.
+        #
+        # * Backed mode is crucial for our ability to ingest larger H5AD files
+        #   -- those whose file sizes complete with host RAM.
+        # * Semantics of AnnData backed-mode matrices is such that it is
+        #   prohibitive (i.e. it ruins performance, and by a significant amount)
+        #   to compute row nnz for every row -- which is precisely the
+        #   information that any chunk-sizing algorithm requires.
+        # * Therefore we use a sampling algorithm to estimate the chunk size
+        #   (row-count) to satisfy a goal chunk nnz value. However, the nnz
+        #   values in the sample do not always well represent the values in the
+        #   population.
+        #
+        # Therefore as a performance optimization we do the following:
+        #
+        # * Use a sample of a small number of rows (100 as of this writing)
+        #   to estimate a chunk size that satisfies the goal chunk nnz.
+        # * Acquire the full chunk nnz (which is much more performant at the
+        #   AnnData level than getting each of the individual row nnz values)
+        # * Adapt that downard.
+        #
+        # In a future C++-only matrix-writer implementation where buffer sizes
+        # are exposed to the implementation langauge -- a benefit we do not
+        # enjoy here in Python -- it will be easier to simply fill buffers and
+        # send them off, with simplified logic.
+        num_tries = 0
+        max_tries = 20
+        while chunk_coo.nnz > tiledb_create_options.goal_chunk_nnz:
+            num_tries += 1
+            # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
+            # logging.logger.trace(
+            #    f"Adapt: {num_tries}/{max_tries} {chunk_coo.nnz}/{tiledb_create_options.goal_chunk_nnz}"
+            # )
+            if num_tries > max_tries:
+                raise SOMAError(
+                    f"Unable to accommodate goal_chunk_nnz {goal_chunk_nnz}. "
+                    "This may be reduced in TileDBCreateOptions."
+                )
+
+            ratio = chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz
+            chunk_size = int(math.floor(0.9 * (i2 - i) / ratio))
+            if chunk_size < 1:
+                raise SOMAError(
+                    f"Unable to accommodate a single row at goal_chunk_nnz {goal_chunk_nnz}. "
+                    "This may be reduced in TileDBCreateOptions."
+                )
+            i2 = i + chunk_size
+            coords[stride_axis] = slice(i, i2)
+            chunk_coo = sp.coo_matrix(matrix[tuple(coords)])
+
+        chunk_percent = min(100, 100 * i2 / dim_max_size)
 
         if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
             chunk_bounds = matrix_bounds
@@ -1946,8 +2187,15 @@ def _write_matrix_to_sparseNDArray(
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
                     "... %7.3f%% done" % chunk_percent,
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d"
-                    % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
+                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
+                    % (
+                        i,
+                        i2 - 1,
+                        dim_max_size,
+                        chunk_percent,
+                        chunk_coo.nnz,
+                        tiledb_create_options.goal_chunk_nnz,
+                    ),
                 )
                 i = i2
                 continue
@@ -1955,8 +2203,15 @@ def _write_matrix_to_sparseNDArray(
         # Print doubly inclusive lo..hi like 0..17 and 18..31.
         logging.log_io(
             None,
-            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d"
-            % (i, i2 - 1, dim_max_size, chunk_percent, chunk_coo.nnz),
+            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
+            % (
+                i,
+                i2 - 1,
+                dim_max_size,
+                chunk_percent,
+                chunk_coo.nnz,
+                tiledb_create_options.goal_chunk_nnz,
+            ),
         )
 
         soma_ndarray.write(
@@ -2120,7 +2375,7 @@ def _ingest_uns_node(
         return
 
     if isinstance(value, pd.DataFrame):
-        num_cols = value.shape[1]
+        num_rows = value.shape[0]
         with _write_dataframe(
             _util.uri_joinpath(coll.uri, key),
             value,
@@ -2128,7 +2383,7 @@ def _ingest_uns_node(
             platform_config=platform_config,
             context=context,
             ingestion_params=ingestion_params,
-            axis_mapping=AxisIDMapping.identity(num_cols),
+            axis_mapping=AxisIDMapping.identity(num_rows),
         ) as df:
             _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
         return
@@ -2226,10 +2481,15 @@ def _ingest_uns_1d_string_array(
 ) -> None:
     """Helper for ``_ingest_uns_string_array``"""
     n = len(value)
+    # An array like ["a", "b", "c"] becomes a DataFrame like
+    # soma_joinid value
+    # 0           a
+    # 1           b
+    # 2           c
     df = pd.DataFrame(
         data={
-            "soma_joinid": np.arange(n, dtype=np.int64),
-            "values": [str(e) if e else "" for e in value],
+            SOMA_JOINID: np.arange(n, dtype=np.int64),
+            _UNS_OUTGEST_COLUMN_NAME_1D: [str(e) if e else "" for e in value],
         }
     )
     df.set_index("soma_joinid", inplace=True)
@@ -2244,6 +2504,11 @@ def _ingest_uns_1d_string_array(
         context=context,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
+        # Since ND arrays in the SOMA data model are arrays _of number_,
+        # we write these as dataframes. The metadata hint reminds us to
+        # convert back to numpy.ndarray on outgest, since the numpy
+        # data model supports ND arrays of string.
+        soma_df.metadata[_UNS_OUTGEST_HINT_KEY] = _UNS_OUTGEST_HINT_1D
 
 
 def _ingest_uns_2d_string_array(
@@ -2262,6 +2527,10 @@ def _ingest_uns_2d_string_array(
     back out the way it came in."""
     num_rows, num_cols = value.shape
     data: Dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
+    # An array like [["a", "b", "c"], ["d", "e", "f"]] becomes a DataFrame like
+    # soma_joinid values_0 values_1 values_2
+    # 0           a        b        c
+    # 1           d        e        f
     for j in range(num_cols):
         column_name = f"values_{j}"
         data[column_name] = [str(e) if e else "" for e in value[:, j]]
@@ -2278,6 +2547,11 @@ def _ingest_uns_2d_string_array(
         context=context,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
+        # Since ND arrays in the SOMA data model are arrays _of number_,
+        # we write these as dataframes. The metadata hint reminds us to
+        # convert back to numpy.ndarray on outgest, since the numpy
+        # data model supports ND arrays of string.
+        soma_df.metadata[_UNS_OUTGEST_HINT_KEY] = _UNS_OUTGEST_HINT_2D
 
 
 def _ingest_uns_ndarray(
@@ -2481,6 +2755,16 @@ def to_anndata(
             matrix = measurement.varp[key].read().tables().concat().to_pandas()
             varp[key] = conversions.csr_from_tiledb_df(matrix, nvar, nvar)
 
+    uns = {}
+    if "uns" in measurement:
+        s = _util.get_start_stamp()
+        logging.log_io(None, f'Start  writing uns for {measurement["uns"].uri}')
+        uns = _extract_uns(cast(Collection[Any], measurement["uns"]))
+        logging.log_io(
+            None,
+            _util.format_elapsed(s, f'Finish writing uns for {measurement["uns"].uri}'),
+        )
+
     anndata = ad.AnnData(
         X=X_csr if X_csr is not None else X_ndarray,
         obs=obs_df,
@@ -2489,6 +2773,7 @@ def to_anndata(
         varm=varm,
         obsp=obsp,
         varp=varp,
+        uns=uns,
         dtype=X_dtype,
     )
 
@@ -2568,3 +2853,83 @@ def _extract_obsm_or_varm(
         )
 
     return conversions.csr_from_tiledb_df(matrix, num_rows, num_cols).toarray()
+
+
+def _extract_uns(
+    collection: Collection[Any],
+) -> Dict[str, Any]:
+    """
+    This is a helper function for ``to_anndata`` of ``uns`` elements.
+    """
+
+    extracted: Dict[str, Any] = {}
+    for key, element in collection.items():
+        if isinstance(element, Collection):
+            extracted[key] = _extract_uns(element)
+        elif isinstance(element, DataFrame):
+            hint = element.metadata.get(_UNS_OUTGEST_HINT_KEY)
+            pdf = element.read().concat().to_pandas()
+            if hint is None:
+                extracted[key] = pdf
+            elif hint == _UNS_OUTGEST_HINT_1D:
+                extracted[key] = _outgest_uns_1d_string_array(pdf, element.uri)
+            elif hint == _UNS_OUTGEST_HINT_2D:
+                extracted[key] = _outgest_uns_2d_string_array(pdf, element.uri)
+            else:
+                msg = (
+                    f"Warning: uns {collection.uri}[{key!r}] has "
+                    + "{_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame"
+                )
+                logging.log_io_same(msg)
+                extracted[key] = pdf
+        elif isinstance(element, SparseNDArray):
+            extracted[key] = element.read().tables().concat().to_pandas()
+        elif isinstance(element, DenseNDArray):
+            extracted[key] = element.read().to_numpy()
+        else:
+            logging.log_io_same(
+                f"Skipping uns key {key} with unhandled type {element.soma_type}"
+            )
+
+    # Primitives got set on the SOMA-experiment uns metadata.
+    for key, value in collection.metadata.items():
+        if not key.startswith("soma_"):
+            extracted[key] = value
+
+    return extracted
+
+
+def _outgest_uns_1d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPNDArray:
+    """Helper methods for _extract_uns"""
+    num_rows, num_cols = pdf.shape
+    # An array like ["a", "b", "c"] had become a DataFrame like
+    # soma_joinid value
+    # 0           a
+    # 1           b
+    if num_cols != 2:
+        raise SOMAError(f"Expected 2 columns in {uri_for_logging}; got {num_cols}")
+    for column_name in [SOMA_JOINID, _UNS_OUTGEST_COLUMN_NAME_1D]:
+        if column_name not in pdf:
+            raise SOMAError(f"Expected {column_name} column in {uri_for_logging}")
+    return np.asarray(list(pdf[_UNS_OUTGEST_COLUMN_NAME_1D]))
+
+
+def _outgest_uns_2d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPNDArray:
+    """Helper methods for _extract_uns"""
+    num_rows, num_cols = pdf.shape
+    if num_cols < 2:
+        raise SOMAError(f"Expected 2 columns in {uri_for_logging}; got {num_cols}")
+    if SOMA_JOINID not in pdf:
+        raise SOMAError(f"Expected {SOMA_JOINID} column in {uri_for_logging}")
+    num_cols -= 1
+    columns = []
+    # An array like [["a", "b", "c"], ["d", "e", "f"]] had become a DataFrame like
+    # soma_joinid values_0 values_1 values_2
+    # 0           a        b        c
+    # 1           d        e        f
+    for i in range(num_cols):
+        column_name = _UNS_OUTGEST_COLUMN_PREFIX_2D + str(i)
+        if column_name not in pdf:
+            raise SOMAError(f"Expected {column_name} column in {uri_for_logging}")
+        columns.append(list(pdf[column_name]))
+    return np.asarray(columns).transpose()
