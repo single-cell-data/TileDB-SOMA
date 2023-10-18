@@ -11,7 +11,7 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 import attrs
 import numpy as np
-import tiledb
+import pyarrow as pa
 
 from . import pytiledbsoma as clib
 from ._exception import SOMAError
@@ -130,15 +130,14 @@ class QueryCondition:
 
     def init_query_condition(
         self,
-        schema: tiledb.ArraySchema,
-        enum_to_dtype: dict,
+        schema: pa.Schema,
         query_attrs: Optional[List[str]],
     ):
-        qctree = QueryConditionTree(schema, enum_to_dtype, query_attrs)
+        qctree = QueryConditionTree(schema, query_attrs)
         self.c_obj = qctree.visit(self.tree.body)
 
         if not isinstance(self.c_obj, clib.PyQueryCondition):
-            raise tiledb.TileDBError(
+            raise SOMAError(
                 "Malformed query condition statement. A query condition must "
                 "be made up of one or more Boolean expressions."
             )
@@ -148,8 +147,7 @@ class QueryCondition:
 
 @attrs.define
 class QueryConditionTree(ast.NodeVisitor):
-    schema: tiledb.ArraySchema
-    enum_to_dtype: dict
+    schema: pa.Schema
     query_attrs: List[str]
 
     def visit_BitOr(self, node):
@@ -219,21 +217,21 @@ class QueryConditionTree(ast.NodeVisitor):
         elif isinstance(operator, (ast.In, ast.NotIn)):
             rhs = node.comparators[0]
             if not isinstance(rhs, ast.List):
-                raise tiledb.TileDBError(
+                raise SOMAError(
                     "`in` operator syntax must be written as `attr in ['l', 'i', 's', 't']`"
                 )
 
             variable = node.left.id
             values = [self.get_val_from_node(val) for val in self.visit(rhs)]
-
-            if self.schema.has_attr(variable):
-                enum_label = self.schema.attr(variable).enum_label
-                if enum_label is not None:
-                    dt = self.enum_to_dtype[enum_label]
-                else:
-                    dt = self.schema.attr(variable).dtype
+            
+            dt = self.schema.field(variable).type
+            if pa.types.is_dictionary(dt):
+                dt = dt.value_type
+                
+            if pa.types.is_string(dt) or pa.types.is_large_string(dt) or pa.types.is_binary(dt) or pa.types.is_large_binary(dt):
+                dtype = "string"
             else:
-                dt = self.schema.attr_or_dim_dtype(variable)
+                dtype = np.dtype(dt.to_pandas_dtype()).name
 
             # sdf.read(column_names=["foo"], value_filter='bar == 999') should
             # result in bar being added to the column names. See also
@@ -242,7 +240,6 @@ class QueryConditionTree(ast.NodeVisitor):
             if att not in self.query_attrs:
                 self.query_attrs.append(att)
 
-            dtype = "string" if dt.kind in "SUa" else dt.name
             op = clib.TILEDB_IN if isinstance(operator, ast.In) else clib.TILEDB_NOT_IN
             result = self.create_pyqc(dtype)(node.left.id, values, op)
 
@@ -258,12 +255,15 @@ class QueryConditionTree(ast.NodeVisitor):
 
         att = self.get_att_from_node(att)
         val = self.get_val_from_node(val)
-        enum_label = self.schema.attr(att).enum_label
-        if enum_label is not None:
-            dt = self.enum_to_dtype[enum_label]
+
+        dt = self.schema.field(att).type
+        if pa.types.is_dictionary(dt):
+            dt = dt.value_type
+
+        if pa.types.is_string(dt) or pa.types.is_large_string(dt) or pa.types.is_binary(dt) or pa.types.is_large_binary(dt):
+            dtype = "string"
         else:
-            dt = self.schema.attr(att).dtype
-        dtype = "string" if dt.kind in "SUa" else dt.name
+            dtype = np.dtype(dt.to_pandas_dtype()).name
         val = self.cast_val_to_dtype(val, dtype)
 
         pyqc = clib.PyQueryCondition()
@@ -274,7 +274,7 @@ class QueryConditionTree(ast.NodeVisitor):
     def is_att_node(self, att: QueryConditionNodeElem) -> bool:
         if isinstance(att, ast.Call):
             if not isinstance(att.func, ast.Name):
-                raise tiledb.TileDBError(f"Unrecognized expression {att.func}.")
+                raise SOMAError(f"Unrecognized expression {att.func}.")
 
             if att.func.id != "attr":
                 return False
@@ -319,7 +319,7 @@ class QueryConditionTree(ast.NodeVisitor):
 
             if isinstance(att_node, ast.Call):
                 if not isinstance(att_node.func, ast.Name):
-                    raise tiledb.TileDBError(
+                    raise SOMAError(
                         f"Unrecognized expression {att_node.func}."
                     )
                 att_node = att_node.args[0]
@@ -334,21 +334,16 @@ class QueryConditionTree(ast.NodeVisitor):
                 # deprecated in 3.8
                 att = att_node.s
             else:
-                raise tiledb.TileDBError(
+                raise SOMAError(
                     f"Incorrect type for attribute name: {ast.dump(att_node)}"
                 )
         else:
-            raise tiledb.TileDBError(
+            raise SOMAError(
                 f"Incorrect type for attribute name: {ast.dump(node)}"
             )
 
-        if not self.schema.has_attr(att):
-            if self.schema.domain.has_dim(att):
-                raise tiledb.TileDBError(
-                    f"`{att}` is a dimension. QueryConditions currently only "
-                    "work on attributes."
-                )
-            raise tiledb.TileDBError(f"Attribute `{att}` not found in schema.")
+        if not att not in self.schema:
+            raise SOMAError(f"`{att}` not found in schema.")
 
         # sdf.read(column_names=["foo"], value_filter='bar == 999') should
         # result in bar being added to the column names. See also
@@ -363,12 +358,12 @@ class QueryConditionTree(ast.NodeVisitor):
 
         if isinstance(node, ast.Call):
             if not isinstance(node.func, ast.Name):
-                raise tiledb.TileDBError(f"Unrecognized expression {node.func}.")
+                raise SOMAError(f"Unrecognized expression {node.func}.")
 
             if node.func.id == "val":
                 val_node = node.args[0]
             else:
-                raise tiledb.TileDBError(
+                raise SOMAError(
                     f"Incorrect type for cast value: {node.func.id}"
                 )
 
@@ -381,7 +376,7 @@ class QueryConditionTree(ast.NodeVisitor):
             # deprecated in 3.8
             val = val_node.s
         else:
-            raise tiledb.TileDBError(
+            raise SOMAError(
                 f"Incorrect type for comparison value: {ast.dump(val_node)}"
             )
 
@@ -395,7 +390,7 @@ class QueryConditionTree(ast.NodeVisitor):
                 # this prevents numeric strings ("1", '123.32') from getting
                 # casted to numeric types
                 if isinstance(val, str):
-                    raise tiledb.TileDBError(f"Cannot cast `{val}` to {dtype}.")
+                    raise SOMAError(f"Cannot cast `{val}` to {dtype}.")
                 if np.issubdtype(dtype, np.datetime64):
                     cast = getattr(np, "int64")
                 # silence DeprecationWarning: `np.bool`
@@ -405,7 +400,7 @@ class QueryConditionTree(ast.NodeVisitor):
                     cast = getattr(np, dtype)
                 val = cast(val)
             except ValueError:
-                raise tiledb.TileDBError(f"Cannot cast `{val}` to {dtype}.")
+                raise SOMAError(f"Cannot cast `{val}` to {dtype}.")
 
         return val
 
@@ -416,7 +411,7 @@ class QueryConditionTree(ast.NodeVisitor):
         init_fn_name = f"init_{dtype}"
 
         if not hasattr(pyqc, init_fn_name):
-            raise tiledb.TileDBError(f"PyQueryCondition.{init_fn_name}() not found.")
+            raise SOMAError(f"PyQueryCondition.{init_fn_name}() not found.")
 
         return getattr(pyqc, init_fn_name)
 
@@ -432,7 +427,7 @@ class QueryConditionTree(ast.NodeVisitor):
         try:
             return getattr(clib.PyQueryCondition, create_fn_name)
         except AttributeError as ae:
-            raise tiledb.TileDBError(
+            raise SOMAError(
                 f"PyQueryCondition.{create_fn_name}() not found."
             ) from ae
 
@@ -440,7 +435,7 @@ class QueryConditionTree(ast.NodeVisitor):
         try:
             op = self.visit(node.op)
         except KeyError:
-            raise tiledb.TileDBError(
+            raise SOMAError(
                 f"Unsupported binary operator: {ast.dump(node.op)}. Only & is currently supported."
             )
 
@@ -455,7 +450,7 @@ class QueryConditionTree(ast.NodeVisitor):
         try:
             op = self.visit(node.op)
         except KeyError:
-            raise tiledb.TileDBError(
+            raise SOMAError(
                 f"Unsupported Boolean operator: {ast.dump(node.op)}."
             )
 
@@ -467,13 +462,13 @@ class QueryConditionTree(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> ast.Call:
         if not isinstance(node.func, ast.Name):
-            raise tiledb.TileDBError(f"Unrecognized expression {node.func}.")
+            raise SOMAError(f"Unrecognized expression {node.func}.")
 
         if node.func.id not in ["attr", "val"]:
-            raise tiledb.TileDBError("Valid casts are attr() or val().")
+            raise SOMAError("Valid casts are attr() or val().")
 
         if len(node.args) != 1:
-            raise tiledb.TileDBError(
+            raise SOMAError(
                 f"Exactly one argument must be provided to {node.func.id}()."
             )
 
@@ -494,7 +489,7 @@ class QueryConditionTree(ast.NodeVisitor):
         elif isinstance(node.op, ast.USub):
             sign *= -1
         else:
-            raise tiledb.TileDBError(f"Unsupported UnaryOp type. Saw {ast.dump(node)}.")
+            raise SOMAError(f"Unsupported UnaryOp type. Saw {ast.dump(node)}.")
 
         if isinstance(node.operand, ast.UnaryOp):
             return self.visit_UnaryOp(node.operand, sign)
@@ -506,7 +501,7 @@ class QueryConditionTree(ast.NodeVisitor):
             elif isinstance(node.operand, ast.Num):
                 node.operand.n *= sign
             else:
-                raise tiledb.TileDBError(
+                raise SOMAError(
                     f"Unexpected node type following UnaryOp. Saw {ast.dump(node)}."
                 )
 

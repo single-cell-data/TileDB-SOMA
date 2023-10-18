@@ -345,9 +345,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
-        if value_filter is not None:
-            QueryCondition(value_filter)
-
         to_clib_result_order = {
             options.ResultOrder.AUTO: clib.ResultOrder.automatic,
             options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
@@ -361,6 +358,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         sr = self._handle._handle
         sr.reset(column_names or [], "auto", to_clib_result_order[result_order])
+        
+        if value_filter is not None:
+            sr.set_condition(QueryCondition(value_filter), self._handle.schema)
 
         self._set_reader_coords(sr, coords)
 
