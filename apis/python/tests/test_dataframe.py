@@ -830,6 +830,8 @@ def test_write_categorical_types(tmp_path):
         sdf.write(pa.Table.from_pandas(df))
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+        print(pa.Table.from_pandas(df))
+        print(sdf.read().concat())
         assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
