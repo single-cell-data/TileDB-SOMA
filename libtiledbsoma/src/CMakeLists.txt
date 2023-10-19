@@ -266,7 +266,6 @@ if(TILEDBSOMA_BUILD_CLI)
 
     # CLI11::CLI11
     # spdlog::spdlog
-    tiledbsoma
     TileDB::tiledb_shared
   )
 
