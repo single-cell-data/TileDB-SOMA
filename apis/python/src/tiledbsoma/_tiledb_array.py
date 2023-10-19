@@ -154,13 +154,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
                 f" ({self._handle.ndim})"
             )
         for i, coord in enumerate(coords):
-            schema = self._handle.schema
-
-            if isinstance(schema, tiledb.ArraySchema):
-                dim = self._handle.schema.domain.dim(i)
-            else:
-                dim = self._handle.schema.field(i)
-
+            dim = self.schema.field(i)
             if not self._set_reader_coord(sr, i, dim, coord):
                 raise TypeError(
                     f"coord type {type(coord)} for dimension {dim.name}"
@@ -168,7 +162,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
                 )
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: object
     ) -> bool:
         """Parses a single coordinate entry.
 
@@ -188,10 +182,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         if isinstance(coord, slice):
             _util.validate_slice(coord)
             try:
-                if isinstance(dim, tiledb.Dim):
-                    dom = dim.domain
-                else:
-                    dom = self._handle.domain[dim_idx]
+                dom = self._handle.domain[dim_idx]
                 lo_hi = _util.slice_to_numeric_range(coord, dom)
             except _util.NonNumericDimensionError:
                 return False  # We only handle numeric dimensions here.
