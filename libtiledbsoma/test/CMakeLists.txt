@@ -44,6 +44,7 @@ target_include_directories(unit_soma
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/external/include
     ${pybind11_INCLUDE_DIRS}
+    ${TILEDB_SOMA_EXPORT_HEADER_DIR}
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
 )
 

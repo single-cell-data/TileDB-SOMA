@@ -36,12 +36,14 @@
 #ifndef TILEDB_LOGGER_PUBLIC_H
 #define TILEDB_LOGGER_PUBLIC_H
 
+#include "tiledbsoma_export.h"
+
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
 namespace tiledbsoma {
 
 /** Set log level for global logger and optionally set a logfile. */
-__attribute__((visibility("default"))) void LOG_CONFIG(
+TILEDBSOMA_EXPORT void LOG_CONFIG(
     const std::string& level, const std::string& logfile = "");
 
 /** Set log level for global logger. */
@@ -54,16 +56,16 @@ void LOG_SET_FILE(const std::string& logfile);
 bool LOG_DEBUG_ENABLED();
 
 /** Logs a trace message. */
-__attribute__((visibility("default"))) void LOG_TRACE(const std::string& msg);
+TILEDBSOMA_EXPORT void LOG_TRACE(const std::string& msg);
 
 /** Logs a debug message. */
-__attribute__((visibility("default"))) void LOG_DEBUG(const std::string& msg);
+TILEDBSOMA_EXPORT void LOG_DEBUG(const std::string& msg);
 
 /** Logs an info message. */
-__attribute__((visibility("default"))) void LOG_INFO(const std::string& msg);
+TILEDBSOMA_EXPORT void LOG_INFO(const std::string& msg);
 
 /** Logs a warning. */
-__attribute__((visibility("default"))) void LOG_WARN(const std::string& msg);
+TILEDBSOMA_EXPORT void LOG_WARN(const std::string& msg);
 
 /** Logs an error. */
 void LOG_ERROR(const std::string& msg);
