@@ -366,6 +366,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obsp_layers = NULL
     ) {
       check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+      op <- options(Seurat.object.assay.version = 'v3')
+      on.exit(options(op), add = TRUE)
       stopifnot(
         "'obs_index' must be a single character value" = is.null(obs_index) ||
           (is_scalar_character(obs_index) && !is.na(obs_index)),
@@ -560,6 +562,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     ) {
       version <- 'v3'
       check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+      op <- options(Seurat.object.assay.version = 'v3')
+      on.exit(options(op), add = TRUE)
       stopifnot(
         "'X_layers' must be a named character vector" = is.character(X_layers) &&
           is_named(X_layers, allow_empty = FALSE),
