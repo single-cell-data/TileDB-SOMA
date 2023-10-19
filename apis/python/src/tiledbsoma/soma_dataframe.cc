@@ -201,16 +201,13 @@ void init_soma_dataframe(py::module &m) {
     py::class_<SOMADataFrame>(m, "SOMADataFrame")
 
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::map<std::string, std::string>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
-    .def_static("open", py::overload_cast<std::string_view, OpenMode, std::shared_ptr<Context>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def_static("exists", &SOMADataFrame::exists)
-
     .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def("close", &SOMADataFrame::close)
     .def_property_readonly("closed", [](SOMADataFrame& soma_df) -> bool { 
         return soma_df.is_open();
     })
     .def("reset", &SOMADataFrame::reset)
-
     .def("set_condition", 
         [](SOMADataFrame& reader, 
             py::object py_query_condition,
@@ -254,17 +251,12 @@ void init_soma_dataframe(py::module &m) {
         }, 
         "py_query_condition"_a,
         "py_schema"_a)
-
     .def("type", &SOMADataFrame::type)
     .def("uri", &SOMADataFrame::uri)
     .def_property_readonly("schema", [](SOMADataFrame& soma_df) -> py::object {
         auto pa = py::module::import("pyarrow");
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
-        auto schema = soma_df.schema();
-        auto attr_to_enum = soma_df.get_attr_to_enum_mapping();
-        auto tdb_schema = 
-            ArrowAdapter::tiledb_schema_to_arrow_schema(schema, attr_to_enum);
-        return pa_schema_import(py::capsule(tdb_schema.get()));
+        return pa_schema_import(py::capsule(soma_df.arrow_schema().get()));
     })
     .def_property_readonly("timestamp", &SOMADataFrame::timestamp)
     .def_property_readonly("index_column_names", &SOMADataFrame::index_column_names)
@@ -394,7 +386,6 @@ void init_soma_dataframe(py::module &m) {
 
         return to_table(buffers);
     })
-    
     .def("set_metadata", &SOMADataFrame::set_metadata)
     .def("delete_metadata", &SOMADataFrame::delete_metadata)
     .def("get_metadata", 
@@ -416,10 +407,8 @@ void init_soma_dataframe(py::module &m) {
                 results[py::str(key)] = py::array(value_type, value_num, value);
             }
         }
-
         return results;
-    }
-    )
+    })
     .def("has_metadata", &SOMADataFrame::has_metadata)
     .def("metadata_num", &SOMADataFrame::metadata_num)
     .def(
@@ -519,7 +508,6 @@ void init_soma_dataframe(py::module &m) {
         "py_arrow_array"_a,
         "partition_index"_a = 0,
         "partition_count"_a = 1)
-
     .def(
         "set_dim_points_string_or_bytes",
         static_cast<void (SOMADataFrame::*)(
@@ -574,83 +562,72 @@ void init_soma_dataframe(py::module &m) {
         "set_dim_points_uint8",
         static_cast<void (SOMADataFrame::*)(
             const std::string&, const std::vector<uint8_t>&)>(
-            &SOMADataFrame::set_dim_points))
-            
+            &SOMADataFrame::set_dim_points))       
     .def(
         "set_dim_ranges_string_or_bytes",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<std::string, std::string>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_int64",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<int64_t, int64_t>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_int32",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<int32_t, int32_t>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_int16",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<int16_t, int16_t>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_int8",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<int8_t, int8_t>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_uint64",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<uint64_t, uint64_t>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_uint32",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<uint32_t, uint32_t>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_uint16",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<uint16_t, uint16_t>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_uint8",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<uint8_t, uint8_t>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_float64",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<double, double>>&)>(
             &SOMADataFrame::set_dim_ranges))
-
     .def(
         "set_dim_ranges_float32",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<float, float>>&)>(
             &SOMADataFrame::set_dim_ranges));
-}
+    }
 }

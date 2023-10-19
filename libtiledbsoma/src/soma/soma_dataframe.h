@@ -217,11 +217,18 @@ class SOMADataFrame : public SOMAObject {
     }
 
     /**
-     * Return the data schema, in the form of a TileDB ArraySchema.
+     * Return the data schema, in the form of a TileDB schema.
      *
      * @return std::shared_ptr<ArraySchema>
      */
     std::shared_ptr<ArraySchema> schema() const;
+
+    /**
+     * Return the data schema, in the form of a ArrowSchema.
+     *
+     * @return std::unique_ptr<ArrowSchema>
+     */
+    std::unique_ptr<ArrowSchema> arrow_schema() const;
 
     /**
      * Return the index (dimension) column names.
@@ -263,15 +270,6 @@ class SOMADataFrame : public SOMAObject {
     std::pair<std::string, std::string> non_empty_domain_var(
         const std::string& name) {
         return array_->non_empty_domain_var(name);
-    };
-
-    /**
-     * @brief Get the mapping of attributes to Enumerations.
-     *
-     * @return std::map<std::string, Enumeration>
-     */
-    std::map<std::string, Enumeration> get_attr_to_enum_mapping() {
-        return array_->get_attr_to_enum_mapping();
     };
 
     /**

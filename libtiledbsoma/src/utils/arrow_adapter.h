@@ -46,6 +46,71 @@ class ArrowAdapter {
     static std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
     to_arrow(std::shared_ptr<ColumnBuffer> column);
 
+    static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
+        std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
+        auto tiledb_schema = tiledb_array->schema();
+        auto ndim = tiledb_schema.domain().ndim();
+        auto nattr = tiledb_schema.attribute_num();
+
+        std::unique_ptr<ArrowSchema>
+            arrow_schema = std::make_unique<ArrowSchema>();
+        arrow_schema->format = "+s";
+        arrow_schema->n_children = ndim + nattr;
+        arrow_schema->release = &release_schema;
+        arrow_schema->children = (ArrowSchema**)malloc(
+            sizeof(ArrowSchema*) * arrow_schema->n_children);
+
+        ArrowSchema* child;
+
+        for (uint32_t i = 0; i < ndim; ++i) {
+            auto dim = tiledb_schema.domain().dimension(i);
+            child = arrow_schema->children[i] = new ArrowSchema;
+            child->format = to_arrow_format(dim.type()).data();
+            child->name = strdup(dim.name().c_str());
+            child->metadata = nullptr;
+            child->flags = 0;
+            child->n_children = 0;
+            child->dictionary = nullptr;
+            child->children = nullptr;
+            child->release = &release_schema;
+        }
+
+        for (uint32_t i = 0; i < nattr; ++i) {
+            auto attr = tiledb_schema.attribute(i);
+            child = arrow_schema->children[ndim + i] = new ArrowSchema;
+            child->format = to_arrow_format(attr.type()).data();
+            child->name = strdup(attr.name().c_str());
+            child->metadata = nullptr;
+            child->flags = attr.nullable() ? ARROW_FLAG_NULLABLE : 0;
+            child->n_children = 0;
+            child->children = nullptr;
+            child->dictionary = nullptr;
+
+            auto enmr_name = AttributeExperimental::get_enumeration_name(
+                *ctx, attr);
+            if (enmr_name.has_value()) {
+                auto enmr = ArrayExperimental::get_enumeration(
+                    *ctx, *tiledb_array, attr.name());
+                ArrowSchema* dict = new ArrowSchema;
+                dict->format = (const char*)malloc(
+                    sizeof(char) * 2);  // mandatory, 'u' as 32bit indexing
+                strcpy((char*)dict->format, "u");
+                dict->name = strdup(enmr.name().c_str());
+                dict->metadata = nullptr;
+                dict->flags = 0;
+                dict->n_children = 0;
+                dict->children = nullptr;
+                dict->dictionary = nullptr;
+                dict->release = &release_schema;
+                dict->private_data = nullptr;
+                child->dictionary = dict;
+            }
+            child->release = &release_schema;
+        }
+
+        return arrow_schema;
+    }
+
     static std::pair<const void*, std::size_t> _get_data_and_length(
         Enumeration& enmr, const void* dst) {
         switch (enmr.type()) {
