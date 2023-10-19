@@ -11,7 +11,6 @@ from typing import Optional, Tuple
 
 import pyarrow as pa
 import somacore
-import tiledb
 from somacore import options
 from typing_extensions import Self
 
@@ -71,18 +70,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     """
 
     __slots__ = ()
-
-    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
-        """
-        Retrieves the non-empty domain for each dimension, namely the smallest
-        and largest indices in each dimension for which the sparse array has
-        data occupied.  This is nominally the same as the domain used at
-        creation time, but if for example only a corner of the available domain
-        has actually had data written, this function will return a tighter
-        range.
-        """
-        with tiledb.open(self.uri, ctx=self.context.tiledb_ctx) as A:
-            return A.nonempty_domain()  # type: ignore
 
     def read(
         self,
