@@ -46,6 +46,57 @@ class ArrowAdapter {
     static std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
     to_arrow(std::shared_ptr<ColumnBuffer> column);
 
+    static std::pair<const void*, std::size_t> _get_data_and_length(
+        Enumeration& enmr, const void* dst) {
+        switch (enmr.type()) {
+            case TILEDB_BOOL:
+            case TILEDB_INT8: {
+                auto data = enmr.as_vector<int8_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_UINT8: {
+                auto data = enmr.as_vector<uint8_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_INT16: {
+                auto data = enmr.as_vector<int16_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_UINT16: {
+                auto data = enmr.as_vector<uint16_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_INT32: {
+                auto data = enmr.as_vector<int32_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_UINT32: {
+                auto data = enmr.as_vector<uint32_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_INT64: {
+                auto data = enmr.as_vector<int64_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_UINT64: {
+                auto data = enmr.as_vector<uint64_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            default:
+                throw TileDBSOMAError(fmt::format(
+                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                    tiledb::impl::type_to_str(enmr.type())));
+        }
+    }
+
+    template <typename T>
+    static const void* _fill_data_buffer(std::vector<T> src, const void* dst) {
+        auto sz = src.size() * sizeof(T);
+        dst = (const void*)malloc(sz);
+        std::memcpy((void*)dst, src.data(), sz);
+        return dst;
+    }
+
     static std::unique_ptr<ArrowSchema> tiledb_schema_to_arrow_schema(
         std::shared_ptr<ArraySchema> tiledb_schema,
         std::map<std::string, Enumeration> attr_to_enmr = {});

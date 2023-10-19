@@ -402,23 +402,23 @@ void init_soma_dataframe(py::module &m) {
     .def_property_readonly("meta", [](SOMADataFrame&soma_dataframe) -> py::dict {
         py::dict results;
             
-            for (auto const& [key, val] : soma_dataframe.get_metadata()){
-                tiledb_datatype_t tdb_type = std::get<MetadataInfo::dtype>(val);
-                uint32_t value_num = std::get<MetadataInfo::num>(val);
-                const void *value = std::get<MetadataInfo::value>(val);
+        for (auto const& [key, val] : soma_dataframe.get_metadata()){
+            tiledb_datatype_t tdb_type = std::get<MetadataInfo::dtype>(val);
+            uint32_t value_num = std::get<MetadataInfo::num>(val);
+            const void *value = std::get<MetadataInfo::value>(val);
 
-                if(tdb_type == TILEDB_STRING_UTF8){
-                    results[py::str(key)] = py::str(std::string((const char*)value, value_num));
-                }else if(tdb_type == TILEDB_STRING_ASCII){
-                    results[py::str(key)] = py::bytes(std::string((const char*)value, value_num));
-                }else{
-                    py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
-                    results[py::str(key)] = py::array(value_type, value_num, value);
-                }
+            if(tdb_type == TILEDB_STRING_UTF8){
+                results[py::str(key)] = py::str(std::string((const char*)value, value_num));
+            }else if(tdb_type == TILEDB_STRING_ASCII){
+                results[py::str(key)] = py::bytes(std::string((const char*)value, value_num));
+            }else{
+                py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+                results[py::str(key)] = py::array(value_type, value_num, value);
             }
-
-            return results;
         }
+
+        return results;
+    }
     )
     .def("has_metadata", &SOMADataFrame::has_metadata)
     .def("metadata_num", &SOMADataFrame::metadata_num)
