@@ -637,7 +637,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return True
 
     def _set_reader_coord_by_numeric_slice(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
+        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: Slice[Any]
     ) -> bool:
         try:
             lo_hi = _util.slice_to_numeric_range(coord, self.domain[dim_idx])
