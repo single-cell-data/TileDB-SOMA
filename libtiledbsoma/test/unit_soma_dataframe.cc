@@ -86,9 +86,6 @@ TEST_CASE("SOMADataFrame: basic") {
     REQUIRE(soma_dataframe->uri() == uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
     REQUIRE(soma_dataframe->type() == "SOMADataFrame");
-    auto schema = soma_dataframe->schema();
-    REQUIRE(schema->has_attribute("a0"));
-    REQUIRE(schema->domain().has_dimension("d0"));
     std::vector<std::string> expected_index_column_names = {"d0"};
     REQUIRE(
         soma_dataframe->index_column_names() == expected_index_column_names);

@@ -39,6 +39,7 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+#include "../utils/arrow_adapter.h"
 #include "enums.h"
 #include "logger_public.h"
 #include "managed_query.h"
@@ -472,12 +473,21 @@ class SOMAArray {
     uint64_t nnz();
 
     /**
-     * @brief Get the schema of the array.
+     * @brief Get the TileDB schema of the array.
      *
      * @return std::shared_ptr<ArraySchema> Schema
      */
     std::shared_ptr<ArraySchema> schema() const {
         return mq_->schema();
+    }
+
+    /**
+     * @brief Get the Arrow schema of the array.
+     *
+     * @return std::unique_ptr<ArrowSchema> Schema
+     */
+    std::unique_ptr<ArrowSchema> arrow_schema() const {
+        return ArrowAdapter::arrow_schema_from_tiledb_array(ctx_, arr_);
     }
 
     /**
