@@ -73,7 +73,7 @@ add_dependencies(build_tests
 
 # Add custom target 'check' in the root of the tree
 add_custom_target(
-  check COMMAND ${CMAKE_CTEST_COMMAND} -V -C ${CMAKE_BUILD_TYPE}
+  check COMMAND ${CMAKE_CTEST_COMMAND} -V -C $<CONFIG>
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../
   DEPENDS
     build_tests
