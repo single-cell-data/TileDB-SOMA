@@ -132,6 +132,23 @@ def test_dense_nd_array_requires_shape(tmp_path, shape_is_numeric):
             soma.DenseNDArray.create(uri, type=pa.float32(), shape=(None, None)).close()
 
 
+def test_dense_nd_array_ned_write(tmp_path):
+    uri = tmp_path.as_posix()
+
+    with soma.DenseNDArray.create(
+        uri=uri,
+        type=pa.int32(),
+        shape=[1000000],
+    ) as dnda:
+        dnda.write(
+            (slice(0, 4),),
+            pa.Tensor.from_numpy(np.asarray([100, 101, 102, 103])),
+        )
+
+    with soma.DenseNDArray.open(uri) as dnda:
+        assert (dnda.read().to_numpy() == np.asarray([100, 101, 102, 103])).all()
+
+
 @pytest.mark.parametrize(
     "io",
     [

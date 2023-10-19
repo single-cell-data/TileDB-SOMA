@@ -11,6 +11,7 @@ from typing import Optional, Tuple
 
 import pyarrow as pa
 import somacore
+import tiledb
 from somacore import options
 from typing_extensions import Self
 
@@ -71,6 +72,18 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     __slots__ = ()
 
+    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
+        """
+        Retrieves the non-empty domain for each dimension, namely the smallest
+        and largest indices in each dimension for which the sparse array has
+        data occupied.  This is nominally the same as the domain used at
+        creation time, but if for example only a corner of the available domain
+        has actually had data written, this function will return a tighter
+        range.
+        """
+        with tiledb.open(self.uri, ctx=self.context.tiledb_ctx) as A:
+            return A.nonempty_domain()  # type: ignore
+
     def read(
         self,
         coords: options.DenseNDCoords = (),
@@ -108,8 +121,23 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         self._check_open_read()
         result_order = somacore.ResultOrder(result_order)
 
-        schema = self._handle.schema
-        target_shape = dense_indices_to_shape(coords, schema.shape, result_order)
+        # The dense_indices_to_shape includes, as one of its roles, how to handle default
+        # coordinates -- e.g. `dnda.read()`. The default for a DenseNDArray should be "all the data"
+        # -- but what is that? If the schema shape matches the non-empty domain -- e.g. at create,
+        # shape was 100x200, and at write, 100x200 cells were written, those are both the same. But
+        # if the array was written with room for growth -- e.g. created with shape
+        # 1,000,000x1,000,000 but only 100x200 cells were written -- then we need the non-empty
+        # domain.
+        #
+        # The non-empty domain is the corret choice in either case.
+        #
+        # The only exception is if the array has been created but no data have been written at
+        # all, in which case the best we can do is use the schema shape.
+        data_shape = self._handle.schema.shape
+        ned = self.non_empty_domain()
+        if ned is not None:
+            data_shape = tuple(slot[1] + 1 for slot in ned)
+        target_shape = dense_indices_to_shape(coords, data_shape, result_order)
 
         sr = self._soma_reader(result_order=result_order)
 
