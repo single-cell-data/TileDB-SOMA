@@ -263,15 +263,20 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         )
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: object
     ) -> bool:
         if super()._set_reader_coord(sr, dim_idx, dim, coord):
             return True
         if isinstance(coord, Sequence):
-            if dim.dtype == np.int64:
+            if pa.types.is_int64(dim.type):
                 sr.set_dim_points_int64(dim.name, coord)
                 return True
-            elif dim.dtype == "str" or dim.dtype == "bytes":
+            elif (
+                pa.types.is_large_string(dim.type)
+                or pa.types.is_large_binary(dim.type)
+                or pa.types.is_string(dim.type)
+                or pa.types.is_binary(dim.type)
+            ):
                 sr.set_dim_points_string_or_bytes(dim.name, coord)
                 return True
             else:
@@ -282,10 +287,15 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 raise ValueError(
                     f"only 1D numpy arrays may be used to index; got {coord.ndim}"
                 )
-            if dim.dtype == np.int64:
+            if pa.types.is_int64(dim.type):
                 sr.set_dim_points_int64(dim.name, coord)
                 return True
-            elif dim.dtype == "str" or dim.dtype == "bytes":
+            elif (
+                pa.types.is_large_string(dim.type)
+                or pa.types.is_large_binary(dim.type)
+                or pa.types.is_string(dim.type)
+                or pa.types.is_binary(dim.type)
+            ):
                 sr.set_dim_points_string_or_bytes(dim.name, coord)
                 return True
 
