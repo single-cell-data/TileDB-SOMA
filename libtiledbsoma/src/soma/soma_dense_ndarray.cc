@@ -96,7 +96,7 @@ SOMADenseNDArray::SOMADenseNDArray(
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    std::string array_name = std::filesystem::path(uri).filename();
+    std::string array_name = std::filesystem::path(uri).filename().string();
     array_ = std::make_shared<SOMAArray>(
         mode,
         uri,
