@@ -74,8 +74,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         has actually had data written, this function will return a tighter
         range.
         """
-        with tiledb.open(self.uri, ctx=self.context.tiledb_ctx) as A:
-            return A.nonempty_domain()  # type: ignore
+        return self._handle.non_empty_domain()
 
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """Returns the TileDB array schema, for internal use."""
