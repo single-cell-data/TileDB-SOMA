@@ -14,18 +14,14 @@ on:
         required: true
         type: string
       cc:
-        required: true
+        required: false
         type: string
       cxx:
-        required: true
+        required: false
         type: string
       report_codecov:
         required: true
         type: boolean
-      is_mac:
-        required: false
-        type: boolean
-        default: false
       run_lint:
         required: false
         type: boolean
@@ -33,7 +29,7 @@ on:
 
 jobs:
   lint:
-    if: ${{ inputs.run_lint }}
+    if: inputs.run_lint
     runs-on: ${{ inputs.os }}
     steps:
     - name: Checkout TileDB-SOMA
@@ -62,7 +58,7 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
     - name: Select XCode version
-      if: inputs.is_mac
+      if: startsWith(inputs.os, 'macos')
       uses: maxim-lobanov/setup-xcode@v1
       with:
         # Pending https://github.com/actions/runner-images/issues/6350

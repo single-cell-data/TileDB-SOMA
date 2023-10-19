@@ -35,7 +35,6 @@ jobs:
       python_version: ${{ matrix.python-version }}
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
-      is_mac: ${{ contains(matrix.os, 'macos') }}
       report_codecov: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
       run_lint: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
     secrets: inherit
