@@ -72,7 +72,15 @@ def test_platform_config(adata):
             ]
             # TODO as we remove usage of TileDB-Py in favor of ArrowSchema, we
             # need a new method to get which filters have applied to the column
-            # rather than grabbing it from the ArraySchema
+            # rather than grabbing it from the ArraySchema. One consideration
+            # would be to store TileDB information in JSON format as a field in 
+            # the ArraySchema metadata very similar to how Pandas stores information
+            # within pa.Schema.pandas_metadata. This could hold not only which
+            # filters have been applied to the column, but other info that cannot
+            # be "directly" stored in the ArrowSchema such as whether the column  
+            # is a TileDB attribute or dimension, whether this represent a dense 
+            # or sparse array, etc. This may be as easy as simply copying the
+            # platform_config by calling pa.Schema.with_metadata(platform_config).
             # var_df = exp.ms["RNA"].var
             # var_arr = var_df._handle.reader
             # assert var_arr.dim("soma_joinid").filters == [tiledb.ZstdFilter(level=1)]
