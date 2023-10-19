@@ -229,6 +229,13 @@ class SOMADataFrame : public SOMAObject {
     std::unique_ptr<ArrowSchema> schema() const;
 
     /**
+     * Return the data schema, in the form of a ArrowSchema.
+     *
+     * @return std::unique_ptr<ArrowSchema>
+     */
+    std::unique_ptr<ArrowSchema> arrow_schema() const;
+
+    /**
      * Return the index (dimension) column names.
      *
      * @return std::vector<std::string>
