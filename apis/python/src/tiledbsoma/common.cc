@@ -42,6 +42,43 @@ std::unordered_map<tiledb_datatype_t, std::string> _tdb_to_np_name_dtype = {
     {TILEDB_BOOL, "bool"},
 };
 
+std::unordered_map<std::string, tiledb_datatype_t> _np_name_to_tdb_dtype = {
+    {"int32", TILEDB_INT32},
+    {"int64", TILEDB_INT64},
+    {"float32", TILEDB_FLOAT32},
+    {"float64", TILEDB_FLOAT64},
+    {"int8", TILEDB_INT8},
+    {"uint8", TILEDB_UINT8},
+    {"int16", TILEDB_INT16},
+    {"uint16", TILEDB_UINT16},
+    {"uint32", TILEDB_UINT32},
+    {"uint64", TILEDB_UINT64},
+    {"datetime64[Y]", TILEDB_DATETIME_YEAR},
+    {"datetime64[M]", TILEDB_DATETIME_MONTH},
+    {"datetime64[W]", TILEDB_DATETIME_WEEK},
+    {"datetime64[D]", TILEDB_DATETIME_DAY},
+    {"datetime64[h]", TILEDB_DATETIME_HR},
+    {"datetime64[m]", TILEDB_DATETIME_MIN},
+    {"datetime64[s]", TILEDB_DATETIME_SEC},
+    {"datetime64[ms]", TILEDB_DATETIME_MS},
+    {"datetime64[us]", TILEDB_DATETIME_US},
+    {"datetime64[ns]", TILEDB_DATETIME_NS},
+    {"datetime64[ps]", TILEDB_DATETIME_PS},
+    {"datetime64[fs]", TILEDB_DATETIME_FS},
+    {"datetime64[as]", TILEDB_DATETIME_AS},
+    /* duration types map to timedelta */
+    {"timedelta64[h]", TILEDB_TIME_HR},
+    {"timedelta64[m]", TILEDB_TIME_MIN},
+    {"timedelta64[s]", TILEDB_TIME_SEC},
+    {"timedelta64[ms]", TILEDB_TIME_MS},
+    {"timedelta64[us]", TILEDB_TIME_US},
+    {"timedelta64[ns]", TILEDB_TIME_NS},
+    {"timedelta64[ps]", TILEDB_TIME_PS},
+    {"timedelta64[fs]", TILEDB_TIME_FS},
+    {"timedelta64[as]", TILEDB_TIME_AS},
+    {"bool", TILEDB_BOOL},
+};
+
 py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
   if (type == TILEDB_CHAR || type == TILEDB_STRING_UTF8 ||
       type == TILEDB_STRING_ASCII) {
@@ -87,6 +124,20 @@ py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
   throw TileDBSOMAError("tiledb datatype not understood ('" +
         tiledb::impl::type_to_str(type) +
         "', cell_val_num: " + std::to_string(cell_val_num) + ")");
+}
+
+tiledb_datatype_t np_to_tdb_dtype(py::dtype type) {
+  auto name = py::str(py::getattr(type, "name"));
+  if (_np_name_to_tdb_dtype.count(name) == 1)
+    return _np_name_to_tdb_dtype[name];
+
+  auto kind = py::str(py::getattr(type, "kind"));
+  if (kind == py::str("S"))
+    return TILEDB_STRING_ASCII;
+  if (kind == py::str("U"))
+    return TILEDB_STRING_UTF8;
+
+  TPY_ERROR_LOC("could not handle numpy dtype");
 }
 
 /**

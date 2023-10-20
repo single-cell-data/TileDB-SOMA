@@ -146,20 +146,12 @@ std::shared_ptr<Context> SOMADataFrame::ctx() {
     return array_->ctx();
 }
 
-std::shared_ptr<ArraySchema> SOMADataFrame::schema() const {
+std::unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
     return array_->schema();
-}
-
-std::unique_ptr<ArrowSchema> SOMADataFrame::arrow_schema() const {
-    return array_->arrow_schema();
 }
 
 const std::vector<std::string> SOMADataFrame::index_column_names() const {
     return array_->dimension_names();
-}
-
-int64_t SOMADataFrame::ndim() const {
-    return array_->ndim();
 }
 
 int64_t SOMADataFrame::count() const {

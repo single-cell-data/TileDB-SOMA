@@ -541,7 +541,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             if coord.stop is None:
                 # There's no way to specify "to infinity" for strings.
                 # We have to get the nonempty domain and use that as the end.
-                ned = self._handle.nonempty_domain()
+                ned = self._handle.non_empty_domain()
                 if ned is None:
                     raise ValueError(
                         "Found empty nonempty domain when setting "
