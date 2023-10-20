@@ -18,6 +18,7 @@ from typing import (
     Mapping,
     MutableMapping,
     Optional,
+    Tuple,
     Type,
     TypeVar,
     Union,
@@ -192,6 +193,17 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
     @property
     def schema(self) -> tiledb.ArraySchema:
         return self._handle.schema
+
+    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
+        """
+        Retrieves the non-empty domain for each dimension, namely the smallest
+        and largest indices in each dimension for which the array/dataframe has
+        data occupied.  This is nominally the same as the domain used at
+        creation time, but if for example only a portion of the available domain
+        has actually had data written, this function will return a tighter
+        range.
+        """
+        return self._handle.nonempty_domain()  # type: ignore
 
 
 @attrs.define(frozen=True)
