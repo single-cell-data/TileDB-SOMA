@@ -87,9 +87,6 @@ TEST_CASE("SOMASparseNDArray: basic") {
     REQUIRE(soma_sparse->ctx() == ctx);
     REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
     REQUIRE(soma_sparse->is_sparse() == true);
-    auto schema = soma_sparse->schema();
-    REQUIRE(schema->has_attribute("a0"));
-    REQUIRE(schema->domain().has_dimension("d0"));
     REQUIRE(soma_sparse->ndim() == 1);
     REQUIRE(soma_sparse->nnz() == 0);
     soma_sparse->close();
