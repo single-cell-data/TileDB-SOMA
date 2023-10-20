@@ -152,16 +152,8 @@ std::unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
     return array_->arrow_schema();
 }
 
-std::unique_ptr<ArrowSchema> SOMADataFrame::arrow_schema() const {
-    return array_->arrow_schema();
-}
-
 const std::vector<std::string> SOMADataFrame::index_column_names() const {
     return array_->dimension_names();
-}
-
-int64_t SOMADataFrame::count() const {
-    return array_->nnz();
 }
 
 int64_t SOMADataFrame::count() const {
