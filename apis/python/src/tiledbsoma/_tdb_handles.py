@@ -271,6 +271,8 @@ class GroupWrapper(Wrapper[tiledb.Group]):
 
 
 class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
+    """Wrapper around a Pybind11 SOMADataFrame handle."""
+
     @classmethod
     def _opener(
         cls,
@@ -299,14 +301,14 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
         """
         # non–attrs-managed field
         self.metadata = MetadataWrapper(self, dict(reader.meta))
-        
+
     @property
     def schema(self) -> pa.Schema:
         return self._handle.schema
 
     @property
-    def meta(self) -> Dict[str, Any]:
-        return MetadataWrapper(self, dict(self._handle.meta)) 
+    def meta(self) -> "MetadataWrapper":
+        return MetadataWrapper(self, dict(self._handle.meta))
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
