@@ -272,6 +272,7 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
         return self._handle.enum(label)
 
 
+
 @attrs.define(frozen=True)
 class GroupEntry:
     uri: str
