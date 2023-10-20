@@ -94,6 +94,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     def __init__(
         self,
+        # TODO DataFrameWrapper should be _WrapperType_co
         handle: Union[_WrapperType_co, DataFrameWrapper],
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",

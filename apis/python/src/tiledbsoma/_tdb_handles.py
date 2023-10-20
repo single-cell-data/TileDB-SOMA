@@ -25,6 +25,7 @@ from typing import (
 )
 
 import attrs
+import numpy as np
 import pyarrow as pa
 import tiledb
 from somacore import options
@@ -316,8 +317,8 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
         for name in self._handle.index_column_names:
             dtype = self._handle.schema.field(name).type
             if pa.types.is_timestamp(dtype):
-                dom = self._handle.domain(name)
-                np_dtype = dtype.to_pandas_dtype()
+                np_dtype = np.dtype(dtype.to_pandas_dtype())
+                dom = self._handle.domain(name, np_dtype)
                 result.append(
                     (
                         np_dtype.type(dom[0], dtype.unit),
@@ -325,20 +326,26 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
                     )
                 )
             else:
-                result.append(self._handle.domain(name))
+                if pa.types.is_large_string(dtype) or pa.types.is_string(dtype):
+                    dtype = np.dtype("U")
+                elif pa.types.is_large_binary(dtype) or pa.types.is_binary(dtype):
+                    dtype = np.dtype("S")
+                else:
+                    dtype = np.dtype(dtype.to_pandas_dtype())
+                result.append(self._handle.domain(name, dtype))
         return tuple(result)
 
     @property
     def ndim(self) -> int:
-        return int(self._handle.ndim)
+        return int(len(self._handle.index_column_names))
 
-    def nonempty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
+    def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
         result = []
         for name in self._handle.index_column_names:
             dtype = self._handle.schema.field(name).type
             if pa.types.is_timestamp(dtype):
-                ned = self._handle.nonempty_domain(name)
-                np_dtype = dtype.to_pandas_dtype()
+                np_dtype = np.dtype(dtype.to_pandas_dtype())
+                ned = self._handle.non_empty_domain(name, dtype)
                 result.append(
                     (
                         np_dtype.type(ned[0], dtype.unit),
@@ -346,7 +353,13 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
                     )
                 )
             else:
-                result.append(self._handle.nonempty_domain(name))
+                if pa.types.is_large_string(dtype) or pa.types.is_string(dtype):
+                    dtype = np.dtype("U")
+                elif pa.types.is_large_binary(dtype) or pa.types.is_binary(dtype):
+                    dtype = np.dtype("S")
+                else:
+                    dtype = np.dtype(dtype.to_pandas_dtype())
+                result.append(self._handle.non_empty_domain(name, dtype))
         return None if len(result) == 0 else tuple(result)
 
     @property

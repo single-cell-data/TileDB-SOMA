@@ -256,15 +256,14 @@ void init_soma_dataframe(py::module &m) {
     .def_property_readonly("schema", [](SOMADataFrame& soma_df) -> py::object {
         auto pa = py::module::import("pyarrow");
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
-        return pa_schema_import(py::capsule(soma_df.arrow_schema().get()));
+        return pa_schema_import(py::capsule(soma_df.schema().get()));
     })
     .def_property_readonly("timestamp", &SOMADataFrame::timestamp)
     .def_property_readonly("index_column_names", &SOMADataFrame::index_column_names)
-    .def("nonempty_domain", [](SOMADataFrame& soma_df, std::string name){
-        switch (soma_df.schema()->domain().dimension(name).type()) {
-        case TILEDB_UINT64: {
+    .def("non_empty_domain", [](SOMADataFrame& soma_df, std::string name, py::dtype dtype){
+        switch (np_to_tdb_dtype(dtype)) {
+        case TILEDB_UINT64:
             return py::cast(soma_df.non_empty_domain<uint64_t>(name));
-        }
         case TILEDB_DATETIME_YEAR:
         case TILEDB_DATETIME_MONTH:
         case TILEDB_DATETIME_WEEK:
@@ -278,48 +277,35 @@ void init_soma_dataframe(py::module &m) {
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
-        case TILEDB_INT64: {
+        case TILEDB_INT64:
             return py::cast(soma_df.non_empty_domain<int64_t>(name));
-        }
-        case TILEDB_UINT32: {
+        case TILEDB_UINT32:
             return py::cast(soma_df.non_empty_domain<uint32_t>(name));
-        }
-        case TILEDB_INT32: {
+        case TILEDB_INT32:
             return py::cast(soma_df.non_empty_domain<int32_t>(name));
-        }
-        case TILEDB_UINT16: {
+        case TILEDB_UINT16:
             return py::cast(soma_df.non_empty_domain<uint16_t>(name));
-        }
-        case TILEDB_INT16: {
+        case TILEDB_INT16:
             return py::cast(soma_df.non_empty_domain<int16_t>(name));
-        }
-        case TILEDB_UINT8: {
+        case TILEDB_UINT8:
             return py::cast(soma_df.non_empty_domain<uint8_t>(name));
-        }
-        case TILEDB_INT8: {
+        case TILEDB_INT8:
             return py::cast(soma_df.non_empty_domain<int8_t>(name));
-        }
-        case TILEDB_FLOAT64: {
+        case TILEDB_FLOAT64:
             return py::cast(soma_df.non_empty_domain<double>(name));
-        }
-        case TILEDB_FLOAT32: {
+        case TILEDB_FLOAT32:
             return py::cast(soma_df.non_empty_domain<float>(name));
-        }
         case TILEDB_STRING_UTF8:
-        case TILEDB_STRING_ASCII: {
+        case TILEDB_STRING_ASCII: 
             return py::cast(soma_df.non_empty_domain_var(name));
-        }
         default:
             throw TileDBSOMAError("Unsupported dtype for nonempty domain.");
         }
     })
-    .def("domain", [](SOMADataFrame& soma_df, std::string name) -> py::tuple {
-        auto dim = soma_df.schema()->domain().dimension(name);
-        switch (dim.type()) {
-        case TILEDB_UINT64: {
-        auto dom = dim.domain<uint64_t>();
-        return py::make_tuple(dom.first, dom.second);
-        }
+    .def("domain", [](SOMADataFrame& soma_df, std::string name, py::dtype dtype) {
+        switch (np_to_tdb_dtype(dtype)) {
+        case TILEDB_UINT64:
+            return py::cast(soma_df.domain<uint64_t>(name));
         case TILEDB_DATETIME_YEAR:
         case TILEDB_DATETIME_MONTH:
         case TILEDB_DATETIME_WEEK:
@@ -333,50 +319,33 @@ void init_soma_dataframe(py::module &m) {
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
-        case TILEDB_INT64: {
-        auto dom = dim.domain<int64_t>();
-        return py::make_tuple(dom.first, dom.second);
-        }
-        case TILEDB_UINT32: {
-        auto dom = dim.domain<uint32_t>();
-        return py::make_tuple(dom.first, dom.second);
-        }
-        case TILEDB_INT32: {
-        auto dom = dim.domain<int32_t>();
-        return py::make_tuple(dom.first, dom.second);
-        }
-        case TILEDB_UINT16: {
-        auto dom = dim.domain<uint16_t>();
-        return py::make_tuple(dom.first, dom.second);
-        }
-        case TILEDB_INT16: {
-        auto dom = dim.domain<int16_t>();
-        return py::make_tuple(dom.first, dom.second);
-        }
-        case TILEDB_UINT8: {
-        auto dom = dim.domain<uint8_t>();
-        return py::make_tuple(dom.first, dom.second);
-        }
-        case TILEDB_INT8: {
-        auto dom = dim.domain<int8_t>();
-        return py::make_tuple(dom.first, dom.second);
-        }
-        case TILEDB_FLOAT64: {
-        auto dom = dim.domain<double>();
-        return py::make_tuple(dom.first, dom.second);
-        }
-        case TILEDB_FLOAT32: {
-        auto dom = dim.domain<float>();
-        return py::make_tuple(dom.first, dom.second);
-        }
+        case TILEDB_INT64:
+            return py::cast(soma_df.domain<int64_t>(name));
+        case TILEDB_UINT32:
+            return py::cast(soma_df.domain<uint32_t>(name));
+        case TILEDB_INT32:
+            return py::cast(soma_df.domain<int32_t>(name));
+        case TILEDB_UINT16:
+            return py::cast(soma_df.domain<uint16_t>(name));
+        case TILEDB_INT16:
+            return py::cast(soma_df.domain<int16_t>(name));
+        case TILEDB_UINT8:
+            return py::cast(soma_df.domain<uint8_t>(name));
+        case TILEDB_INT8:
+            return py::cast(soma_df.domain<int8_t>(name));
+        case TILEDB_FLOAT64:
+            return py::cast(soma_df.domain<double>(name));
+        case TILEDB_FLOAT32:
+            return py::cast(soma_df.domain<float>(name));
+        case TILEDB_STRING_UTF8:
         case TILEDB_STRING_ASCII: {
-        return py::make_tuple("", "");
+            std::pair<std::string, std::string> str_domain;
+            return py::cast(std::make_pair("", ""));
         }
         default:
-        throw TileDBSOMAError("Unsupported dtype for Dimension's domain");
+            throw TileDBSOMAError("Unsupported dtype for Dimension's domain");
         }
     })
-    .def_property_readonly("ndim", &SOMADataFrame::ndim)
     .def_property_readonly("count", &SOMADataFrame::count)
     .def("read_next", [](SOMADataFrame& dataframe){
         // Release GIL when reading data
