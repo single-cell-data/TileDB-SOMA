@@ -5,7 +5,7 @@
 
 import datetime
 from contextlib import ExitStack
-from typing import Any, Generic, MutableMapping, Optional, Type, TypeVar
+from typing import Any, Generic, MutableMapping, Optional, Type, TypeVar, Union
 
 import somacore
 import tiledb
@@ -94,7 +94,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     def __init__(
         self,
-        handle: _WrapperType_co,
+        handle: Union[_WrapperType_co, DataFrameWrapper],
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ):
