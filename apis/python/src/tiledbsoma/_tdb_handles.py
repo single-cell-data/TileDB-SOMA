@@ -200,16 +200,12 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
     def schema(self) -> tiledb.ArraySchema:
         return self._handle.schema
 
-    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
-        """
-        Retrieves the non-empty domain for each dimension, namely the smallest
-        and largest indices in each dimension for which the array/dataframe has
-        data occupied.  This is nominally the same as the domain used at
-        creation time, but if for example only a portion of the available domain
-        has actually had data written, this function will return a tighter
-        range.
-        """
-        return self._handle.nonempty_domain()  # type: ignore
+    def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
+        try:
+            ned: Optional[Tuple[Tuple[Any, Any], ...]] = self._handle.nonempty_domain()
+            return ned
+        except tiledb.TileDBError as e:
+            raise SOMAError(e)
 
     def enum(self, label: str) -> tiledb.Enumeration:
         return self._handle.enum(label)
@@ -232,6 +228,7 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
     def dim_names(self) -> Tuple[str, ...]:
         schema = self._handle.schema
         return tuple(schema.domain.dim(i).name for i in range(schema.domain.ndim))
+
 
 @attrs.define(frozen=True)
 class GroupEntry:

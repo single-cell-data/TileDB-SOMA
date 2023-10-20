@@ -72,7 +72,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         else:
             return self._tiledb_array_schema()
 
-    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
+    def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
         """
         Retrieves the non-empty domain for each dimension, namely the smallest
         and largest indices in each dimension for which the array/dataframe has
