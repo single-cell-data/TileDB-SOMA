@@ -125,12 +125,13 @@ bool SOMADataFrame::exists(std::string_view uri) {
         if (!soma_object_type.has_value())
             return false;
 
-        return std::string((const char*)std::get<MetadataInfo::value>(
-                   *soma_object_type)) == "SOMADataFrame";
+        const char* dtype = (const char*)std::get<MetadataInfo::value>(
+            *soma_object_type);
+
+        return std::string(dtype).find("SOMADataFrame") != std::string::npos;
     } catch (std::exception& e) {
         return false;
     }
-    return true;
 }
 
 bool SOMADataFrame::is_open() const {
