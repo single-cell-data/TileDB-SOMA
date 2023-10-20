@@ -354,7 +354,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         # In the unlikely event that a previous data update succeeded but the
         # subsequent metadata update did not, take the union of the core non-empty domain
         # (which is done as part of the data update) and the metadata bounding box.
-        ned = self.non_empty_domain()
+        ned = self.non_empty_domain() or tuple()
         for i, nedslot in enumerate(ned):
             ned_lower, ned_upper = nedslot
             bbox_lower, bbox_upper = retval[i]
