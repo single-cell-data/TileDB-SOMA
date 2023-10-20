@@ -12,6 +12,7 @@ from .ingest import (
     to_anndata,
     to_h5ad,
     update_obs,
+    update_uns,
     update_var,
 )
 
@@ -30,4 +31,5 @@ __all__ = (
     "to_h5ad",
     "update_obs",
     "update_var",
+    "update_uns",
 )
