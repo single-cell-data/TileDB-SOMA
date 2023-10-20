@@ -33,8 +33,6 @@
 #ifndef SOMA_DATAFRAME
 #define SOMA_DATAFRAME
 
-#include <tiledb/tiledb>
-#include "../utils/arrow_adapter.h"
 #include "enums.h"
 #include "soma_array.h"
 #include "soma_object.h"

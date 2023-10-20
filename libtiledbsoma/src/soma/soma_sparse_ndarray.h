@@ -33,7 +33,6 @@
 #ifndef SOMA_SPARSE_NDARRAY
 #define SOMA_SPARSE_NDARRAY
 
-#include <tiledb/tiledb>
 #include "enums.h"
 #include "soma_array.h"
 #include "soma_object.h"
