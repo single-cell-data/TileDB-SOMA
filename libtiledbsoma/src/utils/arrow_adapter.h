@@ -92,9 +92,8 @@ class ArrowAdapter {
                 auto enmr = ArrayExperimental::get_enumeration(
                     *ctx, *tiledb_array, attr.name());
                 ArrowSchema* dict = new ArrowSchema;
-                dict->format = (const char*)malloc(
-                    sizeof(char) * 2);  // mandatory, 'u' as 32bit indexing
-                strcpy((char*)dict->format, "u");
+                dict->format = strdup(
+                    to_arrow_format(enmr.type(), false).data());
                 dict->name = strdup(enmr.name().c_str());
                 dict->metadata = nullptr;
                 dict->flags = 0;
