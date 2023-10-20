@@ -147,7 +147,7 @@ std::shared_ptr<Context> SOMADataFrame::ctx() {
 }
 
 std::unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
-    return array_->schema();
+    return array_->arrow_schema();
 }
 
 const std::vector<std::string> SOMADataFrame::index_column_names() const {

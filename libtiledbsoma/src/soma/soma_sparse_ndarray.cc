@@ -132,7 +132,7 @@ std::shared_ptr<Context> SOMASparseNDArray::ctx() {
 }
 
 std::unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
-    return array_->schema();
+    return array_->arrow_schema();
 }
 
 std::vector<int64_t> SOMASparseNDArray::shape() const {
