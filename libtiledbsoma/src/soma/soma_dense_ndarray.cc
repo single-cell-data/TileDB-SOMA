@@ -131,7 +131,7 @@ std::shared_ptr<Context> SOMADenseNDArray::ctx() {
     return array_->ctx();
 }
 
-std::shared_ptr<ArraySchema> SOMADenseNDArray::schema() const {
+std::unique_ptr<ArrowSchema> SOMADenseNDArray::schema() const {
     return array_->schema();
 }
 

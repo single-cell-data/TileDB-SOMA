@@ -217,18 +217,11 @@ class SOMADataFrame : public SOMAObject {
     }
 
     /**
-     * Return the data schema, in the form of a TileDB schema.
-     *
-     * @return std::shared_ptr<ArraySchema>
-     */
-    std::shared_ptr<ArraySchema> schema() const;
-
-    /**
      * Return the data schema, in the form of a ArrowSchema.
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    std::unique_ptr<ArrowSchema> arrow_schema() const;
+    std::unique_ptr<ArrowSchema> schema() const;
 
     /**
      * Return the index (dimension) column names.
@@ -238,13 +231,6 @@ class SOMADataFrame : public SOMAObject {
     const std::vector<std::string> index_column_names() const;
 
     /**
-     * Return the number of dimnesions.
-     *
-     * @return int64_t
-     */
-    int64_t ndim() const;
-
-    /**
      * Return the number of rows.
      *
      * @return int64_t
@@ -252,25 +238,34 @@ class SOMADataFrame : public SOMAObject {
     int64_t count() const;
 
     /**
-     * Retrieves the non-empty domain from the array. This is the union of the
-     * non-empty domains of the array fragments.
+     * Retrieves the non-empty domain of the column index.
      *
      * @return int64_t
      */
     template <typename T>
-    std::pair<T, T> non_empty_domain(const std::string& name) {
-        return array_->non_empty_domain<T>(name);
+    std::pair<T, T> non_empty_domain(const std::string& column_index_name) {
+        return array_->non_empty_domain<T>(column_index_name);
     };
 
     /**
-     * Retrieves the non-empty domain from the array on the given dimension.
-     * This is the union of the non-empty domains of the array fragments.
+     * Retrieves the non-empty domain of the column index.
      * Applicable only to var-sized dimensions.
      */
     std::pair<std::string, std::string> non_empty_domain_var(
-        const std::string& name) {
-        return array_->non_empty_domain_var(name);
+        const std::string& column_index_name) {
+        return array_->non_empty_domain_var(column_index_name);
     };
+
+    /**
+     * Returns the domain of the given column index.
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> domain(const std::string& column_index_name) const {
+        return array_->domain<T>(column_index_name);
+    }
 
     /**
      * @brief Read the next chunk of results from the query. If all results have
