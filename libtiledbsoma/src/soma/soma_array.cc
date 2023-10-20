@@ -203,7 +203,6 @@ void SOMAArray::reset(
                                      TILEDB_ROW_MAJOR :
                                      TILEDB_COL_MAJOR;
         mq_->set_layout(layout);
-        result_order_ = result_order;
     }
 
     first_read_next_ = true;
@@ -362,7 +361,7 @@ uint64_t SOMAArray::nnz_slow() {
         "count_cells",
         {mq_->schema()->domain().dimension(0).name()},
         batch_size_,
-        result_order_,
+        result_order(),
         timestamp_);
 
     uint64_t total_cell_num = 0;

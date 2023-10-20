@@ -181,6 +181,15 @@ class ManagedQuery {
     }
 
     /**
+     * @brief Get query result order (layout).
+     *
+     * @return layout A tiledb_layout_t constant
+     */
+    tiledb_layout_t query_layout() const {
+        return query_->query_layout();
+    }
+
+    /**
      * @brief Set column data for write query.
      *
      * @param column_name Column name

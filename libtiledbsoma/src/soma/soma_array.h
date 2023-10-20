@@ -355,6 +355,16 @@ class SOMAArray {
     }
 
     /**
+     * @brief Returns the result order set by the query.
+     *
+     * @return ResultOrder
+     */
+    ResultOrder result_order() {
+        return mq_->query_layout() == TILEDB_ROW_MAJOR ? ResultOrder::rowmajor :
+                                                         ResultOrder::colmajor;
+    }
+
+    /**
      * @brief Read the next chunk of results from the query. If all results
      * have already been read, std::nullopt is returned.
      *
@@ -632,9 +642,6 @@ class SOMAArray {
 
     // Batch size
     std::string batch_size_;
-
-    // Result order
-    ResultOrder result_order_;
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
