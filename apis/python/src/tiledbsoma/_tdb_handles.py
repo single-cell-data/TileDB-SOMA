@@ -271,6 +271,8 @@ class GroupWrapper(Wrapper[tiledb.Group]):
 
 
 class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
+    """Wrapper around a Pybind11 SOMADataFrame handle."""
+
     @classmethod
     def _opener(
         cls,
