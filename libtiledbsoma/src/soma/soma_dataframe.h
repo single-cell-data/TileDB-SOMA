@@ -168,6 +168,14 @@ class SOMADataFrame : public SOMAObject {
      */
     void close();
 
+    /**
+     * @brief Reset the state of this SOMADataFrame object to prepare for a
+     * new query, while holding the array open.
+     *
+     * @param column_names
+     * @param batch_size
+     * @param result_order
+     */
     void reset(
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",

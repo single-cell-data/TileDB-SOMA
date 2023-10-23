@@ -215,7 +215,7 @@ void load_soma_dataframe(py::module &m) {
     .def("delete_metadata", &SOMADataFrame::delete_metadata)
     .def("get_metadata", 
         py::overload_cast<const std::string&>(&SOMADataFrame::get_metadata))
-    .def_property_readonly("meta", [](SOMADataFrame&soma_dataframe) -> py::dict {
+    .def_property_readonly("meta", [](SOMADataFrame& soma_dataframe) -> py::dict {
         py::dict results;
             
         for (auto const& [key, val] : soma_dataframe.get_metadata()){

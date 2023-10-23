@@ -160,6 +160,26 @@ class SOMASparseNDArray : public SOMAObject {
     void close();
 
     /**
+     * @brief Reset the state of this SOMASparseNDArray object to prepare for a
+     * new query, while holding the array open.
+     *
+     * @param column_names
+     * @param batch_size
+     * @param result_order
+     */
+    void reset(
+        std::vector<std::string> column_names = {},
+        std::string_view batch_size = "auto",
+        ResultOrder result_order = ResultOrder::automatic) {
+        array_->reset(column_names, batch_size, result_order);
+    }
+
+    /**
+     * @brief Check if the SOMASparseNDArray exists at the URI.
+     */
+    static bool exists(std::string_view uri);
+
+    /**
      * Check if the SOMASparseNDArray is open.
      *
      * @return bool true if open
@@ -181,6 +201,13 @@ class SOMASparseNDArray : public SOMAObject {
      * @return std::shared_ptr<Context>
      */
     std::shared_ptr<Context> ctx();
+
+    /**
+     * Return optional timestamp pair SOMASparseNDArray was opened with.
+     */
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp() {
+        return array_->timestamp();
+    }
 
     /**
      * Return whether the NDArray is sparse.
@@ -206,6 +233,13 @@ class SOMASparseNDArray : public SOMAObject {
     std::unique_ptr<ArrowSchema> schema() const;
 
     /**
+     * Return the index (dimension) column names.
+     *
+     * @return std::vector<std::string>
+     */
+    const std::vector<std::string> index_column_names() const;
+
+    /**
      * @brief Get the capacity of each dimension.
      *
      * @return A vector with length equal to the number of dimensions; each
@@ -226,6 +260,36 @@ class SOMASparseNDArray : public SOMAObject {
      * @return uint64_t Total number of shared cells
      */
     uint64_t nnz() const;
+
+    /**
+     * Retrieves the non-empty domain of the column index.
+     *
+     * @return int64_t
+     */
+    template <typename T>
+    std::pair<T, T> non_empty_domain(const std::string& column_index_name) {
+        return array_->non_empty_domain<T>(column_index_name);
+    };
+
+    /**
+     * Retrieves the non-empty domain of the column index.
+     * Applicable only to var-sized dimensions.
+     */
+    std::pair<std::string, std::string> non_empty_domain_var(
+        const std::string& column_index_name) {
+        return array_->non_empty_domain_var(column_index_name);
+    };
+
+    /**
+     * Returns the domain of the given column index.
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> domain(const std::string& column_index_name) const {
+        return array_->domain<T>(column_index_name);
+    }
 
     /**
      * @brief Read the next chunk of results from the query. If all results have

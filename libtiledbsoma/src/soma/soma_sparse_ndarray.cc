@@ -119,6 +119,26 @@ void SOMASparseNDArray::close() {
     array_->close();
 }
 
+bool SOMASparseNDArray::exists(std::string_view uri) {
+    try {
+        auto soma_sparse_nd_array = SOMASparseNDArray::open(
+            uri, OpenMode::read);
+        auto soma_object_type = soma_sparse_nd_array->get_metadata(
+            "soma_object_type");
+
+        if (!soma_object_type.has_value())
+            return false;
+
+        const char* dtype = (const char*)std::get<MetadataInfo::value>(
+            *soma_object_type);
+
+        return std::string(dtype).find("SOMASparseNDArray") !=
+               std::string::npos;
+    } catch (std::exception& e) {
+        return false;
+    }
+}
+
 bool SOMASparseNDArray::is_open() const {
     return array_->is_open();
 }
@@ -133,6 +153,10 @@ std::shared_ptr<Context> SOMASparseNDArray::ctx() {
 
 std::unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return array_->arrow_schema();
+}
+
+const std::vector<std::string> SOMASparseNDArray::index_column_names() const {
+    return array_->dimension_names();
 }
 
 std::vector<int64_t> SOMASparseNDArray::shape() const {
