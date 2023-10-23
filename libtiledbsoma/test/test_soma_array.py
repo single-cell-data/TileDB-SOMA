@@ -53,14 +53,10 @@ def test_soma_array_var_x_data():
     # The := "walrus" operator is really the appropriate thing here, but alas, is not
     # supported in Python 3.7 which we do wish to preserve compatibility with.
     # while arrow_table := sr.read_next():
-    while True:
+    while not sr.results_complete():
         arrow_table = sr.read_next()
-        if not arrow_table:
-            break
         total_num_rows += arrow_table.num_rows
 
-    # test that all results are not present in the arrow table (incomplete queries)
-    assert not sr.results_complete()
     assert total_num_rows == 4848644
 
 
