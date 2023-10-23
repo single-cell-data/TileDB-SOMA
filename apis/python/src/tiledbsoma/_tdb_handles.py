@@ -40,10 +40,8 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
-SOMAArray = Union[clib.SOMADataFrame, clib.SOMASparseNDArray]
-RawHandle = Union[
-    tiledb.Array, tiledb.Group, clib.SOMADataFrame, clib.SOMASparseNDArray
-]
+SOMAArray = Union[clib.SOMADataFrame, clib.SOMADenseNDArray, clib.SOMASparseNDArray]
+RawHandle = Union[tiledb.Array, tiledb.Group, SOMAArray]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
 
@@ -436,6 +434,33 @@ class SparseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMASparseNDArray]):
         context: SOMATileDBContext,
         timestamp: int,
     ) -> clib.SOMASparseNDArray:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        return clib.SOMASparseNDArray.open(
+            uri,
+            open_mode,
+            {k: str(v) for k, v in context.tiledb_config.items()},
+            [],
+            clib.ResultOrder.automatic,
+            (0, timestamp),
+        )
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        result: Tuple[int] = self._handle.shape()
+        return tuple(result)
+
+
+class DenseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADenseNDArray]):
+    """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
+
+    @classmethod
+    def _opener(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: int,
+    ) -> clib.SOMADenseNDArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
         return clib.SOMASparseNDArray.open(
             uri,

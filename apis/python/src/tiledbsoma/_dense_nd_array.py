@@ -15,6 +15,9 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _util
+
+# This package's pybind11 code
+from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._exception import SOMAError
 from ._tdb_handles import ArrayWrapper
@@ -123,7 +126,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         #
         # The only exception is if the array has been created but no data have been written at
         # all, in which case the best we can do is use the schema shape.
-        data_shape = self._handle.schema.shape
+        handle: clib.DenseNDArrayWrapper = self._handle._handle
+        data_shape = handle.shape
         ned = self.non_empty_domain()
         if ned is not None:
             data_shape = tuple(slot[1] + 1 for slot in ned)

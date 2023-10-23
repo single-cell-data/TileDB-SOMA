@@ -160,21 +160,6 @@ class SOMASparseNDArray : public SOMAObject {
     void close();
 
     /**
-     * @brief Reset the state of this SOMASparseNDArray object to prepare for a
-     * new query, while holding the array open.
-     *
-     * @param column_names
-     * @param batch_size
-     * @param result_order
-     */
-    void reset(
-        std::vector<std::string> column_names = {},
-        std::string_view batch_size = "auto",
-        ResultOrder result_order = ResultOrder::automatic) {
-        array_->reset(column_names, batch_size, result_order);
-    }
-
-    /**
      * @brief Check if the SOMASparseNDArray exists at the URI.
      */
     static bool exists(std::string_view uri);

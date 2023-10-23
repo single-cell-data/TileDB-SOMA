@@ -15,7 +15,7 @@ from typing_extensions import Self
 from . import _constants, _tdb_handles
 from . import pytiledbsoma as clib
 from ._exception import SOMAError
-from ._tdb_handles import DataFrameWrapper, SparseNDArrayWrapper
+from ._tdb_handles import DataFrameWrapper, DenseNDArrayWrapper, SparseNDArrayWrapper
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
@@ -82,7 +82,9 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             Experimental.
         """
         del platform_config  # unused
-        handle: Union[_WrapperType_co, DataFrameWrapper, SparseNDArrayWrapper]
+        handle: Union[
+            _WrapperType_co, DataFrameWrapper, DenseNDArrayWrapper, SparseNDArrayWrapper
+        ]
         context = _validate_soma_tiledb_context(context)
         try:
             handle = _tdb_handles._open_with_clib_wrapper(

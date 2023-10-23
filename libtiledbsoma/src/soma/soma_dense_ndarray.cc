@@ -119,6 +119,24 @@ void SOMADenseNDArray::close() {
     array_->close();
 }
 
+bool SOMADenseNDArray::exists(std::string_view uri) {
+    try {
+        auto soma_dense_nd_array = SOMADenseNDArray::open(uri, OpenMode::read);
+        auto soma_object_type = soma_dense_nd_array->get_metadata(
+            "soma_object_type");
+
+        if (!soma_object_type.has_value())
+            return false;
+
+        const char* dtype = (const char*)std::get<MetadataInfo::value>(
+            *soma_object_type);
+
+        return std::string(dtype).find("SOMADenseNDArray") != std::string::npos;
+    } catch (std::exception& e) {
+        return false;
+    }
+}
+
 bool SOMADenseNDArray::is_open() const {
     return array_->is_open();
 }
@@ -133,6 +151,10 @@ std::shared_ptr<Context> SOMADenseNDArray::ctx() {
 
 std::unique_ptr<ArrowSchema> SOMADenseNDArray::schema() const {
     return array_->arrow_schema();
+}
+
+const std::vector<std::string> SOMADenseNDArray::index_column_names() const {
+    return array_->dimension_names();
 }
 
 std::vector<int64_t> SOMADenseNDArray::shape() const {

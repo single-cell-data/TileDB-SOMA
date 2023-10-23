@@ -56,7 +56,6 @@ void load_soma_sparse_ndarray(py::module &m) {
         SOMASparseNDArray& soma_sparse_ndarr) -> bool { 
         return soma_sparse_ndarr.is_open();
     })
-    .def("reset", &SOMASparseNDArray::reset)
     .def("type", &SOMASparseNDArray::type)
     .def("ctx", &SOMASparseNDArray::ctx)
     .def("is_sparse", &SOMASparseNDArray::is_sparse)
