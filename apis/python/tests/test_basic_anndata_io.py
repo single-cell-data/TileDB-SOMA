@@ -845,7 +845,9 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         assert list(bdata.var.index) == list(soma_var[var_id_name])
 
 
-@pytest.mark.parametrize("outgest_uns_restrict_keys", [["louvain_colors"], None])
+@pytest.mark.parametrize(
+    "outgest_uns_restrict_keys", [["int_scalar", "strings", "np_ndarray_2d"], None]
+)
 def test_uns_io(tmp_path, outgest_uns_restrict_keys):
     obs = pd.DataFrame(
         data={"obs_id": np.asarray(["a", "b", "c"])},
