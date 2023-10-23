@@ -360,8 +360,7 @@ class SOMAArray {
      * @return ResultOrder
      */
     ResultOrder result_order() {
-        return mq_->query_layout() == TILEDB_ROW_MAJOR ? ResultOrder::rowmajor :
-                                                         ResultOrder::colmajor;
+        return result_order_;
     }
 
     /**
@@ -642,6 +641,9 @@ class SOMAArray {
 
     // Batch size
     std::string batch_size_;
+
+    // Result order
+    ResultOrder result_order_;
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
