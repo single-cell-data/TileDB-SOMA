@@ -211,6 +211,7 @@ void load_soma_dataframe(py::module &m) {
 
         return to_table(buffers);
     })
+    .def("results_complete", &SOMADataFrame::results_complete)
     .def("set_metadata", &SOMADataFrame::set_metadata)
     .def("delete_metadata", &SOMADataFrame::delete_metadata)
     .def("get_metadata", 
@@ -236,8 +237,7 @@ void load_soma_dataframe(py::module &m) {
     })
     .def("has_metadata", &SOMADataFrame::has_metadata)
     .def("metadata_num", &SOMADataFrame::metadata_num)
-    .def(
-        "set_dim_points_arrow",
+    .def("set_dim_points_arrow",
         [](SOMADataFrame& reader,
             const std::string& dim,
             py::object py_arrow_array,

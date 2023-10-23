@@ -110,7 +110,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Experimental.
         """
         self._check_open_read()
-        return cast(int, self._soma_reader().nnz())
+        handle: clib.SparseNDArrayWrapper = self._handle
+        return cast(int, handle.nnz)
 
     def read(
         self,

@@ -160,6 +160,21 @@ class SOMASparseNDArray : public SOMAObject {
     void close();
 
     /**
+     * @brief Reset the state of this SOMASparseNDArray object to prepare for a
+     * new query, while holding the array open.
+     *
+     * @param column_names
+     * @param batch_size
+     * @param result_order
+     */
+    void reset(
+        std::vector<std::string> column_names = {},
+        std::string_view batch_size = "auto",
+        ResultOrder result_order = ResultOrder::automatic) {
+        array_->reset(column_names, batch_size, result_order);
+    }
+
+    /**
      * @brief Check if the SOMASparseNDArray exists at the URI.
      */
     static bool exists(std::string_view uri);
@@ -281,6 +296,77 @@ class SOMASparseNDArray : public SOMAObject {
      * already been read, std::nullopt is returned.
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
+
+    /**
+     * @brief Return true if `read_next` returned all results from the
+     * query. The return value is false if the query was incomplete.
+     *
+     * @return True if last call to `read_next` returned all results of the
+     * query
+     */
+    bool results_complete() {
+        return array_->results_complete();
+    }
+
+    /**
+     * @brief Set the dimension slice using one point
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param dim
+     * @param point
+     */
+    template <typename T>
+    void set_dim_point(const std::string& dim, const T& point) {
+        array_->set_dim_point(dim, point);
+    }
+
+    /**
+     * @brief Set the dimension slice using multiple points, with support
+     * for partitioning.
+     *
+     * @tparam T
+     * @param dim
+     * @param points
+     */
+    template <typename T>
+    void set_dim_points(
+        const std::string& dim,
+        const tcb::span<T> points,
+        int partition_index,
+        int partition_count) {
+        array_->set_dim_points(dim, points, partition_index, partition_count);
+    }
+
+    /**
+     * @brief Set the dimension slice using multiple points
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param dim
+     * @param points
+     */
+    template <typename T>
+    void set_dim_points(const std::string& dim, const std::vector<T>& points) {
+        array_->set_dim_points(dim, points);
+    }
+
+    /**
+     * @brief Set the dimension slice using multiple ranges
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param dim
+     * @param ranges
+     */
+    template <typename T>
+    void set_dim_ranges(
+        const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
+        array_->set_dim_ranges(dim, ranges);
+    }
 
     /**
      * @brief Write ArrayBuffers data to the dataframe.

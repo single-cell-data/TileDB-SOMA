@@ -258,6 +258,16 @@ class SOMADataFrame : public SOMAObject {
     int64_t count() const;
 
     /**
+     * @brief Get the capacity of each dimension.
+     *
+     * @return A vector with length equal to the number of dimensions; each
+     * value in the vector is the capcity of each dimension.
+     */
+    std::vector<int64_t> shape() {
+        return array_->shape();
+    }
+
+    /**
      * Retrieves the non-empty domain of the column index.
      *
      * @return int64_t
@@ -292,6 +302,17 @@ class SOMADataFrame : public SOMAObject {
      * already been read, std::nullopt is returned.
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
+
+    /**
+     * @brief Return true if `read_next` returned all results from the
+     * query. The return value is false if the query was incomplete.
+     *
+     * @return True if last call to `read_next` returned all results of the
+     * query
+     */
+    bool results_complete() {
+        return array_->results_complete();
+    }
 
     /**
      * @brief Set the dimension slice using one point

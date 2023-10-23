@@ -264,6 +264,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             Experimental.
         """
         self._check_open_read()
+        
         # if is it in read open mode, then it is a DataFrameWrapper
         return cast(DataFrameWrapper, self._handle).count
 
@@ -478,7 +479,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMADataFrame, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
         if coord is None:
             return True  # No constraint; select all in this dimension
@@ -555,7 +556,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
     def _set_reader_coord_by_py_seq_or_np_array(
         self,
-        sr: clib.SOMAArray,
+        sr: clib.SOMADataFrame,
         dim_idx: int,
         dim: tiledb.Dim,
         coord: object,
@@ -596,7 +597,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return True
 
     def _set_reader_coord_by_numeric_slice(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: Slice[Any]
+        self, sr: clib.SOMADataFrame, dim_idx: int, dim: pa.Field, coord: Slice[Any]
     ) -> bool:
         try:
             lo_hi = _util.slice_to_numeric_range(coord, self.domain[dim_idx])

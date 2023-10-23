@@ -255,7 +255,6 @@ setuptools.setup(
             [
                 "src/tiledbsoma/common.cc",
                 "src/tiledbsoma/query_condition.cc",
-                "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
                 "src/tiledbsoma/soma_dense_ndarray.cc",
                 "src/tiledbsoma/soma_sparse_ndarray.cc",

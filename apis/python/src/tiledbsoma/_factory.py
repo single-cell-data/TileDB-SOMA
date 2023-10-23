@@ -7,7 +7,16 @@
 Collection.
 """
 
-from typing import Callable, Dict, Optional, Type, TypeVar, Union, cast, overload
+from typing import (
+    Callable,
+    Dict,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 
 import somacore
 from somacore import options
@@ -30,6 +39,7 @@ from ._constants import (
 )
 from ._exception import SOMAError
 from ._funcs import typeguard_ignore
+from ._tdb_handles import DataFrameWrapper, DenseNDArrayWrapper, SparseNDArrayWrapper
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -112,7 +122,16 @@ def open(
         Experimental.
     """
     context = _validate_soma_tiledb_context(context)
-    obj = _open_internal(_tdb_handles.open, uri, mode, context, tiledb_timestamp)
+    # TODO fix typing issues for new wrappers
+    if mode == "r" and clib.SOMADataFrame.exists(uri):
+        wrapper = DataFrameWrapper
+    elif mode == "r" and clib.SOMASparseNDArray.exists(uri):
+        wrapper = SparseNDArrayWrapper  # type:ignore
+    elif mode == "r" and clib.SOMADenseNDArray.exists(uri):
+        wrapper = DenseNDArrayWrapper  # type:ignore
+    else:
+        wrapper = _tdb_handles  # type:ignore
+    obj = _open_internal(wrapper.open, uri, mode, context, tiledb_timestamp)
     try:
         if soma_type:
             if isinstance(soma_type, str):
@@ -170,6 +189,7 @@ def _reify_handle(hdl: _Wrapper) -> "_tiledb_object.TileDBObject[_Wrapper]":
             f"cannot open {hdl.uri!r}: a {type(hdl._handle)}"
             f" cannot be converted to a {typename}"
         )
+    print(typename, cls, type(hdl))
     return cast(
         _tiledb_object.TileDBObject[_Wrapper],
         cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),

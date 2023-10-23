@@ -273,7 +273,6 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
         return self._handle.enum(label)
 
 
-
 @attrs.define(frozen=True)
 class GroupEntry:
     uri: str
@@ -422,6 +421,10 @@ class DataFrameWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADataFrame]):
             (0, timestamp),
         )
 
+    @property
+    def count(self) -> int:
+        return int(self._handle.count)
+
 
 class SparseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMASparseNDArray]):
     """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
@@ -446,8 +449,11 @@ class SparseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMASparseNDArray]):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        result: Tuple[int] = self._handle.shape()
-        return tuple(result)
+        return tuple(self._handle.shape)
+
+    @property
+    def nnz(self) -> int:
+        return int(self._handle.nnz)
 
 
 class DenseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADenseNDArray]):
@@ -473,8 +479,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADenseNDArray]):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        result: Tuple[int] = self._handle.shape()
-        return tuple(result)
+        return tuple(self._handle.shape)
 
 
 class _DictMod(enum.Enum):

@@ -133,7 +133,19 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             data_shape = tuple(slot[1] + 1 for slot in ned)
         target_shape = dense_indices_to_shape(coords, data_shape, result_order)
 
-        sr = self._soma_reader(result_order=result_order)
+        to_clib_result_order = {
+            options.ResultOrder.AUTO: clib.ResultOrder.automatic,
+            options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
+            options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
+            "auto": clib.ResultOrder.automatic,
+            "row-major": clib.ResultOrder.rowmajor,
+            "column-major": clib.ResultOrder.colmajor,
+        }
+        if result_order not in to_clib_result_order:
+            raise ValueError(f"Invalid result_order: {result_order}")
+
+        sr = self._handle._handle
+        sr.reset([], "auto", to_clib_result_order[result_order])
 
         self._set_reader_coords(sr, coords)
 

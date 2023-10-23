@@ -1,3 +1,35 @@
+/**
+ * @file   soma_dataframe.cc
+ *
+ * @section LICENSE
+ *
+ * The MIT License
+ *
+ * @copyright Copyright (c) 2023 TileDB, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * @section DESCRIPTION
+ *
+ * This file defines the SOMADataFrame bindings.
+ */
+
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
@@ -8,11 +40,12 @@
 
 #include "common.h"
 
-using namespace tiledbsoma;
 
 namespace py = pybind11;
+using namespace py::literals;
 
 namespace tiledbsoma {
+
 void load_soma_dense_ndarray(py::module &m) {
     py::class_<SOMADenseNDArray>(m, "SOMADenseNDArray")
 
@@ -20,6 +53,7 @@ void load_soma_dense_ndarray(py::module &m) {
     .def_static("exists", &SOMADenseNDArray::exists)
     .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADenseNDArray::open))
     .def("close", &SOMADenseNDArray::close)
+    .def("reset", &SOMADenseNDArray::reset)
     .def("is_open", &SOMADenseNDArray::is_open)
     .def("type", &SOMADenseNDArray::type)
     .def("ctx", &SOMADenseNDArray::ctx)
@@ -119,9 +153,16 @@ void load_soma_dense_ndarray(py::module &m) {
             throw TileDBSOMAError("Unsupported dtype for Dimension's domain");
         }
     })
-    .def("shape", &SOMADenseNDArray::shape)
-    .def("ndim", &SOMADenseNDArray::ndim)
-    .def("read_next", &SOMADenseNDArray::read_next)
+    .def_property_readonly("shape", &SOMADenseNDArray::shape)
+    .def_property_readonly("ndim", &SOMADenseNDArray::ndim)
+    .def("read_next", [](SOMASparseNDArray& dataframe){
+        // Release GIL when reading data
+        py::gil_scoped_release release;
+        auto buffers = dataframe.read_next();
+        py::gil_scoped_acquire acquire;
+
+        return to_table(buffers);
+    })
     .def("write", &SOMADenseNDArray::write)
     .def("set_metadata", &SOMADenseNDArray::set_metadata)
     .def("delete_metadata", &SOMADenseNDArray::delete_metadata)
@@ -148,6 +189,223 @@ void load_soma_dense_ndarray(py::module &m) {
         py::overload_cast<const std::string&>(&SOMADenseNDArray::get_metadata))
     .def("get_metadata", py::overload_cast<>(&SOMADenseNDArray::get_metadata))
     .def("has_metadata", &SOMADenseNDArray::has_metadata)
-    .def("metadata_num", &SOMADenseNDArray::metadata_num);
+    .def("metadata_num", &SOMADenseNDArray::metadata_num)
+    .def("set_dim_points_arrow",
+        [](SOMADenseNDArray& reader,
+            const std::string& dim,
+            py::object py_arrow_array,
+            int partition_index,
+            int partition_count) {
+            // Create a list of array chunks
+            py::list array_chunks;
+            if (py::hasattr(py_arrow_array, "chunks")) {
+                array_chunks = py_arrow_array.attr("chunks")
+                                    .cast<py::list>();
+            } else {
+                array_chunks.append(py_arrow_array);
+            }
+
+            for (const pybind11::handle array : array_chunks) {
+                ArrowSchema arrow_schema;
+                ArrowArray arrow_array;
+                uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
+                uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
+
+                // Call array._export_to_c to get arrow array and schema
+                //
+                // If ever a NumPy array gets in here, there will be an
+                // exception like "AttributeError: 'numpy.ndarray' object
+                // has no attribute '_export_to_c'".
+                array.attr("_export_to_c")(
+                    arrow_array_ptr, arrow_schema_ptr);
+
+                auto coords = array.attr("tolist")();
+
+                if (!strcmp(arrow_schema.format, "l")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<int64_t>>());
+                } else if (!strcmp(arrow_schema.format, "i")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<int32_t>>());
+                } else if (!strcmp(arrow_schema.format, "s")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<int16_t>>());
+                } else if (!strcmp(arrow_schema.format, "c")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<int8_t>>());
+                } else if (!strcmp(arrow_schema.format, "L")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<uint64_t>>());
+                } else if (!strcmp(arrow_schema.format, "I")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<uint32_t>>());
+                } else if (!strcmp(arrow_schema.format, "S")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<uint16_t>>());
+                } else if (!strcmp(arrow_schema.format, "C")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<uint8_t>>());
+                } else if (!strcmp(arrow_schema.format, "f")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<float>>());
+                } else if (!strcmp(arrow_schema.format, "g")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<double>>());
+                } else if (
+                    !strcmp(arrow_schema.format, "u") ||
+                    !strcmp(arrow_schema.format, "z")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<std::string>>());
+                } else if (
+                    !strcmp(arrow_schema.format, "tss:") ||
+                    !strcmp(arrow_schema.format, "tsm:") ||
+                    !strcmp(arrow_schema.format, "tsu:") ||
+                    !strcmp(arrow_schema.format, "tsn:")) {
+                    // convert the Arrow Array to int64
+                    auto pa = py::module::import("pyarrow");
+                    coords = array.attr("cast")(pa.attr("int64")()).attr("tolist")();
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<int64_t>>());
+                } else if (
+                    !strcmp(arrow_schema.format, "U") ||
+                    !strcmp(arrow_schema.format, "Z")) {
+                    reader.set_dim_points(
+                        dim, coords.cast<std::vector<std::string>>());
+                } else {
+                    throw TileDBSOMAError(fmt::format(
+                        "[pytiledbsoma] set_dim_points: type={} not "
+                        "supported",
+                        arrow_schema.format));
+                }
+
+                // Release arrow schema
+                arrow_schema.release(&arrow_schema);
+            }
+        },
+        "dim"_a,
+        "py_arrow_array"_a,
+        "partition_index"_a = 0,
+        "partition_count"_a = 1)
+    .def(
+        "set_dim_points_string_or_bytes",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<std::string>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_float64",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<double>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_float32",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<float>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_int64",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<int64_t>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_int32",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<int32_t>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_int16",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<int16_t>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_int8",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<int8_t>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_uint64",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<uint64_t>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_uint32",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<uint32_t>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_uint16",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<uint16_t>&)>(
+            &SOMADenseNDArray::set_dim_points))
+    .def(
+        "set_dim_points_uint8",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&, const std::vector<uint8_t>&)>(
+            &SOMADenseNDArray::set_dim_points))       
+    .def(
+        "set_dim_ranges_string_or_bytes",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<std::string, std::string>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_int64",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<int64_t, int64_t>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_int32",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<int32_t, int32_t>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_int16",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<int16_t, int16_t>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_int8",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<int8_t, int8_t>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_uint64",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<uint64_t, uint64_t>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_uint32",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<uint32_t, uint32_t>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_uint16",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<uint16_t, uint16_t>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_uint8",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<uint8_t, uint8_t>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_float64",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<double, double>>&)>(
+            &SOMADenseNDArray::set_dim_ranges))
+    .def(
+        "set_dim_ranges_float32",
+        static_cast<void (SOMADenseNDArray::*)(
+            const std::string&,
+            const std::vector<std::pair<float, float>>&)>(
+            &SOMADenseNDArray::set_dim_ranges));
 }
 }
