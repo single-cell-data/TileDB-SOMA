@@ -176,6 +176,8 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
     // complete.
     if (status == Query::Status::INCOMPLETE) {
         results_complete_ = false;
+    } else if (status == Query::Status::COMPLETE) {
+        results_complete_ = true;
     }
 
     // Update ColumnBuffer size to match query results
