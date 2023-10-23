@@ -203,6 +203,45 @@ void load_soma_dataframe(py::module &m) {
         }
     })
     .def_property_readonly("count", &SOMADataFrame::count)
+    .def("enumeration", [](SOMADataFrame& soma_df, std::string attr_name) -> py::object 
+    {
+        auto attr_to_enmrs = soma_df.get_attr_to_enum_mapping();
+        if(attr_to_enmrs.count(attr_name) == 0)
+            return py::none();
+
+        Enumeration enmr(attr_to_enmrs.at(attr_name));
+
+        switch (enmr.type()) {
+            case TILEDB_UINT8:
+                return py::tuple(py::cast(enmr.as_vector<uint8_t>()));
+            case TILEDB_INT8:
+                return py::tuple(py::cast(enmr.as_vector<int8_t>()));
+            case TILEDB_UINT16:
+                return py::tuple(py::cast(enmr.as_vector<uint16_t>()));
+            case TILEDB_INT16:
+                return py::tuple(py::cast(enmr.as_vector<int16_t>()));
+            case TILEDB_UINT32:
+                return py::tuple(py::cast(enmr.as_vector<uint32_t>()));
+            case TILEDB_INT32:
+                return py::tuple(py::cast(enmr.as_vector<int32_t>()));
+            case TILEDB_UINT64:
+                return py::tuple(py::cast(enmr.as_vector<uint64_t>()));
+            case TILEDB_INT64:
+                return py::tuple(py::cast(enmr.as_vector<int64_t>()));
+            case TILEDB_FLOAT32:
+                return py::tuple(py::cast(enmr.as_vector<float>()));
+            case TILEDB_FLOAT64:
+                return py::tuple(py::cast(enmr.as_vector<double>()));
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_CHAR:
+                return py::tuple(py::cast(enmr.as_vector<std::string>()));
+            case TILEDB_BOOL:
+                return py::tuple(py::cast(enmr.as_vector<bool>()));
+            default:
+                throw TileDBSOMAError("Unsupported enumeration type.");
+        }
+    })
     .def("read_next", [](SOMADataFrame& dataframe){
         // Release GIL when reading data
         py::gil_scoped_release release;
