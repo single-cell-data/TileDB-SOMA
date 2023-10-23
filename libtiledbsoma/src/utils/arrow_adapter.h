@@ -14,6 +14,15 @@
 
 namespace tiledbsoma {
 
+struct TypeInfo {
+    tiledb_datatype_t type;
+    uint64_t elem_size;
+    uint32_t cell_val_num;
+
+    // is this represented as "Arrow large"
+    bool arrow_large;
+};
+
 /**
  * @brief The ArrowBuffer holds a shared pointer to a ColumnBuffer, which
  * manages the lifetime of a ColumnBuffer used to back an Arrow array.
@@ -264,8 +273,207 @@ class ArrowAdapter {
             "ArrowAdapter: Unsupported TileDB datatype: {} ",
             tiledb::impl::type_to_str(datatype)));
     }
-};
 
+    static TypeInfo arrow_type_to_tiledb(ArrowSchema* arw_schema) {
+        auto fmt = std::string(arw_schema->format);
+        bool large = false;
+        if (fmt == "+l") {
+            large = false;
+            assert(arw_schema->n_children == 1);
+            arw_schema = arw_schema->children[0];
+        } else if (fmt == "+L") {
+            large = true;
+            assert(arw_schema->n_children == 1);
+            arw_schema = arw_schema->children[0];
+        }
+
+        if (fmt == "i")
+            return {TILEDB_INT32, 4, 1, large};
+        else if (fmt == "l")
+            return {TILEDB_INT64, 8, 1, large};
+        else if (fmt == "f")
+            return {TILEDB_FLOAT32, 4, 1, large};
+        else if (fmt == "g")
+            return {TILEDB_FLOAT64, 8, 1, large};
+        else if (fmt == "b")
+            return {TILEDB_BOOL, 1, 1, large};
+        else if (fmt == "B")
+            return {TILEDB_BLOB, 1, 1, large};
+        else if (fmt == "c")
+            return {TILEDB_INT8, 1, 1, large};
+        else if (fmt == "C")
+            return {TILEDB_UINT8, 1, 1, large};
+        else if (fmt == "s")
+            return {TILEDB_INT16, 2, 1, large};
+        else if (fmt == "S")
+            return {TILEDB_UINT16, 2, 1, large};
+        else if (fmt == "I")
+            return {TILEDB_UINT32, 4, 1, large};
+        else if (fmt == "L")
+            return {TILEDB_UINT64, 8, 1, large};
+        // this is kind of a hack
+        // technically 'tsn:' is timezone-specific, which we don't support
+        // however, the blank (no suffix) base is interconvertible w/
+        // np.datetime64
+        else if (fmt == "tsn:")
+            return {TILEDB_DATETIME_NS, 8, 1, large};
+        else if (fmt == "z" || fmt == "Z")
+            return {TILEDB_CHAR, 1, TILEDB_VAR_NUM, fmt == "Z"};
+        else if (fmt == "u" || fmt == "U")
+            return {TILEDB_STRING_UTF8, 1, TILEDB_VAR_NUM, fmt == "U"};
+        else
+            throw tiledb::TileDBError(
+                "[TileDB-Arrow]: Unknown or unsupported Arrow format string '" +
+                fmt + "'");
+    };
+
+    static ArraySchema arrow_schema_to_tiledb_schema(
+        std::shared_ptr<Context> ctx,
+        ArrowSchema& schema,
+        std::vector<std::string> index_column_names,
+        ArrowArray& domains,
+        ArrowArray& extents) {
+        if (domains.n_children != (int64_t)index_column_names.size()) {
+            throw TileDBSOMAError(
+                "if domain is specified, it must have the same length as "
+                "index_column_names");
+        }
+
+        ArraySchema tdb_schema(*ctx, TILEDB_SPARSE);
+        Domain tdb_dom(*ctx);
+
+        auto platform_config = ctx->config();
+
+        for (size_t col_idx = 0; col_idx < index_column_names.size();
+             ++col_idx) {
+            for (int64_t schema_idx = 0; schema_idx < schema.n_children;
+                 ++schema_idx) {
+                auto child = schema.children[schema_idx];
+                auto typeinfo = arrow_type_to_tiledb(child);
+                if (child->name == index_column_names[col_idx]) {
+                    auto dim = Dimension::create(
+                        *ctx,
+                        child->name,
+                        typeinfo.type,
+                        domains.children[col_idx]->buffers[1],
+                        extents.children[col_idx]->buffers[1]);
+
+                    Filter filter(*ctx, TILEDB_FILTER_ZSTD);
+                    if (platform_config.contains("dataframe_dim_zstd_level")) {
+                        auto level = std::stoi(
+                            platform_config.get("dataframe_dim_zstd_level"));
+                        filter.set_option(TILEDB_COMPRESSION_LEVEL, level);
+                    } else {
+                        filter.set_option(TILEDB_COMPRESSION_LEVEL, 3);
+                    }
+
+                    FilterList filter_list(*ctx);
+                    filter_list.add_filter(filter);
+                    dim.set_filter_list(filter_list);
+
+                    tdb_dom.add_dimension(dim);
+                } else {
+                    auto attr = Attribute(*ctx, child->name, typeinfo.type);
+                    if (child->flags | ARROW_FLAG_NULLABLE) {
+                        attr.set_nullable(true);
+                    }
+                    tdb_schema.add_attribute(attr);
+                }
+            }
+        }
+
+        tdb_schema.set_domain(tdb_dom);
+
+        if (platform_config.contains("offsets_filters")) {
+            auto filter_list = _get_filterlist_from_config_option(
+                ctx, platform_config.get("offsets_filters"));
+            tdb_schema.set_offsets_filter_list(filter_list);
+        } else {
+            FilterList filter_list(*ctx);
+            filter_list.add_filter(Filter(*ctx, TILEDB_FILTER_DOUBLE_DELTA));
+            filter_list.add_filter(
+                Filter(*ctx, TILEDB_FILTER_BIT_WIDTH_REDUCTION));
+            filter_list.add_filter(Filter(*ctx, TILEDB_FILTER_ZSTD));
+            tdb_schema.set_offsets_filter_list(filter_list);
+        }
+
+        if (platform_config.contains("validity_filters")) {
+            auto filter_list = _get_filterlist_from_config_option(
+                ctx, platform_config.get("validity_filters"));
+            tdb_schema.set_validity_filter_list(filter_list);
+        }
+
+        if (platform_config.contains("tile_order")) {
+            auto order = _get_order_from_config_option(
+                platform_config.get("tile_order"));
+            tdb_schema.set_tile_order(order);
+        }
+
+        if (platform_config.contains("cell_order")) {
+            auto order = _get_order_from_config_option(
+                platform_config.get("cell_order"));
+            tdb_schema.set_cell_order(order);
+        }
+
+        if (platform_config.contains("capacity")) {
+            tdb_schema.set_capacity(std::stoi(platform_config.get("capacity")));
+        }
+
+        if (platform_config.contains("allows_duplicates")) {
+            bool allows_duplicates;
+            std::istringstream(platform_config.get("allows_duplicates")) >>
+                std::boolalpha >> allows_duplicates;
+            tdb_schema.set_allows_dups(allows_duplicates);
+        }
+
+        tdb_schema.check();
+
+        return tdb_schema;
+    }
+
+    static FilterList _get_filterlist_from_config_option(
+        std::shared_ptr<Context> ctx, std::string filters) {
+        std::map<std::string, tiledb_filter_type_t> token_to_filter = {
+            {"GzipFilter", TILEDB_FILTER_GZIP},
+            {"ZstdFilter", TILEDB_FILTER_ZSTD},
+            {"LZ4Filter", TILEDB_FILTER_LZ4},
+            {"Bzip2Filter", TILEDB_FILTER_BZIP2},
+            {"RleFilter", TILEDB_FILTER_RLE},
+            {"DeltaFilter", TILEDB_FILTER_DELTA},
+            {"DoubleDeltaFilter", TILEDB_FILTER_DOUBLE_DELTA},
+            {"BitWidthReductionFilter", TILEDB_FILTER_BIT_WIDTH_REDUCTION},
+            {"BitShuffleFilter", TILEDB_FILTER_BITSHUFFLE},
+            {"ByteShuffleFilter", TILEDB_FILTER_BYTESHUFFLE},
+            {"PositiveDeltaFilter", TILEDB_FILTER_POSITIVE_DELTA},
+            {"ChecksumMD5Filter", TILEDB_FILTER_CHECKSUM_MD5},
+            {"ChecksumSHA256Filter", TILEDB_FILTER_CHECKSUM_SHA256},
+            {"DictionaryFilter", TILEDB_FILTER_DICTIONARY},
+            {"FloatScaleFilter", TILEDB_FILTER_SCALE_FLOAT},
+            {"XORFilter", TILEDB_FILTER_XOR},
+            {"WebpFilter", TILEDB_FILTER_WEBP},
+            {"NoOpFilter", TILEDB_FILTER_NONE}};
+
+        FilterList filter_list(*ctx);
+        std::istringstream ss(filters);
+        std::string filter_tokenized;
+
+        while (std::getline(ss, filter_tokenized, ',')) {
+            filter_list.add_filter(
+                Filter(*ctx, token_to_filter[filter_tokenized]));
+        }
+        return filter_list;
+    }
+
+    static tiledb_layout_t _get_order_from_config_option(std::string order) {
+        std::map<std::string, tiledb_layout_t> token_to_order = {
+            {"row-major", TILEDB_ROW_MAJOR},
+            {"R", TILEDB_ROW_MAJOR},
+            {"col-major", TILEDB_COL_MAJOR},
+            {"C", TILEDB_COL_MAJOR},
+            {"hilbert", TILEDB_HILBERT}};
+        return token_to_order[order];
+    }
+};
 };  // namespace tiledbsoma
 
 #endif
