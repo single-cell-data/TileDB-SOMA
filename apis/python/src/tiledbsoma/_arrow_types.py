@@ -169,7 +169,7 @@ def tiledb_schema_to_arrow(
         if attr.enum_label is not None:  # enumerated
             if A is None:
                 A = tiledb.open(uri, ctx=ctx)
-            info = A.enum(name)
+            info = A.enum(attr.enum_label)
             arrow_schema_dict[name] = pa.dictionary(
                 index_type=arrow_type_from_tiledb_dtype(attr.dtype),
                 value_type=arrow_type_from_tiledb_dtype(
