@@ -310,7 +310,8 @@ def from_h5ad(
               )
 
         uns_restrict_keys: Only ingest the specified top-level ``uns`` keys.
-          The default is to ingest them all.
+          The default is to ingest them all. Use ``uns_restrict_keys=[]``
+          to not ingest any ``uns`` keys.
 
     Returns:
         The URI of the newly created experiment.
@@ -2701,7 +2702,8 @@ def to_anndata(
     ``{"obsm":{"X_tSNE":2}}`` to aid with export errors.
 
     If ``uns_restrict_keys`` is provided, only the specified top-level ``uns`` keys
-    are extracted.  The default is to extract them all.
+    are extracted.  The default is to extract them all.  Use ``uns_restrict_keys=[]``
+    to not ingest any ``uns`` keys.
 
     Lifecycle:
         Experimental.
