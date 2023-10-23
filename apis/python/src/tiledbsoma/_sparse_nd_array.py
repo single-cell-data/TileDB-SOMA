@@ -355,17 +355,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             retval[i] = (min(ned_lower, bbox_lower), max(ned_upper, bbox_upper))
         return tuple(retval)
 
-    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
-        """
-        Retrieves the non-empty domain for each dimension, namely the smallest and
-        largest indices in each dimension for which the sparse array has data occupied.
-        This is nominally the same as ``used_shape``, but if for example the
-        leading/trailing rows/columns of the sparse array are entirely unoccupied, this
-        function will return a tighter range.
-        """
-        with tiledb.open(self.uri, ctx=self.context.tiledb_ctx) as A:
-            return A.nonempty_domain()  # type: ignore
-
     def _compute_bounding_box_metadata(
         self,
         maxes: Sequence[int],

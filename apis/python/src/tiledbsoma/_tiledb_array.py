@@ -65,6 +65,17 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         """
         return tiledb_schema_to_arrow(self._tiledb_array_schema(), self.uri, self._ctx)
 
+    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
+        """
+        Retrieves the non-empty domain for each dimension, namely the smallest
+        and largest indices in each dimension for which the array/dataframe has
+        data occupied.  This is nominally the same as the domain used at
+        creation time, but if for example only a portion of the available domain
+        has actually had data written, this function will return a tighter
+        range.
+        """
+        return self._handle.non_empty_domain()
+
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """Returns the TileDB array schema, for internal use."""
         return self._handle.schema
