@@ -38,6 +38,7 @@ def test_soma_array_basic_getters():
     assert sr.result_order == result_order
     assert sr.column_names == column_names
 
+
 def test_soma_array_obs():
     """Read all values from obs array into an arrow table."""
 
