@@ -19,8 +19,8 @@ def _create_anndata(
     obs_ids: Sequence[str],
     var_ids: Sequence[str],
     X_base: int,
+    measurement_name: str,
     raw_var_ids: Optional[Sequence[str]] = None,
-    measurement_name: str = "RNA",
     X_density: float = 0.3,
 ):
     n_obs = len(obs_ids)
@@ -86,6 +86,7 @@ def anndata1():
         var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA"],
         raw_var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "RAW1", "RAW2"],
         X_base=100,
+        measurement_name="measname",
     )
 
 
@@ -96,6 +97,7 @@ def anndata2():
         var_ids=["APOE", "ESR1", "TP53", "VEGFA"],
         raw_var_ids=["APOE", "ESR1", "TP53", "VEGFA"],
         X_base=200,
+        measurement_name="measname",
     )
 
 
@@ -106,6 +108,7 @@ def anndata3():
         var_ids=["APOE", "EGFR", "ESR1", "TP53", "VEGFA"],
         raw_var_ids=["APOE", "EGFR", "ESR1", "TP53", "VEGFA", "RAW1", "RAW3"],
         X_base=300,
+        measurement_name="measname",
     )
 
 
@@ -126,6 +129,7 @@ def anndata4():
             "RAW2",
         ],
         X_base=400,
+        measurement_name="measname",
     )
 
 
@@ -152,7 +156,7 @@ def h5ad4(tmp_path, anndata4):
 @pytest.fixture
 def soma1(tmp_path, h5ad1):
     uri = (tmp_path / "soma1").as_posix()
-    tiledbsoma.io.from_h5ad(uri, h5ad1, "RNA")
+    tiledbsoma.io.from_h5ad(uri, h5ad1, "measname")
     return uri
 
 
@@ -335,11 +339,14 @@ def test_axis_mappings(anndata1):
 
 def test_isolated_anndata_mappings(anndata1):
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_anndata(
-        anndata1, measurement_name="RNA"
+        anndata1, measurement_name="measname"
     )
     assert rd.obs_axis.id_mapping_from_values([]).data == ()
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
-    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == (3, 4)
+    assert rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data == (
+        3,
+        4,
+    )
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
     ).data == (6, 3, 4)
@@ -348,11 +355,14 @@ def test_isolated_anndata_mappings(anndata1):
 def test_isolated_h5ad_mappings(h5ad1):
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_h5ad(
         h5ad1,
-        measurement_name="RNA",
+        measurement_name="measname",
     )
     assert rd.obs_axis.id_mapping_from_values([]).data == ()
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
-    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == (3, 4)
+    assert rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data == (
+        3,
+        4,
+    )
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
     ).data == (6, 3, 4)
@@ -362,7 +372,10 @@ def test_isolated_soma_experiment_mappings(soma1):
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(soma1)
     assert rd.obs_axis.id_mapping_from_values([]).data == ()
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
-    assert rd.var_axes["RNA"].id_mapping_from_values(["TP53", "VEGFA"]).data == (3, 4)
+    assert rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data == (
+        3,
+        4,
+    )
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
     ).data == (6, 3, 4)
@@ -387,13 +400,13 @@ def test_multiples_without_experiment(
         tiledbsoma.io.from_h5ad(
             experiment_uri,
             h5ad_file_names[0],
-            measurement_name="RNA",
+            measurement_name="measname",
             ingest_mode="write",
         )
         rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
             experiment_uri=experiment_uri,
             h5ad_file_names=h5ad_file_names,
-            measurement_name="RNA",
+            measurement_name="measname",
             obs_field_name="obs_id",
             var_field_name="var_id",
         )
@@ -403,13 +416,16 @@ def test_multiples_without_experiment(
         rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
             experiment_uri=None,
             h5ad_file_names=h5ad_file_names,
-            measurement_name="RNA",
+            measurement_name="measname",
             obs_field_name="obs_id",
             var_field_name="var_id",
         )
 
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == (2, 8)
-    assert rd.var_axes["RNA"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (2, 4)
+    assert rd.var_axes["measname"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (
+        2,
+        4,
+    )
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["ZZZ3", "RAW2", "TP53", "VEGFA"]
     ).data == (9, 6, 3, 4)
@@ -429,7 +445,7 @@ def test_multiples_without_experiment(
         "TGAG": 11,
     }
 
-    assert rd.var_axes["RNA"].data == {
+    assert rd.var_axes["measname"].data == {
         "AKT1": 0,
         "APOE": 1,
         "EGFR": 5,
@@ -464,7 +480,7 @@ def test_multiples_without_experiment(
         tiledbsoma.io.from_h5ad(
             experiment_uri,
             h5ad_file_name,
-            measurement_name="RNA",
+            measurement_name="measname",
             ingest_mode="write",
             registration_mapping=rd,
         )
@@ -606,7 +622,7 @@ def test_multiples_without_experiment(
 
     with tiledbsoma.Experiment.open(experiment_uri) as exp:
         obs = exp.obs.read().concat()
-        var = exp.ms["RNA"].var.read().concat()
+        var = exp.ms["measname"].var.read().concat()
 
         actual_obs_soma_joinids = obs["soma_joinid"].to_pylist()
         actual_obs_obs_ids = obs["obs_id"].to_pylist()
@@ -614,7 +630,7 @@ def test_multiples_without_experiment(
         actual_var_soma_joinids = var["soma_joinid"].to_pylist()
         actual_var_var_ids = var["var_id"].to_pylist()
 
-        actual_X = exp.ms["RNA"].X["data"].read().tables().concat().to_pandas()
+        actual_X = exp.ms["measname"].X["data"].read().tables().concat().to_pandas()
 
         assert actual_obs_soma_joinids == expect_obs_soma_joinids
         assert actual_var_soma_joinids == expect_var_soma_joinids
@@ -632,7 +648,7 @@ def test_multiples_without_experiment(
         assert all(actual_X.dtypes == expect_X.dtypes)
         assert all(actual_X == expect_X)
 
-        X = exp.ms["RNA"].X["data"]
+        X = exp.ms["measname"].X["data"]
         assert X.used_shape() == ((0, 11), (0, 6))
         assert X.non_empty_domain() == ((0, 11), (0, 6))
 
@@ -641,12 +657,15 @@ def test_multiples_with_experiment(soma1, h5ad2, h5ad3, h5ad4):
     rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
         experiment_uri=soma1,
         h5ad_file_names=[h5ad2, h5ad3, h5ad4],
-        measurement_name="RNA",
+        measurement_name="measname",
         obs_field_name="obs_id",
         var_field_name="var_id",
     )
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == (2, 8)
-    assert rd.var_axes["RNA"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (2, 4)
+    assert rd.var_axes["measname"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (
+        2,
+        4,
+    )
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["ZZZ3", "RAW2", "TP53", "VEGFA"]
     ).data == (9, 6, 3, 4)
@@ -666,7 +685,7 @@ def test_multiples_with_experiment(soma1, h5ad2, h5ad3, h5ad4):
         "TGAG": 11,
     }
 
-    assert rd.var_axes["RNA"].data == {
+    assert rd.var_axes["measname"].data == {
         "AKT1": 0,
         "APOE": 1,
         "EGFR": 5,
@@ -694,7 +713,7 @@ def test_append_items_with_experiment(soma1, h5ad2):
     rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
         experiment_uri=soma1,
         h5ad_file_names=[h5ad2],
-        measurement_name="RNA",
+        measurement_name="measname",
         obs_field_name="obs_id",
         var_field_name="var_id",
     )
@@ -711,14 +730,14 @@ def test_append_items_with_experiment(soma1, h5ad2):
         tiledbsoma.io.append_var(
             exp1,
             adata2.var,
-            measurement_name="RNA",
+            measurement_name="measname",
             registration_mapping=rd,
         )
 
         tiledbsoma.io.append_X(
             exp1,
             adata2.X,
-            measurement_name="RNA",
+            measurement_name="measname",
             X_layer_name="data",
             obs_ids=list(adata2.obs.index),
             var_ids=list(adata2.var.index),
@@ -747,8 +766,8 @@ def test_append_items_with_experiment(soma1, h5ad2):
 
     with tiledbsoma.Experiment.open(soma1) as exp:
         obs = exp.obs.read().concat()
-        var = exp.ms["RNA"].var.read().concat()
-        exp.ms["RNA"].X["data"].read().tables().concat()
+        var = exp.ms["measname"].var.read().concat()
+        exp.ms["measname"].X["data"].read().tables().concat()
 
         actual_obs_soma_joinids = obs["soma_joinid"].to_pylist()
         actual_obs_obs_ids = obs["obs_id"].to_pylist()
@@ -761,7 +780,7 @@ def test_append_items_with_experiment(soma1, h5ad2):
         assert actual_obs_obs_ids == expect_obs_obs_ids
         assert actual_var_var_ids == expect_var_var_ids
 
-        actual_X = exp.ms["RNA"].X["data"].read().tables().concat().to_pandas()
+        actual_X = exp.ms["measname"].X["data"].read().tables().concat().to_pandas()
 
         expect_X = pd.DataFrame(
             {
