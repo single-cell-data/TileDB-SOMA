@@ -12,6 +12,7 @@ import abc
 import enum
 from typing import (
     Any,
+    Callable,
     Dict,
     Generic,
     Iterator,
@@ -22,6 +23,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 import attrs
@@ -202,8 +204,10 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
 
     def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
         try:
-            ned: Optional[Tuple[Tuple[Any, Any], ...]] = self._handle.nonempty_domain()
-            return ned
+            ned = self._handle.nonempty_domain()
+            if ned is None:
+                return None
+            return cast(Tuple[Tuple[Any, Any], ...], ned)
         except tiledb.TileDBError as e:
             raise SOMAError(e)
 
@@ -309,13 +313,18 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
         return MetadataWrapper(self, dict(self._handle.meta))
 
     @property
-    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def ndim(self) -> int:
+        return int(len(self._handle.index_column_names))
+
+    def _cast_domain(
+        self, domain: Callable[[str, np.dtype[Any]], Tuple[Any, Any]]
+    ) -> Tuple[Tuple[Any, Any], ...]:
         result = []
         for name in self._handle.index_column_names:
             dtype = self._handle.schema.field(name).type
             if pa.types.is_timestamp(dtype):
                 np_dtype = np.dtype(dtype.to_pandas_dtype())
-                dom = self._handle.domain(name, np_dtype)
+                dom = domain(name, np_dtype)
                 result.append(
                     (
                         np_dtype.type(dom[0], dtype.unit),
@@ -329,47 +338,32 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
                     dtype = np.dtype("S")
                 else:
                     dtype = np.dtype(dtype.to_pandas_dtype())
-                result.append(self._handle.domain(name, dtype))
+                result.append(domain(name, dtype))
         return tuple(result)
 
     @property
-    def ndim(self) -> int:
-        return int(len(self._handle.index_column_names))
+    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+        return self._cast_domain(self._handle.domain)
 
     def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
-        result = []
-        for name in self._handle.index_column_names:
-            dtype = self._handle.schema.field(name).type
-            if pa.types.is_timestamp(dtype):
-                np_dtype = np.dtype(dtype.to_pandas_dtype())
-                ned = self._handle.non_empty_domain(name, dtype)
-                result.append(
-                    (
-                        np_dtype.type(ned[0], dtype.unit),
-                        np_dtype.type(ned[1], dtype.unit),
-                    )
-                )
-            else:
-                if pa.types.is_large_string(dtype) or pa.types.is_string(dtype):
-                    dtype = np.dtype("U")
-                elif pa.types.is_large_binary(dtype) or pa.types.is_binary(dtype):
-                    dtype = np.dtype("S")
-                else:
-                    dtype = np.dtype(dtype.to_pandas_dtype())
-                result.append(self._handle.non_empty_domain(name, dtype))
-        return None if len(result) == 0 else tuple(result)
+        result = self._cast_domain(self._handle.non_empty_domain)
+        return None if len(result) == 0 else result
 
     @property
     def attr_names(self) -> Tuple[str, ...]:
-        result = []
-        for field in self.schema:
-            if field.name not in self._handle.index_column_names:
-                result.append(field.name)
-        return tuple(result)
+        return tuple(
+            f.name for f in self.schema if f.name not in self._handle.index_column_names
+        )
 
     @property
     def dim_names(self) -> Tuple[str, ...]:
         return tuple(self._handle.index_column_names)
+
+    def enum(self, label: str) -> tiledb.Enumeration:
+        # The DataFrame handle may either be ArrayWrapper or DataFrameWrapper.
+        # enum is only used in the DataFrame write path and is implemented by
+        # ArrayWrapper. If enum is called in the read path, it is an error.
+        raise NotImplementedError
 
 
 class _DictMod(enum.Enum):
