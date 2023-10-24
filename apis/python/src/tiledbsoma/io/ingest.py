@@ -406,9 +406,13 @@ def from_anndata(
     #
     # * Here we select out the renumberings for the obs, var, X, etc array indices
     if registration_mapping is None:
-        jidmaps = ExperimentIDMapping.from_isolated_anndata(anndata, measurement_name)
+        jidmaps = ExperimentIDMapping.from_isolated_anndata(
+            anndata, measurement_name=measurement_name
+        )
     else:
-        jidmaps = registration_mapping.id_mappings_for_anndata(anndata)
+        jidmaps = registration_mapping.id_mappings_for_anndata(
+            anndata, measurement_name=measurement_name
+        )
 
     context = _validate_soma_tiledb_context(context)
 
