@@ -22,6 +22,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 import attrs
@@ -202,8 +203,10 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
 
     def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
         try:
-            ned: Optional[Tuple[Tuple[Any, Any], ...]] = self._handle.nonempty_domain()
-            return ned
+            ned = self._handle.nonempty_domain()
+            if ned is None:
+                return None
+            return cast(Tuple[Tuple[Any, Any], ...], ned)
         except tiledb.TileDBError as e:
             raise SOMAError(e)
 
