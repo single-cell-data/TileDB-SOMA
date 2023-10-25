@@ -965,3 +965,7 @@ def _find_extent_for_domain(
         return np.datetime64(iextent, "ns")
 
     return extent
+
+
+# canary for CI fail on
+# https://github.com/single-cell-data/TileDB-SOMA/actions/runs/6641492395/job/18044152171?pr=1815
