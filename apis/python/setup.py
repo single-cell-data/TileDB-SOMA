@@ -201,10 +201,13 @@ LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
     str(tiledb_dir / "lib"),
 ]
-CXX_FLAGS = [
-    f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
-    f'-Wl,-rpath,{str(tiledb_dir / "lib")}',
-]
+
+CXX_FLAGS = []
+
+if os.name != "nt":
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}')
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib")}')
+
 if sys.platform == "darwin":
     CXX_FLAGS.append("-mmacosx-version-min=10.14")
 
@@ -262,9 +265,9 @@ setuptools.setup(
             ["src/tiledbsoma/pytiledbsoma.cc"],
             include_dirs=INC_DIRS,
             library_dirs=LIB_DIRS,
-            libraries=["tiledbsoma"],
+            libraries=["tiledbsoma", "tiledb"],
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++17"] + CXX_FLAGS,
+            extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17"] + CXX_FLAGS,
             language="c++",
         )
     ],

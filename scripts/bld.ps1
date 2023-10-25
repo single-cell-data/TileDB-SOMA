@@ -60,6 +60,6 @@ $SourceDir = (Get-Item -Path $PSScriptRoot).Parent.FullName + '\libtiledbsoma'
 Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $BuildDir
 
 cmake -B $BuildDir -S $SourceDir -DCMAKE_BUILD_TYPE=$Configuration $ExtraOpts
-cmake --build $BuildDir -j $BuildProcesses
-cmake --build $BuildDir --target install-libtiledbsoma
-cmake --build $BuildDir/libtiledbsoma --target build_tests -j $BuildProcesses
+cmake --build $BuildDir --config $Configuration -j $BuildProcesses
+cmake --build $BuildDir --config $Configuration --target install-libtiledbsoma
+cmake --build $BuildDir/libtiledbsoma --config $Configuration --target build_tests -j $BuildProcesses
