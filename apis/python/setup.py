@@ -261,7 +261,7 @@ setuptools.setup(
             ["src/tiledbsoma/pytiledbsoma.cc"],
             include_dirs=INC_DIRS,
             library_dirs=LIB_DIRS,
-            libraries=["tiledbsoma", "tiledb"],
+            libraries=["tiledbsoma"] + (["tiledb"] if os.name == "nt" else []),
             extra_link_args=CXX_FLAGS,
             extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17"]
             + CXX_FLAGS,
