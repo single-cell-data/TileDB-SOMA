@@ -43,9 +43,7 @@ if [ "$(uname -m)" == "aarch64" ]; then
 fi
 
 # NOTE: set to true to debug the cmake build
-# CI test
-# if false; then
-if true; then
+if false; then
   # Debug note: this is _incredibly_ helpful in that it reveals the actual compile lines etc which
   # make itself shows by default but which cmake-driven make hides by default. Use this for any
   # non-trivial cmake debugging.
