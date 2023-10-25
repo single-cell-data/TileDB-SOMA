@@ -204,7 +204,7 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
         range.
         """
         return self._handle.nonempty_domain()  # type: ignore
-    
+
     def enum(self, label: str) -> tiledb.Enumeration:
         return self._handle.enum(label)
 

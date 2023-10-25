@@ -758,6 +758,7 @@ def test_read_indexing(tmp_path, io):
             table = next(sdf.read(**read_kwargs)).to_pandas()
             assert table["A"].to_list() == io["A"]
 
+
 def test_write_categorical_types(tmp_path):
     """
     Verify that write path accepts categoricals
@@ -855,7 +856,8 @@ def test_write_categorical_dims(tmp_path):
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         assert (df == sdf.read().concat().to_pandas()).all().all()
-        
+
+
 def test_write_categorical_dim_extend(tmp_path):
     """
     Introduce new categorical values in each subsequent write.
