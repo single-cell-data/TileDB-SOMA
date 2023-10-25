@@ -33,6 +33,7 @@
 #ifndef __TILEDBSOMA__
 #define __TILEDBSOMA__
 
+#include "tiledbsoma_export.h"
 #include "utils/arrow_adapter.h"
 #include "utils/common.h"
 #include "utils/stats.h"
