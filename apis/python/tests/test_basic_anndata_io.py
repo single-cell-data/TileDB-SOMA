@@ -742,6 +742,9 @@ def test_X_empty(h5ad_file_X_empty):
         assert "data" in exp.ms["RNA"].X
         assert exp.ms["RNA"].X["data"].nnz == 0
 
+        tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+        # TODO: more
+
 
 def test_X_none(h5ad_file_X_none):
     tempdir = tempfile.TemporaryDirectory()
@@ -754,6 +757,9 @@ def test_X_none(h5ad_file_X_none):
         assert exp.obs.count == 2638
         assert exp.ms["RNA"].var.count == 1838
         assert list(exp.ms["RNA"].X.keys()) == []
+
+        tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name=None)
+        # TODO: more
 
 
 # There exist in the wild AnnData files with categorical-int columns where the "not in the category"
