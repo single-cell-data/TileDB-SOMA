@@ -65,6 +65,13 @@ add_test(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+if (WIN32)
+  add_custom_command(TARGET unit_soma POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:unit_soma> $<TARGET_FILE_DIR:unit_soma>
+    COMMAND_EXPAND_LISTS
+  )
+endif()
+
 add_custom_target(build_tests)
 add_dependencies(build_tests
   unit_soma
