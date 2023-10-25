@@ -249,7 +249,7 @@ def from_h5ad(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
-    uns_restrict_keys: Optional[Sequence[str]] = None,
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> str:
     """Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
 
@@ -309,8 +309,8 @@ def from_h5ad(
                   registration_mapping=rd,
               )
 
-        uns_restrict_keys: Only ingest the specified top-level ``uns`` keys.
-          The default is to ingest them all. Use ``uns_restrict_keys=[]``
+        uns_keys: Only ingest the specified top-level ``uns`` keys.
+          The default is to ingest them all. Use ``uns_keys=[]``
           to not ingest any ``uns`` keys.
 
     Returns:
@@ -349,7 +349,7 @@ def from_h5ad(
             use_relative_uri=use_relative_uri,
             X_kind=X_kind,
             registration_mapping=registration_mapping,
-            uns_restrict_keys=uns_restrict_keys,
+            uns_keys=uns_keys,
         )
 
     logging.log_io(
@@ -372,7 +372,7 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
-    uns_restrict_keys: Optional[Sequence[str]] = None,
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> str:
     """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
@@ -493,7 +493,7 @@ def from_anndata(
                 context=context,
                 ingestion_params=ingestion_params,
                 use_relative_uri=use_relative_uri,
-                uns_restrict_keys=uns_restrict_keys,
+                uns_keys=uns_keys,
             )
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2301,7 +2301,7 @@ def _maybe_ingest_uns(
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
-    uns_restrict_keys: Optional[Sequence[str]] = None,
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> None:
     # Don't try to ingest an empty uns.
     if not uns:
@@ -2314,7 +2314,7 @@ def _maybe_ingest_uns(
         context=context,
         ingestion_params=ingestion_params,
         use_relative_uri=use_relative_uri,
-        uns_restrict_keys=uns_restrict_keys,
+        uns_keys=uns_keys,
     )
 
 
@@ -2327,7 +2327,7 @@ def _ingest_uns_dict(
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
-    uns_restrict_keys: Optional[Sequence[str]] = None,
+    uns_keys: Optional[Sequence[str]] = None,
     level: int = 0,
 ) -> None:
     with _create_or_open_collection(
@@ -2339,11 +2339,7 @@ def _ingest_uns_dict(
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
         coll.metadata["soma_tiledbsoma_type"] = "uns"
         for key, value in dct.items():
-            if (
-                level == 0
-                and uns_restrict_keys is not None
-                and key not in uns_restrict_keys
-            ):
+            if level == 0 and uns_keys is not None and key not in uns_keys:
                 continue
             _ingest_uns_node(
                 coll,
@@ -2645,7 +2641,7 @@ def to_h5ad(
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
-    uns_restrict_keys: Optional[Sequence[str]] = None,
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> None:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
     format and writes it to the specified ``.h5ad`` file. Arguments are as in ``to_anndata``.
@@ -2663,7 +2659,7 @@ def to_h5ad(
         var_id_name=var_id_name,
         X_layer_name=X_layer_name,
         obsm_varm_width_hints=obsm_varm_width_hints,
-        uns_restrict_keys=uns_restrict_keys,
+        uns_keys=uns_keys,
     )
 
     s2 = _util.get_start_stamp()
@@ -2687,7 +2683,7 @@ def to_anndata(
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
-    uns_restrict_keys: Optional[Sequence[str]] = None,
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> ad.AnnData:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
     format. Choice of matrix formats is following what we often see in input
@@ -2701,8 +2697,8 @@ def to_anndata(
     The ``obsm_varm_width_hints`` is optional. If provided, it should be of the form
     ``{"obsm":{"X_tSNE":2}}`` to aid with export errors.
 
-    If ``uns_restrict_keys`` is provided, only the specified top-level ``uns`` keys
-    are extracted.  The default is to extract them all.  Use ``uns_restrict_keys=[]``
+    If ``uns_keys`` is provided, only the specified top-level ``uns`` keys
+    are extracted.  The default is to extract them all.  Use ``uns_keys=[]``
     to not ingest any ``uns`` keys.
 
     Lifecycle:
@@ -2791,7 +2787,7 @@ def to_anndata(
         logging.log_io(None, f'Start  writing uns for {measurement["uns"].uri}')
         uns = _extract_uns(
             cast(Collection[Any], measurement["uns"]),
-            uns_restrict_keys=uns_restrict_keys,
+            uns_keys=uns_keys,
         )
         logging.log_io(
             None,
@@ -2890,7 +2886,7 @@ def _extract_obsm_or_varm(
 
 def _extract_uns(
     collection: Collection[Any],
-    uns_restrict_keys: Optional[Sequence[str]] = None,
+    uns_keys: Optional[Sequence[str]] = None,
     level: int = 0,
 ) -> Dict[str, Any]:
     """
@@ -2899,11 +2895,7 @@ def _extract_uns(
 
     extracted: Dict[str, Any] = {}
     for key, element in collection.items():
-        if (
-            level == 0
-            and uns_restrict_keys is not None
-            and key not in uns_restrict_keys
-        ):
+        if level == 0 and uns_keys is not None and key not in uns_keys:
             continue
 
         if isinstance(element, Collection):
@@ -2935,11 +2927,7 @@ def _extract_uns(
 
     # Primitives got set on the SOMA-experiment uns metadata.
     for key, value in collection.metadata.items():
-        if (
-            level == 0
-            and uns_restrict_keys is not None
-            and key not in uns_restrict_keys
-        ):
+        if level == 0 and uns_keys is not None and key not in uns_keys:
             continue
         if not key.startswith("soma_"):
             extracted[key] = value

@@ -364,24 +364,22 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
     exp.close()
 
 
-@pytest.mark.parametrize("ingest_uns_restrict_keys", [["louvain_colors"], None])
-def test_ingest_uns(
-    tmp_path: pathlib.Path, h5ad_file_extended, ingest_uns_restrict_keys
-):
+@pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])
+def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended, ingest_uns_keys):
     tmp_uri = tmp_path.as_uri()
     original = anndata.read(h5ad_file_extended)
     uri = tiledbsoma.io.from_anndata(
         tmp_uri,
         original,
         measurement_name="hello",
-        uns_restrict_keys=ingest_uns_restrict_keys,
+        uns_keys=ingest_uns_keys,
     )
 
     with tiledbsoma.Experiment.open(uri) as exp:
         uns = exp.ms["hello"]["uns"]
         assert isinstance(uns, tiledbsoma.Collection)
         assert uns.metadata["soma_tiledbsoma_type"] == "uns"
-        if ingest_uns_restrict_keys is None:
+        if ingest_uns_keys is None:
             assert set(uns) == {
                 "draw_graph",
                 "louvain",
@@ -407,7 +405,7 @@ def test_ingest_uns(
             got_pca_variance = uns["pca"]["variance"].read().to_numpy()
             assert np.array_equal(got_pca_variance, original.uns["pca"]["variance"])
         else:
-            assert set(uns) == set(ingest_uns_restrict_keys)
+            assert set(uns) == set(ingest_uns_keys)
 
 
 def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
@@ -846,9 +844,9 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
 
 
 @pytest.mark.parametrize(
-    "outgest_uns_restrict_keys", [["int_scalar", "strings", "np_ndarray_2d"], None]
+    "outgest_uns_keys", [["int_scalar", "strings", "np_ndarray_2d"], None]
 )
-def test_uns_io(tmp_path, outgest_uns_restrict_keys):
+def test_uns_io(tmp_path, outgest_uns_keys):
     obs = pd.DataFrame(
         data={"obs_id": np.asarray(["a", "b", "c"])},
         index=np.arange(3).astype(str),
@@ -900,14 +898,14 @@ def test_uns_io(tmp_path, outgest_uns_restrict_keys):
         bdata = tiledbsoma.io.to_anndata(
             exp,
             measurement_name="RNA",
-            uns_restrict_keys=outgest_uns_restrict_keys,
+            uns_keys=outgest_uns_keys,
         )
 
     # Keystroke-savers
     a = adata.uns
     b = bdata.uns
 
-    if outgest_uns_restrict_keys is None:
+    if outgest_uns_keys is None:
         assert a["int_scalar"] == b["int_scalar"]
         assert a["float_scalar"] == b["float_scalar"]
         assert a["string_scalar"] == b["string_scalar"]
@@ -926,4 +924,4 @@ def test_uns_io(tmp_path, outgest_uns_restrict_keys):
         assert (sa["string_np_ndarray_2d"] == sb["string_np_ndarray_2d"]).all()
 
     else:
-        assert set(b.keys()) == set(outgest_uns_restrict_keys)
+        assert set(b.keys()) == set(outgest_uns_keys)
