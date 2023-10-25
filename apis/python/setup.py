@@ -61,13 +61,9 @@ for arg in args:
 
 if libtiledbsoma_dir is None:
     scripts_dir = this_dir / "dist_links" / "scripts"
+    scripts_dir = scripts_dir.resolve()
 
-    if scripts_dir.is_symlink():
-        # in git source tree
-        libtiledbsoma_dir = this_dir.parent.parent / "dist"
-    else:
-        # in extracted sdist, with libtiledbsoma copied into dist_links/
-        libtiledbsoma_dir = this_dir / "dist_links" / "dist"
+    libtiledbsoma_dir = scripts_dir.parent / "dist"
 else:
     libtiledbsoma_dir = pathlib.Path(libtiledbsoma_dir)
 
