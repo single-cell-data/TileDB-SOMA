@@ -151,7 +151,10 @@ def find_or_build_package_data(setuptools_cmd):
         # cause that cache to fall out of sync.
         #
         # See `.github/workflows/python-ci-single.yml` for configuration.
-        subprocess.run(["./bld"], cwd=scripts_dir)
+        if os.name == "nt":
+            subprocess.run(["pwsh.exe", "./bld.ps1"], cwd=scripts_dir, check=True)
+        else:
+            subprocess.run(["./bld"], cwd=scripts_dir, check=True)
         lib_dir = libtiledbsoma_exists()
         assert lib_dir, "error when building libtiledbsoma from source"
 
@@ -225,7 +228,7 @@ if os.name == "posix" and sys.platform != "darwin":
 setuptools.setup(
     name="tiledbsoma",
     description="Python API for efficient storage and retrieval of single-cell data using TileDB",
-    long_description=open("README.md").read(),
+    long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     author="TileDB, Inc.",
     author_email="help@tiledb.io",
@@ -242,6 +245,7 @@ setuptools.setup(
         "Operating System :: Unix",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS :: MacOS X",
+        "Operating System :: Microsoft :: Windows",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
