@@ -355,6 +355,15 @@ class SOMAArray {
     }
 
     /**
+     * @brief Returns the result order set by the query.
+     *
+     * @return ResultOrder
+     */
+    ResultOrder result_order() {
+        return result_order_;
+    }
+
+    /**
      * @brief Read the next chunk of results from the query. If all results
      * have already been read, std::nullopt is returned.
      *
