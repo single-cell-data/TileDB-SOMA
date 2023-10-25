@@ -36,7 +36,14 @@
 #ifndef TILEDB_LOGGER_PUBLIC_H
 #define TILEDB_LOGGER_PUBLIC_H
 
-#include "../../tiledbsoma_export.h"
+#ifndef TILEDBSOMA_EXPORT
+// TILEDBSOMA_EXPORT is defined by the auto-generated tiledbsoma_export.h
+// which is included from the top-level tiledbsoma header. We don't include
+// it here to simplify the include paths (and avoid copying all headers to
+// a single directory like TileDB does). In case the symbol is not defined,
+// define it here as empty.
+#define TILEDBSOMA_EXPORT
+#endif
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 

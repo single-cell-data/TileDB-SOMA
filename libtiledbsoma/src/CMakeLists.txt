@@ -233,7 +233,7 @@ set(TILEDB_SOMA_EXPORT_HEADER "${TILEDB_SOMA_EXPORT_HEADER}" PARENT_SCOPE)
 
 # Set related compiler settings
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXPORTS)
-target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${TILEDB_SOMA_EXPORT_HEADER_DIR})
 
 # Add the generated header to the public headers list
 list(APPEND TILEDB_SOMA_PUBLIC_HEADERS
