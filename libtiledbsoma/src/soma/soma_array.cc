@@ -566,3 +566,6 @@ std::optional<std::pair<uint64_t, uint64_t>> SOMAArray::timestamp() {
 }
 
 }  // namespace tiledbsoma
+
+// canary for CI fail on
+// https://github.com/single-cell-data/TileDB-SOMA/actions/runs/6641492395/job/18044152171?pr=1815
