@@ -1248,8 +1248,8 @@ def _write_dataframe_impl(
                     vals = col.chunk(0).dictionary.tolist()
                     se = tiledb.ArraySchemaEvolution(soma_df.context.tiledb_ctx)
                     se.extend_enumeration(tiledb.Enumeration(name, ordered, vals))
-                    se.array_evolve(uri=df_uri)
-
+                    se.array_evolve(uri=df_uri)     
+                    
         logging.log_io(
             f"Wrote schema {soma_df.uri}",
             _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),

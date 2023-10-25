@@ -417,10 +417,15 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                             f"Expected dictionary type for enumerated attribute {name} but saw {col_info.type}"
                         )
 
-                    ordered = col_info.type.ordered
-                    vals = col.chunk(0).dictionary.tolist()
+                    enmr = self._handle.enum(attr.name)
+                    
+                    # extend only with new values
+                    old_vals = set(enmr.values())
+                    new_vals = set(col.chunk(0).dictionary.tolist())
+                    update_vals = list(new_vals - old_vals)
+                    
                     se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
-                    se.extend_enumeration(tiledb.Enumeration(name, ordered, vals))
+                    se.extend_enumeration(enmr.extend(update_vals))
                     se.array_evolve(uri=self.uri)
 
             cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
