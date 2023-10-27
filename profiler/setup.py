@@ -4,5 +4,5 @@ setup(
     name="soma-profiler",
     version="1.0",
     packages=find_packages(),
-    requires=["gitpython", "psutil"],
+    requires=["gitpython", "comacore", "psutil", "tiledbsoma", "cellxgene_census"],
 )

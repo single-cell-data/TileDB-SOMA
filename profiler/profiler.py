@@ -10,10 +10,9 @@ from sys import stderr
 from typing import Any, Dict, Optional
 
 import somacore
+from context_generator import host_context
 
 import tiledbsoma
-
-from context_generator import host_context
 from data import FileBasedProfileDB, ProfileData, ProfileDB
 
 GNU_TIME_FORMAT = (
@@ -206,6 +205,7 @@ def main():
         f"{data.command_key=}, {data.command=}, {data.exit_status=}, {db_record_file=}",
         file=stderr,
     )
+
 
 if __name__ == "__main__":
     main()
