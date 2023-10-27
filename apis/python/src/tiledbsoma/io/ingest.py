@@ -2641,7 +2641,7 @@ def to_h5ad(
     h5ad_path: Path,
     measurement_name: str,
     *,
-    X_layer_name: str = "data",
+    X_layer_name: Optional[str] = "data",
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
@@ -2683,7 +2683,7 @@ def to_anndata(
     experiment: Experiment,
     measurement_name: str,
     *,
-    X_layer_name: str = "data",
+    X_layer_name: Optional[str] = "data",
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
@@ -2737,22 +2737,26 @@ def to_anndata(
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    if X_layer_name not in measurement.X:
-        raise ValueError(
-            f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
-        )
-    X_data = measurement.X[X_layer_name]
     X_csr = None
+    X_ndarray = None
     X_dtype = None  # some datasets have no X
-    if isinstance(X_data, DenseNDArray):
-        X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
-        X_dtype = X_ndarray.dtype
-    elif isinstance(X_data, SparseNDArray):
-        X_mat = X_data.read().tables().concat().to_pandas()  # TODO: CSR/CSC options ...
-        X_csr = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
-        X_dtype = X_csr.dtype
-    else:
-        raise TypeError(f"Unexpected NDArray type {type(X_data)}")
+    if X_layer_name is not None:
+        if X_layer_name not in measurement.X:
+            raise ValueError(
+                f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
+            )
+        X_data = measurement.X[X_layer_name]
+        if isinstance(X_data, DenseNDArray):
+            X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
+            X_dtype = X_ndarray.dtype
+        elif isinstance(X_data, SparseNDArray):
+            X_mat = (
+                X_data.read().tables().concat().to_pandas()
+            )  # TODO: CSR/CSC options ...
+            X_csr = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
+            X_dtype = X_csr.dtype
+        else:
+            raise TypeError(f"Unexpected NDArray type {type(X_data)}")
 
     if obsm_varm_width_hints is None:
         obsm_varm_width_hints = {}
