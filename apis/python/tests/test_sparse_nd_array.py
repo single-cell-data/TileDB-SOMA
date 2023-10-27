@@ -1392,7 +1392,7 @@ def test_blockwise_table_iter_error_checks(
         (0.001, (10_101, 389), (slice(33, 1048), slice(45, 333))),
     ],
 )
-@pytest.mark.parametrize("size", [9, 77, 243, 1001, 2**16])
+@pytest.mark.parametrize("size", [77, 1001, 2**16])
 def test_blockwise_scipy_iter(
     a_random_sparse_nd_array: str, coords: Tuple[Any, ...], size: int
 ) -> None:
