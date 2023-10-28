@@ -95,7 +95,7 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
     expect_equal(length(lvls), ncol(et))  # et, not ett or tsch or sch as no soma_joinid
     expect_equal(names(lvls), colnames(et))
 
-    sdf <- SOMADataFrameCreate(uri, sch, levels=lvls)
+    sdf <- SOMADataFrameCreate(uri, sch)
     expect_true(inherits(sdf, "SOMADataFrame"))
 
     sdf$write(att)
