@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import abc
-import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
     Dict,
@@ -220,7 +220,7 @@ def _single_axis_blockwise_table_iter(
     size: int,
     reindex_disable: List[int],
     eager: bool = True,
-    pool: Optional[concurrent.futures.Executor] = None,
+    pool: Optional[ThreadPoolExecutor] = None,
 ) -> SingleAxisTableIterReturn:
     """Private. Blockwise Arrow Table iterator, restricted to a single axis"""
 
@@ -247,8 +247,10 @@ def _single_axis_blockwise_table_iter(
         d: pd.Index(joinids[d].to_numpy()) for d in (axes_to_reindex - set((axis,)))
     }
 
-    def _if_eager(x: Iterator[_RT]) -> Iterator[_RT]:
-        return EagerIterator(x, pool=pool) if eager else x
+    def _if_eager(
+        x: Iterator[_RT], _pool: Optional[ThreadPoolExecutor] = None
+    ) -> Iterator[_RT]:
+        return EagerIterator(x, pool=_pool) if eager else x
 
     # blockwise reader
     def _table_reader() -> SingleAxisTableIterReturn:
@@ -263,8 +265,10 @@ def _single_axis_blockwise_table_iter(
             )
 
     # with reindexing
-    def _reindexed_table_reader() -> SingleAxisTableIterReturn:
-        for tbl, coords in _if_eager(_table_reader()):
+    def _reindexed_table_reader(
+        _pool: Optional[ThreadPoolExecutor] = None,
+    ) -> SingleAxisTableIterReturn:
+        for tbl, coords in _if_eager(_table_reader(), _pool):
             pytbl = {}
             for d in range(ndim):
                 col = tbl.column(f"soma_dim_{d}")
@@ -278,11 +282,14 @@ def _single_axis_blockwise_table_iter(
             yield pa.Table.from_pydict(pytbl), coords
 
     if eager and not pool:
-        with concurrent.futures.ThreadPoolExecutor() as _pool:
-            pool = _pool
-            yield from _reindexed_table_reader() if axes_to_reindex else _table_reader()
+        with ThreadPoolExecutor() as _pool:
+            yield from _reindexed_table_reader(
+                _pool
+            ) if axes_to_reindex else _table_reader()
     else:
-        yield from _reindexed_table_reader() if axes_to_reindex else _table_reader()
+        yield from _reindexed_table_reader(
+            _pool=pool
+        ) if axes_to_reindex else _table_reader()
 
 
 def _scipy_sparse_iter(
@@ -294,7 +301,7 @@ def _scipy_sparse_iter(
     compress: bool,
     reindex_disable: List[int],
     eager: bool,
-    pool: Optional[concurrent.futures.Executor] = None,
+    pool: Optional[ThreadPoolExecutor] = None,
 ) -> Iterator[BlockwiseScipyReadIterResult]:
     """
     Private. Iterator over SparseNDArray producing sequence of scipy sparse matrix.
@@ -323,15 +330,20 @@ def _scipy_sparse_iter(
     minor_axis = 1 - axis
     reindex_sparse_axis = minor_axis not in reindex_disable
 
-    def _if_eager(x: Iterator[_RT]) -> Iterator[_RT]:
-        return EagerIterator(x, pool=pool) if eager else x
+    def _if_eager(
+        x: Iterator[_RT], _pool: Optional[ThreadPoolExecutor] = None
+    ) -> Iterator[_RT]:
+        return EagerIterator(x, pool=_pool) if eager else x
 
-    def _sorted_tbl_reader() -> Iterator[Tuple[IJDType, IndicesType]]:
+    def _sorted_tbl_reader(
+        _pool: Optional[ThreadPoolExecutor] = None,
+    ) -> Iterator[Tuple[IJDType, IndicesType]]:
         """Read reindexed tables and sort them. Yield as ((i,j),d)"""
         for coo_tbl, indices in _if_eager(
             _single_axis_blockwise_table_iter(
                 array, sr, coords, axis, size, reindex_disable, eager
-            )
+            ),
+            _pool,
         ):
             coo_tbl = coo_tbl.sort_by(
                 [
@@ -356,10 +368,12 @@ def _scipy_sparse_iter(
             _sp_shape[minor_axis] = len(minor_coords)
         return cast(Tuple[int, int], tuple(_sp_shape))
 
-    def _coo_reader() -> Iterator[Tuple[sparse.coo_matrix, IndicesType]]:
+    def _coo_reader(
+        _pool: Optional[ThreadPoolExecutor] = None,
+    ) -> Iterator[Tuple[sparse.coo_matrix, IndicesType]]:
         """Uncompressed variants"""
         assert not compress
-        for ((i, j), d), indices in _if_eager(_sorted_tbl_reader()):
+        for ((i, j), d), indices in _if_eager(_sorted_tbl_reader(_pool), _pool):
             major_coords, minor_coords = indices[major_axis], indices[minor_axis]
             sp = sparse.coo_matrix(
                 (d, (i, j)), shape=_mk_shape(major_coords, minor_coords)
@@ -371,12 +385,12 @@ def _scipy_sparse_iter(
 
             yield sp, indices
 
-    def _cs_reader() -> (
-        Iterator[Tuple[Union[sparse.csr_matrix, sparse.csc_matrix], IndicesType],]
-    ):
+    def _cs_reader(
+        _pool: Optional[ThreadPoolExecutor] = None,
+    ) -> Iterator[Tuple[Union[sparse.csr_matrix, sparse.csc_matrix], IndicesType],]:
         """Compressed sparse variants"""
         assert compress
-        for ((i, j), d), indices in _if_eager(_sorted_tbl_reader()):
+        for ((i, j), d), indices in _if_eager(_sorted_tbl_reader(_pool), _pool):
             major_coords, minor_coords = indices[major_axis], indices[minor_axis]
             cls = sparse.csr_matrix if axis == 0 else sparse.csc_matrix
             sp = cls(
@@ -387,11 +401,10 @@ def _scipy_sparse_iter(
             yield sp, indices
 
     if eager and not pool:
-        with concurrent.futures.ThreadPoolExecutor() as _pool:
-            pool = _pool
-            yield from _cs_reader() if compress else _coo_reader()
+        with ThreadPoolExecutor() as _pool:
+            yield from _cs_reader(_pool) if compress else _coo_reader(_pool)
     else:
-        yield from _cs_reader() if compress else _coo_reader()
+        yield from _cs_reader(_pool=pool) if compress else _coo_reader(_pool=pool)
 
 
 def _arrow_table_reader(sr: clib.SOMAArray) -> Iterator[pa.Table]:
