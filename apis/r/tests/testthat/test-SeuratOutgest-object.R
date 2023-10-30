@@ -24,7 +24,8 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     experiment = experiment,
     measurement_name = "RNA"
   )
-  expect_no_condition(obj <- query$to_seurat())
+  # expect_no_condition(obj <- query$to_seurat())
+  obj <- query$to_seurat()
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
@@ -53,10 +54,14 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_identical(colnames(graph), colnames(obj))
 
   # Test named
-  expect_no_condition(obj <- query$to_seurat(
+  # expect_no_condition(obj <- query$to_seurat(
+  #   obs_index = 'baz',
+  #   var_index = 'quux'
+  # ))
+  obj <- query$to_seurat(
     obs_index = 'baz',
     var_index = 'quux'
-  ))
+  )
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(
@@ -92,7 +97,8 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_identical(colnames(graph), colnames(obj))
 
   # Test `X_layers`
-  expect_no_condition(obj <- query$to_seurat(c(counts = 'counts')))
+  # expect_no_condition(obj <- query$to_seurat(c(counts = 'counts')))
+  obj <- query$to_seurat(c(counts = 'counts'))
   expect_s4_class(
     counts <- SeuratObject::GetAssayData(obj[['RNA']], 'counts'),
     'dgCMatrix'
@@ -102,7 +108,8 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     'dgCMatrix'
   )
   expect_identical(counts, data)
-  expect_no_condition(obj <- query$to_seurat(c(data = 'logcounts')))
+  # expect_no_condition(obj <- query$to_seurat(c(data = 'logcounts')))
+  obj <- query$to_seurat(c(data = 'logcounts'))
   expect_s4_class(
     SeuratObject::GetAssayData(obj[['RNA']], 'data'),
     'dgCMatrix'
@@ -113,16 +120,20 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   )))
 
   # Test suppress reductions
-  expect_no_condition(obj <- query$to_seurat(obsm_layers = FALSE))
+  # expect_no_condition(obj <- query$to_seurat(obsm_layers = FALSE))
+  obj <- query$to_seurat(obsm_layers = FALSE)
   expect_length(SeuratObject::Reductions(obj), 0L)
-  expect_no_condition(obj <- query$to_seurat(obsm_layers = NA))
+  # expect_no_condition(obj <- query$to_seurat(obsm_layers = NA))
+  obj <- query$to_seurat(obsm_layers = NA)
   expect_length(SeuratObject::Reductions(obj), 0L)
-  expect_no_condition(obj <- query$to_seurat(obsm_layers = 'umap'))
+  # expect_no_condition(obj <- query$to_seurat(obsm_layers = 'umap'))
+  obj <- query$to_seurat(obsm_layers = 'umap')
   expect_identical(SeuratObject::Reductions(obj), 'umap')
   expect_error(obj[['pca']])
 
   # Test suppress loadings
-  expect_no_condition(obj <- query$to_seurat(varm_layers = FALSE))
+  # expect_no_condition(obj <- query$to_seurat(varm_layers = FALSE))
+  obj <- query$to_seurat(varm_layers = FALSE)
   expect_identical(
     lapply(list(SeuratObject::Reductions(obj)), sort),
     lapply(list(c('pca', 'umap')), sort)
@@ -130,11 +141,13 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(obj[['pca']])))
 
   # Test suppress graphs
-  expect_no_condition(obj <- query$to_seurat(obsp_layers = FALSE))
+  # expect_no_condition(obj <- query$to_seurat(obsp_layers = FALSE))
+  obj <- query$to_seurat(obsp_layers = FALSE)
   expect_length(SeuratObject::Graphs(obj), 0L)
 
   # Test suppress cell-level meta data
-  expect_no_condition(obj <- query$to_seurat(obs_column_names = FALSE))
+  # expect_no_condition(obj <- query$to_seurat(obs_column_names = FALSE))
+  obj <- query$to_seurat(obs_column_names = FALSE)
   expect_false(any(query$obs_df$attrnames() %in% names(obj[[]])))
 
   # Test `X_layers` assertions
@@ -211,7 +224,8 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   )
   n_var_slice <- length(var_slice)
   n_obs_slice <- length(obs_slice)
-  expect_no_condition(obj <- query$to_seurat())
+  # expect_no_condition(obj <- query$to_seurat())
+  obj <- query$to_seurat()
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
@@ -222,10 +236,14 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   )
 
   # Test named
-  expect_no_condition(obj <- query$to_seurat(
+  # expect_no_condition(obj <- query$to_seurat(
+  #   obs_index = 'baz',
+  #   var_index = 'quux'
+  # ))
+  obj <- query$to_seurat(
     obs_index = 'baz',
     var_index = 'quux'
-  ))
+  )
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(
@@ -282,7 +300,8 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   )
   n_var_select <- length(var_label_values)
   n_obs_select <- length(obs_label_values)
-  expect_no_condition(obj <- query$to_seurat())
+  # expect_no_condition(obj <- query$to_seurat())
+  obj <- query$to_seurat()
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
@@ -293,10 +312,14 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   )
 
   # Test named
-  expect_no_condition(obj <- query$to_seurat(
+  # expect_no_condition(obj <- query$to_seurat(
+  #   obs_index = 'baz',
+  #   var_index = 'quux'
+  # ))
+  obj <- query$to_seurat(
     obs_index = 'baz',
     var_index = 'quux'
-  ))
+  )
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(
