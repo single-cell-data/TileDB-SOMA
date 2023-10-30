@@ -809,6 +809,8 @@ def _build_tiledb_schema(
                 enmr_dtype = np.dtype("U")
             elif pa.types.is_large_binary(vtype) or pa.types.is_binary(vtype):
                 enmr_dtype = np.dtype("S")
+            elif pa.types.is_boolean(vtype):
+                enmr_dtype = np.dtype("int64")
             else:
                 enmr_dtype = np.dtype(vtype.to_pandas_dtype())
             enums.append(
