@@ -94,12 +94,12 @@ write_soma.Assay <- function(
 
   # Write `X` matrices
   for (slot in c("counts", "data", "scale.data")) {
-    mat <- SeuratObject::GetAssayData(x, slot = slot)
+    mat <- SeuratObject::GetAssayData(x, slot)
     if (SeuratObject::IsMatrixEmpty(mat)) next
 
     # Skip 'data' slot if it's identical to 'counts'
     if (slot == "data") {
-      if (identical(mat, SeuratObject::GetAssayData(x, slot = "counts"))) {
+      if (identical(mat, SeuratObject::GetAssayData(x, "counts"))) {
         spdl::info("Skipping 'data' slot because it's identical to 'counts'")
         next
       }
