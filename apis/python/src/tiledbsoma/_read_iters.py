@@ -62,14 +62,10 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
     """Iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements"""
 
     def __init__(self, sr: clib.SOMAArray):
-        self.sr = sr
+        self._reader = _arrow_table_reader(sr)
 
     def __next__(self) -> pa.Table:
-        arrow_table = self.sr.read_next()
-        if arrow_table is None:
-            raise StopIteration
-
-        return arrow_table
+        return next(self._reader)
 
     def concat(self) -> pa.Table:
         """Concatenate remainder of iterator, and return as a single `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_"""
