@@ -26,8 +26,8 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-import scipy.sparse as sparse
 import somacore
+from scipy import sparse
 from somacore import options
 from somacore.query._eager_iter import EagerIterator
 
@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 
 
 # Convenience types
-RT = TypeVar("RT")
+_RT = TypeVar("_RT")
 
 
 class TableReadIter(somacore.ReadIter[pa.Table]):
@@ -64,10 +64,10 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         return pa.concat_tables(self)
 
 
-class BlockwiseReadIterBase(somacore.ReadIter[RT], metaclass=abc.ABCMeta):
+class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     """Private implementation class"""
 
-    _reader: Iterator[RT]
+    _reader: Iterator[_RT]
 
     def __init__(
         self,
@@ -88,11 +88,17 @@ class BlockwiseReadIterBase(somacore.ReadIter[RT], metaclass=abc.ABCMeta):
             sr.shape, axis, size, reindex_disable
         )
         self.eager = eager
+        self._reader = self._create_reader()
 
-    def __next__(self) -> RT:
+    @abc.abstractmethod
+    def _create_reader(self) -> Iterator[_RT]:
+        """Sub-class responsibility"""
+        raise NotImplementedError()
+
+    def __next__(self) -> _RT:
         return next(self._reader)
 
-    def concat(self) -> RT:
+    def concat(self) -> _RT:
         # Unimplemented as there is little utility beyond that offered by a ragged
         # read iterator concat, other than reindexing.
         raise NotImplementedError("Blockwise iterators do not support concat operation")
@@ -104,27 +110,8 @@ BlockwiseTableReadIterResult = Tuple[pa.Table, Tuple[pa.Array, ...]]
 class BlockwiseTableReadIter(BlockwiseReadIterBase[BlockwiseTableReadIterResult]):
     """Blockwise iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements"""
 
-    def __init__(
-        self,
-        array: "SparseNDArray",
-        sr: clib.SOMAArray,
-        coords: options.SparseNDCoords,
-        axis: Union[int, Sequence[int]],
-        *,
-        size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable: Optional[Union[int, Sequence[int]]] = None,
-        eager: bool = True,
-    ):
-        super().__init__(
-            array,
-            sr,
-            coords,
-            axis,
-            size=size,
-            reindex_disable=reindex_disable,
-            eager=eager,
-        )
-        self._reader = _single_axis_blockwise_table_iter(
+    def _create_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
+        return _single_axis_blockwise_table_iter(
             self.array,
             self.sr,
             self.coords,
@@ -156,6 +143,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         eager: bool = True,
         compress: bool = True,
     ):
+        self.compress = compress
         super().__init__(
             array,
             sr,
@@ -165,19 +153,21 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             reindex_disable=reindex_disable,
             eager=eager,
         )
-        self._reader = _scipy_sparse_iter(
+
+    def _create_reader(self) -> Iterator[BlockwiseScipyReadIterResult]:
+        return _scipy_sparse_iter(
             self.array,
             self.sr,
             self.coords,
             self.axis[0],
             self.size[0],
-            compress,
+            self.compress,
             self.reindex_disable,
             self.eager,
         )
 
 
-class SparseTensorReadIterBase(somacore.ReadIter[RT], metaclass=abc.ABCMeta):
+class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     """Private implementation class"""
 
     def __init__(self, sr: clib.SOMAArray, shape: NTuple):
@@ -185,17 +175,17 @@ class SparseTensorReadIterBase(somacore.ReadIter[RT], metaclass=abc.ABCMeta):
         self.shape = shape
 
     @abc.abstractmethod
-    def _from_table(self, arrow_table: pa.Table) -> RT:
+    def _from_table(self, arrow_table: pa.Table) -> _RT:
         raise NotImplementedError()
 
-    def __next__(self) -> RT:
+    def __next__(self) -> _RT:
         arrow_table = self.sr.read_next()
         if arrow_table is None:
             raise StopIteration
 
         return self._from_table(arrow_table)
 
-    def concat(self) -> RT:
+    def concat(self) -> _RT:
         """Returns all the requested data in a single operation.
 
         If some data has already been retrieved using ``next``, this will return
@@ -235,11 +225,11 @@ def _single_axis_blockwise_table_iter(
     """Private. Blockwise Arrow Table iterator, restricted to a single axis"""
 
     ndim = len(sr.shape)
-    if axis < 0 or axis >= ndim:
+    if not 0 <= axis < ndim:
         raise ValueError("chunk_dim argument must specify a dimension value.")
 
     # normalize params tuple
-    coords = tuple(coords[i] if i < len(coords) else None for i in range(ndim))
+    coords = _pad_with_none(coords, ndim)
 
     # Materialize all joinids except the axis
     joinids: List[pa.Array] = [
@@ -257,7 +247,7 @@ def _single_axis_blockwise_table_iter(
         d: pd.Index(joinids[d].to_numpy()) for d in (axes_to_reindex - set((axis,)))
     }
 
-    def _if_eager(x: Iterator[RT]) -> Iterator[RT]:
+    def _if_eager(x: Iterator[_RT]) -> Iterator[_RT]:
         return EagerIterator(x, pool=pool) if eager else x
 
     # blockwise reader
@@ -274,8 +264,7 @@ def _single_axis_blockwise_table_iter(
 
     # with reindexing
     def _reindexed_table_reader() -> SingleAxisTableIterReturn:
-        _tbl_iter = _table_reader() if eager else _if_eager(_table_reader())
-        for tbl, coords in _tbl_iter:
+        for tbl, coords in _if_eager(_table_reader()):
             pytbl = {}
             for d in range(ndim):
                 col = tbl.column(f"soma_dim_{d}")
@@ -291,13 +280,9 @@ def _single_axis_blockwise_table_iter(
     if eager and not pool:
         with concurrent.futures.ThreadPoolExecutor() as _pool:
             pool = _pool
-            yield from _reindexed_table_reader() if len(
-                axes_to_reindex
-            ) else _table_reader()
+            yield from _reindexed_table_reader() if axes_to_reindex else _table_reader()
     else:
-        yield from _reindexed_table_reader() if len(
-            axes_to_reindex
-        ) else _table_reader()
+        yield from _reindexed_table_reader() if axes_to_reindex else _table_reader()
 
 
 def _scipy_sparse_iter(
@@ -331,14 +316,14 @@ def _scipy_sparse_iter(
     shape = cast(Tuple[int, int], tuple(sr.shape))
 
     # normalize params tuple
-    coords = tuple(coords[i] if i < len(coords) else None for i in range(2))
+    coords = _pad_with_none(coords, 2)
 
     # Blockwise on the major axis, e.g., axis==0 implies CSR, axis==1 implies CSC
     major_axis = axis
     minor_axis = 1 - axis
     reindex_sparse_axis = minor_axis not in reindex_disable
 
-    def _if_eager(x: Iterator[RT]) -> Iterator[RT]:
+    def _if_eager(x: Iterator[_RT]) -> Iterator[_RT]:
         return EagerIterator(x, pool=pool) if eager else x
 
     def _sorted_tbl_reader() -> Iterator[Tuple[IJDType, IndicesType]]:
@@ -506,3 +491,11 @@ def _blockwise_config(
         raise TypeError("blockwise iterator `size` must be None, int or Sequence[int]")
 
     return axis, size, reindex_disable
+
+
+_ET = TypeVar("_ET")
+
+
+def _pad_with_none(s: Sequence[_ET], to_length: int) -> Tuple[Union[_ET, None], ...]:
+    """Given a sequence, pad length to a user-specified length, with None values"""
+    return tuple(s[i] if i < len(s) else None for i in range(to_length))
