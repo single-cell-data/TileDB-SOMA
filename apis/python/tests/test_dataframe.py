@@ -766,13 +766,16 @@ def test_write_categorical_types(tmp_path):
     schema = pa.schema(
         [
             ("soma_joinid", pa.int64()),
-            ("string-ordered", pa.dictionary(pa.int8(), pa.large_string())),
+            (
+                "string-ordered",
+                pa.dictionary(pa.int8(), pa.large_string(), ordered=True),
+            ),
             ("string-unordered", pa.dictionary(pa.int8(), pa.large_string())),
             ("string-compat", pa.large_string()),
-            ("int-ordered", pa.dictionary(pa.int8(), pa.int8())),
-            ("int-unordered", pa.dictionary(pa.int8(), pa.int8())),
+            ("int-ordered", pa.dictionary(pa.int8(), pa.int64(), ordered=True)),
+            ("int-unordered", pa.dictionary(pa.int8(), pa.int64())),
             ("int-compat", pa.int64()),
-            ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_())),
+            ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_(), ordered=True)),
             ("bool-unordered", pa.dictionary(pa.int8(), pa.bool_())),
             ("bool-compat", pa.bool_()),
         ]
@@ -827,6 +830,9 @@ def test_write_categorical_types(tmp_path):
         sdf.write(pa.Table.from_pandas(df))
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+        print(df)
+        print(sdf.read().concat().to_pandas())
+        print(sdf.read().concat())
         assert (df == sdf.read().concat().to_pandas()).all().all()
 
 

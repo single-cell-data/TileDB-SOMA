@@ -414,19 +414,24 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 if attr.enum_label is not None and col.num_chunks != 0:
                     if not pa.types.is_dictionary(col_info.type):
                         raise ValueError(
-                            f"Expected dictionary type for enumerated attribute {name} but saw {col_info.type}"
+                            "Expected dictionary type for enumerated attribute "
+                            "{name} but saw {col_info.type}"
                         )
 
                     enmr = self._handle.enum(attr.name)
 
-                    # extend only with new values
-                    old_vals = set(enmr.values())
-                    new_vals = set(col.chunk(0).dictionary.tolist())
-                    update_vals = list(new_vals - old_vals)
+                    # get new enumeration values
+                    update_vals = []
+                    for new_val in col.chunk(0).dictionary.tolist():
+                        if new_val not in enmr.values():
+                            update_vals.append(new_val)
 
-                    se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
-                    se.extend_enumeration(enmr.extend(update_vals))
-                    se.array_evolve(uri=self.uri)
+                    # only extend if there are new values
+                    if update_vals:
+                        se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
+                        new_enmr = enmr.extend(update_vals)
+                        se.extend_enumeration(new_enmr)
+                        se.array_evolve(uri=self.uri)
 
             cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
             if pa.types.is_dictionary(col.type):
@@ -798,7 +803,6 @@ def _build_tiledb_schema(
         has_enum = pa.types.is_dictionary(pa_attr.type)
 
         if has_enum:
-            pa.types.is_integer(pa_attr.type.value_type)
             enmr_dtype: np.dtype[Any]
             vtype = pa_attr.type.value_type
             if pa.types.is_large_string(vtype) or pa.types.is_string(vtype):
