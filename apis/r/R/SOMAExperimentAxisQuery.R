@@ -1345,11 +1345,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         )
         dimnames(cmat) <- dnames
         obj <- if (is_scalar_character(data)) {
-          SeuratObject::SetAssayData(
-            object = obj,
-            slot = 'counts',
-            new.data = cmat
-          )
+          SeuratObject::SetAssayData(obj, 'counts', new.data = cmat)
         } else {
           SeuratObject::CreateAssayObject(counts = cmat)
         }
@@ -1362,11 +1358,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           transpose = TRUE
         )
         dimnames(smat) <- dnames
-        obj <- SeuratObject::SetAssayData(
-          object = obj,
-          slot = 'scale.data',
-          new.data = smat
-        )
+        obj <- SeuratObject::SetAssayData(obj, 'scale.data', new.data = smat)
       }
       # Return the assay
       validObject(obj)
