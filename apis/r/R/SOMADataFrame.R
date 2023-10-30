@@ -124,6 +124,7 @@ SOMADataFrame <- R6::R6Class(
               tiledb::tiledb_array_schema_set_enumeration_empty(schema = tdb_schema,
                                                                 attr = tdb_attrs[[field_name]],
                                                                 enum_name = field_name,
+                                                                type_str = "UTF8",
                                                                 ordered = fieldtype$ordered)
           }
       }
