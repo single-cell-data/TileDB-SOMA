@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
 ## version pinning info
-tiledb_core_version <- "2.17.1"
-tiledb_core_sha1 <- "7c8c73b"
+tiledb_core_version <- "2.17.3"
+tiledb_core_sha1 <- "0c2de58"
 
 if ( ! dir.exists("inst/") ) {
     stop("No 'inst/' directory. Exiting.", call. = FALSE)
