@@ -31,7 +31,7 @@ SUPPORTED_ARROW_TYPES = [
     (pa.binary(), pa.large_binary()),
     (pa.large_string(),) * 2,
     (pa.large_binary(),) * 2,
-    (pa.dictionary(pa.int32(), pa.string()), pa.int32()),
+    (pa.dictionary(pa.int32(), pa.string()),) * 2,
 ]
 
 
