@@ -284,7 +284,7 @@ setuptools.setup(
         "scanpy>=1.9.2",
         "scipy",
         "somacore==1.0.4",
-        "tiledb~=0.23.1",
+        "tiledb~=0.23.3",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
