@@ -468,7 +468,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADenseNDArray]):
         timestamp: int,
     ) -> clib.SOMADenseNDArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        return clib.SOMASparseNDArray.open(
+        return clib.SOMADenseNDArray.open(
             uri,
             open_mode,
             {k: str(v) for k, v in context.tiledb_config.items()},

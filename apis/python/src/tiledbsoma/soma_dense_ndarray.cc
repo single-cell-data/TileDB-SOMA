@@ -155,10 +155,10 @@ void load_soma_dense_ndarray(py::module &m) {
     })
     .def_property_readonly("shape", &SOMADenseNDArray::shape)
     .def_property_readonly("ndim", &SOMADenseNDArray::ndim)
-    .def("read_next", [](SOMASparseNDArray& dataframe){
+    .def("read_next", [](SOMADenseNDArray& soma_dense_ndarr){
         // Release GIL when reading data
         py::gil_scoped_release release;
-        auto buffers = dataframe.read_next();
+        auto buffers = soma_dense_ndarr.read_next();
         py::gil_scoped_acquire acquire;
 
         return to_table(buffers);
