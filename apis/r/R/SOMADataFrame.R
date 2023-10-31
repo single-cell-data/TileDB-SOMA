@@ -399,3 +399,5 @@ SOMADataFrame <- R6::R6Class(
     ctx_ptr = NULL
   )
 )
+
+# test/compare for #1843
