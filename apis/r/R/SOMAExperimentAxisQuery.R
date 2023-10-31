@@ -366,6 +366,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obsp_layers = NULL
     ) {
       check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+      op <- options(Seurat.object.assay.version = 'v3')
+      on.exit(options(op), add = TRUE)
       stopifnot(
         "'obs_index' must be a single character value" = is.null(obs_index) ||
           (is_scalar_character(obs_index) && !is.na(obs_index)),
@@ -560,6 +562,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     ) {
       version <- 'v3'
       check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+      op <- options(Seurat.object.assay.version = 'v3')
+      on.exit(options(op), add = TRUE)
       stopifnot(
         "'X_layers' must be a named character vector" = is.character(X_layers) &&
           is_named(X_layers, allow_empty = FALSE),
@@ -1341,11 +1345,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         )
         dimnames(cmat) <- dnames
         obj <- if (is_scalar_character(data)) {
-          SeuratObject::SetAssayData(
-            object = obj,
-            slot = 'counts',
-            new.data = cmat
-          )
+          SeuratObject::SetAssayData(obj, 'counts', new.data = cmat)
         } else {
           SeuratObject::CreateAssayObject(counts = cmat)
         }
@@ -1358,11 +1358,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           transpose = TRUE
         )
         dimnames(smat) <- dnames
-        obj <- SeuratObject::SetAssayData(
-          object = obj,
-          slot = 'scale.data',
-          new.data = smat
-        )
+        obj <- SeuratObject::SetAssayData(obj, 'scale.data', new.data = smat)
       }
       # Return the assay
       validObject(obj)
