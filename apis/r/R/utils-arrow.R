@@ -62,8 +62,6 @@ tiledb_type_from_arrow_type <- function(x, is_dim) {
     # binary = "binary",
     # large_binary = "large_binary",
     # fixed_size_binary = "fixed_size_binary",
-    # tiledb::r_to_tiledb_type() returns UTF8 for characters but they are
-    # not yet queryable so we use ASCII for now
     utf8 = "UTF8",
     string = "UTF8",
     large_utf8 = "UTF8",
