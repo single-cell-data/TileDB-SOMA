@@ -133,8 +133,6 @@ def test_dataframe_with_enumeration(tmp_path):
     with soma.DataFrame.create(
         tmp_path.as_posix(),
         schema=schema,
-        enumerations=enums,
-        column_to_enumerations={"foo": "enmr1", "bar": "enmr2"},
     ) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
@@ -761,68 +759,6 @@ def test_read_indexing(tmp_path, io):
             assert table["A"].to_list() == io["A"]
 
 
-@pytest.mark.parametrize(
-    "schema",
-    [
-        pa.schema(
-            [
-                (
-                    "A",
-                    pa.dictionary(
-                        value_type=pa.string(), index_type=pa.int8(), ordered=True
-                    ),
-                ),
-            ]
-        ),
-        pa.schema(
-            [
-                (
-                    "A",
-                    pa.dictionary(
-                        value_type=pa.string(), index_type=pa.int8(), ordered=False
-                    ),
-                ),
-            ]
-        ),
-        pa.Schema.from_pandas(
-            pd.DataFrame(
-                data={
-                    "A": pd.Categorical(
-                        ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
-                    )
-                }
-            )
-        ),
-        pa.Schema.from_pandas(
-            pd.DataFrame(
-                data={
-                    "A": pd.Categorical(
-                        ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
-                    )
-                }
-            )
-        ),
-    ],
-)
-def test_create_categorical_types(tmp_path, schema):
-    """
-    Verify that `create` throws expected error on (unsupported) dictionary/categorical types.
-    """
-    schema = schema.insert(0, pa.field("soma_joinid", pa.int64()))
-
-    soma.DataFrame.create(
-        f"{tmp_path.as_posix()}1", schema=schema, index_column_names=["soma_joinid"]
-    )
-    # with tiledb.open(f"{tmp_path.as_posix()}1") as A:
-    #     print(A.schema)
-
-    soma.DataFrame.create(
-        f"{tmp_path.as_posix()}2", schema=schema, index_column_names=["A"]
-    )
-    # with tiledb.open(f"{tmp_path.as_posix()}1") as A:
-    #     print(A.schema.attr("A").enum_label)
-
-
 def test_write_categorical_types(tmp_path):
     """
     Verify that write path accepts categoricals
@@ -830,42 +766,22 @@ def test_write_categorical_types(tmp_path):
     schema = pa.schema(
         [
             ("soma_joinid", pa.int64()),
-            ("string-ordered", pa.dictionary(pa.int8(), pa.large_string())),
+            (
+                "string-ordered",
+                pa.dictionary(pa.int8(), pa.large_string(), ordered=True),
+            ),
             ("string-unordered", pa.dictionary(pa.int8(), pa.large_string())),
             ("string-compat", pa.large_string()),
-            ("int-ordered", pa.dictionary(pa.int8(), pa.int8())),
-            ("int-unordered", pa.dictionary(pa.int8(), pa.int8())),
+            ("int-ordered", pa.dictionary(pa.int8(), pa.int64(), ordered=True)),
+            ("int-unordered", pa.dictionary(pa.int8(), pa.int64())),
             ("int-compat", pa.int64()),
-            ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_())),
+            ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_(), ordered=True)),
             ("bool-unordered", pa.dictionary(pa.int8(), pa.bool_())),
             ("bool-compat", pa.bool_()),
         ]
     )
     with soma.DataFrame.create(
-        tmp_path.as_posix(),
-        schema=schema,
-        index_column_names=["soma_joinid"],
-        enumerations={
-            "enum-string-ordered": ["b", "a"],
-            "enum-string-unordered": ["b", "a"],
-            "enum-int-ordered": [888888888, 777777777],
-            "enum-int-unordered": [888888888, 777777777],
-            "enum-bool-ordered": [True, False],
-            "enum-bool-unordered": [True, False],
-        },
-        ordered_enumerations=[
-            "enum-string-ordered",
-            "enum-int-ordered",
-            "enum-bool-ordered",
-        ],
-        column_to_enumerations={
-            "string-ordered": "enum-string-ordered",
-            "string-unordered": "enum-string-unordered",
-            "int-ordered": "enum-int-ordered",
-            "int-unordered": "enum-int-unordered",
-            "bool-ordered": "enum-bool-ordered",
-            "bool-unordered": "enum-bool-unordered",
-        },
+        tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
     ) as sdf:
         df = pd.DataFrame(
             data={
@@ -932,13 +848,6 @@ def test_write_categorical_dims(tmp_path):
         tmp_path.as_posix(),
         schema=schema,
         index_column_names=["soma_joinid"],
-        enumerations={
-            "enum-string": ["b", "a"],
-        },
-        ordered_enumerations=[],
-        column_to_enumerations={
-            "string": "enum-string",
-        },
     ) as sdf:
         df = pd.DataFrame(
             data={
@@ -950,6 +859,39 @@ def test_write_categorical_dims(tmp_path):
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         assert (df == sdf.read().concat().to_pandas()).all().all()
+
+
+def test_write_categorical_dim_extend(tmp_path):
+    """
+    Introduce new categorical values in each subsequent write.
+    """
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("string", pa.dictionary(pa.int8(), pa.large_string())),
+        ]
+    )
+    with soma.DataFrame.create(
+        tmp_path.as_posix(),
+        schema=schema,
+        index_column_names=["soma_joinid"],
+    ) as sdf:
+        df = pd.DataFrame(
+            data={
+                "soma_joinid": [0, 1, 2, 3],
+                "string": pd.Categorical(["a", "b", "a", "b"], categories=["b", "a"]),
+            }
+        )
+        sdf.write(pa.Table.from_pandas(df))
+
+    with soma.DataFrame.open(tmp_path.as_posix(), "w") as sdf:
+        df = pd.DataFrame(
+            data={
+                "soma_joinid": [4, 5],
+                "string": pd.Categorical(["c", "b"], categories=["b", "c"]),
+            }
+        )
+        sdf.write(pa.Table.from_pandas(df))
 
 
 def test_result_order(tmp_path):
