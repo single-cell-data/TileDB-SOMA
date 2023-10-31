@@ -36,13 +36,13 @@ is_arrow_dictionary <- function(x) {
 
 #' Convert Arrow types to supported TileDB type
 #' List of TileDB types supported in R: https://github.com/TileDB-Inc/TileDB-R/blob/8014da156b5fee5b4cc221d57b4aa7d388abc968/inst/tinytest/test_dim.R#L97-L121
+#' Note: TileDB attrs may be UTF-8; TileDB dims may not.
 #'
 #' List of all arrow types: https://github.com/apache/arrow/blob/90aac16761b7dbf5fe931bc8837cad5116939270/r/R/type.R#L700
 #' @noRd
 
-tiledb_type_from_arrow_type <- function(x) {
+tiledb_type_from_arrow_type <- function(x, is_dim) {
   stopifnot(is_arrow_data_type(x))
-  switch(x$name,
     int8 = "INT8",
     int16 = "INT16",
     int32 = "INT32",
@@ -64,9 +64,9 @@ tiledb_type_from_arrow_type <- function(x) {
     # fixed_size_binary = "fixed_size_binary",
     # tiledb::r_to_tiledb_type() returns UTF8 for characters but they are
     # not yet queryable so we use ASCII for now
-    utf8 = "ASCII",
-    string = "ASCII",
-    large_utf8 = "ASCII",
+    utf8 = "UTF8",
+    string = "UTF8",
+    large_utf8 = "UTF8",
     # date32 = "date32",
     # date64 = "date64",
     # time32 = "time32",
@@ -87,6 +87,10 @@ tiledb_type_from_arrow_type <- function(x) {
     dictionary = tiledb_type_from_arrow_type(x$index_type),
     stop("Unsupported Arrow data type: ", x$name, call. = FALSE)
   )
+  if (is_dim && retval == "UTF8") {
+    retval <- "ASCII"
+  }
+  retval
 }
 
 arrow_type_from_tiledb_type <- function(x) {
@@ -214,7 +218,7 @@ tiledb_attr_from_arrow_field <- function(field, tiledb_create_options) {
     name = field$name,
     type = field_type,
     nullable = field$nullable,
-    ncells = if (field_type == "ASCII") NA_integer_ else 1L,
+    ncells = if (field_type == "ASCII" || field_type == "UTF8") NA_integer_ else 1L,
     filter_list = tiledb::tiledb_filter_list(
       tiledb_create_options$attr_filters(
         attr_name = field$name,

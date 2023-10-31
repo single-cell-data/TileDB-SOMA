@@ -73,9 +73,19 @@ SOMADataFrame <- R6::R6Class(
         tdb_dims[[field_name]] <- tiledb::tiledb_dim(
           name = field_name,
           # Numeric index types must be positive values for indexing
-          domain = arrow_type_unsigned_range(field$type), tile = tile_extent,
-          type = tiledb_type_from_arrow_type(field$type),
-          filter_list = tiledb::tiledb_filter_list(tdb_opts)
+          domain = arrow_type_unsigned_range(field$type),
+          tile = tile_extent,
+          type = tiledb_type_from_arrow_type(field$type, is_dim=TRUE),
+          filter_list = tiledb::tiledb_filter_list(
+            tiledb_create_options$dim_filters(
+              field_name,
+              # Default to use if there is nothing specified in tiledb-create options
+              # in the platform config:
+              list(
+                list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level())
+              )
+            )
+          )
         )
       }
 
@@ -87,7 +97,7 @@ SOMADataFrame <- R6::R6Class(
 
       for (field_name in attr_column_names) {
         field <- schema$GetFieldByName(field_name)
-        field_type <- tiledb_type_from_arrow_type(field$type)
+        field_type <- tiledb_type_from_arrow_type(field$type, is_dim=FALSE)
 
         ## # Check if the field is ordered and mark it as such
         ## if (!is.null(x = levels[[field_name]]) && isTRUE(field$type$ordered)) {
@@ -98,8 +108,9 @@ SOMADataFrame <- R6::R6Class(
           name = field_name,
           type = field_type,
           nullable = field$nullable,
-          ncells = if (field_type == "ASCII") NA_integer_ else 1L,
-          filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters(field_name))
+          ncells = if (field_type == "ASCII" || field_type == "UTF8" ) NA_integer_ else 1L,
+          filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters(field_name)),
+          enumeration = levels[[field_name]]
         )
       }
 
