@@ -235,16 +235,7 @@ test_that("creation with ordered factors", {
   )
   tbl <- arrow::as_arrow_table(df)
   expect_true(tbl$schema$GetFieldByName("ord")$type$ordered)
-  expect_no_condition(sdf <- SOMADataFrameCreate(
-    uri = uri,
-    schema = tbl$schema,
-    levels = sapply(
-      X = df[, setdiff(names(df), "soma_joinid")],
-      FUN = levels,
-      simplify = FALSE,
-      USE.NAMES = TRUE
-    )
-  ))
+  expect_no_condition(sdf <- SOMADataFrameCreate(uri = uri, schema = tbl$schema))
   expect_no_condition(sdf$write(values = tbl))
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_true(sdf$schema()$GetFieldByName("ord")$type$ordered)
@@ -266,27 +257,12 @@ test_that("explicit casting of ordered factors to regular factors", {
   )
   tbl <- arrow::as_arrow_table(df)
   expect_true(tbl$schema$GetFieldByName("ord")$type$ordered)
-  lvls <- sapply(
-    X = df[, setdiff(names(df), "soma_joinid")],
-    FUN = levels,
-    simplify = FALSE,
-    USE.NAMES = TRUE
-  )
-  for (col in names(lvls)) {
-    if (!is.null(lvls[[col]])) {
-      attr(lvls[[col]], 'ordered') <- FALSE
-    }
-  }
-  expect_no_condition(sdf <- SOMADataFrameCreate(
-    uri = uri,
-    schema = tbl$schema,
-    levels = lvls
-  ))
+  expect_no_condition(sdf <- SOMADataFrameCreate(uri = uri, schema = tbl$schema,))
   expect_no_condition(sdf$write(values = tbl))
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
-  expect_false(sdf$schema()$GetFieldByName("ord")$type$ordered)
-  expect_s3_class(ord <- sdf$object[]$ord, "factor", exact = TRUE)
-  expect_false(is.ordered(ord))
+  expect_true(sdf$schema()$GetFieldByName("ord")$type$ordered)
+  expect_s3_class(ord <- sdf$object[]$ord, c("ordered","factor"), exact = TRUE)
+  expect_true(is.ordered(ord))
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
 })
@@ -734,13 +710,7 @@ test_that("missing levels in enums", {
 
   # Create SOMADataFrame w/ missing enum levels
   tbl <- arrow::as_arrow_table(df)
-  lvls <- sapply(
-    setdiff(names(df), "soma_joinid"),
-    function(x) levels(df[[x]]),
-    simplify = FALSE,
-    USE.NAMES = TRUE
-  )
-  sdf <- SOMADataFrameCreate(uri, tbl$schema, levels = lvls)
+  sdf <- SOMADataFrameCreate(uri, tbl$schema)
   on.exit(sdf$close())
   sdf$write(tbl)
   sdf$close()
