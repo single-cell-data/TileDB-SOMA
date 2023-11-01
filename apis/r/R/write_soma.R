@@ -160,7 +160,6 @@ write_soma.data.frame <- function(
     uri = uri,
     schema = tbl$schema,
     index_column_names = index_column_names,
-    levels = enumerations,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
