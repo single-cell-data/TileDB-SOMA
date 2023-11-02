@@ -410,6 +410,12 @@ class _SparseNDArrayReadBase(somacore.SparseRead):
 class SparseNDArrayRead(_SparseNDArrayReadBase):
     """Intermediate type to choose result format when reading a sparse array.
 
+    Results returned by `coos` and `tables` iterate over COO coordinates in the user-specified result order,
+    but with breaks between iterator steps at arbitrary coordinates (i.e., any given result may split a row or
+    column across two separate steps of the iterator). See `blockwise` for iterators that will always yield
+    complete "blocks" for any given user-specified dimension, eg., all coordinates in a given row in one
+    iteration step. NB: `blockwise` iterators may utilize additional disk or network IO.
+
     See also:
         somacore.data.SparseRead
 
@@ -468,7 +474,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         `reindex_disable` argument. When reindexing:
         * the primary iterator axis coordinates, as indicated by the `axis` argument, will be reindexed into the range
           `[0, N)`, where `N` is the number of coordinates read for the block (controlled with the `size` argument).
-        * all other axes will be reindexed will be reindexed to `[0, N)`, where `N` is the number of points read
+        * all other axes will be reindexed to `[0, N)`, where `N` is the number of points read
           on that axis across all blocks.
 
         Args:
@@ -476,18 +482,21 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
                 Required. The axis across which to yield blocks, indicated as the dimension number, e.g.,
                 `axis=0` will step across `soma_dim_0` (the first dimension).
             size:
-                Optional. Number of coordinates in each block yielded by the iterator.
+                Optional. Number of coordinates in each block yielded by the iterator. A reasonable default will
+                be provided if the argument is omitted. Current defaults are 2^16 for dimension 0 and 2^8 for
+                all other dimensions. Defaults are subject to change and will likely remain relatively small.
             reindex_disable:
-                Optional. Sequence of axis which will _not_ be reindexed. Defaults to None, indicating
+                Optional. Axis or sequence of axes which will _not_ be reindexed. Defaults to None, indicating
                 all axes will be reindexed.
             eager:
-                Optional. If `True`, the iteartor will read ahead (using multi-threading) to improve overall
+                Optional. If `True`, the iterator will read ahead (using multi-threading) to improve overall
                 performance when iterating over a large result. Setting this flag to `False` will reduce memory
                 consumption, at the cost of additional processing time.
 
         Examples:
 
-            A simple example iterating over the first 10000 elements, into SciPy sparse matrices:
+            A simple example iterating over the first 10000 elements of the first dimension, into
+            blocks of SciPy sparse matrices:
 
             >>> import tiledbsoma
             >>> with tiledbsoma.open("a_sparse_nd_array") as X:
@@ -565,7 +574,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
     def coos(self) -> somacore.ReadIter[None]:
         """
         Unimplemented due to ARROW-17933, https://issues.apache.org/jira/browse/ARROW-17933,
-        which causes failure on empty tensors (which commonly yielded by blockwise
+        which causes failure on empty tensors (which are commonly yielded by blockwise
         iterators). Also tracked as https://github.com/single-cell-data/TileDB-SOMA/issues/668
         """
         raise NotImplementedError(
