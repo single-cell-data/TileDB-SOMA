@@ -34,6 +34,19 @@ class ArrowAdapter {
     static void release_schema(struct ArrowSchema* schema) {
         schema->release = nullptr;
 
+        for (int i = 0; i < schema->n_children; ++i) {
+            struct ArrowSchema* child = schema->children[i];
+            if (schema->name != nullptr) {
+                free((void*)schema->name);
+                schema->name = nullptr;
+            }
+            if (child->release != NULL) {
+                child->release(child);
+            }
+            free(child);
+        }
+        free(schema->children);
+
         struct ArrowSchema* dict = schema->dictionary;
         if (dict != nullptr) {
             if (dict->format != nullptr) {
@@ -87,19 +100,19 @@ class ArrowAdapter {
      * @return auto [Arrow array, Arrow schema]
      */
     static auto to_arrow(
-        std::shared_ptr<ColumnBuffer> column, bool use_enum = false) {
+        std::shared_ptr<ColumnBuffer> column, bool use_enum = true) {
         std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
         std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
 
-        schema->format = to_arrow_format(column->type()).data();  // mandatory
-        schema->name = column->name().data();                     // optional
-        schema->metadata = nullptr;                               // optional
-        schema->flags = 0;                                        // optional
-        schema->n_children = 0;                                   // mandatory
-        schema->children = nullptr;                               // optional
-        schema->dictionary = nullptr;                             // optional
-        schema->release = &release_schema;                        // mandatory
-        schema->private_data = nullptr;                           // optional
+        schema->format = to_arrow_format(column->type()).data();
+        schema->name = column->name().data();
+        schema->metadata = nullptr;
+        schema->flags = 0;
+        schema->n_children = 0;
+        schema->children = nullptr;
+        schema->dictionary = nullptr;
+        schema->release = &release_schema;
+        schema->private_data = nullptr;
 
         int n_buffers = column->is_var() ? 3 : 2;
 
@@ -112,16 +125,16 @@ class ArrowAdapter {
         //   reaches 0, the ColumnBuffer data will be deleted.
         auto arrow_buffer = new ArrowBuffer(column);
 
-        array->length = column->size();             // mandatory
-        array->null_count = 0;                      // mandatory
-        array->offset = 0;                          // mandatory
-        array->n_buffers = n_buffers;               // mandatory
-        array->n_children = 0;                      // mandatory
-        array->buffers = nullptr;                   // mandatory
-        array->children = nullptr;                  // optional
-        array->dictionary = nullptr;                // optional
-        array->release = &release_array;            // mandatory
-        array->private_data = (void*)arrow_buffer;  // mandatory
+        array->length = column->size();
+        array->null_count = 0;
+        array->offset = 0;
+        array->n_buffers = n_buffers;
+        array->n_children = 0;
+        array->buffers = nullptr;
+        array->children = nullptr;
+        array->dictionary = nullptr;
+        array->release = &release_array;
+        array->private_data = (void*)arrow_buffer;
 
         LOG_TRACE(fmt::format(
             "[ArrowAdapter] create array name='{}' use_count={}",
@@ -157,46 +170,57 @@ class ArrowAdapter {
             column->data_to_bitmap();
         }
 
-        // If we have an enumeration, fill a dictionary.
-        // The Python callpath handles this separately. The R callpath needs us
-        // to do this. TODO: uniformize this at the callsites.
         if (column->has_enumeration() && use_enum) {
-            auto enumvec = column->get_enumeration();
-
             ArrowSchema* dict_sch = new ArrowSchema;
             ArrowArray* dict_arr = new ArrowArray;
 
-            dict_sch->format = (const char*)malloc(
-                sizeof(char) * 2);  // mandatory, 'u' as 32bit indexing
-            strcpy((char*)dict_sch->format, "u");
-            dict_sch->name = nullptr;             // optional in dictionary
-            dict_sch->metadata = nullptr;         // optional
-            dict_sch->flags = 0;                  // optional
-            dict_sch->n_children = 0;             // mandatory
-            dict_sch->children = nullptr;         // optional
-            dict_sch->dictionary = nullptr;       // optional
-            dict_sch->release = &release_schema;  // mandatory
-            dict_sch->private_data = nullptr;     // optional
+            auto enmr = column->get_enumeration_info();
+            dict_sch->format = strdup(
+                to_arrow_format(enmr->type(), false).data());
+            dict_sch->name = strdup(enmr->name().c_str());
+            dict_sch->metadata = nullptr;
+            dict_sch->flags = 0;
+            dict_sch->n_children = 0;
+            dict_sch->children = nullptr;
+            dict_sch->dictionary = nullptr;
+            dict_sch->release = &release_schema;
+            dict_sch->private_data = nullptr;
 
-            const int n_buf = 3;  // always variable here
+            const int n_buf = strcmp(dict_sch->format, "u") == 0 ? 3 : 2;
+            dict_arr->null_count = 0;
+            dict_arr->offset = 0;
+            dict_arr->n_buffers = n_buf;
+            dict_arr->n_children = 0;
+            dict_arr->buffers = nullptr;
+            dict_arr->children = nullptr;
+            dict_arr->dictionary = nullptr;
+            dict_arr->release = &release_array;
+            dict_arr->private_data = nullptr;
 
-            const int64_t n_vec = enumvec.size();
-            dict_arr->length = n_vec;            // mandatory
-            dict_arr->null_count = 0;            // mandatory
-            dict_arr->offset = 0;                // mandatory
-            dict_arr->n_buffers = n_buf;         // mandatory
-            dict_arr->n_children = 0;            // mandatory
-            dict_arr->buffers = nullptr;         // mandatory
-            dict_arr->children = nullptr;        // optional
-            dict_arr->dictionary = nullptr;      // optional
-            dict_arr->release = &release_array;  // release from parent
-            dict_arr->private_data = nullptr;    // optional here
-
-            column->convert_enumeration();
             dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buf);
             dict_arr->buffers[0] = nullptr;  // validity: none here
-            dict_arr->buffers[1] = column->enum_offsets().data();
-            dict_arr->buffers[2] = column->enum_string().data();
+
+            // TODO string types currently get the data and offset buffers from
+            // ColumnBuffer::enum_offsets and ColumnBuffer::enum_string which is
+            // retrieved via ColumnBuffer::convert_enumeration. This may be
+            // refactored to all use ColumnBuffer::get_enumeration_info. Note
+            // that ColumnBuffer::has_enumeration may also be removed in a
+            // future refactor as ColumnBuffer::get_enumeration_info returns
+            // std::optional where std::nullopt indicates the column does not
+            // contain enumerated values.
+            if (enmr->type() == TILEDB_STRING_ASCII or
+                enmr->type() == TILEDB_STRING_UTF8) {
+                auto dict_vec = enmr->as_vector<std::string>();
+                column->convert_enumeration();
+                dict_arr->buffers[1] = column->enum_offsets().data();
+                dict_arr->buffers[2] = column->enum_string().data();
+                dict_arr->length = dict_vec.size();
+            } else {
+                auto [dict_data, dict_length] = _get_data_and_length(
+                    *enmr, dict_arr->buffers[1]);
+                dict_arr->buffers[1] = dict_data;
+                dict_arr->length = dict_length;
+            }
 
             schema->dictionary = dict_sch;
             array->dictionary = dict_arr;
@@ -205,20 +229,101 @@ class ArrowAdapter {
         return std::pair(std::move(array), std::move(schema));
     }
 
+    static std::pair<const void*, std::size_t> _get_data_and_length(
+        Enumeration& enmr, const void* dst) {
+        switch (enmr.type()) {
+            case TILEDB_BOOL: {
+                // We must handle this specially because vector<bool> does
+                // not store elements contiguously in memory
+                auto data = enmr.as_vector<bool>();
+
+                // Represent the Boolean vector with, at most, the last two
+                // bits. In Arrow, Boolean values are LSB packed
+                uint8_t src = 0;
+                for (size_t i = 0; i < data.size(); ++i)
+                    src |= (data[i] << i);
+
+                // Allocate a single byte to copy the bits into
+                size_t sz = 1;
+                dst = (const void*)malloc(sz);
+                std::memcpy((void*)dst, &src, sz);
+
+                return std::pair(dst, data.size());
+            }
+            case TILEDB_INT8: {
+                auto data = enmr.as_vector<int8_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_UINT8: {
+                auto data = enmr.as_vector<uint8_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_INT16: {
+                auto data = enmr.as_vector<int16_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_UINT16: {
+                auto data = enmr.as_vector<uint16_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_INT32: {
+                auto data = enmr.as_vector<int32_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_UINT32: {
+                auto data = enmr.as_vector<uint32_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_INT64: {
+                auto data = enmr.as_vector<int64_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_UINT64: {
+                auto data = enmr.as_vector<uint64_t>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_FLOAT32: {
+                auto data = enmr.as_vector<float>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            case TILEDB_FLOAT64: {
+                auto data = enmr.as_vector<double>();
+                return std::pair(_fill_data_buffer(data, dst), data.size());
+            }
+            default:
+                throw TileDBSOMAError(fmt::format(
+                    "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                    tiledb::impl::type_to_str(enmr.type())));
+        }
+    }
+
+    template <typename T>
+    static const void* _fill_data_buffer(std::vector<T> src, const void* dst) {
+        auto sz = src.size() * sizeof(T);
+        dst = (const void*)malloc(sz);
+        std::memcpy((void*)dst, src.data(), sz);
+        return dst;
+    }
+
     /**
      * @brief Get Arrow format string from TileDB datatype.
      *
      * @param datatype TileDB datatype.
      * @return std::string_view Arrow format string.
      */
-    static std::string_view to_arrow_format(tiledb_datatype_t datatype) {
+    static std::string_view to_arrow_format(
+        tiledb_datatype_t datatype, bool use_large = true) {
         switch (datatype) {
             case TILEDB_STRING_ASCII:
             case TILEDB_STRING_UTF8:
-                return "U";  // large because TileDB uses 64bit offsets
+                return use_large ?
+                           "U" :
+                           "u";  // large because TileDB uses 64bit offsets
             case TILEDB_CHAR:
             case TILEDB_BLOB:
-                return "Z";  // large because TileDB uses 64bit offsets
+                return use_large ?
+                           "Z" :
+                           "z";  // large because TileDB uses 64bit offsets
             case TILEDB_BOOL:
                 return "b";
             case TILEDB_INT32:
@@ -264,8 +369,7 @@ class ArrowAdapter {
             "ArrowAdapter: Unsupported TileDB datatype: {} ",
             tiledb::impl::type_to_str(datatype)));
     }
-};
-
+};  // namespace tiledbsoma
 };  // namespace tiledbsoma
 
 #endif

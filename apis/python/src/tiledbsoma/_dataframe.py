@@ -429,6 +429,11 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     # only extend if there are new values
                     if update_vals:
                         se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
+                        if not (
+                            np.issubdtype(enmr.dtype.type, np.str_)
+                            or np.issubdtype(enmr.dtype.type, np.bytes_)
+                        ):
+                            update_vals = np.array(update_vals, enmr.dtype)
                         new_enmr = enmr.extend(update_vals)
                         se.extend_enumeration(new_enmr)
                         se.array_evolve(uri=self.uri)

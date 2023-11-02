@@ -240,7 +240,7 @@ class ColumnBuffer {
         return is_nullable_;
     }
 
-    std::optional<Enumeration> get_enumeration() const {
+    std::optional<Enumeration> get_enumeration_info() const {
         return enumeration_;
     }
 
