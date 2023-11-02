@@ -1,6 +1,8 @@
 import pathlib
 
 import pyarrow as pa
+import pandas as pd
+import numpy as np
 import pytest
 
 import tiledbsoma as soma
@@ -150,3 +152,95 @@ def test_bool_arrays(tmp_path, bool_array):
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         table = sdf.read().concat()
     assert table["b"].to_pylist() == bool_array
+
+
+def test_enum_types(tmp_path):
+    uri = tmp_path.as_posix()
+
+    pandas_df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3, 4, 5], dtype=np.int64),
+            "str": pd.Series(["A", "B", "A", "B", "B", "B"], dtype="category"),
+            "byte": pd.Series([b"A", b"B", b"A", b"B", b"B", b"B"], dtype="category"),
+            "bool": pd.Series(
+                [True, False, True, False, False, False], dtype="category"
+            ),
+            "int64": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.int64), dtype="category"
+            ),
+            "uint64": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint64), dtype="category"
+            ),
+            "int32": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.int32), dtype="category"
+            ),
+            "uint32": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint32), dtype="category"
+            ),
+            "int16": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.int16), dtype="category"
+            ),
+            "uint16": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint16), dtype="category"
+            ),
+            "int8": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.int8), dtype="category"
+            ),
+            "uint8": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint8), dtype="category"
+            ),
+            "float32": pd.Series(
+                np.array([0, 1.1, 2.1, 0, 1.1, 2.1], dtype=np.float32), dtype="category"
+            ),
+            "float64": pd.Series(
+                np.array([0, 1.1, 2.1, 0, 1.1, 2.1], dtype=np.float64), dtype="category"
+            ),
+            "float64_w_non_finite": pd.Series(
+                np.array([0, 1.1, 2.1, 0, np.Inf, np.NINF], dtype=np.float64), dtype="category"
+            ),
+            #
+            # Ordered
+            #
+            "str_ordered": pd.Series(
+                pd.Categorical(
+                    ["A", "B", "A", "B", "B", "B"],
+                    categories=["B", "A", "C"],
+                    ordered=True,
+                ),
+            ),
+            "int64_ordered": pd.Series(
+                pd.Categorical(
+                    [1, 2, 3, 3, 2, 1],
+                    categories=np.array([3, 2, 1], dtype=np.int64),
+                    ordered=True,
+                ),
+            ),
+            "uint64_ordered": pd.Series(
+                pd.Categorical(
+                    [1, 2, 3, 3, 2, 1],
+                    categories=np.array([3, 2, 1], dtype=np.uint64),
+                    ordered=True,
+                ),
+            ),
+            "float64_ordered": pd.Series(
+                pd.Categorical(
+                    [0, 1.1, 2.1, 0, 1.1, 2.1],
+                    categories=np.array([1.1, 0, 2.1], dtype=np.float64),
+                    ordered=True,
+                ),
+            ),
+        },
+    )
+
+    schema = pa.Schema.from_pandas(pandas_df, preserve_index=False)
+
+    with soma.DataFrame.create(uri, schema=schema) as soma_dataframe:
+        tbl = pa.Table.from_pandas(pandas_df, preserve_index=False)
+        soma_dataframe.write(tbl)
+
+    with soma.open(uri) as soma_dataframe:
+        readback_df = soma_dataframe.read().concat().to_pandas()
+        for c in readback_df:
+            assert readback_df[c].dtype == pandas_df[c].dtype
+            if readback_df[c].dtype == 'category':
+                assert readback_df[c].cat.categories.dtype == pandas_df[c].cat.categories.dtype
