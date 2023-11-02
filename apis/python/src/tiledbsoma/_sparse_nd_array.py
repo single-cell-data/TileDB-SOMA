@@ -456,7 +456,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         axis: Union[int, Sequence[int]],
         *,
         size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable: Optional[Union[int, Sequence[int]]] = None,
+        reindex_disable: Optional[Union[int, Sequence[int], bool]] = None,
         eager: bool = True,
     ) -> SparseNDArrayBlockwiseRead:
         """
@@ -487,7 +487,8 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
                 all other dimensions. Defaults are subject to change and will likely remain relatively small.
             reindex_disable:
                 Optional. Axis or sequence of axes which will _not_ be reindexed. Defaults to None, indicating
-                all axes will be reindexed.
+                all axes will be reindexed. Also accepts a boolean value, where `True` indicates reindexing is
+                disabled for all axes, and `False` is synonymous with `None`.
             eager:
                 Optional. If `True`, the iterator will read ahead (using multi-threading) to improve overall
                 performance when iterating over a large result. Setting this flag to `False` will reduce memory
@@ -539,7 +540,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
         axis: Union[int, Sequence[int]],
         *,
         size: Optional[Union[int, Sequence[int]]],
-        reindex_disable: Optional[Union[int, Sequence[int]]],
+        reindex_disable: Optional[Union[int, Sequence[int], bool]],
         eager: bool = True,
     ):
         super().__init__(sr, array, coords)

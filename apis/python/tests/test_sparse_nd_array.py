@@ -1244,7 +1244,7 @@ def test_blockwise_table_iter_size(
     NB: test requires soma_joinids assigned [0, n)
     """
     ndim = len(shape)
-    reindex_disable = list(range(ndim))  # reindexing off
+    reindex_disable = True  # reindexing off
     for axis in range(ndim):
         with soma.open(a_random_sparse_nd_array, mode="r") as A:
             assert shape == A.shape

@@ -85,7 +85,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         axis: Union[int, Sequence[int]],
         *,
         size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable: Optional[Union[int, Sequence[int]]] = None,
+        reindex_disable: Optional[Union[int, Sequence[int], bool]] = None,
         eager: bool = True,
         eager_iterator_pool: Optional[ThreadPoolExecutor] = None,
     ):
@@ -97,7 +97,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.eager = eager
         self.eager_iterator_pool = eager_iterator_pool
 
-        # raises on various error checks
+        # raises on various error checks, AND normalizes args
         self.axis, self.size, self.reindex_disable = self._validate_args(
             sr.shape, axis, size, reindex_disable
         )
@@ -137,7 +137,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         shape: NTuple,
         axis: Union[int, Sequence[int]],
         size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable: Optional[Union[int, Sequence[int]]] = None,
+        reindex_disable: Optional[Union[int, Sequence[int], bool]] = None,
     ) -> Tuple[List[int], List[int], List[int]]:
         """
         Class method to validate and normalize common user-provided arguments axis, size and reindex_disable.
@@ -149,15 +149,17 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
         # convert to list
         axis = list(axis if isinstance(axis, Sequence) else [axis])
-        reindex_disable = (
-            list(
-                reindex_disable
-                if isinstance(reindex_disable, Sequence)
-                else [reindex_disable]
-            )
-            if reindex_disable is not None
-            else []
-        )
+
+        if reindex_disable is None:
+            reindex_disable = []
+        elif isinstance(reindex_disable, bool):
+            reindex_disable = list(range(ndim)) if reindex_disable else []
+        elif isinstance(reindex_disable, int):
+            reindex_disable = [reindex_disable]
+        elif isinstance(reindex_disable, Sequence):
+            reindex_disable = list(reindex_disable)
+        else:
+            raise TypeError("reindex_disable must be None, int, bool or Sequence[int]")
 
         # Currently, only support blockwise iteration on one dimension.
         if len(axis) != 1:
@@ -168,6 +170,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         if not all(0 <= d < ndim for d in axis):
             raise ValueError("blockwise `axis` value must be in range [0, ndim)")
         if not all(0 <= d < ndim for d in reindex_disable):
+            print(reindex_disable)
             raise ValueError(
                 "blockwise `reindex_disable` value must be in range [0, ndim)"
             )
@@ -220,14 +223,13 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
             self.size[0],
         ):
             self.sr.reset(**kwargs)
-            step_coords = [*self.coords]
+            step_coords = list(self.coords)
             step_coords[self.major_axis] = coord_chunk
             self.array._set_reader_coords(self.sr, step_coords)
-            yield pa.concat_tables(_arrow_table_reader(self.sr)), tuple(
-                self.joinids[0 : self.major_axis]
-                + [pa.array(coord_chunk)]
-                + self.joinids[self.major_axis + 1 : self.ndim]
-            )
+
+            joinids = list(self.joinids)
+            joinids[self.major_axis] = pa.array(coord_chunk)
+            yield pa.concat_tables(_arrow_table_reader(self.sr)), tuple(joinids)
 
     def _reindexed_table_reader(
         self, _pool: Optional[ThreadPoolExecutor] = None
@@ -274,7 +276,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         axis: Union[int, Sequence[int]],
         *,
         size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable: Optional[Union[int, Sequence[int]]] = None,
+        reindex_disable: Optional[Union[int, Sequence[int], bool]] = None,
         eager: bool = True,
         compress: bool = True,
     ):
@@ -391,10 +393,8 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         for ((i, j), d), indices in self._maybe_eager_iterator(
             self._sorted_tbl_reader(_pool), _pool
         ):
-            major_coords, minor_coords = (
-                indices[self.major_axis],
-                indices[self.minor_axis],
-            )
+            major_coords = indices[self.major_axis]
+            minor_coords = indices[self.minor_axis]
             cls = sparse.csr_matrix if self.major_axis == 0 else sparse.csc_matrix
             sp = cls(
                 sparse.coo_matrix(
@@ -468,16 +468,13 @@ def _coords_strider(
     # normalize coord to either a slice or ndarray
     if coords is None or (isinstance(coords, slice) and coords == slice(None)):
         coords = slice(0, length - 1)
-    elif isinstance(coords, slice):
-        if coords == slice(None):
-            coords = slice(0, length - 1)
+    elif isinstance(coords, int):
+        coords = np.array([coords], dtype=np.int64)
     elif isinstance(coords, Sequence):
         coords = np.array(coords).astype(np.int64)
     elif isinstance(coords, (pa.Array, pa.ChunkedArray)):
         coords = coords.to_numpy()
-    elif isinstance(coords, int):
-        coords = np.array([coords], dtype=np.int64)
-    elif not isinstance(coords, np.ndarray):
+    elif not isinstance(coords, (np.ndarray, slice)):
         raise TypeError("Unsupported slice coordinate type")
 
     if isinstance(coords, slice):
