@@ -43,7 +43,6 @@ is_arrow_dictionary <- function(x) {
 tiledb_type_from_arrow_type <- function(x) {
   stopifnot(is_arrow_data_type(x))
   switch(x$name,
-
     int8 = "INT8",
     int16 = "INT16",
     int32 = "INT32",
@@ -85,7 +84,7 @@ tiledb_type_from_arrow_type <- function(x) {
     # fixed_size_list = "fixed_size_list",
     # map_of = "map",
     # duration = "duration",
-    dictionary = "INT32", 			# for a dictionary the 'values' are ints, levels are character
+    dictionary = tiledb_type_from_arrow_type(x$index_type),
     stop("Unsupported Arrow data type: ", x$name, call. = FALSE)
   )
 }

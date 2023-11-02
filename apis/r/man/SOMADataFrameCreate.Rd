@@ -8,7 +8,6 @@ SOMADataFrameCreate(
   uri,
   schema,
   index_column_names = c("soma_joinid"),
-  levels = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
@@ -20,8 +19,6 @@ SOMADataFrameCreate(
 \item{schema}{schema Arrow schema argument passed on to DataFrame$create()}
 
 \item{index_column_names}{Index column names passed on to DataFrame$create()}
-
-\item{levels}{Optional list of enumeration (aka factor) levels}
 
 \item{platform_config}{Optional platform configuration}
 
