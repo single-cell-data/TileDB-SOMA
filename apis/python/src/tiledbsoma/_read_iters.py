@@ -465,7 +465,11 @@ def _coords_strider(
 
     NB: SOMA slices are _closed_ (i.e., inclusive of both range start and stop)
     """
+
     # normalize coord to either a slice or ndarray
+
+    # NB: type check on slice is to handle the case where coords is an NDArray,
+    # and the equality check is broadcast to all elements of the array.
     if coords is None or (isinstance(coords, slice) and coords == slice(None)):
         coords = slice(0, length - 1)
     elif isinstance(coords, int):
