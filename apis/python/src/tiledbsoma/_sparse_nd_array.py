@@ -590,7 +590,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
         Args:
             compress:
                 If True, a CSC or CSR matrix is returned, dependent on the value of the
-                `axis` argument. If False, a COO matrix is returned.
+                `axis` argument of the `blockwise()` method. If False, a COO matrix is returned.
 
                 Note: implementation details of SciPy CSC and CSR compression effectively require
                 reindexing of the major axis (columns and rows, respectively). Therefore, this method

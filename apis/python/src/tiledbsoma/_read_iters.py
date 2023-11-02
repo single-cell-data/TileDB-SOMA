@@ -87,7 +87,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         size: Optional[Union[int, Sequence[int]]] = None,
         reindex_disable: Optional[Union[int, Sequence[int]]] = None,
         eager: bool = True,
-        pool: Optional[ThreadPoolExecutor] = None,
+        eager_iterator_pool: Optional[ThreadPoolExecutor] = None,
     ):
         super().__init__()
 
@@ -95,7 +95,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.array = array
         self.sr = sr
         self.eager = eager
-        self.pool = pool
+        self.eager_iterator_pool = eager_iterator_pool
 
         # raises on various error checks
         self.axis, self.size, self.reindex_disable = self._validate_args(
@@ -159,7 +159,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
             else []
         )
 
-        # Currently, only support chunking on one dimension.
+        # Currently, only support blockwise iteration on one dimension.
         if len(axis) != 1:
             raise NotImplementedError(
                 "Multi-dimension blockwise iterators not implemented"
@@ -205,7 +205,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
     _EagerRT = TypeVar("_EagerRT")
 
-    def _if_eager(
+    def _maybe_eager_iterator(
         self, x: Iterator[_EagerRT], _pool: Optional[ThreadPoolExecutor] = None
     ) -> Iterator[_EagerRT]:
         """Private"""
@@ -233,7 +233,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self, _pool: Optional[ThreadPoolExecutor] = None
     ) -> BlockwiseSingleAxisTableIter:
         """Private. Blockwise table reader w/ reindexing. Helper function for sub-class use"""
-        for tbl, coords in self._if_eager(self._table_reader(), _pool):
+        for tbl, coords in self._maybe_eager_iterator(self._table_reader(), _pool):
             pytbl = {}
             for d in range(self.ndim):
                 col = tbl.column(f"soma_dim_{d}")
@@ -252,14 +252,14 @@ class BlockwiseTableReadIter(BlockwiseReadIterBase[BlockwiseTableReadIterResult]
 
     def _create_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
         """Private. Blockwise Arrow Table iterator, restricted to a single axis"""
-        if self.eager and not self.pool:
+        if self.eager and not self.eager_iterator_pool:
             with ThreadPoolExecutor() as _pool:
                 yield from self._reindexed_table_reader(
                     _pool
                 ) if self.axes_to_reindex else self._table_reader()
         else:
             yield from self._reindexed_table_reader(
-                _pool=self.pool
+                _pool=self.eager_iterator_pool
             ) if self.axes_to_reindex else self._table_reader()
 
 
@@ -316,21 +316,21 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         Private. Iterator over SparseNDArray producing sequence of scipy sparse matrix.
         """
 
-        if self.eager and not self.pool:
+        if self.eager and not self.eager_iterator_pool:
             with ThreadPoolExecutor() as _pool:
                 yield from self._cs_reader(
                     _pool
                 ) if self.compress else self._coo_reader(_pool)
         else:
             yield from self._cs_reader(
-                _pool=self.pool
-            ) if self.compress else self._coo_reader(_pool=self.pool)
+                _pool=self.eager_iterator_pool
+            ) if self.compress else self._coo_reader(_pool=self.eager_iterator_pool)
 
     def _sorted_tbl_reader(
         self, _pool: Optional[ThreadPoolExecutor] = None
     ) -> Iterator[Tuple[IJDType, IndicesType]]:
         """Private. Read reindexed tables and sort them. Yield as ((i,j),d)"""
-        for coo_tbl, indices in self._if_eager(
+        for coo_tbl, indices in self._maybe_eager_iterator(
             self._reindexed_table_reader(_pool), _pool
         ):
             coo_tbl = coo_tbl.sort_by(
@@ -365,7 +365,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
     ) -> Iterator[Tuple[sparse.coo_matrix, IndicesType]]:
         """Private. Uncompressed variants"""
         assert not self.compress
-        for ((i, j), d), indices in self._if_eager(
+        for ((i, j), d), indices in self._maybe_eager_iterator(
             self._sorted_tbl_reader(_pool), _pool
         ):
             major_coords, minor_coords = (
@@ -388,7 +388,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         """Private. Compressed sparse variants"""
         assert self.compress
         assert self.major_axis not in self.reindex_disable
-        for ((i, j), d), indices in self._if_eager(
+        for ((i, j), d), indices in self._maybe_eager_iterator(
             self._sorted_tbl_reader(_pool), _pool
         ):
             major_coords, minor_coords = (
