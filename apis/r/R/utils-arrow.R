@@ -43,6 +43,7 @@ is_arrow_dictionary <- function(x) {
 
 tiledb_type_from_arrow_type <- function(x, is_dim) {
   stopifnot(is_arrow_data_type(x))
+  retval <- switch(x$name,
     int8 = "INT8",
     int16 = "INT16",
     int32 = "INT32",
@@ -82,7 +83,7 @@ tiledb_type_from_arrow_type <- function(x, is_dim) {
     # fixed_size_list = "fixed_size_list",
     # map_of = "map",
     # duration = "duration",
-    dictionary = tiledb_type_from_arrow_type(x$index_type),
+    dictionary = tiledb_type_from_arrow_type(x$index_type, is_dim=is_dim),
     stop("Unsupported Arrow data type: ", x$name, call. = FALSE)
   )
   if (is_dim && retval == "UTF8") {
@@ -211,7 +212,7 @@ tiledb_attr_from_arrow_field <- function(field, tiledb_create_options) {
     COMPRESSION_LEVEL = tiledb_create_options$dataframe_dim_zstd_level()
   )
 
-  field_type <- tiledb_type_from_arrow_type(field$type)
+  field_type <- tiledb_type_from_arrow_type(field$type, is_dim=FALSE)
   tiledb::tiledb_attr(
     name = field$name,
     type = field_type,
