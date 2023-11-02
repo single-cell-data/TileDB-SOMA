@@ -352,9 +352,12 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         shape = cast(Tuple[int, int], tuple(self.sr.shape))
         assert len(shape) == 2
         _sp_shape: List[int] = list(shape)
-        _sp_shape[self.major_axis] = len(major_coords)
+
+        if self.major_axis not in self.reindex_disable:
+            _sp_shape[self.major_axis] = len(major_coords)
         if self.minor_axis not in self.reindex_disable:
             _sp_shape[self.minor_axis] = len(minor_coords)
+
         return cast(Tuple[int, int], tuple(_sp_shape))
 
     def _coo_reader(
@@ -384,6 +387,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
     ) -> Iterator[Tuple[Union[sparse.csr_matrix, sparse.csc_matrix], IndicesType],]:
         """Private. Compressed sparse variants"""
         assert self.compress
+        assert self.major_axis not in self.reindex_disable
         for ((i, j), d), indices in self._if_eager(
             self._sorted_tbl_reader(_pool), _pool
         ):

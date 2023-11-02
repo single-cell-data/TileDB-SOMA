@@ -1637,3 +1637,33 @@ def test_blockwise_indices(
                         expected_indices[minor_axis], indices[minor_axis]
                     )
                     block += 1
+
+
+@pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
+@pytest.mark.parametrize("coords", [(slice(0, 10),), (slice(1, 10),)])
+def test_blockwise_scipy_reindex_disable_major_dim(
+    a_random_sparse_nd_array: str, coords: Tuple[Any, ...]
+) -> None:
+    """
+    Disable reindexing on major axis. Expected behavior:
+    * fails if compress==True
+    * succeeds if compress==False
+    """
+
+    with soma.open(a_random_sparse_nd_array) as A:
+        for axis in (0, 1):
+            # Should fail if compress==True (CSR/CSC)
+            with pytest.raises(soma.SOMAError):
+                next(
+                    A.read(coords)
+                    .blockwise(axis=axis, reindex_disable=axis)
+                    .scipy(compress=True)
+                )
+
+            # should succeed if compress==False (COO)
+            sp, _ = next(
+                A.read(coords)
+                .blockwise(axis=axis, reindex_disable=axis)
+                .scipy(compress=False)
+            )
+            assert isinstance(sp, sparse.coo_matrix)
