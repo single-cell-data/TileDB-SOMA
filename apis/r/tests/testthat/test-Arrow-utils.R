@@ -23,7 +23,7 @@ test_that("TileDB classes can be converted to Arrow equivalents", {
   expect_true(is_arrow_field(dim0_field))
   expect_equal(dim0_field$name, tiledb::name(dim0))
   expect_equal(
-    tiledb_type_from_arrow_type(dim0_field$type),
+    tiledb_type_from_arrow_type(dim0_field$type, is_dim=TRUE),
     tiledb::datatype(dim0)
   )
 
@@ -32,14 +32,14 @@ test_that("TileDB classes can be converted to Arrow equivalents", {
   expect_true(is_arrow_field(dim1_field))
   expect_equal(dim1_field$name, tiledb::name(dim1))
   expect_equal(
-    tiledb_type_from_arrow_type(dim1_field$type),
+    tiledb_type_from_arrow_type(dim1_field$type, is_dim=TRUE),
     tiledb::datatype(dim1)
   )
 
   # Attribute to Arrow field
   attr0 <- tiledb::tiledb_attr(
     name = "attr0",
-    type = "ASCII"
+    type = "UTF8"
   )
 
   attr1 <- tiledb::tiledb_attr(
@@ -55,7 +55,7 @@ test_that("TileDB classes can be converted to Arrow equivalents", {
   expect_true(is_arrow_field(attr0_field))
   expect_equal(attr0_field$name, tiledb::name(attr0))
   expect_equal(
-    tiledb_type_from_arrow_type(attr0_field$type),
+    tiledb_type_from_arrow_type(attr0_field$type, is_dim=FALSE),
     tiledb::datatype(attr0)
   )
 
@@ -64,7 +64,7 @@ test_that("TileDB classes can be converted to Arrow equivalents", {
   expect_true(is_arrow_field(attr1_field))
   expect_equal(attr1_field$name, tiledb::name(attr1))
   expect_equal(
-    tiledb_type_from_arrow_type(attr1_field$type),
+    tiledb_type_from_arrow_type(attr1_field$type, is_dim=FALSE),
     tiledb::datatype(attr1)
   )
 
