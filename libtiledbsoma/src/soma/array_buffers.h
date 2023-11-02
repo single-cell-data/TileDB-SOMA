@@ -38,7 +38,6 @@
 #include <tiledb/tiledb>
 
 #include "../utils/common.h"
-#include "../utils/logger.h"
 #include "column_buffer.h"
 
 namespace tiledbsoma {
@@ -58,13 +57,7 @@ class ArrayBuffers {
      * @param name Column name
      * @return std::shared_ptr<ColumnBuffer> Column buffer
      */
-    std::shared_ptr<ColumnBuffer> at(const std::string& name) {
-        if (!contains(name)) {
-            throw TileDBSOMAError(
-                fmt::format("[ArrayBuffers] column '{}' does not exist", name));
-        }
-        return buffers_[name];
-    }
+    std::shared_ptr<ColumnBuffer> at(const std::string& name);
 
     /**
      * @brief Return true if a buffer with the given name exists.
@@ -83,15 +76,7 @@ class ArrayBuffers {
      * @param name Column name
      * @param buffer Column buffer
      */
-    void emplace(
-        const std::string& name, std::shared_ptr<ColumnBuffer> buffer) {
-        if (contains(name)) {
-            throw TileDBSOMAError(
-                fmt::format("[ArrayBuffers] column '{}' already exists", name));
-        }
-        names_.push_back(name);
-        buffers_.emplace(name, buffer);
-    }
+    void emplace(const std::string& name, std::shared_ptr<ColumnBuffer> buffer);
 
     /**
      * @brief Returns the ordered vector of names.

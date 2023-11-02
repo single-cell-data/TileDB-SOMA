@@ -39,7 +39,6 @@
 #include <tiledb/tiledb_experimental>
 
 #include "../utils/common.h"
-#include "../utils/logger.h"
 #include "span/span.hpp"
 
 namespace tiledbsoma {
@@ -128,9 +127,7 @@ class ColumnBuffer {
     ColumnBuffer(const ColumnBuffer&) = delete;
     ColumnBuffer(ColumnBuffer&&) = default;
 
-    ~ColumnBuffer() {
-        LOG_TRACE(fmt::format("[ColumnBuffer] release '{}'", name_));
-    }
+    ~ColumnBuffer();
 
     /**
      * @brief Attach this ColumnBuffer to a TileDB query.

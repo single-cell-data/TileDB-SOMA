@@ -40,6 +40,7 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 #include "enums.h"
+#include "logger_public.h"
 #include "managed_query.h"
 
 namespace tiledbsoma {
@@ -251,12 +252,13 @@ class SOMAArray {
         int partition_count) {
         // Validate partition inputs
         if (partition_index >= partition_count) {
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAArray] partition_index ({}) must be < "
-                "partition_count "
-                "({})",
-                partition_index,
-                partition_count));
+            // TODO this use to be formatted with fmt::format which is part of
+            // internal header spd/log/fmt/fmt.h and should not be used.
+            // In C++20, this can be replaced with std::format.
+            std::ostringstream err;
+            err << "[SOMAArray] partition_index (" << partition_index
+                << ") must be < partition_count (" << partition_count;
+            throw TileDBSOMAError(err.str());
         }
 
         if (partition_count > 1) {
@@ -268,19 +270,17 @@ class SOMAArray {
                 partition_size = points.size() - start;
             }
 
-            LOG_DEBUG(fmt::format(
-                "[SOMAArray] set_dim_points partitioning: sizeof(T)={} "
-                "dim={} "
-                "index={} "
-                "count={} "
-                "range=[{}, {}] of {} points",
-                sizeof(T),
-                dim,
-                partition_index,
-                partition_count,
-                start,
-                start + partition_size - 1,
-                points.size()));
+            // TODO this use to be formatted with fmt::format which is part of
+            // internal header spd/log/fmt/fmt.h and should not be used.
+            // In C++20, this can be replaced with std::format.
+            std::ostringstream log_dbg;
+            log_dbg << "[SOMAArray] set_dim_points partitioning:"
+                    << " sizeof(T)=" << sizeof(T) << " dim=" << dim
+                    << " index=" << partition_index
+                    << " count=" << partition_count << " range =[" << start
+                    << ", " << start + partition_size - 1 << "] of "
+                    << points.size() << "points";
+            LOG_DEBUG(log_dbg.str());
 
             mq_->select_points(
                 dim, tcb::span<T>{&points[start], partition_size});
@@ -301,7 +301,8 @@ class SOMAArray {
     template <typename T>
     void set_dim_points(const std::string& dim, const std::vector<T>& points) {
         LOG_DEBUG(
-            fmt::format("[SOMAArray] set_dim_points: sizeof(T)={}", sizeof(T)));
+            "[SOMAArray] set_dim_points: sizeof(T)=" +
+            std::to_string(sizeof(T)));
         mq_->select_points(dim, points);
     }
 
