@@ -201,14 +201,12 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
                 # math.NaN, for which pa.infer_type fails with "Could not
                 # convert <NA> with type NAType".
                 #
-                # Problem: with
+                # Note: with
                 #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))
                 # the dtype comes in to us via `tiledbsoma.io.from_anndata` not
-                # as `pd.StringDtype()` but rather as `object`, so, the
-                # if-branch is not taken. :(
-                if df[k].dtype == pd.StringDtype():
+                # as `pd.StringDtype()` but rather as `object`.
+                if df[k].dtype == pd.StringDtype() or df[k].dtype.name == 'object':
                     df[k] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
-                    pass
                 else:
                     df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k]))
             else:

@@ -934,3 +934,31 @@ def test_uns_io(tmp_path, outgest_uns_keys):
 
     else:
         assert set(b.keys()) == set(outgest_uns_keys)
+
+@pytest.mark.parametrize("write_index", [0, 1])
+def test_string_nan_columns(tmp_path, adata, write_index):
+    # Use case:
+    #
+    # 1. Anndata has column filled with np.nan
+    # 2. Import AnnData to SOMA
+    # 3. Export SOMA back to AnnData
+    # 4. Fill all/part of empty column with string values
+
+    # Step 1
+    adata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))
+
+    # Step 2
+    uri = tmp_path.as_posix()
+    tiledbsoma.io.from_anndata(uri, adata, measurement_name='RNA')
+
+    # Step 3
+    with tiledbsoma.open(uri, 'r') as exp:
+        bdata = tiledbsoma.io.to_anndata(exp, measurement_name='RNA')
+
+    # Step 4
+    bdata.obs['new_col'][write_index] = 'abc'
+    with tiledbsoma.open(uri, 'w') as exp:
+        # Implicit assert here that nothing throws
+        tiledbsoma.io.update_obs(exp, bdata.obs)
+
+    # TODO: asserts
