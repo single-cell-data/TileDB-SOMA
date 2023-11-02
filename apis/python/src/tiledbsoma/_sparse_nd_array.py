@@ -474,7 +474,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         `reindex_disable` argument. When reindexing:
         * the primary iterator axis coordinates, as indicated by the `axis` argument, will be reindexed into the range
           `[0, N)`, where `N` is the number of coordinates read for the block (controlled with the `size` argument).
-        * all other axes will be reindexed to `[0, N)`, where `N` is the number of points read
+        * all other axes will be reindexed to `[0, M)`, where `M` is the number of points read
           on that axis across all blocks.
 
         Args:
@@ -591,6 +591,11 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             compress:
                 If True, a CSC or CSR matrix is returned, dependent on the value of the
                 `axis` argument. If False, a COO matrix is returned.
+
+                Note: implementation details of SciPy CSC and CSR compression effectively require
+                reindexing of the major axis (columns and rows, respectively). Therefore, this method
+                will throw an error if the major axis was included in the reindex_disable argument to
+                `blockwise()`. Reindexing can be disabled for the minor axis.
 
         Yields:
             The iterator will yield a tuple of:
