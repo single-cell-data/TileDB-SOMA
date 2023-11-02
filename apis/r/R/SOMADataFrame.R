@@ -74,7 +74,7 @@ SOMADataFrame <- R6::R6Class(
           name = field_name,
           # Numeric index types must be positive values for indexing
           domain = arrow_type_unsigned_range(field$type), tile = tile_extent,
-          type = tiledb_type_from_arrow_type(field$type),
+          type = tiledb_type_from_arrow_type(field$type, is_dim=TRUE),
           filter_list = tiledb::tiledb_filter_list(tdb_opts)
         )
       }
@@ -87,7 +87,7 @@ SOMADataFrame <- R6::R6Class(
 
       for (field_name in attr_column_names) {
         field <- schema$GetFieldByName(field_name)
-        field_type <- tiledb_type_from_arrow_type(field$type)
+        field_type <- tiledb_type_from_arrow_type(field$type, is_dim=FALSE)
 
         ## # Check if the field is ordered and mark it as such
         ## if (!is.null(x = levels[[field_name]]) && isTRUE(field$type$ordered)) {
@@ -98,7 +98,7 @@ SOMADataFrame <- R6::R6Class(
           name = field_name,
           type = field_type,
           nullable = field$nullable,
-          ncells = if (field_type == "ASCII") NA_integer_ else 1L,
+          ncells = if (field_type == "ASCII" || field_type == "UTF8" ) NA_integer_ else 1L,
           filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters(field_name))
         )
       }
