@@ -429,14 +429,7 @@ class ManagedQuery {
      *
      * @param name Column name
      */
-    void check_column_name(const std::string& name) {
-        if (!buffers_->contains(name)) {
-            throw TileDBSOMAError(fmt::format(
-                "[ManagedQuery] Column '{}' is not available in the query "
-                "results.",
-                name));
-        }
-    }
+    void check_column_name(const std::string& name);
 
     // TileDB array being queried.
     std::shared_ptr<Array> array_;
