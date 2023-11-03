@@ -7,7 +7,9 @@
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
 // https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
 
+#ifndef ARROW_SCHEMA_AND_ARRAY_DEFINED
 #include "carrow.h"
+#endif
 namespace tiledbsoma {
 
 class ColumnBuffer;
