@@ -1065,3 +1065,91 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
         assert list(x.as_py() for x in tab["string"]) == ["apple"]
         assert sidf.tiledb_timestamp_ms == 1615402887987
         assert sidf.tiledb_timestamp.isoformat() == "2021-03-10T19:01:27.987000+00:00"
+
+
+def test_extend_enumerations(tmp_path):
+    pandas_df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3, 4, 5], dtype=np.int64),
+            "str": pd.Series(["A", "B", "A", "B", "B", "B"], dtype="category"),
+            "byte": pd.Series([b"A", b"B", b"A", b"B", b"B", b"B"], dtype="category"),
+            "bool": pd.Series(
+                [True, False, True, False, False, False], dtype="category"
+            ),
+            "int64": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.int64), dtype="category"
+            ),
+            "uint64": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint64), dtype="category"
+            ),
+            "int32": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.int32), dtype="category"
+            ),
+            "uint32": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint32), dtype="category"
+            ),
+            "int16": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.int16), dtype="category"
+            ),
+            "uint16": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint16), dtype="category"
+            ),
+            "int8": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.int8), dtype="category"
+            ),
+            "uint8": pd.Series(
+                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint8), dtype="category"
+            ),
+            "float32": pd.Series(
+                np.array([0, 1.1, 2.1, 0, 1.1, 2.1], dtype=np.float32), dtype="category"
+            ),
+            "float64": pd.Series(
+                np.array([0, 1.1, 2.1, 0, 1.1, 2.1], dtype=np.float64), dtype="category"
+            ),
+            "float64_w_non_finite": pd.Series(
+                np.array([0, 1.1, 2.1, 0, np.Inf, np.NINF], dtype=np.float64),
+                dtype="category",
+            ),
+            "str_ordered": pd.Series(
+                pd.Categorical(
+                    ["A", "B", "A", "B", "B", "B"],
+                    categories=["B", "A", "C"],
+                    ordered=True,
+                ),
+            ),
+            "int64_ordered": pd.Series(
+                pd.Categorical(
+                    [1, 2, 3, 3, 2, 1],
+                    categories=np.array([3, 2, 1], dtype=np.int64),
+                    ordered=True,
+                ),
+            ),
+            "uint64_ordered": pd.Series(
+                pd.Categorical(
+                    [1, 2, 3, 3, 2, 1],
+                    categories=np.array([3, 2, 1], dtype=np.uint64),
+                    ordered=True,
+                ),
+            ),
+            "float64_ordered": pd.Series(
+                pd.Categorical(
+                    [0, 1.1, 2.1, 0, 1.1, 2.1],
+                    categories=np.array([1.1, 0, 2.1], dtype=np.float64),
+                    ordered=True,
+                ),
+            ),
+        },
+    )
+
+    schema = pa.Schema.from_pandas(pandas_df, preserve_index=False)
+
+    with soma.DataFrame.create(str(tmp_path), schema=schema) as soma_dataframe:
+        tbl = pa.Table.from_pandas(pandas_df, preserve_index=False)
+        soma_dataframe.write(tbl)
+
+    with soma.open(str(tmp_path)) as soma_dataframe:
+        df = soma_dataframe.read().concat().to_pandas()
+        for c in df:
+            assert df[c].dtype == pandas_df[c].dtype
+            if df[c].dtype == "category":
+                assert df[c].cat.categories.dtype == pandas_df[c].cat.categories.dtype
