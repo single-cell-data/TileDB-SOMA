@@ -474,10 +474,9 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                         reader.set_dim_points(
                             dim, coords.cast<std::vector<std::string>>());
                     } else {
-                        throw TileDBSOMAError(fmt::format(
-                            "[pytiledbsoma] set_dim_points: type={} not "
-                            "supported",
-                            arrow_schema.format));
+                        throw TileDBSOMAError(
+                            "[pytiledbsoma] set_dim_points: type=" + std::string(arrow_schema.format) + " not "
+                            "supported");
                     }
 
                     // Release arrow schema

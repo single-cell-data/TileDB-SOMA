@@ -59,20 +59,12 @@ const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 namespace {
 
 std::tuple<std::string, uint64_t> create_array(
-    const std::string& uri_in,
+    const std::string& uri,
     std::shared_ptr<Context> ctx,
     int num_cells_per_fragment = 10,
     int num_fragments = 1,
     bool overlap = false,
     bool allow_duplicates = false) {
-    std::string uri = fmt::format(
-        "{}-{}-{}-{}-{}",
-        uri_in,
-        num_cells_per_fragment,
-        num_fragments,
-        overlap,
-        allow_duplicates);
-
     auto vfs = VFS(*ctx);
     if (vfs.is_dir(uri)) {
         vfs.remove_dir(uri);
@@ -190,11 +182,14 @@ TEST_CASE("SOMAArray: nnz") {
     int num_cells_per_fragment = 128;
     auto timestamp = 10;
 
-    SECTION(fmt::format(
-        " - fragments={}, overlap={}, allow_duplicates={}",
-        num_fragments,
-        overlap,
-        allow_duplicates)) {
+    // TODO this use to be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- fragments=" << num_fragments << ", overlap" << overlap
+            << ", allow_duplicates=" << allow_duplicates;
+
+    SECTION(section.str()) {
         auto ctx = std::make_shared<Context>();
 
         // Create array
@@ -260,11 +255,14 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
     auto allow_duplicates = true;
     int num_cells_per_fragment = 128;
 
-    SECTION(fmt::format(
-        " - fragments={}, overlap={}, allow_duplicates={}",
-        num_fragments,
-        overlap,
-        allow_duplicates)) {
+    // TODO this use to be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- fragments=" << num_fragments << ", overlap" << overlap
+            << ", allow_duplicates=" << allow_duplicates;
+
+    SECTION(section.str()) {
         auto ctx = std::make_shared<Context>();
 
         // Create array
@@ -310,12 +308,14 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
     auto vacuum = GENERATE(false, true);
     int num_cells_per_fragment = 128;
 
-    SECTION(fmt::format(
-        " - fragments={}, overlap={}, allow_duplicates={}, vacuum={}",
-        num_fragments,
-        overlap,
-        allow_duplicates,
-        vacuum)) {
+    // TODO this use to be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- fragments=" << num_fragments << ", overlap" << overlap
+            << ", allow_duplicates=" << allow_duplicates;
+
+    SECTION(section.str()) {
         auto ctx = std::make_shared<Context>();
 
         // Create array

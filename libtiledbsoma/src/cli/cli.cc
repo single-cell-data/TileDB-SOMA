@@ -33,6 +33,8 @@
 #include "soma/enums.h"
 #include "soma/soma_array.h"
 #include "utils/arrow_adapter.h"
+#include "utils/carrow.h"
+#include "utils/logger.h"
 
 using namespace tiledbsoma;
 
