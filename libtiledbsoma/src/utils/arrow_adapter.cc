@@ -179,7 +179,7 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
 }
 
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
-ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column, bool use_enum) {
+ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
     std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
 
@@ -249,7 +249,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column, bool use_enum) {
         column->data_to_bitmap();
     }
 
-    if (column->has_enumeration() && use_enum) {
+    if (column->has_enumeration()) {
         ArrowSchema* dict_sch = new ArrowSchema;
         ArrowArray* dict_arr = new ArrowArray;
 
