@@ -85,7 +85,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         axis: Union[int, Sequence[int]],
         *,
         size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable: Optional[Union[int, Sequence[int], bool]] = None,
+        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
         eager: bool = True,
         eager_iterator_pool: Optional[ThreadPoolExecutor] = None,
     ):
@@ -98,8 +98,8 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.eager_iterator_pool = eager_iterator_pool
 
         # raises on various error checks, AND normalizes args
-        self.axis, self.size, self.reindex_disable = self._validate_args(
-            sr.shape, axis, size, reindex_disable
+        self.axis, self.size, self.reindex_disable_on_axis = self._validate_args(
+            sr.shape, axis, size, reindex_disable_on_axis
         )
 
         self.major_axis = self.axis[0]
@@ -122,7 +122,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         ]
 
         # build indexers, as needed
-        self.axes_to_reindex = set(range(self.ndim)) - set(self.reindex_disable)
+        self.axes_to_reindex = set(range(self.ndim)) - set(self.reindex_disable_on_axis)
         self.minor_axes_indexer = {
             d: pd.Index(self.joinids[d].to_numpy())
             for d in (self.axes_to_reindex - set((self.major_axis,)))
@@ -137,10 +137,10 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         shape: NTuple,
         axis: Union[int, Sequence[int]],
         size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable: Optional[Union[int, Sequence[int], bool]] = None,
+        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
     ) -> Tuple[List[int], List[int], List[int]]:
         """
-        Class method to validate and normalize common user-provided arguments axis, size and reindex_disable.
+        Class method to validate and normalize common user-provided arguments axis, size and reindex_disable_on_axis.
         * normalize args to fully specify the arg per dimension, for convenience in later usage
         * error check and raise if a nonsense value
         * set defaults where supported.
@@ -150,16 +150,16 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         # convert to list
         axis = list(axis if isinstance(axis, Sequence) else [axis])
 
-        if reindex_disable is None:
-            reindex_disable = []
-        elif isinstance(reindex_disable, bool):
-            reindex_disable = list(range(ndim)) if reindex_disable else []
-        elif isinstance(reindex_disable, int):
-            reindex_disable = [reindex_disable]
-        elif isinstance(reindex_disable, Sequence):
-            reindex_disable = list(reindex_disable)
+        if reindex_disable_on_axis is None:
+            reindex_disable_on_axis = []
+        elif isinstance(reindex_disable_on_axis, int):
+            reindex_disable_on_axis = [reindex_disable_on_axis]
+        elif isinstance(reindex_disable_on_axis, Sequence):
+            reindex_disable_on_axis = list(reindex_disable_on_axis)
         else:
-            raise TypeError("reindex_disable must be None, int, bool or Sequence[int]")
+            raise TypeError(
+                "reindex_disable_on_axis must be None, int or Sequence[int]"
+            )
 
         # Currently, only support blockwise iteration on one dimension.
         if len(axis) != 1:
@@ -169,9 +169,9 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         # all dim indices must be in acceptable range
         if not all(0 <= d < ndim for d in axis):
             raise ValueError("blockwise `axis` value must be in range [0, ndim)")
-        if not all(0 <= d < ndim for d in reindex_disable):
+        if not all(0 <= d < ndim for d in reindex_disable_on_axis):
             raise ValueError(
-                "blockwise `reindex_disable` value must be in range [0, ndim)"
+                "blockwise `reindex_disable_on_axis` value must be in range [0, ndim)"
             )
 
         # if not specified, set default size for each axis. Default heuristic
@@ -188,7 +188,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
                 "blockwise iterator `size` must be None, int or Sequence[int]"
             )
 
-        return axis, size, reindex_disable
+        return axis, size, reindex_disable_on_axis
 
     @abc.abstractmethod
     def _create_reader(self) -> Iterator[_RT]:
@@ -279,7 +279,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         axis: Union[int, Sequence[int]],
         *,
         size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable: Optional[Union[int, Sequence[int], bool]] = None,
+        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
         eager: bool = True,
         compress: bool = True,
     ):
@@ -290,7 +290,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             coords,
             axis,
             size=size,
-            reindex_disable=reindex_disable,
+            reindex_disable_on_axis=reindex_disable_on_axis,
             eager=eager,
         )
 
@@ -303,7 +303,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
                 "SciPy sparse matrix iterator compatible only with 2D arrays"
             )
 
-        if self.compress and self.major_axis in self.reindex_disable:
+        if self.compress and self.major_axis in self.reindex_disable_on_axis:
             raise SOMAError(
                 "Unable to disable reindexing of coordinates on CSC/CSR major axis"
             )
@@ -358,9 +358,9 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         assert len(shape) == 2
         _sp_shape: List[int] = list(shape)
 
-        if self.major_axis not in self.reindex_disable:
+        if self.major_axis not in self.reindex_disable_on_axis:
             _sp_shape[self.major_axis] = len(major_coords)
-        if self.minor_axis not in self.reindex_disable:
+        if self.minor_axis not in self.reindex_disable_on_axis:
             _sp_shape[self.minor_axis] = len(minor_coords)
 
         return cast(Tuple[int, int], tuple(_sp_shape))
@@ -392,7 +392,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
     ) -> Iterator[Tuple[Union[sparse.csr_matrix, sparse.csc_matrix], IndicesType],]:
         """Private. Compressed sparse variants"""
         assert self.compress
-        assert self.major_axis not in self.reindex_disable
+        assert self.major_axis not in self.reindex_disable_on_axis
         for ((i, j), d), indices in self._maybe_eager_iterator(
             self._sorted_tbl_reader(_pool), _pool
         ):

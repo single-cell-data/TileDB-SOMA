@@ -456,7 +456,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         axis: Union[int, Sequence[int]],
         *,
         size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable: Optional[Union[int, Sequence[int], bool]] = None,
+        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
         eager: bool = True,
     ) -> SparseNDArrayBlockwiseRead:
         """
@@ -471,7 +471,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
 
         All blockwise iterators will reindex coordinates (i.e., map them from soma_joinid to an integer
         in the range [0, N)), unless reindexing is specifically disabled for that axis, using the
-        `reindex_disable` argument. When reindexing:
+        `reindex_disable_on_axis` argument. When reindexing:
         * the primary iterator axis coordinates, as indicated by the `axis` argument, will be reindexed into the range
           `[0, N)`, where `N` is the number of coordinates read for the block (controlled with the `size` argument).
         * all other axes will be reindexed to `[0, M)`, where `M` is the number of points read
@@ -485,10 +485,9 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
                 Optional. Number of coordinates in each block yielded by the iterator. A reasonable default will
                 be provided if the argument is omitted. Current defaults are 2^16 for dimension 0 and 2^8 for
                 all other dimensions. Defaults are subject to change and will likely remain relatively small.
-            reindex_disable:
+            reindex_disable_on_axis:
                 Optional. Axis or sequence of axes which will _not_ be reindexed. Defaults to None, indicating
-                all axes will be reindexed. Also accepts a boolean value, where `True` indicates reindexing is
-                disabled for all axes, and `False` is synonymous with `None`.
+                all axes will be reindexed.
             eager:
                 Optional. If `True`, the iterator will read ahead (using multi-threading) to improve overall
                 performance when iterating over a large result. Setting this flag to `False` will reduce memory
@@ -526,7 +525,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
             self.coords,
             axis,
             size=size,
-            reindex_disable=reindex_disable,
+            reindex_disable_on_axis=reindex_disable_on_axis,
             eager=eager,
         )
 
@@ -540,13 +539,13 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
         axis: Union[int, Sequence[int]],
         *,
         size: Optional[Union[int, Sequence[int]]],
-        reindex_disable: Optional[Union[int, Sequence[int], bool]],
+        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]],
         eager: bool = True,
     ):
         super().__init__(sr, array, coords)
         self.axis = axis
         self.size = size
-        self.reindex_disable = reindex_disable
+        self.reindex_disable_on_axis = reindex_disable_on_axis
         self.eager = eager
 
     def tables(self) -> BlockwiseTableReadIter:
@@ -568,7 +567,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             self.coords,
             self.axis,
             size=self.size,
-            reindex_disable=self.reindex_disable,
+            reindex_disable_on_axis=self.reindex_disable_on_axis,
             eager=self.eager,
         )
 
@@ -595,7 +594,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
 
                 Note: implementation details of SciPy CSC and CSR compression effectively require
                 reindexing of the major axis (columns and rows, respectively). Therefore, this method
-                will throw an error if the major axis was included in the reindex_disable argument to
+                will throw an error if the major axis was included in the reindex_disable_on_axis argument to
                 `blockwise()`. Reindexing can be disabled for the minor axis.
 
         Yields:
@@ -613,6 +612,6 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             self.axis,
             size=self.size,
             compress=compress,
-            reindex_disable=self.reindex_disable,
+            reindex_disable_on_axis=self.reindex_disable_on_axis,
             eager=self.eager,
         )

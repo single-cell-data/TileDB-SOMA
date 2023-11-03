@@ -1187,7 +1187,7 @@ def test_blockwise_table_iter(
 ) -> None:
     """Check blockwise iteration over non-reindexed results"""
     ndim = len(shape)
-    reindex_disable = list(range(ndim))  # disable all
+    reindex_disable_on_axis = list(range(ndim))  # disable all
     for axis, result_order in itertools.product(
         range(ndim), ["auto", "row-major", "column-major"]
     ):
@@ -1202,7 +1202,11 @@ def test_blockwise_table_iter(
             tbls = []
             for tbl, joinids in (
                 A.read(coords=coords, result_order=result_order)
-                .blockwise(axis=axis, size=size, reindex_disable=reindex_disable)
+                .blockwise(
+                    axis=axis,
+                    size=size,
+                    reindex_disable_on_axis=reindex_disable_on_axis,
+                )
                 .tables()
             ):
                 assert isinstance(tbl, pa.Table)
@@ -1244,14 +1248,18 @@ def test_blockwise_table_iter_size(
     NB: test requires soma_joinids assigned [0, n)
     """
     ndim = len(shape)
-    reindex_disable = True  # reindexing off
+    reindex_disable_on_axis = list(range(ndim))  # reindexing off
     for axis in range(ndim):
         with soma.open(a_random_sparse_nd_array, mode="r") as A:
             assert shape == A.shape
             block = 0
             for tbl, joinids in (
                 A.read()
-                .blockwise(axis=axis, size=size, reindex_disable=reindex_disable)
+                .blockwise(
+                    axis=axis,
+                    size=size,
+                    reindex_disable_on_axis=reindex_disable_on_axis,
+                )
                 .tables()
             ):
                 axis_coords = tbl.column(f"soma_dim_{axis}").to_numpy()
@@ -1438,11 +1446,15 @@ def test_blockwise_scipy_iter(
             truth_coo = _slice_sp(truth_coo, coords)
 
             # Reindexing is on by default. Disable if we don't want it for minor axis.
-            reindex_disable = [minor_axis] if not reindex_sparse_axis else None
+            reindex_disable_on_axis = [minor_axis] if not reindex_sparse_axis else None
             results = []
             for sp, joinids in (
                 A.read(coords)
-                .blockwise(axis=axis, size=size, reindex_disable=reindex_disable)
+                .blockwise(
+                    axis=axis,
+                    size=size,
+                    reindex_disable_on_axis=reindex_disable_on_axis,
+                )
                 .scipy(compress=compress)
             ):
                 # check for expected type
@@ -1498,10 +1510,10 @@ def test_blockwise_scipy_iter_error_checks(
             next(A.read().blockwise(axis=2).scipy())
 
         with pytest.raises(soma.SOMAError):
-            next(A.read().blockwise(axis=0, reindex_disable=[0]).scipy())
+            next(A.read().blockwise(axis=0, reindex_disable_on_axis=[0]).scipy())
 
         with pytest.raises(soma.SOMAError):
-            next(A.read().blockwise(axis=1, reindex_disable=[1]).scipy())
+            next(A.read().blockwise(axis=1, reindex_disable_on_axis=[1]).scipy())
 
 
 @pytest.mark.parametrize("density,shape", [(0.1, (4, 8, 16))])
@@ -1591,7 +1603,7 @@ def test_blockwise_indices(
 
     # blockwise table
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
-        for axis, reindex_disable in itertools.product(
+        for axis, reindex_disable_on_axis in itertools.product(
             (0, 1), (None, [0], [1], [0, 1])
         ):
             minor_axis = 1 - axis
@@ -1599,7 +1611,10 @@ def test_blockwise_indices(
             for _, indices in (
                 A.read(coords)
                 .blockwise(
-                    axis=axis, size=size, reindex_disable=reindex_disable, eager=False
+                    axis=axis,
+                    size=size,
+                    reindex_disable_on_axis=reindex_disable_on_axis,
+                    eager=False,
                 )
                 .tables()
             ):
@@ -1616,14 +1631,14 @@ def test_blockwise_indices(
         # blockwise scipy
         for axis in (0, 1):
             minor_axis = 1 - axis
-            for reindex_disable in (None, [minor_axis]):
+            for reindex_disable_on_axis in (None, [minor_axis]):
                 block = 0
                 for _, indices in (
                     A.read(coords)
                     .blockwise(
                         axis=axis,
                         size=size,
-                        reindex_disable=reindex_disable,
+                        reindex_disable_on_axis=reindex_disable_on_axis,
                         eager=True,
                     )
                     .scipy()
@@ -1656,14 +1671,14 @@ def test_blockwise_scipy_reindex_disable_major_dim(
             with pytest.raises(soma.SOMAError):
                 next(
                     A.read(coords)
-                    .blockwise(axis=axis, reindex_disable=axis)
+                    .blockwise(axis=axis, reindex_disable_on_axis=axis)
                     .scipy(compress=True)
                 )
 
             # should succeed if compress==False (COO)
             sp, _ = next(
                 A.read(coords)
-                .blockwise(axis=axis, reindex_disable=axis)
+                .blockwise(axis=axis, reindex_disable_on_axis=axis)
                 .scipy(compress=False)
             )
             assert isinstance(sp, sparse.coo_matrix)
