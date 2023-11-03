@@ -170,7 +170,6 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         if not all(0 <= d < ndim for d in axis):
             raise ValueError("blockwise `axis` value must be in range [0, ndim)")
         if not all(0 <= d < ndim for d in reindex_disable):
-            print(reindex_disable)
             raise ValueError(
                 "blockwise `reindex_disable` value must be in range [0, ndim)"
             )
@@ -256,13 +255,17 @@ class BlockwiseTableReadIter(BlockwiseReadIterBase[BlockwiseTableReadIterResult]
         """Private. Blockwise Arrow Table iterator, restricted to a single axis"""
         if self.eager and not self.eager_iterator_pool:
             with ThreadPoolExecutor() as _pool:
-                yield from self._reindexed_table_reader(
-                    _pool
-                ) if self.axes_to_reindex else self._table_reader()
+                yield from (
+                    self._reindexed_table_reader(_pool)
+                    if self.axes_to_reindex
+                    else self._table_reader()
+                )
         else:
-            yield from self._reindexed_table_reader(
-                _pool=self.eager_iterator_pool
-            ) if self.axes_to_reindex else self._table_reader()
+            yield from (
+                self._reindexed_table_reader(_pool=self.eager_iterator_pool)
+                if self.axes_to_reindex
+                else self._table_reader()
+            )
 
 
 class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]):
@@ -499,8 +502,6 @@ def _coords_strider(
 _ElemT = TypeVar("_ElemT")
 
 
-def _pad_with_none(
-    s: Sequence[_ElemT], to_length: int
-) -> Tuple[Union[_ElemT, None], ...]:
+def _pad_with_none(s: Sequence[_ElemT], to_length: int) -> Tuple[Optional[_ElemT], ...]:
     """Given a sequence, pad length to a user-specified length, with None values"""
     return tuple(s[i] if i < len(s) else None for i in range(to_length))
