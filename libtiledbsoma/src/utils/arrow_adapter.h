@@ -2,6 +2,7 @@
 #define ARROW_ADAPTER_H
 
 #include <tiledb/tiledb>
+#include <tiledb/tiledb_experimental>
 
 // https://arrow.apache.org/docs/format/CDataInterface.html
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
@@ -11,6 +12,8 @@
 #include "carrow.h"
 #endif
 namespace tiledbsoma {
+
+using namespace tiledb;
 
 class ColumnBuffer;
 
@@ -37,10 +40,11 @@ class ArrowAdapter {
     /**
      * @brief Convert ColumnBuffer to an Arrow array.
      *
-     * @return auto [Arrow array, Arrow schema]
+     * @return std::pair<std::unique_ptr<ArrowArray>,
+     * std::unique_ptr<ArrowSchema>>
      */
     static std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
-    to_arrow(std::shared_ptr<ColumnBuffer> column, bool use_enum = false);
+    to_arrow(std::shared_ptr<ColumnBuffer> column);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.
@@ -48,9 +52,21 @@ class ArrowAdapter {
      * @param datatype TileDB datatype.
      * @return std::string_view Arrow format string.
      */
-    static std::string_view to_arrow_format(tiledb_datatype_t datatype);
-};
+    static std::string_view to_arrow_format(
+        tiledb_datatype_t datatype, bool use_large = true);
 
+   private:
+    static std::pair<const void*, std::size_t> _get_data_and_length(
+        Enumeration& enmr, const void* dst);
+
+    template <typename T>
+    static const void* _fill_data_buffer(std::vector<T> src, const void* dst) {
+        auto sz = src.size() * sizeof(T);
+        dst = (const void*)malloc(sz);
+        std::memcpy((void*)dst, src.data(), sz);
+        return dst;
+    }
+};
 };  // namespace tiledbsoma
 
 #endif
