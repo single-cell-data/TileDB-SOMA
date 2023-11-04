@@ -345,19 +345,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
-        to_clib_result_order = {
-            options.ResultOrder.AUTO: clib.ResultOrder.automatic,
-            options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
-            options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
-            "auto": clib.ResultOrder.automatic,
-            "row-major": clib.ResultOrder.rowmajor,
-            "column-major": clib.ResultOrder.colmajor,
-        }
-        if result_order not in to_clib_result_order:
-            raise ValueError(f"Invalid result_order: {result_order}")
-
         sr = self._handle._handle
-        sr.reset(column_names or [], "auto", to_clib_result_order[result_order])
+        sr.reset(column_names or [], "auto", _to_clib_result_order(result_order))
 
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), self._handle.schema)
@@ -524,6 +513,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             _util.validate_slice(coord)
             if self._set_reader_coord_by_numeric_slice(sr, dim_idx, dim, coord):
                 return True
+            
+            
+        domain = self.domain[dim_idx]
 
         # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
         # part.
@@ -535,7 +527,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         ):
             _util.validate_slice(coord)
             # Figure out which one.
-            dim_type: Union[Type[str], Type[bytes]] = type(self.domain[dim_idx][0])
+            dim_type: Union[Type[str], Type[bytes]] = type(domain[0])
             # A ``None`` or empty start is always equivalent to empty str/bytes.
             start = coord.start or dim_type()
             if coord.stop is None:
@@ -560,9 +552,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             # These timestamp types are stored in Arrow as well as TileDB as 64-bit integers (with
             # distinguishing metadata of course). For purposes of the query logic they're just
             # int64.
-            istart = coord.start or self.domain[dim_idx][0]
+            istart = coord.start or domain[0]
             istart = int(istart.astype("int64"))
-            istop = coord.stop or self.domain[dim_idx][1]
+            istop = coord.stop or domain[1]
             istop = int(istop.astype("int64"))
             sr.set_dim_ranges_int64(dim.name, [(istart, istop)])
             return True
@@ -608,12 +600,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             sr.set_dim_points_float64(dim.name, coord)
         elif pa.types.is_float32(dim.type):
             sr.set_dim_points_float32(dim.name, coord)
-        elif (
-            pa.types.is_large_string(dim.type)
-            or pa.types.is_large_binary(dim.type)
-            or pa.types.is_string(dim.type)
-            or pa.types.is_binary(dim.type)
-        ):
+        elif _pa_types_is_string_or_bytes(dim.type):
             sr.set_dim_points_string_or_bytes(dim.name, coord)
         elif pa.types.is_timestamp(dim.type):
             if not isinstance(coord, (tuple, list, np.ndarray)):
@@ -1001,3 +988,22 @@ def _find_extent_for_domain(
         return np.datetime64(iextent, "ns")
 
     return extent
+
+def _to_clib_result_order(result_order: options.ResultOrderStr):
+    to_clib_result_order = {
+            options.ResultOrder.AUTO: clib.ResultOrder.automatic,
+            options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
+            options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
+            "auto": clib.ResultOrder.automatic,
+            "row-major": clib.ResultOrder.rowmajor,
+            "column-major": clib.ResultOrder.colmajor,
+        }
+    if result_order not in to_clib_result_order:
+        raise ValueError(f"Invalid result_order: {result_order}")
+    return to_clib_result_order[result_order]
+
+def _pa_types_is_string_or_bytes(dtype: pa.DataType):
+    return (pa.types.is_large_string(dtype)
+            or pa.types.is_large_binary(dtype)
+            or pa.types.is_string(dtype)
+            or pa.types.is_binary(dtype))
