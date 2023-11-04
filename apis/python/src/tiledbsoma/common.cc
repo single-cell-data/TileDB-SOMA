@@ -157,7 +157,7 @@ py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
 
     for (auto& name : buffers->names()) {
         auto column = buffers->at(name);
-        auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(column, true);
+        auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(column);
         auto array = pa_array_import(py::capsule(pa_array.get()), 
                                      py::capsule(pa_schema.get()));
         array_list.append(array);
