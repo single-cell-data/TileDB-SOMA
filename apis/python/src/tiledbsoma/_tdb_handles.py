@@ -12,6 +12,7 @@ import abc
 import enum
 from typing import (
     Any,
+    Callable,
     Dict,
     Generic,
     Iterator,
@@ -310,18 +311,20 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
     @property
     def meta(self) -> "MetadataWrapper":
         return MetadataWrapper(self, dict(self._handle.meta))
-        
+
     @property
     def ndim(self) -> int:
         return int(len(self._handle.index_column_names))
-    
-    def _cast_domain(self, domain):
+
+    def _cast_domain(
+        self, domain: Callable[[str, np.dtype[Any]], Tuple[Any, Any]]
+    ) -> Tuple[Tuple[Any, Any], ...]:
         result = []
         for name in self._handle.index_column_names:
             dtype = self._handle.schema.field(name).type
             if pa.types.is_timestamp(dtype):
                 np_dtype = np.dtype(dtype.to_pandas_dtype())
-                dom = self._handle.domain(name, np_dtype)
+                dom = domain(name, np_dtype)
                 result.append(
                     (
                         np_dtype.type(dom[0], dtype.unit),
@@ -336,24 +339,31 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
                 else:
                     dtype = np.dtype(dtype.to_pandas_dtype())
                 result.append(domain(name, dtype))
-        return result
-
+        return tuple(result)
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
-        return tuple(self._cast_domain(self._handle.domain))
+        return self._cast_domain(self._handle.domain)
 
     def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
         result = self._cast_domain(self._handle.non_empty_domain)
-        return None if len(result) == 0 else tuple(result)
+        return None if len(result) == 0 else result
 
     @property
     def attr_names(self) -> Tuple[str, ...]:
-        return tuple(f.name for f in self.schema if f.name not in self._handle.index_column_names)
+        return tuple(
+            f.name for f in self.schema if f.name not in self._handle.index_column_names
+        )
 
     @property
     def dim_names(self) -> Tuple[str, ...]:
         return tuple(self._handle.index_column_names)
+
+    def enum(self, label: str) -> tiledb.Enumeration:
+        # The DataFrame handle may either be ArrayWrapper or DataFrameWrapper.
+        # enum is only used in the DataFrame write path and is implemented by
+        # ArrayWrapper. If enum is called in the read path, it is an error.
+        raise NotImplementedError
 
 
 class _DictMod(enum.Enum):

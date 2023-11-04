@@ -405,7 +405,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
                 # Add the enumeration values to the TileDB Array from ArrowArray
                 if attr.enum_label is not None and col.num_chunks != 0:
-                    if not pa.types.is_dictionary(col_info.type):
+                    if not pa.types.is_dictionary(col.type):
                         raise ValueError(
                             "Expected dictionary type for enumerated attribute "
                             f"{name} but saw {col_info.type}"
@@ -513,18 +513,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             _util.validate_slice(coord)
             if self._set_reader_coord_by_numeric_slice(sr, dim_idx, dim, coord):
                 return True
-            
-            
+
         domain = self.domain[dim_idx]
 
         # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
         # part.
-        if (is_slice_of(coord, str) or is_slice_of(coord, bytes)) and (
-            pa.types.is_large_string(dim.type)
-            or pa.types.is_large_binary(dim.type)
-            or pa.types.is_string(dim.type)
-            or pa.types.is_binary(dim.type)
-        ):
+        if (
+            is_slice_of(coord, str) or is_slice_of(coord, bytes)
+        ) and _pa_types_is_string_or_bytes(dim.type):
             _util.validate_slice(coord)
             # Figure out which one.
             dim_type: Union[Type[str], Type[bytes]] = type(domain[0])
@@ -989,21 +985,25 @@ def _find_extent_for_domain(
 
     return extent
 
-def _to_clib_result_order(result_order: options.ResultOrderStr):
+
+def _to_clib_result_order(result_order: options.ResultOrderStr) -> clib.ResultOrder:
     to_clib_result_order = {
-            options.ResultOrder.AUTO: clib.ResultOrder.automatic,
-            options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
-            options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
-            "auto": clib.ResultOrder.automatic,
-            "row-major": clib.ResultOrder.rowmajor,
-            "column-major": clib.ResultOrder.colmajor,
-        }
+        options.ResultOrder.AUTO: clib.ResultOrder.automatic,
+        options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
+        options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
+        "auto": clib.ResultOrder.automatic,
+        "row-major": clib.ResultOrder.rowmajor,
+        "column-major": clib.ResultOrder.colmajor,
+    }
     if result_order not in to_clib_result_order:
         raise ValueError(f"Invalid result_order: {result_order}")
     return to_clib_result_order[result_order]
 
-def _pa_types_is_string_or_bytes(dtype: pa.DataType):
-    return (pa.types.is_large_string(dtype)
-            or pa.types.is_large_binary(dtype)
-            or pa.types.is_string(dtype)
-            or pa.types.is_binary(dtype))
+
+def _pa_types_is_string_or_bytes(dtype: pa.DataType) -> bool:
+    return bool(
+        pa.types.is_large_string(dtype)
+        or pa.types.is_large_binary(dtype)
+        or pa.types.is_string(dtype)
+        or pa.types.is_binary(dtype)
+    )

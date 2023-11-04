@@ -101,6 +101,69 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     array->release = nullptr;
 }
 
+std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
+    std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
+    auto tiledb_schema = tiledb_array->schema();
+    auto ndim = tiledb_schema.domain().ndim();
+    auto nattr = tiledb_schema.attribute_num();
+
+    std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
+    arrow_schema->format = "+s";
+    arrow_schema->n_children = ndim + nattr;
+    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->children = (ArrowSchema**)malloc(
+        sizeof(ArrowSchema*) * arrow_schema->n_children);
+
+    ArrowSchema* child;
+
+    for (uint32_t i = 0; i < ndim; ++i) {
+        auto dim = tiledb_schema.domain().dimension(i);
+        child = arrow_schema->children[i] = new ArrowSchema;
+        child->format = ArrowAdapter::to_arrow_format(dim.type()).data();
+        child->name = strdup(dim.name().c_str());
+        child->metadata = nullptr;
+        child->flags = 0;
+        child->n_children = 0;
+        child->dictionary = nullptr;
+        child->children = nullptr;
+        child->release = &ArrowAdapter::release_schema;
+    }
+
+    for (uint32_t i = 0; i < nattr; ++i) {
+        auto attr = tiledb_schema.attribute(i);
+        child = arrow_schema->children[ndim + i] = new ArrowSchema;
+        child->format = ArrowAdapter::to_arrow_format(attr.type()).data();
+        child->name = strdup(attr.name().c_str());
+        child->metadata = nullptr;
+        child->flags = attr.nullable() ? ARROW_FLAG_NULLABLE : 0;
+        child->n_children = 0;
+        child->children = nullptr;
+        child->dictionary = nullptr;
+
+        auto enmr_name = AttributeExperimental::get_enumeration_name(
+            *ctx, attr);
+        if (enmr_name.has_value()) {
+            auto enmr = ArrayExperimental::get_enumeration(
+                *ctx, *tiledb_array, attr.name());
+            ArrowSchema* dict = new ArrowSchema;
+            dict->format = strdup(
+                ArrowAdapter::to_arrow_format(enmr.type(), false).data());
+            dict->name = strdup(enmr.name().c_str());
+            dict->metadata = nullptr;
+            dict->flags = 0;
+            dict->n_children = 0;
+            dict->children = nullptr;
+            dict->dictionary = nullptr;
+            dict->release = &ArrowAdapter::release_schema;
+            dict->private_data = nullptr;
+            child->dictionary = dict;
+        }
+        child->release = &ArrowAdapter::release_schema;
+    }
+
+    return arrow_schema;
+}
+
 std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
     Enumeration& enmr, const void* dst) {
     switch (enmr.type()) {
@@ -178,263 +241,195 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
     }
 }
 
-std::unique_ptr<ArrowSchema> tiledb_schema_to_arrow_schema(
-    std::shared_ptr<ArraySchema> tiledb_schema,
-    std::map<std::string, Enumeration> attr_to_enmr) {
-    auto ndim = tiledb_schema->domain().ndim();
-    auto nattr = tiledb_schema->attribute_num();
-
-    std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
-    arrow_schema->format = "+s";
-    arrow_schema->n_children = ndim + nattr;
-    arrow_schema->release = &release_schema;
-    arrow_schema->children = (ArrowSchema**)malloc(
-        sizeof(ArrowSchema*) * arrow_schema->n_children);
-
-    ArrowSchema* child;
-
-    for (uint32_t i = 0; i < ndim; ++i) {
-        auto dim = tiledb_schema->domain().dimension(i);
-        child = arrow_schema->children[i] = new ArrowSchema;
-        child->format = to_arrow_format(dim.type()).data();
-        child->name = strdup(dim.name().c_str());
-        child->metadata = nullptr;
-        child->flags = 0;
-        child->n_children = 0;
-        child->dictionary = nullptr;
-        child->children = nullptr;
-        child->release = &release_schema;
-    }
-
-    for (uint32_t i = 0; i < nattr; ++i) {
-        auto attr = tiledb_schema->attribute(i);
-        child = arrow_schema->children[ndim + i] = new ArrowSchema;
-        child->format = to_arrow_format(attr.type()).data();
-        child->name = strdup(attr.name().c_str());
-        child->metadata = nullptr;
-        child->flags = attr.nullable() ? ARROW_FLAG_NULLABLE : 0;
-        child->n_children = 0;
-        child->children = nullptr;
-        child->dictionary = nullptr;
-        if (attr_to_enmr.count(attr.name()) != 0) {
-            auto enmr = attr_to_enmr.at(attr.name());
-            ArrowSchema* dict = new ArrowSchema;
-            dict->format = (const char*)malloc(
-                sizeof(char) * 2);  // mandatory, 'u' as 32bit indexing
-            strcpy((char*)dict->format, "u");
-            dict->name = strdup(enmr.name().c_str());
-            dict->metadata = nullptr;
-            dict->flags = 0;
-            dict->n_children = 0;
-            dict->children = nullptr;
-            dict->dictionary = nullptr;
-            dict->release = &release_schema;
-            dict->private_data = nullptr;
-            child->dictionary = dict;
-        }
-        child->release = &release_schema;
-    }
-
-    return arrow_schema;
-}
-
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
 ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
-            std::shared_ptr<ColumnBuffer> column, bool use_enum = true) {
-                std::unique_ptr<ArrowSchema>
-                    schema = std::make_unique<ArrowSchema>();
-                std::unique_ptr<ArrowArray>
-                    array = std::make_unique<ArrowArray>();
+    std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
+    std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
 
-                schema->format = to_arrow_format(column->type()).data();
-                schema->name = column->name().data();
-                schema->metadata = nullptr;
-                schema->flags = 0;
-                schema->n_children = 0;
-                schema->children = nullptr;
-                schema->dictionary = nullptr;
-                schema->release = &release_schema;
-                schema->private_data = nullptr;
+    schema->format = to_arrow_format(column->type()).data();
+    schema->name = column->name().data();
+    schema->metadata = nullptr;
+    schema->flags = 0;
+    schema->n_children = 0;
+    schema->children = nullptr;
+    schema->dictionary = nullptr;
+    schema->release = &release_schema;
+    schema->private_data = nullptr;
 
-                int n_buffers = column->is_var() ? 3 : 2;
+    int n_buffers = column->is_var() ? 3 : 2;
 
-                // Create an ArrowBuffer to manage the lifetime of `column`.
-                // - `arrow_buffer` holds a shared_ptr to `column`, which
-                // increments
-                //   the use count and keeps the ColumnBuffer data alive.
-                // - When the arrow array is released, `array->release()` is
-                // called with
-                //   `arrow_buffer` in `private_data`. `arrow_buffer` is
-                //   deleted, which decrements the the `column` use count. When
-                //   the `column` use count reaches 0, the ColumnBuffer data
-                //   will be deleted.
-                auto arrow_buffer = new ArrowBuffer(column);
+    // Create an ArrowBuffer to manage the lifetime of `column`.
+    // - `arrow_buffer` holds a shared_ptr to `column`, which
+    // increments
+    //   the use count and keeps the ColumnBuffer data alive.
+    // - When the arrow array is released, `array->release()` is
+    // called with
+    //   `arrow_buffer` in `private_data`. `arrow_buffer` is
+    //   deleted, which decrements the the `column` use count. When
+    //   the `column` use count reaches 0, the ColumnBuffer data
+    //   will be deleted.
+    auto arrow_buffer = new ArrowBuffer(column);
 
-                array->length = column->size();
-                array->null_count = 0;
-                array->offset = 0;
-                array->n_buffers = n_buffers;
-                array->n_children = 0;
-                array->buffers = nullptr;
-                array->children = nullptr;
-                array->dictionary = nullptr;
-                array->release = &release_array;
-                array->private_data = (void*)arrow_buffer;
+    array->length = column->size();
+    array->null_count = 0;
+    array->offset = 0;
+    array->n_buffers = n_buffers;
+    array->n_children = 0;
+    array->buffers = nullptr;
+    array->children = nullptr;
+    array->dictionary = nullptr;
+    array->release = &release_array;
+    array->private_data = (void*)arrow_buffer;
 
-                LOG_TRACE(fmt::format(
-                    "[ArrowAdapter] create array name='{}' use_count={}",
-                    column->name(),
-                    column.use_count()));
+    LOG_TRACE(fmt::format(
+        "[ArrowAdapter] create array name='{}' use_count={}",
+        column->name(),
+        column.use_count()));
 
-                array->buffers = (const void**)malloc(
-                    sizeof(void*) * n_buffers);
-                assert(array->buffers != nullptr);
-                array->buffers[0] = nullptr;  // validity
-                array->buffers[n_buffers - 1] = column->data<void*>()
-                                                    .data();  // data
-                if (n_buffers == 3) {
-                    array->buffers[1] = column->offsets().data();  // offsets
-                }
+    array->buffers = (const void**)malloc(sizeof(void*) * n_buffers);
+    assert(array->buffers != nullptr);
+    array->buffers[0] = nullptr;                                   // validity
+    array->buffers[n_buffers - 1] = column->data<void*>().data();  // data
+    if (n_buffers == 3) {
+        array->buffers[1] = column->offsets().data();  // offsets
+    }
 
-                if (column->is_nullable()) {
-                    schema->flags |= ARROW_FLAG_NULLABLE;
+    if (column->is_nullable()) {
+        schema->flags |= ARROW_FLAG_NULLABLE;
 
-                    // Count nulls
-                    for (auto v : column->validity()) {
-                        array->null_count += v == 0;
-                    }
+        // Count nulls
+        for (auto v : column->validity()) {
+            array->null_count += v == 0;
+        }
 
-                    // Convert validity bytemap to a bitmap in place
-                    column->validity_to_bitmap();
-                    array->buffers[0] = column->validity().data();
-                }
-                if (column->is_ordered()) {
-                    schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
-                }
+        // Convert validity bytemap to a bitmap in place
+        column->validity_to_bitmap();
+        array->buffers[0] = column->validity().data();
+    }
+    if (column->is_ordered()) {
+        schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
+    }
 
-                /* Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow
-                 * boolean. */
-                if (column->type() == TILEDB_BOOL) {
-                    column->data_to_bitmap();
-                }
+    /* Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow
+     * boolean. */
+    if (column->type() == TILEDB_BOOL) {
+        column->data_to_bitmap();
+    }
 
-                if (column->has_enumeration() && use_enum) {
-                    ArrowSchema* dict_sch = new ArrowSchema;
-                    ArrowArray* dict_arr = new ArrowArray;
+    if (column->has_enumeration()) {
+        ArrowSchema* dict_sch = new ArrowSchema;
+        ArrowArray* dict_arr = new ArrowArray;
 
-                    auto enmr = column->get_enumeration_info();
-                    dict_sch->format = strdup(
-                        to_arrow_format(enmr->type(), false).data());
-                    dict_sch->name = nullptr;
-                    dict_sch->metadata = nullptr;
-                    dict_sch->flags = 0;
-                    dict_sch->n_children = 0;
-                    dict_sch->children = nullptr;
-                    dict_sch->dictionary = nullptr;
-                    dict_sch->release = &release_schema;
-                    dict_sch->private_data = nullptr;
+        auto enmr = column->get_enumeration_info();
+        dict_sch->format = strdup(to_arrow_format(enmr->type(), false).data());
+        dict_sch->name = nullptr;
+        dict_sch->metadata = nullptr;
+        dict_sch->flags = 0;
+        dict_sch->n_children = 0;
+        dict_sch->children = nullptr;
+        dict_sch->dictionary = nullptr;
+        dict_sch->release = &release_schema;
+        dict_sch->private_data = nullptr;
 
-                    const int n_buf = strcmp(dict_sch->format, "u") == 0 ? 3 :
-                                                                           2;
-                    dict_arr->null_count = 0;
-                    dict_arr->offset = 0;
-                    dict_arr->n_buffers = n_buf;
-                    dict_arr->n_children = 0;
-                    dict_arr->buffers = nullptr;
-                    dict_arr->children = nullptr;
-                    dict_arr->dictionary = nullptr;
-                    dict_arr->release = &release_array;
-                    dict_arr->private_data = nullptr;
+        const int n_buf = strcmp(dict_sch->format, "u") == 0 ? 3 : 2;
+        dict_arr->null_count = 0;
+        dict_arr->offset = 0;
+        dict_arr->n_buffers = n_buf;
+        dict_arr->n_children = 0;
+        dict_arr->buffers = nullptr;
+        dict_arr->children = nullptr;
+        dict_arr->dictionary = nullptr;
+        dict_arr->release = &release_array;
+        dict_arr->private_data = nullptr;
 
-                    dict_arr->buffers = (const void**)malloc(
-                        sizeof(void*) * n_buf);
-                    dict_arr->buffers[0] = nullptr;  // validity: none here
+        dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buf);
+        dict_arr->buffers[0] = nullptr;  // validity: none here
 
-                    // TODO string types currently get the data and offset
-                    // buffers from ColumnBuffer::enum_offsets and
-                    // ColumnBuffer::enum_string which is retrieved via
-                    // ColumnBuffer::convert_enumeration. This may be refactored
-                    // to all use ColumnBuffer::get_enumeration_info. Note that
-                    // ColumnBuffer::has_enumeration may also be removed in a
-                    // future refactor as ColumnBuffer::get_enumeration_info
-                    // returns std::optional where std::nullopt indicates the
-                    // column does not contain enumerated values.
-                    if (enmr->type() == TILEDB_STRING_ASCII or
-                        enmr->type() == TILEDB_STRING_UTF8) {
-                        auto dict_vec = enmr->as_vector<std::string>();
-                        column->convert_enumeration();
-                        dict_arr->buffers[1] = column->enum_offsets().data();
-                        dict_arr->buffers[2] = column->enum_string().data();
-                        dict_arr->length = dict_vec.size();
-                    } else {
-                        auto [dict_data, dict_length] = _get_data_and_length(
-                            *enmr, dict_arr->buffers[1]);
-                        dict_arr->buffers[1] = dict_data;
-                        dict_arr->length = dict_length;
-                    }
+        // TODO string types currently get the data and offset
+        // buffers from ColumnBuffer::enum_offsets and
+        // ColumnBuffer::enum_string which is retrieved via
+        // ColumnBuffer::convert_enumeration. This may be refactored
+        // to all use ColumnBuffer::get_enumeration_info. Note that
+        // ColumnBuffer::has_enumeration may also be removed in a
+        // future refactor as ColumnBuffer::get_enumeration_info
+        // returns std::optional where std::nullopt indicates the
+        // column does not contain enumerated values.
+        if (enmr->type() == TILEDB_STRING_ASCII or
+            enmr->type() == TILEDB_STRING_UTF8) {
+            auto dict_vec = enmr->as_vector<std::string>();
+            column->convert_enumeration();
+            dict_arr->buffers[1] = column->enum_offsets().data();
+            dict_arr->buffers[2] = column->enum_string().data();
+            dict_arr->length = dict_vec.size();
+        } else {
+            auto [dict_data, dict_length] = _get_data_and_length(
+                *enmr, dict_arr->buffers[1]);
+            dict_arr->buffers[1] = dict_data;
+            dict_arr->length = dict_length;
+        }
 
-                    schema->dictionary = dict_sch;
-                    array->dictionary = dict_arr;
-                }
+        schema->dictionary = dict_sch;
+        array->dictionary = dict_arr;
+    }
 
-                return std::pair(std::move(array), std::move(schema));
-            }
+    return std::pair(std::move(array), std::move(schema));
+}
 
-            std::string_view ArrowAdapter::to_arrow_format(
-                tiledb_datatype_t datatype, bool use_large) {
-                switch (datatype) {
-                    case TILEDB_STRING_ASCII:
-                    case TILEDB_STRING_UTF8:
-                        return use_large ? "U" : "u";  // large because TileDB
-                                                       // uses 64bit offsets
-                    case TILEDB_CHAR:
-                    case TILEDB_BLOB:
-                        return use_large ? "Z" : "z";  // large because TileDB
-                                                       // uses 64bit offsets
-                    case TILEDB_BOOL:
-                        return "b";
-                    case TILEDB_INT32:
-                        return "i";
-                    case TILEDB_INT64:
-                        return "l";
-                    case TILEDB_FLOAT32:
-                        return "f";
-                    case TILEDB_FLOAT64:
-                        return "g";
-                    case TILEDB_INT8:
-                        return "c";
-                    case TILEDB_UINT8:
-                        return "C";
-                    case TILEDB_INT16:
-                        return "s";
-                    case TILEDB_UINT16:
-                        return "S";
-                    case TILEDB_UINT32:
-                        return "I";
-                    case TILEDB_UINT64:
-                        return "L";
-                    case TILEDB_TIME_SEC:
-                        return "tts";
-                    case TILEDB_TIME_MS:
-                        return "ttm";
-                    case TILEDB_TIME_US:
-                        return "ttu";
-                    case TILEDB_TIME_NS:
-                        return "ttn";
-                    case TILEDB_DATETIME_SEC:
-                        return "tss:";
-                    case TILEDB_DATETIME_MS:
-                        return "tsm:";
-                    case TILEDB_DATETIME_US:
-                        return "tsu:";
-                    case TILEDB_DATETIME_NS:
-                        return "tsn:";
-                    default:
-                        break;
-                }
-                throw TileDBSOMAError(fmt::format(
-                    "ArrowAdapter: Unsupported TileDB datatype: {} ",
-                    tiledb::impl::type_to_str(datatype)));
-            }
+std::string_view ArrowAdapter::to_arrow_format(
+    tiledb_datatype_t datatype, bool use_large) {
+    switch (datatype) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+            return use_large ? "U" : "u";  // large because TileDB
+                                           // uses 64bit offsets
+        case TILEDB_CHAR:
+        case TILEDB_BLOB:
+            return use_large ? "Z" : "z";  // large because TileDB
+                                           // uses 64bit offsets
+        case TILEDB_BOOL:
+            return "b";
+        case TILEDB_INT32:
+            return "i";
+        case TILEDB_INT64:
+            return "l";
+        case TILEDB_FLOAT32:
+            return "f";
+        case TILEDB_FLOAT64:
+            return "g";
+        case TILEDB_INT8:
+            return "c";
+        case TILEDB_UINT8:
+            return "C";
+        case TILEDB_INT16:
+            return "s";
+        case TILEDB_UINT16:
+            return "S";
+        case TILEDB_UINT32:
+            return "I";
+        case TILEDB_UINT64:
+            return "L";
+        case TILEDB_TIME_SEC:
+            return "tts";
+        case TILEDB_TIME_MS:
+            return "ttm";
+        case TILEDB_TIME_US:
+            return "ttu";
+        case TILEDB_TIME_NS:
+            return "ttn";
+        case TILEDB_DATETIME_SEC:
+            return "tss:";
+        case TILEDB_DATETIME_MS:
+            return "tsm:";
+        case TILEDB_DATETIME_US:
+            return "tsu:";
+        case TILEDB_DATETIME_NS:
+            return "tsn:";
+        default:
+            break;
+    }
+    throw TileDBSOMAError(fmt::format(
+        "ArrowAdapter: Unsupported TileDB datatype: {} ",
+        tiledb::impl::type_to_str(datatype)));
+}
 
 }  // namespace tiledbsoma

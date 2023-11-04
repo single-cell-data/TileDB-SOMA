@@ -492,6 +492,12 @@ void load_soma_array(py::module &m) {
 
         .def_property_readonly("shape", &SOMAArray::shape)
 
+        .def_property_readonly("uri", &SOMAArray::uri)
+
+        .def_property_readonly("column_names", &SOMAArray::column_names)
+
+        .def_property_readonly("result_order", &SOMAArray::result_order)
+        
         .def("get_enum", get_enum)
 
         .def("get_enum_is_ordered", get_enum_is_ordered)
