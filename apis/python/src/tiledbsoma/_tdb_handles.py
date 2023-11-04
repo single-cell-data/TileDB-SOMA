@@ -30,6 +30,7 @@ import attrs
 import numpy as np
 import pyarrow as pa
 import tiledb
+from numpy.typing import DTypeLike
 from somacore import options
 from typing_extensions import Literal, Self
 
@@ -317,7 +318,7 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
         return int(len(self._handle.index_column_names))
 
     def _cast_domain(
-        self, domain: Callable[[str, np.dtype[Any]], Tuple[Any, Any]]
+        self, domain: Callable[[str, DTypeLike], Tuple[Any, Any]]
     ) -> Tuple[Tuple[Any, Any], ...]:
         result = []
         for name in self._handle.index_column_names:
