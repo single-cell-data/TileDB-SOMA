@@ -39,52 +39,6 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-py::tuple get_enum(SOMAArray& sr, std::string attr_name){
-    auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
-    if(attr_to_enmrs.count(attr_name) == 0)
-        TPY_ERROR_LOC("Given attribute does not have enumeration");
-
-    Enumeration enmr(attr_to_enmrs.at(attr_name));
-
-    switch (enmr.type()) {
-        case TILEDB_UINT8:
-            return py::tuple(py::cast(enmr.as_vector<uint8_t>()));
-        case TILEDB_INT8:
-            return py::tuple(py::cast(enmr.as_vector<int8_t>()));
-        case TILEDB_UINT16:
-            return py::tuple(py::cast(enmr.as_vector<uint16_t>()));
-        case TILEDB_INT16:
-            return py::tuple(py::cast(enmr.as_vector<int16_t>()));
-        case TILEDB_UINT32:
-            return py::tuple(py::cast(enmr.as_vector<uint32_t>()));
-        case TILEDB_INT32:
-            return py::tuple(py::cast(enmr.as_vector<int32_t>()));
-        case TILEDB_UINT64:
-            return py::tuple(py::cast(enmr.as_vector<uint64_t>()));
-        case TILEDB_INT64:
-            return py::tuple(py::cast(enmr.as_vector<int64_t>()));
-        case TILEDB_FLOAT32:
-            return py::tuple(py::cast(enmr.as_vector<float>()));
-        case TILEDB_FLOAT64:
-            return py::tuple(py::cast(enmr.as_vector<double>()));
-        case TILEDB_STRING_ASCII:
-        case TILEDB_STRING_UTF8:
-        case TILEDB_CHAR:
-            return py::tuple(py::cast(enmr.as_vector<std::string>()));
-        case TILEDB_BOOL:
-            return py::tuple(py::cast(enmr.as_vector<bool>()));
-        default:
-            TPY_ERROR_LOC("Unsupported enumeration type.");
-    }
-}
-
-bool get_enum_is_ordered(SOMAArray& sr, std::string attr_name){
-    auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
-    if(attr_to_enmrs.count(attr_name) == 0)
-        TPY_ERROR_LOC("Given attribute does not have enumeration");
-    return attr_to_enmrs.at(attr_name).ordered();
-}
-
 void load_soma_array(py::module &m) {
     py::class_<SOMAArray>(m, "SOMAArray")
         .def(
@@ -495,12 +449,6 @@ void load_soma_array(py::module &m) {
 
         .def_property_readonly("column_names", &SOMAArray::column_names)
 
-        .def_property_readonly("result_order", &SOMAArray::result_order)
-
-        .def("get_enum", get_enum)
-
-        .def("get_enum_is_ordered", get_enum_is_ordered)
-
-        .def("get_enum_label_on_attr", &SOMAArray::get_enum_label_on_attr);
+        .def_property_readonly("result_order", &SOMAArray::result_order);
 }
 }  // namespace tiledbsoma
