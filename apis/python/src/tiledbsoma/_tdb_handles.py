@@ -310,9 +310,12 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
     @property
     def meta(self) -> "MetadataWrapper":
         return MetadataWrapper(self, dict(self._handle.meta))
-
+        
     @property
-    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def ndim(self) -> int:
+        return int(len(self._handle.index_column_names))
+    
+    def _cast_domain(self, domain):
         result = []
         for name in self._handle.index_column_names:
             dtype = self._handle.schema.field(name).type
@@ -332,43 +335,21 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
                     dtype = np.dtype("S")
                 else:
                     dtype = np.dtype(dtype.to_pandas_dtype())
-                result.append(self._handle.domain(name, dtype))
-        return tuple(result)
+                result.append(domain(name, dtype))
+        return result
+
 
     @property
-    def ndim(self) -> int:
-        return int(len(self._handle.index_column_names))
+    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+        return tuple(self._cast_domain(self._handle.domain))
 
     def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
-        result = []
-        for name in self._handle.index_column_names:
-            dtype = self._handle.schema.field(name).type
-            if pa.types.is_timestamp(dtype):
-                np_dtype = np.dtype(dtype.to_pandas_dtype())
-                ned = self._handle.non_empty_domain(name, dtype)
-                result.append(
-                    (
-                        np_dtype.type(ned[0], dtype.unit),
-                        np_dtype.type(ned[1], dtype.unit),
-                    )
-                )
-            else:
-                if pa.types.is_large_string(dtype) or pa.types.is_string(dtype):
-                    dtype = np.dtype("U")
-                elif pa.types.is_large_binary(dtype) or pa.types.is_binary(dtype):
-                    dtype = np.dtype("S")
-                else:
-                    dtype = np.dtype(dtype.to_pandas_dtype())
-                result.append(self._handle.non_empty_domain(name, dtype))
+        result = self._cast_domain(self._handle.non_empty_domain)
         return None if len(result) == 0 else tuple(result)
 
     @property
     def attr_names(self) -> Tuple[str, ...]:
-        result = []
-        for field in self.schema:
-            if field.name not in self._handle.index_column_names:
-                result.append(field.name)
-        return tuple(result)
+        return tuple(f.name for f in self.schema if f.name not in self._handle.index_column_names)
 
     @property
     def dim_names(self) -> Tuple[str, ...]:
