@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import itertools
 import operator
 import pathlib
@@ -21,6 +22,16 @@ from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 AnySparseTensor = Union[pa.SparseCOOTensor, pa.SparseCSRMatrix, pa.SparseCSCMatrix]
 
 
+def stamp(msg):
+    print(
+        "\n<<<",
+        msg,
+        datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+        ">>>\n",
+        file=sys.stderr,
+    )
+
+
 @pytest.mark.parametrize(
     "shape", [(10,), (1, 100), (10, 1, 100), (2, 4, 6, 8), [1], (1, 2, 3, 4, 5)]
 )
@@ -32,6 +43,7 @@ def test_sparse_nd_array_create_ok(
     Test all cases we expect "create" to succeed.
     """
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
+    stamp("test_sparse_nd_array_create_ok")
 
     with pytest.raises(TypeError):
         # non-arrow write
@@ -61,6 +73,7 @@ def test_sparse_nd_array_create_ok(
 def test_sparse_nd_array_create_fail(
     tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
 ):
+    stamp("test_sparse_nd_array_create_fail")
     with pytest.raises(TypeError):
         soma.SparseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
 
@@ -1112,6 +1125,7 @@ def test_empty_indexed_read(tmp_path):
     work. There are edge cases around SparseTensors, which are unable
     to represent empty arrays.
     """
+    stamp("test_empty_indexed_read")
     shape = (10, 100)
     soma.SparseNDArray.create(
         tmp_path.as_posix(), type=pa.uint16(), shape=shape
@@ -1186,6 +1200,7 @@ def test_blockwise_table_iter(
     a_random_sparse_nd_array: str, shape: Tuple[int, ...], coords: Tuple[Any, ...]
 ) -> None:
     """Check blockwise iteration over non-reindexed results"""
+    stamp("test_blockwise_table_iter")
     ndim = len(shape)
     reindex_disable_on_axis = list(range(ndim))  # disable all
     for axis, result_order in itertools.product(
@@ -1247,6 +1262,7 @@ def test_blockwise_table_iter_size(
     Verify that blockwise iteration correctly obeys size param.
     NB: test requires soma_joinids assigned [0, n)
     """
+    stamp("test_blockwise_table_iter_size")
     ndim = len(shape)
     reindex_disable_on_axis = list(range(ndim))  # reindexing off
     for axis in range(ndim):
@@ -1314,6 +1330,7 @@ def test_blockwise_table_iter_reindex(
     a_random_sparse_nd_array: str, shape: Tuple[int, ...], coords: Tuple[Any, ...]
 ) -> None:
     """Test blockwise table iteration with reindexing"""
+    stamp("test_blockwise_table_iter_reindex")
     ndim = len(shape)
     for axis in range(ndim):
         with soma.open(a_random_sparse_nd_array, mode="r") as A:
@@ -1368,6 +1385,7 @@ def test_blockwise_table_iter_reindex(
 def test_blockwise_table_iter_error_checks(
     a_random_sparse_nd_array: str, shape: Tuple[int, ...]
 ) -> None:
+    stamp("test_blockwise_table_iter_error_checks")
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
         with pytest.raises(NotImplementedError):
             next(A.read().blockwise(axis=0).tables().concat())
@@ -1407,6 +1425,7 @@ def test_blockwise_scipy_iter(
     """
     Verify that simple use of scipy iterator works.
     """
+    stamp("test_blockwise_scipy_iter")
 
     def _slice_sp(
         coo: sparse.coo_matrix, _coords: Tuple[Any, ...]
@@ -1505,6 +1524,7 @@ def test_blockwise_scipy_iter(
 def test_blockwise_scipy_iter_error_checks(
     a_random_sparse_nd_array: str, shape: Tuple[int, ...]
 ) -> None:
+    stamp("test_blockwise_scipy_iter_error_checks")
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
         with pytest.raises(ValueError):
             next(A.read().blockwise(axis=2).scipy())
@@ -1520,6 +1540,7 @@ def test_blockwise_scipy_iter_error_checks(
 def test_blockwise_scipy_iter_not_2D(
     a_random_sparse_nd_array: str, shape: Tuple[int, ...]
 ) -> None:
+    stamp("test_blockwise_scipy_iter_not_2D")
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
         with pytest.raises(soma.SOMAError):
             next(A.read().blockwise(axis=0).scipy())
@@ -1530,6 +1551,7 @@ def test_blockwise_scipy_iter_eager(
     a_random_sparse_nd_array: str, shape: Tuple[int, ...]
 ) -> None:
     """Should get same results with any eager setting"""
+    stamp("test_blockwise_scipy_iter_eager")
     coords = (slice(3, 9993), slice(21, 1111))
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
         sp1 = sparse.vstack(
@@ -1551,6 +1573,7 @@ def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str) -> Non
     """
     Confirm behavior with different result_order.
     """
+    stamp("test_blockwise_scipy_iter_result_order")
     coords = (slice(7, 8693), slice(21, 999))
 
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
@@ -1599,6 +1622,7 @@ def test_blockwise_indices(
     expected_indices: Tuple[Any, ...],
 ) -> None:
     """Verify indices look reasonable"""
+    stamp("test_blockwise_indices")
     size = 1111
 
     # blockwise table
@@ -1664,6 +1688,7 @@ def test_blockwise_scipy_reindex_disable_major_dim(
     * fails if compress==True
     * succeeds if compress==False
     """
+    stamp("test_blockwise_scipy_reindex_disable_major_dim")
 
     with soma.open(a_random_sparse_nd_array) as A:
         for axis in (0, 1):
