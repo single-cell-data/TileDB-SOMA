@@ -26,8 +26,8 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+import scipy.sparse as sparse
 import somacore
-from scipy import sparse
 from somacore import options
 from somacore.query._eager_iter import EagerIterator
 
