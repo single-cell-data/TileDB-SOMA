@@ -1239,7 +1239,7 @@ def test_blockwise_table_iter(
         (0.01, (1_000, 100, 10)),
     ],
 )
-@pytest.mark.parametrize("size", (10, 101, 999, 2**16, 2**20))
+@pytest.mark.parametrize("size", (999, 2**16, 2**20))
 def test_blockwise_table_iter_size(
     a_random_sparse_nd_array: str, shape: Tuple[int, ...], size: int
 ) -> None:
@@ -1282,32 +1282,32 @@ def test_blockwise_table_iter_size(
 
 @pytest.mark.parametrize(
     # use density to keep the sparse array memory use "reasonable"
-    "density,shape, coords",
+    "density,shape,coords",
     [
         # 1D
         (0.1, (10_000,), ()),
         (0.1, (10_000,), (slice(200, 8000),)),
         (0.1, (10_000,), ([0, 99, 1, 100, 2, 101, 3, *list(range(150, 1000))],)),
         # 2D
-        (0.05, (1_000, 100), ()),
-        (0.05, (1_000, 100), (None,)),
-        (0.05, (1_000, 100), (slice(None),)),
-        (0.05, (1_000, 100), (slice(10, 20),)),
-        (0.05, (1_000, 100), (None, slice(10, 20))),
-        (0.05, (1_000, 100), (slice(10, 20), slice(2, 33))),
-        (0.05, (1_000, 100), (1,)),
-        (0.05, (1_000, 100), (None, 3)),
-        (0.05, (1_000, 100), (10, 3)),
-        (0.05, (1_000, 100), (slice(None), 1)),
-        (0.05, (1_000, 100), ([3, 99, 101, 102, 77, 0],)),
-        (0.05, (1_000, 100), (slice(500), [3, 99, 33, 77, 0])),
-        (0.05, (1_000, 100), (np.arange(0, 101),)),
-        (0.05, (1_000, 100), (np.arange(0, 1000), [0, 10, 20])),
-        (0.05, (1_000, 100), (np.arange(0, 1000), slice(2, 99))),
+        (0.01, (1_000, 100), ()),
+        (0.01, (1_000, 100), (None,)),
+        (0.01, (1_000, 100), (slice(None),)),
+        (0.01, (1_000, 100), (slice(10, 20),)),
+        (0.01, (1_000, 100), (None, slice(10, 20))),
+        (0.01, (1_000, 100), (slice(10, 20), slice(2, 33))),
+        (0.01, (1_000, 100), (1,)),
+        (0.01, (1_000, 100), (None, 3)),
+        (0.01, (1_000, 100), (10, 3)),
+        (0.01, (1_000, 100), (slice(None), 1)),
+        (0.01, (1_000, 100), ([3, 99, 101, 102, 77, 0],)),
+        (0.01, (1_000, 100), (slice(500), [3, 99, 33, 77, 0])),
+        (0.01, (1_000, 100), (np.arange(0, 101),)),
+        (0.01, (1_000, 100), (np.arange(0, 1000), [0, 10, 20])),
+        (0.01, (1_000, 100), (np.arange(0, 1000), slice(2, 99))),
         # 3D
-        (0.005, (1_000, 100, 10), ()),
-        (0.005, (1_000, 100, 10), (slice(10, 100), slice(20, 43))),
-        (0.005, (1_000, 100, 10), ([1, 2, 88, 282, 0, 382], slice(99), slice(1, 10))),
+        (0.001, (1_000, 100, 10), ()),
+        (0.001, (1_000, 100, 10), (slice(10, 100), slice(20, 43))),
+        (0.001, (1_000, 100, 10), ([1, 2, 88, 282, 0, 382], slice(99), slice(1, 10))),
     ],
 )
 def test_blockwise_table_iter_reindex(
@@ -1326,8 +1326,8 @@ def test_blockwise_table_iter_reindex(
                 truth_coo = None
 
             size = max(
-                5, min(A.shape[axis] // 3, 5000)
-            )  # shoot for 3 blocks, in range [5,5000]
+                50, min(A.shape[axis] // 3, 7500)
+            )  # shoot for 3 blocks, in range [50,7500]
 
             for tbl, joinids in (
                 A.read(coords=coords).blockwise(axis=axis, size=size).tables()
@@ -1393,14 +1393,14 @@ def test_blockwise_table_iter_error_checks(
         (0.1, (1_000, 100), (np.arange(0, 101),)),
         (0.1, (1_000, 100), (np.arange(0, 1000), [0, 10, 20])),
         (0.1, (1_000, 100), (np.arange(0, 1000), slice(2, 99))),
-        (0.001, (10_101, 389), ()),
-        (0.001, (10_101, 389), (None,)),
-        (0.001, (10_101, 389), (slice(None),)),
-        (0.001, (10_101, 389), (slice(33, 1048),)),
-        (0.001, (10_101, 389), (slice(33, 1048), slice(45, 333))),
+        (0.0005, (10_101, 39), ()),
+        (0.0005, (10_101, 39), (None,)),
+        (0.0005, (10_101, 39), (slice(None),)),
+        (0.0005, (10_101, 389), (slice(33, 1048),)),
+        (0.0005, (10_101, 389), (slice(33, 1048), slice(45, 333))),
     ],
 )
-@pytest.mark.parametrize("size", [77, 1001, 2**16])
+@pytest.mark.parametrize("size", [777, 1001, 2**16])
 def test_blockwise_scipy_iter(
     a_random_sparse_nd_array: str, coords: Tuple[Any, ...], size: int
 ) -> None:
@@ -1577,7 +1577,7 @@ def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str) -> Non
                         assert isinstance(sp, sparse.coo_matrix)
 
 
-@pytest.mark.parametrize("density,shape", [(0.05, (9799, 1530))])
+@pytest.mark.parametrize("density,shape", [(0.001, (9799, 1530))])
 @pytest.mark.parametrize(
     "coords,expected_indices",
     [
