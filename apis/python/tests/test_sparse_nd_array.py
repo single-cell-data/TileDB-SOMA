@@ -28,6 +28,12 @@ def stamp(msg):
         msg,
         datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         ">>>\n",
+    )
+    print(
+        "\n<<<",
+        msg,
+        datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+        ">>>\n",
         file=sys.stderr,
     )
 
