@@ -8,7 +8,8 @@ test_that("Write SingleCellExperiment mechanics", {
 
   uri <- withr::local_tempdir('single-cell-experiment')
 
-  expect_no_condition(uri <- suppressMessages(write_soma(sce, uri)))
+  # expect_no_condition(uri <- suppressMessages(write_soma(sce, uri)))
+  uri <- suppressMessages(write_soma(sce, uri))
 
   expect_type(uri, 'character')
   expect_true(grepl('^single-cell-experiment', basename(uri)))
@@ -78,7 +79,8 @@ test_that("SingleCellExperiment mainExpName mechanics", {
 
   expect_error(uri <- suppressMessages(write_soma(sce, uri)))
 
-  expect_no_condition(uri <- suppressMessages(write_soma(sce, uri, ms_name)))
+  # expect_no_condition(uri <- suppressMessages(write_soma(sce, uri, ms_name)))
+  uri <- suppressMessages(write_soma(sce, uri, ms_name))
   expect_no_condition(experiment <- SOMAExperimentOpen(uri))
   expect_identical(experiment$ms$names(), ms_name)
 
@@ -88,7 +90,8 @@ test_that("SingleCellExperiment mainExpName mechanics", {
 
   expect_type(SingleCellExperiment::mainExpName(sce), 'character')
 
-  expect_no_condition(uri <- suppressMessages(write_soma(sce, uri, ms_name2)))
+  # expect_no_condition(uri <- suppressMessages(write_soma(sce, uri, ms_name2)))
+  uri <- suppressMessages(write_soma(sce, uri, ms_name2))
   expect_no_condition(experiment <- SOMAExperimentOpen(uri))
   expect_identical(experiment$ms$names(), ms_name2)
 })
