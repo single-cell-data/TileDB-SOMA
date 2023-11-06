@@ -1136,11 +1136,23 @@ def test_empty_indexed_read(tmp_path):
 
 
 @pytest.fixture
-def a_random_sparse_nd_array(tmp_path, shape: Tuple[int, ...], density: float) -> str:
+def a_soma_context() -> SOMATileDBContext:
+    return SOMATileDBContext(
+        tiledb_config={
+            "soma.init_buffer_bytes": 128 * 1024**2,
+            "tiledb.init_buffer_bytes": 128 * 1024**2,
+        }
+    )
+
+
+@pytest.fixture
+def a_random_sparse_nd_array(
+    tmp_path, a_soma_context: SOMATileDBContext, shape: Tuple[int, ...], density: float
+) -> str:
     uri = tmp_path.as_posix()
     dtype = np.float32
     with soma.SparseNDArray.create(
-        uri, type=pa.from_numpy_dtype(dtype), shape=shape
+        uri, type=pa.from_numpy_dtype(dtype), shape=shape, context=a_soma_context
     ) as a:
         a.write(create_random_tensor("table", shape, dtype, density))
     return uri
@@ -1152,9 +1164,9 @@ def a_random_sparse_nd_array(tmp_path, shape: Tuple[int, ...], density: float) -
     "density,shape,coords",
     [
         # 2D
-        (0.1, (1_000, 100), ()),
-        (0.1, (1_000, 100), (None,)),
-        (0.1, (1_000, 100), (slice(None),)),
+        (0.01, (1_000, 100), ()),
+        (0.01, (1_000, 100), (None,)),
+        (0.01, (1_000, 100), (slice(None),)),
         (0.1, (1_000, 100), (slice(10, 20),)),
         (0.1, (1_000, 100), (None, slice(10, 20))),
         (0.1, (1_000, 100), (slice(10, 20), slice(2, 33))),
@@ -1183,7 +1195,10 @@ def a_random_sparse_nd_array(tmp_path, shape: Tuple[int, ...], density: float) -
     ],
 )
 def test_blockwise_table_iter(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...], coords: Tuple[Any, ...]
+    a_random_sparse_nd_array: str,
+    shape: Tuple[int, ...],
+    coords: Tuple[Any, ...],
+    a_soma_context: SOMATileDBContext,
 ) -> None:
     """Check blockwise iteration over non-reindexed results"""
     ndim = len(shape)
@@ -1191,7 +1206,7 @@ def test_blockwise_table_iter(
     for axis, result_order in itertools.product(
         range(ndim), ["auto", "row-major", "column-major"]
     ):
-        with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        with soma.open(a_random_sparse_nd_array, mode="r", context=a_soma_context) as A:
             # get the whole enchilada in ragged form
             truth_tbl = A.read(coords=coords).tables().concat()
 
@@ -1285,13 +1300,13 @@ def test_blockwise_table_iter_size(
     "density,shape,coords",
     [
         # 1D
-        (0.1, (10_000,), ()),
-        (0.1, (10_000,), (slice(200, 8000),)),
+        (0.01, (10_000,), ()),
+        (0.01, (10_000,), (slice(200, 8000),)),
         (0.1, (10_000,), ([0, 99, 1, 100, 2, 101, 3, *list(range(150, 1000))],)),
         # 2D
-        (0.01, (1_000, 100), ()),
-        (0.01, (1_000, 100), (None,)),
-        (0.01, (1_000, 100), (slice(None),)),
+        (0.0001, (1_000, 100), ()),
+        (0.001, (1_000, 100), (None,)),
+        (0.001, (1_000, 100), (slice(None),)),
         (0.01, (1_000, 100), (slice(10, 20),)),
         (0.01, (1_000, 100), (None, slice(10, 20))),
         (0.01, (1_000, 100), (slice(10, 20), slice(2, 33))),
@@ -1311,12 +1326,15 @@ def test_blockwise_table_iter_size(
     ],
 )
 def test_blockwise_table_iter_reindex(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...], coords: Tuple[Any, ...]
+    a_random_sparse_nd_array: str,
+    shape: Tuple[int, ...],
+    coords: Tuple[Any, ...],
+    a_soma_context: SOMATileDBContext,
 ) -> None:
     """Test blockwise table iteration with reindexing"""
     ndim = len(shape)
     for axis in range(ndim):
-        with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        with soma.open(a_random_sparse_nd_array, mode="r", context=a_soma_context) as A:
             # SparseCOOMatrix does not allow empty matrices.
             # See https://issues.apache.org/jira/browse/ARROW-17933
             # for more details.
@@ -1402,7 +1420,10 @@ def test_blockwise_table_iter_error_checks(
 )
 @pytest.mark.parametrize("size", [777, 1001, 2**16])
 def test_blockwise_scipy_iter(
-    a_random_sparse_nd_array: str, coords: Tuple[Any, ...], size: int
+    a_random_sparse_nd_array: str,
+    coords: Tuple[Any, ...],
+    size: int,
+    a_soma_context: SOMATileDBContext,
 ) -> None:
     """
     Verify that simple use of scipy iterator works.
@@ -1431,7 +1452,7 @@ def test_blockwise_scipy_iter(
         (a, c, ri) for a in (1, 0) for c in (False, True) for ri in (True, False)
     ]:
         minor_axis = 1 - axis
-        with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        with soma.open(a_random_sparse_nd_array, mode="r", context=a_soma_context) as A:
             truth_coo_tbl = A.read().tables().concat()
             truth_coo = sparse.coo_matrix(
                 (
@@ -1525,13 +1546,15 @@ def test_blockwise_scipy_iter_not_2D(
             next(A.read().blockwise(axis=0).scipy())
 
 
-@pytest.mark.parametrize("density,shape", [(0.05, (10_000, 1230))])
+@pytest.mark.parametrize("density,shape", [(0.01, (10_000, 1230))])
 def test_blockwise_scipy_iter_eager(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+    a_random_sparse_nd_array: str,
+    shape: Tuple[int, ...],
+    a_soma_context: SOMATileDBContext,
 ) -> None:
     """Should get same results with any eager setting"""
     coords = (slice(3, 9993), slice(21, 1111))
-    with soma.open(a_random_sparse_nd_array, mode="r") as A:
+    with soma.open(a_random_sparse_nd_array, mode="r", context=a_soma_context) as A:
         sp1 = sparse.vstack(
             sp
             for sp, _ in A.read(coords).blockwise(axis=0, size=1000, eager=True).scipy()
@@ -1546,7 +1569,7 @@ def test_blockwise_scipy_iter_eager(
         assert (sp1 != sp2).nnz == 0
 
 
-@pytest.mark.parametrize("density,shape", [(0.05, (9799, 1530))])
+@pytest.mark.parametrize("density,shape", [(0.001, (9799, 1530))])
 def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str) -> None:
     """
     Confirm behavior with different result_order.
