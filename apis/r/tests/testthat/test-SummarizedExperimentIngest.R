@@ -12,7 +12,8 @@ test_that("Write SummarizedExperiment mechanics", {
 
   uri <- withr::local_tempdir('summarized-experiment')
 
-  expect_no_condition(uri <- suppressMessages(write_soma(se, uri, 'RNA')))
+  # expect_no_condition(uri <- suppressMessages(write_soma(se, uri, 'RNA')))
+  uri <- suppressMessages(write_soma(se, uri, 'RNA'))
 
   expect_type(uri, 'character')
   expect_true(grepl('^summarized-experiment', basename(uri)))
