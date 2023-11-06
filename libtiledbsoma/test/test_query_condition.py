@@ -219,17 +219,14 @@ def test_eval_error_conditions(malformed_condition):
     """Conditions which should not evaluate (but WILL parse)"""
     uri = os.path.join(SOMA_URI, "obs")
 
-    # TODO: these raise the wrong error - it should be SOMAError. Change the test
-    # when https://github.com/single-cell-data/TileDB-SOMA/issues/783 is fixed
-
-    with pytest.raises(RuntimeError):
+    with pytest.raises(SOMAError):
         qc = QueryCondition(malformed_condition)
         schema = tiledb.open(uri).schema
         sr = clib.SOMAArray(uri)
         sr.set_condition(qc, schema)
         sr.read_next()
 
-    with pytest.raises(tiledb.TileDBError):
+    with pytest.raises(SOMAError):
         qc = QueryCondition(malformed_condition)
         schema = tiledb.open(uri).schema
         # test function directly for codecov

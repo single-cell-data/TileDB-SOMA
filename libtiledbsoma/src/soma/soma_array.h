@@ -186,6 +186,18 @@ class SOMAArray {
      */
     std::shared_ptr<Context> ctx();
 
+    std::optional<std::string> type() {
+        auto soma_object_type = this->get_metadata("soma_object_type");
+
+        if (!soma_object_type.has_value())
+            return std::nullopt;
+
+        const char* dtype = (const char*)std::get<MetadataInfo::value>(
+            *soma_object_type);
+
+        return std::string(dtype);
+    }
+
     /**
      * Open the SOMAArray object.
      *
@@ -208,6 +220,11 @@ class SOMAArray {
      */
     bool is_open() const {
         return arr_->is_open();
+    }
+
+    OpenMode mode() const {
+        return mq_->query_type() == TILEDB_READ ? OpenMode::read :
+                                                  OpenMode::write;
     }
 
     /**

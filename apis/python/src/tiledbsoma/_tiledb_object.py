@@ -83,9 +83,16 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
-        if mode == "r" and clib.SOMADataFrame.exists(uri):
-            handle = DataFrameWrapper.open(uri, mode, context, tiledb_timestamp)
-        else:
+        try:
+            open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+            config = {k: str(v) for k, v in context.tiledb_config.items()}
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
+            if obj.type == "SOMADataFrame":
+                handle = DataFrameWrapper._from_soma_object(obj, context)
+            else:
+                raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+        except SOMAError:
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
             handle,
