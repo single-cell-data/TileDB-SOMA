@@ -37,14 +37,13 @@
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 2
 #if !defined(NDEBUG)
 #endif
-
+namespace libtiledbsomacpp {
 
 using namespace std;
 using namespace tiledb;
 namespace py = pybind11;
 using namespace py::literals;
-
-namespace tiledbsoma {
+using namespace tiledbsoma;
 
 void load_query_condition(py::module &m) {
   py::class_<PyQueryCondition>(m, "PyQueryCondition", py::module_local())

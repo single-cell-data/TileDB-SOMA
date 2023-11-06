@@ -427,21 +427,26 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             raise KeyError(err_str) from None
         if entry.soma is None:
             from . import _factory  # Delayed binding to resolve circular import.
-            from ._tdb_handles import Wrapper
 
-            wrapper: type[Wrapper[Any | Any | Any]]
-            if self.mode == "r" and clib.SOMADataFrame.exists(entry.entry.uri):
-                wrapper = DataFrameWrapper
-            else:
-                wrapper = entry.entry.wrapper_type
+            uri = entry.entry.uri
+            mode = self.mode
+            context = self.context
+            timestamp = self.tiledb_timestamp_ms
 
-            entry.soma = _factory._open_internal(
-                wrapper.open,
-                entry.entry.uri,
-                self.mode,
-                self.context,
-                self.tiledb_timestamp_ms,
-            )
+            try:
+                open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+                config = {k: str(v) for k, v in context.tiledb_config.items()}
+                timestamp_ms = context._open_timestamp_ms(timestamp)
+                obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
+                if obj.type == "SOMADataFrame":
+                    wrapper = DataFrameWrapper._from_soma_object(obj, context)
+                else:
+                    raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+                entry.soma = _factory._set_internal(wrapper)
+            except SOMAError:
+                entry.soma = _factory._open_internal(
+                    entry.entry.wrapper_type.open, uri, mode, context, timestamp
+                )
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)
         return cast(CollectionElementType, entry.soma)
