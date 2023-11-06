@@ -21,6 +21,7 @@ from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
+from ._tdb_handles import DataFrameWrapper
 from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
@@ -261,7 +262,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             Experimental.
         """
         self._check_open_read()
-        return cast(int, self._soma_reader().nnz())
+        # if is it in read open mode, then it is a DataFrameWrapper
+        return cast(DataFrameWrapper, self._handle).count
 
     def enumeration(self, name: str) -> Tuple[Any, ...]:
         """Doc place holder.

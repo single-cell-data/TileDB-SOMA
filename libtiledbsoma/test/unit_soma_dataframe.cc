@@ -115,6 +115,11 @@ TEST_CASE("SOMADataFrame: basic") {
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
     soma_dataframe->close();
+
+    auto soma_object = SOMAObject::open(uri, OpenMode::read, ctx);
+    REQUIRE(soma_object->uri() == uri);
+    REQUIRE(soma_object->type() == "SOMADataFrame");
+    soma_object->close();
 }
 
 TEST_CASE("SOMADataFrame: metadata") {

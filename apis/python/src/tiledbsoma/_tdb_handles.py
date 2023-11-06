@@ -54,14 +54,22 @@ def open(
     obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
     if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
-    if obj_type == "array":
-        if mode == "r" and clib.SOMADataFrame.exists(uri):
-            return DataFrameWrapper.open(uri, mode, context, timestamp)
+
+    try:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        config = {k: str(v) for k, v in context.tiledb_config.items()}
+        timestamp_ms = context._open_timestamp_ms(timestamp)
+        obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
+        if obj.type == "SOMADataFrame":
+            return DataFrameWrapper._from_soma_object(obj, context)
         else:
+            raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+    except SOMAError:
+        if obj_type == "array":
             return ArrayWrapper.open(uri, mode, context, timestamp)
-    if obj_type == "group":
-        return GroupWrapper.open(uri, mode, context, timestamp)
-    raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
+        if obj_type == "group":
+            return GroupWrapper.open(uri, mode, context, timestamp)
+        raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
 
 
 @attrs.define(eq=False, hash=False, slots=False)
@@ -101,6 +109,26 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         except tiledb.TileDBError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(f"{uri!r} does not exist") from tdbe
+            raise
+        return handle
+
+    @classmethod
+    def _from_soma_object(
+        cls, soma_object: clib.SOMAObject, context: SOMATileDBContext
+    ) -> Self:
+        uri = soma_object.uri
+        mode = soma_object.mode
+        timestamp = soma_object.timestamp
+        try:
+            handle = cls(uri, mode, context, timestamp, soma_object)
+            if handle.mode == "w":
+                with cls._opener(uri, mode, context, timestamp) as auxiliary_reader:
+                    handle._do_initial_reads(auxiliary_reader)
+            else:
+                handle._do_initial_reads(soma_object)
+        except tiledb.TileDBError as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(f"{handle.uri!r} does not exist") from tdbe
             raise
         return handle
 
@@ -316,6 +344,10 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
     @property
     def ndim(self) -> int:
         return int(len(self._handle.index_column_names))
+
+    @property
+    def count(self) -> int:
+        return int(self._handle.count)
 
     def _cast_domain(
         self, domain: Callable[[str, DTypeLike], Tuple[Any, Any]]

@@ -22,6 +22,7 @@ from . import (
     _tdb_handles,
     _tiledb_object,
 )
+from . import pytiledbsoma as clib
 from ._constants import (
     SOMA_ENCODING_VERSION,
     SOMA_ENCODING_VERSION_METADATA_KEY,
@@ -145,6 +146,17 @@ def _open_internal(
         return _reify_handle(handle)
     except Exception:
         handle.close()
+        raise
+
+
+def _set_internal(
+    soma_object: clib.SOMAObject,
+) -> "_tiledb_object.TileDBObject[_Wrapper]":
+    """Lower-level open function for internal use only."""
+    try:
+        return _reify_handle(soma_object)
+    except Exception:
+        soma_object.close()
         raise
 
 
