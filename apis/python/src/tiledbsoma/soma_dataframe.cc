@@ -40,13 +40,14 @@
 
 #include "common.h"
 
+namespace libtiledbsomacpp {
+
 namespace py = pybind11;
 using namespace py::literals;
-
-namespace tiledbsoma {
+using namespace tiledbsoma;
 
 void load_soma_dataframe(py::module &m) {
-    py::class_<SOMADataFrame>(m, "SOMADataFrame")
+    py::class_<SOMADataFrame, SOMAObject>(m, "SOMADataFrame")
 
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::map<std::string, std::string>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def_static("exists", &SOMADataFrame::exists)
@@ -99,14 +100,21 @@ void load_soma_dataframe(py::module &m) {
         }, 
         "py_query_condition"_a,
         "py_schema"_a)
-    .def("type", &SOMADataFrame::type)
-    .def("uri", &SOMADataFrame::uri)
+    .def_property_readonly("type", &SOMADataFrame::type)
+    .def_property_readonly("uri", &SOMADataFrame::uri)
+    .def_property_readonly("mode", [](SOMADataFrame& soma_df){
+        return soma_df.mode() == OpenMode::read ? "r" : "w";
+    })
     .def_property_readonly("schema", [](SOMADataFrame& soma_df) -> py::object {
         auto pa = py::module::import("pyarrow");
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
         return pa_schema_import(py::capsule(soma_df.schema().get()));
     })
-    .def_property_readonly("timestamp", &SOMADataFrame::timestamp)
+    .def_property_readonly("timestamp", [](SOMADataFrame& soma_df) -> py::object {
+        if(!soma_df.timestamp().has_value())
+            return py::none();
+        return py::cast(soma_df.timestamp()->second);
+    })
     .def_property_readonly("index_column_names", &SOMADataFrame::index_column_names)
     .def("non_empty_domain", [](SOMADataFrame& soma_df, std::string name, py::dtype dtype){
         switch (np_to_tdb_dtype(dtype)) {

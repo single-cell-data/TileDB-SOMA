@@ -33,12 +33,11 @@
 #include "common.h"
 
 #define DENUM(x) .value(#x, TILEDB_##x)
+namespace libtiledbsomacpp {
 
-// using namespace tiledbsoma;
 namespace py = pybind11;
 using namespace py::literals;
-
-namespace tiledbsoma {
+using namespace tiledbsoma;
 
 py::tuple get_enum(SOMAArray& sr, std::string attr_name){
     auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
@@ -497,7 +496,7 @@ void load_soma_array(py::module &m) {
         .def_property_readonly("column_names", &SOMAArray::column_names)
 
         .def_property_readonly("result_order", &SOMAArray::result_order)
-        
+
         .def("get_enum", get_enum)
 
         .def("get_enum_is_ordered", get_enum_is_ordered)

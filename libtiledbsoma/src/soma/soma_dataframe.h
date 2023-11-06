@@ -145,8 +145,11 @@ class SOMADataFrame : public SOMAObject {
         ResultOrder result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
+    SOMADataFrame(std::shared_ptr<SOMAArray> array)
+        : array_(array){};
+
     SOMADataFrame() = delete;
-    SOMADataFrame(const SOMADataFrame&) = delete;
+    SOMADataFrame(const SOMADataFrame&) = default;
     SOMADataFrame(SOMADataFrame&&) = default;
     ~SOMADataFrame() = default;
 
@@ -183,6 +186,10 @@ class SOMADataFrame : public SOMAObject {
      * @return bool true if open
      */
     bool is_open() const;
+
+    OpenMode mode() const {
+        return array_->mode();
+    }
 
     /**
      * Return the constant "SOMADataFrame".
