@@ -21,7 +21,7 @@ write_soma.DataFrame <- function(
     }
   }
   index <- attr(x, which = 'index')
-  x <- as.data.frame(x)
+  x <- suppressWarnings(as.data.frame(x), classes = "deprecatedWarning")
   attr(x, which = 'index') <- index
   return(write_soma(
     x = x,
