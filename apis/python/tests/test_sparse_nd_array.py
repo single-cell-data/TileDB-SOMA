@@ -1152,9 +1152,9 @@ def a_random_sparse_nd_array(tmp_path, shape: Tuple[int, ...], density: float) -
     "density,shape,coords",
     [
         # 2D
-        (0.1, (1_000, 100), ()),
-        (0.1, (1_000, 100), (None,)),
-        (0.1, (1_000, 100), (slice(None),)),
+        (0.01, (1_000, 100), ()),
+        (0.01, (1_000, 100), (None,)),
+        (0.01, (1_000, 100), (slice(None),)),
         (0.1, (1_000, 100), (slice(10, 20),)),
         (0.1, (1_000, 100), (None, slice(10, 20))),
         (0.1, (1_000, 100), (slice(10, 20), slice(2, 33))),
@@ -1285,13 +1285,13 @@ def test_blockwise_table_iter_size(
     "density,shape,coords",
     [
         # 1D
-        (0.1, (10_000,), ()),
-        (0.1, (10_000,), (slice(200, 8000),)),
+        (0.01, (10_000,), ()),
+        (0.01, (10_000,), (slice(200, 8000),)),
         (0.1, (10_000,), ([0, 99, 1, 100, 2, 101, 3, *list(range(150, 1000))],)),
         # 2D
-        (0.01, (1_000, 100), ()),
-        (0.01, (1_000, 100), (None,)),
-        (0.01, (1_000, 100), (slice(None),)),
+        (0.001, (1_000, 100), ()),
+        (0.001, (1_000, 100), (None,)),
+        (0.001, (1_000, 100), (slice(None),)),
         (0.01, (1_000, 100), (slice(10, 20),)),
         (0.01, (1_000, 100), (None, slice(10, 20))),
         (0.01, (1_000, 100), (slice(10, 20), slice(2, 33))),
@@ -1546,7 +1546,7 @@ def test_blockwise_scipy_iter_eager(
         assert (sp1 != sp2).nnz == 0
 
 
-@pytest.mark.parametrize("density,shape", [(0.05, (9799, 1530))])
+@pytest.mark.parametrize("density,shape", [(0.001, (9799, 1530))])
 def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str) -> None:
     """
     Confirm behavior with different result_order.
