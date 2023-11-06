@@ -1146,7 +1146,9 @@ def a_soma_context() -> SOMATileDBContext:
 
 
 @pytest.fixture
-def a_random_sparse_nd_array(tmp_path, a_soma_context: SOMATileDBContext, shape: Tuple[int, ...], density: float) -> str:
+def a_random_sparse_nd_array(
+    tmp_path, a_soma_context: SOMATileDBContext, shape: Tuple[int, ...], density: float
+) -> str:
     uri = tmp_path.as_posix()
     dtype = np.float32
     with soma.SparseNDArray.create(
@@ -1324,7 +1326,10 @@ def test_blockwise_table_iter_size(
     ],
 )
 def test_blockwise_table_iter_reindex(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...], coords: Tuple[Any, ...], a_soma_context: SOMATileDBContext
+    a_random_sparse_nd_array: str,
+    shape: Tuple[int, ...],
+    coords: Tuple[Any, ...],
+    a_soma_context: SOMATileDBContext,
 ) -> None:
     """Test blockwise table iteration with reindexing"""
     ndim = len(shape)
@@ -1415,7 +1420,10 @@ def test_blockwise_table_iter_error_checks(
 )
 @pytest.mark.parametrize("size", [777, 1001, 2**16])
 def test_blockwise_scipy_iter(
-    a_random_sparse_nd_array: str, coords: Tuple[Any, ...], size: int, a_soma_context: SOMATileDBContext
+    a_random_sparse_nd_array: str,
+    coords: Tuple[Any, ...],
+    size: int,
+    a_soma_context: SOMATileDBContext,
 ) -> None:
     """
     Verify that simple use of scipy iterator works.
@@ -1540,7 +1548,9 @@ def test_blockwise_scipy_iter_not_2D(
 
 @pytest.mark.parametrize("density,shape", [(0.01, (10_000, 1230))])
 def test_blockwise_scipy_iter_eager(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...] , a_soma_context: SOMATileDBContext
+    a_random_sparse_nd_array: str,
+    shape: Tuple[int, ...],
+    a_soma_context: SOMATileDBContext,
 ) -> None:
     """Should get same results with any eager setting"""
     coords = (slice(3, 9993), slice(21, 1111))
