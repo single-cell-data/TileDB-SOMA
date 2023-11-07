@@ -360,8 +360,7 @@ void load_soma_dataframe(py::module &m) {
                 } else {
                     TPY_ERROR_LOC(
                         "[pytiledbsoma] set_dim_points: type={} not "
-                        "supported" + 
-                        std::string(arrow_schema.format));
+                        "supported " + std::string(arrow_schema.format));
                 }
 
                 // Release arrow schema

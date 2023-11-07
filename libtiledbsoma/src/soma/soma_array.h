@@ -505,7 +505,7 @@ class SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema> Schema
      */
-    std::unique_ptr<ArrowSchema> schema() const {
+    std::unique_ptr<ArrowSchema> arrow_schema() const {
         return ArrowAdapter::arrow_schema_from_tiledb_array(ctx_, arr_);
     }
 

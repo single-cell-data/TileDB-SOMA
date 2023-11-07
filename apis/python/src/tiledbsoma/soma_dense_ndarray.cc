@@ -40,11 +40,12 @@
 
 #include "common.h"
 
+namespace libtiledbsomacpp {
 
 namespace py = pybind11;
 using namespace py::literals;
+using namespace tiledbsoma;
 
-namespace tiledbsoma {
 
 void load_soma_dense_ndarray(py::module &m) {
     py::class_<SOMADenseNDArray>(m, "SOMADenseNDArray")
@@ -106,7 +107,7 @@ void load_soma_dense_ndarray(py::module &m) {
         case TILEDB_STRING_ASCII: 
             return py::cast(soma_dense_ndarr.non_empty_domain_var(name));
         default:
-            throw TileDBSOMAError("Unsupported dtype for nonempty domain.");
+            TPY_ERROR_LOC("Unsupported dtype for nonempty domain.");
         }
     })
     .def("domain", [](SOMADenseNDArray& soma_dense_ndarr, std::string name, py::dtype dtype) {
@@ -150,7 +151,7 @@ void load_soma_dense_ndarray(py::module &m) {
             return py::cast(std::make_pair("", ""));
         }
         default:
-            throw TileDBSOMAError("Unsupported dtype for Dimension's domain");
+            TPY_ERROR_LOC("Unsupported dtype for Dimension's domain");
         }
     })
     .def_property_readonly("shape", &SOMADenseNDArray::shape)
@@ -272,10 +273,9 @@ void load_soma_dense_ndarray(py::module &m) {
                     reader.set_dim_points(
                         dim, coords.cast<std::vector<std::string>>());
                 } else {
-                    throw TileDBSOMAError(fmt::format(
+                    TPY_ERROR_LOC(
                         "[pytiledbsoma] set_dim_points: type={} not "
-                        "supported",
-                        arrow_schema.format));
+                        "supported " + std::string(arrow_schema.format));
                 }
 
                 // Release arrow schema
