@@ -34,6 +34,7 @@ from numpy.typing import DTypeLike
 from somacore import options
 from typing_extensions import Literal, Self
 
+from . import _tdb_handles
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import OpenTimestamp
@@ -56,20 +57,29 @@ def open(
         raise DoesNotExistError(f"{uri!r} does not exist")
 
     try:
-        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        config = {k: str(v) for k, v in context.tiledb_config.items()}
-        timestamp_ms = context._open_timestamp_ms(timestamp)
-        obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
-        if obj.type == "SOMADataFrame":
-            return DataFrameWrapper._from_soma_object(obj, context)
-        else:
-            raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+        return _get_wrapper(uri, mode, context, timestamp)
     except SOMAError:
         if obj_type == "array":
             return ArrayWrapper.open(uri, mode, context, timestamp)
         if obj_type == "group":
             return GroupWrapper.open(uri, mode, context, timestamp)
         raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
+
+
+def _get_wrapper(
+    uri: str,
+    mode: options.OpenMode,
+    context: SOMATileDBContext,
+    timestamp: Optional[OpenTimestamp] = None,
+) -> "_tdb_handles.DataFrameWrapper":
+    open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+    config = {k: str(v) for k, v in context.tiledb_config.items()}
+    timestamp_ms = context._open_timestamp_ms(timestamp)
+    obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
+    if obj.type == "SOMADataFrame":
+        return _tdb_handles.DataFrameWrapper._from_soma_object(obj, context)
+    else:
+        raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
 
 
 @attrs.define(eq=False, hash=False, slots=False)
