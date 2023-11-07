@@ -42,7 +42,7 @@ using namespace tiledbsoma;
 py::tuple get_enum(SOMAArray& sr, std::string attr_name){
     auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
     if(attr_to_enmrs.count(attr_name) == 0)
-        throw TileDBSOMAError("Given attribute does not have enumeration");
+        TPY_ERROR_LOC("Given attribute does not have enumeration");
 
     Enumeration enmr(attr_to_enmrs.at(attr_name));
 
@@ -74,14 +74,14 @@ py::tuple get_enum(SOMAArray& sr, std::string attr_name){
         case TILEDB_BOOL:
             return py::tuple(py::cast(enmr.as_vector<bool>()));
         default:
-            throw TileDBSOMAError("Unsupported enumeration type.");
+            TPY_ERROR_LOC("Unsupported enumeration type.");
     }
 }
 
 bool get_enum_is_ordered(SOMAArray& sr, std::string attr_name){
     auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
     if(attr_to_enmrs.count(attr_name) == 0)
-        throw TileDBSOMAError("Given attribute does not have enumeration");
+        TPY_ERROR_LOC("Given attribute does not have enumeration");
     return attr_to_enmrs.at(attr_name).ordered();
 }
 
@@ -146,7 +146,7 @@ void load_soma_array(py::module &m) {
                                column_names = new_column_names;
                            }
                        } catch (const std::exception& e) {
-                           throw TileDBSOMAError(e.what());
+                           TPY_ERROR_LOC(e.what());
                        }   
                        qc = py_query_condition.attr("c_obj")
                                    .cast<PyQueryCondition>()
@@ -272,7 +272,7 @@ void load_soma_array(py::module &m) {
                         reader.set_dim_points(
                             dim, coords.cast<std::vector<std::string>>());
                     } else {
-                        throw TileDBSOMAError(
+                        TPY_ERROR_LOC(
                             "[pytiledbsoma] set_dim_points: type={} not "
                             "supported" + 
                             std::string(arrow_schema.format));

@@ -90,9 +90,9 @@ py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
 
   if (cell_val_num == 1) {
     if (type == TILEDB_STRING_UTF16 || type == TILEDB_STRING_UTF32)
-      throw TileDBSOMAError("Unimplemented UTF16 or UTF32 string conversion!");
+      TPY_ERROR_LOC("Unimplemented UTF16 or UTF32 string conversion!");
     if (type == TILEDB_STRING_UCS2 || type == TILEDB_STRING_UCS4)
-      throw TileDBSOMAError("Unimplemented UCS2 or UCS4 string conversion!");
+      TPY_ERROR_LOC("Unimplemented UCS2 or UCS4 string conversion!");
 
     if (_tdb_to_np_name_dtype.count(type) == 1)
       return py::dtype(_tdb_to_np_name_dtype[type]);
@@ -121,7 +121,7 @@ py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
     return np_dtype(rec_list);
   }
 
-  throw TileDBSOMAError("tiledb datatype not understood ('" +
+  TPY_ERROR_LOC("tiledb datatype not understood ('" +
         tiledb::impl::type_to_str(type) +
         "', cell_val_num: " + std::to_string(cell_val_num) + ")");
 }
