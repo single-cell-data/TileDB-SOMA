@@ -33,13 +33,11 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
-from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, is_does_not_exist_error
 from ._sparse_nd_array import SparseNDArray
-from ._tdb_handles import DataFrameWrapper
 from ._tiledb_object import AnyTileDBObject, TileDBObject
 from ._types import OpenTimestamp
 from ._util import (
@@ -434,14 +432,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             timestamp = self.tiledb_timestamp_ms
 
             try:
-                open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-                config = {k: str(v) for k, v in context.tiledb_config.items()}
-                timestamp_ms = context._open_timestamp_ms(timestamp)
-                obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
-                if obj.type == "SOMADataFrame":
-                    wrapper = DataFrameWrapper._from_soma_object(obj, context)
-                else:
-                    raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+                wrapper = _tdb_handles._get_wrapper(uri, mode, context, timestamp)
                 entry.soma = _factory._set_internal(wrapper)
             except SOMAError:
                 entry.soma = _factory._open_internal(
