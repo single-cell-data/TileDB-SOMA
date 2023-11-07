@@ -128,7 +128,9 @@ bool SOMADataFrame::exists(std::string_view uri) {
         const char* dtype = (const char*)std::get<MetadataInfo::value>(
             *soma_object_type);
 
-        return std::string(dtype).find("SOMADataFrame") != std::string::npos;
+        uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
+
+        return std::string(dtype, sz) == "SOMADataFrame";
     } catch (std::exception& e) {
         return false;
     }

@@ -194,8 +194,9 @@ class SOMAArray {
 
         const char* dtype = (const char*)std::get<MetadataInfo::value>(
             *soma_object_type);
+        uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
 
-        return std::string(dtype);
+        return std::string(dtype, sz);
     }
 
     /**

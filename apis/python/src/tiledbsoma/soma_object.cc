@@ -55,14 +55,16 @@ void load_soma_object(py::module &m) {
                            std::map<std::string, std::string> config, 
                            std::optional<std::pair<uint64_t, uint64_t>> timestamp) -> py::object {
         if(mode == OpenMode::write)
-            throw TileDBSOMAError("SOMAObjects for write mode not handled in Python API yet.");
+            TPY_ERROR_LOC("SOMAObjects for write mode not handled in Python API yet.");
 
-        auto obj = SOMAObject::open(uri, mode, config, timestamp);
+	try{
+        	auto obj = SOMAObject::open(uri, mode, config, timestamp);
 
-        if (obj->type() == "SOMADataFrame")
-            return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
-
-        throw TileDBSOMAError("SOMAObject not handled in Python API yet.");
+        	if (obj->type() == "SOMADataFrame")
+            	return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
+	}catch(TileDBSOMAError& e){
+        	TPY_ERROR_LOC("SOMAObject not handled in Python API yet.");
+	}
     });
 }
 }
