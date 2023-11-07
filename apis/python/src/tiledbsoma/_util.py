@@ -265,17 +265,16 @@ def ms_to_datetime(millis: int) -> datetime.datetime:
 
 
 def to_clib_result_order(result_order: options.ResultOrderStr) -> clib.ResultOrder:
+    result_order = options.ResultOrder(result_order)
     to_clib_result_order = {
         options.ResultOrder.AUTO: clib.ResultOrder.automatic,
         options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
         options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
-        "auto": clib.ResultOrder.automatic,
-        "row-major": clib.ResultOrder.rowmajor,
-        "column-major": clib.ResultOrder.colmajor,
     }
-    if result_order not in to_clib_result_order:
-        raise ValueError(f"Invalid result_order: {result_order}")
-    return to_clib_result_order[result_order]
+    try:
+        return to_clib_result_order[result_order]
+    except KeyError as ke:
+        raise ValueError(f"Invalid result_order: {result_order}") from ke
 
 
 def pa_types_is_string_or_bytes(dtype: pa.DataType) -> bool:

@@ -29,7 +29,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto array_ = SOMAArray::open(
             mode, ctx, uri, "", {}, "auto", ResultOrder::automatic, timestamp);
 
-        if (array_->type() == "SOMADataFrame")
+        if (array_->soma_object_type() == "SOMADataFrame")
             return std::make_unique<SOMADataFrame>(std::move(array_));
         else
             throw TileDBSOMAError(

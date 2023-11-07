@@ -131,10 +131,7 @@ def test_dataframe_with_enumeration(tmp_path):
         ]
     )
     enums = {"enmr1": ("a", "bb", "ccc"), "enmr2": ("cat", "dog")}
-    with soma.DataFrame.create(
-        tmp_path.as_posix(),
-        schema=schema,
-    ) as sdf:
+    with soma.DataFrame.create(tmp_path.as_posix(), schema=schema) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
         data["foo"] = ["a", "bb", "ccc", "bb", "a"]
