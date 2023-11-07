@@ -186,7 +186,7 @@ class SOMAArray {
      */
     std::shared_ptr<Context> ctx();
 
-    std::optional<std::string> type() {
+    std::optional<std::string> soma_object_type() {
         auto soma_object_type = this->get_metadata("soma_object_type");
 
         if (!soma_object_type.has_value())
@@ -496,7 +496,7 @@ class SOMAArray {
      *
      * @return std::shared_ptr<ArraySchema> Schema
      */
-    std::shared_ptr<ArraySchema> schema() const {
+    std::shared_ptr<ArraySchema> tiledb_schema() const {
         return mq_->schema();
     }
 
@@ -725,6 +725,9 @@ class SOMAArray {
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t nnz_slow();
+
+    // Future for asyncronous managed query
+    std::future<void> managed_query_future_;
 };
 
 }  // namespace tiledbsoma

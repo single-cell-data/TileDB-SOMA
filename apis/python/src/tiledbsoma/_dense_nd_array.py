@@ -17,6 +17,7 @@ from typing_extensions import Self
 from . import _util
 from ._common_nd_array import NDArray
 from ._exception import SOMAError
+from ._tdb_handles import ArrayWrapper
 from ._util import dense_indices_to_shape
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -70,6 +71,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     """
 
     __slots__ = ()
+
+    _reader_wrapper_type = ArrayWrapper
 
     def read(
         self,

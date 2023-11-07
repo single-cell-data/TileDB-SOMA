@@ -122,6 +122,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         it must be ``None``.
     """
 
+    _reader_wrapper_type = DataFrameWrapper
+
     @classmethod
     def create(
         cls,
@@ -265,17 +267,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # if is it in read open mode, then it is a DataFrameWrapper
         return cast(DataFrameWrapper, self._handle).count
 
-    def enumeration(self, name: str) -> Tuple[Any, ...]:
-        """Doc place holder.
-
-        Returns:
-            Tuple[Any, ...]: _description_
-        """
-        return tuple(self._soma_reader().get_enum(name))
-
-    def column_to_enumeration(self, name: str) -> str:
-        return str(self._soma_reader().get_enum_label_on_attr(name))
-
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
         return self.count
@@ -411,7 +402,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     if not pa.types.is_dictionary(col_info.type):
                         raise ValueError(
                             "Expected dictionary type for enumerated attribute "
-                            f"{name} but saw {col_info.type}"
+                            f"{name} but saw {col.type}"
                         )
 
                     enmr = self._handle.enum(attr.name)
@@ -576,30 +567,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     f"only 1D numpy arrays may be used to index; got {coord.ndim}"
                 )
 
-        # See libtiledbsoma.cc for more context on why we need the
-        # explicit type-check here.
+        try:
+            set_dim_points = getattr(sr, f"set_dim_points_{dim.type}")
+            set_dim_points(dim.name, coord)
+            return True
+        except AttributeError:
+            pass
 
-        if pa.types.is_int64(dim.type):
-            sr.set_dim_points_int64(dim.name, coord)
-        elif pa.types.is_int32(dim.type):
-            sr.set_dim_points_int32(dim.name, coord)
-        elif pa.types.is_int16(dim.type):
-            sr.set_dim_points_int16(dim.name, coord)
-        elif pa.types.is_int8(dim.type):
-            sr.set_dim_points_int8(dim.name, coord)
-        elif pa.types.is_uint64(dim.type):
-            sr.set_dim_points_uint64(dim.name, coord)
-        elif pa.types.is_uint32(dim.type):
-            sr.set_dim_points_uint32(dim.name, coord)
-        elif pa.types.is_uint16(dim.type):
-            sr.set_dim_points_uint16(dim.name, coord)
-        elif pa.types.is_uint8(dim.type):
-            sr.set_dim_points_uint8(dim.name, coord)
-        elif pa.types.is_float64(dim.type):
-            sr.set_dim_points_float64(dim.name, coord)
-        elif pa.types.is_float32(dim.type):
-            sr.set_dim_points_float32(dim.name, coord)
-        elif _util.pa_types_is_string_or_bytes(dim.type):
+        if _util.pa_types_is_string_or_bytes(dim.type):
             sr.set_dim_points_string_or_bytes(dim.name, coord)
         elif pa.types.is_timestamp(dim.type):
             if not isinstance(coord, (tuple, list, np.ndarray)):
@@ -632,41 +607,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         if not lo_hi:
             return True
 
-        elif pa.types.is_int64(dim.type):
-            sr.set_dim_ranges_int64(dim.name, [lo_hi])
+        try:
+            set_dim_range = getattr(sr, f"set_dim_ranges_{dim.type}")
+            set_dim_range(dim.name, [lo_hi])
             return True
-        elif pa.types.is_int32(dim.type):
-            sr.set_dim_ranges_int32(dim.name, [lo_hi])
-            return True
-        elif pa.types.is_int16(dim.type):
-            sr.set_dim_ranges_int16(dim.name, [lo_hi])
-            return True
-        elif pa.types.is_int8(dim.type):
-            sr.set_dim_ranges_int8(dim.name, [lo_hi])
-            return True
-        elif pa.types.is_uint64(dim.type):
-            sr.set_dim_ranges_uint64(dim.name, [lo_hi])
-            return True
-        elif pa.types.is_uint32(dim.type):
-            sr.set_dim_ranges_uint32(dim.name, [lo_hi])
-            return True
-        elif pa.types.is_uint16(dim.type):
-            sr.set_dim_ranges_uint16(dim.name, [lo_hi])
-            return True
-        elif pa.types.is_uint8(dim.type):
-            sr.set_dim_ranges_uint8(dim.name, [lo_hi])
-            return True
-        elif pa.types.is_float64(dim.type):
-            sr.set_dim_ranges_float64(dim.name, [lo_hi])
-            return True
-        elif pa.types.is_float32(dim.type):
-            sr.set_dim_ranges_float32(dim.name, [lo_hi])
-            return True
-
-        # TODO:
-        # elif dim.dtype == np.bool_:
-
-        return False
+        except AttributeError:
+            return False
 
 
 def _canonicalize_schema(

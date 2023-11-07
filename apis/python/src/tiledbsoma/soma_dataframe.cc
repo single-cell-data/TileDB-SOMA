@@ -339,12 +339,12 @@ void load_soma_dataframe(py::module &m) {
             const std::string&, const std::vector<std::string>&)>(
             &SOMADataFrame::set_dim_points))
     .def(
-        "set_dim_points_float64",
+        "set_dim_points_double",
         static_cast<void (SOMADataFrame::*)(
             const std::string&, const std::vector<double>&)>(
             &SOMADataFrame::set_dim_points))
     .def(
-        "set_dim_points_float32",
+        "set_dim_points_float",
         static_cast<void (SOMADataFrame::*)(
             const std::string&, const std::vector<float>&)>(
             &SOMADataFrame::set_dim_points))
@@ -443,13 +443,13 @@ void load_soma_dataframe(py::module &m) {
             const std::vector<std::pair<uint8_t, uint8_t>>&)>(
             &SOMADataFrame::set_dim_ranges))
     .def(
-        "set_dim_ranges_float64",
+        "set_dim_ranges_double",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<double, double>>&)>(
             &SOMADataFrame::set_dim_ranges))
     .def(
-        "set_dim_ranges_float32",
+        "set_dim_ranges_float",
         static_cast<void (SOMADataFrame::*)(
             const std::string&,
             const std::vector<std::pair<float, float>>&)>(

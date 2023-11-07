@@ -199,7 +199,7 @@ class SOMASparseNDArray : public SOMAObject {
     const std::string uri() const;
 
     /**
-     * Return the data schema, in the form of a ArrowSchema.
+     * Return the data schema, in the form of an ArrowSchema.
      *
      * @return std::unique_ptr<ArrowSchema>
      */

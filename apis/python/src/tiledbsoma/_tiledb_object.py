@@ -82,7 +82,9 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
         try:
-            handle = _tdb_handles._get_wrapper(uri, mode, context, tiledb_timestamp)
+            handle = _tdb_handles._open_with_clib_wrapper(
+                uri, mode, context, tiledb_timestamp
+            )
         except SOMAError:
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
@@ -125,6 +127,9 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._close_stack.enter_context(self._handle)
 
     _wrapper_type: Type[_WrapperType_co]
+    _reader_wrapper_type: Union[
+        Type[_WrapperType_co], Type[_tdb_handles.DataFrameWrapper]
+    ]
     """Class variable of the Wrapper class used to open this object type."""
 
     @property
