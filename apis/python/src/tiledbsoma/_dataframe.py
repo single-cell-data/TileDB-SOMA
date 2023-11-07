@@ -348,7 +348,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self._check_open_read()
 
         sr = self._handle._handle
-        sr.reset(column_names or [], "auto", _to_clib_result_order(result_order))
+        sr.reset(column_names or [], "auto", _util.to_clib_result_order(result_order))
 
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), self._handle.schema)
@@ -522,7 +522,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # part.
         if (
             is_slice_of(coord, str) or is_slice_of(coord, bytes)
-        ) and _pa_types_is_string_or_bytes(dim.type):
+        ) and _util.pa_types_is_string_or_bytes(dim.type):
             _util.validate_slice(coord)
             # Figure out which one.
             dim_type: Union[Type[str], Type[bytes]] = type(domain[0])
@@ -598,7 +598,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             sr.set_dim_points_float64(dim.name, coord)
         elif pa.types.is_float32(dim.type):
             sr.set_dim_points_float32(dim.name, coord)
-        elif _pa_types_is_string_or_bytes(dim.type):
+        elif _util.pa_types_is_string_or_bytes(dim.type):
             sr.set_dim_points_string_or_bytes(dim.name, coord)
         elif pa.types.is_timestamp(dim.type):
             if not isinstance(coord, (tuple, list, np.ndarray)):
@@ -986,26 +986,3 @@ def _find_extent_for_domain(
         return np.datetime64(iextent, "ns")
 
     return extent
-
-
-def _to_clib_result_order(result_order: options.ResultOrderStr) -> clib.ResultOrder:
-    to_clib_result_order = {
-        options.ResultOrder.AUTO: clib.ResultOrder.automatic,
-        options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
-        options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
-        "auto": clib.ResultOrder.automatic,
-        "row-major": clib.ResultOrder.rowmajor,
-        "column-major": clib.ResultOrder.colmajor,
-    }
-    if result_order not in to_clib_result_order:
-        raise ValueError(f"Invalid result_order: {result_order}")
-    return to_clib_result_order[result_order]
-
-
-def _pa_types_is_string_or_bytes(dtype: pa.DataType) -> bool:
-    return bool(
-        pa.types.is_large_string(dtype)
-        or pa.types.is_large_binary(dtype)
-        or pa.types.is_string(dtype)
-        or pa.types.is_binary(dtype)
-    )

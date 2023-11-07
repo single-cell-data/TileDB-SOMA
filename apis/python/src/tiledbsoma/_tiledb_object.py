@@ -13,9 +13,7 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _constants, _tdb_handles
-from . import pytiledbsoma as clib
 from ._exception import SOMAError
-from ._tdb_handles import DataFrameWrapper
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
@@ -84,14 +82,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
         try:
-            open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-            config = {k: str(v) for k, v in context.tiledb_config.items()}
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
-            obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
-            if obj.type == "SOMADataFrame":
-                handle = DataFrameWrapper._from_soma_object(obj, context)
-            else:
-                raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+            handle = _tdb_handles._get_wrapper(uri, mode, context, tiledb_timestamp)
         except SOMAError:
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
@@ -102,7 +93,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     def __init__(
         self,
         # TODO DataFrameWrapper should be _WrapperType_co
-        handle: Union[_WrapperType_co, DataFrameWrapper],
+        handle: Union[_WrapperType_co, _tdb_handles.DataFrameWrapper],
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ):
