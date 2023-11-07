@@ -272,12 +272,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             if pa.types.is_int64(dim.type):
                 sr.set_dim_points_int64(dim.name, coord)
                 return True
-            elif (
-                pa.types.is_large_string(dim.type)
-                or pa.types.is_large_binary(dim.type)
-                or pa.types.is_string(dim.type)
-                or pa.types.is_binary(dim.type)
-            ):
+            elif _util.pa_types_is_string_or_bytes(dim.type):
                 sr.set_dim_points_string_or_bytes(dim.name, coord)
                 return True
             else:
@@ -291,12 +286,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             if pa.types.is_int64(dim.type):
                 sr.set_dim_points_int64(dim.name, coord)
                 return True
-            elif (
-                pa.types.is_large_string(dim.type)
-                or pa.types.is_large_binary(dim.type)
-                or pa.types.is_string(dim.type)
-                or pa.types.is_binary(dim.type)
-            ):
+            elif _util.pa_types_is_string_or_bytes(dim.type):
                 sr.set_dim_points_string_or_bytes(dim.name, coord)
                 return True
 

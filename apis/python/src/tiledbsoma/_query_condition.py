@@ -15,6 +15,7 @@ import pyarrow as pa
 
 from . import pytiledbsoma as clib
 from ._exception import SOMAError
+from ._util import pa_types_is_string_or_bytes
 
 # In Python 3.7, a boolean literal like `True` is of type `ast.NameConstant`.
 # Above that, it's of type `ast.Constant`.
@@ -239,12 +240,7 @@ class QueryConditionTree(ast.NodeVisitor):
             if pa.types.is_dictionary(dt):
                 dt = dt.value_type
 
-            if (
-                pa.types.is_string(dt)
-                or pa.types.is_large_string(dt)
-                or pa.types.is_binary(dt)
-                or pa.types.is_large_binary(dt)
-            ):
+            if pa_types_is_string_or_bytes(dt):
                 dtype = "string"
             else:
                 dtype = np.dtype(dt.to_pandas_dtype()).name
@@ -276,12 +272,7 @@ class QueryConditionTree(ast.NodeVisitor):
         if pa.types.is_dictionary(dt):
             dt = dt.value_type
 
-        if (
-            pa.types.is_string(dt)
-            or pa.types.is_large_string(dt)
-            or pa.types.is_binary(dt)
-            or pa.types.is_large_binary(dt)
-        ):
+        if pa_types_is_string_or_bytes(dt):
             dtype = "string"
         else:
             dtype = np.dtype(dt.to_pandas_dtype()).name
