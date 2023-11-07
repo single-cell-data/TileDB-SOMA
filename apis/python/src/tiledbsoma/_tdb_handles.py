@@ -75,11 +75,13 @@ def _get_wrapper(
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
     config = {k: str(v) for k, v in context.tiledb_config.items()}
     timestamp_ms = context._open_timestamp_ms(timestamp)
-    obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
-    if obj.type == "SOMADataFrame":
-        return _tdb_handles.DataFrameWrapper._from_soma_object(obj, context)
-    else:
+    try:
+        obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
+        if obj.type == "SOMADataFrame":
+            return _tdb_handles.DataFrameWrapper._from_soma_object(obj, context)
         raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+    except SOMAError as err:
+        raise err
 
 
 @attrs.define(eq=False, hash=False, slots=False)
