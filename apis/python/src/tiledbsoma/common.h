@@ -13,7 +13,18 @@ using namespace std;
 using namespace tiledb;
 namespace py = pybind11;
 
-#define TPY_ERROR_LOC(m) throw tiledbsoma::TileDBSOMAError(m);
+#define TPY_ERROR_LOC(m) throw TileDBSOMAPyError(m);
+
+class TileDBSOMAPyError : std::runtime_error {
+public:
+  explicit TileDBSOMAPyError(const char *m) : std::runtime_error(m) {}
+  explicit TileDBSOMAPyError(std::string m) : std::runtime_error(m.c_str()) {}
+
+public:
+  virtual const char *what() const noexcept override {
+    return std::runtime_error::what();
+  }
+};
 
 namespace tiledbsoma {
 
