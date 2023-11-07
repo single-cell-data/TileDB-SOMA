@@ -62,7 +62,7 @@ void load_soma_object(py::module &m) {
             if (obj->type() == "SOMADataFrame")
                 return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
         }
-        catch(TileDBSOMAError& e){
+        catch(...){
             TPY_ERROR_LOC("SOMAObject not handled in Python API yet.");
         }
     });
