@@ -32,9 +32,9 @@
 
 #pragma once
 #include <assert.h>
-#include <stdexcept>
 #include <unistd.h>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 struct kh_m64_s;
@@ -64,8 +64,7 @@ class IntIndexer {
      */
     void lookup(const int64_t* keys, int64_t* results, int size);
     void lookup(
-        const std::vector<int64_t>& keys,
-        std::vector<int64_t> results) {
+        const std::vector<int64_t>& keys, std::vector<int64_t> results) {
         if (keys.size() != results.size())
             throw std::runtime_error(
                 "The size of input and results arrays must be the same.");
