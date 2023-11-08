@@ -37,7 +37,7 @@
 #include <pybind11/stl_bind.h>
 
 #include <tiledbsoma/tiledbsoma>
-#include <reindexer.h>
+#include <tiledbsoma/reindexer/reindexer.h>
 
 #include "query_condition.cc"
 
