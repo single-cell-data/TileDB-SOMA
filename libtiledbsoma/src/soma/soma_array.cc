@@ -196,18 +196,23 @@ void SOMAArray::reset(
         mq_->select_columns(column_names);
     }
 
-    batch_size_ = batch_size;
-
-    if (result_order !=
-        ResultOrder::automatic) {  // default ResultOrder::automatic is set in
-                                   // soma_array.h
-        tiledb_layout_t layout = (result_order == ResultOrder::rowmajor) ?
-                                     TILEDB_ROW_MAJOR :
-                                     TILEDB_COL_MAJOR;
-        mq_->set_layout(layout);
-        result_order_ = result_order;
+    switch (result_order) {
+        case ResultOrder::automatic:
+            // default ResultOrder::automatic is set in soma_array.h
+            break;
+        case ResultOrder::rowmajor:
+            mq_->set_layout(TILEDB_ROW_MAJOR);
+            break;
+        case ResultOrder::colmajor:
+            mq_->set_layout(TILEDB_COL_MAJOR);
+            break;
+        default:
+            throw std::invalid_argument(
+                "[SOMAArray] invalid ResultOrder passed");
     }
 
+    batch_size_ = batch_size;
+    result_order_ = result_order;
     first_read_next_ = true;
     submitted_ = false;
 }
