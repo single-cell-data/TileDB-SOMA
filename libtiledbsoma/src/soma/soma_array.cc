@@ -111,6 +111,7 @@ SOMAArray::SOMAArray(
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp)
     : uri_(util::rstrip_uri(uri))
+    , result_order_(result_order)
     , timestamp_(timestamp) {
     ctx_ = std::make_shared<Context>(Config(platform_config));
     validate(mode, name, timestamp);
@@ -129,6 +130,7 @@ SOMAArray::SOMAArray(
     std::optional<std::pair<uint64_t, uint64_t>> timestamp)
     : ctx_(ctx)
     , uri_(util::rstrip_uri(uri))
+    , result_order_(result_order)
     , timestamp_(timestamp) {
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
