@@ -93,5 +93,5 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
             measurement_name,
             obs_query=obs_query or query.AxisQuery(),
             var_query=var_query or query.AxisQuery(),
-            index_factory=indexer_map_locations
+            index_factory=indexer_map_locations # comment this line to disable thw C++ indexer
         )

@@ -34,6 +34,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <memory>
+#include <vector>
 
 struct kh_m64_s;
 
@@ -50,6 +51,9 @@ class IntIndexer {
      * @param threads number of threads in the thread pool
      */
     void map_locations(const int64_t* keys, int size, int threads = 4);
+    void map_locations(const std::vector<int64_t>& keys, int threads = 4) {
+        map_locations(keys.data(), keys.size(), threads);
+    }
     /**
      * Used for parallel lookup using khash
      * @param keys array of keys to lookup
@@ -57,23 +61,35 @@ class IntIndexer {
      * @param size // Number of key array
      * @return and array of looked up value (same size as keys)
      */
-    void lookup(int64_t* keys, int64_t* results, int size);
-    IntIndexer() {};
+    void lookup(const int64_t* keys, int64_t* results, int size);
+    void lookup(
+        const std::vector<int64_t>& keys,
+        std::vector<int64_t> results) {
+        if (keys.size() != results.size())
+            throw std::runtime_error(
+                "The size of input and results arrays must be the same.");
+
+        lookup(keys.data(), results.data(), keys.size());
+    }
+    IntIndexer(){};
     /**
      * Constructor with the same arguments as map_locations
      */
     IntIndexer(const int64_t* keys, int size, int threads);
+    IntIndexer(const std::vector<int64_t>& keys, int threads)
+        : IntIndexer(keys.data(), keys.size(), threads) {
+    }
     virtual ~IntIndexer();
 
    private:
     /*
      * The created 64bit hash table
      */
-    kh_m64_s * hash_;
+    kh_m64_s* hash_;
     /*
      * TileDB threadpool
      */
     std::shared_ptr<tiledbsoma::ThreadPool> tiledb_thread_pool_ = nullptr;
 };
 
-} // namespace tiledbsoma
+}  // namespace tiledbsoma
