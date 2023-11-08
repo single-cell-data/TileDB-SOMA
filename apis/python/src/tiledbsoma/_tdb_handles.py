@@ -16,6 +16,7 @@ from typing import (
     Dict,
     Generic,
     Iterator,
+    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -34,7 +35,6 @@ from numpy.typing import DTypeLike
 from somacore import options
 from typing_extensions import Literal, Self
 
-from . import _tdb_handles
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import OpenTimestamp
@@ -57,7 +57,7 @@ def open(
         raise DoesNotExistError(f"{uri!r} does not exist")
 
     try:
-        return _get_wrapper(uri, mode, context, timestamp)
+        return _open_with_clib_wrapper(uri, mode, context, timestamp)
     except SOMAError:
         if obj_type == "array":
             return ArrayWrapper.open(uri, mode, context, timestamp)
@@ -66,22 +66,19 @@ def open(
         raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
 
 
-def _get_wrapper(
+def _open_with_clib_wrapper(
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp] = None,
-) -> "_tdb_handles.DataFrameWrapper":
+) -> "DataFrameWrapper":
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
     config = {k: str(v) for k, v in context.tiledb_config.items()}
     timestamp_ms = context._open_timestamp_ms(timestamp)
-    try:
-        obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
-        if obj.type == "SOMADataFrame":
-            return _tdb_handles.DataFrameWrapper._from_soma_object(obj, context)
-        raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
-    except SOMAError as err:
-        raise err
+    obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
+    if obj.type == "SOMADataFrame":
+        return DataFrameWrapper._from_soma_object(obj, context)
+    raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
 
 
 @attrs.define(eq=False, hash=False, slots=False)
@@ -243,20 +240,17 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
     def schema(self) -> tiledb.ArraySchema:
         return self._handle.schema
 
-    def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
+    def non_empty_domain(self) -> Optional[Tuple[Tuple[object, object], ...]]:
         try:
             ned = self._handle.nonempty_domain()
             if ned is None:
                 return None
-            return cast(Tuple[Tuple[Any, Any], ...], ned)
+            return cast(Tuple[Tuple[object, object], ...], ned)
         except tiledb.TileDBError as e:
             raise SOMAError(e)
 
-    def enum(self, label: str) -> tiledb.Enumeration:
-        return self._handle.enum(label)
-
     @property
-    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def domain(self) -> Tuple[Tuple[object, object], ...]:
         dom = self._handle.schema.domain
         return tuple(dom.dim(i).domain for i in range(dom.ndim))
 
@@ -273,6 +267,9 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
     def dim_names(self) -> Tuple[str, ...]:
         schema = self._handle.schema
         return tuple(schema.domain.dim(i).name for i in range(schema.domain.ndim))
+
+    def enum(self, label: str) -> tiledb.Enumeration:
+        return self._handle.enum(label)
 
 
 @attrs.define(frozen=True)
@@ -325,12 +322,15 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
         timestamp: int,
     ) -> clib.SOMADataFrame:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        config = {k: str(v) for k, v in context.tiledb_config.items()}
+        column_names: List[str] = []
+        result_order = clib.ResultOrder.automatic
         return clib.SOMADataFrame.open(
             uri,
             open_mode,
-            {k: str(v) for k, v in context.tiledb_config.items()},
-            [],
-            clib.ResultOrder.automatic,
+            config,
+            column_names,
+            result_order,
             (0, timestamp),
         )
 
@@ -355,15 +355,15 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
 
     @property
     def ndim(self) -> int:
-        return int(len(self._handle.index_column_names))
+        return len(self._handle.index_column_names)
 
     @property
     def count(self) -> int:
         return int(self._handle.count)
 
     def _cast_domain(
-        self, domain: Callable[[str, DTypeLike], Tuple[Any, Any]]
-    ) -> Tuple[Tuple[Any, Any], ...]:
+        self, domain: Callable[[str, DTypeLike], Tuple[object, object]]
+    ) -> Tuple[Tuple[object, object], ...]:
         result = []
         for name in self._handle.index_column_names:
             dtype = self._handle.schema.field(name).type
@@ -387,12 +387,12 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
         return tuple(result)
 
     @property
-    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def domain(self) -> Tuple[Tuple[object, object], ...]:
         return self._cast_domain(self._handle.domain)
 
-    def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
+    def non_empty_domain(self) -> Optional[Tuple[Tuple[object, object], ...]]:
         result = self._cast_domain(self._handle.non_empty_domain)
-        return None if len(result) == 0 else result
+        return result or None
 
     @property
     def attr_names(self) -> Tuple[str, ...]:
