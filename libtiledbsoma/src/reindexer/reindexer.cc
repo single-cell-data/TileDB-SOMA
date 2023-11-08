@@ -46,6 +46,10 @@ KHASH_MAP_INIT_INT64(m64, int64_t)
 namespace tiledbsoma {
 
 void IntIndexer::map_locations(const int64_t* keys, int size, int threads) {
+    if (size < threads)
+        throw std::runtime_error(
+            "The number of keys must be larger than the number of threads.");
+
     LOG_DEBUG(fmt::format(
         "End of Map locations of size {} and {} threads", size, threads));
 
@@ -76,7 +80,7 @@ void IntIndexer::map_locations(const int64_t* keys, int size, int threads) {
     tiledb_thread_pool_ = std::make_unique<tiledbsoma::ThreadPool>(threads);
 }
 
-void IntIndexer::lookup(int64_t* keys, int64_t* results, int size) {
+void IntIndexer::lookup(const int64_t* keys, int64_t* results, int size) {
     LOG_DEBUG(fmt::format(
         "Lookup with thread concurrency {} on data size {}",
         tiledb_thread_pool_->concurrency_level(),
