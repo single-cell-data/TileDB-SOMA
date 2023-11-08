@@ -46,7 +46,6 @@
 #include "soma/managed_query.h"
 #include "soma/array_buffers.h"
 #include "soma/column_buffer.h"
-#include "soma/reindexer.h"
 #include "soma/soma_array.h"
 #include "soma/soma_collection.h"
 #include "soma/soma_dataframe.h"
