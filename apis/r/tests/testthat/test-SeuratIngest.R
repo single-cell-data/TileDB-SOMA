@@ -409,7 +409,9 @@ test_that("Write Seurat mechanics", {
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   uri <- withr::local_tempdir(SeuratObject::Project(pbmc_small))
 
-  expect_no_condition(uri <- write_soma(pbmc_small, uri))
+  # expect_no_condition(uri <- write_soma(pbmc_small, uri))
+  uri <- write_soma(pbmc_small, uri)
+  expect_true(FALSE)
 
   expect_type(uri, 'character')
   expect_true(grepl(
