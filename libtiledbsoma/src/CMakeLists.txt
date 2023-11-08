@@ -201,11 +201,15 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.h 
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.h 
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.h
   DESTINATION "include/tiledbsoma/soma"
 )
 
-install(FILES 
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.h
+  DESTINATION "include/tiledbsoma/reindexer/"
+)
+
+install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/tiledbsoma
   DESTINATION "include/tiledbsoma"
 )
