@@ -32,6 +32,7 @@
 
 #pragma once
 #include <assert.h>
+#include <stdexcept>
 #include <unistd.h>
 #include <memory>
 #include <vector>
