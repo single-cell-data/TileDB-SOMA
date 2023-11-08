@@ -215,7 +215,7 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
        auto buf = sr_data->get()->at(names[i]);
 
        // this is pair of array and schema pointer
-       auto pp = tdbs::ArrowAdapter::to_arrow(buf, true);
+       auto pp = tdbs::ArrowAdapter::to_arrow(buf);
 
        memcpy((void*) chldschemaxp, pp.second.get(), sizeof(ArrowSchema));
        memcpy((void*) chldarrayxp, pp.first.get(), sizeof(ArrowArray));

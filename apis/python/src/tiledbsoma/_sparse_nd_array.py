@@ -6,7 +6,16 @@
 """
 Implementation of SOMA SparseNDArray.
 """
-from typing import Dict, Optional, Sequence, Tuple, Union, cast
+from __future__ import annotations
+
+from typing import (
+    Dict,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 import numpy as np
 import pyarrow as pa
@@ -23,6 +32,8 @@ from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._exception import SOMAError
 from ._read_iters import (
+    BlockwiseScipyReadIter,
+    BlockwiseTableReadIter,
     SparseCOOTensorReadIter,
     TableReadIter,
 )
@@ -144,10 +155,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         self._check_open_read()
         _util.check_unpartitioned(partitions)
 
-        schema = self._handle.schema
-        sr = self._soma_reader(schema=schema, result_order=result_order)
-        self._set_reader_coords(sr, coords)
-        return SparseNDArrayRead(sr, schema.shape)
+        sr = self._soma_reader(schema=self._handle.schema, result_order=result_order)
+        return SparseNDArrayRead(sr, self, coords)
 
     def write(
         self,
@@ -379,8 +388,33 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         self.metadata.update(bounding_box)
 
 
-class SparseNDArrayRead(somacore.SparseRead):
+class _SparseNDArrayReadBase(somacore.SparseRead):
+    """Base class for sparse reads"""
+
+    def __init__(
+        self,
+        sr: clib.SOMAArray,
+        array: SparseNDArray,
+        coords: options.SparseNDCoords,
+    ):
+        """
+        Lifecycle:
+            Experimental.
+        """
+        self.sr = sr
+        self.shape = tuple(sr.shape)
+        self.array = array
+        self.coords = coords
+
+
+class SparseNDArrayRead(_SparseNDArrayReadBase):
     """Intermediate type to choose result format when reading a sparse array.
+
+    Results returned by `coos` and `tables` iterate over COO coordinates in the user-specified result order,
+    but with breaks between iterator steps at arbitrary coordinates (i.e., any given result may split a row or
+    column across two separate steps of the iterator). See `blockwise` for iterators that will always yield
+    complete "blocks" for any given user-specified dimension, eg., all coordinates in a given row in one
+    iteration step. NB: `blockwise` iterators may utilize additional disk or network IO.
 
     See also:
         somacore.data.SparseRead
@@ -388,14 +422,6 @@ class SparseNDArrayRead(somacore.SparseRead):
     Lifecycle:
         Experimental.
     """
-
-    def __init__(self, sr: clib.SOMAArray, shape: NTuple):
-        """
-        Lifecycle:
-            Experimental.
-        """
-        self.sr = sr
-        self.shape = shape
 
     def coos(self, shape: Optional[NTuple] = None) -> SparseCOOTensorReadIter:
         """
@@ -411,17 +437,8 @@ class SparseNDArrayRead(somacore.SparseRead):
         """
         if shape is not None and (len(shape) != len(self.shape)):
             raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
+        self.array._set_reader_coords(self.sr, self.coords)
         return SparseCOOTensorReadIter(self.sr, shape or self.shape)
-
-    def dense_tensors(self) -> somacore.ReadIter[pa.Tensor]:
-        """
-        Returns an iterator of `Arrow Tensor <https://arrow.apache.org/docs/cpp/api/tensor.html>`_.
-
-        Lifecycle:
-            Experimental.
-        """
-
-        raise NotImplementedError()
 
     def tables(self) -> TableReadIter:
         """
@@ -431,4 +448,170 @@ class SparseNDArrayRead(somacore.SparseRead):
         Lifecycle:
             Experimental.
         """
+        self.array._set_reader_coords(self.sr, self.coords)
         return TableReadIter(self.sr)
+
+    def blockwise(
+        self,
+        axis: Union[int, Sequence[int]],
+        *,
+        size: Optional[Union[int, Sequence[int]]] = None,
+        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
+        eager: bool = True,
+    ) -> SparseNDArrayBlockwiseRead:
+        """
+        Returns an intermediate type to choose a blockwise iterator of a specific format.
+
+        Blockwise iterators yield results grouped by a user-specified axis. For example, a
+        blockwise iterator with `axis=0` will yield results containing all coordinates for
+        a given "row" in the array, regardless of the read `result_order` (i.e., the sort order).
+
+        Blockwise iterators yield an array "block" in some user-specified format, as well as a
+        list of coordinates contained in the individual block.
+
+        All blockwise iterators will reindex coordinates (i.e., map them from soma_joinid to an integer
+        in the range [0, N)), unless reindexing is specifically disabled for that axis, using the
+        `reindex_disable_on_axis` argument. When reindexing:
+        * the primary iterator axis coordinates, as indicated by the `axis` argument, will be reindexed into the range
+          `[0, N)`, where `N` is the number of coordinates read for the block (controlled with the `size` argument).
+        * all other axes will be reindexed to `[0, M)`, where `M` is the number of points read
+          on that axis across all blocks.
+
+        Args:
+            axis:
+                Required. The axis across which to yield blocks, indicated as the dimension number, e.g.,
+                `axis=0` will step across `soma_dim_0` (the first dimension).
+            size:
+                Optional. Number of coordinates in each block yielded by the iterator. A reasonable default will
+                be provided if the argument is omitted. Current defaults are 2^16 for dimension 0 and 2^8 for
+                all other dimensions. Defaults are subject to change and will likely remain relatively small.
+            reindex_disable_on_axis:
+                Optional. Axis or sequence of axes which will _not_ be reindexed. Defaults to None, indicating
+                all axes will be reindexed.
+            eager:
+                Optional. If `True`, the iterator will read ahead (using multi-threading) to improve overall
+                performance when iterating over a large result. Setting this flag to `False` will reduce memory
+                consumption, at the cost of additional processing time.
+
+        Examples:
+
+            A simple example iterating over the first 10000 elements of the first dimension, into
+            blocks of SciPy sparse matrices:
+
+            >>> import tiledbsoma
+            >>> with tiledbsoma.open("a_sparse_nd_array") as X:
+            ...     for (obs_coords, var_coords), matrix in X.read(
+            ...         coords=(slice(9999),)
+            ...     ).blockwise(
+            ...         axis=0, size=4999
+            ...     ).scipy():
+            ...         print(repr(matrix))
+            <4999x60664 sparse matrix of type '<class 'numpy.float32'>'
+                    with 11509741 stored elements in Compressed Sparse Row format>
+            <4999x60664 sparse matrix of type '<class 'numpy.float32'>'
+                    with 13760197 stored elements in Compressed Sparse Row format>
+            <2x60664 sparse matrix of type '<class 'numpy.float32'>'
+                    with 3417 stored elements in Compressed Sparse Row format>
+
+            To stride over the second dimension, returning a CSC matrix, specify `blockwise(axis=1)`.
+            To iterate over COO matrices, on either axis, specify `scipy(compress=False)`.
+
+        Lifecycle:
+            Experimental.
+        """
+        return SparseNDArrayBlockwiseRead(
+            self.sr,
+            self.array,
+            self.coords,
+            axis,
+            size=size,
+            reindex_disable_on_axis=reindex_disable_on_axis,
+            eager=eager,
+        )
+
+
+class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
+    def __init__(
+        self,
+        sr: clib.SOMAArray,
+        array: SparseNDArray,
+        coords: options.SparseNDCoords,
+        axis: Union[int, Sequence[int]],
+        *,
+        size: Optional[Union[int, Sequence[int]]],
+        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]],
+        eager: bool = True,
+    ):
+        super().__init__(sr, array, coords)
+        self.axis = axis
+        self.size = size
+        self.reindex_disable_on_axis = reindex_disable_on_axis
+        self.eager = eager
+
+    def tables(self) -> BlockwiseTableReadIter:
+        """
+        Returns a blockwise iterator of
+        `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_.
+
+        Yields:
+            The iterator will yield a tuple of:
+                Arrow Table, (dim_0_coords, ...),
+            where the second element is a tuple containing the soma_joinid values for the queried array dimensions.
+
+        Lifecycle:
+            Experimental.
+        """
+        return BlockwiseTableReadIter(
+            self.array,
+            self.sr,
+            self.coords,
+            self.axis,
+            size=self.size,
+            reindex_disable_on_axis=self.reindex_disable_on_axis,
+            eager=self.eager,
+        )
+
+    def coos(self) -> somacore.ReadIter[None]:
+        """
+        Unimplemented due to ARROW-17933, https://issues.apache.org/jira/browse/ARROW-17933,
+        which causes failure on empty tensors (which are commonly yielded by blockwise
+        iterators). Also tracked as https://github.com/single-cell-data/TileDB-SOMA/issues/668
+        """
+        raise NotImplementedError(
+            "Blockwise SparseCOOTensor not implemented due to ARROW-17933."
+        )
+
+    def scipy(self, *, compress: bool = True) -> BlockwiseScipyReadIter:
+        """
+        Returns a blockwise iterator of
+        `SciPy sparse matrix` <https://docs.scipy.org/doc/scipy/reference/sparse.html>
+        over a 2D SparseNDArray.
+
+        Args:
+            compress:
+                If True, a CSC or CSR matrix is returned, dependent on the value of the
+                `axis` argument of the `blockwise()` method. If False, a COO matrix is returned.
+
+                Note: implementation details of SciPy CSC and CSR compression effectively require
+                reindexing of the major axis (columns and rows, respectively). Therefore, this method
+                will throw an error if the major axis was included in the reindex_disable_on_axis argument to
+                `blockwise()`. Reindexing can be disabled for the minor axis.
+
+        Yields:
+            The iterator will yield a tuple of:
+                SciPy sparse matrix, (obs_coords, var_coords),
+            where the first element is a tuple containing the soma_joinid values for the queried array dimensions.
+
+        Lifecycle:
+            Experimental.
+        """
+        return BlockwiseScipyReadIter(
+            self.array,
+            self.sr,
+            self.coords,
+            self.axis,
+            size=self.size,
+            compress=compress,
+            reindex_disable_on_axis=self.reindex_disable_on_axis,
+            eager=self.eager,
+        )

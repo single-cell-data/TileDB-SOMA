@@ -105,7 +105,7 @@ SOMANDArrayBase <- R6::R6Class(
       # create array attribute
       tdb_attr <- tiledb::tiledb_attr(
         name = "soma_data",
-        type = tiledb_type_from_arrow_type(type),
+        type = tiledb_type_from_arrow_type(type, is_dim=FALSE),
         filter_list = tdb_attr_filters
       )
 

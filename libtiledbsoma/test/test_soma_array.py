@@ -15,6 +15,30 @@ if VERBOSE:
     clib.config_logging("debug")
 
 
+def test_soma_array_basic_getters():
+    name = "obs"
+    uri = os.path.join(SOMA_URI, name)
+    column_names = [
+        "soma_joinid",
+        "obs_id",
+        "n_genes",
+        "percent_mito",
+        "n_counts",
+        "louvain",
+        "is_b_cell",
+    ]
+    result_order = clib.ResultOrder.colmajor
+
+    sr = clib.SOMAArray(
+        uri=uri, name=name, column_names=column_names, result_order=result_order
+    )
+
+    assert sr.uri == uri
+    assert sr.nnz() == 2638
+    assert sr.result_order == result_order
+    assert sr.column_names == column_names
+
+
 def test_soma_array_obs():
     """Read all values from obs array into an arrow table."""
 
@@ -219,16 +243,6 @@ def test_soma_array_column_names():
     # test that all results are present in the arrow table (no incomplete queries)
     assert sr.results_complete()
     assert arrow_table.num_columns == 2
-
-
-def test_nnz():
-    name = "obs"
-    uri = os.path.join(SOMA_URI, name)
-    sr = clib.SOMAArray(uri)
-
-    total_cell_count = sr.nnz()
-
-    assert total_cell_count == 2638
 
 
 def test_soma_array_reset():

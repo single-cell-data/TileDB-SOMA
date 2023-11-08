@@ -20,11 +20,11 @@ SOMADataFrame <- R6::R6Class(
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
-    #' @param levels Optional list of enumeration (aka factor) levels
     #' @template param-platform-config
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
-    create = function(schema, index_column_names = c("soma_joinid"), levels = NULL, platform_config = NULL, internal_use_only = NULL) {
+    create = function(schema, index_column_names = c("soma_joinid"),
+                        platform_config = NULL, internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
@@ -33,10 +33,8 @@ SOMADataFrame <- R6::R6Class(
       schema <- private$validate_schema(schema, index_column_names)
 
       attr_column_names <- setdiff(schema$names, index_column_names)
-      stopifnot(
-        "At least one non-index column must be defined in the schema" =
-          length(attr_column_names) > 0
-      )
+      stopifnot("At least one non-index column must be defined in the schema" =
+                    length(attr_column_names) > 0)
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
@@ -68,22 +66,16 @@ SOMADataFrame <- R6::R6Class(
           tile_extent <- 64L
         }
 
+        tdb_opts <- tiledb_create_options$dim_filters(field_name,
+          ## Default if there is nothing specified in tiledb-create options in the platform config:
+          list(list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level()))
+        )
         tdb_dims[[field_name]] <- tiledb::tiledb_dim(
           name = field_name,
           # Numeric index types must be positive values for indexing
-          domain = arrow_type_unsigned_range(field$type),
-          tile = tile_extent,
-          type = tiledb_type_from_arrow_type(field$type),
-          filter_list = tiledb::tiledb_filter_list(
-            tiledb_create_options$dim_filters(
-              field_name,
-              # Default to use if there is nothing specified in tiledb-create options
-              # in the platform config:
-              list(
-                list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level())
-              )
-            )
-          )
+          domain = arrow_type_unsigned_range(field$type), tile = tile_extent,
+          type = tiledb_type_from_arrow_type(field$type, is_dim=TRUE),
+          filter_list = tiledb::tiledb_filter_list(tdb_opts)
         )
       }
 
@@ -95,20 +87,19 @@ SOMADataFrame <- R6::R6Class(
 
       for (field_name in attr_column_names) {
         field <- schema$GetFieldByName(field_name)
-        field_type <- tiledb_type_from_arrow_type(field$type)
+        field_type <- tiledb_type_from_arrow_type(field$type, is_dim=FALSE)
 
-        # Check if the field is ordered and mark it as such
-        if (!is.null(x = levels[[field_name]]) && isTRUE(field$type$ordered)) {
-          attr(levels[[field_name]], 'ordered') <- attr(levels[[field_name]], 'ordered', exact = TRUE) %||% TRUE
-        }
+        ## # Check if the field is ordered and mark it as such
+        ## if (!is.null(x = levels[[field_name]]) && isTRUE(field$type$ordered)) {
+        ##   attr(levels[[field_name]], 'ordered') <- attr(levels[[field_name]], 'ordered', exact = TRUE) %||% TRUE
+        ## }
 
         tdb_attrs[[field_name]] <- tiledb::tiledb_attr(
           name = field_name,
           type = field_type,
           nullable = field$nullable,
-          ncells = if (field_type == "ASCII") NA_integer_ else 1L,
-          filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters(field_name)),
-          enumeration = levels[[field_name]]
+          ncells = if (field_type == "ASCII" || field_type == "UTF8" ) NA_integer_ else 1L,
+          filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters(field_name))
         )
       }
 
@@ -123,9 +114,20 @@ SOMADataFrame <- R6::R6Class(
         capacity = tiledb_create_options$capacity(),
         allows_dups = tiledb_create_options$allows_duplicates(),
         offsets_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$offsets_filters()),
-        validity_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$validity_filters()),
-        enumerations = if (any(!sapply(levels, is.null))) levels else NULL
+        validity_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$validity_filters())
+        ## enumerations = if (any(!sapply(levels, is.null))) levels else NULL
         )
+
+      for (field_name in attr_column_names) {
+          fieldtype <- schema$GetFieldByName(field_name)$type
+          if (is(fieldtype, "DictionaryType")) {
+              tiledb::tiledb_array_schema_set_enumeration_empty(schema = tdb_schema,
+                                                                attr = tdb_attrs[[field_name]],
+                                                                enum_name = field_name,
+                                                                type_str = "UTF8",
+                                                                ordered = fieldtype$ordered)
+          }
+      }
 
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
@@ -164,6 +166,25 @@ SOMADataFrame <- R6::R6Class(
 
       df <- as.data.frame(values)[schema_names]
       arr <- self$object
+
+      has_enums <- tiledb::tiledb_array_has_enumeration(arr)
+      if (any(has_enums)) { 			# if enumerations exists in array
+          attrs <- tiledb::attrs(tiledb::schema(arr))
+          if (!tiledb::tiledb_array_is_open(arr)) arr <- tiledb::tiledb_array_open(arr, "READ")
+          for (attr_name in names(attrs)) {
+              if (has_enums[attr_name]) {
+                  old_enum <- tiledb::tiledb_attribute_get_enumeration(attrs[[attr_name]], arr)
+                  new_enum <- levels(values[[attr_name]]$as_vector())
+                  added_enum <- setdiff(new_enum, old_enum)
+                  if (length(added_enum) > 0) {
+                      ase <- tiledb::tiledb_array_schema_evolution()
+                      ase <- tiledb::tiledb_array_schema_evolution_extend_enumeration(ase, arr, attr_name, added_enum)
+                      tiledb::tiledb_array_schema_evolution_array_evolve(ase, self$uri)
+                  }
+              }
+          }
+      }
+
       arr[] <- df
     },
 

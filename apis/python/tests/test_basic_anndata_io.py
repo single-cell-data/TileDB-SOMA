@@ -107,15 +107,18 @@ def adata(h5ad_file):
     [tiledbsoma.SparseNDArray, tiledbsoma.DenseNDArray],
 )
 def test_import_anndata(adata, ingest_modes, X_kind):
+    adata = adata.copy()
+
     have_ingested = False
 
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
-    orig = adata
-    metakey = _constants.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
-    all2d = (slice(None), slice(None))  # keystroke-saver
 
     adata.layers["plus1"] = adata.X + 1
+    orig = adata.copy()
+
+    metakey = _constants.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
+    all2d = (slice(None), slice(None))  # keystroke-saver
 
     for ingest_mode in ingest_modes:
         uri = tiledbsoma.io.from_anndata(
@@ -364,38 +367,48 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
     exp.close()
 
 
-def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended):
+@pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])
+def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended, ingest_uns_keys):
     tmp_uri = tmp_path.as_uri()
     original = anndata.read(h5ad_file_extended)
-    uri = tiledbsoma.io.from_anndata(tmp_uri, original, measurement_name="hello")
+    uri = tiledbsoma.io.from_anndata(
+        tmp_uri,
+        original,
+        measurement_name="hello",
+        uns_keys=ingest_uns_keys,
+    )
 
     with tiledbsoma.Experiment.open(uri) as exp:
         uns = exp.ms["hello"]["uns"]
         assert isinstance(uns, tiledbsoma.Collection)
         assert uns.metadata["soma_tiledbsoma_type"] == "uns"
-        assert set(uns) == {
-            "draw_graph",
-            "louvain",
-            "louvain_colors",
-            "neighbors",
-            "pca",
-            "rank_genes_groups",
-        }
-        rgg = uns["rank_genes_groups"]
-        assert set(rgg) == {"params"}, "structured arrays not imported"
-        assert rgg["params"].metadata.items() >= {
-            ("groupby", "louvain"),
-            ("method", "t-test_overestim_var"),
-            ("reference", "rest"),
-        }
-        dg_params = uns["draw_graph"]["params"]
-        assert isinstance(dg_params, tiledbsoma.Collection)
-        assert dg_params.metadata["layout"] == "fr"
-        random_state = dg_params["random_state"]
-        assert isinstance(random_state, tiledbsoma.DenseNDArray)
-        assert np.array_equal(random_state.read().to_numpy(), np.array([0]))
-        got_pca_variance = uns["pca"]["variance"].read().to_numpy()
-        assert np.array_equal(got_pca_variance, original.uns["pca"]["variance"])
+        if ingest_uns_keys is None:
+            assert set(uns) == {
+                "draw_graph",
+                "louvain",
+                "louvain_colors",
+                "neighbors",
+                "pca",
+                "rank_genes_groups",
+            }
+            assert isinstance(uns["louvain_colors"], tiledbsoma.DataFrame)
+            rgg = uns["rank_genes_groups"]
+            assert set(rgg) == {"params"}, "structured arrays not imported"
+            assert rgg["params"].metadata.items() >= {
+                ("groupby", "louvain"),
+                ("method", "t-test_overestim_var"),
+                ("reference", "rest"),
+            }
+            dg_params = uns["draw_graph"]["params"]
+            assert isinstance(dg_params, tiledbsoma.Collection)
+            assert dg_params.metadata["layout"] == "fr"
+            random_state = dg_params["random_state"]
+            assert isinstance(random_state, tiledbsoma.DenseNDArray)
+            assert np.array_equal(random_state.read().to_numpy(), np.array([0]))
+            got_pca_variance = uns["pca"]["variance"].read().to_numpy()
+            assert np.array_equal(got_pca_variance, original.uns["pca"]["variance"])
+        else:
+            assert set(uns) == set(ingest_uns_keys)
 
 
 def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
@@ -732,6 +745,9 @@ def test_X_empty(h5ad_file_X_empty):
         assert "data" in exp.ms["RNA"].X
         assert exp.ms["RNA"].X["data"].nnz == 0
 
+        tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+        # TODO: more
+
 
 def test_X_none(h5ad_file_X_none):
     tempdir = tempfile.TemporaryDirectory()
@@ -744,6 +760,9 @@ def test_X_none(h5ad_file_X_none):
         assert exp.obs.count == 2638
         assert exp.ms["RNA"].var.count == 1838
         assert list(exp.ms["RNA"].X.keys()) == []
+
+        tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name=None)
+        # TODO: more
 
 
 # There exist in the wild AnnData files with categorical-int columns where the "not in the category"
@@ -833,7 +852,10 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         assert list(bdata.var.index) == list(soma_var[var_id_name])
 
 
-def test_uns_io(tmp_path):
+@pytest.mark.parametrize(
+    "outgest_uns_keys", [["int_scalar", "strings", "np_ndarray_2d"], None]
+)
+def test_uns_io(tmp_path, outgest_uns_keys):
     obs = pd.DataFrame(
         data={"obs_id": np.asarray(["a", "b", "c"])},
         index=np.arange(3).astype(str),
@@ -882,23 +904,62 @@ def test_uns_io(tmp_path):
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name="RNA")
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
-        bdata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+        bdata = tiledbsoma.io.to_anndata(
+            exp,
+            measurement_name="RNA",
+            uns_keys=outgest_uns_keys,
+        )
 
     # Keystroke-savers
     a = adata.uns
     b = bdata.uns
 
-    assert a["int_scalar"] == b["int_scalar"]
-    assert a["float_scalar"] == b["float_scalar"]
-    assert a["string_scalar"] == b["string_scalar"]
+    if outgest_uns_keys is None:
+        assert a["int_scalar"] == b["int_scalar"]
+        assert a["float_scalar"] == b["float_scalar"]
+        assert a["string_scalar"] == b["string_scalar"]
 
-    assert all(a["pd_df_indexed"]["column_1"] == b["pd_df_indexed"]["column_1"])
-    assert all(a["pd_df_nonindexed"]["column_1"] == b["pd_df_nonindexed"]["column_1"])
+        assert all(a["pd_df_indexed"]["column_1"] == b["pd_df_indexed"]["column_1"])
+        assert all(
+            a["pd_df_nonindexed"]["column_1"] == b["pd_df_nonindexed"]["column_1"]
+        )
 
-    assert (a["np_ndarray_1d"] == b["np_ndarray_1d"]).all()
-    assert (a["np_ndarray_2d"] == b["np_ndarray_2d"]).all()
+        assert (a["np_ndarray_1d"] == b["np_ndarray_1d"]).all()
+        assert (a["np_ndarray_2d"] == b["np_ndarray_2d"]).all()
 
-    sa = a["strings"]
-    sb = b["strings"]
-    assert (sa["string_np_ndarray_1d"] == sb["string_np_ndarray_1d"]).all()
-    assert (sa["string_np_ndarray_2d"] == sb["string_np_ndarray_2d"]).all()
+        sa = a["strings"]
+        sb = b["strings"]
+        assert (sa["string_np_ndarray_1d"] == sb["string_np_ndarray_1d"]).all()
+        assert (sa["string_np_ndarray_2d"] == sb["string_np_ndarray_2d"]).all()
+
+    else:
+        assert set(b.keys()) == set(outgest_uns_keys)
+
+
+@pytest.mark.parametrize("write_index", [0, 1])
+def test_string_nan_columns(tmp_path, adata, write_index):
+    # Use case:
+    #
+    # 1. Anndata has column filled with np.nan
+    # 2. Import AnnData to SOMA
+    # 3. Export SOMA back to AnnData
+    # 4. Fill all/part of empty column with string values
+
+    # Step 1
+    adata.obs["new_col"] = pd.Series(data=np.nan, dtype=np.dtype(str))
+
+    # Step 2
+    uri = tmp_path.as_posix()
+    tiledbsoma.io.from_anndata(uri, adata, measurement_name="RNA")
+
+    # Step 3
+    with tiledbsoma.open(uri, "r") as exp:
+        bdata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+
+    # Step 4
+    bdata.obs["new_col"][write_index] = "abc"
+    with tiledbsoma.open(uri, "w") as exp:
+        # Implicit assert here that nothing throws
+        tiledbsoma.io.update_obs(exp, bdata.obs)
+
+    # TODO: asserts

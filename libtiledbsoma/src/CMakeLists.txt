@@ -52,7 +52,9 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
@@ -201,7 +203,6 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/carrow.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/common.h  
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/logger.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h

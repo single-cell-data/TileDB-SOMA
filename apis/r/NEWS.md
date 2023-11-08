@@ -1,11 +1,18 @@
-# In Development
+# tiledbsoma 1.5.0
 
 ## Changes
 
+* Add support for I/O of R factors as enumerated types in `SOMADataFrame`
 * Add support for writing `SummarizedExperiment` and `SingleCellExperiment` object to SOMAs
 * Add support for bounding boxes for sparse arrays
 * Add support for creating `SOMADataFrames` with `ordered()` columns
-
+* Add support for I/O between SOMA and `SingleCellExperiment`
+* Add support for updating `obs` and `var`
+* Write string attrs as UTF-8 (Python compatibility)
+* Optimize export of obsm/varm arrays to Seurat
+* Add `axis_query()` method to `SOMAExperiment`
+* Add `to_sparse_matrix()` method to `SOMAExperimentAxisQuery`
+* Force exporting v3 assays with SeuratObject v5 installed
 
 # tiledbsoma 1.4.0
 

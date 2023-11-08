@@ -60,7 +60,7 @@ const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 namespace {
 
 std::tuple<std::string, uint64_t> create_array(
-    const std::string& uri_in,
+    const std::string& uri,
     Context& ctx,
     int num_cells_per_fragment = 10,
     int num_fragments = 1,
@@ -68,13 +68,6 @@ std::tuple<std::string, uint64_t> create_array(
     bool allow_duplicates = false,
     uint64_t timestamp = 1,
     bool reuse_existing = false) {
-    std::string uri = fmt::format(
-        "{}-{}-{}-{}-{}",
-        uri_in,
-        num_cells_per_fragment,
-        num_fragments,
-        overlap,
-        allow_duplicates);
     // Create array, if not reusing the existing array
     if (!reuse_existing) {
         auto vfs = VFS(ctx);

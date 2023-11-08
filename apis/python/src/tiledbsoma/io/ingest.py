@@ -249,6 +249,7 @@ def from_h5ad(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> str:
     """Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
 
@@ -308,6 +309,10 @@ def from_h5ad(
                   registration_mapping=rd,
               )
 
+        uns_keys: Only ingest the specified top-level ``uns`` keys.
+          The default is to ingest them all. Use ``uns_keys=[]``
+          to not ingest any ``uns`` keys.
+
     Returns:
         The URI of the newly created experiment.
 
@@ -344,6 +349,7 @@ def from_h5ad(
             use_relative_uri=use_relative_uri,
             X_kind=X_kind,
             registration_mapping=registration_mapping,
+            uns_keys=uns_keys,
         )
 
     logging.log_io(
@@ -366,6 +372,7 @@ def from_anndata(
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> str:
     """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
@@ -490,6 +497,7 @@ def from_anndata(
                 context=context,
                 ingestion_params=ingestion_params,
                 use_relative_uri=use_relative_uri,
+                uns_keys=uns_keys,
             )
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1201,23 +1209,11 @@ def _write_dataframe_impl(
     try:
         soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
     except DoesNotExistError:
-        enums: Dict[str, Union[Sequence[Any], np.ndarray[Any, Any]]] = {}
-        col_to_enums = {}
-        for att in arrow_table.schema:
-            if pa.types.is_dictionary(att.type):
-                cat = df[att.name].cat.categories
-                if pa.types.is_string(att.type.value_type):
-                    enums[att.name] = np.array(cat, dtype="U")
-                else:
-                    enums[att.name] = cat
-                col_to_enums[att.name] = att.name
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
             platform_config=platform_config,
             context=context,
-            enumerations=enums,
-            column_to_enumerations=col_to_enums,
         )
     else:
         if ingestion_params.skip_existing_nonempty_domain:
@@ -2297,6 +2293,7 @@ def _maybe_ingest_uns(
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> None:
     # Don't try to ingest an empty uns.
     if not uns:
@@ -2309,6 +2306,7 @@ def _maybe_ingest_uns(
         context=context,
         ingestion_params=ingestion_params,
         use_relative_uri=use_relative_uri,
+        uns_keys=uns_keys,
     )
 
 
@@ -2321,6 +2319,8 @@ def _ingest_uns_dict(
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
+    uns_keys: Optional[Sequence[str]] = None,
+    level: int = 0,
 ) -> None:
     with _create_or_open_collection(
         Collection,
@@ -2331,6 +2331,8 @@ def _ingest_uns_dict(
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
         coll.metadata["soma_tiledbsoma_type"] = "uns"
         for key, value in dct.items():
+            if level == 0 and uns_keys is not None and key not in uns_keys:
+                continue
             _ingest_uns_node(
                 coll,
                 key,
@@ -2339,6 +2341,7 @@ def _ingest_uns_dict(
                 context=context,
                 ingestion_params=ingestion_params,
                 use_relative_uri=use_relative_uri,
+                level=level + 1,
             )
 
     msg = f"Wrote   {coll.uri} (uns collection)"
@@ -2354,6 +2357,7 @@ def _ingest_uns_node(
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
+    level: int,
 ) -> None:
     if isinstance(value, np.generic):
         # This is some kind of numpy scalar value. Metadata entries
@@ -2375,6 +2379,7 @@ def _ingest_uns_node(
             context=context,
             ingestion_params=ingestion_params,
             use_relative_uri=use_relative_uri,
+            level=level + 1,
         )
         return
 
@@ -2624,12 +2629,14 @@ def to_h5ad(
     h5ad_path: Path,
     measurement_name: str,
     *,
-    X_layer_name: str = "data",
+    X_layer_name: Optional[str] = "data",
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
+    obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> None:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
-    format and writes it to the specified ``.h5ad`` file.
+    format and writes it to the specified ``.h5ad`` file. Arguments are as in ``to_anndata``.
 
     Lifecycle:
         Experimental.
@@ -2643,6 +2650,8 @@ def to_h5ad(
         obs_id_name=obs_id_name,
         var_id_name=var_id_name,
         X_layer_name=X_layer_name,
+        obsm_varm_width_hints=obsm_varm_width_hints,
+        uns_keys=uns_keys,
     )
 
     s2 = _util.get_start_stamp()
@@ -2662,10 +2671,11 @@ def to_anndata(
     experiment: Experiment,
     measurement_name: str,
     *,
-    X_layer_name: str = "data",
+    X_layer_name: Optional[str] = "data",
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
+    uns_keys: Optional[Sequence[str]] = None,
 ) -> ad.AnnData:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
     format. Choice of matrix formats is following what we often see in input
@@ -2678,6 +2688,10 @@ def to_anndata(
 
     The ``obsm_varm_width_hints`` is optional. If provided, it should be of the form
     ``{"obsm":{"X_tSNE":2}}`` to aid with export errors.
+
+    If ``uns_keys`` is provided, only the specified top-level ``uns`` keys
+    are extracted.  The default is to extract them all.  Use ``uns_keys=[]``
+    to not ingest any ``uns`` keys.
 
     Lifecycle:
         Experimental.
@@ -2711,22 +2725,26 @@ def to_anndata(
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    if X_layer_name not in measurement.X:
-        raise ValueError(
-            f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
-        )
-    X_data = measurement.X[X_layer_name]
     X_csr = None
+    X_ndarray = None
     X_dtype = None  # some datasets have no X
-    if isinstance(X_data, DenseNDArray):
-        X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
-        X_dtype = X_ndarray.dtype
-    elif isinstance(X_data, SparseNDArray):
-        X_mat = X_data.read().tables().concat().to_pandas()  # TODO: CSR/CSC options ...
-        X_csr = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
-        X_dtype = X_csr.dtype
-    else:
-        raise TypeError(f"Unexpected NDArray type {type(X_data)}")
+    if X_layer_name is not None:
+        if X_layer_name not in measurement.X:
+            raise ValueError(
+                f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
+            )
+        X_data = measurement.X[X_layer_name]
+        if isinstance(X_data, DenseNDArray):
+            X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
+            X_dtype = X_ndarray.dtype
+        elif isinstance(X_data, SparseNDArray):
+            X_mat = (
+                X_data.read().tables().concat().to_pandas()
+            )  # TODO: CSR/CSC options ...
+            X_csr = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
+            X_dtype = X_csr.dtype
+        else:
+            raise TypeError(f"Unexpected NDArray type {type(X_data)}")
 
     if obsm_varm_width_hints is None:
         obsm_varm_width_hints = {}
@@ -2763,7 +2781,10 @@ def to_anndata(
     if "uns" in measurement:
         s = _util.get_start_stamp()
         logging.log_io(None, f'Start  writing uns for {measurement["uns"].uri}')
-        uns = _extract_uns(cast(Collection[Any], measurement["uns"]))
+        uns = _extract_uns(
+            cast(Collection[Any], measurement["uns"]),
+            uns_keys=uns_keys,
+        )
         logging.log_io(
             None,
             _util.format_elapsed(s, f'Finish writing uns for {measurement["uns"].uri}'),
@@ -2861,6 +2882,8 @@ def _extract_obsm_or_varm(
 
 def _extract_uns(
     collection: Collection[Any],
+    uns_keys: Optional[Sequence[str]] = None,
+    level: int = 0,
 ) -> Dict[str, Any]:
     """
     This is a helper function for ``to_anndata`` of ``uns`` elements.
@@ -2868,8 +2891,11 @@ def _extract_uns(
 
     extracted: Dict[str, Any] = {}
     for key, element in collection.items():
+        if level == 0 and uns_keys is not None and key not in uns_keys:
+            continue
+
         if isinstance(element, Collection):
-            extracted[key] = _extract_uns(element)
+            extracted[key] = _extract_uns(element, level=level + 1)
         elif isinstance(element, DataFrame):
             hint = element.metadata.get(_UNS_OUTGEST_HINT_KEY)
             pdf = element.read().concat().to_pandas()
@@ -2897,6 +2923,8 @@ def _extract_uns(
 
     # Primitives got set on the SOMA-experiment uns metadata.
     for key, value in collection.metadata.items():
+        if level == 0 and uns_keys is not None and key not in uns_keys:
+            continue
         if not key.startswith("soma_"):
             extracted[key] = value
 

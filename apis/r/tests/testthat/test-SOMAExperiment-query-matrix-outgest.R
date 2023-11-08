@@ -49,7 +49,7 @@ test_that("matrix outgest with all results", {
   expect_identical(snn1, snn2)
 
   # Assay data
-  assay1 <- SeuratObject::GetAssayData(pbmc_small[["RNA"]], slot = "counts")
+  assay1 <- SeuratObject::GetAssayData(pbmc_small[["RNA"]], "counts")
   assay2 <- query$to_sparse_matrix(
     collection = "X",
     layer_name = "counts",
@@ -127,7 +127,7 @@ test_that("matrix outgest with filtered results", {
   expect_identical(snn2, snn1)
 
   # Assay data
-  assay1 <- SeuratObject::GetAssayData(pbmc_small1[["RNA"]], slot = "counts")
+  assay1 <- SeuratObject::GetAssayData(pbmc_small1[["RNA"]], "counts")
   assay2 <- query$to_sparse_matrix(
     collection = "X",
     layer_name = "counts",

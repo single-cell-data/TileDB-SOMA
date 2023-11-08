@@ -31,6 +31,7 @@
  */
 
 #include "column_buffer.h"
+#include "../utils/logger.h"
 
 namespace tiledbsoma {
 
@@ -150,6 +151,10 @@ ColumnBuffer::ColumnBuffer(
     if (is_nullable_) {
         validity_.reserve(num_cells);
     }
+}
+
+ColumnBuffer::~ColumnBuffer() {
+    LOG_TRACE(fmt::format("[ColumnBuffer] release '{}'", name_));
 }
 
 void ColumnBuffer::attach(Query& query) {

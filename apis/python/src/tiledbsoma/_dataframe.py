@@ -13,7 +13,6 @@ import pandas as pd
 import pyarrow as pa
 import somacore
 import tiledb
-from numpy.typing import NDArray
 from somacore import options
 from typing_extensions import Self
 
@@ -122,8 +121,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         it must be ``None``.
     """
 
-    __slots__ = ()
-
     @classmethod
     def create(
         cls,
@@ -135,9 +132,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
-        enumerations: Optional[Dict[str, Union[Sequence[Any], NDArray[Any]]]] = None,
-        ordered_enumerations: Optional[Sequence[str]] = None,
-        column_to_enumerations: Optional[Dict[str, str]] = None,
     ) -> "DataFrame":
         """Creates the data structure on disk/S3/cloud.
 
@@ -216,9 +210,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             schema,
             index_column_names,
             domain,
-            enumerations or {},
-            ordered_enumerations or [],
-            column_to_enumerations or {},
             TileDBCreateOptions.from_platform_config(platform_config),
             context,
         )
@@ -411,9 +402,42 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         dim_names_set = self.index_column_names
         n = None
 
-        for name in values.schema.names:
+        for col_info in values.schema:
+            name = col_info.name
             col = values.column(name)
             n = len(col)
+
+            if self._handle.schema.has_attr(name):
+                attr = self._handle.schema.attr(name)
+
+                # Add the enumeration values to the TileDB Array from ArrowArray
+                if attr.enum_label is not None and col.num_chunks != 0:
+                    if not pa.types.is_dictionary(col_info.type):
+                        raise ValueError(
+                            "Expected dictionary type for enumerated attribute "
+                            "{name} but saw {col_info.type}"
+                        )
+
+                    enmr = self._handle.enum(attr.name)
+
+                    # get new enumeration values, maintain original ordering
+                    update_vals = []
+                    for new_val in col.chunk(0).dictionary.tolist():
+                        if new_val not in enmr.values():
+                            update_vals.append(new_val)
+
+                    # only extend if there are new values
+                    if update_vals:
+                        se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
+                        if np.issubdtype(enmr.dtype.type, np.str_):
+                            extend_vals = np.array(update_vals, "U")
+                        elif np.issubdtype(enmr.dtype.type, np.bytes_):
+                            extend_vals = np.array(update_vals, "S")
+                        else:
+                            extend_vals = np.array(update_vals, enmr.dtype)
+                        new_enmr = enmr.extend(extend_vals)
+                        se.extend_enumeration(new_enmr)
+                        se.array_evolve(uri=self.uri)
 
             cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
             if pa.types.is_dictionary(col.type):
@@ -724,9 +748,6 @@ def _build_tiledb_schema(
     schema: pa.Schema,
     index_column_names: Sequence[str],
     domain: Optional[Sequence[Optional[Tuple[Any, Any]]]],
-    enumerations: Dict[str, Any],
-    ordered_enumerations: Sequence[str],
-    column_to_enumerations: Dict[str, str],
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
@@ -776,22 +797,34 @@ def _build_tiledb_schema(
 
     dom = tiledb.Domain(dims, ctx=context.tiledb_ctx)
 
+    attrs = []
     enums = []
-    if enumerations is not None:
-        for enum_name in enumerations:
+    metadata = schema.metadata or {}
+    for pa_attr in schema:
+        attr_name = pa_attr.name
+
+        if attr_name in index_column_names:
+            continue
+
+        has_enum = pa.types.is_dictionary(pa_attr.type)
+
+        if has_enum:
+            enmr_dtype: np.dtype[Any]
+            vtype = pa_attr.type.value_type
+            if pa.types.is_large_string(vtype) or pa.types.is_string(vtype):
+                enmr_dtype = np.dtype("U")
+            elif pa.types.is_large_binary(vtype) or pa.types.is_binary(vtype):
+                enmr_dtype = np.dtype("S")
+            else:
+                enmr_dtype = np.dtype(vtype.to_pandas_dtype())
             enums.append(
                 tiledb.Enumeration(
-                    enum_name,
-                    enum_name in ordered_enumerations,
-                    np.array(enumerations[enum_name]),
+                    name=attr_name,
+                    ordered=pa_attr.type.ordered,
+                    dtype=enmr_dtype,
                 )
             )
 
-    attrs = []
-    metadata = schema.metadata or {}
-    for attr_name in schema.names:
-        if attr_name in index_column_names:
-            continue
         attr = tiledb.Attr(
             name=attr_name,
             dtype=_arrow_types.tiledb_type_from_arrow_type(
@@ -801,9 +834,7 @@ def _build_tiledb_schema(
             filters=tiledb_create_options.attr_filters_tiledb(
                 attr_name, ["ZstdFilter"]
             ),
-            enum_label=column_to_enumerations[attr_name]
-            if attr_name in column_to_enumerations
-            else None,
+            enum_label=attr_name if has_enum else None,
             ctx=context.tiledb_ctx,
         )
         attrs.append(attr)

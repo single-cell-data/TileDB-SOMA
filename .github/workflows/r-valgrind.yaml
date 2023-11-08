@@ -20,6 +20,10 @@ jobs:
         run: apt update -qq && apt upgrade --yes && apt install --yes --no-install-recommends valgrind cmake git
       - name: Package Dependencies
         run: cd apis/r && R -q -e 'remotes::install_deps(".", dependencies=TRUE)'
+      - name: Fetch tiledb from r-universe
+        ## DESCRIPTION has a 'hard' depends on a tiledb version not at CRAN and hence not in r2u
+        ## So using a helper script from the `littler` package to fetch the Ubuntu binary from the given universe
+        run: cd apis/r && installRub.r -u eddelbuettel tiledb
       - name: Build Package
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
       - name: Check Package under valgrind
