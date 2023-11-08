@@ -557,16 +557,23 @@ write_soma.Seurat <- function(
       next
     }
     spdl::info("Adding graph {}", sQuote(obsp))
-    tryCatch(
-      expr = write_soma(
-        x = x[[obsp]],
-        uri = obsp,
-        soma_parent = experiment$ms$get(measurement),
-        platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx
-      ),
-      error = err_to_warn
+    write_soma(
+      x = x[[obsp]],
+      uri = obsp,
+      soma_parent = experiment$ms$get(measurement),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
     )
+    # tryCatch(
+    #   expr = write_soma(
+    #     x = x[[obsp]],
+    #     uri = obsp,
+    #     soma_parent = experiment$ms$get(measurement),
+    #     platform_config = platform_config,
+    #     tiledbsoma_ctx = tiledbsoma_ctx
+    #   ),
+    #   error = err_to_warn
+    # )
   }
 
   # TODO: Write images
