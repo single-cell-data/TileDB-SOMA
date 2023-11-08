@@ -17,7 +17,7 @@ set -e
 
 CRAN=${CRAN:-"https://cloud.r-project.org"}
 OS=$(uname -s)
-RVER=${RVER:-"4.3.1"}
+RVER=${RVER:-$(Rscript -e 'cat(format(getRversion()))')}
 
 ## Optional drat repos, unset by default
 DRAT_REPOS=${DRAT_REPOS:-""}
