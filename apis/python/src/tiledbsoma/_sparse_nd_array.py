@@ -37,6 +37,7 @@ from ._read_iters import (
     SparseCOOTensorReadIter,
     TableReadIter,
 )
+from ._tdb_handles import ArrayWrapper
 from ._types import NTuple
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -92,6 +93,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     """
 
     __slots__ = ()
+
+    _reader_wrapper_type = ArrayWrapper
 
     # Inherited from somacore
     # * ndim accessor
@@ -344,7 +347,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         # In the unlikely event that a previous data update succeeded but the
         # subsequent metadata update did not, take the union of the core non-empty domain
         # (which is done as part of the data update) and the metadata bounding box.
-        ned = self.non_empty_domain() or tuple()
+        ned = self.non_empty_domain() or ()
         for i, nedslot in enumerate(ned):
             ned_lower, ned_upper = nedslot
             bbox_lower, bbox_upper = retval[i]

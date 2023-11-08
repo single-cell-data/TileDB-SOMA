@@ -75,6 +75,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     __slots__ = ("_contents", "_mutated_keys")
     _wrapper_type = _tdb_handles.GroupWrapper
+    _reader_wrapper_type = _tdb_handles.GroupWrapper
 
     # TODO: Implement additional creation of members on collection subclasses.
     @classmethod
@@ -432,7 +433,9 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             timestamp = self.tiledb_timestamp_ms
 
             try:
-                wrapper = _tdb_handles._get_wrapper(uri, mode, context, timestamp)
+                wrapper = _tdb_handles._open_with_clib_wrapper(
+                    uri, mode, context, timestamp
+                )
                 entry.soma = _factory._set_internal(wrapper)
             except SOMAError:
                 entry.soma = _factory._open_internal(
