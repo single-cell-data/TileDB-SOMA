@@ -459,3 +459,19 @@ TEST_CASE("SOMAArray: Enumeration") {
     REQUIRE(soma_array->get_enum_label_on_attr("a"));
     REQUIRE(soma_array->attr_has_enum("a"));
 }
+
+TEST_CASE("SOMAArray: ResultOrder") {
+    auto ctx = std::make_shared<Context>();
+    std::string base_uri = "mem://unit-test-array-result-order";
+    auto [uri, expected_nnz] = create_array(base_uri, ctx);
+    auto [expected_d0, expected_a0] = write_array(uri, ctx);
+    auto soma_array = SOMAArray::open(OpenMode::read, ctx, uri);
+    REQUIRE(soma_array->result_order() == ResultOrder::automatic);
+    soma_array->reset({}, "auto", ResultOrder::rowmajor);
+    REQUIRE(soma_array->result_order() == ResultOrder::rowmajor);
+    soma_array->reset({}, "auto", ResultOrder::colmajor);
+    REQUIRE(soma_array->result_order() == ResultOrder::colmajor);
+    REQUIRE_THROWS_AS(
+        soma_array->reset({}, "auto", static_cast<ResultOrder>(3)),
+        std::invalid_argument);
+}
