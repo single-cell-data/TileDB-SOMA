@@ -401,7 +401,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     if not pa.types.is_dictionary(col.type):
                         raise ValueError(
                             "Expected dictionary type for enumerated attribute "
-                            f"{name} but saw {col_info.type}"
+                            f"{name} but saw {col.type}"
                         )
 
                     enmr = self._handle.enum(attr.name)
