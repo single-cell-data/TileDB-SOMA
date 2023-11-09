@@ -7,8 +7,8 @@
 """
 
 from typing import Any, Optional
-from somacore import experiment
-from somacore import query
+
+from somacore import experiment, query
 
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
@@ -16,6 +16,8 @@ from ._measurement import Measurement
 from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
 from .IntIndexer import indexer_map_locations
+
+
 class Experiment(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnyTileDBObject],
     experiment.Experiment[  # type: ignore[type-var]
@@ -74,13 +76,13 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         return super()._set_create_metadata(handle)
 
     # in tiledbsoma
-    def axis_query(
-            self,
-            measurement_name: str,
-            *,
-            obs_query: Optional[query.AxisQuery] = None,
-            var_query: Optional[query.AxisQuery] = None,
-    ) -> "query.ExperimentAxisQuery[Self]":
+    def axis_query(  # type: ignore
+        self,
+        measurement_name: str,
+        *,
+        obs_query: Optional[query.AxisQuery] = None,
+        var_query: Optional[query.AxisQuery] = None,
+    ):
         """Creates an axis query over this experiment.
 
 
@@ -88,10 +90,10 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         """
         # mypy doesn't quite understand descriptors so it issues a spurious
         # error here.
-        return query.ExperimentAxisQuery(  # type: ignore[type-var]
+        return query.ExperimentAxisQuery(  # type: ignore
             self,
             measurement_name,
             obs_query=obs_query or query.AxisQuery(),
             var_query=var_query or query.AxisQuery(),
-            index_factory=indexer_map_locations # comment this line to disable thw C++ indexer
+            index_factory=indexer_map_locations,  # comment this line to disable thw C++ indexer
         )

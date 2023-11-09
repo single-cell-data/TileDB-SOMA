@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 
-import tiledbsoma
 from tiledbsoma.IntIndexer import IntIndexer
 
-#tiledbsoma.pytiledbsoma.config_logging("debug")
+# tiledbsoma.pytiledbsoma.config_logging("debug")
+
 
 # 1d array to list
 def indexer_test(keys: np.array, lookups: np.array):
@@ -57,7 +57,7 @@ test_data = [
             4,
             5,
         ],
-        "lookups": [-10000, 1, 2, 3, 5 , 6],
+        "lookups": [-10000, 1, 2, 3, 5, 6],
     },
     {
         "keys": [-1, 1, 2, 3, 4, 5],
@@ -147,7 +147,10 @@ test_data = [
         ],
     },
     {"keys": [i for i in range(1, 10000)], "lookups": [i for i in range(1, 10)]},
-    {"keys": [1, 2, 3, 4, 5, 2**63 - 1], "lookups": [i for i in range(2**63 - 1000, 2**63 - 1)]},
+    {
+        "keys": [1, 2, 3, 4, 5, 2**63 - 1],
+        "lookups": [i for i in range(2**63 - 1000, 2**63 - 1)],
+    },
 ]
 
 
