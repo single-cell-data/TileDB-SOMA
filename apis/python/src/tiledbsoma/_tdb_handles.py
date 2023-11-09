@@ -79,7 +79,12 @@ def _open_with_clib_wrapper(
     obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
     if obj.type == "SOMADataFrame":
         return DataFrameWrapper._from_soma_object(obj, context)
-    raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+    elif obj.type == "SOMADenseNDArray":
+        return DenseNDArrayWrapper._from_soma_object(obj, context)
+    elif obj.type == "SOMASparseNDArray":
+        return SparseNDArrayWrapper._from_soma_object(obj, context)
+    else:
+        raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
 
 
 @attrs.define(eq=False, hash=False, slots=False)
@@ -258,6 +263,10 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
     @property
     def ndim(self) -> int:
         return int(self._handle.schema.domain.ndim)
+    
+    @property
+    def shape(self):
+        return self._handle.schema.shape
 
     @property
     def attr_names(self) -> Tuple[str, ...]:
@@ -328,6 +337,12 @@ class SOMAArrayWrapper(Wrapper[SOMAArray]):
     @property
     def schema(self) -> pa.Schema:
         return self._handle.schema
+    
+    @property
+    def reader(self):
+        if self._handle.mode != "r":
+            raise SOMAError("Reader handle is not in read-mode")
+        return self._handle
 
     @property
     def meta(self) -> Dict[str, Any]:
@@ -438,12 +453,15 @@ class SparseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMASparseNDArray]):
         timestamp: int,
     ) -> clib.SOMASparseNDArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        config = {k: str(v) for k, v in context.tiledb_config.items()}
+        column_names: List[str] = []
+        result_order = clib.ResultOrder.automatic
         return clib.SOMASparseNDArray.open(
             uri,
             open_mode,
-            {k: str(v) for k, v in context.tiledb_config.items()},
-            [],
-            clib.ResultOrder.automatic,
+            config,
+            column_names,
+            result_order,
             (0, timestamp),
         )
 
@@ -466,14 +484,17 @@ class DenseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADenseNDArray]):
         mode: options.OpenMode,
         context: SOMATileDBContext,
         timestamp: int,
-    ) -> clib.SOMADenseNDArray:
+    ) -> clib.SOMADenseNDArray:  
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        config = {k: str(v) for k, v in context.tiledb_config.items()}
+        column_names: List[str] = []
+        result_order = clib.ResultOrder.automatic
         return clib.SOMADenseNDArray.open(
             uri,
             open_mode,
-            {k: str(v) for k, v in context.tiledb_config.items()},
-            [],
-            clib.ResultOrder.automatic,
+            config,
+            column_names,
+            result_order,
             (0, timestamp),
         )
 

@@ -337,9 +337,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         del batch_size, platform_config  # Currently unused.
         _util.check_unpartitioned(partitions)
-        self._check_open_read()
 
-        sr = self._handle._handle
+        sr = self._handle.reader
         sr.reset(column_names or [], "auto", _util.to_clib_result_order(result_order))
 
         if value_filter is not None:

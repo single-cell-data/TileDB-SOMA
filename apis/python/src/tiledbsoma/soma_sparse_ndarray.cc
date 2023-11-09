@@ -58,10 +58,13 @@ void load_soma_sparse_ndarray(py::module &m) {
         SOMASparseNDArray& soma_sparse_ndarr) -> bool { 
         return soma_sparse_ndarr.is_open();
     })
-    .def("type", &SOMASparseNDArray::type)
+    .def_property_readonly("type", &SOMASparseNDArray::type)
     .def("ctx", &SOMASparseNDArray::ctx)
     .def("is_sparse", &SOMASparseNDArray::is_sparse)
     .def_property_readonly("uri", &SOMASparseNDArray::uri)
+    .def_property_readonly("mode", [](SOMASparseNDArray& soma_sparse_ndarr){
+        return soma_sparse_ndarr.mode() == OpenMode::read ? "r" : "w";
+    })
     .def_property_readonly("schema", [](SOMASparseNDArray& soma_sparse_ndarr) -> py::object {
         auto pa = py::module::import("pyarrow");
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
@@ -111,6 +114,7 @@ void load_soma_sparse_ndarray(py::module &m) {
             TPY_ERROR_LOC("Unsupported dtype for nonempty domain.");
         }
     })
+    .def_property_readonly("result_order", &SOMASparseNDArray::result_order)
     .def("domain", [](SOMASparseNDArray& soma_sparse_ndarr, std::string name, py::dtype dtype) {
         switch (np_to_tdb_dtype(dtype)) {
         case TILEDB_UINT64:

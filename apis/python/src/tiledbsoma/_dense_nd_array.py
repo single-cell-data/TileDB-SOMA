@@ -20,7 +20,7 @@ from . import _util
 from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._exception import SOMAError
-from ._tdb_handles import ArrayWrapper
+from ._tdb_handles import DenseNDArrayWrapper
 from ._util import dense_indices_to_shape
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -75,7 +75,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     __slots__ = ()
 
-    _reader_wrapper_type = ArrayWrapper
+    _reader_wrapper_type = DenseNDArrayWrapper
 
     def read(
         self,
@@ -133,19 +133,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             data_shape = tuple(slot[1] + 1 for slot in ned)
         target_shape = dense_indices_to_shape(coords, data_shape, result_order)
 
-        to_clib_result_order = {
-            options.ResultOrder.AUTO: clib.ResultOrder.automatic,
-            options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
-            options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
-            "auto": clib.ResultOrder.automatic,
-            "row-major": clib.ResultOrder.rowmajor,
-            "column-major": clib.ResultOrder.colmajor,
-        }
-        if result_order not in to_clib_result_order:
-            raise ValueError(f"Invalid result_order: {result_order}")
-
         sr = self._handle._handle
-        sr.reset([], "auto", to_clib_result_order[result_order])
+        sr.reset([], "auto", _util.to_clib_result_order(result_order))
 
         self._set_reader_coords(sr, coords)
 

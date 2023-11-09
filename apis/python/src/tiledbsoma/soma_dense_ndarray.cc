@@ -56,10 +56,13 @@ void load_soma_dense_ndarray(py::module &m) {
     .def("close", &SOMADenseNDArray::close)
     .def("reset", &SOMADenseNDArray::reset)
     .def("is_open", &SOMADenseNDArray::is_open)
-    .def("type", &SOMADenseNDArray::type)
+    .def_property_readonly("type", &SOMADenseNDArray::type)
     .def("ctx", &SOMADenseNDArray::ctx)
     .def("is_sparse", &SOMADenseNDArray::is_sparse)
     .def("uri", &SOMADenseNDArray::uri)
+    .def_property_readonly("mode", [](SOMADenseNDArray& soma_dense_ndarr){
+        return soma_dense_ndarr.mode() == OpenMode::read ? "r" : "w";
+    })
     .def("schema", &SOMADenseNDArray::schema)
     .def_property_readonly("schema", [](SOMADenseNDArray& soma_dense_ndarr) -> py::object {
         auto pa = py::module::import("pyarrow");

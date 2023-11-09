@@ -144,6 +144,14 @@ class SOMADenseNDArray : public SOMAObject {
         ResultOrder result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
+    SOMADenseNDArray(std::shared_ptr<SOMAArray> array)
+        : array_(array){};
+
+    SOMADenseNDArray() = delete;
+    SOMADenseNDArray(const SOMADenseNDArray&) = default;
+    SOMADenseNDArray(SOMADenseNDArray&&) = default;
+    ~SOMADenseNDArray() = default;
+
     /**
      * Open the SOMADenseNDArray object.
      *
@@ -185,6 +193,15 @@ class SOMADenseNDArray : public SOMAObject {
      * @return bool true if open
      */
     bool is_open() const;
+
+    /**
+     * Check if the SOMADenseNDArray is in read or write mode.
+     *
+     * @return OpenMode
+     */
+    OpenMode mode() const {
+        return array_->mode();
+    }
 
     /**
      * Returns the constant "SOMADenseNDArray".
@@ -238,6 +255,15 @@ class SOMADenseNDArray : public SOMAObject {
      * @return std::vector<std::string>
      */
     const std::vector<std::string> index_column_names() const;
+
+    /**
+     * @brief Returns the result order set by the query.
+     *
+     * @return ResultOrder
+     */
+    ResultOrder result_order() {
+        return array_->result_order();
+    }
 
     /**
      * @brief Get the capacity of each dimension.

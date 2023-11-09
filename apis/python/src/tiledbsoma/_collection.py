@@ -428,29 +428,20 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             raise KeyError(err_str) from None
         if entry.soma is None:
             from . import _factory  # Delayed binding to resolve circular import.
-            from ._tdb_handles import Wrapper
-
-            uri = entry.entry.uri
-            wrapper: type[Wrapper[Any | Any | Any]]
-            if self.mode == "r" and clib.SOMADataFrame.exists(uri):
-                wrapper = DataFrameWrapper
-            elif self.mode == "r" and clib.SOMASparseNDArray.exists(uri):
-                wrapper = SparseNDArrayWrapper
-            elif self.mode == "r" and clib.SOMADenseNDArray.exists(uri):
-                wrapper = DenseNDArrayWrapper
-            else:
-                wrapper = entry.entry.wrapper_type
-
+            
             uri = entry.entry.uri
             mode = self.mode
             context = self.context
             timestamp = self.tiledb_timestamp_ms
 
             try:
+                print(uri, mode)
                 wrapper = _tdb_handles._open_with_clib_wrapper(
                     uri, mode, context, timestamp
                 )
+                print(wrapper)
                 entry.soma = _factory._set_internal(wrapper)
+                print(entry.soma)
             except SOMAError:
                 entry.soma = _factory._open_internal(
                     entry.entry.wrapper_type.open, uri, mode, context, timestamp

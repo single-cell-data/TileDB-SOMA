@@ -195,6 +195,11 @@ class SOMADataFrame : public SOMAObject {
      */
     bool is_open() const;
 
+    /**
+     * Check if the SOMADataFrame is in read or write mode.
+     *
+     * @return OpenMode
+     */
     OpenMode mode() const {
         return array_->mode();
     }
@@ -242,6 +247,15 @@ class SOMADataFrame : public SOMAObject {
      * @return std::vector<std::string>
      */
     const std::vector<std::string> index_column_names() const;
+
+    /**
+     * @brief Returns the result order set by the query.
+     *
+     * @return ResultOrder
+     */
+    ResultOrder result_order() {
+        return array_->result_order();
+    }
 
     /**
      * Return the number of rows.
