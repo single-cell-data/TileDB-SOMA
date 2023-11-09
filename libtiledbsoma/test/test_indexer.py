@@ -27,7 +27,7 @@ def indexer_test(keys: np.array, lookups: np.array):
 
 test_data = [
     {
-        "keys": [-1, -1, -1, 0],
+        "keys": [-1, -1, -1, 0, 0, 0],
         "lookups": [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
     },
     {
@@ -57,7 +57,7 @@ test_data = [
             4,
             5,
         ],
-        "lookups": [-10000, 1, 2, 3],
+        "lookups": [-10000, 1, 2, 3, 5 , 6],
     },
     {
         "keys": [-1, 1, 2, 3, 4, 5],
@@ -89,7 +89,7 @@ test_data = [
         ],
     },
     {
-        "keys": [-10000],
+        "keys": [-10000, -100000, 200000, 5, 1, 7],
         "lookups": [
             -1,
             1,
@@ -118,7 +118,7 @@ test_data = [
         ],
     },
     {
-        "keys": [-10000, -200000, 1000],
+        "keys": [-10000, -200000, 1000, 3000, 1, 2],
         "lookups": [
             -1,
             1,
@@ -147,7 +147,7 @@ test_data = [
         ],
     },
     {"keys": [i for i in range(1, 10000)], "lookups": [i for i in range(1, 10)]},
-    {"keys": [2**63 - 1], "lookups": [i for i in range(2**63 - 1000, 2**63 - 1)]},
+    {"keys": [1, 2, 3, 4, 5, 2**63 - 1], "lookups": [i for i in range(2**63 - 1000, 2**63 - 1)]},
 ]
 
 
