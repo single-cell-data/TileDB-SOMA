@@ -73,6 +73,7 @@ jobs:
         run: Rscript -e 'update.packages(ask=FALSE)'
 
       - name: Install SeuratObject from source
+        if: ${{ matrix.os != 'macOS-latest' }}
         run: install.packages("SeuratObject", type = "source", repos = "https://cloud.r-project.org")
         shell: Rscript {0}
 
