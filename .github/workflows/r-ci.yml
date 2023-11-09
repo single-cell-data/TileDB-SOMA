@@ -27,9 +27,9 @@ jobs:
           - name: macos
             os: macOS-latest
             covr: 'no'
-          # - name: coverage
-          #   os: ubuntu-latest
-          #   covr: 'yes'
+          - name: coverage
+            os: ubuntu-latest
+            covr: 'yes'
 
     runs-on: ${{ matrix.os }}
 
