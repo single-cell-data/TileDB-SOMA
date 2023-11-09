@@ -48,7 +48,9 @@ namespace tiledbsoma {
 void IntIndexer::map_locations(const int64_t* keys, int size, int threads) {
     if (size < threads)
         throw std::runtime_error(
-            "The number of keys must be larger than the number of threads.");
+            "The number of keys " + std::to_string(size) +
+            " must be larger than the number of threads " +
+            std::to_string(threads) + " .");
 
     LOG_DEBUG(fmt::format(
         "End of Map locations of size {} and {} threads", size, threads));

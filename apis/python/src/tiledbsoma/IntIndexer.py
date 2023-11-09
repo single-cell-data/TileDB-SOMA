@@ -30,7 +30,6 @@ def indexer_map_locations(keys: np.ndarray[np.int64, Any]) -> clib.IntIndexer:
         compute_concurrency = int(
             int(context._tiledb_ctx.config()["sm.compute_concurrency_level"]) / 2
         )
-    compute_concurrency = 8
     thread_counts = int(compute_concurrency)
     reindexer = clib.IntIndexer()
     reindexer.map_locations(keys, thread_counts)
