@@ -4,13 +4,12 @@ import cellxgene_census
 
 import tiledbsoma as soma
 
-census_S3_latest = dict(census_version="latest")
-census_local_copy = dict(uri="/Users/brobatmili/projects/census_data/")
+census_S3_latest = dict(census_version="2023-10-23")
 
 
 def main():
     t1 = perf_counter()
-    with cellxgene_census.open_soma(**census_local_copy) as census:
+    with cellxgene_census.open_soma(**census_S3_latest) as census:
         with census["census_data"]["homo_sapiens"].axis_query(
             measurement_name="RNA",
             obs_query=soma.AxisQuery(value_filter="""tissue_general == 'eye'"""),

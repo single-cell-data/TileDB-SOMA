@@ -10,4 +10,4 @@ pip install tiledbsoma
 pip install cellxgene_census
 python -m profiler "python ann_data.py" -t gtime
 
-python ./top_profiler.py
+python ./profile_report.py

@@ -1,14 +1,14 @@
 name: TileDB-SOMA Profiler run
 
 on:
+  pull_request:
+
   push:
     branches:
-  pull_request:
-    branches:
-      - "main"
+      - main
+      - 'release-*'
+  workflow_dispatch:
 
-paths:
-      - ".github/workflows/profiler"
 jobs:
 
   check-links:
