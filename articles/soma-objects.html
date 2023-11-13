@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,7 +95,7 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">uri</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">extract_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small"</span><span class="op">)</span></span>
 <span><span class="va">uri</span></span>
-<span><span class="co">#&gt; [1] "/tmp/Rtmphybkud/soma-exp-pbmc-small"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "/tmp/RtmpOcepVz/soma-exp-pbmc-small"</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="somaexperiment">
@@ -113,7 +113,7 @@
 <code class="sourceCode R"><span><span class="va">experiment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SOMAExperimentOpen.html">SOMAExperimentOpen</a></span><span class="op">(</span><span class="va">uri</span><span class="op">)</span></span>
 <span><span class="va">experiment</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/Rtmphybkud/soma-exp-pbmc-small </span></span>
+<span><span class="co">#&gt;   uri: /tmp/RtmpOcepVz/soma-exp-pbmc-small </span></span>
 <span><span class="co">#&gt;   arrays: obs </span></span>
 <span><span class="co">#&gt;   groups: ms</span></span></code></pre></div>
 <p>Note that opening a <code>SOMAExperiment</code> (or any SOMA object) only returns a pointer to the object on disk. No data is actually read into memory until it’s requested. This is important as the full experiment may be too large to fit in memory.</p>
@@ -121,14 +121,14 @@
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmphybkud/soma-exp-pbmc-small/ms </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpOcepVz/soma-exp-pbmc-small/ms </span></span>
 <span><span class="co">#&gt;   groups: RNA</span></span></code></pre></div>
 <p>This returns the <code>SOMACollection</code> of measurements. We’ll take a closer look at this later.</p>
 <p>To access the <code>obs</code> field containing the observation annotations:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">obs</span></span>
 <span><span class="co">#&gt; &lt;SOMADataFrame&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmphybkud/soma-exp-pbmc-small/obs </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpOcepVz/soma-exp-pbmc-small/obs </span></span>
 <span><span class="co">#&gt;   dimensions: soma_joinid </span></span>
 <span><span class="co">#&gt;   attributes: orig.ident, nCount_RNA, nFeature_RNA, RNA_snn_res.0.8, letter.idents, groups,...</span></span></code></pre></div>
 </div>
@@ -228,13 +228,13 @@
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmphybkud/soma-exp-pbmc-small/ms </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpOcepVz/soma-exp-pbmc-small/ms </span></span>
 <span><span class="co">#&gt;   groups: RNA</span></span></code></pre></div>
 <p>In this case, we have one member: <code>RNA</code>, which is a <code>SOMAMeasurement</code>. A specific measurement can be accessed by name with the <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code> method:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"RNA"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;SOMAMeasurement&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmphybkud/soma-exp-pbmc-small/ms/RNA </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpOcepVz/soma-exp-pbmc-small/ms/RNA </span></span>
 <span><span class="co">#&gt;   arrays: var </span></span>
 <span><span class="co">#&gt;   groups: obsm, obsp, varm, X</span></span></code></pre></div>
 </div>
@@ -269,7 +269,7 @@
 <code class="sourceCode R"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="va">experiment</span><span class="op">$</span><span class="va">ms</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"RNA"</span><span class="op">)</span><span class="op">$</span><span class="va">X</span></span>
 <span><span class="va">X</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmphybkud/soma-exp-pbmc-small/ms/RNA/X </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpOcepVz/soma-exp-pbmc-small/ms/RNA/X </span></span>
 <span><span class="co">#&gt;   arrays: counts, data, scale_data</span></span></code></pre></div>
 <p>This collection contains 3 layers corresponding to the raw, normalized, and scaled slots from the original Seurat object.</p>
 <p>Any of these <code>X</code> layers can be accessed using <code><a href="https://rdrr.io/r/base/get.html" class="external-link">get()</a></code>:</p>
@@ -277,7 +277,7 @@
 <code class="sourceCode R"><span><span class="va">X_data</span> <span class="op">&lt;-</span> <span class="va">X</span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"data"</span><span class="op">)</span></span>
 <span><span class="va">X_data</span></span>
 <span><span class="co">#&gt; &lt;SOMASparseNDArray&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/Rtmphybkud/soma-exp-pbmc-small/ms/RNA/X/data </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/RtmpOcepVz/soma-exp-pbmc-small/ms/RNA/X/data </span></span>
 <span><span class="co">#&gt;   dimensions: soma_dim_0, soma_dim_1 </span></span>
 <span><span class="co">#&gt;   attributes: soma_data</span></span></code></pre></div>
 <p>This returns a <code>SOMASparseNDArray</code>. As we did before, we can inspect the array’s schema:</p>
