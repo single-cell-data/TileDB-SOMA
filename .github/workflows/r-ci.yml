@@ -55,13 +55,11 @@ jobs:
 
       - name: Install r-universe build of SeuratObject (macOS)
         if: ${{ matrix.os == 'macOS-latest' }}
-        run: install.packages("SeuratObject", repos = c("https://mojaveazure.r-universe.dev", "https://cloud.r-project.org"))
-        shell: Rscript {0}
+        run: cd apis/r && Rscript -e "install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev', 'https://cloud.r-project.org'))"
 
       - name: Install r-universe build of SeuratObject (linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: install.packages("SeuratObject", repos = c("https://mojaveazure.r-universe.dev/bin/linux/jammy/4.3", "https://cloud.r-project.org"))
-        shell: Rscript {0}
+        run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
