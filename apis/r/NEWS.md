@@ -1,4 +1,4 @@
-# tiledbsoma 1.5.0
+# tiledbsoma 1.5.1
 
 ## Changes
 
