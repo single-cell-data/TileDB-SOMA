@@ -17,7 +17,7 @@ set -e
 
 CRAN=${CRAN:-"https://cloud.r-project.org"}
 OS=$(uname -s)
-RVER=${RVER:-"4.3.1"}
+RVER=${RVER:-"4.3.2"}
 
 ## Optional drat repos, unset by default
 DRAT_REPOS=${DRAT_REPOS:-""}
@@ -203,9 +203,10 @@ BootstrapLinuxOptions() {
 
 BootstrapMac() {
     # Install from latest CRAN binary build for OS X
+    echo "Downloading ${RVER} for macOS"
     wget ${CRAN}/bin/macosx/big-sur-x86_64/base/R-${RVER}-x86_64.pkg -O /tmp/R-latest.pkg
 
-    echo "Installing OS X binary package for R"
+    echo "Installing macOS binary package for R"
     sudo installer -pkg "/tmp/R-latest.pkg" -target /
     rm "/tmp/R-latest.pkg"
 
