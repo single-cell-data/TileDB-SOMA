@@ -53,6 +53,14 @@ jobs:
         if: ${{ matrix.os != 'macOS-latest' }}
         run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
+      - name: Install r-universe build of SeuratObject (macOS)
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: cd apis/r && Rscript -e "install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev', 'https://cloud.r-project.org'))"
+
+      - name: Install r-universe build of SeuratObject (linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
+
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 
@@ -71,11 +79,6 @@ jobs:
       #
       - name: Update Packages
         run: Rscript -e 'update.packages(ask=FALSE)'
-
-      - name: Install SeuratObject from source
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: install.packages("SeuratObject", type = "source", repos = "https://cloud.r-project.org")
-        shell: Rscript {0}
 
       - name: Test
         if: ${{ matrix.covr == 'no' }}
