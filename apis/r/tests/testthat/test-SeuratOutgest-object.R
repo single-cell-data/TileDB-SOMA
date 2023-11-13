@@ -1,6 +1,21 @@
+so_msg <- function(version) {
+  return(paste0(
+    "The version of SeuratObject installed (",
+    sQuote(version),
+    ") is known to have issues with testing `Seurat` object outgestion; skipping..."
+  ))
+}
+
 test_that("Load Seurat object from ExperimentQuery mechanics", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  so_version <- utils::packageVersion('SeuratObject')
+  skip_if_not(
+    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < '5.0.0') ||
+      so_version >= '5.0.0.9003',
+    message = so_msg(so_version)
+  )
+
   uri <- withr::local_tempdir("seurat-experiment-query-whole")
   n_obs <- 20L
   n_var <- 10L
@@ -24,8 +39,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     experiment = experiment,
     measurement_name = "RNA"
   )
-  # expect_no_condition(obj <- query$to_seurat())
-  obj <- query$to_seurat()
+  expect_no_condition(obj <- query$to_seurat())
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
@@ -54,14 +68,10 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_identical(colnames(graph), colnames(obj))
 
   # Test named
-  # expect_no_condition(obj <- query$to_seurat(
-  #   obs_index = 'baz',
-  #   var_index = 'quux'
-  # ))
-  obj <- query$to_seurat(
+  expect_no_condition(obj <- query$to_seurat(
     obs_index = 'baz',
     var_index = 'quux'
-  )
+  ))
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(
@@ -97,8 +107,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_identical(colnames(graph), colnames(obj))
 
   # Test `X_layers`
-  # expect_no_condition(obj <- query$to_seurat(c(counts = 'counts')))
-  obj <- query$to_seurat(c(counts = 'counts'))
+  expect_no_condition(obj <- query$to_seurat(c(counts = 'counts')))
   expect_s4_class(
     counts <- SeuratObject::GetAssayData(obj[['RNA']], 'counts'),
     'dgCMatrix'
@@ -108,8 +117,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     'dgCMatrix'
   )
   expect_identical(counts, data)
-  # expect_no_condition(obj <- query$to_seurat(c(data = 'logcounts')))
-  obj <- query$to_seurat(c(data = 'logcounts'))
+  expect_no_condition(obj <- query$to_seurat(c(data = 'logcounts')))
   expect_s4_class(
     SeuratObject::GetAssayData(obj[['RNA']], 'data'),
     'dgCMatrix'
@@ -120,20 +128,16 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   )))
 
   # Test suppress reductions
-  # expect_no_condition(obj <- query$to_seurat(obsm_layers = FALSE))
-  obj <- query$to_seurat(obsm_layers = FALSE)
+  expect_no_condition(obj <- query$to_seurat(obsm_layers = FALSE))
   expect_length(SeuratObject::Reductions(obj), 0L)
-  # expect_no_condition(obj <- query$to_seurat(obsm_layers = NA))
-  obj <- query$to_seurat(obsm_layers = NA)
+  expect_no_condition(obj <- query$to_seurat(obsm_layers = NA))
   expect_length(SeuratObject::Reductions(obj), 0L)
-  # expect_no_condition(obj <- query$to_seurat(obsm_layers = 'umap'))
-  obj <- query$to_seurat(obsm_layers = 'umap')
+  expect_no_condition(obj <- query$to_seurat(obsm_layers = 'umap'))
   expect_identical(SeuratObject::Reductions(obj), 'umap')
   expect_error(obj[['pca']])
 
   # Test suppress loadings
-  # expect_no_condition(obj <- query$to_seurat(varm_layers = FALSE))
-  obj <- query$to_seurat(varm_layers = FALSE)
+  expect_no_condition(obj <- query$to_seurat(varm_layers = FALSE))
   expect_identical(
     lapply(list(SeuratObject::Reductions(obj)), sort),
     lapply(list(c('pca', 'umap')), sort)
@@ -141,13 +145,11 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(obj[['pca']])))
 
   # Test suppress graphs
-  # expect_no_condition(obj <- query$to_seurat(obsp_layers = FALSE))
-  obj <- query$to_seurat(obsp_layers = FALSE)
+  expect_no_condition(obj <- query$to_seurat(obsp_layers = FALSE))
   expect_length(SeuratObject::Graphs(obj), 0L)
 
   # Test suppress cell-level meta data
-  # expect_no_condition(obj <- query$to_seurat(obs_column_names = FALSE))
-  obj <- query$to_seurat(obs_column_names = FALSE)
+  expect_no_condition(obj <- query$to_seurat(obs_column_names = FALSE))
   expect_false(any(query$obs_df$attrnames() %in% names(obj[[]])))
 
   # Test `X_layers` assertions
@@ -195,6 +197,13 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
 test_that("Load Seurat object from sliced ExperimentQuery", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  so_version <- utils::packageVersion('SeuratObject')
+  skip_if_not(
+    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < '5.0.0') ||
+      so_version >= '5.0.0.9003',
+    message = so_msg(so_version)
+  )
+
   uri <- withr::local_tempdir("seurat-experiment-query-sliced")
   n_obs <- 1001L
   n_var <- 99L
@@ -224,8 +233,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   )
   n_var_slice <- length(var_slice)
   n_obs_slice <- length(obs_slice)
-  # expect_no_condition(obj <- query$to_seurat())
-  obj <- query$to_seurat()
+  expect_no_condition(obj <- query$to_seurat())
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
@@ -236,14 +244,10 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   )
 
   # Test named
-  # expect_no_condition(obj <- query$to_seurat(
-  #   obs_index = 'baz',
-  #   var_index = 'quux'
-  # ))
-  obj <- query$to_seurat(
+  expect_no_condition(obj <- query$to_seurat(
     obs_index = 'baz',
     var_index = 'quux'
-  )
+  ))
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(
@@ -263,6 +267,13 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
 test_that("Load Seurat object from indexed ExperimentQuery", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  so_version <- utils::packageVersion('SeuratObject')
+  skip_if_not(
+    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < '5.0.0') ||
+      so_version >= '5.0.0.9003',
+    message = so_msg(so_version)
+  )
+
   uri <- withr::local_tempdir("seurat-experiment-query-value-filters")
   n_obs <- 1001L
   n_var <- 99L
@@ -300,8 +311,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   )
   n_var_select <- length(var_label_values)
   n_obs_select <- length(obs_label_values)
-  # expect_no_condition(obj <- query$to_seurat())
-  obj <- query$to_seurat()
+  expect_no_condition(obj <- query$to_seurat())
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
@@ -312,14 +322,10 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   )
 
   # Test named
-  # expect_no_condition(obj <- query$to_seurat(
-  #   obs_index = 'baz',
-  #   var_index = 'quux'
-  # ))
-  obj <- query$to_seurat(
+  expect_no_condition(obj <- query$to_seurat(
     obs_index = 'baz',
     var_index = 'quux'
-  )
+  ))
   expect_s4_class(obj, 'Seurat')
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(
