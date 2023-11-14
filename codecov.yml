@@ -4,3 +4,19 @@ coverage:
 ignore:
   - "apis/r/inst/tiledb/"
   - "apis/python/devtools/"
+
+comment:
+  layout: "header, diff, flags, components"  # show component info in the PR comment
+
+component_management:
+  individual_components:
+    - component_id: python_api
+      name: python_api
+      paths:
+        - apis/python/src/tiledbsoma/**
+    - component_id: libtiledbsoma
+      name: libtiledbsoma
+      paths:
+        - libtiledbsoma/src/tiledbsoma/**
+        - libtiledbsoma/src/soma/**
+        - libtiledbsoma/src/utils/**
