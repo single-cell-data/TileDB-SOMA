@@ -19,6 +19,7 @@ from typing import (
 
 import numpy as np
 import pyarrow as pa
+import pyarrow.compute as pacomp
 import somacore
 import tiledb
 from somacore import options
@@ -247,7 +248,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             for i in range(coord_tbl.num_columns):
                 coords = values.column(f"soma_dim_{i}")
                 if coords:
-                    maxes.append(pa.compute.max(coords).as_py())
+                    maxes.append(pacomp.max(coords).as_py())
                 else:  # completely empty X
                     maxes.append(0)
             bounding_box = self._compute_bounding_box_metadata(maxes)
