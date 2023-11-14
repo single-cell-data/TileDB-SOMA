@@ -93,7 +93,7 @@ check_package <- function(package, version = NULL, quietly = FALSE) {
 #' informative error is thrown with the missing values.
 #' @noRd
 assert_subset <- function(x, y, type = "value") {
-  stopifnot(is.atomic(x) && is.atomic(y))
+  stopifnot((is.atomic(x) || is.null(x)) && (is.atomic(y) || is.null(y)))
   missing <- !x %in% y
   if (any(missing)) {
     stop(sprintf(
