@@ -53,7 +53,24 @@ void load_soma_sparse_ndarray(py::module &m) {
     .def_static("exists", &SOMASparseNDArray::exists)
     .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMASparseNDArray::open))
     .def("close", &SOMASparseNDArray::close)
-    .def("reset", &SOMASparseNDArray::reset)
+    .def("reset",
+        [](SOMASparseNDArray& soma_sparse_ndarr,
+        std::optional<std::vector<std::string>> column_names_in,
+        std::string_view batch_size,
+        ResultOrder result_order) {
+            // Handle optional args
+            std::vector<std::string> column_names;
+            if (column_names_in) {
+                column_names = *column_names_in;
+            }
+
+            // Reset state of the existing SOMAArray object
+            soma_sparse_ndarr.reset(column_names, batch_size, result_order);
+        },
+        py::kw_only(),
+        "column_names"_a = py::none(),
+        "batch_size"_a = "auto",
+        "result_order"_a = ResultOrder::automatic)
     .def_property_readonly("closed", [](
         SOMASparseNDArray& soma_sparse_ndarr) -> bool { 
         return soma_sparse_ndarr.is_open();
@@ -162,10 +179,10 @@ void load_soma_sparse_ndarray(py::module &m) {
     .def_property_readonly("shape", &SOMASparseNDArray::shape)
     .def_property_readonly("ndim", &SOMASparseNDArray::ndim)
     .def_property_readonly("nnz", &SOMASparseNDArray::nnz)
-    .def("read_next", [](SOMASparseNDArray& dataframe){
+    .def("read_next", [](SOMASparseNDArray& soma_sparse_ndarr){
         // Release GIL when reading data
         py::gil_scoped_release release;
-        auto buffers = dataframe.read_next();
+        auto buffers = soma_sparse_ndarr.read_next();
         py::gil_scoped_acquire acquire;
 
         return to_table(buffers);

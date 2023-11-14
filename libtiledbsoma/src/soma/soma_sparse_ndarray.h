@@ -144,12 +144,14 @@ class SOMASparseNDArray : public SOMAObject {
         ResultOrder result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp);
 
-    SOMASparseNDArray(std::shared_ptr<SOMAArray> array)
-        : array_(array){};
+    SOMASparseNDArray(std::unique_ptr<SOMAArray> array)
+        : array_(std::move(array)){};
 
     SOMASparseNDArray() = delete;
-    SOMASparseNDArray(const SOMASparseNDArray&) = default;
-    SOMASparseNDArray(SOMASparseNDArray&&) = default;
+    SOMASparseNDArray(const SOMASparseNDArray&) = delete;
+    SOMASparseNDArray(SOMASparseNDArray&& sparse_ndarray)
+        : array_(std::move(sparse_ndarray.array_)) {
+    }
     ~SOMASparseNDArray() = default;
 
     /**
@@ -503,7 +505,7 @@ class SOMASparseNDArray : public SOMAObject {
     //===================================================================
 
     // SOMAArray
-    std::shared_ptr<SOMAArray> array_;
+    std::unique_ptr<SOMAArray> array_;
 };
 }  // namespace tiledbsoma
 

@@ -160,7 +160,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         _util.check_unpartitioned(partitions)
         
         sr = self._handle.reader
-        sr.reset([], "auto", _util.to_clib_result_order(result_order))
+        sr.reset(result_order=_util.to_clib_result_order(result_order))
         
         return SparseNDArrayRead(sr, self, coords)
 

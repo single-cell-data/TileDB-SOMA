@@ -101,11 +101,11 @@ TEST_CASE("SOMASparseNDArray: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
 
-    soma_sparse->open(OpenMode::write);
+    soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
     soma_sparse->write(array_buffer);
     soma_sparse->close();
 
-    soma_sparse->open(OpenMode::read);
+    soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
     while (auto batch = soma_sparse->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();

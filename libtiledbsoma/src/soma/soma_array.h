@@ -168,7 +168,7 @@ class SOMAArray {
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMAArray() = delete;
-    SOMAArray(const SOMAArray&) = delete;
+    SOMAArray(const SOMAArray&) = default;
     SOMAArray(SOMAArray&&) = default;
     ~SOMAArray() = default;
 

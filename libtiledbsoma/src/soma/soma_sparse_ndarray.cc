@@ -97,7 +97,7 @@ SOMASparseNDArray::SOMASparseNDArray(
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     std::string array_name = std::filesystem::path(uri).filename();
-    array_ = std::make_shared<SOMAArray>(
+    array_ = std::make_unique<SOMAArray>(
         mode,
         uri,
         array_name,  // label used when debugging
@@ -106,13 +106,11 @@ SOMASparseNDArray::SOMASparseNDArray(
         "auto",  // batch_size,
         result_order,
         timestamp);
-    array_->reset();
 }
 
 void SOMASparseNDArray::open(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     array_->open(mode, timestamp);
-    array_->reset();
 }
 
 void SOMASparseNDArray::close() {
@@ -132,8 +130,9 @@ bool SOMASparseNDArray::exists(std::string_view uri) {
         const char* dtype = (const char*)std::get<MetadataInfo::value>(
             *soma_object_type);
 
-        return std::string(dtype).find("SOMASparseNDArray") !=
-               std::string::npos;
+        uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
+
+        return std::string(dtype, sz) == "SOMASparseNDArray";
     } catch (std::exception& e) {
         return false;
     }

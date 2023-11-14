@@ -215,12 +215,13 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
     def _table_reader(self) -> BlockwiseSingleAxisTableIter:
         """Private. Blockwise table reader. Helper function for sub-class use"""
+        kwargs: Dict[str, object] = {"result_order": self.sr.result_order}
         for coord_chunk in _coords_strider(
             self.coords[self.major_axis],
             self.sr.shape[self.major_axis],
             self.size[0],
         ):
-            self.sr.reset([], "auto", self.sr.result_order)
+            self.sr.reset(**kwargs)
             step_coords = list(self.coords)
             step_coords[self.major_axis] = coord_chunk
             self.array._set_reader_coords(self.sr, step_coords)
@@ -456,6 +457,7 @@ def _arrow_table_reader(sr: clib.SOMAArray) -> Iterator[pa.Table]:
     while tbl is not None:
         yield tbl
         tbl = sr.read_next()
+        
 
 
 def _coords_strider(
