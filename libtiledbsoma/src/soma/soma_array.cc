@@ -114,6 +114,7 @@ SOMAArray::SOMAArray(
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp)
     : uri_(util::rstrip_uri(uri))
+    , result_order_(result_order)
     , timestamp_(timestamp) {
     ctx_ = std::make_shared<Context>(Config(platform_config));
     validate(mode, name, timestamp);
@@ -132,6 +133,7 @@ SOMAArray::SOMAArray(
     std::optional<std::pair<uint64_t, uint64_t>> timestamp)
     : ctx_(ctx)
     , uri_(util::rstrip_uri(uri))
+    , result_order_(result_order)
     , timestamp_(timestamp) {
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
@@ -197,18 +199,27 @@ void SOMAArray::reset(
         mq_->select_columns(column_names);
     }
 
-    batch_size_ = batch_size;
-
-    if (result_order !=
-        ResultOrder::automatic) {  // default ResultOrder::automatic is set in
-                                   // soma_array.h
-        tiledb_layout_t layout = (result_order == ResultOrder::rowmajor) ?
-                                     TILEDB_ROW_MAJOR :
-                                     TILEDB_COL_MAJOR;
-        mq_->set_layout(layout);
-        result_order_ = result_order;
+    switch (result_order) {
+        case ResultOrder::automatic:
+            if (arr_->schema().array_type() == TILEDB_SPARSE)
+                mq_->set_layout(TILEDB_UNORDERED);
+            else
+                mq_->set_layout(TILEDB_ROW_MAJOR);
+            break;
+        case ResultOrder::rowmajor:
+            mq_->set_layout(TILEDB_ROW_MAJOR);
+            break;
+        case ResultOrder::colmajor:
+            mq_->set_layout(TILEDB_COL_MAJOR);
+            break;
+        default:
+            throw std::invalid_argument(fmt::format(
+                "[SOMAArray] invalid ResultOrder({}) passed",
+                static_cast<int>(result_order)));
     }
 
+    batch_size_ = batch_size;
+    result_order_ = result_order;
     first_read_next_ = true;
     submitted_ = false;
 }

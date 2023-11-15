@@ -1812,60 +1812,70 @@ def test_types_write_errors(
             ["int32"],
             None,
             [pa.array([3202, 3203])],
+            # Static type (INT64) does not match expected type (INT32)
         ],
         [
             "int16-pa-array-untyped",
             ["int16"],
             None,
             [pa.array([1602, 1603])],
+            # Static type (INT64) does not match expected type (INT16)
         ],
         [
             "int8-pa-array-untyped",
             ["int8"],
             None,
             [pa.array([82, 83])],
+            # Static type (INT64) does not match expected type (INT8)
         ],
         [
             "uint64-pa-array-untyped",
             ["uint64"],
             None,
             [pa.array([6412, 6413])],
+            # Static type (INT64) does not match expected type (UINT64)
         ],
         [
             "uint32-pa-array-untyped",
             ["uint32"],
             None,
             [pa.array([3212, 3213])],
+            # Static type (UINT64) does not match expected type (UINT32)
         ],
         [
             "uint16-pa-array-untyped",
             ["uint16"],
             None,
             [pa.array([1612, 1613])],
+            # Static type (UINT64) does not match expected type (UINT16)
         ],
         [
             "uint8-pa-array-untyped",
             ["uint8"],
             None,
             [pa.array([92, 93])],
+            # Static type (UINT64) does not match expected type (UINT8)
         ],
         [
             "float32-pa-array-untyped",
             ["float32"],
             None,
             [pa.array([322.5, 323.5])],
+            # Static type (FLOAT64) does not match expected type (FLOAT32)
         ],
         [
             "float32-pa-array-typed-float64",
             ["float32"],
             None,
             [pa.array([322.5, 323.5], pa.float64())],
+            # Static type (FLOAT64) does not match expected type (FLOAT32)
         ],
         [
             "float64-pa-array-typed-float32",
             ["float64"],
             None,
             [pa.array([322.5, 323.5], pa.float32())],
+            # Static type (FLOAT32) does not match expected type (FLOAT64)
         ],
     ],
 )
@@ -1889,6 +1899,6 @@ def test_types_read_errors(
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_table)
 
-    with pytest.raises((RuntimeError, tiledb.TileDBError)):
+    with pytest.raises((RuntimeError, tiledb.cc.TileDBError)):
         with soma.DataFrame.open(uri, "r") as sdf:
             sdf.read(coords=coords).concat()
