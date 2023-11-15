@@ -161,7 +161,7 @@ void SOMAArray::fill_metadata_cache() {
     }
 }
 
-const std::string& SOMAArray::uri() const {
+const std::string SOMAArray::uri() const {
     return uri_;
 };
 
@@ -169,7 +169,17 @@ std::shared_ptr<Context> SOMAArray::ctx() {
     return ctx_;
 };
 
-void SOMAArray::open(
+const std::string SOMAArray::type() const {
+    auto soma_object_type = this->get_metadata("soma_object_type");
+
+    const char* dtype = (const char*)std::get<MetadataInfo::value>(
+        *soma_object_type);
+    uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
+
+    return std::string(dtype, sz);
+}
+
+void SOMAArray::reopen(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
     arr_->open(tdb_mode);
@@ -523,15 +533,16 @@ void SOMAArray::delete_metadata(const std::string& key) {
     metadata_.erase(key);
 }
 
-std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
+const std::map<std::string, MetadataValue> SOMAArray::get_metadata() const {
     return metadata_;
 }
 
-std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
+std::optional<MetadataValue> SOMAArray::get_metadata(
+    const std::string& key) const {
     if (metadata_.count(key) == 0) {
         return std::nullopt;
     }
-    return metadata_[key];
+    return metadata_.at(key);
 }
 
 bool SOMAArray::has_metadata(const std::string& key) {

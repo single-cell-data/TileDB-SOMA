@@ -57,19 +57,18 @@ void load_soma_object(py::module &m) {
         if(mode == OpenMode::write)
             TPY_ERROR_LOC("SOMAObjects for write mode not handled in Python API yet.");
 
-        try{
+        // try{
             auto obj = SOMAObject::open(uri, mode, config, timestamp);
             if (obj->type() == "SOMADataFrame")
                 return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
             else if(obj->type() == "SOMASparseNDArray")
-                return py::cast(std::move(dynamic_cast<SOMASparseNDArray&>(*obj)));
+                return py::cast(dynamic_cast<SOMASparseNDArray&>(*obj));
             else if(obj->type() == "SOMADenseNDArray")
                 return py::cast(dynamic_cast<SOMADenseNDArray&>(*obj));
-        }
-        catch(...){
-            std::cout << "error" << std::endl;
-            TPY_ERROR_LOC("SOMAObject not handled in Python API yet.");
-        }
+        // }catch(std::bad_cast e){
+        //     std::cout << e.what() << std::endl;
+        //     TPY_ERROR_LOC("SOMAObject not handled in Python API yet.");
+        // }
     });
 }
 }

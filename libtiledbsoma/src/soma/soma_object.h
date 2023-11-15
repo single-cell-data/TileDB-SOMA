@@ -41,15 +41,13 @@
 
 namespace tiledbsoma {
 
-class SOMADataFrame;
-
 using namespace tiledb;
 class SOMAObject {
    public:
     //===================================================================
     //= public non-static
     //===================================================================
-    virtual ~SOMAObject() = default;
+    virtual ~SOMAObject(){};
 
     static std::unique_ptr<SOMAObject> open(
         std::string uri,
@@ -153,7 +151,7 @@ class SOMAObject {
      * @return std::optional<MetadataValue>
      */
     virtual std::optional<MetadataValue> get_metadata(
-        const std::string& key) = 0;
+        const std::string& key) const = 0;
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
@@ -161,7 +159,7 @@ class SOMAObject {
      *
      * @return std::map<std::string, MetadataValue>
      */
-    virtual std::map<std::string, MetadataValue> get_metadata() = 0;
+    virtual const std::map<std::string, MetadataValue> get_metadata() const = 0;
 
     /**
      * Check if the key exists in metadata from an open SOMAObject.

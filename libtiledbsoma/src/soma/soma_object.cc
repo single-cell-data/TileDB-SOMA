@@ -5,10 +5,10 @@
 #include "soma_array.h"
 #include "soma_dataframe.h"
 #include "soma_dense_ndarray.h"
+#include "soma_object.h"
 #include "soma_sparse_ndarray.h"
 
 namespace tiledbsoma {
-
 using namespace tiledb;
 
 std::unique_ptr<SOMAObject> SOMAObject::open(
@@ -31,13 +31,16 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto array_ = SOMAArray::open(
             mode, ctx, uri, "", {}, "auto", ResultOrder::automatic, timestamp);
 
-        if (array_->type() == "SOMADataFrame")
-            return std::make_unique<SOMADataFrame>(std::move(array_));
-        else if (array_->type() == "SOMASparseNDArray")
-            return std::make_unique<SOMASparseNDArray>(std::move(array_));
-        else if (array_->type() == "SOMADenseNDArray")
-            return std::make_unique<SOMADenseNDArray>(std::move(array_));
-        else
+        if (array_->type() == "SOMADataFrame") {
+            auto arr = static_cast<SOMADataFrame*>(array_.release());
+            return std::unique_ptr<SOMADataFrame>(arr);
+        } else if (array_->type() == "SOMASparseNDArray") {
+            auto arr = static_cast<SOMASparseNDArray*>(array_.release());
+            return std::unique_ptr<SOMASparseNDArray>(arr);
+        } else if (array_->type() == "SOMADenseNDArray") {
+            auto arr = static_cast<SOMADenseNDArray*>(array_.release());
+            return std::unique_ptr<SOMADenseNDArray>(arr);
+        } else
             throw TileDBSOMAError(
                 "Invalid TileDB array passed to SOMAObject::open");
     }

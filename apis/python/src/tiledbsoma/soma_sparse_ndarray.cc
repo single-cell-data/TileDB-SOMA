@@ -51,7 +51,6 @@ void load_soma_sparse_ndarray(py::module &m) {
 
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::map<std::string, std::string>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMASparseNDArray::open))
     .def_static("exists", &SOMASparseNDArray::exists)
-    .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMASparseNDArray::open))
     .def("close", &SOMASparseNDArray::close)
     .def("reset",
         [](SOMASparseNDArray& soma_sparse_ndarr,
@@ -88,8 +87,8 @@ void load_soma_sparse_ndarray(py::module &m) {
         return pa_schema_import(py::capsule(soma_sparse_ndarr.schema().get()));
     })
     .def_property_readonly("timestamp", &SOMASparseNDArray::timestamp)
-    .def_property_readonly("index_column_names", &SOMASparseNDArray::index_column_names)
-        .def("non_empty_domain", [](SOMASparseNDArray& soma_sparse_ndarr, std::string name, py::dtype dtype){
+    .def_property_readonly("index_column_names", &SOMASparseNDArray::dimension_names)
+    .def("non_empty_domain", [](SOMASparseNDArray& soma_sparse_ndarr, std::string name, py::dtype dtype){
         switch (np_to_tdb_dtype(dtype)) {
         case TILEDB_UINT64:
             return py::cast(soma_sparse_ndarr.non_empty_domain<uint64_t>(name));
@@ -209,11 +208,6 @@ void load_soma_sparse_ndarray(py::module &m) {
         }
         return results;
     })
-    .def("get_metadata", 
-        py::overload_cast<const std::string&>(&SOMASparseNDArray::get_metadata))
-    .def("get_metadata", py::overload_cast<>(&SOMASparseNDArray::get_metadata))
-    .def("has_metadata", &SOMASparseNDArray::has_metadata)
-    .def("metadata_num", &SOMASparseNDArray::metadata_num)
     .def("set_dim_points_arrow",
         [](SOMASparseNDArray& reader,
             const std::string& dim,

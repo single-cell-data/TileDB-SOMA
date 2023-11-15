@@ -64,8 +64,8 @@ class ManagedQuery {
         std::string_view name = "unnamed");
 
     ManagedQuery() = delete;
-    ManagedQuery(const ManagedQuery&) = delete;
-    ManagedQuery(ManagedQuery&&) = default;
+    ManagedQuery(const ManagedQuery&) = default;
+    ManagedQuery(ManagedQuery&&) = delete;
     ~ManagedQuery() = default;
 
     /**
@@ -470,7 +470,6 @@ class ManagedQuery {
     // True if the query has been submitted
     bool query_submitted_ = false;
 };
-
 };  // namespace tiledbsoma
 
 #endif

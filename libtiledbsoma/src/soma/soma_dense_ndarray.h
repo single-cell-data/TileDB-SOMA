@@ -33,18 +33,18 @@
 #ifndef SOMA_DENSE_NDARRAY
 #define SOMA_DENSE_NDARRAY
 
+#include <filesystem>
+
 #include "enums.h"
 #include "soma_array.h"
-#include "soma_object.h"
 
 namespace tiledbsoma {
 
-class SOMAArray;
 class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMADenseNDArray : public SOMAObject {
+class SOMADenseNDArray : public SOMAArray {
    public:
     //===================================================================
     //= public static
@@ -122,6 +122,14 @@ class SOMADenseNDArray : public SOMAObject {
         ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
+    /**
+     * @brief Check if the SOMADenseNDArray exists at the URI.
+     *
+     * @param uri URI of the object
+     * @return bool
+     */
+    static bool exists(std::string_view uri);
+
     //===================================================================
     //= public non-static
     //===================================================================
@@ -142,89 +150,21 @@ class SOMADenseNDArray : public SOMAObject {
         std::shared_ptr<Context> ctx,
         std::vector<std::string> column_names,
         ResultOrder result_order,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
-
-    SOMADenseNDArray(std::shared_ptr<SOMAArray> array)
-        : array_(array){};
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt)
+        : SOMAArray(
+              mode,
+              uri,
+              std::string(std::filesystem::path(uri).filename()),
+              ctx,
+              column_names,
+              "auto",
+              result_order,
+              timestamp){};
 
     SOMADenseNDArray() = delete;
-    SOMADenseNDArray(const SOMADenseNDArray&) = default;
-    SOMADenseNDArray(SOMADenseNDArray&&) = default;
-    ~SOMADenseNDArray() = default;
-
-    /**
-     * Open the SOMADenseNDArray object.
-     *
-     * @param mode read or write
-     * @param timestamp Timestamp
-     */
-    void open(
-        OpenMode mode,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
-
-    /**
-     * Closes the SOMADenseNDArray object.
-     */
-    void close();
-
-    /**
-     * @brief Reset the state of this SOMADenseNDArray object to prepare for a
-     * new query, while holding the array open.
-     *
-     * @param column_names
-     * @param batch_size
-     * @param result_order
-     */
-    void reset(
-        std::vector<std::string> column_names = {},
-        std::string_view batch_size = "auto",
-        ResultOrder result_order = ResultOrder::automatic) {
-        array_->reset(column_names, batch_size, result_order);
-    }
-
-    /**
-     * @brief Check if the SOMADenseNDArray exists at the URI.
-     */
-    static bool exists(std::string_view uri);
-
-    /**
-     * Check if the SOMADenseNDArray is open.
-     *
-     * @return bool true if open
-     */
-    bool is_open() const;
-
-    /**
-     * Check if the SOMADenseNDArray is in read or write mode.
-     *
-     * @return OpenMode
-     */
-    OpenMode mode() const {
-        return array_->mode();
-    }
-
-    /**
-     * Returns the constant "SOMADenseNDArray".
-     *
-     * @return std::string
-     */
-    const std::string type() const {
-        return "SOMADenseNDArray";
-    }
-
-    /**
-     * Get the Context associated with the SOMADenseNDArray.
-     *
-     * @return std::shared_ptr<Context>
-     */
-    std::shared_ptr<Context> ctx();
-
-    /**
-     * Return optional timestamp pair SOMADenseNDArray was opened with.
-     */
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp() {
-        return array_->timestamp();
-    }
+    SOMADenseNDArray(const SOMADenseNDArray& rhs) = default;
+    SOMADenseNDArray(SOMADenseNDArray&&) = delete;
+    virtual ~SOMADenseNDArray() = default;
 
     /**
      * Return whether the SOMADenseNDArray is sparse.
@@ -234,268 +174,6 @@ class SOMADenseNDArray : public SOMAObject {
     bool is_sparse() {
         return false;
     };
-
-    /**
-     * @brief Get URI of the SOMADenseNDArray.
-     *
-     * @return std::string URI
-     */
-    const std::string uri() const;
-
-    /**
-     * Return the data schema, in the form of a ArrowSchema.
-     *
-     * @return std::unique_ptr<ArrowSchema>
-     */
-    std::unique_ptr<ArrowSchema> schema() const;
-
-    /**
-     * Return the index (dimension) column names.
-     *
-     * @return std::vector<std::string>
-     */
-    const std::vector<std::string> index_column_names() const;
-
-    /**
-     * @brief Returns the result order set by the query.
-     *
-     * @return ResultOrder
-     */
-    ResultOrder result_order() {
-        return array_->result_order();
-    }
-
-    /**
-     * @brief Get the capacity of each dimension.
-     *
-     * @return A vector with length equal to the number of dimensions; each
-     * value in the vector is the capcity of each dimension.
-     */
-    std::vector<int64_t> shape() const;
-
-    /**
-     * Return the number of dimensions.
-     *
-     * @return int64_t
-     */
-    int64_t ndim() const;
-
-    /**
-     * Retrieves the non-empty domain of the column index.
-     *
-     * @return int64_t
-     */
-    template <typename T>
-    std::pair<T, T> non_empty_domain(const std::string& column_index_name) {
-        return array_->non_empty_domain<T>(column_index_name);
-    };
-
-    /**
-     * Retrieves the non-empty domain of the column index.
-     * Applicable only to var-sized dimensions.
-     */
-    std::pair<std::string, std::string> non_empty_domain_var(
-        const std::string& column_index_name) {
-        return array_->non_empty_domain_var(column_index_name);
-    };
-
-    /**
-     * Returns the domain of the given column index.
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
-     */
-    template <typename T>
-    std::pair<T, T> domain(const std::string& column_index_name) const {
-        return array_->domain<T>(column_index_name);
-    }
-
-    /**
-     * @brief Read the next chunk of results from the query. If all results have
-     * already been read, std::nullopt is returned.
-     */
-    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
-
-    /**
-     * @brief Return true if `read_next` returned all results from the
-     * query. The return value is false if the query was incomplete.
-     *
-     * @return True if last call to `read_next` returned all results of the
-     * query
-     */
-    bool results_complete() {
-        return array_->results_complete();
-    }
-
-    /**
-     * @brief Set the dimension slice using one point
-     *
-     * @note Partitioning is not supported
-     *
-     * @tparam T
-     * @param dim
-     * @param point
-     */
-    template <typename T>
-    void set_dim_point(const std::string& dim, const T& point) {
-        array_->set_dim_point(dim, point);
-    }
-
-    /**
-     * @brief Set the dimension slice using multiple points, with support
-     * for partitioning.
-     *
-     * @tparam T
-     * @param dim
-     * @param points
-     */
-    template <typename T>
-    void set_dim_points(
-        const std::string& dim,
-        const tcb::span<T> points,
-        int partition_index,
-        int partition_count) {
-        array_->set_dim_points(dim, points, partition_index, partition_count);
-    }
-
-    /**
-     * @brief Set the dimension slice using multiple points
-     *
-     * @note Partitioning is not supported
-     *
-     * @tparam T
-     * @param dim
-     * @param points
-     */
-    template <typename T>
-    void set_dim_points(const std::string& dim, const std::vector<T>& points) {
-        array_->set_dim_points(dim, points);
-    }
-
-    /**
-     * @brief Set the dimension slice using multiple ranges
-     *
-     * @note Partitioning is not supported
-     *
-     * @tparam T
-     * @param dim
-     * @param ranges
-     */
-    template <typename T>
-    void set_dim_ranges(
-        const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
-        array_->set_dim_ranges(dim, ranges);
-    }
-
-    /**
-     * @brief Write ArrayBuffers data to the dataframe.
-     * @param buffers The ArrayBuffers to write
-     */
-    void write(std::shared_ptr<ArrayBuffers> buffers);
-
-    /**
-     * Set metadata key-value items to a SOMADenseNDArray. The SOMADenseNDArray
-     * must opened in WRITE mode, otherwise the function will error out.
-     *
-     * @param key The key of the metadata item to be added. UTF-8 encodings
-     *     are acceptable.
-     * @param value_type The datatype of the value.
-     * @param value_num The value may consist of more than one items of the
-     *     same datatype. This argument indicates the number of items in the
-     *     value component of the metadata.
-     * @param value The metadata value in binary form.
-     *
-     * @note The writes will take effect only upon closing the array.
-     */
-    void set_metadata(
-        const std::string& key,
-        tiledb_datatype_t value_type,
-        uint32_t value_num,
-        const void* value) {
-        array_->set_metadata(key, value_type, value_num, value);
-    }
-
-    /**
-     * Delete a metadata key-value item from an open SOMADenseNDArray. The
-     * SOMADenseNDArray must be opened in WRITE mode, otherwise the function
-     * will error out.
-     *
-     * @param key The key of the metadata item to be deleted.
-     *
-     * @note The writes will take effect only upon closing the group.
-     *
-     * @note If the key does not exist, this will take no effect
-     *     (i.e., the function will not error out).
-     */
-    void delete_metadata(const std::string& key) {
-        array_->delete_metadata(key);
-    }
-
-    /**
-     * @brief Given a key, get the associated value datatype, number of
-     * values, and value in binary form.
-     *
-     * The value may consist of more than one items of the same datatype. Keys
-     * that do not exist in the metadata will be return NULL for the value.
-     *
-     * **Example:**
-     * @code{.cpp}
-     * // Open the group for reading
-     * tiledbsoma::SOMAGroup soma_group = SOMAGroup::open(TILEDB_READ,
-     "s3://bucket-name/group-name");
-     * tiledbsoma::MetadataValue meta_val = soma_group->get_metadata("key");
-     * std::string key = std::get<MetadataInfo::key>(meta_val);
-     * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
-     * uint32_t num = std::get<MetadataInfo::num>(meta_val);
-     * const void* value = *((const
-     int32_t*)std::get<MetadataInfo::value>(meta_val));
-     * @endcode
-     *
-     * @param key The key of the metadata item to be retrieved. UTF-8 encodings
-     *     are acceptable.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
-     * uint32_t, const void*>)
-     */
-    std::optional<MetadataValue> get_metadata(const std::string& key) {
-        return array_->get_metadata(key);
-    }
-
-    /**
-     * Get a mapping of all metadata keys with its associated value datatype,
-     * number of values, and value in binary form.
-     *
-     * @return std::map<std::string, MetadataValue>
-     */
-    std::map<std::string, MetadataValue> get_metadata() {
-        return array_->get_metadata();
-    }
-
-    /**
-     * Check if the key exists in metadata from an open SOMADenseNDArray.
-     *
-     * @param key The key of the metadata item to be checked. UTF-8 encodings
-     *     are acceptable.
-     * @return true if the key exists, else false.
-     */
-    bool has_metadata(const std::string& key) {
-        return array_->has_metadata(key);
-    }
-
-    /**
-     * Return then number of metadata items in an open SOMADenseNDArray. The
-     * group must be opened in READ mode, otherwise the function will error out.
-     */
-    uint64_t metadata_num() const {
-        return array_->metadata_num();
-    }
-
-   private:
-    //===================================================================
-    //= private non-static
-    //===================================================================
-
-    // SOMAArray
-    std::shared_ptr<SOMAArray> array_;
 };
 }  // namespace tiledbsoma
 

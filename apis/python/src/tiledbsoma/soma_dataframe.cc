@@ -51,7 +51,6 @@ void load_soma_dataframe(py::module &m) {
 
     .def_static("open", py::overload_cast<std::string_view, OpenMode, std::map<std::string, std::string>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def_static("exists", &SOMADataFrame::exists)
-    .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def("close", &SOMADataFrame::close)
     .def_property_readonly("closed", [](SOMADataFrame& soma_df) -> bool { 
         return not soma_df.is_open();
@@ -61,7 +60,7 @@ void load_soma_dataframe(py::module &m) {
         [](SOMADataFrame& reader, 
             py::object py_query_condition,
             py::object pa_schema){  
-                auto column_names = reader.column_names();
+                auto column_names = reader.index_column_names();
                 // Handle query condition based on
                 // TileDB-Py::PyQuery::set_attr_cond()
                 QueryCondition* qc = nullptr;
@@ -253,8 +252,6 @@ void load_soma_dataframe(py::module &m) {
     .def("results_complete", &SOMADataFrame::results_complete)
     .def("set_metadata", &SOMADataFrame::set_metadata)
     .def("delete_metadata", &SOMADataFrame::delete_metadata)
-    .def("get_metadata", 
-        py::overload_cast<const std::string&>(&SOMADataFrame::get_metadata))
     .def_property_readonly("meta", [](SOMADataFrame& soma_dataframe) -> py::dict {
         py::dict results;
             
@@ -274,8 +271,6 @@ void load_soma_dataframe(py::module &m) {
         }
         return results;
     })
-    .def("has_metadata", &SOMADataFrame::has_metadata)
-    .def("metadata_num", &SOMADataFrame::metadata_num)
     .def("set_dim_points_arrow",
         [](SOMADataFrame& reader,
             const std::string& dim,

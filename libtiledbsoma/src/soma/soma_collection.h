@@ -367,7 +367,7 @@ class SOMACollection : public SOMAObject {
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    std::optional<MetadataValue> get_metadata(const std::string& key) {
+    std::optional<MetadataValue> get_metadata(const std::string& key) const {
         return group_->get_metadata(key);
     }
 
@@ -377,7 +377,7 @@ class SOMACollection : public SOMAObject {
      *
      * @return std::map<std::string, MetadataValue>
      */
-    std::map<std::string, MetadataValue> get_metadata() {
+    const std::map<std::string, MetadataValue> get_metadata() const {
         return group_->get_metadata();
     }
 

@@ -43,11 +43,12 @@
 #include "enums.h"
 #include "logger_public.h"
 #include "managed_query.h"
+#include "soma_object.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
 
-class SOMAArray {
+class SOMAArray : public SOMAObject {
    public:
     //===================================================================
     //= public static
@@ -169,15 +170,15 @@ class SOMAArray {
 
     SOMAArray() = delete;
     SOMAArray(const SOMAArray&) = default;
-    SOMAArray(SOMAArray&&) = default;
-    ~SOMAArray() = default;
+    SOMAArray(SOMAArray&&) = delete;
+    virtual ~SOMAArray() = default;
 
     /**
      * @brief Get URI of the SOMAArray.
      *
      * @return std::string URI
      */
-    const std::string& uri() const;
+    const std::string uri() const;
 
     /**
      * @brief Get Ctx of the SOMAArray.
@@ -186,18 +187,13 @@ class SOMAArray {
      */
     std::shared_ptr<Context> ctx();
 
-    std::optional<std::string> type() {
-        auto soma_object_type = this->get_metadata("soma_object_type");
-
-        if (!soma_object_type.has_value())
-            return std::nullopt;
-
-        const char* dtype = (const char*)std::get<MetadataInfo::value>(
-            *soma_object_type);
-        uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
-
-        return std::string(dtype, sz);
-    }
+    /**
+     * @brief Get the derived type of the SOMAArray.
+     *
+     * @return std::string where valid types are SOMADataFrame,
+     * SOMADenseNDArray, or SOMASparseNDArray
+     */
+    const std::string type() const;
 
     /**
      * Open the SOMAArray object.
@@ -205,7 +201,7 @@ class SOMAArray {
      * @param mode read or write
      * @param timestamp Timestamp
      */
-    void open(
+    void reopen(
         OpenMode mode,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
@@ -223,6 +219,11 @@ class SOMAArray {
         return arr_->is_open();
     }
 
+    /**
+     * Check if the SOMAArray is in read or write mode.
+     *
+     * @return OpenMode
+     */
     OpenMode mode() const {
         return mq_->query_type() == TILEDB_READ ? OpenMode::read :
                                                   OpenMode::write;
@@ -644,7 +645,7 @@ class SOMAArray {
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    std::optional<MetadataValue> get_metadata(const std::string& key);
+    std::optional<MetadataValue> get_metadata(const std::string& key) const;
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
@@ -652,7 +653,7 @@ class SOMAArray {
      *
      * @return std::map<std::string, MetadataValue>
      */
-    std::map<std::string, MetadataValue> get_metadata();
+    const std::map<std::string, MetadataValue> get_metadata() const;
 
     /**
      * Check if the key exists in metadata from an open array. The array
@@ -685,13 +686,22 @@ class SOMAArray {
 
    private:
     //===================================================================
-    //= private non-static
+    //= private non-static methods
     //===================================================================
 
     /**
      * Fills the metadata cache upon opening the array.
      */
     void fill_metadata_cache();
+
+    /**
+     * Unoptimized method for computing nnz() (issue `count_cells` query)
+     */
+    uint64_t nnz_slow();
+
+    //===================================================================
+    //= private attributes
+    //===================================================================
 
     // TileDB context
     std::shared_ptr<Context> ctx_;
@@ -722,9 +732,6 @@ class SOMAArray {
 
     // True if the query was submitted
     bool submitted_ = false;
-
-    // Unoptimized method for computing nnz() (issue `count_cells` query)
-    uint64_t nnz_slow();
 };
 
 }  // namespace tiledbsoma

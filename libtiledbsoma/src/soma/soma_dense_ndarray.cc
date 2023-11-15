@@ -30,8 +30,6 @@
  *   This file defines the SOMADenseNDArray class.
  */
 
-#include <filesystem>
-
 #include "soma_dense_ndarray.h"
 
 namespace tiledbsoma {
@@ -89,88 +87,13 @@ std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
 //= public non-static
 //===================================================================
 
-SOMADenseNDArray::SOMADenseNDArray(
-    OpenMode mode,
-    std::string_view uri,
-    std::shared_ptr<Context> ctx,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    std::string array_name = std::filesystem::path(uri).filename();
-    array_ = std::make_shared<SOMAArray>(
-        mode,
-        uri,
-        array_name,  // label used when debugging
-        ctx,
-        column_names,
-        "auto",  // batch_size,
-        result_order,
-        timestamp);
-    array_->reset();
-}
-
-void SOMADenseNDArray::open(
-    OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    array_->open(mode, timestamp);
-    array_->reset();
-}
-
-void SOMADenseNDArray::close() {
-    array_->close();
-}
-
 bool SOMADenseNDArray::exists(std::string_view uri) {
     try {
         auto soma_dense_nd_array = SOMADenseNDArray::open(uri, OpenMode::read);
-        auto soma_object_type = soma_dense_nd_array->get_metadata(
-            "soma_object_type");
-
-        if (!soma_object_type.has_value())
-            return false;
-
-        const char* dtype = (const char*)std::get<MetadataInfo::value>(
-            *soma_object_type);
-
-        return std::string(dtype).find("SOMADenseNDArray") != std::string::npos;
+        return soma_dense_nd_array->type() == "SOMADenseNDArray";
     } catch (std::exception& e) {
         return false;
     }
-}
-
-bool SOMADenseNDArray::is_open() const {
-    return array_->is_open();
-}
-
-const std::string SOMADenseNDArray::uri() const {
-    return array_->uri();
-}
-
-std::shared_ptr<Context> SOMADenseNDArray::ctx() {
-    return array_->ctx();
-}
-
-std::unique_ptr<ArrowSchema> SOMADenseNDArray::schema() const {
-    return array_->arrow_schema();
-}
-
-const std::vector<std::string> SOMADenseNDArray::index_column_names() const {
-    return array_->dimension_names();
-}
-
-std::vector<int64_t> SOMADenseNDArray::shape() const {
-    return array_->shape();
-}
-
-int64_t SOMADenseNDArray::ndim() const {
-    return array_->ndim();
-}
-
-std::optional<std::shared_ptr<ArrayBuffers>> SOMADenseNDArray::read_next() {
-    return array_->read_next();
-}
-
-void SOMADenseNDArray::write(std::shared_ptr<ArrayBuffers> buffers) {
-    array_->write(buffers);
 }
 
 }  // namespace tiledbsoma

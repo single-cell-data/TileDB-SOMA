@@ -1570,34 +1570,34 @@ def test_blockwise_scipy_iter_eager(
 
 
 @pytest.mark.parametrize("density,shape", [(0.001, (9799, 1530))])
-def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str) -> None:
+@pytest.mark.parametrize("result_order", ["auto", "row-major", "column-major"])
+@pytest.mark.parametrize("axis", [0, 1])
+@pytest.mark.parametrize("compress", [True, False])
+def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str, result_order, axis, compress) -> None:
     """
     Confirm behavior with different result_order.
     """
     coords = (slice(7, 8693), slice(21, 999))
 
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
-        for result_order in ["auto", "row-major", "column-major"]:
-            for axis in (0, 1):
-                for compress in (True, False):
-                    sp, _ = next(
-                        A.read(coords, result_order=result_order)
-                        .blockwise(axis=axis)
-                        .scipy(compress=compress)
-                    )
+        sp, _ = next(
+            A.read(coords, result_order=result_order)
+            .blockwise(axis=axis)
+            .scipy(compress=compress)
+        )
 
-                    if compress:
-                        # CS{C,R} is always sorted, always canonical
-                        assert not isinstance(sp, sparse.coo_matrix)
-                        assert sp.has_sorted_indices
-                        assert sp.has_canonical_format
-                        sp.check_format()  # raises if malformed
+        if compress:
+            # CS{C,R} is always sorted, always canonical
+            assert not isinstance(sp, sparse.coo_matrix)
+            assert sp.has_sorted_indices
+            assert sp.has_canonical_format
+            sp.check_format()  # raises if malformed
 
-                    else:
-                        # always canonical if row-major, regardless of format
-                        if result_order == "row-major":
-                            assert sp.has_canonical_format
-                        assert isinstance(sp, sparse.coo_matrix)
+        else:
+            # always canonical if row-major, regardless of format
+            if result_order == "row-major":
+                assert sp.has_canonical_format
+            assert isinstance(sp, sparse.coo_matrix)
 
 
 @pytest.mark.parametrize("density,shape", [(0.001, (9799, 1530))])
