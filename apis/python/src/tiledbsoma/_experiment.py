@@ -5,17 +5,40 @@
 
 """Implementation of a SOMA Experiment.
 """
-
 from typing import Any, Optional
 
+import numpy as np
+import pandas as pd
+import tiledb
 from somacore import experiment, query
 
+from . import pytiledbsoma as clib
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._measurement import Measurement
 from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
-from .IntIndexer import indexer_map_locations
+from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
+
+
+def _indexer_map_locations(keys: np.typing.NDArray[np.int64]) -> clib.IntIndexer:
+    if len(np.unique(keys)) != len(keys):
+        raise pd.errors.InvalidIndexError(
+            "Reindexing only valid with uniquely valued Index objects"
+        )
+    context: SOMATileDBContext = _validate_soma_tiledb_context(
+        SOMATileDBContext(tiledb.default_ctx())
+    )
+    compute_concurrency: int = 5
+    if context._tiledb_ctx:
+        compute_concurrency = int(
+            int(context._tiledb_ctx.config()["sm.compute_concurrency_level"]) / 2
+        )
+    thread_counts = int(compute_concurrency)
+    reindexer = clib.IntIndexer()
+    reindexer.map_locations(keys, thread_counts)
+    return reindexer
 
 
 class Experiment(  # type: ignore[misc]  # __eq__ false positive
@@ -95,5 +118,5 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
             measurement_name,
             obs_query=obs_query or query.AxisQuery(),
             var_query=var_query or query.AxisQuery(),
-            index_factory=indexer_map_locations,  # comment this line to disable thw C++ indexer
+            index_factory=_indexer_map_locations,  # comment this line to disable thw C++ indexer
         )
