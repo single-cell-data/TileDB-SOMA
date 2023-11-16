@@ -812,3 +812,226 @@ def test_append_items_with_experiment(soma1, h5ad2):
         )
 
         assert all(actual_X == expect_X)
+
+
+@pytest.mark.parametrize("use_same_cells", [True, False])
+def test_append_with_disjoint_measurements(
+    tmp_path, anndata1, anndata4, use_same_cells
+):
+    soma_uri = tmp_path.as_posix()
+
+    tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="one")
+
+    with tiledbsoma.open(soma_uri, "w") as exp:
+        exp.ms.add_new_collection("two", kind=tiledbsoma.Measurement)
+
+    anndata2 = anndata1 if use_same_cells else anndata4
+
+    rd = tiledbsoma.io.register_anndatas(
+        soma_uri,
+        [anndata2],
+        measurement_name="two",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+
+    tiledbsoma.io.from_anndata(
+        soma_uri,
+        anndata2,
+        measurement_name="two",
+        registration_mapping=rd,
+    )
+
+    # exp/obs, use_same_cells=True:                       exp/obs, use_same_cells=False:
+    #    soma_joinid obs_id cell_type  is_primary_data       soma_joinid obs_id cell_type  is_primary_data
+    # 0            0   AAAT    B cell                1    0            0   AAAT    B cell                1
+    # 1            1   ACTG    T cell                1    1            1   ACTG    T cell                1
+    # 2            2   AGAG    B cell                1    2            2   AGAG    B cell                1
+    #                                                     3            3   TAAT    B cell                1
+    #                                                     4            4   TCTG    T cell                1
+    #                                                     5            5   TGAG    B cell                1
+    #
+    # exp/ms/one/var, use_same_cells=True:                exp/ms/one/var, use_same_cells=False:
+    #    soma_joinid var_id      means                       soma_joinid var_id      means
+    # 0            0   AKT1  16.522711                    0            0   AKT1  16.522711
+    # 1            1   APOE  17.117243                    1            1   APOE  17.117243
+    # 2            2   ESR1  16.822603                    2            2   ESR1  16.822603
+    # 3            3   TP53  16.370705                    3            3   TP53  16.370705
+    # 4            4  VEGFA  19.000000                    4            4  VEGFA  19.000000
+    #
+    # exp/ms/two/var, use_same_cells=True:                exp/ms/two/var, use_same_cells=False:
+    #    soma_joinid var_id      means                       soma_joinid var_id      means
+    # 0            0   AKT1  16.522711                    0            0   AKT1  16.522711
+    # 1            1   APOE  17.117243                    1            1   APOE  17.117243
+    # 2            2   ESR1  16.822603                    2            2   ESR1  16.822603
+    # 3            3   TP53  16.370705                    3            3   TP53  16.370705
+    # 4            4  VEGFA  19.000000                    4            4  VEGFA  19.000000
+    #                                                     5            5   ZZZ3  17.916473
+    #
+    # exp/ms/one/X/data, use_same_cells=True:             exp/ms/one/X/data, use_same_cells=False:
+    #    soma_dim_0  soma_dim_1  soma_data                   soma_dim_0  soma_dim_1  soma_data
+    # 0           0           1      101.0                0           0           1      101.0
+    # 1           0           3      103.0                1           0           3      103.0
+    # 2           1           0      110.0                2           1           0      110.0
+    # 3           1           2      112.0                3           1           2      112.0
+    # 4           1           4      114.0                4           1           4      114.0
+    # 5           2           1      121.0                5           2           1      121.0
+    # 6           2           3      123.0                6           2           3      123.0
+    #
+    # exp/ms/two/X/data, use_same_cells=True:             exp/ms/two/X/data, use_same_cells=False:
+    #    soma_dim_0  soma_dim_1  soma_data                   soma_dim_0  soma_dim_1  soma_data
+    # 0           0           1      101.0                0           3           1      401.0
+    # 1           0           3      103.0                1           3           3      403.0
+    # 2           1           0      110.0                2           3           5      405.0
+    # 3           1           2      112.0                3           4           0      410.0
+    # 4           1           4      114.0                4           4           2      412.0
+    # 5           2           1      121.0                5           4           4      414.0
+    # 6           2           3      123.0                6           5           1      421.0
+    #                                                     7           5           3      423.0
+    #                                                     8           5           5      425.0
+
+    if use_same_cells:
+        # Data for the same cells, ingested into two different measurements:
+        # obs should not extend.
+        expect_obs_soma_joinids = list(range(3))
+        expect_obs_obs_ids = [
+            "AAAT",
+            "ACTG",
+            "AGAG",
+        ]
+    else:
+        # Data for different cells, ingested into two different measurements:
+        # obs should extend.
+        expect_obs_soma_joinids = list(range(6))
+        expect_obs_obs_ids = [
+            "AAAT",
+            "ACTG",
+            "AGAG",
+            "TAAT",
+            "TCTG",
+            "TGAG",
+        ]
+
+    # anndata1 cell IDs go into measurement one's var.
+    expect_var_one_soma_joinids = list(range(5))
+    expect_var_one_var_ids = [
+        "AKT1",
+        "APOE",
+        "ESR1",
+        "TP53",
+        "VEGFA",
+    ]
+
+    # anndata2 cell IDs go into measurement two's var.
+    if use_same_cells:
+        expect_var_two_soma_joinids = list(range(5))
+        expect_var_two_var_ids = [
+            "AKT1",
+            "APOE",
+            "ESR1",
+            "TP53",
+            "VEGFA",
+        ]
+    else:
+        expect_var_two_soma_joinids = list(range(6))
+        expect_var_two_var_ids = [
+            "AKT1",
+            "APOE",
+            "ESR1",
+            "TP53",
+            "VEGFA",
+            "ZZZ3",
+        ]
+
+    with tiledbsoma.Experiment.open(soma_uri) as exp:
+        obs = exp.obs.read().concat()
+        var_one = exp.ms["one"].var.read().concat()
+        var_two = exp.ms["two"].var.read().concat()
+
+        actual_obs_soma_joinids = obs["soma_joinid"].to_pylist()
+        actual_obs_obs_ids = obs["obs_id"].to_pylist()
+
+        actual_var_one_soma_joinids = var_one["soma_joinid"].to_pylist()
+        actual_var_one_var_ids = var_one["var_id"].to_pylist()
+
+        actual_var_two_soma_joinids = var_two["soma_joinid"].to_pylist()
+        actual_var_two_var_ids = var_two["var_id"].to_pylist()
+
+        assert actual_obs_soma_joinids == expect_obs_soma_joinids
+        assert actual_obs_obs_ids == expect_obs_obs_ids
+
+        assert actual_var_one_soma_joinids == expect_var_one_soma_joinids
+        assert actual_var_one_var_ids == expect_var_one_var_ids
+
+        assert actual_var_two_soma_joinids == expect_var_two_soma_joinids
+        assert actual_var_two_var_ids == expect_var_two_var_ids
+
+        actual_X_one = exp.ms["one"].X["data"].read().tables().concat().to_pandas()
+        actual_X_two = exp.ms["two"].X["data"].read().tables().concat().to_pandas()
+
+        expect_X_one = pd.DataFrame(
+            {
+                "soma_dim_0": np.asarray([0, 0, 1, 1, 1, 2, 2], dtype=np.int64),
+                "soma_dim_1": np.asarray([1, 3, 0, 2, 4, 1, 3], dtype=np.int64),
+                "soma_data": np.asarray(
+                    [
+                        101.0,
+                        103.0,
+                        110.0,
+                        112.0,
+                        114.0,
+                        121.0,
+                        123.0,
+                    ],
+                    dtype=np.float64,
+                ),
+            }
+        )
+
+        if use_same_cells:
+            expect_X_two = pd.DataFrame(
+                {
+                    "soma_dim_0": np.asarray([0, 0, 1, 1, 1, 2, 2], dtype=np.int64),
+                    "soma_dim_1": np.asarray([1, 3, 0, 2, 4, 1, 3], dtype=np.int64),
+                    "soma_data": np.asarray(
+                        [
+                            101.0,
+                            103.0,
+                            110.0,
+                            112.0,
+                            114.0,
+                            121.0,
+                            123.0,
+                        ],
+                        dtype=np.float64,
+                    ),
+                }
+            )
+        else:
+            expect_X_two = pd.DataFrame(
+                {
+                    "soma_dim_0": np.asarray(
+                        [3, 3, 3, 4, 4, 4, 5, 5, 5], dtype=np.int64
+                    ),
+                    "soma_dim_1": np.asarray(
+                        [1, 3, 5, 0, 2, 4, 1, 3, 5], dtype=np.int64
+                    ),
+                    "soma_data": np.asarray(
+                        [
+                            401.0,
+                            403.0,
+                            405.0,
+                            410.0,
+                            412.0,
+                            414.0,
+                            421.0,
+                            423.0,
+                            425.0,
+                        ],
+                        dtype=np.float64,
+                    ),
+                }
+            )
+
+        assert all(actual_X_one == expect_X_one)
+        assert all(actual_X_two == expect_X_two)

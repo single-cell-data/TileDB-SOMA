@@ -230,7 +230,7 @@ class ExperimentAmbientLabelMapping:
                     obs_map = dict(zip(obs_ids, soma_joinids))
 
                 for measurement_name in exp.ms:
-                    var = exp.ms[measurement_name].var
+                    exp.ms[measurement_name].var
                     if "var" not in exp.ms[measurement_name]:
                         continue
                     var_map = {}
