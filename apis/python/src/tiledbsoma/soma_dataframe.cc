@@ -107,7 +107,7 @@ void load_soma_dataframe(py::module &m) {
     .def_property_readonly("schema", [](SOMADataFrame& soma_df) -> py::object {
         auto pa = py::module::import("pyarrow");
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
-        return pa_schema_import(py::capsule(soma_df.schema().get()));
+        return pa_schema_import(py::capsule(soma_df.arrow_schema().get()));
     })
     .def_property_readonly("timestamp", [](SOMADataFrame& soma_df) -> py::object {
         if(!soma_df.timestamp().has_value())

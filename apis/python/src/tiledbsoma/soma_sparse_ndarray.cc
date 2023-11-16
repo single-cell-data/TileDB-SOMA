@@ -84,7 +84,7 @@ void load_soma_sparse_ndarray(py::module &m) {
     .def_property_readonly("schema", [](SOMASparseNDArray& soma_sparse_ndarr) -> py::object {
         auto pa = py::module::import("pyarrow");
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
-        return pa_schema_import(py::capsule(soma_sparse_ndarr.schema().get()));
+        return pa_schema_import(py::capsule(soma_sparse_ndarr.arrow_schema().get()));
     })
     .def_property_readonly("timestamp", &SOMASparseNDArray::timestamp)
     .def_property_readonly("index_column_names", &SOMASparseNDArray::dimension_names)

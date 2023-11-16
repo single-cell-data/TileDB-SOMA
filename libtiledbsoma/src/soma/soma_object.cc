@@ -32,17 +32,15 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             mode, ctx, uri, "", {}, "auto", ResultOrder::automatic, timestamp);
 
         if (array_->type() == "SOMADataFrame") {
-            auto arr = static_cast<SOMADataFrame*>(array_.release());
-            return std::unique_ptr<SOMADataFrame>(arr);
+            return std::make_unique<SOMADataFrame>(*array_);
         } else if (array_->type() == "SOMASparseNDArray") {
-            auto arr = static_cast<SOMASparseNDArray*>(array_.release());
-            return std::unique_ptr<SOMASparseNDArray>(arr);
+            return std::make_unique<SOMASparseNDArray>(*array_);
         } else if (array_->type() == "SOMADenseNDArray") {
-            auto arr = static_cast<SOMADenseNDArray*>(array_.release());
-            return std::unique_ptr<SOMADenseNDArray>(arr);
-        } else
+            return std::make_unique<SOMADenseNDArray>(*array_);
+        } else {
             throw TileDBSOMAError(
                 "Invalid TileDB array passed to SOMAObject::open");
+        }
     }
 
     throw TileDBSOMAError("Invalid TileDB object passed to SOMAObject::open");

@@ -165,9 +165,11 @@ class SOMADataFrame : public SOMAArray {
           };
 
     SOMADataFrame() = delete;
-    SOMADataFrame(const SOMADataFrame& rhs) = default;
+    SOMADataFrame(const SOMADataFrame&) = default;
+    SOMADataFrame(const SOMAArray& rhs)
+        : SOMAArray(rhs){};
     SOMADataFrame(SOMADataFrame&&) = delete;
-    virtual ~SOMADataFrame() = default;
+    ~SOMADataFrame() = default;
 
     /**
      * @brief Get the name of each index column.

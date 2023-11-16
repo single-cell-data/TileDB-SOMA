@@ -117,8 +117,19 @@ TEST_CASE("SOMADataFrame: basic") {
     soma_dataframe->close();
 
     auto soma_object = SOMAObject::open(uri, OpenMode::read, ctx);
-    REQUIRE(soma_object->uri() == uri);
     REQUIRE(soma_object->type() == "SOMADataFrame");
+    REQUIRE(soma_object->uri() == uri);
+
+    auto a = dynamic_cast<SOMAArray*>(soma_object.get());
+    REQUIRE(a->type() == "SOMADataFrame");
+    REQUIRE(a->uri() == uri);
+    auto b = dynamic_cast<SOMADataFrame&>(*a);
+    REQUIRE(b.type() == "SOMADataFrame");
+    REQUIRE(b.uri() == uri);
+    auto c = dynamic_cast<SOMADataFrame&>(*soma_object);
+    REQUIRE(c.type() == "SOMADataFrame");
+    REQUIRE(c.uri() == uri);
+
     soma_object->close();
 }
 

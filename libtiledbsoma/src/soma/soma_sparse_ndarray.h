@@ -163,8 +163,10 @@ class SOMASparseNDArray : public SOMAArray {
 
     SOMASparseNDArray() = delete;
     SOMASparseNDArray(const SOMASparseNDArray&) = default;
+    SOMASparseNDArray(const SOMAArray& rhs)
+        : SOMAArray(rhs){};
     SOMASparseNDArray(SOMASparseNDArray&&) = delete;
-    virtual ~SOMASparseNDArray() = default;
+    ~SOMASparseNDArray() = default;
 
     /**
      * Return whether the NDArray is sparse.

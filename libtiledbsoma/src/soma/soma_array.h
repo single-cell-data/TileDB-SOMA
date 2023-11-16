@@ -169,7 +169,19 @@ class SOMAArray : public SOMAObject {
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMAArray() = delete;
-    SOMAArray(const SOMAArray&) = default;
+    SOMAArray(const SOMAObject& rhs)
+        : SOMAObject(rhs){};
+    SOMAArray(const SOMAArray& rhs)
+        : ctx_(rhs.ctx_)
+        , uri_(rhs.uri_)
+        , batch_size_(rhs.batch_size_)
+        , result_order_(rhs.result_order_)
+        , metadata_(rhs.metadata_)
+        , timestamp_(rhs.timestamp_)
+        , mq_(new ManagedQuery(*rhs.mq_))
+        , arr_(rhs.arr_)
+        , first_read_next_(rhs.first_read_next_)
+        , submitted_(rhs.submitted_){};
     SOMAArray(SOMAArray&&) = delete;
     virtual ~SOMAArray() = default;
 
@@ -191,7 +203,7 @@ class SOMAArray : public SOMAObject {
      * @brief Get the derived type of the SOMAArray.
      *
      * @return std::string where valid types are SOMADataFrame,
-     * SOMADenseNDArray, or SOMASparseNDArray
+     * SOMADenseNDArray, or SOMASparseNDArray and invalid type is empty string
      */
     const std::string type() const;
 
@@ -722,7 +734,7 @@ class SOMAArray : public SOMAObject {
     std::optional<std::pair<uint64_t, uint64_t>> timestamp_;
 
     // Managed query for the array
-    std::unique_ptr<ManagedQuery> mq_;
+    std::shared_ptr<ManagedQuery> mq_;
 
     // Array associated with mq_
     std::shared_ptr<Array> arr_;

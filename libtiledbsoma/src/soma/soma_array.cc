@@ -172,6 +172,9 @@ std::shared_ptr<Context> SOMAArray::ctx() {
 const std::string SOMAArray::type() const {
     auto soma_object_type = this->get_metadata("soma_object_type");
 
+    if (!soma_object_type.has_value())
+        return "";
+
     const char* dtype = (const char*)std::get<MetadataInfo::value>(
         *soma_object_type);
     uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);

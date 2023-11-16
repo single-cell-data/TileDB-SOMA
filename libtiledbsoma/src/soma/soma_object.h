@@ -47,7 +47,7 @@ class SOMAObject {
     //===================================================================
     //= public non-static
     //===================================================================
-    virtual ~SOMAObject(){};
+    virtual ~SOMAObject() = default;
 
     static std::unique_ptr<SOMAObject> open(
         std::string uri,
