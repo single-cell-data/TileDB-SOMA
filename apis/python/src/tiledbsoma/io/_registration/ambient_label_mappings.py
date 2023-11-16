@@ -230,6 +230,9 @@ class ExperimentAmbientLabelMapping:
                     obs_map = dict(zip(obs_ids, soma_joinids))
 
                 for measurement_name in exp.ms:
+                    var = exp.ms[measurement_name].var
+                    if "var" not in exp.ms[measurement_name]:
+                        continue
                     var_map = {}
                     for batch in exp.ms[measurement_name].var.read(
                         column_names=["soma_joinid", var_field_name]
@@ -285,10 +288,13 @@ class ExperimentAmbientLabelMapping:
                 obs_map[obs_id] = obs_next_soma_joinid
                 obs_next_soma_joinid += 1
 
-        var_map = dict(previous.var_axes[measurement_name].data)
-        var_next_soma_joinid = previous.var_axes[
-            measurement_name
-        ].get_next_start_soma_joinid()
+        var_map = {}
+        var_next_soma_joinid = 0
+        if measurement_name in previous.var_axes:
+            var_map = dict(previous.var_axes[measurement_name].data)
+            var_next_soma_joinid = previous.var_axes[
+                measurement_name
+            ].get_next_start_soma_joinid()
         var_ids = get_dataframe_values(adata.var, var_field_name)
         for var_id in var_ids:
             if var_id not in var_map:
