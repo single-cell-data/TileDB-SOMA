@@ -280,7 +280,7 @@ setuptools.setup(
         "numba==0.56.4; python_version<'3.8'",
         "numpy>=1.18,<1.24; python_version<'3.8'",
         "pandas",
-        "pyarrow>=9.0.0",
+        "pyarrow>=9.0.0,!=14.0.0",
         "scanpy>=1.9.2",
         "scipy",
         "somacore==1.0.4",
