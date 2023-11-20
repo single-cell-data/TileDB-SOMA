@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-import os
 import json
+import os
 
 import pyarrow as pa
+
 import tiledbsoma.pytiledbsoma as clib
 
 VERBOSE = False
@@ -51,18 +52,20 @@ def test_soma_array_obs():
     assert sr.results_complete()
     assert arrow_table.num_rows == 2638
 
+
 def test_soma_array_stats():
     """Get query stats from an obs array."""
-    
+
     name = "obs"
     uri = os.path.join(SOMA_URI, name)
     sr = clib.SOMAArray(uri)
     sr.read_next()
     stats = json.loads(sr.stats())
-    
+
     assert "Context.StorageManager.Query.Reader.dowork.sum" in stats["timers"]
     assert "Context.StorageManager.Query.Reader.dowork.avg" in stats["timers"]
     assert "Context.StorageManager.Query.Reader.loop_num" in stats["counters"]
+
 
 def test_soma_array_var():
     """Read all values from var array into an arrow table."""
