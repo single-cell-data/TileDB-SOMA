@@ -321,7 +321,10 @@ std::string tiledbsoma_stats_dump() {
 //' @noRd
 // [[Rcpp::export]]
 std::string libtiledbsoma_version() {
-    return tiledbsoma::version::as_string();
+    auto v = tiledbsoma::version::embedded_version_triple();
+    std::ostringstream txt;
+    txt << std::get<0>(v) << "." << std::get<1>(v) << "." << std::get<2>(v);
+    return txt.str();
 }
 
 //' TileDB embedded version
