@@ -47,7 +47,10 @@ null <- function(...) {
 }
 
 random_name <- function(length = 5L, chars = letters, ...) {
-  stopifnot(is_integerish(length, n = 1L), is.character(chars))
+  stopifnot(
+    "'length' must be a single integer" = is_integerish(length, n = 1L),
+    "'chars' must be character" = is.character(chars)
+  )
   chars <- unique(unlist(strsplit(chars, split = '')))
   return(paste(sample(chars, size = length, ...), collapse = ''))
 }
