@@ -221,6 +221,10 @@ void SOMAArray::reset(
     submitted_ = false;
 }
 
+std::string SOMAArray::stats() {
+    return mq_->stats();
+}
+
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     // If the query is complete, return `std::nullopt`
     if (mq_->is_complete(true)) {

@@ -307,6 +307,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             "platform_config"_a = py::dict(),
             "timestamp"_a = py::none())
 
+        .def("stats", &SOMAArray::stats)
+
         .def(
             "set_condition", 
             [](SOMAArray& reader, 

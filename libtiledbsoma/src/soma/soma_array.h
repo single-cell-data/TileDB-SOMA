@@ -223,6 +223,13 @@ class SOMAArray {
         ResultOrder result_order = ResultOrder::automatic);
 
     /**
+     * @brief Returns a JSON-formatted string of the stats.
+     *
+     * @return std::string
+     */
+    std::string stats();
+
+    /**
      * @brief Set the dimension slice using one point
      *
      * @note Partitioning is not supported

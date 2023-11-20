@@ -67,6 +67,10 @@ void ManagedQuery::reset() {
     query_submitted_ = false;
 }
 
+std::string ManagedQuery::stats() {
+    return query_->stats();
+}
+
 void ManagedQuery::select_columns(
     const std::vector<std::string>& names, bool if_not_empty) {
     // Return if we are selecting all columns (columns_ is empty) and we want to

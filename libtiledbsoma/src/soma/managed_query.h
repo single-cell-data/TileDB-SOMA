@@ -76,6 +76,13 @@ class ManagedQuery {
     void reset();
 
     /**
+     * @brief Returns a JSON-formatted string of the stats.
+     *
+     * @return std::string
+     */
+    std::string stats();
+
+    /**
      * @brief Select columns names to query (dim and attr). If the
      * `if_not_empty` parameter is `true`, the column will be selected iff the
      * list of selected columns is empty. This prevents a `select_columns` call
