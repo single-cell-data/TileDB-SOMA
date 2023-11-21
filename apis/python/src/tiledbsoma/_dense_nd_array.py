@@ -10,6 +10,8 @@ Implementation of SOMA DenseNDArray.
 from typing import Optional, Tuple
 
 import pyarrow as pa
+
+# ruff: noqa
 import pyarrow_hotfix
 import somacore
 from somacore import options

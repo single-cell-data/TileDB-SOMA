@@ -33,6 +33,8 @@ import h5py
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+
+# ruff: noqa
 import pyarrow_hotfix
 import scipy.sparse as sp
 import tiledb

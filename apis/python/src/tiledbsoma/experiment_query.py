@@ -7,6 +7,8 @@ from typing import cast
 
 import pandas as pd
 import pyarrow as pa
+
+# ruff: noqa
 import pyarrow_hotfix
 
 from ._types import NPNDArray, PDSeries

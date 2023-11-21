@@ -5,6 +5,8 @@ import anndata as ad
 import attrs
 import pandas as pd
 import pyarrow as pa
+
+# ruff: noqa
 import pyarrow_hotfix
 from typing_extensions import Self
 

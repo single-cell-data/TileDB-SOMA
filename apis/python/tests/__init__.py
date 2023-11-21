@@ -1,4 +1,6 @@
 import pyarrow as pa
+
+# ruff: noqa
 import pyarrow_hotfix
 from typeguard.importhook import install_import_hook
 

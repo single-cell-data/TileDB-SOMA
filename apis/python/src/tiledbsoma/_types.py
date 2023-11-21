@@ -11,6 +11,8 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+
+# ruff: noqa
 import pyarrow_hotfix
 from somacore import types
 from typing_extensions import Literal

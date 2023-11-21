@@ -3,6 +3,8 @@ from typing import Any, Dict
 
 import numpy as np
 import pyarrow as pa
+
+# ruff: noqa
 import pyarrow_hotfix
 import pytest
 

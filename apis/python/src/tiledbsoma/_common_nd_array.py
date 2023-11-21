@@ -9,6 +9,8 @@ from typing import Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 import pyarrow as pa
+
+# ruff: noqa
 import pyarrow_hotfix
 import somacore
 import tiledb

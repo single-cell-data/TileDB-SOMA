@@ -6,6 +6,8 @@ from typing import List, TypeVar, Union
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+
+# ruff: noqa
 import pyarrow_hotfix
 import pytest
 from typing_extensions import Literal
