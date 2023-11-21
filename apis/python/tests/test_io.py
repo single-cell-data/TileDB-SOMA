@@ -1,8 +1,5 @@
 import numpy as np
 import pyarrow as pa
-
-# ruff: noqa
-import pyarrow_hotfix
 import pytest
 from scipy import sparse as sp
 

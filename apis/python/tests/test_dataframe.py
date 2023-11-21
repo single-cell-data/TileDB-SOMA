@@ -4,9 +4,6 @@ from typing import Dict, List
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-
-# ruff: noqa
-import pyarrow_hotfix
 import pytest
 import somacore
 import tiledb

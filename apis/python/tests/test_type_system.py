@@ -1,9 +1,6 @@
 import pathlib
 
 import pyarrow as pa
-
-# ruff: noqa
-import pyarrow_hotfix
 import pytest
 
 import tiledbsoma as soma

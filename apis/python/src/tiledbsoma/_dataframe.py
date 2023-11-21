@@ -11,9 +11,6 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, cast
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-
-# ruff: noqa
-import pyarrow_hotfix
 import somacore
 import tiledb
 from somacore import options
