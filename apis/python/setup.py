@@ -280,7 +280,10 @@ setuptools.setup(
         "numba==0.56.4; python_version<'3.8'",
         "numpy>=1.18,<1.24; python_version<'3.8'",
         "pandas",
-        "pyarrow>=9.0.0,!=14.0.0",
+        "pyarrow>=9.0.0",
+        # TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/1926
+        "pyarrow_hotfix",
         "scanpy>=1.9.2",
         "scipy",
         "somacore==1.0.4",

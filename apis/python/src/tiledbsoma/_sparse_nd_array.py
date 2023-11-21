@@ -19,6 +19,7 @@ from typing import (
 
 import numpy as np
 import pyarrow as pa
+import pyarrow_hotfix
 import pyarrow.compute as pacomp
 import somacore
 import tiledb

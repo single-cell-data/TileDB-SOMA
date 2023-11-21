@@ -1,6 +1,7 @@
 import pathlib
 
 import pyarrow as pa
+import pyarrow_hotfix
 import pytest
 
 import tiledbsoma as soma

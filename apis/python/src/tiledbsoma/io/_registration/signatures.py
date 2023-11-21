@@ -5,6 +5,7 @@ import anndata as ad
 import attrs
 import pandas as pd
 import pyarrow as pa
+import pyarrow_hotfix
 from typing_extensions import Self
 
 import tiledbsoma

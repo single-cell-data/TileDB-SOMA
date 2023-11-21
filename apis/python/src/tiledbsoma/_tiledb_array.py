@@ -9,6 +9,7 @@ import sys
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pyarrow as pa
+import pyarrow_hotfix
 import tiledb
 from somacore.options import ResultOrder, ResultOrderStr
 

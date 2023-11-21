@@ -26,6 +26,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+import pyarrow_hotfix
 import somacore
 from scipy import sparse
 from somacore import options

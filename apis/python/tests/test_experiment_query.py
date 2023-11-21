@@ -3,6 +3,7 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+import pyarrow_hotfix
 import pytest
 from scipy import sparse
 from somacore import options

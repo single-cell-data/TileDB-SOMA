@@ -3,6 +3,7 @@ from typing import Tuple
 
 import numpy as np
 import pyarrow as pa
+import pyarrow_hotfix
 import pytest
 import tiledb
 
