@@ -157,6 +157,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         _util.check_unpartitioned(partitions)
 
         sr = self._soma_reader(schema=self._handle.schema, result_order=result_order)
+
         return SparseNDArrayRead(sr, self, coords)
 
     def write(
@@ -346,6 +347,12 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         # subsequent metadata update did not, take the union of the core non-empty domain
         # (which is done as part of the data update) and the metadata bounding box.
         ned = self.non_empty_domain()
+        if ned is None:
+            raise SOMAError(
+                f"Array {self.uri} has no data written. "
+                + "For an approximation, please use `non_empty_domain()` instead",
+            )
+
         for i, nedslot in enumerate(ned):
             ned_lower, ned_upper = nedslot
             bbox_lower, bbox_upper = retval[i]
@@ -403,7 +410,20 @@ class _SparseNDArrayReadBase(somacore.SparseRead):
             Experimental.
         """
         self.sr = sr
-        self.shape = tuple(sr.shape)
+
+        # array.used_shape returns for example ((0,99),(0,199)). We want (100,200).
+        #
+        # Context: ever since 1.5.0, sr.shape can be 2 billion x 2 billion,
+        # which makes the resultant to-CSR slow. By making the output shaped to
+        # data that have actually been written, we can make to-CSR orders of
+        # magnitude faster.
+        try:
+            bounding_box = array.used_shape()
+            used_shape = tuple(e[1] + 1 for e in bounding_box)
+        except SOMAError:
+            used_shape = tuple(sr.shape)
+
+        self.shape = used_shape
         self.array = array
         self.coords = coords
 

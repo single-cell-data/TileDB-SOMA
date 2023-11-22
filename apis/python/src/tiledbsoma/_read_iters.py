@@ -97,9 +97,21 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.eager = eager
         self.eager_iterator_pool = eager_iterator_pool
 
+        # array.used_shape returns for example ((0,99),(0,199)). We want (100,200).
+        #
+        # Context: ever since 1.5.0, sr.shape can be 2 billion x 2 billion,
+        # which makes the resultant to-CSR slow. By making the output shaped to
+        # data that have actually been written, we can make to-CSR orders of
+        # magnitude faster.
+        try:
+            bounding_box = array.used_shape()
+            used_shape = tuple(e[1] + 1 for e in bounding_box)
+        except SOMAError:
+            used_shape = tuple(sr.shape)
+
         # raises on various error checks, AND normalizes args
         self.axis, self.size, self.reindex_disable_on_axis = self._validate_args(
-            sr.shape, axis, size, reindex_disable_on_axis
+            used_shape, axis, size, reindex_disable_on_axis
         )
 
         self.major_axis = self.axis[0]
