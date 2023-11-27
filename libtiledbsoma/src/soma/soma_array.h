@@ -169,19 +169,20 @@ class SOMAArray : public SOMAObject {
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMAArray() = delete;
-    SOMAArray(const SOMAObject& rhs)
-        : SOMAObject(rhs){};
-    SOMAArray(const SOMAArray& rhs)
-        : ctx_(rhs.ctx_)
-        , uri_(rhs.uri_)
-        , batch_size_(rhs.batch_size_)
-        , result_order_(rhs.result_order_)
-        , metadata_(rhs.metadata_)
-        , timestamp_(rhs.timestamp_)
-        , mq_(new ManagedQuery(*rhs.mq_))
-        , arr_(rhs.arr_)
-        , first_read_next_(rhs.first_read_next_)
-        , submitted_(rhs.submitted_){};
+    // SOMAArray(const SOMAObject& rhs)
+    //     : SOMAObject(rhs){};
+    // SOMAArray(const SOMAArray& rhs)
+    //     : ctx_(rhs.ctx_)
+    //     , uri_(rhs.uri_)
+    //     , batch_size_(rhs.batch_size_)
+    //     , result_order_(rhs.result_order_)
+    //     , metadata_(rhs.metadata_)
+    //     , timestamp_(rhs.timestamp_)
+    //     , mq_(new ManagedQuery(*rhs.mq_))
+    //     , arr_(rhs.arr_)
+    //     , first_read_next_(rhs.first_read_next_)
+    //     , submitted_(rhs.submitted_){};
+    SOMAArray(const SOMAArray& rhs) = default;
     SOMAArray(SOMAArray&&) = delete;
     virtual ~SOMAArray() = default;
 
