@@ -60,17 +60,17 @@ void load_soma_object(py::module &m) {
         try{
             auto obj = SOMAObject::open(uri, mode, config, timestamp);
             if (obj->type() == "SOMADataFrame")
-                return py::cast((SOMADataFrame::open(
+                return py::cast(SOMADataFrame::open(
                     uri, mode, config, {}, ResultOrder::automatic, timestamp
-                )));
+                ));
             else if(obj->type() == "SOMASparseNDArray")
-                return py::cast((SOMASparseNDArray::open(
+                return py::cast(SOMASparseNDArray::open(
                     uri, mode, config, {}, ResultOrder::automatic, timestamp
-                )));
+                ));
             else if(obj->type() == "SOMADenseNDArray")
-                return py::cast((SOMADenseNDArray::open(
+                return py::cast(SOMADenseNDArray::open(
                     uri, mode, config, {}, ResultOrder::automatic, timestamp
-                )));
+                ));
         }catch(...){
             TPY_ERROR_LOC("SOMAObject not handled in Python API yet.");
         }

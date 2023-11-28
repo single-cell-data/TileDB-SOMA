@@ -68,7 +68,11 @@ void load_soma_dense_ndarray(py::module &m) {
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
         return pa_schema_import(py::capsule(soma_dense_ndarr.arrow_schema().get()));
     })
-    .def_property_readonly("timestamp", &SOMADenseNDArray::timestamp)
+    .def_property_readonly("timestamp", [](SOMADenseNDArray& soma_df) -> py::object {
+        if(!soma_df.timestamp().has_value())
+            return py::none();
+        return py::cast(soma_df.timestamp()->second);
+    })
     .def_property_readonly("index_column_names", &SOMADenseNDArray::dimension_names)
     .def("non_empty_domain", [](SOMADenseNDArray& soma_dense_ndarr, std::string name, py::dtype dtype){
         switch (np_to_tdb_dtype(dtype)) {

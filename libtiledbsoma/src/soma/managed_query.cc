@@ -55,8 +55,8 @@ ManagedQuery::ManagedQuery(
 }
 
 void ManagedQuery::reset() {
-    query_ = std::make_unique<Query>(schema_->context(), *array_);
-    subarray_ = std::make_unique<Subarray>(schema_->context(), *array_);
+    query_ = std::make_unique<Query>(*ctx_, *array_);
+    subarray_ = std::make_unique<Subarray>(*ctx_, *array_);
 
     subarray_range_set_ = false;
     subarray_range_empty_ = {};
@@ -146,17 +146,29 @@ void ManagedQuery::submit_write() {
 }
 
 std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
+    std::cout << 6 << std::endl;
     if (is_empty_query()) {
         return buffers_;
     }
+    std::cout << 7 << std::endl;
+
+    std::cout << query_.get() << std::endl;
+    std::cout << query_->query_status() << std::endl;
+    std::cout << array_.get() << std::endl;
+    array_->schema().dump(stdout);
+    std::cout << subarray_.get() << std::endl;
 
     query_->submit();
+
+    std::cout << 8 << std::endl;
 
     // Poll status until query is not INPROGRESS
     Query::Status status;
     do {
         status = query_->query_status();
     } while (status == Query::Status::INPROGRESS);
+
+    std::cout << 9 << std::endl;
 
     LOG_DEBUG(fmt::format(
         "[ManagedQuery] [{}] Query status = {}", name_, (int)status));
@@ -166,6 +178,8 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
             fmt::format("[ManagedQuery] [{}] Query FAILED", name_));
     }
 
+    std::cout << 10 << std::endl;
+
     // If the query was ever incomplete, the result buffers contents are not
     // complete.
     if (status == Query::Status::INCOMPLETE) {
@@ -173,6 +187,8 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
     } else if (status == Query::Status::COMPLETE) {
         results_complete_ = true;
     }
+
+    std::cout << 11 << std::endl;
 
     // Update ColumnBuffer size to match query results
     size_t num_cells = 0;

@@ -61,8 +61,6 @@ void load_soma_dataframe(py::module &m) {
             py::object py_query_condition,
             py::object pa_schema){  
                 auto column_names = reader.column_names();
-                for(auto n : column_names)
-                    std::cout << n << std::endl;
                 // Handle query condition based on
                 // TileDB-Py::PyQuery::set_attr_cond()
                 QueryCondition* qc = nullptr;
