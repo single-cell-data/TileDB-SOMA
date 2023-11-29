@@ -170,6 +170,8 @@ class SOMAArray : public SOMAObject {
 
     SOMAArray() = delete;
     SOMAArray(const SOMAArray& rhs) = default;
+    SOMAArray(const SOMAObject& rhs)
+        : SOMAObject(rhs){};
     SOMAArray(SOMAArray&&) = delete;
     virtual ~SOMAArray() = default;
 

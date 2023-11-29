@@ -239,18 +239,12 @@ void SOMAArray::reset(
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     // If the query is complete, return `std::nullopt`
-    std::cout << 1 << std::endl;
-
     if (mq_->is_complete(true)) {
         return std::nullopt;
     }
 
-    std::cout << 2 << std::endl;
-
     // Configure query and allocate result buffers
     mq_->setup_read();
-
-    std::cout << 3 << std::endl;
 
     // Continue to submit the empty query on first read to return empty results
     if (mq_->is_empty_query()) {
@@ -262,11 +256,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
         }
     }
 
-    std::cout << 4 << std::endl;
-
     first_read_next_ = false;
-
-    std::cout << 5 << std::endl;
 
     // Return the results, possibly incomplete
     return mq_->submit_read();
