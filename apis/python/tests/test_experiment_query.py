@@ -526,7 +526,8 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
 
 
 @pytest.mark.parametrize(
-    "n_obs,n_vars,obsp_layer_names,varp_layer_names,obsm_layer_names,varm_layer_names", [(1001, 99, ["foo"], ["bar"], ["baz"], ["quux"])]
+    "n_obs,n_vars,obsp_layer_names,varp_layer_names,obsm_layer_names,varm_layer_names",
+    [(1001, 99, ["foo"], ["bar"], ["baz"], ["quux"])],
 )
 def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
     obs_slice = slice(3, 72)
@@ -572,10 +573,10 @@ def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
 
         print(
             soma_experiment.ms["RNA"]
-                .obsm["baz"]
-                .read((obs_slice, range(50)))
-                .tables()
-                .concat()
+            .obsm["baz"]
+            .read((obs_slice, range(50)))
+            .tables()
+            .concat()
         )
 
         assert (
@@ -587,43 +588,54 @@ def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
             .concat()
         )
 
+
 @pytest.mark.parametrize(
     "n_obs,n_vars,obsm_layer_names,varm_layer_names", [(1001, 99, ["foo"], ["bar"])]
 )
 def test_experiment_query_to_anndata_obsm_varm(soma_experiment):
     with soma_experiment.axis_query("RNA") as query:
-        ad = query.to_anndata("raw", obsm_keys = ["foo"], varm_keys = ["bar"])
+        ad = query.to_anndata("raw", obsm_keys=["foo"], varm_keys=["bar"])
         assert set(ad.obsm.keys()) == {"foo"}
         obsm = ad.obsm["foo"]
         assert isinstance(obsm, np.ndarray)
         assert obsm.shape == (query.n_obs, 50)
 
-        assert np.array_equal(query.obsm("foo").coos().concat().to_scipy().todense(), obsm)
+        assert np.array_equal(
+            query.obsm("foo").coos().concat().to_scipy().todense(), obsm
+        )
 
         assert set(ad.varm.keys()) == {"bar"}
         varm = ad.varm["bar"]
         assert isinstance(varm, np.ndarray)
         assert varm.shape == (query.n_vars, 50)
-        assert np.array_equal(query.varm("bar").coos().concat().to_scipy().todense(), varm)
+        assert np.array_equal(
+            query.varm("bar").coos().concat().to_scipy().todense(), varm
+        )
+
 
 @pytest.mark.parametrize(
     "n_obs,n_vars,obsp_layer_names,varp_layer_names", [(1001, 99, ["foo"], ["bar"])]
 )
 def test_experiment_query_to_anndata_obsp_varp(soma_experiment):
     with soma_experiment.axis_query("RNA") as query:
-        ad = query.to_anndata("raw", obsp_keys = ["foo"], varp_keys = ["bar"])
+        ad = query.to_anndata("raw", obsp_keys=["foo"], varp_keys=["bar"])
         assert set(ad.obsp.keys()) == {"foo"}
         obsp = ad.obsp["foo"]
         assert isinstance(obsp, np.ndarray)
         assert obsp.shape == (query.n_obs, query.n_obs)
 
-        assert np.array_equal(query.obsp("foo").coos().concat().to_scipy().todense(), obsp)
+        assert np.array_equal(
+            query.obsp("foo").coos().concat().to_scipy().todense(), obsp
+        )
 
         assert set(ad.varp.keys()) == {"bar"}
         varp = ad.varp["bar"]
         assert isinstance(varp, np.ndarray)
         assert varp.shape == (query.n_vars, query.n_vars)
-        assert np.array_equal(query.varp("bar").coos().concat().to_scipy().todense(), varp)
+        assert np.array_equal(
+            query.varp("bar").coos().concat().to_scipy().todense(), varp
+        )
+
 
 def test_axis_query():
     """Basic test of the AxisQuery class"""
