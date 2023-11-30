@@ -150,22 +150,16 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
         return buffers_;
     }
 
-    std::cout << query_.get() << std::endl;
-    std::cout << query_->query_status() << std::endl;
-    std::cout << array_.get() << std::endl;
-    array_->schema().dump(stdout);
-    std::cout << subarray_.get() << std::endl;
+    query_future_ = std::async(std::launch::async, [&]() {
+        LOG_DEBUG("[ManagedQuery] submit thread start");
+        query_->submit();
+        LOG_DEBUG("[ManagedQuery] submit thread done");
+    });
 
-    query_->submit();
+    LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
+    query_future_.wait();
 
-    // Poll status until query is not INPROGRESS
-    Query::Status status;
-    do {
-        status = query_->query_status();
-    } while (status == Query::Status::INPROGRESS);
-
-    LOG_DEBUG(fmt::format(
-        "[ManagedQuery] [{}] Query status = {}", name_, (int)status));
+    auto status = query_->query_status();
 
     if (status == Query::Status::FAILED) {
         throw TileDBSOMAError(
