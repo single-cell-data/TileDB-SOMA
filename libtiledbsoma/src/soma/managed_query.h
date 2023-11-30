@@ -386,12 +386,14 @@ class ManagedQuery {
         return buffers_->at(name)->string_view(index);
     }
 
+    void submit_read();
+
     /**
      * @brief Submit and return results from the query.
      *
      * @return std::shared_ptr<ArrayBuffers>
      */
-    std::shared_ptr<ArrayBuffers> submit_read();
+    std::shared_ptr<ArrayBuffers> results();
 
     /**
      * @brief Submit the write query.

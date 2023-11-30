@@ -145,16 +145,19 @@ void ManagedQuery::submit_write() {
     query_->submit();
 }
 
-std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
-    if (is_empty_query()) {
-        return buffers_;
-    }
-
+void ManagedQuery::submit_read() {
+    query_submitted_ = true;
     query_future_ = std::async(std::launch::async, [&]() {
         LOG_DEBUG("[ManagedQuery] submit thread start");
         query_->submit();
         LOG_DEBUG("[ManagedQuery] submit thread done");
     });
+}
+
+std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
+    if (is_empty_query()) {
+        return buffers_;
+    }
 
     LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
     query_future_.wait();
