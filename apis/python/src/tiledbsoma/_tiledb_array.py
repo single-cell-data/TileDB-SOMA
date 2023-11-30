@@ -21,20 +21,27 @@ from .options._soma_tiledb_context import SOMATileDBContext
 
 def _load_libs() -> None:
     """Loads the required TileDB-SOMA native library."""
-    if os.name == "nt":
-        lib_name = "tiledbsoma.dll"
-    elif sys.platform == "darwin":
-        lib_name = "libtiledbsoma.dylib"
-    else:
-        lib_name = "libtiledbsoma.so"
 
+    # On wheel builds, we may have a shared library already linked
+    # In this case, we can import directly
     try:
-        # Try loading the bundled native library.
-        lib_dir = os.path.dirname(os.path.abspath(__file__))
-        ctypes.CDLL(os.path.join(lib_dir, lib_name))
-    except OSError:
-        # Otherwise try loading by name only.
-        ctypes.CDLL(lib_name)
+        from . import pytiledbsoma as clib
+        del clib
+    except:
+        if os.name == "nt":
+            lib_name = "tiledbsoma.dll"
+        elif sys.platform == "darwin":
+            lib_name = "libtiledbsoma.dylib"
+        else:
+            lib_name = "libtiledbsoma.so"
+
+        try:
+            # Try loading the bundled native library.
+            lib_dir = os.path.dirname(os.path.abspath(__file__))
+            ctypes.CDLL(os.path.join(lib_dir, lib_name))
+        except OSError:
+            # Otherwise try loading by name only.
+            ctypes.CDLL(lib_name)
 
 
 # Load native libraries

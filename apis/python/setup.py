@@ -154,19 +154,20 @@ def find_or_build_package_data(setuptools_cmd):
         lib_dir = libtiledbsoma_exists()
         assert lib_dir, "error when building libtiledbsoma from source"
 
-    # Copy native libs into the package dir so they can be found by package_data
-    package_data = []
-    src_dir = this_dir / "src" / "tiledbsoma"
-    for f in lib_dir.glob("*tiledbsoma*"):
-        if f.suffix != ".a":  # skip static library
-            print(f"  copying file {f} to {src_dir}")
-            shutil.copy(f, src_dir)
-            package_data.append(f.name)
-    assert package_data, f"libtiledbsoma artifacts absent from {lib_dir}"
+        # If we are building from source, then we are likely building wheels. 
+        # Copy native libs into the package dir so they can be found by package_data
+        package_data = []
+        src_dir = this_dir / "src" / "tiledbsoma"
+        for f in lib_dir.glob("*tiledbsoma*"):
+            if f.suffix != ".a":  # skip static library
+                print(f"  copying file {f} to {src_dir}")
+                shutil.copy(f, src_dir)
+                package_data.append(f.name)
+        assert package_data, f"libtiledbsoma artifacts absent from {lib_dir}"
 
-    # Install shared libraries inside the Python module via package_data.
-    print(f"  adding to package_data: {package_data}")
-    setuptools_cmd.distribution.package_data["tiledbsoma"] = package_data
+        # Install shared libraries inside the Python module via package_data.
+        print(f"  adding to package_data: {package_data}")
+        setuptools_cmd.distribution.package_data["tiledbsoma"] = package_data
 
 
 class build_ext(setuptools.command.build_ext.build_ext):
