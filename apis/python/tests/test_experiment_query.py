@@ -571,14 +571,6 @@ def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
             .concat()
         )
 
-        print(
-            soma_experiment.ms["RNA"]
-            .obsm["baz"]
-            .read((obs_slice, range(50)))
-            .tables()
-            .concat()
-        )
-
         assert (
             query.varm("quux").tables().concat()
             == soma_experiment.ms["RNA"]
