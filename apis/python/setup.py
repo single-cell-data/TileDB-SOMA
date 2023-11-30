@@ -154,7 +154,7 @@ def find_or_build_package_data(setuptools_cmd):
         lib_dir = libtiledbsoma_exists()
         assert lib_dir, "error when building libtiledbsoma from source"
 
-        # If we are building from source, then we are likely building wheels. 
+        # If we are building from source, then we are likely building wheels.
         # Copy native libs into the package dir so they can be found by package_data
         package_data = []
         src_dir = this_dir / "src" / "tiledbsoma"

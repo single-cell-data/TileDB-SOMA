@@ -26,8 +26,9 @@ def _load_libs() -> None:
     # In this case, we can import directly
     try:
         from . import pytiledbsoma as clib
+
         del clib
-    except:
+    except ImportError:
         if os.name == "nt":
             lib_name = "tiledbsoma.dll"
         elif sys.platform == "darwin":
