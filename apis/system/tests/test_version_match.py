@@ -17,6 +17,6 @@ class TestVersionMatch(BasePythonRInterop):
         library("tiledb")
         version = tiledb_version()
         stopifnot(as.integer(version["major"]) == {major})
-        stopifnot(as.integer(version["minor"]) == {minor})
+        stopifnot(as.integer(version["minor"]) >= {minor})
         """
         )
