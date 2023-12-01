@@ -272,13 +272,21 @@ setuptools.setup(
         # Tracked in https://github.com/single-cell-data/TileDB-SOMA/issues/1785
         "anndata != 0.10.0; python_version>='3.8'",
         "attrs>=22.2",
-        "numba~=0.58.0; python_version>='3.8'",
-        # Older numba version needed for Python3.7.
-        # This older numba version was also incompatble with newer numpy
-        # versions, and the old pip solver (<=2020) needed us to explicate
-        # that constraint here (issue #1051).
-        "numba==0.56.4; python_version<'3.8'",
-        "numpy>=1.18,<1.24; python_version<'3.8'",
+        # Pinning numba & its particular numpy constraints:
+        # The old pip solver (<=2020) doesn't deal with the transitive
+        # requirements (scanpy -> numba -> numpy) properly resulting in broken
+        # installation of incompatible numpy>=1.24. Issue #1051
+        # These pins can be removed either when there's a new numba release
+        # with less-particular numpy version constraints, or if we decide we no
+        # longer need to support the old pip solver (default on ubuntu 20.04).
+        #
+        # Also: numba doesn't support Python 3.11 until 0.57.0rc1.
+        # It' not preferable to pin to an RC dependency, so we only do this
+        # when we must, which is for 3.11.
+        "numba==0.56.4; python_version<'3.11'",
+        "numba==0.57; python_version=='3.11'",
+        "numpy>=1.18,<1.24; python_version<'3.11'",
+        "numpy>=1.18,<1.25; python_version=='3.11'",
         "pandas",
         # TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
         # https://github.com/single-cell-data/TileDB-SOMA/issues/1926
