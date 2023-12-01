@@ -285,7 +285,8 @@ setuptools.setup(
         "pyarrow_hotfix",
         # MacOS issue with import pyarrow before import tiledb at >= 13.0:
         # https://github.com/single-cell-data/TileDB-SOMA/issues/1926#issuecomment-1834695149
-        "pyarrow>=9.0.0,<13.0.0",
+        "pyarrow>=9.0.0,<13.0.0; platform_system=='Darwin'",
+        "pyarrow>=9.0.0; platform_system!='Darwin'",
         "scanpy>=1.9.2",
         "scipy",
         "somacore==1.0.4",
