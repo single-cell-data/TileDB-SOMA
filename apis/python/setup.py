@@ -280,11 +280,16 @@ setuptools.setup(
         "numba==0.56.4; python_version<'3.8'",
         "numpy>=1.18,<1.24; python_version<'3.8'",
         "pandas",
-        "pyarrow>=9.0.0",
+        # TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/1926
+        "pyarrow_hotfix",
+        # MacOS issue with import pyarrow before import tiledb at >= 13.0:
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/1926#issuecomment-1834695149
+        "pyarrow>=9.0.0,<13.0.0",
         "scanpy>=1.9.2",
         "scipy",
         "somacore==1.0.4",
-        "tiledb~=0.23.4",
+        "tiledb~=0.24.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
