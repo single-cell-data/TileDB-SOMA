@@ -12,6 +12,9 @@ from tiledbsoma import _factory
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
 
+# Number of features for the embeddings layer
+N_FEATURES = 50
+
 
 @pytest.fixture
 def X_layer_names():
@@ -71,12 +74,12 @@ def soma_experiment(
         if obsm_layer_names:
             obsm = rna.add_new_collection("obsm")
             for obsm_layer_name in obsm_layer_names:
-                add_sparse_array(obsm, obsm_layer_name, (n_obs, 50))
+                add_sparse_array(obsm, obsm_layer_name, (n_obs, N_FEATURES))
 
         if varm_layer_names:
             varm = rna.add_new_collection("varm")
             for varm_layer_name in varm_layer_names:
-                add_sparse_array(varm, varm_layer_name, (n_vars, 50))
+                add_sparse_array(varm, varm_layer_name, (n_vars, N_FEATURES))
 
     return _factory.open((tmp_path / "exp").as_posix())
 
@@ -581,7 +584,7 @@ def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
             query.obsm("baz").tables().concat()
             == soma_experiment.ms["RNA"]
             .obsm["baz"]
-            .read((obs_slice, range(50)))
+            .read((obs_slice, range(N_FEATURES)))
             .tables()
             .concat()
         )
@@ -590,7 +593,7 @@ def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
             query.varm("quux").tables().concat()
             == soma_experiment.ms["RNA"]
             .varm["quux"]
-            .read((var_slice, range(50)))
+            .read((var_slice, range(N_FEATURES)))
             .tables()
             .concat()
         )
@@ -605,7 +608,7 @@ def test_experiment_query_to_anndata_obsm_varm(soma_experiment):
         assert set(ad.obsm.keys()) == {"foo"}
         obsm = ad.obsm["foo"]
         assert isinstance(obsm, np.ndarray)
-        assert obsm.shape == (query.n_obs, 50)
+        assert obsm.shape == (query.n_obs, N_FEATURES)
 
         assert np.array_equal(
             query.obsm("foo").coos().concat().to_scipy().todense(), obsm
@@ -614,7 +617,7 @@ def test_experiment_query_to_anndata_obsm_varm(soma_experiment):
         assert set(ad.varm.keys()) == {"bar"}
         varm = ad.varm["bar"]
         assert isinstance(varm, np.ndarray)
-        assert varm.shape == (query.n_vars, 50)
+        assert varm.shape == (query.n_vars, N_FEATURES)
         assert np.array_equal(
             query.varm("bar").coos().concat().to_scipy().todense(), varm
         )
