@@ -4,7 +4,7 @@
 
 * `SOMADataFrame`, `SOMASparseNDArray`, and `SOMADenseNDArray`'s `write()` method now correctly leaves the array open in write mode
 
-# tiledbsoma 1.5.1
+# tiledbsoma 1.6.0
 
 ## Changes
 
