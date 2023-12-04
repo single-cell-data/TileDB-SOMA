@@ -22,15 +22,16 @@ from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 
-def _indexer_map_locations(keys: np.typing.NDArray[np.int64]) -> clib.IntIndexer:
+def _indexer_map_locations(keys: np.typing.NDArray[np.int64], context: SOMATileDBContext) -> clib.IntIndexer:
     if len(np.unique(keys)) != len(keys):
         raise pd.errors.InvalidIndexError(
             "Reindexing only valid with uniquely valued Index objects"
         )
-    context: SOMATileDBContext = _validate_soma_tiledb_context(
-        SOMATileDBContext(tiledb.default_ctx())
-    )
-    compute_concurrency: int = 5
+    if context == None:
+        context: SOMATileDBContext = _validate_soma_tiledb_context(
+            SOMATileDBContext(tiledb.default_ctx())
+        )
+    ompute_concurrency: int = 5
     if context._tiledb_ctx:
         compute_concurrency = int(
             int(context._tiledb_ctx.config()["sm.compute_concurrency_level"]) / 2

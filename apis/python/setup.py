@@ -296,7 +296,7 @@ setuptools.setup(
         "scanpy>=1.9.2",
         "scipy",
         # "somacore==1.0.4", # temporarily change for this PR! TODO will be reversed before landing
-        "somacore @ git+https://github.com/single-cell-data/SOMA@1d71cc1",
+        "somacore @ git+https://github.com/single-cell-data/SOMA@7a922b0",
         "tiledb~=0.24.0",
     ],
     extras_require={
