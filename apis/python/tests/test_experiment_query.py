@@ -572,6 +572,15 @@ def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
         )
 
         assert (
+            query.obsm("baz").tables().concat()
+            == soma_experiment.ms["RNA"]
+            .obsm["baz"]
+            .read((obs_slice, range(50)))
+            .tables()
+            .concat()
+        )
+
+        assert (
             query.varm("quux").tables().concat()
             == soma_experiment.ms["RNA"]
             .varm["quux"]
@@ -586,7 +595,7 @@ def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
 )
 def test_experiment_query_to_anndata_obsm_varm(soma_experiment):
     with soma_experiment.axis_query("RNA") as query:
-        ad = query.to_anndata("raw", obsm_keys=["foo"], varm_keys=["bar"])
+        ad = query.to_anndata("raw", obsm_layers=["foo"], varm_layers=["bar"])
         assert set(ad.obsm.keys()) == {"foo"}
         obsm = ad.obsm["foo"]
         assert isinstance(obsm, np.ndarray)
@@ -610,7 +619,7 @@ def test_experiment_query_to_anndata_obsm_varm(soma_experiment):
 )
 def test_experiment_query_to_anndata_obsp_varp(soma_experiment):
     with soma_experiment.axis_query("RNA") as query:
-        ad = query.to_anndata("raw", obsp_keys=["foo"], varp_keys=["bar"])
+        ad = query.to_anndata("raw", obsp_layers=["foo"], varp_layers=["bar"])
         assert set(ad.obsp.keys()) == {"foo"}
         obsp = ad.obsp["foo"]
         assert isinstance(obsp, np.ndarray)
