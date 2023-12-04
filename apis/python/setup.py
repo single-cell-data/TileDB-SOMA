@@ -283,7 +283,7 @@ setuptools.setup(
         "pyarrow>=9.0.0",
         "scanpy>=1.9.2",
         "scipy",
-        "somacore==1.0.4",
+        "somacore==1.0.6",
         "tiledb~=0.23.3",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
