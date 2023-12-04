@@ -1,6 +1,10 @@
+from __future__ import annotations
+
+import itertools
+import operator
 import pathlib
 import sys
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
@@ -1129,3 +1133,575 @@ def test_empty_indexed_read(tmp_path):
 
         coords = [[], [4]]
         assert sum(len(t) for t in a.read(coords).tables()) == 0
+
+
+@pytest.fixture
+def a_soma_context() -> SOMATileDBContext:
+    return SOMATileDBContext(
+        tiledb_config={
+            "soma.init_buffer_bytes": 128 * 1024**2,
+            "tiledb.init_buffer_bytes": 128 * 1024**2,
+        }
+    )
+
+
+@pytest.fixture
+def a_random_sparse_nd_array(
+    tmp_path, a_soma_context: SOMATileDBContext, shape: Tuple[int, ...], density: float
+) -> str:
+    uri = tmp_path.as_posix()
+    dtype = np.float32
+    with soma.SparseNDArray.create(
+        uri, type=pa.from_numpy_dtype(dtype), shape=shape, context=a_soma_context
+    ) as a:
+        a.write(create_random_tensor("table", shape, dtype, density))
+    return uri
+
+
+@pytest.mark.parametrize(
+    # specify coords using SOMA semantics, ie. closed range
+    # use density to keep the sparse array memory use "reasonable"
+    "density,shape,coords",
+    [
+        # 2D
+        (0.01, (1_000, 100), ()),
+        (0.01, (1_000, 100), (None,)),
+        (0.01, (1_000, 100), (slice(None),)),
+        (0.1, (1_000, 100), (slice(10, 20),)),
+        (0.1, (1_000, 100), (None, slice(10, 20))),
+        (0.1, (1_000, 100), (slice(10, 20), slice(2, 33))),
+        (0.1, (1_000, 100), (1,)),
+        (0.1, (1_000, 100), (None, 3)),
+        (0.1, (1_000, 100), (10, 3)),
+        (0.1, (1_000, 100), (slice(None), 1)),
+        (0.1, (1_000, 100), ([3, 99, 101, 102, 77, 0],)),
+        (0.1, (1_000, 100), (slice(500), [3, 99, 33, 77, 0])),
+        (0.1, (1_000, 100), (np.arange(0, 101),)),
+        (0.1, (1_000, 100), (np.arange(0, 1000), [0, 10, 20])),
+        (0.1, (1_000, 100), (np.arange(0, 1000), slice(2, 99))),
+        # 3D
+        (0.005, (2_589, 101, 38), ()),
+        (0.005, (2_589, 101, 38), (None,)),
+        (0.005, (2_589, 101, 38), (slice(None),)),
+        (0.005, (2_589, 101, 38), (slice(3, 8),)),
+        (0.005, (2_589, 101, 38), (slice(3, 8), slice(45, 93))),
+        (
+            0.005,
+            (2_589, 101, 38),
+            (slice(None), slice(2, 80), [0, 22, 1, 23, 2, 24, 3]),
+        ),
+        # 1D
+        (0.3, (10_000,), (slice(4000),)),
+    ],
+)
+def test_blockwise_table_iter(
+    a_random_sparse_nd_array: str,
+    shape: Tuple[int, ...],
+    coords: Tuple[Any, ...],
+    a_soma_context: SOMATileDBContext,
+) -> None:
+    """Check blockwise iteration over non-reindexed results"""
+    ndim = len(shape)
+    reindex_disable_on_axis = list(range(ndim))  # disable all
+    for axis, result_order in itertools.product(
+        range(ndim), ["auto", "row-major", "column-major"]
+    ):
+        with soma.open(a_random_sparse_nd_array, mode="r", context=a_soma_context) as A:
+            # get the whole enchilada in ragged form
+            truth_tbl = A.read(coords=coords).tables().concat()
+
+            block = 0
+            size = max(
+                5, min(A.shape[axis] // 3, 1000)
+            )  # shoot for 3 blocks, in range [5,1000]
+            tbls = []
+            for tbl, joinids in (
+                A.read(coords=coords, result_order=result_order)
+                .blockwise(
+                    axis=axis,
+                    size=size,
+                    reindex_disable_on_axis=reindex_disable_on_axis,
+                )
+                .tables()
+            ):
+                assert isinstance(tbl, pa.Table)
+                assert isinstance(joinids, tuple)
+                assert len(joinids) == ndim
+                assert all(isinstance(joinids[d], pa.Array) for d in range(ndim))
+                assert all(joinids[d].type == pa.int64() for d in range(ndim))
+                assert tbl.num_columns == ndim + 1
+                for d in range(ndim):
+                    assert np.isin(
+                        tbl.column(f"soma_dim_{d}").to_numpy(), joinids[d].to_numpy()
+                    ).all()
+
+                tbls.append(tbl)
+                block += 1
+
+            # check that stacked blocks match the full (ragged) read
+            row_sort_order = [(f"soma_dim_{n}", "ascending") for n in range(ndim)]
+            assert truth_tbl.sort_by(row_sort_order).equals(
+                pa.concat_tables(tbls).sort_by(row_sort_order)
+            )
+
+
+@pytest.mark.parametrize(
+    # use density to keep the sparse array memory use "reasonable"
+    "density,shape",
+    [
+        (0.3, (10_000,)),
+        (0.1, (1_000, 100)),
+        (0.01, (1_000, 100, 10)),
+    ],
+)
+@pytest.mark.parametrize("size", (999, 2**16, 2**20))
+def test_blockwise_table_iter_size(
+    a_random_sparse_nd_array: str, shape: Tuple[int, ...], size: int
+) -> None:
+    """
+    Verify that blockwise iteration correctly obeys size param.
+    NB: test requires soma_joinids assigned [0, n)
+    """
+    ndim = len(shape)
+    reindex_disable_on_axis = list(range(ndim))  # reindexing off
+    for axis in range(ndim):
+        with soma.open(a_random_sparse_nd_array, mode="r") as A:
+            assert shape == A.shape
+            block = 0
+            for tbl, joinids in (
+                A.read()
+                .blockwise(
+                    axis=axis,
+                    size=size,
+                    reindex_disable_on_axis=reindex_disable_on_axis,
+                )
+                .tables()
+            ):
+                axis_coords = tbl.column(f"soma_dim_{axis}").to_numpy()
+
+                assert len(joinids[axis]) <= size
+
+                # Verify all coords are in expected range
+                assert np.logical_and(
+                    axis_coords >= (block * size), axis_coords < ((block + 1) * size)
+                ).all()
+
+                # Verify all block axis join ids are in same range
+                assert np.logical_and(
+                    joinids[axis].to_numpy() >= (block * size),
+                    joinids[axis].to_numpy() < ((block + 1) * size),
+                ).all()
+
+                block += 1
+
+
+@pytest.mark.parametrize(
+    # use density to keep the sparse array memory use "reasonable"
+    "density,shape,coords",
+    [
+        # 1D
+        (0.01, (10_000,), ()),
+        (0.01, (10_000,), (slice(200, 8000),)),
+        (0.1, (10_000,), ([0, 99, 1, 100, 2, 101, 3, *list(range(150, 1000))],)),
+        # 2D
+        (0.0001, (1_000, 100), ()),
+        (0.001, (1_000, 100), (None,)),
+        (0.001, (1_000, 100), (slice(None),)),
+        (0.01, (1_000, 100), (slice(10, 20),)),
+        (0.01, (1_000, 100), (None, slice(10, 20))),
+        (0.01, (1_000, 100), (slice(10, 20), slice(2, 33))),
+        (0.01, (1_000, 100), (1,)),
+        (0.01, (1_000, 100), (None, 3)),
+        (0.01, (1_000, 100), (10, 3)),
+        (0.01, (1_000, 100), (slice(None), 1)),
+        (0.01, (1_000, 100), ([3, 99, 101, 102, 77, 0],)),
+        (0.01, (1_000, 100), (slice(500), [3, 99, 33, 77, 0])),
+        (0.01, (1_000, 100), (np.arange(0, 101),)),
+        (0.01, (1_000, 100), (np.arange(0, 1000), [0, 10, 20])),
+        (0.01, (1_000, 100), (np.arange(0, 1000), slice(2, 99))),
+        # 3D
+        (0.001, (1_000, 100, 10), ()),
+        (0.001, (1_000, 100, 10), (slice(10, 100), slice(20, 43))),
+        (0.001, (1_000, 100, 10), ([1, 2, 88, 282, 0, 382], slice(99), slice(1, 10))),
+    ],
+)
+def test_blockwise_table_iter_reindex(
+    a_random_sparse_nd_array: str,
+    shape: Tuple[int, ...],
+    coords: Tuple[Any, ...],
+    a_soma_context: SOMATileDBContext,
+) -> None:
+    """Test blockwise table iteration with reindexing"""
+    ndim = len(shape)
+    for axis in range(ndim):
+        with soma.open(a_random_sparse_nd_array, mode="r", context=a_soma_context) as A:
+            # SparseCOOMatrix does not allow empty matrices.
+            # See https://issues.apache.org/jira/browse/ARROW-17933
+            # for more details.
+            try:
+                truth_coo = A.read(coords=coords).coos().concat().to_pydata_sparse()
+            except pa.ArrowInvalid:
+                truth_coo = None
+
+            size = max(
+                50, min(A.shape[axis] // 3, 7500)
+            )  # shoot for 3 blocks, in range [50,7500]
+
+            for tbl, joinids in (
+                A.read(coords=coords).blockwise(axis=axis, size=size).tables()
+            ):
+                # Verify that reindex columns are [0, n)
+                for d in range(ndim):
+                    assert np.isin(
+                        tbl.column(f"soma_dim_{d}").to_numpy(),
+                        np.arange(0, len(joinids[d])),
+                    ).all()
+
+                # Check for value match with slice of whole truth. If our slice is
+                # empty, skip due to aforementioned Arrow bug.
+                block_coo = None
+                if len(tbl) > 0:
+                    d = tbl.column("soma_data").to_numpy()
+                    c = np.array(
+                        [tbl.column(f"soma_dim_{n}").to_numpy() for n in range(ndim)]
+                    ).T
+                    shape = [len(a) for a in joinids]
+                    block_coo = pa.SparseCOOTensor.from_numpy(
+                        d, c, shape=shape
+                    ).to_pydata_sparse()
+
+                if truth_coo is not None and block_coo is not None:
+                    truth_slice = truth_coo
+                    # Sparse does not allow indexing multiple dimensions with arrays, so
+                    # do a progress slicing to achieve same effect.
+                    for d in range(ndim):
+                        truth_slice = operator.getitem(
+                            truth_slice,
+                            tuple([slice(None)] * d + [joinids[d].to_numpy()]),
+                        )
+                    assert (truth_slice == block_coo).all()
+
+
+@pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
+def test_blockwise_table_iter_error_checks(
+    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+) -> None:
+    with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        with pytest.raises(NotImplementedError):
+            next(A.read().blockwise(axis=0).tables().concat())
+
+
+@pytest.mark.parametrize(
+    # specify coords using SOMA semantics, ie. closed range
+    # use density to keep the sparse array size "reasonable"
+    "density,shape,coords",
+    [
+        (0.1, (1_000, 100), ()),
+        (0.1, (1_000, 100), (None,)),
+        (0.1, (1_000, 100), (slice(None),)),
+        (0.1, (1_000, 100), (slice(10, 20),)),
+        (0.1, (1_000, 100), (None, slice(10, 20))),
+        (0.1, (1_000, 100), (slice(10, 20), slice(2, 33))),
+        (0.1, (1_000, 100), (1,)),
+        (0.1, (1_000, 100), (None, 3)),
+        (0.1, (1_000, 100), (10, 3)),
+        (0.1, (1_000, 100), (slice(None), 1)),
+        (0.1, (1_000, 100), ([3, 99, 101, 102, 77, 0],)),
+        (0.1, (1_000, 100), (slice(500), [3, 99, 33, 77, 0])),
+        (0.1, (1_000, 100), (np.arange(0, 101),)),
+        (0.1, (1_000, 100), (np.arange(0, 1000), [0, 10, 20])),
+        (0.1, (1_000, 100), (np.arange(0, 1000), slice(2, 99))),
+        (0.0005, (10_101, 39), ()),
+        (0.0005, (10_101, 39), (None,)),
+        (0.0005, (10_101, 39), (slice(None),)),
+        (0.0005, (10_101, 389), (slice(33, 1048),)),
+        (0.0005, (10_101, 389), (slice(33, 1048), slice(45, 333))),
+    ],
+)
+@pytest.mark.parametrize("size", [777, 1001, 2**16])
+def test_blockwise_scipy_iter(
+    a_random_sparse_nd_array: str,
+    coords: Tuple[Any, ...],
+    size: int,
+    a_soma_context: SOMATileDBContext,
+) -> None:
+    """
+    Verify that simple use of scipy iterator works.
+    """
+
+    def _slice_sp(
+        coo: sparse.coo_matrix, _coords: Tuple[Any, ...]
+    ) -> sparse.coo_matrix:
+        """
+        Slice from the COO, accomodating conversion from closed range to half-open range
+        slices, plus quirks of scipy.sparse which can't slice on multiple dimensions in
+        all cases (but handles it fine if you slice one dim at a time).
+        """
+        csr = coo.tocsr()
+        for i, c in enumerate(_coords):
+            if isinstance(c, slice) and c.stop is not None:
+                c = slice(c.start, c.stop + 1)
+            if c is None:
+                c = slice(None)
+            _coord = tuple([slice(None)] * (i) + [c])
+            csr = operator.getitem(csr, _coord)
+        return csr.tocoo()
+
+    # these are not pytest params to speed up tests (by reducing the number of SOMA arrays created)
+    for axis, compress, reindex_sparse_axis in [
+        (a, c, ri) for a in (1, 0) for c in (False, True) for ri in (True, False)
+    ]:
+        minor_axis = 1 - axis
+        with soma.open(a_random_sparse_nd_array, mode="r", context=a_soma_context) as A:
+            truth_coo_tbl = A.read().tables().concat()
+            truth_coo = sparse.coo_matrix(
+                (
+                    truth_coo_tbl.column(2).to_numpy(),
+                    (
+                        truth_coo_tbl.column(0).to_numpy(),
+                        truth_coo_tbl.column(1).to_numpy(),
+                    ),
+                ),
+                shape=A.shape,
+            )
+            truth_coo = _slice_sp(truth_coo, coords)
+
+            # Reindexing is on by default. Disable if we don't want it for minor axis.
+            reindex_disable_on_axis = [minor_axis] if not reindex_sparse_axis else None
+            results = []
+            for sp, joinids in (
+                A.read(coords)
+                .blockwise(
+                    axis=axis,
+                    size=size,
+                    reindex_disable_on_axis=reindex_disable_on_axis,
+                )
+                .scipy(compress=compress)
+            ):
+                # check for expected type
+                assert len(joinids) == 2 and isinstance(joinids, tuple)
+                assert all(isinstance(j, np.ndarray) for j in joinids)
+                if not compress:
+                    assert isinstance(sp, sparse.coo_matrix)
+                elif axis == 0:
+                    assert isinstance(sp, sparse.csr_matrix)
+                else:
+                    assert isinstance(sp, sparse.csc_matrix)
+
+                # check for expected shape
+                assert len(joinids[axis]) == min(size, sp.shape[axis])
+                assert (
+                    not reindex_sparse_axis
+                    or len(joinids[minor_axis]) == sp.shape[minor_axis]
+                )
+
+                # internal layout (dups, ordering, etc)
+                if compress:
+                    assert sp.has_canonical_format
+                    sp.check_format(full_check=True)
+
+                # sanity check coordinates
+                if not reindex_sparse_axis:
+                    if not compress:
+                        minor = sp.col if axis == 0 else sp.row
+                    else:
+                        minor = sp.indices
+                    assert np.isin(minor, joinids[minor_axis]).all()
+
+                results.append(sp)
+
+            # check vs ground truth - only implemented if reindex_sparse_axis == True
+            if reindex_sparse_axis:
+                stacked = (
+                    sparse.vstack(results) if axis == 0 else sparse.hstack(results)
+                )
+                assert (
+                    truth_coo.dtype == stacked.dtype
+                    and truth_coo.shape == stacked.shape
+                    and (truth_coo != stacked.tocoo()).nnz == 0
+                )
+
+
+@pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
+def test_blockwise_scipy_iter_error_checks(
+    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+) -> None:
+    with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        with pytest.raises(ValueError):
+            next(A.read().blockwise(axis=2).scipy())
+
+        with pytest.raises(soma.SOMAError):
+            next(A.read().blockwise(axis=0, reindex_disable_on_axis=[0]).scipy())
+
+        with pytest.raises(soma.SOMAError):
+            next(A.read().blockwise(axis=1, reindex_disable_on_axis=[1]).scipy())
+
+
+@pytest.mark.parametrize("density,shape", [(0.1, (4, 8, 16))])
+def test_blockwise_scipy_iter_not_2D(
+    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+) -> None:
+    with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        with pytest.raises(soma.SOMAError):
+            next(A.read().blockwise(axis=0).scipy())
+
+
+@pytest.mark.parametrize("density,shape", [(0.01, (10_000, 1230))])
+def test_blockwise_scipy_iter_eager(
+    a_random_sparse_nd_array: str,
+    shape: Tuple[int, ...],
+    a_soma_context: SOMATileDBContext,
+) -> None:
+    """Should get same results with any eager setting"""
+    coords = (slice(3, 9993), slice(21, 1111))
+    with soma.open(a_random_sparse_nd_array, mode="r", context=a_soma_context) as A:
+        sp1 = sparse.vstack(
+            sp
+            for sp, _ in A.read(coords).blockwise(axis=0, size=1000, eager=True).scipy()
+        )
+        sp2 = sparse.vstack(
+            sp
+            for sp, _ in A.read(coords)
+            .blockwise(axis=0, size=1000, eager=False)
+            .scipy()
+        )
+
+        assert (sp1 != sp2).nnz == 0
+
+
+@pytest.mark.parametrize("density,shape", [(0.001, (9799, 1530))])
+def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str) -> None:
+    """
+    Confirm behavior with different result_order.
+    """
+    coords = (slice(7, 8693), slice(21, 999))
+
+    with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        for result_order in ["auto", "row-major", "column-major"]:
+            for axis in (0, 1):
+                for compress in (True, False):
+                    sp, _ = next(
+                        A.read(coords, result_order=result_order)
+                        .blockwise(axis=axis)
+                        .scipy(compress=compress)
+                    )
+
+                    if compress:
+                        # CS{C,R} is always sorted, always canonical
+                        assert not isinstance(sp, sparse.coo_matrix)
+                        assert sp.has_sorted_indices
+                        assert sp.has_canonical_format
+                        sp.check_format()  # raises if malformed
+
+                    else:
+                        # always canonical if row-major, regardless of format
+                        if result_order == "row-major":
+                            assert sp.has_canonical_format
+                        assert isinstance(sp, sparse.coo_matrix)
+
+
+@pytest.mark.parametrize("density,shape", [(0.001, (9799, 1530))])
+@pytest.mark.parametrize(
+    "coords,expected_indices",
+    [
+        ((), (np.arange(0, 9799), np.arange(0, 1530))),
+        ((slice(43, 9000),), (np.arange(43, 9001), np.arange(0, 1530))),
+        (
+            (slice(430, 7100), slice(100, 200)),
+            (np.arange(430, 7101), np.arange(100, 201)),
+        ),
+        (
+            ([0, 1, 99, 3, 100, 4, 101, 5],),
+            (np.array([0, 1, 99, 3, 100, 4, 101, 5]), np.arange(0, 1530)),
+        ),
+    ],
+)
+def test_blockwise_indices(
+    a_random_sparse_nd_array: str,
+    coords: Tuple[Any, ...],
+    expected_indices: Tuple[Any, ...],
+) -> None:
+    """Verify indices look reasonable"""
+    size = 1111
+
+    # blockwise table
+    with soma.open(a_random_sparse_nd_array, mode="r") as A:
+        for axis, reindex_disable_on_axis in itertools.product(
+            (0, 1), (None, [0], [1], [0, 1])
+        ):
+            minor_axis = 1 - axis
+            block = 0
+            for _, indices in (
+                A.read(coords)
+                .blockwise(
+                    axis=axis,
+                    size=size,
+                    reindex_disable_on_axis=reindex_disable_on_axis,
+                    eager=False,
+                )
+                .tables()
+            ):
+                assert len(indices) == 2
+                beg = block * size
+                assert np.array_equal(
+                    expected_indices[axis][beg : beg + size], indices[axis].to_numpy()
+                )
+                assert np.array_equal(
+                    expected_indices[minor_axis], indices[minor_axis].to_numpy()
+                )
+                block += 1
+
+        # blockwise scipy
+        for axis in (0, 1):
+            minor_axis = 1 - axis
+            for reindex_disable_on_axis in (None, [minor_axis]):
+                block = 0
+                for _, indices in (
+                    A.read(coords)
+                    .blockwise(
+                        axis=axis,
+                        size=size,
+                        reindex_disable_on_axis=reindex_disable_on_axis,
+                        eager=True,
+                    )
+                    .scipy()
+                ):
+                    assert len(indices) == 2
+                    beg = block * size
+                    assert np.array_equal(
+                        expected_indices[axis][beg : beg + size], indices[axis]
+                    )
+                    assert np.array_equal(
+                        expected_indices[minor_axis], indices[minor_axis]
+                    )
+                    block += 1
+
+
+@pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
+@pytest.mark.parametrize("coords", [(slice(0, 10),), (slice(1, 10),)])
+def test_blockwise_scipy_reindex_disable_major_dim(
+    a_random_sparse_nd_array: str, coords: Tuple[Any, ...]
+) -> None:
+    """
+    Disable reindexing on major axis. Expected behavior:
+    * fails if compress==True
+    * succeeds if compress==False
+    """
+
+    with soma.open(a_random_sparse_nd_array) as A:
+        for axis in (0, 1):
+            # Should fail if compress==True (CSR/CSC)
+            with pytest.raises(soma.SOMAError):
+                next(
+                    A.read(coords)
+                    .blockwise(axis=axis, reindex_disable_on_axis=axis)
+                    .scipy(compress=True)
+                )
+
+            # should succeed if compress==False (COO)
+            sp, _ = next(
+                A.read(coords)
+                .blockwise(axis=axis, reindex_disable_on_axis=axis)
+                .scipy(compress=False)
+            )
+            assert isinstance(sp, sparse.coo_matrix)

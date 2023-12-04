@@ -415,12 +415,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     if not pa.types.is_dictionary(col_info.type):
                         raise ValueError(
                             "Expected dictionary type for enumerated attribute "
-                            "{name} but saw {col_info.type}"
+                            f"{name} but saw {col_info.type}"
                         )
 
                     enmr = self._handle.enum(attr.name)
 
-                    # get new enumeration values
+                    # get new enumeration values, maintain original ordering
                     update_vals = []
                     for new_val in col.chunk(0).dictionary.tolist():
                         if new_val not in enmr.values():
@@ -429,7 +429,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     # only extend if there are new values
                     if update_vals:
                         se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
-                        new_enmr = enmr.extend(update_vals)
+                        if np.issubdtype(enmr.dtype.type, np.str_):
+                            extend_vals = np.array(update_vals, "U")
+                        elif np.issubdtype(enmr.dtype.type, np.bytes_):
+                            extend_vals = np.array(update_vals, "S")
+                        else:
+                            extend_vals = np.array(update_vals, enmr.dtype)
+                        new_enmr = enmr.extend(extend_vals)
                         se.extend_enumeration(new_enmr)
                         se.array_evolve(uri=self.uri)
 

@@ -6,7 +6,7 @@ Description: Interface for working with 'TileDB'-based Stack of Matrices,
     like those commonly used for single cell data analysis. It is documented at
     <https://github.com/single-cell-data>; a formal specification available is at
     <https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md>.
-Version: 1.4.4.1
+Version: 1.5.1
 Authors@R: c(
     person(given = "Aaron", family = "Wolen",
            role = c("cre", "aut"), email = "aaron@tiledb.com",
@@ -34,7 +34,7 @@ Imports:
     Matrix,
     stats,
     bit64,
-    tiledb (>= 0.21.1),
+    tiledb (>= 0.22.0),
     arrow,
     utils,
     fs,

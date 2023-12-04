@@ -33,7 +33,7 @@
 #include "managed_query.h"
 #include <tiledb/array_experimental.h>
 #include <tiledb/attribute_experimental.h>
-#include "logger_public.h"
+#include "../utils/logger.h"
 #include "utils/common.h"
 namespace tiledbsoma {
 
@@ -57,12 +57,6 @@ ManagedQuery::ManagedQuery(
 void ManagedQuery::reset() {
     query_ = std::make_unique<Query>(schema_->context(), *array_);
     subarray_ = std::make_unique<Subarray>(schema_->context(), *array_);
-
-    if (array_->schema().array_type() == TILEDB_SPARSE) {
-        query_->set_layout(TILEDB_UNORDERED);
-    } else {
-        query_->set_layout(TILEDB_ROW_MAJOR);
-    }
 
     subarray_range_set_ = false;
     subarray_range_empty_ = {};
@@ -218,6 +212,15 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
         }
     }
     return buffers_;
+}
+
+void ManagedQuery::check_column_name(const std::string& name) {
+    if (!buffers_->contains(name)) {
+        throw TileDBSOMAError(fmt::format(
+            "[ManagedQuery] Column '{}' is not available in the query "
+            "results.",
+            name));
+    }
 }
 
 };  // namespace tiledbsoma

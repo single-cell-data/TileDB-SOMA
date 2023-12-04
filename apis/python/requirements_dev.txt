@@ -2,3 +2,4 @@ cmake >= 3.21
 pybind11-global >= 2.10.0
 typeguard < 3.0
 pytest
+sparse

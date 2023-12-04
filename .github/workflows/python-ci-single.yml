@@ -90,7 +90,7 @@ jobs:
 #        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
     - name: Install testing prereqs
-      run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools
+      run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools sparse
 
     - name: Install tiledbsoma
       run: python -m pip -v install -e apis/python
@@ -119,13 +119,13 @@ jobs:
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
       # instead of copy we `pip install`ed to site-packages above. That's needed for the code
       # coverage analysis to work.
-      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml libtiledbsoma/test
+      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml libtiledbsoma/test -v --durations=20
 
     - name: Run pytests for Python
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
       # instead of copy we `pip install`ed to site-packages above. That's needed for the code
       # coverage analysis to work.
-      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests
+      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests -v --durations=20
 
     - name: Report coverage to Codecov
       if: inputs.report_codecov
