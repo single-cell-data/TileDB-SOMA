@@ -289,7 +289,7 @@ setuptools.setup(
         "pyarrow>=9.0.0; platform_system!='Darwin'",
         "scanpy>=1.9.2",
         "scipy",
-        "somacore==1.0.4",
+        "somacore==1.0.6",
         "tiledb~=0.24.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
