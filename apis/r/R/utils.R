@@ -46,6 +46,15 @@ null <- function(...) {
   return(NULL)
 }
 
+random_name <- function(length = 5L, chars = letters, ...) {
+  stopifnot(
+    "'length' must be a single integer" = is_integerish(length, n = 1L),
+    "'chars' must be character" = is.character(chars)
+  )
+  chars <- unique(unlist(strsplit(chars, split = '')))
+  return(paste(sample(chars, size = length, ...), collapse = ''))
+}
+
 #' Pad Names of a Character Vector
 #'
 #' Fill in missing names of a vector using missing values of said vector

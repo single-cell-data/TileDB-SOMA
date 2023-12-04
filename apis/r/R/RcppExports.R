@@ -133,9 +133,11 @@ tiledbsoma_stats_dump <- function() {
 #' libtiledbsoma version
 #'
 #' Returns a string with version information for libtiledbsoma and the linked TileDB Embedded library.
+#' If argument `compact` is set to `TRUE`, shorter version of just the TileDB Embedded library
+#' version is returned,
 #' @noRd
-libtiledbsoma_version <- function() {
-    .Call(`_tiledbsoma_libtiledbsoma_version`)
+libtiledbsoma_version <- function(compact = FALSE) {
+    .Call(`_tiledbsoma_libtiledbsoma_version`, compact)
 }
 
 #' TileDB embedded version

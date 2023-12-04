@@ -1155,9 +1155,6 @@ def _write_dataframe(
     context: Optional[SOMATileDBContext] = None,
     axis_mapping: AxisIDMapping,
 ) -> DataFrame:
-    _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {df_uri}")
-
     df.reset_index(inplace=True)
     if id_column_name is not None:
         if id_column_name in df:

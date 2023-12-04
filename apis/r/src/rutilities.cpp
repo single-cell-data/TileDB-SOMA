@@ -318,10 +318,19 @@ std::string tiledbsoma_stats_dump() {
 //' libtiledbsoma version
 //'
 //' Returns a string with version information for libtiledbsoma and the linked TileDB Embedded library.
+//' If argument `compact` is set to `TRUE`, a shorter version of just the TileDB Embedded library
+//' version is returned,
 //' @noRd
 // [[Rcpp::export]]
-std::string libtiledbsoma_version() {
-    return tiledbsoma::version::as_string();
+std::string libtiledbsoma_version(const bool compact = false) {
+    if (compact) {
+        auto v = tiledbsoma::version::embedded_version_triple();
+        std::ostringstream txt;
+        txt << std::get<0>(v) << "." << std::get<1>(v) << "." << std::get<2>(v);
+        return txt.str();
+    } else {
+        return tiledbsoma::version::as_string();
+    }
 }
 
 //' TileDB embedded version
