@@ -187,9 +187,6 @@ INC_DIRS = [
     "dist_links/libtiledbsoma/external/include",
     "../../build/externals/install/include",
     str(libtiledbsoma_dir / "include"),
-    str(
-        "./src/tiledbsoma"
-    ),  # since pytiledbsoma.cc does #include of query_condition.cc
     str(libtiledbsoma_dir.parent / "build/externals/install/include"),
     str(tiledb_dir / "include"),
 ]
@@ -255,7 +252,15 @@ setuptools.setup(
     ext_modules=[
         Pybind11Extension(
             "tiledbsoma.pytiledbsoma",
-            ["src/tiledbsoma/pytiledbsoma.cc"],
+            [
+                "src/tiledbsoma/common.cc",
+                "src/tiledbsoma/query_condition.cc",
+                "src/tiledbsoma/soma_object.cc",
+                "src/tiledbsoma/soma_dense_ndarray.cc",
+                "src/tiledbsoma/soma_sparse_ndarray.cc",
+                "src/tiledbsoma/soma_dataframe.cc",
+                "src/tiledbsoma/pytiledbsoma.cc",
+            ],
             include_dirs=INC_DIRS,
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"],
@@ -269,6 +274,7 @@ setuptools.setup(
     install_requires=[
         # Needed for Python 3.7 which anndata 0.9 doesn't support but we do
         "anndata < 0.9; python_version<'3.8'",
+        "anndata; python_version>='3.8'",
         # Tracked in https://github.com/single-cell-data/TileDB-SOMA/issues/1785
         "anndata != 0.10.0; python_version>='3.8'",
         "attrs>=22.2",

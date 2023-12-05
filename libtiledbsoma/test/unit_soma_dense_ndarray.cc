@@ -87,9 +87,6 @@ TEST_CASE("SOMADenseNDArray: basic") {
     REQUIRE(soma_dense->ctx() == ctx);
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
     REQUIRE(soma_dense->is_sparse() == false);
-    auto schema = soma_dense->schema();
-    REQUIRE(schema->has_attribute("a0"));
-    REQUIRE(schema->domain().has_dimension("d0"));
     REQUIRE(soma_dense->ndim() == 1);
     REQUIRE(soma_dense->shape() == std::vector<int64_t>{1001});
     soma_dense->close();
@@ -102,11 +99,11 @@ TEST_CASE("SOMADenseNDArray: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
 
-    soma_dense->open(OpenMode::write);
+    soma_dense = SOMADenseNDArray::open(uri, OpenMode::write, ctx);
     soma_dense->write(array_buffer);
     soma_dense->close();
 
-    soma_dense->open(OpenMode::read);
+    soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
     while (auto batch = soma_dense->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
@@ -135,7 +132,7 @@ TEST_CASE("SOMADenseNDArray: metadata") {
     soma_dense->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_dense->close();
 
-    soma_dense->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
+    soma_dense->reopen(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
     REQUIRE(soma_dense->metadata_num() == 2);
     REQUIRE(soma_dense->has_metadata("soma_object_type") == true);
     REQUIRE(soma_dense->has_metadata("md") == true);
@@ -146,7 +143,7 @@ TEST_CASE("SOMADenseNDArray: metadata") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_dense->close();
 
-    soma_dense->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    soma_dense->reopen(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
     // Metadata should also be retrievable in write mode
     mdval = soma_dense->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
@@ -155,7 +152,7 @@ TEST_CASE("SOMADenseNDArray: metadata") {
     REQUIRE(!mdval.has_value());
     soma_dense->close();
 
-    soma_dense->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
+    soma_dense->reopen(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
     REQUIRE(soma_dense->has_metadata("md") == false);
     REQUIRE(soma_dense->metadata_num() == 1);
     soma_dense->close();

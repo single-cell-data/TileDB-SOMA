@@ -59,7 +59,7 @@ const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 namespace {
 ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
     // Create schema
-    ArraySchema schema(ctx, TILEDB_DENSE);
+    ArraySchema schema(ctx, TILEDB_SPARSE);
 
     auto dim = Dimension::create<int64_t>(ctx, "d0", {0, 1000});
 
@@ -86,16 +86,15 @@ TEST_CASE("SOMADataFrame: basic") {
     REQUIRE(soma_dataframe->uri() == uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
     REQUIRE(soma_dataframe->type() == "SOMADataFrame");
-    auto schema = soma_dataframe->schema();
-    REQUIRE(schema->has_attribute("a0"));
-    REQUIRE(schema->domain().has_dimension("d0"));
     std::vector<std::string> expected_index_column_names = {"d0"};
     REQUIRE(
         soma_dataframe->index_column_names() == expected_index_column_names);
-    REQUIRE(soma_dataframe->count() == 1);
+    REQUIRE(soma_dataframe->count() == 0);
     soma_dataframe->close();
 
-    std::vector<int64_t> d0{1, 10};
+    std::vector<int64_t> d0(10);
+    for (int j = 0; j < 10; j++)
+        d0[j] = j;
     std::vector<int> a0(10, 1);
 
     auto array_buffer = std::make_shared<ArrayBuffers>();
@@ -103,21 +102,35 @@ TEST_CASE("SOMADataFrame: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
 
-    soma_dataframe->open(OpenMode::write);
+    soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
     soma_dataframe->write(array_buffer);
     soma_dataframe->close();
 
-    soma_dataframe->open(OpenMode::read);
+    soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
     while (auto batch = soma_dataframe->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
         auto a0span = arrbuf->at("a0")->data<int>();
-        REQUIRE(
-            std::vector<int64_t>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10} ==
-            std::vector<int64_t>(d0span.begin(), d0span.end()));
+        REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
     soma_dataframe->close();
+
+    auto soma_object = SOMAObject::open(uri, OpenMode::read, ctx);
+    REQUIRE(soma_object->type() == "SOMADataFrame");
+    REQUIRE(soma_object->uri() == uri);
+
+    auto a = dynamic_cast<SOMAArray*>(soma_object.get());
+    REQUIRE(a->type() == "SOMADataFrame");
+    REQUIRE(a->uri() == uri);
+    auto b = dynamic_cast<SOMADataFrame&>(*a);
+    REQUIRE(b.type() == "SOMADataFrame");
+    REQUIRE(b.uri() == uri);
+    auto c = dynamic_cast<SOMADataFrame&>(*soma_object);
+    REQUIRE(c.type() == "SOMADataFrame");
+    REQUIRE(c.uri() == uri);
+
+    soma_object->close();
 }
 
 TEST_CASE("SOMADataFrame: metadata") {
@@ -136,7 +149,7 @@ TEST_CASE("SOMADataFrame: metadata") {
     soma_dataframe->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_dataframe->close();
 
-    soma_dataframe->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
+    soma_dataframe->reopen(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
     REQUIRE(soma_dataframe->metadata_num() == 2);
     REQUIRE(soma_dataframe->has_metadata("soma_object_type") == true);
     REQUIRE(soma_dataframe->has_metadata("md") == true);
@@ -147,7 +160,8 @@ TEST_CASE("SOMADataFrame: metadata") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_dataframe->close();
 
-    soma_dataframe->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    soma_dataframe->reopen(
+        OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
     // Metadata should also be retrievable in write mode
     mdval = soma_dataframe->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
@@ -156,7 +170,7 @@ TEST_CASE("SOMADataFrame: metadata") {
     REQUIRE(!mdval.has_value());
     soma_dataframe->close();
 
-    soma_dataframe->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
+    soma_dataframe->reopen(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
     REQUIRE(soma_dataframe->has_metadata("md") == false);
     REQUIRE(soma_dataframe->metadata_num() == 1);
     soma_dataframe->close();

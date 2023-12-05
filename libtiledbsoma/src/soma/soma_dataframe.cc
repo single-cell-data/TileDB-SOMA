@@ -30,10 +30,6 @@
  *   This file defines the SOMADataFrame class.
  */
 
-#include <filesystem>
-
-#include <tiledb/tiledb>
-#include "array_buffers.h"
 #include "soma_dataframe.h"
 
 namespace tiledbsoma {
@@ -88,66 +84,21 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
 //= public non-static
 //===================================================================
 
-SOMADataFrame::SOMADataFrame(
-    OpenMode mode,
-    std::string_view uri,
-    std::shared_ptr<Context> ctx,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    std::string array_name = std::filesystem::path(uri).filename();
-    array_ = std::make_shared<SOMAArray>(
-        mode,
-        uri,
-        array_name,  // label used when debugging
-        ctx,
-        column_names,
-        "auto",  // batch_size,
-        result_order,
-        timestamp);
-    array_->reset();
+bool SOMADataFrame::exists(std::string_view uri) {
+    try {
+        auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read);
+        return soma_dataframe->type() == "SOMADataFrame";
+    } catch (std::exception& e) {
+        return false;
+    }
 }
 
-void SOMADataFrame::open(
-    OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    array_->open(mode, timestamp);
-    array_->reset();
+std::vector<std::string> SOMADataFrame::index_column_names() {
+    return this->dimension_names();
 }
 
-void SOMADataFrame::close() {
-    array_->close();
-}
-
-bool SOMADataFrame::is_open() const {
-    return array_->is_open();
-}
-
-const std::string SOMADataFrame::uri() const {
-    return array_->uri();
-}
-
-std::shared_ptr<Context> SOMADataFrame::ctx() {
-    return array_->ctx();
-}
-
-std::shared_ptr<ArraySchema> SOMADataFrame::schema() const {
-    return array_->schema();
-}
-
-const std::vector<std::string> SOMADataFrame::index_column_names() const {
-    return array_->dimension_names();
-}
-
-int64_t SOMADataFrame::count() const {
-    return array_->ndim();
-}
-
-std::optional<std::shared_ptr<ArrayBuffers>> SOMADataFrame::read_next() {
-    return array_->read_next();
-}
-
-void SOMADataFrame::write(std::shared_ptr<ArrayBuffers> buffers) {
-    array_->write(buffers);
+int64_t SOMADataFrame::count() {
+    return this->nnz();
 }
 
 }  // namespace tiledbsoma

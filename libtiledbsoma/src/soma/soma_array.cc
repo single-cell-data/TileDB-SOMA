@@ -49,7 +49,10 @@ void SOMAArray::create(
     Array::create(std::string(uri), schema);
     auto array = Array(*ctx, std::string(uri), TILEDB_WRITE);
     array.put_metadata(
-        "soma_object_type", TILEDB_STRING_UTF8, 1, soma_type.c_str());
+        "soma_object_type",
+        TILEDB_STRING_UTF8,
+        soma_type.length(),
+        soma_type.c_str());
     array.close();
 }
 
@@ -158,7 +161,7 @@ void SOMAArray::fill_metadata_cache() {
     }
 }
 
-const std::string& SOMAArray::uri() const {
+const std::string SOMAArray::uri() const {
     return uri_;
 };
 
@@ -166,7 +169,20 @@ std::shared_ptr<Context> SOMAArray::ctx() {
     return ctx_;
 };
 
-void SOMAArray::open(
+const std::string SOMAArray::type() const {
+    auto soma_object_type = this->get_metadata("soma_object_type");
+
+    if (!soma_object_type.has_value())
+        return "";
+
+    const char* dtype = (const char*)std::get<MetadataInfo::value>(
+        *soma_object_type);
+    uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
+
+    return std::string(dtype, sz);
+}
+
+void SOMAArray::reopen(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
     arr_->open(tdb_mode);
@@ -182,7 +198,9 @@ void SOMAArray::open(
 }
 
 void SOMAArray::close() {
-    arr_->close();
+    // Close the array through the managed query to ensure any pending queries
+    // are completed.
+    mq_->close();
 }
 
 void SOMAArray::reset(
@@ -234,7 +252,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     if (mq_->is_empty_query()) {
         if (first_read_next_) {
             first_read_next_ = false;
-            return mq_->submit_read();
+            return mq_->results();
         } else {
             return std::nullopt;
         }
@@ -242,8 +260,10 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
 
     first_read_next_ = false;
 
+    mq_->submit_read();
+
     // Return the results, possibly incomplete
-    return mq_->submit_read();
+    return mq_->results();
 }
 
 void SOMAArray::write(std::shared_ptr<ArrayBuffers> buffers) {
@@ -461,12 +481,12 @@ std::vector<int64_t> SOMAArray::shape() {
 }
 
 uint64_t SOMAArray::ndim() const {
-    return this->schema().get()->domain().ndim();
+    return mq_->schema()->domain().ndim();
 }
 
 std::vector<std::string> SOMAArray::dimension_names() const {
     std::vector<std::string> result;
-    auto dimensions = this->schema().get()->domain().dimensions();
+    auto dimensions = mq_->schema()->domain().dimensions();
     for (const auto& dim : dimensions) {
         result.push_back(dim.name());
     }
@@ -520,15 +540,16 @@ void SOMAArray::delete_metadata(const std::string& key) {
     metadata_.erase(key);
 }
 
-std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
+const std::map<std::string, MetadataValue> SOMAArray::get_metadata() const {
     return metadata_;
 }
 
-std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
+std::optional<MetadataValue> SOMAArray::get_metadata(
+    const std::string& key) const {
     if (metadata_.count(key) == 0) {
         return std::nullopt;
     }
-    return metadata_[key];
+    return metadata_.at(key);
 }
 
 bool SOMAArray::has_metadata(const std::string& key) {

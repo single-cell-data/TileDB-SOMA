@@ -6,14 +6,14 @@
 import ctypes
 import os
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
 import pyarrow as pa
 import tiledb
-from somacore.options import ResultOrder, ResultOrderStr
 
 from . import _tdb_handles, _util
 from ._arrow_types import tiledb_schema_to_arrow
+from ._tdb_handles import SOMAArray
 from ._tiledb_object import TileDBObject
 from ._types import OpenTimestamp, is_nonstringy_sequence
 from .options._soma_tiledb_context import SOMATileDBContext
@@ -39,7 +39,6 @@ def _load_libs() -> None:
 _load_libs()
 
 # This package's pybind11 code
-from . import pytiledbsoma as clib  # noqa: E402
 
 
 class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
@@ -63,9 +62,14 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         Lifecycle:
             Experimental.
         """
-        return tiledb_schema_to_arrow(self._tiledb_array_schema(), self.uri, self._ctx)
+        if isinstance(self._tiledb_array_schema(), tiledb.ArraySchema):
+            return tiledb_schema_to_arrow(
+                self._tiledb_array_schema(), self.uri, self._ctx
+            )
+        else:
+            return self._tiledb_array_schema()
 
-    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
+    def non_empty_domain(self) -> Optional[Tuple[Tuple[Any, Any], ...]]:
         """
         Retrieves the non-empty domain for each dimension, namely the smallest
         and largest indices in each dimension for which the array/dataframe has
@@ -86,73 +90,32 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
 
     def _tiledb_dim_names(self) -> Tuple[str, ...]:
         """Reads the dimension names from the schema: for example, ['obs_id', 'var_id']."""
-        schema = self._handle.schema
-        return tuple(schema.domain.dim(i).name for i in range(schema.domain.ndim))
+        return self._handle.dim_names
 
     def _tiledb_attr_names(self) -> Tuple[str, ...]:
         """Reads the attribute names from the schema:
         for example, the list of column names in a dataframe.
         """
-        schema = self._handle.schema
-        return tuple(schema.attr(i).name for i in range(schema.nattr))
+        return self._handle.attr_names
 
     def _tiledb_domain(self) -> Tuple[Tuple[Any, Any], ...]:
-        schema = self._handle.schema
-        return tuple(schema.domain.dim(i).domain for i in range(0, schema.domain.ndim))
+        return self._handle.domain
 
-    def _soma_reader(
-        self,
-        *,
-        schema: Optional[tiledb.ArraySchema] = None,
-        column_names: Optional[Sequence[str]] = None,
-        query_condition: Optional[tiledb.QueryCondition] = None,
-        result_order: Optional[ResultOrderStr] = None,
-    ) -> clib.SOMAArray:
-        """Constructs a C++ SOMAArray using appropriate context/config/etc."""
-        # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
-        # they're not all wrapped in std::optional<>.
-        kwargs: Dict[str, object] = {}
-        # if schema:
-        #     kwargs["schema"] = schema
-        if column_names:
-            kwargs["column_names"] = column_names
-        if result_order:
-            result_order_map = {
-                "auto": clib.ResultOrder.automatic,
-                "row-major": clib.ResultOrder.rowmajor,
-                "column-major": clib.ResultOrder.colmajor,
-            }
-            result_order_enum = result_order_map[ResultOrder(result_order).value]
-            kwargs["result_order"] = result_order_enum
-
-        soma_array = clib.SOMAArray(
-            self.uri,
-            name=f"{self} reader",
-            platform_config=self._ctx.config().dict(),
-            timestamp=(0, self.tiledb_timestamp_ms),
-            **kwargs,
-        )
-
-        if query_condition:
-            soma_array.set_condition(query_condition, self._tiledb_array_schema())
-
-        return soma_array
-
-    def _set_reader_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
+    def _set_reader_coords(self, sr: SOMAArray, coords: Sequence[object]) -> None:
         """Parses the given coords and sets them on the SOMA Reader."""
         if not is_nonstringy_sequence(coords):
             raise TypeError(
                 f"coords type {type(coords)} must be a regular sequence,"
                 " not str or bytes"
             )
-        schema = self._handle.schema
-        if len(coords) > schema.domain.ndim:
+
+        if len(coords) > self._handle.ndim:
             raise ValueError(
                 f"coords ({len(coords)} elements) must be shorter than ndim"
-                f" ({schema.domain.ndim})"
+                f" ({self._handle.ndim})"
             )
         for i, coord in enumerate(coords):
-            dim = self._handle.schema.domain.dim(i)
+            dim = self.schema.field(i)
             if not self._set_reader_coord(sr, i, dim, coord):
                 raise TypeError(
                     f"coord type {type(coord)} for dimension {dim.name}"
@@ -160,7 +123,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
                 )
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: SOMAArray, dim_idx: int, dim: pa.Field, coord: object
     ) -> bool:
         """Parses a single coordinate entry.
 
@@ -171,7 +134,6 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         Returns:
             True if successful, False if unrecognized.
         """
-        del dim_idx  # Unused.
         if coord is None:
             return True  # No constraint; select all in this dimension
 
@@ -181,7 +143,8 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         if isinstance(coord, slice):
             _util.validate_slice(coord)
             try:
-                lo_hi = _util.slice_to_numeric_range(coord, dim.domain)
+                dom = self._handle.domain[dim_idx]
+                lo_hi = _util.slice_to_numeric_range(coord, dom)
             except _util.NonNumericDimensionError:
                 return False  # We only handle numeric dimensions here.
             if lo_hi:

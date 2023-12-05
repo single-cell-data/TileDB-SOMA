@@ -47,8 +47,8 @@ using namespace tiledb;
 class ArrayBuffers {
    public:
     ArrayBuffers() = default;
-    ArrayBuffers(const ArrayBuffers&) = delete;
-    ArrayBuffers(ArrayBuffers&&) = default;
+    ArrayBuffers(const ArrayBuffers&) = default;
+    ArrayBuffers(ArrayBuffers&&) = delete;
     ~ArrayBuffers() = default;
 
     /**

@@ -15,6 +15,7 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _arrow_types, _util
+from ._tdb_handles import SOMAArray
 from ._tiledb_array import TileDBArray
 from ._types import OpenTimestamp
 from .options._soma_tiledb_context import (
@@ -105,7 +106,8 @@ class NDArray(TileDBArray, somacore.NDArray):
         Lifecycle:
             Experimental.
         """
-        return cast(Tuple[int, ...], tuple(self._soma_reader().shape))
+        handle: SOMAArray = self._handle
+        return cast(Tuple[int, ...], tuple(handle.shape))
 
     def reshape(self, shape: Tuple[int, ...]) -> None:
         """Unsupported operation for this object type.

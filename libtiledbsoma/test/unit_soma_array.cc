@@ -127,10 +127,6 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
             ResultOrder::automatic,
             std::pair<uint64_t, uint64_t>(timestamp + i, timestamp + i));
 
-        if (LOG_DEBUG_ENABLED()) {
-            soma_array->schema()->dump();
-        }
-
         std::vector<int64_t> d0(num_cells_per_fragment);
         for (int j = 0; j < num_cells_per_fragment; j++) {
             // Overlap odd fragments when generating overlaps
@@ -383,7 +379,7 @@ TEST_CASE("SOMAArray: metadata") {
     soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_array->close();
 
-    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
+    soma_array->reopen(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
     REQUIRE(soma_array->metadata_num() == 2);
     REQUIRE(soma_array->has_metadata("soma_object_type") == true);
     REQUIRE(soma_array->has_metadata("md") == true);
@@ -394,7 +390,7 @@ TEST_CASE("SOMAArray: metadata") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_array->close();
 
-    soma_array->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    soma_array->reopen(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
     // Metadata should also be retrievable in write mode
     mdval = soma_array->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
@@ -403,7 +399,7 @@ TEST_CASE("SOMAArray: metadata") {
     REQUIRE(!mdval.has_value());
     soma_array->close();
 
-    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
+    soma_array->reopen(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
     REQUIRE(soma_array->has_metadata("md") == false);
     REQUIRE(soma_array->metadata_num() == 1);
     soma_array->close();

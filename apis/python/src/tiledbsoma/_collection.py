@@ -75,6 +75,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     __slots__ = ("_contents", "_mutated_keys")
     _wrapper_type = _tdb_handles.GroupWrapper
+    _reader_wrapper_type = _tdb_handles.GroupWrapper
 
     # TODO: Implement additional creation of members on collection subclasses.
     @classmethod
@@ -426,13 +427,23 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         if entry.soma is None:
             from . import _factory  # Delayed binding to resolve circular import.
 
-            entry.soma = _factory._open_internal(
-                entry.entry.wrapper_type.open,
-                entry.entry.uri,
-                self.mode,
-                self.context,
-                self.tiledb_timestamp_ms,
-            )
+            uri = entry.entry.uri
+            mode = self.mode
+            context = self.context
+            timestamp = self.tiledb_timestamp_ms
+
+            try:
+                print(uri, mode)
+                wrapper = _tdb_handles._open_with_clib_wrapper(
+                    uri, mode, context, timestamp
+                )
+                print(wrapper)
+                entry.soma = _factory._set_internal(wrapper)
+                print(entry.soma)
+            except SOMAError:
+                entry.soma = _factory._open_internal(
+                    entry.entry.wrapper_type.open, uri, mode, context, timestamp
+                )
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)
         return cast(CollectionElementType, entry.soma)

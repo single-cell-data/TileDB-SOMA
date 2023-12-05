@@ -10,9 +10,11 @@ import urllib.parse
 from itertools import zip_longest
 from typing import Any, Optional, Tuple, Type, TypeVar
 
+import pyarrow as pa
 import somacore
 from somacore import options
 
+from . import pytiledbsoma as clib
 from ._types import OpenTimestamp, Slice, is_slice_of
 
 
@@ -260,3 +262,25 @@ def ms_to_datetime(millis: int) -> datetime.datetime:
     secs, millis = divmod(millis, 1000)
     dt = datetime.datetime.fromtimestamp(secs, tz=datetime.timezone.utc)
     return dt.replace(microsecond=millis * 1000)
+
+
+def to_clib_result_order(result_order: options.ResultOrderStr) -> clib.ResultOrder:
+    result_order = options.ResultOrder(result_order)
+    to_clib_result_order = {
+        options.ResultOrder.AUTO: clib.ResultOrder.automatic,
+        options.ResultOrder.ROW_MAJOR: clib.ResultOrder.rowmajor,
+        options.ResultOrder.COLUMN_MAJOR: clib.ResultOrder.colmajor,
+    }
+    try:
+        return to_clib_result_order[result_order]
+    except KeyError as ke:
+        raise ValueError(f"Invalid result_order: {result_order}") from ke
+
+
+def pa_types_is_string_or_bytes(dtype: pa.DataType) -> bool:
+    return bool(
+        pa.types.is_large_string(dtype)
+        or pa.types.is_large_binary(dtype)
+        or pa.types.is_string(dtype)
+        or pa.types.is_binary(dtype)
+    )

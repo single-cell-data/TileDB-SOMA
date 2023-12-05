@@ -49,6 +49,18 @@ class SOMAObject {
     //===================================================================
     virtual ~SOMAObject() = default;
 
+    static std::unique_ptr<SOMAObject> open(
+        std::string uri,
+        OpenMode mode,
+        std::map<std::string, std::string> platform_config = {},
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+
+    static std::unique_ptr<SOMAObject> open(
+        std::string uri,
+        OpenMode mode,
+        std::shared_ptr<Context> ctx,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+
     /**
      * @brief Return a constant string describing the type of the object.
      */
@@ -139,7 +151,7 @@ class SOMAObject {
      * @return std::optional<MetadataValue>
      */
     virtual std::optional<MetadataValue> get_metadata(
-        const std::string& key) = 0;
+        const std::string& key) const = 0;
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,
@@ -147,7 +159,7 @@ class SOMAObject {
      *
      * @return std::map<std::string, MetadataValue>
      */
-    virtual std::map<std::string, MetadataValue> get_metadata() = 0;
+    virtual const std::map<std::string, MetadataValue> get_metadata() const = 0;
 
     /**
      * Check if the key exists in metadata from an open SOMAObject.

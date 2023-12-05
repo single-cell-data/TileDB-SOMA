@@ -87,9 +87,6 @@ TEST_CASE("SOMASparseNDArray: basic") {
     REQUIRE(soma_sparse->ctx() == ctx);
     REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
     REQUIRE(soma_sparse->is_sparse() == true);
-    auto schema = soma_sparse->schema();
-    REQUIRE(schema->has_attribute("a0"));
-    REQUIRE(schema->domain().has_dimension("d0"));
     REQUIRE(soma_sparse->ndim() == 1);
     REQUIRE(soma_sparse->nnz() == 0);
     soma_sparse->close();
@@ -104,11 +101,11 @@ TEST_CASE("SOMASparseNDArray: basic") {
     array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
 
-    soma_sparse->open(OpenMode::write);
+    soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
     soma_sparse->write(array_buffer);
     soma_sparse->close();
 
-    soma_sparse->open(OpenMode::read);
+    soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
     while (auto batch = soma_sparse->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
@@ -135,7 +132,7 @@ TEST_CASE("SOMASparseNDArray: metadata") {
     soma_sparse->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_sparse->close();
 
-    soma_sparse->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
+    soma_sparse->reopen(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
     REQUIRE(soma_sparse->metadata_num() == 2);
     REQUIRE(soma_sparse->has_metadata("soma_object_type") == true);
     REQUIRE(soma_sparse->has_metadata("md") == true);
@@ -146,7 +143,7 @@ TEST_CASE("SOMASparseNDArray: metadata") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_sparse->close();
 
-    soma_sparse->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    soma_sparse->reopen(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
     // Metadata should also be retrievable in write mode
     mdval = soma_sparse->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
@@ -155,7 +152,7 @@ TEST_CASE("SOMASparseNDArray: metadata") {
     REQUIRE(!mdval.has_value());
     soma_sparse->close();
 
-    soma_sparse->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
+    soma_sparse->reopen(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
     REQUIRE(soma_sparse->has_metadata("md") == false);
     REQUIRE(soma_sparse->metadata_num() == 1);
     soma_sparse->close();

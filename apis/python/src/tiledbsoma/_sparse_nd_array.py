@@ -38,6 +38,7 @@ from ._read_iters import (
     SparseCOOTensorReadIter,
     TableReadIter,
 )
+from ._tdb_handles import SparseNDArrayWrapper
 from ._types import NTuple
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -94,6 +95,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     __slots__ = ()
 
+    _reader_wrapper_type = SparseNDArrayWrapper
+
     # Inherited from somacore
     # * ndim accessor
     # * is_sparse: Final = True
@@ -107,7 +110,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Experimental.
         """
         self._check_open_read()
-        return cast(int, self._soma_reader().nnz())
+        handle: clib.SparseNDArrayWrapper = self._handle
+        return cast(int, handle.nnz)
 
     def read(
         self,
@@ -153,10 +157,11 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             * Negative indexing is unsupported.
         """
         del batch_size, platform_config  # Currently unused.
-        self._check_open_read()
         _util.check_unpartitioned(partitions)
 
-        sr = self._soma_reader(schema=self._handle.schema, result_order=result_order)
+        sr = self._handle.reader
+        sr.reset(result_order=_util.to_clib_result_order(result_order))
+
         return SparseNDArrayRead(sr, self, coords)
 
     def write(
@@ -264,15 +269,15 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         )
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMASparseNDArray, dim_idx: int, dim: pa.Field, coord: object
     ) -> bool:
         if super()._set_reader_coord(sr, dim_idx, dim, coord):
             return True
         if isinstance(coord, Sequence):
-            if dim.dtype == np.int64:
+            if pa.types.is_int64(dim.type):
                 sr.set_dim_points_int64(dim.name, coord)
                 return True
-            elif dim.dtype == "str" or dim.dtype == "bytes":
+            elif _util.pa_types_is_string_or_bytes(dim.type):
                 sr.set_dim_points_string_or_bytes(dim.name, coord)
                 return True
             else:
@@ -283,10 +288,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 raise ValueError(
                     f"only 1D numpy arrays may be used to index; got {coord.ndim}"
                 )
-            if dim.dtype == np.int64:
+            if pa.types.is_int64(dim.type):
                 sr.set_dim_points_int64(dim.name, coord)
                 return True
-            elif dim.dtype == "str" or dim.dtype == "bytes":
+            elif _util.pa_types_is_string_or_bytes(dim.type):
                 sr.set_dim_points_string_or_bytes(dim.name, coord)
                 return True
 
@@ -345,7 +350,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         # In the unlikely event that a previous data update succeeded but the
         # subsequent metadata update did not, take the union of the core non-empty domain
         # (which is done as part of the data update) and the metadata bounding box.
-        ned = self.non_empty_domain()
+        ned = self.non_empty_domain() or ()
         for i, nedslot in enumerate(ned):
             ned_lower, ned_upper = nedslot
             bbox_lower, bbox_upper = retval[i]

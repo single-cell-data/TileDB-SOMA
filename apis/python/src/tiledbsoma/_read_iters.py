@@ -410,7 +410,9 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     """Private implementation class"""
 
-    def __init__(self, sr: clib.SOMAArray, shape: NTuple):
+    def __init__(
+        self, sr: Union[clib.SOMADataFrame, clib.SOMASparseNDArray], shape: NTuple
+    ):
         self.sr = sr
         self.shape = shape
 
