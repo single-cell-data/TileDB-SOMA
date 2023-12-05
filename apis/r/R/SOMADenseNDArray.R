@@ -117,6 +117,10 @@ SOMADenseNDArray <- R6::R6Class(
       arr <- self$object
       tiledb::query_layout(arr) <- "COL_MAJOR"
       arr[] <- values
+
+      # tiledb-r always closes the array after a write operation so we need to
+      # manually reopen it until close-on-write is optional
+      self$open("WRITE", internal_use_only = "allowed_use")
     }
   ),
 
