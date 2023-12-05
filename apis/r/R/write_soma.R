@@ -146,7 +146,11 @@ write_soma.data.frame <- function(
   }
   # Add `soma_joinid` to `x`
   if (!'soma_joinid' %in% names(x)) {
-    x$soma_joinid <- bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
+    x$soma_joinid <- if (nrow(x) == 1L) {
+      bit64::integer64(length = 1L)
+    } else {
+      bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
+    }
   }
   # Check `index_column_names`
   index_column_names <- match.arg(
