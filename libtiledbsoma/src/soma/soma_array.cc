@@ -198,7 +198,9 @@ void SOMAArray::reopen(
 }
 
 void SOMAArray::close() {
-    arr_->close();
+    // Close the array through the managed query to ensure any pending queries
+    // are completed.
+    mq_->close();
 }
 
 void SOMAArray::reset(

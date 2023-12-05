@@ -83,6 +83,13 @@ class ManagedQuery {
     ~ManagedQuery() = default;
 
     /**
+     * @brief Close the array after waiting for any asynchronous queries to
+     * complete.
+     *
+     */
+    void close();
+
+    /**
      * @brief Reset the state of this ManagedQuery object to prepare for a new
      * query, while holding the array open.
      *

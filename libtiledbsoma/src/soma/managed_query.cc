@@ -54,6 +54,13 @@ ManagedQuery::ManagedQuery(
     reset();
 }
 
+void ManagedQuery::close() {
+    if (query_future_.valid()) {
+        query_future_.wait();
+    }
+    array_->close();
+}
+
 void ManagedQuery::reset() {
     query_ = std::make_unique<Query>(*ctx_, *array_);
     subarray_ = std::make_unique<Subarray>(*ctx_, *array_);
