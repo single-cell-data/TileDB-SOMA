@@ -166,8 +166,13 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
         return buffers_;
     }
 
-    LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
-    query_future_.wait();
+    if (query_future_.valid()) {
+        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
+        query_future_.wait();
+    } else {
+        throw TileDBSOMAError(
+            fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
+    }
 
     auto status = query_->query_status();
 
