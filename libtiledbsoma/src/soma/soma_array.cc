@@ -182,7 +182,9 @@ void SOMAArray::open(
 }
 
 void SOMAArray::close() {
-    arr_->close();
+    // Close the array through the managed query to ensure any pending queries
+    // are completed.
+    mq_->close();
 }
 
 void SOMAArray::reset(
@@ -234,7 +236,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     if (mq_->is_empty_query()) {
         if (first_read_next_) {
             first_read_next_ = false;
-            return mq_->submit_read();
+            return mq_->results();
         } else {
             return std::nullopt;
         }
@@ -242,8 +244,10 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
 
     first_read_next_ = false;
 
+    mq_->submit_read();
+
     // Return the results, possibly incomplete
-    return mq_->submit_read();
+    return mq_->results();
 }
 
 void SOMAArray::write(std::shared_ptr<ArrayBuffers> buffers) {
