@@ -155,14 +155,12 @@ class SOMADataFrame : public SOMAArray {
         : SOMAArray(
               mode,
               uri,
-              std::string(std::filesystem::path(uri).filename()),
+              std::filesystem::path(uri).filename().string(),
               ctx,
               column_names,
               "auto",
               result_order,
-              timestamp){
-
-          };
+              timestamp){};
 
     SOMADataFrame() = delete;
     SOMADataFrame(const SOMADataFrame&) = default;

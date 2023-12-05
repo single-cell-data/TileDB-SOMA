@@ -154,7 +154,7 @@ class SOMASparseNDArray : public SOMAArray {
         : SOMAArray(
               mode,
               uri,
-              std::string(std::filesystem::path(uri).filename()),
+              std::filesystem::path(uri).filename().string(),
               ctx,
               column_names,
               "auto",
