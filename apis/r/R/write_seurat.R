@@ -579,27 +579,27 @@ write_soma.Seurat <- function(
     )
   }
 
-  # # Add extra Seurat data
-  # experiment$add_new_collection(
-  #   object = SOMACollectionCreate(
-  #     uri = file_path(experiment$uri, 'uns'),
-  #     platform_config = platform_config,
-  #     tiledbsoma_ctx = tiledbsoma_ctx
-  #   ),
-  #   key = 'uns'
-  # )
-  #
-  # # Write command logs
-  # for (cmd in SeuratObject::Command(x)) {
-  #   spdl::info("Adding command log {}", sQuote(cmd))
-  #   write_soma(
-  #     x = x[[cmd]],
-  #     uri = cmd,
-  #     soma_parent = experiment$get('uns'),
-  #     platform_config = platform_config,
-  #     tiledbsoma_ctx = tiledbsoma_ctx
-  #   )
-  # }
+  # Add extra Seurat data
+  experiment$add_new_collection(
+    object = SOMACollectionCreate(
+      uri = file_path(experiment$uri, 'uns'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    ),
+    key = 'uns'
+  )
+
+  # Write command logs
+  for (cmd in SeuratObject::Command(x)) {
+    spdl::info("Adding command log {}", sQuote(cmd))
+    write_soma(
+      x = x[[cmd]],
+      uri = cmd,
+      soma_parent = experiment$get('uns'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+  }
 
   return(experiment$uri)
 }
@@ -628,6 +628,7 @@ write_soma.SeuratCommand <- function(
   )
 
   key <- 'seurat_commands'
+  uri <- uri %||% methods::slot(x, name = 'name')
 
   # Create a group for command logs
   logs <- if (!key %in% soma_parent$names()) {
@@ -659,8 +660,9 @@ write_soma.SeuratCommand <- function(
 
   sdf <- write_soma(
     x = data.frame(values = enc),
-    uri = uri %||% methods::slot(x, name = 'name'),
+    uri = uri,
     soma_parent = logs,
+    key = basename(uri),
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     relative = relative
