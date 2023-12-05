@@ -33,6 +33,7 @@
 #ifndef MANAGED_QUERY_H
 #define MANAGED_QUERY_H
 
+#include <future>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <unordered_set>
 
@@ -67,6 +68,13 @@ class ManagedQuery {
     ManagedQuery(const ManagedQuery&) = delete;
     ManagedQuery(ManagedQuery&&) = default;
     ~ManagedQuery() = default;
+
+    /**
+     * @brief Close the array after waiting for any asynchronous queries to
+     * complete.
+     *
+     */
+    void close();
 
     /**
      * @brief Reset the state of this ManagedQuery object to prepare for a new
@@ -373,11 +381,17 @@ class ManagedQuery {
     }
 
     /**
-     * @brief Submit and return results from the query.
+     * @brief Submit the query.
+     *
+     */
+    void submit_read();
+
+    /**
+     * @brief Return results from the query.
      *
      * @return std::shared_ptr<ArrayBuffers>
      */
-    std::shared_ptr<ArrayBuffers> submit_read();
+    std::shared_ptr<ArrayBuffers> results();
 
     /**
      * @brief Submit the write query.
@@ -469,8 +483,10 @@ class ManagedQuery {
 
     // True if the query has been submitted
     bool query_submitted_ = false;
-};
 
+    // Future for asyncronous query
+    std::future<void> query_future_;
+};
 };  // namespace tiledbsoma
 
 #endif
