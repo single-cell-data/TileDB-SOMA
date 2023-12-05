@@ -49,7 +49,10 @@ void SOMAArray::create(
     Array::create(std::string(uri), schema);
     auto array = Array(*ctx, std::string(uri), TILEDB_WRITE);
     array.put_metadata(
-        "soma_object_type", TILEDB_STRING_UTF8, 1, soma_type.c_str());
+        "soma_object_type",
+        TILEDB_STRING_UTF8,
+        soma_type.length(),
+        soma_type.c_str());
     array.close();
 }
 
@@ -461,12 +464,12 @@ std::vector<int64_t> SOMAArray::shape() {
 }
 
 uint64_t SOMAArray::ndim() const {
-    return this->schema().get()->domain().ndim();
+    return mq_->schema()->domain().ndim();
 }
 
 std::vector<std::string> SOMAArray::dimension_names() const {
     std::vector<std::string> result;
-    auto dimensions = this->schema().get()->domain().dimensions();
+    auto dimensions = mq_->schema()->domain().dimensions();
     for (const auto& dim : dimensions) {
         result.push_back(dim.name());
     }

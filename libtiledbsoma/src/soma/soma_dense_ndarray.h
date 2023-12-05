@@ -33,7 +33,6 @@
 #ifndef SOMA_DENSE_NDARRAY
 #define SOMA_DENSE_NDARRAY
 
-#include <tiledb/tiledb>
 #include "enums.h"
 #include "soma_array.h"
 #include "soma_object.h"
@@ -200,11 +199,11 @@ class SOMADenseNDArray : public SOMAObject {
     const std::string uri() const;
 
     /**
-     * Return data schema, in the form of a TileDB ArraySchema.
+     * Return the data schema, in the form of a ArrowSchema.
      *
-     * @return std::shared_ptr<ArraySchema>
+     * @return std::unique_ptr<ArrowSchema>
      */
-    std::shared_ptr<ArraySchema> schema() const;
+    std::unique_ptr<ArrowSchema> schema() const;
 
     /**
      * @brief Get the capacity of each dimension.

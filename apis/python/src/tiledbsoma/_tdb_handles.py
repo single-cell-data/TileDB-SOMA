@@ -12,9 +12,11 @@ import abc
 import enum
 from typing import (
     Any,
+    Callable,
     Dict,
     Generic,
     Iterator,
+    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -22,18 +24,23 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 import attrs
+import numpy as np
+import pyarrow as pa
 import tiledb
+from numpy.typing import DTypeLike
 from somacore import options
 from typing_extensions import Literal, Self
 
+from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
-RawHandle = Union[tiledb.Array, tiledb.Group]
+RawHandle = Union[tiledb.Array, tiledb.Group, clib.SOMADataFrame]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
 
@@ -48,11 +55,30 @@ def open(
     obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
     if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
-    if obj_type == "array":
-        return ArrayWrapper.open(uri, mode, context, timestamp)
-    if obj_type == "group":
-        return GroupWrapper.open(uri, mode, context, timestamp)
-    raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
+
+    try:
+        return _open_with_clib_wrapper(uri, mode, context, timestamp)
+    except SOMAError:
+        if obj_type == "array":
+            return ArrayWrapper.open(uri, mode, context, timestamp)
+        if obj_type == "group":
+            return GroupWrapper.open(uri, mode, context, timestamp)
+        raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
+
+
+def _open_with_clib_wrapper(
+    uri: str,
+    mode: options.OpenMode,
+    context: SOMATileDBContext,
+    timestamp: Optional[OpenTimestamp] = None,
+) -> "DataFrameWrapper":
+    open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+    config = {k: str(v) for k, v in context.tiledb_config.items()}
+    timestamp_ms = context._open_timestamp_ms(timestamp)
+    obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
+    if obj.type == "SOMADataFrame":
+        return DataFrameWrapper._from_soma_object(obj, context)
+    raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
 
 
 @attrs.define(eq=False, hash=False, slots=False)
@@ -92,6 +118,26 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         except tiledb.TileDBError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(f"{uri!r} does not exist") from tdbe
+            raise
+        return handle
+
+    @classmethod
+    def _from_soma_object(
+        cls, soma_object: clib.SOMAObject, context: SOMATileDBContext
+    ) -> Self:
+        uri = soma_object.uri
+        mode = soma_object.mode
+        timestamp = soma_object.timestamp
+        try:
+            handle = cls(uri, mode, context, timestamp, soma_object)
+            if handle.mode == "w":
+                with cls._opener(uri, mode, context, timestamp) as auxiliary_reader:
+                    handle._do_initial_reads(auxiliary_reader)
+            else:
+                handle._do_initial_reads(soma_object)
+        except tiledb.TileDBError as tdbe:
+            if is_does_not_exist_error(tdbe):
+                raise DoesNotExistError(f"{handle.uri!r} does not exist") from tdbe
             raise
         return handle
 
@@ -194,16 +240,33 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
     def schema(self) -> tiledb.ArraySchema:
         return self._handle.schema
 
-    def non_empty_domain(self) -> Tuple[Tuple[int, int], ...]:
-        """
-        Retrieves the non-empty domain for each dimension, namely the smallest
-        and largest indices in each dimension for which the array/dataframe has
-        data occupied.  This is nominally the same as the domain used at
-        creation time, but if for example only a portion of the available domain
-        has actually had data written, this function will return a tighter
-        range.
-        """
-        return self._handle.nonempty_domain()  # type: ignore
+    def non_empty_domain(self) -> Optional[Tuple[Tuple[object, object], ...]]:
+        try:
+            ned = self._handle.nonempty_domain()
+            if ned is None:
+                return None
+            return cast(Tuple[Tuple[object, object], ...], ned)
+        except tiledb.TileDBError as e:
+            raise SOMAError(e)
+
+    @property
+    def domain(self) -> Tuple[Tuple[object, object], ...]:
+        dom = self._handle.schema.domain
+        return tuple(dom.dim(i).domain for i in range(dom.ndim))
+
+    @property
+    def ndim(self) -> int:
+        return int(self._handle.schema.domain.ndim)
+
+    @property
+    def attr_names(self) -> Tuple[str, ...]:
+        schema = self._handle.schema
+        return tuple(schema.attr(i).name for i in range(schema.nattr))
+
+    @property
+    def dim_names(self) -> Tuple[str, ...]:
+        schema = self._handle.schema
+        return tuple(schema.domain.dim(i).name for i in range(schema.domain.ndim))
 
     def enum(self, label: str) -> tiledb.Enumeration:
         return self._handle.enum(label)
@@ -245,6 +308,107 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         self.initial_contents = {
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
+
+
+class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
+    """Wrapper around a Pybind11 SOMADataFrame handle."""
+
+    @classmethod
+    def _opener(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: int,
+    ) -> clib.SOMADataFrame:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        config = {k: str(v) for k, v in context.tiledb_config.items()}
+        column_names: List[str] = []
+        result_order = clib.ResultOrder.automatic
+        return clib.SOMADataFrame.open(
+            uri,
+            open_mode,
+            config,
+            column_names,
+            result_order,
+            (0, timestamp),
+        )
+
+    # Covariant types should normally not be in parameters, but this is for
+    # internal use only so it's OK.
+    def _do_initial_reads(self, reader: _RawHdl_co) -> None:  # type: ignore[misc]
+        """Final setup step before returning the Handle.
+
+        This is passed a raw TileDB object opened in read mode, since writers
+        will need to retrieve data from the backing store on setup.
+        """
+        # non–attrs-managed field
+        self.metadata = MetadataWrapper(self, dict(reader.meta))
+
+    @property
+    def schema(self) -> pa.Schema:
+        return self._handle.schema
+
+    @property
+    def meta(self) -> "MetadataWrapper":
+        return MetadataWrapper(self, dict(self._handle.meta))
+
+    @property
+    def ndim(self) -> int:
+        return len(self._handle.index_column_names)
+
+    @property
+    def count(self) -> int:
+        return int(self._handle.count)
+
+    def _cast_domain(
+        self, domain: Callable[[str, DTypeLike], Tuple[object, object]]
+    ) -> Tuple[Tuple[object, object], ...]:
+        result = []
+        for name in self._handle.index_column_names:
+            dtype = self._handle.schema.field(name).type
+            if pa.types.is_timestamp(dtype):
+                np_dtype = np.dtype(dtype.to_pandas_dtype())
+                dom = domain(name, np_dtype)
+                result.append(
+                    (
+                        np_dtype.type(dom[0], dtype.unit),
+                        np_dtype.type(dom[1], dtype.unit),
+                    )
+                )
+            else:
+                if pa.types.is_large_string(dtype) or pa.types.is_string(dtype):
+                    dtype = np.dtype("U")
+                elif pa.types.is_large_binary(dtype) or pa.types.is_binary(dtype):
+                    dtype = np.dtype("S")
+                else:
+                    dtype = np.dtype(dtype.to_pandas_dtype())
+                result.append(domain(name, dtype))
+        return tuple(result)
+
+    @property
+    def domain(self) -> Tuple[Tuple[object, object], ...]:
+        return self._cast_domain(self._handle.domain)
+
+    def non_empty_domain(self) -> Optional[Tuple[Tuple[object, object], ...]]:
+        result = self._cast_domain(self._handle.non_empty_domain)
+        return result or None
+
+    @property
+    def attr_names(self) -> Tuple[str, ...]:
+        return tuple(
+            f.name for f in self.schema if f.name not in self._handle.index_column_names
+        )
+
+    @property
+    def dim_names(self) -> Tuple[str, ...]:
+        return tuple(self._handle.index_column_names)
+
+    def enum(self, label: str) -> tiledb.Enumeration:
+        # The DataFrame handle may either be ArrayWrapper or DataFrameWrapper.
+        # enum is only used in the DataFrame write path and is implemented by
+        # ArrayWrapper. If enum is called in the read path, it is an error.
+        raise NotImplementedError
 
 
 class _DictMod(enum.Enum):
