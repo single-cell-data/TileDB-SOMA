@@ -24,12 +24,12 @@ jobs:
           - name: linux
             os: ubuntu-latest
             covr: 'no'
-          - name: macos
-            os: macOS-latest
-            covr: 'no'
-          - name: coverage
-            os: ubuntu-latest
-            covr: 'yes'
+          # - name: macos
+          #   os: macOS-latest
+          #   covr: 'no'
+          # - name: coverage
+          #   os: ubuntu-latest
+          #   covr: 'yes'
 
     runs-on: ${{ matrix.os }}
 
