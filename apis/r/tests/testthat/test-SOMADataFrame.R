@@ -33,6 +33,10 @@ test_that("Basic mechanics", {
                              schema = asch)
 
   sdf$write(tbl0)
+
+  # Verify the array is still open for write
+  expect_equal(sdf$mode(), "WRITE")
+  expect_true(tiledb::tiledb_array_is_open(sdf$object))
   sdf$close()
 
   # Read back the data (ignore attributes)
