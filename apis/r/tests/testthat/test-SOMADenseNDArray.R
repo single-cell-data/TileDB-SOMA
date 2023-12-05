@@ -11,6 +11,10 @@ test_that("SOMADenseNDArray creation", {
 
   mat <- create_dense_matrix_with_int_dims(10, 5)
   ndarray$write(mat)
+
+  # Verify the array is still open for write
+  expect_equal(ndarray$mode(), "WRITE")
+  expect_true(tiledb::tiledb_array_is_open(ndarray$object))
   ndarray$close()
 
   # Read result in column-major order to match R matrix layout
