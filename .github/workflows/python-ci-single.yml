@@ -61,6 +61,11 @@ jobs:
   build:
     runs-on: ${{ inputs.os }}
     steps:
+
+    - name: Linux Platform
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: cat /proc/cpuinfo
+
     - name: Select XCode version
       if: inputs.is_mac
       uses: maxim-lobanov/setup-xcode@v1
