@@ -88,6 +88,7 @@ write_soma.data.frame <- function(
   df_index = NULL,
   index_column_names = 'soma_joinid',
   ...,
+  key = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -95,8 +96,10 @@ write_soma.data.frame <- function(
   stopifnot(
     "'x' must be named" = is_named(x, allow_empty = FALSE),
     "'df_index' must be a single character value" = is.null(df_index) ||
-      is_scalar_character(df_index),
-    "'index_column_names' must be a character vector" = is.character(index_column_names)
+      (is_scalar_character(df_index) && nzchar(key)),
+    "'index_column_names' must be a character vector" = is.character(index_column_names),
+    "'key' must be a single character value" = is.null(key) ||
+      (is_scalar_character(key) && nzchar(key))
   )
   # Create a proper URI
   uri <- .check_soma_uri(
@@ -104,6 +107,9 @@ write_soma.data.frame <- function(
     soma_parent = soma_parent,
     relative = relative
   )
+  if (is.character(key) && is.null(soma_parent)) {
+    stop("'soma_parent' must be a SOMACollection if 'key' is provided")
+  }
   # Clean up data types in `x`
   remove <- vector(mode = 'logical', length = ncol(x))
   for (i in seq_len(ncol(x))) {
@@ -167,8 +173,12 @@ write_soma.data.frame <- function(
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
-  # Write and return
+  # Write
   sdf$write(tbl)
+  # Add to `soma_parent`
+  if (is.character(key)) {
+    soma_parent$set(sdf, name = key, relative = relative)
+  }
   return(sdf)
 }
 
