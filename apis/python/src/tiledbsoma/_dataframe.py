@@ -21,7 +21,7 @@ from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
-from ._tdb_handles import DataFrameWrapper
+from ._tdb_handles import ArrayWrapper, DataFrameWrapper
 from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
@@ -264,7 +264,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             Experimental.
         """
         self._check_open_read()
-        
+
         # if is it in read open mode, then it is a DataFrameWrapper
         return cast(DataFrameWrapper, self._handle).count
 
@@ -384,6 +384,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
+        # the handle will be the ArrayWrapper in write-mode
+        handle = cast(ArrayWrapper, self._handle)
         dim_cols_map: Dict[str, pd.DataFrame] = {}
         attr_cols_map: Dict[str, pd.DataFrame] = {}
         dim_names_set = self.index_column_names
@@ -393,8 +395,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             col = values.column(name)
             n = len(col)
 
-            if self._handle.schema.has_attr(name):
-                attr = self._handle.schema.attr(name)
+            if handle.schema.has_attr(name):
+                attr = handle.schema.attr(name)
 
                 # Add the enumeration values to the TileDB Array from ArrowArray
                 if attr.enum_label is not None and col.num_chunks != 0:
@@ -404,7 +406,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                             f"{name} but saw {col.type}"
                         )
 
-                    enmr = self._handle.enum(attr.name)
+                    enmr = handle.enum(attr.name)
 
                     # get new enumeration values, maintain original ordering
                     update_vals = []
@@ -434,7 +436,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                             [chunk.dictionary_decode() for chunk in col.chunks]
                         )
                     else:
-                        attr = self._handle.schema.attr(name)
+                        attr = handle.schema.attr(name)
                         if attr.enum_label is not None:
                             # Normal case: writing categorical data to categorical schema.
                             cols_map[name] = col.chunk(0).indices.to_pandas()
@@ -449,7 +451,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
             else:
                 if name not in dim_names_set:
-                    attr = self._handle.schema.attr(name)
+                    attr = handle.schema.attr(name)
                     if attr.enum_label is not None:
                         raise ValueError(
                             f"Categorical column {name} must be presented with categorical data"

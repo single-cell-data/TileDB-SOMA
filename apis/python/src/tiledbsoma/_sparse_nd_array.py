@@ -158,10 +158,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         """
         del batch_size, platform_config  # Currently unused.
         _util.check_unpartitioned(partitions)
-        
+
         sr = self._handle.reader
         sr.reset(result_order=_util.to_clib_result_order(result_order))
-        
+
         return SparseNDArrayRead(sr, self, coords)
 
     def write(

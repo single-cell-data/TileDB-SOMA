@@ -12,7 +12,6 @@ import abc
 import enum
 from typing import (
     Any,
-    Callable,
     Dict,
     Generic,
     Iterator,
@@ -31,7 +30,6 @@ import attrs
 import numpy as np
 import pyarrow as pa
 import tiledb
-from numpy.typing import DTypeLike
 from somacore import options
 from typing_extensions import Literal, Self
 
@@ -72,7 +70,7 @@ def _open_with_clib_wrapper(
     mode: options.OpenMode,
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp] = None,
-) -> "DataFrameWrapper":
+) -> Union["DataFrameWrapper", "DenseNDArrayWrapper", "SparseNDArrayWrapper"]:
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
     config = {k: str(v) for k, v in context.tiledb_config.items()}
     timestamp_ms = context._open_timestamp_ms(timestamp)
@@ -263,10 +261,10 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
     @property
     def ndim(self) -> int:
         return int(self._handle.schema.domain.ndim)
-    
+
     @property
-    def shape(self):
-        return self._handle.schema.shape
+    def shape(self) -> Tuple[int, ...]:
+        return cast(Tuple[int, ...], self._handle.schema.shape)
 
     @property
     def attr_names(self) -> Tuple[str, ...]:
@@ -333,20 +331,22 @@ class SOMAArrayWrapper(Wrapper[SOMAArray]):
         """
         # non–attrs-managed field
         self.metadata = MetadataWrapper(self, dict(reader.meta))
-        
+
     @property
     def schema(self) -> pa.Schema:
         return self._handle.schema
-    
+
     @property
-    def reader(self):
+    def reader(
+        self,
+    ) -> Union[clib.SOMADataFrame, clib.SOMADenseNDArray, clib.SOMASparseNDArray]:
         if self._handle.mode != "r":
             raise SOMAError("Reader handle is not in read-mode")
         return self._handle
 
     @property
-    def meta(self) -> Dict[str, Any]:
-        return MetadataWrapper(self, dict(self._handle.meta)) 
+    def meta(self) -> "MetadataWrapper":
+        return MetadataWrapper(self, dict(self._handle.meta))
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
@@ -484,7 +484,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADenseNDArray]):
         mode: options.OpenMode,
         context: SOMATileDBContext,
         timestamp: int,
-    ) -> clib.SOMADenseNDArray:  
+    ) -> clib.SOMADenseNDArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
         config = {k: str(v) for k, v in context.tiledb_config.items()}
         column_names: List[str] = []

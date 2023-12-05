@@ -13,7 +13,6 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _constants, _tdb_handles
-from . import pytiledbsoma as clib
 from ._exception import SOMAError
 from ._tdb_handles import DataFrameWrapper, DenseNDArrayWrapper, SparseNDArrayWrapper
 from ._types import OpenTimestamp
@@ -100,7 +99,12 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     def __init__(
         self,
         # TODO DataFrameWrapper should be _WrapperType_co
-        handle: Union[_WrapperType_co, _tdb_handles.DataFrameWrapper],
+        handle: Union[
+            _WrapperType_co,
+            _tdb_handles.DataFrameWrapper,
+            _tdb_handles.DenseNDArrayWrapper,
+            _tdb_handles.SparseNDArrayWrapper,
+        ],
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ):
@@ -133,7 +137,10 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     _wrapper_type: Type[_WrapperType_co]
     _reader_wrapper_type: Union[
-        Type[_WrapperType_co], Type[_tdb_handles.DataFrameWrapper]
+        Type[_WrapperType_co],
+        Type[_tdb_handles.DataFrameWrapper],
+        Type[_tdb_handles.DenseNDArrayWrapper],
+        Type[_tdb_handles.SparseNDArrayWrapper],
     ]
     """Class variable of the Wrapper class used to open this object type."""
 

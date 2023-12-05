@@ -39,7 +39,6 @@ from ._constants import (
 )
 from ._exception import SOMAError
 from ._funcs import typeguard_ignore
-from ._tdb_handles import DataFrameWrapper, DenseNDArrayWrapper, SparseNDArrayWrapper
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context

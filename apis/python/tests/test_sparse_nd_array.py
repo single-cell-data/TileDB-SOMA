@@ -1573,7 +1573,9 @@ def test_blockwise_scipy_iter_eager(
 @pytest.mark.parametrize("result_order", ["auto", "row-major", "column-major"])
 @pytest.mark.parametrize("axis", [0, 1])
 @pytest.mark.parametrize("compress", [True, False])
-def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str, result_order, axis, compress) -> None:
+def test_blockwise_scipy_iter_result_order(
+    a_random_sparse_nd_array: str, result_order, axis, compress
+) -> None:
     """
     Confirm behavior with different result_order.
     """

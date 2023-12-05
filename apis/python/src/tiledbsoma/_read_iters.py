@@ -457,7 +457,6 @@ def _arrow_table_reader(sr: clib.SOMAArray) -> Iterator[pa.Table]:
     while tbl is not None:
         yield tbl
         tbl = sr.read_next()
-        
 
 
 def _coords_strider(
