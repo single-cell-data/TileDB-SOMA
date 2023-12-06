@@ -36,6 +36,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Show matrix OS
+        run: echo "matrix.os:" ${{ matrix.os }}
+
+      - name: Linux CPU info
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: cat /proc/cpuinfo
+
+      - name: MacOS CPU info
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: sysctl -a | grep cpu
+
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
 
