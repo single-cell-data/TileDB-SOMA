@@ -124,7 +124,8 @@ TEST_CASE("ManagedQuery: Basic execution test") {
     auto mq = ManagedQuery(array, ctx);
     mq.setup_read();
 
-    auto results = mq.submit_read();
+    mq.submit_read();
+    auto results = mq.results();
     REQUIRE(mq.results_complete());
 
     auto num_cells = mq.total_num_cells();
@@ -144,7 +145,8 @@ TEST_CASE("ManagedQuery: Select test") {
     mq.select_points<std::string>("d0", {"a"});
     mq.setup_read();
 
-    auto results = mq.submit_read();
+    mq.submit_read();
+    auto results = mq.results();
     REQUIRE(mq.results_complete());
 
     auto num_cells = mq.total_num_cells();
@@ -166,7 +168,8 @@ TEST_CASE("ManagedQuery: Validity test") {
     auto mq = ManagedQuery(array, ctx);
     mq.setup_read();
 
-    auto results = mq.submit_read();
+    mq.submit_read();
+    auto results = mq.results();
     REQUIRE(mq.results_complete());
 
     auto num_cells = mq.total_num_cells();
