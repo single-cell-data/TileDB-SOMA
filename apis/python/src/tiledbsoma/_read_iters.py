@@ -478,10 +478,14 @@ def _coords_strider(
     elif isinstance(coords, int):
         coords = np.array([coords], dtype=np.int64)
     elif isinstance(coords, Sequence):
-        coords = np.array(coords).astype(np.int64)
+        coords = np.array(coords, dtype=np.int64)
     elif isinstance(coords, (pa.Array, pa.ChunkedArray)):
-        coords = coords.to_numpy()
-    elif not isinstance(coords, (np.ndarray, slice)):
+        coords = coords.to_numpy().astype(np.int64, copy=False)
+    elif isinstance(coords, np.ndarray):
+        coords = coords.astype(np.int64)
+    elif isinstance(coords, slice):
+        pass
+    else:
         raise TypeError("Unsupported slice coordinate type")
 
     if isinstance(coords, slice):
