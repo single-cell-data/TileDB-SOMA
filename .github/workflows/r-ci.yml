@@ -40,11 +40,11 @@ jobs:
         run: echo "matrix.os:" ${{ matrix.os }}
 
       - name: Linux CPU info
-        if: ${{ matrix.os == 'ubuntu-22.04' }}
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: cat /proc/cpuinfo
 
       - name: MacOS CPU info
-        if: ${{ matrix.os == 'macos-12' }}
+        if: ${{ matrix.os == 'macOS-latest' }}
         run: sysctl -a | grep cpu
 
       - name: Bootstrap
