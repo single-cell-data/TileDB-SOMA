@@ -505,7 +505,7 @@ def from_anndata(
             with _write_dataframe(
                 _util.uri_joinpath(measurement_uri, "var"),
                 conversions.decategoricalize_obs_or_var(anndata.var),
-                id_column_name="var_id",
+                id_column_name=var_id_name,
                 platform_config=platform_config,
                 context=context,
                 ingestion_params=ingestion_params,
