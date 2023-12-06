@@ -24,6 +24,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 
+from .ingest import _FSPathWrapper
 from .. import (
     Collection,
     DataFrame,
@@ -52,7 +53,7 @@ from ._common import (
 # ----------------------------------------------------------------
 def to_h5ad(
     experiment: Experiment,
-    h5ad_path: Path,
+    h5ad_path: Union[Path, _FSPathWrapper],
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
