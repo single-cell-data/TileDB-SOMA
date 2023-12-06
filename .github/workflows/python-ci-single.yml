@@ -61,6 +61,7 @@ jobs:
   build:
     runs-on: ${{ inputs.os }}
     steps:
+
     - name: Show matrix OS
       run: echo "inputs.os:" ${{ inputs.os }}
 
@@ -71,6 +72,7 @@ jobs:
     - name: MacOS CPU info
       if: ${{ inputs.os == 'macos-12' }}
       run: sysctl -a | grep cpu
+
     - name: Select XCode version
       if: inputs.is_mac
       uses: maxim-lobanov/setup-xcode@v1
