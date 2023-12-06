@@ -298,7 +298,7 @@ class ColumnBuffer {
             std::string s(enums_[i]);
             enum_str_ += s;
             enum_offsets_[i] = cumlen;
-            cumlen += s.length();
+            cumlen += static_cast<uint32_t>(s.length());
         }
         enum_offsets_[n_vec] = cumlen;
     }
