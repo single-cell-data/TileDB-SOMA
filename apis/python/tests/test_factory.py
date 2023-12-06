@@ -1,4 +1,3 @@
-from time import sleep
 from typing import Type
 
 import numpy as np
@@ -73,8 +72,6 @@ def tiledb_object_uri(tmp_path, object_type, metadata_typename, encoding_version
 )
 def test_open(tiledb_object_uri, expected_soma_type: Type):
     """Happy path tests"""
-    # TODO: Fix Windows test failures without the following.
-    sleep(0.01)
     soma_obj = soma.open(tiledb_object_uri)
     assert isinstance(soma_obj, expected_soma_type)
     typed_soma_obj = soma.open(tiledb_object_uri, soma_type=expected_soma_type)
@@ -135,8 +132,6 @@ def test_open_wrong_type(tiledb_object_uri, wrong_type):
 )
 def test_factory_unsupported_version(tiledb_object_uri):
     """All of these should raise, as they are encoding formats from the future"""
-    # TODO: Fix Windows test failures without the following.
-    sleep(0.01)
     with pytest.raises(ValueError):
         soma.open(tiledb_object_uri)
 

@@ -95,7 +95,7 @@ SOMADataFrame::SOMADataFrame(
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    std::string array_name = std::filesystem::path(uri).filename().string();
+    std::string array_name = std::filesystem::path(uri).filename();
     array_ = std::make_shared<SOMAArray>(
         mode,
         uri,

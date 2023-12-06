@@ -1,5 +1,4 @@
 .vscode*
-.vs
 *.swp
 dist/*
 **/venv

@@ -21,9 +21,7 @@ from .options._soma_tiledb_context import SOMATileDBContext
 
 def _load_libs() -> None:
     """Loads the required TileDB-SOMA native library."""
-    if os.name == "nt":
-        lib_name = "tiledbsoma.dll"
-    elif sys.platform == "darwin":
+    if sys.platform == "darwin":
         lib_name = "libtiledbsoma.dylib"
     else:
         lib_name = "libtiledbsoma.so"

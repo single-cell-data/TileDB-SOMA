@@ -691,11 +691,8 @@ def _canonicalize_schema(
         raise ValueError("DataFrame requires one or more index columns")
 
     if SOMA_JOINID in schema.names:
-        joinid_type = schema.field(SOMA_JOINID).type
-        if joinid_type != pa.int64():
-            raise ValueError(
-                f"{SOMA_JOINID} field must be of type Arrow int64 but is {joinid_type}"
-            )
+        if schema.field(SOMA_JOINID).type != pa.int64():
+            raise ValueError(f"{SOMA_JOINID} field must be of type Arrow int64")
     else:
         # add SOMA_JOINID
         schema = schema.append(pa.field(SOMA_JOINID, pa.int64()))

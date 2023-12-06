@@ -14,14 +14,18 @@ on:
         required: true
         type: string
       cc:
-        required: false
+        required: true
         type: string
       cxx:
-        required: false
+        required: true
         type: string
       report_codecov:
         required: true
         type: boolean
+      is_mac:
+        required: false
+        type: boolean
+        default: false
       run_lint:
         required: false
         type: boolean
@@ -29,7 +33,7 @@ on:
 
 jobs:
   lint:
-    if: inputs.run_lint
+    if: ${{ inputs.run_lint }}
     runs-on: ${{ inputs.os }}
     steps:
     - name: Checkout TileDB-SOMA
@@ -52,7 +56,6 @@ jobs:
       run: python -m pip -v install pre-commit && pre-commit run -a -v
 
     - name: Check C++ Format
-      shell: bash
       run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h")
 
   build:
@@ -69,7 +72,7 @@ jobs:
       if: ${{ inputs.os == 'macos-12' }}
       run: sysctl -a | grep cpu
     - name: Select XCode version
-      if: startsWith(inputs.os, 'macos')
+      if: inputs.is_mac
       uses: maxim-lobanov/setup-xcode@v1
       with:
         # Pending https://github.com/actions/runner-images/issues/6350
@@ -123,14 +126,12 @@ jobs:
       run: ctest --output-on-failure --test-dir build/libtiledbsoma -C Release --verbose
 
     - name: Run pytests for C++
-      shell: bash
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
       # instead of copy we `pip install`ed to site-packages above. That's needed for the code
       # coverage analysis to work.
       run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml libtiledbsoma/test -v --durations=20
 
     - name: Run pytests for Python
-      shell: bash
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
       # instead of copy we `pip install`ed to site-packages above. That's needed for the code
       # coverage analysis to work.
