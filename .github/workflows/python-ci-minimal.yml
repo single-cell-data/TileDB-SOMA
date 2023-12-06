@@ -19,9 +19,11 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: true
+    # TODO: temporary -- do not merge -- full (but pre-push) Windows-only CI for this PR
+      # fail-fast: true
+      fail-fast: false
       matrix:
-        # TODO: temporary full -- but pre-push -- Windows-only CI for this PR
+        # TODO: temporary -- do not merge -- full (but pre-push) Windows-only CI for this PR
         # os: [ubuntu-22.04, macos-12]
         # python-version: ['3.10', '3.7']
         os: [windows-2019]
