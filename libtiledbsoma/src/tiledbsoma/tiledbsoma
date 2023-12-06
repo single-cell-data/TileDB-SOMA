@@ -33,9 +33,14 @@
 #ifndef __TILEDBSOMA__
 #define __TILEDBSOMA__
 
-// Auto-generated file by CMake, used to define the TILEDBSOMA_EXPORT macro
-// that allows exporting symbols in a cross-platform fashion.
-#include "tiledbsoma_export.h"
+// TODO Uncomment after finishing Python and R bindings
+// #include "soma_collection.h"
+// #include "soma_dataframe.h"
+// #include "soma_dense_ndarray.h"
+// #include "soma_experiment.h"
+// #include "soma_measurement.h"
+// #include "soma_object.h"
+// #include "soma_sparse_ndarray.h"
 
 #include "utils/arrow_adapter.h"
 #include "utils/common.h"

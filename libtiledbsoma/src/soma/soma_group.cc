@@ -46,10 +46,7 @@ void SOMAGroup::create(
     Group::create(*ctx, std::string(uri));
     auto group = Group(*ctx, std::string(uri), TILEDB_WRITE);
     group.put_metadata(
-        "soma_object_type",
-        TILEDB_STRING_UTF8,
-        static_cast<uint32_t>(soma_type.length()),
-        soma_type.c_str());
+        "soma_object_type", TILEDB_STRING_UTF8, 1, soma_type.c_str());
     group.close();
 }
 

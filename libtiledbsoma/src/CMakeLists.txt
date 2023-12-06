@@ -234,7 +234,7 @@ set(TILEDB_SOMA_EXPORT_HEADER "${TILEDB_SOMA_EXPORT_HEADER}" PARENT_SCOPE)
 
 # Set related compiler settings
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXPORTS)
-target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${TILEDB_SOMA_EXPORT_HEADER_DIR})
+target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # Add the generated header to the public headers list
 list(APPEND TILEDB_SOMA_PUBLIC_HEADERS
@@ -267,6 +267,7 @@ if(TILEDBSOMA_BUILD_CLI)
 
     # CLI11::CLI11
     # spdlog::spdlog
+    tiledbsoma
     TileDB::tiledb_shared
   )
 
@@ -333,11 +334,6 @@ if(NOT WIN32 AND NOT TILEDBSOMA_BUILD_STATIC)
     INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
   )
 endif()
-
-install(
-  FILES $<TARGET_RUNTIME_DLLS:tiledbsoma>
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
 
 if(TILEDBSOMA_BUILD_CLI)
   set_target_properties(tiledbsoma-cli PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})

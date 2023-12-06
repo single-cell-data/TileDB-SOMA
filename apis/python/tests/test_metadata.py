@@ -56,7 +56,6 @@ def test_metadata(soma_object):
     # Verify the metadata is empty to start. "Empty" defined as no keys
     # other than soma_ keys.
     uri = soma_object.uri
-    timestamp = soma_object.tiledb_timestamp_ms
     with soma_object:
         assert non_soma_metadata(soma_object) == {}
         non_soma_keys = [k for k in soma_object.metadata if not k.startswith("soma_")]
@@ -71,7 +70,7 @@ def test_metadata(soma_object):
     with pytest.raises(soma.SOMAError):
         soma_object.metadata["x"] = "y"
 
-    with _factory.open(uri, "r", tiledb_timestamp=timestamp) as read_obj:
+    with _factory.open(uri, "r") as read_obj:
         assert non_soma_metadata(read_obj) == {"foobar": True}
         assert "foobar" in read_obj.metadata
         # Double-check the various getter methods
@@ -83,7 +82,7 @@ def test_metadata(soma_object):
         with pytest.raises(soma.SOMAError):
             read_obj.metadata["x"] = "y"
 
-    with _factory.open(uri, "w", tiledb_timestamp=timestamp + 1) as second_write:
+    with _factory.open(uri, "w") as second_write:
         second_write.metadata.update(stay="frosty", my="friends")
         assert non_soma_metadata(second_write) == {
             "foobar": True,
@@ -91,7 +90,7 @@ def test_metadata(soma_object):
             "my": "friends",
         }
 
-    with _factory.open(uri, "w", tiledb_timestamp=timestamp + 2) as third_write:
+    with _factory.open(uri, "w") as third_write:
         del third_write.metadata["stay"]
         third_write.metadata["my"] = "enemies"
         assert non_soma_metadata(third_write) == {"foobar": True, "my": "enemies"}
@@ -125,49 +124,46 @@ def test_add_delete_metadata(soma_object):
 
 def test_delete_add_metadata(soma_object):
     uri = soma_object.uri
-    timestamp = soma_object.tiledb_timestamp_ms
     with soma_object:
         soma_object.metadata["hdyfn"] = "destruction"
         assert non_soma_metadata(soma_object) == {"hdyfn": "destruction"}
 
-    with _factory.open(uri, "w", tiledb_timestamp=timestamp + 1) as second_write:
+    with _factory.open(uri, "w") as second_write:
         assert non_soma_metadata(second_write) == {"hdyfn": "destruction"}
         del second_write.metadata["hdyfn"]
         assert non_soma_metadata(second_write) == {}
         second_write.metadata["hdyfn"] = "somebody new"
         assert non_soma_metadata(second_write) == {"hdyfn": "somebody new"}
 
-    with _factory.open(uri, "r", tiledb_timestamp=timestamp + 1) as reader:
+    with _factory.open(uri, "r") as reader:
         assert non_soma_metadata(reader) == {"hdyfn": "somebody new"}
 
 
 def test_set_set_metadata(soma_object):
     uri = soma_object.uri
-    timestamp = soma_object.tiledb_timestamp_ms
 
     with soma_object:
         soma_object.metadata["content"] = "content"
 
-    with _factory.open(uri, "w", tiledb_timestamp=timestamp + 1) as second_write:
+    with _factory.open(uri, "w") as second_write:
         second_write.metadata["content"] = "confidence"
         second_write.metadata["content"] = "doubt"
 
-    with _factory.open(uri, "r", tiledb_timestamp=timestamp + 1) as reader:
+    with _factory.open(uri, "r") as reader:
         assert non_soma_metadata(reader) == {"content": "doubt"}
 
 
 def test_set_delete_metadata(soma_object):
     uri = soma_object.uri
-    timestamp = soma_object.tiledb_timestamp_ms
 
     with soma_object:
         soma_object.metadata["possession"] = "obsession"
 
-    with _factory.open(uri, "w", tiledb_timestamp=timestamp + 1) as second_write:
+    with _factory.open(uri, "w") as second_write:
         second_write.metadata["possession"] = "funny thing about opinions"
         del second_write.metadata["possession"]
 
-    with _factory.open(uri, "r", tiledb_timestamp=timestamp + 1) as reader:
+    with _factory.open(uri, "r") as reader:
         assert non_soma_metadata(reader) == {}
 
 

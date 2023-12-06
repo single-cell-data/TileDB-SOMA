@@ -48,7 +48,7 @@ set(EXTERNAL_PROJECTS)
 set(INHERITED_CMAKE_ARGS
   -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
   -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-  -DCMAKE_BUILD_TYPE=$<CONFIG>
+  -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
   -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
   -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
   -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}
@@ -118,13 +118,13 @@ ExternalProject_Add(libtiledbsoma
 
 # make install-libtiledbsoma
 add_custom_target(install-libtiledbsoma
-  COMMAND ${CMAKE_COMMAND} --build . --target install --config $<CONFIG>
+  COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libtiledbsoma
 )
 
 # make check
 add_custom_target(check
-  COMMAND ${CMAKE_COMMAND} --build . --target check --config $<CONFIG>
+  COMMAND ${CMAKE_COMMAND} --build . --target check --config ${CMAKE_BUILD_TYPE}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libtiledbsoma
 )
 

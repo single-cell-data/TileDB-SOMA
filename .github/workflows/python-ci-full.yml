@@ -20,7 +20,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-12, windows-2019]
+        # TODO: restore Windows build once we have C++/libtiledbsoma integration supported there
+        os: [ubuntu-22.04, macos-12]
+        # os: [ubuntu-22.04, macos-12, windows-2019]
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
         include:
           - runs-on: ubuntu-22.04
@@ -35,6 +37,7 @@ jobs:
       python_version: ${{ matrix.python-version }}
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
+      is_mac: ${{ contains(matrix.os, 'macos') }}
       report_codecov: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
       run_lint: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.9' }}
     secrets: inherit
