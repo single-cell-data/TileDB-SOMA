@@ -54,9 +54,16 @@ ManagedQuery::ManagedQuery(
     reset();
 }
 
+void ManagedQuery::close() {
+    if (query_future_.valid()) {
+        query_future_.wait();
+    }
+    array_->close();
+}
+
 void ManagedQuery::reset() {
-    query_ = std::make_unique<Query>(schema_->context(), *array_);
-    subarray_ = std::make_unique<Subarray>(schema_->context(), *array_);
+    query_ = std::make_unique<Query>(*ctx_, *array_);
+    subarray_ = std::make_unique<Subarray>(*ctx_, *array_);
 
     subarray_range_set_ = false;
     subarray_range_empty_ = {};
@@ -145,21 +152,29 @@ void ManagedQuery::submit_write() {
     query_->submit();
 }
 
-std::shared_ptr<ArrayBuffers> ManagedQuery::submit_read() {
+void ManagedQuery::submit_read() {
+    query_submitted_ = true;
+    query_future_ = std::async(std::launch::async, [&]() {
+        LOG_DEBUG("[ManagedQuery] submit thread start");
+        query_->submit();
+        LOG_DEBUG("[ManagedQuery] submit thread done");
+    });
+}
+
+std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     if (is_empty_query()) {
         return buffers_;
     }
 
-    query_->submit();
+    if (query_future_.valid()) {
+        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
+        query_future_.wait();
+    } else {
+        throw TileDBSOMAError(
+            fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
+    }
 
-    // Poll status until query is not INPROGRESS
-    Query::Status status;
-    do {
-        status = query_->query_status();
-    } while (status == Query::Status::INPROGRESS);
-
-    LOG_DEBUG(fmt::format(
-        "[ManagedQuery] [{}] Query status = {}", name_, (int)status));
+    auto status = query_->query_status();
 
     if (status == Query::Status::FAILED) {
         throw TileDBSOMAError(
