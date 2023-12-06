@@ -61,13 +61,9 @@ for arg in args:
 
 if libtiledbsoma_dir is None:
     scripts_dir = this_dir / "dist_links" / "scripts"
+    scripts_dir = scripts_dir.resolve()
 
-    if scripts_dir.is_symlink():
-        # in git source tree
-        libtiledbsoma_dir = this_dir.parent.parent / "dist"
-    else:
-        # in extracted sdist, with libtiledbsoma copied into dist_links/
-        libtiledbsoma_dir = this_dir / "dist_links" / "dist"
+    libtiledbsoma_dir = scripts_dir.parent / "dist"
 else:
     libtiledbsoma_dir = pathlib.Path(libtiledbsoma_dir)
 
@@ -151,7 +147,10 @@ def find_or_build_package_data(setuptools_cmd):
         # cause that cache to fall out of sync.
         #
         # See `.github/workflows/python-ci-single.yml` for configuration.
-        subprocess.run(["./bld"], cwd=scripts_dir)
+        if os.name == "nt":
+            subprocess.run(["pwsh.exe", "./bld.ps1"], cwd=scripts_dir, check=True)
+        else:
+            subprocess.run(["./bld"], cwd=scripts_dir, check=True)
         lib_dir = libtiledbsoma_exists()
         assert lib_dir, "error when building libtiledbsoma from source"
 
@@ -198,10 +197,13 @@ LIB_DIRS = [
     str(libtiledbsoma_dir / "lib"),
     str(tiledb_dir / "lib"),
 ]
-CXX_FLAGS = [
-    f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}',
-    f'-Wl,-rpath,{str(tiledb_dir / "lib")}',
-]
+
+CXX_FLAGS = []
+
+if os.name != "nt":
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}')
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib")}')
+
 if sys.platform == "darwin":
     CXX_FLAGS.append("-mmacosx-version-min=10.14")
 
@@ -225,7 +227,7 @@ if os.name == "posix" and sys.platform != "darwin":
 setuptools.setup(
     name="tiledbsoma",
     description="Python API for efficient storage and retrieval of single-cell data using TileDB",
-    long_description=open("README.md").read(),
+    long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     author="TileDB, Inc.",
     author_email="help@tiledb.io",
@@ -242,6 +244,7 @@ setuptools.setup(
         "Operating System :: Unix",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS :: MacOS X",
+        "Operating System :: Microsoft :: Windows",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
@@ -258,9 +261,10 @@ setuptools.setup(
             ["src/tiledbsoma/pytiledbsoma.cc"],
             include_dirs=INC_DIRS,
             library_dirs=LIB_DIRS,
-            libraries=["tiledbsoma"],
+            libraries=["tiledbsoma"] + (["tiledb"] if os.name == "nt" else []),
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++17"] + CXX_FLAGS,
+            extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17"]
+            + CXX_FLAGS,
             language="c++",
         )
     ],

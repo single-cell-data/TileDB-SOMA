@@ -1163,7 +1163,7 @@ def _write_dataframe(
         else:
             df.rename(columns={"index": id_column_name}, inplace=True)
 
-    df[SOMA_JOINID] = np.asarray(axis_mapping.data)
+    df[SOMA_JOINID] = np.asarray(axis_mapping.data, dtype=np.int64)
 
     df.set_index(SOMA_JOINID, inplace=True)
 
