@@ -1,13 +1,16 @@
 ##spdl::set_level('warn')
 
+print(paste("R_COVR:", isTRUE(as.logical(Sys.getenv('R_COVR')))))
+print(paste("COVR:", Sys.getenv('COVR')))
+
 test_that("Write Assay mechanics", {
   skip_if(!extended_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   skip_on_covr()
   skip_if(
     isTRUE(as.logical(Sys.getenv('COVR', 'false'))),
     "Other coverage variable because testthat missed its variable"
   )
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   uri <- withr::local_tempdir("write-assay")
   collection <- SOMACollectionCreate(uri)
@@ -122,12 +125,12 @@ test_that("Write Assay mechanics", {
 
 test_that("Write DimReduc mechanics", {
   skip_if(!extended_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   skip_on_covr()
   skip_if(
     isTRUE(as.logical(Sys.getenv('COVR', 'false'))),
     "Other coverage variable because testthat missed its variable"
   )
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   uri <- withr::local_tempdir("write-reduction")
   collection <- SOMACollectionCreate(uri)
@@ -173,8 +176,6 @@ test_that("Write DimReduc mechanics", {
     nfeatures = nrow(pbmc_small_rna)
   ))
   on.exit(ms_pca2$close(), add = TRUE, after = FALSE)
-  # expect_no_condition(ms_rna <- write_soma(pbmc_small_rna, soma_parent = ms))
-  # on.exit(ms_rna$close(), add = TRUE, after = FALSE)
   expect_no_condition(write_soma(pbmc_small_tsne, soma_parent = ms))
   expect_identical(sort(ms$names()), sort(c('X', 'var', 'obsm', 'varm')))
   expect_identical(sort(ms$obsm$names()), sort(paste0('X_', c('pca', 'tsne'))))
@@ -190,12 +191,12 @@ test_that("Write DimReduc mechanics", {
 
 test_that("Write Graph mechanics", {
   skip_if(!extended_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   skip_on_covr()
   skip_if(
     isTRUE(as.logical(Sys.getenv('COVR', 'false'))),
     "Other coverage variable because testthat missed its variable"
   )
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   uri <- withr::local_tempdir("write-graph")
   collection <- SOMACollectionCreate(uri)
@@ -220,12 +221,12 @@ test_that("Write Graph mechanics", {
 test_that("Write Seurat mechanics", {
   skip_if(Sys.getenv("CI", "") != "")
   skip_if(!extended_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   skip_on_covr()
   skip_if(
     isTRUE(as.logical(Sys.getenv('COVR', 'false'))),
     "Other coverage variable because testthat missed its variable"
   )
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   uri <- withr::local_tempdir(SeuratObject::Project(pbmc_small))
