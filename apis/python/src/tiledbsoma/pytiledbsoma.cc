@@ -698,13 +698,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     // between 0 and number of keys - 1) based on khash
     py::class_<IntIndexer>(m, "IntIndexer")
         .def(py::init<>())
-        .def(py::init([](py::array_t<int64_t> keys, int num_threads) {
-            auto buffer = keys.request();
-            int64_t* data = static_cast<int64_t*>(buffer.ptr);
-            size_t length = buffer.shape[0];
-            IntIndexer indexer(data, length, num_threads);
-            return indexer;
-        }))
+        .def(py::init<std::vector<int64_t>&, int>())
         .def(
             "map_locations",
             [](IntIndexer& indexer,
