@@ -169,7 +169,7 @@ def find_or_build_package_data(setuptools_cmd):
             subprocess.run(["pwsh.exe", "./bld.ps1"], cwd=scripts_dir, check=True)
         else:
             subprocess.run(["./bld"], cwd=scripts_dir, check=True)
-        
+
         lib_dir = libtiledbsoma_exists()
         assert lib_dir, "error when building libtiledbsoma from source"
 
