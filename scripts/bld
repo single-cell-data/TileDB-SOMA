@@ -82,7 +82,10 @@ cd "$(dirname "$0")/.."
 
 rm -rf build
 mkdir -p build
-cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
-cmake --build build -j ${nproc}
-cmake --build build --target install-libtiledbsoma
-cmake --build build/libtiledbsoma --target build_tests -j ${nproc}
+
+if [ -z ${TILEDBSOMA_COVERAGE+x} ]; then TILEDBSOMA_COVERAGE=""; fi
+
+TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
+TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build -j ${nproc}
+TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build --target install-libtiledbsoma
+TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build/libtiledbsoma --target build_tests -j ${nproc}

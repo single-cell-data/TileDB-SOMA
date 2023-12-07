@@ -1,0 +1,30 @@
+name: libTileDB-SOMA CodeCov
+
+on:
+  pull_request:
+    paths-ignore:
+      - "apis/python/**"
+      - "apis/r/**"
+      - ".pre-commit-config.yaml"
+  push:
+    branches:
+      - main
+      - 'release-*'
+  workflow_dispatch:
+
+jobs:
+  codecov:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout TileDB-SOMA
+      uses: actions/checkout@v3
+    - name: Build libTileDB-SOMA
+      run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld
+    - name: Run libTileDB-SOMA unittests
+      run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failur
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        gcov: true
+        flags: libtiledbsoma
+        gcov_include: $(find libtiledbsoma -name "*.h" -or -name "*.cc")
