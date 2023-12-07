@@ -10,10 +10,9 @@ print(os.getpid())
 
 
 def main():
-    dict(census_version="latest")
-    census_local_copy = dict(uri="/Users/brobatmili/projects/census_data/")
+    census_s3 = dict(census_version="latest")
     t1 = perf_counter()
-    with cellxgene_census.open_soma(**census_local_copy) as census:
+    with cellxgene_census.open_soma(**census_s3) as census:
         with census["census_data"]["homo_sapiens"].axis_query(
             measurement_name="RNA",
             obs_query=soma.AxisQuery(value_filter="""tissue_general == 'eye'"""),
