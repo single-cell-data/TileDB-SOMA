@@ -14,7 +14,6 @@ on:
 env:
   COVERAGE_FLAGS: "r"
   COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  R_COVR: ${{ matrix.covr == 'yes' }}
   _R_CHECK_TESTS_NLINES_: 0
 
 jobs:
@@ -34,6 +33,8 @@ jobs:
             covr: 'yes'
 
     runs-on: ${{ matrix.os }}
+    env:
+      R_COVR: ${{ matrix.covr == 'yes' }}
 
     steps:
       - uses: actions/checkout@v3
