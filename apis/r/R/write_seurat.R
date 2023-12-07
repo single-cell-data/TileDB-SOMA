@@ -414,7 +414,7 @@ write_soma.Seurat <- function(
   check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
-      is_scalar_character(uri)
+      (is_scalar_character(uri) && nzchar(uri))
   )
   experiment <- SOMAExperimentCreate(
     uri = uri,
