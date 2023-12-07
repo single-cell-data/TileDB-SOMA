@@ -33,8 +33,6 @@ jobs:
             covr: 'yes'
 
     runs-on: ${{ matrix.os }}
-    env:
-      R_COVR: ${{ matrix.covr == 'yes' }}
 
     steps:
       - uses: actions/checkout@v3
@@ -101,8 +99,9 @@ jobs:
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}
         run: apis/r/tools/r-ci.sh coverage
+        env:
+          R_COVR: 'true'
 
       - name: View Logs
         run: apis/r/tools/r-ci.sh dump_logs
         if: failure()
-
