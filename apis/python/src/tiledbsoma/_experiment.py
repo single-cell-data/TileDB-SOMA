@@ -5,7 +5,7 @@
 
 """Implementation of a SOMA Experiment.
 """
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -22,16 +22,16 @@ from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 
-def _indexer_map_locations(keys: np.typing.NDArray[np.int64], context: SOMATileDBContext) -> clib.IntIndexer:
+def _indexer_map_locations(
+    keys: np.typing.NDArray[np.int64], context: Union[SOMATileDBContext, None]
+) -> clib.IntIndexer:
     if len(np.unique(keys)) != len(keys):
         raise pd.errors.InvalidIndexError(
             "Reindexing only valid with uniquely valued Index objects"
         )
-    if context == None:
-        context: SOMATileDBContext = _validate_soma_tiledb_context(
-            SOMATileDBContext(tiledb.default_ctx())
-        )
-    ompute_concurrency: int = 5
+    if context is None:
+        context = _validate_soma_tiledb_context(SOMATileDBContext(tiledb.default_ctx()))
+
     if context._tiledb_ctx:
         compute_concurrency = int(
             int(context._tiledb_ctx.config()["sm.compute_concurrency_level"]) / 2
