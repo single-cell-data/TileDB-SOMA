@@ -1,15 +1,7 @@
 ##spdl::set_level('warn')
 
-print(paste("R_COVR:", isTRUE(as.logical(Sys.getenv('R_COVR')))))
-print(paste("COVR:", Sys.getenv('COVR')))
-
 test_that("Write Assay mechanics", {
-  skip_if(!extended_tests())
-  skip_on_covr()
-  skip_if(
-    isTRUE(as.logical(Sys.getenv('COVR', 'false'))),
-    "Other coverage variable because testthat missed its variable"
-  )
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   uri <- withr::local_tempdir("write-assay")
@@ -124,12 +116,7 @@ test_that("Write Assay mechanics", {
 })
 
 test_that("Write DimReduc mechanics", {
-  skip_if(!extended_tests())
-  skip_on_covr()
-  skip_if(
-    isTRUE(as.logical(Sys.getenv('COVR', 'false'))),
-    "Other coverage variable because testthat missed its variable"
-  )
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   uri <- withr::local_tempdir("write-reduction")
@@ -190,12 +177,7 @@ test_that("Write DimReduc mechanics", {
 })
 
 test_that("Write Graph mechanics", {
-  skip_if(!extended_tests())
-  skip_on_covr()
-  skip_if(
-    isTRUE(as.logical(Sys.getenv('COVR', 'false'))),
-    "Other coverage variable because testthat missed its variable"
-  )
+  skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   uri <- withr::local_tempdir("write-graph")
@@ -220,8 +202,7 @@ test_that("Write Graph mechanics", {
 
 test_that("Write Seurat mechanics", {
   skip_if(Sys.getenv("CI", "") != "")
-  skip_if(!extended_tests())
-  skip_on_covr()
+  skip_if(!extended_tests() || covr_tests())
   skip_if(
     isTRUE(as.logical(Sys.getenv('COVR', 'false'))),
     "Other coverage variable because testthat missed its variable"
