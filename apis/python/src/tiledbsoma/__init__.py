@@ -93,8 +93,12 @@ Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
 # crucial that we include a separator (e.g. "Classes and functions") to make an entry in the
 # readthedocs table of contents.
 
+import ctypes
+import os
+import sys
 
-# Load native libraries. On wheel builds, we may have a shared library 
+
+# Load native libraries. On wheel builds, we may have a shared library
 # already linked. In this case, we can import directly
 try:
     from . import pytiledbsoma as clib

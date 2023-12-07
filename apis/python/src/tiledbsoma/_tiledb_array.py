@@ -3,9 +3,6 @@
 #
 # Licensed under the MIT License.
 
-import ctypes
-import os
-import sys
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pyarrow as pa
@@ -13,13 +10,13 @@ import tiledb
 from somacore.options import ResultOrder, ResultOrderStr
 
 from . import _tdb_handles, _util
+
+# This package's pybind11 code
+from . import pytiledbsoma as clib  # noqa: E402
 from ._arrow_types import tiledb_schema_to_arrow
 from ._tiledb_object import TileDBObject
 from ._types import OpenTimestamp, is_nonstringy_sequence
 from .options._soma_tiledb_context import SOMATileDBContext
-
-# This package's pybind11 code
-from . import pytiledbsoma as clib  # noqa: E402
 
 
 class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
