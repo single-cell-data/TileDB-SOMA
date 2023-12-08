@@ -1,4 +1,5 @@
 test_that("SOMAOpen", {
+    skip_if(!extended_tests() || covr_tests())
     skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
 
     tdir <- tempfile()
