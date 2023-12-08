@@ -1,4 +1,5 @@
 test_that("Basic mechanics", {
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-ms")
 
   measurement <- SOMAMeasurementCreate(uri)
