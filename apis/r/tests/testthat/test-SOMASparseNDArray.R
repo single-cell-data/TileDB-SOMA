@@ -1,5 +1,5 @@
 test_that("SOMASparseNDArray creation", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("sparse-ndarray")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
@@ -79,7 +79,7 @@ test_that("SOMASparseNDArray creation", {
 })
 
 test_that("SOMASparseNDArray read_sparse_matrix", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("sparse-ndarray-3")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
@@ -108,7 +108,7 @@ test_that("SOMASparseNDArray read_sparse_matrix", {
 })
 
 test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("sparse-ndarray")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
@@ -147,7 +147,7 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
 })
 
 test_that("SOMASparseNDArray creation with duplicates", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("sparse-ndarray")
 
   set.seed(42)
@@ -182,7 +182,7 @@ test_that("SOMASparseNDArray creation with duplicates", {
 })
 
 test_that("platform_config is respected", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-sparse-nd-array")
 
   # Set tiledb create options
@@ -283,7 +283,7 @@ test_that("platform_config is respected", {
 })
 
 test_that("platform_config defaults", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-sparse-nd-array")
 
   # Set tiledb create options
@@ -320,7 +320,7 @@ test_that("platform_config defaults", {
 })
 
 test_that("SOMASparseNDArray timestamped ops", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-sparse-nd-array-timestamps")
 
   # t=10: create 2x2 array and write 1 into top-left entry
@@ -348,7 +348,7 @@ test_that("SOMASparseNDArray timestamped ops", {
 })
 
 test_that("SOMASparseNDArray compatibility with shape >= 2^31 - 1", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- create_and_populate_32bit_sparse_nd_array(
     uri = withr::local_tempdir("soma-32bit-sparse-nd-array")
   )
@@ -389,6 +389,7 @@ test_that("SOMASparseNDArray compatibility with shape >= 2^31 - 1", {
 })
 
 test_that("SOMASparseNDArray bounding box", {
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("sparse-ndarray-bbox")
   nrows <- 100L
   ncols <- 500L
@@ -442,6 +443,7 @@ test_that("SOMASparseNDArray bounding box", {
 })
 
 test_that("SOMASparseNDArray without bounding box", {
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("sparse-ndarray-no-bbox")
   nrows <- 100L
   ncols <- 500L
@@ -463,6 +465,7 @@ test_that("SOMASparseNDArray without bounding box", {
 })
 
 test_that("SOMASparseNDArray with failed bounding box", {
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("sparse-ndarray-failed-bbox")
   nrows <- 100L
   ncols <- 500L
@@ -493,6 +496,7 @@ test_that("SOMASparseNDArray with failed bounding box", {
 })
 
 test_that("SOMASparseNDArray bounding box implicitly-stored values", {
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("sparse-ndarray-bbox-implicit")
   nrows <- 100L
   ncols <- 500L
@@ -555,6 +559,7 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
 })
 
 test_that("Bounding box assertions", {
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("bbox-assertions")
   nrows <- 100L
   ncols <- 500L
