@@ -225,6 +225,10 @@ class QueryConditionTree(ast.NodeVisitor):
 
             variable = node.left.id
             values = [self.get_val_from_node(val) for val in self.visit(rhs)]
+            if len(values) == 0:
+                raise tiledb.TileDBError(
+                    "At least one value must be provided to the set membership"
+                )
 
             if self.schema.has_attr(variable):
                 enum_label = self.schema.attr(variable).enum_label
@@ -325,14 +329,14 @@ class QueryConditionTree(ast.NodeVisitor):
                 att_node = att_node.args[0]
 
             if isinstance(att_node, ast.Name):
-                att = att_node.id
+                att = str(att_node.id)
             elif isinstance(att_node, ast.Constant) or isinstance(
                 att_node, ast.NameConstant
             ):
-                att = att_node.value
+                att = str(att_node.value)
             elif isinstance(att_node, ast.Str) or isinstance(att_node, ast.Bytes):
                 # deprecated in 3.8
-                att = att_node.s
+                att = str(att_node.s)
             else:
                 raise tiledb.TileDBError(
                     f"Incorrect type for attribute name: {ast.dump(att_node)}"
@@ -437,9 +441,8 @@ class QueryConditionTree(ast.NodeVisitor):
             ) from ae
 
     def visit_BinOp(self, node: ast.BinOp) -> clib.PyQueryCondition:
-        try:
-            op = self.visit(node.op)
-        except KeyError:
+        op = self.visit(node.op)
+        if op is None:
             raise tiledb.TileDBError(
                 f"Unsupported binary operator: {ast.dump(node.op)}. Only & is currently supported."
             )
