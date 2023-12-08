@@ -100,7 +100,7 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}
         run: apis/r/tools/r-ci.sh coverage
         env:
-          R_COVR: 'true'
+          R_COVR: "true"
 
       - name: View Logs
         run: apis/r/tools/r-ci.sh dump_logs

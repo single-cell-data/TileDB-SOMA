@@ -1,4 +1,5 @@
-print("COVR: ", isTRUE(as.logical(Sys.getenv('COVR', 'false'))))
+print(paste("R_COVR:", isTRUE(as.logical(Sys.getenv('R_COVR', 'false')))))
+print(paste("COVR:", isTRUE(as.logical(Sys.getenv('COVR', 'false')))))
 
 test_that("SOMASparseNDArray creation", {
   skip_if(!extended_tests() || covr_tests())

@@ -27,5 +27,10 @@ extended_tests <- function() {
 covr_tests <- function() {
     ## check if coverage is flagged
     ## could add if pre-release number ie 1.4.3.1 instead of 1.4.3
-    Sys.getenv("COVR", "") != ""
+    any(nzchar(vapply(
+      c('COVR', 'R_COVR'),
+      FUN = Sys.getenv,
+      FUN.VALUE = character(length = 1L),
+      unset = ''
+    )))
 }
