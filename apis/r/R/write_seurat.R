@@ -652,9 +652,23 @@ write_soma.SeuratCommand <- function(
   }
   on.exit(logs$close(), add = TRUE)
 
+  spdl::info("Encoding parameters in the command log")
+  xlist <- as.list(x, complete = TRUE)
+  for (i in names(xlist)) {
+    if (i == 'time.stamp') {
+      next
+    }
+    xlist[[i]] <- switch(
+      EXPR = typeof(xlist[[i]]),
+      double = sprintf('%a', xlist[[i]]),
+      xlist[[i]]
+    )
+  }
+
   spdl::info("Encoding command log as JSON")
   enc <- as.character(jsonlite::toJSON(
-    as.list(x, complete = TRUE),
+    xlist,
+    null = 'null',
     auto_unbox = TRUE
   ))
 
@@ -662,6 +676,7 @@ write_soma.SeuratCommand <- function(
     x = data.frame(values = enc),
     uri = uri,
     soma_parent = logs,
+    df_index = 'values',
     key = basename(uri),
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,

@@ -200,6 +200,72 @@ test_that("Write Graph mechanics", {
   expect_error(write_soma(graph, collection = soma_parent))
 })
 
+test_that("Write SeuratCommand mechanics", {
+  skip_if(!extended_tests() || covr_tests())
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  skip_if_not_installed('jsonlite')
+
+  uri <- withr::local_tempdir('write-command-log')
+  uns <- SOMACollectionCreate(uri)
+  on.exit(uns$close, add = TRUE)
+
+  pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
+  for (cmd in SeuratObject::Command(pbmc_small)) {
+    cmdlog <- pbmc_small[[cmd]]
+    cmdlist <- as.list(cmdlog)
+    # Test dumping the command log to SOMA
+    expect_no_condition(write_soma(cmdlog, uri = cmd, soma_parent = uns), )
+    expect_s3_class(cmdgrp <- uns$get('seurat_commands'), 'SOMACollection')
+
+    expect_s3_class(cmddf <- cmdgrp$get(cmd), 'SOMADataFrame')
+    expect_identical(cmddf$mode(), 'CLOSED')
+
+    expect_no_condition(cmddf <- cmddf$open('READ', internal_use_only = 'allowed_use'))
+    on.exit(cmddf$close(), add = TRUE, after = FALSE)
+
+    # Test qualities of the SOMADataFrame
+    expect_identical(cmddf$attrnames(), 'values')
+    expect_identical(sort(cmddf$colnames()), sort(c('soma_joinid', 'values')))
+    expect_identical(basename(cmddf$uri), cmd)
+    expect_equal(cmddf$ndim(), 1L)
+
+    # Test reading the SOMADataFrame
+    expect_s3_class(tbl <- cmddf$read()$concat(), 'Table')
+    expect_equal(dim(tbl), c(1L, 2L))
+    expect_identical(colnames(tbl), cmddf$colnames())
+    expect_s3_class(df <- as.data.frame(tbl), 'data.frame')
+    expect_type(df$values, 'character')
+
+    # Test decoding the JSON-encoded command log
+    expect_type(vals <- jsonlite::fromJSON(df$values), 'list')
+    # Test slots of the command log
+    for (slot in setdiff(methods::slotNames(cmdlog), 'params')) {
+      cmdslot <- methods::slot(cmdlog, slot)
+      cmdslot <- if (is.null(cmdslot)) {
+        cmdslot
+      } else if (is.character(cmdslot)) {
+        paste(trimws(cmdslot), collapse = ' ')
+      } else {
+        as.character(cmdslot)
+      }
+      expect_identical(vals[[slot]], cmdslot)
+    }
+    # Test encoded parameters
+    expect_length(params <- vals[names(cmdlist)], length(cmdlist))
+    expect_identical(sort(names(params)), sort(names(cmdlist)))
+    for (param in names(params)) {
+      if (is.character(cmdlist[[param]])) {
+        expect_identical(params[[param]], cmdlist[[param]])
+      } else if (is.double(cmdlist[[param]])) {
+        # Doubles are encoded as hexadecimal
+        expect_identical(params[[param]], sprintf('%a', cmdlist[[param]]))
+      } else {
+        expect_equivalent(params[[param]], cmdlist[[param]])
+      }
+    }
+  }
+})
+
 test_that("Write Seurat mechanics", {
   skip_if(Sys.getenv("CI", "") != "")
   skip_if(!extended_tests() || covr_tests())
