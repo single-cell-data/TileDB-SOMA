@@ -2,9 +2,9 @@ from typing import Union
 
 import numpy as np
 
-from . import pytiledbsoma as clib
-from ._experiment import _indexer_map_locations
-from .options import SOMATileDBContext
+from tiledbsoma import pytiledbsoma as clib
+from tiledbsoma._experiment import _indexer_map_locations
+from tiledbsoma.options import SOMATileDBContext
 
 """External API"""
 

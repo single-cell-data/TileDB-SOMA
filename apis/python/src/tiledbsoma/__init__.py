@@ -117,7 +117,6 @@ from ._general_utilities import (
 )
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
-from .IntIndexer import IntIndexer
 from .options import SOMATileDBContext, TileDBCreateOptions
 from .pytiledbsoma import (
     tiledbsoma_stats_disable,
@@ -154,5 +153,4 @@ __all__ = [
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
     "tiledbsoma_stats_reset",
-    "IntIndexer",
 ]
