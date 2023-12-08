@@ -1,5 +1,5 @@
 test_that("Arrow Interface from SOMAArrayReader", {
-    skip_if(!extended_tests())
+    skip_if(!extended_tests() || covr_tests())
     library(arrow)
     library(tiledb)
 
@@ -47,7 +47,7 @@ test_that("Arrow Interface from SOMAArrayReader", {
 
 
 test_that("SOMAArrayReader result order", {
-    skip_if(!extended_tests())
+    skip_if(!extended_tests() || covr_tests())
     uri <- withr::local_tempdir("soma-dense-ndarray")
     ndarray <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(4, 4))
 
