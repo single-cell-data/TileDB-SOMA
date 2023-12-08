@@ -1,5 +1,5 @@
 test_that("Basic mechanics", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
@@ -113,7 +113,7 @@ test_that("Basic mechanics", {
 })
 
 test_that("Basic mechanics with default index_column_names", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe-soma-joinid")
   asch <- create_arrow_schema(foo_first=FALSE)
 
@@ -162,7 +162,7 @@ test_that("Basic mechanics with default index_column_names", {
 })
 
 test_that("creation with all supported dimension data types", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   sch <- arrow::schema(
     arrow::field("int8", arrow::int8(), nullable = FALSE),
     arrow::field("int16", arrow::int16(), nullable = FALSE),
@@ -199,7 +199,7 @@ test_that("creation with all supported dimension data types", {
 })
 
 test_that("int64 values are stored correctly", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- arrow::schema(
     arrow::field("foo", arrow::int32(), nullable = FALSE),
@@ -228,7 +228,7 @@ test_that("int64 values are stored correctly", {
 
 test_that("creation with ordered factors", {
   skip_if_not_installed("tiledb", "0.21.0")
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe-ordered")
   n <- 10L
   df <- data.frame(
@@ -250,7 +250,7 @@ test_that("creation with ordered factors", {
 
 test_that("explicit casting of ordered factors to regular factors", {
   skip_if_not_installed("tiledb", "0.21.0")
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe-unordered")
   n <- 10L
   df <- data.frame(
@@ -272,7 +272,7 @@ test_that("explicit casting of ordered factors to regular factors", {
 })
 
 test_that("SOMADataFrame read", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 
   sdf <- SOMADataFrameOpen(uri)
@@ -305,7 +305,7 @@ test_that("SOMADataFrame read", {
 })
 
 test_that("soma_ prefix is reserved", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
@@ -322,7 +322,7 @@ test_that("soma_ prefix is reserved", {
 })
 
 test_that("soma_joinid is added on creation", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
@@ -335,7 +335,7 @@ test_that("soma_joinid is added on creation", {
 })
 
 test_that("soma_joinid validations", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- create_arrow_schema()
 
@@ -353,7 +353,7 @@ test_that("soma_joinid validations", {
 })
 
 test_that("platform_config is respected", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe")
 
   # Set Arrow schema
@@ -449,7 +449,7 @@ test_that("platform_config is respected", {
 })
 
 test_that("platform_config defaults", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe")
 
   # Set Arrow schema
@@ -489,7 +489,7 @@ test_that("platform_config defaults", {
 })
 
 test_that("Metadata", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- file.path(withr::local_tempdir(), "sdf-metadata")
   asch <- create_arrow_schema()
   sdf <- SOMADataFrameCreate(uri, asch)
@@ -515,7 +515,7 @@ test_that("Metadata", {
 })
 
 test_that("SOMADataFrame timestamped ops", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe-timestamps")
 
   sch <- arrow::schema(arrow::field("soma_joinid", arrow::int64(), nullable=FALSE),
@@ -557,7 +557,7 @@ test_that("SOMADataFrame timestamped ops", {
 })
 
 test_that("SOMADataFrame can be updated", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe-update")
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
 
@@ -681,7 +681,7 @@ test_that("SOMADataFrame can be updated", {
 })
 
 test_that("SOMADataFrame can be updated from a data frame", {
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe-update")
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
 
@@ -712,7 +712,7 @@ test_that("SOMADataFrame can be updated from a data frame", {
 
 test_that("missing levels in enums", {
   skip_if_not_installed("tiledb", "0.21.0")
-  skip_if(!extended_tests())
+  skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("soma-dataframe-missing-levels")
   n <- 10L
   df <- data.frame(
