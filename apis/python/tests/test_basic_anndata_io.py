@@ -836,6 +836,18 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         assert obs_id_name in exp.obs.keys()
         assert var_id_name in exp.ms["RNA"].var.keys()
 
+        if indexify_obs:
+            expected_obs_keys = ["soma_joinid", obs_id_name] + adata.obs_keys()
+        else:
+            expected_obs_keys = ["soma_joinid"] + adata.obs_keys()
+        assert list(exp.obs.keys()) == expected_obs_keys
+
+        if indexify_var:
+            expected_var_keys = ["soma_joinid", var_id_name] + adata.var_keys()
+        else:
+            expected_var_keys = ["soma_joinid"] + adata.var_keys()
+        assert list(exp.ms["RNA"].var.keys()) == expected_var_keys
+
         # Implicitly, a check for no-throw
         bdata = tiledbsoma.io.to_anndata(
             exp,
