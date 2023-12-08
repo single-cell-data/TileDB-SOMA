@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from tiledbsoma.IntIndexer import IntIndexer
+from tiledbsoma.utils.IntIndexer import IntIndexer
 
 # tiledbsoma.pytiledbsoma.config_logging("debug")
 
