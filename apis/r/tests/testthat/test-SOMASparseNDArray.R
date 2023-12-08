@@ -1,3 +1,5 @@
+print("COVR: ", isTRUE(as.logical(Sys.getenv('COVR', 'false'))))
+
 test_that("SOMASparseNDArray creation", {
   skip_if(!extended_tests() || covr_tests())
   uri <- withr::local_tempdir("sparse-ndarray")
