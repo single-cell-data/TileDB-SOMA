@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from tiledbsoma.utils.IntIndexer import IntIndexer
+from tiledbsoma._util import build_index
 
 # tiledbsoma.pytiledbsoma.config_logging("debug")
 
@@ -19,7 +19,7 @@ def indexer_test(keys: np.array, lookups: np.array, fail: bool):
 def indexer_test_fail(keys: np.array, lookups: np.array):
     reindexing_exception: bool = False
     try:
-        indexer = IntIndexer.map_locations(keys)
+        indexer = build_index(keys)
         indexer.get_indexer(lookups)
     except pd.errors.InvalidIndexError:
         reindexing_exception = True
@@ -34,7 +34,7 @@ def indexer_test_fail(keys: np.array, lookups: np.array):
 
 
 def indexer_test_pass(keys: np.array, lookups: np.array):
-    indexer = IntIndexer.map_locations(keys)
+    indexer = build_index(keys)
     results = indexer.get_indexer(lookups)
     panda_indexer = pd.Index(keys)
     panda_results = panda_indexer.get_indexer(lookups)
