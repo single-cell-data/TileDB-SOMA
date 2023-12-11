@@ -212,6 +212,7 @@ def test_parsing_error_conditions(malformed_condition):
         "n_genes == val()",
         "attr() > 20",
         "n_genes < -val(-1)",
+        "louvain in []",
     ],
 )
 def test_eval_error_conditions(malformed_condition):
@@ -220,13 +221,19 @@ def test_eval_error_conditions(malformed_condition):
 
     # TODO: these raise the wrong error - it should be SOMAError. Change the test
     # when https://github.com/single-cell-data/TileDB-SOMA/issues/783 is fixed
-    #
+
     with pytest.raises(RuntimeError):
         qc = QueryCondition(malformed_condition)
         schema = tiledb.open(uri).schema
         sr = clib.SOMAArray(uri)
         sr.set_condition(qc, schema)
         sr.read_next()
+
+    with pytest.raises(tiledb.TileDBError):
+        qc = QueryCondition(malformed_condition)
+        schema = tiledb.open(uri).schema
+        # test function directly for codecov
+        qc.init_query_condition(schema, {}, [])
 
 
 if __name__ == "__main__":
