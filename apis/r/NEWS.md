@@ -2,6 +2,13 @@
 
 ## Changes
 
+1.5.2 delivers a Python-only bugfix on the `release-1.5` branch. R is not affected, other than our
+commitment to keep Python and R API versions synchronized.
+
+# tiledbsoma 1.5.1
+
+## Changes
+
 * Add support for I/O of R factors as enumerated types in `SOMADataFrame`
 * Add support for writing `SummarizedExperiment` and `SingleCellExperiment` object to SOMAs
 * Add support for bounding boxes for sparse arrays
