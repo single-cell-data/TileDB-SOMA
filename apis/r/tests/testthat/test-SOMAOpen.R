@@ -18,7 +18,7 @@ test_that("SOMAOpen", {
     expect_true(inherits(SOMAOpen(file.path(uri, "pbmc3k_processed", "ms", "raw")), "SOMAMeasurement"))
     expect_true(inherits(SOMAOpen(file.path(uri, "pbmc3k_processed", "ms", "RNA")), "SOMAMeasurement"))
 
-    expect_true(inherits(SOMAOpen(file.path(uri, "pbmc3k_processed", "ms", "RNA", "obsm", "X_draw_graph_fr")), "SOMADenseNDArray"))
+    expect_true(inherits(SOMAOpen(file.path(uri, "pbmc3k_processed", "ms", "RNA", "obsm", "X_draw_graph_fr")), "SOMASparseNDArray"))
 
     expect_true(inherits(SOMAOpen(file.path(uri, "pbmc3k_processed", "ms", "raw", "X", "data")), "SOMASparseNDArray"))
 
