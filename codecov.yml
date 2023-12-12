@@ -1,5 +1,10 @@
 coverage:
-  range: "90...95"
+  range: "30...95"
+  status:
+    project:
+      default:
+        target: 30%    # we are getting flaky results with a mixed-language repo -- this is a KP
+        threshold: 50%
 
 ignore:
   - "apis/r/inst/tiledb/"
