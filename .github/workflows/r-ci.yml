@@ -51,17 +51,35 @@ jobs:
           wget https://github.com/TileDB-Inc/TileDB-R/archive/refs/tags/0.21.3.tar.gz
           Rscript -e 'remotes::install_deps("0.21.3.tar.gz")'
           R CMD INSTALL 0.21.3.tar.gz    # as 0.21.3 is needed by SOMA 1.5.1
+          Rscript -e 'print("VERSION CHECK")'
+          Rscript -e 'print(packageVersion("tiledb"))'
+          Rscript -e 'print(tiledb::tiledb_version())'
 
       - name: Install r-universe build of SeuratObject (macOS)
         if: ${{ matrix.os == 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev', 'https://cloud.r-project.org'))"
+        run: |
+          cd apis/r
+          Rscript -e "install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev', 'https://cloud.r-project.org'))"
+          Rscript -e 'print("VERSION CHECK")'
+          Rscript -e 'print(packageVersion("tiledb"))'
+          Rscript -e 'print(tiledb::tiledb_version())'
 
       - name: Install r-universe build of SeuratObject (linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
+        run: |
+          cd apis/r
+          Rscript -e "options(bspm.version.check=TRUE); install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
+          Rscript -e 'print("VERSION CHECK")'
+          Rscript -e 'print(packageVersion("tiledb"))'
+          Rscript -e 'print(tiledb::tiledb_version())'
 
       - name: Dependencies
-        run: cd apis/r && tools/r-ci.sh install_all
+        run: |
+          cd apis/r
+          tools/r-ci.sh install_all
+          Rscript -e 'print("VERSION CHECK")'
+          Rscript -e 'print(packageVersion("tiledb"))'
+          Rscript -e 'print(tiledb::tiledb_version())'
 
       - name: CMake
         uses: lukka/get-cmake@latest
@@ -77,11 +95,23 @@ jobs:
       #  run: sudo ldconfig
       #
       - name: Update Packages
-        run: Rscript -e 'update.packages(ask=FALSE)'
+        run: |
+          Rscript -e 'update.packages(ask=FALSE)'
+          Rscript -e 'print("VERSION CHECK")'
+          Rscript -e 'print(packageVersion("tiledb"))'
+          Rscript -e 'print(tiledb::tiledb_version())'
 
       - name: Test
         if: ${{ matrix.covr == 'no' }}
-        run: cd apis/r && tools/r-ci.sh run_tests
+        run: |
+          cd apis/r
+          Rscript -e 'print("VERSION CHECK")'
+          Rscript -e 'print(packageVersion("tiledb"))'
+          Rscript -e 'print(tiledb::tiledb_version())'
+          tools/r-ci.sh run_tests
+          Rscript -e 'print("VERSION CHECK")'
+          Rscript -e 'print(packageVersion("tiledb"))'
+          Rscript -e 'print(tiledb::tiledb_version())'
 
       - name: View Install Output
         run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
