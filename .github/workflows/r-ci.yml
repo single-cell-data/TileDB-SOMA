@@ -49,6 +49,7 @@ jobs:
         run: |
           cd apis/r
           wget https://github.com/TileDB-Inc/TileDB-R/archive/refs/tags/0.21.3.tar.gz
+          Rscript -e 'remotes::install_deps("0.21.3.tar.gz")'
           R CMD INSTALL 0.21.3.tar.gz    # as 0.21.3 is needed by SOMA 1.5.1
 
       - name: Install r-universe build of SeuratObject (macOS)
