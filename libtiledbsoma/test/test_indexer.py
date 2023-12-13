@@ -1,7 +1,10 @@
 import numpy as np
 import pandas as pd
+import tiledb
 
-from tiledbsoma._util import build_index
+from tiledbsoma.options import SOMATileDBContext
+from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
+from tiledbsoma.utils import build_index
 
 # tiledbsoma.pytiledbsoma.config_logging("debug")
 
@@ -17,24 +20,25 @@ def indexer_test(keys: np.array, lookups: np.array, fail: bool):
 
 
 def indexer_test_fail(keys: np.array, lookups: np.array):
-    reindexing_exception: bool = False
     try:
-        indexer = build_index(keys)
-        indexer.get_indexer(lookups)
+        context = _validate_soma_tiledb_context(SOMATileDBContext(tiledb.default_ctx()))
+        index = build_index(keys, context)
+        index.get_indexer(lookups)
+        raise AssertionError("should have failed")
     except pd.errors.InvalidIndexError:
-        reindexing_exception = True
+        pass
 
     try:
-        panda_indexer = pd.Index(keys)
-        panda_indexer.get_indexer(lookups)
-    except pd.errors.InvalidIndexError as exception:
-        if reindexing_exception:
-            return
-        raise exception
+        pd_index = pd.Index(keys)
+        pd_index.get_indexer(lookups)
+        raise AssertionError("should have failed")
+    except pd.errors.InvalidIndexError:
+        pass
 
 
 def indexer_test_pass(keys: np.array, lookups: np.array):
-    indexer = build_index(keys)
+    context = _validate_soma_tiledb_context(SOMATileDBContext(tiledb.default_ctx()))
+    indexer = build_index(keys, context)
     results = indexer.get_indexer(lookups)
     panda_indexer = pd.Index(keys)
     panda_results = panda_indexer.get_indexer(lookups)
