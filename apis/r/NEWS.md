@@ -1,3 +1,9 @@
+# tiledbsoma 1.6.1
+
+## Changes
+
+1.6.1 delivers a Python-only bugfix on the `release-1.6` branch. R is not affected, other than our commitment to keep Python and R API versions synchronized.
+
 # tiledbsoma 1.6.0
 
 ## Fixes
