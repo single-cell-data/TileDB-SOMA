@@ -152,7 +152,6 @@ test_that("Iterated Interface from SOMA Classes", {
 
 test_that("Iterated Interface from SOMA Sparse Matrix", {
     skip_if(!extended_tests() || covr_tests())
-    skip_on_ci()
     skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
 
     tdir <- tempfile()
