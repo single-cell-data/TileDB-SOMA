@@ -436,6 +436,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                         else:
                             extend_vals = np.array(update_vals, enmr.dtype)
                         new_enmr = enmr.extend(extend_vals)
+                        df = pd.Categorical(col.chunk(0).to_pandas(), new_enmr.values())
+                        col = pa.chunked_array(pa.DictionaryArray.from_pandas(df))
                         se.extend_enumeration(new_enmr)
                         se.array_evolve(uri=self.uri)
 
