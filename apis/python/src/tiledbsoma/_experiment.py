@@ -5,16 +5,18 @@
 
 """Implementation of a SOMA Experiment.
 """
+import functools
 from typing import Any, Optional
 
 from somacore import experiment, query
+from typing_extensions import Self
 
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._measurement import Measurement
 from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
-from ._util import build_index
+from .utils import build_index
 
 
 class Experiment(  # type: ignore[misc]  # __eq__ false positive
@@ -81,10 +83,8 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         *,
         obs_query: Optional[query.AxisQuery] = None,
         var_query: Optional[query.AxisQuery] = None,
-    ):
+    ) -> query.ExperimentAxisQuery[Self]:  # type: ignore
         """Creates an axis query over this experiment.
-
-
         Lifecycle: maturing
         """
         # mypy doesn't quite understand descriptors so it issues a spurious
@@ -94,5 +94,5 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
             measurement_name,
             obs_query=obs_query or query.AxisQuery(),
             var_query=var_query or query.AxisQuery(),
-            index_factory=build_index,  # comment this line to disable thw C++ indexer
+            index_factory=functools.partial(build_index, context=self.context),
         )

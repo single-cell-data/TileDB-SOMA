@@ -10,13 +10,8 @@ import urllib.parse
 from itertools import zip_longest
 from typing import Any, Optional, Tuple, Type, TypeVar
 
-import numpy as np
-import pandas as pd
 import somacore
-import tiledb
 from somacore import options
-
-from tiledbsoma import pytiledbsoma as clib
 
 from ._types import OpenTimestamp, Slice, is_slice_of
 
@@ -265,26 +260,3 @@ def ms_to_datetime(millis: int) -> datetime.datetime:
     secs, millis = divmod(millis, 1000)
     dt = datetime.datetime.fromtimestamp(secs, tz=datetime.timezone.utc)
     return dt.replace(microsecond=millis * 1000)
-
-
-def build_index(
-    keys: np.typing.NDArray[np.int64], context: Any = None
-) -> clib.IntIndexer:
-    from .options import SOMATileDBContext
-    from .options._soma_tiledb_context import _validate_soma_tiledb_context
-
-    if len(np.unique(keys)) != len(keys):
-        raise pd.errors.InvalidIndexError(
-            "Reindexing only valid with uniquely valued Index objects"
-        )
-    if context is None:
-        context = _validate_soma_tiledb_context(SOMATileDBContext(tiledb.default_ctx()))
-
-    if context._tiledb_ctx:
-        compute_concurrency = int(
-            int(context._tiledb_ctx.config()["sm.compute_concurrency_level"]) / 2
-        )
-    thread_counts = int(compute_concurrency)
-    reindexer = clib.IntIndexer()
-    reindexer.map_locations(keys, thread_counts)
-    return reindexer
