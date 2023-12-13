@@ -77,7 +77,11 @@ else:
     tiledbsoma_dir = pathlib.Path(tiledbsoma_dir)
 
 if tiledb_dir is None:
-    tiledb_dir = pathlib.Path(this_dir)
+    # tiledb_dir = pathlib.Path(this_dir)
+    scripts_dir = this_dir / "dist_links" / "scripts"
+    scripts_dir = scripts_dir.resolve()
+
+    tiledb_dir = scripts_dir.parent / "dist"
 else:
     tiledb_dir = pathlib.Path(tiledb_dir)
 
@@ -161,14 +165,16 @@ def find_or_build_package_data(setuptools_cmd):
         # cause that cache to fall out of sync.
         #
         # See `.github/workflows/python-ci-single.yml` for configuration.
-        bld_command = ["./bld"]
-        if tiledb_dir is not None:
-            bld_command.append(f"--tiledb={tiledb_dir}")
-
         if os.name == "nt":
-            subprocess.run(["pwsh.exe", "./bld.ps1"], cwd=scripts_dir, check=True)
+            bld_command = ["pwsh.exe", "./bld.ps1"]
+            if tiledb_dir is not None:
+                bld_command.append(f"TileDBLocation={tiledb_dir}")
         else:
-            subprocess.run(["./bld"], cwd=scripts_dir, check=True)
+            bld_command = ["./bld"]
+            if tiledb_dir is not None:
+                bld_command.append(f"--tiledb={tiledb_dir}")
+
+        subprocess.run(bld_command, cwd=scripts_dir, check=True)
 
         lib_dir = libtiledbsoma_exists()
         assert lib_dir, "error when building libtiledbsoma from source"
