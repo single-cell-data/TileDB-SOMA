@@ -422,9 +422,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
                     # get new enumeration values by taking the set difference
                     # while maintaining ordering
-                    update_vals = pd.Series(
-                        np.concatenate([enmr.values(), enmr.values(), col.dictionary])
-                    ).drop_duplicates(keep=False)
+                    update_vals = np.setdiff1d(
+                        col.dictionary, enmr.values(), assume_unique=True
+                    )
 
                     # only extend if there are new values
                     if len(update_vals) != 0:
