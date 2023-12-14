@@ -420,14 +420,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
                     enmr = self._handle.enum(attr.name)
 
-                    # get new enumeration values, maintain original ordering
-                    update_vals = []
-                    for new_val in col.dictionary.tolist():
-                        if new_val not in enmr.values():
-                            update_vals.append(new_val)
+                    # get new enumeration values by taking the set difference
+                    # while maintaining ordering
+                    update_vals = pd.Series(
+                        np.concatenate([enmr.values(), enmr.values(), col.dictionary])
+                    ).drop_duplicates(keep=False)
 
                     # only extend if there are new values
-                    if update_vals:
+                    if len(update_vals) != 0:
                         se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
                         if np.issubdtype(enmr.dtype.type, np.str_):
                             extend_vals = np.array(update_vals, "U")
