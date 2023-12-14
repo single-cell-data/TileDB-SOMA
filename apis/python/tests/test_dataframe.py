@@ -1203,6 +1203,7 @@ def test_multiple_writes_with_enums(tmp_path):
 
     assert df.equals(expected_df)
 
+
 def test_multichunk(tmp_path):
     uri = tmp_path.as_posix()
 
@@ -1248,7 +1249,7 @@ def test_multichunk(tmp_path):
 
     with soma.open(uri) as A:
         df = A.read().concat().to_pandas()
-        
+
     assert df.equals(expected_df)
 
 
