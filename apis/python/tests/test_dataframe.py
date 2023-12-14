@@ -1340,7 +1340,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
     tbl = pa.Table.from_pandas(df1, preserve_index=False)
     with soma.open(uri, mode="w") as A:
         A.write(tbl)
-        
+
     more_elem = 4
     df2 = pd.DataFrame(
         {
