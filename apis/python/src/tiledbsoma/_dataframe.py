@@ -426,6 +426,16 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                         col.dictionary, enmr.values(), assume_unique=True
                     )
 
+                    index_capacity_current = len(enmr.values()) + len(update_vals)
+                    index_capacity_max = np.iinfo(
+                        col_info.type.index_type.to_pandas_dtype()
+                    ).max
+                    if index_capacity_max < index_capacity_current:
+                        raise ValueError(
+                            f"Too many enumeration values ({index_capacity_current}) "
+                            "for index type {col_info.type.index_type}"
+                        )
+
                     # only extend if there are new values
                     if update_vals:
                         se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
