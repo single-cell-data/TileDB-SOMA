@@ -1307,3 +1307,52 @@ def test_multichunk_with_enums(tmp_path):
     expected_df = pd.concat((df_0, df_1, df_2), ignore_index=True)
 
     assert df.equals(expected_df)
+
+
+def test_enum_extend_past_numerical_limit(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            (
+                "obs",
+                pa.dictionary(
+                    index_type=pa.int8(), value_type=pa.large_string(), ordered=False
+                ),
+            ),
+        ]
+    )
+    soma.DataFrame.create(uri, schema=schema).close()
+
+    n_elem = 132
+    n_cats = 128
+    df1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series(np.arange(n_elem), dtype=np.int64),
+            "obs": pd.Series(
+                [f"enum_{i % n_cats}" for i in range(n_elem)], dtype="category"
+            ),
+        }
+    )
+
+    # use max number of possible categories
+    tbl = pa.Table.from_pandas(df1, preserve_index=False)
+    with soma.open(uri, mode="w") as A:
+        A.write(tbl)
+
+    more_elem = 4
+    df2 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series(
+                np.arange(n_elem, n_elem + more_elem), dtype=np.int64
+            ),
+            "obs": pd.Series(["TEST"] * more_elem, dtype="category"),
+        }
+    )
+
+    # cannot add additional categories as already maxed out earlier
+    tbl = pa.Table.from_pandas(df2, preserve_index=False)
+    with pytest.raises(ValueError):
+        with soma.open(uri, mode="w") as A:
+            A.write(tbl)
