@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the a pybind11 api into SOMA C++ library.
+ * This file defines the a pybind11 api in the SOMA C++ library.
  */
 
 #include "reindexer.h"
