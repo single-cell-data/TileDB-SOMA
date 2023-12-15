@@ -35,6 +35,7 @@ TRIM_APT_SOURCES=${TRIM_APT_SOURCES:-"TRUE"}
 COVERAGE_TYPE=${COVERAGE_TYPE:-"tests"}
 COVERAGE_FLAGS=${COVERAGE_FLAGS:-"r"}
 COVERAGE_TOKEN=${COVERAGE_TOKEN:-""}
+COVERAGE_PATH=${COVERAGE_PATH:-"apis/r"}
 
 R_BUILD_ARGS=${R_BUILD_ARGS-"--no-build-vignettes --no-manual"}
 R_CHECK_ARGS=${R_CHECK_ARGS-"--no-manual --as-cran"}
@@ -382,7 +383,12 @@ Coverage() {
     ## assumes that the Rutter PPAs are in fact known, which is a given here
     AptGetInstall r-cran-covr
 
-    COVR="true" Rscript -e "covr::codecov(type = '${COVERAGE_TYPE}', quiet = FALSE, token = '${COVERAGE_TOKEN}', flags = '${COVERAGE_FLAGS}')"
+    COVR="true" Rscript -e "covr::codecov(path = ${COVERAGE_PATH}" \
+        		   		 "type = '${COVERAGE_TYPE}', " \
+        				 "token = '${COVERAGE_TOKEN}', " \
+        				 "flags = '${COVERAGE_FLAGS}', " \
+	        			 "quiet = FALSE, " \
+                                         "relative_path = getwd())"
 }
 
 RunTests() {
