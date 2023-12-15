@@ -106,4 +106,4 @@ jobs:
 
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}
-        run: tools/r-ci.sh coverage
+        run: apis/r/tools/r-ci.sh coverage
