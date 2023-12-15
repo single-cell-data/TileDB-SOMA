@@ -3,6 +3,9 @@ coverage:
 
 ignore:
   - "apis/r/inst/tiledb/"
+  - "apis/r/src/nanoarrow.c"
+  - "apis/r/src/nanoarrow.h"
+  - "apis/r/src/libtiledbsoma/src/external"
   - "apis/python/devtools/"
 
 comment:
