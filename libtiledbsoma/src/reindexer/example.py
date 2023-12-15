@@ -1,12 +1,8 @@
-import os
 from time import perf_counter
 
 import cellxgene_census
 
 import tiledbsoma as soma
-
-# soma.pytiledbsoma.config_logging("debug")
-print(os.getpid())
 
 
 def main():

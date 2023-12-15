@@ -4,12 +4,10 @@ import tiledb
 
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
+from tiledbsoma.pytiledbsoma import config_logging
 from tiledbsoma.utils import build_index
 
-# tiledbsoma.pytiledbsoma.config_logging("debug")
-
-
-# 1d array to list
+config_logging("debug")
 
 
 def indexer_test(keys: np.array, lookups: np.array, fail: bool):

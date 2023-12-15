@@ -187,7 +187,6 @@ INC_DIRS = [
     "dist_links/libtiledbsoma/external/include",
     "../../build/externals/install/include",
     str(libtiledbsoma_dir / "include"),
-    str(libtiledbsoma_dir / "include/tiledbsoma/soma/"),
     str(
         "./src/tiledbsoma"
     ),  # since pytiledbsoma.cc does #include of query_condition.cc
