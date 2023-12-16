@@ -133,6 +133,10 @@ relative or aboslute}
 determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}}
 
 \item{transpose}{Transpose \code{x} before writing}
+
+\item{key}{Optionally register the resulting \code{SOMADataFrame} in
+\code{soma_parent} as \code{key}; pass \code{NULL} to prevent registration
+to handle manually}
 }
 \value{
 The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or

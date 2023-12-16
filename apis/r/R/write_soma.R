@@ -93,6 +93,9 @@ write_soma.character <- function(
 #' \code{\link{SOMADataFrame}}
 #' @param index_column_names Names of columns in \code{x} to index in the
 #' resulting SOMA object
+#' @param key Optionally register the resulting \code{SOMADataFrame} in
+#' \code{soma_parent} as \code{key}; pass \code{NULL} to prevent registration
+#' to handle manually
 #'
 #' @rdname write_soma_objects
 #'
