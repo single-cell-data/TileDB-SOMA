@@ -180,6 +180,7 @@ SOMADataFrame <- R6::R6Class(
                       ase <- tiledb::tiledb_array_schema_evolution()
                       ase <- tiledb::tiledb_array_schema_evolution_extend_enumeration(ase, arr, attr_name, added_enum)
                       tiledb::tiledb_array_schema_evolution_array_evolve(ase, self$uri)
+                      df[, attr_name] <- factor(df[, attr_name], levels = unique(c(old_enum,new_enum)))
                   }
               }
           }

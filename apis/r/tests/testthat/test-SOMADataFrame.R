@@ -780,3 +780,43 @@ test_that("missing levels in enums", {
   expect_identical(tbl1$miss$as_vector(), tbl0$miss$as_vector())
   sdf$close()
 })
+
+
+test_that("factor levels can grow without overlap", {
+
+    uri <- tempfile()
+    schema <- arrow::schema(arrow::field(name = "soma_joinid", type = arrow::int64()),
+                            arrow::field(name = "obs_col_like",
+                                         type = arrow::dictionary(index_type = arrow::int8(), ordered = FALSE)))
+
+    sdf <- SOMADataFrameCreate(uri, schema)
+
+    tbl_1 <- arrow::arrow_table(soma_joinid = bit64::as.integer64(c(0,1,2)),
+                                obs_col_like = factor(c("A", "B", "A")),
+                                schema = schema)
+    sdf$write(tbl_1)
+    sdf$close()
+
+    ## write with a factor with two elements but without one of the initial ones
+    ## while factor(c("B", "C", "B")) gets encoded as c(1,2,1) it should really
+    ## encoded as c(2,3,2) under levels that are c("A", "B", "C") -- and the
+    ## write method now does that
+    tbl_2 <- arrow::arrow_table(soma_joinid = bit64::as.integer64(c(3,4,5)),
+                                obs_col_like = factor(c("B", "C", "B")),
+                                schema = schema)
+    sdf <- SOMADataFrameOpen(uri, "WRITE")
+    sdf$write(tbl_2)
+    sdf$close()
+
+    sdf <- SOMADataFrameOpen(uri)
+    res <- sdf$read()$concat()
+    tbl <- tibble::as_tibble(res)
+
+    expect_equal(nrow(tbl), 6)
+    expect_equal(nlevels(tbl[["obs_col_like"]]), 3)
+    expect_equal(levels(tbl[["obs_col_like"]]), c("A", "B", "C"))
+    expect_equal(as.integer(tbl[["obs_col_like"]]), c(1L, 2L, 1L, 2L, 3L, 2L))
+
+    ref <- rbind( tibble::as_tibble(tbl_1), tibble::as_tibble(tbl_2) )
+    expect_equal(tbl, ref)
+})
