@@ -22,12 +22,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - name: linux
-          #   os: ubuntu-latest
-          #   covr: 'no'
-          # - name: macos
-          #   os: macOS-latest
-          #   covr: 'no'
+          - name: linux
+            os: ubuntu-latest
+            covr: 'no'
+          - name: macos
+            os: macOS-latest
+            covr: 'no'
           - name: coverage
             os: ubuntu-latest
             covr: 'yes'
