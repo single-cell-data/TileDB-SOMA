@@ -62,6 +62,23 @@ uns_hint <- function(type = c('1d', '2d')) {
   return(hint)
 }
 
+.encode_as_char <- function(x) {
+  return(switch(
+    EXPR = typeof(x),
+    double = sprintf('%a', x),
+    x
+  ))
+}
+
+.decode_from_char <- function(x) {
+  stopifnot(is_scalar_character(x))
+  return(if (grepl('[-]?0x[0-9a-f](\\.[0-9a-f]+)?p[+-][0-9]+$', x)) {
+    as.numeric(x)
+  } else {
+    x
+  })
+}
+
 #' Pad Names of a Character Vector
 #'
 #' Fill in missing names of a vector using missing values of said vector

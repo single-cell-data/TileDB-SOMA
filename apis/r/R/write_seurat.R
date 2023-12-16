@@ -644,7 +644,14 @@ write_soma.SeuratCommand <- function(
   } else {
     logs <- soma_parent$get(key)
     if (!inherits(logs, 'SOMACollection')) {
-      stop("existing ", key, call. = FALSE)
+      stop(
+        "Existing ",
+        class(logs)[1L],
+        " named ",
+        sQuote(key),
+        " found, expected a SOMACollection",
+        call. = FALSE
+      )
     }
     spdl::info("Found existing group for command logs")
     logs$open("WRITE", internal_use_only = "allowed_use")
@@ -652,19 +659,26 @@ write_soma.SeuratCommand <- function(
   }
   on.exit(logs$close(), add = TRUE)
 
+  # Encode parameters
   spdl::info("Encoding parameters in the command log")
   xlist <- as.list(x, complete = TRUE)
   for (i in names(xlist)) {
     if (i == 'time.stamp') {
-      next
+      ts <- sapply(
+        unclass(as.POSIXlt(
+          xlist[[i]],
+          tz = attr(xlist[[i]], 'tzone', exact = TRUE) %||% Sys.timezone()
+        )),
+        .encode_as_char,
+        simplify = FALSE,
+        USE.NAMES = TRUE
+      )
+      xlist[[i]] <- as.character(jsonlite::toJSON(ts, auto_unbox = TRUE))
     }
-    xlist[[i]] <- switch(
-      EXPR = typeof(xlist[[i]]),
-      double = sprintf('%a', xlist[[i]]),
-      xlist[[i]]
-    )
+    xlist[[i]] <- .encode_as_char(xlist[[i]])
   }
 
+  # Encode as JSON
   spdl::info("Encoding command log as JSON")
   enc <- as.character(jsonlite::toJSON(
     xlist,
@@ -672,18 +686,16 @@ write_soma.SeuratCommand <- function(
     auto_unbox = TRUE
   ))
 
+  # Write out and return
   sdf <- write_soma(
-    x = data.frame(values = enc),
+    x = enc,
     uri = uri,
     soma_parent = logs,
-    df_index = 'values',
     key = basename(uri),
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     relative = relative
   )
-  on.exit(sdf$close(), add = TRUE, after = FALSE)
 
-  sdf$set_metadata(uns_hint('1d'))
   return(invisible(soma_parent))
 }

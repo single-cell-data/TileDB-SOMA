@@ -1,4 +1,3 @@
-##spdl::set_level('warn')
 
 test_that("Write Assay mechanics", {
   skip_if(!extended_tests() || covr_tests())
@@ -243,6 +242,16 @@ test_that("Write SeuratCommand mechanics", {
       cmdslot <- methods::slot(cmdlog, slot)
       cmdslot <- if (is.null(cmdslot)) {
         cmdslot
+      } else if (inherits(cmdslot, 'POSIXt')) {
+        cmdslot <- as.character(jsonlite::toJSON(
+          sapply(
+            unclass(as.POSIXlt(cmdslot)),
+            .encode_as_char,
+            simplify = FALSE,
+            USE.NAMES = TRUE
+          ),
+          auto_unbox = TRUE
+        ))
       } else if (is.character(cmdslot)) {
         paste(trimws(cmdslot), collapse = ' ')
       } else {
@@ -267,7 +276,7 @@ test_that("Write SeuratCommand mechanics", {
 })
 
 test_that("Write Seurat mechanics", {
-  skip_if(Sys.getenv("CI", "") != "")
+  # skip_if(Sys.getenv("CI", "") != "")
   skip_if(!extended_tests() || covr_tests())
   skip_if(
     isTRUE(as.logical(Sys.getenv('COVR', 'false'))),
