@@ -383,7 +383,6 @@ Coverage() {
     ## assumes that the Rutter PPAs are in fact known, which is a given here
     AptGetInstall r-cran-covr
 
-    mkdir testdir
     COVR="true" Rscript -e "covr::codecov(path = '${COVERAGE_PATH}', type = '${COVERAGE_TYPE}', token = '${COVERAGE_TOKEN}', flags = '${COVERAGE_FLAGS}', quiet = FALSE, relative_path = getwd(), install_path = 'testdir')"
 }
 
