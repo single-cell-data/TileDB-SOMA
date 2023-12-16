@@ -8,12 +8,12 @@ name: TileDB-SOMA Python CI (Minimal)
 # To test the full matrix on a working branch, invoke ./python-ci-full.yml from
 #   https://github.com/single-cell-data/TileDB-SOMA/actions/workflows/python-ci-full.yml
 on:
-  # pull_request:
-  #   branches:
-  #     - main
-  #     - 'release-*'
-  #   paths-ignore:
-  #     - 'apis/r/**'
+  pull_request:
+    branches:
+      - main
+      - 'release-*'
+    paths-ignore:
+      - 'apis/r/**'
   workflow_dispatch:
 
 jobs:
