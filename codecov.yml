@@ -24,3 +24,14 @@ component_management:
         - libtiledbsoma/src/tiledbsoma/**
         - libtiledbsoma/src/soma/**
         - libtiledbsoma/src/utils/**
+
+coverage:
+  status:
+    patch:
+      default:
+        target: 0
+        threshold: 100
+    project:
+      default:
+        target: 70
+        threshold: 100
