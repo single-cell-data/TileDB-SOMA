@@ -96,6 +96,10 @@ jobs:
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests
 
+      - name: Coverage
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}
+        run: apis/r/tools/r-ci.sh coverage
+
       - name: View Install Output
         run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00install.out
         if: failure()
@@ -104,6 +108,3 @@ jobs:
         run: cat $HOME/work/TileDB-SOMA/TileDB-SOMA/apis/r/tiledbsoma.Rcheck/00check.log
         if: failure()
 
-      - name: Coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}
-        run: apis/r/tools/r-ci.sh coverage
