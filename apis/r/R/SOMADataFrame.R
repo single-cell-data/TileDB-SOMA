@@ -180,12 +180,14 @@ SOMADataFrame <- R6::R6Class(
                       ase <- tiledb::tiledb_array_schema_evolution()
                       ase <- tiledb::tiledb_array_schema_evolution_extend_enumeration(ase, arr, attr_name, added_enum)
                       tiledb::tiledb_array_schema_evolution_array_evolve(ase, self$uri)
-                      df[, attr_name] <- factor(df[, attr_name], levels = unique(c(old_enum,new_enum)))
+                      df[, attr_name] <- factor(df[, attr_name], levels = unique(c(old_enum,new_enum)), ordered=is.ordered(df[, attr_name]))
+                      spdl::debug("[tiledbsoma$write] writing '{}' '{}' {}", paste(unique(c(old_enum,new_enum)),collapse=","), paste(added_enum,collapse=","), is.ordered(df[, attr_name]))
                   }
               }
           }
+          arr <- tiledb::tiledb_array_close(arr)
+          arr <- tiledb::tiledb_array_open(arr, "WRITE")
       }
-
       arr[] <- df
       # tiledb-r always closes the array after a write operation so we need to
       # manually reopen it until close-on-write is optional
