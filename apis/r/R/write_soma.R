@@ -48,6 +48,45 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #'
 NULL
 
+#' @rdname write_soma_objects
+#'
+#' @section Writing Character Arrays:
+#' \link[base:character]{Characters} are written out as
+#' \code{\link{SOMADataFrame}s} with one attribute: \dQuote{\code{values}};
+#' additionally one bit of array-level metadata is added:
+#' \itemize{
+#'  \item \dQuote{\code{\Sexpr[stage=build]{names(tiledbsoma:::uns_hint())}}}
+#'   with a value of \dQuote{\code{\Sexpr[stage=build]{tiledbsoma:::uns_hint()[[1L]]}}}
+#' }
+#'
+#' @method write_soma character
+#' @export
+#'
+write_soma.character <- function(
+  x,
+  uri,
+  soma_parent,
+  ...,
+  key = NULL,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
+  sdf <- write_soma(
+    x = data.frame(values = x),
+    uri = uri,
+    soma_parent = soma_parent,
+    df_index = 'values',
+    ...,
+    key = key,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    relative = relative
+  )
+  sdf$set_metadata(uns_hint('1d'))
+  return(sdf)
+}
+
 #' @param df_index The name of the column in \code{x} with the index
 #' (row names); by default, will automatically add the row names of \code{x}
 #' to an attribute named \dQuote{\code{index}} to the resulting
