@@ -35,6 +35,7 @@ TRIM_APT_SOURCES=${TRIM_APT_SOURCES:-"TRUE"}
 COVERAGE_TYPE=${COVERAGE_TYPE:-"tests"}
 COVERAGE_FLAGS=${COVERAGE_FLAGS:-"r"}
 COVERAGE_TOKEN=${COVERAGE_TOKEN:-""}
+COVERAGE_PATH=${COVERAGE_PATH:-"apis/r"}
 
 R_BUILD_ARGS=${R_BUILD_ARGS-"--no-build-vignettes --no-manual"}
 R_CHECK_ARGS=${R_CHECK_ARGS-"--no-manual --as-cran"}
@@ -382,7 +383,11 @@ Coverage() {
     ## assumes that the Rutter PPAs are in fact known, which is a given here
     AptGetInstall r-cran-covr
 
-    COVR="true" Rscript -e "covr::codecov(type = '${COVERAGE_TYPE}', quiet = FALSE, token = '${COVERAGE_TOKEN}', flags = '${COVERAGE_FLAGS}')"
+    # COVERAGE_TYPE=${COVERAGE_TYPE:-"tests"}
+    # COVERAGE_FLAGS=${COVERAGE_FLAGS:-"r"}
+    # COVERAGE_TOKEN=${COVERAGE_TOKEN:-""}
+    # COVERAGE_PATH=${COVERAGE_PATH:-"apis/r"}
+    COVR="true" Rscript -e 'setwd("apis/r"); library(covr); res <- package_coverage(relative_path="../..", line_exclusion=list("apis/r/src/nanoarrow.c", "apis/r/src/nanoarrow.h", "apis/r/R/roxygen.R", quiet=FALSE)); print(res); codecov(coverage=res, token="", flags="r")'
 }
 
 RunTests() {
