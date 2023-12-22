@@ -33,6 +33,7 @@
 #include "reindexer.h"
 #include <thread_pool/thread_pool.h>
 #include <unistd.h>
+#include <thread>
 #include "khash.h"
 #include "soma/enums.h"
 #include "soma/soma_array.h"
@@ -46,6 +47,7 @@ KHASH_MAP_INIT_INT64(m64, int64_t)
 namespace tiledbsoma {
 
 void IntIndexer::map_locations(const int64_t* keys, int size, int threads) {
+    map_size_ = size;
     if (size == 0) {
         return;
     }
@@ -149,7 +151,9 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, int size) {
 }
 
 IntIndexer::~IntIndexer() {
-    kh_destroy(m64, this->hash_);
+    if (map_size_ > 0) {
+        kh_destroy(m64, this->hash_);
+    }
 }
 
 IntIndexer::IntIndexer(const int64_t* keys, int size, int threads) {

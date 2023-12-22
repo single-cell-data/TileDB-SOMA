@@ -90,6 +90,10 @@ class IntIndexer {
      * TileDB threadpool
      */
     std::shared_ptr<tiledbsoma::ThreadPool> tiledb_thread_pool_ = nullptr;
+    /*
+     * Number of elements in the map set by map_locations
+     */
+    int map_size_ = 0;
 };
 
 }  // namespace tiledbsoma
