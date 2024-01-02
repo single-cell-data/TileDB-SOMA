@@ -26,6 +26,10 @@ jobs:
         run: cd apis/r && installRub.r -u eddelbuettel tiledb
       - name: Build Package
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
+      - name: Install Package
+        run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
+      - name: Downgrade TileDB-R if needed
+        run: cd apis/r && Rscript tools/controlled_downgrade.R
       - name: Check Package under valgrind
         # we unsetting environment variable CI for non-extended set of tests
         run: cd apis/r && CI="" VALGRIND_OPTS="-s --leak-check=full --max-threads=1024" R CMD check --use-valgrind --no-vignettes --no-manual $(ls -1tr *.tar.gz | tail -1)
