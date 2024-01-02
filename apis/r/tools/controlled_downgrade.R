@@ -34,20 +34,30 @@
 ##   OS:            Ubuntu 22.04.1 LTS
 ##   >
 
-if (!grepl("Ubuntu 22.04", utils::osVersion))   	# we currently only support Ubuntu 22.04
+isLinux <- Sys.info()[["sysname"]] == "Linux"
+isMacX86 <- Sys.info()[["sysname"]] == "Darwin" && Sys.info()[["machine"]] == "x86_64"
+
+if (!isLinux && !isMacX86) 								# we only support Linux and macOS/x86_64
+    q()
+
+if (isLinux && !grepl("Ubuntu 22.04", utils::osVersion))# on Linux we only support Ubuntu 22.04
     q()
 
 core_from_tiledb <- tiledb::tiledb_version(compact=TRUE)
 core_from_soma <- tiledbsoma:::libtiledbsoma_version(compact=TRUE)
 
-if (core_from_tiledb == core_from_soma) 			# nothing to do: versions align
+if (core_from_tiledb == core_from_soma) 				# nothing to do: versions align
     q()
 
-if (core_from_tiledb > core_from_soma) { 			# if TileDB-R has newer TileDB Core
-    if (requireNamespace("bspm", quietly=TRUE))		#   if we have bspm (with r2u, likely in CI)
-        bspm::disable() 							#     disable it to permit direct binary install
-
-    url <- "https://eddelbuettel.github.io/tiledb-r-versioned-drat/0.22.0/bin/linux/jammy/4.3/src/contrib"
-
-    install.packages("tiledb", contriburl=url)
+if (core_from_tiledb > core_from_soma) { 				# if TileDB-R has newer TileDB Core
+    repo <- "https://eddelbuettel.github.io/tiledb-r-versioned-drat/0.22.0"
+    if (isLinux) {
+        if (requireNamespace("bspm", quietly=TRUE))		#   if we have bspm (with r2u, likely in CI)
+            bspm::disable() 							#     disable it to permit direct binary install
+        url <- paste0(repo, "/bin/linux/jammy/4.3/src/contrib")
+        install.packages("tiledb", contriburl=url) 		# nb: contrib url for ubuntu binary
+    } else {
+        url <- paste0(repo, "/macosx/big-sur-x86_64/contrib/4.3")
+        install.packages("tiledb", repo=url)
+    }
 }
