@@ -97,10 +97,16 @@ jobs:
 
       - name: Install Package
         run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
-        
+
+      - name: Show package versions
+        run: Rscript -e 'tiledbsoma::show_package_versions()'
+
       - name: Downgrade TileDB-R if needed
         run: cd apis/r && Rscript tools/controlled_downgrade.R
-        
+
+      - name: Show package versions again
+        run: Rscript -e 'tiledbsoma::show_package_versions()'
+
       - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests
