@@ -39,7 +39,7 @@ isMacX86 <- Sys.info()[["sysname"]] == "Darwin" && Sys.info()[["machine"]] == "x
 
 cat("sysname", Sys.info()["sysname"], "\n")
 cat("machine", Sys.info()["machine"], "\n")
-cat("osVersrion", utils::osVersion, "\n")
+cat("osVersion", utils::osVersion, "\n")
 
 if (!isLinux && !isMacX86) {
     cat("We only support Linux and macOS/x86_64\n")
@@ -54,7 +54,7 @@ if (isLinux && !grepl("Ubuntu 22.04", utils::osVersion)) {
 core_from_tiledb <- tiledb::tiledb_version(compact=TRUE)
 core_from_soma <- tiledbsoma:::libtiledbsoma_version(compact=TRUE)
 
-cat("core_from_tiledb", core_from_tiledb, "\n")
+cat("core_from_tiledb", as.character(core_from_tiledb), "\n")
 cat("core_from_soma", core_from_soma, "\n")
 
 if (core_from_tiledb == core_from_soma) {
