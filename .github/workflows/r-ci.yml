@@ -58,7 +58,7 @@ jobs:
       # which source is available but CRAN releases (and hence update r2u binaries) are not yet:
 
       - name: Show installed packages
-        run: Rscript -e 'print(installed.packages())'
+        run: Rscript -e 'print(installed.packages())' | grep tiledb || true
 
       - name: Install r-universe build of tiledb-r (macOS)
         if: ${{ matrix.os == 'macOS-latest' }}
@@ -77,13 +77,13 @@ jobs:
         run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
       - name: Show installed packages
-        run: Rscript -e 'print(installed.packages())'
+        run: Rscript -e 'print(installed.packages())' | grep tiledb || true
 
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 
       - name: Show installed packages
-        run: Rscript -e 'print(installed.packages())'
+        run: Rscript -e 'print(installed.packages())' | grep tiledb || true
 
       - name: CMake
         uses: lukka/get-cmake@latest
@@ -99,25 +99,25 @@ jobs:
       #  run: sudo ldconfig
 
       - name: Show installed packages
-        run: Rscript -e 'print(installed.packages())'
+        run: Rscript -e 'print(installed.packages())' | grep tiledb || true
 
       - name: Update Packages
         run: Rscript -e 'update.packages(ask=FALSE)'
 
       - name: Show installed packages
-        run: Rscript -e 'print(installed.packages())'
+        run: Rscript -e 'print(installed.packages())' | grep tiledb || true
 
       - name: Build Package
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
 
       - name: Show installed packages
-        run: Rscript -e 'print(installed.packages())'
+        run: Rscript -e 'print(installed.packages())' | grep tiledb || true
 
       - name: Install Package
         run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
 
       - name: Show installed packages
-        run: Rscript -e 'print(installed.packages())'
+        run: Rscript -e 'print(installed.packages())' | grep tiledb || true
 
       - name: Show package versions
         run: |
@@ -144,3 +144,4 @@ jobs:
         run: apis/r/tools/r-ci.sh dump_logs
         if: failure()
 
+# touch
