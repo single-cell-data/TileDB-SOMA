@@ -355,6 +355,8 @@ def from_h5ad(
             platform_config=platform_config,
             obs_id_name=obs_id_name,
             var_id_name=var_id_name,
+            X_layer_name=X_layer_name,
+            raw_X_layer_name=raw_X_layer_name,
             ingest_mode=ingest_mode,
             use_relative_uri=use_relative_uri,
             X_kind=X_kind,
