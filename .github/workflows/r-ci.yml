@@ -57,9 +57,12 @@ jobs:
       # Uncomment these next two stanzas as needed whenever we've just released a new tiledb-r for
       # which source is available but CRAN releases (and hence update r2u binaries) are not yet:
 
-#      - name: Install r-universe build of tiledb-r (macOS)
-#        if: ${{ matrix.os == 'macOS-latest' }}
-#        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+      - name: Show installed packages
+        run: Rscript -e 'print(installed.packages())'
+
+      - name: Install r-universe build of tiledb-r (macOS)
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
 
       - name: Install r-universe build of tiledb-r (linux)
         if: ${{ matrix.os != 'macOS-latest' }}
@@ -73,8 +76,14 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('SeuratObject', repos = c('https://mojaveazure.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
+      - name: Show installed packages
+        run: Rscript -e 'print(installed.packages())'
+
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
+
+      - name: Show installed packages
+        run: Rscript -e 'print(installed.packages())'
 
       - name: CMake
         uses: lukka/get-cmake@latest
@@ -89,14 +98,26 @@ jobs:
       #  if: ${{ matrix.os == 'ubuntu-latest' }}
       #  run: sudo ldconfig
 
+      - name: Show installed packages
+        run: Rscript -e 'print(installed.packages())'
+
       - name: Update Packages
         run: Rscript -e 'update.packages(ask=FALSE)'
+
+      - name: Show installed packages
+        run: Rscript -e 'print(installed.packages())'
 
       - name: Build Package
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
 
+      - name: Show installed packages
+        run: Rscript -e 'print(installed.packages())'
+
       - name: Install Package
         run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
+
+      - name: Show installed packages
+        run: Rscript -e 'print(installed.packages())'
 
       - name: Show package versions
         run: |
@@ -107,7 +128,9 @@ jobs:
         run: cd apis/r && Rscript tools/controlled_downgrade.R
 
       - name: Show package versions again
-        run: Rscript -e 'tiledbsoma::show_package_versions()'
+        run: |
+          Rscript -e 'print(tiledb::tiledb_version())'
+          Rscript -e 'print(packageVersion("tiledb"))'
 
       - name: Test
         if: ${{ matrix.covr == 'no' }}
