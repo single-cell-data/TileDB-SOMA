@@ -19,6 +19,7 @@ cd src/libtiledbsoma/build-lib
       -DTILEDBSOMA_BUILD_CLI=OFF \
       -DTILEDBSOMA_ENABLE_TESTING=OFF \
       -DOVERRIDE_INSTALL_PREFIX=OFF \
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
       -DCMAKE_INSTALL_PREFIX=${cwd}/inst/tiledbsoma ..
 
 make
