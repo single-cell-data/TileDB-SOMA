@@ -57,9 +57,9 @@ jobs:
       # Uncomment these next two stanzas as needed whenever we've just released a new tiledb-r for
       # which source is available but CRAN releases (and hence update r2u binaries) are not yet:
 
-      - name: Install r-universe build of tiledb-r (macOS)
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+#      - name: Install r-universe build of tiledb-r (macOS)
+#        if: ${{ matrix.os == 'macOS-latest' }}
+#        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
 
       - name: Install r-universe build of tiledb-r (linux)
         if: ${{ matrix.os != 'macOS-latest' }}
