@@ -16,6 +16,8 @@ import tiledbsoma as soma
 from tiledbsoma import _factory
 from tiledbsoma.options import SOMATileDBContext
 
+from concurrent import futures
+
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
 AnySparseTensor = Union[pa.SparseCOOTensor, pa.SparseCSRMatrix, pa.SparseCSCMatrix]
@@ -1705,3 +1707,68 @@ def test_blockwise_scipy_reindex_disable_major_dim(
                 .scipy(compress=False)
             )
             assert isinstance(sp, sparse.coo_matrix)
+
+@pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
+def test_blockwise_iterator_uses_thread_pool_from_context(
+    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+) -> None:
+
+    # Simple sublcass of ThreadPoolExecutor that tracks whether
+    class SentinelThreadPoolExecutor(futures.ThreadPoolExecutor):
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._sentinel = False
+
+        def submit(self, fn, *args, **kwargs):
+            self._sentinel = True
+            return super().submit(fn, *args, **kwargs)
+        
+        def reset(self):
+            self._sentinel = False
+        
+    pool = SentinelThreadPoolExecutor(max_workers=3)
+    assert pool._sentinel == False
+    
+    context = SOMATileDBContext(threadpool=pool)
+    # with soma.open(a_random_sparse_nd_array, mode="r", context=context) as A:
+    #     axis = 0
+    #     size = 50
+    #     tbls = (A.read()
+    #         .blockwise(
+    #             axis=axis,
+    
+    #             size=size,
+    #         )
+    #         .tables())
+        
+    #     for tbl in tbls:
+    #         assert tbl is not None
+
+    #     assert pool._sentinel == True
+
+    # pool.reset()
+    # assert pool._sentinel == False
+    
+    with soma.open(a_random_sparse_nd_array, mode="r", context=context) as A:
+        axis = 0
+        size = 50
+        tbls = (A.read()
+            .blockwise(
+                axis=axis,
+                size=size,
+            )
+            .scipy())
+        
+        for tbl in tbls:
+            print(tbl)
+
+            
+            assert tbl is not None
+
+        assert pool._sentinel == True
+
+    print("tada")
+    pool.shutdown()
+
+

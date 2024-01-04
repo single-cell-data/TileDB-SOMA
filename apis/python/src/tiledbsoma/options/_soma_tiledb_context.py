@@ -14,6 +14,7 @@ from typing_extensions import Self
 
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
+from concurrent import futures
 
 
 def _default_config(
@@ -65,6 +66,7 @@ class SOMATileDBContext:
         tiledb_ctx: Optional[tiledb.Ctx] = None,
         tiledb_config: Optional[Dict[str, Union[str, float]]] = None,
         timestamp: Optional[OpenTimestamp] = None,
+        threadpool: Optional[futures.ThreadPoolExecutor] = None,
     ) -> None:
         """Initializes a new SOMATileDBContext.
 
@@ -128,6 +130,9 @@ class SOMATileDBContext:
         self._tiledb_ctx = tiledb_ctx
         """The TileDB context to use, either provided or lazily constructed."""
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
+
+        """User specified threadpool."""
+        self._threadpool = threadpool
 
     @property
     def timestamp_ms(self) -> Optional[int]:
@@ -235,7 +240,7 @@ class SOMATileDBContext:
                 # Keep the existing timestamp if not overridden.
                 timestamp = self._timestamp_ms
         return type(self)(
-            tiledb_config=tiledb_config, tiledb_ctx=tiledb_ctx, timestamp=timestamp
+            tiledb_config=tiledb_config, tiledb_ctx=tiledb_ctx, timestamp=timestamp, threadpool=self._threadpool
         )
 
     def _open_timestamp_ms(self, in_timestamp: Optional[OpenTimestamp]) -> int:

@@ -570,6 +570,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             size=self.size,
             reindex_disable_on_axis=self.reindex_disable_on_axis,
             eager=self.eager,
+            context=self.array.context,
         )
 
     def coos(self) -> somacore.ReadIter[None]:
@@ -615,4 +616,5 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             compress=compress,
             reindex_disable_on_axis=self.reindex_disable_on_axis,
             eager=self.eager,
+            context=self.array.context,
         )

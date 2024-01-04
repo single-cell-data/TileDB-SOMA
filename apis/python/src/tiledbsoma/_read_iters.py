@@ -30,6 +30,7 @@ import somacore
 from scipy import sparse
 from somacore import options
 from somacore.query._eager_iter import EagerIterator
+from .options import SOMATileDBContext
 
 # This package's pybind11 code
 import tiledbsoma.pytiledbsoma as clib
@@ -87,7 +88,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         size: Optional[Union[int, Sequence[int]]] = None,
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
         eager: bool = True,
-        eager_iterator_pool: Optional[ThreadPoolExecutor] = None,
+        context: Optional[SOMATileDBContext] = None,
     ):
         super().__init__()
 
@@ -95,7 +96,6 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.array = array
         self.sr = sr
         self.eager = eager
-        self.eager_iterator_pool = eager_iterator_pool
 
         # raises on various error checks, AND normalizes args
         self.axis, self.size, self.reindex_disable_on_axis = self._validate_args(
@@ -130,6 +130,9 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
         # Ask subclass to create the type-specific reader/iterator
         self._reader = self._create_reader()
+
+        # TileDBSOMA context, for thread pools
+        self._context = context
 
     @classmethod
     def _validate_args(
@@ -253,20 +256,11 @@ class BlockwiseTableReadIter(BlockwiseReadIterBase[BlockwiseTableReadIterResult]
 
     def _create_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
         """Private. Blockwise Arrow Table iterator, restricted to a single axis"""
-        if self.eager and not self.eager_iterator_pool:
-            with ThreadPoolExecutor() as _pool:
-                yield from (
-                    self._reindexed_table_reader(_pool)
-                    if self.axes_to_reindex
-                    else self._table_reader()
-                )
-        else:
-            yield from (
-                self._reindexed_table_reader(_pool=self.eager_iterator_pool)
-                if self.axes_to_reindex
-                else self._table_reader()
-            )
-
+        yield from (
+            self._reindexed_table_reader(_pool=self._context._threadpool)
+            if self.axes_to_reindex
+            else self._table_reader()
+        )
 
 class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]):
     """Blockwise iterator over `SciPy sparse matrix <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_ elements"""
@@ -282,6 +276,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
         eager: bool = True,
         compress: bool = True,
+        context: Optional[SOMATileDBContext] = None,
     ):
         self.compress = compress
         super().__init__(
@@ -292,6 +287,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             size=size,
             reindex_disable_on_axis=reindex_disable_on_axis,
             eager=eager,
+            context=context,
         )
 
         if (
@@ -320,16 +316,9 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         """
         Private. Iterator over SparseNDArray producing sequence of scipy sparse matrix.
         """
-
-        if self.eager and not self.eager_iterator_pool:
-            with ThreadPoolExecutor() as _pool:
-                yield from self._cs_reader(
-                    _pool
-                ) if self.compress else self._coo_reader(_pool)
-        else:
-            yield from self._cs_reader(
-                _pool=self.eager_iterator_pool
-            ) if self.compress else self._coo_reader(_pool=self.eager_iterator_pool)
+        yield from self._cs_reader(
+            _pool=self._context._threadpool
+        ) if self.compress else self._coo_reader(_pool=self._context._threadpool)
 
     def _sorted_tbl_reader(
         self, _pool: Optional[ThreadPoolExecutor] = None
