@@ -85,7 +85,14 @@ jobs:
       #  run: sudo ldconfig
       #
       - name: Update Packages
-        run: Rscript -e 'update.packages(ask = FALSE, oldPkgs = setdiff(rownames(old.packages()), "tiledb"))'
+        run: Rscript -e 'update.packages(ask=FALSE)'
+
+      - name: Re-install 0.22 build of tiledb-r with core 2.18
+        run: |
+          cd apis/r
+          wget https://github.com/TileDB-Inc/TileDB-R/archive/refs/tags/0.22.0.tar.gz
+          Rscript -e 'remotes::install_deps("0.22.0.tar.gz")'
+          R CMD INSTALL 0.22.0.tar.gz    # as 0.22.0 is needed by SOMA 1.6
 
       - name: Test
         if: ${{ matrix.covr == 'no' }}
