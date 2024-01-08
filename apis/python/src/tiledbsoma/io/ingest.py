@@ -274,11 +274,7 @@ def from_h5ad(
         platform_config: Platform-specific options used to create this array, provided in the form
         ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}`` nested keys.
 
-        obs_id_name: Which AnnData ``obs`` column to use for append mode.  This may be either
-        an index column or a non-index column.
-
-        var_id_name: Which AnnData ``var`` column to use for append mode.  This may be either
-        an index column or a non-index column.
+        This may be either an index column or a non-index column.
 
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
 
