@@ -82,7 +82,15 @@ jobs:
       #
       - name: Update Packages
         run: |
-          Rscript -e 'update.packages(ask = FALSE, oldPkgs = setdiff(rownames(old.packages()), "tiledb"))'
+          Rscript -e 'update.packages(ask=FALSE)'
+          Rscript -e 'print("VERSION CHECK"); print(packageVersion("tiledb")); print(tiledb::tiledb_version())'
+
+      - name: Re-install tiledb-r 0.21 and core 2.17
+        run: |
+          cd apis/r
+          wget https://github.com/TileDB-Inc/TileDB-R/archive/refs/tags/0.21.3.tar.gz
+          Rscript -e 'remotes::install_deps("0.21.3.tar.gz")'
+          R CMD INSTALL 0.21.3.tar.gz    # as 0.21.3 is needed by SOMA 1.5.1
           Rscript -e 'print("VERSION CHECK"); print(packageVersion("tiledb")); print(tiledb::tiledb_version())'
 
       - name: Test
