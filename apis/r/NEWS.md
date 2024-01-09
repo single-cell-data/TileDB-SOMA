@@ -1,3 +1,10 @@
+# tiledbsoma 1.5.3
+
+## Changes
+
+1.5.3 delivers a Python-only bugfix on the `release-1.5` branch. R is not affected, other than our
+commitment to keep Python and R API versions synchronized.
+
 # tiledbsoma 1.5.2
 
 ## Changes
