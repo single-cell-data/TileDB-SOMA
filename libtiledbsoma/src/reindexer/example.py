@@ -18,4 +18,5 @@ def main():
     print(f"End to end time {t2 - t1}")
 
 
-main()
+if __name__ == "__main__":
+    main()
