@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.3</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,13 +52,13 @@
 </nav><div class="container template-reference-topic">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="" class="logo" alt=""><h1>Write a <code><a href="https://mojaveazure.github.io/seurat-object/reference/Seurat-class.html" class="external-link">Seurat</a></code> object to a SOMA, returned opened for write</h1>
+      <img src="" class="logo" alt=""><h1>Write a <code><a href="https://rdrr.io/pkg/SeuratObject/man/Seurat-class.html" class="external-link">Seurat</a></code> object to a SOMA, returned opened for write</h1>
       <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/HEAD/R/write_seurat.R" class="external-link"><code>R/write_seurat.R</code></a></small>
       <div class="d-none name"><code>write_soma.Seurat.Rd</code></div>
     </div>
 
     <div class="ref-description section level2">
-    <p>Write a <code><a href="https://mojaveazure.github.io/seurat-object/reference/Seurat-class.html" class="external-link">Seurat</a></code> object to a SOMA, returned opened for write</p>
+    <p>Write a <code><a href="https://rdrr.io/pkg/SeuratObject/man/Seurat-class.html" class="external-link">Seurat</a></code> object to a SOMA, returned opened for write</p>
     </div>
 
     <div class="section level2">
@@ -70,7 +70,7 @@
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>x</dt>
-<dd><p>A <code><a href="https://mojaveazure.github.io/seurat-object/reference/Seurat-class.html" class="external-link">Seurat</a></code> object</p></dd>
+<dd><p>A <code><a href="https://rdrr.io/pkg/SeuratObject/man/Seurat-class.html" class="external-link">Seurat</a></code> object</p></dd>
 
 
 <dt>uri</dt>
@@ -108,19 +108,19 @@ the data contained in <code>x</code></p>
 the <code><a href="SOMAExperiment.html">experiment</a></code> level</p>
     </div>
     <div class="section level2">
-    <h2 id="writing-assays">Writing <code><a href="https://mojaveazure.github.io/seurat-object/reference/Assay-class.html" class="external-link">Assay</a>s</code><a class="anchor" aria-label="anchor" href="#writing-assays"></a></h2>
+    <h2 id="writing-assays">Writing <code><a href="https://rdrr.io/pkg/SeuratObject/man/Assay-class.html" class="external-link">Assay</a>s</code><a class="anchor" aria-label="anchor" href="#writing-assays"></a></h2>
     
 
-<p><span class="pkg">Seurat</span> <code><a href="https://mojaveazure.github.io/seurat-object/reference/Assay-class.html" class="external-link">Assay</a></code> objects are written out as
+<p><span class="pkg">Seurat</span> <code><a href="https://rdrr.io/pkg/SeuratObject/man/Assay-class.html" class="external-link">Assay</a></code> objects are written out as
 individual <a href="SOMAMeasurement.html">measurements</a>:</p><ul><li><p>the “<code>data</code>” matrix is written out a
 <a href="SOMASparseNDArray.html">sparse matrix</a> called
 “<code>data</code>” within the “<code>X</code>” group</p></li>
 <li><p>the “<code>counts</code>” matrix, if not
-<a href="https://mojaveazure.github.io/seurat-object/reference/IsMatrixEmpty.html" class="external-link">empty</a>, is written out a
+<a href="https://rdrr.io/pkg/SeuratObject/man/IsMatrixEmpty.html" class="external-link">empty</a>, is written out a
 <a href="SOMASparseNDArray.html">sparse matrix</a> called
 “<code>counts</code>” within the “<code>X</code>” group</p></li>
 <li><p>the “<code>scale.data</code>” matrix, if not
-<a href="https://mojaveazure.github.io/seurat-object/reference/IsMatrixEmpty.html" class="external-link">empty</a>, is written out a
+<a href="https://rdrr.io/pkg/SeuratObject/man/IsMatrixEmpty.html" class="external-link">empty</a>, is written out a
 <a href="SOMASparseNDArray.html">sparse matrix</a> called
 “<code>scale_data</code>” within the “<code>X</code>” group</p></li>
 <li><p>feature-level meta data is written out as a
@@ -130,15 +130,15 @@ other slots, including results from extended assays (eg. <code>SCTAssay</code>,
 <code>ChromatinAssay</code>) are lost</p>
     </div>
     <div class="section level2">
-    <h2 id="writing-dimreducs">Writing <code><a href="https://mojaveazure.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">DimReduc</a>s</code><a class="anchor" aria-label="anchor" href="#writing-dimreducs"></a></h2>
+    <h2 id="writing-dimreducs">Writing <code><a href="https://rdrr.io/pkg/SeuratObject/man/DimReduc-class.html" class="external-link">DimReduc</a>s</code><a class="anchor" aria-label="anchor" href="#writing-dimreducs"></a></h2>
     
 
-<p><span class="pkg">Seurat</span> <code><a href="https://mojaveazure.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">DimReduc</a></code> objects are written out
+<p><span class="pkg">Seurat</span> <code><a href="https://rdrr.io/pkg/SeuratObject/man/DimReduc-class.html" class="external-link">DimReduc</a></code> objects are written out
 to the “<code>obsm</code>” and “<code>varm</code>” groups of a
 <a href="SOMAMeasurement.html">measurement</a>:</p><ul><li><p>cell embeddings are written out as a
 <a href="SOMASparseNDArray.html">sparse matrix</a> in the
 “<code>obsm</code>” group</p></li>
-<li><p>feature loadings, if not <a href="https://mojaveazure.github.io/seurat-object/reference/IsMatrixEmpty.html" class="external-link">empty</a>,
+<li><p>feature loadings, if not <a href="https://rdrr.io/pkg/SeuratObject/man/IsMatrixEmpty.html" class="external-link">empty</a>,
 are written out as a <a href="SOMASparseNDArray.html">sparse matrix</a> in
 the “<code>varm</code>” groups; loadings are padded with <code>NAs</code>
 to include all features</p></li>
@@ -148,10 +148,10 @@ to include all features</p></li>
 feature loadings and jackstraw information, are lost</p>
     </div>
     <div class="section level2">
-    <h2 id="writing-graphs">Writing <code><a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a>s</code><a class="anchor" aria-label="anchor" href="#writing-graphs"></a></h2>
+    <h2 id="writing-graphs">Writing <code><a href="https://rdrr.io/pkg/SeuratObject/man/Graph-class.html" class="external-link">Graph</a>s</code><a class="anchor" aria-label="anchor" href="#writing-graphs"></a></h2>
     
 
-<p><span class="pkg">Seurat</span> <code><a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a></code> objects are
+<p><span class="pkg">Seurat</span> <code><a href="https://rdrr.io/pkg/SeuratObject/man/Graph-class.html" class="external-link">Graph</a></code> objects are
 written out as <a href="SOMASparseNDArray.html">sparse matrices</a>
 to the “<code>obsp</code>” group of a
 <a href="SOMAMeasurement.html">measurement</a></p>
