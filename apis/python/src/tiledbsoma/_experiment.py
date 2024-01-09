@@ -76,7 +76,6 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         handle.metadata["dataset_type"] = "soma"
         return super()._set_create_metadata(handle)
 
-    # in tiledbsoma
     def axis_query(  # type: ignore
         self,
         measurement_name: str,

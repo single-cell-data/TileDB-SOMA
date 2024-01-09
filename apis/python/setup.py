@@ -40,7 +40,6 @@ sys.path.insert(0, str(this_dir))
 
 import version  # noqa E402
 
-
 # tiledb_dir and libtiledbsoma_dir may be specified by either environment variable
 # or command-line argument. If both are provided, the latter wins.
 
@@ -296,9 +295,6 @@ setuptools.setup(
         "scipy",
         "somacore==1.0.7",
         "tiledb~=0.25.0",
-        # "somacore==1.0.4", # temporarily change for this PR! TODO will be reversed before landing
-        "somacore @ git+https://github.com/single-cell-data/SOMA.git@b47bbc87f6fa37aed6a7b30c3ac0ddca4bc9fc6c",
-        "tiledb~=0.24.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
