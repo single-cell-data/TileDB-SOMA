@@ -1,8 +1,9 @@
 #!/usr/bin/env Rscript
 
 ## version pinning info
-tiledb_core_version <- "2.18.2"
-tiledb_core_sha1 <- "9ae6e1a"
+tiledb_core_version <- "2.19.0"
+# 8-nybble hash for 2.19.0 only. Please see https://github.com/TileDB-Inc/TileDB/pull/4599.
+tiledb_core_sha1 <- "fa30a88a"
 
 if ( ! dir.exists("inst/") ) {
     stop("No 'inst/' directory. Exiting.", call. = FALSE)
