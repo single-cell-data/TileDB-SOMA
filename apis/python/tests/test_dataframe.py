@@ -145,8 +145,11 @@ def test_dataframe_with_enumeration(tmp_path):
         data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
         data["bar"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
         sdf.write(pa.Table.from_pydict(data))
-        assert sdf.enumeration("foo") == enums["enmr1"]
-        assert sdf.enumeration("bar") == enums["enmr2"]
+
+    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+        df = sdf.read().concat()
+        np.testing.assert_array_equal(df["foo"].chunk(0).dictionary, enums["enmr1"])
+        np.testing.assert_array_equal(df["bar"].chunk(0).dictionary, enums["enmr2"])
 
 
 @pytest.fixture
