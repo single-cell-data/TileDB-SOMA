@@ -30,7 +30,6 @@ import somacore
 from scipy import sparse
 from somacore import options
 from somacore.query._eager_iter import EagerIterator
-from .options import SOMATileDBContext
 
 # This package's pybind11 code
 import tiledbsoma.pytiledbsoma as clib
@@ -38,6 +37,7 @@ import tiledbsoma.pytiledbsoma as clib
 from . import _util
 from ._exception import SOMAError
 from ._types import NTuple
+from .options import SOMATileDBContext
 
 if TYPE_CHECKING:
     from . import SparseNDArray
@@ -261,6 +261,7 @@ class BlockwiseTableReadIter(BlockwiseReadIterBase[BlockwiseTableReadIterResult]
             if self.axes_to_reindex
             else self._table_reader()
         )
+
 
 class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]):
     """Blockwise iterator over `SciPy sparse matrix <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_ elements"""

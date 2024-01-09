@@ -4,7 +4,10 @@ import itertools
 import operator
 import pathlib
 import sys
+from concurrent import futures
 from typing import Any, Dict, List, Tuple, Union
+
+from unittest import mock
 
 import numpy as np
 import pyarrow as pa
@@ -15,8 +18,6 @@ import tiledb
 import tiledbsoma as soma
 from tiledbsoma import _factory
 from tiledbsoma.options import SOMATileDBContext
-
-from concurrent import futures
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 
@@ -1708,65 +1709,53 @@ def test_blockwise_scipy_reindex_disable_major_dim(
             )
             assert isinstance(sp, sparse.coo_matrix)
 
+
 @pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
 def test_blockwise_iterator_uses_thread_pool_from_context(
     a_random_sparse_nd_array: str, shape: Tuple[int, ...]
 ) -> None:
 
-    # Simple sublcass of ThreadPoolExecutor that tracks whether
-    # submit() was called by setting a sentinel flag.
-    class SentinelThreadPoolExecutor(futures.ThreadPoolExecutor):
+    pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=4))
+    pool.submit.assert_not_called()
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self._sentinel = False
-
-        def submit(self, fn, *args, **kwargs):
-            self._sentinel = True
-            return super().submit(fn, *args, **kwargs)
-        
-        def reset(self):
-            self._sentinel = False
-        
-    pool = SentinelThreadPoolExecutor(max_workers=4)
-    assert pool._sentinel == False
-    
     context = SOMATileDBContext(threadpool=pool)
     with soma.open(a_random_sparse_nd_array, mode="r", context=context) as A:
         axis = 0
         size = 50
-        tbls = (A.read()
+        tbls = (
+            A.read()
             .blockwise(
                 axis=axis,
                 size=size,
             )
-            .tables())
-        
+            .tables()
+        )
+
         # The iteration needs to happen to ensure the threadpool is used
         for tbl in tbls:
             assert tbl is not None
 
-        assert pool._sentinel == True
+        pool.submit.assert_called()
 
-    pool.reset()
-    assert pool._sentinel == False
-    
+    pool.reset_mock()
+    pool.submit.assert_not_called()
+
     with soma.open(a_random_sparse_nd_array, mode="r", context=context) as A:
         axis = 0
         size = 50
-        arrs = (A.read()
+        arrs = (
+            A.read()
             .blockwise(
                 axis=axis,
                 size=size,
             )
-            .scipy())
-        
+            .scipy()
+        )
+
         # The iteration needs to happen to ensure the threadpool is used
         for arr in arrs:
             assert arr is not None
 
-        assert pool._sentinel == True
+        pool.submit.assert_called()
 
     pool.shutdown()
-
-

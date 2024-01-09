@@ -6,10 +6,12 @@ import pyarrow as pa
 import pytest
 from scipy import sparse
 from somacore import options
+from concurrent import futures
+
+from unittest import mock
 
 import tiledbsoma as soma
-from tiledbsoma import _factory
-from tiledbsoma import SOMATileDBContext
+from tiledbsoma import SOMATileDBContext, _factory
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
 
@@ -83,6 +85,7 @@ def soma_experiment(
                 add_sparse_array(varm, varm_layer_name, (n_vars, N_FEATURES))
 
     return _factory.open((tmp_path / "exp").as_posix())
+
 
 def get_soma_experiment_with_context(soma_experiment, context):
     soma_experiment.close()
@@ -883,29 +886,16 @@ def add_sparse_array(coll: CollectionBase, key: str, shape: Tuple[int, int]) -> 
     )
     a.write(tensor)
 
+
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_uses_threadpool_from_context(soma_experiment):
     """
     Verify that ExperimentAxisQuery uses the threadpool from the context
     """
 
-    from concurrent import futures
-    class SentinelThreadPoolExecutor(futures.ThreadPoolExecutor):
+    pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=4))
+    pool.submit.assert_not_called()
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self._sentinel = False
-
-        def submit(self, fn, *args, **kwargs):
-            self._sentinel = True
-            return super().submit(fn, *args, **kwargs)
-        
-        def reset(self):
-            self._sentinel = False
-
-    pool = SentinelThreadPoolExecutor(max_workers=4)
-    assert pool._sentinel == False
-    
     context = SOMATileDBContext(threadpool=pool)
     soma_experiment = get_soma_experiment_with_context(soma_experiment, context=context)
 
@@ -914,5 +904,4 @@ def test_experiment_query_uses_threadpool_from_context(soma_experiment):
         adata = query.to_anndata(X_name="raw")
         assert adata is not None
 
-        assert pool._sentinel == True
-
+        pool.submit.assert_called()
