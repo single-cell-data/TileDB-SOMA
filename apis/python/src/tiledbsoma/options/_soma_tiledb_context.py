@@ -204,7 +204,7 @@ class SOMATileDBContext:
         tiledb_config: Optional[Dict[str, Any]] = None,
         tiledb_ctx: Optional[tiledb.Ctx] = None,
         timestamp: Optional[OpenTimestamp] = _SENTINEL,  # type: ignore[assignment]
-        threadpool: Optional[futures.ThreadPoolExecutor] = _SENTINEL,
+        threadpool: Optional[futures.ThreadPoolExecutor] = _SENTINEL,  # type: ignore[assignment]
     ) -> Self:
         """Create a copy of the context, merging changes.
 

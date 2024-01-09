@@ -1,4 +1,6 @@
+from concurrent import futures
 from typing import Tuple
+from unittest import mock
 
 import numpy as np
 import pandas as pd
@@ -6,9 +8,6 @@ import pyarrow as pa
 import pytest
 from scipy import sparse
 from somacore import options
-from concurrent import futures
-
-from unittest import mock
 
 import tiledbsoma as soma
 from tiledbsoma import SOMATileDBContext, _factory

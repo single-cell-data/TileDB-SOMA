@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import abc
+from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
@@ -97,8 +98,12 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.sr = sr
         self.eager = eager
 
-        # TileDBSOMA context, for thread pools
-        self._context = context
+        # Assign a thread pool from the context, or create a new one if no context
+        # is available
+        if context is not None:
+            self._threadpool = context._threadpool
+        else:
+            self._threadpool = futures.ThreadPoolExecutor()
 
         # raises on various error checks, AND normalizes args
         self.axis, self.size, self.reindex_disable_on_axis = self._validate_args(
@@ -257,7 +262,7 @@ class BlockwiseTableReadIter(BlockwiseReadIterBase[BlockwiseTableReadIterResult]
     def _create_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
         """Private. Blockwise Arrow Table iterator, restricted to a single axis"""
         yield from (
-            self._reindexed_table_reader(_pool=self._context._threadpool)
+            self._reindexed_table_reader(_pool=self._threadpool)
             if self.axes_to_reindex
             else self._table_reader()
         )
@@ -318,8 +323,8 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         Private. Iterator over SparseNDArray producing sequence of scipy sparse matrix.
         """
         yield from self._cs_reader(
-            _pool=self._context._threadpool
-        ) if self.compress else self._coo_reader(_pool=self._context._threadpool)
+            _pool=self._threadpool
+        ) if self.compress else self._coo_reader(_pool=self._threadpool)
 
     def _sorted_tbl_reader(
         self, _pool: Optional[ThreadPoolExecutor] = None
