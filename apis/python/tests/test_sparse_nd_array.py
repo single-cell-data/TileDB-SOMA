@@ -1714,6 +1714,7 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
 ) -> None:
 
     # Simple sublcass of ThreadPoolExecutor that tracks whether
+    # submit() was called by setting a sentinel flag.
     class SentinelThreadPoolExecutor(futures.ThreadPoolExecutor):
 
         def __init__(self, *args, **kwargs):
@@ -1727,29 +1728,10 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
         def reset(self):
             self._sentinel = False
         
-    pool = SentinelThreadPoolExecutor(max_workers=3)
+    pool = SentinelThreadPoolExecutor(max_workers=4)
     assert pool._sentinel == False
     
     context = SOMATileDBContext(threadpool=pool)
-    # with soma.open(a_random_sparse_nd_array, mode="r", context=context) as A:
-    #     axis = 0
-    #     size = 50
-    #     tbls = (A.read()
-    #         .blockwise(
-    #             axis=axis,
-    
-    #             size=size,
-    #         )
-    #         .tables())
-        
-    #     for tbl in tbls:
-    #         assert tbl is not None
-
-    #     assert pool._sentinel == True
-
-    # pool.reset()
-    # assert pool._sentinel == False
-    
     with soma.open(a_random_sparse_nd_array, mode="r", context=context) as A:
         axis = 0
         size = 50
@@ -1758,17 +1740,33 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
                 axis=axis,
                 size=size,
             )
-            .scipy())
+            .tables())
         
+        # The iteration needs to happen to ensure the threadpool is used
         for tbl in tbls:
-            print(tbl)
-
-            
             assert tbl is not None
 
         assert pool._sentinel == True
 
-    print("tada")
+    pool.reset()
+    assert pool._sentinel == False
+    
+    with soma.open(a_random_sparse_nd_array, mode="r", context=context) as A:
+        axis = 0
+        size = 50
+        arrs = (A.read()
+            .blockwise(
+                axis=axis,
+                size=size,
+            )
+            .scipy())
+        
+        # The iteration needs to happen to ensure the threadpool is used
+        for arr in arrs:
+            assert arr is not None
+
+        assert pool._sentinel == True
+
     pool.shutdown()
 
 

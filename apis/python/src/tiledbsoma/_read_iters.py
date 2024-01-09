@@ -97,6 +97,9 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.sr = sr
         self.eager = eager
 
+        # TileDBSOMA context, for thread pools
+        self._context = context
+
         # raises on various error checks, AND normalizes args
         self.axis, self.size, self.reindex_disable_on_axis = self._validate_args(
             sr.shape, axis, size, reindex_disable_on_axis
@@ -130,9 +133,6 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
         # Ask subclass to create the type-specific reader/iterator
         self._reader = self._create_reader()
-
-        # TileDBSOMA context, for thread pools
-        self._context = context
 
     @classmethod
     def _validate_args(

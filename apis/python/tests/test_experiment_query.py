@@ -9,6 +9,7 @@ from somacore import options
 
 import tiledbsoma as soma
 from tiledbsoma import _factory
+from tiledbsoma import SOMATileDBContext
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
 
@@ -82,6 +83,10 @@ def soma_experiment(
                 add_sparse_array(varm, varm_layer_name, (n_vars, N_FEATURES))
 
     return _factory.open((tmp_path / "exp").as_posix())
+
+def get_soma_experiment_with_context(soma_experiment, context):
+    soma_experiment.close()
+    return _factory.open(soma_experiment.uri, context=context)
 
 
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw", "extra"))])
@@ -515,9 +520,15 @@ def test_error_corners(soma_experiment: soma.Experiment):
 def test_query_cleanup(soma_experiment: soma.Experiment):
     """
     Verify soma.Experiment.query works as context manager and stand-alone,
-    and that it cleans up correct.
+    and that it cleans up correctly.
     """
     from contextlib import closing
+
+    # Forces a context without a thread pool, which in turn causes ExperimentAxisQuery
+    # to own (and release) its own thread pool.
+    context = SOMATileDBContext()
+    context._threadpool = None
+    soma_experiment = get_soma_experiment_with_context(soma_experiment, context)
 
     with soma_experiment.axis_query("RNA") as query:
         assert query.n_obs == 1001
@@ -871,3 +882,37 @@ def add_sparse_array(coll: CollectionBase, key: str, shape: Tuple[int, int]) -> 
         )
     )
     a.write(tensor)
+
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_experiment_query_uses_threadpool_from_context(soma_experiment):
+    """
+    Verify that ExperimentAxisQuery uses the threadpool from the context
+    """
+
+    from concurrent import futures
+    class SentinelThreadPoolExecutor(futures.ThreadPoolExecutor):
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._sentinel = False
+
+        def submit(self, fn, *args, **kwargs):
+            self._sentinel = True
+            return super().submit(fn, *args, **kwargs)
+        
+        def reset(self):
+            self._sentinel = False
+
+    pool = SentinelThreadPoolExecutor(max_workers=4)
+    assert pool._sentinel == False
+    
+    context = SOMATileDBContext(threadpool=pool)
+    soma_experiment = get_soma_experiment_with_context(soma_experiment, context=context)
+
+    with soma_experiment.axis_query("RNA") as query:
+        # to_anndata uses the threadpool
+        adata = query.to_anndata(X_name="raw")
+        assert adata is not None
+
+        assert pool._sentinel == True
+
