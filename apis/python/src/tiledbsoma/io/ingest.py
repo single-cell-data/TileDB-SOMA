@@ -274,9 +274,13 @@ def from_h5ad(
         platform_config: Platform-specific options used to create this array, provided in the form
         ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}`` nested keys.
 
-        obs_id_name: Which AnnData ``obs`` column to use for append mode.
-
-        var_id_name: Which AnnData ``var`` column to use for append mode.
+        obs_id_name and var_id_name: Which AnnData ``obs`` and ``var`` columns, respectively, to use
+        for append mode: values of this column will be used to decide which obs/var rows in appended
+        inputs are distinct from the ones already stored, for the assignment of ``soma_joinid``.  If
+        this column exists in the input data, as a named index or a non-index column name, it will
+        be used. If this column doesn't exist in the input data, and if the index is nameless or
+        named ``index``, that index will be given this name when written to the SOMA experiment's
+        ``obs`` / ``var``.
 
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
 
