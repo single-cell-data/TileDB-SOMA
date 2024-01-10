@@ -16,6 +16,7 @@ from typing_extensions import Self
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
+from somacore import ContextBase
 
 def _default_config(
     override: Mapping[str, Union[str, float]]
@@ -48,7 +49,7 @@ _SENTINEL = object()
 """Sentinel object to distinguish default parameters from None."""
 
 
-class SOMATileDBContext:
+class SOMATileDBContext(ContextBase):
     """Maintains TileDB-specific context for TileDB-SOMA objects.
     This context can be shared across multiple objects,
     including having a child object inherit it from its parent.
