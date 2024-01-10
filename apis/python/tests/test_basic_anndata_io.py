@@ -249,6 +249,44 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         tempdir.cleanup()
 
 
+@pytest.mark.parametrize(
+    "X_layer_name",
+    [
+        None,
+        "data",
+        "othername",
+    ],
+)
+def test_named_X_layers(h5ad_file, X_layer_name):
+    tempdir = tempfile.TemporaryDirectory()
+    soma_path = tempdir.name
+
+    if X_layer_name is None:
+        tiledbsoma.io.from_h5ad(
+            soma_path,
+            h5ad_file.as_posix(),
+            "RNA",
+            ingest_mode="write",
+        )
+    else:
+        tiledbsoma.io.from_h5ad(
+            soma_path,
+            h5ad_file.as_posix(),
+            "RNA",
+            ingest_mode="write",
+            X_layer_name=X_layer_name,
+            raw_X_layer_name=X_layer_name,
+        )
+
+    with tiledbsoma.Experiment.open(soma_path) as exp:
+        if X_layer_name is None:
+            assert "data" in exp.ms["RNA"].X
+            assert "data" in exp.ms["raw"].X
+        else:
+            assert X_layer_name in exp.ms["RNA"].X
+            assert X_layer_name in exp.ms["raw"].X
+
+
 def _get_fragment_count(array_uri):
     return len(tiledb.fragment.FragmentInfoList(array_uri=array_uri))
 

@@ -245,6 +245,8 @@ def from_h5ad(
     platform_config: Optional[PlatformConfig] = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
+    X_layer_name: str = "data",
+    raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
@@ -271,6 +273,18 @@ def from_h5ad(
 
         platform_config: Platform-specific options used to create this array, provided in the form
         ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}`` nested keys.
+
+        obs_id_name and var_id_name: Which AnnData ``obs`` and ``var`` columns, respectively, to use
+        for append mode: values of this column will be used to decide which obs/var rows in appended
+        inputs are distinct from the ones already stored, for the assignment of ``soma_joinid``.  If
+        this column exists in the input data, as a named index or a non-index column name, it will
+        be used. If this column doesn't exist in the input data, and if the index is nameless or
+        named ``index``, that index will be given this name when written to the SOMA experiment's
+        ``obs`` / ``var``.
+
+        X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
+
+        raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
 
         ingest_mode: The ingestion type to perform:
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
@@ -345,6 +359,8 @@ def from_h5ad(
             platform_config=platform_config,
             obs_id_name=obs_id_name,
             var_id_name=var_id_name,
+            X_layer_name=X_layer_name,
+            raw_X_layer_name=raw_X_layer_name,
             ingest_mode=ingest_mode,
             use_relative_uri=use_relative_uri,
             X_kind=X_kind,
@@ -368,6 +384,8 @@ def from_anndata(
     platform_config: Optional[PlatformConfig] = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
+    X_layer_name: str = "data",
+    raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
@@ -544,7 +562,7 @@ def from_anndata(
                 if has_X:
                     with _create_from_matrix(
                         X_kind,
-                        _util.uri_joinpath(measurement_X_uri, "data"),
+                        _util.uri_joinpath(measurement_X_uri, X_layer_name),
                         anndata.X,
                         ingestion_params=ingestion_params,
                         platform_config=platform_config,
@@ -552,7 +570,9 @@ def from_anndata(
                         axis_0_mapping=jidmaps.obs_axis,
                         axis_1_mapping=jidmaps.var_axes[measurement_name],
                     ) as data:
-                        _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
+                        _maybe_set(
+                            x, X_layer_name, data, use_relative_uri=use_relative_uri
+                        )
 
                 for layer_name, layer in anndata.layers.items():
                     with _create_from_matrix(
@@ -751,7 +771,7 @@ def from_anndata(
 
                             with _create_from_matrix(
                                 SparseNDArray,
-                                _util.uri_joinpath(raw_X_uri, "data"),
+                                _util.uri_joinpath(raw_X_uri, raw_X_layer_name),
                                 anndata.raw.X,
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
@@ -761,7 +781,7 @@ def from_anndata(
                             ) as rm_x_data:
                                 _maybe_set(
                                     rm_x,
-                                    "data",
+                                    raw_X_layer_name,
                                     rm_x_data,
                                     use_relative_uri=use_relative_uri,
                                 )
