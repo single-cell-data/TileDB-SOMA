@@ -334,19 +334,21 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        del batch_size, platform_config  # Currently unused.
+        del batch_size  # Currently unused.
         _util.check_unpartitioned(partitions)
         self._check_open_read()
+        
+        ts = None
+        if self._handle._handle.timestamp is not None:
+            ts = (0, self._handle._handle.timestamp)
 
-        sr = self._handle._handle
-        sr.reset(column_names or [], "auto", _util.to_clib_result_order(result_order))
+        sr = clib.SOMADataFrame.open(self._handle._handle.uri, clib.OpenMode.read, platform_config or {}, column_names or [], _util.to_clib_result_order(result_order), ts)
 
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), self._handle.schema)
 
         self._set_reader_coords(sr, coords)
 
-        # TODO: platform_config
         # TODO: batch_size
 
         return TableReadIter(sr)

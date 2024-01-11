@@ -725,9 +725,6 @@ class SOMAArray {
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t nnz_slow();
-
-    // Future for asyncronous managed query
-    std::future<void> managed_query_future_;
 };
 
 }  // namespace tiledbsoma

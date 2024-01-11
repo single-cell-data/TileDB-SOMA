@@ -187,14 +187,6 @@ void SOMAArray::open(
 void SOMAArray::close() {
     // Close the array through the managed query to ensure any pending queries
     // are completed.
-    if (managed_query_future_.valid()) {
-        managed_query_future_.wait();
-        // mq_->close();
-    }
-    // else {
-    //     throw TileDBSOMAError(
-    //         fmt::format("[SOMAArray] 'managed_query_future_' invalid"));
-    // }
     mq_->close();
 }
 
@@ -255,20 +247,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
 
     first_read_next_ = false;
 
-    // mq_->submit_read();
-
-    managed_query_future_ = std::async(std::launch::async, [&]() {
-        LOG_DEBUG("[SOMAArray] submit thread start");
-        mq_->submit_read();
-        LOG_DEBUG("[SOMAArray] submit thread done");
-    });
-
-    if (managed_query_future_.valid()) {
-        LOG_DEBUG("[SOMAArray] Waiting for query");
-        managed_query_future_.wait();
-    } else {
-        throw TileDBSOMAError("[SOMAArray] 'managed_query_future_' invalid");
-    }
+    mq_->submit_read();
 
     // Return the results, possibly incomplete
     return mq_->results();
