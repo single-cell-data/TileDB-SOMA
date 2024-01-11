@@ -820,3 +820,28 @@ test_that("factor levels can grow without overlap", {
     ref <- rbind( tibble::as_tibble(tbl_1), tibble::as_tibble(tbl_2) )
     expect_equal(tbl, ref)
 })
+
+test_that("factor levels cannot beyond index limit", {
+    for (tp in c("INT8", "UINT8")) {
+        uri <- tempfile()
+        idx_type <- if (tp == "INT8") arrow::int8() else arrow::uint8()
+        sch <- arrow::schema(soma_joinid = arrow::int64(),
+                             obs = arrow::dictionary(index_type = idx_type,
+                                                     value_type = arrow::string()))
+        df <- data.frame(soma_joinid = bit64::as.integer64(seq_len(65)),
+                         obs = factor(paste0("elem", seq_len(65))))
+        tbl <- arrow::as_arrow_table(df, schema = sch)
+        expect_silent(SOMADataFrameCreate(uri, sch)$write(tbl)$close())
+
+        df2 <- data.frame(soma_joinid =  bit64::as.integer64(65 + seq_len(65)),
+                          obs = factor(paste0("elem_", 65 + seq_len(65))))
+        tbl2 <- arrow::as_arrow_table(df2, schema = sch)
+
+        if (tp == "INT8") {		# error: we cannot write 130 factor levels into an int8
+            expect_error(SOMADataFrameOpen(uri, mode = "WRITE")$write(tbl2)$close())
+        } else {				# success: we can write 130 factor levels into an *unsigned* int8
+            expect_silent(SOMADataFrameOpen(uri, mode = "WRITE")$write(tbl2)$close())
+        }
+    }
+
+})
