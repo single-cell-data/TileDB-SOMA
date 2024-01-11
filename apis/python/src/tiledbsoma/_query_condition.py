@@ -134,8 +134,11 @@ class QueryCondition:
         schema: pa.Schema,
         query_attrs: Optional[List[str]],
     ):
-        qctree = QueryConditionTree(schema, query_attrs)
-        self.c_obj = qctree.visit(self.tree.body)
+        try:
+            qctree = QueryConditionTree(schema, query_attrs)
+            self.c_obj = qctree.visit(self.tree.body)
+        except Exception as pex:
+            raise SOMAError(pex)
 
         if not isinstance(self.c_obj, clib.PyQueryCondition):
             raise SOMAError(
@@ -229,13 +232,6 @@ class QueryConditionTree(ast.NodeVisitor):
                     "At least one value must be provided to the set membership"
                 )
 
-            if self.schema.has_attr(variable):
-                enum_label = self.schema.attr(variable).enum_label
-                if enum_label is not None:
-                    dt = self.enum_to_dtype[enum_label]
-                else:
-                    dt = self.schema.attr(variable).dtype
-            
             dt = self.schema.field(variable).type
             if pa.types.is_dictionary(dt):
                 dt = dt.value_type

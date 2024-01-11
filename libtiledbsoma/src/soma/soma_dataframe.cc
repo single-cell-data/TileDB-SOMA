@@ -152,6 +152,10 @@ std::unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
     return array_->arrow_schema();
 }
 
+std::shared_ptr<ArraySchema> SOMADataFrame::tiledb_schema() const {
+    return array_->tiledb_schema();
+}
+
 const std::vector<std::string> SOMADataFrame::index_column_names() const {
     return array_->dimension_names();
 }

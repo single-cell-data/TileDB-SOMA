@@ -135,6 +135,10 @@ std::unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return array_->arrow_schema();
 }
 
+std::shared_ptr<ArraySchema> SOMASparseNDArray::tiledb_schema() const {
+    return array_->tiledb_schema();
+}
+
 std::vector<int64_t> SOMASparseNDArray::shape() const {
     return array_->shape();
 }

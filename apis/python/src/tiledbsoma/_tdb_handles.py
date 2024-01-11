@@ -59,11 +59,14 @@ def open(
     try:
         return _open_with_clib_wrapper(uri, mode, context, timestamp)
     except SOMAError:
+        # This object still uses tiledb-py and must be handled below
         if obj_type == "array":
             return ArrayWrapper.open(uri, mode, context, timestamp)
         if obj_type == "group":
             return GroupWrapper.open(uri, mode, context, timestamp)
-        raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
+
+    # Invalid object
+    raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
 
 
 def _open_with_clib_wrapper(

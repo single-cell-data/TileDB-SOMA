@@ -206,6 +206,13 @@ class SOMASparseNDArray : public SOMAObject {
     std::unique_ptr<ArrowSchema> schema() const;
 
     /**
+     * Return the data schema, in the form of a TileDB ArraySchema.
+     *
+     * @return std::shared_ptr<ArraySchema>
+     */
+    std::shared_ptr<ArraySchema> tiledb_schema() const;
+
+    /**
      * @brief Get the capacity of each dimension.
      *
      * @return A vector with length equal to the number of dimensions; each

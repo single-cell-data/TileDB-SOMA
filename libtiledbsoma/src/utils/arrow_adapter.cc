@@ -111,10 +111,9 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     arrow_schema->format = "+s";
     arrow_schema->n_children = ndim + nattr;
     arrow_schema->release = &ArrowAdapter::release_schema;
-    arrow_schema->children = (ArrowSchema**)malloc(
-        sizeof(ArrowSchema*) * arrow_schema->n_children);
+    arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
 
-    ArrowSchema* child;
+    ArrowSchema* child = nullptr;
 
     for (uint32_t i = 0; i < ndim; ++i) {
         auto dim = tiledb_schema.domain().dimension(i);
@@ -145,7 +144,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         if (enmr_name.has_value()) {
             auto enmr = ArrayExperimental::get_enumeration(
                 *ctx, *tiledb_array, attr.name());
-            ArrowSchema* dict = new ArrowSchema;
+            auto dict = new ArrowSchema;
             dict->format = strdup(
                 ArrowAdapter::to_arrow_format(enmr.type(), false).data());
             dict->name = strdup(enmr.name().c_str());
@@ -180,7 +179,7 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
 
             // Allocate a single byte to copy the bits into
             size_t sz = 1;
-            dst = (const void*)malloc(sz);
+            dst = new const void*[sz];
             std::memcpy((void*)dst, &src, sz);
 
             return std::pair(dst, data.size());
@@ -286,7 +285,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         column->name(),
         column.use_count()));
 
-    array->buffers = (const void**)malloc(sizeof(void*) * n_buffers);
+    array->buffers = new const void*[n_buffers];
     assert(array->buffers != nullptr);
     array->buffers[0] = nullptr;                                   // validity
     array->buffers[n_buffers - 1] = column->data<void*>().data();  // data
@@ -310,15 +309,14 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
     }
 
-    /* Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow
-     * boolean. */
+    // Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow boolean
     if (column->type() == TILEDB_BOOL) {
         column->data_to_bitmap();
     }
 
     if (column->has_enumeration()) {
-        ArrowSchema* dict_sch = new ArrowSchema;
-        ArrowArray* dict_arr = new ArrowArray;
+        auto dict_sch = new ArrowSchema;
+        auto dict_arr = new ArrowArray;
 
         auto enmr = column->get_enumeration_info();
         dict_sch->format = strdup(to_arrow_format(enmr->type(), false).data());
@@ -342,7 +340,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         dict_arr->release = &release_array;
         dict_arr->private_data = nullptr;
 
-        dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buf);
+        dict_arr->buffers = new const void*[n_buf];
         dict_arr->buffers[0] = nullptr;  // validity: none here
 
         // TODO string types currently get the data and offset

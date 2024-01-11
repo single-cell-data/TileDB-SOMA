@@ -337,12 +337,19 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         del batch_size  # Currently unused.
         _util.check_unpartitioned(partitions)
         self._check_open_read()
-        
+
         ts = None
         if self._handle._handle.timestamp is not None:
             ts = (0, self._handle._handle.timestamp)
 
-        sr = clib.SOMADataFrame.open(self._handle._handle.uri, clib.OpenMode.read, platform_config or {}, column_names or [], _util.to_clib_result_order(result_order), ts)
+        sr = clib.SOMADataFrame.open(
+            self._handle._handle.uri,
+            clib.OpenMode.read,
+            platform_config or {},
+            column_names or [],
+            _util.to_clib_result_order(result_order),
+            ts,
+        )
 
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), self._handle.schema)
@@ -571,10 +578,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         try:
             set_dim_points = getattr(sr, f"set_dim_points_{dim.type}")
+        except AttributeError:
+            # We have to handle this type specially below
+            pass
+        else:
             set_dim_points(dim.name, coord)
             return True
-        except AttributeError:
-            pass
 
         if _util.pa_types_is_string_or_bytes(dim.type):
             sr.set_dim_points_string_or_bytes(dim.name, coord)
