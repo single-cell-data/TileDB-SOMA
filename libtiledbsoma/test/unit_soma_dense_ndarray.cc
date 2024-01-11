@@ -87,6 +87,9 @@ TEST_CASE("SOMADenseNDArray: basic") {
     REQUIRE(soma_dense->ctx() == ctx);
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
     REQUIRE(soma_dense->is_sparse() == false);
+    auto schema = soma_dense->tiledb_schema();
+    REQUIRE(schema->has_attribute("a0"));
+    REQUIRE(schema->domain().has_dimension("d0"));
     REQUIRE(soma_dense->ndim() == 1);
     REQUIRE(soma_dense->shape() == std::vector<int64_t>{1001});
     soma_dense->close();

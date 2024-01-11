@@ -436,7 +436,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 wrapper = _tdb_handles._open_with_clib_wrapper(
                     uri, mode, context, timestamp
                 )
-                entry.soma = _factory._set_internal(wrapper)
+                entry.soma = _factory.reify_handle(wrapper)
             except SOMAError:
                 entry.soma = _factory._open_internal(
                     entry.entry.wrapper_type.open, uri, mode, context, timestamp

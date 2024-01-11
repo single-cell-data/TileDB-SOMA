@@ -218,19 +218,16 @@ def test_parsing_error_conditions(malformed_condition):
 def test_eval_error_conditions(malformed_condition):
     """Conditions which should not evaluate (but WILL parse)"""
     uri = os.path.join(SOMA_URI, "obs")
+    schema = tiledb_schema_to_arrow(tiledb.open(uri).schema, uri, tiledb.default_ctx())
+    qc = QueryCondition(malformed_condition)
 
     with pytest.raises(SOMAError):
-        qc = QueryCondition(malformed_condition)
-        schema = tiledb.open(uri).schema
         sr = clib.SOMAArray(uri)
         sr.set_condition(qc, schema)
-        sr.read_next()
 
     with pytest.raises(SOMAError):
-        qc = QueryCondition(malformed_condition)
-        schema = tiledb.open(uri).schema
         # test function directly for codecov
-        qc.init_query_condition(schema, {}, [])
+        qc.init_query_condition(schema, [])
 
 
 if __name__ == "__main__":
