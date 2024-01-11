@@ -13,14 +13,12 @@ makeUrl <- function(arch, ver=tiledb_core_version, sha1=tiledb_core_sha1) {
     sprintf("https://github.com/TileDB-Inc/TileDB/releases/download/%s/tiledb-%s-%s-%s.tar.gz", ver, arch, ver, sha1)
 }
 
-isX86 <- Sys.info()["machine"] == "x86_64"
 isMac <- Sys.info()["sysname"] == "Darwin"
 isLinux <- Sys.info()["sysname"] == "Linux"
 
-if (isMac && isX86) {
-    url <- makeUrl("macos-x86_64")
-} else if (isMac && !isX86) {
-    url <- makeUrl("macos-arm64")
+if (isMac) {
+    arch <- system('uname -m', intern = TRUE)
+    url <- makeUrl(paste0("macos-", arch))
 } else if (isLinux) {
     url <- makeUrl("linux-x86_64")
 } else {
