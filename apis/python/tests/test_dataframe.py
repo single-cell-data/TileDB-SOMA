@@ -7,6 +7,7 @@ import pyarrow as pa
 import pytest
 import somacore
 import tiledb
+from pandas.api.types import union_categoricals
 
 import tiledbsoma as soma
 
@@ -1153,3 +1154,156 @@ def test_extend_enumerations(tmp_path):
             assert df[c].dtype == pandas_df[c].dtype
             if df[c].dtype == "category":
                 assert df[c].cat.categories.dtype == pandas_df[c].cat.categories.dtype
+
+
+def test_multiple_writes_with_enums(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            (
+                "obs",
+                pa.dictionary(
+                    index_type=pa.int8(), value_type=pa.large_string(), ordered=False
+                ),
+            ),
+        ]
+    )
+    soma.DataFrame.create(uri, schema=schema).close()
+
+    df1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2], dtype=np.int64),
+            "obs": pd.Series(["A", "B", "A"], dtype="category"),
+        }
+    )
+    tbl = pa.Table.from_pandas(df1, preserve_index=False)
+    with soma.open(uri, mode="w") as A:
+        A.write(tbl)
+
+    df2 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([3, 4, 5], dtype=np.int64),
+            "obs": pd.Series(["B", "C", "B"], dtype="category"),
+        }
+    )
+    tbl = pa.Table.from_pandas(df2, preserve_index=False)
+    with soma.open(uri, mode="w") as A:
+        A.write(tbl)
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    # https://stackoverflow.com/questions/45639350/retaining-categorical-dtype-upon-dataframe-concatenation
+    uc = union_categoricals([df1.obs, df2.obs])
+    df1.obs = pd.Categorical(df1.obs, categories=uc.categories)
+    df2.obs = pd.Categorical(df2.obs, categories=uc.categories)
+    expected_df = pd.concat((df1, df2), ignore_index=True)
+
+    assert df.equals(expected_df)
+
+
+def test_multichunk(tmp_path):
+    uri = tmp_path.as_posix()
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "obs": pd.Series(["A", "B", "A", "B"], dtype="str"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([4, 5, 6, 7], dtype=np.int64),
+            "obs": pd.Series(["A", "A", "B", "B"], dtype="str"),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([8, 9, 10, 11], dtype=np.int64),
+            "obs": pd.Series(["B", "C", "B", "C"], dtype="str"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.DataFrame.create(
+        uri, schema=pa.Schema.from_pandas(df_0, preserve_index=False)
+    ).close()
+
+    with soma.open(uri, mode="w") as A:
+        # one-chunk table
+        A.write(pa.Table.from_pandas(df_0, preserve_index=False))
+
+    with soma.open(uri, mode="w") as A:
+        # two-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            )
+        )
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    assert df.equals(expected_df)
+
+
+def test_multichunk_with_enums(tmp_path):
+    uri = tmp_path.as_posix()
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "obs": pd.Series(["A", "B", "A", "B"], dtype="category"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([4, 5, 6, 7], dtype=np.int64),
+            "obs": pd.Series(["A", "A", "B", "B"], dtype="category"),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([8, 9, 10, 11], dtype=np.int64),
+            "obs": pd.Series(["B", "C", "B", "C"], dtype="category"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.DataFrame.create(
+        uri, schema=pa.Schema.from_pandas(df_0, preserve_index=False)
+    ).close()
+
+    with soma.open(uri, mode="w") as A:
+        # one-chunk table
+        A.write(pa.Table.from_pandas(df_0, preserve_index=False))
+
+    with soma.open(uri, mode="w") as A:
+        # two-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            )
+        )
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    # https://stackoverflow.com/questions/45639350/retaining-categorical-dtype-upon-dataframe-concatenation
+    uc = union_categoricals([df_0.obs, df_1.obs, df_2.obs])
+    df_0.obs = pd.Categorical(df_0.obs, categories=uc.categories)
+    df_1.obs = pd.Categorical(df_1.obs, categories=uc.categories)
+    df_2.obs = pd.Categorical(df_2.obs, categories=uc.categories)
+    expected_df = pd.concat((df_0, df_1, df_2), ignore_index=True)
+
+    assert df.equals(expected_df)

@@ -404,14 +404,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         for col_info in values.schema:
             name = col_info.name
-            col = values.column(name)
+            col = values.column(name).combine_chunks()
             n = len(col)
 
             if self._handle.schema.has_attr(name):
                 attr = self._handle.schema.attr(name)
 
                 # Add the enumeration values to the TileDB Array from ArrowArray
-                if attr.enum_label is not None and col.num_chunks != 0:
+                if attr.enum_label is not None:
                     if not pa.types.is_dictionary(col_info.type):
                         raise ValueError(
                             "Expected dictionary type for enumerated attribute "
@@ -420,11 +420,11 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
                     enmr = self._handle.enum(attr.name)
 
-                    # get new enumeration values, maintain original ordering
-                    update_vals = []
-                    for new_val in col.chunk(0).dictionary.tolist():
-                        if new_val not in enmr.values():
-                            update_vals.append(new_val)
+                    # get new enumeration values by taking the set difference
+                    # while maintaining ordering
+                    update_vals = np.setdiff1d(
+                        col.dictionary, enmr.values(), assume_unique=True
+                    )
 
                     # only extend if there are new values
                     if update_vals:
@@ -436,35 +436,25 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                         else:
                             extend_vals = np.array(update_vals, enmr.dtype)
                         new_enmr = enmr.extend(extend_vals)
+                        df = pd.Categorical(col.to_pandas(), new_enmr.values())
+                        col = pa.DictionaryArray.from_pandas(df)
                         se.extend_enumeration(new_enmr)
                         se.array_evolve(uri=self.uri)
 
             cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
+            schema = self._handle.schema
             if pa.types.is_dictionary(col.type):
-                if col.num_chunks != 0:
-                    if name in dim_names_set:
-                        # Dims are never categorical. Decategoricalize for them.
-                        cols_map[name] = pa.chunked_array(
-                            [chunk.dictionary_decode() for chunk in col.chunks]
-                        )
-                    else:
-                        attr = self._handle.schema.attr(name)
-                        if attr.enum_label is not None:
-                            # Normal case: writing categorical data to categorical schema.
-                            cols_map[name] = col.chunk(0).indices.to_pandas()
-                        else:
-                            # Schema is non-categorical but the user is writing categorical.
-                            # Simply decategoricalize for them.
-                            cols_map[name] = pa.chunked_array(
-                                [chunk.dictionary_decode() for chunk in col.chunks]
-                            )
+                if (
+                    name not in dim_names_set
+                    and schema.attr(name).enum_label is not None
+                ):
+                    cols_map[name] = col.indices.to_pandas()
                 else:
-                    cols_map[name] = col.to_pandas()
+                    cols_map[name] = col
 
             else:
                 if name not in dim_names_set:
-                    attr = self._handle.schema.attr(name)
-                    if attr.enum_label is not None:
+                    if schema.attr(name).enum_label is not None:
                         raise ValueError(
                             f"Categorical column {name} must be presented with categorical data"
                         )
