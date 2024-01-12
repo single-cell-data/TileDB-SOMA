@@ -821,7 +821,7 @@ test_that("factor levels can grow without overlap", {
     expect_equal(tbl, ref)
 })
 
-test_that("factor levels cannot beyond index limit", {
+test_that("factor levels cannot extend beyond index limit", {
     for (tp in c("INT8", "UINT8")) {
         uri <- tempfile()
         idx_type <- if (tp == "INT8") arrow::int8() else arrow::uint8()
