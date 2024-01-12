@@ -177,6 +177,12 @@ SOMADataFrame <- R6::R6Class(
                   new_enum <- levels(values[[attr_name]]$as_vector())
                   added_enum <- setdiff(new_enum, old_enum)
                   if (length(added_enum) > 0) {
+                      datatype <- tiledb::datatype(attrs[[attr_name]])
+                      maxval <- tiledb:::tiledb_datatype_max_value(datatype) + 1 # R is one-based
+                      if (length(old_enum) + length(added_enum) > maxval) {
+                          stop(sprintf("For column '%s' cannot add %d factor levels to existing %d for type '%s' with maximum value %d",
+                                       attr_name, length(added_enum), length(old_enum), datatype, maxval), call. = FALSE)
+                      }
                       ase <- tiledb::tiledb_array_schema_evolution()
                       ase <- tiledb::tiledb_array_schema_evolution_extend_enumeration(ase, arr, attr_name, added_enum)
                       tiledb::tiledb_array_schema_evolution_array_evolve(ase, self$uri)
