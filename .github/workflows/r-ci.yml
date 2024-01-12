@@ -19,6 +19,7 @@ env:
 jobs:
   ci:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: linux

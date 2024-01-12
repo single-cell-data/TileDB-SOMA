@@ -67,7 +67,8 @@ jobs:
           R CMD INSTALL $FILE
 
       - name: Show R package versions
-        run: Rscript -e 'tiledbsoma::show_package_versions()'
+        run: |
+          Rscript -e 'tiledbsoma::show_package_versions()'
 
       - name: Install testing prereqs
         run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools
@@ -82,13 +83,31 @@ jobs:
       - name: Install tiledbsoma
         run: python -m pip -v install -e apis/python
 
-      - name: Show Python package versions
+      - name: Show package versions
         run: |
           python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
+          echo
           python scripts/show-versions.py
+          echo
+          Rscript -e 'tiledbsoma::show_package_versions()'
 
       - name: Update Packages
         run: Rscript -e 'update.packages(ask=FALSE)'
+
+      - name: Re-install 0.22 build of tiledb-r with core 2.18
+        run: |
+          cd apis/r
+          wget https://github.com/TileDB-Inc/TileDB-R/archive/refs/tags/0.22.0.tar.gz
+          Rscript -e 'remotes::install_deps("0.22.0.tar.gz")'
+          R CMD INSTALL 0.22.0.tar.gz    # as 0.22.0 is needed by SOMA 1.6
+
+      - name: Show package versions
+        run: |
+          python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
+          echo
+          python scripts/show-versions.py
+          echo
+          Rscript -e 'tiledbsoma::show_package_versions()'
 
       - name: Interop Tests
         run: python -m pytest apis/system/tests/
