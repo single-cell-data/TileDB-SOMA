@@ -56,6 +56,7 @@
   type = NULL,
   transpose = FALSE,
   ...,
+  key = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -69,6 +70,7 @@
   type = NULL,
   transpose = FALSE,
   ...,
+  key = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -81,6 +83,7 @@
   type = NULL,
   transpose = FALSE,
   ...,
+  key = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
