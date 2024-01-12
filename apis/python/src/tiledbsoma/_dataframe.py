@@ -427,7 +427,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                             update_vals.append(new_val)
 
                     # only extend if there are new values
-                    if update_vals:
+                    if len(update_vals) > 0:
                         se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
                         if np.issubdtype(enmr.dtype.type, np.str_):
                             extend_vals = np.array(update_vals, "U")
