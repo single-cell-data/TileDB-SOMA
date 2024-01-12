@@ -87,7 +87,7 @@ Rcpp::List soma_array_reader(const std::string& uri,
                                     tdb_result_order);
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
-    std::shared_ptr<tiledb::ArraySchema> schema = sr->schema();
+    std::shared_ptr<tiledb::ArraySchema> schema = sr->tiledb_schema();
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim: dims) {
