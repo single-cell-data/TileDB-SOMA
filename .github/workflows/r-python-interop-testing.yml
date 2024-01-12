@@ -66,12 +66,8 @@ jobs:
           FILE=$(ls -1t *.tar.gz | head -n 1)
           R CMD INSTALL $FILE
 
-      - name: Show package versions
+      - name: Show R package versions
         run: |
-          python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
-          echo
-          python scripts/show-versions.py
-          echo
           Rscript -e 'tiledbsoma::show_package_versions()'
 
       - name: Install testing prereqs
