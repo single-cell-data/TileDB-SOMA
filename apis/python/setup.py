@@ -281,10 +281,10 @@ setuptools.setup(
         # longer need to support the old pip solver (default on ubuntu 20.04).
         #
         # Also: numba doesn't support Python 3.11 until 0.57.0rc1.
-        # It' not preferable to pin to an RC dependency, so we only do this
+        # It's not preferable to pin to an RC dependency, so we only do this
         # when we must, which is for 3.11.
         "numba==0.56.4; python_version<'3.11'",
-        "numba==0.57; python_version=='3.11'",
+        "numba~=0.57; python_version=='3.11'",
         "numpy>=1.18,<1.24; python_version<'3.11'",
         "numpy>=1.18,<1.25; python_version=='3.11'",
         "pandas",
