@@ -1,3 +1,9 @@
+# Develop
+
+## Changes
+
+* Add support for registering arrays with their parent collection in `write_soma()`
+
 # tiledbsoma 1.6.0
 
 ## Fixes
