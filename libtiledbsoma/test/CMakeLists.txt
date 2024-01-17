@@ -9,8 +9,8 @@ add_compile_definitions(TILEDBSOMA_SOURCE_ROOT="${TILEDBSOMA_SOURCE_ROOT}")
 # ###########################################################
 # Adding coverage flags
 # ###########################################################
-set(CMAKE_CXX_FLAGS "$ENV{TILEDBSOMA_COVERAGE}")
-set(CMAKE_C_FLAGS "$ENV{TILEDBSOMA_COVERAGE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
+set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
 
 ############################################################
 # Dependencies
