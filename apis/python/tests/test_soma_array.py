@@ -9,7 +9,7 @@ import tiledbsoma.pytiledbsoma as clib
 VERBOSE = False
 
 TEST_DIR = os.path.dirname(__file__)
-SOMA_URI = f"{TEST_DIR}/../../test/soco/pbmc3k_processed"
+SOMA_URI = f"{TEST_DIR}/../../../test/soco/pbmc3k_processed"
 
 if VERBOSE:
     clib.config_logging("debug")

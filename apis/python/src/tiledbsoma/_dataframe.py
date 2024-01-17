@@ -343,12 +343,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             ts = (0, self._handle._handle.timestamp)
 
         sr = clib.SOMADataFrame.open(
-            self._handle._handle.uri,
-            clib.OpenMode.read,
-            platform_config or {},
-            column_names or [],
-            _util.to_clib_result_order(result_order),
-            ts,
+            uri=self._handle._handle.uri,
+            mode=clib.OpenMode.read,
+            platform_config=platform_config or {},
+            column_names=column_names or [],
+            result_order=_util.to_clib_result_order(result_order),
+            timestamp=ts,
         )
 
         if value_filter is not None:
@@ -533,11 +533,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 # There's no way to specify "to infinity" for strings.
                 # We have to get the nonempty domain and use that as the end.
                 ned = self._handle.non_empty_domain()
-                if ned is None:
-                    raise ValueError(
-                        "Found empty nonempty domain when setting "
-                        "string coordinates in _set_reader_coord"
-                    )
                 _, stop = ned[dim_idx]
             else:
                 stop = coord.stop
@@ -587,6 +582,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         if _util.pa_types_is_string_or_bytes(dim.type):
             sr.set_dim_points_string_or_bytes(dim.name, coord)
+            return True
         elif pa.types.is_timestamp(dim.type):
             if not isinstance(coord, (tuple, list, np.ndarray)):
                 raise ValueError(
@@ -597,15 +593,13 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 for e in coord
             ]
             sr.set_dim_points_int64(dim.name, icoord)
+            return True
 
         # TODO: bool
 
-        else:
-            raise ValueError(
-                f"unhandled type {dim.dtype} for index column named {dim.name}"
-            )
-
-        return True
+        raise ValueError(
+            f"unhandled type {dim.dtype} for index column named {dim.name}"
+        )
 
     def _set_reader_coord_by_numeric_slice(
         self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: Slice[Any]

@@ -24,7 +24,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
 )
 
 import attrs
@@ -243,12 +242,9 @@ class ArrayWrapper(Wrapper[tiledb.Array]):
     def schema(self) -> tiledb.ArraySchema:
         return self._handle.schema
 
-    def non_empty_domain(self) -> Optional[Tuple[Tuple[object, object], ...]]:
+    def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
         try:
-            ned = self._handle.nonempty_domain()
-            if ned is None:
-                return None
-            return cast(Tuple[Tuple[object, object], ...], ned)
+            return self._handle.nonempty_domain() or ()
         except tiledb.TileDBError as e:
             raise SOMAError(e)
 
@@ -393,9 +389,8 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
     def domain(self) -> Tuple[Tuple[object, object], ...]:
         return self._cast_domain(self._handle.domain)
 
-    def non_empty_domain(self) -> Optional[Tuple[Tuple[object, object], ...]]:
-        result = self._cast_domain(self._handle.non_empty_domain)
-        return result or None
+    def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
+        return self._cast_domain(self._handle.non_empty_domain) or ()
 
     @property
     def attr_names(self) -> Tuple[str, ...]:

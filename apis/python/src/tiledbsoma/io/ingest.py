@@ -2251,7 +2251,7 @@ def _write_matrix_to_sparseNDArray(
 
 def _chunk_is_contained_in(
     chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Optional[Sequence[Tuple[Optional[int], Optional[int]]]],
+    storage_nonempty_domain: Sequence[Tuple[Optional[int], Optional[int]]],
 ) -> bool:
     """
     Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
@@ -2269,7 +2269,7 @@ def _chunk_is_contained_in(
     user that they declare they are retrying the exact same input file -- and we do our best to
     fulfill their ask by checking the dimension being strided on.
     """
-    if storage_nonempty_domain is None:
+    if len(storage_nonempty_domain) == 0:
         return False
 
     if len(chunk_bounds) != len(storage_nonempty_domain):
@@ -2288,6 +2288,9 @@ def _chunk_is_contained_in_axis(
     stride_axis: int,
 ) -> bool:
     """Helper function for ``_chunk_is_contained_in``."""
+    if len(storage_nonempty_domain) == 0:
+        return False
+
     storage_lo, storage_hi = storage_nonempty_domain[stride_axis]
     if storage_lo is None or storage_hi is None:
         # E.g. an array has had its schema created but no data written yet
