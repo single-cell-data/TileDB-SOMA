@@ -49,7 +49,23 @@ using namespace tiledbsoma;
 void load_soma_dataframe(py::module &m) {
     py::class_<SOMADataFrame, SOMAObject>(m, "SOMADataFrame")
 
-    .def_static("open", py::overload_cast<std::string_view, OpenMode, std::map<std::string, std::string>, std::vector<std::string>, ResultOrder, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
+    .def_static(
+        "open", 
+        py::overload_cast<
+            std::string_view, 
+            OpenMode, 
+            std::map<std::string, std::string>, 
+            std::vector<std::string>, 
+            ResultOrder, 
+            std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open),
+        "uri"_a,
+        "mode"_a,
+        py::kw_only(),
+        "platform_config"_a = py::dict(),
+        "column_names"_a = py::none(),
+        "result_order"_a = ResultOrder::automatic,
+        "timestamp"_a = py::none())
+
     .def_static("exists", &SOMADataFrame::exists)
     .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open))
     .def("close", &SOMADataFrame::close)

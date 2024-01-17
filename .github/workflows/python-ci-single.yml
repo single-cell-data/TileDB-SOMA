@@ -122,13 +122,6 @@ jobs:
     - name: Run libtiledbsoma unit tests
       run: ctest --output-on-failure --test-dir build/libtiledbsoma -C Release --verbose
 
-    - name: Run pytests for C++
-      shell: bash
-      # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src
-      # instead of copy we `pip install`ed to site-packages above. That's needed for the code
-      # coverage analysis to work.
-      run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml libtiledbsoma/test -v --durations=20
-
     - name: Run pytests for Python
       shell: bash
       # Setting PYTHONPATH ensures the tests load the in-tree source code unde apis/python/src

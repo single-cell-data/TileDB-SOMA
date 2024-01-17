@@ -13,7 +13,7 @@ from tiledbsoma._query_condition import QueryCondition
 VERBOSE = False
 
 TEST_DIR = os.path.dirname(__file__)
-SOMA_URI = f"{TEST_DIR}/../../test/soco/pbmc3k_processed"
+SOMA_URI = f"{TEST_DIR}/../../../test/soco/pbmc3k_processed"
 
 if VERBOSE:
     clib.config_logging("debug")
@@ -228,6 +228,7 @@ def test_eval_error_conditions(malformed_condition):
     with pytest.raises(SOMAError):
         # test function directly for codecov
         qc.init_query_condition(schema, [])
+        qc.init_query_condition(schema, ["bad_query_attr"])
 
 
 if __name__ == "__main__":

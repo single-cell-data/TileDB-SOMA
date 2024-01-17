@@ -1356,3 +1356,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
     with pytest.raises(ValueError):
         with soma.open(uri, mode="w") as A:
             A.write(tbl)
+
+
+def test_write_str_empty_ned(tmp_path):
+    tmp_path.as_posix()
