@@ -148,3 +148,8 @@ tiledb_embedded_version <- function() {
     .Call(`_tiledbsoma_tiledb_embedded_version`)
 }
 
+#' @noRd
+tiledb_datatype_max_value <- function(datatype) {
+    .Call(`_tiledbsoma_tiledb_datatype_max_value`, datatype)
+}
+

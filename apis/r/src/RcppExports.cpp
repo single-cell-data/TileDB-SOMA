@@ -198,6 +198,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// tiledb_datatype_max_value
+size_t tiledb_datatype_max_value(const std::string& datatype);
+RcppExport SEXP _tiledbsoma_tiledb_datatype_max_value(SEXP datatypeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type datatype(datatypeSEXP);
+    rcpp_result_gen = Rcpp::wrap(tiledb_datatype_max_value(datatype));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_array_reader", (DL_FUNC) &_tiledbsoma_soma_array_reader, 9},
@@ -216,6 +227,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_tiledbsoma_stats_dump", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_dump, 0},
     {"_tiledbsoma_libtiledbsoma_version", (DL_FUNC) &_tiledbsoma_libtiledbsoma_version, 1},
     {"_tiledbsoma_tiledb_embedded_version", (DL_FUNC) &_tiledbsoma_tiledb_embedded_version, 0},
+    {"_tiledbsoma_tiledb_datatype_max_value", (DL_FUNC) &_tiledbsoma_tiledb_datatype_max_value, 1},
     {NULL, NULL, 0}
 };
 

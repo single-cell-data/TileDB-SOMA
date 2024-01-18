@@ -342,3 +342,19 @@ Rcpp::IntegerVector tiledb_embedded_version() {
     std::tuple<int, int, int> triple = tiledbsoma::version::embedded_version_triple();
     return Rcpp::IntegerVector::create(std::get<0>(triple), std::get<1>(triple), std::get<2>(triple));
 }
+
+// Also present in tiledb-r but only after 0.23.0 so this can be removed (and
+// the call to it updated) once we hit a new tiledb-r release 0.24.0 (or 0.23.1)
+//' @noRd
+// [[Rcpp::export]]
+size_t tiledb_datatype_max_value(const std::string& datatype) {
+    if      (datatype == "INT8")   return std::numeric_limits<int8_t>::max();
+    else if (datatype == "UINT8")  return std::numeric_limits<uint8_t>::max();
+    else if (datatype == "INT16")  return std::numeric_limits<int16_t>::max();
+    else if (datatype == "UINT16") return std::numeric_limits<uint16_t>::max();
+    else if (datatype == "INT32")  return std::numeric_limits<int32_t>::max();
+    else if (datatype == "UINT32") return std::numeric_limits<uint32_t>::max();
+    else if (datatype == "INT64")  return std::numeric_limits<int64_t>::max();
+    else if (datatype == "UINT64") return std::numeric_limits<uint64_t>::max();
+    else Rcpp::stop("currently unsupported datatype (%s)", datatype);
+}
