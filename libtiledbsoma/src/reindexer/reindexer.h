@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,9 @@
  * This file defines the a pybind11 api into SOMA C++ library.
  */
 
-#pragma once
+#ifndef TILEDBSOMA_REINDEXER_H
+#define TILEDBSOMA_REINDEXER_H
+
 #include <assert.h>
 #include <unistd.h>
 #include <memory>
@@ -97,3 +99,5 @@ class IntIndexer {
 };
 
 }  // namespace tiledbsoma
+
+#endif  // TILEDBSOMA_REINDEXER_H

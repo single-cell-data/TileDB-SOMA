@@ -51,9 +51,6 @@ jobs:
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
 
-      - name: Install tiledb
-        run: cd apis/r && Rscript -e 'remotes::install_version("tiledb", "0.22.0")'
-
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
 
