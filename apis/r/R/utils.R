@@ -55,6 +55,13 @@ random_name <- function(length = 5L, chars = letters, ...) {
   return(paste(sample(chars, size = length, ...), collapse = ''))
 }
 
+uns_hint <- function(type = c('1d', '2d')) {
+  type <- match.arg(type)
+  hint <- list(paste0('array_', type))
+  names(hint) <- 'soma_uns_outgest_hint'
+  return(hint)
+}
+
 #' Pad Names of a Character Vector
 #'
 #' Fill in missing names of a vector using missing values of said vector

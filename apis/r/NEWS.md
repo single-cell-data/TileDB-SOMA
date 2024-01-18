@@ -3,6 +3,7 @@
 ## Changes
 
 * Add support for registering arrays with their parent collection in `write_soma()`
+* Add `write_soma.character()` to encode character vectors as SOMA arrays
 
 # tiledbsoma 1.6.0
 

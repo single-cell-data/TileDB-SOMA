@@ -4,6 +4,7 @@
 \alias{write_soma.DataFrame}
 \alias{write_soma.Hits}
 \alias{write_soma_objects}
+\alias{write_soma.character}
 \alias{write_soma.data.frame}
 \alias{write_soma.matrix}
 \alias{write_soma.Matrix}
@@ -30,6 +31,17 @@
   type = NULL,
   transpose = FALSE,
   ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+)
+
+\method{write_soma}{character}(
+  x,
+  uri,
+  soma_parent,
+  ...,
+  key = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -136,6 +148,17 @@ The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
 \description{
 Various helpers to write R objects to SOMA
 }
+\section{Writing Character Arrays}{
+
+\link[base:character]{Characters} are written out as
+\code{\link{SOMADataFrame}s} with one attribute: \dQuote{\code{values}};
+additionally one bit of array-level metadata is added:
+\itemize{
+\item \dQuote{\code{\Sexpr[stage=build]{names(tiledbsoma:::uns_hint())}}}
+with a value of \dQuote{\code{\Sexpr[stage=build]{tiledbsoma:::uns_hint()[[1L]]}}}
+}
+}
+
 \section{Writing Data Frames}{
 
 \link[base:data.frame]{Data frames} are written out as

@@ -334,3 +334,61 @@ test_that("write_soma sparse matrix registration", {
   expect_error(write_soma(knex, "uri", soma_parent = NULL, key = "knex"))
 
 })
+
+test_that("write_soma.character mechanics", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("datasets")
+
+  uri <- withr::local_tempdir("write-soma-character")
+  collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close(), add = TRUE)
+
+  mtcars <- get_data("mtcars", package = "datasets")
+  cars <- row.names(mtcars)
+
+  expect_no_condition(sdf <- write_soma(cars, "cars", soma_parent = collection))
+  expect_s3_class(sdf, "SOMADataFrame")
+  expect_true(sdf$exists())
+  expect_length(sdf$attrnames(), 1L)
+  expect_identical(sdf$attrnames(), "values")
+
+  hint <- "soma_uns_outgest_hint"
+  expect_true(hint %in% names(sdf$get_metadata()))
+  expect_identical(sdf$get_metadata(hint), uns_hint("1d")[[hint]])
+
+  sdf$close()
+  expect_no_condition(sdf <- SOMADataFrameOpen(sdf$uri))
+  expect_s3_class(tbl <- sdf$read()$concat(), "Table")
+  expect_identical(nrow(tbl), length(cars))
+  expect_identical(tbl$values$as_vector(), cars)
+})
+
+test_that("write_soma.character scalar", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("datasets")
+
+  uri <- withr::local_tempdir("write-soma-character-scalar")
+  collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close(), add = TRUE)
+
+  mtcars <- get_data("mtcars", package = "datasets")
+  cars <- paste(row.names(mtcars), collapse = ",")
+
+  expect_no_condition(sdf <- write_soma(cars, "cars", soma_parent = collection))
+  expect_s3_class(sdf, "SOMADataFrame")
+  expect_true(sdf$exists())
+  expect_length(sdf$attrnames(), 1L)
+  expect_identical(sdf$attrnames(), "values")
+
+  hint <- "soma_uns_outgest_hint"
+  expect_true(hint %in% names(sdf$get_metadata()))
+  expect_identical(sdf$get_metadata(hint), uns_hint("1d")[[hint]])
+
+  sdf$close()
+  expect_no_condition(sdf <- SOMADataFrameOpen(sdf$uri))
+  expect_s3_class(tbl <- sdf$read()$concat(), "Table")
+  expect_identical(nrow(tbl), 1L)
+  expect_identical(tbl$soma_joinid$as_vector(), 0L)
+  expect_identical(sdf.cars <- tbl$values$as_vector(), cars)
+  expect_length(unlist(strsplit(sdf.cars, ",")), nrow(mtcars))
+})
