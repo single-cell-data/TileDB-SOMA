@@ -48,6 +48,45 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #'
 NULL
 
+#' @rdname write_soma_objects
+#'
+#' @section Writing Character Arrays:
+#' \link[base:character]{Characters} are written out as
+#' \code{\link{SOMADataFrame}s} with one attribute: \dQuote{\code{values}};
+#' additionally one bit of array-level metadata is added:
+#' \itemize{
+#'  \item \dQuote{\code{\Sexpr[stage=build]{names(tiledbsoma:::uns_hint())}}}
+#'   with a value of \dQuote{\code{\Sexpr[stage=build]{tiledbsoma:::uns_hint()[[1L]]}}}
+#' }
+#'
+#' @method write_soma character
+#' @export
+#'
+write_soma.character <- function(
+  x,
+  uri,
+  soma_parent,
+  ...,
+  key = NULL,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
+  sdf <- write_soma(
+    x = data.frame(values = x),
+    uri = uri,
+    soma_parent = soma_parent,
+    df_index = 'values',
+    ...,
+    key = key,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    relative = relative
+  )
+  sdf$set_metadata(uns_hint('1d'))
+  return(sdf)
+}
+
 #' @param df_index The name of the column in \code{x} with the index
 #' (row names); by default, will automatically add the row names of \code{x}
 #' to an attribute named \dQuote{\code{index}} to the resulting
@@ -98,8 +137,9 @@ write_soma.data.frame <- function(
 ) {
   stopifnot(
     "'x' must be named" = is_named(x, allow_empty = FALSE),
+    "'x' must have at lease one row and one column" = dim(x) > 0L,
     "'df_index' must be a single character value" = is.null(df_index) ||
-      (is_scalar_character(df_index) && nzchar(key)),
+      (is_scalar_character(df_index) && nzchar(df_index)),
     "'index_column_names' must be a character vector" = is.character(index_column_names),
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key))
@@ -155,7 +195,12 @@ write_soma.data.frame <- function(
   }
   # Add `soma_joinid` to `x`
   if (!'soma_joinid' %in% names(x)) {
-    x$soma_joinid <- bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
+    # bit64::seq.integer64 does not support seq(from = 0, to = 0)
+    x$soma_joinid <- if (nrow(x) == 1L) {
+      bit64::integer64(length = 1L)
+    } else {
+      bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
+    }
   }
   # Check `index_column_names`
   index_column_names <- match.arg(
