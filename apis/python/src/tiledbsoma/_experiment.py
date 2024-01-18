@@ -45,6 +45,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
             A collection of named measurements.
 
     Example:
+        >>> import tiledbsoma
         >>> with tiledbsoma.open("/path/to/experiment") as exp:
         ...     # While users can interact directly with an Experiment's fields:
         ...     obs_df = exp.obs

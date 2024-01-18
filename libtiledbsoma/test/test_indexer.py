@@ -182,10 +182,6 @@ test_data = [
 ]
 
 
-def main():
+def test_indexer():
     for data in test_data:
         indexer_test(data["keys"], data["lookups"], not data["pass"])
-
-
-if __name__ == "__main__":
-    main()

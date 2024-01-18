@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -76,11 +76,7 @@ void IntIndexer::map_locations(const int64_t* keys, int size, int threads) {
     int64_t counter = 0;
     // Hash map construction
     for (int i = 0; i < size; i++) {
-        k = kh_put(
-            m64,
-            hash_,
-            keys[i],
-            &ret);  // hash_wrapper<IntType>::put(hash_, key, &ret);
+        k = kh_put(m64, hash_, keys[i], &ret);
         assert(k != kh_end(hash_));
         kh_val(hash_, k) = counter;
         counter++;
@@ -100,10 +96,7 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, int size) {
         size));
     if (tiledb_thread_pool_->concurrency_level() == 1) {
         for (int i = 0; i < size; i++) {
-            auto k = kh_get(
-                m64,
-                hash_,
-                keys[i]);  // hash_wrapper<IntType>::get(hash_, keys[i]);
+            auto k = kh_get(m64, hash_, keys[i]);
             if (k == kh_end(hash_)) {
                 // According to pandas behavior
                 results[i] = -1;
