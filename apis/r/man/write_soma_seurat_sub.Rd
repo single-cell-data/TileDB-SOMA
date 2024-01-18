@@ -5,6 +5,7 @@
 \alias{write_soma.Assay}
 \alias{write_soma.DimReduc}
 \alias{write_soma.Graph}
+\alias{write_soma.SeuratCommand}
 \title{Convert a \pkg{Seurat} Sub-Object to a SOMA Object, returned opened for write}
 \usage{
 \method{write_soma}{Assay}(
@@ -32,6 +33,16 @@
 \method{write_soma}{Graph}(
   x,
   uri,
+  soma_parent,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+)
+
+\method{write_soma}{SeuratCommand}(
+  x,
+  uri = NULL,
   soma_parent,
   ...,
   platform_config = NULL,
@@ -128,6 +139,14 @@ feature loadings and jackstraw information, are lost
 written out as \link[tiledbsoma:SOMASparseNDArray]{sparse matrices}
 to the \dQuote{\code{obsp}} group of a
 \link[tiledbsoma:SOMAMeasurement]{measurement}
+}
+
+\section{Writing \code{\link[SeuratObject]{SeuratCommand}s}}{
+
+\pkg{Seurat} \link[SeuratObject:SeuratCommand]{command logs} are written out
+as \link[tiledbsoma:SOMADataFrame]{data frames} to the
+\dQuote{\code{seurat_commands}} group of a
+\link[tiledbsoma:SOMACollection]{collection}
 }
 
 \keyword{internal}

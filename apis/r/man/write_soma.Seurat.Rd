@@ -2,7 +2,7 @@
 % Please edit documentation in R/write_seurat.R
 \name{write_soma.Seurat}
 \alias{write_soma.Seurat}
-\title{Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA, returned opened for write}
+\title{Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA}
 \usage{
 \method{write_soma}{Seurat}(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
 }
@@ -23,7 +23,7 @@ The URI to the resulting \code{\link{SOMAExperiment}} generated from
 the data contained in \code{x}
 }
 \description{
-Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA, returned opened for write
+Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
 }
 \section{Writing Cell-Level Meta Data}{
 
@@ -82,5 +82,13 @@ feature loadings and jackstraw information, are lost
 written out as \link[tiledbsoma:SOMASparseNDArray]{sparse matrices}
 to the \dQuote{\code{obsp}} group of a
 \link[tiledbsoma:SOMAMeasurement]{measurement}
+}
+
+\section{Writing \code{\link[SeuratObject]{SeuratCommand}s}}{
+
+\pkg{Seurat} \link[SeuratObject:SeuratCommand]{command logs} are written out
+as \link[tiledbsoma:SOMADataFrame]{data frames} to the
+\dQuote{\code{seurat_commands}} group of a
+\link[tiledbsoma:SOMACollection]{collection}
 }
 
