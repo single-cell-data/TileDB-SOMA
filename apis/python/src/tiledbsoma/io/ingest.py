@@ -1165,6 +1165,30 @@ def _extract_new_values_for_append(
         return arrow_table
 
 
+def _write_arrow_table(
+    arrow_table: pa.Table,
+    handle: Union[DataFrame, SparseNDArray],
+    tiledb_create_options: TileDBCreateOptions,
+) -> None:
+    """Handles num-bytes capacity for remote object stores."""
+    cap = tiledb_create_options._remote_cap_nbytes
+    if arrow_table.nbytes > cap:
+        n = len(arrow_table)
+        if n < 2:
+            raise SOMAError(
+                "single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}"
+            )
+        m = n // 2
+        _write_arrow_table(arrow_table[:m], handle, tiledb_create_options)
+        _write_arrow_table(arrow_table[m:], handle, tiledb_create_options)
+    else:
+        logging.log_io(
+            None,
+            f"Write Arrow table num_rows={len(arrow_table)} num_bytes={arrow_table.nbytes} cap={cap}",
+        )
+        handle.write(arrow_table)
+
+
 def _write_dataframe(
     df_uri: str,
     df: pd.DataFrame,
@@ -1252,7 +1276,10 @@ def _write_dataframe_impl(
         )
         return soma_df
 
-    soma_df.write(arrow_table)
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+
+    _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
+
     logging.log_io(
         f"Wrote   {soma_df.uri}",
         _util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
@@ -1757,6 +1784,7 @@ def _write_matrix_to_denseNDArray(
             tensor = pa.Tensor.from_numpy(chunk)
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
+        # XXX TOUCH DNDA CHUNK: NO .NBYTES FOR ARROW TENSORS
         soma_ndarray.write((slice(i, i2), slice(None)), tensor)
 
         t2 = time.time()
@@ -2032,6 +2060,8 @@ def _write_matrix_to_sparseNDArray(
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
+    print(f"WSNDA SHAPE {matrix.shape}")
+
     def _coo_to_table(
         mat_coo: sp.coo_matrix,
         axis_0_mapping: AxisIDMapping,
@@ -2204,7 +2234,7 @@ def _write_matrix_to_sparseNDArray(
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
                     "... %7.3f%% done" % chunk_percent,
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
+                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d (%.1f%%)"
                     % (
                         i,
                         i2 - 1,
@@ -2212,6 +2242,7 @@ def _write_matrix_to_sparseNDArray(
                         chunk_percent,
                         chunk_coo.nnz,
                         tiledb_create_options.goal_chunk_nnz,
+                        100 * chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz,
                     ),
                 )
                 i = i2
@@ -2220,7 +2251,7 @@ def _write_matrix_to_sparseNDArray(
         # Print doubly inclusive lo..hi like 0..17 and 18..31.
         logging.log_io(
             None,
-            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
+            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d (%.1f%%)"
             % (
                 i,
                 i2 - 1,
@@ -2228,12 +2259,14 @@ def _write_matrix_to_sparseNDArray(
                 chunk_percent,
                 chunk_coo.nnz,
                 tiledb_create_options.goal_chunk_nnz,
+                100 * chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz,
             ),
         )
 
-        soma_ndarray.write(
-            _coo_to_table(chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i)
+        arrow_table = _coo_to_table(
+            chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i
         )
+        _write_arrow_table(arrow_table, soma_ndarray, tiledb_create_options)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -2634,6 +2667,7 @@ def _ingest_uns_ndarray(
 
     with soma_arr:
         _maybe_set(coll, key, soma_arr, use_relative_uri=use_relative_uri)
+        # XXX TOUCH DNDA CHUNK: NO .NBYTES FOR ARROW TENSORS
         soma_arr.write(
             (),
             pa.Tensor.from_numpy(value),
