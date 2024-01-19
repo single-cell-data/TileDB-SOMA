@@ -115,7 +115,10 @@ class TileDBCreateOptions:
     goal_chunk_nnz: int = attrs_.field(
         validator=vld.instance_of(int), default=100_000_000
     )
-    _remote_cap_nbytes: int = attrs_.field(
+    # We would prefer _remote_cap_nbytes as this is a server-side parameter
+    # people should not be changing. However, leading underscores are not
+    # accepted by the attrs framework.
+    remote_cap_nbytes: int = attrs_.field(
         validator=vld.instance_of(int), default=2_400_000_000
     )
     capacity: int = attrs_.field(validator=vld.instance_of(int), default=100_000)

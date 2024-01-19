@@ -1171,7 +1171,7 @@ def _write_arrow_table(
     tiledb_create_options: TileDBCreateOptions,
 ) -> None:
     """Handles num-bytes capacity for remote object stores."""
-    cap = tiledb_create_options._remote_cap_nbytes
+    cap = tiledb_create_options.remote_cap_nbytes
     if arrow_table.nbytes > cap:
         n = len(arrow_table)
         if n < 2:
@@ -2060,8 +2060,6 @@ def _write_matrix_to_sparseNDArray(
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
-    print(f"WSNDA SHAPE {matrix.shape}")
-
     def _coo_to_table(
         mat_coo: sp.coo_matrix,
         axis_0_mapping: AxisIDMapping,
@@ -2234,7 +2232,7 @@ def _write_matrix_to_sparseNDArray(
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
                     "... %7.3f%% done" % chunk_percent,
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d (%.1f%%)"
+                    "SKIP   chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
                     % (
                         i,
                         i2 - 1,
@@ -2242,7 +2240,6 @@ def _write_matrix_to_sparseNDArray(
                         chunk_percent,
                         chunk_coo.nnz,
                         tiledb_create_options.goal_chunk_nnz,
-                        100 * chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz,
                     ),
                 )
                 i = i2
@@ -2251,7 +2248,7 @@ def _write_matrix_to_sparseNDArray(
         # Print doubly inclusive lo..hi like 0..17 and 18..31.
         logging.log_io(
             None,
-            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d (%.1f%%)"
+            "START  chunk rows %d..%d of %d (%.3f%%), nnz=%d, goal=%d"
             % (
                 i,
                 i2 - 1,
@@ -2259,7 +2256,6 @@ def _write_matrix_to_sparseNDArray(
                 chunk_percent,
                 chunk_coo.nnz,
                 tiledb_create_options.goal_chunk_nnz,
-                100 * chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz,
             ),
         )
 

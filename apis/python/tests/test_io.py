@@ -29,6 +29,7 @@ def src_matrix(request):
         TileDBCreateOptions(write_X_chunked=False, goal_chunk_nnz=100000),
         TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=10000),
         TileDBCreateOptions(write_X_chunked=True, goal_chunk_nnz=100000),
+        TileDBCreateOptions(write_X_chunked=True, remote_cap_nbytes=100000),
     ],
 )
 @pytest.mark.parametrize(
