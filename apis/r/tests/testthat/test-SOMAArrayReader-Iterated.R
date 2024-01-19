@@ -153,7 +153,7 @@ test_that("Iterated Interface from SOMA Classes", {
 test_that("Iterated Interface from SOMA Sparse Matrix", {
     skip_if(!extended_tests() || covr_tests())
     skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
-    skip_if(Sys.getenv("CI", "") != "")         # breaks only in CI so skipping
+    #skip_if(Sys.getenv("CI", "") != "")         # breaks only in CI so skipping
 
     tdir <- tempfile()
     tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package="pbmc3k.tiledb")
@@ -171,7 +171,9 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     for (i in 1:2) {
         expect_false(iterator$read_complete())
         dat <- iterator$read_next()$get_one_based_matrix()
-        nnz <- Matrix::nnzero(dat)
+        ## -- nnz <- Matrix::nnzero(dat)
+        ##    use length() which is identical for this data set but does not suffer from an issue sometimes seen in CI
+        nnz <- length(dat@x)
         expect_gt(nnz, 0)
         nnzTotal <- nnzTotal + nnz
         # the shard dims always match the shape of the whole sparse matrix
@@ -181,7 +183,9 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     expect_true(iterator$read_complete())
     expect_warning(iterator$read_next()) # returns NULL with warning
     expect_warning(iterator$read_next()) # returns NULL with warning
-    expect_equal(nnzTotal, Matrix::nnzero(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
+    ## -- expect_equal(nnzTotal, Matrix::nnzero(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
+    ##    use length() which is identical for this data set but does not suffer from an issue sometimes seen in CI
+    expect_equal(nnzTotal, length(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()@x))
     expect_equal(nnzTotal, 2238732)
 
     rm(sdf)
