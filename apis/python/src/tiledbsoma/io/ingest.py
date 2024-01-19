@@ -1757,12 +1757,20 @@ def _write_matrix_to_denseNDArray(
         )
 
     # Number of rows to chunk by. These are dense writes, so this is loop-invariant.
-    # * The goal_chunk_nnz is an older parameter.
+    # * The goal_chunk_nnz is an older parameter. It's still important, as for backed AnnData,
+    #   it controls how much is read into client RAM from the backing store on each chunk.
     # * The remote_cap_nbytes is an older parameter.
     # * Compute chunk sizes for both and take the minimum.
     chunk_size_using_nnz = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
 
-    total_nbytes = matrix.size * matrix.itemsize
+    try:
+        # not scipy csr/csc
+        itemsize = matrix.itemsize
+    except AttributeError:
+        # scipy csr/csc
+        itemsize = matrix.data.itemsize
+
+    total_nbytes = matrix.size * itemsize
     nbytes_num_chunks = math.ceil(
         total_nbytes / tiledb_create_options.remote_cap_nbytes
     )
@@ -2026,6 +2034,11 @@ def _find_sparse_chunk_size_backed(
     extent = int(matrix.shape[axis])
 
     # Initial guess of chunk size.
+    #
+    # The goal_chunk_nnz is important, as for backed AnnData, it controls how much is read into
+    # client RAM from the backing store on each chunk. We also subdivide chunks by
+    # remote_cap_nbytes, if necessary, within _write_arrow_table in order to accommodate remote
+    # object stores, which is a different ceiling.
     chunk_size = max(1, int(math.floor(goal_chunk_nnz / mean_nnz)))
     if chunk_size > extent:
         chunk_size = extent
