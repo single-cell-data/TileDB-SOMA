@@ -1746,10 +1746,32 @@ def _write_matrix_to_denseNDArray(
 
     # OR, write in chunks
     eta_tracker = eta.Tracker()
-    nrow, ncol = matrix.shape
+    if matrix.ndim == 2:
+        nrow, ncol = matrix.shape
+    elif matrix.ndim == 1:
+        nrow = matrix.shape[0]
+        ncol = 1
+    else:
+        raise ValueError(
+            f"only 1D or 2D dense arrays are supported here; got {matrix.ndim}"
+        )
+
+    # Number of rows to chunk by. These are dense writes, so this is loop-invariant.
+    # * The goal_chunk_nnz is an older parameter.
+    # * The remote_cap_nbytes is an older parameter.
+    # * Compute chunk sizes for both and take the minimum.
+    chunk_size_using_nnz = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
+
+    total_nbytes = matrix.size * matrix.itemsize
+    nbytes_num_chunks = math.ceil(
+        total_nbytes / tiledb_create_options.remote_cap_nbytes
+    )
+    nbytes_num_chunks = min(1, nbytes_num_chunks)
+    chunk_size_using_nbytes = math.floor(nrow / nbytes_num_chunks)
+
+    chunk_size = min(chunk_size_using_nnz, chunk_size_using_nbytes)
+
     i = 0
-    # Number of rows to chunk by. Dense writes, so this is a constant.
-    chunk_size = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
     while i < nrow:
         t1 = time.time()
         i2 = i + chunk_size
@@ -1762,7 +1784,10 @@ def _write_matrix_to_denseNDArray(
             % (i, i2 - 1, nrow, chunk_percent),
         )
 
-        chunk = matrix[i:i2, :]
+        if matrix.ndim == 2:
+            chunk = matrix[i:i2, :]
+        else:
+            chunk = matrix[i:i2]
 
         if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
             chunk_bounds = matrix_bounds
@@ -1784,8 +1809,10 @@ def _write_matrix_to_denseNDArray(
             tensor = pa.Tensor.from_numpy(chunk)
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
-        # XXX TOUCH DNDA CHUNK: NO .NBYTES FOR ARROW TENSORS
-        soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+        if matrix.ndim == 2:
+            soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+        else:
+            soma_ndarray.write((slice(i, i2),), tensor)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -2663,12 +2690,23 @@ def _ingest_uns_ndarray(
 
     with soma_arr:
         _maybe_set(coll, key, soma_arr, use_relative_uri=use_relative_uri)
-        # XXX TOUCH DNDA CHUNK: NO .NBYTES FOR ARROW TENSORS
-        soma_arr.write(
-            (),
-            pa.Tensor.from_numpy(value),
-            platform_config=platform_config,
+
+        _write_matrix_to_denseNDArray(
+            soma_arr,
+            value,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            context=context,
+            ingestion_params=ingestion_params,
         )
+
+    #        soma_arr.write(
+    #            (),
+    #            pa.Tensor.from_numpy(value),
+    #            platform_config=platform_config,
+    #        )
+
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
     logging.log_io(msg, msg)
 
