@@ -14,7 +14,7 @@ install.packages('tiledbsoma', repos = c('https://tiledb-inc.r-universe.dev',
                                          'https://cloud.r-project.org'))
 ```
 
-Installing from source on Unix-like platforms requires `cmake` and `git`.
+Installing from source on Unix-like platforms requires `cmake`, `git`, and a recent version of a C++ compiler (it was tested on `g++` version 10.5.0).
 
 Alternatively, tiledbsoma can be installed directly from [Conda](https://anaconda.org/tiledb/r-tiledbsoma), which serves binaries for multiple architectures.
 
