@@ -15,7 +15,8 @@ env:
   COVERAGE_FLAGS: "r"
   COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   _R_CHECK_TESTS_NLINES_: 0
-
+  CATCHSEGV: "TRUE"
+  
 jobs:
   ci:
     strategy:
@@ -92,6 +93,18 @@ jobs:
       - name: Update Packages
         run: Rscript -e 'update.packages(ask=FALSE)'
 
+      # - name: Build Package
+      #   run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
+
+      # - name: Install Package
+      #   run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
+
+      # - name: Diagnostics
+      #   run: Rscript -e 'print(Sys.info())'
+
+      # - name: Downgrade TileDB-R if needed
+      #   run: cd apis/r && Rscript tools/controlled_downgrade.R
+        
       - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests

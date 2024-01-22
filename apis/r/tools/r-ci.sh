@@ -37,6 +37,9 @@ COVERAGE_FLAGS=${COVERAGE_FLAGS:-"r"}
 COVERAGE_TOKEN=${COVERAGE_TOKEN:-""}
 COVERAGE_PATH=${COVERAGE_PATH:-"apis/r"}
 
+## Optional 'catchsegv' frontend on Linux
+CATCHSEGV=${CATCHSEGV:-"FALSE"}
+
 R_BUILD_ARGS=${R_BUILD_ARGS-"--no-build-vignettes --no-manual"}
 R_CHECK_ARGS=${R_CHECK_ARGS-"--no-manual --as-cran"}
 R_CHECK_INSTALL_ARGS=${R_CHECK_INSTALL_ARGS-"--install-args=--install-tests"}
@@ -161,7 +164,14 @@ BootstrapLinux() {
     #   https://stat.ethz.ch/pipermail/r-help//2012-September/335676.html
     # May 2020: we also need devscripts for checkbashism
     # Sep 2020: add bspm, remotes
-    Retry sudo apt-get install -y --no-install-recommends r-base-dev r-recommended qpdf devscripts r-cran-bspm r-cran-remotes
+    PKGS="r-base-dev r-recommended qpdf devscripts r-cran-bspm r-cran-remotes"
+
+    # If 'catchsegv' requested intall glibc-tools
+    if [[ "${CATCHSEGV}" != "FALSE" ]]; then
+        PKGS="${PKGS} glibc-tools"
+    fi
+
+    Retry sudo apt-get install -y --no-install-recommends ${PKGS}
 
     #sudo cp -ax /usr/lib/R/site-library/littler/examples/{build.r,check.r,install*.r,update.r} /usr/local/bin
     ## for now also from littler from GH
@@ -387,7 +397,11 @@ Coverage() {
     # COVERAGE_FLAGS=${COVERAGE_FLAGS:-"r"}
     # COVERAGE_TOKEN=${COVERAGE_TOKEN:-""}
     # COVERAGE_PATH=${COVERAGE_PATH:-"apis/r"}
-    COVR="true" Rscript -e 'setwd("apis/r"); library(covr); res <- package_coverage(relative_path="../..", line_exclusion=list("apis/r/src/nanoarrow.c", "apis/r/src/nanoarrow.h", "apis/r/R/roxygen.R", quiet=FALSE)); print(res); codecov(coverage=res, token="", flags="r")'
+    if [[ "${CATCHSEGV}" != "FALSE" ]] && [[ "Linux" == "${OS}" ]]; then
+        COVR="true" catchsegv Rscript -e 'setwd("apis/r"); library(covr); res <- package_coverage(relative_path="../..", line_exclusion=list("apis/r/src/nanoarrow.c", "apis/r/src/nanoarrow.h", "apis/r/R/roxygen.R", quiet=FALSE)); print(res); codecov(coverage=res, token="", flags="r")'
+    else
+        COVR="true" Rscript -e 'setwd("apis/r"); library(covr); res <- package_coverage(relative_path="../..", line_exclusion=list("apis/r/src/nanoarrow.c", "apis/r/src/nanoarrow.h", "apis/r/R/roxygen.R", quiet=FALSE)); print(res); codecov(coverage=res, token="", flags="r")'
+    fi
 }
 
 RunTests() {
@@ -401,7 +415,11 @@ RunTests() {
     if [[ "$_R_CHECK_CRAN_INCOMING_" == "FALSE" ]]; then
         echo "(CRAN incoming checks are off)"
     fi
-    _R_CHECK_CRAN_INCOMING_=${_R_CHECK_CRAN_INCOMING_} R CMD check "${FILE}" ${R_CHECK_ARGS} ${R_CHECK_INSTALL_ARGS}
+    if [[ "${CATCHSEGV}" != "FALSE" ]] && [[ "Linux" == "${OS}" ]]; then
+        _R_CHECK_CRAN_INCOMING_=${_R_CHECK_CRAN_INCOMING_} catchsegv R CMD check "${FILE}" ${R_CHECK_ARGS} ${R_CHECK_INSTALL_ARGS}
+    else
+        _R_CHECK_CRAN_INCOMING_=${_R_CHECK_CRAN_INCOMING_} R CMD check "${FILE}" ${R_CHECK_ARGS} ${R_CHECK_INSTALL_ARGS}
+    fi
 
     if [[ -n "${WARNINGS_ARE_ERRORS}" ]]; then
         if DumpLogsByExtension "00check.log" | grep -q WARNING; then
