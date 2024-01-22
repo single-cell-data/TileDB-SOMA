@@ -112,10 +112,12 @@ def test_experiment_query_all(soma_experiment):
             query.X("raw").tables()
         )
         assert sparse.vstack(
-            sp
-            for sp, _ in query.X("raw")
-            .blockwise(axis=0, reindex_disable_on_axis=[1])
-            .scipy()
+            [
+                sp
+                for sp, _ in query.X("raw")
+                .blockwise(axis=0, reindex_disable_on_axis=[1])
+                .scipy()
+            ]
         ).shape == (query.n_obs, query.n_vars)
 
         # read as anndata
