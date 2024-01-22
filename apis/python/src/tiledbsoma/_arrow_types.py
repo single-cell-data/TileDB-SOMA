@@ -207,8 +207,38 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
                 # as `pd.StringDtype()` but rather as `object`.
                 if df[k].dtype == pd.StringDtype() or df[k].dtype.name == "object":
                     df[k] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
+
                 else:
-                    df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k]))
+                    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                    # Original:
+                    # df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k]))
+
+                    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                    # https://app.shortcut.com/tiledb-inc/story/39118/python-support-for-nullable-columns
+                    # Try 1:
+                    # df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k], from_pandas=True))
+
+                    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                    # Another idea would be to replace pa.infer_type with
+                    # pa.from_numpy_dtype. pa.infer_type takes in a column and deduces the
+                    # dtype based on the values in the column. It seems to have issues
+                    # whenever there's NULLs present though, and we have added this
+                    # special handling for this case.
+
+                    # This probably isn't necessary as we do know the dtype of the column
+                    # via df[k].dtype, so we don't need to "infer" anything. We could try
+                    # and use pa.from_numpy_dtype(np.dtype(df[k].dtype.name)) instead
+                    # which maps a numpy dtype to a pyarrow dtype. It might optimize the
+                    # code too since it seems like pa.infer_type is looking at each value
+                    # to determine a dtype whereas pa.from_numpy_dtype only looks at a
+                    # np.dtype.
+
+                    # Try 2:
+                    # df[k] = pa.nulls(df.shape[0], pa.from_numpy_dtype(df[k]))
+
+                    # Try 3:
+                    df[k] = pa.nulls(df.shape[0], pa.from_numpy_dtype(np.dtype(df[k].dtype.name)))
+
             else:
                 df[k].where(
                     df[k].notnull(),
