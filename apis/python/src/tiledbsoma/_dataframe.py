@@ -338,21 +338,23 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
+        handle = self._handle._handle
+
         ts = None
-        if self._handle._handle.timestamp is not None:
-            ts = (0, self._handle._handle.timestamp)
+        if handle.timestamp is not None:
+            ts = (0, handle.timestamp)
 
         sr = clib.SOMADataFrame.open(
-            uri=self._handle._handle.uri,
+            uri=handle.uri,
             mode=clib.OpenMode.read,
-            platform_config=platform_config or {},
+            platform_config=platform_config or handle.config(),
             column_names=column_names or [],
             result_order=_util.to_clib_result_order(result_order),
             timestamp=ts,
         )
 
         if value_filter is not None:
-            sr.set_condition(QueryCondition(value_filter), self._handle.schema)
+            sr.set_condition(QueryCondition(value_filter), handle.schema)
 
         self._set_reader_coords(sr, coords)
 
