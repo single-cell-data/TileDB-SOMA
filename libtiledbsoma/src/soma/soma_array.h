@@ -531,7 +531,7 @@ class SOMAArray {
     template <typename T>
     std::pair<T, T> non_empty_domain(const std::string& name) {
         return arr_->non_empty_domain<T>(name);
-    };
+    }
 
     /**
      * Retrieves the non-empty domain from the array on the given dimension.
@@ -541,7 +541,7 @@ class SOMAArray {
     std::pair<std::string, std::string> non_empty_domain_var(
         const std::string& name) {
         return arr_->non_empty_domain_var(name);
-    };
+    }
 
     /**
      * Returns the domain of the given dimension.
