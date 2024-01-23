@@ -215,6 +215,13 @@ class SOMADataFrame : public SOMAObject {
     std::shared_ptr<Context> ctx();
 
     /**
+     * Get the Config associated with the SOMADataFrame.
+     *
+     * @return std::map<std::string, std::string>
+     */
+    std::map<std::string, std::string> config();
+
+    /**
      * Return optional timestamp pair SOMADataFrame was opened with.
      */
     std::optional<std::pair<uint64_t, uint64_t>> timestamp() {

@@ -127,11 +127,7 @@ void load_soma_dataframe(py::module &m) {
         return pa_schema_import(py::capsule(soma_df.schema().get()));
     })
     .def("config", [](SOMADataFrame& soma_df) -> py::object {
-        std::map<std::string, std::string> result;
-        auto cfg = soma_df.ctx()->config();
-        for (auto& it : cfg)
-            result.emplace(it.first, it.second);
-        return py::cast(result);
+        return py::cast(soma_df.config());
     })
     .def_property_readonly("timestamp", [](SOMADataFrame& soma_df) -> py::object {
         if(!soma_df.timestamp().has_value())
