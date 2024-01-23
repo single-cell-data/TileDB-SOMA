@@ -52,7 +52,7 @@ class TileDBSOMAError : public std::runtime_error {
    public:
     virtual const char* what() const noexcept override {
         return std::runtime_error::what();
-    };
+    }
 };
 
 };  // namespace tiledbsoma
