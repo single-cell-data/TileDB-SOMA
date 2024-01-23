@@ -981,7 +981,6 @@ def test_create_platform_config_overrides(
         for k, v in expected_schema_fields.items():
             assert getattr(D.schema, k) == v
 
-
 @pytest.mark.parametrize("allows_duplicates", [False, True])
 @pytest.mark.parametrize("consolidate", [False, True])
 def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
