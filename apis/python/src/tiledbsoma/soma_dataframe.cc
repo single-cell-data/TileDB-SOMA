@@ -130,7 +130,7 @@ void load_soma_dataframe(py::module &m) {
         std::map<std::string, std::string> result;
         auto cfg = soma_df.ctx()->config();
         for (auto& it : cfg)
-            result[it.first] = it.second;
+            result.emplace(it.first, it.second);
         return py::cast(result);
     })
     .def_property_readonly("timestamp", [](SOMADataFrame& soma_df) -> py::object {
