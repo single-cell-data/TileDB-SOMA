@@ -2845,6 +2845,7 @@ def to_anndata(
     # * If the desired names are passed in, use them.
     # * Else if the names used at ingest time are available, use them.
     # * Else use the default/fallback name.
+
     if obs_id_name is None:
         if _DATAFRAME_ORIGINAL_INDEX_NAME in experiment.obs.metadata:
             if (
@@ -2873,6 +2874,24 @@ def to_anndata(
                 f"requested obs IDs column name {obs_id_name} not found in input: {obs_df.keys()}"
             )
         obs_df.set_index(obs_id_name, inplace=True)
+    else:
+        # There are multiple cases to be handled here, all tested in CI.
+        # This else-block handle this one:
+        #
+        #                 orig.ident  nCount_RNA  ...
+        # ATGCCAGAACGACT           0        70.0  ...
+        # CATGGCCTGTGCAT           0        85.0  ...
+        # GAACCTGATGAACC           0        87.0  ...
+        #
+        # Namely:
+        # * The input AnnData dataframe had an index with no name
+        # * In the SOMA experiment we name that column "obs_id" and our index is "soma_joinid"
+        # * On outgest we drop "soma_joinid"
+        # * The thing we named "obs_id" needs to become the index again ...
+        # * ... and it needs to be nameless.
+        if "obs_id" in obs_df:
+            obs_df.set_index("obs_id", inplace=True)
+            obs_df.index.name = None
 
     var_df = measurement.var.read().concat().to_pandas()
 
@@ -2883,6 +2902,10 @@ def to_anndata(
                 f"requested var IDs column name {var_id_name} not found in input: {var_df.keys()}"
             )
         var_df.set_index(var_id_name, inplace=True)
+    else:
+        if "var_id" in var_df:
+            var_df.set_index("var_id", inplace=True)
+            var_df.index.name = None
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
