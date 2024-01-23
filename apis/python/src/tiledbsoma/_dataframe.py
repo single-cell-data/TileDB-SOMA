@@ -339,7 +339,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self._check_open_read()
 
         handle = self._handle._handle
-
+        
         ts = None
         if handle.timestamp is not None:
             ts = (0, handle.timestamp)
@@ -347,7 +347,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         sr = clib.SOMADataFrame.open(
             uri=handle.uri,
             mode=clib.OpenMode.read,
-            platform_config=platform_config or handle.config(),
+            platform_config=handle.config().update(platform_config or {}),
             column_names=column_names or [],
             result_order=_util.to_clib_result_order(result_order),
             timestamp=ts,
