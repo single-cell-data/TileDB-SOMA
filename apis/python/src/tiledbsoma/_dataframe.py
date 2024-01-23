@@ -344,6 +344,17 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         if handle.timestamp is not None:
             ts = (0, handle.timestamp)
 
+        print("AAA001 platform_config")
+        print(type(platform_config))
+        print(platform_config)
+        print("AAA002")
+        print(type(handle))
+        print(handle)
+        print("AAA003")
+        print(type(handle.config))
+        print(handle.config)
+        print("AAA004")
+
         sr = clib.SOMADataFrame.open(
             uri=handle.uri,
             mode=clib.OpenMode.read,
