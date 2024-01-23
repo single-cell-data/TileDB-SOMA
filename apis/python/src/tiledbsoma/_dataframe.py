@@ -339,7 +339,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self._check_open_read()
 
         handle = self._handle._handle
-        
+
         ts = None
         if handle.timestamp is not None:
             ts = (0, handle.timestamp)
