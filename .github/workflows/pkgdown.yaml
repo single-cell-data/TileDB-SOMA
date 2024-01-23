@@ -1,15 +1,26 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/master/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+
+# DEBUG
 on:
-  #push:
-  #  # To publish docs from your branch: list the branch name here instead of main.
-  #  branches: [main]
-  #pull_request:
-  #  # To publish docs from your branch: list the branch name here instead of main.
-  #  branches: [main]
-  release:
-    types: [published]
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'release-*'
   workflow_dispatch:
+
+# ORIGINAL
+#on:
+#   #push:
+#   #  # To publish docs from your branch: list the branch name here instead of main.
+#   #  branches: [main]
+#   #pull_request:
+#   #  # To publish docs from your branch: list the branch name here instead of main.
+#   #  branches: [main]
+#   release:
+#     types: [published]
+#   workflow_dispatch:
 
 name: pkgdown
 
@@ -34,5 +45,6 @@ jobs:
       - name: Install dependencies
         run: ./apis/r/tools/install-pkgdown-dependencies.sh
 
-      - name: Deploy package
-        run: ./apis/r/tools/deploy-pkgdown.sh
+      # DEBUG
+      # - name: Deploy package
+      #   run: ./apis/r/tools/deploy-pkgdown.sh
