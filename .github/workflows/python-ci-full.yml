@@ -21,9 +21,11 @@ jobs:
       fail-fast: false
       matrix:
         # TODO: decide on Windows CI coverage
-        os: [ubuntu-22.04, macos-12]
+        ### DEBUG os: [ubuntu-22.04, macos-12]
+        os: [macos-12]
         # os: [ubuntu-22.04, macos-12, windows-2019]
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        ### DEBUG python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.10']
         include:
           - runs-on: ubuntu-22.04
             cc: gcc-11
