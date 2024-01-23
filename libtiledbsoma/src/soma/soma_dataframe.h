@@ -257,7 +257,7 @@ class SOMADataFrame : public SOMAObject {
     template <typename T>
     std::pair<T, T> non_empty_domain(const std::string& column_index_name) {
         return array_->non_empty_domain<T>(column_index_name);
-    };
+    }
 
     /**
      * Retrieves the non-empty domain of the column index.
@@ -266,7 +266,7 @@ class SOMADataFrame : public SOMAObject {
     std::pair<std::string, std::string> non_empty_domain_var(
         const std::string& column_index_name) {
         return array_->non_empty_domain_var(column_index_name);
-    };
+    }
 
     /**
      * Returns the domain of the given column index.
