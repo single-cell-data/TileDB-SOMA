@@ -339,7 +339,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self._check_open_read()
 
         handle = self._handle._handle
-        
+
         config = handle.config()
         config.update(platform_config or {})
 
