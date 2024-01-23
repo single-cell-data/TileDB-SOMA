@@ -189,7 +189,7 @@ class SOMADenseNDArray : public SOMAObject {
      */
     bool is_sparse() {
         return false;
-    };
+    }
 
     /**
      * @brief Get URI of the SOMADenseNDArray.
