@@ -1,3 +1,4 @@
+import inspect
 import pathlib
 import tempfile
 from pathlib import Path
@@ -19,6 +20,7 @@ HERE = Path(__file__).parent
 
 @pytest.fixture
 def h5ad_file(request):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     # pbmc-small is faster for automated unit-test / CI runs.
     input_path = HERE.parent / "testdata/pbmc-small.h5ad"
     # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
@@ -27,6 +29,7 @@ def h5ad_file(request):
 
 @pytest.fixture
 def h5ad_file_extended(request):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     # This has more component arrays in it
     input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
     return input_path
@@ -34,6 +37,7 @@ def h5ad_file_extended(request):
 
 @pytest.fixture
 def h5ad_file_with_obsm_holes(request):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     # This has zeroes in an obsm matrix so nnz is not num_rows * num_cols
     input_path = HERE.parent / "testdata/pbmc3k-with-obsm-zero.h5ad"
     return input_path
@@ -41,6 +45,7 @@ def h5ad_file_with_obsm_holes(request):
 
 @pytest.fixture
 def h5ad_file_uns_string_arrays(request):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     # This has uns["louvain_colors"] with dtype.char == "U".
     # It also has uns["more_colors"] in the form '[[...]]', as often occurs in the wild.
     input_path = HERE.parent / "testdata/pbmc3k.h5ad"
@@ -49,6 +54,7 @@ def h5ad_file_uns_string_arrays(request):
 
 @pytest.fixture
 def h5ad_file_categorical_int_nan(request):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     # This has obs["categ_int_nan"] as a categorical int but with math.nan as a
     # "not-in-the-category" indicator. Such H5AD files do arise in the wild.
     #
@@ -67,6 +73,7 @@ def h5ad_file_categorical_int_nan(request):
 
 @pytest.fixture
 def h5ad_file_X_empty(request):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     """adata.X is a zero-cell sparse matrix"""
     input_path = HERE.parent / "testdata/x-empty.h5ad"
     return input_path
@@ -74,6 +81,7 @@ def h5ad_file_X_empty(request):
 
 @pytest.fixture
 def h5ad_file_X_none(request):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     """
     adata.X has Python value None if read in non-backed mode; if read in backed
     mode, adata.X is not present as an attribute of adata.
@@ -84,6 +92,7 @@ def h5ad_file_X_none(request):
 
 @pytest.fixture
 def adata(h5ad_file):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     return anndata.read_h5ad(h5ad_file)
 
 
@@ -107,6 +116,7 @@ def adata(h5ad_file):
     [tiledbsoma.SparseNDArray, tiledbsoma.DenseNDArray],
 )
 def test_import_anndata(adata, ingest_modes, X_kind):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     adata = adata.copy()
 
     have_ingested = False
@@ -247,6 +257,7 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         # pbmc-small has no varp
 
         tempdir.cleanup()
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 @pytest.mark.parametrize(
@@ -258,6 +269,7 @@ def test_import_anndata(adata, ingest_modes, X_kind):
     ],
 )
 def test_named_X_layers(h5ad_file, X_layer_name):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     tempdir = tempfile.TemporaryDirectory()
     soma_path = tempdir.name
 
@@ -286,8 +298,11 @@ def test_named_X_layers(h5ad_file, X_layer_name):
             assert X_layer_name in exp.ms["RNA"].X
             assert X_layer_name in exp.ms["raw"].X
 
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
+
 
 def _get_fragment_count(array_uri):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     return len(tiledb.fragment.FragmentInfoList(array_uri=array_uri))
 
 
@@ -300,6 +315,7 @@ def _get_fragment_count(array_uri):
     ],
 )
 def test_resume_mode(adata, resume_mode_h5ad_file):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     """
     Makes sure resume-mode ingest after successful ingest of the same input data does not write
     anything new
@@ -354,10 +370,12 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
                 assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(
                     meas2.varm[key].uri
                 )
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
 def test_ingest_relative(h5ad_file_extended, use_relative_uri):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
@@ -403,10 +421,12 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
         assert G.is_relative("data") == expected_relative
 
     exp.close()
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 @pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])
 def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended, ingest_uns_keys):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     tmp_uri = tmp_path.as_uri()
     original = anndata.read(h5ad_file_extended)
     uri = tiledbsoma.io.from_anndata(
@@ -447,9 +467,11 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended, ingest_uns_keys)
             assert np.array_equal(got_pca_variance, original.uns["pca"]["variance"])
         else:
             assert set(uns) == set(ingest_uns_keys)
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
@@ -473,9 +495,11 @@ def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
             assert contents.shape == (8, 2)
             assert len(contents["values_0"]) == 8
             assert contents["values_0"][0].as_py() == "#1f77b4"
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 def test_add_matrix_to_collection(adata):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
@@ -520,6 +544,7 @@ def test_add_matrix_to_collection(adata):
         )
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 # This tests tiledbsoma.io._create_or_open_coll -> tiledbsoma.io._create_or_open_collection
@@ -528,6 +553,8 @@ def test_add_matrix_to_collection(adata):
 # making an exception. For future code-imitation purposes, please be aware this is a pattern to be
 # avoided in the future, not imitated.
 def test_add_matrix_to_collection_1_2_7(adata):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
+
     def add_X_layer(
         exp: tiledbsoma.Experiment,
         measurement_name: str,
@@ -649,8 +676,11 @@ def test_add_matrix_to_collection_1_2_7(adata):
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
+
 
 def test_export_anndata(adata):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
@@ -689,6 +719,7 @@ def test_export_anndata(adata):
 
 
 def test_null_obs(adata, tmp_path: Path):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     output_path = tmp_path.as_uri()
     seed = 42
     #   Create column of all null values
@@ -711,9 +742,11 @@ def test_null_obs(adata, tmp_path: Path):
         #   of the Pandas data frame
         for k in adata.obs:
             assert obs.attr(k).isnullable == adata.obs[k].isnull().any()
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
     assert 1 == 1
 
@@ -769,8 +802,11 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
     )
     assert try3.obsm["X_pca"].shape == (2638, 50)
 
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
+
 
 def test_X_empty(h5ad_file_X_empty):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     tiledbsoma.io.from_h5ad(
@@ -785,9 +821,11 @@ def test_X_empty(h5ad_file_X_empty):
 
         tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
         # TODO: more
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 def test_X_none(h5ad_file_X_none):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     tiledbsoma.io.from_h5ad(
@@ -809,11 +847,14 @@ def test_X_none(h5ad_file_X_none):
 def test_obs_with_categorical_int_nan_enumeration(
     tmp_path, h5ad_file_categorical_int_nan
 ):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     output_path = tmp_path.as_uri()
 
     tiledbsoma.io.from_h5ad(
         output_path, h5ad_file_categorical_int_nan, measurement_name="RNA"
     )
+
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 @pytest.mark.parametrize("obs_id_name", ["obs_id", "cells_are_great"])
@@ -821,6 +862,7 @@ def test_obs_with_categorical_int_nan_enumeration(
 @pytest.mark.parametrize("indexify_obs", [True, False])
 @pytest.mark.parametrize("indexify_var", [True, False])
 def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     obs_ids = ["AAAT", "CATG", "CTGA", "TCTG", "TGAG", "TTTG"]
     var_ids = ["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"]
 
@@ -900,12 +942,14 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         )
         assert list(bdata.obs.index) == list(soma_obs[obs_id_name])
         assert list(bdata.var.index) == list(soma_var[var_id_name])
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 @pytest.mark.parametrize(
     "outgest_uns_keys", [["int_scalar", "strings", "np_ndarray_2d"], None]
 )
 def test_uns_io(tmp_path, outgest_uns_keys):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     obs = pd.DataFrame(
         data={"obs_id": np.asarray(["a", "b", "c"])},
         index=np.arange(3).astype(str),
@@ -984,10 +1028,12 @@ def test_uns_io(tmp_path, outgest_uns_keys):
 
     else:
         assert set(b.keys()) == set(outgest_uns_keys)
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")
 
 
 @pytest.mark.parametrize("write_index", [0, 1])
 def test_string_nan_columns(tmp_path, adata, write_index):
+    print(f"\nENTER {inspect.currentframe().f_code.co_name}\n")
     # Use case:
     #
     # 1. Anndata has column filled with np.nan
@@ -1013,3 +1059,4 @@ def test_string_nan_columns(tmp_path, adata, write_index):
         tiledbsoma.io.update_obs(exp, bdata.obs)
 
     # TODO: asserts
+    print(f"\nEXIT  {inspect.currentframe().f_code.co_name}\n")

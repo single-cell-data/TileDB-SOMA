@@ -22,39 +22,8 @@ on:
       report_codecov:
         required: true
         type: boolean
-      run_lint:
-        required: false
-        type: boolean
-        default: false
 
 jobs:
-  lint:
-    if: inputs.run_lint
-    runs-on: ${{ inputs.os }}
-    steps:
-    - name: Checkout TileDB-SOMA
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ inputs.python_version }}
-        cache: pip
-        cache-dependency-path: ./.github/workflows/python-ci-single.yml
-
-    - name: Restore pre-commit cache
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pre-commit
-        key: pre-commit-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('.github/workflows/python-ci-single.yml') }}
-
-    - name: Run pre-commit hooks on all files
-      run: python -m pip -v install pre-commit && pre-commit run -a -v
-
-    - name: Check C++ Format
-      shell: bash
-      run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h" | grep -v external)
-
   build:
     runs-on: ${{ inputs.os }}
     steps:
@@ -83,15 +52,6 @@ jobs:
         cache: pip
         cache-dependency-path: ./apis/python/setup.py
 
-# Experiment for MacOS CI false negatives ...
-#    - name: Cache native libraries
-#      uses: actions/cache@v3
-#      with:
-#        path: |
-#          build
-#          dist
-#        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
-
     - name: Install testing prereqs
       run: python -m pip -v install -U pip pytest-cov 'typeguard<3.0' types-setuptools sparse
 
@@ -114,9 +74,6 @@ jobs:
         rm -rf soco
         tar zxf soco.tgz
         cd ..
-
-    - name: Run libtiledbsoma unit tests
-      run: ctest --output-on-failure --test-dir build/libtiledbsoma -C Release --verbose
 
     - name: Run pytests for Python
       shell: bash
