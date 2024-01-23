@@ -7,6 +7,7 @@ import anndata
 import numpy as np
 import pandas as pd
 import pytest
+import scipy
 import somacore
 import tiledb
 
@@ -1013,3 +1014,59 @@ def test_string_nan_columns(tmp_path, adata, write_index):
         tiledbsoma.io.update_obs(exp, bdata.obs)
 
     # TODO: asserts
+
+
+@pytest.mark.parametrize("obs_index_name", [None, "obs_id", "cell_id"])
+@pytest.mark.parametrize("var_index_name", [None, "var_id", "gene_id"])
+def test_index_names_io(tmp_path, obs_index_name, var_index_name):
+    nobs = 200
+    nvar = 100
+    xocc = 0.3
+    measurement_name = "meas"
+
+    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]
+    var_ids = ["gene_%08d" % (j) for j in range(nvar)]
+
+    cell_types = [["B cell", "T cell"][e % 2] for e in range(nobs)]
+    obs = pd.DataFrame(
+        data={
+            obs_index_name: np.asarray(obs_ids),
+            "cell_type": pd.Categorical(cell_types),
+        },
+        index=np.arange(nobs).astype(str),
+    )
+    if obs_index_name is not None:
+        obs.set_index(obs_index_name, inplace=True)
+
+    var = pd.DataFrame(
+        data={
+            var_index_name: np.asarray(var_ids),
+            "squares": np.asarray([i**2 for i in range(nvar)]),
+        },
+        index=np.arange(len(var_ids)).astype(str),
+    )
+    if var_index_name is not None:
+        var.set_index(var_index_name, inplace=True)
+
+    X = scipy.sparse.random(nobs, nvar, density=xocc, dtype=np.float64).tocsr()
+
+    adata = anndata.AnnData(X=X, obs=obs, var=var)
+
+    soma_uri = tmp_path.as_posix()
+
+    tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name)
+
+    with tiledbsoma.Experiment.open(soma_uri) as exp:
+        bdata = tiledbsoma.io.to_anndata(exp, measurement_name)
+
+    if obs_index_name is None:
+        assert adata.obs.index.name is None
+        assert bdata.obs.index.name is None
+    else:
+        assert adata.obs.index.name == bdata.obs.index.name
+
+    if var_index_name is None:
+        assert adata.var.index.name is None
+        assert bdata.var.index.name is None
+    else:
+        assert adata.var.index.name == bdata.var.index.name

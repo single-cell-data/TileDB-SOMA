@@ -91,6 +91,7 @@ _UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
 
 _TILEDBSOMA_TYPE = "soma_tiledbsoma_type"
 _DATAFRAME_ORIGINAL_INDEX_NAME = "soma_dataframe_original_index_name"
+_DATAFRAME_ORIGINAL_INDEX_NAME_IS_NONE = "soma_original_index_name_is_python_None"
 
 
 # ----------------------------------------------------------------
@@ -1295,7 +1296,11 @@ def _write_dataframe_impl(
     _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
 
     # Save the original index name for outgest
-    if original_index_name is not None:
+    if original_index_name is None:
+        soma_df.metadata[
+            _DATAFRAME_ORIGINAL_INDEX_NAME
+        ] = _DATAFRAME_ORIGINAL_INDEX_NAME_IS_NONE
+    else:
         soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME] = original_index_name
 
     logging.log_io(
@@ -2842,32 +2847,42 @@ def to_anndata(
     # * Else use the default/fallback name.
     if obs_id_name is None:
         if _DATAFRAME_ORIGINAL_INDEX_NAME in experiment.obs.metadata:
-            obs_id_name = experiment.obs.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
+            if (
+                experiment.obs.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
+                != _DATAFRAME_ORIGINAL_INDEX_NAME_IS_NONE
+            ):
+                obs_id_name = experiment.obs.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
         else:
             obs_id_name = "obs_id"
 
     if var_id_name is None:
         if _DATAFRAME_ORIGINAL_INDEX_NAME in measurement.var.metadata:
-            var_id_name = measurement.var.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
+            if (
+                measurement.var.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
+                != _DATAFRAME_ORIGINAL_INDEX_NAME_IS_NONE
+            ):
+                var_id_name = measurement.var.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
         else:
             var_id_name = "var_id"
 
     obs_df = experiment.obs.read().concat().to_pandas()
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    if obs_id_name not in obs_df.keys():
-        raise ValueError(
-            f"requested obs IDs column name {obs_id_name} not found in input: {obs_df.keys()}"
-        )
-    obs_df.set_index(obs_id_name, inplace=True)
+    if obs_id_name is not None:
+        if obs_id_name not in obs_df.keys():
+            raise ValueError(
+                f"requested obs IDs column name {obs_id_name} not found in input: {obs_df.keys()}"
+            )
+        obs_df.set_index(obs_id_name, inplace=True)
 
     var_df = measurement.var.read().concat().to_pandas()
 
     var_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    if var_id_name not in var_df.keys():
-        raise ValueError(
-            f"requested var IDs column name {var_id_name} not found in input: {var_df.keys()}"
-        )
-    var_df.set_index(var_id_name, inplace=True)
+    if var_id_name is not None:
+        if var_id_name not in var_df.keys():
+            raise ValueError(
+                f"requested var IDs column name {var_id_name} not found in input: {var_df.keys()}"
+            )
+        var_df.set_index(var_id_name, inplace=True)
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
