@@ -13,10 +13,10 @@ from typing_extensions import Self
 
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
+from ._index_util import build_index
 from ._measurement import Measurement
 from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
-from .utils import build_index
 
 
 class Experiment(  # type: ignore[misc]  # __eq__ false positive
