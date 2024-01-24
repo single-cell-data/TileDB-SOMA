@@ -126,7 +126,7 @@ void load_soma_dataframe(py::module &m) {
         auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
         return pa_schema_import(py::capsule(soma_df.schema().get()));
     })
-    .def("config", [](SOMADataFrame& soma_df) -> py::object {
+    .def("config", [](SOMADataFrame& soma_df) -> py::dict {
         return py::cast(soma_df.config());
     })
     .def_property_readonly("timestamp", [](SOMADataFrame& soma_df) -> py::object {
