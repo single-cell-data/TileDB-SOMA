@@ -9,6 +9,7 @@ This module contains methods to generate SOMA artifacts starting from
 other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
 
+import json
 import math
 import time
 from typing import (
@@ -91,7 +92,6 @@ _UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
 
 _TILEDBSOMA_TYPE = "soma_tiledbsoma_type"
 _DATAFRAME_ORIGINAL_INDEX_NAME = "soma_dataframe_original_index_name"
-_DATAFRAME_ORIGINAL_INDEX_NAME_IS_NONE = "soma_original_index_name_is_python_None"
 
 
 # ----------------------------------------------------------------
@@ -1295,13 +1295,9 @@ def _write_dataframe_impl(
 
     _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
 
-    # Save the original index name for outgest
-    if original_index_name is None:
-        soma_df.metadata[
-            _DATAFRAME_ORIGINAL_INDEX_NAME
-        ] = _DATAFRAME_ORIGINAL_INDEX_NAME_IS_NONE
-    else:
-        soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME] = original_index_name
+    # Save the original index name for outgest. We use JSON for elegant indication of index name
+    # being None (in Python anyway).
+    soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME] = json.dumps(original_index_name)
 
     logging.log_io(
         f"Wrote   {soma_df.uri}",
@@ -2847,22 +2843,22 @@ def to_anndata(
     # * Else use the default/fallback name.
 
     if obs_id_name is None:
+        # Restore the original index name for outgest. We use JSON for elegant indication of index
+        # name being None (in Python anyway).
         if _DATAFRAME_ORIGINAL_INDEX_NAME in experiment.obs.metadata:
-            if (
+            # Maybe 'null' which maps to Pyhton None
+            obs_id_name = json.loads(
                 experiment.obs.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
-                != _DATAFRAME_ORIGINAL_INDEX_NAME_IS_NONE
-            ):
-                obs_id_name = experiment.obs.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
+            )
         else:
             obs_id_name = "obs_id"
 
     if var_id_name is None:
         if _DATAFRAME_ORIGINAL_INDEX_NAME in measurement.var.metadata:
-            if (
+            # Maybe 'null' which maps to Pyhton None
+            var_id_name = json.loads(
                 measurement.var.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
-                != _DATAFRAME_ORIGINAL_INDEX_NAME_IS_NONE
-            ):
-                var_id_name = measurement.var.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
+            )
         else:
             var_id_name = "var_id"
 

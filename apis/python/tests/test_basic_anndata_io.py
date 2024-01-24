@@ -1,3 +1,4 @@
+import json
 import pathlib
 import tempfile
 from pathlib import Path
@@ -1023,6 +1024,9 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
     nvar = 100
     xocc = 0.3
     measurement_name = "meas"
+
+    # White-box-test this, which we leverage inside tiledbsoma.io
+    assert json.loads("null") is None
 
     obs_ids = ["cell_%08d" % (i) for i in range(nobs)]
     var_ids = ["gene_%08d" % (j) for j in range(nvar)]
