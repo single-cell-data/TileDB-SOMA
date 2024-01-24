@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 
+from tiledbsoma._index_util import build_index
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
-from tiledbsoma.utils import build_index
 
 
 def indexer_test(keys: np.array, lookups: np.array, fail: bool):
