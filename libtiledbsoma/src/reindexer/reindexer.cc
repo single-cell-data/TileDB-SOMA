@@ -111,6 +111,9 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, int size) {
     std::vector<tiledbsoma::ThreadPool::Task> tasks;
 
     size_t thread_chunk_size = size / tiledb_thread_pool_->concurrency_level();
+    if (thread_chunk_size == 0) {
+        thread_chunk_size = 1;
+    }
 
     for (size_t i = 0; i < size_t(size); i += thread_chunk_size) {
         size_t start = i;
