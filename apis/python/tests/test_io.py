@@ -128,3 +128,46 @@ def test_io_create_from_matrix_Sparse_nd_array(
 
         # fast equality check using __ne__
         assert (sp.csr_matrix(src_matrix) != read_back).nnz == 0
+
+
+@pytest.mark.parametrize(
+    "num_rows",
+    [0, 1, 2, 3, 4, 10, 100, 1_000, 10_000],
+)
+@pytest.mark.parametrize(
+    "cap_nbytes",
+    [1, 100, 1_000, 10_000],
+)
+def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
+    """
+    Additional focus-testing for tiledbsoma.io._write_arrow_table
+    """
+
+    schema = pa.schema(
+        [
+            ("foo", pa.int32()),
+            ("bar", pa.float64()),
+        ]
+    )
+
+    pydict = {}
+    pydict["soma_joinid"] = list(range(num_rows))
+    pydict["foo"] = [(e + 1) * 10 for e in range(num_rows)]
+    pydict["bar"] = [(e + 1) / 25 for e in range(num_rows)]
+
+    opt = soma.TileDBCreateOptions(remote_cap_nbytes=cap_nbytes)
+    uri = tmp_path.as_posix()
+    expect_error = cap_nbytes == 1 and num_rows > 0  # Not enough room for even one row
+
+    with soma.DataFrame.create(uri, schema=schema) as sdf:
+        table = pa.Table.from_pydict(pydict)
+        if expect_error:
+            with pytest.raises(soma.SOMAError):
+                somaio.ingest._write_arrow_table(table, sdf, opt)
+        else:
+            somaio.ingest._write_arrow_table(table, sdf, opt)
+
+    if not expect_error:
+        with soma.DataFrame.open(uri) as sdf:
+            pdf = sdf.read().concat().to_pandas()
+            assert list(pdf["foo"]) == pydict["foo"]
