@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from tiledbsoma import pytiledbsoma as clib
 from tiledbsoma._index_util import build_index
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -181,3 +182,50 @@ test_data = [
 def test_indexer():
     for data in test_data:
         indexer_test(data["keys"], data["lookups"], not data["pass"])
+
+
+def test_indexer_workload_allocation():
+    reindexer = clib.IntIndexer()
+    keys = np.arange(0, 10000, dtype=np.int64)
+    reindexer.map_locations(keys, 64)
+    ids = np.array(
+        [
+            525,
+            1293,
+            1805,
+            5802,
+            7636,
+            7754,
+            7791,
+            7957,
+            7959,
+            8067,
+            8340,
+            8736,
+            8806,
+            9329,
+            9377,
+            9653,
+        ],
+        dtype=np.int64,
+    )
+
+    ret = reindexer.get_indexer(ids)  # Checking for a hang
+    assert list(ret) == [
+        525,
+        1293,
+        1805,
+        5802,
+        7636,
+        7754,
+        7791,
+        7957,
+        7959,
+        8067,
+        8340,
+        8736,
+        8806,
+        9329,
+        9377,
+        9653,
+    ]
