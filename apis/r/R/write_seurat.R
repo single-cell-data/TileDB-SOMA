@@ -669,6 +669,14 @@ write_soma.SeuratCommand <- function(
   spdl::info("Encoding parameters in the command log")
   xlist <- as.list(x, complete = TRUE)
   for (i in names(xlist)) {
+    # Timestamp -> JSON defaults to:
+    # - timestamp -> string
+    # - string -> JSON
+    # which is lossy. Instead, do
+    # - timestamp -> numeric
+    # - numeric -> hex double precision (`sprintf("%a")`)
+    # - hex double precision -> JSON
+    # for lossless timestamp encoding in JSON
     if (i == 'time.stamp') {
       ts <- sapply(
         unclass(as.POSIXlt(
@@ -681,6 +689,7 @@ write_soma.SeuratCommand <- function(
       )
       xlist[[i]] <- as.character(jsonlite::toJSON(ts, auto_unbox = TRUE))
     }
+    # Encode numerics/doubles as hex double precision for lossless encoding
     xlist[[i]] <- .encode_as_char(xlist[[i]])
   }
 
