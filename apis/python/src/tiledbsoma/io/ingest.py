@@ -1165,6 +1165,30 @@ def _extract_new_values_for_append(
         return arrow_table
 
 
+def _write_arrow_table(
+    arrow_table: pa.Table,
+    handle: Union[DataFrame, SparseNDArray],
+    tiledb_create_options: TileDBCreateOptions,
+) -> None:
+    """Handles num-bytes capacity for remote object stores."""
+    cap = tiledb_create_options.remote_cap_nbytes
+    if arrow_table.nbytes > cap:
+        n = len(arrow_table)
+        if n < 2:
+            raise SOMAError(
+                "single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}"
+            )
+        m = n // 2
+        _write_arrow_table(arrow_table[:m], handle, tiledb_create_options)
+        _write_arrow_table(arrow_table[m:], handle, tiledb_create_options)
+    else:
+        logging.log_io(
+            None,
+            f"Write Arrow table num_rows={len(arrow_table)} num_bytes={arrow_table.nbytes} cap={cap}",
+        )
+        handle.write(arrow_table)
+
+
 def _write_dataframe(
     df_uri: str,
     df: pd.DataFrame,
@@ -1252,7 +1276,10 @@ def _write_dataframe_impl(
         )
         return soma_df
 
-    soma_df.write(arrow_table)
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+
+    _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
+
     logging.log_io(
         f"Wrote   {soma_df.uri}",
         _util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
@@ -1719,10 +1746,40 @@ def _write_matrix_to_denseNDArray(
 
     # OR, write in chunks
     eta_tracker = eta.Tracker()
-    nrow, ncol = matrix.shape
+    if matrix.ndim == 2:
+        nrow, ncol = matrix.shape
+    elif matrix.ndim == 1:
+        nrow = matrix.shape[0]
+        ncol = 1
+    else:
+        raise ValueError(
+            f"only 1D or 2D dense arrays are supported here; got {matrix.ndim}"
+        )
+
+    # Number of rows to chunk by. These are dense writes, so this is loop-invariant.
+    # * The goal_chunk_nnz is an older parameter. It's still important, as for backed AnnData,
+    #   it controls how much is read into client RAM from the backing store on each chunk.
+    # * The remote_cap_nbytes is an older parameter.
+    # * Compute chunk sizes for both and take the minimum.
+    chunk_size_using_nnz = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
+
+    try:
+        # not scipy csr/csc
+        itemsize = matrix.itemsize
+    except AttributeError:
+        # scipy csr/csc
+        itemsize = matrix.data.itemsize
+
+    total_nbytes = matrix.size * itemsize
+    nbytes_num_chunks = math.ceil(
+        total_nbytes / tiledb_create_options.remote_cap_nbytes
+    )
+    nbytes_num_chunks = min(1, nbytes_num_chunks)
+    chunk_size_using_nbytes = math.floor(nrow / nbytes_num_chunks)
+
+    chunk_size = min(chunk_size_using_nnz, chunk_size_using_nbytes)
+
     i = 0
-    # Number of rows to chunk by. Dense writes, so this is a constant.
-    chunk_size = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
     while i < nrow:
         t1 = time.time()
         i2 = i + chunk_size
@@ -1735,7 +1792,10 @@ def _write_matrix_to_denseNDArray(
             % (i, i2 - 1, nrow, chunk_percent),
         )
 
-        chunk = matrix[i:i2, :]
+        if matrix.ndim == 2:
+            chunk = matrix[i:i2, :]
+        else:
+            chunk = matrix[i:i2]
 
         if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
             chunk_bounds = matrix_bounds
@@ -1757,7 +1817,10 @@ def _write_matrix_to_denseNDArray(
             tensor = pa.Tensor.from_numpy(chunk)
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
-        soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+        if matrix.ndim == 2:
+            soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+        else:
+            soma_ndarray.write((slice(i, i2),), tensor)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -1971,6 +2034,11 @@ def _find_sparse_chunk_size_backed(
     extent = int(matrix.shape[axis])
 
     # Initial guess of chunk size.
+    #
+    # The goal_chunk_nnz is important, as for backed AnnData, it controls how much is read into
+    # client RAM from the backing store on each chunk. We also subdivide chunks by
+    # remote_cap_nbytes, if necessary, within _write_arrow_table in order to accommodate remote
+    # object stores, which is a different ceiling.
     chunk_size = max(1, int(math.floor(goal_chunk_nnz / mean_nnz)))
     if chunk_size > extent:
         chunk_size = extent
@@ -2231,9 +2299,10 @@ def _write_matrix_to_sparseNDArray(
             ),
         )
 
-        soma_ndarray.write(
-            _coo_to_table(chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i)
+        arrow_table = _coo_to_table(
+            chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i
         )
+        _write_arrow_table(arrow_table, soma_ndarray, tiledb_create_options)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -2634,11 +2703,17 @@ def _ingest_uns_ndarray(
 
     with soma_arr:
         _maybe_set(coll, key, soma_arr, use_relative_uri=use_relative_uri)
-        soma_arr.write(
-            (),
-            pa.Tensor.from_numpy(value),
-            platform_config=platform_config,
+
+        _write_matrix_to_denseNDArray(
+            soma_arr,
+            value,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            context=context,
+            ingestion_params=ingestion_params,
         )
+
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
     logging.log_io(msg, msg)
 
