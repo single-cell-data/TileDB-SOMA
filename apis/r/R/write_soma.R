@@ -221,7 +221,15 @@ write_soma.data.frame <- function(
   sdf$write(tbl)
   # Add to `soma_parent`
   if (is.character(key)) {
-    soma_parent$set(sdf, name = key, relative = relative)
+    soma_parent$set(
+      sdf,
+      name = key,
+      relative = ifelse(
+        startsWith(x = sdf$uri, 'tiledb://'),
+        yes = FALSE,
+        no = relative
+      )
+    )
   }
   # Return
   return(sdf)
