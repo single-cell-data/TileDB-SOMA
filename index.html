@@ -34,7 +34,7 @@
     
     <a class="navbar-brand me-2" href="index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.6.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.7.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,7 +95,7 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'tiledbsoma'</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'https://tiledb-inc.r-universe.dev'</span>,</span>
 <span>                                         <span class="st">'https://cloud.r-project.org'</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Installing from source on Unix-like platforms requires <code>cmake</code> and <code>git</code>.</p>
+<p>Installing from source on Unix-like platforms requires <code>cmake</code>, <code>git</code>, and a recent-enough C++ compiler (<code>g++</code> version 10.* or above).</p>
 <p>Alternatively, tiledbsoma can be installed directly from <a href="https://anaconda.org/tiledb/r-tiledbsoma" class="external-link">Conda</a>, which serves binaries for multiple architectures.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1"></a><span class="ex">mamba</span> install -c conda-forge -c tiledb r-tiledbsoma</span></code></pre></div>
 <p><em>Note, we’re using <code>mamba</code> here as a drop-in replacement for <code>conda</code> to accelerate the install process.</em></p>
