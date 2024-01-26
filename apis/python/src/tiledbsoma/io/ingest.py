@@ -9,6 +9,7 @@ This module contains methods to generate SOMA artifacts starting from
 other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
 
+import json
 import math
 import time
 from typing import (
@@ -88,6 +89,9 @@ _UNS_OUTGEST_HINT_1D = "array_1d"
 _UNS_OUTGEST_HINT_2D = "array_2d"
 _UNS_OUTGEST_COLUMN_NAME_1D = "values"
 _UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
+
+_TILEDBSOMA_TYPE = "soma_tiledbsoma_type"
+_DATAFRAME_ORIGINAL_INDEX_NAME_JSON = "soma_dataframe_original_index_name"
 
 
 # ----------------------------------------------------------------
@@ -280,7 +284,8 @@ def from_h5ad(
         this column exists in the input data, as a named index or a non-index column name, it will
         be used. If this column doesn't exist in the input data, and if the index is nameless or
         named ``index``, that index will be given this name when written to the SOMA experiment's
-        ``obs`` / ``var``.
+        ``obs`` / ``var``. NOTE: it is not necessary for this column to be the index-column
+        name in the input AnnData objects ``obs``/``var``.
 
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
 
@@ -742,7 +747,7 @@ def from_anndata(
                         with _write_dataframe(
                             _util.uri_joinpath(raw_uri, "var"),
                             conversions.decategoricalize_obs_or_var(anndata.raw.var),
-                            id_column_name="var_id",
+                            id_column_name=var_id_name,
                             ingestion_params=ingestion_params,
                             platform_config=platform_config,
                             context=context,
@@ -907,7 +912,7 @@ def append_var(
     with _write_dataframe(
         sdf.uri,
         conversions.decategoricalize_obs_or_var(new_var),
-        id_column_name="var_id",
+        id_column_name=var_id_name,
         platform_config=platform_config,
         context=context,
         ingestion_params=ingestion_params,
@@ -1199,6 +1204,14 @@ def _write_dataframe(
     context: Optional[SOMATileDBContext] = None,
     axis_mapping: AxisIDMapping,
 ) -> DataFrame:
+    # The id_column_name is for disambiguating rows in append mode;
+    # it may or may not be an index name in the input AnnData obs/var.
+    #
+    # The original_index_name is the index name in the AnnData obs/var.
+    original_index_name = None
+    if df.index is not None and df.index.name is not None and df.index.name != "index":
+        original_index_name = df.index.name
+
     df.reset_index(inplace=True)
     if id_column_name is not None:
         if id_column_name in df:
@@ -1216,6 +1229,7 @@ def _write_dataframe(
         df_uri,
         id_column_name,
         ingestion_params=ingestion_params,
+        original_index_name=original_index_name,
         platform_config=platform_config,
         context=context,
     )
@@ -1227,6 +1241,7 @@ def _write_dataframe_impl(
     id_column_name: Optional[str],
     *,
     ingestion_params: IngestionParams,
+    original_index_name: Optional[str] = None,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
 ) -> DataFrame:
@@ -1279,6 +1294,12 @@ def _write_dataframe_impl(
     tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
 
     _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
+
+    # Save the original index name for outgest. We use JSON for elegant indication of index name
+    # being None (in Python anyway).
+    soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(
+        original_index_name
+    )
 
     logging.log_io(
         f"Wrote   {soma_df.uri}",
@@ -2418,7 +2439,7 @@ def _ingest_uns_dict(
         context=context,
     ) as coll:
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
-        coll.metadata["soma_tiledbsoma_type"] = "uns"
+        coll.metadata[_TILEDBSOMA_TYPE] = "uns"
         for key, value in dct.items():
             if level == 0 and uns_keys is not None and key not in uns_keys:
                 continue
@@ -2725,13 +2746,17 @@ def to_h5ad(
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
-    obs_id_name: str = "obs_id",
-    var_id_name: str = "var_id",
+    obs_id_name: Optional[str] = None,
+    var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
     uns_keys: Optional[Sequence[str]] = None,
 ) -> None:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
-    format and writes it to the specified ``.h5ad`` file. Arguments are as in ``to_anndata``.
+    format and writes it to the specified ``.h5ad`` file.
+
+    Arguments are as in ``to_anndata``.
+
+    TO DO: doc more params
 
     Lifecycle:
         Experimental.
@@ -2767,8 +2792,8 @@ def to_anndata(
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
-    obs_id_name: str = "obs_id",
-    var_id_name: str = "var_id",
+    obs_id_name: Optional[str] = None,
+    var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
     uns_keys: Optional[Sequence[str]] = None,
 ) -> ad.AnnData:
@@ -2780,6 +2805,17 @@ def to_anndata(
     * ``obs``,``var`` as ``pandas.dataframe``
     * ``obsm``,``varm`` arrays as ``numpy.ndarray``
     * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
+
+    The ``X_layer_name`` is the name of the TileDB-SOMA measurement's
+    ``X`` collection which will be outgested to the resulting AnnData object's
+    ``adata.X``.
+
+    The ``obs_id_name`` and ``var_id_name`` are columns within the TileDB-SOMA
+    experiment which will become index names within the resulting AnnData
+    object's ``obs``/``var`` dataframes. If not specified as arguments, the
+    TileDB-SOMA's dataframes will be checked for an original-index-name key.
+    When that also is unavailable, these default to ``"obs_id"`` and
+    ``"var_id"``, respectively.
 
     The ``obsm_varm_width_hints`` is optional. If provided, it should be of the form
     ``{"obsm":{"X_tSNE":2}}`` to aid with export errors.
@@ -2801,21 +2837,60 @@ def to_anndata(
         )
     measurement = experiment.ms[measurement_name]
 
+    # How to choose index name for AnnData obs and var dataframes:
+    # * If the desired names are passed in, use them.
+    # * Else if the names used at ingest time are available, use them.
+    # * Else use the default/fallback name.
+
+    # Restore the original index name for outgest. We use JSON for elegant indication of index
+    # name being None (in Python anyway). It may be 'null' which maps to Pyhton None.
+    obs_id_name = obs_id_name or json.loads(
+        experiment.obs.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, '"obs_id"')
+    )
+    var_id_name = var_id_name or json.loads(
+        measurement.var.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, '"var_id"')
+    )
+
     obs_df = experiment.obs.read().concat().to_pandas()
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    if obs_id_name not in obs_df.keys():
-        raise ValueError(
-            f"requested obs IDs column name {obs_id_name} not found in input: {obs_df.keys()}"
-        )
-    obs_df.set_index(obs_id_name, inplace=True)
+    if obs_id_name is not None:
+        if obs_id_name not in obs_df.keys():
+            raise ValueError(
+                f"requested obs IDs column name {obs_id_name} not found in input: {obs_df.keys()}"
+            )
+        obs_df.set_index(obs_id_name, inplace=True)
+    else:
+        # There are multiple cases to be handled here, all tested in CI.
+        # This else-block handle this one:
+        #
+        #                 orig.ident  nCount_RNA  ...
+        # ATGCCAGAACGACT           0        70.0  ...
+        # CATGGCCTGTGCAT           0        85.0  ...
+        # GAACCTGATGAACC           0        87.0  ...
+        #
+        # Namely:
+        # * The input AnnData dataframe had an index with no name
+        # * In the SOMA experiment we name that column "obs_id" and our index is "soma_joinid"
+        # * On outgest we drop "soma_joinid"
+        # * The thing we named "obs_id" needs to become the index again ...
+        # * ... and it needs to be nameless.
+        if "obs_id" in obs_df:
+            obs_df.set_index("obs_id", inplace=True)
+            obs_df.index.name = None
 
     var_df = measurement.var.read().concat().to_pandas()
+
     var_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    if var_id_name not in var_df.keys():
-        raise ValueError(
-            f"requested var IDs column name {var_id_name} not found in input: {var_df.keys()}"
-        )
-    var_df.set_index(var_id_name, inplace=True)
+    if var_id_name is not None:
+        if var_id_name not in var_df.keys():
+            raise ValueError(
+                f"requested var IDs column name {var_id_name} not found in input: {var_df.keys()}"
+            )
+        var_df.set_index(var_id_name, inplace=True)
+    else:
+        if "var_id" in var_df:
+            var_df.set_index("var_id", inplace=True)
+            var_df.index.name = None
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
