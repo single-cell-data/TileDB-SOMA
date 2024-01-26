@@ -116,9 +116,11 @@ class FileBasedProfileDB(ProfileDB):
     def add(self, data: ProfileData) -> str:
         key = _command_key(data.command)
         os.makedirs(f"{self.path}/{key}", exist_ok=True)
-        with open(f"{self.path}/{key}/command.txt", "w") as f:
-            f.write(data.command.strip())
+        filename = f"{self.path}/{key}/command.txt"
 
+        if not os.path.exists(filename):
+            with open(filename, "w") as f:
+                f.write(data.command.strip())
         key2 = data.timestamp
 
         filename = f"{self.path}/{key}/{key2}.json"
