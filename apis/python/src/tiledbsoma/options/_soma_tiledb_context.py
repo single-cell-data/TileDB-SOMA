@@ -11,12 +11,12 @@ from concurrent import futures
 from typing import Any, Dict, Mapping, Optional, Union
 
 import tiledb
+from somacore import ContextBase
 from typing_extensions import Self
 
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
-from somacore import ContextBase
 
 def _default_config(
     override: Mapping[str, Union[str, float]]
@@ -136,7 +136,7 @@ class SOMATileDBContext(ContextBase):
         """The TileDB context to use, either provided or lazily constructed."""
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
 
-        self._threadpool = threadpool or futures.ThreadPoolExecutor()
+        self.threadpool = threadpool or futures.ThreadPoolExecutor()
         """User specified threadpool. If None, we'll instantiate one ourselves."""
 
     @property
@@ -249,7 +249,7 @@ class SOMATileDBContext(ContextBase):
                 timestamp = self._timestamp_ms
             if threadpool is _SENTINEL:
                 # Keep the existing threadpool if not overridden.
-                threadpool = self._threadpool
+                threadpool = self.threadpool
         return type(self)(
             tiledb_config=tiledb_config,
             tiledb_ctx=tiledb_ctx,

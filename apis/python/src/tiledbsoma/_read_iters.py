@@ -101,7 +101,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         # Assign a thread pool from the context, or create a new one if no context
         # is available
         if context is not None:
-            self._threadpool = context._threadpool
+            self._threadpool = context.threadpool
         else:
             self._threadpool = futures.ThreadPoolExecutor()
 

@@ -1713,7 +1713,7 @@ def test_blockwise_scipy_reindex_disable_major_dim(
 def test_blockwise_iterator_uses_thread_pool_from_context(
     a_random_sparse_nd_array: str, shape: Tuple[int, ...]
 ) -> None:
-    pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=4))
+    pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=2))
     pool.submit.assert_not_called()
 
     context = SOMATileDBContext(threadpool=pool)
