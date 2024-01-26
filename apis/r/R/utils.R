@@ -62,6 +62,14 @@ uns_hint <- function(type = c('1d', '2d')) {
   return(hint)
 }
 
+.encode_as_char <- function(x) {
+  return(switch(
+    EXPR = typeof(x),
+    double = sprintf('%a', x),
+    x
+  ))
+}
+
 #' Pad Names of a Character Vector
 #'
 #' Fill in missing names of a vector using missing values of said vector
