@@ -91,7 +91,7 @@ _UNS_OUTGEST_COLUMN_NAME_1D = "values"
 _UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
 
 _TILEDBSOMA_TYPE = "soma_tiledbsoma_type"
-_DATAFRAME_ORIGINAL_INDEX_NAME = "soma_dataframe_original_index_name"
+_DATAFRAME_ORIGINAL_INDEX_NAME_JSON = "soma_dataframe_original_index_name"
 
 
 # ----------------------------------------------------------------
@@ -1297,7 +1297,9 @@ def _write_dataframe_impl(
 
     # Save the original index name for outgest. We use JSON for elegant indication of index name
     # being None (in Python anyway).
-    soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME] = json.dumps(original_index_name)
+    soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(
+        original_index_name
+    )
 
     logging.log_io(
         f"Wrote   {soma_df.uri}",
@@ -2840,25 +2842,14 @@ def to_anndata(
     # * Else if the names used at ingest time are available, use them.
     # * Else use the default/fallback name.
 
-    if obs_id_name is None:
-        # Restore the original index name for outgest. We use JSON for elegant indication of index
-        # name being None (in Python anyway).
-        if _DATAFRAME_ORIGINAL_INDEX_NAME in experiment.obs.metadata:
-            # Maybe 'null' which maps to Pyhton None
-            obs_id_name = json.loads(
-                experiment.obs.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
-            )
-        else:
-            obs_id_name = "obs_id"
-
-    if var_id_name is None:
-        if _DATAFRAME_ORIGINAL_INDEX_NAME in measurement.var.metadata:
-            # Maybe 'null' which maps to Pyhton None
-            var_id_name = json.loads(
-                measurement.var.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME]
-            )
-        else:
-            var_id_name = "var_id"
+    # Restore the original index name for outgest. We use JSON for elegant indication of index
+    # name being None (in Python anyway). It may be 'null' which maps to Pyhton None.
+    obs_id_name = obs_id_name or json.loads(
+        experiment.obs.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, '"obs_id"')
+    )
+    var_id_name = var_id_name or json.loads(
+        measurement.var.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, '"var_id"')
+    )
 
     obs_df = experiment.obs.read().concat().to_pandas()
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
