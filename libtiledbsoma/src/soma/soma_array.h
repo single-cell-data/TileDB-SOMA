@@ -186,6 +186,13 @@ class SOMAArray {
      */
     std::shared_ptr<Context> ctx();
 
+    /**
+     * Get the Config associated with the SOMAArray.
+     *
+     * @return std::map<std::string, std::string>
+     */
+    std::map<std::string, std::string> config();
+
     std::optional<std::string> soma_object_type() {
         auto soma_object_type = this->get_metadata("soma_object_type");
 
@@ -695,6 +702,9 @@ class SOMAArray {
 
     // TileDB context
     std::shared_ptr<Context> ctx_;
+
+    // Config as a map
+    std::map<std::string, std::string> config_;
 
     // SOMAArray URI
     std::string uri_;

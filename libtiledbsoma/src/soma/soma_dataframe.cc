@@ -148,6 +148,10 @@ std::shared_ptr<Context> SOMADataFrame::ctx() {
     return array_->ctx();
 }
 
+std::map<std::string, std::string> SOMADataFrame::config() {
+    return array_->config();
+}
+
 std::unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
     return array_->arrow_schema();
 }

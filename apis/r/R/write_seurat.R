@@ -387,7 +387,7 @@ write_soma.Graph <- function(
   return(invisible(soma_parent))
 }
 
-#' Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA, returned opened for write
+#' Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
 #'
 #' @inheritParams write_soma
 #' @param x A \code{\link[SeuratObject]{Seurat}} object
@@ -414,13 +414,14 @@ write_soma.Seurat <- function(
   check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
-      is_scalar_character(uri)
+      (is_scalar_character(uri) && nzchar(uri))
   )
   experiment <- SOMAExperimentCreate(
     uri = uri,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
+  on.exit(experiment$close(), add = TRUE)
 
   # Write cell-level meta data (obs)
   spdl::info("Adding cell-level meta data")
@@ -577,6 +578,139 @@ write_soma.Seurat <- function(
       immediate. = TRUE
     )
   }
-  experiment$close()
+
+  # Add extra Seurat data
+  experiment$add_new_collection(
+    object = SOMACollectionCreate(
+      uri = file_path(experiment$uri, 'uns'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    ),
+    key = 'uns'
+  )
+
+  # Write command logs
+  for (cmd in SeuratObject::Command(x)) {
+    spdl::info("Adding command log {}", sQuote(cmd))
+    write_soma(
+      x = x[[cmd]],
+      uri = cmd,
+      soma_parent = experiment$get('uns'),
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+  }
+
   return(experiment$uri)
+}
+
+#' @rdname write_soma_seurat_sub
+#'
+#' @section Writing \code{\link[SeuratObject]{SeuratCommand}s}:
+#' \pkg{Seurat} \link[SeuratObject:SeuratCommand]{command logs} are written out
+#' as \link[tiledbsoma:SOMADataFrame]{data frames} to the
+#' \dQuote{\code{seurat_commands}} group of a
+#' \link[tiledbsoma:SOMACollection]{collection}
+#'
+#' @method write_soma SeuratCommand
+#' @export
+#'
+write_soma.SeuratCommand <- function(
+  x,
+  uri = NULL,
+  soma_parent,
+  ...,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+  check_package('jsonlite')
+  stopifnot(
+    "'uri' must be a single character value" = is.null(uri) ||
+      (is_scalar_character(uri) && nzchar(uri)),
+    "'soma_parent' must be a SOMACollection" = inherits(soma_parent, what = 'SOMACollection'),
+    "'relative' must be a single logical value" = is_scalar_logical(relative)
+  )
+
+  key <- 'seurat_commands'
+  uri <- uri %||% methods::slot(x, name = 'name')
+
+  # Create a group for command logs
+  logs <- if (!key %in% soma_parent$names()) {
+    spdl::info("Creating a group for command logs")
+    logs_uri <- .check_soma_uri(key, soma_parent = soma_parent, relative = relative)
+    logs <- SOMACollectionCreate(
+      uri = logs_uri,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+    soma_parent$add_new_collection(logs, key)
+    logs
+  } else {
+    logs <- soma_parent$get(key)
+    if (!inherits(logs, 'SOMACollection')) {
+      stop(
+        "Existing ",
+        class(logs)[1L],
+        " named ",
+        sQuote(key),
+        " found, expected a SOMACollection",
+        call. = FALSE
+      )
+    }
+    spdl::info("Found existing group for command logs")
+    logs$open("WRITE", internal_use_only = "allowed_use")
+    logs
+  }
+  on.exit(logs$close(), add = TRUE)
+
+  # Encode parameters
+  spdl::info("Encoding parameters in the command log")
+  xlist <- as.list(x, complete = TRUE)
+  for (i in names(xlist)) {
+    # Timestamp -> JSON defaults to:
+    # - timestamp -> string
+    # - string -> JSON
+    # which is lossy. Instead, do
+    # - timestamp -> numeric
+    # - numeric -> hex double precision (`sprintf("%a")`)
+    # - hex double precision -> JSON
+    # for lossless timestamp encoding in JSON
+    if (i == 'time.stamp') {
+      ts <- sapply(
+        unclass(as.POSIXlt(
+          xlist[[i]],
+          tz = attr(xlist[[i]], 'tzone', exact = TRUE) %||% Sys.timezone()
+        )),
+        .encode_as_char,
+        simplify = FALSE,
+        USE.NAMES = TRUE
+      )
+      xlist[[i]] <- as.character(jsonlite::toJSON(ts, auto_unbox = TRUE))
+    }
+    # Encode numerics/doubles as hex double precision for lossless encoding
+    xlist[[i]] <- .encode_as_char(xlist[[i]])
+  }
+
+  # Encode as JSON
+  spdl::info("Encoding command log as JSON")
+  enc <- as.character(jsonlite::toJSON(
+    xlist,
+    null = 'null',
+    auto_unbox = TRUE
+  ))
+
+  # Write out and return
+  sdf <- write_soma(
+    x = enc,
+    uri = uri,
+    soma_parent = logs,
+    key = basename(uri),
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    relative = relative
+  )
+
+  return(invisible(soma_parent))
 }

@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 
+from tiledbsoma._index_util import build_index
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
-from tiledbsoma.utils import build_index
 
 
 def indexer_test(keys: np.array, lookups: np.array, fail: bool):
@@ -171,8 +171,30 @@ test_data = [
         "pass": True,
     },
     {
-        "keys": [1, 2, 3, 4, 5, 2**63 - 1],
-        "lookups": [i for i in range(2**63 - 1000, 2**63 - 1)],
+        "keys": [i for i in range(1, 10000)],
+        "lookups": [
+            525,
+            1293,
+            1805,
+            5802,
+            7636,
+            7754,
+            7791,
+            7957,
+            7959,
+            8067,
+            8340,
+            8736,
+            8806,
+            9329,
+            9377,
+            9653,
+        ],
+        "pass": True,
+    },
+    {
+        "keys": [i for i in range(1, 10000)],
+        "lookups": [i for i in range(1, 10000)],
         "pass": True,
     },
 ]
