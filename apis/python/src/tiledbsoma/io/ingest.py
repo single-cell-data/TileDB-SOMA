@@ -2822,8 +2822,6 @@ def to_anndata(
     are extracted.  The default is to extract them all.  Use ``uns_keys=[]``
     to not ingest any ``uns`` keys.
 
-    TO DO: doc more params
-
     Lifecycle:
         Experimental.
     """
