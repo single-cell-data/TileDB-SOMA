@@ -10,8 +10,7 @@ if ( ! dir.exists("inst/") ) {
 }
 
 makeUrl <- function(arch, ver=tiledb_core_version, sha1=tiledb_core_sha1) {
--    sprintf("https://github.com/TileDB-Inc/TileDB/releases/download/%s/tiledb-%s-%s-%s.tar.gz", ver, arch, ver, sha1)
-    sprintf("https://github.com/TileDB-Inc/TileDB/releases/download/2.19.1/tiledb-2.19.1-2.19.1-2.19.1.tar.gz", ver, arch, ver, sha1)
+    sprintf("https://github.com/TileDB-Inc/TileDB/releases/download/%s/tiledb-%s-%s-%s.tar.gz", ver, arch, ver, sha1)
 }
 
 isMac <- Sys.info()["sysname"] == "Darwin"
