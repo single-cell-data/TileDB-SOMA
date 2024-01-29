@@ -115,6 +115,7 @@ from ._general_utilities import (
     get_storage_engine,
     show_package_versions,
 )
+from ._index_util import build_index
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
 from .options import SOMATileDBContext, TileDBCreateOptions
@@ -130,6 +131,8 @@ __version__ = get_implementation_version()
 __all__ = [
     "AxisColumnNames",
     "AxisQuery",
+    "build_index",
+    "build_index_tiledb_context",
     "Collection",
     "DataFrame",
     "DenseNDArray",
