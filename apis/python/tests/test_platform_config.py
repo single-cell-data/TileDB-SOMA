@@ -25,8 +25,18 @@ def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
 
+def _anndata_dataframe_unmodified(old, new):
+    """Checks that we didn't mutate the object while ingesting"""
+    try:
+        return (old == new).all().all()
+    except ValueError:
+        # Can be thrown when columns don't match -- which is what we check for
+        return False
+
+
 def test_platform_config(adata):
     # Set up anndata input path and tiledb-group output path
+    original = adata.copy()
     with tempfile.TemporaryDirectory() as output_path:
         # Ingest
         tiledbsoma.io.from_anndata(
@@ -53,6 +63,8 @@ def test_platform_config(adata):
                 }
             },
         )
+        assert _anndata_dataframe_unmodified(original.obs, adata.obs)
+        assert _anndata_dataframe_unmodified(original.var, adata.var)
 
         with tiledbsoma.Experiment.open(output_path) as exp:
             x_data = exp.ms["RNA"].X["data"]
