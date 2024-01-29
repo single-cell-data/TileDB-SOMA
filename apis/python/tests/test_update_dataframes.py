@@ -9,6 +9,7 @@ import pytest
 
 import tiledbsoma
 import tiledbsoma.io
+from tiledbsoma._util import anndata_dataframe_unmodified
 
 HERE = Path(__file__).parent
 
@@ -26,23 +27,14 @@ def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
 
 
-def _anndata_dataframe_unmodified(old, new):
-    """Checks that we didn't mutate the object while ingesting"""
-    try:
-        return (old == new).all().all()
-    except ValueError:
-        # Can be thrown when columns don't match -- which is what we check for
-        return False
-
-
 @pytest.mark.parametrize("readback", [False, True])
 def test_no_change(adata, readback):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert _anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert _anndata_dataframe_unmodified(original.var, adata.var)
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o1 = exp.obs.schema
@@ -58,8 +50,8 @@ def test_no_change(adata, readback):
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         tiledbsoma.io.update_obs(exp, new_obs)
         tiledbsoma.io.update_var(exp, new_var, "RNA")
-    assert _anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert _anndata_dataframe_unmodified(original.var, adata.var)
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
@@ -75,8 +67,8 @@ def test_add(adata, readback):
     output_path = tempdir.name
     original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert _anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert _anndata_dataframe_unmodified(original.var, adata.var)
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         exp.ms["RNA"].var.schema
@@ -104,8 +96,8 @@ def test_add(adata, readback):
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         tiledbsoma.io.update_obs(exp, new_obs)
         tiledbsoma.io.update_var(exp, new_var, "RNA")
-    assert _anndata_dataframe_unmodified(new_obs, new_obs_save)
-    assert _anndata_dataframe_unmodified(new_var, new_var_save)
+    assert anndata_dataframe_unmodified(new_obs, new_obs_save)
+    assert anndata_dataframe_unmodified(new_var, new_var_save)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
@@ -128,8 +120,8 @@ def test_drop(adata, readback):
     output_path = tempdir.name
     original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert _anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert _anndata_dataframe_unmodified(original.var, adata.var)
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         exp.ms["RNA"].var.schema
@@ -149,8 +141,8 @@ def test_drop(adata, readback):
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         tiledbsoma.io.update_obs(exp, new_obs)
         tiledbsoma.io.update_var(exp, new_var, "RNA")
-    assert _anndata_dataframe_unmodified(new_obs, new_obs_save)
-    assert _anndata_dataframe_unmodified(new_var, new_var_save)
+    assert anndata_dataframe_unmodified(new_obs, new_obs_save)
+    assert anndata_dataframe_unmodified(new_var, new_var_save)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
@@ -168,8 +160,8 @@ def test_change(adata, readback):
     output_path = tempdir.name
     original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert _anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert _anndata_dataframe_unmodified(original.var, adata.var)
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o1 = exp.obs.schema
@@ -192,8 +184,8 @@ def test_change(adata, readback):
             tiledbsoma.io.update_obs(exp, new_obs)
         with pytest.raises(ValueError):
             tiledbsoma.io.update_var(exp, new_var, "RNA")
-    assert _anndata_dataframe_unmodified(new_obs, new_obs_save)
-    assert _anndata_dataframe_unmodified(new_var, new_var_save)
+    assert anndata_dataframe_unmodified(new_obs, new_obs_save)
+    assert anndata_dataframe_unmodified(new_var, new_var_save)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
@@ -211,8 +203,8 @@ def test_change_counts(adata, readback, shift_and_exc):
     output_path = tempdir.name
     original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert _anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert _anndata_dataframe_unmodified(original.var, adata.var)
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o1 = exp.obs.schema
@@ -251,8 +243,8 @@ def test_change_counts(adata, readback, shift_and_exc):
             tiledbsoma.io.update_obs(exp, new_obs)
             tiledbsoma.io.update_var(exp, new_var, measurement_name="RNA")
 
-        assert _anndata_dataframe_unmodified(new_obs, new_obs_save)
-        assert _anndata_dataframe_unmodified(new_var, new_var_save)
+        assert anndata_dataframe_unmodified(new_obs, new_obs_save)
+        assert anndata_dataframe_unmodified(new_var, new_var_save)
 
     else:
         with tiledbsoma.Experiment.open(output_path, "w") as exp:
@@ -261,8 +253,8 @@ def test_change_counts(adata, readback, shift_and_exc):
             with pytest.raises(exc):
                 tiledbsoma.io.update_var(exp, new_var, measurement_name="RNA")
 
-        assert _anndata_dataframe_unmodified(original.obs, adata.obs)
-        assert _anndata_dataframe_unmodified(original.var, adata.var)
+        assert anndata_dataframe_unmodified(original.obs, adata.obs)
+        assert anndata_dataframe_unmodified(original.var, adata.var)
 
         with tiledbsoma.Experiment.open(output_path) as exp:
             o2 = exp.obs.schema

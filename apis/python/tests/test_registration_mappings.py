@@ -12,15 +12,7 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io._registration as registration
-
-
-def _anndata_dataframe_unmodified(old, new):
-    """Checks that we didn't mutate the object while ingesting"""
-    try:
-        return (old == new).all().all()
-    except ValueError:
-        # Can be thrown when columns don't match -- which is what we check for
-        return False
+from tiledbsoma._util import anndata_dataframe_unmodified
 
 
 def _create_anndata(
@@ -755,8 +747,8 @@ def test_append_items_with_experiment(soma1, h5ad2):
             registration_mapping=rd,
         )
 
-    assert _anndata_dataframe_unmodified(original.obs, adata2.obs)
-    assert _anndata_dataframe_unmodified(original.var, adata2.var)
+    assert anndata_dataframe_unmodified(original.obs, adata2.obs)
+    assert anndata_dataframe_unmodified(original.var, adata2.var)
 
     expect_obs_soma_joinids = list(range(6))
     expect_var_soma_joinids = list(range(5))
@@ -858,8 +850,8 @@ def test_append_with_disjoint_measurements(
         registration_mapping=rd,
     )
 
-    assert _anndata_dataframe_unmodified(original.obs, anndata2.obs)
-    assert _anndata_dataframe_unmodified(original.var, anndata2.var)
+    assert anndata_dataframe_unmodified(original.obs, anndata2.obs)
+    assert anndata_dataframe_unmodified(original.var, anndata2.var)
 
     # exp/obs, use_same_cells=True:                       exp/obs, use_same_cells=False:
     #    soma_joinid obs_id cell_type  is_primary_data       soma_joinid obs_id cell_type  is_primary_data

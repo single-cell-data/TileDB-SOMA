@@ -8,6 +8,7 @@ import tiledb
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_options as tco
+from tiledbsoma._util import anndata_dataframe_unmodified
 
 HERE = Path(__file__).parent
 
@@ -23,15 +24,6 @@ def h5ad_file(request):
 @pytest.fixture
 def adata(h5ad_file):
     return anndata.read_h5ad(h5ad_file)
-
-
-def _anndata_dataframe_unmodified(old, new):
-    """Checks that we didn't mutate the object while ingesting"""
-    try:
-        return (old == new).all().all()
-    except ValueError:
-        # Can be thrown when columns don't match -- which is what we check for
-        return False
 
 
 def test_platform_config(adata):
@@ -63,8 +55,8 @@ def test_platform_config(adata):
                 }
             },
         )
-        assert _anndata_dataframe_unmodified(original.obs, adata.obs)
-        assert _anndata_dataframe_unmodified(original.var, adata.var)
+        assert anndata_dataframe_unmodified(original.obs, adata.obs)
+        assert anndata_dataframe_unmodified(original.var, adata.var)
 
         with tiledbsoma.Experiment.open(output_path) as exp:
             x_data = exp.ms["RNA"].X["data"]
