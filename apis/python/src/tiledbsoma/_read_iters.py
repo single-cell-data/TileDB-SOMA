@@ -24,7 +24,6 @@ from typing import (
 
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 import pyarrow as pa
 import somacore
 from scipy import sparse
@@ -36,6 +35,7 @@ import tiledbsoma.pytiledbsoma as clib
 
 from . import _util
 from ._exception import SOMAError
+from ._index_util import build_index
 from ._types import NTuple
 
 if TYPE_CHECKING:
@@ -124,7 +124,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         # build indexers, as needed
         self.axes_to_reindex = set(range(self.ndim)) - set(self.reindex_disable_on_axis)
         self.minor_axes_indexer = {
-            d: pd.Index(self.joinids[d].to_numpy())
+            d: build_index(self.joinids[d].to_numpy())
             for d in (self.axes_to_reindex - set((self.major_axis,)))
         }
 
@@ -240,9 +240,11 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
                 col = tbl.column(f"soma_dim_{d}")
                 if d in self.axes_to_reindex:
                     if d == self.major_axis:
-                        col = pd.Index(coords[self.major_axis]).get_indexer(col.to_numpy())  # type: ignore[no-untyped-call]
+                        col = build_index(coords[self.major_axis]).get_indexer(
+                            col.to_numpy()
+                        )
                     else:
-                        col = self.minor_axes_indexer[d].get_indexer(col.to_numpy())  # type: ignore[no-untyped-call]
+                        col = self.minor_axes_indexer[d].get_indexer(col.to_numpy())
                 pytbl[f"soma_dim_{d}"] = col
             pytbl["soma_data"] = tbl.column("soma_data")
             yield pa.Table.from_pydict(pytbl), coords
