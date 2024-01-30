@@ -13,7 +13,7 @@ from typing_extensions import Self
 
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
-from ._index_util import build_index
+from ._index_util import tiledbsoma_build_index
 from ._measurement import Measurement
 from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
@@ -94,5 +94,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
             measurement_name,
             obs_query=obs_query or query.AxisQuery(),
             var_query=var_query or query.AxisQuery(),
-            index_factory=functools.partial(build_index, context=self.context),
+            index_factory=functools.partial(
+                tiledbsoma_build_index, context=self.context
+            ),
         )
