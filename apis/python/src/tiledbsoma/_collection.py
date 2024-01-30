@@ -205,6 +205,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 linked to by absolute URI in the stored collection, or relative,
                 in which case the sub-collection will be linked to by relative URI.
                 The default is to use a relative URI generated based on the key.
+                Absolute example: ``uri="s3://mybucket/myexperiment/ms/RNA/newchild"``.
+                Relative example: ``uri="newchild"``.
             platform_config:
                 Platform configuration options to use when
                 creating this sub-collection. This is passed directly to
