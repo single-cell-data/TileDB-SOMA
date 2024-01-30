@@ -35,8 +35,9 @@ import tiledbsoma.pytiledbsoma as clib
 
 from . import _util
 from ._exception import SOMAError
-from ._index_util import build_index
+from ._index_util import tiledbsoma_build_index
 from ._types import NTuple
+from .options import SOMATileDBContext
 
 if TYPE_CHECKING:
     from . import SparseNDArray
@@ -88,6 +89,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
         eager: bool = True,
         eager_iterator_pool: Optional[ThreadPoolExecutor] = None,
+        context: Optional[SOMATileDBContext] = None,
     ):
         super().__init__()
 
@@ -96,6 +98,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.sr = sr
         self.eager = eager
         self.eager_iterator_pool = eager_iterator_pool
+        self.context = context
 
         # raises on various error checks, AND normalizes args
         self.axis, self.size, self.reindex_disable_on_axis = self._validate_args(
@@ -124,7 +127,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         # build indexers, as needed
         self.axes_to_reindex = set(range(self.ndim)) - set(self.reindex_disable_on_axis)
         self.minor_axes_indexer = {
-            d: build_index(self.joinids[d].to_numpy())
+            d: tiledbsoma_build_index(self.joinids[d].to_numpy(), context=context)
             for d in (self.axes_to_reindex - set((self.major_axis,)))
         }
 
@@ -231,7 +234,8 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
             yield pa.concat_tables(_arrow_table_reader(self.sr)), tuple(joinids)
 
     def _reindexed_table_reader(
-        self, _pool: Optional[ThreadPoolExecutor] = None
+        self,
+        _pool: Optional[ThreadPoolExecutor] = None,
     ) -> BlockwiseSingleAxisTableIter:
         """Private. Blockwise table reader w/ reindexing. Helper function for sub-class use"""
         for tbl, coords in self._maybe_eager_iterator(self._table_reader(), _pool):
@@ -240,8 +244,10 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
                 col = tbl.column(f"soma_dim_{d}")
                 if d in self.axes_to_reindex:
                     if d == self.major_axis:
-                        col = build_index(coords[self.major_axis]).get_indexer(
-                            col.to_numpy()
+                        col = tiledbsoma_build_index(
+                            coords[self.major_axis], context=self.context
+                        ).get_indexer(
+                            col.to_numpy(),
                         )
                     else:
                         col = self.minor_axes_indexer[d].get_indexer(col.to_numpy())
@@ -284,8 +290,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
         eager: bool = True,
         compress: bool = True,
+        context: Optional[SOMATileDBContext] = None,
     ):
         self.compress = compress
+        self.context = context
         super().__init__(
             array,
             sr,
@@ -294,6 +302,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             size=size,
             reindex_disable_on_axis=reindex_disable_on_axis,
             eager=eager,
+            context=context,
         )
 
         if (
