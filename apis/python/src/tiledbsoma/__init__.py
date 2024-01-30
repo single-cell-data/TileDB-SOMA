@@ -132,7 +132,6 @@ __all__ = [
     "AxisColumnNames",
     "AxisQuery",
     "build_index",
-    "build_index_tiledb_context",
     "Collection",
     "DataFrame",
     "DenseNDArray",
