@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from tiledbsoma._index_util import build_index
+from tiledbsoma._index_util import tiledbsoma_build_index
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 
@@ -16,7 +16,7 @@ def indexer_test(keys: np.array, lookups: np.array, fail: bool):
 def indexer_test_fail(keys: np.array, lookups: np.array):
     try:
         context = _validate_soma_tiledb_context(SOMATileDBContext())
-        index = build_index(keys, context)
+        index = tiledbsoma_build_index(keys, context=context)
         index.get_indexer(lookups)
         raise AssertionError("should have failed")
     except pd.errors.InvalidIndexError:
@@ -32,7 +32,7 @@ def indexer_test_fail(keys: np.array, lookups: np.array):
 
 def indexer_test_pass(keys: np.array, lookups: np.array):
     context = _validate_soma_tiledb_context(SOMATileDBContext())
-    indexer = build_index(keys, context)
+    indexer = tiledbsoma_build_index(keys, context=context)
     results = indexer.get_indexer(lookups)
     panda_indexer = pd.Index(keys)
     panda_results = panda_indexer.get_indexer(lookups)
