@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import os
 import re
+import sys
 from fileinput import FileInput
 from subprocess import run
 from urllib.request import urlopen
@@ -12,6 +13,7 @@ from urllib.request import urlopen
 def hash_url_file(url):
     """Return SHA1 hash of the file located at the provided url."""
 
+    print(f"URL {url}", file=sys.stderr)
     BLOCK_SIZE = 65536
     hash = hashlib.sha1()
     with urlopen(url) as fp:
@@ -30,7 +32,7 @@ def get_version_hash(version):
 
     m = re.search(rf"\s(\S+)\s+refs/tags/{version}\s", output)
     if m:
-        # 8-nybble hash for 2.19.0 only. Please see https://github.com/TileDB-Inc/TileDB/pull/4599.
+        # 8-nybble hash for 2.19.0 and 2.19.1 only. Please see https://github.com/TileDB-Inc/TileDB/pull/4599.
         return m.group(1)[0:8]
 
     print(output)
@@ -92,6 +94,7 @@ def update_version(filepath, new_version, new_hash, update_sha=True):
 def main(args):
     new_version = args.version
     new_hash = get_version_hash(new_version)
+    print(f"New hash {new_hash}")
 
     # update cmake version
     filepath = f"{os.path.dirname(__file__)}/../libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake"
