@@ -1,9 +1,9 @@
 import numpy as np
 
-from tiledbsoma import build_index
+from tiledbsoma import SOMATileDBContext, build_index
 
 
-def main():
+def test_reindexer_api_thread_count():
     keys = np.arange(3, 10, 2)
     ids = np.arange(3, 10, 2)
     expected = np.array([0, 1, 2, 3])
@@ -12,4 +12,11 @@ def main():
     assert np.equal(result.all(), expected.all())
 
 
-main()
+def test_reindexer_api_context():
+    context = SOMATileDBContext()
+    keys = np.arange(3, 10, 2)
+    ids = np.arange(3, 10, 2)
+    expected = np.array([0, 1, 2, 3])
+    indexer = build_index(keys, context)
+    result = indexer.get_indexer(ids)
+    assert np.equal(result.all(), expected.all())
