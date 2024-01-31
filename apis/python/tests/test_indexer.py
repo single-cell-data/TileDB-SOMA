@@ -46,6 +46,7 @@ def indexer_test_pass(keys: np.array, lookups: np.array):
 
 
 test_data = [
+    {"keys": [1], "lookups": [1, 1, 1, 1], "pass": True},
     {
         "keys": [-1, -1, -1, 0, 0, 0],
         "lookups": [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5],

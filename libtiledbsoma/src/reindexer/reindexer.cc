@@ -51,14 +51,6 @@ void IntIndexer::map_locations(const int64_t* keys, int size, int threads) {
     if (size == 0) {
         return;
     }
-    if (size < 10) {
-        threads = 1;
-    }
-    if (size < threads)
-        throw std::runtime_error(
-            "The number of keys " + std::to_string(size) +
-            " must be larger than the number of threads " +
-            std::to_string(threads) + " .");
 
     LOG_DEBUG(fmt::format(
         "End of Map locations of size {} and {} threads", size, threads));
