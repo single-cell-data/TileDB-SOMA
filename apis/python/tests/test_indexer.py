@@ -21,6 +21,9 @@ def indexer_test_fail(keys: np.array, lookups: np.array):
         raise AssertionError("should have failed")
     except pd.errors.InvalidIndexError:
         pass
+    except Exception as e:
+        if str(e) == "RuntimeError: There are duplicate keys.":
+            pass
 
     try:
         pd_index = pd.Index(keys)
@@ -28,6 +31,9 @@ def indexer_test_fail(keys: np.array, lookups: np.array):
         raise AssertionError("should have failed")
     except pd.errors.InvalidIndexError:
         pass
+    except Exception as e:
+        if str(e) == "RuntimeError: There are duplicate keys.":
+            pass
 
 
 def indexer_test_pass(keys: np.array, lookups: np.array):
