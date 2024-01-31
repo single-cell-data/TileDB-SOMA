@@ -81,6 +81,9 @@ void IntIndexer::map_locations(const int64_t* keys, int size, int threads) {
         kh_val(hash_, k) = counter;
         counter++;
     }
+    if (int(kh_size(hash_)) != size) {
+        throw std::runtime_error("There are duplicate keys.");
+    }
     auto hsize = kh_size(hash_);
     LOG_DEBUG(fmt::format("[Re-indexer] khash size = {}", hsize));
     tiledb_thread_pool_ = std::make_unique<tiledbsoma::ThreadPool>(threads);

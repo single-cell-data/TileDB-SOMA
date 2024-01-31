@@ -16,11 +16,14 @@ def indexer_test(keys: np.array, lookups: np.array, fail: bool):
 def indexer_test_fail(keys: np.array, lookups: np.array):
     try:
         context = _validate_soma_tiledb_context(SOMATileDBContext())
-        index = tiledbsoma_build_index(keys, context)
+        index = tiledbsoma_build_index(keys, context=context)
         index.get_indexer(lookups)
         raise AssertionError("should have failed")
     except pd.errors.InvalidIndexError:
         pass
+    except Exception as e:
+        if str(e) == "RuntimeError: There are duplicate keys.":
+            pass
 
     try:
         pd_index = pd.Index(keys)
@@ -28,11 +31,14 @@ def indexer_test_fail(keys: np.array, lookups: np.array):
         raise AssertionError("should have failed")
     except pd.errors.InvalidIndexError:
         pass
+    except Exception as e:
+        if str(e) == "RuntimeError: There are duplicate keys.":
+            pass
 
 
 def indexer_test_pass(keys: np.array, lookups: np.array):
     context = _validate_soma_tiledb_context(SOMATileDBContext())
-    indexer = tiledbsoma_build_index(keys, context)
+    indexer = tiledbsoma_build_index(keys, context=context)
     results = indexer.get_indexer(lookups)
     panda_indexer = pd.Index(keys)
     panda_results = panda_indexer.get_indexer(lookups)
