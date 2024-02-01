@@ -51,14 +51,6 @@ void IntIndexer::map_locations(const int64_t* keys, int size, int threads) {
     if (size == 0) {
         return;
     }
-    if (size < 10) {
-        threads = 1;
-    }
-    if (size < threads)
-        throw std::runtime_error(
-            "The number of keys " + std::to_string(size) +
-            " must be larger than the number of threads " +
-            std::to_string(threads) + " .");
 
     LOG_DEBUG(fmt::format(
         "End of Map locations of size {} and {} threads", size, threads));
@@ -80,6 +72,9 @@ void IntIndexer::map_locations(const int64_t* keys, int size, int threads) {
         assert(k != kh_end(hash_));
         kh_val(hash_, k) = counter;
         counter++;
+    }
+    if (int(kh_size(hash_)) != size) {
+        throw std::runtime_error("There are duplicate keys.");
     }
     auto hsize = kh_size(hash_);
     LOG_DEBUG(fmt::format("[Re-indexer] khash size = {}", hsize));
