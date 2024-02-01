@@ -53,8 +53,8 @@ class IntIndexer {
      * @param size yhr number of keys in the put
      * @param threads number of threads in the thread pool
      */
-    void map_locations(const int64_t* keys, int size, int threads = 4);
-    void map_locations(const std::vector<int64_t>& keys, int threads = 4) {
+    void map_locations(const int64_t* keys, size_t size, size_t threads = 4);
+    void map_locations(const std::vector<int64_t>& keys, size_t threads = 4) {
         map_locations(keys.data(), keys.size(), threads);
     }
     /**
