@@ -1204,10 +1204,16 @@ def _write_dataframe(
     context: Optional[SOMATileDBContext] = None,
     axis_mapping: AxisIDMapping,
 ) -> DataFrame:
-    # The id_column_name is for disambiguating rows in append mode;
-    # it may or may not be an index name in the input AnnData obs/var.
-    #
-    # The original_index_name is the index name in the AnnData obs/var.
+    """
+    The id_column_name is for disambiguating rows in append mode;
+    it may or may not be an index name in the input AnnData obs/var.
+
+    The original_index_name is the index name in the AnnData obs/var.
+
+    This helper mutates the input dataframe, for parsimony of memory usage.
+    The caller should have copied anything pointing to a user-provided
+    adata.obs, adata.var, etc.
+    """
     original_index_name = None
     if df.index is not None and df.index.name is not None and df.index.name != "index":
         original_index_name = df.index.name
@@ -1540,6 +1546,9 @@ def _update_dataframe(
     """
     See ``update_obs`` and ``update_var``. This is common helper code shared by both.
     """
+    new_data = (
+        new_data.copy()
+    )  # Further operations are in-place for parsimony of memory usage
     if sdf.closed or sdf.mode != "w":
         raise SOMAError(f"DataFrame must be open for write: {sdf.uri}")
     old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)

@@ -12,6 +12,7 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io._registration as registration
+from tiledbsoma._util import anndata_dataframe_unmodified
 
 
 def _create_anndata(
@@ -720,6 +721,8 @@ def test_append_items_with_experiment(soma1, h5ad2):
 
     adata2 = ad.read_h5ad(h5ad2)
 
+    original = adata2.copy()
+
     with tiledbsoma.Experiment.open(soma1, "w") as exp1:
         tiledbsoma.io.append_obs(
             exp1,
@@ -743,6 +746,9 @@ def test_append_items_with_experiment(soma1, h5ad2):
             var_ids=list(adata2.var.index),
             registration_mapping=rd,
         )
+
+    assert anndata_dataframe_unmodified(original.obs, adata2.obs)
+    assert anndata_dataframe_unmodified(original.var, adata2.var)
 
     expect_obs_soma_joinids = list(range(6))
     expect_var_soma_joinids = list(range(5))
@@ -827,6 +833,8 @@ def test_append_with_disjoint_measurements(
 
     anndata2 = anndata1 if use_same_cells else anndata4
 
+    original = anndata2.copy()
+
     rd = tiledbsoma.io.register_anndatas(
         soma_uri,
         [anndata2],
@@ -841,6 +849,9 @@ def test_append_with_disjoint_measurements(
         measurement_name="two",
         registration_mapping=rd,
     )
+
+    assert anndata_dataframe_unmodified(original.obs, anndata2.obs)
+    assert anndata_dataframe_unmodified(original.var, anndata2.var)
 
     # exp/obs, use_same_cells=True:                       exp/obs, use_same_cells=False:
     #    soma_joinid obs_id cell_type  is_primary_data       soma_joinid obs_id cell_type  is_primary_data

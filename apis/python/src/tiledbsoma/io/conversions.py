@@ -31,7 +31,7 @@ def decategoricalize_obs_or_var(obs_or_var: pd.DataFrame) -> pd.DataFrame:
             },
         )
     else:
-        return obs_or_var
+        return obs_or_var.copy()
 
 
 @typeguard_ignore

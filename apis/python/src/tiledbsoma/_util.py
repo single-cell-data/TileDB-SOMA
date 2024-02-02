@@ -10,6 +10,7 @@ import urllib.parse
 from itertools import zip_longest
 from typing import Any, Optional, Tuple, Type, TypeVar
 
+import pandas as pd
 import pyarrow as pa
 import somacore
 from somacore import options
@@ -284,3 +285,29 @@ def pa_types_is_string_or_bytes(dtype: pa.DataType) -> bool:
         or pa.types.is_string(dtype)
         or pa.types.is_binary(dtype)
     )
+
+
+def anndata_dataframe_unmodified(old: pd.DataFrame, new: pd.DataFrame) -> bool:
+    """
+    Checks that we didn't mutate the object while ingesting. Intended for unit tests.
+    """
+    try:
+        return (old == new).all().all()
+    except ValueError:
+        # Can be thrown when columns don't match -- which is what we check for
+        return False
+
+
+def anndata_dataframe_unmodified_nan_safe(old: pd.DataFrame, new: pd.DataFrame) -> bool:
+    """
+    Same as anndata_dataframe_unmodified, except it works with NaN data.
+    A key property of NaN is it's not equal to itself: x != x.
+    """
+
+    if old.index.name != new.index.name:
+        return False
+    if len(old) != len(new):
+        return False
+    if any(old.keys() != new.keys()):
+        return False
+    return True

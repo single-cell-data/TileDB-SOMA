@@ -67,7 +67,7 @@ def _string_dict_from_pandas_dataframe(
     allow the same.
     """
 
-    df = df.head(1)  # since reset_index can be expensive on full data
+    df = df.head(1).copy()  # since reset_index can be expensive on full data
     if df.index.name is None or df.index.name == "index":
         df.reset_index(inplace=True)
         if default_index_name in df:
