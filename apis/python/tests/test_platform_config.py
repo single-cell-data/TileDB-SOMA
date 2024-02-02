@@ -8,6 +8,7 @@ import tiledb
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_options as tco
+from tiledbsoma._util import anndata_dataframe_unmodified
 
 HERE = Path(__file__).parent
 
@@ -27,6 +28,7 @@ def adata(h5ad_file):
 
 def test_platform_config(adata):
     # Set up anndata input path and tiledb-group output path
+    original = adata.copy()
     with tempfile.TemporaryDirectory() as output_path:
         # Ingest
         tiledbsoma.io.from_anndata(
@@ -53,6 +55,8 @@ def test_platform_config(adata):
                 }
             },
         )
+        assert anndata_dataframe_unmodified(original.obs, adata.obs)
+        assert anndata_dataframe_unmodified(original.var, adata.var)
 
         with tiledbsoma.Experiment.open(output_path) as exp:
             x_data = exp.ms["RNA"].X["data"]
