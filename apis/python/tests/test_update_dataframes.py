@@ -9,6 +9,7 @@ import pytest
 
 import tiledbsoma
 import tiledbsoma.io
+from tiledbsoma._util import anndata_dataframe_unmodified
 
 HERE = Path(__file__).parent
 
@@ -30,7 +31,10 @@ def adata(h5ad_file):
 def test_no_change(adata, readback):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
+    original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o1 = exp.obs.schema
@@ -46,6 +50,8 @@ def test_no_change(adata, readback):
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         tiledbsoma.io.update_obs(exp, new_obs)
         tiledbsoma.io.update_var(exp, new_var, "RNA")
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
@@ -59,7 +65,10 @@ def test_no_change(adata, readback):
 def test_add(adata, readback):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
+    original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         exp.ms["RNA"].var.schema
@@ -82,9 +91,13 @@ def test_add(adata, readback):
 
     new_var["vst.mean.sq"] = new_var["vst.mean"] ** 2
 
+    new_obs_save = new_obs.copy()
+    new_var_save = new_var.copy()
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         tiledbsoma.io.update_obs(exp, new_obs)
         tiledbsoma.io.update_var(exp, new_var, "RNA")
+    assert anndata_dataframe_unmodified(new_obs, new_obs_save)
+    assert anndata_dataframe_unmodified(new_var, new_var_save)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
@@ -105,7 +118,10 @@ def test_add(adata, readback):
 def test_drop(adata, readback):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
+    original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         exp.ms["RNA"].var.schema
@@ -120,9 +136,13 @@ def test_drop(adata, readback):
     del new_obs["groups"]
     del new_var["vst.mean"]
 
+    new_obs_save = new_obs.copy()
+    new_var_save = new_var.copy()
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         tiledbsoma.io.update_obs(exp, new_obs)
         tiledbsoma.io.update_var(exp, new_var, "RNA")
+    assert anndata_dataframe_unmodified(new_obs, new_obs_save)
+    assert anndata_dataframe_unmodified(new_var, new_var_save)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
@@ -138,7 +158,10 @@ def test_drop(adata, readback):
 def test_change(adata, readback):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
+    original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o1 = exp.obs.schema
@@ -154,11 +177,15 @@ def test_change(adata, readback):
     new_obs["groups"] = np.arange(new_obs.shape[0], dtype=np.int16)
     new_var["vst.mean"] = np.arange(new_var.shape[0], dtype=np.int32)
 
+    new_obs_save = new_obs.copy()
+    new_var_save = new_var.copy()
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         with pytest.raises(ValueError):
             tiledbsoma.io.update_obs(exp, new_obs)
         with pytest.raises(ValueError):
             tiledbsoma.io.update_var(exp, new_var, "RNA")
+    assert anndata_dataframe_unmodified(new_obs, new_obs_save)
+    assert anndata_dataframe_unmodified(new_var, new_var_save)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o2 = exp.obs.schema
@@ -174,7 +201,10 @@ def test_change_counts(adata, readback, shift_and_exc):
     shift, exc = shift_and_exc
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
+    original = adata.copy()
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         o1 = exp.obs.schema
@@ -207,9 +237,14 @@ def test_change_counts(adata, readback, shift_and_exc):
     )
 
     if exc is None:
+        new_obs_save = new_obs.copy()
+        new_var_save = new_var.copy()
         with tiledbsoma.Experiment.open(output_path, "w") as exp:
             tiledbsoma.io.update_obs(exp, new_obs)
             tiledbsoma.io.update_var(exp, new_var, measurement_name="RNA")
+
+        assert anndata_dataframe_unmodified(new_obs, new_obs_save)
+        assert anndata_dataframe_unmodified(new_var, new_var_save)
 
     else:
         with tiledbsoma.Experiment.open(output_path, "w") as exp:
@@ -217,6 +252,10 @@ def test_change_counts(adata, readback, shift_and_exc):
                 tiledbsoma.io.update_obs(exp, new_obs)
             with pytest.raises(exc):
                 tiledbsoma.io.update_var(exp, new_var, measurement_name="RNA")
+
+        assert anndata_dataframe_unmodified(original.obs, adata.obs)
+        assert anndata_dataframe_unmodified(original.var, adata.var)
+
         with tiledbsoma.Experiment.open(output_path) as exp:
             o2 = exp.obs.schema
             v2 = exp.ms["RNA"].var.schema

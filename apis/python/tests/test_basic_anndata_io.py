@@ -15,6 +15,10 @@ import tiledb
 import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import _constants, _factory
+from tiledbsoma._util import (
+    anndata_dataframe_unmodified,
+    anndata_dataframe_unmodified_nan_safe,
+)
 
 HERE = Path(__file__).parent
 
@@ -109,6 +113,7 @@ def adata(h5ad_file):
     [tiledbsoma.SparseNDArray, tiledbsoma.DenseNDArray],
 )
 def test_import_anndata(adata, ingest_modes, X_kind):
+    original = adata.copy()
     adata = adata.copy()
 
     have_ingested = False
@@ -132,6 +137,9 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         )
         if ingest_mode != "schema_only":
             have_ingested = True
+
+        assert anndata_dataframe_unmodified(original.obs, adata.obs)
+        assert anndata_dataframe_unmodified(original.var, adata.var)
 
         exp = tiledbsoma.Experiment.open(uri)
 
@@ -411,12 +419,16 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
 def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended, ingest_uns_keys):
     tmp_uri = tmp_path.as_uri()
     original = anndata.read(h5ad_file_extended)
+    adata = anndata.read(h5ad_file_extended)
     uri = tiledbsoma.io.from_anndata(
         tmp_uri,
-        original,
+        adata,
         measurement_name="hello",
         uns_keys=ingest_uns_keys,
     )
+
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(uri) as exp:
         uns = exp.ms["hello"]["uns"]
@@ -446,7 +458,7 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended, ingest_uns_keys)
             assert isinstance(random_state, tiledbsoma.DenseNDArray)
             assert np.array_equal(random_state.read().to_numpy(), np.array([0]))
             got_pca_variance = uns["pca"]["variance"].read().to_numpy()
-            assert np.array_equal(got_pca_variance, original.uns["pca"]["variance"])
+            assert np.array_equal(got_pca_variance, adata.uns["pca"]["variance"])
         else:
             assert set(uns) == set(ingest_uns_keys)
 
@@ -481,7 +493,13 @@ def test_add_matrix_to_collection(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
+    original = adata.copy()
+
     uri = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
+
     exp = tiledbsoma.Experiment.open(uri)
     with _factory.open(output_path) as exp_r:
         assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
@@ -602,8 +620,13 @@ def test_add_matrix_to_collection_1_2_7(adata):
 
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
+    original = adata.copy()
 
     uri = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
+
     exp = tiledbsoma.Experiment.open(uri)
     with _factory.open(output_path) as exp_r:
         assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
@@ -656,7 +679,12 @@ def test_export_anndata(adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
+    original = adata.copy()
+
     tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with _factory.open(output_path) as exp:
         with pytest.raises(ValueError):
@@ -702,15 +730,21 @@ def test_null_obs(adata, tmp_path: Path):
     )
     #   Create column of partially-null values
     rng = np.random.RandomState(seed)
+
     adata.obs["empty_categorical_partial"] = rng.choice(
         (np.NaN, 1.0), adata.n_obs, True
     )
     adata.obs["empty_extension_partial"] = pd.Series(
         [1] * adata.n_obs + [np.nan], dtype=pd.Int64Dtype()
     )
+
+    original = adata.copy()
     uri = tiledbsoma.io.from_anndata(
         output_path, adata, "RNA", ingest_mode="write", X_kind=tiledbsoma.SparseNDArray
     )
+    assert anndata_dataframe_unmodified_nan_safe(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified_nan_safe(original.var, adata.var)
+
     exp = tiledbsoma.Experiment.open(uri)
     with tiledb.open(exp.obs.uri, "r") as obs:
         #   Explicitly check columns created above
@@ -727,6 +761,7 @@ def test_null_obs(adata, tmp_path: Path):
 
 def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
     adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
+    original = adata.copy()
     assert 1 == 1
 
     # This data file is prepared such that obsm["X_pca"] has shape (2638, 50)
@@ -737,6 +772,9 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
 
     output_path = tmp_path.as_posix()
     tiledbsoma.io.from_anndata(output_path, adata, "RNA")
+
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     exp = tiledbsoma.Experiment.open(output_path)
 
@@ -870,6 +908,7 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
                 X[i, j] = 100 + 10 * i + j
 
     adata = anndata.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+    original = adata.copy()
 
     uri = tmp_path.as_posix()
 
@@ -881,6 +920,8 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         obs_id_name=obs_id_name,
         var_id_name=var_id_name,
     )
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(uri) as exp:
         assert obs_id_name in exp.obs.keys()
@@ -960,10 +1001,13 @@ def test_uns_io(tmp_path, outgest_uns_keys):
         uns=uns,
         dtype=X.dtype,
     )
+    original = adata.copy()
 
     soma_uri = tmp_path.as_posix()
 
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name="RNA")
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         bdata = tiledbsoma.io.to_anndata(
@@ -1012,7 +1056,10 @@ def test_string_nan_columns(tmp_path, adata, write_index):
 
     # Step 2
     uri = tmp_path.as_posix()
+    original = adata.copy()
     tiledbsoma.io.from_anndata(uri, adata, measurement_name="RNA")
+    assert anndata_dataframe_unmodified_nan_safe(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified_nan_safe(original.var, adata.var)
 
     # Step 3
     with tiledbsoma.open(uri, "r") as exp:
@@ -1068,7 +1115,10 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
 
     soma_uri = tmp_path.as_posix()
 
+    original = adata.copy()
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name)
+    assert anndata_dataframe_unmodified(original.obs, adata.obs)
+    assert anndata_dataframe_unmodified(original.var, adata.var)
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         bdata = tiledbsoma.io.to_anndata(exp, measurement_name)

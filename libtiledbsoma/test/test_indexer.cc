@@ -49,39 +49,51 @@ namespace {
 
 KHASH_MAP_INIT_INT64(m64, int64_t)
 
-bool run_test(std::vector<int64_t> keys, std::vector<int64_t> lookups) {
-    std::vector<int64_t> indexer_results;
-    indexer_results.resize(lookups.size());
+// Identify the test in which keys are not unique and we should expect
+// exception.
+std::vector<bool> uniqueness = {false, false, true, true, true};
 
-    tiledbsoma::IntIndexer indexer;
-    indexer.map_locations(keys);
-    auto* hash = kh_init(m64);
-    int ret;
-    khint64_t k;
+bool run_test(int id, std::vector<int64_t> keys, std::vector<int64_t> lookups) {
+    try {
+        std::vector<int64_t> indexer_results;
+        indexer_results.resize(lookups.size());
 
-    for (size_t i = 0; i < keys.size(); i++) {
-        k = kh_put(m64, hash, keys[i], &ret);
-        assert(k != kh_end(hash));
-        kh_val(hash, k) = i;
-    }
+        tiledbsoma::IntIndexer indexer;
+        indexer.map_locations(keys);
+        auto* hash = kh_init(m64);
+        int ret;
+        khint64_t k;
 
-    indexer.lookup(lookups, indexer_results);
-    std::vector<int64_t> kh_results;
-    kh_results.resize(lookups.size());
-    for (size_t i = 0; i < lookups.size(); i++) {
-        auto k = kh_get(m64, hash, lookups[i]);
-        if (k == kh_end(hash)) {
-            // According to pandas behavior
-            kh_results[i] = -1;
-        } else {
-            kh_results[i] = kh_val(hash, k);
+        for (size_t i = 0; i < keys.size(); i++) {
+            k = kh_put(m64, hash, keys[i], &ret);
+            assert(k != kh_end(hash));
+            kh_val(hash, k) = i;
         }
+
+        indexer.lookup(lookups, indexer_results);
+        std::vector<int64_t> kh_results;
+        kh_results.resize(lookups.size());
+        for (size_t i = 0; i < lookups.size(); i++) {
+            auto k = kh_get(m64, hash, lookups[i]);
+            if (k == kh_end(hash)) {
+                // According to pandas behavior
+                kh_results[i] = -1;
+            } else {
+                kh_results[i] = kh_val(hash, k);
+            }
+        }
+        kh_destroy(m64, hash);
+        return indexer_results == kh_results;
+    } catch (const std::runtime_error& e) {
+        // Path with non unique keys
+        if (!uniqueness[id]) {
+            return true;
+        }
+        return false;
     }
-    kh_destroy(m64, hash);
-    return indexer_results == kh_results;
 }
 
-std::vector<bool> test_pass = {false, false, true, true, true};
+// Test data
 std::vector<std::unordered_map<std::string, std::vector<int64_t>>> test_data = {
     {
         {"keys", {-1, -1, -1, 0, 0, 0}},
@@ -122,7 +134,7 @@ std::vector<std::unordered_map<std::string, std::vector<int64_t>>> test_data = {
 TEST_CASE("C++ re-indexer") {
     for (size_t test = 0; test < test_data.size(); test++) {
         bool result = run_test(
-            test_data[test]["keys"], test_data[test]["lookups"]);
+            test, test_data[test]["keys"], test_data[test]["lookups"]);
         if (!result) {
             throw std::runtime_error(
                 "Test " + std::to_string(test) + " failed");
