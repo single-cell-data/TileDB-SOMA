@@ -220,8 +220,8 @@ INC_DIRS = [
     "dist_links/libtiledbsoma/include",
     "dist_links/libtiledbsoma/external/include",
     "../../build/externals/install/include",
-    str(libtiledbsoma_dir / "include"),
-    str(libtiledbsoma_dir.parent / "build/externals/install/include"),
+    str(tiledbsoma_dir / "include"),
+    str(tiledbsoma_dir.parent / "build/externals/install/include"),
     str(tiledbsoma_dir / "include"),
     str(tiledb_dir / "include"),
 ]
