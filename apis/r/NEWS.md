@@ -3,6 +3,7 @@
 ## Changes
 
 * Add support for ingestion of `SeuratCommand` logs
+* Add support for outgestion of `SeuratCommand` logs
 
 # 1.7.0
 
