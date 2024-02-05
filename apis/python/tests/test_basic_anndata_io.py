@@ -722,12 +722,21 @@ def test_null_obs(adata, tmp_path: Path):
     output_path = tmp_path.as_uri()
     seed = 42
     #   Create column of all null values
-    adata.obs["empty_all"] = pd.Categorical(
+    adata.obs["empty_categorical_all"] = pd.Categorical(
         [np.NaN] * adata.n_obs, dtype=pd.CategoricalDtype(categories=[], ordered=False)
+    )
+    adata.obs["empty_extension_all"] = pd.Series(
+        [np.nan] * adata.n_obs, dtype=pd.Int64Dtype()
     )
     #   Create column of partially-null values
     rng = np.random.RandomState(seed)
-    adata.obs["empty_partial"] = rng.choice((np.NaN, 1.0), adata.n_obs, True)
+
+    adata.obs["empty_categorical_partial"] = rng.choice(
+        (np.NaN, 1.0), adata.n_obs, True
+    )
+    adata.obs["empty_extension_partial"] = pd.Series(
+        [1] * adata.n_obs + [np.nan], dtype=pd.Int64Dtype()
+    )
 
     original = adata.copy()
     uri = tiledbsoma.io.from_anndata(
@@ -739,8 +748,10 @@ def test_null_obs(adata, tmp_path: Path):
     exp = tiledbsoma.Experiment.open(uri)
     with tiledb.open(exp.obs.uri, "r") as obs:
         #   Explicitly check columns created above
-        assert obs.attr("empty_all").isnullable
-        assert obs.attr("empty_partial").isnullable
+        assert obs.attr("empty_categorical_all").isnullable
+        assert obs.attr("empty_categorical_partial").isnullable
+        assert obs.attr("empty_extension_all").isnullable
+        assert obs.attr("empty_extension_partial").isnullable
         #   For every column in the data frame
         #   ensure that `isnullable` reflects the null-ness
         #   of the Pandas data frame
