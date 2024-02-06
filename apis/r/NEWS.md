@@ -1,3 +1,9 @@
+# Develop
+
+## Changes
+
+* Add support for ingestion of `SeuratCommand` logs
+
 # 1.7.0
 
 ## Changes
