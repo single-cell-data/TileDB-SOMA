@@ -257,6 +257,7 @@ setuptools.setup(
             "tiledbsoma.pytiledbsoma",
             [
                 "src/tiledbsoma/common.cc",
+                "src/tiledbsoma/reindexer.cc",
                 "src/tiledbsoma/query_condition.cc",
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
