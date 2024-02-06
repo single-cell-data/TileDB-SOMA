@@ -130,7 +130,6 @@ except ImportError:
     try:
         # Try loading the bundled native library.
         lib_dir = os.path.dirname(os.path.abspath(__file__))
-        ctypes.CDLL(os.path.join(lib_dir, "libtiledb.so"), mode=ctypes.RTLD_GLOBAL)
         ctypes.CDLL(os.path.join(lib_dir, lib_name))
     except OSError:
         # Otherwise try loading by name only.
