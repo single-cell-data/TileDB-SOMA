@@ -541,10 +541,25 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           object[[grph]] <- mat
         }
       }
+      # Load in the command logs
+      uns <- try(self$experiment$get("uns"), silent = TRUE)
+      if (inherits(uns, 'SOMACollection')) {
+        cmds <- tryCatch(
+          .load_seurat_command(uns, ms_names = private$.measurement_name),
+          packageCheckError = function(err) {
+            warning(conditionMessage(err), call. = FALSE, immediate. = TRUE)
+            return(NULL)
+          }
+        )
+        for (i in names(cmds)) {
+          object[[i]] <- cmds[[i]]
+        }
+      }
       # Validate and return
       validObject(object)
       return(object)
     },
+
     #' @description Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
     #'
     #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}
