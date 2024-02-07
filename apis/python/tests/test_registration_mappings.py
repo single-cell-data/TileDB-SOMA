@@ -135,6 +135,16 @@ def anndata4():
 
 
 @pytest.fixture
+def anndata_larger():
+    return _create_anndata(
+        obs_ids=["id_%08d" % e for e in range(1000)],
+        var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"],
+        X_base=0,
+        measurement_name="measname",
+    )
+
+
+@pytest.fixture
 def h5ad1(tmp_path, anndata1):
     return create_h5ad(anndata1, (tmp_path / "1.h5ad").as_posix())
 
@@ -158,6 +168,13 @@ def h5ad4(tmp_path, anndata4):
 def soma1(tmp_path, h5ad1):
     uri = (tmp_path / "soma1").as_posix()
     tiledbsoma.io.from_h5ad(uri, h5ad1, "measname")
+    return uri
+
+
+@pytest.fixture
+def soma_larger(tmp_path, anndata_larger):
+    uri = (tmp_path / "soma-larger").as_posix()
+    tiledbsoma.io.from_anndata(uri, anndata_larger, "measname")
     return uri
 
 
@@ -1046,3 +1063,34 @@ def test_append_with_disjoint_measurements(
 
         assert all(actual_X_one == expect_X_one)
         assert all(actual_X_two == expect_X_two)
+
+
+@pytest.mark.parametrize("use_small_buffer", [False, True])
+def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer):
+    # This tests https://github.com/single-cell-data/TileDB-SOMA/pull/2112.
+    # We check that it takes more than one batch iteration to read all of
+    # obs, and then we check that the registration got all the obs IDs.
+
+    context = None
+    if use_small_buffer:
+        context = tiledbsoma.SOMATileDBContext(
+            tiledb_config={
+                "soma.init_buffer_bytes": 2048,
+            }
+        )
+
+    with tiledbsoma.Experiment.open(soma_larger, context=context) as exp:
+        assert exp.obs.count == 1000
+
+        nbatch = 0
+        for batch in exp.obs.read():
+            nbatch += 1
+        if use_small_buffer:
+            assert nbatch > 1
+
+    rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
+        soma_larger,
+        context=context,
+    )
+
+    assert len(rd.obs_axis.data) == 1000
