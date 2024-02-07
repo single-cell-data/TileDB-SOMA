@@ -227,7 +227,7 @@ class ExperimentAmbientLabelMapping:
                 for batch in exp.obs.read(column_names=["soma_joinid", obs_field_name]):
                     obs_ids = [e.as_py() for e in batch[1]]
                     soma_joinids = [e.as_py() for e in batch[0]]
-                    obs_map = dict(zip(obs_ids, soma_joinids))
+                    obs_map.update(dict(zip(obs_ids, soma_joinids)))
 
                 for measurement_name in exp.ms:
                     exp.ms[measurement_name].var
@@ -239,7 +239,7 @@ class ExperimentAmbientLabelMapping:
                     ):
                         var_ids = [e.as_py() for e in batch[1]]
                         soma_joinids = [e.as_py() for e in batch[0]]
-                        var_map = dict(zip(var_ids, soma_joinids))
+                        var_map.update(dict(zip(var_ids, soma_joinids)))
                     var_maps[measurement_name] = var_map
 
             tiledbsoma.logging.logger.info(
