@@ -73,16 +73,18 @@ check_package <- function(package, version = NULL, quietly = FALSE) {
     return(invisible(all(checks)))
   }
   if (!checks['installed']) {
-    stop(sQuote(package), " must be installed", call. = FALSE)
+    stop(errorCondition(
+      message = paste(sQuote(package), "must be installed"),
+      class = c('packageNotFoundError', 'packageCheckError'),
+      call = NULL
+    ))
   }
   if (!checks['version']) {
-    stop(
-      sQuote(package),
-      " must be version ",
-      version,
-      " or higher",
-      call. = FALSE
-    )
+    stop(errorCondition(
+      message = paste(sQuote(package), "must be version", version, "or higher"),
+      class = c('packageVersionError', 'packageCheckError'),
+      call = NULL
+    ))
   }
   return(invisible(TRUE))
 }
