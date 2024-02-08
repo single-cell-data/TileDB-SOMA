@@ -1135,12 +1135,77 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
     else:
         assert adata.var.index.name == bdata.var.index.name
 
+
 def test_obsm_data_type(adata):
     tempdir = tempfile.TemporaryDirectory()
     soma_path = tempdir.name
-    bdata = anndata.AnnData(X=adata.X, obs=adata.obs, var=adata.var, obsm={"testing": adata.obs})
+    bdata = anndata.AnnData(
+        X=adata.X, obs=adata.obs, var=adata.var, obsm={"testing": adata.obs}
+    )
 
     with pytest.raises(TypeError):
         tiledbsoma.io.from_anndata(soma_path, bdata, measurement_name="RNA")
 
     assert not any(Path(soma_path).iterdir())
+
+
+@pytest.mark.parametrize("X_layer_name", ["data", "data2", "data3", "nonesuch", None])
+def test_outgest_X_layers(tmp_path, X_layer_name):
+    nobs = 200
+    nvar = 100
+    xocc = 0.3
+    measurement_name = "meas"
+
+    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]
+    var_ids = ["gene_%08d" % (j) for j in range(nvar)]
+
+    cell_types = [["B cell", "T cell"][e % 2] for e in range(nobs)]
+    obs = pd.DataFrame(
+        data={
+            "obs_id": np.asarray(obs_ids),
+            "cell_type": pd.Categorical(cell_types),
+        },
+        index=np.arange(nobs).astype(str),
+    )
+    obs.set_index("obs_id", inplace=True)
+
+    var = pd.DataFrame(
+        data={
+            "var_id": np.asarray(var_ids),
+            "squares": np.asarray([i**2 for i in range(nvar)]),
+        },
+        index=np.arange(len(var_ids)).astype(str),
+    )
+    var.set_index("var_id", inplace=True)
+
+    X = scipy.sparse.random(nobs, nvar, density=xocc, dtype=np.float64).tocsr()
+    layers = {"data2": X, "data3": X}
+
+    adata = anndata.AnnData(X=X, obs=obs, var=var, layers=layers)
+
+    soma_uri = tmp_path.as_posix()
+
+    tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name)
+
+    with tiledbsoma.Experiment.open(soma_uri) as exp:
+        if X_layer_name == "nonesuch":
+            with pytest.raises(ValueError):
+                tiledbsoma.io.to_anndata(
+                    exp, measurement_name, X_layer_name=X_layer_name
+                )
+        else:
+            bdata = tiledbsoma.io.to_anndata(
+                exp, measurement_name, X_layer_name=X_layer_name
+            )
+
+            if X_layer_name is None:
+                assert sorted(list(bdata.layers.keys())) == []
+                assert bdata.X is None
+            elif X_layer_name == "data":
+                assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
+            elif X_layer_name == "data2":
+                assert sorted(list(bdata.layers.keys())) == ["data", "data3"]
+            elif X_layer_name == "data3":
+                assert sorted(list(bdata.layers.keys())) == ["data", "data2"]
+            else:
+                assert False
