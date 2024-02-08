@@ -2880,8 +2880,6 @@ def to_h5ad(
 
     Arguments are as in ``to_anndata``.
 
-    TO DO: doc more params
-
     Lifecycle:
         Experimental.
     """
@@ -2932,7 +2930,11 @@ def to_anndata(
 
     The ``X_layer_name`` is the name of the TileDB-SOMA measurement's
     ``X`` collection which will be outgested to the resulting AnnData object's
-    ``adata.X``.
+    ``adata.X``. If this is ``None``, then the return value's ``adata.X`` will
+    be None, and ``adata.layers`` will be unpopulated. If this is not ``None``,
+    then ``adata.X`` will be taken from this layer name within the input
+    measurement, and ``adata.layers`` will be populated with all remaining
+    layers in the input measurement.
 
     The ``obs_id_name`` and ``var_id_name`` are columns within the TileDB-SOMA
     experiment which will become index names within the resulting AnnData
@@ -3019,26 +3021,39 @@ def to_anndata(
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    X_csr = None
-    X_ndarray = None
-    X_dtype = None  # some datasets have no X
+    anndata_X = None
+    anndata_X_dtype = None  # some datasets have no X
+    anndata_layers = {}
+
     if X_layer_name is not None:
         if X_layer_name not in measurement.X:
             raise ValueError(
                 f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
             )
-        X_data = measurement.X[X_layer_name]
-        if isinstance(X_data, DenseNDArray):
-            X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
-            X_dtype = X_ndarray.dtype
-        elif isinstance(X_data, SparseNDArray):
-            X_mat = (
-                X_data.read().tables().concat().to_pandas()
-            )  # TODO: CSR/CSC options ...
-            X_csr = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
-            X_dtype = X_csr.dtype
-        else:
-            raise TypeError(f"Unexpected NDArray type {type(X_data)}")
+
+        for key in measurement.X.keys():
+            # Acquire handle to TileDB-SOMA data
+            soma_X_data_handle = measurement.X[key]
+            logging.log_io(None, f"FOO {key} {soma_X_data_handle.uri}")
+
+            # Read data from SOMA into memory
+            if isinstance(soma_X_data_handle, DenseNDArray):
+                data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
+            elif isinstance(soma_X_data_handle, SparseNDArray):
+                X_mat = (
+                    soma_X_data_handle.read().tables().concat().to_pandas()
+                )  # TODO: CSR/CSC options ...
+                data = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
+            else:
+                raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
+
+            # Targeted X_layer_name will do into anndata.X.
+            # Others will go into anndata.layers.
+            if key == X_layer_name:
+                anndata_X_dtype = data.dtype
+                anndata_X = data
+            else:
+                anndata_layers[key] = data
 
     if obsm_varm_width_hints is None:
         obsm_varm_width_hints = {}
@@ -3085,7 +3100,8 @@ def to_anndata(
         )
 
     anndata = ad.AnnData(
-        X=X_csr if X_csr is not None else X_ndarray,
+        X=anndata_X,
+        layers=anndata_layers,
         obs=obs_df,
         var=var_df,
         obsm=obsm,
@@ -3093,7 +3109,7 @@ def to_anndata(
         obsp=obsp,
         varp=varp,
         uns=uns,
-        dtype=X_dtype,
+        dtype=anndata_X_dtype,
     )
 
     logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))
