@@ -1637,6 +1637,56 @@ def _update_dataframe(
     )
 
 
+def update_matrix(
+    soma_ndarray: Union[SparseNDArray, DenseNDArray],
+    new_data: Union[Matrix, h5py.Dataset],
+    *,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig] = None,
+) -> None:
+    """
+    TODO: WRITE ME
+    """
+
+    s = _util.get_start_stamp()
+    logging.log_io(
+        f"Writing {soma_ndarray.uri}",
+        f"START  UPDATING {soma_ndarray.uri}",
+    )
+
+    ingestion_params = IngestionParams("write", None)
+
+    if isinstance(soma_ndarray, DenseNDArray):
+        _write_matrix_to_denseNDArray(
+            soma_ndarray,
+            new_data,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            context=context,
+            ingestion_params=ingestion_params,
+        )
+    elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
+        _write_matrix_to_sparseNDArray(
+            soma_ndarray,
+            new_data,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            context=context,
+            ingestion_params=ingestion_params,
+            axis_0_mapping=AxisIDMapping.identity(new_data.shape[0]),
+            axis_1_mapping=AxisIDMapping.identity(new_data.shape[1]),
+        )
+    else:
+        raise TypeError(f"unknown array type {type(soma_ndarray)}")
+
+    logging.log_io(
+        f"Wrote   {soma_ndarray.uri}",
+        _util.format_elapsed(s, f"FINISH UPDATING {soma_ndarray.uri}"),
+    )
+
+
 def add_X_layer(
     exp: Experiment,
     measurement_name: str,

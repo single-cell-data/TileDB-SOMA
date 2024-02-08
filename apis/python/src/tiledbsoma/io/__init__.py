@@ -11,6 +11,7 @@ from .ingest import (
     register_h5ads,
     to_anndata,
     to_h5ad,
+    update_matrix,
     update_obs,
     update_var,
 )
@@ -28,6 +29,7 @@ __all__ = (
     "register_anndatas",
     "to_anndata",
     "to_h5ad",
+    "update_matrix",
     "update_obs",
     "update_var",
 )
