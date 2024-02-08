@@ -3040,14 +3040,12 @@ def to_anndata(
             if isinstance(soma_X_data_handle, DenseNDArray):
                 data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
             elif isinstance(soma_X_data_handle, SparseNDArray):
-                X_mat = (
-                    soma_X_data_handle.read().tables().concat().to_pandas()
-                )  # TODO: CSR/CSC options ...
+                X_mat = soma_X_data_handle.read().tables().concat().to_pandas()
                 data = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
             else:
                 raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
 
-            # Targeted X_layer_name will do into anndata.X.
+            # Targeted X_layer_name will go into anndata.X.
             # Others will go into anndata.layers.
             if key == X_layer_name:
                 anndata_X_dtype = data.dtype
