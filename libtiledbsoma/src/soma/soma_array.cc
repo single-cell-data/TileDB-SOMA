@@ -164,7 +164,7 @@ void SOMAArray::fill_metadata_cache() {
     }
 }
 
-const std::string& SOMAArray::uri() const {
+const std::string SOMAArray::uri() const {
     return uri_;
 };
 
@@ -189,6 +189,7 @@ void SOMAArray::open(
         arr_->close();
         arr_->open(tdb_mode);
     }
+    reset(column_names(), batch_size_, result_order_);
 }
 
 void SOMAArray::close() {
