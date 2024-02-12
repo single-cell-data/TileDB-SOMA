@@ -153,7 +153,7 @@ class SOMADataFrame : public SOMAArray {
         : SOMAArray(
               mode,
               uri,
-              std::filesystem::path(uri).filename().string(),  // array name
+              std::string(std::filesystem::path(uri).filename()),  // array name
               ctx,
               column_names,
               "auto",  // batch_size
