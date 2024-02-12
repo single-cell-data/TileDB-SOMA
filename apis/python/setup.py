@@ -202,7 +202,7 @@ if os.name != "nt":
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib")}')
 
 if sys.platform == "darwin":
-    CXX_FLAGS.append("-mmacosx-version-min=10.14")
+    CXX_FLAGS.append("-mmacosx-version-min=11.0")
 
 if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
