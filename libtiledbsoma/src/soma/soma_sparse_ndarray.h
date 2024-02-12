@@ -121,6 +121,13 @@ class SOMASparseNDArray : public SOMAArray {
         ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
+    /**
+     * @brief Check if the SOMASparseNDArray exists at the URI.
+     *
+     * @param uri URI to create the SOMASparseNDArray
+     */
+    static bool exists(std::string_view uri);
+
     //===================================================================
     //= public non-static
     //===================================================================

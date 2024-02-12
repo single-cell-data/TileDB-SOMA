@@ -262,6 +262,8 @@ setuptools.setup(
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
                 "src/tiledbsoma/soma_dataframe.cc",
+                "src/tiledbsoma/soma_dense_ndarray.cc",
+                "src/tiledbsoma/soma_sparse_ndarray.cc",
                 "src/tiledbsoma/pytiledbsoma.cc",
             ],
             include_dirs=INC_DIRS,

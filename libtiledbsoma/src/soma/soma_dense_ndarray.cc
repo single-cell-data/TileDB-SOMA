@@ -82,6 +82,15 @@ std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 
+bool SOMADenseNDArray::exists(std::string_view uri) {
+    try {
+        return "SOMADenseNDArray" ==
+               SOMAObject::open(uri, OpenMode::read)->type();
+    } catch (TileDBSOMAError& e) {
+        return false;
+    }
+}
+
 //===================================================================
 //= public non-static
 //===================================================================
