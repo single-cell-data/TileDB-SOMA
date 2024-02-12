@@ -5,13 +5,15 @@
 
 """Implementation of a SOMA Experiment.
 """
+import functools
+from typing import Any, Optional
 
-from typing import Any
-
-from somacore import experiment
+from somacore import experiment, query
+from typing_extensions import Self
 
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
+from ._index_util import tiledbsoma_build_index
 from ._measurement import Measurement
 from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
@@ -74,3 +76,25 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         # TileDB Cloud UI to detect that they are SOMA datasets.
         handle.metadata["dataset_type"] = "soma"
         return super()._set_create_metadata(handle)
+
+    def axis_query(  # type: ignore
+        self,
+        measurement_name: str,
+        *,
+        obs_query: Optional[query.AxisQuery] = None,
+        var_query: Optional[query.AxisQuery] = None,
+    ) -> query.ExperimentAxisQuery[Self]:  # type: ignore
+        """Creates an axis query over this experiment.
+        Lifecycle: maturing
+        """
+        # mypy doesn't quite understand descriptors so it issues a spurious
+        # error here.
+        return query.ExperimentAxisQuery(  # type: ignore
+            self,
+            measurement_name,
+            obs_query=obs_query or query.AxisQuery(),
+            var_query=var_query or query.AxisQuery(),
+            index_factory=functools.partial(
+                tiledbsoma_build_index, context=self.context
+            ),
+        )

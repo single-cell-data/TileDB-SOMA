@@ -9,8 +9,8 @@ add_compile_definitions(TILEDBSOMA_SOURCE_ROOT="${TILEDBSOMA_SOURCE_ROOT}")
 # ###########################################################
 # Adding coverage flags
 # ###########################################################
-set(CMAKE_CXX_FLAGS "$ENV{TILEDBSOMA_COVERAGE}")
-set(CMAKE_C_FLAGS "$ENV{TILEDBSOMA_COVERAGE}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
+set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
 
 ############################################################
 # Dependencies
@@ -35,6 +35,7 @@ add_executable(unit_soma
     unit_soma_dense_ndarray.cc
     unit_soma_sparse_ndarray.cc
     unit_soma_collection.cc
+    test_indexer.cc
 # TODO: uncomment when thread_pool is enabled
 #    unit_thread_pool.cc
 )

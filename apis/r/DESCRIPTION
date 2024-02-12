@@ -6,7 +6,7 @@ Description: Interface for working with 'TileDB'-based Stack of Matrices,
     like those commonly used for single cell data analysis. It is documented at
     <https://github.com/single-cell-data>; a formal specification available is at
     <https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md>.
-Version: 1.6.0
+Version: 1.7.99.2
 Authors@R: c(
     person(given = "Aaron", family = "Wolen",
            role = c("cre", "aut"), email = "aaron@tiledb.com",
@@ -34,7 +34,7 @@ Imports:
     Matrix,
     stats,
     bit64,
-    tiledb (>= 0.22.0),
+    tiledb (>= 0.23.0),
     arrow,
     utils,
     fs,
@@ -64,7 +64,8 @@ Suggests:
     datasets,
     SingleCellExperiment (>= 1.20.0),
     SummarizedExperiment (>= 1.28.0),
-    S4Vectors
+    S4Vectors,
+    jsonlite
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix

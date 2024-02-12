@@ -1558,14 +1558,20 @@ def test_blockwise_scipy_iter_eager(
     coords = (slice(3, 9993), slice(21, 1111))
     with soma.open(a_random_sparse_nd_array, mode="r", context=a_soma_context) as A:
         sp1 = sparse.vstack(
-            sp
-            for sp, _ in A.read(coords).blockwise(axis=0, size=1000, eager=True).scipy()
+            [
+                sp
+                for sp, _ in A.read(coords)
+                .blockwise(axis=0, size=1000, eager=True)
+                .scipy()
+            ]
         )
         sp2 = sparse.vstack(
-            sp
-            for sp, _ in A.read(coords)
-            .blockwise(axis=0, size=1000, eager=False)
-            .scipy()
+            [
+                sp
+                for sp, _ in A.read(coords)
+                .blockwise(axis=0, size=1000, eager=False)
+                .scipy()
+            ]
         )
 
         assert (sp1 != sp2).nnz == 0

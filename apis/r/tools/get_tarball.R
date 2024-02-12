@@ -1,27 +1,27 @@
 #!/usr/bin/env Rscript
 
-## version pinning info
-tiledb_core_version <- "2.18.2"
-tiledb_core_sha1 <- "9ae6e1a"
+# Please use scripts/update-tiledb-version.py in this repo's base directory to
+# update URLs in this file as well as the FindTileDB_EP.cmake file within the
+# libtiledbsoma directory.
 
 if ( ! dir.exists("inst/") ) {
     stop("No 'inst/' directory. Exiting.", call. = FALSE)
 }
 
-makeUrl <- function(arch, ver=tiledb_core_version, sha1=tiledb_core_sha1) {
-    sprintf("https://github.com/TileDB-Inc/TileDB/releases/download/%s/tiledb-%s-%s-%s.tar.gz", ver, arch, ver, sha1)
-}
-
-isX86 <- Sys.info()["machine"] == "x86_64"
 isMac <- Sys.info()["sysname"] == "Darwin"
 isLinux <- Sys.info()["sysname"] == "Linux"
 
-if (isMac && isX86) {
-    url <- makeUrl("macos-x86_64")
-} else if (isMac && !isX86) {
-    url <- makeUrl("macos-arm64")
+if (isMac) {
+    arch <- system('uname -m', intern = TRUE)
+    if (arch == "x86_64") {
+      url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.19.1/tiledb-macos-x86_64-2.19.1-29ceb3e7.tar.gz"
+    } else if (arch == "arm64") {
+      url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.19.1/tiledb-macos-arm64-2.19.1-29ceb3e7.tar.gz"
+    } else {
+      stop("Unsupported Mac architecture. Please have TileDB Core installed locally.")
+    }
 } else if (isLinux) {
-    url <- makeUrl("linux-x86_64")
+    url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.19.1/tiledb-linux-x86_64-2.19.1-29ceb3e7.tar.gz"
 } else {
     stop("Unsupported platform for downloading artifacts. Please have TileDB Core installed locally.")
 }

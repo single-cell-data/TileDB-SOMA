@@ -21,6 +21,7 @@ from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
+from ._tdb_handles import DataFrameWrapper
 from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
@@ -120,6 +121,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         a given slot, meaning use the largest possible domain. For string/bytes types,
         it must be ``None``.
     """
+
+    _reader_wrapper_type = DataFrameWrapper
 
     @classmethod
     def create(
@@ -261,18 +264,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             Experimental.
         """
         self._check_open_read()
-        return cast(int, self._soma_reader().nnz())
-
-    def enumeration(self, name: str) -> Tuple[Any, ...]:
-        """Doc place holder.
-
-        Returns:
-            Tuple[Any, ...]: _description_
-        """
-        return tuple(self._soma_reader().get_enum(name))
-
-    def column_to_enumeration(self, name: str) -> str:
-        return str(self._soma_reader().get_enum_label_on_attr(name))
+        # if is it in read open mode, then it is a DataFrameWrapper
+        return cast(DataFrameWrapper, self._handle).count
 
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
@@ -341,25 +334,33 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        del batch_size, platform_config  # Currently unused.
+        del batch_size  # Currently unused.
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
-        schema = self._handle.schema
-        query_condition = None
-        if value_filter is not None:
-            query_condition = QueryCondition(value_filter)
+        handle = self._handle._handle
 
-        sr = self._soma_reader(
-            schema=schema,  # query_condition needs this
-            column_names=column_names,
-            query_condition=query_condition,
-            result_order=result_order,
+        config = handle.config().copy()
+        config.update(platform_config or {})
+
+        ts = None
+        if handle.timestamp is not None:
+            ts = (0, handle.timestamp)
+
+        sr = clib.SOMADataFrame.open(
+            uri=handle.uri,
+            mode=clib.OpenMode.read,
+            platform_config=config,
+            column_names=column_names or [],
+            result_order=_util.to_clib_result_order(result_order),
+            timestamp=ts,
         )
+
+        if value_filter is not None:
+            sr.set_condition(QueryCondition(value_filter), handle.schema)
 
         self._set_reader_coords(sr, coords)
 
-        # TODO: platform_config
         # TODO: batch_size
 
         return TableReadIter(sr)
@@ -415,7 +416,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     if not pa.types.is_dictionary(col_info.type):
                         raise ValueError(
                             "Expected dictionary type for enumerated attribute "
-                            f"{name} but saw {col_info.type}"
+                            f"{name} but saw {col.type}"
                         )
 
                     enmr = self._handle.enum(attr.name)
@@ -521,20 +522,23 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             if self._set_reader_coord_by_numeric_slice(sr, dim_idx, dim, coord):
                 return True
 
+        domain = self.domain[dim_idx]
+
         # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
         # part.
-        if (is_slice_of(coord, str) or is_slice_of(coord, bytes)) and (
-            dim.dtype == "str" or dim.dtype == "bytes"
-        ):
+        if (
+            is_slice_of(coord, str) or is_slice_of(coord, bytes)
+        ) and _util.pa_types_is_string_or_bytes(dim.type):
             _util.validate_slice(coord)
             # Figure out which one.
-            dim_type: Union[Type[str], Type[bytes]] = type(dim.domain[0])
+            dim_type: Union[Type[str], Type[bytes]] = type(domain[0])
             # A ``None`` or empty start is always equivalent to empty str/bytes.
             start = coord.start or dim_type()
             if coord.stop is None:
                 # There's no way to specify "to infinity" for strings.
                 # We have to get the nonempty domain and use that as the end.
-                _, stop = self._handle.reader.nonempty_domain()[dim_idx]
+                ned = self._handle.non_empty_domain()
+                _, stop = ned[dim_idx]
             else:
                 stop = coord.stop
             sr.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
@@ -542,16 +546,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
         # part.
-        if is_slice_of(coord, np.datetime64) and dim.dtype.name.startswith(
-            "datetime64"
-        ):
+        if is_slice_of(coord, np.datetime64) and pa.types.is_timestamp(dim.type):
             _util.validate_slice(coord)
             # These timestamp types are stored in Arrow as well as TileDB as 64-bit integers (with
             # distinguishing metadata of course). For purposes of the query logic they're just
             # int64.
-            istart = coord.start or dim.domain[0]
+            istart = coord.start or domain[0]
             istart = int(istart.astype("int64"))
-            istop = coord.stop or dim.domain[1]
+            istop = coord.stop or domain[1]
             istop = int(istop.astype("int64"))
             sr.set_dim_ranges_int64(dim.name, [(istart, istop)])
             return True
@@ -574,41 +576,19 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     f"only 1D numpy arrays may be used to index; got {coord.ndim}"
                 )
 
-        # See libtiledbsoma.cc for more context on why we need the
-        # explicit type-check here.
+        try:
+            set_dim_points = getattr(sr, f"set_dim_points_{dim.type}")
+        except AttributeError:
+            # We have to handle this type specially below
+            pass
+        else:
+            set_dim_points(dim.name, coord)
+            return True
 
-        if dim.dtype == np.int64:
-            sr.set_dim_points_int64(dim.name, coord)
-        elif dim.dtype == np.int32:
-            sr.set_dim_points_int32(dim.name, coord)
-        elif dim.dtype == np.int16:
-            sr.set_dim_points_int16(dim.name, coord)
-        elif dim.dtype == np.int8:
-            sr.set_dim_points_int8(dim.name, coord)
-
-        elif dim.dtype == np.uint64:
-            sr.set_dim_points_uint64(dim.name, coord)
-        elif dim.dtype == np.uint32:
-            sr.set_dim_points_uint32(dim.name, coord)
-        elif dim.dtype == np.uint16:
-            sr.set_dim_points_uint16(dim.name, coord)
-        elif dim.dtype == np.uint8:
-            sr.set_dim_points_uint8(dim.name, coord)
-
-        elif dim.dtype == np.float64:
-            sr.set_dim_points_float64(dim.name, coord)
-        elif dim.dtype == np.float32:
-            sr.set_dim_points_float32(dim.name, coord)
-
-        elif dim.dtype == "str" or dim.dtype == "bytes":
+        if _util.pa_types_is_string_or_bytes(dim.type):
             sr.set_dim_points_string_or_bytes(dim.name, coord)
-
-        elif (
-            dim.dtype == "datetime64[s]"
-            or dim.dtype == "datetime64[ms]"
-            or dim.dtype == "datetime64[us]"
-            or dim.dtype == "datetime64[ns]"
-        ):
+            return True
+        elif pa.types.is_timestamp(dim.type):
             if not isinstance(coord, (tuple, list, np.ndarray)):
                 raise ValueError(
                     f"unhandled coord type {type(coord)} for index column named {dim.name}"
@@ -618,64 +598,31 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 for e in coord
             ]
             sr.set_dim_points_int64(dim.name, icoord)
+            return True
 
         # TODO: bool
 
-        else:
-            raise ValueError(
-                f"unhandled type {dim.dtype} for index column named {dim.name}"
-            )
-
-        return True
+        raise ValueError(
+            f"unhandled type {dim.dtype} for index column named {dim.name}"
+        )
 
     def _set_reader_coord_by_numeric_slice(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: Slice[Any]
+        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: Slice[Any]
     ) -> bool:
         try:
-            lo_hi = _util.slice_to_numeric_range(coord, dim.domain)
+            lo_hi = _util.slice_to_numeric_range(coord, self.domain[dim_idx])
         except _util.NonNumericDimensionError:
             return False  # We only handle numeric dimensions here.
 
         if not lo_hi:
             return True
 
-        elif dim.dtype == np.int64:
-            sr.set_dim_ranges_int64(dim.name, [lo_hi])
+        try:
+            set_dim_range = getattr(sr, f"set_dim_ranges_{dim.type}")
+            set_dim_range(dim.name, [lo_hi])
             return True
-        elif dim.dtype == np.int32:
-            sr.set_dim_ranges_int32(dim.name, [lo_hi])
-            return True
-        elif dim.dtype == np.int16:
-            sr.set_dim_ranges_int16(dim.name, [lo_hi])
-            return True
-        elif dim.dtype == np.int8:
-            sr.set_dim_ranges_int8(dim.name, [lo_hi])
-            return True
-
-        elif dim.dtype == np.uint64:
-            sr.set_dim_ranges_uint64(dim.name, [lo_hi])
-            return True
-        elif dim.dtype == np.uint32:
-            sr.set_dim_ranges_uint32(dim.name, [lo_hi])
-            return True
-        elif dim.dtype == np.uint16:
-            sr.set_dim_ranges_uint16(dim.name, [lo_hi])
-            return True
-        elif dim.dtype == np.uint8:
-            sr.set_dim_ranges_uint8(dim.name, [lo_hi])
-            return True
-
-        elif dim.dtype == np.float64:
-            sr.set_dim_ranges_float64(dim.name, [lo_hi])
-            return True
-        elif dim.dtype == np.float32:
-            sr.set_dim_ranges_float32(dim.name, [lo_hi])
-            return True
-
-        # TODO:
-        # elif dim.dtype == np.bool_:
-
-        return False
+        except AttributeError:
+            return False
 
 
 def _canonicalize_schema(

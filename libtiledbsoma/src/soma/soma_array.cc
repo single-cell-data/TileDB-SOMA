@@ -135,6 +135,9 @@ SOMAArray::SOMAArray(
     , uri_(util::rstrip_uri(uri))
     , result_order_(result_order)
     , timestamp_(timestamp) {
+    for (auto& it : ctx->config())
+        config_[it.first] = it.second;
+
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
     fill_metadata_cache();
@@ -168,6 +171,10 @@ const std::string& SOMAArray::uri() const {
 std::shared_ptr<Context> SOMAArray::ctx() {
     return ctx_;
 };
+
+std::map<std::string, std::string> SOMAArray::config() {
+    return config_;
+}
 
 void SOMAArray::open(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -468,12 +475,12 @@ std::vector<int64_t> SOMAArray::shape() {
 }
 
 uint64_t SOMAArray::ndim() const {
-    return this->schema().get()->domain().ndim();
+    return tiledb_schema()->domain().ndim();
 }
 
 std::vector<std::string> SOMAArray::dimension_names() const {
     std::vector<std::string> result;
-    auto dimensions = this->schema().get()->domain().dimensions();
+    auto dimensions = tiledb_schema()->domain().dimensions();
     for (const auto& dim : dimensions) {
         result.push_back(dim.name());
     }

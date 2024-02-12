@@ -32,7 +32,7 @@ update:
 .PHONY: test
 test: data
 	ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
-	pytest apis/python/tests libtiledbsoma/test
+	pytest apis/python/tests 
 
 .PHONY: data
 data:

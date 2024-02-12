@@ -142,18 +142,18 @@ def _open_internal(
     """Lower-level open function for internal use only."""
     handle = opener(uri, mode, context, timestamp)
     try:
-        return _reify_handle(handle)
+        return reify_handle(handle)
     except Exception:
         handle.close()
         raise
 
 
 @typeguard_ignore
-def _reify_handle(hdl: _Wrapper) -> "_tiledb_object.TileDBObject[_Wrapper]":
+def reify_handle(hdl: _Wrapper) -> "_tiledb_object.TileDBObject[_Wrapper]":
     """Picks out the appropriate SOMA class for a handle and wraps it."""
     typename = _read_soma_type(hdl)
     cls = _type_name_to_cls(typename)
-    if cls._wrapper_type != type(hdl):
+    if type(hdl) not in (cls._wrapper_type, cls._reader_wrapper_type):
         raise SOMAError(
             f"cannot open {hdl.uri!r}: a {type(hdl._handle)}"
             f" cannot be converted to a {typename}"

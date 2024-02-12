@@ -127,10 +127,6 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
             ResultOrder::automatic,
             std::pair<uint64_t, uint64_t>(timestamp + i, timestamp + i));
 
-        if (LOG_DEBUG_ENABLED()) {
-            soma_array->schema()->dump();
-        }
-
         std::vector<int64_t> d0(num_cells_per_fragment);
         for (int j = 0; j < num_cells_per_fragment; j++) {
             // Overlap odd fragments when generating overlaps

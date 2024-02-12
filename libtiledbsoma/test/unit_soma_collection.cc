@@ -107,8 +107,6 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     REQUIRE(soma_sparse->ctx() == ctx);
     REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
     REQUIRE(soma_sparse->is_sparse() == true);
-    REQUIRE(soma_sparse->schema()->has_attribute("a0"));
-    REQUIRE(soma_sparse->schema()->domain().has_dimension("d0"));
     REQUIRE(soma_sparse->ndim() == 1);
     REQUIRE(soma_sparse->nnz() == 0);
     soma_sparse->close();
@@ -137,8 +135,6 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     REQUIRE(soma_dense->ctx() == ctx);
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
     REQUIRE(soma_dense->is_sparse() == false);
-    REQUIRE(soma_dense->schema()->has_attribute("a0"));
-    REQUIRE(soma_dense->schema()->domain().has_dimension("d0"));
     REQUIRE(soma_dense->ndim() == 1);
     REQUIRE(soma_dense->shape() == std::vector<int64_t>{1001});
     soma_collection->close();
@@ -154,7 +150,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     std::string sub_uri = "mem://unit-test-add-dataframe/sub";
 
     SOMACollection::create(base_uri, ctx);
-    auto schema = create_schema(*ctx, false);
+    auto schema = create_schema(*ctx, true);
 
     std::map<std::string, std::string> expected_map{{"dataframe", sub_uri}};
 
@@ -165,16 +161,14 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     REQUIRE(soma_dataframe->uri() == sub_uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
     REQUIRE(soma_dataframe->type() == "SOMADataFrame");
-    REQUIRE(soma_dataframe->schema()->has_attribute("a0"));
-    REQUIRE(soma_dataframe->schema()->domain().has_dimension("d0"));
     std::vector<std::string> expected_index_column_names = {"d0"};
     REQUIRE(
         soma_dataframe->index_column_names() == expected_index_column_names);
-    REQUIRE(soma_dataframe->count() == 1);
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_dataframe->count() == 0);
     soma_collection->close();
 }
 

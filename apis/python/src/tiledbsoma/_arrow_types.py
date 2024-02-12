@@ -189,33 +189,27 @@ def tiledb_schema_to_arrow(
 
 def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     """
-    Categoricals are not yet well supported, so we must flatten.
-    Also replace Numpy/Pandas-style nulls with Arrow-style nulls.
+    Handle special cases where pa.Table.from_pandas is not sufficient.
     """
     null_fields = set()
     # Not for name, col in df.items() since we need df[k] on the left-hand sides
     for k in df:
         if df[k].isnull().any():
-            if df[k].isnull().all():
-                # Special case: Pandas dtype is string, but the values are
-                # math.NaN, for which pa.infer_type fails with "Could not
-                # convert <NA> with type NAType".
-                #
-                # Note: with
-                #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))
-                # the dtype comes in to us via `tiledbsoma.io.from_anndata` not
-                # as `pd.StringDtype()` but rather as `object`.
-                if df[k].dtype == pd.StringDtype() or df[k].dtype.name == "object":
-                    df[k] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
-                else:
-                    df[k] = pa.nulls(df.shape[0], pa.infer_type(df[k]))
-            else:
-                df[k].where(
-                    df[k].notnull(),
-                    pd.Series(pa.nulls(df[k].isnull().sum(), pa.infer_type(df[k]))),
-                    inplace=True,
-                )
             null_fields.add(k)
+
+        # Handle special cases for all null columns where the dtype is "object"
+        # or "category" and must be expliitly casted to the correct pandas
+        # extension dtype.
+        #
+        # Note: with
+        #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))
+        # the dtype comes in to us via `tiledbsoma.io.from_anndata` not
+        # as `pd.StringDtype()` but rather as `object`.
+        if df[k].isnull().all():
+            if df[k].dtype.name == "object":
+                df[k] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
+            elif df[k].dtype.name == "category":
+                df[k] = pd.Series([None] * df.shape[0], dtype=pd.CategoricalDtype())
 
     # For categoricals, it's possible to get
     #   TypeError: Object of type bool_ is not JSON serializable

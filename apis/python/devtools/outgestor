@@ -59,13 +59,13 @@ def main():
         "--obs-id-name",
         help="Which obs column name to use as index for outgested andata",
         type=str,
-        default="obs_id",
+        default=None,
     )
     parser.add_argument(
         "--var-id-name",
         help="Which var column name to use as index for outgested andata",
         type=str,
-        default="var_id",
+        default=None,
     )
     parser.add_argument(
         "paths",

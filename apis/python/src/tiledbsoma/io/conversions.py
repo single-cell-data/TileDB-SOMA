@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 import pandas._typing as pdt
 import scipy.sparse as sp
-from pandas.api.types import is_categorical_dtype
 
 from .._funcs import typeguard_ignore
 from .._types import NPNDArray, PDSeries
@@ -32,7 +31,7 @@ def decategoricalize_obs_or_var(obs_or_var: pd.DataFrame) -> pd.DataFrame:
             },
         )
     else:
-        return obs_or_var
+        return obs_or_var.copy()
 
 
 @typeguard_ignore
@@ -46,7 +45,9 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     """Converts datatypes unrepresentable by TileDB into datatypes it can represent.
     E.g., float16 -> float32
     """
-    if isinstance(x, (np.ndarray, sp.spmatrix)) or not is_categorical_dtype(x):
+    if isinstance(x, (np.ndarray, sp.spmatrix)) or not isinstance(
+        x, pd.CategoricalDtype
+    ):
         # mypy issues a spurious error here, but only when
         # _to_tiledb_supported_dtype is decorated with @typeguard_ignore???
         target_dtype = _to_tiledb_supported_dtype(x.dtype)  # type: ignore[arg-type]

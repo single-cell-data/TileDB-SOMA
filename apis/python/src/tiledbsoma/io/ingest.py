@@ -9,6 +9,7 @@ This module contains methods to generate SOMA artifacts starting from
 other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
 
+import json
 import math
 import time
 from typing import (
@@ -88,6 +89,9 @@ _UNS_OUTGEST_HINT_1D = "array_1d"
 _UNS_OUTGEST_HINT_2D = "array_2d"
 _UNS_OUTGEST_COLUMN_NAME_1D = "values"
 _UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
+
+_TILEDBSOMA_TYPE = "soma_tiledbsoma_type"
+_DATAFRAME_ORIGINAL_INDEX_NAME_JSON = "soma_dataframe_original_index_name"
 
 
 # ----------------------------------------------------------------
@@ -245,6 +249,8 @@ def from_h5ad(
     platform_config: Optional[PlatformConfig] = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
+    X_layer_name: str = "data",
+    raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
@@ -271,6 +277,19 @@ def from_h5ad(
 
         platform_config: Platform-specific options used to create this array, provided in the form
         ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}`` nested keys.
+
+        obs_id_name and var_id_name: Which AnnData ``obs`` and ``var`` columns, respectively, to use
+        for append mode: values of this column will be used to decide which obs/var rows in appended
+        inputs are distinct from the ones already stored, for the assignment of ``soma_joinid``.  If
+        this column exists in the input data, as a named index or a non-index column name, it will
+        be used. If this column doesn't exist in the input data, and if the index is nameless or
+        named ``index``, that index will be given this name when written to the SOMA experiment's
+        ``obs`` / ``var``. NOTE: it is not necessary for this column to be the index-column
+        name in the input AnnData objects ``obs``/``var``.
+
+        X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
+
+        raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
 
         ingest_mode: The ingestion type to perform:
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
@@ -345,6 +364,8 @@ def from_h5ad(
             platform_config=platform_config,
             obs_id_name=obs_id_name,
             var_id_name=var_id_name,
+            X_layer_name=X_layer_name,
+            raw_X_layer_name=raw_X_layer_name,
             ingest_mode=ingest_mode,
             use_relative_uri=use_relative_uri,
             X_kind=X_kind,
@@ -368,6 +389,8 @@ def from_anndata(
     platform_config: Optional[PlatformConfig] = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
+    X_layer_name: str = "data",
+    raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
@@ -544,7 +567,7 @@ def from_anndata(
                 if has_X:
                     with _create_from_matrix(
                         X_kind,
-                        _util.uri_joinpath(measurement_X_uri, "data"),
+                        _util.uri_joinpath(measurement_X_uri, X_layer_name),
                         anndata.X,
                         ingestion_params=ingestion_params,
                         platform_config=platform_config,
@@ -552,7 +575,9 @@ def from_anndata(
                         axis_0_mapping=jidmaps.obs_axis,
                         axis_1_mapping=jidmaps.var_axes[measurement_name],
                     ) as data:
-                        _maybe_set(x, "data", data, use_relative_uri=use_relative_uri)
+                        _maybe_set(
+                            x, X_layer_name, data, use_relative_uri=use_relative_uri
+                        )
 
                 for layer_name, layer in anndata.layers.items():
                     with _create_from_matrix(
@@ -722,7 +747,7 @@ def from_anndata(
                         with _write_dataframe(
                             _util.uri_joinpath(raw_uri, "var"),
                             conversions.decategoricalize_obs_or_var(anndata.raw.var),
-                            id_column_name="var_id",
+                            id_column_name=var_id_name,
                             ingestion_params=ingestion_params,
                             platform_config=platform_config,
                             context=context,
@@ -751,7 +776,7 @@ def from_anndata(
 
                             with _create_from_matrix(
                                 SparseNDArray,
-                                _util.uri_joinpath(raw_X_uri, "data"),
+                                _util.uri_joinpath(raw_X_uri, raw_X_layer_name),
                                 anndata.raw.X,
                                 ingestion_params=ingestion_params,
                                 platform_config=platform_config,
@@ -761,7 +786,7 @@ def from_anndata(
                             ) as rm_x_data:
                                 _maybe_set(
                                     rm_x,
-                                    "data",
+                                    raw_X_layer_name,
                                     rm_x_data,
                                     use_relative_uri=use_relative_uri,
                                 )
@@ -887,7 +912,7 @@ def append_var(
     with _write_dataframe(
         sdf.uri,
         conversions.decategoricalize_obs_or_var(new_var),
-        id_column_name="var_id",
+        id_column_name=var_id_name,
         platform_config=platform_config,
         context=context,
         ingestion_params=ingestion_params,
@@ -1145,6 +1170,30 @@ def _extract_new_values_for_append(
         return arrow_table
 
 
+def _write_arrow_table(
+    arrow_table: pa.Table,
+    handle: Union[DataFrame, SparseNDArray],
+    tiledb_create_options: TileDBCreateOptions,
+) -> None:
+    """Handles num-bytes capacity for remote object stores."""
+    cap = tiledb_create_options.remote_cap_nbytes
+    if arrow_table.nbytes > cap:
+        n = len(arrow_table)
+        if n < 2:
+            raise SOMAError(
+                "single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}"
+            )
+        m = n // 2
+        _write_arrow_table(arrow_table[:m], handle, tiledb_create_options)
+        _write_arrow_table(arrow_table[m:], handle, tiledb_create_options)
+    else:
+        logging.log_io(
+            None,
+            f"Write Arrow table num_rows={len(arrow_table)} num_bytes={arrow_table.nbytes} cap={cap}",
+        )
+        handle.write(arrow_table)
+
+
 def _write_dataframe(
     df_uri: str,
     df: pd.DataFrame,
@@ -1155,6 +1204,20 @@ def _write_dataframe(
     context: Optional[SOMATileDBContext] = None,
     axis_mapping: AxisIDMapping,
 ) -> DataFrame:
+    """
+    The id_column_name is for disambiguating rows in append mode;
+    it may or may not be an index name in the input AnnData obs/var.
+
+    The original_index_name is the index name in the AnnData obs/var.
+
+    This helper mutates the input dataframe, for parsimony of memory usage.
+    The caller should have copied anything pointing to a user-provided
+    adata.obs, adata.var, etc.
+    """
+    original_index_name = None
+    if df.index is not None and df.index.name is not None and df.index.name != "index":
+        original_index_name = df.index.name
+
     df.reset_index(inplace=True)
     if id_column_name is not None:
         if id_column_name in df:
@@ -1172,6 +1235,7 @@ def _write_dataframe(
         df_uri,
         id_column_name,
         ingestion_params=ingestion_params,
+        original_index_name=original_index_name,
         platform_config=platform_config,
         context=context,
     )
@@ -1183,6 +1247,7 @@ def _write_dataframe_impl(
     id_column_name: Optional[str],
     *,
     ingestion_params: IngestionParams,
+    original_index_name: Optional[str] = None,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
 ) -> DataFrame:
@@ -1232,7 +1297,16 @@ def _write_dataframe_impl(
         )
         return soma_df
 
-    soma_df.write(arrow_table)
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+
+    _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
+
+    # Save the original index name for outgest. We use JSON for elegant indication of index name
+    # being None (in Python anyway).
+    soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(
+        original_index_name
+    )
+
     logging.log_io(
         f"Wrote   {soma_df.uri}",
         _util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
@@ -1472,6 +1546,9 @@ def _update_dataframe(
     """
     See ``update_obs`` and ``update_var``. This is common helper code shared by both.
     """
+    new_data = (
+        new_data.copy()
+    )  # Further operations are in-place for parsimony of memory usage
     if sdf.closed or sdf.mode != "w":
         raise SOMAError(f"DataFrame must be open for write: {sdf.uri}")
     old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)
@@ -1699,10 +1776,40 @@ def _write_matrix_to_denseNDArray(
 
     # OR, write in chunks
     eta_tracker = eta.Tracker()
-    nrow, ncol = matrix.shape
+    if matrix.ndim == 2:
+        nrow, ncol = matrix.shape
+    elif matrix.ndim == 1:
+        nrow = matrix.shape[0]
+        ncol = 1
+    else:
+        raise ValueError(
+            f"only 1D or 2D dense arrays are supported here; got {matrix.ndim}"
+        )
+
+    # Number of rows to chunk by. These are dense writes, so this is loop-invariant.
+    # * The goal_chunk_nnz is an older parameter. It's still important, as for backed AnnData,
+    #   it controls how much is read into client RAM from the backing store on each chunk.
+    # * The remote_cap_nbytes is an older parameter.
+    # * Compute chunk sizes for both and take the minimum.
+    chunk_size_using_nnz = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
+
+    try:
+        # not scipy csr/csc
+        itemsize = matrix.itemsize
+    except AttributeError:
+        # scipy csr/csc
+        itemsize = matrix.data.itemsize
+
+    total_nbytes = matrix.size * itemsize
+    nbytes_num_chunks = math.ceil(
+        total_nbytes / tiledb_create_options.remote_cap_nbytes
+    )
+    nbytes_num_chunks = min(1, nbytes_num_chunks)
+    chunk_size_using_nbytes = math.floor(nrow / nbytes_num_chunks)
+
+    chunk_size = min(chunk_size_using_nnz, chunk_size_using_nbytes)
+
     i = 0
-    # Number of rows to chunk by. Dense writes, so this is a constant.
-    chunk_size = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
     while i < nrow:
         t1 = time.time()
         i2 = i + chunk_size
@@ -1715,7 +1822,10 @@ def _write_matrix_to_denseNDArray(
             % (i, i2 - 1, nrow, chunk_percent),
         )
 
-        chunk = matrix[i:i2, :]
+        if matrix.ndim == 2:
+            chunk = matrix[i:i2, :]
+        else:
+            chunk = matrix[i:i2]
 
         if ingestion_params.skip_existing_nonempty_domain and storage_ned is not None:
             chunk_bounds = matrix_bounds
@@ -1737,7 +1847,10 @@ def _write_matrix_to_denseNDArray(
             tensor = pa.Tensor.from_numpy(chunk)
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
-        soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+        if matrix.ndim == 2:
+            soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+        else:
+            soma_ndarray.write((slice(i, i2),), tensor)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -1757,7 +1870,7 @@ def _write_matrix_to_denseNDArray(
 
 def _read_nonempty_domain(arr: TileDBArray) -> Any:
     try:
-        return arr._handle.reader.nonempty_domain()
+        return arr._handle.non_empty_domain()
     except SOMAError:
         # This means that we're open in write-only mode.
         # Reopen the array in read mode.
@@ -1765,7 +1878,7 @@ def _read_nonempty_domain(arr: TileDBArray) -> Any:
 
     cls = type(arr)
     with cls.open(arr.uri, "r", platform_config=None, context=arr.context) as readarr:
-        return readarr._handle.reader.nonempty_domain()
+        return readarr._handle.non_empty_domain()
 
 
 def _find_sparse_chunk_size(
@@ -1951,6 +2064,11 @@ def _find_sparse_chunk_size_backed(
     extent = int(matrix.shape[axis])
 
     # Initial guess of chunk size.
+    #
+    # The goal_chunk_nnz is important, as for backed AnnData, it controls how much is read into
+    # client RAM from the backing store on each chunk. We also subdivide chunks by
+    # remote_cap_nbytes, if necessary, within _write_arrow_table in order to accommodate remote
+    # object stores, which is a different ceiling.
     chunk_size = max(1, int(math.floor(goal_chunk_nnz / mean_nnz)))
     if chunk_size > extent:
         chunk_size = extent
@@ -2211,9 +2329,10 @@ def _write_matrix_to_sparseNDArray(
             ),
         )
 
-        soma_ndarray.write(
-            _coo_to_table(chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i)
+        arrow_table = _coo_to_table(
+            chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i
         )
+        _write_arrow_table(arrow_table, soma_ndarray, tiledb_create_options)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -2231,7 +2350,7 @@ def _write_matrix_to_sparseNDArray(
 
 def _chunk_is_contained_in(
     chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Optional[Sequence[Tuple[Optional[int], Optional[int]]]],
+    storage_nonempty_domain: Sequence[Tuple[Optional[int], Optional[int]]],
 ) -> bool:
     """
     Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
@@ -2249,7 +2368,7 @@ def _chunk_is_contained_in(
     user that they declare they are retrying the exact same input file -- and we do our best to
     fulfill their ask by checking the dimension being strided on.
     """
-    if storage_nonempty_domain is None:
+    if len(storage_nonempty_domain) == 0:
         return False
 
     if len(chunk_bounds) != len(storage_nonempty_domain):
@@ -2268,6 +2387,9 @@ def _chunk_is_contained_in_axis(
     stride_axis: int,
 ) -> bool:
     """Helper function for ``_chunk_is_contained_in``."""
+    if len(storage_nonempty_domain) == 0:
+        return False
+
     storage_lo, storage_hi = storage_nonempty_domain[stride_axis]
     if storage_lo is None or storage_hi is None:
         # E.g. an array has had its schema created but no data written yet
@@ -2326,7 +2448,7 @@ def _ingest_uns_dict(
         context=context,
     ) as coll:
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
-        coll.metadata["soma_tiledbsoma_type"] = "uns"
+        coll.metadata[_TILEDBSOMA_TYPE] = "uns"
         for key, value in dct.items():
             if level == 0 and uns_keys is not None and key not in uns_keys:
                 continue
@@ -2611,11 +2733,17 @@ def _ingest_uns_ndarray(
 
     with soma_arr:
         _maybe_set(coll, key, soma_arr, use_relative_uri=use_relative_uri)
-        soma_arr.write(
-            (),
-            pa.Tensor.from_numpy(value),
-            platform_config=platform_config,
+
+        _write_matrix_to_denseNDArray(
+            soma_arr,
+            value,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            context=context,
+            ingestion_params=ingestion_params,
         )
+
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
     logging.log_io(msg, msg)
 
@@ -2627,13 +2755,17 @@ def to_h5ad(
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
-    obs_id_name: str = "obs_id",
-    var_id_name: str = "var_id",
+    obs_id_name: Optional[str] = None,
+    var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
     uns_keys: Optional[Sequence[str]] = None,
 ) -> None:
     """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
-    format and writes it to the specified ``.h5ad`` file. Arguments are as in ``to_anndata``.
+    format and writes it to the specified ``.h5ad`` file.
+
+    Arguments are as in ``to_anndata``.
+
+    TO DO: doc more params
 
     Lifecycle:
         Experimental.
@@ -2669,8 +2801,8 @@ def to_anndata(
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
-    obs_id_name: str = "obs_id",
-    var_id_name: str = "var_id",
+    obs_id_name: Optional[str] = None,
+    var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
     uns_keys: Optional[Sequence[str]] = None,
 ) -> ad.AnnData:
@@ -2682,6 +2814,17 @@ def to_anndata(
     * ``obs``,``var`` as ``pandas.dataframe``
     * ``obsm``,``varm`` arrays as ``numpy.ndarray``
     * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
+
+    The ``X_layer_name`` is the name of the TileDB-SOMA measurement's
+    ``X`` collection which will be outgested to the resulting AnnData object's
+    ``adata.X``.
+
+    The ``obs_id_name`` and ``var_id_name`` are columns within the TileDB-SOMA
+    experiment which will become index names within the resulting AnnData
+    object's ``obs``/``var`` dataframes. If not specified as arguments, the
+    TileDB-SOMA's dataframes will be checked for an original-index-name key.
+    When that also is unavailable, these default to ``"obs_id"`` and
+    ``"var_id"``, respectively.
 
     The ``obsm_varm_width_hints`` is optional. If provided, it should be of the form
     ``{"obsm":{"X_tSNE":2}}`` to aid with export errors.
@@ -2703,21 +2846,60 @@ def to_anndata(
         )
     measurement = experiment.ms[measurement_name]
 
+    # How to choose index name for AnnData obs and var dataframes:
+    # * If the desired names are passed in, use them.
+    # * Else if the names used at ingest time are available, use them.
+    # * Else use the default/fallback name.
+
+    # Restore the original index name for outgest. We use JSON for elegant indication of index
+    # name being None (in Python anyway). It may be 'null' which maps to Pyhton None.
+    obs_id_name = obs_id_name or json.loads(
+        experiment.obs.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, '"obs_id"')
+    )
+    var_id_name = var_id_name or json.loads(
+        measurement.var.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, '"var_id"')
+    )
+
     obs_df = experiment.obs.read().concat().to_pandas()
     obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    if obs_id_name not in obs_df.keys():
-        raise ValueError(
-            f"requested obs IDs column name {obs_id_name} not found in input: {obs_df.keys()}"
-        )
-    obs_df.set_index(obs_id_name, inplace=True)
+    if obs_id_name is not None:
+        if obs_id_name not in obs_df.keys():
+            raise ValueError(
+                f"requested obs IDs column name {obs_id_name} not found in input: {obs_df.keys()}"
+            )
+        obs_df.set_index(obs_id_name, inplace=True)
+    else:
+        # There are multiple cases to be handled here, all tested in CI.
+        # This else-block handle this one:
+        #
+        #                 orig.ident  nCount_RNA  ...
+        # ATGCCAGAACGACT           0        70.0  ...
+        # CATGGCCTGTGCAT           0        85.0  ...
+        # GAACCTGATGAACC           0        87.0  ...
+        #
+        # Namely:
+        # * The input AnnData dataframe had an index with no name
+        # * In the SOMA experiment we name that column "obs_id" and our index is "soma_joinid"
+        # * On outgest we drop "soma_joinid"
+        # * The thing we named "obs_id" needs to become the index again ...
+        # * ... and it needs to be nameless.
+        if "obs_id" in obs_df:
+            obs_df.set_index("obs_id", inplace=True)
+            obs_df.index.name = None
 
     var_df = measurement.var.read().concat().to_pandas()
+
     var_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    if var_id_name not in var_df.keys():
-        raise ValueError(
-            f"requested var IDs column name {var_id_name} not found in input: {var_df.keys()}"
-        )
-    var_df.set_index(var_id_name, inplace=True)
+    if var_id_name is not None:
+        if var_id_name not in var_df.keys():
+            raise ValueError(
+                f"requested var IDs column name {var_id_name} not found in input: {var_df.keys()}"
+            )
+        var_df.set_index(var_id_name, inplace=True)
+    else:
+        if "var_id" in var_df:
+            var_df.set_index("var_id", inplace=True)
+            var_df.index.name = None
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)

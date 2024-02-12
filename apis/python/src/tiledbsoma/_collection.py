@@ -75,6 +75,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     __slots__ = ("_contents", "_mutated_keys")
     _wrapper_type = _tdb_handles.GroupWrapper
+    _reader_wrapper_type = _tdb_handles.GroupWrapper
 
     # TODO: Implement additional creation of members on collection subclasses.
     @classmethod
@@ -204,6 +205,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 linked to by absolute URI in the stored collection, or relative,
                 in which case the sub-collection will be linked to by relative URI.
                 The default is to use a relative URI generated based on the key.
+                Absolute example: ``uri="s3://mybucket/myexperiment/ms/RNA/newchild"``.
+                Relative example: ``uri="newchild"``.
             platform_config:
                 Platform configuration options to use when
                 creating this sub-collection. This is passed directly to
@@ -426,13 +429,20 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         if entry.soma is None:
             from . import _factory  # Delayed binding to resolve circular import.
 
-            entry.soma = _factory._open_internal(
-                entry.entry.wrapper_type.open,
-                entry.entry.uri,
-                self.mode,
-                self.context,
-                self.tiledb_timestamp_ms,
-            )
+            uri = entry.entry.uri
+            mode = self.mode
+            context = self.context
+            timestamp = self.tiledb_timestamp_ms
+
+            try:
+                wrapper = _tdb_handles._open_with_clib_wrapper(
+                    uri, mode, context, timestamp
+                )
+                entry.soma = _factory.reify_handle(wrapper)
+            except SOMAError:
+                entry.soma = _factory._open_internal(
+                    entry.entry.wrapper_type.open, uri, mode, context, timestamp
+                )
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)
         return cast(CollectionElementType, entry.soma)

@@ -118,7 +118,7 @@ Rcpp::List sr_setup(const std::string& uri,
                                    tdb_result_order, std::make_pair(ts_start, ts_end));
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
-    std::shared_ptr<tiledb::ArraySchema> schema = ptr->schema();
+    std::shared_ptr<tiledb::ArraySchema> schema = ptr->tiledb_schema();
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim: dims) {
