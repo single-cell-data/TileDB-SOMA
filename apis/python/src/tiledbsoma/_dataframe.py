@@ -602,9 +602,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         # TODO: bool
 
-        raise ValueError(
-            f"unhandled type {dim.dtype} for index column named {dim.name}"
-        )
+        raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
 
     def _set_reader_coord_by_numeric_slice(
         self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: Slice[Any]
