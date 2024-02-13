@@ -10,7 +10,7 @@ import platform
 import sys
 
 import tiledb
-from pkg_resources import DistributionNotFound, get_distribution
+import importlib.metadata
 
 from .pytiledbsoma import version as libtiledbsoma_version
 
@@ -37,8 +37,8 @@ def get_implementation_version() -> str:
     Lifecycle: maturing
     """
     try:
-        return get_distribution("tiledbsoma").version
-    except DistributionNotFound:
+        return importlib_metadata.version("tiledbsoma")
+    except importlib_metadata.PackageNotFoundError
         return "unknown"
 
 
