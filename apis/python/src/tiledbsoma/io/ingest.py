@@ -9,10 +9,10 @@ This module contains methods to generate SOMA artifacts starting from
 other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
 
-import collections
 import json
 import math
 import time
+from collections.abc import KeysView
 from typing import (
     Any,
     ContextManager,
@@ -2946,9 +2946,7 @@ def to_anndata(
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
-    extra_X_layer_names: Optional[
-        Union[Sequence[str], collections.abc.KeysView[str]]
-    ] = None,
+    extra_X_layer_names: Optional[Union[Sequence[str], KeysView[str]]] = None,
     obs_id_name: Optional[str] = None,
     var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
