@@ -2912,33 +2912,33 @@ def to_h5ad(
 
 # XXX TEMP CI DEBUG
 ## ----------------------------------------------------------------
-# def _extract_X_key(
-#    measurement: Measurement,
-#    X_layer_name: str,
-#    nobs: int,
-#    nvar: int,
-# ) -> Matrix:
-#    """Helper function for to_anndata"""
-#
-#    if X_layer_name not in measurement.X:
-#        raise ValueError(
-#            f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
-#        )
-#
-#    # Acquire handle to TileDB-SOMA data
-#    soma_X_data_handle = measurement.X[X_layer_name]
-#    logging.log_io(None, f"FOO {X_layer_name} {soma_X_data_handle.uri}")
-#
-#    # Read data from SOMA into memory
-#    if isinstance(soma_X_data_handle, DenseNDArray):
-#        data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
-#    elif isinstance(soma_X_data_handle, SparseNDArray):
-#        X_mat = soma_X_data_handle.read().tables().concat().to_pandas()
-#        data = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
-#    else:
-#        raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
-#
-#    return data
+def _extract_X_key(
+    measurement: Measurement,
+    X_layer_name: str,
+    nobs: int,
+    nvar: int,
+) -> Matrix:
+    """Helper function for to_anndata"""
+
+    if X_layer_name not in measurement.X:
+        raise ValueError(
+            f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
+        )
+
+    # Acquire handle to TileDB-SOMA data
+    soma_X_data_handle = measurement.X[X_layer_name]
+    logging.log_io(None, f"FOO {X_layer_name} {soma_X_data_handle.uri}")
+
+    # Read data from SOMA into memory
+    if isinstance(soma_X_data_handle, DenseNDArray):
+        data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
+    elif isinstance(soma_X_data_handle, SparseNDArray):
+        X_mat = soma_X_data_handle.read().tables().concat().to_pandas()
+        data = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
+    else:
+        raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
+
+    return data
 
 
 # ----------------------------------------------------------------
