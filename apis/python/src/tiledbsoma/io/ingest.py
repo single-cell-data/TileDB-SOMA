@@ -425,25 +425,25 @@ def from_anndata(
     for key in anndata.obsm.keys():
         if not isinstance(anndata.obsm[key], get_args(Matrix)):
             raise TypeError(
-                f"Obsm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+                f"obsm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
             )
 
     for key in anndata.obsp.keys():
         if not isinstance(anndata.obsp[key], get_args(Matrix)):
             raise TypeError(
-                f"Obsp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+                f"obsp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
             )
 
     for key in anndata.varm.keys():
         if not isinstance(anndata.varm[key], get_args(Matrix)):
             raise TypeError(
-                f"Varm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+                f"varm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
             )
 
     for key in anndata.varp.keys():
         if not isinstance(anndata.varp[key], get_args(Matrix)):
             raise TypeError(
-                f"Varp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+                f"varp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
             )
 
     # For single ingest (no append):
