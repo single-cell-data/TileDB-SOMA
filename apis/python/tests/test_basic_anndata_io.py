@@ -1151,6 +1151,7 @@ def test_obsm_data_type(adata):
 
 @pytest.mark.parametrize("X_layer_name", ["data", "data2", "data3", "nonesuch", None])
 def test_outgest_X_layers(tmp_path, X_layer_name):
+def test_outgest_X_layers(tmp_path):
     nobs = 200
     nvar = 100
     xocc = 0.3
@@ -1187,25 +1188,75 @@ def test_outgest_X_layers(tmp_path, X_layer_name):
 
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name)
 
+    # @pytest.mark.parametrize is intentionally not used here. For this
+    # particular test-case, it's simpler to spell out the checks.
+
     with tiledbsoma.Experiment.open(soma_uri) as exp:
-        if X_layer_name == "nonesuch":
-            with pytest.raises(ValueError):
-                tiledbsoma.io.to_anndata(
-                    exp, measurement_name, X_layer_name=X_layer_name
-                )
-        else:
-            bdata = tiledbsoma.io.to_anndata(
-                exp, measurement_name, X_layer_name=X_layer_name
+        measurement = exp.ms[measurement_name]
+
+        bdata = tiledbsoma.io.to_anndata(exp, measurement_name)
+        assert bdata.X is not None
+        assert len(bdata.layers) == 0
+
+        bdata = tiledbsoma.io.to_anndata(
+            exp, measurement_name, X_layer_name=None, extra_X_layer_names=[]
+        )
+        assert bdata.X is None
+        assert len(bdata.layers) == 0
+
+        with pytest.raises(ValueError):
+            tiledbsoma.io.to_anndata(
+                exp, measurement_name, X_layer_name=None, extra_X_layer_names=["data"]
             )
 
-            if X_layer_name is None:
-                assert sorted(list(bdata.layers.keys())) == []
-                assert bdata.X is None
-            elif X_layer_name == "data":
-                assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
-            elif X_layer_name == "data2":
-                assert sorted(list(bdata.layers.keys())) == ["data", "data3"]
-            elif X_layer_name == "data3":
-                assert sorted(list(bdata.layers.keys())) == ["data", "data2"]
-            else:
-                assert False
+        with pytest.raises(ValueError):
+            tiledbsoma.io.to_anndata(exp, measurement_name, X_layer_name="nonesuch")
+
+        with pytest.raises(ValueError):
+            tiledbsoma.io.to_anndata(
+                exp,
+                measurement_name,
+                X_layer_name="data",
+                extra_X_layer_names=["nonesuch"],
+            )
+
+        bdata = tiledbsoma.io.to_anndata(
+            exp, measurement_name, X_layer_name="data", extra_X_layer_names=["data2"]
+        )
+        assert bdata.X is not None
+        assert len(bdata.layers) == 1
+        assert sorted(list(bdata.layers.keys())) == ["data2"]
+
+        # extra_X_layer_names as list
+        bdata = tiledbsoma.io.to_anndata(
+            exp,
+            measurement_name,
+            X_layer_name="data",
+            extra_X_layer_names=["data2", "data"],
+        )
+        assert bdata.X is not None
+        assert len(bdata.layers) == 1
+        assert sorted(list(bdata.layers.keys())) == ["data2"]
+
+        # extra_X_layer_names as tuple
+        bdata = tiledbsoma.io.to_anndata(
+            exp,
+            measurement_name,
+            X_layer_name="data",
+            extra_X_layer_names=("data2", "data", "data3"),
+        )
+        assert bdata.X is not None
+        assert len(bdata.layers) == 2
+        assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
+
+        # measurement.X.keys() is a collections.abc.KeysView -- check that they can do this without
+        # having to do list(measurement.X.keys())
+        bdata = tiledbsoma.io.to_anndata(
+            exp,
+            measurement_name,
+            X_layer_name="data",
+            extra_X_layer_names=measurement.X.keys(),
+        )
+        assert bdata.X is not None
+        assert len(bdata.layers) == 2
+        assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
