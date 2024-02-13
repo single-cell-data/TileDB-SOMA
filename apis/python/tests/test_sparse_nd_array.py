@@ -55,6 +55,14 @@ def test_sparse_nd_array_create_ok(
         assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
     assert a.schema.field("soma_data").type == element_type
 
+    # Ensure read mode uses clib object
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A:
+        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMASparseNDArray)
+
+    # Ensure write mode uses Python object
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
+        assert isinstance(A._handle._handle, tiledb.Array)
+
 
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)

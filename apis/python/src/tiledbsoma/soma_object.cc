@@ -81,7 +81,6 @@ void load_soma_object(py::module& m) {
             "context"_a,
             py::kw_only(),
             "timestamp"_a = py::none())
-
         .def_property_readonly("type", &SOMAObject::type);
 };
 }  // namespace libtiledbsomacpp
