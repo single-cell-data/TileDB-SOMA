@@ -1144,3 +1144,115 @@ def test_obsm_data_type(adata):
         tiledbsoma.io.from_anndata(soma_path, bdata, measurement_name="RNA")
 
     assert not any(Path(soma_path).iterdir())
+
+
+# XXX TEMP CI DEBUG
+# def test_outgest_X_layers(tmp_path):
+#    nobs = 200
+#    nvar = 100
+#    xocc = 0.3
+#    measurement_name = "meas"
+#
+#    obs_ids = ["cell_%08d" % (i) for i in range(nobs)]
+#    var_ids = ["gene_%08d" % (j) for j in range(nvar)]
+#
+#    cell_types = [["B cell", "T cell"][e % 2] for e in range(nobs)]
+#    obs = pd.DataFrame(
+#        data={
+#            "obs_id": np.asarray(obs_ids),
+#            "cell_type": pd.Categorical(cell_types),
+#        },
+#        index=np.arange(nobs).astype(str),
+#    )
+#    obs.set_index("obs_id", inplace=True)
+#
+#    var = pd.DataFrame(
+#        data={
+#            "var_id": np.asarray(var_ids),
+#            "squares": np.asarray([i**2 for i in range(nvar)]),
+#        },
+#        index=np.arange(len(var_ids)).astype(str),
+#    )
+#    var.set_index("var_id", inplace=True)
+#
+#    X = scipy.sparse.random(nobs, nvar, density=xocc, dtype=np.float64).tocsr()
+#    layers = {"data2": X, "data3": X}
+#
+#    adata = anndata.AnnData(X=X, obs=obs, var=var, layers=layers)
+#
+#    soma_uri = tmp_path.as_posix()
+#
+#    tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name)
+#
+#    # @pytest.mark.parametrize is intentionally not used here. For this
+#    # particular test-case, it's simpler to spell out the checks.
+#
+#    with tiledbsoma.Experiment.open(soma_uri) as exp:
+#        measurement = exp.ms[measurement_name]
+#
+#        bdata = tiledbsoma.io.to_anndata(exp, measurement_name)
+#        assert bdata.X is not None
+#        assert len(bdata.layers) == 0
+#
+#        bdata = tiledbsoma.io.to_anndata(
+#            exp, measurement_name, X_layer_name=None, extra_X_layer_names=[]
+#        )
+#        assert bdata.X is None
+#        assert len(bdata.layers) == 0
+#
+#        with pytest.raises(ValueError):
+#            tiledbsoma.io.to_anndata(
+#                exp, measurement_name, X_layer_name=None, extra_X_layer_names=["data"]
+#            )
+#
+#        with pytest.raises(ValueError):
+#            tiledbsoma.io.to_anndata(exp, measurement_name, X_layer_name="nonesuch")
+#
+#        with pytest.raises(ValueError):
+#            tiledbsoma.io.to_anndata(
+#                exp,
+#                measurement_name,
+#                X_layer_name="data",
+#                extra_X_layer_names=["nonesuch"],
+#            )
+#
+#        bdata = tiledbsoma.io.to_anndata(
+#            exp, measurement_name, X_layer_name="data", extra_X_layer_names=["data2"]
+#        )
+#        assert bdata.X is not None
+#        assert len(bdata.layers) == 1
+#        assert sorted(list(bdata.layers.keys())) == ["data2"]
+#
+#        # extra_X_layer_names as list
+#        bdata = tiledbsoma.io.to_anndata(
+#            exp,
+#            measurement_name,
+#            X_layer_name="data",
+#            extra_X_layer_names=["data2", "data"],
+#        )
+#        assert bdata.X is not None
+#        assert len(bdata.layers) == 1
+#        assert sorted(list(bdata.layers.keys())) == ["data2"]
+#
+#        # extra_X_layer_names as tuple
+#        bdata = tiledbsoma.io.to_anndata(
+#            exp,
+#            measurement_name,
+#            X_layer_name="data",
+#            extra_X_layer_names=("data2", "data", "data3"),
+#        )
+#        assert bdata.X is not None
+#        assert len(bdata.layers) == 2
+#        assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
+#
+#        # measurement.X.keys() is a collections.abc.KeysView -- check that they can do this without
+#        # having to do list(measurement.X.keys())
+#        bdata = tiledbsoma.io.to_anndata(
+#            exp,
+#            measurement_name,
+#            X_layer_name="data",
+#            extra_X_layer_names=measurement.X.keys(),
+#        )
+#        assert bdata.X is not None
+#        assert len(bdata.layers) == 2
+#        assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
