@@ -9,6 +9,7 @@ This module contains methods to generate SOMA artifacts starting from
 other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
 
+import collections
 import json
 import math
 import time
@@ -2909,12 +2910,44 @@ def to_h5ad(
 
 
 # ----------------------------------------------------------------
+def _extract_X_key(
+    measurement: Measurement,
+    X_layer_name: str,
+    nobs: int,
+    nvar: int,
+) -> Matrix:
+    """Helper function for to_anndata"""
+
+    if X_layer_name not in measurement.X:
+        raise ValueError(
+            f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
+        )
+
+    # Acquire handle to TileDB-SOMA data
+    soma_X_data_handle = measurement.X[X_layer_name]
+    logging.log_io(None, f"FOO {X_layer_name} {soma_X_data_handle.uri}")
+
+    # Read data from SOMA into memory
+    if isinstance(soma_X_data_handle, DenseNDArray):
+        data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
+    elif isinstance(soma_X_data_handle, SparseNDArray):
+        X_mat = soma_X_data_handle.read().tables().concat().to_pandas()
+        data = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
+    else:
+        raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
+
+    return data
+
+
+# ----------------------------------------------------------------
 def to_anndata(
     experiment: Experiment,
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
-    extra_X_layer_names: Optional[Sequence[str]] = None,
+    extra_X_layer_names: Optional[
+        Union[Sequence[str], collections.abc.KeysView[str]]
+    ] = None,
     obs_id_name: Optional[str] = None,
     var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
@@ -2938,16 +2971,16 @@ def to_anndata(
 
     The ``extra_X_layer_names`` are used to specify how the output ``adata``
     object's ``adata.layers`` is populated.  The default behavior --
-    ``extra_X_layer_names`` being ``None`` -- means that `adata.layers` will be
-    empty.  If `extra_X_layer_names` is a provided list these will be used for
+    ``extra_X_layer_names`` being ``None`` -- means that ``adata.layers`` will be
+    empty.  If ``extra_X_layer_names`` is a provided list these will be used for
     populating ``adata.layers``. If you want all the layers to be outgested,
     without having to name them individually, you can use
     ``extra_X_layer_names=experiment.ms[measurement_name].X.keys()``.  To make
     this low-friction for you, we introduce one more feature: we'll ignore
     ``X_layer_name`` when populating ``adata.layers``.  For example, if X keys
-    are `"a"`, `"b"`, `"c"`, `"d"`, and you say ``X_layer_name="b"`` and
+    are ``"a"``, ``"b"``, ``"c"``, ``"d"``, and you say ``X_layer_name="b"`` and
     ``extra_X_layer_names=experiment.ms[measurement_name].X.keys()``, we'll not
-    write `"b"` to ``adata.layers``.
+    write ``"b"`` to ``adata.layers``.
 
     The ``obs_id_name`` and ``var_id_name`` are columns within the TileDB-SOMA
     experiment which will become index names within the resulting AnnData
@@ -3038,33 +3071,23 @@ def to_anndata(
     anndata_X_dtype = None  # some datasets have no X
     anndata_layers = {}
 
+    if X_layer_name is None and extra_X_layer_names:
+        # The latter boolean check covers both not None and not []
+        raise ValueError(
+            "If X_layer_name is None, extra_X_layer_names must not be provided"
+        )
+
     if X_layer_name is not None:
-        if X_layer_name not in measurement.X:
-            raise ValueError(
-                f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
-            )
+        anndata_X = _extract_X_key(measurement, X_layer_name, nobs, nvar)
+        anndata_X_dtype = anndata_X.dtype
 
-        for key in measurement.X.keys():
-            # Acquire handle to TileDB-SOMA data
-            soma_X_data_handle = measurement.X[key]
-            logging.log_io(None, f"FOO {key} {soma_X_data_handle.uri}")
-
-            # Read data from SOMA into memory
-            if isinstance(soma_X_data_handle, DenseNDArray):
-                data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
-            elif isinstance(soma_X_data_handle, SparseNDArray):
-                X_mat = soma_X_data_handle.read().tables().concat().to_pandas()
-                data = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
-            else:
-                raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
-
-            # Targeted X_layer_name will go into anndata.X.
-            # Others will go into anndata.layers.
-            if key == X_layer_name:
-                anndata_X_dtype = data.dtype
-                anndata_X = data
-            else:
-                anndata_layers[key] = data
+    if extra_X_layer_names is not None:
+        for extra_X_layer_name in extra_X_layer_names:
+            if extra_X_layer_name == X_layer_name:
+                continue
+            assert extra_X_layer_name is not None  # appease linter; already checked
+            data = _extract_X_key(measurement, extra_X_layer_name, nobs, nvar)
+            anndata_layers[extra_X_layer_name] = data
 
     if obsm_varm_width_hints is None:
         obsm_varm_width_hints = {}
