@@ -420,6 +420,30 @@ def from_anndata(
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
+    
+    for key in anndata.obsm.keys():
+        if not isinstance(anndata.obsm[key], Matrix.__args__):
+            raise TypeError(
+                f"Obsm value at {key} in not of type {list(cl.__name__ for cl in Matrix.__args__)}"
+            )
+        
+    for key in anndata.obsp.keys():
+        if not isinstance(anndata.obsp[key], Matrix.__args__):
+            raise TypeError(
+                f"Obsp value at {key} in not of type {list(cl.__name__ for cl in Matrix.__args__)}"
+            )
+        
+    for key in anndata.varm.keys():
+        if not isinstance(anndata.varm[key], Matrix.__args__):
+            raise TypeError(
+                f"Varm value at {key} in not of type {list(cl.__name__ for cl in Matrix.__args__)}"
+            )
+        
+    for key in anndata.varp.keys():
+        if not isinstance(anndata.varp[key], Matrix.__args__):
+            raise TypeError(
+                f"Varp value at {key} in not of type {list(cl.__name__ for cl in Matrix.__args__)}"
+            )
 
     # For single ingest (no append):
     #
