@@ -187,18 +187,23 @@ void load_soma_array(py::module &m) {
             "result_order"_a = ResultOrder::automatic)
         
         .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAArray::open))
+
         .def("close", &SOMAArray::close)
+
         .def_property_readonly("closed", [](SOMAArray& reader) -> bool { 
             return not reader.is_open();
         })
+
         .def_property_readonly("mode", [](SOMAArray& reader){
             return reader.mode() == OpenMode::read ? "r" : "w";
         })
+
         .def_property_readonly("schema", [](SOMAArray& reader) -> py::object {
             auto pa = py::module::import("pyarrow");
             auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
             return pa_schema_import(py::capsule(reader.arrow_schema().get()));
         })
+
         .def("config", [](SOMAArray& reader) -> py::dict {
             return py::cast(reader.config());
         })
@@ -568,6 +573,7 @@ void load_soma_array(py::module &m) {
                 throw TileDBSOMAError("Unsupported dtype for nonempty domain.");
             }
         })
+
         .def("domain", [](SOMAArray& reader, std::string name, py::dtype dtype) {
             switch (np_to_tdb_dtype(dtype)) {
             case TILEDB_UINT64:
@@ -612,11 +618,16 @@ void load_soma_array(py::module &m) {
                 throw TileDBSOMAError("Unsupported dtype for Dimension's domain");
             }
         })
+
+        .def_property_readonly("dimension_names", &SOMAArray::dimension_names)
         
         .def("set_metadata", &SOMAArray::set_metadata)
+
         .def("delete_metadata", &SOMAArray::delete_metadata)
+
         .def("get_metadata", 
             py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
+
         .def_property_readonly("meta", [](SOMAArray&soma_dataframe) -> py::dict {
             py::dict results;
                 
@@ -636,7 +647,9 @@ void load_soma_array(py::module &m) {
             }
             return results;
         })
+
         .def("has_metadata", &SOMAArray::has_metadata)
+
         .def("metadata_num", &SOMAArray::metadata_num);
 }
 }  // namespace tiledbsoma

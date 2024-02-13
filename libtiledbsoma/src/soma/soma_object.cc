@@ -4,6 +4,7 @@
 
 #include "soma_array.h"
 #include "soma_dataframe.h"
+#include "soma_dense_ndarray.h"
 
 namespace tiledbsoma {
 
@@ -35,6 +36,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
 
         if (*(array_->type()) == "SOMADataFrame")
             return std::make_unique<SOMADataFrame>(*array_);
+        else if (*(array_->type()) == "SOMADenseNDArray")
+            return std::make_unique<SOMADenseNDArray>(*array_);
         else
             throw TileDBSOMAError(
                 "Invalid SOMAObject passed to SOMAObject::open");

@@ -73,13 +73,15 @@ def _open_with_clib_wrapper(
     mode: options.OpenMode,
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp] = None,
-) -> "DataFrameWrapper":
+) -> "SOMAArrayWrapper":
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
     config = {k: str(v) for k, v in context.tiledb_config.items()}
     timestamp_ms = context._open_timestamp_ms(timestamp)
     obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
     if obj.type == "SOMADataFrame":
         return DataFrameWrapper._from_soma_object(obj, context)
+    elif obj.type == "SOMADenseNDArray":
+        return DenseNDArrayWrapper._from_soma_object(obj, context)
     raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
 
 
@@ -309,8 +311,8 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         }
 
 
-class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
-    """Wrapper around a Pybind11 SOMADataFrame handle."""
+class SOMAArrayWrapper(Wrapper[clib.SOMAArray]):
+    """Base class for Pybind11 SOMAArrayWrapper handles."""
 
     @classmethod
     def _opener(
@@ -319,19 +321,8 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
         mode: options.OpenMode,
         context: SOMATileDBContext,
         timestamp: int,
-    ) -> clib.SOMADataFrame:
-        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        config = {k: str(v) for k, v in context.tiledb_config.items()}
-        column_names: List[str] = []
-        result_order = clib.ResultOrder.automatic
-        return clib.SOMADataFrame.open(
-            uri,
-            open_mode,
-            config,
-            column_names,
-            result_order,
-            (0, timestamp),
-        )
+    ) -> clib.SOMAArray:
+        raise NotImplementedError
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.
@@ -354,17 +345,13 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
 
     @property
     def ndim(self) -> int:
-        return len(self._handle.index_column_names)
-
-    @property
-    def count(self) -> int:
-        return int(self._handle.count)
+        return len(self._handle.dimension_names)
 
     def _cast_domain(
         self, domain: Callable[[str, DTypeLike], Tuple[object, object]]
     ) -> Tuple[Tuple[object, object], ...]:
         result = []
-        for name in self._handle.index_column_names:
+        for name in self._handle.dimension_names:
             dtype = self._handle.schema.field(name).type
             if pa.types.is_timestamp(dtype):
                 np_dtype = np.dtype(dtype.to_pandas_dtype())
@@ -395,18 +382,76 @@ class DataFrameWrapper(Wrapper[clib.SOMADataFrame]):
     @property
     def attr_names(self) -> Tuple[str, ...]:
         return tuple(
-            f.name for f in self.schema if f.name not in self._handle.index_column_names
+            f.name for f in self.schema if f.name not in self._handle.dimension_names
         )
 
     @property
     def dim_names(self) -> Tuple[str, ...]:
-        return tuple(self._handle.index_column_names)
+        return tuple(self._handle.dimension_names)
 
     def enum(self, label: str) -> tiledb.Enumeration:
         # The DataFrame handle may either be ArrayWrapper or DataFrameWrapper.
         # enum is only used in the DataFrame write path and is implemented by
         # ArrayWrapper. If enum is called in the read path, it is an error.
         raise NotImplementedError
+
+
+class DataFrameWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADataFrame]):
+    """Wrapper around a Pybind11 SOMADataFrame handle."""
+
+    @classmethod
+    def _opener(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: int,
+    ) -> clib.SOMADataFrame:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        config = {k: str(v) for k, v in context.tiledb_config.items()}
+        column_names: List[str] = []
+        result_order = clib.ResultOrder.automatic
+        return clib.SOMADataFrame.open(
+            uri,
+            open_mode,
+            config,
+            column_names,
+            result_order,
+            (0, timestamp),
+        )
+
+    @property
+    def count(self) -> int:
+        return int(self._handle.count)
+
+
+class DenseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADenseNDArray]):
+    """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
+
+    @classmethod
+    def _opener(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: int,
+    ) -> clib.SOMADenseNDArray:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        config = {k: str(v) for k, v in context.tiledb_config.items()}
+        column_names: List[str] = []
+        result_order = clib.ResultOrder.automatic
+        return clib.SOMADenseNDArray.open(
+            uri,
+            open_mode,
+            config,
+            column_names,
+            result_order,
+            (0, timestamp),
+        )
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return tuple(self._handle.shape)
 
 
 class _DictMod(enum.Enum):

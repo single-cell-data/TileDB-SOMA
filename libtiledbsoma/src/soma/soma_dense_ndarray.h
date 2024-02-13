@@ -160,6 +160,15 @@ class SOMADenseNDArray : public SOMAArray {
               timestamp) {
     }
 
+    SOMADenseNDArray(const SOMAArray& other)
+        : SOMAArray(other) {
+    }
+
+    SOMADenseNDArray() = delete;
+    SOMADenseNDArray(const SOMADenseNDArray&) = default;
+    SOMADenseNDArray(SOMADenseNDArray&&) = delete;
+    ~SOMADenseNDArray() = default;
+
     using SOMAArray::open;
 
     /**
