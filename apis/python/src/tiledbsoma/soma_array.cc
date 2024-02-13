@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -86,7 +86,7 @@ bool get_enum_is_ordered(SOMAArray& sr, std::string attr_name){
 }
 
 void load_soma_array(py::module &m) {
-    py::class_<SOMAArray>(m, "SOMAArray")
+    py::class_<SOMAArray>(m, "SOMAArray", "SOMAObject")
         .def(
             py::init(
                 [](std::string_view uri,
@@ -185,6 +185,23 @@ void load_soma_array(py::module &m) {
             "column_names"_a = py::none(),
             "batch_size"_a = "auto",
             "result_order"_a = ResultOrder::automatic)
+        
+        .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAArray::open))
+        .def("close", &SOMAArray::close)
+        .def_property_readonly("closed", [](SOMAArray& reader) -> bool { 
+            return not reader.is_open();
+        })
+        .def_property_readonly("mode", [](SOMAArray& reader){
+            return reader.mode() == OpenMode::read ? "r" : "w";
+        })
+        .def_property_readonly("schema", [](SOMAArray& reader) -> py::object {
+            auto pa = py::module::import("pyarrow");
+            auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
+            return pa_schema_import(py::capsule(reader.arrow_schema().get()));
+        })
+        .def("config", [](SOMAArray& reader) -> py::dict {
+            return py::cast(reader.config());
+        })
 
         // After this are short functions expected to be invoked when the coords
         // are Python list/tuple, or NumPy arrays.  Arrow arrays are in this
@@ -315,13 +332,13 @@ void load_soma_array(py::module &m) {
                 &SOMAArray::set_dim_points))
 
         .def(
-            "set_dim_points_float64",
+            "set_dim_points_double",
             static_cast<void (SOMAArray::*)(
                 const std::string&, const std::vector<double>&)>(
                 &SOMAArray::set_dim_points))
 
         .def(
-            "set_dim_points_float32",
+            "set_dim_points_float",
             static_cast<void (SOMAArray::*)(
                 const std::string&, const std::vector<float>&)>(
                 &SOMAArray::set_dim_points))
@@ -451,14 +468,14 @@ void load_soma_array(py::module &m) {
                 &SOMAArray::set_dim_ranges))
 
         .def(
-            "set_dim_ranges_float64",
+            "set_dim_ranges_double",
             static_cast<void (SOMAArray::*)(
                 const std::string&,
                 const std::vector<std::pair<double, double>>&)>(
                 &SOMAArray::set_dim_ranges))
 
         .def(
-            "set_dim_ranges_float32",
+            "set_dim_ranges_float",
             static_cast<void (SOMAArray::*)(
                 const std::string&,
                 const std::vector<std::pair<float, float>>&)>(
@@ -501,6 +518,125 @@ void load_soma_array(py::module &m) {
 
         .def("get_enum_is_ordered", get_enum_is_ordered)
 
-        .def("get_enum_label_on_attr", &SOMAArray::get_enum_label_on_attr);
+        .def("get_enum_label_on_attr", &SOMAArray::get_enum_label_on_attr)
+
+        .def_property_readonly("timestamp", [](SOMAArray& reader) -> py::object {
+            if(!reader.timestamp().has_value())
+                return py::none();
+            return py::cast(reader.timestamp()->second);
+        })
+
+        .def("non_empty_domain", [](SOMAArray& reader, std::string name, py::dtype dtype){
+            switch (np_to_tdb_dtype(dtype)) {
+            case TILEDB_UINT64:
+                return py::cast(reader.non_empty_domain<uint64_t>(name));
+            case TILEDB_DATETIME_YEAR:
+            case TILEDB_DATETIME_MONTH:
+            case TILEDB_DATETIME_WEEK:
+            case TILEDB_DATETIME_DAY:
+            case TILEDB_DATETIME_HR:
+            case TILEDB_DATETIME_MIN:
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_DATETIME_PS:
+            case TILEDB_DATETIME_FS:
+            case TILEDB_DATETIME_AS:
+            case TILEDB_INT64:
+                return py::cast(reader.non_empty_domain<int64_t>(name));
+            case TILEDB_UINT32:
+                return py::cast(reader.non_empty_domain<uint32_t>(name));
+            case TILEDB_INT32:
+                return py::cast(reader.non_empty_domain<int32_t>(name));
+            case TILEDB_UINT16:
+                return py::cast(reader.non_empty_domain<uint16_t>(name));
+            case TILEDB_INT16:
+                return py::cast(reader.non_empty_domain<int16_t>(name));
+            case TILEDB_UINT8:
+                return py::cast(reader.non_empty_domain<uint8_t>(name));
+            case TILEDB_INT8:
+                return py::cast(reader.non_empty_domain<int8_t>(name));
+            case TILEDB_FLOAT64:
+                return py::cast(reader.non_empty_domain<double>(name));
+            case TILEDB_FLOAT32:
+                return py::cast(reader.non_empty_domain<float>(name));
+            case TILEDB_STRING_UTF8:
+            case TILEDB_STRING_ASCII: 
+                return py::cast(reader.non_empty_domain_var(name));
+            default:
+                throw TileDBSOMAError("Unsupported dtype for nonempty domain.");
+            }
+        })
+        .def("domain", [](SOMAArray& reader, std::string name, py::dtype dtype) {
+            switch (np_to_tdb_dtype(dtype)) {
+            case TILEDB_UINT64:
+                return py::cast(reader.domain<uint64_t>(name));
+            case TILEDB_DATETIME_YEAR:
+            case TILEDB_DATETIME_MONTH:
+            case TILEDB_DATETIME_WEEK:
+            case TILEDB_DATETIME_DAY:
+            case TILEDB_DATETIME_HR:
+            case TILEDB_DATETIME_MIN:
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_DATETIME_PS:
+            case TILEDB_DATETIME_FS:
+            case TILEDB_DATETIME_AS:
+            case TILEDB_INT64:
+                return py::cast(reader.domain<int64_t>(name));
+            case TILEDB_UINT32:
+                return py::cast(reader.domain<uint32_t>(name));
+            case TILEDB_INT32:
+                return py::cast(reader.domain<int32_t>(name));
+            case TILEDB_UINT16:
+                return py::cast(reader.domain<uint16_t>(name));
+            case TILEDB_INT16:
+                return py::cast(reader.domain<int16_t>(name));
+            case TILEDB_UINT8:
+                return py::cast(reader.domain<uint8_t>(name));
+            case TILEDB_INT8:
+                return py::cast(reader.domain<int8_t>(name));
+            case TILEDB_FLOAT64:
+                return py::cast(reader.domain<double>(name));
+            case TILEDB_FLOAT32:
+                return py::cast(reader.domain<float>(name));
+            case TILEDB_STRING_UTF8:
+            case TILEDB_STRING_ASCII: {
+                std::pair<std::string, std::string> str_domain;
+                return py::cast(std::make_pair("", ""));
+            }
+            default:
+                throw TileDBSOMAError("Unsupported dtype for Dimension's domain");
+            }
+        })
+        
+        .def("set_metadata", &SOMAArray::set_metadata)
+        .def("delete_metadata", &SOMAArray::delete_metadata)
+        .def("get_metadata", 
+            py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
+        .def_property_readonly("meta", [](SOMAArray&soma_dataframe) -> py::dict {
+            py::dict results;
+                
+            for (auto const& [key, val] : soma_dataframe.get_metadata()){
+                tiledb_datatype_t tdb_type = std::get<MetadataInfo::dtype>(val);
+                uint32_t value_num = std::get<MetadataInfo::num>(val);
+                const void *value = std::get<MetadataInfo::value>(val);
+
+                if(tdb_type == TILEDB_STRING_UTF8){
+                    results[py::str(key)] = py::str(std::string((const char*)value, value_num));
+                }else if(tdb_type == TILEDB_STRING_ASCII){
+                    results[py::str(key)] = py::bytes(std::string((const char*)value, value_num));
+                }else{
+                    py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+                    results[py::str(key)] = py::array(value_type, value_num, value);
+                }
+            }
+            return results;
+        })
+        .def("has_metadata", &SOMAArray::has_metadata)
+        .def("metadata_num", &SOMAArray::metadata_num);
 }
 }  // namespace tiledbsoma

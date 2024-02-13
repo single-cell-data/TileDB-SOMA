@@ -1637,6 +1637,96 @@ def _update_dataframe(
     )
 
 
+def update_matrix(
+    soma_ndarray: Union[SparseNDArray, DenseNDArray],
+    new_data: Union[Matrix, h5py.Dataset],
+    *,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig] = None,
+) -> None:
+    """
+    Given a ``SparseNDArray`` or ``DenseNDArray`` already opened for write,
+    writes the new data. It is the caller's responsibility to ensure that the
+    intended shape of written contents of the array match those of the existing
+    data. The intended use-case is to replace updated numerical values.
+
+    Example:
+
+        with tiledbsoma.Experiment.open(uri, "w") as exp:
+            tiledbsoma.io.update_matrix(
+                exp.ms["RNA"].X["data"],
+                adata.X,
+            )
+
+    Args:
+        soma_ndarray: a ``SparseNDArray`` or ``DenseNDArray`` already opened for write.
+
+        new_data: If the ``soma_ndarray`` is sparse, a Scipy CSR/CSC matrix or
+            AnnData ``SparseDataset``. If the ``soma_ndarray`` is dense,
+            a NumPy NDArray.
+
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Platform-specific options used to update this array, provided
+        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+
+    Returns:
+        None
+
+    Lifecycle:
+        Experimental.
+    """
+
+    # More developer-level information on why we do not -- and cannot -- check
+    # shape/bounding box:
+    #
+    # * The TileDB-SOMA "shape" can be huge x huge, with "room for growth" --
+    #   this does not track the user-level "shape" and is not intended to.
+    # * The TileDB-SOMA bounding box is, by contrast, intended to track the
+    #   user-level "shape" but it is not thread-safe and may be incorrect.
+    #   Please see
+    #   https://github.com/single-cell-data/TileDB-SOMA/issues/1969
+    #   https://github.com/single-cell-data/TileDB-SOMA/issues/1971
+
+    s = _util.get_start_stamp()
+    logging.log_io(
+        f"Writing {soma_ndarray.uri}",
+        f"START  UPDATING {soma_ndarray.uri}",
+    )
+
+    ingestion_params = IngestionParams("write", None)
+
+    if isinstance(soma_ndarray, DenseNDArray):
+        _write_matrix_to_denseNDArray(
+            soma_ndarray,
+            new_data,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            context=context,
+            ingestion_params=ingestion_params,
+        )
+    elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
+        _write_matrix_to_sparseNDArray(
+            soma_ndarray,
+            new_data,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            context=context,
+            ingestion_params=ingestion_params,
+            axis_0_mapping=AxisIDMapping.identity(new_data.shape[0]),
+            axis_1_mapping=AxisIDMapping.identity(new_data.shape[1]),
+        )
+    else:
+        raise TypeError(f"unknown array type {type(soma_ndarray)}")
+
+    logging.log_io(
+        f"Wrote   {soma_ndarray.uri}",
+        _util.format_elapsed(s, f"FINISH UPDATING {soma_ndarray.uri}"),
+    )
+
+
 def add_X_layer(
     exp: Experiment,
     measurement_name: str,

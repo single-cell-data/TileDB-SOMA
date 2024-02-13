@@ -40,11 +40,12 @@
 
 #include "../utils/common.h"
 #include "enums.h"
+#include "soma_object.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
 
-class SOMAGroup {
+class SOMAGroup : public SOMAObject {
    public:
     //===================================================================
     //= public static

@@ -202,7 +202,7 @@ if os.name != "nt":
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib")}')
 
 if sys.platform == "darwin":
-    CXX_FLAGS.append("-mmacosx-version-min=10.14")
+    CXX_FLAGS.append("-mmacosx-version-min=11.0")
 
 if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
@@ -258,6 +258,7 @@ setuptools.setup(
             "tiledbsoma.pytiledbsoma",
             [
                 "src/tiledbsoma/common.cc",
+                "src/tiledbsoma/reindexer.cc",
                 "src/tiledbsoma/query_condition.cc",
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
@@ -281,9 +282,9 @@ setuptools.setup(
         # Tracked in https://github.com/single-cell-data/TileDB-SOMA/issues/1785
         "anndata != 0.10.0; python_version>='3.8'",
         "attrs>=22.2",
-        "numba~=0.58.0; python_version>='3.8'",
+        "numba>=0.58.0; python_version>='3.8'",
         # Older numba version needed for Python3.7.
-        # This older numba version was also incompatble with newer numpy
+        # This older numba version was also incompatible with newer numpy
         # versions, and the old pip solver (<=2020) needed us to explicate
         # that constraint here (issue #1051).
         "numba==0.56.4; python_version<'3.8'",

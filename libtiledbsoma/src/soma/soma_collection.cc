@@ -114,19 +114,22 @@ void SOMACollection::set(
 
 std::shared_ptr<SOMAObject> SOMACollection::get(const std::string& key) {
     auto member = group_->get_member(key);
-    std::string soma_object_type = this->type();
+    std::optional<std::string> soma_object_type = this->type();
 
-    if (soma_object_type.compare("SOMACollection") == 0)
+    if (!soma_object_type)
+        throw TileDBSOMAError("Saw invalid SOMA object.");
+
+    if (soma_object_type->compare("SOMACollection") == 0)
         return SOMACollection::open(member.uri(), OpenMode::read);
-    else if (soma_object_type.compare("SOMAExperiment") == 0)
+    else if (soma_object_type->compare("SOMAExperiment") == 0)
         return SOMAExperiment::open(member.uri(), OpenMode::read);
-    else if (soma_object_type.compare("SOMAMeasurement") == 0)
+    else if (soma_object_type->compare("SOMAMeasurement") == 0)
         return SOMAMeasurement::open(member.uri(), OpenMode::read);
-    else if (soma_object_type.compare("SOMADataFrame") == 0)
+    else if (soma_object_type->compare("SOMADataFrame") == 0)
         return SOMADataFrame::open(member.uri(), OpenMode::read);
-    else if (soma_object_type.compare("SOMASparseNDArray") == 0)
+    else if (soma_object_type->compare("SOMASparseNDArray") == 0)
         return SOMASparseNDArray::open(member.uri(), OpenMode::read);
-    else if (soma_object_type.compare("SOMADenseNDArray") == 0)
+    else if (soma_object_type->compare("SOMADenseNDArray") == 0)
         return SOMADenseNDArray::open(member.uri(), OpenMode::read);
 
     throw TileDBSOMAError("Saw invalid SOMA object.");
