@@ -2914,6 +2914,7 @@ def to_anndata(
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
+    extra_X_layer_names: Optional[Sequence[str]] = None,
     obs_id_name: Optional[str] = None,
     var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
@@ -2928,13 +2929,25 @@ def to_anndata(
     * ``obsm``,``varm`` arrays as ``numpy.ndarray``
     * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
 
-    The ``X_layer_name`` is the name of the TileDB-SOMA measurement's
-    ``X`` collection which will be outgested to the resulting AnnData object's
+    The ``X_layer_name`` is the name of the TileDB-SOMA measurement's ``X``
+    collection which will be outgested to the resulting AnnData object's
     ``adata.X``. If this is ``None``, then the return value's ``adata.X`` will
     be None, and ``adata.layers`` will be unpopulated. If this is not ``None``,
     then ``adata.X`` will be taken from this layer name within the input
-    measurement, and ``adata.layers`` will be populated with all remaining
-    layers in the input measurement.
+    measurement.
+
+    The ``extra_X_layer_names`` are used to specify how the output ``adata``
+    object's ``adata.layers`` is populated.  The default behavior --
+    ``extra_X_layer_names`` being ``None`` -- means that `adata.layers` will be
+    empty.  If `extra_X_layer_names` is a provided list these will be used for
+    populating ``adata.layers``. If you want all the layers to be outgested,
+    without having to name them individually, you can use
+    ``extra_X_layer_names=experiment.ms[measurement_name].X.keys()``.  To make
+    this low-friction for you, we introduce one more feature: we'll ignore
+    ``X_layer_name`` when populating ``adata.layers``.  For example, if X keys
+    are `"a"`, `"b"`, `"c"`, `"d"`, and you say ``X_layer_name="b"`` and
+    ``extra_X_layer_names=experiment.ms[measurement_name].X.keys()``, we'll not
+    write `"b"` to ``adata.layers``.
 
     The ``obs_id_name`` and ``var_id_name`` are columns within the TileDB-SOMA
     experiment which will become index names within the resulting AnnData
