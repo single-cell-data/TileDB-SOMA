@@ -39,6 +39,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Experimental.
     """
 
+    """Class variable of the Wrapper class used to open this object type."""
     _wrapper_type: Type[_WrapperType_co]
     _reader_wrapper_type: Union[
         Type[_WrapperType_co], Type[_tdb_handles.DataFrameWrapper]
@@ -127,8 +128,6 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         self._handle = handle
         self._close_stack.enter_context(self._handle)
-
-    """Class variable of the Wrapper class used to open this object type."""
 
     @property
     def context(self) -> SOMATileDBContext:

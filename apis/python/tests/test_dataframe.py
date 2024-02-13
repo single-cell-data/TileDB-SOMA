@@ -115,6 +115,14 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sdf.count == 5
         assert len(sdf) == 5
 
+    # Ensure read mode uses clib object
+    with soma.DataFrame.open(tmp_path.as_posix(), "r") as A:
+        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADataFrame)
+
+    # Ensure write mode uses Python object
+    with soma.DataFrame.open(tmp_path.as_posix(), "w") as A:
+        assert isinstance(A._handle._handle, tiledb.Array)
+
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     sdf = soma.DataFrame.create(
