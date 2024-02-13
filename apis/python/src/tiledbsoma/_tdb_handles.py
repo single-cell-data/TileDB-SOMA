@@ -82,6 +82,8 @@ def _open_with_clib_wrapper(
         return DataFrameWrapper._from_soma_object(obj, context)
     elif obj.type == "SOMADenseNDArray":
         return DenseNDArrayWrapper._from_soma_object(obj, context)
+    elif obj.type == "SOMASparseNDArray":
+        return SparseNDArrayWrapper._from_soma_object(obj, context)
     raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
 
 
@@ -423,6 +425,39 @@ class DataFrameWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADataFrame]):
     @property
     def count(self) -> int:
         return int(self._handle.count)
+
+
+class SparseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMASparseNDArray]):
+    """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
+
+    @classmethod
+    def _opener(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: int,
+    ) -> clib.SOMASparseNDArray:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        config = {k: str(v) for k, v in context.tiledb_config.items()}
+        column_names: List[str] = []
+        result_order = clib.ResultOrder.automatic
+        return clib.SOMASparseNDArray.open(
+            uri,
+            open_mode,
+            config,
+            column_names,
+            result_order,
+            (0, timestamp),
+        )
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return tuple(self._handle.shape)
+
+    @property
+    def nnz(self) -> int:
+        return int(self._handle.nnz)
 
 
 class DenseNDArrayWrapper(SOMAArrayWrapper, Wrapper[clib.SOMADenseNDArray]):

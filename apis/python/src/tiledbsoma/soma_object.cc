@@ -67,6 +67,8 @@ void load_soma_object(py::module &m) {
                 return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
             else if (obj->type() == "SOMADenseNDArray")
                 return py::cast(dynamic_cast<SOMADenseNDArray&>(*obj));
+            else if (obj->type() == "SOMASparseNDArray")
+                return py::cast(dynamic_cast<SOMASparseNDArray&>(*obj));
         }
         catch(...){
             TPY_ERROR_LOC("SOMAObject not handled in Python API yet.");

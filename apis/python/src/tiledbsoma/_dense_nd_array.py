@@ -148,8 +148,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             timestamp=ts,
         )
 
-        # sr = self._soma_reader(result_order=result_order)
-
         self._set_reader_coords(sr, coords)
 
         arrow_tables = []
