@@ -3071,6 +3071,13 @@ def to_anndata(
     anndata_X_dtype = None  # some datasets have no X
     anndata_layers = {}
 
+    # Let them use
+    #   extra_X_layer_names=exp.ms["RNA"].X.keys()
+    # while avoiding
+    #   TypeError: 'ABCMeta' object is not subscriptable
+    if isinstance(extra_X_layer_names, collections.abc.KeysView):
+        extra_X_layer_names = list(extra_X_layer_names)
+
     if X_layer_name is None and extra_X_layer_names:
         # The latter boolean check covers both not None and not []
         raise ValueError(
