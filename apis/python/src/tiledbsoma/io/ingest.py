@@ -39,6 +39,7 @@ import tiledb
 from anndata._core import file_backing
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
+from typing_extensions import get_args
 
 from .. import (
     Collection,
@@ -420,29 +421,29 @@ def from_anndata(
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
-    
+
     for key in anndata.obsm.keys():
-        if not isinstance(anndata.obsm[key], Matrix.__args__):
+        if not isinstance(anndata.obsm[key], get_args(Matrix)):
             raise TypeError(
-                f"Obsm value at {key} in not of type {list(cl.__name__ for cl in Matrix.__args__)}"
+                f"Obsm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
             )
-        
+
     for key in anndata.obsp.keys():
-        if not isinstance(anndata.obsp[key], Matrix.__args__):
+        if not isinstance(anndata.obsp[key], get_args(Matrix)):
             raise TypeError(
-                f"Obsp value at {key} in not of type {list(cl.__name__ for cl in Matrix.__args__)}"
+                f"Obsp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
             )
-        
+
     for key in anndata.varm.keys():
-        if not isinstance(anndata.varm[key], Matrix.__args__):
+        if not isinstance(anndata.varm[key], get_args(Matrix)):
             raise TypeError(
-                f"Varm value at {key} in not of type {list(cl.__name__ for cl in Matrix.__args__)}"
+                f"Varm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
             )
-        
+
     for key in anndata.varp.keys():
-        if not isinstance(anndata.varp[key], Matrix.__args__):
+        if not isinstance(anndata.varp[key], get_args(Matrix)):
             raise TypeError(
-                f"Varp value at {key} in not of type {list(cl.__name__ for cl in Matrix.__args__)}"
+                f"Varp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
             )
 
     # For single ingest (no append):
