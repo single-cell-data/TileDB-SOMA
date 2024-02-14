@@ -9,7 +9,6 @@ This module contains methods to generate SOMA artifacts starting from
 other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
 
-import collections
 import json
 import math
 import time
@@ -17,6 +16,7 @@ from typing import (
     Any,
     ContextManager,
     Dict,
+    KeysView,
     List,
     Mapping,
     Optional,
@@ -2945,9 +2945,7 @@ def to_anndata(
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
-    extra_X_layer_names: Optional[
-        Union[Sequence[str], collections.abc.KeysView[str]]
-    ] = None,
+    extra_X_layer_names: Optional[Union[Sequence[str], KeysView[str]]] = None,
     obs_id_name: Optional[str] = None,
     var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
@@ -3075,7 +3073,7 @@ def to_anndata(
     #   extra_X_layer_names=exp.ms["RNA"].X.keys()
     # while avoiding
     #   TypeError: 'ABCMeta' object is not subscriptable
-    if isinstance(extra_X_layer_names, collections.abc.KeysView):
+    if isinstance(extra_X_layer_names, KeysView):
         extra_X_layer_names = list(extra_X_layer_names)
 
     if X_layer_name is None and extra_X_layer_names:
