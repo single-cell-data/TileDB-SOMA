@@ -39,6 +39,7 @@ import tiledb
 from anndata._core import file_backing
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
+from typing_extensions import get_args
 
 from .. import (
     Collection,
@@ -420,6 +421,30 @@ def from_anndata(
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
+
+    for key in anndata.obsm.keys():
+        if not isinstance(anndata.obsm[key], get_args(Matrix)):
+            raise TypeError(
+                f"obsm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+            )
+
+    for key in anndata.obsp.keys():
+        if not isinstance(anndata.obsp[key], get_args(Matrix)):
+            raise TypeError(
+                f"obsp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+            )
+
+    for key in anndata.varm.keys():
+        if not isinstance(anndata.varm[key], get_args(Matrix)):
+            raise TypeError(
+                f"varm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+            )
+
+    for key in anndata.varp.keys():
+        if not isinstance(anndata.varp[key], get_args(Matrix)):
+            raise TypeError(
+                f"varp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+            )
 
     # For single ingest (no append):
     #
