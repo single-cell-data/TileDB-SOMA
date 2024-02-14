@@ -12,11 +12,11 @@ other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.i
 import json
 import math
 import time
-from collections.abc import KeysView
 from typing import (
     Any,
     ContextManager,
     Dict,
+    KeysView,
     List,
     Mapping,
     Optional,
