@@ -23,7 +23,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, macos-12]
         # Just testing this out for https://github.com/single-cell-data/TileDB-SOMA/issues/1849
-        python-version: ['3.7, '3.12']
+        python-version: ['3.7', '3.12']
         include:
           - os: ubuntu-22.04
             cc: gcc-11
