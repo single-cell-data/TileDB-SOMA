@@ -119,9 +119,13 @@ class SOMAGroup : public SOMAObject {
         std::shared_ptr<Context> ctx,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
+    SOMAGroup(const SOMAObject& other)
+        : SOMAObject(other) {
+    }
+
     SOMAGroup() = delete;
-    SOMAGroup(const SOMAGroup&) = delete;
-    SOMAGroup(SOMAGroup&&) = default;
+    SOMAGroup(const SOMAGroup&) = default;
+    SOMAGroup(SOMAGroup&&) = delete;
     ~SOMAGroup() = default;
 
     /**
@@ -144,9 +148,7 @@ class SOMAGroup : public SOMAObject {
      *
      * @return bool true if open
      */
-    bool is_open() const {
-        return group_->is_open();
-    }
+    bool is_open() const;
 
     /**
      * Get the SOMAGroup URI.

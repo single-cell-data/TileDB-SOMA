@@ -81,19 +81,14 @@ class SOMAExperiment : public SOMACollection {
         : SOMACollection(mode, uri, ctx, timestamp) {
     }
 
-    SOMAExperiment() = delete;
-    SOMAExperiment(const SOMAExperiment&) = delete;
-    SOMAExperiment(SOMAExperiment&&) = default;
-    ~SOMAExperiment() = default;
-
-    /**
-     * Return the constant "SOMAExperiment".
-     *
-     * @return std::string
-     */
-    const std::string type() const {
-        return "SOMAExperiment";
+    SOMAExperiment(const SOMACollection& other)
+        : SOMACollection(other) {
     }
+
+    SOMAExperiment() = delete;
+    SOMAExperiment(const SOMAExperiment&) = default;
+    SOMAExperiment(SOMAExperiment&&) = delete;
+    ~SOMAExperiment() = default;
 
    private:
     //===================================================================

@@ -34,6 +34,7 @@
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+
 namespace tiledbsoma {
 using namespace tiledb;
 

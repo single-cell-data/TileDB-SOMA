@@ -31,7 +31,7 @@
  */
 
 #include "soma_group.h"
-#include "../soma/logger_public.h"
+#include "../utils/logger.h"
 #include "../utils/util.h"
 
 namespace tiledbsoma {
@@ -97,11 +97,16 @@ SOMAGroup::SOMAGroup(
         cfg["sm.group.timestamp_start"] = timestamp->first;
         cfg["sm.group.timestamp_end"] = timestamp->second;
     }
-    group_ = std::make_unique<Group>(
-        *ctx_,
-        std::string(uri),
-        mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE,
-        cfg);
+    try {
+        group_ = std::make_shared<Group>(
+            *ctx_,
+            std::string(uri),
+            mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE,
+            cfg);
+    } catch (const std::exception& e) {
+        throw TileDBSOMAError(
+            fmt::format("Error opening group: '{}'\n  {}", uri_, e.what()));
+    }
 
     fill_caches();
 }
@@ -153,6 +158,10 @@ void SOMAGroup::open(
 
 void SOMAGroup::close() {
     group_->close();
+}
+
+bool SOMAGroup::is_open() const {
+    return group_->is_open();
 }
 
 const std::string SOMAGroup::uri() const {

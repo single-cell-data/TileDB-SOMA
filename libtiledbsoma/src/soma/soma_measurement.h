@@ -81,19 +81,14 @@ class SOMAMeasurement : public SOMACollection {
         : SOMACollection(mode, uri, ctx, timestamp) {
     }
 
-    SOMAMeasurement() = delete;
-    SOMAMeasurement(const SOMAMeasurement&) = delete;
-    SOMAMeasurement(SOMAMeasurement&&) = default;
-    ~SOMAMeasurement() = default;
-
-    /**
-     * Return the constant "SOMAMeasurement".
-     *
-     * @return std::string
-     */
-    const std::string type() const {
-        return "SOMAMeasurement";
+    SOMAMeasurement(const SOMACollection& other)
+        : SOMACollection(other) {
     }
+
+    SOMAMeasurement() = delete;
+    SOMAMeasurement(const SOMAMeasurement&) = default;
+    SOMAMeasurement(SOMAMeasurement&&) = delete;
+    ~SOMAMeasurement() = default;
 
    private:
     //===================================================================
