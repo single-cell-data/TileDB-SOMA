@@ -1134,3 +1134,16 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
         assert bdata.var.index.name is None
     else:
         assert adata.var.index.name == bdata.var.index.name
+
+
+def test_obsm_data_type(adata):
+    tempdir = tempfile.TemporaryDirectory()
+    soma_path = tempdir.name
+    bdata = anndata.AnnData(
+        X=adata.X, obs=adata.obs, var=adata.var, obsm={"testing": adata.obs}
+    )
+
+    with pytest.raises(TypeError):
+        tiledbsoma.io.from_anndata(soma_path, bdata, measurement_name="RNA")
+
+    assert not any(Path(soma_path).iterdir())
