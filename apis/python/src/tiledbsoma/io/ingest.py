@@ -16,6 +16,7 @@ from typing import (
     Any,
     ContextManager,
     Dict,
+    KeysView,
     List,
     Mapping,
     Optional,
@@ -2855,8 +2856,6 @@ def to_h5ad(
 
     Arguments are as in ``to_anndata``.
 
-    TO DO: doc more params
-
     Lifecycle:
         Experimental.
     """
@@ -2886,11 +2885,42 @@ def to_h5ad(
 
 
 # ----------------------------------------------------------------
+def _extract_X_key(
+    measurement: Measurement,
+    X_layer_name: str,
+    nobs: int,
+    nvar: int,
+) -> Matrix:
+    """Helper function for to_anndata"""
+
+    if X_layer_name not in measurement.X:
+        raise ValueError(
+            f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
+        )
+
+    # Acquire handle to TileDB-SOMA data
+    soma_X_data_handle = measurement.X[X_layer_name]
+    logging.log_io(None, f"FOO {X_layer_name} {soma_X_data_handle.uri}")
+
+    # Read data from SOMA into memory
+    if isinstance(soma_X_data_handle, DenseNDArray):
+        data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
+    elif isinstance(soma_X_data_handle, SparseNDArray):
+        X_mat = soma_X_data_handle.read().tables().concat().to_pandas()
+        data = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
+    else:
+        raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
+
+    return data
+
+
+# ----------------------------------------------------------------
 def to_anndata(
     experiment: Experiment,
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
+    extra_X_layer_names: Optional[Union[Sequence[str], KeysView[str]]] = None,
     obs_id_name: Optional[str] = None,
     var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
@@ -2905,9 +2935,25 @@ def to_anndata(
     * ``obsm``,``varm`` arrays as ``numpy.ndarray``
     * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
 
-    The ``X_layer_name`` is the name of the TileDB-SOMA measurement's
-    ``X`` collection which will be outgested to the resulting AnnData object's
-    ``adata.X``.
+    The ``X_layer_name`` is the name of the TileDB-SOMA measurement's ``X``
+    collection which will be outgested to the resulting AnnData object's
+    ``adata.X``. If this is ``None``, then the return value's ``adata.X`` will
+    be None, and ``adata.layers`` will be unpopulated. If this is not ``None``,
+    then ``adata.X`` will be taken from this layer name within the input
+    measurement.
+
+    The ``extra_X_layer_names`` are used to specify how the output ``adata``
+    object's ``adata.layers`` is populated.  The default behavior --
+    ``extra_X_layer_names`` being ``None`` -- means that ``adata.layers`` will be
+    empty.  If ``extra_X_layer_names`` is a provided list these will be used for
+    populating ``adata.layers``. If you want all the layers to be outgested,
+    without having to name them individually, you can use
+    ``extra_X_layer_names=experiment.ms[measurement_name].X.keys()``.  To make
+    this low-friction for you, we introduce one more feature: we'll ignore
+    ``X_layer_name`` when populating ``adata.layers``.  For example, if X keys
+    are ``"a"``, ``"b"``, ``"c"``, ``"d"``, and you say ``X_layer_name="b"`` and
+    ``extra_X_layer_names=experiment.ms[measurement_name].X.keys()``, we'll not
+    write ``"b"`` to ``adata.layers``.
 
     The ``obs_id_name`` and ``var_id_name`` are columns within the TileDB-SOMA
     experiment which will become index names within the resulting AnnData
@@ -2994,26 +3040,34 @@ def to_anndata(
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    X_csr = None
-    X_ndarray = None
-    X_dtype = None  # some datasets have no X
+    anndata_X = None
+    anndata_X_dtype = None  # some datasets have no X
+    anndata_layers = {}
+
+    # Let them use
+    #   extra_X_layer_names=exp.ms["RNA"].X.keys()
+    # while avoiding
+    #   TypeError: 'ABCMeta' object is not subscriptable
+    if isinstance(extra_X_layer_names, KeysView):
+        extra_X_layer_names = list(extra_X_layer_names)
+
+    if X_layer_name is None and extra_X_layer_names:
+        # The latter boolean check covers both not None and not []
+        raise ValueError(
+            "If X_layer_name is None, extra_X_layer_names must not be provided"
+        )
+
     if X_layer_name is not None:
-        if X_layer_name not in measurement.X:
-            raise ValueError(
-                f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
-            )
-        X_data = measurement.X[X_layer_name]
-        if isinstance(X_data, DenseNDArray):
-            X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
-            X_dtype = X_ndarray.dtype
-        elif isinstance(X_data, SparseNDArray):
-            X_mat = (
-                X_data.read().tables().concat().to_pandas()
-            )  # TODO: CSR/CSC options ...
-            X_csr = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
-            X_dtype = X_csr.dtype
-        else:
-            raise TypeError(f"Unexpected NDArray type {type(X_data)}")
+        anndata_X = _extract_X_key(measurement, X_layer_name, nobs, nvar)
+        anndata_X_dtype = anndata_X.dtype
+
+    if extra_X_layer_names is not None:
+        for extra_X_layer_name in extra_X_layer_names:
+            if extra_X_layer_name == X_layer_name:
+                continue
+            assert extra_X_layer_name is not None  # appease linter; already checked
+            data = _extract_X_key(measurement, extra_X_layer_name, nobs, nvar)
+            anndata_layers[extra_X_layer_name] = data
 
     if obsm_varm_width_hints is None:
         obsm_varm_width_hints = {}
@@ -3060,7 +3114,8 @@ def to_anndata(
         )
 
     anndata = ad.AnnData(
-        X=X_csr if X_csr is not None else X_ndarray,
+        X=anndata_X,
+        layers=anndata_layers,
         obs=obs_df,
         var=var_df,
         obsm=obsm,
@@ -3068,7 +3123,7 @@ def to_anndata(
         obsp=obsp,
         varp=varp,
         uns=uns,
-        dtype=X_dtype,
+        dtype=anndata_X_dtype,
     )
 
     logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))
