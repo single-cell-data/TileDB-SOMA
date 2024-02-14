@@ -1135,6 +1135,7 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
     else:
         assert adata.var.index.name == bdata.var.index.name
 
+
 def test_obsm_data_type(adata):
     tempdir = tempfile.TemporaryDirectory()
     soma_path = tempdir.name
