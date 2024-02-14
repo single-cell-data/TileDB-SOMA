@@ -1149,8 +1149,6 @@ def test_obsm_data_type(adata):
     assert not any(Path(soma_path).iterdir())
 
 
-@pytest.mark.parametrize("X_layer_name", ["data", "data2", "data3", "nonesuch", None])
-def test_outgest_X_layers(tmp_path, X_layer_name):
 def test_outgest_X_layers(tmp_path):
     nobs = 200
     nvar = 100
