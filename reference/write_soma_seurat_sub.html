@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.7.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,6 +91,17 @@
 <span><span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span></span>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">uri</span>,</span>
+<span>  <span class="va">soma_parent</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  relative <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for SeuratCommand</span></span>
+<span><span class="fu"><a href="write_soma.html">write_soma</a></span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  uri <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">soma_parent</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -206,6 +217,15 @@ feature loadings and jackstraw information, are lost</p>
 written out as <a href="SOMASparseNDArray.html">sparse matrices</a>
 to the “<code>obsp</code>” group of a
 <a href="SOMAMeasurement.html">measurement</a></p>
+    </div>
+    <div class="section level2">
+    <h2 id="writing-seuratcommands">Writing <code><a href="https://rdrr.io/pkg/SeuratObject/man/SeuratCommand-class.html" class="external-link">SeuratCommand</a>s</code><a class="anchor" aria-label="anchor" href="#writing-seuratcommands"></a></h2>
+    
+
+<p><span class="pkg">Seurat</span> <a href="https://rdrr.io/pkg/SeuratObject/man/SeuratCommand-class.html" class="external-link">command logs</a> are written out
+as <a href="SOMADataFrame.html">data frames</a> to the
+“<code>seurat_commands</code>” group of a
+<a href="SOMACollection.html">collection</a></p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
