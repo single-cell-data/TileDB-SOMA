@@ -121,6 +121,13 @@ class SOMADenseNDArray : public SOMAArray {
         ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
+    /**
+     * @brief Check if the SOMADenseNDArray exists at the URI.
+     *
+     * @param uri URI to create the SOMADenseNDArray
+     */
+    static bool exists(std::string_view uri);
+
     //===================================================================
     //= public non-static
     //===================================================================
