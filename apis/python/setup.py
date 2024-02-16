@@ -40,14 +40,11 @@ sys.path.insert(0, str(this_dir))
 
 import version  # noqa E402
 
-# tiledb_dir and libtiledbsoma_dir may be specified by either environment variable
+# tiledb_dir and tiledbsoma_dir may be specified by either environment variable
 # or command-line argument. If both are provided, the latter wins.
 
 tiledb_dir: Optional[pathlib.Path] = None
-libtiledbsoma_dir: Optional[pathlib.Path] = None
-
-tiledb_dir = pathlib.Path(os.environ.get("TILEDB_PATH", this_dir))
-libtiledbsoma_dir = os.environ.get("TILEDBSOMA_PATH", None)
+tiledbsoma_dir: Optional[pathlib.Path] = None
 
 args = sys.argv[:]
 for arg in args:
@@ -56,16 +53,37 @@ for arg in args:
         tiledb_dir = pathlib.Path(last)
         sys.argv.remove(arg)
     if (start, eq) == ("--libtiledbsoma", "="):
-        libtiledbsoma_dir = pathlib.Path(last)
+        tiledbsoma_dir = pathlib.Path(last)
         sys.argv.remove(arg)
 
-if libtiledbsoma_dir is None:
+tiledb_dir = os.environ.get("TILEDB_PATH", None)
+tiledb_given = tiledb_dir is not None
+tiledbsoma_dir = os.environ.get("TILEDBSOMA_PATH", None)
+
+if tiledbsoma_dir is not None and tiledb_dir is None:
+    raise ValueError(
+        "If TILEDBSOMA_PATH is set, then TILEDB_PATH must be "
+        "also be set. TILEDB_PATH must be set to the location of "
+        "the TileDB shared object library linked to the "
+        "TileDB-SOMA shared object library"
+    )
+
+if tiledbsoma_dir is None:
     scripts_dir = this_dir / "dist_links" / "scripts"
     scripts_dir = scripts_dir.resolve()
 
-    libtiledbsoma_dir = scripts_dir.parent / "dist"
+    tiledbsoma_dir = scripts_dir.parent / "dist"
 else:
-    libtiledbsoma_dir = pathlib.Path(libtiledbsoma_dir)
+    tiledbsoma_dir = pathlib.Path(tiledbsoma_dir)
+
+if tiledb_dir is None:
+    # tiledb_dir = pathlib.Path(this_dir)
+    scripts_dir = this_dir / "dist_links" / "scripts"
+    scripts_dir = scripts_dir.resolve()
+
+    tiledb_dir = scripts_dir.parent / "dist"
+else:
+    tiledb_dir = pathlib.Path(tiledb_dir)
 
 
 def get_libtiledbsoma_library_name():
@@ -106,12 +124,12 @@ def libtiledbsoma_exists():
     :return: The path to the TileDB-SOMA library, or None.
     """
     # Check if TileDB-SOMA is installed in user given path
-    dist_dirs = [libtiledbsoma_dir / "lib"]
+    dist_dirs = [tiledbsoma_dir / "lib"]
     if sys.platform.startswith("linux"):
-        dist_dirs.append(libtiledbsoma_dir / "lib64")
-        dist_dirs.append(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu")
+        dist_dirs.append(tiledbsoma_dir / "lib64")
+        dist_dirs.append(tiledbsoma_dir / "lib" / "x86_64-linux-gnu")
     elif os.name == "nt":
-        dist_dirs.append(libtiledbsoma_dir / "bin")
+        dist_dirs.append(tiledbsoma_dir / "bin")
 
     for lib_dir in dist_dirs:
         full_lib_path = lib_dir / get_libtiledbsoma_library_name()
@@ -148,25 +166,42 @@ def find_or_build_package_data(setuptools_cmd):
         #
         # See `.github/workflows/python-ci-single.yml` for configuration.
         if os.name == "nt":
-            subprocess.run(["pwsh.exe", "./bld.ps1"], cwd=scripts_dir, check=True)
+            bld_command = ["pwsh.exe", "./bld.ps1"]
+            if tiledb_dir is not None:
+                bld_command.append(f"TileDBLocation={tiledb_dir}")
         else:
-            subprocess.run(["./bld"], cwd=scripts_dir, check=True)
+            bld_command = ["./bld"]
+            if tiledb_dir is not None:
+                bld_command.append(f"--tiledb={tiledb_dir}")
+
+        subprocess.run(bld_command, cwd=scripts_dir, check=True)
+
         lib_dir = libtiledbsoma_exists()
         assert lib_dir, "error when building libtiledbsoma from source"
 
-    # Copy native libs into the package dir so they can be found by package_data
-    package_data = []
-    src_dir = this_dir / "src" / "tiledbsoma"
-    for f in lib_dir.glob("*tiledbsoma*"):
-        if f.suffix != ".a":  # skip static library
-            print(f"  copying file {f} to {src_dir}")
-            shutil.copy(f, src_dir)
-            package_data.append(f.name)
-    assert package_data, f"libtiledbsoma artifacts absent from {lib_dir}"
+        # If we are building from source, then we are likely building wheels.
+        # Copy both the tiledbsoma and tiledb shared objects into the
+        # package dir so they can be found by package_data
+        package_data = []
+        src_dir = this_dir / "src" / "tiledbsoma"
+        for f in lib_dir.glob("*tiledbsoma.*"):
+            if f.suffix != ".a":  # skip static library
+                print(f"  copying file {f} to {src_dir}")
+                shutil.copy(f, src_dir)
+                package_data.append(f.name)
+        assert package_data, f"tiledbsoma artifacts absent from {lib_dir}"
 
-    # Install shared libraries inside the Python module via package_data.
-    print(f"  adding to package_data: {package_data}")
-    setuptools_cmd.distribution.package_data["tiledbsoma"] = package_data
+        if not tiledb_given:
+            for f in lib_dir.glob("*tiledb.*"):
+                if f.suffix != ".a":  # skip static library
+                    print(f"  copying file {f} to {src_dir}")
+                    shutil.copy(f, src_dir)
+                    package_data.append(f.name)
+                assert package_data, f"tiledb artifacts absent from {lib_dir}"
+
+        # Install shared libraries inside the Python module via package_data.
+        print(f"  adding to package_data: {package_data}")
+        setuptools_cmd.distribution.package_data["tiledbsoma"] = package_data
 
 
 class build_ext(setuptools.command.build_ext.build_ext):
@@ -185,34 +220,33 @@ INC_DIRS = [
     "dist_links/libtiledbsoma/include",
     "dist_links/libtiledbsoma/external/include",
     "../../build/externals/install/include",
-    str(libtiledbsoma_dir / "include"),
-    str(libtiledbsoma_dir.parent / "build/externals/install/include"),
+    str(tiledbsoma_dir / "include"),
+    str(tiledbsoma_dir.parent / "build/externals/install/include"),
+    str(tiledbsoma_dir / "include"),
     str(tiledb_dir / "include"),
 ]
 
 LIB_DIRS = [
-    str(libtiledbsoma_dir / "lib"),
+    str(tiledbsoma_dir / "lib"),
     str(tiledb_dir / "lib"),
 ]
 
 CXX_FLAGS = []
 
 if os.name != "nt":
-    CXX_FLAGS.append(f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib")}')
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledbsoma_dir / "lib")}')
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib")}')
 
 if sys.platform == "darwin":
     CXX_FLAGS.append("-mmacosx-version-min=10.14")
 
 if os.name == "posix" and sys.platform != "darwin":
-    LIB_DIRS.append(str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
-    LIB_DIRS.append(str(libtiledbsoma_dir / "lib64"))
+    LIB_DIRS.append(str(tiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
+    LIB_DIRS.append(str(tiledbsoma_dir / "lib64"))
     LIB_DIRS.append(str(tiledb_dir / "lib" / "x86_64-linux-gnu"))
     LIB_DIRS.append(str(tiledb_dir / "lib64"))
-    CXX_FLAGS.append(
-        f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib" / "x86_64-linux-gnu")}'
-    )
-    CXX_FLAGS.append(f'-Wl,-rpath,{str(libtiledbsoma_dir / "lib64")}')
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledbsoma_dir / "lib" / "x86_64-linux-gnu")}')
+    CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledbsoma_dir / "lib64")}')
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib" / "x86_64-linux-gnu")}')
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib64")}')
 
