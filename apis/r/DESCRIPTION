@@ -45,14 +45,16 @@ Imports:
     spdl,
     rlang,
     tools,
-    tibble
+    tibble,
+    itertools,
+    iterators
 LinkingTo:
     Rcpp,
     RcppSpdlog,
     RcppInt64
 Additional_repositories: https://ghrr.github.io/drat
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Suggests:
     rmarkdown,
     knitr,
