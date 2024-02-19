@@ -1,7 +1,34 @@
+#' The Coordinate Strider
+#'
+#' @description The \code{CoordsStrider} allows creating coordinate slices
+#' in an interated manner. Alternatively, it can chunk an existing vector of
+#' coordinates
+#'
+#' @keywords internal
+#'
+#' @export
+#'
+#' @examples
+#' strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 15L)
+#' while (strider$hasNext()) {
+#'   strider$nextElem()
+#' }
+#'
 CoordsStrider <- R6::R6Class(
   classname = "CoordsStrider",
   cloneable = FALSE,
   public = list(
+    #' @description Create a coordinate strider
+    #'
+    #' @param coords An integer vector of coordinates
+    #' @param ... Ignored
+    #' @param stride The stride of how many coordinates to yield per iteration;
+    #' by default, will try to yield all coordinates per iteration
+    #' @param start If \code{coords} is missing, the starting coordinate
+    #' to generate
+    #' @param end If \code{coords} is missing, the ending coordinate
+    #' to generate
+    #'
     initialize = function(coords, ..., stride = NULL, start = NULL, end = NULL) {
       if (missing(coords)) {
         stopifnot(
@@ -25,6 +52,8 @@ CoordsStrider <- R6::R6Class(
       stopifnot(rlang::is_integerish(stride, 1L, TRUE) && stride > 0L)
       private$.stride <- stride
     },
+    #' @description Print the coordinate strider to the screen
+    #'
     print = function() {
       cat("<", class(self)[1L], ">\n", sep = "")
       if (is.null(self$coords)) {
@@ -36,12 +65,22 @@ CoordsStrider <- R6::R6Class(
       cat("  stride:", self$stride, "\n")
       return(invisible(self))
     },
+    #' @description Determine if there are more coordinates to yield
+    #'
+    #' @return \code{TRUE} if there are more coordinates to yield or
+    #' \code{FALSE} if otherwise
+    #'
     hasNext = function() {
       if (is.null(self$coords)) {
         return(private$.index <= abs(self$end - self$start))
       }
       return(private$.index <= length(self$coords))
     },
+    #' @description Generate the next set of coordinates to yield. If there are
+    #' no more coordiantes to yield, raises a \code{stopIteration} error
+    #'
+    #' @return An integer vector of the next set of coordinates
+    #'
     nextElem = function() {
       if (!self$hasNext()) {
         private$.stopIteration()
@@ -63,10 +102,36 @@ CoordsStrider <- R6::R6Class(
     }
   ),
   active = list(
+    #' @field coords If set, the coordinates to iterate over
+    #'
     coords = function() private$.coords,
+    #' @field start If set, the starting point of the iterated coordinates;
+    #' otherwise the minimum value of \code{self$coords}
+    #'
     start = function() ifelse(is.null(self$coords), private$.start, min(self$coords)),
+    #' @field end If set, the end point of the iterated coordinates;
+    #' otherwise the maximum value of \code{self$coords}
+    #'
     end = function() ifelse(is.null(self$coords), private$.end, max(self$coords)),
-    stride = function() private$.stride
+    #' @field stride The stride, or how many coordiantes to generate per
+    #' iteration; note: this field is settable, which will reset the iterator
+    #'
+    stride = function(value) {
+      if (missing(value)) {
+        return(private$.stride)
+      }
+      stopifnot(rlang::is_integerish(value, n = 1L, finite = TRUE) && value > 0L)
+      private$.stride <- value
+      index <- ifelse(is.null(self$coords), yes = 0L, no = 1L)
+      if (private$.index != index) {
+        warning(warningCondition(
+          "The stride has changed, coordinates have been put back at the beginning",
+          class = "coordsStrideChangedWarning"
+        ))
+      }
+      private$.index <- index
+      return(invisible(NULL))
+    }
   ),
   private = list(
     .coords = NULL,

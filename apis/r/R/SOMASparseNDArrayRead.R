@@ -22,22 +22,16 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
         "'array' must be a SOMASparseNDArray" = inherits(array, "SOMASparseNDArray")
       )
       if (is.null(coords)) {
-        private$.striders <- vector(mode = "list", length = array$ndim())
+        private$.coords <- vector(mode = "list", length = array$ndim())
         shape <- array$shape()
-        for (i in seq_along(private$.striders)) {
-          private$.striders[[i]] <- CoordsStrider$new(
+        for (i in seq_along(private$.coords)) {
+          private$.coords[[i]] <- CoordsStrider$new(
             start = 0L,
             end = shape[i],
             stride = .Machine$integer.max
           )
         }
-        names(private$.striders) <- array$dimnames()
-        # shape <- array$shape()
-        # coords <- vector(mode = "list", length = array$ndim())
-        # for (i in seq_along(coords)) {
-        #   coords[[i]] <- bit64::seq.integer64(0L, shape[i] - 1L)
-        # }
-        # names(coords) <- array$dimnames()
+        names(private$.coords) <- array$dimnames()
       } else {
         stopifnot(
           "'coords' must be a list of integer64 values" = is.list(coords) &&
@@ -45,7 +39,12 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
           "'coords' must be named with the dimnames of 'array'" = is_named(coords, FALSE) &&
             all(names(coords) %in% array$dimnames())
         )
-        private$.coords <- coords
+        private$.coords_vec <- coords
+        private$.coords <- vector(mode = "list", length = length(coords))
+        names(private$.coords) <- names(coords)
+        for (i in names(coords)) {
+          private$.coords[[i]] <- CoordsStrider$new(coords[[i]], stride = .Machine$integer.max)
+        }
       }
       private$.sr <- sr
       private$.array <- array
@@ -57,8 +56,11 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
     sr = function() return(private$.sr),
     #' @field array The underlying \code{\link{SOMASparseNDArray}}
     array = function() return(private$.array),
-    #' @field coords The coordinates for the read
+    #' @field coords The iterated coordinates for the read
     coords = function() return(private$.coords),
+    #' @field coords_vec If \code{coords} is passed, then the coordinate vector
+    #'
+    coords_vec = function() return(private$.coords_vec),
     #' @field shape The shape of the underlying array
     shape = function() return(self$array$shape())
   ),
@@ -66,6 +68,7 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
     .sr = NULL,
     .array = NULL,
     .coords = NULL,
+    .coords_vec = NULL,
     .striders = NULL
   )
 )
