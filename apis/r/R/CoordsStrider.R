@@ -38,19 +38,23 @@ CoordsStrider <- R6::R6Class(
             (inherits(end, "integer64") && length(end) == 1L && is.finite(end)),
           start <= end
         )
-        private$.start <- start
-        private$.end <- end
-        stride <- stride %||% abs(end - start + 1L)
+        private$.start <- bit64::as.integer64(start)
+        private$.end <- bit64::as.integer64(end)
+        stride <- stride %||% bit64::abs.integer64(self$end - self$start + 1L)
         private$.index <- 0L
       } else {
         stopifnot(inherits(coords, c("integer64", "numeric", "integer")))
-        private$.coords <- coords
+        private$.coords <- bit64::as.integer64(coords)
         stride <- stride %||% length(coords)
         stopifnot(stride <= .Machine$integer.max)
         private$.index <- 1L
       }
-      stopifnot(rlang::is_integerish(stride, 1L, TRUE) && stride > 0L)
-      private$.stride <- stride
+      stopifnot(
+        rlang::is_integerish(stride, 1L, TRUE) ||
+          (inherits(stride, "integer64") && length(stride == 1L) && is.finite(stride)),
+        stride > 0L
+      )
+      private$.stride <- bit64::as.integer64(stride)
     },
     #' @description Print the coordinate strider to the screen
     #'
@@ -96,8 +100,11 @@ CoordsStrider <- R6::R6Class(
         return(bit64::seq.integer64(from = start, to = end, by = by))
       }
       start <- private$.index
-      end <- min(private$.index + self$stride - 1L, length(self$coords))
-      private$.index <- end + 1
+      end <- as.integer(bit64::min.integer64(
+        private$.index + self$stride - 1L,
+        length(self$coords)
+      ))
+      private$.index <- end + 1L
       return(self$coords[start:end])
     }
   ),
@@ -108,11 +115,19 @@ CoordsStrider <- R6::R6Class(
     #' @field start If set, the starting point of the iterated coordinates;
     #' otherwise the minimum value of \code{self$coords}
     #'
-    start = function() ifelse(is.null(self$coords), private$.start, min(self$coords)),
+    start = function() if (is.null(self$coords)) {
+      private$.start
+    } else {
+      bit64::min.integer64(self$coords)
+    },
     #' @field end If set, the end point of the iterated coordinates;
     #' otherwise the maximum value of \code{self$coords}
     #'
-    end = function() ifelse(is.null(self$coords), private$.end, max(self$coords)),
+    end = function() if (is.null(self$coords)) {
+      private$.end
+    } else {
+      bit64::max.integer64(self$coords)
+    },
     #' @field stride The stride, or how many coordiantes to generate per
     #' iteration; note: this field is settable, which will reset the iterator
     #'
