@@ -205,7 +205,7 @@ Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64
 }
 
 extern "C" {
-    void ArrowArrayRelease(struct ArrowArray *array); 		// made non-static in nanoarrow.c
+    void ArrowArrayReleaseInternal(struct ArrowArray *array); 		    // non-static in nanoarrow.c
     ArrowErrorCode ArrowArraySetStorageType(struct ArrowArray* array,	// ditto
                                             enum ArrowType storage_type);
 }
@@ -222,7 +222,7 @@ Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t 
     array->buffers = NULL;
     array->children = NULL;
     array->dictionary = NULL;
-    array->release = &ArrowArrayRelease;
+    array->release = &ArrowArrayReleaseInternal;
     array->private_data = NULL;
 
     auto private_data = (struct ArrowArrayPrivateData*) ArrowMalloc(sizeof(struct ArrowArrayPrivateData));
