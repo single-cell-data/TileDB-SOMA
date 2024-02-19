@@ -4,14 +4,21 @@
 #' in an interated manner. Alternatively, it can chunk an existing vector of
 #' coordinates
 #'
+#' @note The \code{CoordsStrider} operates using
+#' \link[bit64:integer64]{64-bit integer} objects; as such, accessing fields,
+#' such as \code{strider$start} or \code{strider$stride} will return an
+#' \code{integer64} object, which functions differently than a regular
+#' \code{integer}. Use with caution and convert back to integers or numerics
+#' as necessary
+#'
 #' @keywords internal
 #'
 #' @export
 #'
 #' @examples
-#' strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 15L)
+#' strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L)
 #' while (strider$hasNext()) {
-#'   strider$nextElem()
+#'   str(strider$nextElem())
 #' }
 #'
 CoordsStrider <- R6::R6Class(
@@ -128,7 +135,7 @@ CoordsStrider <- R6::R6Class(
     } else {
       bit64::max.integer64(self$coords)
     },
-    #' @field stride The stride, or how many coordiantes to generate per
+    #' @field stride The stride, or how many coordinates to generate per
     #' iteration; note: this field is settable, which will reset the iterator
     #'
     stride = function(value) {
