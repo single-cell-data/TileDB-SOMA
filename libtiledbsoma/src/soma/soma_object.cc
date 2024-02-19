@@ -33,11 +33,16 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             throw TileDBSOMAError(
                 "Invalid SOMAObject passed to SOMAObject::open");
 
-        if (*(array_->type()) == "SOMADataFrame")
-            return std::make_unique<SOMADataFrame>(*array_);
-        else
+        if (*(array_->type()) == "SOMADataFrame") {
+            auto raw_ptr = static_cast<SOMADataFrame*>(array_.get());
+            std::unique_ptr<SOMADataFrame> obj;
+            array_.release();
+            obj.reset(raw_ptr);
+            return obj;
+        } else {
             throw TileDBSOMAError(
                 "Invalid SOMAObject passed to SOMAObject::open");
+        }
     }
 
     throw TileDBSOMAError("Invalid TileDB object passed to SOMAObject::open");

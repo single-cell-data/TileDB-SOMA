@@ -184,12 +184,13 @@ class SOMAArray : public SOMAObject {
         , submitted_(other.submitted_) {
     }
 
+    SOMAArray(SOMAArray&&) = default;
+
     SOMAArray(const SOMAObject& other)
         : SOMAObject(other) {
     }
 
     SOMAArray() = delete;
-    SOMAArray(SOMAArray&&) = delete;
     ~SOMAArray() = default;
 
     /**

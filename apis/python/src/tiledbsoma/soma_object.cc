@@ -64,7 +64,8 @@ void load_soma_object(py::module &m) {
         }
         catch(...){
             TPY_ERROR_LOC("SOMAObject not handled in Python API yet.");
-        }})
+        }
+        })
 
         .def_property_readonly("type", &SOMAObject::type);
     };

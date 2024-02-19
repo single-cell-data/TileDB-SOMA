@@ -355,7 +355,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             result_order=_util.to_clib_result_order(result_order),
             timestamp=ts,
         )
-
+        
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), handle.schema)
 

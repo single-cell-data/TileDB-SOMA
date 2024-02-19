@@ -146,7 +146,7 @@ def _open_internal(
     except Exception:
         handle.close()
         raise
-
+    
 
 @typeguard_ignore
 def reify_handle(hdl: _Wrapper) -> "_tiledb_object.TileDBObject[_Wrapper]":
