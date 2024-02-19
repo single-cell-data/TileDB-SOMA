@@ -14,7 +14,9 @@ Base class for SOMA sparse ND-array reads
 
 \item{\code{array}}{The underlying \code{\link{SOMASparseNDArray}}}
 
-\item{\code{coords}}{The coordinates for the read}
+\item{\code{coords}}{The iterated coordinates for the read}
+
+\item{\code{coords_vec}}{If \code{coords} is passed, then the coordinate vector}
 
 \item{\code{shape}}{The shape of the underlying array}
 }
