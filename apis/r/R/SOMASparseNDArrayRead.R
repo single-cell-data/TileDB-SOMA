@@ -35,20 +35,33 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
       } else {
         stopifnot(
           "'coords' must be a list of integer64 values" = is.list(coords) &&
-            all(vapply_lgl(coords, inherits, what = c('integer64', 'numeric'))),
+            all(vapply_lgl(coords, inherits, what = c('integer64', 'numeric', 'CoordsStrider'))),
           "'coords' must be named with the dimnames of 'array'" = is_named(coords, FALSE) &&
             all(names(coords) %in% array$dimnames())
         )
-        private$.coords_vec <- coords
-        private$.coords <- vector(mode = "list", length = length(coords))
-        names(private$.coords) <- names(coords)
-        for (i in names(coords)) {
-          private$.coords[[i]] <- CoordsStrider$new(coords[[i]], stride = .Machine$integer.max)
+        if (all(vapply_lgl(coords, inherits, what = 'CoordsStrider'))) {
+          private$.coords <- coords
+          coords_vec <- sapply(
+            X = coords,
+            FUN = function(x) x$coords,
+            simplify = FALSE,
+            USE.NAMES = TRUE
+          )
+          Filter(Negate(is.null), x = coords_vec)
+          if (length(coords_vec)) {
+            private$.coords_vec <- coords_vec
+          }
+        } else {
+          private$.coords_vec <- coords
+          private$.coords <- vector(mode = "list", length = length(coords))
+          names(private$.coords) <- names(coords)
+          for (i in names(coords)) {
+            private$.coords[[i]] <- CoordsStrider$new(coords[[i]], stride = .Machine$integer.max)
+          }
         }
       }
       private$.sr <- sr
       private$.array <- array
-      # private$.shape <- shape
     }
   ),
   active = list(
@@ -68,8 +81,7 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
     .sr = NULL,
     .array = NULL,
     .coords = NULL,
-    .coords_vec = NULL,
-    .striders = NULL
+    .coords_vec = NULL
   )
 )
 
@@ -190,7 +202,15 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
       eager = TRUE
     ) {
       super$initialize(sr, array, coords)
-      stopifnot()
+      stopifnot(
+        is.null(size) ||
+          rlang::is_integerish(size, finite = TRUE) ||
+          (inherits(size, 'integer64') && all(is.finite(size))),
+        is.null(reindex_disable_on_axis) ||
+          rlang::is_integerish(reindex_disable_on_axis, finite = TRUE) ||
+          (inherits(reindex_disable_on_axis, 'integer64') && all(is.finite(reindex_disable_on_axis))),
+        isTRUE(eager) || isFALSE(eager)
+      )
       private$.axis <- axis
       private$.size <- size
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
