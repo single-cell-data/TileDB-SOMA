@@ -546,10 +546,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       if (inherits(uns, 'SOMACollection')) {
         cmds <- tryCatch(
           .load_seurat_command(uns, ms_names = private$.measurement_name),
-          packageCheckError = function(err) {
-            warning(conditionMessage(err), call. = FALSE, immediate. = TRUE)
-            return(NULL)
-          }
+          packageCheckError = .err_to_warn,
+          missingCollectionError = .err_to_warn
         )
         for (i in names(cmds)) {
           object[[i]] <- cmds[[i]]

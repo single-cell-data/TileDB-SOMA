@@ -27,11 +27,15 @@
   check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uns' must be a SOMACollection" = inherits(uns, what = 'SOMACollection'),
-    "Cannot find a SOMACollection with command logs in 'uns'" = key %in% uns$names() &&
-      inherits(logs <- uns$get(key), what = 'SOMACollection'),
     "'ms_names' must be a character vector with no empty strings" = is.character(ms_names) &&
       all(nzchar(ms_names))
   )
+  if (!(key %in% uns$names() && inherits(logs <- uns$get(key), what = 'SOMACollection'))) {
+    stop(errorCondition(
+      "Cannot find a SOMACollection with command logs in 'uns'",
+      class = c("noCommandLogsError", "missingCollectionError")
+    ))
+  }
   slots <- slotNames(getClassDef('SeuratCommand', package = 'SeuratObject'))
   hint <- uns_hint('1d')
   lognames <- logs$names()
