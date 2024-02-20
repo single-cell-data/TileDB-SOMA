@@ -103,3 +103,31 @@ test_that("Loading SeuratCommands works from experiment queries", {
     sort(SeuratObject::Command(pbmc_small))
   )
 })
+
+test_that("Load SeuratCommand with missing commands", {
+  skip_if(!extended_tests())
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  skip_if_not_installed('jsonlite')
+
+
+  pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
+  slot(pbmc_small, "commands") <- list()
+  expect_true(validObject(pbmc_small))
+  uri <- write_soma(pbmc_small, uri = withr::local_tempdir('missing-commands'))
+
+  expect_no_condition(exp <- SOMAExperimentOpen(uri))
+  on.exit(exp$close(), add = TRUE)
+
+  expect_s3_class(
+    query <- SOMAExperimentAxisQuery$new(exp, SeuratObject::DefaultAssay(pbmc_small)),
+    'SOMAExperimentAxisQuery'
+  )
+
+  expect_warning(
+    obj <- query$to_seurat(X_layers = c('data' = 'data')),
+    regexp = "^Cannot find a SOMACollection with command logs in 'uns'$"
+  )
+  expect_s4_class(obj, 'Seurat')
+  expect_true(validObject(obj))
+  expect_length(SeuratObject::Command(obj), 0L)
+})
