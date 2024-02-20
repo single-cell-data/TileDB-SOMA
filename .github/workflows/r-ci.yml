@@ -110,9 +110,7 @@ jobs:
         
       - name: Test
         if: ${{ matrix.covr == 'no' }}
-        run: |
-          cd apis/r && tools/r-ci.sh run_tests
-          Rscript -e 'tiledbsoma::show_package_versions()'
+        run: cd apis/r && tools/r-ci.sh run_tests
 
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}
