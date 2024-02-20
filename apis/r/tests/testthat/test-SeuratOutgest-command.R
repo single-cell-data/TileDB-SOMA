@@ -117,6 +117,9 @@ test_that("Load SeuratCommand with missing commands", {
 
   expect_no_condition(exp <- SOMAExperimentOpen(uri))
   on.exit(exp$close(), add = TRUE)
+  expect_true('uns' %in% exp$names())
+  expect_s3_class(uns <- exp$get('uns'), 'SOMACollection')
+  expect_false('seurat_commands' %in% uns$names())
 
   expect_s3_class(
     query <- SOMAExperimentAxisQuery$new(exp, SeuratObject::DefaultAssay(pbmc_small)),
