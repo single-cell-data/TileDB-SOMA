@@ -1,3 +1,9 @@
+# 1.7.2
+
+## Changes
+
+* Fix a corner case for outgestion of `SeuratCommand` logs
+
 # 1.7.1
 
 ## Changes
