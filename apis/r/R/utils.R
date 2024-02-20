@@ -70,6 +70,10 @@ uns_hint <- function(type = c('1d', '2d')) {
   ))
 }
 
+.err_to_warn <- function(err, immediate. = TRUE) {
+  warning(conditionMessage(err), call. = FALSE, immediate. = immediate.)
+}
+
 .decode_from_char <- function(x) {
   stopifnot(is.character(x))
   double <- paste0(
