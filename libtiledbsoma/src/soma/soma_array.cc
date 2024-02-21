@@ -59,6 +59,28 @@ void SOMAArray::create(
 std::unique_ptr<SOMAArray> SOMAArray::open(
     OpenMode mode,
     std::string_view uri,
+    std::string_view name,
+    std::map<std::string, std::string> platform_config,
+    std::vector<std::string> column_names,
+    std::string_view batch_size,
+    ResultOrder result_order,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    LOG_DEBUG(
+        fmt::format("[SOMAArray] static method 'cfg' opening array '{}'", uri));
+    return std::make_unique<SOMAArray>(
+        mode,
+        uri,
+        std::make_shared<SOMAContext>(platform_config),
+        name,
+        column_names,
+        batch_size,
+        result_order,
+        timestamp);
+}
+
+std::unique_ptr<SOMAArray> SOMAArray::open(
+    OpenMode mode,
+    std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
     std::string_view name,
     std::vector<std::string> column_names,
@@ -66,7 +88,7 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     LOG_DEBUG(
-        fmt::format("[SOMAArray] static method 'cfg' opening array '{}'", uri));
+        fmt::format("[SOMAArray] static method 'ctx' opening array '{}'", uri));
     return std::make_unique<SOMAArray>(
         mode,
         uri,
@@ -81,6 +103,24 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
 //===================================================================
 //= public non-static
 //===================================================================
+
+SOMAArray::SOMAArray(
+    OpenMode mode,
+    std::string_view uri,
+    std::string_view name,
+    std::map<std::string, std::string> platform_config,
+    std::vector<std::string> column_names,
+    std::string_view batch_size,
+    ResultOrder result_order,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp)
+    : uri_(util::rstrip_uri(uri))
+    , result_order_(result_order)
+    , timestamp_(timestamp) {
+    ctx_ = std::make_shared<SOMAContext>(platform_config);
+    validate(mode, name, timestamp);
+    reset(column_names, batch_size, result_order);
+    fill_metadata_cache();
+}
 
 SOMAArray::SOMAArray(
     OpenMode mode,

@@ -87,6 +87,31 @@ class SOMAArray : public SOMAObject {
     static std::unique_ptr<SOMAArray> open(
         OpenMode mode,
         std::string_view uri,
+        std::string_view name = "unnamed",
+        std::map<std::string, std::string> platform_config = {},
+        std::vector<std::string> column_names = {},
+        std::string_view batch_size = "auto",
+        ResultOrder result_order = ResultOrder::automatic,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+
+    /**
+     * @brief Open an array at the specified URI and return SOMAArray
+     * object.
+     *
+     * @param mode read or write
+     * @param uri URI of the array
+     * @param name Name of the array
+     * @param platform_config Config parameter dictionary
+     * @param column_names Columns to read
+     * @param batch_size Read batch size
+     * @param result_order Read result order: automatic (default), rowmajor,
+     * or colmajor
+     * @param timestamp Optional pair indicating timestamp start and end
+     * @return std::unique_ptr<SOMAArray> SOMAArray
+     */
+    static std::unique_ptr<SOMAArray> open(
+        OpenMode mode,
+        std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
         std::string_view name = "unnamed",
         std::vector<std::string> column_names = {},
@@ -97,6 +122,28 @@ class SOMAArray : public SOMAObject {
     //===================================================================
     //= public non-static
     //===================================================================
+    
+    /**
+     * @brief Construct a new SOMAArray object
+     *
+     * @param mode read or write
+     * @param uri URI of the array
+     * @param name name of the array
+     * @param platform_config Config parameter dictionary
+     * @param column_names Columns to read
+     * @param batch_size Batch size
+     * @param result_order Result order
+     * @param timestamp Timestamp
+     */
+    SOMAArray(
+        OpenMode mode,
+        std::string_view uri,
+        std::string_view name,
+        std::map<std::string, std::string> platform_config,
+        std::vector<std::string> column_names,
+        std::string_view batch_size,
+        ResultOrder result_order,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Construct a new SOMAArray object
