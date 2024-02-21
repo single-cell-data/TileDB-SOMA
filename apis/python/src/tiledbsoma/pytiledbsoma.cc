@@ -22,6 +22,8 @@ void load_soma_array(py::module &);
 void load_soma_dataframe(py::module &);
 void load_soma_dense_ndarray(py::module &);
 void load_soma_sparse_ndarray(py::module &);
+void load_soma_group(py::module &);
+void load_soma_collection(py::module &);
 void load_query_condition(py::module &);
 void load_reindexer(py::module &);
 
@@ -98,6 +100,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     load_soma_dataframe(m);
     load_soma_dense_ndarray(m);
     load_soma_sparse_ndarray(m);
+    load_soma_group(m);
+    load_soma_collection(m);
     load_query_condition(m);
     load_reindexer(m);
 }

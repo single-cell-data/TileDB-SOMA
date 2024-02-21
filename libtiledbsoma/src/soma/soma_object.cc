@@ -20,22 +20,13 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
     std::shared_ptr<SOMAContext> ctx,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     auto obj = tiledb::Object::object(*ctx->tiledb_ctx(), std::string(uri));
-    auto label = std::string(std::filesystem::path(uri).filename());
 
     if (obj.type() == tiledb::Object::Type::Array) {
         auto array_ = SOMAArray::open(
-            mode,
-            uri,
-            ctx,
-            label,
-            {},
-            "auto",
-            ResultOrder::automatic,
-            timestamp);
+            mode, uri, ctx, "", {}, "auto", ResultOrder::automatic, timestamp);
 
         if (!array_->type().has_value())
-            throw TileDBSOMAError(
-                "Invalid SOMAObject passed to SOMAObject::open");
+            throw TileDBSOMAError("SOMAArray has no type info");
 
         if (array_->type() == "SOMADataFrame") {
             return std::make_unique<SOMADataFrame>(*array_);
@@ -44,15 +35,13 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         } else if (array_->type() == "SOMADenseNDArray") {
             return std::make_unique<SOMADenseNDArray>(*array_);
         } else {
-            throw TileDBSOMAError(
-                "Invalid SOMAObject passed to SOMAObject::open");
+            throw TileDBSOMAError("Saw invalid SOMAArray type");
         }
     } else if (obj.type() == tiledb::Object::Type::Group) {
-        auto group_ = SOMAGroup::open(mode, uri, ctx, label, timestamp);
+        auto group_ = SOMAGroup::open(mode, uri, ctx, "", timestamp);
 
         if (!group_->type().has_value())
-            throw TileDBSOMAError(
-                "Invalid SOMAObject passed to SOMAObject::open");
+            throw TileDBSOMAError("SOMAGroup has no type info");
 
         if (group_->type() == "SOMACollection") {
             return std::make_unique<SOMACollection>(*group_);
@@ -61,8 +50,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         } else if (group_->type() == "SOMAMeasurement") {
             return std::make_unique<SOMAMeasurement>(*group_);
         } else {
-            throw TileDBSOMAError(
-                "Invalid SOMAObject passed to SOMAObject::open");
+            throw TileDBSOMAError("Saw invalid SOMAGroup type");
         }
     }
 

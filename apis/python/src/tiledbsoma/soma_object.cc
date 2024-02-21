@@ -50,7 +50,7 @@ using namespace tiledbsoma;
 void load_soma_object(py::module &m) {
     py::class_<SOMAObject>(m, "SOMAObject")
 
-    .def_static("open", [](std::string uri, 
+    .def_static("open", [](std::string_view uri, 
                            OpenMode mode, 
                            std::shared_ptr<SOMAContext> ctx, 
                            std::optional<std::pair<uint64_t, uint64_t>> timestamp) -> py::object {
@@ -67,6 +67,7 @@ void load_soma_object(py::module &m) {
             return py::cast(dynamic_cast<SOMAExperiment&>(*obj));
         else if (obj->type() == "SOMAMeasurement")
             return py::cast(dynamic_cast<SOMAMeasurement&>(*obj));
+        TPY_ERROR_LOC("Invalid SOMAObject");
     })
     .def_property_readonly("type", &SOMAObject::type);
     

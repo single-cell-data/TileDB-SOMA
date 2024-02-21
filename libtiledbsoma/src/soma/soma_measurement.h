@@ -76,7 +76,7 @@ class SOMAMeasurement : public SOMACollection {
     }
 
     SOMAMeasurement() = delete;
-    SOMAMeasurement(const SOMAMeasurement&) = delete;
+    SOMAMeasurement(const SOMAMeasurement&) = default;
     SOMAMeasurement(SOMAMeasurement&&) = default;
     ~SOMAMeasurement() = default;
 

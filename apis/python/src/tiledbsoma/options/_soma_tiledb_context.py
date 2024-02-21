@@ -48,7 +48,9 @@ _SENTINEL = object()
 """Sentinel object to distinguish default parameters from None."""
 
 
-class SOMATileDBContext(clib.SOMAContext):
+class SOMATileDBContext(clib.SOMAContext):  # type: ignore
+    # (Class cannot subclass "SOMAContext" (has type "Any"))
+
     """Maintains TileDB-specific context for TileDB-SOMA objects.
     This context can be shared across multiple objects,
     including having a child object inherit it from its parent.
@@ -159,11 +161,7 @@ class SOMATileDBContext(clib.SOMAContext):
         """The TileDB Context for this SOMA context."""
         with self._lock:
             if self._tiledb_ctx is None:
-                if self._initial_config is None:
-                    # Special case: we need to use the One Global Default.
-                    self._tiledb_ctx = _default_global_ctx()
-                else:
-                    self._tiledb_ctx = tiledb.Ctx(self._initial_config)
+                self._tiledb_ctx = tiledb.Ctx(self._initial_config)
             return self._tiledb_ctx
 
     @property
