@@ -69,7 +69,8 @@ def open(
             return ArrayWrapper.open(uri, mode, context, timestamp)
         if soma_object.type in ("SOMACollection", "SOMAExperiment", "SOMAMeasurement"):
             return GroupWrapper.open(uri, mode, context, timestamp)
-    except SOMAError:
+    except:
+        # TODO on Linux this throws a SOMAError but on macOS a RuntimeError
         pass
 
     # We avoid needing to create a tiledb.Ctx() unless necessary
