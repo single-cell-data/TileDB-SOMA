@@ -212,6 +212,11 @@ install(FILES
 )
 
 install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/carrow.h
+  DESTINATION "include/tiledbsoma/utils/"
+)
+
+install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/tiledbsoma
   DESTINATION "include/tiledbsoma"
 )
