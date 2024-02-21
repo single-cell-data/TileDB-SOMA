@@ -59,7 +59,7 @@ class SOMAGroup : public SOMAObject {
      * @param soma_type SOMACollection, SOMAMeasurement, or SOMAExperiment
      */
     static void create(
-        std::shared_ptr<Context> ctx,
+        std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
         std::string soma_type);
 
@@ -77,25 +77,7 @@ class SOMAGroup : public SOMAObject {
     static std::unique_ptr<SOMAGroup> open(
         OpenMode mode,
         std::string_view uri,
-        std::string_view name = "unnamed",
-        std::map<std::string, std::string> platform_config = {},
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
-
-    /**
-     * @brief Open a group at the specified URI and return SOMAGroup
-     * object.
-     *
-     * @param mode read or write
-     * @param ctx TileDB context
-     * @param uri URI of the group
-     * @param name Name of the group
-     * @param timestamp Optional pair indicating timestamp start and end
-     * @return std::unique_ptr<SOMAGroup> SOMAGroup
-     */
-    static std::unique_ptr<SOMAGroup> open(
-        OpenMode mode,
-        std::shared_ptr<Context> ctx,
-        std::string_view uri,
+        std::shared_ptr<SOMAContext> ctx,
         std::string_view name = "unnamed",
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
@@ -115,12 +97,12 @@ class SOMAGroup : public SOMAObject {
     SOMAGroup(
         OpenMode mode,
         std::string_view uri,
+        std::shared_ptr<SOMAContext> ctx,
         std::string_view name,
-        std::shared_ptr<Context> ctx,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMAGroup() = delete;
-    SOMAGroup(const SOMAGroup&) = delete;
+    SOMAGroup(const SOMAGroup&) = default;
     SOMAGroup(SOMAGroup&&) = default;
     ~SOMAGroup() = default;
 
@@ -154,32 +136,32 @@ class SOMAGroup : public SOMAObject {
     const std::string uri() const;
 
     /**
-     * Get the Context associated with the SOMAGroup.
+     * Get the context associated with the SOMAGroup.
      *
-     * @return std::shared_ptr<Context>
+     * @return SOMAContext
      */
-    std::shared_ptr<Context> ctx();
+    std::shared_ptr<SOMAContext> ctx();
 
     /**
      * Get a member from the SOMAGroup given the index.
      *
      * @param index of member
      */
-    tiledb::Object get_member(uint64_t index) const;
+    tiledb::Object get(uint64_t index) const;
 
     /**
      * Get a member from the SOMAGroup given the name.
      *
      * @param name of member
      */
-    tiledb::Object get_member(const std::string& name) const;
+    tiledb::Object get(const std::string& name) const;
 
     /**
      * Check if the SOMAGroup contains the given name.
      *
      * @param name of member
      */
-    bool has_member(const std::string& name);
+    bool has(const std::string& name);
 
     /**
      * Add a named member to a SOMAGroup.
@@ -189,20 +171,19 @@ class SOMAGroup : public SOMAObject {
      * or relative
      * @param name of member
      */
-    void add_member(
-        const std::string& uri, URIType uri_type, const std::string& name);
+    void set(const std::string& uri, URIType uri_type, const std::string& name);
 
     /**
      * Get the number of members in the SOMAGroup.
      */
-    uint64_t get_length() const;
+    uint64_t count() const;
 
     /**
      * Remove a named member from the SOMAGroup.
      *
      * @param name of member
      */
-    void remove_member(const std::string& name);
+    void del(const std::string& name);
 
     /**
      * Return a SOMAGroup member to URI mapping.
@@ -299,8 +280,8 @@ class SOMAGroup : public SOMAObject {
      */
     void fill_caches();
 
-    // TileDB context
-    std::shared_ptr<Context> ctx_;
+    // SOMA context
+    std::shared_ptr<SOMAContext> ctx_;
 
     // SOMAGroup URI
     std::string uri_;

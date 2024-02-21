@@ -52,22 +52,24 @@ void load_soma_object(py::module &m) {
 
     .def_static("open", [](std::string uri, 
                            OpenMode mode, 
-                           std::map<std::string, std::string> config, 
+                           std::shared_ptr<SOMAContext> ctx, 
                            std::optional<std::pair<uint64_t, uint64_t>> timestamp) -> py::object {
-        if(mode == OpenMode::write)
-            TPY_ERROR_LOC("SOMAObjects for write mode not handled in Python API yet.");
-
-        try{
-            auto obj = SOMAObject::open(uri, mode, config, timestamp);
-            if (obj->type() == "SOMADataFrame")
-                return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
-        }
-        catch(...){
-            TPY_ERROR_LOC("SOMAObject not handled in Python API yet.");
-        }
-        })
-
-        .def_property_readonly("type", &SOMAObject::type);
+        auto obj = SOMAObject::open(uri, mode, ctx, timestamp);
+        if (obj->type() == "SOMADataFrame")
+            return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
+        else if (obj->type() == "SOMASparseNDArray")
+            return py::cast(dynamic_cast<SOMASparseNDArray&>(*obj));
+        else if (obj->type() == "SOMADenseNDArray")
+            return py::cast(dynamic_cast<SOMADenseNDArray&>(*obj));
+        else if (obj->type() == "SOMACollection")
+            return py::cast(dynamic_cast<SOMACollection&>(*obj));
+        else if (obj->type() == "SOMAExperiment")
+            return py::cast(dynamic_cast<SOMAExperiment&>(*obj));
+        else if (obj->type() == "SOMAMeasurement")
+            return py::cast(dynamic_cast<SOMAMeasurement&>(*obj));
+    })
+    .def_property_readonly("type", &SOMAObject::type);
+    
     };
 }
 

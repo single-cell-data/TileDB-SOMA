@@ -144,7 +144,7 @@ std::tuple<std::string, uint64_t> create_array(
 };  // namespace
 
 TEST_CASE("SOMAGroup: basic") {
-    auto ctx = std::make_shared<Context>();
+    auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri_main_group = "mem://main-group";
     SOMAGroup::create(ctx, uri_main_group, "NONE");
@@ -152,16 +152,17 @@ TEST_CASE("SOMAGroup: basic") {
     std::string uri_sub_group = "mem://sub-group";
     SOMAGroup::create(ctx, uri_sub_group, "NONE");
 
-    auto [uri_sub_array, expected_nnz] = create_array("mem://sub-array", *ctx);
+    auto [uri_sub_array, expected_nnz] = create_array(
+        "mem://sub-array", *ctx->tiledb_ctx());
 
     auto soma_group = SOMAGroup::open(
         OpenMode::write,
-        ctx,
         uri_main_group,
+        ctx,
         "metadata",
         std::pair<uint64_t, uint64_t>(0, 1));
-    soma_group->add_member(uri_sub_group, URIType::absolute, "subgroup");
-    soma_group->add_member(uri_sub_array, URIType::absolute, "subarray");
+    soma_group->set(uri_sub_group, URIType::absolute, "subgroup");
+    soma_group->set(uri_sub_array, URIType::absolute, "subarray");
     soma_group->close();
 
     std::map<std::string, std::string> expected_map{
@@ -170,33 +171,33 @@ TEST_CASE("SOMAGroup: basic") {
     soma_group->open(OpenMode::read, std::pair<uint64_t, uint64_t>(0, 2));
     REQUIRE(soma_group->ctx() == ctx);
     REQUIRE(soma_group->uri() == uri_main_group);
-    REQUIRE(soma_group->get_length() == 2);
+    REQUIRE(soma_group->count() == 2);
     REQUIRE(expected_map == soma_group->member_to_uri_mapping());
-    REQUIRE(soma_group->get_member("subgroup").type() == Object::Type::Group);
-    REQUIRE(soma_group->get_member("subarray").type() == Object::Type::Array);
+    REQUIRE(soma_group->get("subgroup").type() == Object::Type::Group);
+    REQUIRE(soma_group->get("subarray").type() == Object::Type::Array);
     soma_group->close();
 
     soma_group->open(OpenMode::write, std::pair<uint64_t, uint64_t>(0, 3));
     REQUIRE(expected_map == soma_group->member_to_uri_mapping());
-    soma_group->remove_member("subgroup");
+    soma_group->del("subgroup");
     soma_group->close();
 
     soma_group->open(OpenMode::read, std::pair<uint64_t, uint64_t>(0, 4));
-    REQUIRE(soma_group->get_length() == 1);
-    REQUIRE(soma_group->has_member("subgroup") == false);
-    REQUIRE(soma_group->has_member("subarray") == true);
+    REQUIRE(soma_group->count() == 1);
+    REQUIRE(soma_group->has("subgroup") == false);
+    REQUIRE(soma_group->has("subarray") == true);
     soma_group->close();
 }
 
 TEST_CASE("SOMAGroup: metadata") {
-    auto ctx = std::make_shared<Context>();
+    auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-group";
     SOMAGroup::create(ctx, uri, "NONE");
     auto soma_group = SOMAGroup::open(
         OpenMode::write,
-        ctx,
         uri,
+        ctx,
         "metadata",
         std::pair<uint64_t, uint64_t>(1, 1));
     int32_t val = 100;

@@ -42,13 +42,7 @@ using namespace tiledb;
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri,
     ArraySchema schema,
-    std::map<std::string, std::string> platform_config) {
-    return SOMADataFrame::create(
-        uri, schema, std::make_shared<Context>(Config(platform_config)));
-}
-
-std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
-    std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
+    std::shared_ptr<SOMAContext> ctx) {
     SOMAArray::create(ctx, uri, schema, "SOMADataFrame");
     return SOMADataFrame::open(uri, OpenMode::read, ctx);
 }
@@ -56,23 +50,7 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
 std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     std::string_view uri,
     OpenMode mode,
-    std::map<std::string, std::string> platform_config,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return SOMADataFrame::open(
-        uri,
-        mode,
-        std::make_shared<Context>(Config(platform_config)),
-        column_names,
-        result_order,
-        timestamp);
-}
-
-std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
-    std::string_view uri,
-    OpenMode mode,
-    std::shared_ptr<Context> ctx,
+    std::shared_ptr<SOMAContext> ctx,
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -82,7 +60,9 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
 
 bool SOMADataFrame::exists(std::string_view uri) {
     try {
-        return "SOMADataFrame" == SOMAObject::open(uri, OpenMode::read)->type();
+        auto obj = SOMAObject::open(
+            uri, OpenMode::read, std::make_shared<SOMAContext>());
+        return "SOMADataFrame" == obj->type();
     } catch (TileDBSOMAError& e) {
         return false;
     }

@@ -57,17 +57,7 @@ class SOMAExperiment : public SOMACollection {
     static std::unique_ptr<SOMAExperiment> create(
         std::string_view uri,
         ArraySchema schema,
-        std::map<std::string, std::string> platform_config = {});
-
-    /**
-     * @brief Create a SOMAExperiment object at the given URI.
-     *
-     * @param uri URI to create the SOMAExperiment
-     * @param schema TileDB ArraySchema
-     * @param ctx TileDB context
-     */
-    static std::unique_ptr<SOMAExperiment> create(
-        std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
+        std::shared_ptr<SOMAContext> ctx);
 
     //===================================================================
     //= public non-static
@@ -76,24 +66,19 @@ class SOMAExperiment : public SOMACollection {
     SOMAExperiment(
         OpenMode mode,
         std::string_view uri,
-        std::shared_ptr<Context> ctx,
+        std::shared_ptr<SOMAContext> ctx,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt)
         : SOMACollection(mode, uri, ctx, timestamp) {
     }
 
+    SOMAExperiment(const SOMACollection& other)
+        : SOMACollection(other) {
+    }
+
     SOMAExperiment() = delete;
-    SOMAExperiment(const SOMAExperiment&) = delete;
+    SOMAExperiment(const SOMAExperiment&) = default;
     SOMAExperiment(SOMAExperiment&&) = default;
     ~SOMAExperiment() = default;
-
-    /**
-     * Return the constant "SOMAExperiment".
-     *
-     * @return std::string
-     */
-    const std::string type() const {
-        return "SOMAExperiment";
-    }
 
    private:
     //===================================================================

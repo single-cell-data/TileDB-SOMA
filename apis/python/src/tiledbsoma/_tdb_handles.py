@@ -51,36 +51,21 @@ def open(
     timestamp: Optional[OpenTimestamp],
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
-    obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
-    if not obj_type:
-        raise DoesNotExistError(f"{uri!r} does not exist")
+    open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+    timestamp_ms = context._open_timestamp_ms(timestamp)
+    soma_object = clib.SOMAObject.open(uri, open_mode, context, (0, timestamp_ms))
 
-    try:
-        return _open_with_clib_wrapper(uri, mode, context, timestamp)
-    except SOMAError:
-        # This object still uses tiledb-py and must be handled below
-        if obj_type == "array":
-            return ArrayWrapper.open(uri, mode, context, timestamp)
-        if obj_type == "group":
-            return GroupWrapper.open(uri, mode, context, timestamp)
+    if open_mode == clib.OpenMode.read and soma_object.type == "SOMADataFrame":
+        return DataFrameWrapper._from_soma_object(soma_object, context)
+
+    # This object still uses tiledb-py and must be handled below
+    if soma_object.type in ("SOMADataFrame", "SOMASparseNDArray", "SOMADenseNDArray"):
+        return ArrayWrapper.open(uri, mode, context, timestamp)
+    if soma_object.type in ("SOMACollection", "SOMAExperiment", "SOMAMeasurement"):
+        return GroupWrapper.open(uri, mode, context, timestamp)
 
     # Invalid object
-    raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
-
-
-def _open_with_clib_wrapper(
-    uri: str,
-    mode: options.OpenMode,
-    context: SOMATileDBContext,
-    timestamp: Optional[OpenTimestamp] = None,
-) -> "DataFrameWrapper":
-    open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-    config = {k: str(v) for k, v in context.tiledb_config.items()}
-    timestamp_ms = context._open_timestamp_ms(timestamp)
-    obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
-    if obj.type == "SOMADataFrame":
-        return DataFrameWrapper._from_soma_object(obj, context)
-    raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+    raise SOMAError(f"{uri!r} is unknown type {soma_object.type!r}")
 
 
 @attrs.define(eq=False, hash=False, slots=False)

@@ -12,6 +12,7 @@ from typing import Any, Dict, Mapping, Optional, Union
 import tiledb
 from typing_extensions import Self
 
+from .. import pytiledbsoma as clib
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
@@ -47,7 +48,7 @@ _SENTINEL = object()
 """Sentinel object to distinguish default parameters from None."""
 
 
-class SOMATileDBContext:
+class SOMATileDBContext(clib.SOMAContext):
     """Maintains TileDB-specific context for TileDB-SOMA objects.
     This context can be shared across multiple objects,
     including having a child object inherit it from its parent.
@@ -117,17 +118,24 @@ class SOMATileDBContext:
         self._lock = threading.Lock()
         """A lock to ensure single initialization of ``_tiledb_ctx``."""
         self._initial_config = (
-            None if tiledb_config is None else _default_config(tiledb_config)
+            _default_config({})
+            if tiledb_config is None
+            else _default_config(tiledb_config)
         )
-        """A dictionary of options to override the default TileDB config.
 
-        This includes both the user-provided options and the default options
-        that we provide to TileDB. If this is unset, then either we were
-        provided with a TileDB Ctx, or we need to use The Default Global Ctx.
-        """
+        # """A dictionary of options to override the default TileDB config.
+
+        # This includes both the user-provided options and the default options
+        # that we provide to TileDB. If this is unset, then either we were
+        # provided with a TileDB Ctx, or we need to use The Default Global Ctx.
+        # """
         self._tiledb_ctx = tiledb_ctx
         """The TileDB context to use, either provided or lazily constructed."""
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
+
+        super().__init__(
+            {k: str(self._initial_config[k]) for k in self._initial_config}
+        )
 
     @property
     def timestamp_ms(self) -> Optional[int]:

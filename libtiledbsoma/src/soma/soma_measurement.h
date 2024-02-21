@@ -53,22 +53,12 @@ class SOMAMeasurement : public SOMACollection {
      *
      * @param uri URI to create the SOMAMeasurement
      * @param schema TileDB ArraySchema
-     * @param platform_config Optional config parameter dictionary
+     * @param ctx TileDB context
      */
     static std::unique_ptr<SOMAMeasurement> create(
         std::string_view uri,
         ArraySchema schema,
-        std::map<std::string, std::string> platform_config = {});
-
-    /**
-     * @brief Create a SOMAMeasurement object at the given URI.
-     *
-     * @param uri URI to create the SOMAMeasurement
-     * @param schema TileDB ArraySchema
-     * @param ctx TileDB context
-     */
-    static std::unique_ptr<SOMAMeasurement> create(
-        std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
+        std::shared_ptr<SOMAContext> ctx);
 
     //===================================================================
     //= public non-static
@@ -76,24 +66,19 @@ class SOMAMeasurement : public SOMACollection {
     SOMAMeasurement(
         OpenMode mode,
         std::string_view uri,
-        std::shared_ptr<Context> ctx,
+        std::shared_ptr<SOMAContext> ctx,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt)
         : SOMACollection(mode, uri, ctx, timestamp) {
+    }
+
+    SOMAMeasurement(const SOMACollection& other)
+        : SOMACollection(other) {
     }
 
     SOMAMeasurement() = delete;
     SOMAMeasurement(const SOMAMeasurement&) = delete;
     SOMAMeasurement(SOMAMeasurement&&) = default;
     ~SOMAMeasurement() = default;
-
-    /**
-     * Return the constant "SOMAMeasurement".
-     *
-     * @return std::string
-     */
-    const std::string type() const {
-        return "SOMAMeasurement";
-    }
 
    private:
     //===================================================================
