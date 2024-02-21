@@ -86,14 +86,13 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         except SOMAError:
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
-            handle,
+            handle,  # type: ignore
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
     def __init__(
         self,
-        # TODO DataFrameWrapper should be _WrapperType_co
-        handle: Union[_WrapperType_co, _tdb_handles.DataFrameWrapper],
+        handle: Union[_WrapperType_co],
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ):

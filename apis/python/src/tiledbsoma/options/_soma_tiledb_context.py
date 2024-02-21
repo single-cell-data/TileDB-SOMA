@@ -120,9 +120,7 @@ class SOMATileDBContext(clib.SOMAContext):  # type: ignore
         self._lock = threading.Lock()
         """A lock to ensure single initialization of ``_tiledb_ctx``."""
         self._initial_config = (
-            _default_config({})
-            if tiledb_config is None
-            else _default_config(tiledb_config)
+            None if tiledb_config is None else _default_config(tiledb_config)
         )
 
         # """A dictionary of options to override the default TileDB config.
@@ -135,9 +133,8 @@ class SOMATileDBContext(clib.SOMAContext):  # type: ignore
         """The TileDB context to use, either provided or lazily constructed."""
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
 
-        super().__init__(
-            {k: str(self._initial_config[k]) for k in self._initial_config}
-        )
+        cfg = _default_config(tiledb_config or {})
+        super().__init__({k: str(cfg[k]) for k in cfg})
 
     @property
     def timestamp_ms(self) -> Optional[int]:
@@ -161,7 +158,11 @@ class SOMATileDBContext(clib.SOMAContext):  # type: ignore
         """The TileDB Context for this SOMA context."""
         with self._lock:
             if self._tiledb_ctx is None:
-                self._tiledb_ctx = tiledb.Ctx(self._initial_config)
+                if self._initial_config is None:
+                    # Special case: we need to use the One Global Default.
+                    self._tiledb_ctx = _default_global_ctx()
+                else:
+                    self._tiledb_ctx = tiledb.Ctx(self._initial_config)
             return self._tiledb_ctx
 
     @property

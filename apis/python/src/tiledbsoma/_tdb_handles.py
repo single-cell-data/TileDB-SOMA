@@ -70,45 +70,23 @@ def open(
         if soma_object.type in ("SOMACollection", "SOMAExperiment", "SOMAMeasurement"):
             return GroupWrapper.open(uri, mode, context, timestamp)
     except SOMAError:
+        pass
+
+    # We avoid needing to create a tiledb.Ctx() unless necessary
+    # This SOMAObject does not have metadata information
+    # associated with it yet and requires tiledb.object_type to check
+
+    obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
+    if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
+    if obj_type == "array":
+        return ArrayWrapper.open(uri, mode, context, timestamp)
+    if obj_type == "group":
+        return GroupWrapper.open(uri, mode, context, timestamp)
 
-# def open(
-#     uri: str,
-#     mode: options.OpenMode,
-#     context: SOMATileDBContext,
-#     timestamp: Optional[OpenTimestamp],
-# ) -> "Wrapper[RawHandle]":
-#     """Determine whether the URI is an array or group, and open it."""
-#     obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
-#     if not obj_type:
-#         raise DoesNotExistError(f"{uri!r} does not exist")
-
-#     try:
-#         return _open_with_clib_wrapper(uri, mode, context, timestamp)
-#     except SOMAError:
-#         # This object still uses tiledb-py and must be handled below
-#         if obj_type == "array":
-#             return ArrayWrapper.open(uri, mode, context, timestamp)
-#         if obj_type == "group":
-#             return GroupWrapper.open(uri, mode, context, timestamp)
-
-#     # Invalid object
-#     raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
-
-
-# def _open_with_clib_wrapper(
-#     uri: str,
-#     mode: options.OpenMode,
-#     context: SOMATileDBContext,
-#     timestamp: Optional[OpenTimestamp] = None,
-# ) -> "DataFrameWrapper":
-#     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-#     timestamp_ms = context._open_timestamp_ms(timestamp)
-#     obj = clib.SOMAObject.open(uri, open_mode, context, (0, timestamp_ms))
-#     if obj.type == "SOMADataFrame":
-#         return DataFrameWrapper._from_soma_object(obj, context)
-#     raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
+    # Invalid object
+    raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
 
 
 @attrs.define(eq=False, hash=False, slots=False)
