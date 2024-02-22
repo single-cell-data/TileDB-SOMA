@@ -3,9 +3,6 @@
 #
 # Licensed under the MIT License.
 
-import ctypes
-import os
-import sys
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pyarrow as pa
@@ -13,35 +10,13 @@ import tiledb
 from somacore.options import ResultOrder, ResultOrderStr
 
 from . import _tdb_handles, _util
+
+# This package's pybind11 code
+from . import pytiledbsoma as clib  # noqa: E402
 from ._arrow_types import tiledb_schema_to_arrow
 from ._tiledb_object import TileDBObject
 from ._types import OpenTimestamp, is_nonstringy_sequence
 from .options._soma_tiledb_context import SOMATileDBContext
-
-
-def _load_libs() -> None:
-    """Loads the required TileDB-SOMA native library."""
-    if os.name == "nt":
-        lib_name = "tiledbsoma.dll"
-    elif sys.platform == "darwin":
-        lib_name = "libtiledbsoma.dylib"
-    else:
-        lib_name = "libtiledbsoma.so"
-
-    try:
-        # Try loading the bundled native library.
-        lib_dir = os.path.dirname(os.path.abspath(__file__))
-        ctypes.CDLL(os.path.join(lib_dir, lib_name))
-    except OSError:
-        # Otherwise try loading by name only.
-        ctypes.CDLL(lib_name)
-
-
-# Load native libraries
-_load_libs()
-
-# This package's pybind11 code
-from . import pytiledbsoma as clib  # noqa: E402
 
 
 class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
