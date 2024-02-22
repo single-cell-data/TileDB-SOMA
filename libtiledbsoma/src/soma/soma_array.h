@@ -43,11 +43,12 @@
 #include "enums.h"
 #include "logger_public.h"
 #include "managed_query.h"
+#include "soma_object.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
 
-class SOMAArray {
+class SOMAArray : public SOMAObject {
    public:
     //===================================================================
     //= public static
@@ -167,9 +168,28 @@ class SOMAArray {
         ResultOrder result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
+    SOMAArray(const SOMAArray& other)
+        : ctx_(other.ctx_)
+        , config_(other.config_)
+        , uri_(other.uri_)
+        , name_(other.name_)
+        , batch_size_(other.batch_size_)
+        , result_order_(other.result_order_)
+        , metadata_(other.metadata_)
+        , timestamp_(other.timestamp_)
+        , mq_(std::make_unique<ManagedQuery>(
+              other.arr_, other.ctx_, other.name_))
+        , arr_(other.arr_)
+        , first_read_next_(other.first_read_next_)
+        , submitted_(other.submitted_) {
+    }
+
+    SOMAArray(const SOMAObject& other)
+        : SOMAObject(other) {
+    }
+
     SOMAArray() = delete;
-    SOMAArray(const SOMAArray&) = delete;
-    SOMAArray(SOMAArray&&) = default;
+    SOMAArray(SOMAArray&&) = delete;
     ~SOMAArray() = default;
 
     /**
@@ -177,7 +197,7 @@ class SOMAArray {
      *
      * @return std::string URI
      */
-    const std::string& uri() const;
+    const std::string uri() const;
 
     /**
      * @brief Get Ctx of the SOMAArray.
@@ -192,19 +212,6 @@ class SOMAArray {
      * @return std::map<std::string, std::string>
      */
     std::map<std::string, std::string> config();
-
-    std::optional<std::string> soma_object_type() {
-        auto soma_object_type = this->get_metadata("soma_object_type");
-
-        if (!soma_object_type.has_value())
-            return std::nullopt;
-
-        const char* dtype = (const char*)std::get<MetadataInfo::value>(
-            *soma_object_type);
-        uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
-
-        return std::string(dtype, sz);
-    }
 
     /**
      * Open the SOMAArray object.
@@ -708,6 +715,9 @@ class SOMAArray {
 
     // SOMAArray URI
     std::string uri_;
+
+    // SOMAArray name for debugging
+    std::string_view name_;
 
     // Batch size
     std::string batch_size_;

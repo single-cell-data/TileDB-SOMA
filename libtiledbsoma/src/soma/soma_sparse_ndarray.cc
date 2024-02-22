@@ -30,8 +30,6 @@
  *   This file defines the SOMASparseNDArray class.
  */
 
-#include <filesystem>
-
 #include "soma_sparse_ndarray.h"
 
 namespace tiledbsoma {
@@ -85,78 +83,20 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 
+bool SOMASparseNDArray::exists(std::string_view uri) {
+    try {
+        return "SOMASparseNDArray" ==
+               SOMAObject::open(uri, OpenMode::read)->type();
+    } catch (TileDBSOMAError& e) {
+        return false;
+    }
+}
+
 //===================================================================
 //= public non-static
 //===================================================================
 
-SOMASparseNDArray::SOMASparseNDArray(
-    OpenMode mode,
-    std::string_view uri,
-    std::shared_ptr<Context> ctx,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    std::string array_name = std::filesystem::path(uri).filename().string();
-    array_ = std::make_shared<SOMAArray>(
-        mode,
-        uri,
-        array_name,  // label used when debugging
-        ctx,
-        column_names,
-        "auto",  // batch_size,
-        result_order,
-        timestamp);
-    array_->reset();
-}
-
-void SOMASparseNDArray::open(
-    OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    array_->open(mode, timestamp);
-    array_->reset();
-}
-
-void SOMASparseNDArray::close() {
-    array_->close();
-}
-
-bool SOMASparseNDArray::is_open() const {
-    return array_->is_open();
-}
-
-const std::string SOMASparseNDArray::uri() const {
-    return array_->uri();
-}
-
-std::shared_ptr<Context> SOMASparseNDArray::ctx() {
-    return array_->ctx();
-}
-
 std::unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
-    return array_->arrow_schema();
+    return this->arrow_schema();
 }
-
-std::shared_ptr<ArraySchema> SOMASparseNDArray::tiledb_schema() const {
-    return array_->tiledb_schema();
-}
-
-std::vector<int64_t> SOMASparseNDArray::shape() const {
-    return array_->shape();
-}
-
-int64_t SOMASparseNDArray::ndim() const {
-    return array_->ndim();
-}
-
-uint64_t SOMASparseNDArray::nnz() const {
-    return array_->nnz();
-}
-
-std::optional<std::shared_ptr<ArrayBuffers>> SOMASparseNDArray::read_next() {
-    return array_->read_next();
-}
-
-void SOMASparseNDArray::write(std::shared_ptr<ArrayBuffers> buffers) {
-    array_->write(buffers);
-}
-
 }  // namespace tiledbsoma

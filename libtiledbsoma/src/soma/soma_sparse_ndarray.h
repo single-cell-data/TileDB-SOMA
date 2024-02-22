@@ -33,18 +33,17 @@
 #ifndef SOMA_SPARSE_NDARRAY
 #define SOMA_SPARSE_NDARRAY
 
-#include "enums.h"
+#include <filesystem>
+
 #include "soma_array.h"
-#include "soma_object.h"
 
 namespace tiledbsoma {
 
-class SOMAArray;
 class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMASparseNDArray : public SOMAObject {
+class SOMASparseNDArray : public SOMAArray {
    public:
     //===================================================================
     //= public static
@@ -122,6 +121,13 @@ class SOMASparseNDArray : public SOMAObject {
         ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
+    /**
+     * @brief Check if the SOMASparseNDArray exists at the URI.
+     *
+     * @param uri URI to create the SOMASparseNDArray
+     */
+    static bool exists(std::string_view uri);
+
     //===================================================================
     //= public non-static
     //===================================================================
@@ -142,45 +148,19 @@ class SOMASparseNDArray : public SOMAObject {
         std::shared_ptr<Context> ctx,
         std::vector<std::string> column_names,
         ResultOrder result_order,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
-
-    /**
-     * Open the SOMASparseNDArray object.
-     *
-     * @param mode read or write
-     * @param timestamp Timestamp
-     */
-    void open(
-        OpenMode mode,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
-
-    /**
-     * Closes the SOMASparseNDArray object.
-     */
-    void close();
-
-    /**
-     * Check if the SOMASparseNDArray is open.
-     *
-     * @return bool true if open
-     */
-    bool is_open() const;
-
-    /**
-     * Returns the constant "SOMASparseNDArray".
-     *
-     * @return std::string
-     */
-    const std::string type() const {
-        return "SOMASparseNDArray";
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp)
+        : SOMAArray(
+              mode,
+              uri,
+              std::string(std::filesystem::path(uri).filename()),  // array name
+              ctx,
+              column_names,
+              "auto",  // batch_size
+              result_order,
+              timestamp) {
     }
 
-    /**
-     * Get the Context associated with the SOMASparseNDArray.
-     *
-     * @return std::shared_ptr<Context>
-     */
-    std::shared_ptr<Context> ctx();
+    using SOMAArray::open;
 
     /**
      * Return whether the NDArray is sparse.
@@ -192,164 +172,11 @@ class SOMASparseNDArray : public SOMAObject {
     }
 
     /**
-     * @brief Get URI of the SOMASparseNDArray.
-     *
-     * @return std::string URI
-     */
-    const std::string uri() const;
-
-    /**
      * Return the data schema, in the form of an ArrowSchema.
      *
      * @return std::unique_ptr<ArrowSchema>
      */
     std::unique_ptr<ArrowSchema> schema() const;
-
-    /**
-     * Return the data schema, in the form of a TileDB ArraySchema.
-     *
-     * @return std::shared_ptr<ArraySchema>
-     */
-    std::shared_ptr<ArraySchema> tiledb_schema() const;
-
-    /**
-     * @brief Get the capacity of each dimension.
-     *
-     * @return A vector with length equal to the number of dimensions; each
-     * value in the vector is the capcity of each dimension.
-     */
-    std::vector<int64_t> shape() const;
-
-    /**
-     * Return the number of dimensions.
-     *
-     * @return int64_t
-     */
-    int64_t ndim() const;
-
-    /**
-     * @brief Get the total number of shared cells in the array.
-     *
-     * @return uint64_t Total number of shared cells
-     */
-    uint64_t nnz() const;
-
-    /**
-     * @brief Read the next chunk of results from the query. If all results have
-     * already been read, std::nullopt is returned.
-     */
-    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
-
-    /**
-     * @brief Write ArrayBuffers data to the dataframe.
-     * @param buffers The ArrayBuffers to write
-     */
-    void write(std::shared_ptr<ArrayBuffers> buffers);
-
-    /**
-     * Set metadata key-value items to a SOMASparseNDArray. The
-     * SOMASparseNDArray must opened in WRITE mode, otherwise the function will
-     * error out.
-     *
-     * @param key The key of the metadata item to be added. UTF-8 encodings
-     *     are acceptable.
-     * @param value_type The datatype of the value.
-     * @param value_num The value may consist of more than one items of the
-     *     same datatype. This argument indicates the number of items in the
-     *     value component of the metadata.
-     * @param value The metadata value in binary form.
-     *
-     * @note The writes will take effect only upon closing the array.
-     */
-    void set_metadata(
-        const std::string& key,
-        tiledb_datatype_t value_type,
-        uint32_t value_num,
-        const void* value) {
-        array_->set_metadata(key, value_type, value_num, value);
-    }
-
-    /**
-     * Delete a metadata key-value item from an open SOMASparseNDArray. The
-     * SOMASparseNDArray must be opened in WRITE mode, otherwise the function
-     * will error out.
-     *
-     * @param key The key of the metadata item to be deleted.
-     *
-     * @note The writes will take effect only upon closing the group.
-     *
-     * @note If the key does not exist, this will take no effect
-     *     (i.e., the function will not error out).
-     */
-    void delete_metadata(const std::string& key) {
-        array_->delete_metadata(key);
-    }
-
-    /**
-     * @brief Given a key, get the associated value datatype, number of
-     * values, and value in binary form.
-     *
-     * The value may consist of more than one items of the same datatype. Keys
-     * that do not exist in the metadata will be return NULL for the value.
-     *
-     * **Example:**
-     * @code{.cpp}
-     * // Open the group for reading
-     * tiledbsoma::SOMAGroup soma_group = SOMAGroup::open(TILEDB_READ,
-     "s3://bucket-name/group-name");
-     * tiledbsoma::MetadataValue meta_val = soma_group->get_metadata("key");
-     * std::string key = std::get<MetadataInfo::key>(meta_val);
-     * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
-     * uint32_t num = std::get<MetadataInfo::num>(meta_val);
-     * const void* value = *((const
-     int32_t*)std::get<MetadataInfo::value>(meta_val));
-     * @endcode
-     *
-     * @param key The key of the metadata item to be retrieved. UTF-8 encodings
-     *     are acceptable.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
-     * uint32_t, const void*>)
-     */
-    std::optional<MetadataValue> get_metadata(const std::string& key) {
-        return array_->get_metadata(key);
-    }
-
-    /**
-     * Get a mapping of all metadata keys with its associated value datatype,
-     * number of values, and value in binary form.
-     *
-     * @return std::map<std::string, MetadataValue>
-     */
-    std::map<std::string, MetadataValue> get_metadata() {
-        return array_->get_metadata();
-    }
-
-    /**
-     * Check if the key exists in metadata from an open SOMASparseNDArray.
-     *
-     * @param key The key of the metadata item to be checked. UTF-8 encodings
-     *     are acceptable.
-     * @return true if the key exists, else false.
-     */
-    bool has_metadata(const std::string& key) {
-        return array_->has_metadata(key);
-    }
-
-    /**
-     * Return then number of metadata items in an open SOMASparseNDArray. The
-     * group must be opened in READ mode, otherwise the function will error out.
-     */
-    uint64_t metadata_num() const {
-        return array_->metadata_num();
-    }
-
-   private:
-    //===================================================================
-    //= private non-static
-    //===================================================================
-
-    // SOMAArray
-    std::shared_ptr<SOMAArray> array_;
 };
 }  // namespace tiledbsoma
 

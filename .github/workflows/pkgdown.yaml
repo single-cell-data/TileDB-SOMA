@@ -1,5 +1,6 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/master/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+
 on:
   #push:
   #  # To publish docs from your branch: list the branch name here instead of main.
@@ -9,6 +10,8 @@ on:
   #  branches: [main]
   release:
     types: [published]
+  schedule:
+    - cron: "42 9 * * *"
   workflow_dispatch:
 
 name: pkgdown
@@ -31,8 +34,12 @@ jobs:
           use-public-rspm: true
           working-directory: "apis/r"
 
+      # Run this daily to surface errors as tracked at
+      # https://github.com/single-cell-data/TileDB-SOMA/issues/2052
       - name: Install dependencies
         run: ./apis/r/tools/install-pkgdown-dependencies.sh
 
+      # Run this on releases, or on workflow dispatch
       - name: Deploy package
+        if: github.event_name != 'schedule'
         run: ./apis/r/tools/deploy-pkgdown.sh

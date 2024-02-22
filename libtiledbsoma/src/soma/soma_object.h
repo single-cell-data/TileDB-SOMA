@@ -41,8 +41,6 @@
 
 namespace tiledbsoma {
 
-class SOMADataFrame;
-
 using namespace tiledb;
 class SOMAObject {
    public:
@@ -52,13 +50,13 @@ class SOMAObject {
     virtual ~SOMAObject() = default;
 
     static std::unique_ptr<SOMAObject> open(
-        std::string uri,
+        std::string_view uri,
         OpenMode mode,
         std::map<std::string, std::string> platform_config = {},
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     static std::unique_ptr<SOMAObject> open(
-        std::string uri,
+        std::string_view uri,
         OpenMode mode,
         std::shared_ptr<Context> ctx,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
@@ -66,7 +64,7 @@ class SOMAObject {
     /**
      * @brief Return a constant string describing the type of the object.
      */
-    virtual const std::string type() const = 0;
+    const std::optional<std::string> type();
 
     /**
      * @brief Get URI of the SOMAObject.

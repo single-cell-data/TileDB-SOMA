@@ -154,15 +154,6 @@ class SOMACollection : public SOMAObject {
     }
 
     /**
-     * Return the constant "SOMACollection".
-     *
-     * @return std::string
-     */
-    const std::string type() const {
-        return "SOMACollection";
-    }
-
-    /**
      * Get the SOMACollection URI.
      */
     const std::string uri() const;

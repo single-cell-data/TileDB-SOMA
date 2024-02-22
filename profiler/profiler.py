@@ -10,11 +10,10 @@ from sys import stderr
 from typing import Any, Dict, Optional
 
 import somacore
+from context_generator import host_context
 
 import tiledbsoma
-
-from .context_generator import host_context
-from .data import FileBasedProfileDB, ProfileData, ProfileDB
+from data import FileBasedProfileDB, ProfileData, ProfileDB
 
 GNU_TIME_FORMAT = (
     'Command being timed: "%C"\n'
@@ -149,6 +148,7 @@ def main():
         required=False,
         help="The flamegraph output produced by prof2",
     )
+
     args = parser.parse_args(sys.argv[1:])
 
     print(f"Command to be run: {args.command}", file=stderr)
@@ -159,7 +159,6 @@ def main():
         stderr=PIPE,
     )
 
-    print(f"Running command to be profiled, PID = {p.pid}", file=stderr)
     # Running additional profilers to extract flame graphs for the run
     p1 = None
     p2 = None
@@ -206,3 +205,7 @@ def main():
         f"{data.command_key=}, {data.command=}, {data.exit_status=}, {db_record_file=}",
         file=stderr,
     )
+
+
+if __name__ == "__main__":
+    main()

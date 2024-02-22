@@ -32,7 +32,7 @@ _DictFilterSpec = Mapping[str, object]
 
 The key ``_type`` is used as the name of the filter. Other entries in the
 dictionary are passed as named arguments. For example,
-``{"_name": "SomeFilter", "aggression": 5, "layers": 7}`` will call
+``{"_type": "SomeFilter", "aggression": 5, "layers": 7}`` will call
 ``SomeFilter(aggression=5, layers=7)``."""
 _FilterSpec = Union[str, _DictFilterSpec]
 """A declarative format for specifying filters:
