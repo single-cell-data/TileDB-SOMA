@@ -48,9 +48,7 @@ _SENTINEL = object()
 """Sentinel object to distinguish default parameters from None."""
 
 
-class SOMATileDBContext(clib.SOMAContext):  # type: ignore
-    # (Class cannot subclass "SOMAContext" (has type "Any"))
-
+class SOMATileDBContext:
     """Maintains TileDB-specific context for TileDB-SOMA objects.
     This context can be shared across multiple objects,
     including having a child object inherit it from its parent.
@@ -123,18 +121,18 @@ class SOMATileDBContext(clib.SOMAContext):  # type: ignore
             None if tiledb_config is None else _default_config(tiledb_config)
         )
 
-        # """A dictionary of options to override the default TileDB config.
+        """A dictionary of options to override the default TileDB config.
 
-        # This includes both the user-provided options and the default options
-        # that we provide to TileDB. If this is unset, then either we were
-        # provided with a TileDB Ctx, or we need to use The Default Global Ctx.
-        # """
+        This includes both the user-provided options and the default options
+        that we provide to TileDB. If this is unset, then either we were
+        provided with a TileDB Ctx, or we need to use The Default Global Ctx.
+        """
         self._tiledb_ctx = tiledb_ctx
         """The TileDB context to use, either provided or lazily constructed."""
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
 
-        cfg = _default_config(tiledb_config or {})
-        super().__init__({k: str(cfg[k]) for k in cfg})
+        """Lazily construct clib.SOMAContext."""
+        self._native_context = None
 
     @property
     def timestamp_ms(self) -> Optional[int]:
@@ -152,6 +150,15 @@ class SOMATileDBContext(clib.SOMAContext):  # type: ignore
         if self.timestamp_ms is None:
             return None
         return ms_to_datetime(self.timestamp_ms)
+
+    @property
+    def native_context(self) -> clib.SOMAContext:
+        """The C++ SOMAContext for this SOMA context."""
+        if self._native_context is None:
+            self._native_context = clib.SOMAContext(
+                {k: str(self.tiledb_config[k]) for k in self.tiledb_config}
+            )
+        return self._native_context
 
     @property
     def tiledb_ctx(self) -> tiledb.Ctx:

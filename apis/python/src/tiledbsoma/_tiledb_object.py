@@ -22,6 +22,7 @@ from .options._soma_tiledb_context import _validate_soma_tiledb_context
 _WrapperType_co = TypeVar(
     "_WrapperType_co", bound=_tdb_handles.AnyWrapper, covariant=True
 )
+
 """The type of handle on a backend object that we have.
 
 Covariant because ``_handle`` is read-only.
@@ -37,6 +38,11 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     Lifecycle:
         Experimental.
     """
+
+    _wrapper_type: Type[_WrapperType_co]
+    _reader_wrapper_type: Union[
+        Type[_WrapperType_co], Type[_tdb_handles.DataFrameWrapper]
+    ]
 
     __slots__ = ("_close_stack", "_handle")
 
@@ -81,9 +87,8 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
-        try:
-            handle = _tdb_handles.open(uri, mode, context, tiledb_timestamp)
-        except SOMAError:
+        handle = _tdb_handles.open(uri, mode, context, tiledb_timestamp)
+        if not isinstance(handle, cls._reader_wrapper_type):
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
             handle,  # type: ignore
@@ -123,10 +128,6 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._handle = handle
         self._close_stack.enter_context(self._handle)
 
-    _wrapper_type: Type[_WrapperType_co]
-    _reader_wrapper_type: Union[
-        Type[_WrapperType_co], Type[_tdb_handles.DataFrameWrapper]
-    ]
     """Class variable of the Wrapper class used to open this object type."""
 
     @property

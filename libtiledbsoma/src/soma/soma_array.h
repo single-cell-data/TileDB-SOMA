@@ -122,7 +122,7 @@ class SOMAArray : public SOMAObject {
     //===================================================================
     //= public non-static
     //===================================================================
-    
+
     /**
      * @brief Construct a new SOMAArray object
      *
