@@ -122,6 +122,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         it must be ``None``.
     """
 
+    _wrapper_type = DataFrameWrapper
     _reader_wrapper_type = DataFrameWrapper
 
     @classmethod
@@ -491,7 +492,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Table, coord: object
     ) -> bool:
         if coord is None:
             return True  # No constraint; select all in this dimension
@@ -565,7 +566,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self,
         sr: clib.SOMAArray,
         dim_idx: int,
-        dim: tiledb.Dim,
+        dim: pa.Table,
         coord: object,
     ) -> bool:
         if isinstance(coord, np.ndarray):

@@ -69,7 +69,7 @@ def open(
     if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
-    if open_mode == clib.OpenMode.read and obj_type == "SOMADataFrame":
+    if obj_type == "SOMADataFrame":
         return DataFrameWrapper._from_soma_object(soma_object, context)
     if open_mode == clib.OpenMode.read and obj_type == "SOMADenseNDArray":
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
