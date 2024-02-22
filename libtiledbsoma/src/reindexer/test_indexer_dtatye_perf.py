@@ -20,7 +20,7 @@ def build(keys, pandas):
         indexer.get_indexer([1])
     else:
         perf_counter()
-        indexer = tiledbsoma_build_index(keys, context=context)
+        indexer = tiledbsoma_build_index(keys, context=context.native_context)
     return indexer
 
 

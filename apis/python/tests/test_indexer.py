@@ -1,3 +1,4 @@
+import threading
 from typing import List, Union
 
 import numpy as np
@@ -22,7 +23,7 @@ def test_duplicate_key_indexer_error(
 ):
     context = _validate_soma_tiledb_context(SOMATileDBContext())
     with pytest.raises(RuntimeError, match="There are duplicate keys."):
-        tiledbsoma_build_index(keys, context=context)
+        tiledbsoma_build_index(keys, context=context.native_context)
 
     pd_index = pd.Index(keys)
     with pytest.raises(pd.errors.InvalidIndexError):
@@ -89,8 +90,19 @@ def test_duplicate_key_indexer_error(
 )
 def test_indexer(keys: np.array, lookups: np.array):
     context = _validate_soma_tiledb_context(SOMATileDBContext())
-    indexer = tiledbsoma_build_index(keys, context=context)
-    results = indexer.get_indexer(lookups)
+    all_results = []
+    num_threads = 10
+
+    def target():
+        indexer = tiledbsoma_build_index(keys, context=context.native_context)
+        results = indexer.get_indexer(lookups)
+        all_results.append(results)
+
+    for t in range(num_threads):
+        thread = threading.Thread(target=target, args=())
+        thread.start()
+        thread.join()
     panda_indexer = pd.Index(keys)
     panda_results = panda_indexer.get_indexer(lookups)
-    np.testing.assert_equal(results.all(), panda_results.all())
+    for i in range(num_threads):
+        np.testing.assert_equal(all_results[i].all(), panda_results.all())
