@@ -70,7 +70,43 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
     #' @field array The underlying \code{\link{SOMASparseNDArray}}
     array = function() return(private$.array),
     #' @field coords The iterated coordinates for the read
-    coords = function() return(private$.coords),
+    coords = function(value) {
+      if (missing(value)) {
+        return(private$.coords)
+      }
+      if (!is.list(value) && is_named(value, allow_empty = FALSE)) {
+        stop("'coords' must be a named list", call. = FALSE)
+      }
+      if (!all(names(x = value) %in% names(private$.coords))) {
+        stop(
+          "'coords' must be named with ",
+          paste(sQuote(names(private$.coords)), collapse = ', '),
+          call. = FALSE
+        )
+      }
+      if (!all(vapply_lgl(value, inherits, what = 'CoordsStrider'))) {
+        stop("'coords' must be a list of CoordsStriders", call. = FALSE)
+      }
+      for (dim in names(value)) {
+        strider <- value[[dim]]
+        current <- private$.coords[[dim]]
+        checks <- c(
+          start = strider$start == current$start,
+          end = strider$end == current$end,
+          coords = identical(strider$coords, current$coords)
+        )
+        if (!all(checks)) {
+          stop(
+            "New striders must cover the same coordinates as existing striders (offending: ",
+            sQuote(dim),
+            ")",
+            call. = FALSE
+          )
+        }
+        private$.coords[[dim]] <- strider
+      }
+      return(invisible(NULL))
+    },
     #' @field coords_vec If \code{coords} is passed, then the coordinate vector
     #'
     coords_vec = function() return(private$.coords_vec),

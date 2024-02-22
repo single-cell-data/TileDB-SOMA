@@ -142,8 +142,13 @@ CoordsStrider <- R6::R6Class(
       if (missing(value)) {
         return(private$.stride)
       }
-      stopifnot(rlang::is_integerish(value, n = 1L, finite = TRUE) && value > 0L)
-      private$.stride <- value
+      stopifnot(
+        (rlang::is_integerish(value, n = 1L, finite = TRUE) ||
+          (inherits(value, "integer64") && length(value) == 1L && is.finite(value))
+        ) &&
+          value > 0L
+      )
+      private$.stride <- bit64::as.integer64(value)
       index <- ifelse(is.null(self$coords), yes = 0L, no = 1L)
       if (private$.index != index) {
         warning(warningCondition(
