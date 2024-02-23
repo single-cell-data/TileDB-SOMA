@@ -199,7 +199,7 @@ void load_soma_array(py::module &m) {
             auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
             return pa_schema_import(py::capsule(reader.arrow_schema().get()));
         })
-        .def("ctx", &SOMAArray::ctx)
+        .def("context", &SOMAArray::ctx)
 
         // After this are short functions expected to be invoked when the coords
         // are Python list/tuple, or NumPy arrays.  Arrow arrays are in this

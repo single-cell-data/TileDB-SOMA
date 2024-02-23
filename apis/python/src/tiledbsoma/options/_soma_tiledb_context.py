@@ -154,15 +154,16 @@ class SOMATileDBContext:
     @property
     def native_context(self) -> clib.SOMAContext:
         """The C++ SOMAContext for this SOMA context."""
-        if self._native_context is None:
-            self._native_context = clib.SOMAContext(
-                {k: str(self.tiledb_config[k]) for k in self.tiledb_config}
-            )
-        return self._native_context
+        with self._lock:
+            if self._native_context is None:
+                self._native_context = clib.SOMAContext(
+                    {k: str(self.tiledb_config[k]) for k in self.tiledb_config}
+                )
+            return self._native_context
 
     @property
     def tiledb_ctx(self) -> tiledb.Ctx:
-        """The TileDB Context for this SOMA context."""
+        """The TileDB-Py Context for this SOMA context."""
         with self._lock:
             if self._tiledb_ctx is None:
                 if self._initial_config is None:

@@ -340,7 +340,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         handle = self._handle._handle
 
-        context = handle.ctx()
+        context = handle.context()
         if platform_config is not None:
             config = context.tiledb_config.copy()
             config.update(platform_config or {})
@@ -353,7 +353,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         sr = clib.SOMADataFrame.open(
             uri=handle.uri,
             mode=clib.OpenMode.read,
-            ctx=context,
+            context=context,
             column_names=column_names or [],
             result_order=_util.to_clib_result_order(result_order),
             timestamp=ts,

@@ -54,38 +54,39 @@ def open(
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
-    try:
-        soma_object = clib.SOMAObject.open(
-            uri, open_mode, context.native_context, (0, timestamp_ms)
-        )
-
-        if open_mode == clib.OpenMode.read and soma_object.type == "SOMADataFrame":
-            return DataFrameWrapper._from_soma_object(soma_object, context)
-
-        # This object still uses tiledb-py and must be handled below
-        if soma_object.type in (
-            "SOMADataFrame",
-            "SOMASparseNDArray",
-            "SOMADenseNDArray",
-        ):
-            return ArrayWrapper.open(uri, mode, context, timestamp)
-        if soma_object.type in ("SOMACollection", "SOMAExperiment", "SOMAMeasurement"):
-            return GroupWrapper.open(uri, mode, context, timestamp)
-    except (SOMAError, RuntimeError):
-        # TODO on Linux this throws a SOMAError but on macOS a RuntimeError
-        pass
-
-    # We avoid needing to create a tiledb.Ctx() unless necessary
-    # This SOMAObject does not have metadata information
-    # associated with it yet and requires tiledb.object_type to check
-
-    obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
+    # if there is not a valid SOMAObject at the given URI, this
+    # returns None
+    soma_object = clib.SOMAObject.open(
+        uri, open_mode, context.native_context, (0, timestamp_ms)
+    )
+    
+    # Avoid creating a TileDB-Py Ctx unless necessary
+    obj_type = (
+        soma_object.type
+        if soma_object is not None
+        else tiledb.object_type(uri, ctx=context.tiledb_ctx)
+    )
+    
     if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
-    if obj_type == "array":
+    if open_mode == clib.OpenMode.read and obj_type == "SOMADataFrame":
+        return DataFrameWrapper._from_soma_object(soma_object, context)
+
+    if obj_type in (
+        "SOMADataFrame",
+        "SOMASparseNDArray",
+        "SOMADenseNDArray",
+        "array",
+    ):
         return ArrayWrapper.open(uri, mode, context, timestamp)
-    if obj_type == "group":
+    
+    if obj_type in (
+        "SOMACollection",
+        "SOMAExperiment",
+        "SOMAMeasurement",
+        "group",
+    ):
         return GroupWrapper.open(uri, mode, context, timestamp)
 
     # Invalid object

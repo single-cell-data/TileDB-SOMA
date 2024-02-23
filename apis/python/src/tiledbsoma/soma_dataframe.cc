@@ -60,7 +60,7 @@ void load_soma_dataframe(py::module &m) {
             std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open),
         "uri"_a,
         "mode"_a,
-        "ctx"_a,
+        "context"_a,
         py::kw_only(),
         "column_names"_a = py::none(),
         "result_order"_a = ResultOrder::automatic,
