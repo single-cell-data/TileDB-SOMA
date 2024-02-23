@@ -47,8 +47,8 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_context(py::module &m) {
+void load_soma_context(py::module& m) {
     py::class_<SOMAContext, std::shared_ptr<SOMAContext>>(m, "SOMAContext")
         .def(py::init<std::map<std::string, std::string>>());
-    };
-}
+};
+}  // namespace libtiledbsomacpp

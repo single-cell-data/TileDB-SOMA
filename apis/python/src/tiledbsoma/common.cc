@@ -80,64 +80,64 @@ std::unordered_map<std::string, tiledb_datatype_t> _np_name_to_tdb_dtype = {
 };
 
 py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
-  if (type == TILEDB_CHAR || type == TILEDB_STRING_UTF8 ||
-      type == TILEDB_STRING_ASCII) {
-    std::string base_str = (type == TILEDB_STRING_UTF8) ? "|U" : "|S";
-    if (cell_val_num < TILEDB_VAR_NUM)
-      base_str += std::to_string(cell_val_num);
-    return py::dtype(base_str);
-  }
+    if (type == TILEDB_CHAR || type == TILEDB_STRING_UTF8 ||
+        type == TILEDB_STRING_ASCII) {
+        std::string base_str = (type == TILEDB_STRING_UTF8) ? "|U" : "|S";
+        if (cell_val_num < TILEDB_VAR_NUM)
+            base_str += std::to_string(cell_val_num);
+        return py::dtype(base_str);
+    }
 
-  if (cell_val_num == 1) {
-    if (type == TILEDB_STRING_UTF16 || type == TILEDB_STRING_UTF32)
-      TPY_ERROR_LOC("Unimplemented UTF16 or UTF32 string conversion!");
-    if (type == TILEDB_STRING_UCS2 || type == TILEDB_STRING_UCS4)
-      TPY_ERROR_LOC("Unimplemented UCS2 or UCS4 string conversion!");
+    if (cell_val_num == 1) {
+        if (type == TILEDB_STRING_UTF16 || type == TILEDB_STRING_UTF32)
+            TPY_ERROR_LOC("Unimplemented UTF16 or UTF32 string conversion!");
+        if (type == TILEDB_STRING_UCS2 || type == TILEDB_STRING_UCS4)
+            TPY_ERROR_LOC("Unimplemented UCS2 or UCS4 string conversion!");
 
-    if (_tdb_to_np_name_dtype.count(type) == 1)
-      return py::dtype(_tdb_to_np_name_dtype[type]);
-  }
+        if (_tdb_to_np_name_dtype.count(type) == 1)
+            return py::dtype(_tdb_to_np_name_dtype[type]);
+    }
 
-  if (cell_val_num == 2) {
-    if (type == TILEDB_FLOAT32)
-      return py::dtype("complex64");
-    if (type == TILEDB_FLOAT64)
-      return py::dtype("complex128");
-  }
+    if (cell_val_num == 2) {
+        if (type == TILEDB_FLOAT32)
+            return py::dtype("complex64");
+        if (type == TILEDB_FLOAT64)
+            return py::dtype("complex128");
+    }
 
-  if (cell_val_num == TILEDB_VAR_NUM)
-    return tdb_to_np_dtype(type, 1);
+    if (cell_val_num == TILEDB_VAR_NUM)
+        return tdb_to_np_dtype(type, 1);
 
-  if (cell_val_num > 1) {
-    py::dtype base_dtype = tdb_to_np_dtype(type, 1);
-    py::tuple rec_elem = py::make_tuple("", base_dtype);
-    py::list rec_list;
-    for (size_t i = 0; i < cell_val_num; i++)
-      rec_list.append(rec_elem);
-    // note: we call the 'dtype' constructor b/c py::dtype does not accept
-    // list
-    auto np = py::module::import("numpy");
-    auto np_dtype = np.attr("dtype");
-    return np_dtype(rec_list);
-  }
+    if (cell_val_num > 1) {
+        py::dtype base_dtype = tdb_to_np_dtype(type, 1);
+        py::tuple rec_elem = py::make_tuple("", base_dtype);
+        py::list rec_list;
+        for (size_t i = 0; i < cell_val_num; i++)
+            rec_list.append(rec_elem);
+        // note: we call the 'dtype' constructor b/c py::dtype does not accept
+        // list
+        auto np = py::module::import("numpy");
+        auto np_dtype = np.attr("dtype");
+        return np_dtype(rec_list);
+    }
 
-  TPY_ERROR_LOC("tiledb datatype not understood ('" +
-        tiledb::impl::type_to_str(type) +
+    TPY_ERROR_LOC(
+        "tiledb datatype not understood ('" + tiledb::impl::type_to_str(type) +
         "', cell_val_num: " + std::to_string(cell_val_num) + ")");
 }
 
 tiledb_datatype_t np_to_tdb_dtype(py::dtype type) {
-  auto name = py::str(py::getattr(type, "name"));
-  if (_np_name_to_tdb_dtype.count(name) == 1)
-    return _np_name_to_tdb_dtype[name];
+    auto name = py::str(py::getattr(type, "name"));
+    if (_np_name_to_tdb_dtype.count(name) == 1)
+        return _np_name_to_tdb_dtype[name];
 
-  auto kind = py::str(py::getattr(type, "kind"));
-  if (kind == py::str("S"))
-    return TILEDB_STRING_ASCII;
-  if (kind == py::str("U"))
-    return TILEDB_STRING_UTF8;
+    auto kind = py::str(py::getattr(type, "kind"));
+    if (kind == py::str("S"))
+        return TILEDB_STRING_ASCII;
+    if (kind == py::str("U"))
+        return TILEDB_STRING_UTF8;
 
-  TPY_ERROR_LOC("could not handle numpy dtype");
+    TPY_ERROR_LOC("could not handle numpy dtype");
 }
 
 /**
@@ -158,8 +158,8 @@ py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
     for (auto& name : buffers->names()) {
         auto column = buffers->at(name);
         auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(column);
-        auto array = pa_array_import(py::capsule(pa_array.get()), 
-                                     py::capsule(pa_schema.get()));
+        auto array = pa_array_import(
+            py::capsule(pa_array.get()), py::capsule(pa_schema.get()));
         array_list.append(array);
         names.append(name);
     }
@@ -168,7 +168,7 @@ py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
 }
 
 std::optional<py::object> to_table(
-    std::optional<std::shared_ptr<ArrayBuffers>> buffers){
+    std::optional<std::shared_ptr<ArrayBuffers>> buffers) {
     // If more data was read, convert it to an arrow table and return
     if (buffers.has_value()) {
         return _buffer_to_table(*buffers);
@@ -178,4 +178,4 @@ std::optional<py::object> to_table(
     return std::nullopt;
 }
 
-}
+}  // namespace tiledbsoma

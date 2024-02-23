@@ -38,8 +38,8 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_group(py::module &m) {
+void load_soma_group(py::module& m) {
     py::class_<SOMAGroup, SOMAObject>(m, "SOMAGroup")
-    .def_property_readonly("type", &SOMAGroup::type);
+        .def_property_readonly("type", &SOMAGroup::type);
 }
-}
+}  // namespace libtiledbsomacpp

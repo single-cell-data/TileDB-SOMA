@@ -46,9 +46,9 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_collection(py::module &m) {
+void load_soma_collection(py::module& m) {
     py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection");
     py::class_<SOMAExperiment, SOMAGroup, SOMAObject>(m, "SOMAExperiment");
     py::class_<SOMAMeasurement, SOMAGroup, SOMAObject>(m, "SOMAMeasurement");
 }
-}
+}  // namespace libtiledbsomacpp
