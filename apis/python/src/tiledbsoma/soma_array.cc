@@ -191,18 +191,10 @@ void load_soma_array(py::module& m) {
             py::overload_cast<
                 OpenMode,
                 std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAArray::open))
-
-        .def(
-            "reopen",
-            py::overload_cast<
-                OpenMode,
-                std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAArray::open))
         .def("close", &SOMAArray::close)
-
         .def_property_readonly(
             "closed",
             [](SOMAArray& reader) -> bool { return not reader.is_open(); })
-
         .def_property_readonly(
             "mode",
             [](SOMAArray& reader) {
@@ -679,10 +671,13 @@ void load_soma_array(py::module& m) {
             })
 
         .def("set_metadata", &SOMAArray::set_metadata)
+
         .def("delete_metadata", &SOMAArray::delete_metadata)
+
         .def(
             "get_metadata",
             py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
+
         .def_property_readonly(
             "meta",
             [](SOMAArray& soma_dataframe) -> py::dict {
@@ -709,6 +704,7 @@ void load_soma_array(py::module& m) {
                 return results;
             })
         .def("has_metadata", &SOMAArray::has_metadata)
+
         .def("metadata_num", &SOMAArray::metadata_num);
 }
 }  // namespace libtiledbsomacpp
