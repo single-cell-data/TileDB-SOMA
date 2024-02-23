@@ -157,7 +157,9 @@ class SOMATileDBContext:
         with self._lock:
             if self._native_context is None:
                 cfg = self._internal_tiledb_config()
-                self._native_context = clib.SOMAContext({k: str(cfg[k]) for k in cfg})
+                self._native_context = clib.SOMAContext(
+                    {k: str(v) for k, v in cfg.items()}
+                )
             return self._native_context
 
     @property
