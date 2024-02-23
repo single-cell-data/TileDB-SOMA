@@ -1,5 +1,5 @@
 /**
- * @file   soma_sparse_ndarray.cc
+ * @file   soma_collection.cc
  *
  * @section LICENSE
  *
@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the SOMASparseNDArray bindings.
+ * This file defines the SOMACollection bindings.
  */
 
 #include <pybind11/numpy.h>
@@ -46,26 +46,9 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_sparse_ndarray(py::module &m) {
-    py::class_<SOMASparseNDArray, SOMAArray, SOMAObject>(m, "SOMASparseNDArray")
-
-    .def_static(
-        "open", 
-        py::overload_cast<
-            std::string_view, 
-            OpenMode, 
-            std::shared_ptr<SOMAContext>, 
-            std::vector<std::string>, 
-            ResultOrder, 
-            std::optional<std::pair<uint64_t, uint64_t>>>(&SOMASparseNDArray::open),
-        "uri"_a,
-        "mode"_a,
-        "ctx"_a,
-        py::kw_only(),
-        "column_names"_a = py::none(),
-        "result_order"_a = ResultOrder::automatic,
-        "timestamp"_a = py::none())
-
-    .def_static("exists", &SOMASparseNDArray::exists);
+void load_soma_collection(py::module &m) {
+    py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection");
+    py::class_<SOMAExperiment, SOMAGroup, SOMAObject>(m, "SOMAExperiment");
+    py::class_<SOMAMeasurement, SOMAGroup, SOMAObject>(m, "SOMAMeasurement");
 }
 }

@@ -40,6 +40,8 @@ using namespace tiledbsoma;
 
 // [[Rcpp::export]]
 void test_sdf(const std::string& uri) {
+    auto ctx = std::make_shared<SOMAContext>();
+
     std::map<std::string, std::string> config;
     // Control buffer sizes, similar to tiledb-py
     // config["soma.init_buffer_bytes"] = "4294967296";
@@ -48,11 +50,11 @@ void test_sdf(const std::string& uri) {
     // config["sm.mem.total_budget"] = "1118388608";
 
     // Read all values from the obs array
-    auto obs = SOMAArray::open(OpenMode::read, uri + "/obs", "obs");
+    auto obs = SOMAArray::open(OpenMode::read, uri + "/obs", ctx, "obs");
     auto obs_data = obs->read_next();
 
     // Read all values from the var array
-    auto var = SOMAArray::open(OpenMode::read, uri + "/ms/RNA/var", "var");
+    auto var = SOMAArray::open(OpenMode::read, uri + "/ms/RNA/var", ctx, "var");
     auto var_data = var->read_next();
 
     // Check if obs and var reads are complete
@@ -62,7 +64,10 @@ void test_sdf(const std::string& uri) {
 
     // Read all values from the X/data array
     auto x_data = SOMAArray::open(
-        OpenMode::read, uri + "/ms/RNA/X/data", "X/data", config);
+        OpenMode::read,
+        uri + "/ms/RNA/X/data",
+        std::make_shared<SOMAContext>(config),
+        "X/data");
 
     int batches = 0;
     int total_num_rows = 0;
@@ -80,7 +85,8 @@ void test_sdf(const std::string& uri) {
 namespace tdbs = tiledbsoma;
 void test_arrow(const std::string& uri) {
     const std::vector<std::string>& colnames{"n_counts", "n_genes", "louvain"};
-    auto obs = tdbs::SOMAArray::open(OpenMode::read, uri, "", {}, colnames);
+    auto obs = tdbs::SOMAArray::open(
+        OpenMode::read, uri, std::make_shared<SOMAContext>(), "", colnames);
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
     auto obs_data = obs->read_next();
     if (!obs->results_complete()) {

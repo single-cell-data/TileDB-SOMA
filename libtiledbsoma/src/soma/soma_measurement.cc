@@ -44,13 +44,7 @@ using namespace tiledb;
 std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
     std::string_view uri,
     ArraySchema schema,
-    std::map<std::string, std::string> platform_config) {
-    return SOMAMeasurement::create(
-        uri, schema, std::make_shared<Context>(Config(platform_config)));
-}
-
-std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
-    std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx) {
+    std::shared_ptr<SOMAContext> ctx) {
     std::string exp_uri(uri);
 
     SOMAGroup::create(ctx, exp_uri, "SOMAMeasurement");
@@ -61,13 +55,13 @@ std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
     SOMACollection::create(exp_uri + "/varm", ctx);
     SOMACollection::create(exp_uri + "/varp", ctx);
 
-    auto group = SOMAGroup::open(OpenMode::write, ctx, uri);
-    group->add_member(exp_uri + "/var", URIType::absolute, "var");
-    group->add_member(exp_uri + "/X", URIType::absolute, "X");
-    group->add_member(exp_uri + "/obsm", URIType::absolute, "obsm");
-    group->add_member(exp_uri + "/obsp", URIType::absolute, "obsp");
-    group->add_member(exp_uri + "/varm", URIType::absolute, "varm");
-    group->add_member(exp_uri + "/varp", URIType::absolute, "varp");
+    auto group = SOMAGroup::open(OpenMode::write, uri, ctx);
+    group->set(exp_uri + "/var", URIType::absolute, "var");
+    group->set(exp_uri + "/X", URIType::absolute, "X");
+    group->set(exp_uri + "/obsm", URIType::absolute, "obsm");
+    group->set(exp_uri + "/obsp", URIType::absolute, "obsp");
+    group->set(exp_uri + "/varm", URIType::absolute, "varm");
+    group->set(exp_uri + "/varp", URIType::absolute, "varp");
     group->close();
 
     return std::make_unique<SOMAMeasurement>(OpenMode::read, uri, ctx);

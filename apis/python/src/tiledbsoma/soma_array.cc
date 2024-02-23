@@ -105,8 +105,8 @@ void load_soma_array(py::module &m) {
                     return SOMAArray::open(
                         OpenMode::read,
                         uri,
+                        std::make_shared<SOMAContext>(platform_config),
                         name,
-                        platform_config,
                         column_names,
                         batch_size,
                         result_order,
@@ -199,9 +199,7 @@ void load_soma_array(py::module &m) {
             auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
             return pa_schema_import(py::capsule(reader.arrow_schema().get()));
         })
-        .def("config", [](SOMAArray& reader) -> py::dict {
-            return py::cast(reader.config());
-        })
+        .def("context", &SOMAArray::ctx)
 
         // After this are short functions expected to be invoked when the coords
         // are Python list/tuple, or NumPy arrays.  Arrow arrays are in this

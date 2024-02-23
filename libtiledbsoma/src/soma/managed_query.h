@@ -65,8 +65,25 @@ class ManagedQuery {
         std::string_view name = "unnamed");
 
     ManagedQuery() = delete;
+
     ManagedQuery(const ManagedQuery&) = delete;
-    ManagedQuery(ManagedQuery&&) = default;
+
+    ManagedQuery(ManagedQuery&& other)
+        : array_(other.array_)
+        , ctx_(other.ctx_)
+        , name_(other.name_)
+        , schema_(other.schema_)
+        , query_(std::make_unique<Query>(*other.ctx_, *other.array_))
+        , subarray_(std::make_unique<Subarray>(*other.ctx_, *other.array_))
+        , subarray_range_set_(other.subarray_range_set_)
+        , subarray_range_empty_(other.subarray_range_empty_)
+        , columns_(other.columns_)
+        , results_complete_(other.results_complete_)
+        , total_num_cells_(other.total_num_cells_)
+        , buffers_(other.buffers_)
+        , query_submitted_(other.query_submitted_) {
+    }
+
     ~ManagedQuery() = default;
 
     /**
