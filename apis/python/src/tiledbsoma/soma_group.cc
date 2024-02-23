@@ -1,5 +1,5 @@
 /**
- * @file   soma_sparse_ndarray.cc
+ * @file   soma_group.cc
  *
  * @section LICENSE
  *
@@ -23,20 +23,12 @@
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * THE SOFTWARE.Os
  *
  * @section DESCRIPTION
  *
- * This file defines the SOMASparseNDArray bindings.
+ * This file defines the SOMAGroup bindings.
  */
-
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/pytypes.h>
-#include <pybind11/stl.h>
-#include <pybind11/stl_bind.h>
-
-#include <tiledbsoma/tiledbsoma>
 
 #include "common.h"
 
@@ -46,26 +38,8 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_sparse_ndarray(py::module &m) {
-    py::class_<SOMASparseNDArray, SOMAArray, SOMAObject>(m, "SOMASparseNDArray")
-
-    .def_static(
-        "open", 
-        py::overload_cast<
-            std::string_view, 
-            OpenMode, 
-            std::shared_ptr<SOMAContext>, 
-            std::vector<std::string>, 
-            ResultOrder, 
-            std::optional<std::pair<uint64_t, uint64_t>>>(&SOMASparseNDArray::open),
-        "uri"_a,
-        "mode"_a,
-        "ctx"_a,
-        py::kw_only(),
-        "column_names"_a = py::none(),
-        "result_order"_a = ResultOrder::automatic,
-        "timestamp"_a = py::none())
-
-    .def_static("exists", &SOMASparseNDArray::exists);
+void load_soma_group(py::module &m) {
+    py::class_<SOMAGroup, SOMAObject>(m, "SOMAGroup")
+    .def_property_readonly("type", &SOMAGroup::type);
 }
 }

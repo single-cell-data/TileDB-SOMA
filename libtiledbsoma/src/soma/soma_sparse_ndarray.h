@@ -60,18 +60,7 @@ class SOMASparseNDArray : public SOMAArray {
     static std::unique_ptr<SOMASparseNDArray> create(
         std::string_view uri,
         ArraySchema schema,
-        std::map<std::string, std::string> platform_config = {});
-
-    /**
-     * @brief Create a SOMASparseNDArray object at the given URI.
-     *
-     * @param uri URI to create the SOMASparseNDArray
-     * @param schema TileDB ArraySchema
-     * @param ctx TileDB context
-     * @return std::shared_ptr<SOMASparseNDArray> opened in read mode
-     */
-    static std::unique_ptr<SOMASparseNDArray> create(
-        std::string_view uri, ArraySchema schema, std::shared_ptr<Context> ctx);
+        std::shared_ptr<SOMAContext> ctx);
 
     /**
      * @brief Open and return a SOMASparseNDArray object at the given URI.
@@ -92,31 +81,7 @@ class SOMASparseNDArray : public SOMAArray {
     static std::unique_ptr<SOMASparseNDArray> open(
         std::string_view uri,
         OpenMode mode,
-        std::map<std::string, std::string> platform_config = {},
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
-
-    /**
-     * @brief Open and return a SOMASparseNDArray object at the given URI.
-     *
-     * @param mode read or write
-     * @param ctx TileDB context
-     * @param uri URI to create the SOMASparseNDArray
-     * @param schema TileDB ArraySchema
-     * @param column_names A list of column names to use as user-defined index
-     * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
-     * exist in the schema, and at least one index column name is required.
-     * @param result_order Read result order: automatic (default), rowmajor, or
-     * colmajor
-     * @param timestamp If specified, overrides the default timestamp used to
-     * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::shared_ptr<SOMASparseNDArray> SOMASparseNDArray
-     */
-    static std::unique_ptr<SOMASparseNDArray> open(
-        std::string_view uri,
-        OpenMode mode,
-        std::shared_ptr<Context> ctx,
+        std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names = {},
         ResultOrder result_order = ResultOrder::automatic,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
@@ -145,19 +110,23 @@ class SOMASparseNDArray : public SOMAArray {
     SOMASparseNDArray(
         OpenMode mode,
         std::string_view uri,
-        std::shared_ptr<Context> ctx,
+        std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names,
         ResultOrder result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp)
         : SOMAArray(
               mode,
               uri,
-              std::string(std::filesystem::path(uri).filename()),  // array name
               ctx,
+              std::string(std::filesystem::path(uri).filename()),  // array name
               column_names,
               "auto",  // batch_size
               result_order,
               timestamp) {
+    }
+
+    SOMASparseNDArray(const SOMAArray& other)
+        : SOMAArray(other) {
     }
 
     using SOMAArray::open;

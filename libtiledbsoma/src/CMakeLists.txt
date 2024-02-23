@@ -190,6 +190,7 @@ endif()
 install(FILES 
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/enums.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/logger_public.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.h 
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.h  
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.h  
