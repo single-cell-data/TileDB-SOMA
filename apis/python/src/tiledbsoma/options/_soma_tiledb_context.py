@@ -132,7 +132,7 @@ class SOMATileDBContext:
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
 
         """Lazily construct clib.SOMAContext."""
-        self._native_context = None
+        self._native_context: Optional[clib.SOMAContext] = None
 
     @property
     def timestamp_ms(self) -> Optional[int]:
@@ -155,10 +155,14 @@ class SOMATileDBContext:
     def native_context(self) -> clib.SOMAContext:
         """The C++ SOMAContext for this SOMA context."""
         with self._lock:
-            if self._native_context is None:
-                self._native_context = clib.SOMAContext(
-                    {k: str(self.tiledb_config[k]) for k in self.tiledb_config}
-                )
+            if self._native_context is not None:
+                return self._native_context
+
+        # tiledb_config also acquires the lock so we must first release it and
+        # then reacquire it
+        cfg = self.tiledb_config
+        with self._lock:
+            self._native_context = clib.SOMAContext({k: str(cfg[k]) for k in cfg})
             return self._native_context
 
     @property

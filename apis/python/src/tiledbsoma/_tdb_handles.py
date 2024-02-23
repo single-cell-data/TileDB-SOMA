@@ -59,14 +59,14 @@ def open(
     soma_object = clib.SOMAObject.open(
         uri, open_mode, context.native_context, (0, timestamp_ms)
     )
-    
+
     # Avoid creating a TileDB-Py Ctx unless necessary
     obj_type = (
         soma_object.type
         if soma_object is not None
         else tiledb.object_type(uri, ctx=context.tiledb_ctx)
     )
-    
+
     if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
@@ -80,7 +80,7 @@ def open(
         "array",
     ):
         return ArrayWrapper.open(uri, mode, context, timestamp)
-    
+
     if obj_type in (
         "SOMACollection",
         "SOMAExperiment",
