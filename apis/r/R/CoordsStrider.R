@@ -73,7 +73,7 @@ CoordsStrider <- R6::R6Class(
       } else {
         cat("  length(coords):", length(self$coords), "\n")
       }
-      cat("  stride:", self$stride, "\n")
+      cat("  stride:", format(self$stride), "\n")
       return(invisible(self))
     },
     #' @description Determine if there are more coordinates to yield
