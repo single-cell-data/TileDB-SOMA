@@ -340,8 +340,11 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         handle = self._handle._handle
 
-        config = handle.config().copy()
-        config.update(platform_config or {})
+        context = handle.context()
+        if platform_config is not None:
+            config = context.tiledb_config.copy()
+            config.update(platform_config or {})
+            context = clib.SOMAContext(config)
 
         ts = None
         if handle.timestamp is not None:
@@ -350,7 +353,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         sr = clib.SOMADataFrame.open(
             uri=handle.uri,
             mode=clib.OpenMode.read,
-            platform_config=config,
+            context=context,
             column_names=column_names or [],
             result_order=_util.to_clib_result_order(result_order),
             timestamp=ts,
@@ -361,8 +364,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         self._set_reader_coords(sr, coords)
 
-        # TODO: batch_size
-
+        # # TODO: batch_size
         return TableReadIter(sr)
 
     def write(
@@ -602,9 +604,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         # TODO: bool
 
-        raise ValueError(
-            f"unhandled type {dim.dtype} for index column named {dim.name}"
-        )
+        raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
 
     def _set_reader_coord_by_numeric_slice(
         self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: Slice[Any]

@@ -64,7 +64,7 @@ class SOMAArray : public SOMAObject {
      * SOMASparseNDArray
      */
     static void create(
-        std::shared_ptr<Context> ctx,
+        std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
         ArraySchema schema,
         std::string soma_type);
@@ -99,9 +99,9 @@ class SOMAArray : public SOMAObject {
      * object.
      *
      * @param mode read or write
-     * @param ctx TileDB context
      * @param uri URI of the array
      * @param name Name of the array
+     * @param platform_config Config parameter dictionary
      * @param column_names Columns to read
      * @param batch_size Read batch size
      * @param result_order Read result order: automatic (default), rowmajor,
@@ -111,8 +111,8 @@ class SOMAArray : public SOMAObject {
      */
     static std::unique_ptr<SOMAArray> open(
         OpenMode mode,
-        std::shared_ptr<Context> ctx,
         std::string_view uri,
+        std::shared_ptr<SOMAContext> ctx,
         std::string_view name = "unnamed",
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
@@ -151,45 +151,44 @@ class SOMAArray : public SOMAObject {
      * @param mode read or write
      * @param uri URI of the array
      * @param name name of the array
-     * @param ctx TileDB context
+     * @param platform_config Config parameter dictionary
      * @param column_names Columns to read
      * @param batch_size Batch size
-     * @param result_order Read result order: automatic (default), rowmajor,
-     * or colmajor
+     * @param result_order Result order
      * @param timestamp Timestamp
      */
     SOMAArray(
         OpenMode mode,
         std::string_view uri,
+        std::shared_ptr<SOMAContext> ctx,
         std::string_view name,
-        std::shared_ptr<Context> ctx,
         std::vector<std::string> column_names,
         std::string_view batch_size,
         ResultOrder result_order,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     SOMAArray(const SOMAArray& other)
-        : ctx_(other.ctx_)
-        , config_(other.config_)
-        , uri_(other.uri_)
+        : uri_(other.uri_)
         , name_(other.name_)
+        , ctx_(other.ctx_)
         , batch_size_(other.batch_size_)
         , result_order_(other.result_order_)
         , metadata_(other.metadata_)
         , timestamp_(other.timestamp_)
         , mq_(std::make_unique<ManagedQuery>(
-              other.arr_, other.ctx_, other.name_))
+              other.arr_, other.ctx_->tiledb_ctx(), other.name_))
         , arr_(other.arr_)
         , first_read_next_(other.first_read_next_)
         , submitted_(other.submitted_) {
     }
+
+    SOMAArray(SOMAArray&&) = default;
 
     SOMAArray(const SOMAObject& other)
         : SOMAObject(other) {
     }
 
     SOMAArray() = delete;
-    SOMAArray(SOMAArray&&) = delete;
     ~SOMAArray() = default;
 
     /**
@@ -200,18 +199,11 @@ class SOMAArray : public SOMAObject {
     const std::string uri() const;
 
     /**
-     * @brief Get Ctx of the SOMAArray.
+     * @brief Get context of the SOMAArray.
      *
-     * @return std::shared_ptr<Context>
+     * @return SOMAContext
      */
-    std::shared_ptr<Context> ctx();
-
-    /**
-     * Get the Config associated with the SOMAArray.
-     *
-     * @return std::map<std::string, std::string>
-     */
-    std::map<std::string, std::string> config();
+    std::shared_ptr<SOMAContext> ctx();
 
     /**
      * Open the SOMAArray object.
@@ -520,7 +512,8 @@ class SOMAArray : public SOMAObject {
      * @return std::unique_ptr<ArrowSchema> Schema
      */
     std::unique_ptr<ArrowSchema> arrow_schema() const {
-        return ArrowAdapter::arrow_schema_from_tiledb_array(ctx_, arr_);
+        return ArrowAdapter::arrow_schema_from_tiledb_array(
+            ctx_->tiledb_ctx(), arr_);
     }
 
     /**
@@ -707,17 +700,14 @@ class SOMAArray : public SOMAObject {
      */
     void fill_metadata_cache();
 
-    // TileDB context
-    std::shared_ptr<Context> ctx_;
-
-    // Config as a map
-    std::map<std::string, std::string> config_;
-
     // SOMAArray URI
     std::string uri_;
 
     // SOMAArray name for debugging
     std::string_view name_;
+
+    // SOMA context
+    std::shared_ptr<SOMAContext> ctx_;
 
     // Batch size
     std::string batch_size_;

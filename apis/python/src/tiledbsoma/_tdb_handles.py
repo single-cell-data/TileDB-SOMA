@@ -51,36 +51,46 @@ def open(
     timestamp: Optional[OpenTimestamp],
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
-    obj_type = tiledb.object_type(uri, ctx=context.tiledb_ctx)
+    open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+    timestamp_ms = context._open_timestamp_ms(timestamp)
+
+    # if there is not a valid SOMAObject at the given URI, this
+    # returns None
+    soma_object = clib.SOMAObject.open(
+        uri, open_mode, context.native_context, (0, timestamp_ms)
+    )
+
+    # Avoid creating a TileDB-Py Ctx unless necessary
+    obj_type = (
+        soma_object.type
+        if soma_object is not None
+        else tiledb.object_type(uri, ctx=context.tiledb_ctx)
+    )
+
     if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
-    try:
-        return _open_with_clib_wrapper(uri, mode, context, timestamp)
-    except SOMAError:
-        # This object still uses tiledb-py and must be handled below
-        if obj_type == "array":
-            return ArrayWrapper.open(uri, mode, context, timestamp)
-        if obj_type == "group":
-            return GroupWrapper.open(uri, mode, context, timestamp)
+    if open_mode == clib.OpenMode.read and obj_type == "SOMADataFrame":
+        return DataFrameWrapper._from_soma_object(soma_object, context)
+
+    if obj_type in (
+        "SOMADataFrame",
+        "SOMASparseNDArray",
+        "SOMADenseNDArray",
+        "array",
+    ):
+        return ArrayWrapper.open(uri, mode, context, timestamp)
+
+    if obj_type in (
+        "SOMACollection",
+        "SOMAExperiment",
+        "SOMAMeasurement",
+        "group",
+    ):
+        return GroupWrapper.open(uri, mode, context, timestamp)
 
     # Invalid object
     raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
-
-
-def _open_with_clib_wrapper(
-    uri: str,
-    mode: options.OpenMode,
-    context: SOMATileDBContext,
-    timestamp: Optional[OpenTimestamp] = None,
-) -> "DataFrameWrapper":
-    open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-    config = {k: str(v) for k, v in context.tiledb_config.items()}
-    timestamp_ms = context._open_timestamp_ms(timestamp)
-    obj = clib.SOMAObject.open(uri, open_mode, config, (0, timestamp_ms))
-    if obj.type == "SOMADataFrame":
-        return DataFrameWrapper._from_soma_object(obj, context)
-    raise SOMAError(f"clib.SOMAObject {obj.type!r} not yet supported")
 
 
 @attrs.define(eq=False, hash=False, slots=False)
