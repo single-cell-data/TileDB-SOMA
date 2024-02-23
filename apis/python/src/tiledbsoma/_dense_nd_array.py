@@ -132,8 +132,11 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             data_shape = tuple(slot[1] + 1 for slot in ned)
         target_shape = dense_indices_to_shape(coords, data_shape, result_order)
 
-        config = handle.config().copy()
-        config.update(platform_config or {})
+        context = handle.context()
+        if platform_config is not None:
+            config = context.tiledb_config.copy()
+            config.update(platform_config or {})
+            context = clib.SOMAContext(config)
 
         ts = None
         if handle.timestamp is not None:
@@ -142,13 +145,11 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         sr = clib.SOMADenseNDArray.open(
             uri=handle.uri,
             mode=clib.OpenMode.read,
-            platform_config=config,
+            context=context,
             column_names=[],
             result_order=_util.to_clib_result_order(result_order),
             timestamp=ts,
         )
-
-        # sr = self._soma_reader(result_order=result_order)
 
         self._set_reader_coords(sr, coords)
 
