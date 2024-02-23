@@ -16,37 +16,37 @@ using namespace tiledbsoma;
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
-void load_soma_context(py::module &);
-void load_soma_object(py::module &);
-void load_soma_array(py::module &);
-void load_soma_dataframe(py::module &);
-void load_soma_dense_ndarray(py::module &);
-void load_soma_sparse_ndarray(py::module &);
-void load_soma_group(py::module &);
-void load_soma_collection(py::module &);
-void load_query_condition(py::module &);
-void load_reindexer(py::module &);
+void load_soma_context(py::module&);
+void load_soma_object(py::module&);
+void load_soma_array(py::module&);
+void load_soma_dataframe(py::module&);
+void load_soma_dense_ndarray(py::module&);
+void load_soma_sparse_ndarray(py::module&);
+void load_soma_group(py::module&);
+void load_soma_collection(py::module&);
+void load_query_condition(py::module&);
+void load_reindexer(py::module&);
 
 PYBIND11_MODULE(pytiledbsoma, m) {
     py::register_exception<TileDBSOMAError>(m, "SOMAError");
 
-    /* We need to make sure C++ TileDBSOMAError is translated to a correctly-typed 
-    * Python error
-    */
+    /* We need to make sure C++ TileDBSOMAError is translated to a
+     * correctly-typed Python error
+     */
     py::register_exception_translator([](std::exception_ptr p) {
-    auto tiledb_soma_error =
-        (py::object)py::module::import("tiledbsoma").attr("SOMAError");
+        auto tiledb_soma_error = (py::object)py::module::import("tiledbsoma")
+                                     .attr("SOMAError");
 
-    try {
-        if (p)
-        std::rethrow_exception(p);
-    } catch (const TileDBSOMAError &e) {
-        PyErr_SetString(tiledb_soma_error.ptr(), e.what());
-    } catch (const TileDBSOMAPyError &e) {
-        PyErr_SetString(tiledb_soma_error.ptr(), e.what());
-    } catch (py::builtin_exception &e) {
-        throw;
-    };
+        try {
+            if (p)
+                std::rethrow_exception(p);
+        } catch (const TileDBSOMAError& e) {
+            PyErr_SetString(tiledb_soma_error.ptr(), e.what());
+        } catch (const TileDBSOMAPyError& e) {
+            PyErr_SetString(tiledb_soma_error.ptr(), e.what());
+        } catch (py::builtin_exception& e) {
+            throw;
+        };
     });
 
     py::enum_<OpenMode>(m, "OpenMode")
@@ -106,4 +106,4 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     load_reindexer(m);
 }
 
-}; 
+};  // namespace libtiledbsomacpp

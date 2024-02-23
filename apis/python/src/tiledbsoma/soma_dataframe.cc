@@ -46,28 +46,30 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_dataframe(py::module &m) {
+void load_soma_dataframe(py::module& m) {
     py::class_<SOMADataFrame, SOMAArray, SOMAObject>(m, "SOMADataFrame")
 
-    .def_static(
-        "open", 
-        py::overload_cast<
-            std::string_view, 
-            OpenMode, 
-            std::shared_ptr<SOMAContext>, 
-            std::vector<std::string>, 
-            ResultOrder, 
-            std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADataFrame::open),
-        "uri"_a,
-        "mode"_a,
-        "context"_a,
-        py::kw_only(),
-        "column_names"_a = py::none(),
-        "result_order"_a = ResultOrder::automatic,
-        "timestamp"_a = py::none())
+        .def_static(
+            "open",
+            py::overload_cast<
+                std::string_view,
+                OpenMode,
+                std::shared_ptr<SOMAContext>,
+                std::vector<std::string>,
+                ResultOrder,
+                std::optional<std::pair<uint64_t, uint64_t>>>(
+                &SOMADataFrame::open),
+            "uri"_a,
+            "mode"_a,
+            "context"_a,
+            py::kw_only(),
+            "column_names"_a = py::none(),
+            "result_order"_a = ResultOrder::automatic,
+            "timestamp"_a = py::none())
 
-    .def_static("exists", &SOMADataFrame::exists)
-    .def_property_readonly("index_column_names", &SOMADataFrame::index_column_names)
-    .def_property_readonly("count", &SOMADataFrame::count);
+        .def_static("exists", &SOMADataFrame::exists)
+        .def_property_readonly(
+            "index_column_names", &SOMADataFrame::index_column_names)
+        .def_property_readonly("count", &SOMADataFrame::count);
 }
-}
+}  // namespace libtiledbsomacpp
