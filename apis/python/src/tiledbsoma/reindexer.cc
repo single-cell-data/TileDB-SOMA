@@ -41,7 +41,7 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_reindexer(py::module &m) {
+void load_reindexer(py::module& m) {
     // Efficient C++ re-indexing (aka hashing unique key values to an index
     // between 0 and number of keys - 1) based on khash
     py::class_<IntIndexer>(m, "IntIndexer")
@@ -50,8 +50,8 @@ void load_reindexer(py::module &m) {
         .def(
             "map_locations",
             [](IntIndexer& indexer,
-                py::array_t<int64_t> keys,
-                int num_threads) {
+               py::array_t<int64_t> keys,
+               int num_threads) {
                 auto buffer = keys.request();
                 int64_t* data = static_cast<int64_t*>(buffer.ptr);
                 size_t length = buffer.shape[0];
@@ -60,8 +60,8 @@ void load_reindexer(py::module &m) {
         .def(
             "map_locations",
             [](IntIndexer& indexer,
-                std::vector<int64_t> keys,
-                int num_threads) {
+               std::vector<int64_t> keys,
+               int num_threads) {
                 indexer.map_locations(keys.data(), keys.size(), num_threads);
             })
         // Perform lookup for a large input array of keys and return the looked
@@ -88,8 +88,8 @@ void load_reindexer(py::module &m) {
         .def(
             "get_indexer",
             [](IntIndexer& indexer,
-                py::array_t<int64_t> lookups,
-                py::array_t<int64_t>& results) {
+               py::array_t<int64_t> lookups,
+               py::array_t<int64_t>& results) {
                 auto input_buffer = lookups.request();
                 int64_t* input_ptr = static_cast<int64_t*>(input_buffer.ptr);
                 size_t size = input_buffer.shape[0];
@@ -101,4 +101,4 @@ void load_reindexer(py::module &m) {
                 indexer.lookup(input_ptr, input_ptr, size);
             });
 }
-} // namespace tiledbsoma
+}  // namespace libtiledbsomacpp
