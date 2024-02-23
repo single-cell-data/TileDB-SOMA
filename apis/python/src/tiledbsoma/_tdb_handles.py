@@ -332,9 +332,9 @@ class SOMAArrayWrapper(Wrapper[clib.SOMAArray]):
         context: SOMATileDBContext,
         timestamp: int,
     ) -> clib.SOMAArray:
-        # Virtual method to implement _opener in derived classes 
-        # SOMADataFrameWrapper, SOMASparseNDArrayWrapper, and 
-        # SOMADenseNDArrayWrapper
+        # Ensure SOMADataFrameWrapper, SOMASparseNDArrayWrapper, and 
+        # SOMADenseNDArrayWrapper have _opener implemented to open the correct
+        # clib object (clib.DataFrame.open, etc)
         raise NotImplementedError
 
     # Covariant types should normally not be in parameters, but this is for
