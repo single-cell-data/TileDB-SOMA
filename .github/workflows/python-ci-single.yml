@@ -53,7 +53,7 @@ jobs:
 
     - name: Check C++ Format
       shell: bash
-      run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma -name "*.cc" -or -name "*.h" | grep -v external)
+      run: ./scripts/run-clang-format.sh . clang-format 0 $(find libtiledbsoma apis/python/src apis/r/src -name "*.cc" -or -name "*.cpp" -or -name "*.h" | grep -v external)
 
   build:
     runs-on: ${{ inputs.os }}
