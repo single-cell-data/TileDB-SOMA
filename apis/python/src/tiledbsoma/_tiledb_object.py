@@ -42,7 +42,9 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     """Class variable of the Wrapper class used to open this object type."""
     _wrapper_type: Type[_WrapperType_co]
     _reader_wrapper_type: Union[
-        Type[_WrapperType_co], Type[_tdb_handles.DataFrameWrapper]
+        Type[_WrapperType_co],
+        Type[_tdb_handles.DataFrameWrapper],
+        Type[_tdb_handles.DenseNDArrayWrapper],
     ]
 
     __slots__ = ("_close_stack", "_handle")
