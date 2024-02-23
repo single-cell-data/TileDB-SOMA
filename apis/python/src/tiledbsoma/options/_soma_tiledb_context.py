@@ -155,14 +155,9 @@ class SOMATileDBContext:
     def native_context(self) -> clib.SOMAContext:
         """The C++ SOMAContext for this SOMA context."""
         with self._lock:
-            if self._native_context is not None:
-                return self._native_context
-
-        # tiledb_config also acquires the lock so we must first release it and
-        # then reacquire it
-        cfg = self.tiledb_config
-        with self._lock:
-            self._native_context = clib.SOMAContext({k: str(cfg[k]) for k in cfg})
+            if self._native_context is None:
+                cfg = self._internal_tiledb_config()
+                self._native_context = clib.SOMAContext({k: str(cfg[k]) for k in cfg})
             return self._native_context
 
     @property
