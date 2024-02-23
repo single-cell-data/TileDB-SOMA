@@ -77,10 +77,10 @@ ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
 };  // namespace
 
 TEST_CASE("SOMASparseNDArray: basic") {
-    auto ctx = std::make_shared<Context>();
+    auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-sparse-ndarray-basic";
 
-    SOMASparseNDArray::create(uri, create_schema(*ctx), ctx);
+    SOMASparseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx);
 
     auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_sparse->uri() == uri);
@@ -100,7 +100,8 @@ TEST_CASE("SOMASparseNDArray: basic") {
     std::vector<int> a0(10, 1);
 
     auto array_buffer = std::make_shared<ArrayBuffers>();
-    auto tdb_arr = std::make_shared<Array>(*ctx, uri, TILEDB_READ);
+    auto tdb_arr = std::make_shared<Array>(
+        *ctx->tiledb_ctx(), uri, TILEDB_READ);
     array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
     array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
 
@@ -120,10 +121,10 @@ TEST_CASE("SOMASparseNDArray: basic") {
 }
 
 TEST_CASE("SOMASparseNDArray: metadata") {
-    auto ctx = std::make_shared<Context>();
+    auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-sparse-ndarray";
-    SOMASparseNDArray::create(uri, create_schema(*ctx), ctx);
+    SOMASparseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx);
     auto soma_sparse = SOMASparseNDArray::open(
         uri,
         OpenMode::write,

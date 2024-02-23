@@ -12,6 +12,7 @@ from typing import Any, Dict, Mapping, Optional, Union
 import tiledb
 from typing_extensions import Self
 
+from .. import pytiledbsoma as clib
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
@@ -119,6 +120,7 @@ class SOMATileDBContext:
         self._initial_config = (
             None if tiledb_config is None else _default_config(tiledb_config)
         )
+
         """A dictionary of options to override the default TileDB config.
 
         This includes both the user-provided options and the default options
@@ -128,6 +130,9 @@ class SOMATileDBContext:
         self._tiledb_ctx = tiledb_ctx
         """The TileDB context to use, either provided or lazily constructed."""
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
+
+        """Lazily construct clib.SOMAContext."""
+        self._native_context: Optional[clib.SOMAContext] = None
 
     @property
     def timestamp_ms(self) -> Optional[int]:
@@ -147,8 +152,22 @@ class SOMATileDBContext:
         return ms_to_datetime(self.timestamp_ms)
 
     @property
+    def native_context(self) -> clib.SOMAContext:
+        """The C++ SOMAContext for this SOMA context."""
+        with self._lock:
+            if self._native_context is not None:
+                return self._native_context
+
+        # tiledb_config also acquires the lock so we must first release it and
+        # then reacquire it
+        cfg = self.tiledb_config
+        with self._lock:
+            self._native_context = clib.SOMAContext({k: str(cfg[k]) for k in cfg})
+            return self._native_context
+
+    @property
     def tiledb_ctx(self) -> tiledb.Ctx:
-        """The TileDB Context for this SOMA context."""
+        """The TileDB-Py Context for this SOMA context."""
         with self._lock:
             if self._tiledb_ctx is None:
                 if self._initial_config is None:

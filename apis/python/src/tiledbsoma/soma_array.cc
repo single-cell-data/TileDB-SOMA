@@ -105,8 +105,8 @@ void load_soma_array(py::module &m) {
                     return SOMAArray::open(
                         OpenMode::read,
                         uri,
+                        std::make_shared<SOMAContext>(platform_config),
                         name,
-                        platform_config,
                         column_names,
                         batch_size,
                         result_order,
@@ -122,8 +122,8 @@ void load_soma_array(py::module &m) {
             "timestamp"_a = py::none())
 
         .def(
-            "set_condition", 
-            [](SOMAArray& reader, 
+            "set_condition",
+            [](SOMAArray& reader,
                py::object py_query_condition,
                py::object py_schema){
                    auto column_names = reader.column_names();
@@ -132,13 +132,13 @@ void load_soma_array(py::module &m) {
                    QueryCondition* qc = nullptr;
                    if (!py_query_condition.is(py::none())) {
                        py::object init_pyqc = py_query_condition.attr(
-                           "init_query_condition");   
+                           "init_query_condition");
                        try {
                            // Column names will be updated with columns present
                            // in the query condition
                            auto new_column_names =
                                init_pyqc(py_schema, column_names)
-                                   .cast<std::vector<std::string>>();   
+                                   .cast<std::vector<std::string>>();
                            // Update the column_names list if it was not empty,
                            // otherwise continue selecting all columns with an
                            // empty column_names list
@@ -147,22 +147,22 @@ void load_soma_array(py::module &m) {
                            }
                        } catch (const std::exception& e) {
                            TPY_ERROR_LOC(e.what());
-                       }   
+                       }
                        qc = py_query_condition.attr("c_obj")
                                    .cast<PyQueryCondition>()
                                    .ptr()
                                    .get();
-                   }   
+                   }
                    reader.reset(column_names);
 
                     // Release python GIL after we're done accessing python
                    // objects
-                   py::gil_scoped_release release;   
+                   py::gil_scoped_release release;
                    // Set query condition if present
                    if (qc) {
                        reader.set_condition(*qc);
                    }
-                }, 
+                },
             "py_query_condition"_a,
             "py_schema"_a)
 
@@ -185,6 +185,21 @@ void load_soma_array(py::module &m) {
             "column_names"_a = py::none(),
             "batch_size"_a = "auto",
             "result_order"_a = ResultOrder::automatic)
+
+        .def("reopen", py::overload_cast<OpenMode, std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAArray::open))
+        .def("close", &SOMAArray::close)
+        .def_property_readonly("closed", [](SOMAArray& reader) -> bool {
+            return not reader.is_open();
+        })
+        .def_property_readonly("mode", [](SOMAArray& reader){
+            return reader.mode() == OpenMode::read ? "r" : "w";
+        })
+        .def_property_readonly("schema", [](SOMAArray& reader) -> py::object {
+            auto pa = py::module::import("pyarrow");
+            auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
+            return pa_schema_import(py::capsule(reader.arrow_schema().get()));
+        })
+        .def("context", &SOMAArray::ctx)
 
         // After this are short functions expected to be invoked when the coords
         // are Python list/tuple, or NumPy arrays.  Arrow arrays are in this
@@ -274,7 +289,7 @@ void load_soma_array(py::module &m) {
                     } else {
                         TPY_ERROR_LOC(
                             "[pytiledbsoma] set_dim_points: type={} not "
-                            "supported" + 
+                            "supported" +
                             std::string(arrow_schema.format));
                     }
 
