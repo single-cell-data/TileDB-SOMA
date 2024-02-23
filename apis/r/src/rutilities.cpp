@@ -4,26 +4,24 @@
 #define TILEDB_NO_API_DEPRECATION_WARNINGS
 #endif
 
-#include <Rcpp.h>       // for R interface to C++
-#include <nanoarrow.h>  // for C interface to Arrow
-#include <RcppInt64>    // for fromInteger64
+#include <Rcpp.h>               // for R interface to C++
+#include <nanoarrow.h>          // for C interface to Arrow
+#include <RcppInt64>            // for fromInteger64
 
 // We get these via nanoarrow and must cannot include carrow.h again
 #define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
 #include <tiledbsoma/tiledbsoma>
 
-#include "rutilities.h"  // local declarations
-#include "xptr-utils.h"  // xptr taggging utilitie
+#include "rutilities.h"         // local declarations
+#include "xptr-utils.h"         // xptr taggging utilitie
 
 namespace tdbs = tiledbsoma;
 
-void apply_dim_points(
-    tdbs::SOMAArray* sr,
-    std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
-        name2dim,
-    Rcpp::List lst) {
+void apply_dim_points(tdbs::SOMAArray *sr,
+                      std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>& name2dim,
+                      Rcpp::List lst) {
     std::vector<std::string> colnames = lst.attr("names");
-    for (auto& nm : colnames) {
+    for (auto& nm: colnames) {
         auto dm = name2dim[nm];
         auto tp = dm->type();
         bool suitable = false;
@@ -31,238 +29,154 @@ void apply_dim_points(
             Rcpp::NumericVector payload = lst[nm];
             std::vector<int64_t> iv = Rcpp::fromInteger64(payload, false);
             std::vector<uint64_t> uv(iv.size());
-            const std::pair<uint64_t, uint64_t> pr = dm->domain<uint64_t>();
-            for (size_t i = 0; i < iv.size(); i++) {
+            const std::pair<uint64_t,uint64_t> pr = dm->domain<uint64_t>();
+            for (size_t i=0; i<iv.size(); i++) {
                 uv[i] = static_cast<uint64_t>(iv[i]);
                 if (uv[i] >= pr.first && uv[i] <= pr.second) {
-                    sr->set_dim_point<uint64_t>(
-                        nm, uv[i]);  // bonked when use with vector
-                    spdl::info(
-                        "[apply_dim_points] Applying dim point {} on {}",
-                        uv[i],
-                        nm);
+                    sr->set_dim_point<uint64_t>(nm, uv[i]);  // bonked when use with vector
+                    spdl::info("[apply_dim_points] Applying dim point {} on {}", uv[i], nm);
                     suitable = true;
                 }
             }
         } else if (tp == TILEDB_INT64) {
             Rcpp::NumericVector payload = lst[nm];
             std::vector<int64_t> iv = Rcpp::fromInteger64(payload, false);
-            const std::pair<int64_t, int64_t> pr = dm->domain<int64_t>();
-            for (size_t i = 0; i < iv.size(); i++) {
+            const std::pair<int64_t,int64_t> pr = dm->domain<int64_t>();
+            for (size_t i=0; i<iv.size(); i++) {
                 if (iv[i] >= pr.first && iv[i] <= pr.second) {
                     sr->set_dim_point<int64_t>(nm, iv[i]);
-                    spdl::info(
-                        "[apply_dim_points] Applying dim point {} on {}",
-                        iv[i],
-                        nm);
+                    spdl::info("[apply_dim_points] Applying dim point {} on {}", iv[i], nm);
                     suitable = true;
                 }
             }
         } else if (tp == TILEDB_FLOAT32) {
             Rcpp::NumericVector payload = lst[nm];
-            const std::pair<float, float> pr = dm->domain<float>();
-            for (R_xlen_t i = 0; i < payload.size(); i++) {
+            const std::pair<float,float> pr = dm->domain<float>();
+            for (R_xlen_t i=0; i<payload.size(); i++) {
                 float v = static_cast<float>(payload[i]);
                 if (v >= pr.first && v <= pr.second) {
                     sr->set_dim_point<float>(nm, v);
-                    spdl::info(
-                        "[apply_dim_points] Applying dim point {} on {}",
-                        v,
-                        nm);
+                    spdl::info("[apply_dim_points] Applying dim point {} on {}", v, nm);
                     suitable = true;
                 }
             }
         } else if (tp == TILEDB_FLOAT64) {
             Rcpp::NumericVector payload = lst[nm];
-            const std::pair<double, double> pr = dm->domain<double>();
-            for (R_xlen_t i = 0; i < payload.size(); i++) {
+            const std::pair<double,double> pr = dm->domain<double>();
+            for (R_xlen_t i=0; i<payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
-                    sr->set_dim_point<double>(nm, payload[i]);
-                    spdl::info(
-                        "[apply_dim_points] Applying dim point {} on {}",
-                        payload[i],
-                        nm);
+                    sr->set_dim_point<double>(nm,payload[i]);
+                    spdl::info("[apply_dim_points] Applying dim point {} on {}", payload[i], nm);
                     suitable = true;
                 }
             }
         } else if (tp == TILEDB_INT32) {
             Rcpp::IntegerVector payload = lst[nm];
-            const std::pair<int32_t, int32_t> pr = dm->domain<int32_t>();
-            for (R_xlen_t i = 0; i < payload.size(); i++) {
+            const std::pair<int32_t,int32_t> pr = dm->domain<int32_t>();
+            for (R_xlen_t i=0; i<payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
-                    sr->set_dim_point<int32_t>(nm, payload[i]);
-                    spdl::info(
-                        "[apply_dim_points] Applying dim point {} on {}",
-                        payload[i],
-                        nm);
+                    sr->set_dim_point<int32_t>(nm,payload[i]);
+                    spdl::info("[apply_dim_points] Applying dim point {} on {}", payload[i], nm);
                     suitable = true;
                 }
             }
         } else {
-            Rcpp::stop(
-                "Currently unsupported type: ", tiledb::impl::to_str(tp));
+            Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));
         }
         if (!suitable) {
-            Rcpp::stop(
-                "Unsuitable dim points on dimension '%s' with domain %s",
-                nm,
-                dm->domain_to_str());
+            Rcpp::stop("Unsuitable dim points on dimension '%s' with domain %s", nm, dm->domain_to_str());
         }
     }
 }
 
-void apply_dim_ranges(
-    tdbs::SOMAArray* sr,
-    std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
-        name2dim,
-    Rcpp::List lst) {
+void apply_dim_ranges(tdbs::SOMAArray* sr,
+                      std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>& name2dim,
+                      Rcpp::List lst) {
     std::vector<std::string> colnames = lst.attr("names");
-    for (auto& nm : colnames) {
+    for (auto& nm: colnames) {
         auto dm = name2dim[nm];
         auto tp = dm->type();
         bool suitable = false;
         if (tp == TILEDB_UINT64) {
             Rcpp::NumericMatrix mm = lst[nm];
-            Rcpp::NumericMatrix::Column lo = mm.column(
-                0);  // works as proxy for int and float types
-            Rcpp::NumericMatrix::Column hi = mm.column(
-                1);  // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column lo = mm.column(0); // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column hi = mm.column(1); // works as proxy for int and float types
             std::vector<std::pair<uint64_t, uint64_t>> vp(mm.nrow());
-            const std::pair<uint64_t, uint64_t> pr = dm->domain<uint64_t>();
-            for (int i = 0; i < mm.nrow(); i++) {
+            const std::pair<uint64_t,uint64_t> pr = dm->domain<uint64_t>();
+            for (int i=0; i<mm.nrow(); i++) {
                 uint64_t l = static_cast<uint64_t>(Rcpp::fromInteger64(lo[i]));
                 uint64_t h = static_cast<uint64_t>(Rcpp::fromInteger64(hi[i]));
-                vp[i] = std::make_pair(
-                    std::max(l, pr.first), std::min(h, pr.second));
-                spdl::info(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm,
-                    l,
-                    h);
-                suitable = l < pr.second &&
-                           h > pr.first;  // lower must be less than max, higher
-                                          // more than min
+                vp[i] = std::make_pair(std::max(l,pr.first), std::min(h, pr.second));
+                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, l, h) ;
+                suitable = l < pr.second && h > pr.first; // lower must be less than max, higher more than min
             }
-            if (suitable)
-                sr->set_dim_ranges<uint64_t>(nm, vp);
+            if (suitable) sr->set_dim_ranges<uint64_t>(nm, vp);
         } else if (tp == TILEDB_INT64) {
             Rcpp::NumericMatrix mm = lst[nm];
             std::vector<int64_t> lo = Rcpp::fromInteger64(mm.column(0), false);
             std::vector<int64_t> hi = Rcpp::fromInteger64(mm.column(1), false);
             std::vector<std::pair<int64_t, int64_t>> vp(mm.nrow());
-            const std::pair<int64_t, int64_t> pr = dm->domain<int64_t>();
-            for (int i = 0; i < mm.nrow(); i++) {
-                vp[i] = std::make_pair(
-                    std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                spdl::info(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm,
-                    lo[i],
-                    hi[i]);
-                suitable = lo[i] < pr.second &&
-                           hi[i] > pr.first;  // lower must be less than max,
-                                              // higher more than min
+            const std::pair<int64_t,int64_t> pr = dm->domain<int64_t>();
+            for (int i=0; i<mm.nrow(); i++) {
+                vp[i] = std::make_pair(std::max(lo[i],pr.first), std::min(hi[i], pr.second));
+                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]) ;
+                suitable = lo[i] < pr.second && hi[i] > pr.first; // lower must be less than max, higher more than min
             }
-            if (suitable)
-                sr->set_dim_ranges<int64_t>(nm, vp);
+            if (suitable) sr->set_dim_ranges<int64_t>(nm, vp);
         } else if (tp == TILEDB_FLOAT32) {
             Rcpp::NumericMatrix mm = lst[nm];
-            Rcpp::NumericMatrix::Column lo = mm.column(
-                0);  // works as proxy for int and float types
-            Rcpp::NumericMatrix::Column hi = mm.column(
-                1);  // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column lo = mm.column(0); // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column hi = mm.column(1); // works as proxy for int and float types
             std::vector<std::pair<float, float>> vp(mm.nrow());
-            const std::pair<float, float> pr = dm->domain<float>();
-            for (int i = 0; i < mm.nrow(); i++) {
+            const std::pair<float,float> pr = dm->domain<float>();
+            for (int i=0; i<mm.nrow(); i++) {
                 float l = static_cast<float>(lo[i]);
                 float h = static_cast<float>(hi[i]);
-                vp[i] = std::make_pair(
-                    std::max(l, pr.first), std::min(h, pr.second));
-                spdl::info(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm,
-                    l,
-                    h);
-                suitable = l < pr.second &&
-                           h > pr.first;  // lower must be less than max, higher
-                                          // more than min
+                vp[i] = std::make_pair(std::max(l,pr.first), std::min(h, pr.second));
+                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, l, h) ;
+                suitable = l < pr.second && h > pr.first; // lower must be less than max, higher more than min
             }
-            if (suitable)
-                sr->set_dim_ranges<float>(nm, vp);
+            if (suitable) sr->set_dim_ranges<float>(nm, vp);
         } else if (tp == TILEDB_FLOAT64) {
             Rcpp::NumericMatrix mm = lst[nm];
-            Rcpp::NumericMatrix::Column lo = mm.column(
-                0);  // works as proxy for int and float types
-            Rcpp::NumericMatrix::Column hi = mm.column(
-                1);  // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column lo = mm.column(0); // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column hi = mm.column(1); // works as proxy for int and float types
             std::vector<std::pair<double, double>> vp(mm.nrow());
-            const std::pair<double, double> pr = dm->domain<double>();
-            for (int i = 0; i < mm.nrow(); i++) {
-                vp[i] = std::make_pair(
-                    std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                spdl::info(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm,
-                    lo[i],
-                    hi[i]);
-                suitable = lo[i] < pr.second &&
-                           hi[i] > pr.first;  // lower must be less than max,
-                                              // higher more than min
+            const std::pair<double,double> pr = dm->domain<double>();
+            for (int i=0; i<mm.nrow(); i++) {
+                vp[i] = std::make_pair(std::max(lo[i],pr.first), std::min(hi[i], pr.second));
+                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]) ;
+                suitable = lo[i] < pr.second && hi[i] > pr.first; // lower must be less than max, higher more than min
             }
-            if (suitable)
-                sr->set_dim_ranges<double>(nm, vp);
+            if (suitable) sr->set_dim_ranges<double>(nm, vp);
         } else if (tp == TILEDB_INT32) {
             Rcpp::IntegerMatrix mm = lst[nm];
-            Rcpp::IntegerMatrix::Column lo = mm.column(
-                0);  // works as proxy for int and float types
-            Rcpp::IntegerMatrix::Column hi = mm.column(
-                1);  // works as proxy for int and float types
+            Rcpp::IntegerMatrix::Column lo = mm.column(0); // works as proxy for int and float types
+            Rcpp::IntegerMatrix::Column hi = mm.column(1); // works as proxy for int and float types
             std::vector<std::pair<int32_t, int32_t>> vp(mm.nrow());
-            const std::pair<int32_t, int32_t> pr = dm->domain<int32_t>();
-            for (int i = 0; i < mm.nrow(); i++) {
-                vp[i] = std::make_pair(
-                    std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                spdl::info(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm[i],
-                    lo[i],
-                    hi[i]);
-                suitable = lo[i] < pr.second &&
-                           hi[i] > pr.first;  // lower must be less than max,
-                                              // higher more than min
+            const std::pair<int32_t,int32_t> pr = dm->domain<int32_t>();
+            for (int i=0; i<mm.nrow(); i++) {
+                vp[i] = std::make_pair(std::max(lo[i],pr.first), std::min(hi[i], pr.second));
+                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm[i], lo[i], hi[i]) ;
+                suitable = lo[i] < pr.second && hi[i] > pr.first; // lower must be less than max, higher more than min
             }
-            if (suitable)
-                sr->set_dim_ranges<int32_t>(nm, vp);
+            if (suitable) sr->set_dim_ranges<int32_t>(nm, vp);
         } else {
-            Rcpp::stop(
-                "Currently unsupported type: ", tiledb::impl::to_str(tp));
+            Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));
         }
         if (!suitable) {
-            Rcpp::stop(
-                "Unsuitable dim ranges on dimension '%s' with domain %s",
-                nm,
-                dm->domain_to_str());
+            Rcpp::stop("Unsuitable dim ranges on dimension '%s' with domain %s", nm, dm->domain_to_str());
         }
     }
 }
 
+
 // initialize arrow schema and array, respectively
-Rcpp::XPtr<ArrowSchema> schema_setup_struct(
-    Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children) {
+Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children) {
     ArrowSchema* schema = schxp.get();
     auto type = NANOARROW_TYPE_STRUCT;
 
-    ArrowSchemaInit(schema);  // modified from ArrowSchemaInitFromType()
+    ArrowSchemaInit(schema);    					// modified from ArrowSchemaInitFromType()
     int result = ArrowSchemaSetType(schema, type);
     if (result != NANOARROW_OK) {
         schema->release(schema);
@@ -270,24 +184,20 @@ Rcpp::XPtr<ArrowSchema> schema_setup_struct(
     }
 
     // now adapted from ArrowSchemaAllocateChildren
-    if (schema->children != NULL)
-        Rcpp::stop("Error allocation as children not null");
+    if (schema->children != NULL) Rcpp::stop("Error allocation as children not null");
 
     if (n_children > 0) {
-        auto ptr = (struct ArrowSchema**)ArrowMalloc(
-            n_children * sizeof(struct ArrowSchema*));
+        auto ptr = (struct ArrowSchema**) ArrowMalloc(n_children * sizeof(struct ArrowSchema*));
         Rcpp::XPtr<ArrowSchema*> schema_ptrxp = make_xptr(ptr, false);
         schema->children = schema_ptrxp.get();
-        if (schema->children == NULL)
-            Rcpp::stop("Failed to allocate ArrowSchema*");
+        if (schema->children == NULL) Rcpp::stop("Failed to allocate ArrowSchema*");
 
         schema->n_children = n_children;
         memset(schema->children, 0, n_children * sizeof(struct ArrowSchema*));
 
         for (int64_t i = 0; i < n_children; i++) {
             schema->children[i] = schema_owning_xptr();
-            if (schema->children[i] == NULL)
-                Rcpp::stop("Error allocation schema child %ld", i);
+            if (schema->children[i] == NULL) Rcpp::stop("Error allocation schema child %ld", i);
             schema->children[i]->release = NULL;
         }
     }
@@ -295,15 +205,12 @@ Rcpp::XPtr<ArrowSchema> schema_setup_struct(
 }
 
 extern "C" {
-void ArrowArrayRelease(
-    struct ArrowArray* array);  // made non-static in nanoarrow.c
-ArrowErrorCode ArrowArraySetStorageType(
-    struct ArrowArray* array,  // ditto
-    enum ArrowType storage_type);
+    void ArrowArrayRelease(struct ArrowArray *array); 		// made non-static in nanoarrow.c
+    ArrowErrorCode ArrowArraySetStorageType(struct ArrowArray* array,	// ditto
+                                            enum ArrowType storage_type);
 }
 
-Rcpp::XPtr<ArrowArray> array_setup_struct(
-    Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children) {
+Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children) {
     ArrowArray* array = arrxp.get();
     auto storage_type = NANOARROW_TYPE_STRUCT;
 
@@ -318,8 +225,7 @@ Rcpp::XPtr<ArrowArray> array_setup_struct(
     array->release = &ArrowArrayRelease;
     array->private_data = NULL;
 
-    auto private_data = (struct ArrowArrayPrivateData*)ArrowMalloc(
-        sizeof(struct ArrowArrayPrivateData));
+    auto private_data = (struct ArrowArrayPrivateData*) ArrowMalloc(sizeof(struct ArrowArrayPrivateData));
     if (private_data == NULL) {
         array->release = NULL;
         Rcpp::stop("Error allocating array private data");
@@ -339,49 +245,45 @@ Rcpp::XPtr<ArrowArray> array_setup_struct(
     }
 
     ArrowLayoutInit(&private_data->layout, storage_type);
-    // We can only know this not to be true when initializing based on a schema
-    // so assume this to be true.
+    // We can only know this not to be true when initializing based on a schema so assume this to be true.
     private_data->union_type_id_is_child_index = 1;
 
+
     // remainder from ArrowArrayAllocateChildren()
-    if (array->children != NULL)
-        Rcpp::stop("Error allocating array children as pointer not null");
+    if (array->children != NULL) Rcpp::stop("Error allocating array children as pointer not null");
 
     if (n_children == 0) {
         return arrxp;
     }
 
-    auto ptr = (struct ArrowArray**)ArrowMalloc(
-        n_children * sizeof(struct ArrowArray*));
+    auto ptr = (struct ArrowArray**) ArrowMalloc(n_children * sizeof(struct ArrowArray*));
     Rcpp::XPtr<ArrowArray*> array_ptrxp = make_xptr(ptr, false);
     array->children = array_ptrxp.get();
-    if (array->children == NULL)
-        Rcpp::stop("Failed to allocated ArrayArray*");
+    if (array->children == NULL) Rcpp::stop("Failed to allocated ArrayArray*");
 
     memset(array->children, 0, n_children * sizeof(struct ArrowArray*));
 
     for (int64_t i = 0; i < n_children; i++) {
         array->children[i] = array_owning_xptr();
-        if (array->children[i] == NULL)
-            Rcpp::stop("Error allocation array child %ld", i);
+        if (array->children[i] == NULL) Rcpp::stop("Error allocation array child %ld", i);
         array->children[i]->release = NULL;
     }
     array->n_children = n_children;
     return arrxp;
 }
 
+
 // formerly stats.cpp
 
 //' TileDB SOMA statistics
 //'
-//' These functions expose the TileDB Core functionality for performance
-//measurements ' and statistics.
+//' These functions expose the TileDB Core functionality for performance measurements
+//' and statistics.
 //'
-//' - `tiledbsoma_stats_enable()`/`tiledbsoma_stats_disable()`: Enable and
-//disable TileDB's internal statistics. ' - `tiledbsoma_stats_reset()`: Reset
-//all statistics to 0. ' - `tiledbsoma_stats_dump()`: Dump all statistics to a
-//JSON string. ' - `tiledbsoma_stats_show()`: Print all statistics to the
-//console.
+//' - `tiledbsoma_stats_enable()`/`tiledbsoma_stats_disable()`: Enable and disable TileDB's internal statistics.
+//' - `tiledbsoma_stats_reset()`: Reset all statistics to 0.
+//' - `tiledbsoma_stats_dump()`: Dump all statistics to a JSON string.
+//' - `tiledbsoma_stats_show()`: Print all statistics to the console.
 //'
 //' @name tiledbsoma_stats
 //' @export
@@ -415,9 +317,10 @@ std::string tiledbsoma_stats_dump() {
 
 //' libtiledbsoma version
 //'
-//' Returns a string with version information for libtiledbsoma and the linked
-//TileDB Embedded library. ' If argument `compact` is set to `TRUE`, a shorter
-//version of just the TileDB Embedded library ' version is returned, ' @noRd
+//' Returns a string with version information for libtiledbsoma and the linked TileDB Embedded library.
+//' If argument `compact` is set to `TRUE`, a shorter version of just the TileDB Embedded library
+//' version is returned,
+//' @noRd
 // [[Rcpp::export]]
 std::string libtiledbsoma_version(const bool compact = false) {
     if (compact) {
@@ -436,10 +339,8 @@ std::string libtiledbsoma_version(const bool compact = false) {
 //' @noRd
 // [[Rcpp::export]]
 Rcpp::IntegerVector tiledb_embedded_version() {
-    std::tuple<int, int, int>
-        triple = tiledbsoma::version::embedded_version_triple();
-    return Rcpp::IntegerVector::create(
-        std::get<0>(triple), std::get<1>(triple), std::get<2>(triple));
+    std::tuple<int, int, int> triple = tiledbsoma::version::embedded_version_triple();
+    return Rcpp::IntegerVector::create(std::get<0>(triple), std::get<1>(triple), std::get<2>(triple));
 }
 
 // Also present in tiledb-r but only after 0.23.0 so this can be removed (and
@@ -447,22 +348,13 @@ Rcpp::IntegerVector tiledb_embedded_version() {
 //' @noRd
 // [[Rcpp::export]]
 size_t tiledb_datatype_max_value(const std::string& datatype) {
-    if (datatype == "INT8")
-        return std::numeric_limits<int8_t>::max();
-    else if (datatype == "UINT8")
-        return std::numeric_limits<uint8_t>::max();
-    else if (datatype == "INT16")
-        return std::numeric_limits<int16_t>::max();
-    else if (datatype == "UINT16")
-        return std::numeric_limits<uint16_t>::max();
-    else if (datatype == "INT32")
-        return std::numeric_limits<int32_t>::max();
-    else if (datatype == "UINT32")
-        return std::numeric_limits<uint32_t>::max();
-    else if (datatype == "INT64")
-        return std::numeric_limits<int64_t>::max();
-    else if (datatype == "UINT64")
-        return std::numeric_limits<uint64_t>::max();
-    else
-        Rcpp::stop("currently unsupported datatype (%s)", datatype);
+    if      (datatype == "INT8")   return std::numeric_limits<int8_t>::max();
+    else if (datatype == "UINT8")  return std::numeric_limits<uint8_t>::max();
+    else if (datatype == "INT16")  return std::numeric_limits<int16_t>::max();
+    else if (datatype == "UINT16") return std::numeric_limits<uint16_t>::max();
+    else if (datatype == "INT32")  return std::numeric_limits<int32_t>::max();
+    else if (datatype == "UINT32") return std::numeric_limits<uint32_t>::max();
+    else if (datatype == "INT64")  return std::numeric_limits<int64_t>::max();
+    else if (datatype == "UINT64") return std::numeric_limits<uint64_t>::max();
+    else Rcpp::stop("currently unsupported datatype (%s)", datatype);
 }
