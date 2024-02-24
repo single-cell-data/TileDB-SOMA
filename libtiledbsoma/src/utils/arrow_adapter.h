@@ -62,7 +62,9 @@ class ArrowAdapter {
      * @return tiledb::ArraySchema
      */
     static ArraySchema tiledb_schema_from_arrow_schema(
-        Context ctx, ArrowSchema& arrow_schema, ArrowTable index_columns);
+        std::shared_ptr<Context> ctx,
+        ArrowSchema& arrow_schema,
+        ArrowTable index_columns);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.

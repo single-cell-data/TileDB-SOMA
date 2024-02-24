@@ -59,7 +59,8 @@ class SOMADataFrame : public SOMAArray {
      */
     static std::unique_ptr<SOMADataFrame> create(
         std::string_view uri,
-        ArraySchema schema,
+        ArrowSchema& schema,
+        ArrowTable index_columns,
         std::shared_ptr<SOMAContext> ctx);
 
     /**

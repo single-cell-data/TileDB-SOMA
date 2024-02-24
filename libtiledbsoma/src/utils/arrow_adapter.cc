@@ -242,9 +242,11 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
 }
 
 ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
-    Context ctx, ArrowSchema& arrow_schema, ArrowTable index_columns) {
-    ArraySchema schema(ctx, TILEDB_SPARSE);
-    Domain domain(ctx);
+    std::shared_ptr<Context> ctx,
+    ArrowSchema& arrow_schema,
+    ArrowTable index_columns) {
+    ArraySchema schema(*ctx, TILEDB_SPARSE);
+    Domain domain(*ctx);
 
     for (int64_t i = 0; i < arrow_schema.n_children; ++i) {
         ArrowSchema* child = arrow_schema.children[i];
@@ -253,10 +255,10 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
         if (dim_info.has_value()) {
             auto& [dim_dom, extent] = *dim_info;
-            domain.add_dimension(Dimension::create(
-                ctx, child->name, type, dim_dom, extent));
+            domain.add_dimension(
+                Dimension::create(*ctx, child->name, type, dim_dom, extent));
         } else {
-            schema.add_attribute(Attribute(ctx, child->name, type));
+            schema.add_attribute(Attribute(*ctx, child->name, type));
         }
     }
 

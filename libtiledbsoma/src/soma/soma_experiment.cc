@@ -43,12 +43,13 @@ using namespace tiledb;
 
 std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
     std::string_view uri,
-    ArraySchema schema,
+    ArrowSchema& schema,
+    ArrowTable index_columns,
     std::shared_ptr<SOMAContext> ctx) {
     std::string exp_uri(uri);
 
     SOMAGroup::create(ctx, exp_uri, "SOMAExperiment");
-    SOMADataFrame::create(exp_uri + "/obs", schema, ctx);
+    SOMADataFrame::create(exp_uri + "/obs", schema, index_columns, ctx);
     SOMACollection::create(exp_uri + "/ms", ctx);
 
     auto group = SOMAGroup::open(OpenMode::write, exp_uri, ctx);

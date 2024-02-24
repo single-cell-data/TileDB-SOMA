@@ -107,9 +107,10 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    ArraySchema schema) {
+    ArrowSchema& schema,
+    ArrowTable index_columns) {
     std::shared_ptr<SOMAExperiment> member = SOMAExperiment::create(
-        uri, schema, ctx);
+        uri, schema, index_columns, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
     children_[std::string(key)] = member;
     return member;
@@ -120,9 +121,10 @@ std::shared_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    ArraySchema schema) {
+    ArrowSchema& schema,
+    ArrowTable index_columns) {
     std::shared_ptr<SOMAMeasurement> member = SOMAMeasurement::create(
-        uri, schema, ctx);
+        uri, schema, index_columns, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
     children_[std::string(key)] = member;
     return member;
@@ -133,9 +135,10 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    ArraySchema schema) {
+    ArrowSchema& schema,
+    ArrowTable index_columns) {
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::create(
-        uri, schema, ctx);
+        uri, schema, index_columns, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
     children_[std::string(key)] = member;
     return member;

@@ -41,9 +41,12 @@ using namespace tiledb;
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri,
-    ArraySchema schema,
+    ArrowSchema& schema,
+    ArrowTable index_columns,
     std::shared_ptr<SOMAContext> ctx) {
-    SOMAArray::create(ctx, uri, schema, "SOMADataFrame");
+    auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
+        ctx->tiledb_ctx(), schema, index_columns);
+    SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame");
     return SOMADataFrame::open(uri, OpenMode::read, ctx);
 }
 
