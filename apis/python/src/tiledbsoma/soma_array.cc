@@ -514,7 +514,7 @@ void load_soma_array(py::module& m) {
             })
 
         .def(
-            "write", 
+            "write",
             [](SOMAArray& array, py::handle c_array) {
                 ArrowSchema arrow_schema;
                 ArrowArray arrow_array;
@@ -522,11 +522,9 @@ void load_soma_array(py::module& m) {
                 uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
                 c_array.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
 
-                array.write(
-                    std::shared_ptr<ArrayBuffers>(
-                        reinterpret_cast<ArrayBuffers*>(arrow_array_ptr)
-                ));
-        })
+                array.write(std::shared_ptr<ArrayBuffers>(
+                    reinterpret_cast<ArrayBuffers*>(arrow_array_ptr)));
+            })
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 

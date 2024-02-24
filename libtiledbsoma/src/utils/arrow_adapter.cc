@@ -240,6 +240,39 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
     }
 }
 
+ArraySchema tiledb_schema_from_arrow_schema(
+    Context context,
+    std::shared_ptr<ArrowSchema> arrow_schema,
+    std::vector<std::string> index_column_names,
+    bool sparse) {
+    ArraySchema schema(context, sparse ? TILEDB_SPARSE : TILEDB_DENSE);
+    Domain domain(context);
+
+    for (int64_t i = 0; i < arrow_schema->n_children; ++i) {
+        ArrowSchema* child = arrow_schema->children[i];
+        auto type = ArrowAdapter::to_tiledb_format(child->format);
+
+        bool is_dim = std::find(
+                          index_column_names.begin(),
+                          index_column_names.end(),
+                          child->name) != index_column_names.end();
+
+        if (is_dim) {
+            domain.add_dimension(Dimension::create(
+                context, child->name, type, dim_domain, tile_extent));
+        }
+        // else {
+        //     schema.add_attribute(Attribute::create(context, child->name));
+        // }
+    }
+
+    schema.set_domain(domain);
+
+    schema.check();
+
+    return schema;
+}
+
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
 ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
@@ -374,60 +407,55 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
 }
 
 std::string_view ArrowAdapter::to_arrow_format(
-    tiledb_datatype_t datatype, bool use_large) {
-    switch (datatype) {
-        case TILEDB_STRING_ASCII:
-        case TILEDB_STRING_UTF8:
-            return use_large ? "U" : "u";  // large because TileDB
-                                           // uses 64bit offsets
-        case TILEDB_CHAR:
-        case TILEDB_BLOB:
-            return use_large ? "Z" : "z";  // large because TileDB
-                                           // uses 64bit offsets
-        case TILEDB_BOOL:
-            return "b";
-        case TILEDB_INT32:
-            return "i";
-        case TILEDB_INT64:
-            return "l";
-        case TILEDB_FLOAT32:
-            return "f";
-        case TILEDB_FLOAT64:
-            return "g";
-        case TILEDB_INT8:
-            return "c";
-        case TILEDB_UINT8:
-            return "C";
-        case TILEDB_INT16:
-            return "s";
-        case TILEDB_UINT16:
-            return "S";
-        case TILEDB_UINT32:
-            return "I";
-        case TILEDB_UINT64:
-            return "L";
-        case TILEDB_TIME_SEC:
-            return "tts";
-        case TILEDB_TIME_MS:
-            return "ttm";
-        case TILEDB_TIME_US:
-            return "ttu";
-        case TILEDB_TIME_NS:
-            return "ttn";
-        case TILEDB_DATETIME_SEC:
-            return "tss:";
-        case TILEDB_DATETIME_MS:
-            return "tsm:";
-        case TILEDB_DATETIME_US:
-            return "tsu:";
-        case TILEDB_DATETIME_NS:
-            return "tsn:";
-        default:
-            break;
+    tiledb_datatype_t tiledb_dtype, bool use_large) {
+    auto u = use_large ? "U" : "u";
+    auto z = use_large ? "Z" : "z";
+    std::map<tiledb_datatype_t, std::string_view> _to_arrow_format_map = {
+        {TILEDB_STRING_ASCII, u},     {TILEDB_CHAR, z},
+        {TILEDB_STRING_UTF8, u},      {TILEDB_BLOB, z},
+        {TILEDB_INT8, "c"},           {TILEDB_UINT8, "C"},
+        {TILEDB_INT16, "s"},          {TILEDB_UINT16, "S"},
+        {TILEDB_INT32, "i"},          {TILEDB_UINT32, "I"},
+        {TILEDB_INT64, "l"},          {TILEDB_UINT64, "L"},
+        {TILEDB_FLOAT32, "f"},        {TILEDB_FLOAT64, "g"},
+        {TILEDB_BOOL, "b"},           {TILEDB_TIME_SEC, "tts"},
+        {TILEDB_TIME_MS, "ttm"},      {TILEDB_TIME_US, "ttu"},
+        {TILEDB_TIME_NS, "ttn"},      {TILEDB_DATETIME_SEC, "tss:"},
+        {TILEDB_DATETIME_MS, "tsm:"}, {TILEDB_DATETIME_US, "tsu:"},
+        {TILEDB_DATETIME_NS, "tsn:"},
+    };
+
+    try {
+        return _to_arrow_format_map.at(tiledb_dtype);
+    } catch (const std::out_of_range& err) {
+        throw TileDBSOMAError(fmt::format(
+            "ArrowAdapter: Unsupported TileDB datatype: {} ",
+            tiledb::impl::type_to_str(tiledb_dtype)));
     }
-    throw TileDBSOMAError(fmt::format(
-        "ArrowAdapter: Unsupported TileDB datatype: {} ",
-        tiledb::impl::type_to_str(datatype)));
+}
+
+tiledb_datatype_t to_tiledb_format(std::string_view arrow_dtype) {
+    std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
+        {"u", TILEDB_STRING_UTF8},    {"U", TILEDB_STRING_UTF8},
+        {"z", TILEDB_CHAR},           {"Z", TILEDB_CHAR},
+        {"c", TILEDB_INT8},           {"C", TILEDB_UINT8},
+        {"s", TILEDB_INT16},          {"S", TILEDB_UINT16},
+        {"i", TILEDB_INT32},          {"I", TILEDB_UINT32},
+        {"l", TILEDB_INT64},          {"L", TILEDB_UINT64},
+        {"f", TILEDB_FLOAT32},        {"g", TILEDB_FLOAT64},
+        {"b", TILEDB_BOOL},           {"tts", TILEDB_TIME_SEC},
+        {"ttm", TILEDB_TIME_MS},      {"ttu", TILEDB_TIME_US},
+        {"ttn", TILEDB_TIME_NS},      {"tss:", TILEDB_DATETIME_SEC},
+        {"tsm:", TILEDB_DATETIME_MS}, {"tsu:", TILEDB_DATETIME_US},
+        {"tsn:", TILEDB_DATETIME_NS},
+    };
+
+    try {
+        return _to_tiledb_format_map.at(arrow_dtype);
+    } catch (const std::out_of_range& err) {
+        throw TileDBSOMAError(fmt::format(
+            "ArrowAdapter: Unsupported arrow datatype: {} ", arrow_dtype));
+    }
 }
 
 }  // namespace tiledbsoma

@@ -46,8 +46,24 @@ class ArrowAdapter {
     static std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
     to_arrow(std::shared_ptr<ColumnBuffer> column);
 
+    /**
+     * @brief Create an ArrowSchema from TileDB Array
+     *
+     * @return std::unique_ptr<ArrowSchema>
+     */
     static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
+
+    /**
+     * @brief Create a TileDB ArraySchema from ArrowSchema
+     *
+     * @return tiledb::ArraySchema
+     */
+    static ArraySchema tiledb_schema_from_arrow_schema(
+        Context context,
+        std::shared_ptr<ArrowSchema> arrow_schema,
+        std::vector<std::string> index_column_names,
+        bool sparse = true);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.
@@ -57,6 +73,14 @@ class ArrowAdapter {
      */
     static std::string_view to_arrow_format(
         tiledb_datatype_t datatype, bool use_large = true);
+
+    /**
+     * @brief Get TileDB datatype from Arrow format string.
+     *
+     * @param datatype TileDB datatype.
+     * @return std::string_view Arrow format string.
+     */
+    static tiledb_datatype_t to_tiledb_format(std::string_view arrow_dtype);
 
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(

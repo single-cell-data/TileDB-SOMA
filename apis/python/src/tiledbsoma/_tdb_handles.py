@@ -77,7 +77,6 @@ def open(
         return SparseNDArrayWrapper._from_soma_object(soma_object, context)
 
     if obj_type in (
-        "SOMADataFrame",
         "SOMADenseNDArray",
         "SOMASparseNDArray",
         "array",
