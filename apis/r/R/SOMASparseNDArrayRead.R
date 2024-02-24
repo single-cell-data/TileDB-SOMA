@@ -249,6 +249,9 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
       )
       private$.axis <- axis
       private$.size <- size
+      for (i in seq_along(self$coords)) {
+        self$coords[[i]]$stride <- size
+      }
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
       private$.eager <- eager
     },
