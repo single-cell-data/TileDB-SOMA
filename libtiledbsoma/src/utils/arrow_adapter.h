@@ -32,7 +32,8 @@ struct ArrowBuffer {
     std::shared_ptr<ColumnBuffer> buffer_;
 };
 
-using ArrowTable = std::pair<ArrowArray&, ArrowSchema&>;
+using ArrowTable =
+    std::pair<std::shared_ptr<ArrowArray>, std::shared_ptr<ArrowSchema>>;
 
 class ArrowAdapter {
    public:
@@ -42,18 +43,17 @@ class ArrowAdapter {
     /**
      * @brief Convert ColumnBuffer to an Arrow array.
      *
-     * @return std::pair<std::unique_ptr<ArrowArray>,
-     * std::unique_ptr<ArrowSchema>>
+     * @return std::pair<std::shared_ptr<ArrowArray>,
+     * std::shared_ptr<ArrowSchema>>
      */
-    static std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
-    to_arrow(std::shared_ptr<ColumnBuffer> column);
+    static ArrowTable to_arrow(std::shared_ptr<ColumnBuffer> column);
 
     /**
      * @brief Create an ArrowSchema from TileDB Array
      *
-     * @return std::unique_ptr<ArrowSchema>
+     * @return std::shared_ptr<ArrowSchema>
      */
-    static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
+    static std::shared_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
 
     /**
@@ -63,7 +63,7 @@ class ArrowAdapter {
      */
     static ArraySchema tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
-        ArrowSchema& arrow_schema,
+        std::shared_ptr<ArrowSchema> arrow_schema,
         ArrowTable index_columns);
 
     /**

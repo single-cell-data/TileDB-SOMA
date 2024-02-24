@@ -72,7 +72,7 @@ bool SOMASparseNDArray::exists(std::string_view uri) {
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
+std::shared_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return this->arrow_schema();
 }
 }  // namespace tiledbsoma

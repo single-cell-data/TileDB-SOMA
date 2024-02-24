@@ -509,9 +509,9 @@ class SOMAArray : public SOMAObject {
     /**
      * @brief Get the Arrow schema of the array.
      *
-     * @return std::unique_ptr<ArrowSchema> Schema
+     * @return std::shared_ptr<ArrowSchema> Schema
      */
-    std::unique_ptr<ArrowSchema> arrow_schema() const {
+    std::shared_ptr<ArrowSchema> arrow_schema() const {
         return ArrowAdapter::arrow_schema_from_tiledb_array(
             ctx_->tiledb_ctx(), arr_);
     }

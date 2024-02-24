@@ -41,7 +41,7 @@ using namespace tiledb;
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
     std::string_view uri,
-    ArrowSchema& schema,
+    std::shared_ptr<ArrowSchema> schema,
     ArrowTable index_columns,
     std::shared_ptr<SOMAContext> ctx) {
     auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
@@ -75,7 +75,7 @@ bool SOMADataFrame::exists(std::string_view uri) {
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
+std::shared_ptr<ArrowSchema> SOMADataFrame::schema() const {
     return this->arrow_schema();
 }
 

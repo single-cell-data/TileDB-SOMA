@@ -59,7 +59,7 @@ class SOMADataFrame : public SOMAArray {
      */
     static std::unique_ptr<SOMADataFrame> create(
         std::string_view uri,
-        ArrowSchema& schema,
+        std::shared_ptr<ArrowSchema> schema,
         ArrowTable index_columns,
         std::shared_ptr<SOMAContext> ctx);
 
@@ -141,9 +141,9 @@ class SOMADataFrame : public SOMAArray {
     /**
      * Return the data schema, in the form of a ArrowSchema.
      *
-     * @return std::unique_ptr<ArrowSchema>
+     * @return std::shared_ptr<ArrowSchema>
      */
-    std::unique_ptr<ArrowSchema> schema() const;
+    std::shared_ptr<ArrowSchema> schema() const;
 
     /**
      * Return the index (dimension) column names.

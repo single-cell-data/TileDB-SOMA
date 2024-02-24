@@ -101,13 +101,13 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     array->release = nullptr;
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
+std::shared_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
     auto tiledb_schema = tiledb_array->schema();
     auto ndim = tiledb_schema.domain().ndim();
     auto nattr = tiledb_schema.attribute_num();
 
-    std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
+    std::shared_ptr<ArrowSchema> arrow_schema = std::make_shared<ArrowSchema>();
     arrow_schema->format = "+s";
     arrow_schema->n_children = ndim + nattr;
     arrow_schema->release = &ArrowAdapter::release_schema;
@@ -243,13 +243,13 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
 
 ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
-    ArrowSchema& arrow_schema,
+    std::shared_ptr<ArrowSchema> arrow_schema,
     ArrowTable index_columns) {
     ArraySchema schema(*ctx, TILEDB_SPARSE);
     Domain domain(*ctx);
 
-    for (int64_t i = 0; i < arrow_schema.n_children; ++i) {
-        ArrowSchema* child = arrow_schema.children[i];
+    for (int64_t i = 0; i < arrow_schema->n_children; ++i) {
+        ArrowSchema* child = arrow_schema->children[i];
         auto type = ArrowAdapter::to_tiledb_format(child->format);
         auto dim_info = ArrowAdapter::_get_dim_info(child->name, index_columns);
 
@@ -274,9 +274,9 @@ std::optional<std::pair<const void*, const void*>> ArrowAdapter::_get_dim_info(
     auto index_columns_array = index_columns.first;
     auto index_columns_schema = index_columns.second;
 
-    for (int64_t i = 0; i < index_columns_array.n_children; ++i) {
-        if (dim_name == index_columns_schema.children[i]->name) {
-            auto dim_info = index_columns_array.children[i]->children;
+    for (int64_t i = 0; i < index_columns_array->n_children; ++i) {
+        if (dim_name == index_columns_schema->children[i]->name) {
+            auto dim_info = index_columns_array->children[i]->children;
             auto domain = dim_info[0]->buffers[1];
             auto extent = dim_info[1]->buffers[1];
             return std::make_pair(domain, extent);
@@ -285,10 +285,9 @@ std::optional<std::pair<const void*, const void*>> ArrowAdapter::_get_dim_info(
     return std::nullopt;
 }
 
-std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
-ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
-    std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
-    std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
+ArrowTable ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
+    std::shared_ptr<ArrowSchema> schema = std::make_shared<ArrowSchema>();
+    std::shared_ptr<ArrowArray> array = std::make_shared<ArrowArray>();
 
     schema->format = to_arrow_format(column->type()).data();
     schema->name = column->name().data();
@@ -415,7 +414,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         array->dictionary = dict_arr;
     }
 
-    return std::pair(std::move(array), std::move(schema));
+    return std::pair(array, schema);
 }
 
 std::string_view ArrowAdapter::to_arrow_format(
@@ -446,7 +445,7 @@ std::string_view ArrowAdapter::to_arrow_format(
     }
 }
 
-tiledb_datatype_t to_tiledb_format(std::string_view arrow_dtype) {
+tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
     std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
         {"u", TILEDB_STRING_UTF8},    {"U", TILEDB_STRING_UTF8},
         {"z", TILEDB_CHAR},           {"Z", TILEDB_CHAR},

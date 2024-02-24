@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,57 +30,14 @@
  * This file manages unit tests for the SOMADataFrame class
  */
 
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/matchers/catch_matchers_exception.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <catch2/matchers/catch_matchers_predicate.hpp>
-#include <catch2/matchers/catch_matchers_string.hpp>
-#include <catch2/matchers/catch_matchers_templated.hpp>
-#include <catch2/matchers/catch_matchers_vector.hpp>
-#include <numeric>
-#include <random>
-
-#include <tiledb/tiledb>
-#include <tiledbsoma/tiledbsoma>
-#include "utils/util.h"
-
-using namespace tiledb;
-using namespace tiledbsoma;
-using namespace Catch::Matchers;
-
-#ifndef TILEDBSOMA_SOURCE_ROOT
-#define TILEDBSOMA_SOURCE_ROOT "not_defined"
-#endif
-
-const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
-
-namespace {
-ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
-    // Create schema
-    ArraySchema schema(ctx, TILEDB_SPARSE);
-
-    auto dim = Dimension::create<int64_t>(ctx, "d0", {0, 1000});
-
-    Domain domain(ctx);
-    domain.add_dimension(dim);
-    schema.set_domain(domain);
-
-    auto attr = Attribute::create<int>(ctx, "a0");
-    schema.add_attribute(attr);
-    schema.set_allows_dups(allow_duplicates);
-    schema.check();
-
-    return schema;
-}
-};  // namespace
+#include "common.h"
 
 TEST_CASE("SOMADataFrame: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-dataframe-basic";
 
-    SOMADataFrame::create(uri, create_schema(*ctx->tiledb_ctx()), ctx);
+    auto [schema, index_columns] = helper::create_arrow_schema();
+    SOMADataFrame::create(uri, schema, index_columns, ctx);
 
     auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_dataframe->uri() == uri);
@@ -127,7 +84,8 @@ TEST_CASE("SOMADataFrame: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-collection";
-    SOMADataFrame::create(uri, create_schema(*ctx->tiledb_ctx()), ctx);
+    auto [schema, index_columns] = helper::create_arrow_schema();
+    SOMADataFrame::create(uri, schema, index_columns, ctx);
     auto soma_dataframe = SOMADataFrame::open(
         uri,
         OpenMode::write,

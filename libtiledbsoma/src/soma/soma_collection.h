@@ -155,7 +155,7 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        ArrowSchema& schema,
+        std::shared_ptr<ArrowSchema> schema,
         ArrowTable index_columns);
 
     /**
@@ -171,7 +171,7 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        ArrowSchema& schema,
+        std::shared_ptr<ArrowSchema> schema,
         ArrowTable index_columns);
 
     /**
@@ -187,7 +187,7 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        ArrowSchema& schema,
+        std::shared_ptr<ArrowSchema> schema,
         ArrowTable index_columns);
 
     /**
