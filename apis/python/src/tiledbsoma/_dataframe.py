@@ -343,12 +343,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         context = handle.context()
         if platform_config is not None:
             config = context.tiledb_config.copy()
-            config.update(platform_config or {})
+            config.update(platform_config)
             context = clib.SOMAContext(config)
-
-        ts = None
-        if handle.timestamp is not None:
-            ts = (0, handle.timestamp)
 
         sr = clib.SOMADataFrame.open(
             uri=handle.uri,
@@ -356,7 +352,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             context=context,
             column_names=column_names or [],
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=ts,
+            timestamp=handle.timestamp and (0, handle.timestamp),
         )
 
         if value_filter is not None:

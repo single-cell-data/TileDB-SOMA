@@ -54,11 +54,11 @@ void load_soma_object(py::module& m) {
             "open",
             [](std::string_view uri,
                OpenMode mode,
-               std::shared_ptr<SOMAContext> ctx,
+               std::shared_ptr<SOMAContext> context,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp)
                 -> py::object {
                 try {
-                    auto obj = SOMAObject::open(uri, mode, ctx, timestamp);
+                    auto obj = SOMAObject::open(uri, mode, context, timestamp);
                     if (obj->type() == "SOMADataFrame")
                         return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
                     else if (obj->type() == "SOMASparseNDArray")
@@ -75,7 +75,13 @@ void load_soma_object(py::module& m) {
                 } catch (...) {
                     return py::none();
                 }
-            })
+            },
+            "uri"_a,
+            "mode"_a,
+            "context"_a,
+            py::kw_only(),
+            "timestamp"_a = py::none())
+
         .def_property_readonly("type", &SOMAObject::type);
 };
 }  // namespace libtiledbsomacpp

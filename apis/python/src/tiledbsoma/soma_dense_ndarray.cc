@@ -61,7 +61,7 @@ void load_soma_dense_ndarray(py::module& m) {
                 &SOMADenseNDArray::open),
             "uri"_a,
             "mode"_a,
-            "ctx"_a,
+            "context"_a,
             py::kw_only(),
             "column_names"_a = py::none(),
             "result_order"_a = ResultOrder::automatic,
