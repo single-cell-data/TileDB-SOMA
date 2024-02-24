@@ -32,6 +32,8 @@ struct ArrowBuffer {
     std::shared_ptr<ColumnBuffer> buffer_;
 };
 
+using ArrowTable = std::pair<ArrowArray&, ArrowSchema&>;
+
 class ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema);
@@ -60,10 +62,7 @@ class ArrowAdapter {
      * @return tiledb::ArraySchema
      */
     static ArraySchema tiledb_schema_from_arrow_schema(
-        Context context,
-        std::shared_ptr<ArrowSchema> arrow_schema,
-        std::vector<std::string> index_column_names,
-        bool sparse = true);
+        Context ctx, ArrowSchema& arrow_schema, ArrowTable index_columns);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.
@@ -93,6 +92,9 @@ class ArrowAdapter {
         std::memcpy((void*)dst, src.data(), sz);
         return dst;
     }
+
+    static std::optional<std::pair<const void*, const void*>> _get_dim_info(
+        std::string_view dim_name, ArrowTable index_columns);
 };
 };  // namespace tiledbsoma
 

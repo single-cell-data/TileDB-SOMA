@@ -186,7 +186,8 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
         }
         case TILEDB_INT8: {
             auto data = enmr.as_vector<int8_t>();
-            return std::pair(_fill_data_buffer(data, dst), data.size());
+            return std::pair(
+                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
         }
         case TILEDB_UINT8: {
             auto data = enmr.as_vector<uint8_t>();
@@ -240,30 +241,23 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
     }
 }
 
-ArraySchema tiledb_schema_from_arrow_schema(
-    Context context,
-    std::shared_ptr<ArrowSchema> arrow_schema,
-    std::vector<std::string> index_column_names,
-    bool sparse) {
-    ArraySchema schema(context, sparse ? TILEDB_SPARSE : TILEDB_DENSE);
-    Domain domain(context);
+ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
+    Context ctx, ArrowSchema& arrow_schema, ArrowTable index_columns) {
+    ArraySchema schema(ctx, TILEDB_SPARSE);
+    Domain domain(ctx);
 
-    for (int64_t i = 0; i < arrow_schema->n_children; ++i) {
-        ArrowSchema* child = arrow_schema->children[i];
+    for (int64_t i = 0; i < arrow_schema.n_children; ++i) {
+        ArrowSchema* child = arrow_schema.children[i];
         auto type = ArrowAdapter::to_tiledb_format(child->format);
+        auto dim_info = ArrowAdapter::_get_dim_info(child->name, index_columns);
 
-        bool is_dim = std::find(
-                          index_column_names.begin(),
-                          index_column_names.end(),
-                          child->name) != index_column_names.end();
-
-        if (is_dim) {
+        if (dim_info.has_value()) {
+            auto& [dim_dom, extent] = *dim_info;
             domain.add_dimension(Dimension::create(
-                context, child->name, type, dim_domain, tile_extent));
+                ctx, child->name, type, dim_dom, extent));
+        } else {
+            schema.add_attribute(Attribute(ctx, child->name, type));
         }
-        // else {
-        //     schema.add_attribute(Attribute::create(context, child->name));
-        // }
     }
 
     schema.set_domain(domain);
@@ -271,6 +265,22 @@ ArraySchema tiledb_schema_from_arrow_schema(
     schema.check();
 
     return schema;
+}
+
+std::optional<std::pair<const void*, const void*>> ArrowAdapter::_get_dim_info(
+    std::string_view dim_name, ArrowTable index_columns) {
+    auto index_columns_array = index_columns.first;
+    auto index_columns_schema = index_columns.second;
+
+    for (int64_t i = 0; i < index_columns_array.n_children; ++i) {
+        if (dim_name == index_columns_schema.children[i]->name) {
+            auto dim_info = index_columns_array.children[i]->children;
+            auto domain = dim_info[0]->buffers[1];
+            auto extent = dim_info[1]->buffers[1];
+            return std::make_pair(domain, extent);
+        }
+    }
+    return std::nullopt;
 }
 
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
