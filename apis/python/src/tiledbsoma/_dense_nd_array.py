@@ -135,12 +135,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         context = handle.context()
         if platform_config is not None:
             config = context.tiledb_config.copy()
-            config.update(platform_config or {})
+            config.update(platform_config)
             context = clib.SOMAContext(config)
-
-        ts = None
-        if handle.timestamp is not None:
-            ts = (0, handle.timestamp)
 
         sr = clib.SOMADenseNDArray.open(
             uri=handle.uri,
@@ -148,7 +144,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             context=context,
             column_names=[],
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=ts,
+            timestamp=handle.timestamp and (0, handle.timestamp),
         )
 
         self._set_reader_coords(sr, coords)

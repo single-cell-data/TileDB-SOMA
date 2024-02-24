@@ -71,7 +71,7 @@ def open(
 
     if open_mode == clib.OpenMode.read and obj_type == "SOMADataFrame":
         return DataFrameWrapper._from_soma_object(soma_object, context)
-    elif open_mode == clib.OpenMode.read and obj_type == "SOMADenseNDArray":
+    if open_mode == clib.OpenMode.read and obj_type == "SOMADenseNDArray":
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
 
     if obj_type in (
