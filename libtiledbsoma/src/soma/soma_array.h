@@ -405,19 +405,6 @@ class SOMAArray : public SOMAObject {
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
     /**
-     * @brief Set the write data for a column.
-     *
-     * @param column_name Column name
-     * @param buff Buffer array pointer with elements of the column type.
-     * @param nelements Number of array elements in buffer
-     */
-    void set_column_data(
-        std::string_view column_name,
-        std::shared_ptr<ColumnBuffer> column_buffer) {
-        mq_->set_column_data(std::string(column_name), column_buffer);
-    }
-
-    /**
      * @brief Write ArrayBuffers data to the array.
      *
      * An example use model:

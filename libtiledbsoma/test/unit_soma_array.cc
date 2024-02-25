@@ -143,8 +143,8 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
             *ctx->tiledb_ctx(), uri, TILEDB_READ);
         auto col_a0 = ColumnBuffer::create(tdb_arr, "a0");
         auto col_d0 = ColumnBuffer::create(tdb_arr, "d0");
-        col_a0->set_data(a0);
-        col_d0->set_data(d0);
+        col_a0->set_data(a0.data(), a0.size());
+        col_d0->set_data(d0.data(), d0.size());
         array_buffer->emplace("a0", col_a0);
         array_buffer->emplace("d0", col_d0);
 

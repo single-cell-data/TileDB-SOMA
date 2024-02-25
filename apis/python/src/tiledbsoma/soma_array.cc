@@ -533,20 +533,12 @@ void load_soma_array(py::module& m) {
 
                 auto buffers = std::make_shared<ArrayBuffers>();
                 for (auto i = 0; i < arrow_schema.n_children; ++i) {
-                    std::cout << arrow_schema.children[i]->name << std::endl;
-                    auto arr = std::make_shared<ArrowArray>(
-                        *arrow_array.children[i]);
-                    auto sch = std::make_shared<ArrowSchema>(
-                        *arrow_schema.children[i]);
+                    auto child = arrow_array.children[i];
 
-                    auto name = arrow_schema.children[i]->name;
-                    auto dim_names = array.dimension_names();
-                    bool is_dim = std::find(
-                                      dim_names.begin(),
-                                      dim_names.end(),
-                                      name) != dim_names.end();
-                    auto column = ColumnBuffer::create(
-                        ArrowTable(arr, sch), array.ctx(), is_dim);
+                    std::cout << child->name << std::endl;
+
+                    auto column = ColumnBuffer::create(array.arr_, child->name);
+                    column->write(child->buffers[1], child->length);
 
                     buffers->emplace(name, column);
                 }

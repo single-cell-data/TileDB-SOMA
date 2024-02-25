@@ -72,19 +72,6 @@ class ColumnBuffer {
         std::shared_ptr<Array> array, std::string_view name);
 
     /**
-     * @brief Create a ColumnBuffer from an ArrowSchema and ArrowArray that
-     * represents a single column.
-     *
-     * @param array TileDB array
-     * @param name TileDB dimension or attribute name
-     * @return ColumnBuffer
-     */
-    static std::shared_ptr<ColumnBuffer> create(
-        ArrowTable arrow_table,
-        std::shared_ptr<SOMAContext> context,
-        bool is_column_index);
-
-    /**
      * @brief Convert a bytemap to a bitmap in place.
      *
      */
@@ -135,12 +122,19 @@ class ColumnBuffer {
      * @param std::vector<T> data to write
      */
     template <typename T>
-    void set_data(std::vector<T> data){
+    void set_data(std::vector<T> data) {
         this->num_cells_ = data.size();
         this->data_.resize(data.size());
         this->data_.assign(
             reinterpret_cast<std::byte*>(data.data()),
             reinterpret_cast<std::byte*>(data.data() + data.size()));
+    }
+
+    void set_data(const void* data, uint64_t num_elems) {
+        this->num_cells_ = num_elems;
+        this->data_.resize(num_elems);
+        this->data_.assign(
+            (std::byte*)data, (std::byte*)data + num_elems * type_size_);
     }
 
     /**

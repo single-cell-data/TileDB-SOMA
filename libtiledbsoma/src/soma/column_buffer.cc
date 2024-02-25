@@ -103,37 +103,6 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
 }
 
-std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
-    ArrowTable arrow_table,
-    std::shared_ptr<SOMAContext> context,
-    bool is_column_index) {
-    auto [arrow_array, arrow_schema] = arrow_table;
-
-    auto cfg = context->tiledb_ctx()->config();
-    auto name = arrow_schema->name;
-    auto type = ArrowAdapter::to_tiledb_format(arrow_schema->format);
-
-    if (is_column_index) {
-        bool is_var = type == TILEDB_STRING_ASCII || type == TILEDB_STRING_UTF8;
-        return ColumnBuffer::alloc(
-            cfg,
-            name,
-            type,
-            is_var,
-            false,         // is_nullable
-            std::nullopt,  // enumeration
-            false          // is_ordered
-        );
-    } else {
-        bool is_var = type == TILEDB_STRING_ASCII || type == TILEDB_STRING_UTF8;
-        bool is_nullable = false;
-        std::optional<Enumeration> enumeration = std::nullopt;
-        bool is_ordered = false;
-        return ColumnBuffer::alloc(
-            cfg, name, type, is_var, is_nullable, enumeration, is_ordered);
-    }
-}
-
 void ColumnBuffer::to_bitmap(tcb::span<uint8_t> bytemap) {
     int i_dst = 0;
     for (unsigned int i_src = 0; i_src < bytemap.size(); i_src++) {
