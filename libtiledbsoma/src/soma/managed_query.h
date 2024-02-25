@@ -216,9 +216,10 @@ class ManagedQuery {
         std::string column_name, std::shared_ptr<ColumnBuffer> column_buffer) {
         if (array_->schema().array_type() == TILEDB_SPARSE ||
             schema_->has_attribute(column_name)) {
-            auto data = column_buffer->data<std::byte>();
-            query_->set_data_buffer(
-                column_name, (void*)data.data(), data.size_bytes());
+            // auto data = column_buffer->data<std::byte>();
+            // query_->set_data_buffer(
+            //     column_name, (void*)data.data(), data.size_bytes());
+            column_buffer->attach(*query_);
         } else {
             switch (column_buffer->type()) {
                 case TILEDB_STRING_ASCII:

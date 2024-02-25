@@ -259,6 +259,7 @@ void SOMAArray::write(std::shared_ptr<ArrayBuffers> buffers) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
 
+    // TODO create a ManagedQuery::setup_write?
     for (auto col_name : buffers->names()) {
         mq_->set_column_data(col_name, buffers->at(col_name));
     }

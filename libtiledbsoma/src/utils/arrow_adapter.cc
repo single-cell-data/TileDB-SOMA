@@ -414,7 +414,7 @@ ArrowTable ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         array->dictionary = dict_arr;
     }
 
-    return std::pair(array, schema);
+    return ArrowTable(array, schema);
 }
 
 std::string_view ArrowAdapter::to_arrow_format(

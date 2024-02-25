@@ -121,6 +121,14 @@ void load_soma_array(py::module& m) {
             "platform_config"_a = py::dict(),
             "timestamp"_a = py::none())
 
+        .def("__enter__", [](SOMAArray& reader) { return reader; })
+        .def(
+            "__exit__",
+            [](SOMAArray& reader,
+               void* exc_type,
+               void* exc_value,
+               void* traceback) { reader.close(); })
+
         .def(
             "set_condition",
             [](SOMAArray& reader,
@@ -515,15 +523,34 @@ void load_soma_array(py::module& m) {
 
         .def(
             "write",
-            [](SOMAArray& array, py::handle c_array) {
+            [](SOMAArray& array, py::handle py_batch) {
                 ArrowSchema arrow_schema;
                 ArrowArray arrow_array;
                 uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
                 uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
-                c_array.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
+                py_batch.attr("_export_to_c")(
+                    arrow_array_ptr, arrow_schema_ptr);
 
-                array.write(std::shared_ptr<ArrayBuffers>(
-                    reinterpret_cast<ArrayBuffers*>(arrow_array_ptr)));
+                auto buffers = std::make_shared<ArrayBuffers>();
+                for (auto i = 0; i < arrow_schema.n_children; ++i) {
+                    std::cout << arrow_schema.children[i]->name << std::endl;
+                    auto arr = std::make_shared<ArrowArray>(
+                        *arrow_array.children[i]);
+                    auto sch = std::make_shared<ArrowSchema>(
+                        *arrow_schema.children[i]);
+
+                    auto name = arrow_schema.children[i]->name;
+                    auto dim_names = array.dimension_names();
+                    bool is_dim = std::find(
+                                      dim_names.begin(),
+                                      dim_names.end(),
+                                      name) != dim_names.end();
+                    auto column = ColumnBuffer::create(
+                        ArrowTable(arr, sch), array.ctx(), is_dim);
+
+                    buffers->emplace(name, column);
+                }
+                array.write(buffers);
             })
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())

@@ -397,82 +397,82 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
-        dim_cols_map: Dict[str, pd.DataFrame] = {}
-        attr_cols_map: Dict[str, pd.DataFrame] = {}
-        dim_names_set = self.index_column_names
-        n = None
+        # dim_cols_map: Dict[str, pd.DataFrame] = {}
+        # attr_cols_map: Dict[str, pd.DataFrame] = {}
+        # dim_names_set = self.index_column_names
+        # n = None
 
-        for col_info in values.schema:
-            name = col_info.name
-            col = values.column(name).combine_chunks()
-            n = len(col)
+        # for col_info in values.schema:
+        #     name = col_info.name
+        #     col = values.column(name).combine_chunks()
+        #     n = len(col)
 
-            if self._handle.schema.has_attr(name):
-                attr = self._handle.schema.attr(name)
+        #     if self._handle.schema.has_attr(name):
+        #         attr = self._handle.schema.attr(name)
 
-                # Add the enumeration values to the TileDB Array from ArrowArray
-                if attr.enum_label is not None:
-                    if not pa.types.is_dictionary(col_info.type):
-                        raise ValueError(
-                            "Expected dictionary type for enumerated attribute "
-                            f"{name} but saw {col.type}"
-                        )
+        #         # Add the enumeration values to the TileDB Array from ArrowArray
+        #         if attr.enum_label is not None:
+        #             if not pa.types.is_dictionary(col_info.type):
+        #                 raise ValueError(
+        #                     "Expected dictionary type for enumerated attribute "
+        #                     f"{name} but saw {col.type}"
+        #                 )
 
-                    enmr = self._handle.enum(attr.name)
+        #             enmr = self._handle.enum(attr.name)
 
-                    # get new enumeration values by taking the set difference
-                    # while maintaining ordering
-                    update_vals = np.setdiff1d(
-                        col.dictionary, enmr.values(), assume_unique=True
-                    )
+        #             # get new enumeration values by taking the set difference
+        #             # while maintaining ordering
+        #             update_vals = np.setdiff1d(
+        #                 col.dictionary, enmr.values(), assume_unique=True
+        #             )
 
-                    index_capacity_current = len(enmr.values()) + len(update_vals)
-                    index_capacity_max = np.iinfo(
-                        col_info.type.index_type.to_pandas_dtype()
-                    ).max
-                    if index_capacity_max < index_capacity_current:
-                        raise ValueError(
-                            f"Too many enumeration values ({index_capacity_current}) "
-                            "for index type {col_info.type.index_type}"
-                        )
+        #             index_capacity_current = len(enmr.values()) + len(update_vals)
+        #             index_capacity_max = np.iinfo(
+        #                 col_info.type.index_type.to_pandas_dtype()
+        #             ).max
+        #             if index_capacity_max < index_capacity_current:
+        #                 raise ValueError(
+        #                     f"Too many enumeration values ({index_capacity_current}) "
+        #                     "for index type {col_info.type.index_type}"
+        #                 )
 
-                    # only extend if there are new values
-                    if len(update_vals) != 0:
-                        se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
-                        if np.issubdtype(enmr.dtype.type, np.str_):
-                            extend_vals = np.array(update_vals, "U")
-                        elif np.issubdtype(enmr.dtype.type, np.bytes_):
-                            extend_vals = np.array(update_vals, "S")
-                        else:
-                            extend_vals = np.array(update_vals, enmr.dtype)
-                        new_enmr = enmr.extend(extend_vals)
-                        df = pd.Categorical(col.to_pandas(), new_enmr.values())
-                        col = pa.DictionaryArray.from_pandas(df)
-                        se.extend_enumeration(new_enmr)
-                        se.array_evolve(uri=self.uri)
+        #             # only extend if there are new values
+        #             if len(update_vals) != 0:
+        #                 se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
+        #                 if np.issubdtype(enmr.dtype.type, np.str_):
+        #                     extend_vals = np.array(update_vals, "U")
+        #                 elif np.issubdtype(enmr.dtype.type, np.bytes_):
+        #                     extend_vals = np.array(update_vals, "S")
+        #                 else:
+        #                     extend_vals = np.array(update_vals, enmr.dtype)
+        #                 new_enmr = enmr.extend(extend_vals)
+        #                 df = pd.Categorical(col.to_pandas(), new_enmr.values())
+        #                 col = pa.DictionaryArray.from_pandas(df)
+        #                 se.extend_enumeration(new_enmr)
+        #                 se.array_evolve(uri=self.uri)
 
-            cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
-            schema = self._handle.schema
-            if pa.types.is_dictionary(col.type):
-                if (
-                    name not in dim_names_set
-                    and schema.attr(name).enum_label is not None
-                ):
-                    cols_map[name] = col.indices.to_pandas()
-                else:
-                    cols_map[name] = col
+        #     cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
+        #     schema = self._handle.schema
+        #     if pa.types.is_dictionary(col.type):
+        #         if (
+        #             name not in dim_names_set
+        #             and schema.attr(name).enum_label is not None
+        #         ):
+        #             cols_map[name] = col.indices.to_pandas()
+        #         else:
+        #             cols_map[name] = col
 
-            else:
-                if name not in dim_names_set:
-                    if schema.attr(name).enum_label is not None:
-                        raise ValueError(
-                            f"Categorical column {name} must be presented with categorical data"
-                        )
+        #     else:
+        #         if name not in dim_names_set:
+        #             if schema.attr(name).enum_label is not None:
+        #                 raise ValueError(
+        #                     f"Categorical column {name} must be presented with categorical data"
+        #                 )
 
-                cols_map[name] = col.to_pandas()
+        #         cols_map[name] = col.to_pandas()
 
-        if n is None:
-            raise ValueError(f"did not find any column names in {values.schema.names}")
+        # if n is None:
+        #     raise ValueError(f"did not find any column names in {values.schema.names}")
 
         # We need to produce the dim cols in the same order as they're present in the TileDB schema
         # (tracked by self.index_column_names). This is important in the multi-index case.  Suppose
@@ -480,9 +480,15 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # the user set index_column_names = ["meister", "burger"] when creating the TileDB schema.
         # Then the above for-loop over the Arrow schema will find the former ordering, but for the
         # ``writer[dims] = attrs`` below we must have dims with the latter ordering.
-        dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
-        dim_cols_tuple = tuple(dim_cols_list)
-        self._handle.writer[dim_cols_tuple] = attr_cols_map
+        print("SCHEMAAAAAAAAAAAAAAA")
+        print(values.schema)
+        print("BATCHESSSSSSSSSSSSSS ")
+        for batch in values.to_batches():
+            self._handle.write(batch)
+        print("DONEEEEEEEEE")
+        # dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
+        # dim_cols_tuple = tuple(dim_cols_list)
+        # self._handle.writer[dim_cols_tuple] = attr_cols_map
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
             platform_config
         )
@@ -492,7 +498,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Table, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
     ) -> bool:
         if coord is None:
             return True  # No constraint; select all in this dimension
@@ -566,7 +572,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self,
         sr: clib.SOMAArray,
         dim_idx: int,
-        dim: pa.Table,
+        dim: tiledb.Dim,
         coord: object,
     ) -> bool:
         if isinstance(coord, np.ndarray):

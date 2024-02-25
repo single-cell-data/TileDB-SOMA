@@ -38,7 +38,9 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
+#include "../utils/arrow_adapter.h"
 #include "../utils/common.h"
+#include "soma_context.h"
 #include "span/span.hpp"
 
 namespace tiledbsoma {
@@ -70,26 +72,17 @@ class ColumnBuffer {
         std::shared_ptr<Array> array, std::string_view name);
 
     /**
-     * @brief Create a ColumnBuffer from a schema, column name, and data.
+     * @brief Create a ColumnBuffer from an ArrowSchema and ArrowArray that
+     * represents a single column.
      *
      * @param array TileDB array
      * @param name TileDB dimension or attribute name
-     * @param data Data to set in buffer
      * @return ColumnBuffer
      */
-    template <typename T>
     static std::shared_ptr<ColumnBuffer> create(
-        std::shared_ptr<Array> array,
-        std::string_view name,
-        std::vector<T> data) {
-        auto column_buff = ColumnBuffer::create(array, name);
-        column_buff->num_cells_ = data.size();
-        column_buff->data_.resize(data.size());
-        column_buff->data_.assign(
-            reinterpret_cast<std::byte*>(data.data()),
-            reinterpret_cast<std::byte*>(data.data() + data.size()));
-        return column_buff;
-    }
+        ArrowTable arrow_table,
+        std::shared_ptr<SOMAContext> context,
+        bool is_column_index);
 
     /**
      * @brief Convert a bytemap to a bitmap in place.
@@ -135,6 +128,20 @@ class ColumnBuffer {
      * @param query TileDB query
      */
     void attach(Query& query);
+
+    /**
+     * @brief Set the ColumnBuffer's data.
+     *
+     * @param std::vector<T> data to write
+     */
+    template <typename T>
+    void set_data(std::vector<T> data){
+        this->num_cells_ = data.size();
+        this->data_.resize(data.size());
+        this->data_.assign(
+            reinterpret_cast<std::byte*>(data.data()),
+            reinterpret_cast<std::byte*>(data.data() + data.size()));
+    }
 
     /**
      * @brief Size num_cells_ to match the read query results.
@@ -342,7 +349,7 @@ class ColumnBuffer {
     /**
      * @brief Allocate and return a ColumnBuffer.
      *
-     * @param array TileDB array
+     * @param config TileDB Config
      * @param name Column name
      * @param type TileDB datatype
      * @param is_var True if variable length data
@@ -352,7 +359,7 @@ class ColumnBuffer {
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> alloc(
-        ArraySchema schema,
+        Config config,
         std::string_view name,
         tiledb_datatype_t type,
         bool is_var,

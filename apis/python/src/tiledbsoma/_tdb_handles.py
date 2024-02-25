@@ -428,6 +428,9 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def count(self) -> int:
         return int(self._handle.count)
 
+    def write(self, values: pa.Table) -> None:
+        self._handle.write(values)
+
 
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""

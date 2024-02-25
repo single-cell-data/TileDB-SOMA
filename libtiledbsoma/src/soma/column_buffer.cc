@@ -69,7 +69,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
         }
 
         return ColumnBuffer::alloc(
-            schema,
+            schema.context().config(),
             name_str,
             type,
             is_var,
@@ -91,10 +91,47 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
         }
 
         return ColumnBuffer::alloc(
-            schema, name_str, type, is_var, false, std::nullopt, false);
+            schema.context().config(),
+            name_str,
+            type,
+            is_var,
+            false,
+            std::nullopt,
+            false);
     }
 
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
+}
+
+std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
+    ArrowTable arrow_table,
+    std::shared_ptr<SOMAContext> context,
+    bool is_column_index) {
+    auto [arrow_array, arrow_schema] = arrow_table;
+
+    auto cfg = context->tiledb_ctx()->config();
+    auto name = arrow_schema->name;
+    auto type = ArrowAdapter::to_tiledb_format(arrow_schema->format);
+
+    if (is_column_index) {
+        bool is_var = type == TILEDB_STRING_ASCII || type == TILEDB_STRING_UTF8;
+        return ColumnBuffer::alloc(
+            cfg,
+            name,
+            type,
+            is_var,
+            false,         // is_nullable
+            std::nullopt,  // enumeration
+            false          // is_ordered
+        );
+    } else {
+        bool is_var = type == TILEDB_STRING_ASCII || type == TILEDB_STRING_UTF8;
+        bool is_nullable = false;
+        std::optional<Enumeration> enumeration = std::nullopt;
+        bool is_ordered = false;
+        return ColumnBuffer::alloc(
+            cfg, name, type, is_var, is_nullable, enumeration, is_ordered);
+    }
 }
 
 void ColumnBuffer::to_bitmap(tcb::span<uint8_t> bytemap) {
@@ -211,7 +248,7 @@ std::string_view ColumnBuffer::string_view(uint64_t index) {
 //===================================================================
 
 std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
-    ArraySchema schema,
+    Config config,
     std::string_view name,
     tiledb_datatype_t type,
     bool is_var,
@@ -221,7 +258,6 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     // Set number of bytes for the data buffer. Override with a value from
     // the config if present.
     auto num_bytes = DEFAULT_ALLOC_BYTES;
-    auto config = schema.context().config();
     if (config.contains(CONFIG_KEY_INIT_BYTES)) {
         auto value_str = config.get(CONFIG_KEY_INIT_BYTES);
         try {
@@ -235,10 +271,10 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
         }
     }
 
-    bool is_dense = schema.array_type() == TILEDB_DENSE;
-    if (is_dense) {
-        // TODO: Handle dense arrays similar to tiledb python module
-    }
+    // bool is_dense = schema.array_type() == TILEDB_DENSE;
+    // if (is_dense) {
+    //     // TODO: Handle dense arrays similar to tiledb python module
+    // }
 
     // For variable length column types, allocate an extra num_bytes to hold
     //   offset values. The number of cells is the set by the size of the
