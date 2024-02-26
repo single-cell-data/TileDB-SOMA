@@ -532,29 +532,49 @@ void load_soma_array(py::module& m) {
                     arrow_array_ptr, arrow_schema_ptr);
 
                 for (auto i = 0; i < arrow_schema.n_children; ++i) {
-                    auto child_arr = arrow_array.children[i];
-                    auto len = child_arr->length;
+                    auto sch_ = arrow_schema.children[i];
+                    auto arr_ = arrow_array.children[i];
+
+                    const void* data;
                     std::optional<std::vector<uint64_t>> offsets = std::nullopt;
-                    std::optional<std::vector<uint8_t>> validity = std::nullopt;
+                    std::optional<std::vector<uint8_t>>
+                        validities = std::nullopt;
 
-                    // if (child_arr->n_buffers == 3) {
-                    //     auto offsets_ptr = (uint64_t*)child_arr->buffers[3];
-                    //     offsets = std::vector<uint64_t>(
-                    //         offsets_ptr, offsets_ptr + len);
-                    // }
+                    if (arr_->null_count != 0) {
+                        auto validities_ptr = (uint8_t*)arr_->buffers[0];
+                        validities = std::vector<uint8_t>(
+                            validities_ptr, validities_ptr + arr_->length);
+                    }
 
-                    // if (child_arr->null_count != 0) {
-                    //     auto validity_ptr = (uint8_t*)child_arr->buffers[0];
-                    //     validity = std::vector<uint8_t>(
-                    //         validity_ptr, validity_ptr + len);
-                    // }
+                    if (arr_->n_buffers == 3) {
+                        std::vector<uint64_t> arrow_offsets;
+
+                        if (strcmp("u", sch_->format) == 0 |
+                            strcmp("s", sch_->format) == 0) {
+                            auto offsets_ptr = (uint32_t*)arr_->buffers[1];
+                            arrow_offsets = std::vector<uint64_t>(
+                                offsets_ptr, offsets_ptr + arr_->length + 1);
+                        } else {
+                            auto offsets_ptr = (uint64_t*)arr_->buffers[1];
+                            arrow_offsets = std::vector<uint64_t>(
+                                offsets_ptr, offsets_ptr + arr_->length + 1);
+                        }
+
+                        std::vector<uint64_t> offsets_;
+                        offsets_.reserve(arr_->length);
+                        for (size_t i = 0; i < arrow_offsets.size() - 1; ++i) {
+                            offsets_[i] = arrow_offsets[i + 1] -
+                                          arrow_offsets[i];
+                        }
+
+                        offsets = offsets_;
+                        data = arr_->buffers[2];
+                    } else {
+                        data = arr_->buffers[1];
+                    }
 
                     array.set_column_data(
-                        arrow_schema.children[i]->name,
-                        child_arr->buffers[1],
-                        len,
-                        offsets,
-                        validity);
+                        sch_->name, data, arr_->length, offsets, validities);
                 }
                 array.write();
             })
@@ -701,7 +721,7 @@ void load_soma_array(py::module& m) {
                     auto [tdb_type, value_num, value] = *(
                         array.get_metadata(key));
 
-                    if (tdb_type == TILEDB_STRING_UTF8 |
+                    if (tdb_type == TILEDB_STRING_UTF8 ||
                         tdb_type == TILEDB_STRING_ASCII) {
                         auto py_buf = py::array(
                             py::dtype("|S1"), value_num, value);

@@ -266,9 +266,13 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 domain.add_dimension(dim);
             } else {
                 auto attr = Attribute(*ctx, child->name, type);
-                if (child->flags | ARROW_FLAG_NULLABLE) {
+
+                if (child->flags | ARROW_FLAG_NULLABLE)
                     attr.set_nullable(true);
-                }
+
+                if (strcmp(child->format, "U"))
+                    attr.set_cell_val_num(TILEDB_VAR_NUM);
+
                 schema.add_attribute(attr);
             }
         }

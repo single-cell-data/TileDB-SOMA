@@ -298,6 +298,7 @@ void SOMAArray::write() {
 
     mq_->submit_write();
 
+    mq_->reset();
     array_buffer_ = nullptr;
 }
 
