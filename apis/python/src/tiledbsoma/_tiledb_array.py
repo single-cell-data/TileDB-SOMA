@@ -183,6 +183,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         the newly-created array, open for writing.
         """
         tiledb.Array.create(uri, schema, ctx=context.tiledb_ctx)
+
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         cls._set_create_metadata(handle)
         return handle

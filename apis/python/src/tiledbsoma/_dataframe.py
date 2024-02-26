@@ -6,10 +6,9 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import somacore
 import tiledb
@@ -210,14 +209,49 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
-        tdb_schema = _build_tiledb_schema(
+        if domain is None:
+            domain = tuple(None for _ in index_column_names)
+        else:
+            ndom = len(domain)
+            nidx = len(index_column_names)
+            if ndom != nidx:
+                raise ValueError(
+                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
+                )
+
+        index_columns_info = []
+        for index_column_name, slot_domain in zip(index_column_names, domain):
+            pa_type = schema.field(index_column_name).type
+            dtype = _arrow_types.tiledb_type_from_arrow_type(
+                pa_type, is_indexed_column=True
+            )
+
+            slot_domain = _fill_out_slot_domain(
+                slot_domain, index_column_name, pa_type, dtype
+            )
+
+            extent = _find_extent_for_domain(
+                index_column_name,
+                TileDBCreateOptions.from_platform_config(platform_config),
+                dtype,
+                slot_domain,
+            )
+
+            index_columns_info.append(
+                pa.chunked_array(
+                    [pa.array(slot_domain, pa_type), pa.array([extent], pa_type)]
+                )
+            )
+
+        handle = clib.SOMADataFrame.create(
+            uri,
             schema,
-            index_column_names,
-            domain,
-            TileDBCreateOptions.from_platform_config(platform_config),
-            context,
+            pa.Table.from_arrays(index_columns_info, ["column_info"]),
+            context.native_context,
         )
-        handle = cls._create_internal(uri, tdb_schema, context, tiledb_timestamp)
+        
+        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+        DataFrame._set_create_metadata(handle)
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",

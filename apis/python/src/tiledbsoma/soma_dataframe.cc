@@ -50,6 +50,34 @@ void load_soma_dataframe(py::module& m) {
     py::class_<SOMADataFrame, SOMAArray, SOMAObject>(m, "SOMADataFrame")
 
         .def_static(
+            "create",
+            [](std::string_view uri,
+               py::object py_schema,
+               py::object py_index_columns,
+               std::shared_ptr<SOMAContext> context) {
+                ArrowSchema schema;
+                uintptr_t schema_ptr = (uintptr_t)(&schema);
+                py_schema.attr("_export_to_c")(schema_ptr);
+
+                ArrowSchema index_columns_schema;
+                ArrowArray index_columns_array;
+                uintptr_t index_columns_schema_ptr =
+                    (uintptr_t)(&index_columns_schema);
+                uintptr_t
+                    index_columns_array_ptr = (uintptr_t)(&index_columns_array);
+                py_index_columns.attr("_export_to_c")(
+                    index_columns_array_ptr, index_columns_schema_ptr);
+
+                // return SOMADataFrame::create(
+                //     uri,
+                //     std::make_shared<ArrowSchema>(schema),
+                //     ArrowTable(
+                //         std::make_shared<ArrowArray>(index_columns_schema),
+                //         std::make_shared<ArrowSchema>(index_columns_array)),
+                //     context);
+            })
+
+        .def_static(
             "open",
             py::overload_cast<
                 std::string_view,

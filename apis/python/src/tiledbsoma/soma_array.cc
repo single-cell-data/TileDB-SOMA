@@ -531,18 +531,13 @@ void load_soma_array(py::module& m) {
                 py_batch.attr("_export_to_c")(
                     arrow_array_ptr, arrow_schema_ptr);
 
-                auto buffers = std::make_shared<ArrayBuffers>();
                 for (auto i = 0; i < arrow_schema.n_children; ++i) {
-                    auto child = arrow_array.children[i];
-
-                    std::cout << child->name << std::endl;
-
-                    auto column = ColumnBuffer::create(array.arr_, child->name);
-                    column->write(child->buffers[1], child->length);
-
-                    buffers->emplace(name, column);
+                    array.set_column_data(
+                        arrow_schema.children[i]->name,
+                        arrow_array.children[i]->buffers[1],
+                        arrow_array.children[i]->length);
                 }
-                array.write(buffers);
+                array.write();
             })
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
