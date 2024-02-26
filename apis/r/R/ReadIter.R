@@ -50,19 +50,20 @@ ReadIter <- R6::R6Class(
       if (is.null(private$soma_reader_pointer)) {
           return(NULL)
       }
+      message("Calling reset") # TODO: remove
       sr_reset(private$soma_reader_pointer)
     },
 
     #' @description Set dimension selection on given axis
-    set_dim_point = function(dimname, points) {
+    set_dim_points = function(dimname, points) {
       stopifnot("Name of dimension must be character" =
                     is.character(dimname),
                 "Points must be int64 vector" =
-                    is.vector(points) &&
-                    inherits(points, "int64"))
+                    inherits(points, "integer64"))
       if (is.null(private$soma_reader_pointer)) {
           return(NULL)
       }
+      message("Setting dim points") # TODO: remove
       sr_set_dim_points(private$soma_reader_pointer, dimname, points)
     }
   ),
