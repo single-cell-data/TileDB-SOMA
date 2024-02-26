@@ -356,7 +356,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         will need to retrieve data from the backing store on setup.
         """
         # non–attrs-managed field
-        self.metadata = MetadataWrapper(self, dict(reader.meta))
+        self.metadata = MetadataWrapper(self, reader.meta())
 
     @property
     def schema(self) -> pa.Schema:
@@ -364,7 +364,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 
     @property
     def meta(self) -> "MetadataWrapper":
-        return MetadataWrapper(self, dict(self._handle.meta))
+        return MetadataWrapper(self, self._handle.meta())
 
     @property
     def ndim(self) -> int:
@@ -556,7 +556,10 @@ class MetadataWrapper(MutableMapping[str, Any]):
             # There were no changes (e.g., it's a read handle).  Do nothing.
             return
         # Only try to get the writer if there are changes to be made.
-        meta = self.owner.writer.meta
+        if isinstance(self.owner, DataFrameWrapper):
+            meta = self.owner.meta
+        else:
+            meta = self.owner.writer.meta
         for key, mod in self._mods.items():
             if mod in (_DictMod.ADDED, _DictMod.UPDATED):
                 meta[key] = self.cache[key]
