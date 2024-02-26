@@ -156,7 +156,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             * Negative indexing is unsupported.
         """
         del batch_size  # Currently unused.
-        handle: clib.SparseNDArrayWrapper = self._handle._handle
+        handle: clib.SOMASparseNDArray = self._handle._handle
 
         self._check_open_read()
         _util.check_unpartitioned(partitions)
