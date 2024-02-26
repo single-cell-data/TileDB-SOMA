@@ -8,6 +8,8 @@
 #include <Rcpp.h>          			     // for R interface to C++
 #include <nanoarrow/r.h>				 // for C interface to Arrow (via R package nanoarrow)
 #include <tiledbsoma/utils/nanoarrow.h>
+#include <RcppInt64>            // for fromInteger64
+#include <nanoarrow.h>          // for C interface to Arrow
 
 #include <tiledb/tiledb>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
@@ -251,4 +253,23 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    // Nanoarrow special: stick schema into xptr tag to return single SEXP
    array_xptr_set_schema(arrayxp, schemaxp); 			// embed schema in array
    return arrayxp;
+}
+
+// [[Rcpp::export]]
+void sr_reset(Rcpp::XPtr<tdbs::SOMAArray> sr) {
+    check_xptr_tag<tdbs::SOMAArray>(sr);
+    sr->reset();
+    spdl::debug("[sr_reset] Reset SOMAArray object");
+}
+
+// [[Rcpp::export]]
+void sr_set_dim_points(Rcpp::XPtr<tdbs::SOMAArray> sr, std::string dim,
+                       Rcpp::NumericVector points) {
+    check_xptr_tag<tdbs::SOMAArray>(sr);
+    // check args ?
+
+    std::vector<int64_t> vec = Rcpp::fromInteger64(points);
+    sr->set_dim_points<int64_t>(dim, vec);
+    spdl::debug("[sr_set_dim_points] Set on dim '{}' for {} points, first two are {} and {}",
+                dim, points.length(), vec[0], vec[1]);
 }
