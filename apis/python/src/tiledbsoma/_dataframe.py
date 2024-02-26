@@ -514,6 +514,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # the user set index_column_names = ["meister", "burger"] when creating the TileDB schema.
         # Then the above for-loop over the Arrow schema will find the former ordering, but for the
         # ``writer[dims] = attrs`` below we must have dims with the latter ordering.
+
         for batch in values.to_batches():
             self._handle.write(batch)
         # dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]

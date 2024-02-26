@@ -48,11 +48,20 @@ void SOMAArray::create(
     std::string soma_type) {
     Array::create(std::string(uri), schema);
     auto array = Array(*ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE);
+
     array.put_metadata(
         "soma_object_type",
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(soma_type.length()),
         soma_type.c_str());
+    
+    std::string encoding_version = "1";
+    array.put_metadata(
+        "soma_encoding_version",
+        TILEDB_STRING_UTF8,
+        static_cast<uint32_t>(encoding_version.length()),
+        encoding_version.c_str());
+
     array.close();
 }
 
@@ -536,8 +545,8 @@ void SOMAArray::set_metadata(
     if (key.compare("soma_object_type") == 0) {
         throw TileDBSOMAError("soma_object_type cannot be modified.");
     }
-
     arr_->put_metadata(key, value_type, value_num, value);
+
     MetadataValue mdval(value_type, value_num, value);
     std::pair<std::string, const MetadataValue> mdpair(key, mdval);
     metadata_.insert(mdpair);

@@ -364,7 +364,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 
     @property
     def meta(self) -> "MetadataWrapper":
-        return MetadataWrapper(self, self._handle.meta())
+        return self.metadata
 
     @property
     def ndim(self) -> int:

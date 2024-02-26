@@ -663,49 +663,44 @@ void load_soma_array(py::module& m) {
 
         .def_property_readonly("dimension_names", &SOMAArray::dimension_names)
 
-        // .def("set_metadata", &SOMAArray::set_metadata)
+        .def("set_metadata", &SOMAArray::set_metadata)
 
-        // .def("delete_metadata", &SOMAArray::delete_metadata)
+        .def("delete_metadata", &SOMAArray::delete_metadata)
 
-        // .def(
-        //     "get_metadata",
-        //     py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
+        .def(
+            "get_metadata",
+            py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
 
         .def(
             "meta",
-            [](SOMAArray& soma_dataframe) -> py::dict {
+            [](SOMAArray& array) -> py::dict {
                 py::dict results;
+                auto np_join = py::module::import("numpy").attr("char").attr(
+                    "join");
 
-                for (auto const& [key, val] : soma_dataframe.get_metadata()) {
-                    tiledb_datatype_t tdb_type = std::get<MetadataInfo::dtype>(
-                        val);
-                    uint32_t value_num = std::get<MetadataInfo::num>(val);
-                    const void* value = std::get<MetadataInfo::value>(val);
+                for (auto const& [key, val] : array.get_metadata()) {
+                    auto [tdb_type, value_num, value] = *(array.get_metadata(key));
 
-                    std::cout << key << std::endl;
-
-                //     if (tdb_type == TILEDB_STRING_UTF8) {
-                //         results[py::str(key)] = py::str(
-                //             std::string((const char*)value, value_num));
-                //     } else if (tdb_type == TILEDB_STRING_ASCII) {
-                //         results[py::str(key)] = py::bytes(
-                //             std::string((const char*)value, value_num));
-                //     } else {
-                //         py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
-                //         results[py::str(key)] = py::array(
-                //             value_type, value_num, value);
-                //     }
+                    if (tdb_type == TILEDB_STRING_ASCII) {
+                        auto py_buf = py::array(py::dtype("|S1"), value_num, value);                        
+                    } else if (tdb_type == TILEDB_STRING_UTF8) {
+                        auto py_buf = py::array(py::dtype("|S1"), value_num, value);
+                        results[py::str(key)] = py_buf.attr("tobytes")().attr("decode")("UTF-8");
+                    } else {
+                        py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+                        results[py::str(key)] = py::array(
+                            value_type, value_num, value)[0];
+                    }
                 }
                 return results;
             })
 
-        // .def(
-        //     "get_metadata",
-        //     py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
+        .def(
+            "get_metadata",
+            py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
 
-        // .def("has_metadata", &SOMAArray::has_metadata)
+        .def("has_metadata", &SOMAArray::has_metadata)
 
-        // .def("metadata_num", &SOMAArray::metadata_num)
-        ;
+        .def("metadata_num", &SOMAArray::metadata_num);
 }
 }  // namespace libtiledbsomacpp
