@@ -104,7 +104,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
             self._threadpool = context.threadpool
         else:
             self._threadpool = futures.ThreadPoolExecutor()
-            
+
         self.context = context
 
         # raises on various error checks, AND normalizes args
