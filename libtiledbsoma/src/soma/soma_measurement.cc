@@ -44,7 +44,7 @@ using namespace tiledb;
 std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
     std::string_view uri,
     std::shared_ptr<ArrowSchema> schema,
-    ArrowTable index_columns,
+    ColumnIndexInfo index_columns,
     std::shared_ptr<SOMAContext> ctx) {
     std::string exp_uri(uri);
 

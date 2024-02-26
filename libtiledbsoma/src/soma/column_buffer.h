@@ -119,17 +119,9 @@ class ColumnBuffer {
     /**
      * @brief Set the ColumnBuffer's data.
      *
-     * @param std::vector<T> data to write
+     * @param data pointer to the beginning of the data to write
+     * @param num_elems the number of elements in the column
      */
-    template <typename T>
-    void set_data(std::vector<T> data) {
-        this->num_cells_ = data.size();
-        this->data_.resize(data.size());
-        this->data_.assign(
-            reinterpret_cast<std::byte*>(data.data()),
-            reinterpret_cast<std::byte*>(data.data() + data.size()));
-    }
-
     void set_data(const void* data, uint64_t num_elems) {
         this->num_cells_ = num_elems;
         this->data_.resize(num_elems);

@@ -138,18 +138,10 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         }
         std::vector<int> a0(num_cells_per_fragment, frag_num);
 
-        auto array_buffer = std::make_shared<ArrayBuffers>();
-        auto tdb_arr = std::make_shared<Array>(
-            *ctx->tiledb_ctx(), uri, TILEDB_READ);
-        auto col_a0 = ColumnBuffer::create(tdb_arr, "a0");
-        auto col_d0 = ColumnBuffer::create(tdb_arr, "d0");
-        col_a0->set_data(a0.data(), a0.size());
-        col_d0->set_data(d0.data(), d0.size());
-        array_buffer->emplace("a0", col_a0);
-        array_buffer->emplace("d0", col_d0);
-
         // Write data to array
-        soma_array->write(array_buffer);
+        soma_array->set_column_data("a0", a0.data(), a0.size());
+        soma_array->set_column_data("d0", d0.data(), d0.size());
+        soma_array->write();
         soma_array->close();
     }
 

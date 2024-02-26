@@ -254,14 +254,38 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     return mq_->results();
 }
 
-void SOMAArray::write(std::shared_ptr<ArrayBuffers> buffers) {
+void SOMAArray::set_column_data(
+    std::string_view name, const void* data, uint64_t num_elems) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
 
-    mq_->setup_write(buffers);
+    // Create the array_buffer_ as necessary
+    if (array_buffer_ == nullptr)
+        array_buffer_ = std::make_shared<ArrayBuffers>();
+
+    // Create a ColumnBuffer object instead of passing it in as an argument to
+    // `set_column_data` because ColumnBuffer::create requires a TileDB Array
+    // argument which should remain a private member of SOMAArray
+    auto column = ColumnBuffer::create(arr_, name);
+    column->set_data(data, num_elems);
+
+    // Keep the ColumnBuffer alive by attaching it to the ArrayBuffers class
+    // member. Otherwise, the data held by the ColumnBuffer will be garbage
+    // collected before it is submitted to the write query
+    array_buffer_->emplace(std::string(name), column);
+
+    mq_->set_column_data(column);
+};
+
+void SOMAArray::write() {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
+    }
 
     mq_->submit_write();
+
+    array_buffer_ = nullptr;
 }
 
 uint64_t SOMAArray::nnz() {

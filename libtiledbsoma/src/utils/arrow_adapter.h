@@ -35,6 +35,12 @@ struct ArrowBuffer {
 using ArrowTable =
     std::pair<std::shared_ptr<ArrowArray>, std::shared_ptr<ArrowSchema>>;
 
+using ColumnIndexInfo = std::tuple<
+    std::vector<std::string>,     // name of column
+    std::shared_ptr<ArrowArray>,  // domain
+    std::shared_ptr<ArrowArray>   // tile extent
+    >;
+
 class ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema);
@@ -64,7 +70,7 @@ class ArrowAdapter {
     static ArraySchema tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         std::shared_ptr<ArrowSchema> arrow_schema,
-        ArrowTable index_columns);
+        ColumnIndexInfo index_column_info);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.

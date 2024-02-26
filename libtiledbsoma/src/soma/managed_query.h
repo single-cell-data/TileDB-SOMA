@@ -212,7 +212,7 @@ class ManagedQuery {
      * @param buff Buffer array pointer with elements of the column type.
      * @param nelements Number of array elements in buffer
      */
-    void setup_write(std::shared_ptr<ArrayBuffers> buffers);
+    void set_column_data(std::shared_ptr<ColumnBuffer> buffer);
 
     /**
      * @brief Configure query and allocate result buffers for reads.

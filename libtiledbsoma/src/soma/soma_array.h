@@ -404,6 +404,9 @@ class SOMAArray : public SOMAObject {
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
+    void set_column_data(
+        std::string_view name, const void* data, uint64_t num_elems);
+
     /**
      * @brief Write ArrayBuffers data to the array.
      *
@@ -426,7 +429,7 @@ class SOMAArray : public SOMAObject {
      *
      * @param buffers The ArrayBuffers to write to the array
      */
-    void write(std::shared_ptr<ArrayBuffers> buffers);
+    void write();
 
     /**
      * @brief Check if the query is complete.
@@ -722,6 +725,9 @@ class SOMAArray : public SOMAObject {
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t nnz_slow();
+
+    // ArrayBuffers to hold ColumnBuffers alive when submitting to write query
+    std::shared_ptr<ArrayBuffers> array_buffer_ = nullptr;
 };
 
 }  // namespace tiledbsoma

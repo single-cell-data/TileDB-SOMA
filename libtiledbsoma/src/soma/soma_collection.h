@@ -156,7 +156,7 @@ class SOMACollection : public SOMAGroup {
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
         std::shared_ptr<ArrowSchema> schema,
-        ArrowTable index_columns);
+        ColumnIndexInfo index_columns);
 
     /**
      * Create and add a SOMAMeasurement to the SOMACollection.
@@ -172,7 +172,7 @@ class SOMACollection : public SOMAGroup {
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
         std::shared_ptr<ArrowSchema> schema,
-        ArrowTable index_columns);
+        ColumnIndexInfo index_columns);
 
     /**
      * Create and add a SOMADataFrame to the SOMACollection.
@@ -188,7 +188,7 @@ class SOMACollection : public SOMAGroup {
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
         std::shared_ptr<ArrowSchema> schema,
-        ArrowTable index_columns);
+        ColumnIndexInfo index_columns);
 
     /**
      * Create and add a SOMADenseNDArray to the SOMACollection.
