@@ -234,7 +234,7 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
       axis,
       ...,
       size,
-      reindex_disable_on_axis,
+      reindex_disable_on_axis = NULL,
       eager = TRUE
     ) {
       super$initialize(sr, array, coords)
@@ -260,7 +260,14 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
     #' @return ...
     #'
     tables = function() {
-      .NotYetImplemented()
+      return(BlockwiseTableReadIter$new(
+        sr = self$sr,
+        array = self$array,
+        coords = self$coords,
+        axis = self$axis,
+        reindex_disable_on_axis = self$reindex_disable_on_axis,
+        eager = self$eager
+      ))
     },
     #' @description ...
     #'
@@ -269,21 +276,26 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
     #' @return ...
     #'
     sparse_matrix = function(compress = TRUE) {
-      stopifnot(
-        "'compress' must be TRUE or FALSE" = isTRUE(compress) || isFALSE(compress)
-      )
-      .NotYetImplemented()
+      return(BlockwiseSparseReadIter$new(
+        sr = self$sr,
+        array = self$array,
+        coords = self$coords,
+        axis = self$axis,
+        compress = compress,
+        reindex_disable_on_axis = self$reindex_disable_on_axis,
+        eager = self$eager
+      ))
     }
   ),
   active = list(
     #' @field axis ...
-    axis = function() return(private$.axis),
+    axis = function() private$.axis,
     #' @field size ...
-    size = function() return(private$.size),
+    size = function() private$.size,
     #' @field reindex_disable_on_axis ...
-    reindex_disable_on_axis = function() return(private$.reindex_disable_on_axis),
+    reindex_disable_on_axis = function() private$.reindex_disable_on_axis,
     #' @field eager ...
-    eager = function() return(private$eager)
+    eager = function() private$.eager
   ),
   private = list(
     .axis = NULL,

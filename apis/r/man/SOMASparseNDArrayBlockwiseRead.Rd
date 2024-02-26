@@ -44,7 +44,7 @@ Create
   axis,
   ...,
   size,
-  reindex_disable_on_axis,
+  reindex_disable_on_axis = NULL,
   eager = TRUE
 )}\if{html}{\out{</div>}}
 }
