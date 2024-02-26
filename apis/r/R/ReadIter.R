@@ -30,16 +30,13 @@ ReadIter <- R6::R6Class(
     #' @return \code{NULL} or one of arrow::\link[arrow]{Table}, \link{matrixZeroBasedView}
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
-          NULL
-      } else {
-          if (self$read_complete()) {
-              warning("Iteration complete, returning NULL")
-              NULL
-          } else {
-              rl <- sr_next(private$soma_reader_pointer)
-              return(private$soma_reader_transform(rl))
-          }
+          return(NULL)
       }
+      if (self$read_complete()) {
+        return(private$.readComplete())
+      }
+      rl <- sr_next(private$soma_reader_pointer)
+      return(private$soma_reader_transform(rl))
     },
 
     #' @description  Concatenate remainder of iterator
@@ -58,6 +55,17 @@ ReadIter <- R6::R6Class(
     # to be refined in derived classes
     soma_reader_transform = function(x) {
       .NotYetImplemented()
+    },
+
+    .readComplete = function(immediate. = FALSE) {
+      warning(
+        warningCondition(
+          "Iteration complete, returning NULL",
+          class = "iterationCompleteWarning"
+        ),
+        immediate. = immediate.
+      )
+      return(NULL)
     }
 
   )
