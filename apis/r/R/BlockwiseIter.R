@@ -52,16 +52,19 @@ BlockwiseReadIterBase <- R6::R6Class(
     },
     read_complete = function() !self$coords_axis$hasNext() || super$read_complete(),
     read_next = function() {
-      if (is.null(private$soma_read_pointer)) {
-        return(NULL)
-      }
+      #if (is.null(private$soma_read_pointer)) {  # TODO: FIXME
+      #  return(NULL)
+      #}
       if (self$read_complete()) {
         return(private$.readComplete())
       }
       super$reset()
-      super$set_dim_points(self$array$dimnames()[self$axis + 1L],
-                           self$coords_axis)
-      return(super$read_next())
+      dimnam <- self$array$dimnames()[self$axis + 1L]
+      nextelems <- self$coords_axis$nextElem()
+      super$set_dim_points(dimnam, nextelems)
+      val <- super$read_next()
+      #print(str(val))  # TODO
+      val
     }
   ),
   active = list(
