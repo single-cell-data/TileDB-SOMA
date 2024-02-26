@@ -49,6 +49,14 @@ def test_dense_nd_array_create_ok(
     with tiledb.open(tmp_path.as_posix()) as A:
         assert not A.schema.sparse
 
+    # Ensure read mode uses clib object
+    with soma.DenseNDArray.open(tmp_path.as_posix(), "r") as A:
+        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADenseNDArray)
+
+    # Ensure write mode uses Python object
+    with soma.DenseNDArray.open(tmp_path.as_posix(), "w") as A:
+        assert isinstance(A._handle._handle, tiledb.Array)
+
 
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)

@@ -1,5 +1,5 @@
 /**
- * @file   soma_dataframe.cc
+ * @file   soma_sparse_ndarray.cc
  *
  * @section LICENSE
  *
@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the SOMADataFrame bindings.
+ * This file defines the SOMASparseNDArray bindings.
  */
 
 #include <pybind11/numpy.h>
@@ -46,8 +46,8 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_dataframe(py::module& m) {
-    py::class_<SOMADataFrame, SOMAArray, SOMAObject>(m, "SOMADataFrame")
+void load_soma_sparse_ndarray(py::module& m) {
+    py::class_<SOMASparseNDArray, SOMAArray, SOMAObject>(m, "SOMASparseNDArray")
 
         .def_static(
             "open",
@@ -58,18 +58,15 @@ void load_soma_dataframe(py::module& m) {
                 std::vector<std::string>,
                 ResultOrder,
                 std::optional<std::pair<uint64_t, uint64_t>>>(
-                &SOMADataFrame::open),
+                &SOMASparseNDArray::open),
             "uri"_a,
             "mode"_a,
-            "context"_a,
+            "ctx"_a,
             py::kw_only(),
             "column_names"_a = py::none(),
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 
-        .def_static("exists", &SOMADataFrame::exists)
-        .def_property_readonly(
-            "index_column_names", &SOMADataFrame::index_column_names)
-        .def_property_readonly("count", &SOMADataFrame::count);
+        .def_static("exists", &SOMASparseNDArray::exists);
 }
 }  // namespace libtiledbsomacpp

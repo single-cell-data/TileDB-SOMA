@@ -1,0 +1,125 @@
+# Confirm shared object copying when building the Python package
+# https://github.com/single-cell-data/TileDB-SOMA/pull/1937
+
+name: Python SO copying
+
+on:
+  push:
+    paths:
+      - '.github/workflows/python-so-copying.yml'
+      - 'apis/python/**'
+      - 'libtiledbsoma/cmake/**'
+  pull_request:
+    paths:
+      - '.github/workflows/python-so-copying.yml'
+      - 'apis/python/**'
+      - 'libtiledbsoma/cmake/**'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: "TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        TILEDB_EXISTS: ["no", "yes"]
+        TILEDBSOMA_EXISTS: ["no", "yes"]
+        exclude:
+          - TILEDB_EXISTS: "no"
+            TILEDBSOMA_EXISTS: "yes"
+    container:
+      image: ubuntu:22.04
+    steps:
+      - name: Docker image info
+        run: |
+          uname -a
+          cat /etc/lsb-release
+      - name: Setup
+        run: |
+          apt-get update
+          apt-get install --yes cmake git python-is-python3 python3 python3-pip python3-venv unzip wget
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # for setuptools-scm
+      - name: Configure Git
+        run: |
+          # This is a permissions quirk due to running Git as root inside of a Docker container
+          git config --global --add safe.directory $(pwd)
+          git branch
+      - name: Install pre-built libtiledb
+        if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
+        run: |
+          mkdir -p external
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.19.1/tiledb-linux-x86_64-2.19.1-29ceb3e7.tar.gz
+          tar -C external -xzf tiledb-linux-x86_64-*.tar.gz
+          ls external/lib/
+          echo "LD_LIBRARY_PATH=$(pwd)/external/lib" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(pwd)/external/lib/pkgconfig" >> $GITHUB_ENV
+          echo "TILEDB_PATH=$(pwd)/external" >> $GITHUB_ENV
+      - name: Build and install libtiledbsoma
+        if: ${{ matrix.TILEDBSOMA_EXISTS == 'yes' }}
+        run: |
+          cmake -S libtiledbsoma -B build-libtiledbsoma \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_PREFIX_PATH=$(pwd)/external/ \
+            -D CMAKE_INSTALL_PREFIX:PATH=$(pwd)/external/ \
+            -D OVERRIDE_INSTALL_PREFIX=OFF \
+            -D DOWNLOAD_TILEDB_PREBUILT=OFF \
+            -D FORCE_BUILD_TILEDB=OFF
+          cmake --build build-libtiledbsoma -j $(nproc)
+          cmake --build build-libtiledbsoma --target install-libtiledbsoma
+          ls external/lib/
+          echo "TILEDBSOMA_PATH=$(pwd)/external" >> $GITHUB_ENV
+      - name: Setup Python
+        run: |
+          python --version
+          python -m venv ./venv-soma
+          ./venv-soma/bin/python -m pip install --prefer-binary pybind11-global typeguard sparse wheel
+          ./venv-soma/bin/python -m pip list
+      - name: Build wheel
+        run: |
+          echo env vars: $LD_LIBRARY_PATH $PKG_CONFIG_PATH $TILEDB_PATH $TILEDBSOMA_PATH
+          cd apis/python
+          ../../venv-soma/bin/python setup.py bdist_wheel
+      - name: Inspect wheel
+        run: unzip -l apis/python/dist/tiledbsoma-*.whl | grep '\.so'
+      - name: Confirm libtiledb.so is copied
+        if: ${{ matrix.TILEDB_EXISTS == 'no' }}
+        run: unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledb.so
+      - name: Confirm libtiledb.so is **not** copied when using external shared object
+        if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
+        run: |
+          if unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledb.so
+          then
+            echo "libtiledb.so was copied into the wheel when it was built against an external shared object"
+            exit 1
+          fi
+      - name: Confirm libtiledbsoma.so is copied
+        if: ${{ matrix.TILEDBSOMA_EXISTS == 'no' }}
+        run: unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledbsoma.so
+      - name: Confirm libtiledbsoma.so is **not** copied when using external shared object
+        if: ${{ matrix.TILEDBSOMA_EXISTS == 'yes' }}
+        run: |
+          if unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledbsoma.so
+          then
+            echo "libtiledbsoma.so was copied into the wheel when it was built against an external shared object"
+            exit 1
+          fi
+      - name: Install wheel
+        run: ./venv-soma/bin/python -m pip install --prefer-binary apis/python/dist/tiledbsoma-*.whl
+      - name: Check linking and RPATH
+        run: |
+          ldd ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
+          readelf -d ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so  | grep R*PATH
+      - name: Runtime test
+        run: ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
+      - name: Confirm linking to installed shared objects
+        run: |
+          rm -fr build/ build-libtiledbsoma/ dist/ apis/python/build apis/python/src/tiledbsoma/*tile*.so*
+          find . -name '*tile*.so*' # should only show shared objects installed in virtual env
+          ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"

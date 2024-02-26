@@ -16,6 +16,7 @@ from typing import (
     Any,
     ContextManager,
     Dict,
+    KeysView,
     List,
     Mapping,
     Optional,
@@ -39,6 +40,7 @@ import tiledb
 from anndata._core import file_backing
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
+from typing_extensions import get_args
 
 from .. import (
     Collection,
@@ -420,6 +422,30 @@ def from_anndata(
         raise TypeError(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
+
+    for key in anndata.obsm.keys():
+        if not isinstance(anndata.obsm[key], get_args(Matrix)):
+            raise TypeError(
+                f"obsm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+            )
+
+    for key in anndata.obsp.keys():
+        if not isinstance(anndata.obsp[key], get_args(Matrix)):
+            raise TypeError(
+                f"obsp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+            )
+
+    for key in anndata.varm.keys():
+        if not isinstance(anndata.varm[key], get_args(Matrix)):
+            raise TypeError(
+                f"varm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+            )
+
+    for key in anndata.varp.keys():
+        if not isinstance(anndata.varp[key], get_args(Matrix)):
+            raise TypeError(
+                f"varp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
+            )
 
     # For single ingest (no append):
     #
@@ -1637,6 +1663,96 @@ def _update_dataframe(
     )
 
 
+def update_matrix(
+    soma_ndarray: Union[SparseNDArray, DenseNDArray],
+    new_data: Union[Matrix, h5py.Dataset],
+    *,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig] = None,
+) -> None:
+    """
+    Given a ``SparseNDArray`` or ``DenseNDArray`` already opened for write,
+    writes the new data. It is the caller's responsibility to ensure that the
+    intended shape of written contents of the array match those of the existing
+    data. The intended use-case is to replace updated numerical values.
+
+    Example:
+
+        with tiledbsoma.Experiment.open(uri, "w") as exp:
+            tiledbsoma.io.update_matrix(
+                exp.ms["RNA"].X["data"],
+                adata.X,
+            )
+
+    Args:
+        soma_ndarray: a ``SparseNDArray`` or ``DenseNDArray`` already opened for write.
+
+        new_data: If the ``soma_ndarray`` is sparse, a Scipy CSR/CSC matrix or
+            AnnData ``SparseDataset``. If the ``soma_ndarray`` is dense,
+            a NumPy NDArray.
+
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+
+        platform_config: Platform-specific options used to update this array, provided
+        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+
+    Returns:
+        None
+
+    Lifecycle:
+        Experimental.
+    """
+
+    # More developer-level information on why we do not -- and cannot -- check
+    # shape/bounding box:
+    #
+    # * The TileDB-SOMA "shape" can be huge x huge, with "room for growth" --
+    #   this does not track the user-level "shape" and is not intended to.
+    # * The TileDB-SOMA bounding box is, by contrast, intended to track the
+    #   user-level "shape" but it is not thread-safe and may be incorrect.
+    #   Please see
+    #   https://github.com/single-cell-data/TileDB-SOMA/issues/1969
+    #   https://github.com/single-cell-data/TileDB-SOMA/issues/1971
+
+    s = _util.get_start_stamp()
+    logging.log_io(
+        f"Writing {soma_ndarray.uri}",
+        f"START  UPDATING {soma_ndarray.uri}",
+    )
+
+    ingestion_params = IngestionParams("write", None)
+
+    if isinstance(soma_ndarray, DenseNDArray):
+        _write_matrix_to_denseNDArray(
+            soma_ndarray,
+            new_data,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            context=context,
+            ingestion_params=ingestion_params,
+        )
+    elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
+        _write_matrix_to_sparseNDArray(
+            soma_ndarray,
+            new_data,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            context=context,
+            ingestion_params=ingestion_params,
+            axis_0_mapping=AxisIDMapping.identity(new_data.shape[0]),
+            axis_1_mapping=AxisIDMapping.identity(new_data.shape[1]),
+        )
+    else:
+        raise TypeError(f"unknown array type {type(soma_ndarray)}")
+
+    logging.log_io(
+        f"Wrote   {soma_ndarray.uri}",
+        _util.format_elapsed(s, f"FINISH UPDATING {soma_ndarray.uri}"),
+    )
+
+
 def add_X_layer(
     exp: Experiment,
     measurement_name: str,
@@ -2765,8 +2881,6 @@ def to_h5ad(
 
     Arguments are as in ``to_anndata``.
 
-    TO DO: doc more params
-
     Lifecycle:
         Experimental.
     """
@@ -2796,11 +2910,42 @@ def to_h5ad(
 
 
 # ----------------------------------------------------------------
+def _extract_X_key(
+    measurement: Measurement,
+    X_layer_name: str,
+    nobs: int,
+    nvar: int,
+) -> Matrix:
+    """Helper function for to_anndata"""
+
+    if X_layer_name not in measurement.X:
+        raise ValueError(
+            f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
+        )
+
+    # Acquire handle to TileDB-SOMA data
+    soma_X_data_handle = measurement.X[X_layer_name]
+    logging.log_io(None, f"FOO {X_layer_name} {soma_X_data_handle.uri}")
+
+    # Read data from SOMA into memory
+    if isinstance(soma_X_data_handle, DenseNDArray):
+        data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
+    elif isinstance(soma_X_data_handle, SparseNDArray):
+        X_mat = soma_X_data_handle.read().tables().concat().to_pandas()
+        data = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
+    else:
+        raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
+
+    return data
+
+
+# ----------------------------------------------------------------
 def to_anndata(
     experiment: Experiment,
     measurement_name: str,
     *,
     X_layer_name: Optional[str] = "data",
+    extra_X_layer_names: Optional[Union[Sequence[str], KeysView[str]]] = None,
     obs_id_name: Optional[str] = None,
     var_id_name: Optional[str] = None,
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
@@ -2815,9 +2960,25 @@ def to_anndata(
     * ``obsm``,``varm`` arrays as ``numpy.ndarray``
     * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
 
-    The ``X_layer_name`` is the name of the TileDB-SOMA measurement's
-    ``X`` collection which will be outgested to the resulting AnnData object's
-    ``adata.X``.
+    The ``X_layer_name`` is the name of the TileDB-SOMA measurement's ``X``
+    collection which will be outgested to the resulting AnnData object's
+    ``adata.X``. If this is ``None``, then the return value's ``adata.X`` will
+    be None, and ``adata.layers`` will be unpopulated. If this is not ``None``,
+    then ``adata.X`` will be taken from this layer name within the input
+    measurement.
+
+    The ``extra_X_layer_names`` are used to specify how the output ``adata``
+    object's ``adata.layers`` is populated.  The default behavior --
+    ``extra_X_layer_names`` being ``None`` -- means that ``adata.layers`` will be
+    empty.  If ``extra_X_layer_names`` is a provided list these will be used for
+    populating ``adata.layers``. If you want all the layers to be outgested,
+    without having to name them individually, you can use
+    ``extra_X_layer_names=experiment.ms[measurement_name].X.keys()``.  To make
+    this low-friction for you, we introduce one more feature: we'll ignore
+    ``X_layer_name`` when populating ``adata.layers``.  For example, if X keys
+    are ``"a"``, ``"b"``, ``"c"``, ``"d"``, and you say ``X_layer_name="b"`` and
+    ``extra_X_layer_names=experiment.ms[measurement_name].X.keys()``, we'll not
+    write ``"b"`` to ``adata.layers``.
 
     The ``obs_id_name`` and ``var_id_name`` are columns within the TileDB-SOMA
     experiment which will become index names within the resulting AnnData
@@ -2904,26 +3065,34 @@ def to_anndata(
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    X_csr = None
-    X_ndarray = None
-    X_dtype = None  # some datasets have no X
+    anndata_X = None
+    anndata_X_dtype = None  # some datasets have no X
+    anndata_layers = {}
+
+    # Let them use
+    #   extra_X_layer_names=exp.ms["RNA"].X.keys()
+    # while avoiding
+    #   TypeError: 'ABCMeta' object is not subscriptable
+    if isinstance(extra_X_layer_names, KeysView):
+        extra_X_layer_names = list(extra_X_layer_names)
+
+    if X_layer_name is None and extra_X_layer_names:
+        # The latter boolean check covers both not None and not []
+        raise ValueError(
+            "If X_layer_name is None, extra_X_layer_names must not be provided"
+        )
+
     if X_layer_name is not None:
-        if X_layer_name not in measurement.X:
-            raise ValueError(
-                f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
-            )
-        X_data = measurement.X[X_layer_name]
-        if isinstance(X_data, DenseNDArray):
-            X_ndarray = X_data.read((slice(None), slice(None))).to_numpy()
-            X_dtype = X_ndarray.dtype
-        elif isinstance(X_data, SparseNDArray):
-            X_mat = (
-                X_data.read().tables().concat().to_pandas()
-            )  # TODO: CSR/CSC options ...
-            X_csr = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
-            X_dtype = X_csr.dtype
-        else:
-            raise TypeError(f"Unexpected NDArray type {type(X_data)}")
+        anndata_X = _extract_X_key(measurement, X_layer_name, nobs, nvar)
+        anndata_X_dtype = anndata_X.dtype
+
+    if extra_X_layer_names is not None:
+        for extra_X_layer_name in extra_X_layer_names:
+            if extra_X_layer_name == X_layer_name:
+                continue
+            assert extra_X_layer_name is not None  # appease linter; already checked
+            data = _extract_X_key(measurement, extra_X_layer_name, nobs, nvar)
+            anndata_layers[extra_X_layer_name] = data
 
     if obsm_varm_width_hints is None:
         obsm_varm_width_hints = {}
@@ -2970,7 +3139,8 @@ def to_anndata(
         )
 
     anndata = ad.AnnData(
-        X=X_csr if X_csr is not None else X_ndarray,
+        X=anndata_X,
+        layers=anndata_layers,
         obs=obs_df,
         var=var_df,
         obsm=obsm,
@@ -2978,7 +3148,7 @@ def to_anndata(
         obsp=obsp,
         varp=varp,
         uns=uns,
-        dtype=X_dtype,
+        dtype=anndata_X_dtype,
     )
 
     logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))

@@ -39,9 +39,9 @@
 #include <string>
 #include <tiledb/tiledb>
 
-namespace tiledbsoma {
+#include "soma_context.h"
 
-class SOMADataFrame;
+namespace tiledbsoma {
 
 using namespace tiledb;
 class SOMAObject {
@@ -52,21 +52,15 @@ class SOMAObject {
     virtual ~SOMAObject() = default;
 
     static std::unique_ptr<SOMAObject> open(
-        std::string uri,
+        std::string_view uri,
         OpenMode mode,
-        std::map<std::string, std::string> platform_config = {},
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
-
-    static std::unique_ptr<SOMAObject> open(
-        std::string uri,
-        OpenMode mode,
-        std::shared_ptr<Context> ctx,
+        std::shared_ptr<SOMAContext> ctx,
         std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Return a constant string describing the type of the object.
      */
-    virtual const std::string type() const = 0;
+    const std::optional<std::string> type();
 
     /**
      * @brief Get URI of the SOMAObject.
@@ -78,9 +72,9 @@ class SOMAObject {
     /**
      * @brief Get the context associated with the SOMAObject.
      *
-     * @return std::shared_ptr<Context>
+     * @return SOMAContext
      */
-    virtual std::shared_ptr<Context> ctx() = 0;
+    virtual std::shared_ptr<SOMAContext> ctx() = 0;
 
     /**
      * @brief Close the SOMAObject.

@@ -42,9 +42,11 @@ using namespace tiledb;
 //===================================================================
 
 void SOMAGroup::create(
-    std::shared_ptr<Context> ctx, std::string_view uri, std::string soma_type) {
-    Group::create(*ctx, std::string(uri));
-    auto group = Group(*ctx, std::string(uri), TILEDB_WRITE);
+    std::shared_ptr<SOMAContext> ctx,
+    std::string_view uri,
+    std::string soma_type) {
+    Group::create(*ctx->tiledb_ctx(), std::string(uri));
+    auto group = Group(*ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE);
     group.put_metadata(
         "soma_object_type",
         TILEDB_STRING_UTF8,
@@ -56,24 +58,10 @@ void SOMAGroup::create(
 std::unique_ptr<SOMAGroup> SOMAGroup::open(
     OpenMode mode,
     std::string_view uri,
-    std::string_view name,
-    std::map<std::string, std::string> platform_config,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_unique<SOMAGroup>(
-        mode,
-        uri,
-        name,
-        std::make_shared<Context>(Config(platform_config)),
-        timestamp);
-}
-
-std::unique_ptr<SOMAGroup> SOMAGroup::open(
-    OpenMode mode,
-    std::shared_ptr<Context> ctx,
-    std::string_view uri,
+    std::shared_ptr<SOMAContext> ctx,
     std::string_view name,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    return std::make_unique<SOMAGroup>(mode, uri, name, ctx, timestamp);
+    return std::make_unique<SOMAGroup>(mode, uri, ctx, name, timestamp);
 }
 
 //===================================================================
@@ -83,13 +71,13 @@ std::unique_ptr<SOMAGroup> SOMAGroup::open(
 SOMAGroup::SOMAGroup(
     OpenMode mode,
     std::string_view uri,
+    std::shared_ptr<SOMAContext> ctx,
     std::string_view name,
-    std::shared_ptr<Context> ctx,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp)
     : ctx_(ctx)
     , uri_(util::rstrip_uri(uri))
     , name_(name) {
-    auto cfg = ctx_->config();
+    auto cfg = ctx_->tiledb_ctx()->config();
     if (timestamp) {
         if (timestamp->first > timestamp->second) {
             throw std::invalid_argument("timestamp start > end");
@@ -98,7 +86,7 @@ SOMAGroup::SOMAGroup(
         cfg["sm.group.timestamp_end"] = timestamp->second;
     }
     group_ = std::make_unique<Group>(
-        *ctx_,
+        *ctx_->tiledb_ctx(),
         std::string(uri),
         mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE,
         cfg);
@@ -109,7 +97,7 @@ SOMAGroup::SOMAGroup(
 void SOMAGroup::fill_caches() {
     std::shared_ptr<Group> grp;
     if (group_->query_type() == TILEDB_WRITE) {
-        grp = std::make_shared<Group>(*ctx_, uri_, TILEDB_READ);
+        grp = std::make_shared<Group>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     } else {
         grp = group_;
     }
@@ -139,7 +127,7 @@ void SOMAGroup::fill_caches() {
 void SOMAGroup::open(
     OpenMode query_type,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    auto cfg = ctx_->config();
+    auto cfg = ctx_->tiledb_ctx()->config();
     if (timestamp) {
         if (timestamp->first > timestamp->second) {
             throw std::invalid_argument("timestamp start > end");
@@ -159,19 +147,19 @@ const std::string SOMAGroup::uri() const {
     return group_->uri();
 }
 
-std::shared_ptr<Context> SOMAGroup::ctx() {
+std::shared_ptr<SOMAContext> SOMAGroup::ctx() {
     return ctx_;
 }
 
-tiledb::Object SOMAGroup::get_member(uint64_t index) const {
+tiledb::Object SOMAGroup::get(uint64_t index) const {
     return group_->member(index);
 }
 
-tiledb::Object SOMAGroup::get_member(const std::string& name) const {
+tiledb::Object SOMAGroup::get(const std::string& name) const {
     return group_->member(name);
 }
 
-bool SOMAGroup::has_member(const std::string& name) {
+bool SOMAGroup::has(const std::string& name) {
     try {
         group_->member(name);
     } catch (const TileDBError& e) {
@@ -180,7 +168,7 @@ bool SOMAGroup::has_member(const std::string& name) {
     return true;
 }
 
-void SOMAGroup::add_member(
+void SOMAGroup::set(
     const std::string& uri, URIType uri_type, const std::string& name) {
     bool relative = uri_type == URIType::relative;
     if (uri_type == URIType::automatic) {
@@ -190,11 +178,11 @@ void SOMAGroup::add_member(
     member_to_uri_[name] = uri;
 }
 
-uint64_t SOMAGroup::get_length() const {
+uint64_t SOMAGroup::count() const {
     return group_->member_count();
 }
 
-void SOMAGroup::remove_member(const std::string& name) {
+void SOMAGroup::del(const std::string& name) {
     group_->remove_member(name);
 }
 

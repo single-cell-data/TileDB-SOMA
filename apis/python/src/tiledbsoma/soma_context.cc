@@ -1,5 +1,5 @@
 /**
- * @file   soma_dataframe.cc
+ * @file   soma_context.cc
  *
  * @section LICENSE
  *
@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the SOMADataFrame bindings.
+ * This file defines the SOMAContext bindings.
  */
 
 #include <pybind11/numpy.h>
@@ -36,6 +36,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 
+#include <memory>
 #include <tiledbsoma/tiledbsoma>
 
 #include "common.h"
@@ -46,30 +47,8 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_dataframe(py::module& m) {
-    py::class_<SOMADataFrame, SOMAArray, SOMAObject>(m, "SOMADataFrame")
-
-        .def_static(
-            "open",
-            py::overload_cast<
-                std::string_view,
-                OpenMode,
-                std::shared_ptr<SOMAContext>,
-                std::vector<std::string>,
-                ResultOrder,
-                std::optional<std::pair<uint64_t, uint64_t>>>(
-                &SOMADataFrame::open),
-            "uri"_a,
-            "mode"_a,
-            "context"_a,
-            py::kw_only(),
-            "column_names"_a = py::none(),
-            "result_order"_a = ResultOrder::automatic,
-            "timestamp"_a = py::none())
-
-        .def_static("exists", &SOMADataFrame::exists)
-        .def_property_readonly(
-            "index_column_names", &SOMADataFrame::index_column_names)
-        .def_property_readonly("count", &SOMADataFrame::count);
-}
+void load_soma_context(py::module& m) {
+    py::class_<SOMAContext, std::shared_ptr<SOMAContext>>(m, "SOMAContext")
+        .def(py::init<std::map<std::string, std::string>>());
+};
 }  // namespace libtiledbsomacpp

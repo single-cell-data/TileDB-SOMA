@@ -14,6 +14,7 @@ import tiledb
 from somacore import ContextBase
 from typing_extensions import Self
 
+from .. import pytiledbsoma as clib
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
@@ -126,6 +127,7 @@ class SOMATileDBContext(ContextBase):
         self._initial_config = (
             None if tiledb_config is None else _default_config(tiledb_config)
         )
+
         """A dictionary of options to override the default TileDB config.
 
         This includes both the user-provided options and the default options
@@ -138,6 +140,8 @@ class SOMATileDBContext(ContextBase):
 
         self.threadpool = threadpool or futures.ThreadPoolExecutor()
         """User specified threadpool. If None, we'll instantiate one ourselves."""
+        self._native_context: Optional[clib.SOMAContext] = None
+        """Lazily construct clib.SOMAContext."""
 
     @property
     def timestamp_ms(self) -> Optional[int]:
@@ -157,8 +161,19 @@ class SOMATileDBContext(ContextBase):
         return ms_to_datetime(self.timestamp_ms)
 
     @property
+    def native_context(self) -> clib.SOMAContext:
+        """The C++ SOMAContext for this SOMA context."""
+        with self._lock:
+            if self._native_context is None:
+                cfg = self._internal_tiledb_config()
+                self._native_context = clib.SOMAContext(
+                    {k: str(v) for k, v in cfg.items()}
+                )
+            return self._native_context
+
+    @property
     def tiledb_ctx(self) -> tiledb.Ctx:
-        """The TileDB Context for this SOMA context."""
+        """The TileDB-Py Context for this SOMA context."""
         with self._lock:
             if self._tiledb_ctx is None:
                 if self._initial_config is None:

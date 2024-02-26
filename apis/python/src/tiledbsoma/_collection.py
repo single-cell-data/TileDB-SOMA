@@ -435,9 +435,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             timestamp = self.tiledb_timestamp_ms
 
             try:
-                wrapper = _tdb_handles._open_with_clib_wrapper(
-                    uri, mode, context, timestamp
-                )
+                wrapper = _tdb_handles.open(uri, mode, context, timestamp)
                 entry.soma = _factory.reify_handle(wrapper)
             except SOMAError:
                 entry.soma = _factory._open_internal(

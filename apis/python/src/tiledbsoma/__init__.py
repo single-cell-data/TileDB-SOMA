@@ -93,6 +93,48 @@ Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
 # crucial that we include a separator (e.g. "Classes and functions") to make an entry in the
 # readthedocs table of contents.
 
+import ctypes
+import os
+import sys
+
+
+# Load native libraries. On wheel builds, we may have a shared library
+# already linked. In this case, we can import directly
+try:
+    from . import pytiledbsoma as clib
+
+    del clib
+except ImportError:
+    if os.name == "nt":
+        libtiledb_name = "tiledb.dll"
+    elif sys.platform == "darwin":
+        libtiledb_name = "libtiledb.dylib"
+    else:
+        libtiledb_name = "libtiledb.so"
+
+    try:
+        # Try loading the bundled native library.
+        lib_dir = os.path.dirname(os.path.abspath(__file__))
+        ctypes.CDLL(os.path.join(lib_dir, libtiledb_name), mode=ctypes.RTLD_GLOBAL)
+    except OSError:
+        # Otherwise try loading by name only.
+        ctypes.CDLL(libtiledb_name, mode=ctypes.RTLD_GLOBAL)
+
+    if os.name == "nt":
+        libtiledbsoma_name = "tiledbsoma.dll"
+    elif sys.platform == "darwin":
+        libtiledbsoma_name = "libtiledbsoma.dylib"
+    else:
+        libtiledbsoma_name = "libtiledbsoma.so"
+
+    try:
+        # Try loading the bundled native library.
+        lib_dir = os.path.dirname(os.path.abspath(__file__))
+        ctypes.CDLL(os.path.join(lib_dir, libtiledbsoma_name))
+    except OSError:
+        # Otherwise try loading by name only.
+        ctypes.CDLL(libtiledbsoma_name)
+
 from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
 from somacore.options import ResultOrder
 

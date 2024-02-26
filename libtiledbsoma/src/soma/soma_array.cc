@@ -42,12 +42,12 @@ using namespace tiledb;
 //===================================================================
 
 void SOMAArray::create(
-    std::shared_ptr<Context> ctx,
+    std::shared_ptr<SOMAContext> ctx,
     std::string_view uri,
     ArraySchema schema,
     std::string soma_type) {
     Array::create(std::string(uri), schema);
-    auto array = Array(*ctx, std::string(uri), TILEDB_WRITE);
+    auto array = Array(*ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE);
     array.put_metadata(
         "soma_object_type",
         TILEDB_STRING_UTF8,
@@ -70,8 +70,8 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
     return std::make_unique<SOMAArray>(
         mode,
         uri,
+        std::make_shared<SOMAContext>(platform_config),
         name,
-        std::make_shared<Context>(Config(platform_config)),
         column_names,
         batch_size,
         result_order,
@@ -80,8 +80,8 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
     OpenMode mode,
-    std::shared_ptr<Context> ctx,
     std::string_view uri,
+    std::shared_ptr<SOMAContext> ctx,
     std::string_view name,
     std::vector<std::string> column_names,
     std::string_view batch_size,
@@ -92,8 +92,8 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
     return std::make_unique<SOMAArray>(
         mode,
         uri,
-        name,
         ctx,
+        name,
         column_names,
         batch_size,
         result_order,
@@ -116,7 +116,7 @@ SOMAArray::SOMAArray(
     : uri_(util::rstrip_uri(uri))
     , result_order_(result_order)
     , timestamp_(timestamp) {
-    ctx_ = std::make_shared<Context>(Config(platform_config));
+    ctx_ = std::make_shared<SOMAContext>(platform_config);
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
     fill_metadata_cache();
@@ -125,19 +125,16 @@ SOMAArray::SOMAArray(
 SOMAArray::SOMAArray(
     OpenMode mode,
     std::string_view uri,
+    std::shared_ptr<SOMAContext> ctx,
     std::string_view name,
-    std::shared_ptr<Context> ctx,
     std::vector<std::string> column_names,
     std::string_view batch_size,
     ResultOrder result_order,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp)
-    : ctx_(ctx)
-    , uri_(util::rstrip_uri(uri))
+    : uri_(util::rstrip_uri(uri))
+    , ctx_(ctx)
     , result_order_(result_order)
     , timestamp_(timestamp) {
-    for (auto& it : ctx->config())
-        config_[it.first] = it.second;
-
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
     fill_metadata_cache();
@@ -146,7 +143,7 @@ SOMAArray::SOMAArray(
 void SOMAArray::fill_metadata_cache() {
     std::shared_ptr<Array> array;
     if (arr_->query_type() == TILEDB_WRITE) {
-        array = std::make_shared<Array>(*ctx_, uri_, TILEDB_READ);
+        array = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
     } else {
         array = arr_;
     }
@@ -164,17 +161,13 @@ void SOMAArray::fill_metadata_cache() {
     }
 }
 
-const std::string& SOMAArray::uri() const {
+const std::string SOMAArray::uri() const {
     return uri_;
 };
 
-std::shared_ptr<Context> SOMAArray::ctx() {
+std::shared_ptr<SOMAContext> SOMAArray::ctx() {
     return ctx_;
 };
-
-std::map<std::string, std::string> SOMAArray::config() {
-    return config_;
-}
 
 void SOMAArray::open(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -189,6 +182,7 @@ void SOMAArray::open(
         arr_->close();
         arr_->open(tdb_mode);
     }
+    reset(column_names(), batch_size_, result_order_);
 }
 
 void SOMAArray::close() {
@@ -280,7 +274,7 @@ uint64_t SOMAArray::nnz() {
     }
 
     // Load fragment info
-    FragmentInfo fragment_info(*ctx_, uri_);
+    FragmentInfo fragment_info(*ctx_->tiledb_ctx(), uri_);
     fragment_info.load();
 
     LOG_DEBUG(fmt::format("[SOMAArray] Fragment info for array '{}'", uri_));
@@ -382,8 +376,8 @@ uint64_t SOMAArray::nnz_slow() {
 
     auto sr = SOMAArray::open(
         OpenMode::read,
-        ctx_,
         uri_,
+        ctx_,
         "count_cells",
         {mq_->schema()->domain().dimension(0).name()},
         batch_size_,
@@ -494,7 +488,7 @@ std::map<std::string, Enumeration> SOMAArray::get_attr_to_enum_mapping() {
         if (attr_has_enum(attr.name())) {
             auto enmr_label = *get_enum_label_on_attr(attr.name());
             auto enmr = ArrayExperimental::get_enumeration(
-                *ctx_, *arr_, enmr_label);
+                *ctx_->tiledb_ctx(), *arr_, enmr_label);
             result.insert({attr.name(), enmr});
         }
     }
@@ -504,7 +498,8 @@ std::map<std::string, Enumeration> SOMAArray::get_attr_to_enum_mapping() {
 std::optional<std::string> SOMAArray::get_enum_label_on_attr(
     std::string attr_name) {
     auto attr = arr_->schema().attribute(attr_name);
-    return AttributeExperimental::get_enumeration_name(*ctx_, attr);
+    return AttributeExperimental::get_enumeration_name(
+        *ctx_->tiledb_ctx(), attr);
 }
 
 bool SOMAArray::attr_has_enum(std::string attr_name) {
@@ -562,7 +557,7 @@ void SOMAArray::validate(
 
     try {
         LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));
-        arr_ = std::make_shared<Array>(*ctx_, uri_, tdb_mode);
+        arr_ = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, tdb_mode);
         if (timestamp) {
             if (timestamp->first > timestamp->second) {
                 throw std::invalid_argument("timestamp start > end");
@@ -578,8 +573,9 @@ void SOMAArray::validate(
                 "[SOMAArray] timestamp_end = {}", arr_->open_timestamp_end()));
         }
         LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
-        ArrayExperimental::load_all_enumerations(*ctx_, *(arr_.get()));
-        mq_ = std::make_unique<ManagedQuery>(arr_, ctx_, name);
+        ArrayExperimental::load_all_enumerations(
+            *ctx_->tiledb_ctx(), *(arr_.get()));
+        mq_ = std::make_unique<ManagedQuery>(arr_, ctx_->tiledb_ctx(), name);
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
             fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));

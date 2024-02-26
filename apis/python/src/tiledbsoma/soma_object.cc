@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2023 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,24 +47,41 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_object(py::module &m) {
+void load_soma_object(py::module& m) {
     py::class_<SOMAObject>(m, "SOMAObject")
 
-    .def_static("open", [](std::string uri, 
-                           OpenMode mode, 
-                           std::map<std::string, std::string> config, 
-                           std::optional<std::pair<uint64_t, uint64_t>> timestamp) -> py::object {
-        if(mode == OpenMode::write)
-            TPY_ERROR_LOC("SOMAObjects for write mode not handled in Python API yet.");
+        .def_static(
+            "open",
+            [](std::string_view uri,
+               OpenMode mode,
+               std::shared_ptr<SOMAContext> context,
+               std::optional<std::pair<uint64_t, uint64_t>> timestamp)
+                -> py::object {
+                try {
+                    auto obj = SOMAObject::open(uri, mode, context, timestamp);
+                    if (obj->type() == "SOMADataFrame")
+                        return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
+                    else if (obj->type() == "SOMASparseNDArray")
+                        return py::cast(dynamic_cast<SOMASparseNDArray&>(*obj));
+                    else if (obj->type() == "SOMADenseNDArray")
+                        return py::cast(dynamic_cast<SOMADenseNDArray&>(*obj));
+                    else if (obj->type() == "SOMACollection")
+                        return py::cast(dynamic_cast<SOMACollection&>(*obj));
+                    else if (obj->type() == "SOMAExperiment")
+                        return py::cast(dynamic_cast<SOMAExperiment&>(*obj));
+                    else if (obj->type() == "SOMAMeasurement")
+                        return py::cast(dynamic_cast<SOMAMeasurement&>(*obj));
+                    return py::none();
+                } catch (...) {
+                    return py::none();
+                }
+            },
+            "uri"_a,
+            "mode"_a,
+            "context"_a,
+            py::kw_only(),
+            "timestamp"_a = py::none())
 
-        try{
-            auto obj = SOMAObject::open(uri, mode, config, timestamp);
-            if (obj->type() == "SOMADataFrame")
-                return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
-        }
-        catch(...){
-            TPY_ERROR_LOC("SOMAObject not handled in Python API yet.");
-        }
-    });
-}
-}
+        .def_property_readonly("type", &SOMAObject::type);
+};
+}  // namespace libtiledbsomacpp
