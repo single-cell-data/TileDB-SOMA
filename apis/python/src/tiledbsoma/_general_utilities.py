@@ -10,6 +10,7 @@ import platform
 import sys
 
 import tiledb
+import somacore
 
 from .pytiledbsoma import version as libtiledbsoma_version
 
@@ -66,6 +67,7 @@ def show_package_versions() -> None:
     Lifecycle: maturing
     """
     print("tiledbsoma.__version__       ", get_implementation_version())
+    print("somacore.__version__         ", somacore.__version__)
     print("TileDB-Py tiledb.version()   ", tiledb.version())
     print(
         "TileDB core version          ",
