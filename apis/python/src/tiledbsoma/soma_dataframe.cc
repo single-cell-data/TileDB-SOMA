@@ -53,28 +53,30 @@ void load_soma_dataframe(py::module& m) {
             "create",
             [](std::string_view uri,
                py::object py_schema,
-               py::object py_index_columns,
+               std::vector<std::string> index_columns_names,
+               py::object py_domains,
+               py::object py_extents,
                std::shared_ptr<SOMAContext> context) {
                 ArrowSchema schema;
                 uintptr_t schema_ptr = (uintptr_t)(&schema);
                 py_schema.attr("_export_to_c")(schema_ptr);
 
-                ArrowSchema index_columns_schema;
-                ArrowArray index_columns_array;
-                uintptr_t index_columns_schema_ptr =
-                    (uintptr_t)(&index_columns_schema);
-                uintptr_t
-                    index_columns_array_ptr = (uintptr_t)(&index_columns_array);
-                py_index_columns.attr("_export_to_c")(
-                    index_columns_array_ptr, index_columns_schema_ptr);
+                ArrowArray domains;
+                uintptr_t domains_ptr = (uintptr_t)(&domains);
+                py_domains.attr("_export_to_c")(domains_ptr);
 
-                // return SOMADataFrame::create(
-                //     uri,
-                //     std::make_shared<ArrowSchema>(schema),
-                //     ArrowTable(
-                //         std::make_shared<ArrowArray>(index_columns_schema),
-                //         std::make_shared<ArrowSchema>(index_columns_array)),
-                //     context);
+                ArrowArray extents;
+                uintptr_t extents_ptr = (uintptr_t)(&extents);
+                py_extents.attr("_export_to_c")(extents_ptr);
+
+                return SOMADataFrame::create(
+                    uri,
+                    std::make_shared<ArrowSchema>(schema),
+                    ColumnIndexInfo(
+                        index_columns_names,
+                        std::make_shared<ArrowArray>(domains),
+                        std::make_shared<ArrowArray>(extents)),
+                    context);
             })
 
         .def_static(

@@ -219,7 +219,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
                 )
 
-        index_columns_info = []
+        domains = []
+        extents = []
         for index_column_name, slot_domain in zip(index_column_names, domain):
             pa_type = schema.field(index_column_name).type
             dtype = _arrow_types.tiledb_type_from_arrow_type(
@@ -237,21 +238,20 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 slot_domain,
             )
 
-            index_columns_info.append(
-                pa.chunked_array(
-                    [pa.array(slot_domain, pa_type), pa.array([extent], pa_type)]
-                )
-            )
+            domains.append(slot_domain)
+            extents.append([extent])
 
         handle = clib.SOMADataFrame.create(
             uri,
             schema,
-            pa.Table.from_arrays(index_columns_info, ["column_info"]),
+            index_column_names,
+            pa.array(domains),
+            pa.array(extents),
             context.native_context,
         )
         
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-        DataFrame._set_create_metadata(handle)
+
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -514,12 +514,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # the user set index_column_names = ["meister", "burger"] when creating the TileDB schema.
         # Then the above for-loop over the Arrow schema will find the former ordering, but for the
         # ``writer[dims] = attrs`` below we must have dims with the latter ordering.
-        print("SCHEMAAAAAAAAAAAAAAA")
-        print(values.schema)
-        print("BATCHESSSSSSSSSSSSSS ")
         for batch in values.to_batches():
             self._handle.write(batch)
-        print("DONEEEEEEEEE")
         # dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
         # dim_cols_tuple = tuple(dim_cols_list)
         # self._handle.writer[dim_cols_tuple] = attr_cols_map
