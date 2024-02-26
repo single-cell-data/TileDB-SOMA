@@ -96,6 +96,14 @@ sr_next <- function(sr) {
     .Call(`_tiledbsoma_sr_next`, sr)
 }
 
+sr_reset <- function(sr) {
+    invisible(.Call(`_tiledbsoma_sr_reset`, sr))
+}
+
+sr_set_dim_points <- function(sr, dim, points) {
+    invisible(.Call(`_tiledbsoma_sr_set_dim_points`, sr, dim, points))
+}
+
 #' TileDB SOMA statistics
 #'
 #' These functions expose the TileDB Core functionality for performance measurements
