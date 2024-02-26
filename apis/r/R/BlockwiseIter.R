@@ -58,7 +58,9 @@ BlockwiseReadIterBase <- R6::R6Class(
       if (self$read_complete()) {
         return(private$.readComplete())
       }
-      # TODO: adjust coords of `sr`
+      super$reset()
+      super$set_dim_points(self$array$dimnames()[self$axis + 1L],
+                           self$coords_axis)
       return(super$read_next())
     }
   ),
