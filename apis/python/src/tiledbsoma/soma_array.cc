@@ -532,10 +532,29 @@ void load_soma_array(py::module& m) {
                     arrow_array_ptr, arrow_schema_ptr);
 
                 for (auto i = 0; i < arrow_schema.n_children; ++i) {
+                    auto child_arr = arrow_array.children[i];
+                    auto len = child_arr->length;
+                    std::optional<std::vector<uint64_t>> offsets = std::nullopt;
+                    std::optional<std::vector<uint8_t>> validity = std::nullopt;
+
+                    // if (child_arr->n_buffers == 3) {
+                    //     auto offsets_ptr = (uint64_t*)child_arr->buffers[3];
+                    //     offsets = std::vector<uint64_t>(
+                    //         offsets_ptr, offsets_ptr + len);
+                    // }
+
+                    // if (child_arr->null_count != 0) {
+                    //     auto validity_ptr = (uint8_t*)child_arr->buffers[0];
+                    //     validity = std::vector<uint8_t>(
+                    //         validity_ptr, validity_ptr + len);
+                    // }
+
                     array.set_column_data(
                         arrow_schema.children[i]->name,
-                        arrow_array.children[i]->buffers[1],
-                        arrow_array.children[i]->length);
+                        child_arr->buffers[1],
+                        len,
+                        offsets,
+                        validity);
                 }
                 array.write();
             })
@@ -679,13 +698,15 @@ void load_soma_array(py::module& m) {
                     "join");
 
                 for (auto const& [key, val] : array.get_metadata()) {
-                    auto [tdb_type, value_num, value] = *(array.get_metadata(key));
+                    auto [tdb_type, value_num, value] = *(
+                        array.get_metadata(key));
 
-                    if (tdb_type == TILEDB_STRING_ASCII) {
-                        auto py_buf = py::array(py::dtype("|S1"), value_num, value);                        
-                    } else if (tdb_type == TILEDB_STRING_UTF8) {
-                        auto py_buf = py::array(py::dtype("|S1"), value_num, value);
-                        results[py::str(key)] = py_buf.attr("tobytes")().attr("decode")("UTF-8");
+                    if (tdb_type == TILEDB_STRING_UTF8 |
+                        tdb_type == TILEDB_STRING_ASCII) {
+                        auto py_buf = py::array(
+                            py::dtype("|S1"), value_num, value);
+                        results[py::str(key)] = py_buf.attr("tobytes")().attr(
+                            "decode")("UTF-8");
                     } else {
                         py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
                         results[py::str(key)] = py::array(

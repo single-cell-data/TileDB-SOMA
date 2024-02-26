@@ -405,7 +405,11 @@ class SOMAArray : public SOMAObject {
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
     void set_column_data(
-        std::string_view name, const void* data, uint64_t num_elems);
+        std::string_view name,
+        const void* data,
+        uint64_t num_elems,
+        std::optional<std::vector<uint64_t>> offsets = std::nullopt,
+        std::optional<std::vector<uint8_t>> validity = std::nullopt);
 
     /**
      * @brief Write ArrayBuffers data to the array.

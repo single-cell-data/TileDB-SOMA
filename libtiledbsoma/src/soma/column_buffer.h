@@ -122,11 +122,21 @@ class ColumnBuffer {
      * @param data pointer to the beginning of the data to write
      * @param num_elems the number of elements in the column
      */
-    void set_data(const void* data, uint64_t num_elems) {
+    void set_data(
+        const void* data,
+        uint64_t num_elems,
+        std::optional<std::vector<uint64_t>> offsets = std::nullopt,
+        std::optional<std::vector<uint8_t>> validity = std::nullopt) {
         this->num_cells_ = num_elems;
         this->data_.resize(num_elems);
         this->data_.assign(
             (std::byte*)data, (std::byte*)data + num_elems * type_size_);
+
+        if (offsets.has_value())
+            offsets_ = *offsets;
+
+        if (validity.has_value())
+            validity_ = *validity;
     }
 
     /**
