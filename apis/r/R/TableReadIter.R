@@ -13,7 +13,7 @@ TableReadIter <- R6::R6Class(
   public = list(
     #' @description  Concatenate remainder of iterator.
     #' @return arrow::\link[arrow]{Table}
-    concat = function() soma_arraw_to_arrow_table_concat(self)
+    concat = function() soma_array_to_arrow_table_concat(self)
   ),
 
   private = list(
