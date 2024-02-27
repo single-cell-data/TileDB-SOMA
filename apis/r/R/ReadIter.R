@@ -29,6 +29,7 @@ ReadIter <- R6::R6Class(
     #' If read is complete, retunrs `NULL` and raises warning.
     #' @return \code{NULL} or one of arrow::\link[arrow]{Table}, \link{matrixZeroBasedView}
     read_next = function() {
+      message("readiter read next")
       if (is.null(private$soma_reader_pointer)) {
           return(NULL)
       }
@@ -75,17 +76,15 @@ ReadIter <- R6::R6Class(
 
     # to be refined in derived classes
     soma_reader_transform = function(x) {
+      message("readiter transform")
       .NotYetImplemented()
     },
 
-    .readComplete = function(immediate. = FALSE) {
-      warning(
-        warningCondition(
-          "Iteration complete, returning NULL",
-          class = "iterationCompleteWarning"
-        ),
-        immediate. = immediate.
-      )
+    .readComplete = function() {
+      warning(warningCondition(
+        "Iteration complete, returning NULL",
+        class = "iterationCompleteWarning"
+      ))
       return(NULL)
     }
 
