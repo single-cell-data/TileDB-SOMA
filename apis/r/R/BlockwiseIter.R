@@ -139,7 +139,7 @@ BlockwiseTableReadIter <- R6::R6Class(
     #'
     #' @return ...
     #'
-    concat = function() soma_arraw_to_arrow_table_concat(self)
+    concat = function() soma_array_to_arrow_table_concat(self)
   ),
   private = list(
     soma_reader_transform = function(x) soma_array_to_arrow_table(x)

@@ -12,7 +12,7 @@ soma_array_to_arrow_table <- function(x) {
   )
 }
 
-soma_arraw_to_arrow_table_concat <- function(it) {
+soma_array_to_arrow_table_concat <- function(it) {
   stopifnot(inherits(it, 'ReadIter'))
   tbl <- it$read_next()
   while (!it$read_complete()) {
