@@ -87,12 +87,11 @@ BlockwiseReadIterBase <- R6::R6Class(
       if (self$read_complete()) {
         return(private$.readComplete())
       }
-      super$reset()
+      private$reset()
       dimnam <- self$array$dimnames()[self$axis + 1L]
       nextelems <- self$coords_axis$nextElem()
-      super$set_dim_points(dimnam, nextelems)
-      val <- private$.read_next()
-      val
+      private$set_dim_points(dimnam, nextelems)
+      return(private$.read_next())
     }
   ),
   active = list(
@@ -119,7 +118,27 @@ BlockwiseReadIterBase <- R6::R6Class(
     .coords = list(),
     .axis = integer(1L),
     .reindex_disable_on_axis = NULL,
-    .eager = logical(1L)
+    .eager = logical(1L),
+    # @description Reset internal state of SOMA Reader while keeping array open
+    reset = function() {
+      if (is.null(private$soma_reader_pointer)) {
+        return(NULL)
+      }
+      sr_reset(private$soma_reader_pointer)
+      return(invisible(NULL))
+    },
+    # @description Set dimension selection on given axis
+    set_dim_points = function(dimname, points) {
+      stopifnot(
+        "Name of dimension must be character" = is.character(dimname),
+        "Points must be int64 vector" = inherits(points, "integer64")
+      )
+      if (is.null(private$soma_reader_pointer)) {
+        return(NULL)
+      }
+      sr_set_dim_points(private$soma_reader_pointer, dimname, points)
+      return(invisible(NULL))
+    }
   )
 )
 

@@ -19,8 +19,6 @@ Class that allows for read iteration of SOMA reads.
 \item \href{#method-ReadIter-read_complete}{\code{ReadIter$read_complete()}}
 \item \href{#method-ReadIter-read_next}{\code{ReadIter$read_next()}}
 \item \href{#method-ReadIter-concat}{\code{ReadIter$concat()}}
-\item \href{#method-ReadIter-reset}{\code{ReadIter$reset()}}
-\item \href{#method-ReadIter-set_dim_points}{\code{ReadIter$set_dim_points()}}
 \item \href{#method-ReadIter-clone}{\code{ReadIter$clone()}}
 }
 }
@@ -75,26 +73,6 @@ If read is complete, retunrs \code{NULL} and raises warning.
 Concatenate remainder of iterator
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ReadIter$concat()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ReadIter-reset"></a>}}
-\if{latex}{\out{\hypertarget{method-ReadIter-reset}{}}}
-\subsection{Method \code{reset()}}{
-Reset internal state of SOMA Reader while keeping array open
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ReadIter$reset()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ReadIter-set_dim_points"></a>}}
-\if{latex}{\out{\hypertarget{method-ReadIter-set_dim_points}{}}}
-\subsection{Method \code{set_dim_points()}}{
-Set dimension selection on given axis
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ReadIter$set_dim_points(dimname, points)}\if{html}{\out{</div>}}
 }
 
 }

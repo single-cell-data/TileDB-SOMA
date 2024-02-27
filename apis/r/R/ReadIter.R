@@ -43,28 +43,6 @@ ReadIter <- R6::R6Class(
     # to be refined in derived classes
     concat = function() {
       .NotYetImplemented()
-    },
-
-    #' @description Reset internal state of SOMA Reader while keeping array open
-    reset = function() {
-      if (is.null(private$soma_reader_pointer)) {
-          return(NULL)
-      }
-      message("Calling reset") # TODO: remove
-      sr_reset(private$soma_reader_pointer)
-    },
-
-    #' @description Set dimension selection on given axis
-    set_dim_points = function(dimname, points) {
-      stopifnot("Name of dimension must be character" =
-                    is.character(dimname),
-                "Points must be int64 vector" =
-                    inherits(points, "integer64"))
-      if (is.null(private$soma_reader_pointer)) {
-          return(NULL)
-      }
-      message("Setting dim points") # TODO: remove
-      sr_set_dim_points(private$soma_reader_pointer, dimname, points)
     }
   ),
 

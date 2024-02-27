@@ -24,8 +24,6 @@ Iteration chunks are retrieved as arrow::\link[arrow]{Table}
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="ReadIter" data-id="initialize"><a href='../../tiledbsoma/html/ReadIter.html#method-ReadIter-initialize'><code>tiledbsoma::ReadIter$initialize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="ReadIter" data-id="read_complete"><a href='../../tiledbsoma/html/ReadIter.html#method-ReadIter-read_complete'><code>tiledbsoma::ReadIter$read_complete()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="ReadIter" data-id="read_next"><a href='../../tiledbsoma/html/ReadIter.html#method-ReadIter-read_next'><code>tiledbsoma::ReadIter$read_next()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="ReadIter" data-id="reset"><a href='../../tiledbsoma/html/ReadIter.html#method-ReadIter-reset'><code>tiledbsoma::ReadIter$reset()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="ReadIter" data-id="set_dim_points"><a href='../../tiledbsoma/html/ReadIter.html#method-ReadIter-set_dim_points'><code>tiledbsoma::ReadIter$set_dim_points()</code></a></span></li>
 </ul>
 </details>
 }}
