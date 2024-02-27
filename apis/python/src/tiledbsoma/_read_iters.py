@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import abc
+from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
@@ -88,7 +89,6 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         size: Optional[Union[int, Sequence[int]]] = None,
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
         eager: bool = True,
-        eager_iterator_pool: Optional[ThreadPoolExecutor] = None,
         context: Optional[SOMATileDBContext] = None,
     ):
         super().__init__()
@@ -97,7 +97,14 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.array = array
         self.sr = sr
         self.eager = eager
-        self.eager_iterator_pool = eager_iterator_pool
+
+        # Assign a thread pool from the context, or create a new one if no context
+        # is available
+        if context is not None:
+            self._threadpool = context.threadpool
+        else:
+            self._threadpool = futures.ThreadPoolExecutor()
+
         self.context = context
 
         # raises on various error checks, AND normalizes args
@@ -261,19 +268,11 @@ class BlockwiseTableReadIter(BlockwiseReadIterBase[BlockwiseTableReadIterResult]
 
     def _create_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
         """Private. Blockwise Arrow Table iterator, restricted to a single axis"""
-        if self.eager and not self.eager_iterator_pool:
-            with ThreadPoolExecutor() as _pool:
-                yield from (
-                    self._reindexed_table_reader(_pool)
-                    if self.axes_to_reindex
-                    else self._table_reader()
-                )
-        else:
-            yield from (
-                self._reindexed_table_reader(_pool=self.eager_iterator_pool)
-                if self.axes_to_reindex
-                else self._table_reader()
-            )
+        yield from (
+            self._reindexed_table_reader(_pool=self._threadpool)
+            if self.axes_to_reindex
+            else self._table_reader()
+        )
 
 
 class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]):
@@ -331,16 +330,9 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         """
         Private. Iterator over SparseNDArray producing sequence of scipy sparse matrix.
         """
-
-        if self.eager and not self.eager_iterator_pool:
-            with ThreadPoolExecutor() as _pool:
-                yield from self._cs_reader(
-                    _pool
-                ) if self.compress else self._coo_reader(_pool)
-        else:
-            yield from self._cs_reader(
-                _pool=self.eager_iterator_pool
-            ) if self.compress else self._coo_reader(_pool=self.eager_iterator_pool)
+        yield from self._cs_reader(
+            _pool=self._threadpool
+        ) if self.compress else self._coo_reader(_pool=self._threadpool)
 
     def _sorted_tbl_reader(
         self, _pool: Optional[ThreadPoolExecutor] = None

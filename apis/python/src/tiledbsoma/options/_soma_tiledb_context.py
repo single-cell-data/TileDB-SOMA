@@ -7,9 +7,11 @@ import datetime
 import functools
 import threading
 import time
+from concurrent import futures
 from typing import Any, Dict, Mapping, Optional, Union
 
 import tiledb
+from somacore import ContextBase
 from typing_extensions import Self
 
 from .. import pytiledbsoma as clib
@@ -48,7 +50,7 @@ _SENTINEL = object()
 """Sentinel object to distinguish default parameters from None."""
 
 
-class SOMATileDBContext:
+class SOMATileDBContext(ContextBase):
     """Maintains TileDB-specific context for TileDB-SOMA objects.
     This context can be shared across multiple objects,
     including having a child object inherit it from its parent.
@@ -66,6 +68,7 @@ class SOMATileDBContext:
         tiledb_ctx: Optional[tiledb.Ctx] = None,
         tiledb_config: Optional[Dict[str, Union[str, float]]] = None,
         timestamp: Optional[OpenTimestamp] = None,
+        threadpool: Optional[futures.ThreadPoolExecutor] = None,
     ) -> None:
         """Initializes a new SOMATileDBContext.
 
@@ -109,6 +112,10 @@ class SOMATileDBContext:
                 Set to 0xFFFFFFFFFFFFFFFF (UINT64_MAX) to get the absolute
                 latest revision (i.e., including changes that occur "after"
                 the current wall time) as of when *each* object is opened.
+
+            threadpool: A threadpool to use for concurrent operations. If not
+                provided, a new ThreadPoolExecutor will be created with
+                default settings.
         """
         if tiledb_ctx is not None and tiledb_config is not None:
             raise ValueError(
@@ -131,8 +138,10 @@ class SOMATileDBContext:
         """The TileDB context to use, either provided or lazily constructed."""
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
 
-        """Lazily construct clib.SOMAContext."""
+        self.threadpool = threadpool or futures.ThreadPoolExecutor()
+        """User specified threadpool. If None, we'll instantiate one ourselves."""
         self._native_context: Optional[clib.SOMAContext] = None
+        """Lazily construct clib.SOMAContext."""
 
     @property
     def timestamp_ms(self) -> Optional[int]:
@@ -211,6 +220,7 @@ class SOMATileDBContext:
         tiledb_config: Optional[Dict[str, Any]] = None,
         tiledb_ctx: Optional[tiledb.Ctx] = None,
         timestamp: Optional[OpenTimestamp] = _SENTINEL,  # type: ignore[assignment]
+        threadpool: Optional[futures.ThreadPoolExecutor] = _SENTINEL,  # type: ignore[assignment]
     ) -> Self:
         """Create a copy of the context, merging changes.
 
@@ -226,6 +236,8 @@ class SOMATileDBContext:
                 Explicitly passing ``None`` will remove the timestamp.
                 For details, see the description of ``timestamp``
                 in :meth:`__init__`.
+            threadpool:
+                A threadpool to replace the current threadpool with.
 
         Lifecycle:
             Experimental.
@@ -250,8 +262,14 @@ class SOMATileDBContext:
             if timestamp is _SENTINEL:
                 # Keep the existing timestamp if not overridden.
                 timestamp = self._timestamp_ms
+            if threadpool is _SENTINEL:
+                # Keep the existing threadpool if not overridden.
+                threadpool = self.threadpool
         return type(self)(
-            tiledb_config=tiledb_config, tiledb_ctx=tiledb_ctx, timestamp=timestamp
+            tiledb_config=tiledb_config,
+            tiledb_ctx=tiledb_ctx,
+            timestamp=timestamp,
+            threadpool=threadpool,
         )
 
     def _open_timestamp_ms(self, in_timestamp: Optional[OpenTimestamp]) -> int:
