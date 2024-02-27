@@ -1,7 +1,25 @@
+#' SOMA Blockwise Read Iterator Base Class
+#'
+#' #' @description Class that allows for blockwise read iteration of SOMA reads
+#'
+#' @keywords internal
+#'
+#' @export
+#'
 BlockwiseReadIterBase <- R6::R6Class(
   classname = "BlockwiseReadIterBase",
   inherit = ReadIter,
   public = list(
+    #' @description Create
+    #'
+    #' @param sr SOMA read pointer
+    #' @param array ...
+    #' @param coords ...
+    #' @param axis ...
+    #' @param ... Ignored
+    #' @param reindex_disable_on_axis ...
+    #' @param eager ...
+    #'
     initialize = function(
       sr,
       array,
@@ -50,8 +68,18 @@ BlockwiseReadIterBase <- R6::R6Class(
       }
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
     },
+    #' @description Check if the iterated read is complete or not
+    #'
+    #' @return \code{TRUE} if read is complete, otherwise \code{FALSE}
+    #'
     read_complete = function() !self$coords_axis$hasNext() ||
       is.null(private$soma_reader_pointer),
+    #' @description Read the next chunk of the iterated read. If read
+    #' is complete, throws an \code{iterationCompleteWarning} warning and
+    #' returns \code{NULL}
+    #'
+    #' @return \code{NULL} or the next blockwise chunk of the iterated read
+    #'
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
        return(NULL)
@@ -68,15 +96,22 @@ BlockwiseReadIterBase <- R6::R6Class(
     }
   ),
   active = list(
+    #' @field array The underlying SOMA array
     array = function() private$.array,
+    #' @field context Not yet implemented
     context = function() .NotYetImplemented(),
+    #' @field axis The axis to iterate over in a blockwise fashion
     axis = function() private$.axis,
+    #' @field coords A list of \code{\link{CoordsStrider}} objects
     coords = function() private$.coords,
+    #' @field coords_axis The \code{\link{CoordsStrider}} for \code{axis}
     coords_axis = function() {
       dname <- self$array$dimnames()[self$axis + 1L]
       return(self$coords[[dname]])
     },
+    #' @field reindex_disable_on_axis ...
     reindex_disable_on_axis = function() private$.reindex_disable_on_axis,
+    #' @field eager ...
     eager = function() private$.eager
   ),
   private = list(
@@ -88,10 +123,22 @@ BlockwiseReadIterBase <- R6::R6Class(
   )
 )
 
+#' SOMA Blockwise Read Iterator for Arrow Tables
+#'
+#' @description ...
+#'
+#' @keywords internal
+#'
+#' @export
+#'
 BlockwiseTableReadIter <- R6::R6Class(
   classname = "BlockwiseTableReadIter",
   inherit = BlockwiseReadIterBase,
   public = list(
+    #' @description ...
+    #'
+    #' @return ...
+    #'
     concat = function() soma_arraw_to_arrow_table_concat(self)
   ),
   private = list(
@@ -99,10 +146,30 @@ BlockwiseTableReadIter <- R6::R6Class(
   )
 )
 
+#' SOMA Blockwise Read Iterator for Sparse Matrices
+#'
+#' @description ...
+#'
+#' @keywords internal
+#'
+#' @export
+#'
 BlockwiseSparseReadIter <- R6::R6Class(
   classname = "BlockwiseSparseReadIter",
   inherit = BlockwiseReadIterBase,
   public = list(
+    #' @description ...
+    #'
+    #' @param sr ...
+    #' @param array ...
+    #' @param coords ...
+    #' @param axis ...
+    #' @param ... Ignored
+    #' @param repr ...
+    #' @param compress ...
+    #' @param reindex_disable_on_axis ...
+    #' @param eager ...
+    #'
     initialize = function(
       sr,
       array,
@@ -127,13 +194,21 @@ BlockwiseSparseReadIter <- R6::R6Class(
       stopifnot(isTRUE(compress) || isFALSE(compress))
       private$.compress <- compress
     },
+    #' @description ...
+    #'
+    #' @return ...
+    #'
     concat = function() {
       # TODO: implement concat() of blockwise sparse matrix iterator
       .NotYetImplemented()
     }
   ),
   active = list(
+    #' @field repr ...
+    #'
     repr = function() private$.repr,
+    #' @field compress ...
+    #'
     compress = function() private$.compress
   ),
   private = list(
