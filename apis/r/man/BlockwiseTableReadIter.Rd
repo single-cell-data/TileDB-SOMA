@@ -20,8 +20,6 @@
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="ReadIter" data-id="reset"><a href='../../tiledbsoma/html/ReadIter.html#method-ReadIter-reset'><code>tiledbsoma::ReadIter$reset()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="ReadIter" data-id="set_dim_points"><a href='../../tiledbsoma/html/ReadIter.html#method-ReadIter-set_dim_points'><code>tiledbsoma::ReadIter$set_dim_points()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="BlockwiseReadIterBase" data-id="initialize"><a href='../../tiledbsoma/html/BlockwiseReadIterBase.html#method-BlockwiseReadIterBase-initialize'><code>tiledbsoma::BlockwiseReadIterBase$initialize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="BlockwiseReadIterBase" data-id="read_complete"><a href='../../tiledbsoma/html/BlockwiseReadIterBase.html#method-BlockwiseReadIterBase-read_complete'><code>tiledbsoma::BlockwiseReadIterBase$read_complete()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="BlockwiseReadIterBase" data-id="read_next"><a href='../../tiledbsoma/html/BlockwiseReadIterBase.html#method-BlockwiseReadIterBase-read_next'><code>tiledbsoma::BlockwiseReadIterBase$read_next()</code></a></span></li>
