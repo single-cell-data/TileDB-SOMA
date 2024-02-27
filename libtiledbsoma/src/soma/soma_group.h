@@ -251,8 +251,15 @@ class SOMAGroup : public SOMAObject {
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
-    std::map<std::string, MetadataValue> get_metadata();
     std::optional<MetadataValue> get_metadata(const std::string& key);
+
+    /**
+     * Get a mapping of all metadata keys with its associated value datatype,
+     * number of values, and value in binary form.
+     *
+     * @return std::map<std::string, MetadataValue>
+     */
+    std::map<std::string, MetadataValue> get_metadata();
 
     /**
      * Check if the key exists in metadata from an open group. The group must

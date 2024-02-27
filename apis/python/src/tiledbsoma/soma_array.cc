@@ -39,6 +39,57 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
+void write(SOMAArray& array, py::handle py_batch) {
+    ArrowSchema arrow_schema;
+    ArrowArray arrow_array;
+    uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
+    uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
+    py_batch.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
+
+    for (auto i = 0; i < arrow_schema.n_children; ++i) {
+        auto sch_ = arrow_schema.children[i];
+        auto arr_ = arrow_array.children[i];
+
+        const void* data;
+        uint64_t* offsets = nullptr;
+        uint8_t* validities = nullptr;
+
+        if (arr_->null_count != 0) {
+            validities = (uint8_t*)arr_->buffers[0];
+        }
+
+        if (arr_->n_buffers == 3) {
+            offsets = (uint64_t*)arr_->buffers[1];
+            data = arr_->buffers[2];
+        } else {
+            data = arr_->buffers[1];
+        }
+
+        array.set_column_data(
+            sch_->name, arr_->length, data, offsets, validities);
+    }
+    array.write();
+}
+
+py::dict meta(SOMAArray& array){
+    py::dict results;
+
+    for (auto [key, val] : array.get_metadata()) {
+        auto [tdb_type, value_num, value] = val;
+
+        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII) {
+            auto py_buf = py::array(py::dtype("|S1"), value_num, value);
+            auto res = py_buf.attr("tobytes")().attr("decode")("UTF-8");
+            results[py::str(key)] = res;
+        } else {
+            py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+            auto res = py::array(value_type, value_num, value).attr("item")(0);;
+            results[py::str(key)] = res;
+        }
+    }
+    return results;
+}
+
 py::tuple get_enum(SOMAArray& sr, std::string attr_name) {
     auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
     if (attr_to_enmrs.count(attr_name) == 0)
@@ -521,40 +572,7 @@ void load_soma_array(py::module& m) {
                 return std::nullopt;
             })
 
-        .def(
-            "write",
-            [](SOMAArray& array, py::handle py_batch) {
-                ArrowSchema arrow_schema;
-                ArrowArray arrow_array;
-                uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
-                uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
-                py_batch.attr("_export_to_c")(
-                    arrow_array_ptr, arrow_schema_ptr);
-
-                for (auto i = 0; i < arrow_schema.n_children; ++i) {
-                    auto sch_ = arrow_schema.children[i];
-                    auto arr_ = arrow_array.children[i];
-
-                    const void* data;
-                    uint64_t* offsets = nullptr;
-                    uint8_t* validities = nullptr;
-
-                    if (arr_->null_count != 0) {
-                        validities = (uint8_t*)arr_->buffers[0];
-                    }
-
-                    if (arr_->n_buffers == 3) {
-                        offsets = (uint64_t*)arr_->buffers[1];
-                        data = arr_->buffers[2];
-                    } else {
-                        data = arr_->buffers[1];
-                    }
-
-                    array.set_column_data(
-                        sch_->name, arr_->length, data, offsets, validities);
-                }
-                array.write();
-            })
+        .def("write", write)
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 
@@ -687,35 +705,7 @@ void load_soma_array(py::module& m) {
             "get_metadata",
             py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
 
-        .def(
-            "meta",
-            [](SOMAArray& array) -> py::dict {
-                py::dict results;
-                auto np_join = py::module::import("numpy").attr("char").attr(
-                    "join");
-
-                for (auto const& [key, val] : array.get_metadata()) {
-                    auto [tdb_type, value_num, value] = *(
-                        array.get_metadata(key));
-
-                    if (tdb_type == TILEDB_STRING_UTF8 ||
-                        tdb_type == TILEDB_STRING_ASCII) {
-                        auto py_buf = py::array(
-                            py::dtype("|S1"), value_num, value);
-                        results[py::str(key)] = py_buf.attr("tobytes")().attr(
-                            "decode")("UTF-8");
-                    } else {
-                        py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
-                        results[py::str(key)] = py::array(
-                            value_type, value_num, value)[0];
-                    }
-                }
-                return results;
-            })
-
-        .def(
-            "get_metadata",
-            py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
+        .def("meta", meta)
 
         .def("has_metadata", &SOMAArray::has_metadata)
 

@@ -241,6 +241,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             domains.append(slot_domain)
             extents.append([extent])
 
+        # TODO add as kw args
         handle = clib.SOMADataFrame.create(
             uri,
             schema,
@@ -369,8 +370,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        print("STARTING READ PATH")
-        
         del batch_size  # Currently unused.
         _util.check_unpartitioned(partitions)
         self._check_open_read()
@@ -396,8 +395,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             sr.set_condition(QueryCondition(value_filter), handle.schema)
 
         self._set_reader_coords(sr, coords)
-        
-        print(sr.schema)
 
         # # TODO: batch_size
         return TableReadIter(sr)
@@ -518,13 +515,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # the user set index_column_names = ["meister", "burger"] when creating the TileDB schema.
         # Then the above for-loop over the Arrow schema will find the former ordering, but for the
         # ``writer[dims] = attrs`` below we must have dims with the latter ordering.
-        print("STARTING WRITE PATH")
         for batch in values.to_batches():
-            print(batch)
             self._handle.write(batch)
-        # dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
-        # dim_cols_tuple = tuple(dim_cols_list)
-        # self._handle.writer[dim_cols_tuple] = attr_cols_map
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
             platform_config
         )

@@ -250,35 +250,37 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     ArraySchema schema(*ctx, TILEDB_SPARSE);
     Domain domain(*ctx);
 
-    for (size_t col_idx = 0; col_idx < index_column_names.size(); ++col_idx) {
-        for (int64_t schema_idx = 0; schema_idx < arrow_schema->n_children;
-             ++schema_idx) {
-            auto child = arrow_schema->children[schema_idx];
-            auto type = ArrowAdapter::to_tiledb_format(child->format);
-            if (child->name == index_column_names[col_idx]) {
-                auto dim = Dimension::create(
-                    *ctx,
-                    child->name,
-                    type,
-                    domains->children[col_idx]->buffers[1],
-                    extents->children[col_idx]->buffers[1]);
+    for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children; ++sch_idx) {
+        auto child = arrow_schema->children[sch_idx];
+        auto type = ArrowAdapter::to_tiledb_format(child->format);
 
-                domain.add_dimension(dim);
-            } else {
-                Attribute attr(*ctx, child->name, type);
+        auto idx_col_begin = index_column_names.begin();
+        auto idx_col_end = index_column_names.end();
+        auto idx_col_it = std::find(idx_col_begin, idx_col_end, child->name);
+        if (idx_col_it != idx_col_end) {
+            auto idx_col_idx = std::distance(idx_col_begin, idx_col_it);
+            auto dim = Dimension::create(
+                *ctx,
+                child->name,
+                type,
+                domains->children[idx_col_idx]->buffers[1],
+                extents->children[idx_col_idx]->buffers[1]);
 
-                // if (child->flags & ARROW_FLAG_NULLABLE) {
-                //     attr.set_nullable(true);
-                // }
+            domain.add_dimension(dim);
+        } else {
+            Attribute attr(*ctx, child->name, type);
 
-                if ((strcmp(child->format, "U") == 0) |
-                    (strcmp(child->format, "Z") == 0) |
-                    (strcmp(child->format, "u") == 0) |
-                    (strcmp(child->format, "z") == 0)) {
-                    attr.set_cell_val_num(TILEDB_VAR_NUM);
-                }
-                schema.add_attribute(attr);
+            // if (child->flags & ARROW_FLAG_NULLABLE) {
+            //     attr.set_nullable(true);
+            // }
+
+            if ((strcmp(child->format, "U") == 0) |
+                (strcmp(child->format, "Z") == 0) |
+                (strcmp(child->format, "u") == 0) |
+                (strcmp(child->format, "z") == 0)) {
+                attr.set_cell_val_num(TILEDB_VAR_NUM);
             }
+            schema.add_attribute(attr);
         }
     }
 

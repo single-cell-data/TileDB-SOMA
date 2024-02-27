@@ -128,7 +128,6 @@ SOMAArray::SOMAArray(
     ctx_ = std::make_shared<SOMAContext>(platform_config);
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
-    fill_metadata_cache();
 }
 
 SOMAArray::SOMAArray(
@@ -146,29 +145,29 @@ SOMAArray::SOMAArray(
     , timestamp_(timestamp) {
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
-    fill_metadata_cache();
 }
 
-void SOMAArray::fill_metadata_cache() {
-    std::shared_ptr<Array> array;
-    if (arr_->query_type() == TILEDB_WRITE) {
-        array = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
-    } else {
-        array = arr_;
-    }
+// void SOMAArray::fill_metadata_cache() {
+//     std::shared_ptr<Array> array;
+//     if (arr_->query_type() == TILEDB_WRITE) {
+//         array = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_,
+//         TILEDB_READ);
+//     } else {
+//         array = arr_;
+//     }
 
-    for (uint64_t idx = 0; idx < array->metadata_num(); ++idx) {
-        std::string key;
-        tiledb_datatype_t value_type;
-        uint32_t value_num;
-        const void* value;
-        array->get_metadata_from_index(
-            idx, &key, &value_type, &value_num, &value);
-        MetadataValue mdval(value_type, value_num, value);
-        std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-        metadata_.insert(mdpair);
-    }
-}
+//     for (uint64_t idx = 0; idx < array->metadata_num(); ++idx) {
+//         std::string key;
+//         tiledb_datatype_t value_type;
+//         uint32_t value_num;
+//         const void* value;
+//         array->get_metadata_from_index(
+//             idx, &key, &value_type, &value_num, &value);
+//         MetadataValue mdval(value_type, value_num, value);
+//         std::pair<std::string, const MetadataValue> mdpair(key, mdval);
+//         metadata_.insert(mdpair);
+//     }
+// }
 
 const std::string SOMAArray::uri() const {
     return uri_;
@@ -551,10 +550,6 @@ void SOMAArray::set_metadata(
         throw TileDBSOMAError("soma_object_type cannot be modified.");
     }
     arr_->put_metadata(key, value_type, value_num, value);
-
-    MetadataValue mdval(value_type, value_num, value);
-    std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-    metadata_.insert(mdpair);
 }
 
 void SOMAArray::delete_metadata(const std::string& key) {
@@ -562,26 +557,44 @@ void SOMAArray::delete_metadata(const std::string& key) {
         throw TileDBSOMAError("soma_object_type cannot be deleted.");
     }
     arr_->delete_metadata(key);
-    metadata_.erase(key);
-}
-
-std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
-    return metadata_;
 }
 
 std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
-    if (metadata_.count(key) == 0) {
+    tiledb_datatype_t value_type;
+    uint32_t value_num;
+    const void* value;
+
+    arr_->get_metadata(key, &value_type, &value_num, &value);
+
+    if (value == nullptr)
         return std::nullopt;
+
+    return MetadataValue(value_type, value_num, value);
+}
+
+std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
+    std::map<std::string, MetadataValue> meta;
+
+    std::string key;
+    tiledb_datatype_t value_type;
+    uint32_t value_num;
+    const void* value;
+
+    for (uint64_t idx = 0; idx < arr_->metadata_num(); ++idx) {
+        arr_->get_metadata_from_index(
+            idx, &key, &value_type, &value_num, &value);
+        meta[key] = MetadataValue(value_type, value_num, value);
     }
-    return metadata_[key];
+
+    return meta;
 }
 
 bool SOMAArray::has_metadata(const std::string& key) {
-    return metadata_.count(key) != 0;
+    return get_metadata(key) == std::nullopt;
 }
 
 uint64_t SOMAArray::metadata_num() const {
-    return metadata_.size();
+    return arr_->metadata_num();
 }
 
 void SOMAArray::validate(

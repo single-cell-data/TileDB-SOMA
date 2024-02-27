@@ -173,7 +173,6 @@ class SOMAArray : public SOMAObject {
         , ctx_(other.ctx_)
         , batch_size_(other.batch_size_)
         , result_order_(other.result_order_)
-        , metadata_(other.metadata_)
         , timestamp_(other.timestamp_)
         , mq_(std::make_unique<ManagedQuery>(
               other.arr_, other.ctx_->tiledb_ctx(), other.name_))
@@ -689,11 +688,6 @@ class SOMAArray : public SOMAObject {
     //= private non-static
     //===================================================================
 
-    /**
-     * Fills the metadata cache upon opening the array.
-     */
-    void fill_metadata_cache();
-
     // SOMAArray URI
     std::string uri_;
 
@@ -708,9 +702,6 @@ class SOMAArray : public SOMAObject {
 
     // Result order
     ResultOrder result_order_;
-
-    // Metadata cache
-    std::map<std::string, MetadataValue> metadata_;
 
     // Read timestamp range (start, end)
     std::optional<std::pair<uint64_t, uint64_t>> timestamp_;

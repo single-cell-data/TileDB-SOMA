@@ -127,12 +127,21 @@ class ColumnBuffer {
         const void* data,
         uint64_t* offsets = nullptr,
         uint8_t* validity = nullptr) {
-        this->num_cells_ = num_elems;
-        this->data_.resize(num_elems);
-        this->data_.assign((std::byte*)data, (std::byte*)data + num_elems);
+        num_cells_ = num_elems;
 
         if (offsets != nullptr) {
-            offsets_.assign((uint32_t*)offsets, (uint32_t*)offsets + num_elems);
+            // TODO this can be either a unit32_t or uint64_t pointer
+            offsets_.resize(num_elems + 1);
+            offsets_.assign(
+                (uint32_t*)offsets, (uint32_t*)offsets + num_elems + 1);
+
+            data_.resize(offsets_[num_elems + 1]);
+            data_.assign(
+                (std::byte*)data, (std::byte*)data + offsets_[num_elems]);
+        } else {
+            data_.resize(num_elems);
+            data_.assign(
+                (std::byte*)data, (std::byte*)data + num_elems * type_size_);
         }
 
         if (validity != nullptr) {

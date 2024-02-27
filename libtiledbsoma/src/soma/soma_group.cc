@@ -200,37 +200,51 @@ void SOMAGroup::set_metadata(
     }
 
     group_->put_metadata(key, value_type, value_num, value);
-    MetadataValue mdval(value_type, value_num, value);
-    std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-    metadata_.insert(mdpair);
 }
 
 void SOMAGroup::delete_metadata(const std::string& key) {
     if (key.compare("soma_object_type") == 0) {
         throw TileDBSOMAError("soma_object_type cannot be deleted.");
     }
-
     group_->delete_metadata(key);
-    metadata_.erase(key);
-}
-
-std::map<std::string, MetadataValue> SOMAGroup::get_metadata() {
-    return metadata_;
 }
 
 std::optional<MetadataValue> SOMAGroup::get_metadata(const std::string& key) {
-    if (metadata_.count(key) == 0) {
+    tiledb_datatype_t value_type;
+    uint32_t value_num;
+    const void* value;
+
+    group_->get_metadata(key, &value_type, &value_num, &value);
+
+    if (value == nullptr)
         return std::nullopt;
+
+    return MetadataValue(value_type, value_num, value);
+}
+
+std::map<std::string, MetadataValue> SOMAGroup::get_metadata() {
+    std::map<std::string, MetadataValue> meta;
+
+    std::string key;
+    tiledb_datatype_t value_type;
+    uint32_t value_num;
+    const void* value;
+
+    for (uint64_t idx = 0; idx < group_->metadata_num(); ++idx) {
+        group_->get_metadata_from_index(
+            idx, &key, &value_type, &value_num, &value);
+        meta[key] = MetadataValue(value_type, value_num, value);
     }
-    return metadata_[key];
+
+    return meta;
 }
 
 bool SOMAGroup::has_metadata(const std::string& key) {
-    return metadata_.count(key) != 0;
+    return get_metadata(key) == std::nullopt;
 }
 
 uint64_t SOMAGroup::metadata_num() const {
-    return metadata_.size();
+    return group_->metadata_num();
 }
 
 }  // namespace tiledbsoma
