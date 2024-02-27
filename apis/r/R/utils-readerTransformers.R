@@ -12,6 +12,16 @@ soma_array_to_arrow_table <- function(x) {
   )
 }
 
+soma_arraw_to_arrow_table_concat <- function(it) {
+  stopifnot(inherits(it, 'ReadIter'))
+  tbl <- it$read_next()
+  while (!it$read_complete()) {
+    nxt <- it$read_next()
+    tbl <- arrow::concat_tables(tbl, nxt)
+  }
+  return(tbl)
+}
+
 #' Transformer function: Arrow table to Matrix::sparseMatrix
 #'
 #' @description Converts a \link[arrow]{Table} of sparse format (columns:

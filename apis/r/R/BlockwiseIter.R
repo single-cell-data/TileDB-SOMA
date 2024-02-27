@@ -50,9 +50,9 @@ BlockwiseReadIterBase <- R6::R6Class(
       }
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
     },
-    read_complete = function() !self$coords_axis$hasNext() || super$read_complete(),
+    read_complete = function() !self$coords_axis$hasNext() ||
+      is.null(private$soma_reader_pointer),
     read_next = function() {
-      message("blockwise read next")
       if (is.null(private$soma_reader_pointer)) {
        return(NULL)
       }
@@ -63,8 +63,7 @@ BlockwiseReadIterBase <- R6::R6Class(
       dimnam <- self$array$dimnames()[self$axis + 1L]
       nextelems <- self$coords_axis$nextElem()
       super$set_dim_points(dimnam, nextelems)
-      val <- super$read_next()
-      #print(str(val))  # TODO
+      val <- private$.read_next()
       val
     }
   ),
@@ -93,18 +92,10 @@ BlockwiseTableReadIter <- R6::R6Class(
   classname = "BlockwiseTableReadIter",
   inherit = BlockwiseReadIterBase,
   public = list(
-    concat = function() {
-      message("blockwise table concat")
-      # TODO: implement concat() of blockwise table iterator
-      .NotYetImplemented()
-    }
+    concat = function() soma_arraw_to_arrow_table_concat(self)
   ),
   private = list(
-    soma_reader_transform = function(x) {
-      message("blockwise table transform")
-      # TODO: implement soma_reader_transform() of blockwise table iterator
-      .NotYetImplemented()
-    }
+    soma_reader_transform = function(x) soma_array_to_arrow_table(x)
   )
 )
 
@@ -137,7 +128,6 @@ BlockwiseSparseReadIter <- R6::R6Class(
       private$.compress <- compress
     },
     concat = function() {
-      message("blockwise sparse concat")
       # TODO: implement concat() of blockwise sparse matrix iterator
       .NotYetImplemented()
     }
@@ -150,7 +140,6 @@ BlockwiseSparseReadIter <- R6::R6Class(
     .repr = character(1L),
     .compress = logical(1L),
     soma_reader_transform = function(x) {
-      message("blockwise sparse transform")
       # TODO: implement soma_reader_transform() of blockwise sparse matrix iterator
       .NotYetImplemented()
     }
