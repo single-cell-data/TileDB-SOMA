@@ -73,6 +73,8 @@ def open(
         return DataFrameWrapper._from_soma_object(soma_object, context)
     if open_mode == clib.OpenMode.read and obj_type == "SOMADenseNDArray":
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
+    if open_mode == clib.OpenMode.read and obj_type == "SOMASparseNDArray":
+        return SparseNDArrayWrapper._from_soma_object(soma_object, context)
 
     if obj_type in (
         "SOMADataFrame",
@@ -436,6 +438,20 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     @property
     def shape(self) -> Tuple[int, ...]:
         return tuple(self._handle.shape)
+
+
+class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
+    """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
+
+    _WRAPPED_TYPE = clib.SOMASparseNDArray
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return tuple(self._handle.shape)
+
+    @property
+    def nnz(self) -> int:
+        return int(self._handle.nnz)
 
 
 class _DictMod(enum.Enum):

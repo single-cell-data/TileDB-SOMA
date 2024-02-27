@@ -46,6 +46,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Type[_WrapperType_co],
         Type[_tdb_handles.DataFrameWrapper],
         Type[_tdb_handles.DenseNDArrayWrapper],
+        Type[_tdb_handles.SparseNDArrayWrapper],
     ]
 
     __slots__ = ("_close_stack", "_handle")

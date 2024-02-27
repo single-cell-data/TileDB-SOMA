@@ -38,7 +38,7 @@ from ._read_iters import (
     SparseCOOTensorReadIter,
     TableReadIter,
 )
-from ._tdb_handles import ArrayWrapper
+from ._tdb_handles import SparseNDArrayWrapper
 from ._types import NTuple
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -95,7 +95,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     __slots__ = ()
 
-    _reader_wrapper_type = ArrayWrapper
+    _reader_wrapper_type = SparseNDArrayWrapper
 
     # Inherited from somacore
     # * ndim accessor
@@ -155,11 +155,27 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
               ``slice(2,None)`` or ``slice(None,4)``.
             * Negative indexing is unsupported.
         """
-        del batch_size, platform_config  # Currently unused.
+        del batch_size  # Currently unused.
+        handle: clib.SOMASparseNDArray = self._handle._handle
+
         self._check_open_read()
         _util.check_unpartitioned(partitions)
 
-        sr = self._soma_reader(schema=self._handle.schema, result_order=result_order)
+        context = handle.context()
+        if platform_config is not None:
+            config = context.tiledb_config.copy()
+            config.update(platform_config)
+            context = clib.SOMAContext(config)
+
+        sr = clib.SOMASparseNDArray.open(
+            uri=handle.uri,
+            mode=clib.OpenMode.read,
+            context=context,
+            column_names=[],
+            result_order=_util.to_clib_result_order(result_order),
+            timestamp=handle.timestamp and (0, handle.timestamp),
+        )
+
         return SparseNDArrayRead(sr, self, coords)
 
     def write(
