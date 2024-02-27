@@ -531,7 +531,7 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
     # Forces a context without a thread pool, which in turn causes ExperimentAxisQuery
     # to own (and release) its own thread pool.
     context = SOMATileDBContext()
-    context._threadpool = None
+    context.threadpool = None
     soma_experiment = get_soma_experiment_with_context(soma_experiment, context)
 
     with soma_experiment.axis_query("RNA") as query:
