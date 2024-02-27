@@ -52,9 +52,10 @@ BlockwiseReadIterBase <- R6::R6Class(
     },
     read_complete = function() !self$coords_axis$hasNext() || super$read_complete(),
     read_next = function() {
-      #if (is.null(private$soma_read_pointer)) {  # TODO: FIXME
-      #  return(NULL)
-      #}
+      message("blockwise read next")
+      if (is.null(private$soma_reader_pointer)) {
+       return(NULL)
+      }
       if (self$read_complete()) {
         return(private$.readComplete())
       }
@@ -93,12 +94,14 @@ BlockwiseTableReadIter <- R6::R6Class(
   inherit = BlockwiseReadIterBase,
   public = list(
     concat = function() {
+      message("blockwise table concat")
       # TODO: implement concat() of blockwise table iterator
       .NotYetImplemented()
     }
   ),
   private = list(
     soma_reader_transform = function(x) {
+      message("blockwise table transform")
       # TODO: implement soma_reader_transform() of blockwise table iterator
       .NotYetImplemented()
     }
@@ -134,6 +137,7 @@ BlockwiseSparseReadIter <- R6::R6Class(
       private$.compress <- compress
     },
     concat = function() {
+      message("blockwise sparse concat")
       # TODO: implement concat() of blockwise sparse matrix iterator
       .NotYetImplemented()
     }
@@ -146,6 +150,7 @@ BlockwiseSparseReadIter <- R6::R6Class(
     .repr = character(1L),
     .compress = logical(1L),
     soma_reader_transform = function(x) {
+      message("blockwise sparse transform")
       # TODO: implement soma_reader_transform() of blockwise sparse matrix iterator
       .NotYetImplemented()
     }
