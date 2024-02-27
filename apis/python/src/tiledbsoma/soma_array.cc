@@ -536,45 +536,22 @@ void load_soma_array(py::module& m) {
                     auto arr_ = arrow_array.children[i];
 
                     const void* data;
-                    std::optional<std::vector<uint64_t>> offsets = std::nullopt;
-                    std::optional<std::vector<uint8_t>>
-                        validities = std::nullopt;
+                    uint64_t* offsets = nullptr;
+                    uint8_t* validities = nullptr;
 
                     if (arr_->null_count != 0) {
-                        auto validities_ptr = (uint8_t*)arr_->buffers[0];
-                        validities = std::vector<uint8_t>(
-                            validities_ptr, validities_ptr + arr_->length);
+                        validities = (uint8_t*)arr_->buffers[0];
                     }
 
                     if (arr_->n_buffers == 3) {
-                        std::vector<uint64_t> arrow_offsets;
-
-                        if (strcmp("u", sch_->format) == 0 |
-                            strcmp("s", sch_->format) == 0) {
-                            auto offsets_ptr = (uint32_t*)arr_->buffers[1];
-                            arrow_offsets = std::vector<uint64_t>(
-                                offsets_ptr, offsets_ptr + arr_->length + 1);
-                        } else {
-                            auto offsets_ptr = (uint64_t*)arr_->buffers[1];
-                            arrow_offsets = std::vector<uint64_t>(
-                                offsets_ptr, offsets_ptr + arr_->length + 1);
-                        }
-
-                        std::vector<uint64_t> offsets_;
-                        offsets_.reserve(arr_->length);
-                        for (size_t i = 0; i < arrow_offsets.size() - 1; ++i) {
-                            offsets_[i] = arrow_offsets[i + 1] -
-                                          arrow_offsets[i];
-                        }
-
-                        offsets = offsets_;
+                        offsets = (uint64_t*)arr_->buffers[1];
                         data = arr_->buffers[2];
                     } else {
                         data = arr_->buffers[1];
                     }
 
                     array.set_column_data(
-                        sch_->name, data, arr_->length, offsets, validities);
+                        sch_->name, arr_->length, data, offsets, validities);
                 }
                 array.write();
             })

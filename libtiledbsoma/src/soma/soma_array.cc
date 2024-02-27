@@ -265,10 +265,10 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
 
 void SOMAArray::set_column_data(
     std::string_view name,
-    const void* data,
     uint64_t num_elems,
-    std::optional<std::vector<uint64_t>> offsets,
-    std::optional<std::vector<uint8_t>> validity) {
+    const void* data,
+    uint64_t* offsets,
+    uint8_t* validity) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
@@ -281,7 +281,7 @@ void SOMAArray::set_column_data(
     // `set_column_data` because ColumnBuffer::create requires a TileDB Array
     // argument which should remain a private member of SOMAArray
     auto column = ColumnBuffer::create(arr_, name);
-    column->set_data(data, num_elems, offsets, validity);
+    column->set_data(num_elems, data, offsets, validity);
 
     // Keep the ColumnBuffer alive by attaching it to the ArrayBuffers class
     // member. Otherwise, the data held by the ColumnBuffer will be garbage

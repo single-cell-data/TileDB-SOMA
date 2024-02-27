@@ -98,8 +98,8 @@ TEST_CASE("SOMADenseNDArray: basic") {
     std::vector<int> a0(10, 1);
 
     soma_dense->open(OpenMode::write);
-    soma_dense->set_column_data("a0", a0.data(), a0.size());
-    soma_dense->set_column_data("d0", d0.data(), d0.size());
+    soma_dense->set_column_data("a0", a0.size(), a0.data());
+    soma_dense->set_column_data("d0", d0.size(), d0.data());
     soma_dense->write();
     soma_dense->close();
 

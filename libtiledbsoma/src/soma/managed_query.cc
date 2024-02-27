@@ -103,18 +103,28 @@ void ManagedQuery::set_column_data(
         schema_->has_attribute(column_name)) {
         auto data = column_buffer->data<std::byte>();
         query_->set_data_buffer(
-            column_name, (void*)data.data(), data.size_bytes());
+            column_name,
+            (void*)data.data(),
+            column_buffer->is_var() ?
+                column_buffer->offsets()[column_buffer->offsets().size() - 1] :
+                data.size_bytes());
         if (column_buffer->is_var()) {
             // Remove one offset for TileDB, which checks that the
             // offsets and validity buffers are the same size
             auto offsets = column_buffer->offsets();
             query_->set_offsets_buffer(
-                column_name, offsets.data(), column_buffer->size() - 1);
+                column_name, offsets.data(), offsets.size());
+
+            std::cout << "offset in ManagedQuery::set_column_data for "
+                      << column_name << std::endl;
+            for (auto os : offsets)
+                std::cout << os << " ";
+            std::cout << std::endl;
         }
         if (column_buffer->is_nullable()) {
             auto validity = column_buffer->validity();
             query_->set_validity_buffer(
-                column_name, validity.data(), column_buffer->size());
+                column_name, validity.data(), validity.size());
         }
         // column_buffer->attach(*query_);
     } else {

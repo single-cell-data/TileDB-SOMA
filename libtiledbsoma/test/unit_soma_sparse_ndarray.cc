@@ -100,8 +100,8 @@ TEST_CASE("SOMASparseNDArray: basic") {
     std::vector<int> a0(10, 1);
 
     soma_sparse->open(OpenMode::write);
-    soma_sparse->set_column_data("a0", a0.data(), a0.size());
-    soma_sparse->set_column_data("d0", d0.data(), d0.size());
+    soma_sparse->set_column_data("a0", a0.size(), a0.data());
+    soma_sparse->set_column_data("d0", d0.size(), d0.data());
     soma_sparse->write();
     soma_sparse->close();
 

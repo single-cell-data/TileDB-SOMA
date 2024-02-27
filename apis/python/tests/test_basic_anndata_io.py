@@ -147,6 +147,7 @@ def test_import_anndata(adata, ingest_modes, X_kind):
 
         # Check obs
         obs = exp.obs.read().concat().to_pandas()
+        print(obs)
         assert sorted(obs.columns.to_list()) == sorted(
             orig.obs_keys() + ["soma_joinid", "obs_id"]
         )

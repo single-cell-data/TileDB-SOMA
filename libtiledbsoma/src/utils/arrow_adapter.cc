@@ -265,14 +265,18 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
                 domain.add_dimension(dim);
             } else {
-                auto attr = Attribute(*ctx, child->name, type);
+                Attribute attr(*ctx, child->name, type);
 
-                if (child->flags | ARROW_FLAG_NULLABLE)
-                    attr.set_nullable(true);
+                // if (child->flags & ARROW_FLAG_NULLABLE) {
+                //     attr.set_nullable(true);
+                // }
 
-                if (strcmp(child->format, "U"))
+                if ((strcmp(child->format, "U") == 0) |
+                    (strcmp(child->format, "Z") == 0) |
+                    (strcmp(child->format, "u") == 0) |
+                    (strcmp(child->format, "z") == 0)) {
                     attr.set_cell_val_num(TILEDB_VAR_NUM);
-
+                }
                 schema.add_attribute(attr);
             }
         }

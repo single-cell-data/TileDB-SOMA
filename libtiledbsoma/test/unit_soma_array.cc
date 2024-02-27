@@ -139,8 +139,8 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         std::vector<int> a0(num_cells_per_fragment, frag_num);
 
         // Write data to array
-        soma_array->set_column_data("a0", a0.data(), a0.size());
-        soma_array->set_column_data("d0", d0.data(), d0.size());
+        soma_array->set_column_data("a0", a0.size(), a0.data());
+        soma_array->set_column_data("d0", d0.size(), d0.data());
         soma_array->write();
         soma_array->close();
     }

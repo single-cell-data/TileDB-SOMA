@@ -406,10 +406,10 @@ class SOMAArray : public SOMAObject {
 
     void set_column_data(
         std::string_view name,
-        const void* data,
         uint64_t num_elems,
-        std::optional<std::vector<uint64_t>> offsets = std::nullopt,
-        std::optional<std::vector<uint8_t>> validity = std::nullopt);
+        const void* data,
+        uint64_t* offsets = nullptr,
+        uint8_t* validity = nullptr);
 
     /**
      * @brief Write ArrayBuffers data to the array.
