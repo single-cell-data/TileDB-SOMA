@@ -187,6 +187,9 @@ CoordsStrider <- R6::R6Class(
 #' @export
 #'
 as.list.CoordsStrider <- function(x, ...) {
+  stopifnot(
+    "The iterators package is required for 'as.list()'" = requireNamespace('iterators', quietly = TRUE)
+  )
   f <- get('as.list.iter', envir = asNamespace('iterators'))
   return(f(x, ...))
 }
@@ -196,29 +199,13 @@ as.list.CoordsStrider <- function(x, ...) {
 #'
 length.CoordsStrider <- function(x) x$length()
 
-#' @importFrom iterators nextElem
-#' @export
+#' @exportS3Method iterators::nextElem
 #'
-iterators::nextElem
+nextElem.CoordsStrider <- function(obj, ...) obj$nextElem()
 
-#' @method nextElem CoordsStrider
-#' @export
+#' @exportS3Method itertools::hasNext
 #'
-nextElem.CoordsStrider <- function(obj, ...) {
-  return(obj$nextElem())
-}
-
-#' @importFrom itertools hasNext
-#' @export
-#'
-itertools::hasNext
-
-#' @method hasNext CoordsStrider
-#' @export
-#'
-hasNext.CoordsStrider <- function(obj, ...) {
-  return(obj$hasNext())
-}
+hasNext.CoordsStrider <- function(obj, ...) obj$hasNext()
 
 unlist64 <- function(x) {
   stopifnot(
