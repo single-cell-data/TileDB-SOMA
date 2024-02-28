@@ -14,14 +14,14 @@ isLinux <- Sys.info()["sysname"] == "Linux"
 if (isMac) {
     arch <- system('uname -m', intern = TRUE)
     if (arch == "x86_64") {
-      url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.19.0/tiledb-macos-x86_64-2.19.0-fa30a88a.tar.gz"
+      url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.19.2/tiledb-macos-x86_64-2.19.2-dc780d2.tar.gz"
     } else if (arch == "arm64") {
-      url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.19.0/tiledb-macos-arm64-2.19.0-fa30a88a.tar.gz"
+      url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.19.2/tiledb-macos-arm64-2.19.2-dc780d2.tar.gz"
     } else {
       stop("Unsupported Mac architecture. Please have TileDB Core installed locally.")
     }
 } else if (isLinux) {
-    url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.19.0/tiledb-linux-x86_64-2.19.0-fa30a88a.tar.gz"
+    url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.19.2/tiledb-linux-x86_64-2.19.2-dc780d2.tar.gz"
 } else {
     stop("Unsupported platform for downloading artifacts. Please have TileDB Core installed locally.")
 }
