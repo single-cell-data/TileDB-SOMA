@@ -1094,3 +1094,11 @@ def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer
     )
 
     assert len(rd.obs_axis.data) == 1000
+
+
+def test_ealm_expose():
+    """Checks that this is exported from tiledbsoma.io._registration"""
+    # All we want to check is that the import doesn't throw. Job done. Period.
+    # However, the pre-commit hook will strip out this import statement as "unused".
+    # So, assert something.
+    assert tiledbsoma.io.ExperimentAmbientLabelMapping is not None
