@@ -1,3 +1,6 @@
+from ._registration import (
+    ExperimentAmbientLabelMapping,
+)
 from .ingest import (
     add_matrix_to_collection,
     add_X_layer,
@@ -32,4 +35,5 @@ __all__ = (
     "update_matrix",
     "update_obs",
     "update_var",
+    "ExperimentAmbientLabelMapping",
 )
