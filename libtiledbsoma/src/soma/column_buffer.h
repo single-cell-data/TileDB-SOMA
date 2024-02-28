@@ -131,14 +131,16 @@ class ColumnBuffer {
 
         if (offsets != nullptr) {
             // TODO this can be either a unit32_t or uint64_t pointer
-            offsets_.resize(num_elems + 1);
+            auto num_offsets = num_elems + 1;
+            offsets_.resize(num_offsets);
             offsets_.assign(
-                (uint32_t*)offsets, (uint32_t*)offsets + num_elems + 1);
+                (uint32_t*)offsets, (uint32_t*)offsets + num_offsets);
 
-            data_.resize(offsets_[num_elems + 1]);
-            data_.assign(
-                (std::byte*)data, (std::byte*)data + offsets_[num_elems]);
+            data_size_ = offsets_[num_offsets - 1];
+            data_.resize(data_size_);
+            data_.assign((std::byte*)data, (std::byte*)data + data_size_);
         } else {
+            data_size_ = num_elems;
             data_.resize(num_elems);
             data_.assign(
                 (std::byte*)data, (std::byte*)data + num_elems * type_size_);
@@ -163,6 +165,15 @@ class ColumnBuffer {
      */
     size_t size() const {
         return num_cells_;
+    }
+
+    /**
+     * @brief Return size of the data buffer.
+     *
+     * @return uint64_t
+     */
+    uint64_t data_size() {
+        return data_size_;
     }
 
     /**
@@ -382,6 +393,9 @@ class ColumnBuffer {
 
     // Data type of the column from the schema.
     tiledb_datatype_t type_;
+
+    // Data size which is calculated different for var vs non-var
+    uint64_t data_size_;
 
     // Bytes per element.
     uint64_t type_size_;

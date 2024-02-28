@@ -105,11 +105,7 @@ void ManagedQuery::set_column_data(
     if (is_sparse) {
         auto data = column_buffer->data<std::byte>();
         query_->set_data_buffer(
-            column_name,
-            (void*)data.data(),
-            column_buffer->is_var() ?
-                column_buffer->offsets()[column_buffer->offsets().size()] :
-                data.size_bytes());
+            column_name, (void*)data.data(), column_buffer->data_size());
 
         if (column_buffer->is_var()) {
             // Remove one offset for TileDB, which checks that the
@@ -127,18 +123,13 @@ void ManagedQuery::set_column_data(
         if (has_attr) {
             auto data = column_buffer->data<std::byte>();
             query_->set_data_buffer(
-                column_name,
-                (void*)data.data(),
-                column_buffer->is_var() ?
-                    column_buffer
-                        ->offsets()[column_buffer->offsets().size() - 1] :
-                    data.size_bytes());
+                column_name, (void*)data.data(), column_buffer->data_size());
             if (column_buffer->is_var()) {
                 // Remove one offset for TileDB, which checks that the
                 // offsets and validity buffers are the same size
                 auto offsets = column_buffer->offsets();
                 query_->set_offsets_buffer(
-                    column_name, offsets.data(), offsets.size());
+                    column_name, offsets.data(), offsets.size() - 1);
             }
             if (column_buffer->is_nullable()) {
                 auto validity = column_buffer->validity();
