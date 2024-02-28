@@ -41,7 +41,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
+void SOMAExperiment::create(
     std::string_view uri,
     std::shared_ptr<ArrowSchema> schema,
     ColumnIndexInfo index_columns,
@@ -56,7 +56,13 @@ std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
     group->set(exp_uri + "/obs", URIType::absolute, "obs");
     group->set(exp_uri + "/ms", URIType::absolute, "ms");
     group->close();
+}
 
-    return std::make_unique<SOMAExperiment>(OpenMode::read, exp_uri, ctx);
+std::unique_ptr<SOMAExperiment> SOMAExperiment::open(
+    std::string_view uri,
+    OpenMode mode,
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    return std::make_unique<SOMAExperiment>(mode, uri, ctx, timestamp);
 }
 }  // namespace tiledbsoma

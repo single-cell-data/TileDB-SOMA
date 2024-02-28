@@ -61,8 +61,7 @@ class SOMACollection : public SOMAGroup {
      * @param ctx TileDB context
      * @param uri URI to create the SOMACollection
      */
-    static std::unique_ptr<SOMACollection> create(
-        std::string_view uri, std::shared_ptr<SOMAContext> ctx);
+    static void create(std::string_view uri, std::shared_ptr<SOMAContext> ctx);
 
     /**
      * @brief Open a group at the specified URI and return SOMACollection

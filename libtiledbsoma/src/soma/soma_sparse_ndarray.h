@@ -57,7 +57,7 @@ class SOMASparseNDArray : public SOMAArray {
      * @param platform_config Optional config parameter dictionary
      * @return std::shared_ptr<SOMASparseNDArray> opened in read mode
      */
-    static std::unique_ptr<SOMASparseNDArray> create(
+    static void create(
         std::string_view uri,
         ArraySchema schema,
         std::shared_ptr<SOMAContext> ctx);

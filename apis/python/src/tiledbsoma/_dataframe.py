@@ -242,7 +242,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             extents.append([extent])
 
         # TODO add as kw args
-        handle = clib.SOMADataFrame.create(
+        clib.SOMADataFrame.create(
             uri,
             schema,
             index_column_names,

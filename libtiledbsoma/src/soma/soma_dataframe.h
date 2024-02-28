@@ -55,9 +55,8 @@ class SOMADataFrame : public SOMAArray {
      * @param uri URI to create the SOMADataFrame
      * @param schema TileDB ArraySchema
      * @param platform_config Optional config parameter dictionary
-     * @return std::shared_ptr<SOMADataFrame> opened in read mode
      */
-    static std::unique_ptr<SOMADataFrame> create(
+    static void create(
         std::string_view uri,
         std::shared_ptr<ArrowSchema> schema,
         ColumnIndexInfo index_columns,

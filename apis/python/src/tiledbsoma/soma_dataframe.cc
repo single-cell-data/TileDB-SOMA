@@ -69,7 +69,7 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t extents_ptr = (uintptr_t)(&extents);
                 py_extents.attr("_export_to_c")(extents_ptr);
 
-                return SOMADataFrame::create(
+                SOMADataFrame::create(
                     uri,
                     std::make_shared<ArrowSchema>(schema),
                     ColumnIndexInfo(

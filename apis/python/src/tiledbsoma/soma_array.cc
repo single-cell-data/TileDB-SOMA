@@ -71,7 +71,7 @@ void write(SOMAArray& array, py::handle py_batch) {
     array.write();
 }
 
-py::dict meta(SOMAArray& array){
+py::dict meta(SOMAArray& array) {
     py::dict results;
 
     for (auto [key, val] : array.get_metadata()) {
@@ -83,7 +83,8 @@ py::dict meta(SOMAArray& array){
             results[py::str(key)] = res;
         } else {
             py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
-            auto res = py::array(value_type, value_num, value).attr("item")(0);;
+            auto res = py::array(value_type, value_num, value).attr("item")(0);
+            ;
             results[py::str(key)] = res;
         }
     }
