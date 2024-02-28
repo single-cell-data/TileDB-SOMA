@@ -22,6 +22,26 @@ soma_array_to_arrow_table_concat <- function(it) {
   return(tbl)
 }
 
+soma_array_to_sparse_matrix_concat <- function(obj, zero_based = FALSE) {
+  if (obj$read_complete()) {
+    warning("Iteration complete, returning NULL")
+    return(NULL)
+  }
+
+  mat <- obj$read_next()
+
+  while (!obj$read_complete()) {
+    if (zero_based) {
+      mat <- mat$sum(obj$read_next())
+    } else {
+      mat <- mat + obj$read_next()
+    }
+  }
+
+  mat
+}
+
+
 #' Transformer function: Arrow table to Matrix::sparseMatrix
 #'
 #' @description Converts a \link[arrow]{Table} of sparse format (columns:
