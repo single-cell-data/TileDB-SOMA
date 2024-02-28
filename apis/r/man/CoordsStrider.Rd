@@ -45,6 +45,7 @@ iteration; note: this field is settable, which will reset the iterator}
 \itemize{
 \item \href{#method-CoordsStrider-new}{\code{CoordsStrider$new()}}
 \item \href{#method-CoordsStrider-print}{\code{CoordsStrider$print()}}
+\item \href{#method-CoordsStrider-length}{\code{CoordsStrider$length()}}
 \item \href{#method-CoordsStrider-hasNext}{\code{CoordsStrider$hasNext()}}
 \item \href{#method-CoordsStrider-nextElem}{\code{CoordsStrider$nextElem()}}
 }
@@ -86,6 +87,19 @@ Print the coordinate strider to the screen
 \if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$print()}\if{html}{\out{</div>}}
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CoordsStrider-length"></a>}}
+\if{latex}{\out{\hypertarget{method-CoordsStrider-length}{}}}
+\subsection{Method \code{length()}}{
+Get the length (span) of the coordinates within the strider
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$length()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The length (span) of the coordinate strider
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-CoordsStrider-hasNext"></a>}}

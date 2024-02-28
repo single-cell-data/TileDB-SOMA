@@ -76,6 +76,16 @@ CoordsStrider <- R6::R6Class(
       cat("  stride:", format(self$stride), "\n")
       return(invisible(self))
     },
+    #' @description Get the length (span) of the coordinates within the strider
+    #'
+    #' @return The length (span) of the coordinate strider
+    #'
+    length = function() {
+      if (is.null(self$coords)) {
+        as.numeric(bit64::abs.integer64(self$end - self$start))
+      }
+      return(length(self$coords))
+    },
     #' @description Determine if there are more coordinates to yield
     #'
     #' @return \code{TRUE} if there are more coordinates to yield or
@@ -180,6 +190,11 @@ as.list.CoordsStrider <- function(x, ...) {
   f <- get('as.list.iter', envir = asNamespace('iterators'))
   return(f(x, ...))
 }
+
+#' @method length CoordsStrider
+#' @export
+#'
+length.CoordsStrider <- function(x) x$length()
 
 #' @importFrom iterators nextElem
 #' @export
