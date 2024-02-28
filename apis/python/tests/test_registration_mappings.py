@@ -1101,6 +1101,4 @@ def test_ealm_expose():
     # All we want to check is that the import doesn't throw. Job done. Period.
     # However, the pre-commit hook will strip out this import statement as "unused".
     # So, assert something.
-    from tiledbsoma.io import ExperimentAmbientLabelMapping
-
-    assert ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment is not None
+    assert tiledbsoma.io.ExperimentAmbientLabelMapping is not None
