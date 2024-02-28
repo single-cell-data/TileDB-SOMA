@@ -212,14 +212,14 @@ BlockwiseSparseReadIter <- R6::R6Class(
       private$.repr <- match.arg(repr)
       stopifnot(isTRUE(compress) || isFALSE(compress))
       private$.compress <- compress
+      private$.shape <- sapply(coords, length)
     },
     #' @description ...
     #'
     #' @return ...
     #'
     concat = function() {
-      # TODO: implement concat() of blockwise sparse matrix iterator
-      .NotYetImplemented()
+      soma_array_to_sparse_matrix_concat(self, private$.zero_based)
     }
   ),
   active = list(
@@ -233,9 +233,13 @@ BlockwiseSparseReadIter <- R6::R6Class(
   private = list(
     .repr = character(1L),
     .compress = logical(1L),
+    .shape = NULL,
+    .zero_based = FALSE,
     soma_reader_transform = function(x) {
-      # TODO: implement soma_reader_transform() of blockwise sparse matrix iterator
-      .NotYetImplemented()
+      arrow_table_to_sparse(soma_array_to_arrow_table(x),
+                            repr = private$.repr,
+                            shape = private$.shape,
+                            zero_based = private$.zero_based)
     }
   )
 )
