@@ -1098,3 +1098,9 @@ def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer
 
 def test_ealm_expose():
     """Checks that this is exported from tiledbsoma.io._registration"""
+    # All we want to check is that the import doesn't throw. Job done. Period.
+    # However, the pre-commit hook will strip out this import statement as "unused".
+    # So, assert something.
+    from tiledbsoma.io import ExperimentAmbientLabelMapping
+
+    assert ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment is not None
