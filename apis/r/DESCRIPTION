@@ -45,9 +45,7 @@ Imports:
     spdl,
     rlang,
     tools,
-    tibble,
-    itertools,
-    iterators
+    tibble
 LinkingTo:
     Rcpp,
     RcppSpdlog,
@@ -67,7 +65,9 @@ Suggests:
     SingleCellExperiment (>= 1.20.0),
     SummarizedExperiment (>= 1.28.0),
     S4Vectors,
-    jsonlite
+    jsonlite,
+    iterators,
+    itertools
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix

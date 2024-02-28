@@ -1,4 +1,6 @@
 test_that("CoordsStrider start/end mechanics", {
+  skip_if_not_installed('iterators')
+  skip_if_not_installed('itertools')
   start <- 1L
   end <- 200L
   # Test no stride
@@ -15,7 +17,7 @@ test_that("CoordsStrider start/end mechanics", {
     "CoordsStrider"
   )
   expect_true(strider$hasNext())
-  expect_true(hasNext(strider))
+  expect_true(itertools::hasNext(strider))
   expect_type(coords <- as.list(strider), "list")
   expect_length(coords, end / strider$stride)
   for (i in seq_along(coords)) {
@@ -23,9 +25,9 @@ test_that("CoordsStrider start/end mechanics", {
   }
   expect_equal(unlist64(coords), seq.int(start, end))
   expect_error(strider$nextElem(), "StopIteration")
-  expect_error(nextElem(strider), "StopIteration")
+  expect_error(iterators::nextElem(strider), "StopIteration")
   expect_false(strider$hasNext())
-  expect_false(hasNext(strider))
+  expect_false(itertools::hasNext(strider))
   # Test with uneven stride
   expect_s3_class(
     strider <- CoordsStrider$new(start = start, end = end, stride = 15L),
@@ -54,6 +56,8 @@ test_that("CoordsStrider start/end mechanics", {
 })
 
 test_that("CoordsStrider coodinate mechanics", {
+  skip_if_not_installed('iterators')
+  skip_if_not_installed('itertools')
   init <- seq.int(1L, 205L, 3L)
   # Test no stride
   expect_s3_class(strider <- CoordsStrider$new(init), "CoordsStrider")
@@ -70,7 +74,7 @@ test_that("CoordsStrider coodinate mechanics", {
     "CoordsStrider"
   )
   expect_true(strider$hasNext())
-  expect_true(hasNext(strider))
+  expect_true(itertools::hasNext(strider))
   expect_type(coords <- as.list(strider), "list")
   expect_length(coords, length(init) / as.integer(strider$stride))
   for (i in seq_along(coords)) {
@@ -78,9 +82,9 @@ test_that("CoordsStrider coodinate mechanics", {
   }
   expect_equal(unlist64(coords), init)
   expect_error(strider$nextElem(), "StopIteration")
-  expect_error(nextElem(strider), "StopIteration")
+  expect_error(iterators::nextElem(strider), "StopIteration")
   expect_false(strider$hasNext())
-  expect_false(hasNext(strider))
+  expect_false(itertools::hasNext(strider))
   # Test with uneven stride
   expect_s3_class(
     strider <- CoordsStrider$new(init, stride = 15L),
