@@ -104,7 +104,7 @@ jobs:
 
       # - name: Downgrade TileDB-R if needed
       #   run: cd apis/r && Rscript tools/controlled_downgrade.R
-        
+
       - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests

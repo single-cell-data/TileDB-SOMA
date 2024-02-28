@@ -32,8 +32,7 @@ def get_version_hash(version):
 
     m = re.search(rf"\s(\S+)\s+refs/tags/{version}\s", output)
     if m:
-        # 8-nybble hash for 2.19.0 and 2.19.1 only. Please see https://github.com/TileDB-Inc/TileDB/pull/4599.
-        return m.group(1)[0:8]
+        return m.group(1)[0:7]
 
     print(output)
     print(f"Error: version {version} not found.")
