@@ -105,9 +105,6 @@ jobs:
       # - name: Downgrade TileDB-R if needed
       #   run: cd apis/r && Rscript tools/controlled_downgrade.R
 
-      - name: Show R package versions
-        run: Rscript -e 'tiledbsoma::show_package_versions()'
-        
       - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r && tools/r-ci.sh run_tests
