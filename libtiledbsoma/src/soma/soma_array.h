@@ -174,6 +174,7 @@ class SOMAArray : public SOMAObject {
         , ctx_(other.ctx_)
         , batch_size_(other.batch_size_)
         , result_order_(other.result_order_)
+        , metadata_(other.metadata_)
         , timestamp_(other.timestamp_)
         , mq_(std::make_unique<ManagedQuery>(
               other.arr_, other.ctx_->tiledb_ctx(), other.name_))
@@ -689,6 +690,9 @@ class SOMAArray : public SOMAObject {
     //= private non-static
     //===================================================================
 
+    // Fills the metadata cache upon opening the array.
+    void fill_metadata_cache();
+
     // SOMAArray URI
     std::string uri_;
 
@@ -704,6 +708,9 @@ class SOMAArray : public SOMAObject {
     // Result order
     ResultOrder result_order_;
 
+    // Metadata cache
+    std::map<std::string, MetadataValue> metadata_;
+
     // Read timestamp range (start, end)
     std::optional<std::pair<uint64_t, uint64_t>> timestamp_;
 
@@ -712,6 +719,11 @@ class SOMAArray : public SOMAObject {
 
     // Array associated with mq_
     std::shared_ptr<Array> arr_;
+
+    // Array associated with metadata_. Metadata values need to be accessible in
+    // write mode as well. We need to keep this read-mode array alive in order
+    // for the metadata value pointers in the cache to be accessible
+    std::shared_ptr<Array> meta_cache_arr_;
 
     // True if this is the first call to read_next()
     bool first_read_next_ = true;

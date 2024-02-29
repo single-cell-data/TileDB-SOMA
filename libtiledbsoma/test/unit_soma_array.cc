@@ -86,7 +86,8 @@ std::tuple<std::string, uint64_t> create_array(
     schema.check();
 
     // Create array
-    SOMAArray::create(ctx, uri, schema, "NONE", std::pair<uint64_t, uint64_t>(1, 1));
+    SOMAArray::create(
+        ctx, uri, schema, "NONE", std::pair<uint64_t, uint64_t>(0, 2));
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -362,8 +363,10 @@ TEST_CASE("SOMAArray: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string base_uri = "mem://unit-test-array";
+
     const auto& [uri, expected_nnz] = create_array(base_uri, ctx);
 
+    // Write md at (1, 1)
     auto soma_array = SOMAArray::open(
         OpenMode::write,
         uri,
@@ -377,31 +380,45 @@ TEST_CASE("SOMAArray: metadata") {
     soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_array->close();
 
-    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(0, 1));
+    // Read metadata
+    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(0, 2));
     REQUIRE(soma_array->metadata_num() == 3);
-    REQUIRE(soma_array->has_metadata("soma_object_type") == true);
-    REQUIRE(soma_array->has_metadata("soma_encoding_version") == true);
-    REQUIRE(soma_array->has_metadata("md") == true);
-
+    REQUIRE(soma_array->has_metadata("soma_object_type"));
+    REQUIRE(soma_array->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_array->has_metadata("md"));
     auto mdval = soma_array->get_metadata("md");
     REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_array->close();
 
-    soma_array->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    // md should not be available at (2, 2)
+    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(2, 2));
+    REQUIRE(soma_array->metadata_num() == 2);
+    REQUIRE(soma_array->has_metadata("soma_object_type"));
+    REQUIRE(soma_array->has_metadata("soma_encoding_version"));
+    REQUIRE(!soma_array->has_metadata("md"));
+    soma_array->close();
+
     // Metadata should also be retrievable in write mode
+    soma_array->open(OpenMode::write, std::pair<uint64_t, uint64_t>(0, 2));
+    REQUIRE(soma_array->metadata_num() == 3);
+    REQUIRE(soma_array->has_metadata("soma_object_type"));
+    REQUIRE(soma_array->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_array->has_metadata("md"));
     mdval = soma_array->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+
+    // Delete and have it reflected when reading metadata while in write mode
     soma_array->delete_metadata("md");
     mdval = soma_array->get_metadata("md");
     REQUIRE(!mdval.has_value());
     soma_array->close();
 
+    // Confirm delete in read mode
     soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(0, 2));
-    REQUIRE(soma_array->has_metadata("md") == false);
-    REQUIRE(soma_array->metadata_num() == 1);
-    soma_array->close();
+    REQUIRE(!soma_array->has_metadata("md"));
+    REQUIRE(soma_array->metadata_num() == 2);
 }
 
 TEST_CASE("SOMAArray: Test buffer size") {

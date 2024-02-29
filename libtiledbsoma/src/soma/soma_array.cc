@@ -50,24 +50,29 @@ void SOMAArray::create(
     Array::create(std::string(uri), schema);
 
     std::shared_ptr<Array> array;
-    if(timestamp){
-        array = std::make_shared<Array>(*ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE, TemporalPolicy(TimestampStartEnd, timestamp->first, timestamp->second));
-    }else{
-        array = std::make_shared<Array>(*ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE);
+    if (timestamp) {
+        array = std::make_shared<Array>(
+            *ctx->tiledb_ctx(),
+            std::string(uri),
+            TILEDB_WRITE,
+            TemporalPolicy(
+                TimestampStartEnd, timestamp->first, timestamp->second));
+    } else {
+        array = std::make_shared<Array>(
+            *ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE);
     }
 
     array->put_metadata(
-        "soma_object_type",
+        SOMA_OBJECT_TYPE_KEY,
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(soma_type.length()),
         soma_type.c_str());
 
-    std::string encoding_version = "1";
     array->put_metadata(
-        "soma_encoding_version",
+        ENCODING_VERSION_KEY,
         TILEDB_STRING_UTF8,
-        static_cast<uint32_t>(encoding_version.length()),
-        encoding_version.c_str());
+        static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
+        ENCODING_VERSION_VAL.c_str());
 
     array->close();
 }
@@ -135,6 +140,7 @@ SOMAArray::SOMAArray(
     ctx_ = std::make_shared<SOMAContext>(platform_config);
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
+    fill_metadata_cache();
 }
 
 SOMAArray::SOMAArray(
@@ -152,29 +158,33 @@ SOMAArray::SOMAArray(
     , timestamp_(timestamp) {
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
+    fill_metadata_cache();
 }
 
-// void SOMAArray::fill_metadata_cache() {
-//     std::shared_ptr<Array> array;
-//     if (arr_->query_type() == TILEDB_WRITE) {
-//         array = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_,
-//         TILEDB_READ);
-//     } else {
-//         array = arr_;
-//     }
+void SOMAArray::fill_metadata_cache() {
+    if (arr_->query_type() == TILEDB_WRITE) {
+        meta_cache_arr_ = std::make_shared<Array>(
+            *ctx_->tiledb_ctx(),
+            uri_,
+            TILEDB_READ,
+            TemporalPolicy(
+                TimestampStartEnd, timestamp()->first, timestamp()->second));
+    } else {
+        meta_cache_arr_ = arr_;
+    }
 
-//     for (uint64_t idx = 0; idx < array->metadata_num(); ++idx) {
-//         std::string key;
-//         tiledb_datatype_t value_type;
-//         uint32_t value_num;
-//         const void* value;
-//         array->get_metadata_from_index(
-//             idx, &key, &value_type, &value_num, &value);
-//         MetadataValue mdval(value_type, value_num, value);
-//         std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-//         metadata_.insert(mdpair);
-//     }
-// }
+    for (uint64_t idx = 0; idx < meta_cache_arr_->metadata_num(); ++idx) {
+        std::string key;
+        tiledb_datatype_t value_type;
+        uint32_t value_num;
+        const void* value;
+        meta_cache_arr_->get_metadata_from_index(
+            idx, &key, &value_type, &value_num, &value);
+        MetadataValue mdval(value_type, value_num, value);
+        std::pair<std::string, const MetadataValue> mdpair(key, mdval);
+        metadata_.insert(mdpair);
+    }
+}
 
 const std::string SOMAArray::uri() const {
     return uri_;
@@ -186,24 +196,30 @@ std::shared_ptr<SOMAContext> SOMAArray::ctx() {
 
 void SOMAArray::open(
     OpenMode mode, std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
-    arr_->open(tdb_mode);
-    if (timestamp) {
-        if (timestamp->first > timestamp->second) {
-            throw std::invalid_argument("timestamp start > end");
-        }
-        arr_->set_open_timestamp_start(timestamp->first);
-        arr_->set_open_timestamp_end(timestamp->second);
-        arr_->close();
-        arr_->open(tdb_mode);
-    }
+    // auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
+    // arr_->open(tdb_mode);
+    // if (timestamp) {
+    //     if (timestamp->first > timestamp->second) {
+    //         throw std::invalid_argument("timestamp start > end");
+    //     }
+    //     arr_->set_open_timestamp_start(timestamp->first);
+    //     arr_->set_open_timestamp_end(timestamp->second);
+    //     arr_->close();
+    //     arr_->open(tdb_mode);
+    // }
+    timestamp_ = timestamp;
+
+    validate(mode, name_, timestamp);
     reset(column_names(), batch_size_, result_order_);
+    fill_metadata_cache();
 }
 
 void SOMAArray::close() {
     // Close the array through the managed query to ensure any pending queries
     // are completed.
     mq_->close();
+    meta_cache_arr_->close();
+    metadata_.clear();
 }
 
 void SOMAArray::reset(
@@ -553,55 +569,67 @@ void SOMAArray::set_metadata(
     tiledb_datatype_t value_type,
     uint32_t value_num,
     const void* value) {
-    if (key.compare("soma_object_type") == 0) {
+    if (key.compare("soma_object_type") == 0)
         throw TileDBSOMAError("soma_object_type cannot be modified.");
-    }
+
     arr_->put_metadata(key, value_type, value_num, value);
+    MetadataValue mdval(value_type, value_num, value);
+    std::pair<std::string, const MetadataValue> mdpair(key, mdval);
+    metadata_.insert(mdpair);
 }
 
 void SOMAArray::delete_metadata(const std::string& key) {
-    if (key.compare("soma_object_type") == 0) {
+    if (key.compare("soma_object_type") == 0)
         throw TileDBSOMAError("soma_object_type cannot be deleted.");
-    }
+
     arr_->delete_metadata(key);
+    metadata_.erase(key);
 }
 
 std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
-    tiledb_datatype_t value_type;
-    uint32_t value_num;
-    const void* value;
-
-    arr_->get_metadata(key, &value_type, &value_num, &value);
-
-    if (value == nullptr)
+    if (metadata_.count(key) == 0)
         return std::nullopt;
 
-    return MetadataValue(value_type, value_num, value);
+    return metadata_[key];
+
+    // tiledb_datatype_t value_type;
+    // uint32_t value_num;
+    // const void* value;
+
+    // arr_->get_metadata(key, &value_type, &value_num, &value);
+
+    // if (value == nullptr)
+    //     return std::nullopt;
+
+    // return MetadataValue(value_type, value_num, value);
 }
 
 std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
-    std::map<std::string, MetadataValue> meta;
+    return metadata_;
+    // std::map<std::string, MetadataValue> meta;
 
-    std::string key;
-    tiledb_datatype_t value_type;
-    uint32_t value_num;
-    const void* value;
+    // std::string key;
+    // tiledb_datatype_t value_type;
+    // uint32_t value_num;
+    // const void* value;
 
-    for (uint64_t idx = 0; idx < arr_->metadata_num(); ++idx) {
-        arr_->get_metadata_from_index(
-            idx, &key, &value_type, &value_num, &value);
-        meta[key] = MetadataValue(value_type, value_num, value);
-    }
+    // for (uint64_t idx = 0; idx < arr_->metadata_num(); ++idx) {
+    //     arr_->get_metadata_from_index(
+    //         idx, &key, &value_type, &value_num, &value);
+    //     meta[key] = MetadataValue(value_type, value_num, value);
+    // }
 
-    return meta;
+    // return meta;
 }
 
 bool SOMAArray::has_metadata(const std::string& key) {
-    return get_metadata(key) != std::nullopt;
+    return metadata_.count(key) != 0;
+    // return get_metadata(key) != std::nullopt;
 }
 
 uint64_t SOMAArray::metadata_num() const {
-    return arr_->metadata_num();
+    return metadata_.size();
+    // return arr_->metadata_num();
 }
 
 void SOMAArray::validate(
@@ -613,20 +641,15 @@ void SOMAArray::validate(
 
     try {
         LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));
-        arr_ = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, tdb_mode);
         if (timestamp) {
-            if (timestamp->first > timestamp->second) {
-                throw std::invalid_argument("timestamp start > end");
-            }
-            arr_->set_open_timestamp_start(timestamp->first);
-            arr_->set_open_timestamp_end(timestamp->second);
-            arr_->close();
-            arr_->open(tdb_mode);
-            LOG_DEBUG(fmt::format(
-                "[SOMAArray] timestamp_start = {}",
-                arr_->open_timestamp_start()));
-            LOG_DEBUG(fmt::format(
-                "[SOMAArray] timestamp_end = {}", arr_->open_timestamp_end()));
+            arr_ = std::make_shared<Array>(
+                *ctx_->tiledb_ctx(),
+                uri_,
+                tdb_mode,
+                TemporalPolicy(
+                    TimestampStartEnd, timestamp->first, timestamp->second));
+        } else {
+            arr_ = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, tdb_mode);
         }
         LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
         ArrayExperimental::load_all_enumerations(
