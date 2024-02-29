@@ -60,7 +60,8 @@ class SOMADataFrame : public SOMAArray {
         std::string_view uri,
         std::shared_ptr<ArrowSchema> schema,
         ColumnIndexInfo index_columns,
-        std::shared_ptr<SOMAContext> ctx);
+        std::shared_ptr<SOMAContext> ctx,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.

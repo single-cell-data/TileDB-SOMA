@@ -67,7 +67,8 @@ class SOMAArray : public SOMAObject {
         std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
         ArraySchema schema,
-        std::string soma_type);
+        std::string soma_type,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open an array at the specified URI and return SOMAArray

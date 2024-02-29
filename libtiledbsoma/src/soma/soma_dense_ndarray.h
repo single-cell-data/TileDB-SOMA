@@ -60,7 +60,8 @@ class SOMADenseNDArray : public SOMAArray {
     static void create(
         std::string_view uri,
         ArraySchema schema,
-        std::shared_ptr<SOMAContext> ctx);
+        std::shared_ptr<SOMAContext> ctx,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open and return a SOMADenseNDArray object at the given URI.

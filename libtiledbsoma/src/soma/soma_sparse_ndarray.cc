@@ -42,8 +42,9 @@ using namespace tiledb;
 void SOMASparseNDArray::create(
     std::string_view uri,
     ArraySchema schema,
-    std::shared_ptr<SOMAContext> ctx) {
-    SOMAArray::create(ctx, uri, schema, "SOMASparseNDArray");
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    SOMAArray::create(ctx, uri, schema, "SOMASparseNDArray", timestamp);
 }
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(

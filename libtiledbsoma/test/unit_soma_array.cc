@@ -86,7 +86,7 @@ std::tuple<std::string, uint64_t> create_array(
     schema.check();
 
     // Create array
-    SOMAArray::create(ctx, uri, schema, "NONE");
+    SOMAArray::create(ctx, uri, schema, "NONE", std::pair<uint64_t, uint64_t>(1, 1));
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -377,9 +377,10 @@ TEST_CASE("SOMAArray: metadata") {
     soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_array->close();
 
-    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
-    REQUIRE(soma_array->metadata_num() == 2);
+    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(0, 1));
+    REQUIRE(soma_array->metadata_num() == 3);
     REQUIRE(soma_array->has_metadata("soma_object_type") == true);
+    REQUIRE(soma_array->has_metadata("soma_encoding_version") == true);
     REQUIRE(soma_array->has_metadata("md") == true);
 
     auto mdval = soma_array->get_metadata("md");
@@ -397,7 +398,7 @@ TEST_CASE("SOMAArray: metadata") {
     REQUIRE(!mdval.has_value());
     soma_array->close();
 
-    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
+    soma_array->open(OpenMode::read, std::pair<uint64_t, uint64_t>(0, 2));
     REQUIRE(soma_array->has_metadata("md") == false);
     REQUIRE(soma_array->metadata_num() == 1);
     soma_array->close();

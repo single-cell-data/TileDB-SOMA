@@ -43,10 +43,11 @@ void SOMADataFrame::create(
     std::string_view uri,
     std::shared_ptr<ArrowSchema> schema,
     ColumnIndexInfo index_columns,
-    std::shared_ptr<SOMAContext> ctx) {
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
         ctx->tiledb_ctx(), schema, index_columns);
-    SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame");
+    SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame", timestamp);
 }
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::open(

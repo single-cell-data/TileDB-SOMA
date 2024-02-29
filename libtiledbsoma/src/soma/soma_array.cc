@@ -45,24 +45,31 @@ void SOMAArray::create(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view uri,
     ArraySchema schema,
-    std::string soma_type) {
+    std::string soma_type,
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     Array::create(std::string(uri), schema);
-    auto array = Array(*ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE);
 
-    array.put_metadata(
+    std::shared_ptr<Array> array;
+    if(timestamp){
+        array = std::make_shared<Array>(*ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE, TemporalPolicy(TimestampStartEnd, timestamp->first, timestamp->second));
+    }else{
+        array = std::make_shared<Array>(*ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE);
+    }
+
+    array->put_metadata(
         "soma_object_type",
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(soma_type.length()),
         soma_type.c_str());
 
     std::string encoding_version = "1";
-    array.put_metadata(
+    array->put_metadata(
         "soma_encoding_version",
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(encoding_version.length()),
         encoding_version.c_str());
 
-    array.close();
+    array->close();
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
@@ -590,7 +597,7 @@ std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
 }
 
 bool SOMAArray::has_metadata(const std::string& key) {
-    return get_metadata(key) == std::nullopt;
+    return get_metadata(key) != std::nullopt;
 }
 
 uint64_t SOMAArray::metadata_num() const {
