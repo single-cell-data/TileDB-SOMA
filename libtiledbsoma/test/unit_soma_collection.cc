@@ -207,37 +207,53 @@ TEST_CASE("SOMACollection: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-collection";
-    SOMACollection::create(uri, ctx);
+    SOMACollection::create(uri, ctx, TimestampRange(0, 2));
     auto soma_collection = SOMACollection::open(
         uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
+
     int32_t val = 100;
     soma_collection->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_collection->close();
 
-    soma_collection->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
-    REQUIRE(soma_collection->metadata_num() == 2);
-    REQUIRE(soma_collection->has_metadata("soma_object_type") == true);
-    REQUIRE(soma_collection->has_metadata("md") == true);
-
+    // Read metadata
+    soma_collection->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(soma_collection->metadata_num() == 3);
+    REQUIRE(soma_collection->has_metadata("soma_object_type"));
+    REQUIRE(soma_collection->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_collection->has_metadata("md"));
     auto mdval = soma_collection->get_metadata("md");
     REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_collection->close();
 
-    soma_collection->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    // md should not be available at (2, 2)
+    soma_collection->open(OpenMode::read, TimestampRange(2, 2));
+    REQUIRE(soma_collection->metadata_num() == 2);
+    REQUIRE(soma_collection->has_metadata("soma_object_type"));
+    REQUIRE(soma_collection->has_metadata("soma_encoding_version"));
+    REQUIRE(!soma_collection->has_metadata("md"));
+    soma_collection->close();
+
     // Metadata should also be retrievable in write mode
+    soma_collection->open(OpenMode::write, TimestampRange(0, 2));
+    REQUIRE(soma_collection->metadata_num() == 3);
+    REQUIRE(soma_collection->has_metadata("soma_object_type"));
+    REQUIRE(soma_collection->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_collection->has_metadata("md"));
     mdval = soma_collection->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+
+    // Delete and have it reflected when reading metadata while in write mode
     soma_collection->delete_metadata("md");
     mdval = soma_collection->get_metadata("md");
     REQUIRE(!mdval.has_value());
     soma_collection->close();
 
-    soma_collection->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
-    REQUIRE(soma_collection->has_metadata("md") == false);
-    REQUIRE(soma_collection->metadata_num() == 1);
-    soma_collection->close();
+    // Confirm delete in read mode
+    soma_collection->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(!soma_collection->has_metadata("md"));
+    REQUIRE(soma_collection->metadata_num() == 2);
 }
 
 TEST_CASE("SOMAExperiment: metadata") {
@@ -245,79 +261,105 @@ TEST_CASE("SOMAExperiment: metadata") {
 
     std::string uri = "mem://unit-test-experiment";
     auto [schema, index_columns] = helper::create_arrow_schema();
-    SOMAExperiment::create(uri, schema, index_columns, ctx);
+    SOMAExperiment::create(uri, schema, index_columns, ctx, TimestampRange(0, 2));
     auto soma_experiment = SOMAExperiment::open(
         uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
+
     int32_t val = 100;
     soma_experiment->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_experiment->close();
 
-    soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::read, ctx, std::pair<uint64_t, uint64_t>(1, 1));
-    REQUIRE(soma_experiment->metadata_num() == 2);
-    REQUIRE(soma_experiment->has_metadata("soma_object_type") == true);
-    REQUIRE(soma_experiment->has_metadata("md") == true);
-
+    // Read metadata
+    soma_experiment->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(soma_experiment->metadata_num() == 3);
+    REQUIRE(soma_experiment->has_metadata("soma_object_type"));
+    REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_experiment->has_metadata("md"));
     auto mdval = soma_experiment->get_metadata("md");
     REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_experiment->close();
 
-    soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(2, 2));
+    // md should not be available at (2, 2)
+    soma_experiment->open(OpenMode::read, TimestampRange(2, 2));
+    REQUIRE(soma_experiment->metadata_num() == 2);
+    REQUIRE(soma_experiment->has_metadata("soma_object_type"));
+    REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
+    REQUIRE(!soma_experiment->has_metadata("md"));
+    soma_experiment->close();
+
     // Metadata should also be retrievable in write mode
+    soma_experiment->open(OpenMode::write, TimestampRange(0, 2));
+    REQUIRE(soma_experiment->metadata_num() == 3);
+    REQUIRE(soma_experiment->has_metadata("soma_object_type"));
+    REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_experiment->has_metadata("md"));
     mdval = soma_experiment->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+
+    // Delete and have it reflected when reading metadata while in write mode
     soma_experiment->delete_metadata("md");
     mdval = soma_experiment->get_metadata("md");
     REQUIRE(!mdval.has_value());
     soma_experiment->close();
 
-    soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::read, ctx, std::pair<uint64_t, uint64_t>(3, 3));
-    REQUIRE(soma_experiment->has_metadata("md") == false);
-    REQUIRE(soma_experiment->metadata_num() == 1);
-    soma_experiment->close();
+    // Confirm delete in read mode
+    soma_experiment->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(!soma_experiment->has_metadata("md"));
+    REQUIRE(soma_experiment->metadata_num() == 2);
 }
 
 TEST_CASE("SOMAMeasurement: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
-
     std::string uri = "mem://unit-test-measurement";
     auto [schema, index_columns] = helper::create_arrow_schema();
-    SOMAMeasurement::create(uri, schema, index_columns, ctx);
+    SOMAMeasurement::create(uri, schema, index_columns, ctx, TimestampRange(0, 2));
+    
     auto soma_measurement = SOMAMeasurement::open(
         uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
+
     int32_t val = 100;
     soma_measurement->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_measurement->close();
 
-    soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::read, ctx, std::pair<uint64_t, uint64_t>(1, 1));
-    REQUIRE(soma_measurement->metadata_num() == 2);
-    REQUIRE(soma_measurement->has_metadata("soma_object_type") == true);
-    REQUIRE(soma_measurement->has_metadata("md") == true);
-
+    // Read metadata
+    soma_measurement->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(soma_measurement->metadata_num() == 3);
+    REQUIRE(soma_measurement->has_metadata("soma_object_type"));
+    REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_measurement->has_metadata("md"));
     auto mdval = soma_measurement->get_metadata("md");
     REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_measurement->close();
 
-    soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(2, 2));
+    // md should not be available at (2, 2)
+    soma_measurement->open(OpenMode::read, TimestampRange(2, 2));
+    REQUIRE(soma_measurement->metadata_num() == 2);
+    REQUIRE(soma_measurement->has_metadata("soma_object_type"));
+    REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
+    REQUIRE(!soma_measurement->has_metadata("md"));
+    soma_measurement->close();
+
     // Metadata should also be retrievable in write mode
+    soma_measurement->open(OpenMode::write, TimestampRange(0, 2));
+    REQUIRE(soma_measurement->metadata_num() == 3);
+    REQUIRE(soma_measurement->has_metadata("soma_object_type"));
+    REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_measurement->has_metadata("md"));
     mdval = soma_measurement->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+
+    // Delete and have it reflected when reading metadata while in write mode
     soma_measurement->delete_metadata("md");
     mdval = soma_measurement->get_metadata("md");
     REQUIRE(!mdval.has_value());
     soma_measurement->close();
 
-    soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::read, ctx, std::pair<uint64_t, uint64_t>(3, 3));
-    REQUIRE(soma_measurement->has_metadata("md") == false);
-    REQUIRE(soma_measurement->metadata_num() == 1);
-    soma_measurement->close();
+    // Confirm delete in read mode
+    soma_measurement->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(!soma_measurement->has_metadata("md"));
+    REQUIRE(soma_measurement->metadata_num() == 2);
 }

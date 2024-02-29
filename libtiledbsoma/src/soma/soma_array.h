@@ -68,7 +68,7 @@ class SOMAArray : public SOMAObject {
         std::string_view uri,
         ArraySchema schema,
         std::string soma_type,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open an array at the specified URI and return SOMAArray
@@ -93,7 +93,7 @@ class SOMAArray : public SOMAObject {
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
         ResultOrder result_order = ResultOrder::automatic,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open an array at the specified URI and return SOMAArray
@@ -118,7 +118,7 @@ class SOMAArray : public SOMAObject {
         std::vector<std::string> column_names = {},
         std::string_view batch_size = "auto",
         ResultOrder result_order = ResultOrder::automatic,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -144,7 +144,7 @@ class SOMAArray : public SOMAObject {
         std::vector<std::string> column_names,
         std::string_view batch_size,
         ResultOrder result_order,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Construct a new SOMAArray object
@@ -166,7 +166,7 @@ class SOMAArray : public SOMAObject {
         std::vector<std::string> column_names,
         std::string_view batch_size,
         ResultOrder result_order,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     SOMAArray(const SOMAArray& other)
         : uri_(other.uri_)
@@ -213,8 +213,7 @@ class SOMAArray : public SOMAObject {
      * @param timestamp Timestamp
      */
     void open(
-        OpenMode mode,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * Close the SOMAArray object.
@@ -678,12 +677,12 @@ class SOMAArray : public SOMAObject {
     void validate(
         OpenMode mode,
         std::string_view name,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp);
+        std::optional<TimestampRange> timestamp);
 
     /**
      * Return optional timestamp pair SOMAArray was opened with.
      */
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp();
+    std::optional<TimestampRange> timestamp();
 
    private:
     //===================================================================
@@ -712,7 +711,7 @@ class SOMAArray : public SOMAObject {
     std::map<std::string, MetadataValue> metadata_;
 
     // Read timestamp range (start, end)
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp_;
+    std::optional<TimestampRange> timestamp_;
 
     // Managed query for the array
     std::unique_ptr<ManagedQuery> mq_;

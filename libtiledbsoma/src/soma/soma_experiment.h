@@ -58,7 +58,8 @@ class SOMAExperiment : public SOMACollection {
         std::string_view uri,
         std::shared_ptr<ArrowSchema> schema,
         ColumnIndexInfo index_columns,
-        std::shared_ptr<SOMAContext> ctx);
+        std::shared_ptr<SOMAContext> ctx,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open a group at the specified URI and return SOMAExperiment
@@ -96,6 +97,8 @@ class SOMAExperiment : public SOMACollection {
     SOMAExperiment(const SOMAExperiment&) = default;
     SOMAExperiment(SOMAExperiment&&) = default;
     ~SOMAExperiment() = default;
+
+    using SOMACollection::open;
 
    private:
     //===================================================================

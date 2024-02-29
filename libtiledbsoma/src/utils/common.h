@@ -46,6 +46,8 @@ const std::string ENCODING_VERSION_VAL = "1";
 using MetadataValue = std::tuple<tiledb_datatype_t, uint32_t, const void*>;
 enum MetadataInfo { dtype = 0, num, value };
 
+using TimestampRange = std::pair<uint64_t, uint64_t>;
+
 class TileDBSOMAError : public std::runtime_error {
    public:
     explicit TileDBSOMAError(const char* m)

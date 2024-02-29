@@ -20,10 +20,11 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
     std::shared_ptr<SOMAContext> ctx,
     std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     auto obj = tiledb::Object::object(*ctx->tiledb_ctx(), std::string(uri));
+    auto name = std::string(std::filesystem::path(uri).filename());
 
     if (obj.type() == tiledb::Object::Type::Array) {
         auto array_ = SOMAArray::open(
-            mode, uri, ctx, "", {}, "auto", ResultOrder::automatic, timestamp);
+            mode, uri, ctx, "", {}, name, ResultOrder::automatic, timestamp);
 
         if (!array_->type().has_value())
             throw TileDBSOMAError("SOMAArray has no type info");
@@ -38,7 +39,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             throw TileDBSOMAError("Saw invalid SOMAArray type");
         }
     } else if (obj.type() == tiledb::Object::Type::Group) {
-        auto group_ = SOMAGroup::open(mode, uri, ctx, "", timestamp);
+        auto group_ = SOMAGroup::open(mode, uri, ctx, name, timestamp);
 
         if (!group_->type().has_value())
             throw TileDBSOMAError("SOMAGroup has no type info");

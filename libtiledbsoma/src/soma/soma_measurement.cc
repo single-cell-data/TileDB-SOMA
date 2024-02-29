@@ -45,18 +45,21 @@ void SOMAMeasurement::create(
     std::string_view uri,
     std::shared_ptr<ArrowSchema> schema,
     ColumnIndexInfo index_columns,
-    std::shared_ptr<SOMAContext> ctx) {
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<TimestampRange> timestamp) {
     std::string exp_uri(uri);
 
-    SOMAGroup::create(ctx, exp_uri, "SOMAMeasurement");
-    SOMADataFrame::create(exp_uri + "/var", schema, index_columns, ctx);
-    SOMACollection::create(exp_uri + "/X", ctx);
-    SOMACollection::create(exp_uri + "/obsm", ctx);
-    SOMACollection::create(exp_uri + "/obsp", ctx);
-    SOMACollection::create(exp_uri + "/varm", ctx);
-    SOMACollection::create(exp_uri + "/varp", ctx);
+    SOMAGroup::create(ctx, exp_uri, "SOMAMeasurement", timestamp);
+    SOMADataFrame::create(
+        exp_uri + "/var", schema, index_columns, ctx, timestamp);
+    SOMACollection::create(exp_uri + "/X", ctx, timestamp);
+    SOMACollection::create(exp_uri + "/obsm", ctx, timestamp);
+    SOMACollection::create(exp_uri + "/obsp", ctx, timestamp);
+    SOMACollection::create(exp_uri + "/varm", ctx, timestamp);
+    SOMACollection::create(exp_uri + "/varp", ctx, timestamp);
 
-    auto group = SOMAGroup::open(OpenMode::write, uri, ctx);
+    auto name = std::string(std::filesystem::path(uri).filename());
+    auto group = SOMAGroup::open(OpenMode::write, uri, ctx, name, timestamp);
     group->set(exp_uri + "/var", URIType::absolute, "var");
     group->set(exp_uri + "/X", URIType::absolute, "X");
     group->set(exp_uri + "/obsm", URIType::absolute, "obsm");

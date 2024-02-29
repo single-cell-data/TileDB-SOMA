@@ -80,7 +80,7 @@ TEST_CASE("SOMASparseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-sparse-ndarray-basic";
 
-    SOMASparseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx);
+    SOMASparseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
 
     auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_sparse->uri() == uri);
@@ -120,7 +120,7 @@ TEST_CASE("SOMASparseNDArray: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-sparse-ndarray";
-    SOMASparseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx);
+    SOMASparseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
     auto soma_sparse = SOMASparseNDArray::open(
         uri,
         OpenMode::write,
@@ -128,32 +128,48 @@ TEST_CASE("SOMASparseNDArray: metadata") {
         {},
         ResultOrder::automatic,
         std::pair<uint64_t, uint64_t>(1, 1));
+
     int32_t val = 100;
     soma_sparse->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_sparse->close();
 
-    soma_sparse->open(OpenMode::read, std::pair<uint64_t, uint64_t>(1, 1));
-    REQUIRE(soma_sparse->metadata_num() == 2);
-    REQUIRE(soma_sparse->has_metadata("soma_object_type") == true);
-    REQUIRE(soma_sparse->has_metadata("md") == true);
-
+    // Read metadata
+    soma_sparse->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(soma_sparse->metadata_num() == 3);
+    REQUIRE(soma_sparse->has_metadata("soma_object_type"));
+    REQUIRE(soma_sparse->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_sparse->has_metadata("md"));
     auto mdval = soma_sparse->get_metadata("md");
     REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
     REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     soma_sparse->close();
 
-    soma_sparse->open(OpenMode::write, std::pair<uint64_t, uint64_t>(2, 2));
+    // md should not be available at (2, 2)
+    soma_sparse->open(OpenMode::read, TimestampRange(2, 2));
+    REQUIRE(soma_sparse->metadata_num() == 2);
+    REQUIRE(soma_sparse->has_metadata("soma_object_type"));
+    REQUIRE(soma_sparse->has_metadata("soma_encoding_version"));
+    REQUIRE(!soma_sparse->has_metadata("md"));
+    soma_sparse->close();
+
     // Metadata should also be retrievable in write mode
+    soma_sparse->open(OpenMode::write, TimestampRange(0, 2));
+    REQUIRE(soma_sparse->metadata_num() == 3);
+    REQUIRE(soma_sparse->has_metadata("soma_object_type"));
+    REQUIRE(soma_sparse->has_metadata("soma_encoding_version"));
+    REQUIRE(soma_sparse->has_metadata("md"));
     mdval = soma_sparse->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+
+    // Delete and have it reflected when reading metadata while in write mode
     soma_sparse->delete_metadata("md");
     mdval = soma_sparse->get_metadata("md");
     REQUIRE(!mdval.has_value());
     soma_sparse->close();
 
-    soma_sparse->open(OpenMode::read, std::pair<uint64_t, uint64_t>(3, 3));
-    REQUIRE(soma_sparse->has_metadata("md") == false);
-    REQUIRE(soma_sparse->metadata_num() == 1);
-    soma_sparse->close();
+    // Confirm delete in read mode
+    soma_sparse->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(!soma_sparse->has_metadata("md"));
+    REQUIRE(soma_sparse->metadata_num() == 2);
 }

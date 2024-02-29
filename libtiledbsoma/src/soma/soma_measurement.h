@@ -59,7 +59,8 @@ class SOMAMeasurement : public SOMACollection {
         std::string_view uri,
         std::shared_ptr<ArrowSchema> schema,
         ColumnIndexInfo index_columns,
-        std::shared_ptr<SOMAContext> ctx);
+        std::shared_ptr<SOMAContext> ctx,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open a group at the specified URI and return SOMAMeasurement
@@ -96,6 +97,8 @@ class SOMAMeasurement : public SOMACollection {
     SOMAMeasurement(const SOMAMeasurement&) = default;
     SOMAMeasurement(SOMAMeasurement&&) = default;
     ~SOMAMeasurement() = default;
+
+    using SOMACollection::open;
 
    private:
     //===================================================================

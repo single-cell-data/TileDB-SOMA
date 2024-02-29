@@ -42,8 +42,10 @@ using namespace tiledb;
 //===================================================================
 
 void SOMACollection::create(
-    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
-    SOMAGroup::create(ctx, uri, "SOMACollection");
+    std::string_view uri,
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<TimestampRange> timestamp) {
+    SOMAGroup::create(ctx, uri, "SOMACollection", timestamp);
 }
 
 std::unique_ptr<SOMACollection> SOMACollection::open(

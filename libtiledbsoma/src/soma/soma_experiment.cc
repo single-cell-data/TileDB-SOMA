@@ -45,14 +45,18 @@ void SOMAExperiment::create(
     std::string_view uri,
     std::shared_ptr<ArrowSchema> schema,
     ColumnIndexInfo index_columns,
-    std::shared_ptr<SOMAContext> ctx) {
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<TimestampRange> timestamp) {
     std::string exp_uri(uri);
 
-    SOMAGroup::create(ctx, exp_uri, "SOMAExperiment");
-    SOMADataFrame::create(exp_uri + "/obs", schema, index_columns, ctx);
-    SOMACollection::create(exp_uri + "/ms", ctx);
+    SOMAGroup::create(ctx, exp_uri, "SOMAExperiment", timestamp);
+    SOMADataFrame::create(
+        exp_uri + "/obs", schema, index_columns, ctx, timestamp);
+    SOMACollection::create(exp_uri + "/ms", ctx, timestamp);
 
-    auto group = SOMAGroup::open(OpenMode::write, exp_uri, ctx);
+    auto name = std::string(std::filesystem::path(uri).filename());
+    auto group = SOMAGroup::open(
+        OpenMode::write, exp_uri, ctx, name, timestamp);
     group->set(exp_uri + "/obs", URIType::absolute, "obs");
     group->set(exp_uri + "/ms", URIType::absolute, "ms");
     group->close();
