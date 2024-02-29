@@ -1,0 +1,24 @@
+name: TileDB-SOMA Profiler run
+
+on:
+  pull_request:
+
+  push:
+    branches:
+      - main
+      - 'release-*'
+  workflow_dispatch:
+
+jobs:
+
+  check-links:
+
+  name: Setup profiler
+
+  run: |
+    python -m venv profiler_env
+    source profiler_env/bin/activate
+    pip install -e ./profiler
+
+  run: |
+    ./perf_checker.sh
