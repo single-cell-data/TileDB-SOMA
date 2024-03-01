@@ -36,12 +36,6 @@ def tiledbsoma_build_index(
     Lifecycle:
         Experimental.
     """
-    if context is not None:
-        tdb_concurrency = int(
-            context.tiledb_ctx.config().get("sm.compute_concurrency_level", 10)
-        )
-        thread_count = max(1, tdb_concurrency // 2)
-
-    reindexer = clib.IntIndexer()
-    reindexer.map_locations(keys, thread_count)
+    reindexer = clib.IntIndexer(context)
+    reindexer.map_locations(keys)
     return reindexer  # type: ignore[no-any-return]

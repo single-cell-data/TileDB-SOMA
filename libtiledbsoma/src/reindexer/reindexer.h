@@ -43,7 +43,7 @@ struct kh_m64_s;
 
 namespace tiledbsoma {
 
-class ThreadPool;
+class SOMAContext;
 
 class IntIndexer {
    public:
@@ -53,9 +53,9 @@ class IntIndexer {
      * @param size yhr number of keys in the put
      * @param threads number of threads in the thread pool
      */
-    void map_locations(const int64_t* keys, size_t size, size_t threads = 4);
-    void map_locations(const std::vector<int64_t>& keys, size_t threads = 4) {
-        map_locations(keys.data(), keys.size(), threads);
+    void map_locations(const int64_t* keys, size_t size);
+    void map_locations(const std::vector<int64_t>& keys) {
+        map_locations(keys.data(), keys.size());
     }
     /**
      * Used for parallel lookup using khash
@@ -74,12 +74,8 @@ class IntIndexer {
         lookup(keys.data(), results.data(), keys.size());
     }
     IntIndexer(){};
-    /**
-     * Constructor with the same arguments as map_locations
-     */
-    IntIndexer(const int64_t* keys, int size, int threads);
-    IntIndexer(const std::vector<int64_t>& keys, int threads)
-        : IntIndexer(keys.data(), keys.size(), threads) {
+    IntIndexer(std::shared_ptr<tiledbsoma::SOMAContext> context)
+        : context_(context) {
     }
     virtual ~IntIndexer();
 
@@ -88,10 +84,8 @@ class IntIndexer {
      * The created 64bit hash table
      */
     kh_m64_s* hash_;
-    /*
-     * TileDB threadpool
-     */
-    std::shared_ptr<tiledbsoma::ThreadPool> tiledb_thread_pool_ = nullptr;
+
+    std::shared_ptr<SOMAContext> context_ = nullptr;
     /*
      * Number of elements in the map set by map_locations
      */
