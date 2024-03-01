@@ -74,11 +74,7 @@ def test_soma_array_var_x_data():
 
     # iterate read batches until all results have been processed
     total_num_rows = 0
-    # The := "walrus" operator is really the appropriate thing here, but alas, is not
-    # supported in Python 3.7 which we do wish to preserve compatibility with.
-    # while arrow_table := sr.read_next():
-    while not sr.results_complete():
-        arrow_table = sr.read_next()
+    while arrow_table := sr.read_next():
         total_num_rows += arrow_table.num_rows
 
     assert total_num_rows == 4848644
@@ -219,13 +215,7 @@ def test_soma_array_obs_slice_x():
 
     # iterate read batches until all results have been processed
     total_num_rows = 0
-    # The := "walrus" operator is really the appropriate thing here, but alas, is not
-    # supported in Python 3.7 which we do wish to preserve compatibility with.
-    # while x_data := sr.read_next():
-    while True:
-        x_data = sr.read_next()
-        if not x_data:
-            break
+    while x_data := sr.read_next():
         total_num_rows += x_data.num_rows
 
     assert total_num_rows == 110280
