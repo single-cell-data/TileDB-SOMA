@@ -19,19 +19,18 @@ test_that("Blockwise iterator for arrow tables", {
     expect_error(xrqry$blockwise(axis=2))
     expect_error(xrqry$blockwise(size=-100))
 
-    bi <- xrqry$blockwise(axis=ax, size=sz)
-    expect_true(inherits(bi, "SOMASparseNDArrayBlockwiseRead"))
+    expect_s3_class(
+        bi <- xrqry$blockwise(axis=ax, size=sz),
+        "SOMASparseNDArrayBlockwiseRead"
+    )
 
-    it <- bi$tables()
-    expect_true(inherits(it, "BlockwiseTableReadIter"))
+    expect_s3_class(it <- bi$tables(), "BlockwiseTableReadIter")
     expect_false(it$read_complete())
 
-    at <- it$read_next()
-    expect_true(inherits(at, "Table") && inherits(at, "ArrowTabular"))
-    at <- it$read_next()
-    expect_true(inherits(at, "Table") && inherits(at, "ArrowTabular"))
-    at <- it$read_next()
-    expect_true(inherits(at, "Table") && inherits(at, "ArrowTabular"))
+    for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
+        at <- it$read_next()
+        expect_s3_class(at, "ArrowTabular")
+    }
     expect_true(it$read_complete())
 
     rm(bi, it, xrqry, axqry)
@@ -40,7 +39,8 @@ test_that("Blockwise iterator for arrow tables", {
     bi <- xrqry$blockwise(axis=ax, size=sz)
     it <- bi$tables()
     at <- it$concat()
-    expect_true(inherits(at, "Table") && inherits(at, "ArrowTabular"))
+    expect_s3_class(at, "Table")
+    expect_s3_class(at, "ArrowTabular")
     expect_equal(dim(at), c(4848644, 3))
 })
 
@@ -65,19 +65,18 @@ test_that("Blockwise iterator for sparse matrices", {
     expect_error(xrqry$blockwise(axis=2))
     expect_error(xrqry$blockwise(size=-100))
 
-    bi <- xrqry$blockwise(axis=ax, size=sz)
-    expect_true(inherits(bi, "SOMASparseNDArrayBlockwiseRead"))
+    expect_s3_class(
+        bi <- xrqry$blockwise(axis=ax, size=sz),
+        "SOMASparseNDArrayBlockwiseRead"
+    )
 
-    it <- bi$sparse_matrix()
-    expect_true(inherits(it, "BlockwiseSparseReadIter"))
+    expect_s3_class(it <- bi$sparse_matrix(), "BlockwiseSparseReadIter")
     expect_false(it$read_complete())
 
-    at <- it$read_next()
-    expect_true(inherits(at, "dgTMatrix"))
-    at <- it$read_next()
-    expect_true(inherits(at, "dgTMatrix"))
-    at <- it$read_next()
-    expect_true(inherits(at, "dgTMatrix"))
+    for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
+        at <- it$read_next()
+        expect_s4_class(at, "dgTMatrix")
+    }
     expect_true(it$read_complete())
 
     rm(bi, it, xrqry, axqry)
@@ -86,6 +85,6 @@ test_that("Blockwise iterator for sparse matrices", {
     bi <- xrqry$blockwise(axis=ax, size=sz)
     it <- bi$sparse_matrix()
     at <- it$concat()
-    expect_true(inherits(at, "dgTMatrix"))
+    expect_s4_class(at, "dgTMatrix")
     expect_equal(dim(at), c(2638, 1838))
 })
