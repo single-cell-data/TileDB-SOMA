@@ -129,8 +129,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// create_empty_arrow_table
+nanoarrowXPtr create_empty_arrow_table();
+RcppExport SEXP _tiledbsoma_create_empty_arrow_table() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(create_empty_arrow_table());
+    return rcpp_result_gen;
+END_RCPP
+}
 // sr_next
-Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr);
+nanoarrowXPtr sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr);
 RcppExport SEXP _tiledbsoma_sr_next(SEXP srSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -220,6 +230,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_shape", (DL_FUNC) &_tiledbsoma_shape, 2},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
+    {"_tiledbsoma_create_empty_arrow_table", (DL_FUNC) &_tiledbsoma_create_empty_arrow_table, 0},
     {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},
     {"_tiledbsoma_tiledbsoma_stats_enable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_enable, 0},
     {"_tiledbsoma_tiledbsoma_stats_disable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_disable, 0},

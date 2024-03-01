@@ -62,3 +62,17 @@ struct ContextWrapper {
     std::shared_ptr<tiledb::Context> ctxptr;
 };
 typedef struct ContextWrapper ctx_wrap_t;
+
+// some lipstick on the (plain C language) pig that is a SEXP:
+// allowing the nanoarrow ArrowArray XPtr be typedef'ed
+typedef SEXP nanoarrowXPtr;
+
+inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
+    if (ec != NANOARROW_OK) Rcpp::stop(msg);
+}
+
+// Attaches a schema to an array external pointer. The nanoarrow R package
+// attempts to do this whenever possible to avoid misinterpreting arrays.
+inline void array_xptr_set_schema(SEXP array_xptr, SEXP schema_xptr) {
+    R_SetExternalPtrTag(array_xptr, schema_xptr);
+}
