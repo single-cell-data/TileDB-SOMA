@@ -17,6 +17,6 @@ def test_reindexer_api_context():
     keys = np.arange(3, 10, 2)
     ids = np.arange(3, 10, 2)
     expected = np.array([0, 1, 2, 3])
-    indexer = tiledbsoma_build_index(keys, context=context)
+    indexer = tiledbsoma_build_index(keys, context=context.native_context)
     result = indexer.get_indexer(ids)
     assert np.equal(result.all(), expected.all())

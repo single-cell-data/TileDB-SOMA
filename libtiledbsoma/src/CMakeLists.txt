@@ -58,6 +58,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.cc
@@ -209,6 +210,11 @@ install(FILES
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.h
   DESTINATION "include/tiledbsoma/reindexer/"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/carrow.h
+  DESTINATION "include/tiledbsoma/utils/"
 )
 
 install(FILES
