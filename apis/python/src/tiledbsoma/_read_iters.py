@@ -126,8 +126,11 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
         # build indexers, as needed
         self.axes_to_reindex = set(range(self.ndim)) - set(self.reindex_disable_on_axis)
+        assert context is not None
         self.minor_axes_indexer = {
-            d: tiledbsoma_build_index(self.joinids[d].to_numpy(), context=context)
+            d: tiledbsoma_build_index(
+                self.joinids[d].to_numpy(), context=context.native_context
+            )
             for d in (self.axes_to_reindex - set((self.major_axis,)))
         }
 
@@ -244,8 +247,9 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
                 col = tbl.column(f"soma_dim_{d}")
                 if d in self.axes_to_reindex:
                     if d == self.major_axis:
+                        assert self.context is not None
                         col = tiledbsoma_build_index(
-                            coords[self.major_axis], context=self.context
+                            coords[self.major_axis], context=self.context.native_context
                         ).get_indexer(
                             col.to_numpy(),
                         )
