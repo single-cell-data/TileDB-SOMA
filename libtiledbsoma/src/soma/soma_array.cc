@@ -171,7 +171,7 @@ SOMAArray::SOMAArray(
     , result_order_(ResultOrder::automatic)
     , timestamp_(timestamp)
     , mq_(std::make_unique<ManagedQuery>(arr, ctx_->tiledb_ctx(), name_))
-    , arr_(arr) {)
+    , arr_(arr) {
     reset({}, batch_size_, result_order_);
     fill_metadata_cache();
 }
