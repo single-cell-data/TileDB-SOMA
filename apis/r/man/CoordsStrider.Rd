@@ -18,8 +18,8 @@ as necessary
 }
 \examples{
 strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L)
-while (strider$hasNext()) {
-  str(strider$nextElem())
+while (strider$has_next()) {
+  str(strider$next_element())
 }
 
 }
@@ -46,8 +46,8 @@ iteration; note: this field is settable, which will reset the iterator}
 \item \href{#method-CoordsStrider-new}{\code{CoordsStrider$new()}}
 \item \href{#method-CoordsStrider-print}{\code{CoordsStrider$print()}}
 \item \href{#method-CoordsStrider-length}{\code{CoordsStrider$length()}}
-\item \href{#method-CoordsStrider-hasNext}{\code{CoordsStrider$hasNext()}}
-\item \href{#method-CoordsStrider-nextElem}{\code{CoordsStrider$nextElem()}}
+\item \href{#method-CoordsStrider-has_next}{\code{CoordsStrider$has_next()}}
+\item \href{#method-CoordsStrider-next_element}{\code{CoordsStrider$next_element()}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -102,12 +102,12 @@ The length (span) of the coordinate strider
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CoordsStrider-hasNext"></a>}}
-\if{latex}{\out{\hypertarget{method-CoordsStrider-hasNext}{}}}
-\subsection{Method \code{hasNext()}}{
+\if{html}{\out{<a id="method-CoordsStrider-has_next"></a>}}
+\if{latex}{\out{\hypertarget{method-CoordsStrider-has_next}{}}}
+\subsection{Method \code{has_next()}}{
 Determine if there are more coordinates to yield
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$hasNext()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$has_next()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
@@ -116,13 +116,13 @@ Determine if there are more coordinates to yield
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CoordsStrider-nextElem"></a>}}
-\if{latex}{\out{\hypertarget{method-CoordsStrider-nextElem}{}}}
-\subsection{Method \code{nextElem()}}{
+\if{html}{\out{<a id="method-CoordsStrider-next_element"></a>}}
+\if{latex}{\out{\hypertarget{method-CoordsStrider-next_element}{}}}
+\subsection{Method \code{next_element()}}{
 Generate the next set of coordinates to yield. If there are
-no more coordiantes to yield, raises a \code{stopIteration} error
+no more coordinates to yield, raises a \code{stopIteration} error
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$nextElem()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{CoordsStrider$next_element()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{

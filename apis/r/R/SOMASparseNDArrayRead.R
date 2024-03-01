@@ -222,7 +222,6 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
           (inherits(reindex_disable_on_axis, 'integer64') && all(is.finite(reindex_disable_on_axis)))
       )
       private$.axis <- axis
-      private$.size <- size
       for (i in seq_along(self$coords)) {
         self$coords[[i]]$stride <- size
       }

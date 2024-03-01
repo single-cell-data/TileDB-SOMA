@@ -65,7 +65,7 @@ BlockwiseReadIterBase <- R6::R6Class(
     #'
     #' @return \code{TRUE} if read is complete, otherwise \code{FALSE}
     #'
-    read_complete = function() !self$coords_axis$hasNext() ||
+    read_complete = function() !self$coords_axis$has_next() ||
       is.null(private$soma_reader_pointer),
     #' @description Read the next chunk of the iterated read. If read
     #' is complete, throws an \code{iterationCompleteWarning} warning and
@@ -82,7 +82,7 @@ BlockwiseReadIterBase <- R6::R6Class(
       }
       private$reset()
       dimnam <- self$array$dimnames()[self$axis + 1L]
-      nextelems <- self$coords_axis$nextElem()
+      nextelems <- self$coords_axis$next_element()
       private$set_dim_points(dimnam, nextelems)
       return(private$.read_next())
     }
