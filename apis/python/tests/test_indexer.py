@@ -2,6 +2,7 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pytest
 
 from tiledbsoma._index_util import tiledbsoma_build_index
@@ -61,6 +62,29 @@ def test_duplicate_key_indexer_error(
             ],
         ),
         (list(range(1, 10000)), list(range(1, 10000))),
+        (np.array(range(1, 10000)), np.array(range(1, 10000))),
+        (pa.array(range(1, 10000)), pa.array(range(1, 10000))),
+        (pd.array(range(1, 10000)), pd.array(range(1, 10000))),
+        (
+            pa.chunked_array(
+                [
+                    list(range(1, 10000)),
+                    list(range(10000, 20000)),
+                    list(range(30000, 40000)),
+                ]
+            ),
+            pa.chunked_array(
+                [
+                    list(range(1, 10000)),
+                    list(range(10000, 20000)),
+                    list(range(30000, 40000)),
+                ]
+            ),
+        ),
+        (
+            pd.Series(list(range(1, 10000)), copy=False),
+            pd.Series(list(range(1, 10000)), copy=False),
+        ),
     ],
 )
 def test_indexer(keys: np.array, lookups: np.array):
