@@ -5,7 +5,7 @@
 
 #include <Rcpp.h>               // for R interface to C++
 #include <nanoarrow/r.h>		// for C interface to Arrow
-#include "nanoarrow.h"
+#include <nanoarrow.h>
 
 #include <tiledb/tiledb>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
@@ -214,11 +214,6 @@ nanoarrowXPtr sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
 
    const std::vector<std::string> names = sr_data->get()->names();
    auto ncol = names.size();
-   //Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
-   //Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
-   //schemaxp = schema_setup_struct(schemaxp, ncol);
-   //arrayxp = array_setup_struct(arrayxp, ncol);
-   //arrayxp->length = 0;
    // Schema first
    auto schemaxp = nanoarrow_schema_owning_xptr();
    auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
