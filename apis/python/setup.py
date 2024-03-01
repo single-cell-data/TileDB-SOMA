@@ -277,7 +277,6 @@ setuptools.setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
@@ -316,18 +315,10 @@ setuptools.setup(
     zip_safe=False,
     setup_requires=["pybind11"],
     install_requires=[
-        # Needed for Python 3.7 which anndata 0.9 doesn't support but we do
-        "anndata < 0.9; python_version<'3.8'",
         # Tracked in https://github.com/single-cell-data/TileDB-SOMA/issues/1785
         "anndata != 0.10.0; python_version>='3.8'",
         "attrs>=22.2",
-        "numba>=0.58.0; python_version>='3.8'",
-        # Older numba version needed for Python3.7.
-        # This older numba version was also incompatible with newer numpy
-        # versions, and the old pip solver (<=2020) needed us to explicate
-        # that constraint here (issue #1051).
-        "numba==0.56.4; python_version<'3.8'",
-        "numpy>=1.18,<1.24; python_version<'3.8'",
+        "numba>=0.58.0",
         "pandas",
         # TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
         # https://github.com/single-cell-data/TileDB-SOMA/issues/1926
@@ -350,7 +341,7 @@ setuptools.setup(
             "typeguard<3.0",
         ]
     },
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
     version=version.getVersion(),
 )
