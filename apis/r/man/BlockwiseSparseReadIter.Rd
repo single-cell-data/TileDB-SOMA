@@ -4,7 +4,8 @@
 \alias{BlockwiseSparseReadIter}
 \title{SOMA Blockwise Read Iterator for Sparse Matrices}
 \description{
-...
+Class that allows for blockwise read iteration of SOMA reads
+as sparse matrices
 }
 \keyword{internal}
 \section{Super classes}{
@@ -13,9 +14,7 @@
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{repr}}{...}
-
-\item{\code{compress}}{...}
+\item{\code{repr}}{Representation of the sparse matrix to return}
 }
 \if{html}{\out{</div>}}
 }
@@ -39,7 +38,7 @@
 \if{html}{\out{<a id="method-BlockwiseSparseReadIter-new"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseSparseReadIter-new}{}}}
 \subsection{Method \code{new()}}{
-...
+Create
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BlockwiseSparseReadIter$new(
   sr,
@@ -48,32 +47,32 @@
   axis,
   ...,
   repr = "T",
-  compress = TRUE,
-  reindex_disable_on_axis = NULL,
-  eager = TRUE
+  reindex_disable_on_axis = NULL
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{sr}}{...}
+\item{\code{sr}}{SOMA read pointer}
 
-\item{\code{array}}{...}
+\item{\code{array}}{Underlying \code{\link{SOMASparseNDArray}}}
 
-\item{\code{coords}}{...}
+\item{\code{coords}}{Named list of \code{\link{CoordsStrider}} objects; must be
+named after \code{array$dimnames()}}
 
-\item{\code{axis}}{...}
+\item{\code{axis}}{Axis to iterate over in a blockwise manner}
 
 \item{\code{...}}{Ignored}
 
-\item{\code{repr}}{...}
+\item{\code{repr}}{Representation of the sparse matrix to return; choose from:
+\itemize{
+\item \dQuote{\code{T}}: returns a
+\code{\link[Matrix:TsparseMatrix-class]{TsparseMatrix}}
+}}
 
-\item{\code{compress}}{...}
-
-\item{\code{reindex_disable_on_axis}}{...}
-
-\item{\code{eager}}{...}
+\item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed;
+currently not yet implemented}
 }
 \if{html}{\out{</div>}}
 }

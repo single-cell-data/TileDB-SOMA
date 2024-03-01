@@ -1,6 +1,6 @@
 #' SOMA Blockwise Read Iterator Base Class
 #'
-#' #' @description Class that allows for blockwise read iteration of SOMA reads
+#' @description Class that allows for blockwise read iteration of SOMA reads
 #'
 #' @keywords internal
 #'
@@ -12,13 +12,9 @@ BlockwiseReadIterBase <- R6::R6Class(
   public = list(
     #' @description Create
     #'
-    #' @param sr SOMA read pointer
-    #' @param array ...
-    #' @param coords ...
-    #' @param axis ...
-    #' @param ... Ignored
-    #' @param reindex_disable_on_axis ...
-    #' @param eager ...
+    #' @template param-blockwise-iter
+    #' @template param-coords-iter
+    #' @template param-dots-ignored
     #'
     initialize = function(
       sr,
@@ -26,16 +22,13 @@ BlockwiseReadIterBase <- R6::R6Class(
       coords,
       axis,
       ...,
-      reindex_disable_on_axis = NULL,
-      eager = TRUE
+      reindex_disable_on_axis = NULL
     ) {
       super$initialize(sr)
       stopifnot(
-        "'array' must be a 'SOMASparseNDArray'" = inherits(array, "SOMASparseNDArray"),
-        "'eager' must be TRUE or FALSE" = isTRUE(eager) || isFALSE(eager)
+        "'array' must be a 'SOMASparseNDArray'" = inherits(array, "SOMASparseNDArray")
       )
       private$.array <- array
-      private$.eager <- eager
       # Check axis
       ndim <- self$array$ndim() - 1L
       if (!rlang::is_integerish(axis, 1L, TRUE) && axis >= 0L && axis <= ndim) {
@@ -96,29 +89,29 @@ BlockwiseReadIterBase <- R6::R6Class(
   ),
   active = list(
     #' @field array The underlying SOMA array
+    #'
     array = function() private$.array,
-    #' @field context Not yet implemented
-    context = function() .NotYetImplemented(),
     #' @field axis The axis to iterate over in a blockwise fashion
+    #'
     axis = function() private$.axis,
     #' @field coords A list of \code{\link{CoordsStrider}} objects
+    #'
     coords = function() private$.coords,
     #' @field coords_axis The \code{\link{CoordsStrider}} for \code{axis}
+    #'
     coords_axis = function() {
       dname <- self$array$dimnames()[self$axis + 1L]
       return(self$coords[[dname]])
     },
-    #' @field reindex_disable_on_axis ...
-    reindex_disable_on_axis = function() private$.reindex_disable_on_axis,
-    #' @field eager ...
-    eager = function() private$.eager
+    #' @field reindex_disable_on_axis Additional axes that will not be re-indexed
+    #'
+    reindex_disable_on_axis = function() private$.reindex_disable_on_axis
   ),
   private = list(
     .array = NULL,
     .coords = list(),
     .axis = integer(1L),
     .reindex_disable_on_axis = NULL,
-    .eager = logical(1L),
     # @description Reset internal state of SOMA Reader while keeping array open
     reset = function() {
       if (is.null(private$soma_reader_pointer)) {
@@ -144,7 +137,8 @@ BlockwiseReadIterBase <- R6::R6Class(
 
 #' SOMA Blockwise Read Iterator for Arrow Tables
 #'
-#' @description ...
+#' @description Class that allows for blockwise read iteration of SOMA reads
+#' as Arrow \code{\link[Arrow]{Table}s}
 #'
 #' @keywords internal
 #'
@@ -167,7 +161,8 @@ BlockwiseTableReadIter <- R6::R6Class(
 
 #' SOMA Blockwise Read Iterator for Sparse Matrices
 #'
-#' @description ...
+#' @description Class that allows for blockwise read iteration of SOMA reads
+#' as sparse matrices
 #'
 #' @keywords internal
 #'
@@ -177,17 +172,12 @@ BlockwiseSparseReadIter <- R6::R6Class(
   classname = "BlockwiseSparseReadIter",
   inherit = BlockwiseReadIterBase,
   public = list(
-    #' @description ...
+    #' @description Create
     #'
-    #' @param sr ...
-    #' @param array ...
-    #' @param coords ...
-    #' @param axis ...
-    #' @param ... Ignored
-    #' @param repr ...
-    #' @param compress ...
-    #' @param reindex_disable_on_axis ...
-    #' @param eager ...
+    #' @template param-blockwise-iter
+    #' @template param-coords-iter
+    #' @template param-dots-ignored
+    #' @template param-repr-read
     #'
     initialize = function(
       sr,
@@ -196,9 +186,7 @@ BlockwiseSparseReadIter <- R6::R6Class(
       axis,
       ...,
       repr = "T",
-      compress = TRUE,
-      reindex_disable_on_axis = NULL,
-      eager = TRUE
+      reindex_disable_on_axis = NULL
     ) {
       super$initialize(
         sr,
@@ -206,40 +194,31 @@ BlockwiseSparseReadIter <- R6::R6Class(
         coords,
         axis,
         ...,
-        reindex_disable_on_axis = reindex_disable_on_axis,
-        eager = eager
+        reindex_disable_on_axis = reindex_disable_on_axis
       )
       private$.repr <- match.arg(repr)
-      stopifnot(isTRUE(compress) || isFALSE(compress))
-      private$.compress <- compress
       private$.shape <- sapply(coords, length)
     },
     #' @description ...
     #'
     #' @return ...
     #'
-    concat = function() {
-      soma_array_to_sparse_matrix_concat(self, private$.zero_based)
-    }
+    concat = function() soma_array_to_sparse_matrix_concat(self, private$.zero_based)
   ),
   active = list(
-    #' @field repr ...
+    #' @field repr Representation of the sparse matrix to return
     #'
-    repr = function() private$.repr,
-    #' @field compress ...
-    #'
-    compress = function() private$.compress
+    repr = function() private$.repr
   ),
   private = list(
     .repr = character(1L),
-    .compress = logical(1L),
     .shape = NULL,
     .zero_based = FALSE,
-    soma_reader_transform = function(x) {
-      arrow_table_to_sparse(soma_array_to_arrow_table(x),
-                            repr = private$.repr,
-                            shape = private$.shape,
-                            zero_based = private$.zero_based)
-    }
+    soma_reader_transform = function(x) arrow_table_to_sparse(
+      soma_array_to_arrow_table(x),
+      repr = self$repr,
+      shape = private$.shape,
+      zero_based = private$.zero_based
+    )
   )
 )

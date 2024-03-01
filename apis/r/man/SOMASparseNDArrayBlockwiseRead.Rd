@@ -13,13 +13,7 @@ Blockwise reader for \code{\link{SOMASparseNDArray}}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{axis}}{...}
-
-\item{\code{size}}{...}
-
-\item{\code{reindex_disable_on_axis}}{...}
-
-\item{\code{eager}}{...}
+\item{\code{axis}}{The axis to iterate over in a blockwise fashion}
 }
 \if{html}{\out{</div>}}
 }
@@ -44,8 +38,7 @@ Create
   axis,
   ...,
   size,
-  reindex_disable_on_axis = NULL,
-  eager = TRUE
+  reindex_disable_on_axis = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -54,19 +47,19 @@ Create
 \describe{
 \item{\code{sr}}{SOMA read pointer}
 
-\item{\code{array}}{\code{\link{SOMASparseNDArray}}}
+\item{\code{array}}{Underlying \code{\link{SOMASparseNDArray}}}
 
-\item{\code{coords}}{...}
+\item{\code{coords}}{Optional named list of \code{\link[bit64]{integer64}}
+values; must be named after \code{array$dimnames()}}
 
-\item{\code{axis}}{...}
+\item{\code{axis}}{Axis to iterate over in a blockwise manner}
 
 \item{\code{...}}{Ignored}
 
-\item{\code{size}}{...}
+\item{\code{size}}{The size of each blockwise chunk to generate}
 
-\item{\code{reindex_disable_on_axis}}{...}
-
-\item{\code{eager}}{...}
+\item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed;
+currently not yet implemented}
 }
 \if{html}{\out{</div>}}
 }
@@ -75,33 +68,38 @@ Create
 \if{html}{\out{<a id="method-SOMASparseNDArrayBlockwiseRead-tables"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArrayBlockwiseRead-tables}{}}}
 \subsection{Method \code{tables()}}{
-...
+Read as an \code{\link[Arrow:Table]{Arrow::Table}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayBlockwiseRead$tables()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-...
+A blockwise iterator yielding chunks as
+\code{\link[Arrow:Table]{Arrow::Table}s}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMASparseNDArrayBlockwiseRead-sparse_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArrayBlockwiseRead-sparse_matrix}{}}}
 \subsection{Method \code{sparse_matrix()}}{
-...
+Read as a sparse matrix
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayBlockwiseRead$sparse_matrix(compress = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayBlockwiseRead$sparse_matrix(repr = "T")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{compress}}{...}
+\item{\code{repr}}{Representation of the sparse matrix to return; choose from:
+\itemize{
+\item \dQuote{\code{T}}: returns a
+\code{\link[Matrix:TsparseMatrix-class]{TsparseMatrix}}
+}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-...
+A blockwise iterator yielding chunks as sparse matrices
 }
 }
 }
