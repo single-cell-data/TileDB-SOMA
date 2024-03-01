@@ -39,6 +39,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
+    return; // FIXME: switch to nanoarrow release
     schema->release = nullptr;
 
     for (int i = 0; i < schema->n_children; ++i) {
@@ -70,6 +71,7 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
 }
 
 void ArrowAdapter::release_array(struct ArrowArray* array) {
+    return; // FIXME: switch to nanoarrow release
     auto arrow_buffer = static_cast<ArrowBuffer*>(array->private_data);
 
     LOG_TRACE(fmt::format(

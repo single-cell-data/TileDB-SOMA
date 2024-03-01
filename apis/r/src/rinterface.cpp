@@ -1,4 +1,5 @@
 #include <Rcpp.h>               // for R interface to C++
+#include <nanoarrow/r.h>        // for C interface to Arrow
 #include <nanoarrow.h>          // for C interface to Arrow
 #include <RcppInt64>            // for fromInteger64
 
@@ -48,15 +49,15 @@ Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t 
 
 //' @noRd
 // [[Rcpp::export(soma_array_reader_impl)]]
-Rcpp::List soma_array_reader(const std::string& uri,
-                             Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                             Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                             Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                             Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                             std::string batch_size = "auto",
-                             std::string result_order = "auto",
-                             const std::string& loglevel = "auto",
-                             Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+nanoarrowXPtr soma_array_reader(const std::string& uri,
+                                Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                                Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                                Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                                Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                                std::string batch_size = "auto",
+                                std::string result_order = "auto",
+                                const std::string& loglevel = "auto",
+                                Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -79,7 +80,7 @@ Rcpp::List soma_array_reader(const std::string& uri,
 
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
     auto sr = tdbs::SOMAArray::open(OpenMode::read,
-				    uri,
+                                    uri,
                                     "unnamed",         // name parameter could be added
                                     platform_config,
                                     column_names,
@@ -130,17 +131,22 @@ Rcpp::List soma_array_reader(const std::string& uri,
 
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
-    Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
-    Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
-    schemaxp = schema_setup_struct(schemaxp, ncol);
-    arrayxp = array_setup_struct(arrayxp, ncol);
-    arrayxp->length = 0;
+    // Schema first
+    auto schemaxp = nanoarrow_schema_owning_xptr();
+    auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
+    exitIfError(ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
+    exitIfError(ArrowSchemaSetName(sch, ""), "Bad schema name");
+    exitIfError(ArrowSchemaAllocateChildren(sch, ncol), "Bad schema children alloc");
+
+    // Array second
+    auto arrayxp = nanoarrow_array_owning_xptr();
+    auto arr = nanoarrow_output_array_from_xptr(arrayxp);
+    exitIfError(ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
+    exitIfError(ArrowArrayAllocateChildren(arr, ncol), "Bad array children alloc");
+
+    arr->length = 0;             // initial value
 
     for (size_t i=0; i<ncol; i++) {
-        // this allocates, and properly wraps as external pointers controlling lifetime
-        Rcpp::XPtr<ArrowSchema> chldschemaxp = schema_owning_xptr();
-        Rcpp::XPtr<ArrowArray> chldarrayxp = array_owning_xptr();
-
         spdl::info("[soma_array_reader] Accessing {} at {}", names[i], i);
 
         // now buf is a shared_ptr to ColumnBuffer
@@ -149,33 +155,21 @@ Rcpp::List soma_array_reader(const std::string& uri,
         // this is pair of array and schema pointer
         auto pp = tdbs::ArrowAdapter::to_arrow(buf);
 
-        memcpy((void*) chldschemaxp, pp.second.get(), sizeof(ArrowSchema));
-        memcpy((void*) chldarrayxp, pp.first.get(), sizeof(ArrowArray));
+        memcpy((void*) sch->children[i], pp.second.get(), sizeof(ArrowSchema));
+        memcpy((void*) arr->children[i], pp.first.get(), sizeof(ArrowArray));
 
         spdl::info("[soma_array_reader] Incoming name {} length {}",
                    std::string(pp.second->name), pp.first->length);
 
-        schemaxp->children[i] = chldschemaxp;
-        arrayxp->children[i] = chldarrayxp;
-
-        // if (buf->has_enumeration()) {
-        //     auto vec = buf->get_enumeration();
-        //     Rcpp::Rcout << names[i] << ": ";
-        //     for (auto& s: vec) {
-        //         Rcpp::Rcout << s << " ";
-        //     }
-        //     Rcpp::Rcout << std::endl;
-        // }
-
-        if (pp.first->length > arrayxp->length) {
+        if (pp.first->length > arr->length) {
             spdl::debug("[soma_array_reader] Setting array length to {}", pp.first->length);
-            arrayxp->length = pp.first->length;
+            arr->length = pp.first->length;
         }
     }
 
-    Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
-                                       Rcpp::Named("schema") = schemaxp);
-    return as;
+   // Nanoarrow special: stick schema into xptr tag to return single SEXP
+   array_xptr_set_schema(arrayxp, schemaxp); 			// embed schema in array
+   return arrayxp;
 }
 
 //' Set the logging level for the R package and underlying C++ library

@@ -2,14 +2,13 @@
 #'
 #' @description Converts the results of a \link{soma_array_reader} or
 #' \link{sr_next} to an arrow::\link[arrow]{Table}
-#' @param x A List object with two pointers to Arrow array data and schema
+#' @param x A nanoarrow_array object which is itself a wrapper around the external pointer
+#' to the Arrow array data; the schema external pointer is added to it as well
 #' @return arrow::\link[arrow]{Table}
 #' @noRd
 soma_array_to_arrow_table <- function(x) {
   check_arrow_pointers(x)
-  arrow::as_arrow_table(
-    arrow::RecordBatch$import_from_c(x$array_data, x$schema)
-  )
+  arrow::as_arrow_table(x)
 }
 
 #' Transformer function: Arrow table to Matrix::sparseMatrix
