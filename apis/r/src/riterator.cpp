@@ -4,14 +4,15 @@
 #endif
 
 #include <Rcpp.h>               // for R interface to C++
-#include <nanoarrow.h>          // for C interface to Arrow
+#include <nanoarrow/r.h>		// for C interface to Arrow
+#include "nanoarrow.h"
 
 #include <tiledb/tiledb>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
 #include <tiledb/tiledb_experimental>
 #endif
 
-// We get these via nanoarrow and must cannot include carrow.h again
+// We get these via nanoarrow and must not include carrow.h again
 #define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
 #include <tiledbsoma/tiledbsoma>
 
@@ -164,20 +165,35 @@ bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
     return res;
 }
 
-Rcpp::List create_empty_arrow_table() {
-    Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
-    Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
-    schemaxp = schema_setup_struct(schemaxp, 0);
-    arrayxp = array_setup_struct(arrayxp, 0);
-    arrayxp->length = 0;
-    Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
-                                       Rcpp::Named("schema") = schemaxp);
-    return as;
+//' @noRd
+//' @import nanoarrow
+// [[Rcpp::export]]
+nanoarrowXPtr create_empty_arrow_table() {
+    int ncol = 0;
+
+    // Schema first
+    auto schemaxp = nanoarrow_schema_owning_xptr();
+    auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
+    exitIfError(ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
+    exitIfError(ArrowSchemaSetName(sch, ""), "Bad schema name");
+    exitIfError(ArrowSchemaAllocateChildren(sch, ncol), "Bad schema children alloc");
+
+    // Array second
+    auto arrayxp = nanoarrow_array_owning_xptr();
+    auto arr = nanoarrow_output_array_from_xptr(arrayxp);
+    exitIfError(ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
+    exitIfError(ArrowArrayAllocateChildren(arr, ncol), "Bad array children alloc");
+    arr->length = 0;
+
+    // Nanoarrow special: stick schema into xptr tag to return single SEXP
+    array_xptr_set_schema(arrayxp, schemaxp); 			// embed schema in array
+
+    return arrayxp;
 }
 
 
 // [[Rcpp::export]]
-Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
+nanoarrowXPtr sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    check_xptr_tag<tdbs::SOMAArray>(sr);
 
    if (sr_complete(sr)) {
@@ -198,16 +214,30 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
 
    const std::vector<std::string> names = sr_data->get()->names();
    auto ncol = names.size();
-   Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
-   Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
-   schemaxp = schema_setup_struct(schemaxp, ncol);
-   arrayxp = array_setup_struct(arrayxp, ncol);
-   arrayxp->length = 0;
+   //Rcpp::XPtr<ArrowSchema> schemaxp = schema_owning_xptr();
+   //Rcpp::XPtr<ArrowArray> arrayxp = array_owning_xptr();
+   //schemaxp = schema_setup_struct(schemaxp, ncol);
+   //arrayxp = array_setup_struct(arrayxp, ncol);
+   //arrayxp->length = 0;
+   // Schema first
+   auto schemaxp = nanoarrow_schema_owning_xptr();
+   auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
+   exitIfError(ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
+   exitIfError(ArrowSchemaSetName(sch, ""), "Bad schema name");
+   exitIfError(ArrowSchemaAllocateChildren(sch, ncol), "Bad schema children alloc");
+
+   // Array second
+   auto arrayxp = nanoarrow_array_owning_xptr();
+   auto arr = nanoarrow_output_array_from_xptr(arrayxp);
+   exitIfError(ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
+   exitIfError(ArrowArrayAllocateChildren(arr, ncol), "Bad array children alloc");
+
+   arr->length = 0;             // initial value
 
    for (size_t i=0; i<ncol; i++) {
        // this allocates, and properly wraps as external pointers controlling lifetime
-       Rcpp::XPtr<ArrowSchema> chldschemaxp = schema_owning_xptr();
-       Rcpp::XPtr<ArrowArray> chldarrayxp = array_owning_xptr();
+       //Rcpp::XPtr<ArrowSchema> chldschemaxp = schema_owning_xptr();
+       //Rcpp::XPtr<ArrowArray> chldarrayxp = array_owning_xptr();
 
        spdl::trace("[sr_next] Accessing {} at {}", names[i], i);
 
@@ -217,21 +247,18 @@ Rcpp::List sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
        // this is pair of array and schema pointer
        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
 
-       memcpy((void*) chldschemaxp, pp.second.get(), sizeof(ArrowSchema));
-       memcpy((void*) chldarrayxp, pp.first.get(), sizeof(ArrowArray));
+       memcpy((void*) sch->children[i], pp.second.get(), sizeof(ArrowSchema));
+       memcpy((void*) arr->children[i], pp.first.get(), sizeof(ArrowArray));
 
-       schemaxp->children[i] = chldschemaxp;
-       arrayxp->children[i] = chldarrayxp;
-
-       if (pp.first->length > arrayxp->length) {
+       if (pp.first->length > arr->length) {
            spdl::debug("[soma_array_reader] Setting array length to {}", pp.first->length);
-           arrayxp->length = pp.first->length;
+           arr->length = pp.first->length;
        }
 
    }
 
-   spdl::debug("[sr_next] Exporting chunk with {} rows", arrayxp->length);
-   Rcpp::List as = Rcpp::List::create(Rcpp::Named("array_data") = arrayxp,
-                                      Rcpp::Named("schema") = schemaxp);
-   return as;
+   spdl::debug("[sr_next] Exporting chunk with {} rows", arr->length);
+   // Nanoarrow special: stick schema into xptr tag to return single SEXP
+   array_xptr_set_schema(arrayxp, schemaxp); 			// embed schema in array
+   return arrayxp;
 }
