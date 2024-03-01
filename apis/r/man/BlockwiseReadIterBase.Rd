@@ -4,12 +4,7 @@
 \alias{BlockwiseReadIterBase}
 \title{SOMA Blockwise Read Iterator Base Class}
 \description{
-SOMA Blockwise Read Iterator Base Class
-
-SOMA Blockwise Read Iterator Base Class
-}
-\details{
-#' @description Class that allows for blockwise read iteration of SOMA reads
+Class that allows for blockwise read iteration of SOMA reads
 }
 \keyword{internal}
 \section{Super class}{
@@ -20,17 +15,13 @@ SOMA Blockwise Read Iterator Base Class
 \describe{
 \item{\code{array}}{The underlying SOMA array}
 
-\item{\code{context}}{Not yet implemented}
-
 \item{\code{axis}}{The axis to iterate over in a blockwise fashion}
 
 \item{\code{coords}}{A list of \code{\link{CoordsStrider}} objects}
 
 \item{\code{coords_axis}}{The \code{\link{CoordsStrider}} for \code{axis}}
 
-\item{\code{reindex_disable_on_axis}}{...}
-
-\item{\code{eager}}{...}
+\item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed}
 }
 \if{html}{\out{</div>}}
 }
@@ -62,8 +53,7 @@ Create
   coords,
   axis,
   ...,
-  reindex_disable_on_axis = NULL,
-  eager = TRUE
+  reindex_disable_on_axis = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -72,17 +62,17 @@ Create
 \describe{
 \item{\code{sr}}{SOMA read pointer}
 
-\item{\code{array}}{...}
+\item{\code{array}}{Underlying \code{\link{SOMASparseNDArray}}}
 
-\item{\code{coords}}{...}
+\item{\code{coords}}{Named list of \code{\link{CoordsStrider}} objects; must be
+named after \code{array$dimnames()}}
 
-\item{\code{axis}}{...}
+\item{\code{axis}}{Axis to iterate over in a blockwise manner}
 
 \item{\code{...}}{Ignored}
 
-\item{\code{reindex_disable_on_axis}}{...}
-
-\item{\code{eager}}{...}
+\item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed;
+currently not yet implemented}
 }
 \if{html}{\out{</div>}}
 }

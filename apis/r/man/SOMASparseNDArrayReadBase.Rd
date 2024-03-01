@@ -16,8 +16,6 @@ Base class for SOMA sparse ND-array reads
 
 \item{\code{coords}}{The iterated coordinates for the read}
 
-\item{\code{coords_vec}}{If \code{coords} is passed, then the coordinate vector}
-
 \item{\code{shape}}{The shape of the underlying array}
 }
 \if{html}{\out{</div>}}
@@ -34,7 +32,7 @@ Base class for SOMA sparse ND-array reads
 \subsection{Method \code{new()}}{
 Create
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayReadBase$new(sr, array, coords)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayReadBase$new(sr, array, coords = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -42,9 +40,10 @@ Create
 \describe{
 \item{\code{sr}}{SOMA read pointer}
 
-\item{\code{array}}{\code{\link{SOMASparseNDArray}}}
+\item{\code{array}}{Underlying \code{\link{SOMASparseNDArray}}}
 
-\item{\code{coords}}{...}
+\item{\code{coords}}{Optional named list of \code{\link[bit64]{integer64}}
+values; must be named after \code{array$dimnames()}}
 }
 \if{html}{\out{</div>}}
 }

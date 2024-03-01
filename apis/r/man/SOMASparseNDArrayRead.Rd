@@ -30,7 +30,8 @@ Intermediate type to choose result format when reading a sparse array
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArrayRead-sparse_matrix}{}}}
 \subsection{Method \code{sparse_matrix()}}{
 Read as a sparse matrix (lifecycle: experimental). Returns
-an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or \link{matrixZeroBasedView} of it.
+an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or
+\link{matrixZeroBasedView} of it.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayRead$sparse_matrix(zero_based = FALSE)}\if{html}{\out{</div>}}
 }
@@ -38,8 +39,9 @@ an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or \link{matrixZeroBasedVi
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{zero_based}}{Logical, if \code{TRUE} returns iterator of \link{matrixZeroBasedView}
-if \code{FALSE} returns iterator of Matrix::\link[Matrix]{dgTMatrix-class}.}
+\item{\code{zero_based}}{Logical, if \code{TRUE} returns iterator of
+\link{matrixZeroBasedView} if \code{FALSE} returns iterator of
+Matrix::\link[Matrix]{dgTMatrix-class}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -65,29 +67,27 @@ Returns an iterator of arrow::\link[arrow]{Table}.
 \if{html}{\out{<a id="method-SOMASparseNDArrayRead-blockwise"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArrayRead-blockwise}{}}}
 \subsection{Method \code{blockwise()}}{
-...
+Read in a blockwise fashion
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayRead$blockwise(
   axis,
   ...,
   size = NULL,
-  reindex_disable_on_axis = NULL,
-  eager = TRUE
+  reindex_disable_on_axis = NULL
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{axis}}{...}
+\item{\code{axis}}{Axis to iterate over in a blockwise manner}
 
 \item{\code{...}}{Ignored}
 
-\item{\code{size}}{...}
+\item{\code{size}}{The size of each blockwise chunk to generate}
 
-\item{\code{reindex_disable_on_axis}}{...}
-
-\item{\code{eager}}{...}
+\item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed;
+currently not yet implemented}
 }
 \if{html}{\out{</div>}}
 }
