@@ -22,23 +22,17 @@ soma_array_to_arrow_table_concat <- function(it) {
   return(tbl)
 }
 
-soma_array_to_sparse_matrix_concat <- function(obj, zero_based = FALSE) {
-  if (obj$read_complete()) {
-    warning("Iteration complete, returning NULL")
-    return(NULL)
-  }
-
-  mat <- obj$read_next()
-
-  while (!obj$read_complete()) {
-    if (zero_based) {
-      mat <- mat$sum(obj$read_next())
+soma_array_to_sparse_matrix_concat <- function(it, zero_based = FALSE) {
+  stopifnot(inherits(it, 'ReadIter'), isTRUE(zero_based) || isFALSE(zero_based))
+  mat <- it$read_next()
+  while (!it$read_complete()) {
+    mat <- if (isTRUE(zero_based)) {
+      mat$sum(it$read_next())
     } else {
-      mat <- mat + obj$read_next()
+      mat + it$read_next()
     }
   }
-
-  mat
+  return(mat)
 }
 
 
