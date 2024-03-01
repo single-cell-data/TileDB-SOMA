@@ -34,16 +34,20 @@
 
 namespace tiledbsoma {
 
-void SOMAContext::create_thread_pool() {
-    // Extracting concurrency from tiledb config
-    auto cfg = tiledb_config();
-    int concurrency = 10;
-    if (cfg.find("sm.compute_concurrency_level") != cfg.end()) {
-        concurrency = std::stoi(cfg["sm.compute_concurrency_level"]);
+std::shared_ptr<ThreadPool>& SOMAContext::thread_pool() {
+    const std::lock_guard<std::mutex> lock(thread_pool_mutex_);
+    // The first thread that gets here will create the context thread pool
+    if (thread_pool_ == nullptr) {
+        auto cfg = tiledb_config();
+        int concurrency = 10;
+        if (cfg.find("sm.compute_concurrency_level") != cfg.end()) {
+            concurrency = std::stoi(cfg["sm.compute_concurrency_level"]);
+        }
+        int thread_count = std::max(1, concurrency / 2);
+        if (thread_count > 1) {
+            thread_pool_ = std::make_shared<ThreadPool>(thread_count);
+        }
     }
-    int thread_count = std::max(1, concurrency / 2);
-    if (thread_count > 1) {
-        thread_pool_ = std::make_shared<ThreadPool>(thread_count);
-    }
+    return thread_pool_;
 }
 }  // namespace tiledbsoma

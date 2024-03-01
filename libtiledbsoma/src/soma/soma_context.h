@@ -71,16 +71,7 @@ class SOMAContext {
         return cfg;
     }
 
-    std::shared_ptr<ThreadPool>& thread_pool() {
-        const std::lock_guard<std::mutex> lock(thread_pool_mutex_);
-        // The first thread that gets here will create the context thread pool
-        if (thread_pool_ == nullptr) {
-            create_thread_pool();
-        }
-        return thread_pool_;
-    }
-
-    void create_thread_pool();
+    std::shared_ptr<ThreadPool>& thread_pool();
 
    private:
     //===================================================================
