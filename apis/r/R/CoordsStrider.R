@@ -17,8 +17,8 @@
 #'
 #' @examples
 #' strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L)
-#' while (strider$hasNext()) {
-#'   str(strider$nextElem())
+#' while (strider$has_next()) {
+#'   str(strider$next_element())
 #' }
 #'
 CoordsStrider <- R6::R6Class(
@@ -68,8 +68,8 @@ CoordsStrider <- R6::R6Class(
     print = function() {
       cat("<", class(self)[1L], ">\n", sep = "")
       if (is.null(self$coords)) {
-        cat("  start:", self$start, "\n")
-        cat("  end:", self$end, "\n")
+        cat("  start:", format(self$start), "\n")
+        cat("  end:", format(self$end), "\n")
       } else {
         cat("  length(coords):", length(self$coords), "\n")
       }
@@ -82,7 +82,7 @@ CoordsStrider <- R6::R6Class(
     #'
     length = function() {
       if (is.null(self$coords)) {
-        as.numeric(bit64::abs.integer64(self$end - self$start))
+        return(as.numeric(abs(self$end - self$start)))
       }
       return(length(self$coords))
     },
@@ -91,19 +91,19 @@ CoordsStrider <- R6::R6Class(
     #' @return \code{TRUE} if there are more coordinates to yield or
     #' \code{FALSE} if otherwise
     #'
-    hasNext = function() {
+    has_next = function() {
       if (is.null(self$coords)) {
         return(private$.index <= abs(self$end - self$start))
       }
       return(private$.index <= length(self$coords))
     },
     #' @description Generate the next set of coordinates to yield. If there are
-    #' no more coordiantes to yield, raises a \code{stopIteration} error
+    #' no more coordinates to yield, raises a \code{stopIteration} error
     #'
     #' @return An integer vector of the next set of coordinates
     #'
-    nextElem = function() {
-      if (!self$hasNext()) {
+    next_element = function() {
+      if (!self$has_next()) {
         private$.stopIteration()
       }
       if (is.null(self$coords)) {
@@ -187,11 +187,16 @@ CoordsStrider <- R6::R6Class(
 #' @export
 #'
 as.list.CoordsStrider <- function(x, ...) {
-  stopifnot(
-    "The iterators package is required for 'as.list()'" = requireNamespace('iterators', quietly = TRUE)
-  )
-  f <- get('as.list.iter', envir = asNamespace('iterators'))
-  return(f(x, ...))
+  res <- vector(mode = "list", length = ceiling(x$length() / x$stride))
+  i <- 1L
+  while (x$has_next()) {
+    if (i > length(res)) {
+      stop("this shouldn't be reached")
+    }
+    res[i] <- list(x$next_element())
+    i <- i + 1L
+  }
+  return(Filter(Negate(is.null), res))
 }
 
 #' @method length CoordsStrider
@@ -201,11 +206,11 @@ length.CoordsStrider <- function(x) x$length()
 
 #' @exportS3Method iterators::nextElem
 #'
-nextElem.CoordsStrider <- function(obj, ...) obj$nextElem()
+nextElem.CoordsStrider <- function(obj, ...) obj$next_element()
 
 #' @exportS3Method itertools::hasNext
 #'
-hasNext.CoordsStrider <- function(obj, ...) obj$hasNext()
+hasNext.CoordsStrider <- function(obj, ...) obj$has_next()
 
 unlist64 <- function(x) {
   stopifnot(
