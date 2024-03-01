@@ -9,7 +9,7 @@ from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 
 """
-Performance test evaluating the reindexer performance compared to pnadas.Index for different data types
+Performance test evaluating the reindexer performance compared to pandas.Index for different data types
 """
 
 
