@@ -8,6 +8,7 @@ SOMADenseNDArrayCreate(
   uri,
   type,
   shape,
+  mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
@@ -19,6 +20,8 @@ SOMADenseNDArrayCreate(
 \item{type}{An \link[arrow:data-type]{Arrow type} defining the type of each element in the array.}
 
 \item{shape}{A vector of integers defining the shape of the array.}
+
+\item{mode}{Ingestion mode: one of \code{write} or \code{resume}}
 
 \item{platform_config}{Optional platform configuration}
 

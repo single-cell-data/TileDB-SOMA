@@ -4,7 +4,14 @@
 \alias{write_soma}
 \title{Write a SOMA Object from an \R Object}
 \usage{
-write_soma(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
+write_soma(
+  x,
+  uri,
+  ...,
+  mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{x}{An object}
@@ -12,6 +19,8 @@ write_soma(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
 \item{uri}{URI for resulting SOMA object}
 
 \item{...}{Arguments passed to other methods}
+
+\item{mode}{Ingestion mode: one of \code{write} or \code{resume}}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}}
