@@ -88,7 +88,8 @@ write_soma.character <- function(
     tiledbsoma_ctx = tiledbsoma_ctx,
     relative = relative
   )
-  sdf$set_metadata(uns_hint('1d'))
+  if (mode == "write") sdf$set_metadata(uns_hint('1d'))
+  spdl::debug("[write_soma.character] return sdf")
   return(sdf)
 }
 
