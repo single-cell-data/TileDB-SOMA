@@ -16,7 +16,7 @@ import tiledbsoma
 from .context_generator import host_context
 
 # import context_generator
-from .data import FileBasedProfileDB, ProfileData, ProfileDB
+from .data import FileBasedProfileDB, ProfileData, ProfileDB, S3ProfileDB
 
 GNU_TIME_FORMAT = (
     'Command being timed: "%C"\n'
@@ -206,7 +206,7 @@ def main():
         p_stderr.decode("utf-8"), p_stdout, args.prof1_output, args.prof2_output
     )
     # Add the run data to DB
-    db: ProfileDB = FileBasedProfileDB(args.db_path)
+    db: ProfileDB = S3ProfileDB(args.db_path)
     db_record_file = db.add(data)
     db.close()
 
