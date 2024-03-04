@@ -42,9 +42,17 @@ BlockwiseReadIterBase <- R6::R6Class(
       private$.axis <- axis
       # Check coords
       stopifnot(
-        is_named_list(coords) && all(vapply_lgl(coords, inherits, "CoordsStrider")),
-        self$array$dimnames()[self$axis + 1L] %in% names(coords)
+        "'coords' must be a named list of 'CoordsStrider' objects" = is_named_list(coords) &&
+          all(vapply_lgl(coords, inherits, "CoordsStrider"))
       )
+      axname <- self$array$dimnames()[self$axis + 1L]
+      if (!axname %in% names(coords)) {
+        stop(
+          "'coords' must include an entry for ",
+          sQuote(axname, FALSE),
+          call. = FALSE
+        )
+      }
       private$.coords <- coords
       # Check reindex_disable_on_axis
       if (!is.null(reindex_disable_on_axis)) {

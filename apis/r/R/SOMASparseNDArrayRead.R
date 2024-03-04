@@ -214,10 +214,10 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
     ) {
       super$initialize(sr, array, coords)
       stopifnot(
-        is.null(size) ||
+        "'size' must be a single integer value" = is.null(size) ||
           rlang::is_integerish(size, 1L, finite = TRUE) ||
           (inherits(size, 'integer64') && length(size) == 1L && is.finite(size)),
-        is.null(reindex_disable_on_axis) ||
+        "'reindex_disable_on_axis' must be  avector of integers" = is.null(reindex_disable_on_axis) ||
           rlang::is_integerish(reindex_disable_on_axis, finite = TRUE) ||
           (inherits(reindex_disable_on_axis, 'integer64') && all(is.finite(reindex_disable_on_axis)))
       )

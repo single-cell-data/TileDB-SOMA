@@ -39,25 +39,29 @@ CoordsStrider <- R6::R6Class(
     initialize = function(coords, ..., stride = NULL, start = NULL, end = NULL) {
       if (missing(coords)) {
         stopifnot(
-          rlang::is_integerish(start, 1L, TRUE) ||
+          "'start' must be a single integer value" = rlang::is_integerish(start, 1L, TRUE) ||
             (inherits(start, "integer64") && length(start) == 1L && is.finite(start)),
-          rlang::is_integerish(end, 1L, TRUE) ||
+          "'end' must be a single integer value"  = rlang::is_integerish(end, 1L, TRUE) ||
             (inherits(end, "integer64") && length(end) == 1L && is.finite(end)),
-          start <= end
+          "'start' must be less than or equal to 'end'" = start <= end
         )
         private$.start <- bit64::as.integer64(start)
         private$.end <- bit64::as.integer64(end)
         stride <- stride %||% bit64::abs.integer64(self$end - self$start + 1L)
         private$.index <- 0L
       } else {
-        stopifnot(inherits(coords, c("integer64", "numeric", "integer")))
+        stopifnot(
+          "'coords' must be a vector of integer-like values" = inherits(coords, c("integer64", "numeric", "integer"))
+        )
         private$.coords <- bit64::as.integer64(coords)
         stride <- stride %||% length(coords)
-        stopifnot(stride <= .Machine$integer.max)
+        stopifnot(
+          "'stride' must be less than `Machine$integer.max`" = stride <= .Machine$integer.max
+        )
         private$.index <- 1L
       }
       stopifnot(
-        rlang::is_integerish(stride, 1L, TRUE) ||
+        "'stride' must be a single integer value" = rlang::is_integerish(stride, 1L, TRUE) ||
           (inherits(stride, "integer64") && length(stride == 1L) && is.finite(stride)),
         stride > 0L
       )
@@ -153,7 +157,7 @@ CoordsStrider <- R6::R6Class(
         return(private$.stride)
       }
       stopifnot(
-        (rlang::is_integerish(value, n = 1L, finite = TRUE) ||
+        "'stride' must be a single integer value" = (rlang::is_integerish(value, n = 1L, finite = TRUE) ||
           (inherits(value, "integer64") && length(value) == 1L && is.finite(value))
         ) &&
           value > 0L
@@ -214,8 +218,8 @@ hasNext.CoordsStrider <- function(obj, ...) obj$has_next()
 
 unlist64 <- function(x) {
   stopifnot(
-    is.list(x),
-    all(vapply_lgl(x, inherits, what = 'integer64'))
+    "'x' must be a list" = is.list(x),
+    "'x' must contain 'integer64' values" = all(vapply_lgl(x, inherits, what = 'integer64'))
   )
   res <- bit64::integer64(sum(vapply_int(x, length)))
   idx <- 1L

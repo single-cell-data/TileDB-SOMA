@@ -13,7 +13,7 @@ soma_array_to_arrow_table <- function(x) {
 }
 
 soma_array_to_arrow_table_concat <- function(it) {
-  stopifnot(inherits(it, 'ReadIter'))
+  stopifnot("'it' must be a 'ReadIter' object" = inherits(it, 'ReadIter'))
   tbl <- it$read_next()
   while (!it$read_complete()) {
     nxt <- it$read_next()
@@ -23,7 +23,10 @@ soma_array_to_arrow_table_concat <- function(it) {
 }
 
 soma_array_to_sparse_matrix_concat <- function(it, zero_based = FALSE) {
-  stopifnot(inherits(it, 'ReadIter'), isTRUE(zero_based) || isFALSE(zero_based))
+  stopifnot(
+    "'it' must be a 'ReadIter' object" = inherits(it, 'ReadIter'),
+    "'zero_based' must be TRUE or FALSE" = isTRUE(zero_based) || isFALSE(zero_based)
+  )
   mat <- it$read_next()
   while (!it$read_complete()) {
     mat <- if (isTRUE(zero_based)) {
