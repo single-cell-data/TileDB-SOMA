@@ -34,10 +34,12 @@
 #define SOMA_CONTEXT
 
 #include <map>
+#include <mutex>
 #include <string>
 #include <tiledb/tiledb>
 
 namespace tiledbsoma {
+class ThreadPool;
 
 using namespace tiledb;
 
@@ -47,10 +49,12 @@ class SOMAContext {
     //= public non-static
     //===================================================================
     SOMAContext()
-        : ctx_(std::make_shared<Context>(Config({}))){};
+        : ctx_(std::make_shared<Context>(Config({})))
+        , thread_pool_mutex_(){};
 
     SOMAContext(std::map<std::string, std::string> platform_config)
-        : ctx_(std::make_shared<Context>(Config(platform_config))){};
+        : ctx_(std::make_shared<Context>(Config(platform_config)))
+        , thread_pool_mutex_(){};
 
     bool operator==(const SOMAContext& other) const {
         return ctx_ == other.ctx_;
@@ -67,6 +71,8 @@ class SOMAContext {
         return cfg;
     }
 
+    std::shared_ptr<ThreadPool>& thread_pool();
+
    private:
     //===================================================================
     //= private non-static
@@ -74,6 +80,12 @@ class SOMAContext {
 
     // TileDB context
     std::shared_ptr<Context> ctx_;
+
+    // Threadpool
+    std::shared_ptr<ThreadPool> thread_pool_ = nullptr;
+
+    // Semaphore to create and use the thread_pool
+    std::mutex thread_pool_mutex_;
 };
 }  // namespace tiledbsoma
 

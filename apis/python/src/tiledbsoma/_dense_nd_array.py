@@ -15,9 +15,10 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _util
+from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._exception import SOMAError
-from ._tdb_handles import ArrayWrapper
+from ._tdb_handles import DenseNDArrayWrapper
 from ._util import dense_indices_to_shape
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -72,7 +73,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     __slots__ = ()
 
-    _reader_wrapper_type = ArrayWrapper
+    _reader_wrapper_type = DenseNDArrayWrapper
 
     def read(
         self,
@@ -107,7 +108,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         Lifecycle:
             Experimental.
         """
-        del partitions, platform_config  # Currently unused.
+        del partitions  # Currently unused.
         self._check_open_read()
         result_order = somacore.ResultOrder(result_order)
 
@@ -123,13 +124,28 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         #
         # The only exception is if the array has been created but no data have been written at
         # all, in which case the best we can do is use the schema shape.
-        data_shape = self._handle.schema.shape
+        handle: clib.DenseNDArrayWrapper = self._handle._handle
+
+        data_shape = handle.shape
         ned = self.non_empty_domain()
         if ned is not None:
             data_shape = tuple(slot[1] + 1 for slot in ned)
         target_shape = dense_indices_to_shape(coords, data_shape, result_order)
 
-        sr = self._soma_reader(result_order=result_order)
+        context = handle.context()
+        if platform_config is not None:
+            config = context.tiledb_config.copy()
+            config.update(platform_config)
+            context = clib.SOMAContext(config)
+
+        sr = clib.SOMADenseNDArray.open(
+            uri=handle.uri,
+            mode=clib.OpenMode.read,
+            context=context,
+            column_names=[],
+            result_order=_util.to_clib_result_order(result_order),
+            timestamp=handle.timestamp and (0, handle.timestamp),
+        )
 
         self._set_reader_coords(sr, coords)
 

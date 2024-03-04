@@ -585,6 +585,7 @@ void load_soma_array(py::module& m) {
                             "Unsupported dtype for nonempty domain.");
                 }
             })
+
         .def(
             "domain",
             [](SOMAArray& reader, std::string name, py::dtype dtype) {
@@ -633,11 +634,16 @@ void load_soma_array(py::module& m) {
                 }
             })
 
+        .def_property_readonly("dimension_names", &SOMAArray::dimension_names)
+
         .def("set_metadata", &SOMAArray::set_metadata)
+
         .def("delete_metadata", &SOMAArray::delete_metadata)
+
         .def(
             "get_metadata",
             py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
+
         .def_property_readonly(
             "meta",
             [](SOMAArray& soma_dataframe) -> py::dict {
@@ -663,7 +669,9 @@ void load_soma_array(py::module& m) {
                 }
                 return results;
             })
+
         .def("has_metadata", &SOMAArray::has_metadata)
+
         .def("metadata_num", &SOMAArray::metadata_num);
 }
 }  // namespace libtiledbsomacpp

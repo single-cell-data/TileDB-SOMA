@@ -129,6 +129,11 @@ class SOMADenseNDArray : public SOMAArray {
         : SOMAArray(other) {
     }
 
+    SOMADenseNDArray() = delete;
+    SOMADenseNDArray(const SOMADenseNDArray&) = default;
+    SOMADenseNDArray(SOMADenseNDArray&&) = delete;
+    ~SOMADenseNDArray() = default;
+
     using SOMAArray::open;
 
     /**

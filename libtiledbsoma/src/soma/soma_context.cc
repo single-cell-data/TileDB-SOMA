@@ -1,5 +1,5 @@
 /**
- * @file   soma_dense_ndarray.cc
+ * @file   soma_context.h
  *
  * @section LICENSE
  *
@@ -27,46 +27,27 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the SOMADenseNDArray bindings.
+ *   This file defines the SOMAContext class.
  */
+#include "soma_context.h"
+#include <thread_pool/thread_pool.h>
 
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/pytypes.h>
-#include <pybind11/stl.h>
-#include <pybind11/stl_bind.h>
+namespace tiledbsoma {
 
-#include <tiledbsoma/tiledbsoma>
-
-#include "common.h"
-
-namespace libtiledbsomacpp {
-
-namespace py = pybind11;
-using namespace py::literals;
-using namespace tiledbsoma;
-
-void load_soma_dense_ndarray(py::module& m) {
-    py::class_<SOMADenseNDArray, SOMAArray, SOMAObject>(m, "SOMADenseNDArray")
-
-        .def_static(
-            "open",
-            py::overload_cast<
-                std::string_view,
-                OpenMode,
-                std::shared_ptr<SOMAContext>,
-                std::vector<std::string>,
-                ResultOrder,
-                std::optional<std::pair<uint64_t, uint64_t>>>(
-                &SOMADenseNDArray::open),
-            "uri"_a,
-            "mode"_a,
-            "context"_a,
-            py::kw_only(),
-            "column_names"_a = py::none(),
-            "result_order"_a = ResultOrder::automatic,
-            "timestamp"_a = py::none())
-
-        .def_static("exists", &SOMADenseNDArray::exists);
+std::shared_ptr<ThreadPool>& SOMAContext::thread_pool() {
+    const std::lock_guard<std::mutex> lock(thread_pool_mutex_);
+    // The first thread that gets here will create the context thread pool
+    if (thread_pool_ == nullptr) {
+        auto cfg = tiledb_config();
+        int concurrency = 10;
+        if (cfg.find("sm.compute_concurrency_level") != cfg.end()) {
+            concurrency = std::stoi(cfg["sm.compute_concurrency_level"]);
+        }
+        int thread_count = std::max(1, concurrency / 2);
+        if (thread_count > 1) {
+            thread_pool_ = std::make_shared<ThreadPool>(thread_count);
+        }
+    }
+    return thread_pool_;
 }
-}  // namespace libtiledbsomacpp
+}  // namespace tiledbsoma
