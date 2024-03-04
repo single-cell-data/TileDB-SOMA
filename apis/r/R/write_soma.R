@@ -417,6 +417,7 @@ write_soma.TsparseMatrix <- function(
     uri = uri,
     type = type %||% arrow::infer_type(methods::slot(object = x, name = 'x')),
     shape = dim(x),
+    mode = mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )

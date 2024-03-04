@@ -266,6 +266,7 @@ test_that("write_soma sparse matrix mechanics", {
   collection <- SOMACollectionCreate(uri)
   knex <- get_data('KNex', package = 'Matrix')$mm
   expect_no_condition(smat <- write_soma(knex, uri = 'knex', soma = collection))
+  expect_no_condition(smat <- write_soma(knex, uri = 'knex', soma = collection, mode = "resume"))
   expect_s3_class(smat, 'SOMASparseNDArray')
   expect_true(smat$exists())
   expect_identical(smat$uri, file.path(collection$uri, 'knex'))
