@@ -39,7 +39,7 @@ fi
 
 if [ "$(uname -m)" == "aarch64" ]; then
   # build TileDB from source on arm
-  extra_opts=+" -DDOWNLOAD_TILEDB_PREBUILT=OFF"
+  extra_opts+=" -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 fi
 
 # NOTE: set to true to debug the cmake build
