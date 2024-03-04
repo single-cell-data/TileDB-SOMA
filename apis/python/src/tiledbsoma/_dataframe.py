@@ -401,6 +401,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         dim_names_set = self.index_column_names
         n = None
 
+        se : tiledb.schema_evolution.ArraySchemaEvolution = None
+
         for col_info in values.schema:
             name = col_info.name
             col = values.column(name).combine_chunks()
@@ -437,7 +439,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
                     # only extend if there are new values
                     if len(update_vals) != 0:
-                        se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
+                        if se is None:
+                            se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
                         if np.issubdtype(enmr.dtype.type, np.str_):
                             extend_vals = np.array(update_vals, "U")
                         elif np.issubdtype(enmr.dtype.type, np.bytes_):
@@ -448,7 +451,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                         df = pd.Categorical(col.to_pandas(), new_enmr.values())
                         col = pa.DictionaryArray.from_pandas(df)
                         se.extend_enumeration(new_enmr)
-                        se.array_evolve(uri=self.uri)
 
             cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
             schema = self._handle.schema
@@ -469,6 +471,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                         )
 
                 cols_map[name] = col.to_pandas()
+
+        if se is not None:
+            se.array_evolve(uri=self.uri)
 
         if n is None:
             raise ValueError(f"did not find any column names in {values.schema.names}")
