@@ -6,6 +6,7 @@
 #'
 #' @param x An object
 #' @param uri URI for resulting SOMA object
+#' @param mode Ingestion mode: one of \code{write} or \code{resume}
 #' @template param-dots-method
 #' @param platform_config Optional \link[tiledbsoma:PlatformConfig]{platform
 #' configuration}
@@ -23,7 +24,8 @@
 #'
 #' @export
 #'
-write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL) {
+write_soma <- function(x, uri, ..., mode = "write", platform_config = NULL, tiledbsoma_ctx = NULL) {
+  spdl::debug("[write_soma] mode={}", mode)
   UseMethod(generic = 'write_soma', object = x)
 }
 
@@ -66,18 +68,21 @@ write_soma.character <- function(
   x,
   uri,
   soma_parent,
+  mode = "write",
   ...,
   key = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
+  spdl::debug("[write_soma.character] mode={}", mode)
   sdf <- write_soma(
     x = data.frame(values = x),
     uri = uri,
     soma_parent = soma_parent,
     df_index = 'values',
     ...,
+    mode = mode,
     key = key,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
@@ -127,6 +132,7 @@ write_soma.data.frame <- function(
   x,
   uri,
   soma_parent,
+  mode = "write",
   df_index = NULL,
   index_column_names = 'soma_joinid',
   ...,
@@ -144,11 +150,13 @@ write_soma.data.frame <- function(
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key))
   )
+  spdl::debug("[write_soma.data.frame] mode={}", mode)
   # Create a proper URI
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    mode = mode
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -214,22 +222,26 @@ write_soma.data.frame <- function(
     uri = uri,
     schema = tbl$schema,
     index_column_names = index_column_names,
+    mode = mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
-  # Write values
-  sdf$write(tbl)
-  # Add to `soma_parent`
-  if (is.character(key)) {
-    soma_parent$set(
-      sdf,
-      name = key,
-      relative = ifelse(
-        startsWith(x = sdf$uri, 'tiledb://'),
-        yes = FALSE,
-        no = relative
+  # Write values unless in "resume" mode and uri exists
+  if (!(mode == "resume" &&
+        tiledb::tiledb_vfs_is_dir(uri))) {
+    sdf$write(tbl)
+    # Add to `soma_parent`
+    if (is.character(key)) {
+      soma_parent$set(
+        sdf,
+        name = key,
+        relative = ifelse(
+          startsWith(x = sdf$uri, 'tiledb://'),
+          yes = FALSE,
+          no = relative
+        )
       )
-    )
+    }
   }
   # Return
   return(sdf)
@@ -257,6 +269,7 @@ write_soma.matrix <- function(
   x,
   uri,
   soma_parent,
+  mode = "write",
   sparse = TRUE,
   type = NULL,
   transpose = FALSE,
@@ -273,6 +286,7 @@ write_soma.matrix <- function(
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key))
   )
+  spdl::debug("[write_soma.matrix] mode={}", mode)
   if (!isTRUE(sparse) && inherits(x = x, what = 'sparseMatrix')) {
     stop(
       "A sparse matrix was provided and a dense array was asked for",
@@ -285,6 +299,7 @@ write_soma.matrix <- function(
       x = methods::as(object = x, Class = 'TsparseMatrix'),
       uri = uri,
       soma_parent = soma_parent,
+      mode = mode,
       type = type,
       transpose = transpose,
       ...,
@@ -294,6 +309,7 @@ write_soma.matrix <- function(
       relative = relative
     ))
   }
+  spdl::debug("[write_soma.matrix] dense case")
   # Create a dense array
   if (inherits(x = x, what = 'Matrix')) {
     x <- as.matrix(x)
@@ -302,7 +318,8 @@ write_soma.matrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    mode = mode
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -316,14 +333,17 @@ write_soma.matrix <- function(
     uri = uri,
     type = type %||% arrow::infer_type(x),
     shape = dim(x),
+    mode = mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
-  # Write values
-  array$write(x)
-  # Add to `soma_parent`
-  if (is.character(key)) {
-    soma_parent$set(array, name = key, relative = relative)
+  # Write values unless in "resume" mode and uri exists
+  if (!(mode == "resume" && tiledb::tiledb_vfs_is_dir(uri))) {
+    array$write(x)
+    # Add to `soma_parent`
+    if (is.character(key)) {
+      soma_parent$set(array, name = key, relative = relative)
+    }
   }
   # Return
   return(array)
@@ -360,6 +380,7 @@ write_soma.TsparseMatrix <- function(
   x,
   uri,
   soma_parent,
+  mode = "write",
   type = NULL,
   transpose = FALSE,
   ...,
@@ -381,7 +402,8 @@ write_soma.TsparseMatrix <- function(
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
-    relative = relative
+    relative = relative,
+    mode = mode
   )
   if (is.character(key) && is.null(soma_parent)) {
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
@@ -398,11 +420,13 @@ write_soma.TsparseMatrix <- function(
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
-  # Write values
-  array$write(x)
-  # Add to `soma_parent`
-  if (is.character(key)) {
-    soma_parent$set(array, name = key, relative = relative)
+  # Write values unless in "resume" mode and uri exists
+  if (!(mode == "resume" && tiledb::tiledb_vfs_is_dir(array$uri))) {
+    array$write(x)
+    # Add to `soma_parent`
+    if (is.character(key)) {
+      soma_parent$set(array, name = key, relative = relative)
+    }
   }
   # Return
   return(array)
@@ -472,13 +496,18 @@ write_soma.TsparseMatrix <- function(
 .check_soma_uri <- function(
   uri,
   soma_parent = NULL,
-  relative = TRUE
+  relative = TRUE,
+  mode = "write"
 ) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
     "'soma_parent' must be a SOMACollection" = is.null(soma_parent) ||
       inherits(x = soma_parent, what = 'SOMACollectionBase'),
-    "'relative' must be a single logical value" = is_scalar_logical(relative)
+    "'relative' must be a single logical value" = is_scalar_logical(relative),
+    "'mode' must be a single character value" = is.null(mode) ||
+        (is_scalar_character(mode)),
+    "'mode' must be one of 'write' or 'resume'" =
+        is.finite(match(mode, c("write", "resume")))
   )
   if (!isFALSE(relative)) {
     if (basename(uri) != uri) {
@@ -487,7 +516,9 @@ write_soma.TsparseMatrix <- function(
     }
     uri <- file_path(soma_parent$uri %||% R_user_dir('tiledbsoma'), uri)
   } else if (!is_remote_uri(uri)) {
-    dir.create(dirname(uri), recursive = TRUE)
+    if (mode == "write" ||
+        (mode == "resume" && !dir.exists(dirname(uri))))
+      dir.create(dirname(uri), recursive = TRUE)
   }
   return(uri)
 }

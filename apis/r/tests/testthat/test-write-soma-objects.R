@@ -8,7 +8,9 @@ test_that("write_soma.data.frame mechanics", {
   collection <- SOMACollectionCreate(uri)
 
   co2 <- get_data('CO2', package = 'datasets')
+  expect_error(sdf <- write_soma(co2, uri = 'co2', soma = collection, mode = "doesnotexist"))
   expect_no_condition(sdf <- write_soma(co2, uri = 'co2', soma = collection))
+  expect_no_condition(sdf <- write_soma(co2, uri = 'co2', soma = collection, mode = "resume"))
   expect_s3_class(sdf, 'SOMADataFrame')
   expect_true(sdf$exists())
   expect_identical(sdf$uri, file.path(collection$uri, 'co2'))
@@ -170,6 +172,8 @@ test_that("write_soma dense matrix mechanics", {
     soma = collection,
     sparse = FALSE
   ))
+  expect_no_condition(dmat <- write_soma(state77, uri = 'state77', soma = collection,
+                                         sparse = FALSE, mode = "resume"))
   expect_s3_class(dmat, 'SOMADenseNDArray')
   expect_true(dmat$exists())
   expect_identical(dmat$uri, file.path(collection$uri, 'state77'))
@@ -185,6 +189,8 @@ test_that("write_soma dense matrix mechanics", {
     sparse = FALSE,
     transpose = TRUE
   ))
+  expect_no_condition(tmat <- write_soma(state77, uri = 'state77t', soma = collection,
+                                         sparse = FALSE, transpose = TRUE, mode = "resume"))
   expect_s3_class(tmat, 'SOMADenseNDArray')
   expect_true(tmat$exists())
   expect_identical(tmat$uri, file.path(collection$uri, 'state77t'))

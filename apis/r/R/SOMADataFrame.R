@@ -24,7 +24,7 @@ SOMADataFrame <- R6::R6Class(
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
     create = function(schema, index_column_names = c("soma_joinid"),
-                        platform_config = NULL, internal_use_only = NULL) {
+                      platform_config = NULL, internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
