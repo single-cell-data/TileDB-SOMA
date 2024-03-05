@@ -401,7 +401,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         dim_names_set = self.index_column_names
         n = None
 
-        se : tiledb.schema_evolution.ArraySchemaEvolution = None
+        se: tiledb.schema_evolution.ArraySchemaEvolution = None
 
         for col_info in values.schema:
             name = col_info.name
