@@ -390,7 +390,6 @@ write_soma.TsparseMatrix <- function(
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  # browser()
   stopifnot(
     "'x' must be a general sparse matrix" = inherits(x = x, what = 'generalMatrix'),
     "'x' must not be a pattern matrix" = !inherits(x = x, what = 'nsparseMatrix'),
