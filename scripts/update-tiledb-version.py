@@ -103,6 +103,10 @@ def main(args):
     filepath = f"{os.path.dirname(__file__)}/../apis/r/tools/get_tarball.R"
     update_version(filepath, new_version, new_hash, update_sha=False)
 
+    # update CI version
+    filepath = f"{os.path.dirname(__file__)}/../.github/workflows/python-so-copying.yml"
+    update_version(filepath, new_version, new_hash)
+
 
 if __name__ == "__main__":
     description = (
