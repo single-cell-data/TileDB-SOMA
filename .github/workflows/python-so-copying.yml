@@ -55,6 +55,7 @@ jobs:
         if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
         run: |
           mkdir -p external
+          # Please do not edit manually -- let scripts/update-tiledb-version.py update this
           wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.20.1/tiledb-linux-x86_64-2.20.1-249c024.tar.gz
           tar -C external -xzf tiledb-linux-x86_64-*.tar.gz
           ls external/lib/
