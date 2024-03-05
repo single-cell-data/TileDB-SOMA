@@ -339,7 +339,7 @@ write_soma.matrix <- function(
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   # Write values unless in "resume" mode and uri exists
-  if (!(mode == "resume" && tiledb::tiledb_vfs_is_dir(uri))) {
+  if (!(mode == "resume" && tiledb::tiledb_vfs_is_dir(array$uri))) {
     array$write(x)
     # Add to `soma_parent`
     if (is.character(key)) {
@@ -390,6 +390,7 @@ write_soma.TsparseMatrix <- function(
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
+  # browser()
   stopifnot(
     "'x' must be a general sparse matrix" = inherits(x = x, what = 'generalMatrix'),
     "'x' must not be a pattern matrix" = !inherits(x = x, what = 'nsparseMatrix'),
