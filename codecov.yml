@@ -8,7 +8,6 @@ ignore:
   - "apis/r/src/nanoarrow.h"
   - "apis/r/src/libtiledbsoma/src/external"
   - "apis/python/devtools/"
-  - "apis/python/src/tiledbsoma/__init__.py"
 
 comment:
   layout: "header, diff, flags, components"  # show component info in the PR comment
