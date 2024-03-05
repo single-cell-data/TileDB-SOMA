@@ -22,18 +22,19 @@ defaults:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     name: "TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-22.04, macos-12]
         TILEDB_EXISTS: ["no", "yes"]
         TILEDBSOMA_EXISTS: ["no", "yes"]
         exclude:
           - TILEDB_EXISTS: "no"
             TILEDBSOMA_EXISTS: "yes"
     container:
-      image: ubuntu:22.04
+      image: ${{ matrix.os }}
     steps:
       - name: Docker image info
         run: |
@@ -87,39 +88,44 @@ jobs:
           cd apis/python
           ../../venv-soma/bin/python setup.py bdist_wheel
       - name: Inspect wheel
-        run: unzip -l apis/python/dist/tiledbsoma-*.whl | grep '\.so'
-      - name: Confirm libtiledb.so is copied
+        run: unzip -l apis/python/dist/tiledbsoma-*.whl | egrep '\.so|\.dylib'
+      - name: Confirm libtiledb.so/dylib is copied
         if: ${{ matrix.TILEDB_EXISTS == 'no' }}
-        run: unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledb.so
-      - name: Confirm libtiledb.so is **not** copied when using external shared object
+        run: unzip -l apis/python/dist/tiledbsoma-*.whl | egrep -q 'libtiledb.so|libtiledb.dylib'
+      - name: Confirm libtiledb.so/dylib is **not** copied when using external shared object
         if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
         run: |
-          if unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledb.so
+          if unzip -l apis/python/dist/tiledbsoma-*.whl | egrep -q 'libtiledb.so|libtiledb.dylib'
           then
-            echo "libtiledb.so was copied into the wheel when it was built against an external shared object"
+            echo "libtiledb.so / libtileb.dylib was copied into the wheel when it was built against an external shared object"
             exit 1
           fi
-      - name: Confirm libtiledbsoma.so is copied
+      - name: Confirm libtiledbsoma.so/dylib is copied
         if: ${{ matrix.TILEDBSOMA_EXISTS == 'no' }}
-        run: unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledbsoma.so
-      - name: Confirm libtiledbsoma.so is **not** copied when using external shared object
+        run: unzip -l apis/python/dist/tiledbsoma-*.whl | egrep -q 'libtiledbsoma.so|libtiledbsoma.dylib'
+      - name: Confirm libtiledbsoma.so/dylib is **not** copied when using external shared object
         if: ${{ matrix.TILEDBSOMA_EXISTS == 'yes' }}
         run: |
-          if unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledbsoma.so
+          if unzip -l apis/python/dist/tiledbsoma-*.whl | egrep -q 'libtiledbsoma.so|libtiledbsoma.dylib'
           then
-            echo "libtiledbsoma.so was copied into the wheel when it was built against an external shared object"
+            echo "libtiledbsoma.so / libtliedbsoma.dylib was copied into the wheel when it was built against an external shared object"
             exit 1
           fi
       - name: Install wheel
         run: ./venv-soma/bin/python -m pip install --prefer-binary apis/python/dist/tiledbsoma-*.whl
-      - name: Check linking and RPATH
+      - name: Check linking and RPATH, Linux
+        if: ${{ inputs.os == 'ubuntu-22.04' }}
         run: |
           ldd ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
           readelf -d ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so  | grep R*PATH
+      - name: Check linking and RPATH, MacOS
+        if: ${{ inputs.os == 'macos-12' }}
+        run: |
+          otool -L ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
       - name: Runtime test
         run: ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
       - name: Confirm linking to installed shared objects
         run: |
-          rm -fr build/ build-libtiledbsoma/ dist/ apis/python/build apis/python/src/tiledbsoma/*tile*.so*
-          find . -name '*tile*.so*' # should only show shared objects installed in virtual env
+          rm -fr build/ build-libtiledbsoma/ dist/ apis/python/build apis/python/src/tiledbsoma/*tile*.so* apis/python/src/tiledbsoma/*tile*.dylib
+          find . -name '*tile*.so*' -o -name '*tiledb*.dylib' # should only show shared objects installed in virtual env
           ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
