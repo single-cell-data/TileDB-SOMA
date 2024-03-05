@@ -56,7 +56,7 @@ jobs:
         run: |
           mkdir -p external
           # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.20.1/tiledb-linux-x86_64-2.20.1-249c024.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.19.2/tiledb-linux-x86_64-2.19.2-dc780d2.tar.gz
           tar -C external -xzf tiledb-linux-x86_64-*.tar.gz
           ls external/lib/
           echo "LD_LIBRARY_PATH=$(pwd)/external/lib" >> $GITHUB_ENV
