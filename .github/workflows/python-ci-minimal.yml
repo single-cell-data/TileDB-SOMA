@@ -19,10 +19,14 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: true
+      # TEMP DEBUG PLEASE DO NOT MERGE
+      # fail-fast: true
+      fail-fast: false
       matrix:
         os: [ubuntu-22.04, macos-12]
-        python-version: ['3.8', '3.11']
+          # TEMP DEBUG PLEASE DO NOT MERGEm
+        # python-version: ['3.8', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
         include:
           - os: ubuntu-22.04
             cc: gcc-11
