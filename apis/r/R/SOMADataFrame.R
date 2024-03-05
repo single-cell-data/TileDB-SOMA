@@ -170,6 +170,8 @@ SOMADataFrame <- R6::R6Class(
       has_enums <- tiledb::tiledb_array_has_enumeration(arr)
       if (any(has_enums)) {       # if enumerations exists in array
           attrs <- tiledb::attrs(tiledb::schema(arr))
+          ase <- tiledb::tiledb_array_schema_evolution()
+          call_ase <- FALSE
           if (!tiledb::tiledb_array_is_open(arr)) arr <- tiledb::tiledb_array_open(arr, "READ")
           for (attr_name in names(attrs)) {
               if (has_enums[attr_name]) {
@@ -186,14 +188,14 @@ SOMADataFrame <- R6::R6Class(
                           stop(sprintf("For column '%s' cannot add %d factor levels to existing %d for type '%s' with maximum value %d",
                                        attr_name, length(added_enum), length(old_enum), datatype, maxval), call. = FALSE)
                       }
-                      ase <- tiledb::tiledb_array_schema_evolution()
+                      call_ase <- TRUE
                       ase <- tiledb::tiledb_array_schema_evolution_extend_enumeration(ase, arr, attr_name, added_enum)
-                      tiledb::tiledb_array_schema_evolution_array_evolve(ase, self$uri)
                       df[, attr_name] <- factor(df[, attr_name], levels = unique(c(old_enum,new_enum)), ordered=is.ordered(df[, attr_name]))
                       spdl::debug("[tiledbsoma$write] writing '{}' '{}' {}", paste(unique(c(old_enum,new_enum)),collapse=","), paste(added_enum,collapse=","), is.ordered(df[, attr_name]))
                   }
               }
           }
+          if (call_ase) tiledb::tiledb_array_schema_evolution_array_evolve(ase, self$uri)
           arr <- tiledb::tiledb_array_close(arr)
           arr <- tiledb::tiledb_array_open(arr, "WRITE")
       }
