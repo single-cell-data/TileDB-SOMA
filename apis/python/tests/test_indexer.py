@@ -23,7 +23,7 @@ def test_duplicate_key_indexer_error(
 ):
     context = _validate_soma_tiledb_context(SOMATileDBContext())
     with pytest.raises(RuntimeError, match="There are duplicate keys."):
-        tiledbsoma_build_index(keys, context=context.native_context)
+        tiledbsoma_build_index(keys, context=context)
 
     pd_index = pd.Index(keys)
     with pytest.raises(pd.errors.InvalidIndexError):
@@ -94,7 +94,7 @@ def test_indexer(keys: np.array, lookups: np.array):
     num_threads = 10
 
     def target():
-        indexer = tiledbsoma_build_index(keys, context=context.native_context)
+        indexer = tiledbsoma_build_index(keys, context=context)
         results = indexer.get_indexer(lookups)
         all_results.append(results)
 
