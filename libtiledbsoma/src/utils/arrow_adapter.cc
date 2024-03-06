@@ -39,14 +39,26 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
-    return; // FIXME: switch to nanoarrow release
+    LOG_DEBUG(fmt::format("[ArrowAdapter] release_schema for {}", schema->name));
     schema->release = nullptr;
 
+    if (schema->name != nullptr) {
+        free((void*)schema->name);
+        schema->name = nullptr;
+    }
+    if (schema->format != nullptr) {
+        free((void*)schema->format);
+        schema->format = nullptr;
+    }
     for (int i = 0; i < schema->n_children; ++i) {
         struct ArrowSchema* child = schema->children[i];
-        if (schema->name != nullptr) {
-            free((void*)schema->name);
-            schema->name = nullptr;
+        if (child->name != nullptr) {
+            free((void*)child->name);
+            child->name = nullptr;
+        }
+        if (child->format != nullptr) {
+            free((void*)child->format);
+            child->format = nullptr;
         }
         if (child->release != NULL) {
             child->release(child);
@@ -57,22 +69,32 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
 
     struct ArrowSchema* dict = schema->dictionary;
     if (dict != nullptr) {
+        if (dict->name != nullptr) {
+            free((void*)dict->name);
+            dict->name = nullptr;
+        }
         if (dict->format != nullptr) {
             free((void*)dict->format);
             dict->format = nullptr;
         }
         if (dict->release != nullptr) {
-            delete dict;
+            //delete dict;
+            free(dict);
             dict = nullptr;
         }
     }
-
     LOG_TRACE("[ArrowAdapter] release_schema");
 }
 
 void ArrowAdapter::release_array(struct ArrowArray* array) {
-    return; // FIXME: switch to nanoarrow release
     auto arrow_buffer = static_cast<ArrowBuffer*>(array->private_data);
+    LOG_DEBUG(fmt::format("[ArrowAdapter] release_array for {} cnt {} var {} nullable {} enum {}",
+                         arrow_buffer->buffer_->name(),
+                         arrow_buffer->buffer_.use_count(),
+                         arrow_buffer->buffer_->is_var(),
+                         arrow_buffer->buffer_->is_nullable(),
+                         arrow_buffer->buffer_->has_enumeration()
+                         ));
 
     LOG_TRACE(fmt::format(
         "[ArrowAdapter] release_array {} use_count={}",
@@ -86,6 +108,20 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
 
     if (array->buffers != nullptr) {
         delete[] array->buffers;
+        array->buffers = nullptr;
+    }
+
+    if (array->n_children > 0) {
+        for (int i = 0; i < array->n_children; ++i) {
+            struct ArrowArray* child = array->children[i];
+            if (child != nullptr) {
+                release_array(child);
+                free(child);
+                child = nullptr;
+            }
+        }
+        free(array->children);
+        array->children = nullptr;
     }
 
     struct ArrowArray* dict = array->dictionary;
@@ -95,12 +131,13 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
             dict->buffers = nullptr;
         }
         if (dict->release != nullptr) {
-            delete dict;
+            //delete dict;
+            free(dict);
             dict = nullptr;
         }
     }
-
     array->release = nullptr;
+
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
@@ -113,13 +150,13 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     arrow_schema->format = "+s";
     arrow_schema->n_children = ndim + nattr;
     arrow_schema->release = &ArrowAdapter::release_schema;
-    arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
+    arrow_schema->children = (ArrowSchema**) malloc(arrow_schema->n_children * sizeof(ArrowSchema*)); //new ArrowSchema*[arrow_schema->n_children];
 
     ArrowSchema* child = nullptr;
 
     for (uint32_t i = 0; i < ndim; ++i) {
         auto dim = tiledb_schema.domain().dimension(i);
-        child = arrow_schema->children[i] = new ArrowSchema;
+        child = arrow_schema->children[i] = (ArrowSchema*) malloc(sizeof(ArrowSchema)); //new ArrowSchema;
         child->format = ArrowAdapter::to_arrow_format(dim.type()).data();
         child->name = strdup(dim.name().c_str());
         child->metadata = nullptr;
@@ -132,7 +169,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
 
     for (uint32_t i = 0; i < nattr; ++i) {
         auto attr = tiledb_schema.attribute(i);
-        child = arrow_schema->children[ndim + i] = new ArrowSchema;
+        child = arrow_schema->children[ndim + i] = (ArrowSchema*) malloc(sizeof(ArrowSchema)); //new ArrowSchema;
         child->format = ArrowAdapter::to_arrow_format(attr.type()).data();
         child->name = strdup(attr.name().c_str());
         child->metadata = nullptr;
@@ -186,7 +223,7 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
 
             // Allocate a single byte to copy the bits into
             size_t sz = 1;
-            dst = new const void*[sz];
+            dst = malloc(sz); //new const void*[sz];
             std::memcpy((void*)dst, &src, sz);
 
             return std::pair(dst, data.size());
@@ -255,11 +292,26 @@ bool ArrowAdapter::_isstr(const char* format) {
     return false;
 }
 
+inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
+    if (ec != NANOARROW_OK)
+        throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter: Arrow Error {} ", msg));
+}
+
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
 ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
     std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
+    auto sch = schema.get();
+    auto arr = array.get();
 
+    auto coltype = to_arrow_format(column->type()).data();
+    auto natype = to_nanoarrow_type(coltype);
+    exitIfError(ArrowSchemaInitFromType(sch, natype), "Bad schema init");
+    exitIfError(ArrowSchemaSetName(sch, column->name().data()), "Bad schema name");
+    exitIfError(ArrowSchemaAllocateChildren(sch, 0), "Bad schema children alloc");
+
+#if 0
     schema->format = to_arrow_format(column->type()).data();
     schema->name = column->name().data();
     schema->metadata = nullptr;
@@ -267,10 +319,11 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     schema->n_children = 0;
     schema->children = nullptr;
     schema->dictionary = nullptr;
+#endif
     schema->release = &release_schema;
     schema->private_data = nullptr;
 
-    int n_buffers = column->is_var() ? 3 : 2;
+    int n_buffers = column->is_var() ? 3 : 2; // this will be 2 for enumerations and 3 for char vectors
 
     // Create an ArrowBuffer to manage the lifetime of `column`.
     // - `arrow_buffer` holds a shared_ptr to `column`, which
@@ -284,7 +337,16 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     //   will be deleted.
     auto arrow_buffer = new ArrowBuffer(column);
 
+    exitIfError(ArrowArrayInitFromType(arr, natype), "Bad array init");
+    exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
     array->length = column->size();
+
+    LOG_DEBUG(fmt::format("[ArrowAdapter] column type {} name {} nbuf {} {} nullable {}",
+                         to_arrow_format(column->type()).data(),
+                         column->name().data(), n_buffers, array->n_buffers, column->is_nullable()));
+
+
+#if 0
     array->null_count = 0;
     array->offset = 0;
     array->n_buffers = n_buffers;
@@ -292,6 +354,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     array->buffers = nullptr;
     array->children = nullptr;
     array->dictionary = nullptr;
+#endif
     array->release = &release_array;
     array->private_data = (void*)arrow_buffer;
 
@@ -300,9 +363,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         column->name(),
         column.use_count()));
 
-    array->buffers = new const void*[n_buffers];
+    array->buffers = (const void**) malloc(sizeof(void*) * n_buffers); //new const void*[n_buffers];
     assert(array->buffers != nullptr);
-    array->buffers[0] = nullptr;                                   // validity
+    array->buffers[0] = nullptr;                                   // validity addressed below
     array->buffers[n_buffers - 1] = column->data<void*>().data();  // data
     if (n_buffers == 3) {
         array->buffers[1] = column->offsets().data();  // offsets
@@ -330,10 +393,17 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     }
 
     if (column->has_enumeration()) {
-        auto dict_sch = new ArrowSchema;
-        auto dict_arr = new ArrowArray;
+        auto dict_sch = (ArrowSchema*) malloc(sizeof(ArrowSchema)); //new ArrowSchema;
+        auto dict_arr = (ArrowArray*) malloc(sizeof(ArrowArray));  //new ArrowArray;
 
         auto enmr = column->get_enumeration_info();
+        auto dcoltype = to_arrow_format(enmr->type(), false).data();
+        auto dnatype = to_nanoarrow_type(dcoltype);
+
+        exitIfError(ArrowSchemaInitFromType(dict_sch, dnatype), "Bad schema init");
+        exitIfError(ArrowSchemaSetName(dict_sch, ""), "Bad schema name");
+        exitIfError(ArrowSchemaAllocateChildren(dict_sch, 0), "Bad schema children alloc");
+#if 0
         dict_sch->format = strdup(to_arrow_format(enmr->type(), false).data());
         dict_sch->name = nullptr;
         dict_sch->metadata = nullptr;
@@ -343,8 +413,15 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         dict_sch->dictionary = nullptr;
         dict_sch->release = &release_schema;
         dict_sch->private_data = nullptr;
+#endif
 
+        exitIfError(ArrowArrayInitFromType(dict_arr, dnatype), "Bad array init");
+        exitIfError(ArrowArrayAllocateChildren(dict_arr, 0), "Bad array children alloc");
         const int n_buf = ArrowAdapter::_isstr(dict_sch->format) ? 3 : 2;
+        dict_arr->buffers = (const void**) malloc(sizeof(void*) * n_buf); //new const void*[n_buf];
+        dict_arr->buffers[0] = nullptr;  // validity: none here
+        dict_arr->release = &release_array;
+#if 0
         dict_arr->null_count = 0;
         dict_arr->offset = 0;
         dict_arr->n_buffers = n_buf;
@@ -352,11 +429,8 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         dict_arr->buffers = nullptr;
         dict_arr->children = nullptr;
         dict_arr->dictionary = nullptr;
-        dict_arr->release = &release_array;
         dict_arr->private_data = nullptr;
-
-        dict_arr->buffers = new const void*[n_buf];
-        dict_arr->buffers[0] = nullptr;  // validity: none here
+#endif
 
         // TODO string types currently get the data and offset
         // buffers from ColumnBuffer::enum_offsets and
@@ -443,6 +517,25 @@ std::string_view ArrowAdapter::to_arrow_format(
     throw TileDBSOMAError(fmt::format(
         "ArrowAdapter: Unsupported TileDB datatype: {} ",
         tiledb::impl::type_to_str(datatype)));
+}
+
+// FIXME: Add more types, maybe make it a map
+enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
+    if (sv == "i") 	 	 return NANOARROW_TYPE_INT32;
+    else if (sv == "c")  return NANOARROW_TYPE_INT8;
+    else if (sv == "C")  return NANOARROW_TYPE_UINT8;
+    else if (sv == "s")  return NANOARROW_TYPE_INT16;
+    else if (sv == "S")  return NANOARROW_TYPE_UINT16;
+    else if (sv == "I")  return NANOARROW_TYPE_UINT32;
+    else if (sv == "l")  return NANOARROW_TYPE_INT64;
+    else if (sv == "L")  return NANOARROW_TYPE_UINT64;
+    else if (sv == "f")  return NANOARROW_TYPE_FLOAT;
+    else if (sv == "g")  return NANOARROW_TYPE_DOUBLE;
+    else if (sv == "u")  return NANOARROW_TYPE_STRING;
+    else if (sv == "U")  return NANOARROW_TYPE_LARGE_STRING;
+    else if (sv == "b")  return NANOARROW_TYPE_BOOL;
+    else throw TileDBSOMAError(fmt::format(
+             "ArrowAdapter: Unsupported TileDB datatype string: {} ", sv));
 }
 
 }  // namespace tiledbsoma

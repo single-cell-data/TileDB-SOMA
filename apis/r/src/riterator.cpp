@@ -242,14 +242,15 @@ nanoarrowXPtr sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
        // this is pair of array and schema pointer
        auto pp = tdbs::ArrowAdapter::to_arrow(buf);
 
-       memcpy((void*) sch->children[i], pp.second.get(), sizeof(ArrowSchema));
-       memcpy((void*) arr->children[i], pp.first.get(), sizeof(ArrowArray));
+       //memcpy((void*) sch->children[i], pp.second.get(), sizeof(ArrowSchema));
+       //memcpy((void*) arr->children[i], pp.first.get(), sizeof(ArrowArray));
+       ArrowArrayMove(pp.first.get(),   arr->children[i]);
+       ArrowSchemaMove(pp.second.get(), sch->children[i]);
 
        if (pp.first->length > arr->length) {
            spdl::debug("[soma_array_reader] Setting array length to {}", pp.first->length);
            arr->length = pp.first->length;
        }
-
    }
 
    spdl::debug("[sr_next] Exporting chunk with {} rows", arr->length);
