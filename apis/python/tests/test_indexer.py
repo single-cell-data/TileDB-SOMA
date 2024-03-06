@@ -31,6 +31,10 @@ def test_duplicate_key_indexer_error(
 
 
 @pytest.mark.parametrize(
+    "contextual",
+    [True, False],
+)
+@pytest.mark.parametrize(
     "keys, lookups",
     [
         ([1], [1, 1, 1, 1]),
@@ -88,8 +92,11 @@ def test_duplicate_key_indexer_error(
         ),
     ],
 )
-def test_indexer(keys: np.array, lookups: np.array):
-    context = _validate_soma_tiledb_context(SOMATileDBContext())
+def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
+    if contextual:
+        context = _validate_soma_tiledb_context(SOMATileDBContext())
+    else:
+        context = None
     all_results = []
     num_threads = 10
 
