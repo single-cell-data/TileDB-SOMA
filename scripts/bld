@@ -69,8 +69,30 @@ if [ -n "${tiledb}"  ]; then
   printf "Build with TileDB: ${tiledb}\n"
   extra_opts+=" -DFORCE_BUILD_TILEDB=OFF"
   export TileDB_DIR="${tiledb}"
-  export LD_LIBRARY_PATH="${tiledb}"
-  export DYLD_LIBRARY_PATH="${tiledb}"
+
+  # It's more elegant to use
+  #   if [[ -v LD_LIBRARY_PATH ]]; then
+  #     ...
+  #   fi
+  # -- however, this is supproted by bash not sh. And this script can
+  # be invoked by python via its shell-out which seems to use sh.
+  # It's simplest to just pause set -u.
+
+  set +u
+
+  if [ -z $"LD_LIBRARY_PATH" ]; then
+    export LD_LIBRARY_PATH="${tiledb}"
+  else
+    export LD_LIBRARY_PATH="${tiledb}:${LD_LIBRARY_PATH}"
+  fi
+
+  if [ -z $"DYLD_LIBRARY_PATH" ]; then
+    export DYLD_LIBRARY_PATH="${tiledb}"
+  else
+    export DYLD_LIBRARY_PATH="${tiledb}:${DYLD_LIBRARY_PATH}"
+  fi
+
+  set -u
 fi
 
 # run cmake
