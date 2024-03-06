@@ -16,14 +16,11 @@ on:
       - 'libtiledbsoma/cmake/**'
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  build:
+
+  docker:
     runs-on: ubuntu-latest
-    name: "TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
+    name: "docker TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
       matrix:
@@ -34,6 +31,9 @@ jobs:
             TILEDBSOMA_EXISTS: "yes"
     container:
       image: ubuntu:22.04
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Docker image info
         run: |
@@ -122,5 +122,179 @@ jobs:
       - name: Confirm linking to installed shared objects
         run: |
           rm -fr build/ build-libtiledbsoma/ dist/ apis/python/build apis/python/src/tiledbsoma/*tile*.so*
-          find . -name '*tile*.so*' # should only show shared objects installed in virtual env
+          # should only show shared objects installed in virtual env or in ./external/
+          find . -name '*tile*.so*'
           ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
+
+  macos:
+    runs-on: macos-12
+    name: "macos TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        TILEDB_EXISTS: ["no", "yes"]
+        TILEDBSOMA_EXISTS: ["no", "yes"]
+        exclude:
+          - TILEDB_EXISTS: "no"
+            TILEDBSOMA_EXISTS: "yes"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # for setuptools-scm
+      - name: Install pre-built libtiledb
+        if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
+        run: |
+          mkdir -p external
+          # Please do not edit manually -- let scripts/update-tiledb-version.py update this
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.20.1/tiledb-macos-x86_64-2.20.1-249c024.tar.gz
+          tar -C external -xzf tiledb-macos-x86_64-*.tar.gz
+          ls external/lib/
+          echo "DYLD_LIBRARY_PATH=$(pwd)/external/lib" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(pwd)/external/lib/pkgconfig" >> $GITHUB_ENV
+          echo "TILEDB_PATH=$(pwd)/external" >> $GITHUB_ENV
+      - name: Build and install libtiledbsoma
+        if: ${{ matrix.TILEDBSOMA_EXISTS == 'yes' }}
+        run: |
+          cmake -S libtiledbsoma -B build-libtiledbsoma \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_PREFIX_PATH=$(pwd)/external/ \
+            -D CMAKE_INSTALL_PREFIX:PATH=$(pwd)/external/ \
+            -D OVERRIDE_INSTALL_PREFIX=OFF \
+            -D DOWNLOAD_TILEDB_PREBUILT=OFF \
+            -D FORCE_BUILD_TILEDB=OFF
+          cmake --build build-libtiledbsoma -j $(nproc)
+          cmake --build build-libtiledbsoma --target install-libtiledbsoma
+          ls external/lib/
+          echo "TILEDBSOMA_PATH=$(pwd)/external" >> $GITHUB_ENV
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Setup Python virtual env
+        run: |
+          python --version
+          python -m venv ./venv-soma
+          ./venv-soma/bin/python -m pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
+          ./venv-soma/bin/python -m pip list
+      - name: Build wheel
+        run: |
+          echo env vars: $DYLD_LIBRARY_PATH $PKG_CONFIG_PATH $TILEDB_PATH $TILEDBSOMA_PATH
+          cd apis/python
+          ../../venv-soma/bin/python setup.py bdist_wheel
+      - name: Inspect wheel
+        run: unzip -l apis/python/dist/tiledbsoma-*.whl | grep -e '\.dylib' -e '\.so'
+      - name: Confirm libtiledb.dylib is copied
+        if: ${{ matrix.TILEDB_EXISTS == 'no' }}
+        run: unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledb.dylib
+      - name: Confirm libtiledb.dylib is **not** copied when using external shared object
+        if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
+        run: |
+          if unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledb.dylib
+          then
+            echo "libtiledb.dylib was copied into the wheel when it was built against an external shared object"
+            exit 1
+          fi
+      - name: Confirm libtiledbsoma.dylib is copied
+        if: ${{ matrix.TILEDBSOMA_EXISTS == 'no' }}
+        run: unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledbsoma.dylib
+      - name: Confirm libtiledbsoma.dylib is **not** copied when using external shared object
+        if: ${{ matrix.TILEDBSOMA_EXISTS == 'yes' }}
+        run: |
+          if unzip -l apis/python/dist/tiledbsoma-*.whl | grep -q libtiledbsoma.dylib
+          then
+            echo "libtiledbsoma.dylib was copied into the wheel when it was built against an external shared object"
+            exit 1
+          fi
+      - name: Install wheel
+        run: ./venv-soma/bin/python -m pip install --prefer-binary apis/python/dist/tiledbsoma-*.whl
+      - name: Check linking and RPATH
+        run: otool -L ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
+      - name: Runtime test
+        run: ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
+      - name: Confirm linking to installed shared objects
+        run: |
+          rm -fr build/ build-libtiledbsoma/ dist/ apis/python/build apis/python/src/tiledbsoma/*tile*.dylib*
+          # should only show shared objects installed in virtual env or in ./external/
+          find . -name '*tile*.so*'
+          find . -name '*tile*.dylib*'
+          ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
+
+  # Tests that the --libtiledbsoma flag to setup.py continues working
+  setuptools:
+    runs-on: ${{ matrix.os }}
+    name: "${{ matrix.os }} setuptools"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-22.04", "macos-12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # for setuptools-scm
+      - name: Install pre-built libtiledb
+        run: |
+          mkdir -p external
+          if [ `uname -s` == "Darwin" ];
+          then
+            # Please do not edit manually -- let scripts/update-tiledb-version.py update this
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.20.1/tiledb-macos-x86_64-2.20.1-249c024.tar.gz
+          else
+            # Please do not edit manually -- let scripts/update-tiledb-version.py update this
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.20.1/tiledb-linux-x86_64-2.20.1-249c024.tar.gz
+          fi
+          tar -C external -xzf tiledb-*.tar.gz
+          ls external/lib/
+      - name: Build and install libtiledbsoma
+        run: |
+          cmake -S libtiledbsoma -B build-libtiledbsoma \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D CMAKE_PREFIX_PATH=$(pwd)/external/ \
+            -D CMAKE_INSTALL_PREFIX:PATH=$(pwd)/external/ \
+            -D OVERRIDE_INSTALL_PREFIX=OFF \
+            -D DOWNLOAD_TILEDB_PREBUILT=OFF \
+            -D FORCE_BUILD_TILEDB=OFF
+          cmake --build build-libtiledbsoma -j 2
+          cmake --build build-libtiledbsoma --target install-libtiledbsoma
+          ls external/lib/
+      # Delete all cmake executables from the runner. This will ensure that
+      # tiledbsoma-py has to use the cli flags to find the external
+      # libtiledbsoma.so and not build it from source by shelling out to cmake
+      - name: Delete cmake
+        run: |
+          echo before
+          which -a cmake
+          which -a cmake | xargs sudo rm -f
+          echo after
+          which -a cmake || echo cmake removed
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Setup Python virtual env
+        run: |
+          python --version
+          python -m venv ./venv-soma
+          ./venv-soma/bin/python -m pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
+          ./venv-soma/bin/python -m pip list
+      - name: Install TileDB-SOMA-Py with setuptools and --libtiledbsoma
+        run: |
+          cd apis/python
+          ../../venv-soma/bin/python setup.py install \
+            --single-version-externally-managed \
+            --record record.txt \
+            --tiledb=$GITHUB_WORKSPACE/external/ \
+            --libtiledbsoma=$GITHUB_WORKSPACE/external/
+      - name: Check linking and RPATH (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          ldd ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
+          readelf -d ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so  | grep R*PATH
+      - name: Check linking and RPATH (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          otool -L ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
+          otool -l ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
+      - name: Install runtime dependencies
+        run: ./venv-soma/bin/python -m pip install --prefer-binary `grep -v '^\[' apis/python/src/tiledbsoma.egg-info/requires.txt`
+      - name: Runtime test
+        run: ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
