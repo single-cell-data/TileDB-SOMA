@@ -1,3 +1,7 @@
+# 1.7.3
+
+* This release has Python mods only
+
 # 1.7.2
 
 ## Changes
