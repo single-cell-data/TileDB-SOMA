@@ -55,6 +55,13 @@ def open(
 
     # if there is not a valid SOMAObject at the given URI, this
     # returns None
+    print()
+    print("DEBUG")
+    print(f"DEBUG uri={uri}")
+    print(f"DEBUG open_mode={open_mode}")
+    print(f"DEBUG context={context}")
+    print(f"DEBUG context.native_context={context.native_context}")
+    print()
     soma_object = clib.SOMAObject.open(
         uri, open_mode, context.native_context, timestamp=(0, timestamp_ms)
     )
