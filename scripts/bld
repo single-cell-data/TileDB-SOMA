@@ -69,8 +69,18 @@ if [ -n "${tiledb}"  ]; then
   printf "Build with TileDB: ${tiledb}\n"
   extra_opts+=" -DFORCE_BUILD_TILEDB=OFF"
   export TileDB_DIR="${tiledb}"
-  export LD_LIBRARY_PATH="${tiledb}:${LD_LIBRARY_PATH}"
-  export DYLD_LIBRARY_PATH="${tiledb}:${DYLD_LIBRARY_PATH}"
+
+  # Since set -u:
+  if [[ -v LD_LIBRARY_PATH ]]; then
+    export LD_LIBRARY_PATH="${tiledb}:${LD_LIBRARY_PATH}"
+  else
+    export LD_LIBRARY_PATH="${tiledb}"
+  fi
+  if [[ -v DYLD_LIBRARY_PATH ]]; then
+    export DYLD_LIBRARY_PATH="${tiledb}:${DYLD_LIBRARY_PATH}"
+  else
+    export DYLD_LIBRARY_PATH="${tiledb}"
+  fi
 fi
 
 # run cmake
