@@ -136,7 +136,8 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         assert context is not None
         self.minor_axes_indexer = {
             d: tiledbsoma_build_index(
-                self.joinids[d].to_numpy(), context=context.native_context
+                self.joinids[d].to_numpy(),
+                context=context,
             )
             for d in (self.axes_to_reindex - set((self.major_axis,)))
         }
@@ -256,7 +257,8 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
                     if d == self.major_axis:
                         assert self.context is not None
                         col = tiledbsoma_build_index(
-                            coords[self.major_axis], context=self.context.native_context
+                            coords[self.major_axis],
+                            context=self.context,
                         ).get_indexer(
                             col.to_numpy(),
                         )
