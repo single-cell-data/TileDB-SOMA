@@ -407,6 +407,13 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         """Writes the bounding box to metadata storage."""
         self.metadata.update(bounding_box)
 
+    @staticmethod
+    def example_method(n: int):
+        """
+        Intentionally broken type hints, for verifying typeguard coverage.
+        """
+        assert n.upper() == "ABC"
+
 
 class _SparseNDArrayReadBase(somacore.SparseRead):
     """Base class for sparse reads"""
