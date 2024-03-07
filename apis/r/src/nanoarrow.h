@@ -241,6 +241,11 @@ typedef int ArrowErrorCode;
 #define ArrowErrorCode NANOARROW_CHECK_RETURN_ATTRIBUTE ArrowErrorCode
 #endif
 
+/// \brief Flags supported by ArrowSchemaViewInit()
+/// \ingroup nanoarrow-schema-view
+#define NANOARROW_FLAG_ALL_SUPPORTED \
+  (ARROW_FLAG_DICTIONARY_ORDERED | ARROW_FLAG_NULLABLE | ARROW_FLAG_MAP_KEYS_SORTED)
+
 /// \brief Error type containing a UTF-8 encoded message.
 /// \ingroup nanoarrow-errors
 struct ArrowError {
@@ -948,6 +953,28 @@ static inline void ArrowDecimalSetInt(struct ArrowDecimal* decimal, int64_t valu
   decimal->words[decimal->low_word_index] = value;
 }
 
+/// \brief Negate the value of this decimal in place
+/// \ingroup nanoarrow-utils
+static inline void ArrowDecimalNegate(struct ArrowDecimal* decimal) {
+  uint64_t carry = 1;
+
+  if (decimal->low_word_index == 0) {
+    for (int i = 0; i < decimal->n_words; i++) {
+      uint64_t elem = decimal->words[i];
+      elem = ~elem + carry;
+      carry &= (elem == 0);
+      decimal->words[i] = elem;
+    }
+  } else {
+    for (int i = decimal->low_word_index; i >= 0; i--) {
+      uint64_t elem = decimal->words[i];
+      elem = ~elem + carry;
+      carry &= (elem == 0);
+      decimal->words[i] = elem;
+    }
+  }
+}
+
 /// \brief Copy bytes from a buffer into this decimal
 /// \ingroup nanoarrow-utils
 static inline void ArrowDecimalSetBytes(struct ArrowDecimal* decimal,
@@ -1009,6 +1036,9 @@ static inline void ArrowDecimalSetBytes(struct ArrowDecimal* decimal,
   NANOARROW_SYMBOL(NANOARROW_NAMESPACE, ArrowBufferDeallocator)
 #define ArrowErrorSet NANOARROW_SYMBOL(NANOARROW_NAMESPACE, ArrowErrorSet)
 #define ArrowLayoutInit NANOARROW_SYMBOL(NANOARROW_NAMESPACE, ArrowLayoutInit)
+#define ArrowDecimalSetDigits NANOARROW_SYMBOL(NANOARROW_NAMESPACE, ArrowDecimalSetDigits)
+#define ArrowDecimalAppendDigitsToBuffer \
+  NANOARROW_SYMBOL(NANOARROW_NAMESPACE, ArrowDecimalAppendDigitsToBuffer)
 #define ArrowSchemaInit NANOARROW_SYMBOL(NANOARROW_NAMESPACE, ArrowSchemaInit)
 #define ArrowSchemaInitFromType \
   NANOARROW_SYMBOL(NANOARROW_NAMESPACE, ArrowSchemaInitFromType)
@@ -1241,6 +1271,14 @@ void ArrowLayoutInit(struct ArrowLayout* layout, enum ArrowType storage_type);
 
 /// \brief Create a string view from a null-terminated string
 static inline struct ArrowStringView ArrowCharView(const char* value);
+
+/// \brief Sets the integer value of an ArrowDecimal from a string
+ArrowErrorCode ArrowDecimalSetDigits(struct ArrowDecimal* decimal,
+                                     struct ArrowStringView value);
+
+/// \brief Get the integer value of an ArrowDecimal as string
+ArrowErrorCode ArrowDecimalAppendDigitsToBuffer(const struct ArrowDecimal* decimal,
+                                                struct ArrowBuffer* buffer);
 
 /// @}
 
@@ -3278,6 +3316,10 @@ static inline ArrowErrorCode ArrowArrayAppendInterval(struct ArrowArray* array,
     }
     default:
       return EINVAL;
+  }
+
+  if (private_data->bitmap.buffer.data != NULL) {
+    NANOARROW_RETURN_NOT_OK(ArrowBitmapAppend(ArrowArrayValidityBitmap(array), 1, 1));
   }
 
   array->length++;
