@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import anndata as ad
 import numpy as np
 import pyarrow as pa
 import pytest
@@ -7,6 +10,8 @@ import tiledbsoma as soma
 import tiledbsoma.io as somaio
 from tiledbsoma import _factory
 from tiledbsoma.options._tiledb_create_options import TileDBCreateOptions
+
+HERE = Path(__file__).parent
 
 
 @pytest.fixture
@@ -171,3 +176,37 @@ def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
         with soma.DataFrame.open(uri) as sdf:
             pdf = sdf.read().concat().to_pandas()
             assert list(pdf["foo"]) == pydict["foo"]
+
+
+def test_add_matrices(tmp_path):
+    """Test multiple add_matrix_to_collection calls can be issued on the same soma object.
+
+    See https://github.com/single-cell-data/TileDB-SOMA/issues/1565."""
+    # Create a soma object from an anndata object
+    soma_path = tmp_path.as_posix()
+    h5ad_path = HERE.parent / 'testdata/pbmc-small.h5ad'
+    soma_uri = soma.io.from_h5ad(soma_path, input_path=h5ad_path, measurement_name="RNA")
+
+    # Synthesize some new data to be written into two matrices within the soma object (ensuring it's different from the
+    # original data, so that writes must be performed)
+    h5ad = ad.read_h5ad(h5ad_path)
+    new_X_pca = h5ad.obsm["X_pca"] * 2
+    new_PCs = h5ad.varm["PCs"] * 2
+
+    with soma.open(soma_uri, "w") as exp_w:
+        # Write multiple new matrices into the soma object, attempting to repro https://github.com/single-cell-data/TileDB-SOMA/issues/1565
+        soma.io.add_matrix_to_collection(
+            exp=exp_w,
+            measurement_name="RNA",
+            collection_name="obsm",
+            matrix_name="logcounts_pca",
+            matrix_data=new_X_pca,
+        )
+
+        soma.io.add_matrix_to_collection(
+            exp=exp_w,
+            measurement_name="RNA",
+            collection_name="varm",
+            matrix_name="logcounts_pcs",
+            matrix_data=new_PCs,
+        )
