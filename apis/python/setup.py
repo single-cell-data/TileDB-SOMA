@@ -1,4 +1,4 @@
-# This file is enables building the libtiledbsoma external package as part of the
+# This file enables building the libtiledbsoma external package as part of the
 # tiledbsoma module install process.
 #
 # Local non-editable install:
@@ -62,7 +62,7 @@ tiledbsoma_dir = os.environ.get("TILEDBSOMA_PATH", tiledbsoma_dir)
 
 if tiledbsoma_dir is not None and tiledb_dir is None:
     raise ValueError(
-        "If TILEDBSOMA_PATH is set, then TILEDB_PATH must be "
+        "If TILEDBSOMA_PATH is set, then TILEDB_PATH must "
         "also be set. TILEDB_PATH must be set to the location of "
         "the TileDB shared object library linked to the "
         "TileDB-SOMA shared object library"
