@@ -88,6 +88,7 @@ def test_dataframe(tmp_path, arrow_schema):
 
         # Read all
         table = sdf.read().concat()
+        print(table)
         assert table.num_rows == 5
         assert table.num_columns == 5
         assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
@@ -119,9 +120,9 @@ def test_dataframe(tmp_path, arrow_schema):
     with soma.DataFrame.open(tmp_path.as_posix(), "r") as A:
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADataFrame)
 
-    # Ensure write mode uses Python object
+    # Ensure write mode uses clib object
     with soma.DataFrame.open(tmp_path.as_posix(), "w") as A:
-        assert isinstance(A._handle._handle, tiledb.Array)
+        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADataFrame)
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):

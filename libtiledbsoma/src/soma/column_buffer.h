@@ -146,8 +146,13 @@ class ColumnBuffer {
                 (std::byte*)data, (std::byte*)data + num_elems * type_size_);
         }
 
-        if (validity != nullptr) {
-            validity_.assign(validity, validity + num_elems);
+        if (is_nullable_) {
+            if (validity != nullptr) {
+                validity_.assign(validity, validity + num_elems);
+            } else {
+                validity_.resize(num_elems);
+                std::fill(validity_.begin(), validity_.end(), 1);
+            }
         }
     }
 

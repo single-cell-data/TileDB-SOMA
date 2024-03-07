@@ -52,11 +52,7 @@ void write(SOMAArray& array, py::handle py_batch) {
 
         const void* data;
         uint64_t* offsets = nullptr;
-        uint8_t* validities = nullptr;
-
-        if (arr_->null_count != 0) {
-            validities = (uint8_t*)arr_->buffers[0];
-        }
+        uint8_t* validities = (uint8_t*)arr_->buffers[0];
 
         if (arr_->n_buffers == 3) {
             offsets = (uint64_t*)arr_->buffers[1];
