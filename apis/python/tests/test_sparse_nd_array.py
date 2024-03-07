@@ -901,6 +901,43 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
         assert not bad
 
 
+def test_sparse_nd_array_slice_types(tmp_path):
+    io = {
+        "name": "2D coords=(np64[1, 2], np32[3, 4])",
+        "shape": (9, 11),
+        "coords": (
+            pa.chunked_array([[1], [2]]),
+            # np.array([1, 2], dtype=np.uint64),
+            np.array([3, 4], dtype=np.uint32),
+        ),
+        "dims": {
+            "soma_dim_0": [1, 1, 2, 2],
+            "soma_dim_1": [3, 4, 3, 4],
+        },
+        "throws": None,
+    }
+
+    # Set up contents
+    arrow_tensor = create_random_tensor(
+        format="coo",
+        shape=io["shape"],
+        dtype=np.float64(),  # float32 not preserved through IO round-trip
+        density=1.0,
+    )
+
+    with soma.SparseNDArray.create(
+            tmp_path.as_posix(), type=pa.float64(), shape=io["shape"]
+    ) as snda_w:
+        snda_w.write(arrow_tensor)
+
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as snda:
+        table = snda.read(io["coords"]).tables().concat()
+        for column_name in table.column_names:
+            if column_name in io["dims"]:
+                assert table[column_name].to_pylist() == io["dims"][column_name]
+
+
+
 @pytest.mark.parametrize(
     ("result_order", "want"),
     [
