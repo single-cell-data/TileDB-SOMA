@@ -829,6 +829,19 @@ def test_csr_csc_2d_read(tmp_path, shape):
             },
             "throws": None,
         },
+        {
+            "name": "2D coords=(pa_chunked[1, 2], pa64[3, 4])",
+            "shape": (9, 11),
+            "coords": (
+                pa.chunked_array([[1], [2]]),
+                pa.array([3, 4]),
+            ),
+            "dims": {
+                "soma_dim_0": [1, 1, 2, 2],
+                "soma_dim_1": [3, 4, 3, 4],
+            },
+            "throws": None,
+        },
     ],
     ids=lambda io: io.get("name"),
 )
