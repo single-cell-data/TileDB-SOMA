@@ -303,6 +303,10 @@ void SOMAArray::set_column_data(
     mq_->set_column_data(column);
 };
 
+void SOMAArray::clear_column_data() {
+    array_buffer_ = nullptr;
+}
+
 void SOMAArray::write() {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");

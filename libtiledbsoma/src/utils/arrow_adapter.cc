@@ -301,8 +301,6 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     schema.check();
 
-    schema.dump();
-
     return schema;
 }
 

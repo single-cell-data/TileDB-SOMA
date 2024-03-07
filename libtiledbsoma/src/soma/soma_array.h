@@ -411,6 +411,8 @@ class SOMAArray : public SOMAObject {
         uint64_t* offsets = nullptr,
         uint8_t* validity = nullptr);
 
+    void clear_column_data();
+
     /**
      * @brief Write ArrayBuffers data to the array.
      *

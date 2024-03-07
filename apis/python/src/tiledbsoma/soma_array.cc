@@ -46,6 +46,8 @@ void write(SOMAArray& array, py::handle py_batch) {
     uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
     py_batch.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
 
+    auto attributes = array.tiledb_schema()->attributes();
+
     for (auto i = 0; i < arrow_schema.n_children; ++i) {
         auto sch_ = arrow_schema.children[i];
         auto arr_ = arrow_array.children[i];
@@ -59,6 +61,17 @@ void write(SOMAArray& array, py::handle py_batch) {
             data = arr_->buffers[2];
         } else {
             data = arr_->buffers[1];
+        }
+
+        if (attributes.find(sch_->name) != attributes.end()) {
+            auto enmr_name = AttributeExperimental::get_enumeration_name(
+                *array.ctx()->tiledb_ctx(), attributes.at(sch_->name));
+
+            if (enmr_name.has_value() && !sch_->dictionary) {
+                array.clear_column_data();
+                throw py::value_error(
+                    "Saw non-dictionary column passed to enumerated type");
+            }
         }
 
         array.set_column_data(
@@ -80,7 +93,6 @@ py::dict meta(SOMAArray& array) {
         } else {
             py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
             auto res = py::array(value_type, value_num, value).attr("item")(0);
-            ;
             results[py::str(key)] = res;
         }
     }
