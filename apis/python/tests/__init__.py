@@ -12,7 +12,6 @@ NDARRAY_ARROW_TYPES_SUPPORTED = [
     pa.int8(),
     pa.int16(),
     pa.int32(),
-    pa.int16(),
     pa.uint8(),
     pa.uint16(),
     pa.uint32(),
