@@ -257,6 +257,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         auto idx_col_begin = index_column_names.begin();
         auto idx_col_end = index_column_names.end();
         auto idx_col_it = std::find(idx_col_begin, idx_col_end, child->name);
+
         if (idx_col_it != idx_col_end) {
             auto idx_col_idx = std::distance(idx_col_begin, idx_col_it);
             auto dim = Dimension::create(
@@ -270,9 +271,9 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         } else {
             Attribute attr(*ctx, child->name, type);
 
-            // if (child->flags & ARROW_FLAG_NULLABLE) {
-            //     attr.set_nullable(true);
-            // }
+            if (child->flags & ARROW_FLAG_NULLABLE) {
+                attr.set_nullable(true);
+            }
 
             if ((strcmp(child->format, "U") == 0) |
                 (strcmp(child->format, "Z") == 0) |

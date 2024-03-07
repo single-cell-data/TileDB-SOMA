@@ -61,6 +61,23 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t schema_ptr = (uintptr_t)(&schema);
                 py_schema.attr("_export_to_c")(schema_ptr);
 
+                for (int64_t sch_idx = 0; sch_idx < schema.n_children;
+                     ++sch_idx) {
+                    auto child = schema.children[sch_idx];
+                    auto metadata = py_schema.attr("metadata");
+                    if (py::hasattr(metadata, "get")) {
+                        auto val = metadata.attr("get")(
+                            py::str(child->name).attr("encode")("utf-8"));
+
+                        if (val != py::none() &&
+                            val.cast<std::string>() == "nullable") {
+                            child->flags = ARROW_FLAG_NULLABLE;
+                        } else {
+                            child->flags = 0;
+                        }
+                    }
+                }
+
                 ArrowArray domains;
                 uintptr_t domains_ptr = (uintptr_t)(&domains);
                 py_domains.attr("_export_to_c")(domains_ptr);
