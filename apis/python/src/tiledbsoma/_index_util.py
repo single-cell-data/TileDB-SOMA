@@ -36,6 +36,7 @@ def tiledbsoma_build_index(
     Lifecycle:
         Experimental.
     """
-    reindexer = clib.IntIndexer(context)
+    native_context = None if context is None else context.native_context
+    reindexer = clib.IntIndexer(native_context)
     reindexer.map_locations(keys)
     return reindexer  # type: ignore[no-any-return]

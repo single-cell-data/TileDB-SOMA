@@ -95,6 +95,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
             obs_query=obs_query or query.AxisQuery(),
             var_query=var_query or query.AxisQuery(),
             index_factory=functools.partial(
-                tiledbsoma_build_index, context=self.context.native_context
+                tiledbsoma_build_index,
+                context=self.context,
             ),
         )
