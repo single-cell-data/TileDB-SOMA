@@ -372,7 +372,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     }
 
     if (column->is_nullable()) {
-        schema->flags |= ARROW_FLAG_NULLABLE;
+        schema->flags |= ARROW_FLAG_NULLABLE; // turns out it is also set by default
 
         // Count nulls
         for (auto v : column->validity()) {
@@ -382,7 +382,10 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         // Convert validity bytemap to a bitmap in place
         column->validity_to_bitmap();
         array->buffers[0] = column->validity().data();
+    } else {
+        schema->flags = 0;      // because ArrowSchemaInitFromType leads to NULLABLE set
     }
+
     if (column->is_ordered()) {
         schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
     }
