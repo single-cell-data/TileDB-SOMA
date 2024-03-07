@@ -83,18 +83,11 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
             dict = nullptr;
         }
     }
-    LOG_TRACE("[ArrowAdapter] release_schema");
+    LOG_TRACE("[ArrowAdapter] release_schema done");
 }
 
 void ArrowAdapter::release_array(struct ArrowArray* array) {
     auto arrow_buffer = static_cast<ArrowBuffer*>(array->private_data);
-    LOG_DEBUG(fmt::format("[ArrowAdapter] release_array for {} cnt {} var {} nullable {} enum {}",
-                         arrow_buffer->buffer_->name(),
-                         arrow_buffer->buffer_.use_count(),
-                         arrow_buffer->buffer_->is_var(),
-                         arrow_buffer->buffer_->is_nullable(),
-                         arrow_buffer->buffer_->has_enumeration()
-                         ));
 
     LOG_TRACE(fmt::format(
         "[ArrowAdapter] release_array {} use_count={}",
@@ -127,17 +120,16 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     struct ArrowArray* dict = array->dictionary;
     if (dict != nullptr) {
         if (dict->buffers != nullptr) {
-            free(dict->buffers);
+            //free(dict->buffers);
             dict->buffers = nullptr;
         }
         if (dict->release != nullptr) {
-            //delete dict;
             free(dict);
             dict = nullptr;
         }
     }
     array->release = nullptr;
-
+    LOG_TRACE(fmt::format("[ArrowAdapter] release_array done"));
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
