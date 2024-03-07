@@ -275,12 +275,24 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 attr.set_nullable(true);
             }
 
-            if ((strcmp(child->format, "U") == 0) |
-                (strcmp(child->format, "Z") == 0) |
-                (strcmp(child->format, "u") == 0) |
-                (strcmp(child->format, "z") == 0)) {
+            if (ArrowAdapter::_isvar(child->format)) {
                 attr.set_cell_val_num(TILEDB_VAR_NUM);
             }
+
+            if (child->dictionary != nullptr) {
+                auto enmr_format = child->dictionary->format;
+                auto enmr_type = ArrowAdapter::to_tiledb_format(enmr_format);
+                auto enmr = Enumeration::create_empty(
+                    *ctx,
+                    child->name,
+                    enmr_type,
+                    ArrowAdapter::_isvar(enmr_format) ? TILEDB_VAR_NUM : 1,
+                    child->flags & ARROW_FLAG_DICTIONARY_ORDERED);
+                ArraySchemaExperimental::add_enumeration(*ctx, schema, enmr);
+                AttributeExperimental::set_enumeration_name(
+                    *ctx, attr, child->name);
+            }
+
             schema.add_attribute(attr);
         }
     }
@@ -288,6 +300,8 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     schema.set_domain(domain);
 
     schema.check();
+
+    schema.dump();
 
     return schema;
 }
@@ -422,6 +436,14 @@ ArrowTable ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     }
 
     return ArrowTable(array, schema);
+}
+
+bool ArrowAdapter::_isvar(const char* format) {
+    if ((strcmp(format, "U") == 0) | (strcmp(format, "Z") == 0) |
+        (strcmp(format, "u") == 0) | (strcmp(format, "z") == 0)) {
+        return true;
+    }
+    return false;
 }
 
 std::string_view ArrowAdapter::to_arrow_format(

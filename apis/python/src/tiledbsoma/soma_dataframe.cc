@@ -71,9 +71,9 @@ void load_soma_dataframe(py::module& m) {
 
                         if (val != py::none() &&
                             val.cast<std::string>() == "nullable") {
-                            child->flags = ARROW_FLAG_NULLABLE;
+                            child->flags &= ARROW_FLAG_NULLABLE;
                         } else {
-                            child->flags = 0;
+                            child->flags &= ~ARROW_FLAG_NULLABLE;
                         }
                     }
                 }

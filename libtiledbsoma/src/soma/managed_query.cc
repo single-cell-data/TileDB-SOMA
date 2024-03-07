@@ -276,7 +276,7 @@ void ManagedQuery::setup_read() {
 }
 
 void ManagedQuery::submit_write() {
-    query_->submit();
+    Status status = query_->submit();
 }
 
 void ManagedQuery::submit_read() {

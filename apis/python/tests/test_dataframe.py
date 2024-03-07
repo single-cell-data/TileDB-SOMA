@@ -154,6 +154,7 @@ def test_dataframe_with_enumeration(tmp_path):
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         df = sdf.read().concat()
+        print(df)
         np.testing.assert_array_equal(df["foo"].chunk(0).dictionary, enums["enmr1"])
         np.testing.assert_array_equal(df["bar"].chunk(0).dictionary, enums["enmr2"])
 

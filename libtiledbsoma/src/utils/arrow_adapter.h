@@ -103,6 +103,8 @@ class ArrowAdapter {
 
     static std::optional<std::pair<const void*, const void*>> _get_dim_info(
         std::string_view dim_name, ArrowTable index_columns);
+
+    static bool _isvar(const char* format);
 };
 };  // namespace tiledbsoma
 
