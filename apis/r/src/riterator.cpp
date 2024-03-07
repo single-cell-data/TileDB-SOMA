@@ -3,6 +3,8 @@
 #define TILEDB_NO_API_DEPRECATION_WARNINGS
 #endif
 
+//#define RCPP_DEBUG_LEVEL 5
+
 #include <Rcpp.h>               // for R interface to C++
 #include <nanoarrow/r.h>		// for C interface to Arrow
 #include <nanoarrow.h>
@@ -99,7 +101,7 @@ Rcpp::List sr_setup(const std::string& uri,
     std::shared_ptr<tiledb::Context> ctxptr = std::make_shared<tiledb::Context>(cfg);
 
     ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
-    Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p);
+    Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);
 
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
