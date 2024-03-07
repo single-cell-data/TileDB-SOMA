@@ -12,7 +12,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.7.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.8.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +73,7 @@
     <h2 id="active-bindings">Active bindings<a class="anchor" aria-label="anchor" href="#active-bindings"></a></h2>
     <p></p><div class="r6-active-bindings"><dl><dt><code>object</code></dt>
 <dd><p>Access the underlying TileB object directly (either a
-<code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array.html" class="external-link">tiledb::tiledb_array</a></code> or <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_group.html" class="external-link">tiledb::tiledb_group</a></code>).</p></dd>
+<code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_array.html" class="external-link">tiledb::tiledb_array</a></code> or <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_group.html" class="external-link">tiledb::tiledb_group</a></code>).</p></dd>
 
 
 </dl><p></p></div>
@@ -164,14 +164,14 @@ as <code><a href="https://rdrr.io/r/base/connections.html" class="external-link"
 <div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>...</code></dt>
-<dd><p>Optional arguments to pass to <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array.html" class="external-link">tiledb::tiledb_array()</a></code></p></dd>
+<dd><p>Optional arguments to pass to <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_array.html" class="external-link">tiledb::tiledb_array()</a></code></p></dd>
 
 
 </dl><p></p></div>
 </div>
 <div class="section">
 <h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
-<p>A <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array.html" class="external-link">tiledb::tiledb_array</a></code> object.</p>
+<p>A <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_array.html" class="external-link">tiledb::tiledb_array</a></code> object.</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-get_metadata"></a><div class="section">
@@ -235,7 +235,7 @@ as <code><a href="https://rdrr.io/r/base/connections.html" class="external-link"
 
 <div class="section">
 <h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
-<p>A <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array_schema.html" class="external-link">tiledb::tiledb_array_schema</a></code> object</p>
+<p>A <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_array_schema.html" class="external-link">tiledb::tiledb_array_schema</a></code> object</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-dimensions"></a><div class="section">
@@ -247,7 +247,7 @@ as <code><a href="https://rdrr.io/r/base/connections.html" class="external-link"
 
 <div class="section">
 <h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
-<p>A named list of <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_dim.html" class="external-link">tiledb::tiledb_dim</a></code> objects</p>
+<p>A named list of <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_dim.html" class="external-link">tiledb::tiledb_dim</a></code> objects</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-shape"></a><div class="section">
@@ -295,7 +295,7 @@ If <code>simplify = TRUE</code>, returns a vector of only the upper bounds.</p>
 </div><p></p><hr><a id="method-TileDBArray-non_empty_domain"></a><div class="section">
 <h3 id="method-non-empty-domain-">Method <code>non_empty_domain()</code><a class="anchor" aria-label="anchor" href="#method-non-empty-domain-"></a></h3>
 <p>Retrieve the non-empty domain for each dimension. This
-method calls <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_array_get_non_empty_domain_from_name.html" class="external-link">tiledb::tiledb_array_get_non_empty_domain_from_name</a></code> for
+method calls <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_array_get_non_empty_domain_from_name.html" class="external-link">tiledb::tiledb_array_get_non_empty_domain_from_name</a></code> for
 each dimension in the array.</p><div class="section">
 <h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBArray</span><span class="op">$</span><span class="fu">non_empty_domain</span><span class="op">(</span>index1 <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
@@ -336,7 +336,7 @@ each dimension.</p>
 
 <div class="section">
 <h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
-<p>A list of <code><a href="https://rdrr.io/pkg/tiledb/man/tiledb_attr.html" class="external-link">tiledb::tiledb_attr</a></code> objects</p>
+<p>A list of <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_attr.html" class="external-link">tiledb::tiledb_attr</a></code> objects</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBArray-dimnames"></a><div class="section">
