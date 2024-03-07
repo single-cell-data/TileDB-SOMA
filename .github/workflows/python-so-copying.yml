@@ -7,13 +7,25 @@ on:
   push:
     paths:
       - '.github/workflows/python-so-copying.yml'
-      - 'apis/python/**'
-      - 'libtiledbsoma/cmake/**'
+      - 'apis/python/setup.py'
+      - 'apis/python/src/tiledbsoma/__init__.py'
+      - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
+      - 'libtiledbsoma/cmake/inputs/tiledbsoma.pc.in'
+      - 'libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake'
+      - 'libtiledbsoma/cmake/Modules/TileDBCommon.cmake'
+      - 'libtiledbsoma/cmake/Superbuild.cmake'
+      - 'libtiledbsoma/CMakeLists.txt'
   pull_request:
     paths:
       - '.github/workflows/python-so-copying.yml'
-      - 'apis/python/**'
-      - 'libtiledbsoma/cmake/**'
+      - 'apis/python/setup.py'
+      - 'apis/python/src/tiledbsoma/__init__.py'
+      - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
+      - 'libtiledbsoma/cmake/inputs/tiledbsoma.pc.in'
+      - 'libtiledbsoma/cmake/Modules/FindTileDB_EP.cmake'
+      - 'libtiledbsoma/cmake/Modules/TileDBCommon.cmake'
+      - 'libtiledbsoma/cmake/Superbuild.cmake'
+      - 'libtiledbsoma/CMakeLists.txt'
   workflow_dispatch:
 
 jobs:
