@@ -1,6 +1,6 @@
 #include <Rcpp.h>               // for R interface to C++
 #include <nanoarrow/r.h>        // for C interface to Arrow
-#include <nanoarrow.h>          // for C interface to Arrow
+#include <nanoarrow.hpp>        // for C/C++ interface to Arrow
 #include <RcppInt64>            // for fromInteger64
 
 // we currently get deprecation warnings by default which are noisy

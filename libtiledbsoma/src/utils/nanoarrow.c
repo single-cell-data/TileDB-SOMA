@@ -201,9 +201,7 @@ static void ArrowBufferAllocatorMallocFree(struct ArrowBufferAllocator* allocato
                                            uint8_t* ptr, int64_t size) {
   NANOARROW_UNUSED(allocator);
   NANOARROW_UNUSED(size);
-  if (ptr != NULL) {
-    ArrowFree(ptr);
-  }
+  ArrowFree(ptr);
 }
 
 static struct ArrowBufferAllocator ArrowBufferAllocatorMalloc = {
@@ -213,24 +211,13 @@ struct ArrowBufferAllocator ArrowBufferAllocatorDefault(void) {
   return ArrowBufferAllocatorMalloc;
 }
 
-static uint8_t* ArrowBufferDeallocatorReallocate(struct ArrowBufferAllocator* allocator,
-                                                 uint8_t* ptr, int64_t old_size,
-                                                 int64_t new_size) {
+static uint8_t* ArrowBufferAllocatorNeverReallocate(
+    struct ArrowBufferAllocator* allocator, uint8_t* ptr, int64_t old_size,
+    int64_t new_size) {
+  NANOARROW_UNUSED(allocator);
+  NANOARROW_UNUSED(ptr);
+  NANOARROW_UNUSED(old_size);
   NANOARROW_UNUSED(new_size);
-
-  // Attempting to reallocate a buffer with a custom deallocator is
-  // a programming error. In debug mode, crash here.
-#if defined(NANOARROW_DEBUG)
-  NANOARROW_PRINT_AND_DIE(ENOMEM,
-                          "It is an error to reallocate a buffer whose allocator is "
-                          "ArrowBufferDeallocator()");
-#endif
-
-  // In release mode, ensure the the deallocator is called exactly
-  // once using the pointer it was given and return NULL, which
-  // will trigger the caller to return ENOMEM.
-  allocator->free(allocator, ptr, old_size);
-  *allocator = ArrowBufferAllocatorDefault();
   return NULL;
 }
 
@@ -239,7 +226,7 @@ struct ArrowBufferAllocator ArrowBufferDeallocator(
                         int64_t size),
     void* private_data) {
   struct ArrowBufferAllocator allocator;
-  allocator.reallocate = &ArrowBufferDeallocatorReallocate;
+  allocator.reallocate = &ArrowBufferAllocatorNeverReallocate;
   allocator.free = custom_free;
   allocator.private_data = private_data;
   return allocator;
@@ -467,7 +454,8 @@ ArrowErrorCode ArrowDecimalAppendDigitsToBuffer(const struct ArrowDecimal* decim
 
 #include "nanoarrow.h"
 
-static void ArrowSchemaReleaseInternal(struct ArrowSchema* schema) {
+// -- changed for tiledb-r  static
+void ArrowSchemaReleaseInternal(struct ArrowSchema* schema) {
   if (schema->format != NULL) ArrowFree((void*)schema->format);
   if (schema->name != NULL) ArrowFree((void*)schema->name);
   if (schema->metadata != NULL) ArrowFree((void*)schema->metadata);
@@ -2037,7 +2025,8 @@ ArrowErrorCode ArrowMetadataBuilderRemove(struct ArrowBuffer* buffer,
 
 #include "nanoarrow.h"
 
-static void ArrowArrayReleaseInternal(struct ArrowArray* array) {
+// -- changed for tiledb-r  static
+void ArrowArrayReleaseInternal(struct ArrowArray* array) {
   // Release buffers held by this array
   struct ArrowArrayPrivateData* private_data =
       (struct ArrowArrayPrivateData*)array->private_data;
@@ -2080,7 +2069,8 @@ static void ArrowArrayReleaseInternal(struct ArrowArray* array) {
   array->release = NULL;
 }
 
-static ArrowErrorCode ArrowArraySetStorageType(struct ArrowArray* array,
+// -- changed for tiledb-r  static
+ArrowErrorCode ArrowArraySetStorageType(struct ArrowArray* array,
                                                enum ArrowType storage_type) {
   switch (storage_type) {
     case NANOARROW_TYPE_UNINITIALIZED:
@@ -2919,10 +2909,6 @@ static int ArrowArrayViewValidateDefault(struct ArrowArrayView* array_view,
                         (long)array_view->buffer_views[2].size_bytes);
           return EINVAL;
         }
-      } else if (array_view->buffer_views[2].size_bytes == -1) {
-        // If the data buffer size is unknown and there are no bytes in the offset buffer,
-        // set the data buffer size to 0.
-        array_view->buffer_views[2].size_bytes = 0;
       }
       break;
 
@@ -2949,10 +2935,6 @@ static int ArrowArrayViewValidateDefault(struct ArrowArrayView* array_view,
                         (long)array_view->buffer_views[2].size_bytes);
           return EINVAL;
         }
-      } else if (array_view->buffer_views[2].size_bytes == -1) {
-        // If the data buffer size is unknown and there are no bytes in the offset
-        // buffer, set the data buffer size to 0.
-        array_view->buffer_views[2].size_bytes = 0;
       }
       break;
 
