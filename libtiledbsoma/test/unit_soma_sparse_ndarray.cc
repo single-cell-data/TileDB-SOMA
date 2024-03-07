@@ -80,7 +80,8 @@ TEST_CASE("SOMASparseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-sparse-ndarray-basic";
 
-    SOMASparseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
+    SOMASparseNDArray::create(
+        uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
 
     auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_sparse->uri() == uri);
@@ -120,7 +121,8 @@ TEST_CASE("SOMASparseNDArray: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-sparse-ndarray";
-    SOMASparseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
+    SOMASparseNDArray::create(
+        uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
     auto soma_sparse = SOMASparseNDArray::open(
         uri,
         OpenMode::write,

@@ -261,7 +261,8 @@ TEST_CASE("SOMAExperiment: metadata") {
 
     std::string uri = "mem://unit-test-experiment";
     auto [schema, index_columns] = helper::create_arrow_schema();
-    SOMAExperiment::create(uri, schema, index_columns, ctx, TimestampRange(0, 2));
+    SOMAExperiment::create(
+        uri, schema, index_columns, ctx, TimestampRange(0, 2));
     auto soma_experiment = SOMAExperiment::open(
         uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
@@ -314,8 +315,9 @@ TEST_CASE("SOMAMeasurement: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-measurement";
     auto [schema, index_columns] = helper::create_arrow_schema();
-    SOMAMeasurement::create(uri, schema, index_columns, ctx, TimestampRange(0, 2));
-    
+    SOMAMeasurement::create(
+        uri, schema, index_columns, ctx, TimestampRange(0, 2));
+
     auto soma_measurement = SOMAMeasurement::open(
         uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 

@@ -120,7 +120,8 @@ TEST_CASE("SOMADenseNDArray: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-dense-ndarray";
-    SOMADenseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
+    SOMADenseNDArray::create(
+        uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
     auto soma_dense = SOMADenseNDArray::open(
         uri,
         OpenMode::write,

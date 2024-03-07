@@ -1295,7 +1295,7 @@ def _write_dataframe_impl(
         )
 
     try:
-        soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
+        soma_df = DataFrame.open(df_uri, "w", context=context)
     except DoesNotExistError:
         soma_df = DataFrame.create(
             df_uri,
@@ -1987,7 +1987,7 @@ def _write_matrix_to_denseNDArray(
 def _read_nonempty_domain(arr: TileDBArray) -> Any:
     try:
         return arr._handle.non_empty_domain()
-    except SOMAError:
+    except (SOMAError, RuntimeError):
         # This means that we're open in write-only mode.
         # Reopen the array in read mode.
         pass

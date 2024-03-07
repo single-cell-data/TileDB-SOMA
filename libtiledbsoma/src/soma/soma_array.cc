@@ -205,7 +205,7 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
 void SOMAArray::close() {
     if (arr_->query_type() == TILEDB_WRITE)
         meta_cache_arr_->close();
-        
+
     // Close the array through the managed query to ensure any pending queries
     // are completed.
     mq_->close();
