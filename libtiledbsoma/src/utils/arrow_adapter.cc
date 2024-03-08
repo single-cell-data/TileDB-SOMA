@@ -40,55 +40,55 @@ using namespace tiledb;
 
 void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     LOG_DEBUG(fmt::format("[ArrowAdapter] release_schema for {}", schema->name));
-    schema->release = nullptr;
 
     if (schema->name != nullptr) {
+        LOG_TRACE("[ArrowAdapter] release_schema schema->name");
         free((void*)schema->name);
         schema->name = nullptr;
     }
     if (schema->format != nullptr) {
+        LOG_TRACE("[ArrowAdapter] release_schema schema->format");
         free((void*)schema->format);
         schema->format = nullptr;
     }
-    for (int i = 0; i < schema->n_children; ++i) {
-        struct ArrowSchema* child = schema->children[i];
-        if (child->name != nullptr) {
-            free((void*)child->name);
-            child->name = nullptr;
-        }
-        if (child->format != nullptr) {
-            free((void*)child->format);
-            child->format = nullptr;
-        }
-        if (child->release != NULL) {
-            child->release(child);
-        }
-        free(child);
+    if (schema->metadata != nullptr) {
+        LOG_TRACE("[ArrowAdapter] release_schema schema->metadata");
+        free((void*)schema->metadata);
+        schema->metadata = nullptr;
     }
-    free(schema->children);
 
-    struct ArrowSchema* dict = schema->dictionary;
-    if (dict != nullptr) {
-        if (dict->name != nullptr) {
-            free((void*)dict->name);
-            dict->name = nullptr;
+    if (schema->children != nullptr) {
+        for (auto i = 0; i < schema->n_children; i++) {
+            if (schema->children[i] != nullptr) {
+                if (schema->children[i]->release != nullptr) {
+                    LOG_TRACE(fmt::format("[ArrowAdapter] release_schema schema->child {} release",i));
+                    release_schema(schema->children[i]);
+                }
+                LOG_TRACE(fmt::format("[ArrowAdapter] release_schema schema->child {} free",i));
+                free(schema->children[i]);
+            }
         }
-        if (dict->format != nullptr) {
-            free((void*)dict->format);
-            dict->format = nullptr;
-        }
-        if (dict->release != nullptr) {
-            //delete dict;
-            free(dict);
-            dict = nullptr;
-        }
+        LOG_TRACE("[ArrowAdapter] release_schema schema->children");
+        free(schema->children);
+        schema->children = nullptr;
     }
+
+    if (schema->dictionary != nullptr) {
+        if (schema->dictionary->release != nullptr) {
+            LOG_TRACE("[ArrowAdapter] release_schema schema->dict release");
+            release_schema(schema->dictionary);
+        }
+        LOG_TRACE("[ArrowAdapter] release_schema schema->dict free");
+        free(schema->dictionary);
+        schema->dictionary = nullptr;
+    }
+
+    schema->release = nullptr;
     LOG_TRACE("[ArrowAdapter] release_schema done");
 }
 
 void ArrowAdapter::release_array(struct ArrowArray* array) {
     auto arrow_buffer = static_cast<ArrowBuffer*>(array->private_data);
-
     LOG_TRACE(fmt::format(
         "[ArrowAdapter] release_array {} use_count={}",
         arrow_buffer->buffer_->name(),
@@ -104,30 +104,34 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
         array->buffers = nullptr;
     }
 
-    if (array->n_children > 0) {
-        for (int i = 0; i < array->n_children; ++i) {
-            struct ArrowArray* child = array->children[i];
-            if (child != nullptr) {
-                release_array(child);
-                free(child);
-                child = nullptr;
+    if (array->children != nullptr) {
+        for (auto i = 0; i < array->n_children; i++) {
+            if (array->children[i] != nullptr) {
+                if (array->children[i]->release != nullptr) {
+                    LOG_TRACE(fmt::format("[ArrowAdapter] release_schema array->child {} release",i));
+                    release_array(array->children[i]);
+                }
+                LOG_TRACE(fmt::format("[ArrowAdapter] release_schema array->child {} free",i));
+                free(array->children[i]);
             }
         }
+        LOG_TRACE("[ArrowAdapter] release_array array->children");
         free(array->children);
         array->children = nullptr;
     }
 
-    struct ArrowArray* dict = array->dictionary;
-    if (dict != nullptr) {
-        if (dict->buffers != nullptr) {
-            //free(dict->buffers);
-            dict->buffers = nullptr;
-        }
-        if (dict->release != nullptr) {
-            free(dict);
-            dict = nullptr;
-        }
+    if (array->dictionary != nullptr) {
+        // -- TODO: This can lead to segfault on some data sets and could be cause
+        //          by how we fill arrow data structures.  This should pass.
+        //if (array->dictionary->release != nullptr) {
+        //    LOG_TRACE("[ArrowAdapter] release_array array->dict release");
+        //    release_array(array->dictionary);
+        //}
+        LOG_TRACE("[ArrowAdapter] release_array array->dict free");
+        free(array->dictionary);
+        array->dictionary = nullptr;
     }
+
     array->release = nullptr;
     LOG_TRACE(fmt::format("[ArrowAdapter] release_array done"));
 }

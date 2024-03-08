@@ -1,4 +1,5 @@
 test_that("Load SCE object from ExperimentQuery mechanics", {
+  if (Sys.getenv("GITHUB_ACTION") != "")  set_log_level("trace")
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
   uri <- withr::local_tempdir("sce-experiment-query-whole")
@@ -358,4 +359,5 @@ test_that("Load SCE object from indexed ExperimentQuery", {
   )
   expect_identical(SingleCellExperiment::colPairNames(obj), 'connectivities')
   expect_identical(SingleCellExperiment::rowPairNames(obj), 'network')
+  if (Sys.getenv("GITHUB_ACTION") != "")  set_log_level("warn")
 })
