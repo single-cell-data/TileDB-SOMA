@@ -275,6 +275,29 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     return mq_->results();
 }
 
+void SOMAArray::extend_enumeration(
+    std::string_view name,
+    uint64_t num_elems,
+    const void* data,
+    uint64_t* offsets) {
+    auto ctx = *ctx_->tiledb_ctx();
+
+    auto enmr = ArrayExperimental::get_enumeration(
+        ctx, *arr_, std::string(name));
+
+    // TODO can be uint64_t
+    std::vector<uint64_t> offset_v(
+        (uint32_t*)offsets, (uint32_t*)offsets + num_elems + 1);
+    uint64_t data_size = offset_v[num_elems];
+
+    auto new_enmr = enmr.extend(
+        data, data_size, offset_v.data(), num_elems * sizeof(uint64_t));
+
+    ArraySchemaEvolution se(ctx);
+    se.extend_enumeration(new_enmr);
+    se.array_evolve(uri_);
+}
+
 void SOMAArray::set_column_data(
     std::string_view name,
     uint64_t num_elems,

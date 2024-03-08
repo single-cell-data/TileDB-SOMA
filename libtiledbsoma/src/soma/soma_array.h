@@ -404,6 +404,12 @@ class SOMAArray : public SOMAObject {
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
+    void extend_enumeration(
+        std::string_view name,
+        uint64_t num_elems,
+        const void* data,
+        uint64_t* offsets);
+
     void set_column_data(
         std::string_view name,
         uint64_t num_elems,

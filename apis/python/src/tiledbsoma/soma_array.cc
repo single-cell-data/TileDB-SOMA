@@ -67,11 +67,23 @@ void write(SOMAArray& array, py::handle py_batch) {
             auto enmr_name = AttributeExperimental::get_enumeration_name(
                 *array.ctx()->tiledb_ctx(), attributes.at(sch_->name));
 
-            if (enmr_name.has_value() && !sch_->dictionary) {
+            auto dict = arr_->dictionary;
+            if (enmr_name.has_value() && !dict) {
                 array.clear_column_data();
                 throw py::value_error(
                     "Saw non-dictionary column passed to enumerated type");
             }
+
+            const void* enmr_data;
+            uint64_t* enmr_offsets = nullptr;
+            if (dict->n_buffers == 3) {
+                enmr_offsets = (uint64_t*)dict->buffers[1];
+                enmr_data = dict->buffers[2];
+            } else {
+                enmr_data = dict->buffers[1];
+            }
+            array.extend_enumeration(
+                sch_->name, dict->length, enmr_data, enmr_offsets);
         }
 
         array.set_column_data(
