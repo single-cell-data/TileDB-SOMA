@@ -354,12 +354,12 @@ InstallDeps() {
 }
 
 InstallDepsAndSuggests() {
-    sudo Rscript -e 'remotes::install_deps(".", dependencies=TRUE)'
+    sudo Rscript -e 'options(timeout = max(300, getOption("timeout"))); remotes::install_deps(".", dependencies=TRUE)'
 }
 
 DumpSysinfo() {
     echo "Dumping system information."
-    R -e '.libPaths(); sessionInfo(); installed.packages()'
+    Rscript -e '.libPaths(); sessionInfo(); installed.packages()'
 }
 
 DumpLogsByExtension() {
