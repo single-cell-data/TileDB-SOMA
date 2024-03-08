@@ -67,7 +67,7 @@ void write(SOMAArray& array, py::handle py_batch) {
             auto enmr_name = AttributeExperimental::get_enumeration_name(
                 *array.ctx()->tiledb_ctx(), attributes.at(sch_->name));
 
-            if(enmr_name.has_value()){
+            if (enmr_name.has_value()) {
                 auto dict = arr_->dictionary;
                 if (!dict) {
                     array.clear_column_data();
@@ -83,8 +83,11 @@ void write(SOMAArray& array, py::handle py_batch) {
                 } else {
                     enmr_data = dict->buffers[1];
                 }
-                array.extend_enumeration(
-                    sch_->name, dict->length, enmr_data, enmr_offsets);
+
+                if (dict->length != 0) {
+                    array.extend_enumeration(
+                        sch_->name, dict->length, enmr_data, enmr_offsets);
+                }
             }
         }
 
