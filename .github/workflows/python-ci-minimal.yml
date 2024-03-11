@@ -36,6 +36,6 @@ jobs:
       python_version: ${{ matrix.python-version }}
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
-      report_codecov: ${{ matrix.python-version == '3.10' }}
-      run_lint: ${{ matrix.python-version == '3.10' }}
+      report_codecov: ${{ matrix.python-version == '3.11' }}
+      run_lint: ${{ matrix.python-version == '3.11' }}
     secrets: inherit
