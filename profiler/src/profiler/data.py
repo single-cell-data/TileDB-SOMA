@@ -3,13 +3,14 @@ import glob
 import hashlib
 import json
 import os
+import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
-from botocore.client import ClientError
-import tempfile
+
 import attr
 import boto3
-import uuid
+from botocore.client import ClientError
+
 
 @attr.define
 class ProfileData:
@@ -134,6 +135,7 @@ class FileBasedProfileDB(ProfileDB):
     def close(self):
         pass
 
+
 class S3ProfileDB(ProfileDB):
     """Represents a S3-based implementation of a ProfileDB database.
     Each run is stored as a separate S3 object under a key with the structure `<bucket>/<command>/<timestamp>`.
@@ -143,8 +145,8 @@ class S3ProfileDB(ProfileDB):
         # return all the objects kets starting with prefix and ending with suffix
         result = self.s3.list_objects(Bucket=self.bucket_name, Prefix=prefix)
         keys: List[str] = []
-        for o in result.get('Contents'):
-            object_key = o.get('Key')
+        for o in result.get("Contents"):
+            object_key = o.get("Key")
             if object_key.endswith(suffix):
                 keys.append(object_key)
         return keys
@@ -152,11 +154,10 @@ class S3ProfileDB(ProfileDB):
     def read_s3_text(self, key: str) -> str:
         # Assume the key is associated with one object. Otherwise, return the first object
         result = self.s3.list_objects(Bucket=self.bucket_name, Prefix=key)
-        for o in result.get('Contents'):
-            data = self.s3.get_object(Bucket=self.bucket_name, Key=o.get('Key'))
-            contents = data['Body'].read().decode("utf-8")
+        for o in result.get("Contents"):
+            data = self.s3.get_object(Bucket=self.bucket_name, Key=o.get("Key"))
+            contents = data["Body"].read().decode("utf-8")
             return contents
-
 
     def bucket_exist_and_accessible(self):
         try:
@@ -167,13 +168,16 @@ class S3ProfileDB(ProfileDB):
 
     def __init__(self, bucket_name: str):
         # Initialize bucket's info
-        self.s3 = boto3.client('s3')
+        self.s3 = boto3.client("s3")
         self.bucket_name = bucket_name
-        self.bucket = boto3.resource('s3').Bucket(self.bucket_name)
+        self.bucket = boto3.resource("s3").Bucket(self.bucket_name)
         # Check if the bucket exists
         if not self.bucket_exist_and_accessible():
-            raise(
-                Exception(f"Bucket {self.bucket_name} does not exist or access is not granted."))
+            raise (
+                Exception(
+                    f"Bucket {self.bucket_name} does not exist or access is not granted."
+                )
+            )
 
     def __str__(self):
         result = ""
@@ -186,9 +190,11 @@ class S3ProfileDB(ProfileDB):
                     command = self.read_s3_text(command_file_key)
                     # Get the number of runs.
                     n_runs = len(self.read_object_keys(runs_prefix, ".json"))
-                    result =+ f"[{command_file_key}] \"{command}\": {n_runs} runs\n"
+                    result = +f'[{command_file_key}] "{command}": {n_runs} runs\n'
             return result
-        return Exception(f"Bucket {self.bucket_name} does not exist or access is not granted.")
+        return Exception(
+            f"Bucket {self.bucket_name} does not exist or access is not granted."
+        )
 
     def find(self, command) -> List[ProfileData]:
         key = _command_key(command)
@@ -208,7 +214,9 @@ class S3ProfileDB(ProfileDB):
 
         with open(filename, "w") as fp:
             fp.write(data.command.strip())
-        self.s3.upload_file(os.path.abspath(str(fp.name)), self.bucket_name, s3_command_key)
+        self.s3.upload_file(
+            os.path.abspath(str(fp.name)), self.bucket_name, s3_command_key
+        )
         os.unlink(filename)
 
         key2 = data.timestamp
