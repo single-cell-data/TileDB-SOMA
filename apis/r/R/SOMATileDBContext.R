@@ -38,6 +38,7 @@ SOMATileDBContext <- R6::R6Class(
         cfg[opt] <- config[opt]
       }
       private$.tiledb_ctx <- tiledb::tiledb_ctx(config = cfg, cached = cached)
+      private$.tiledb_vfs <- tiledb::tiledb_vfs(config = cfg, ctx = private$.tiledb_ctx)
     },
     #' @return The keys of the map
     #'
@@ -110,6 +111,11 @@ SOMATileDBContext <- R6::R6Class(
     #' a stored (and long-lived) result from \code{to_tiledb_context}.
     context = function() {
       return(private$.tiledb_ctx)
+    },
+    #' @return A \code{\link[tiledb:tiledb_vfs]{tiledb_vfs}} object, which is
+    #' a stored (and long-lived) TileDB VFS instance
+    vfs = function() {
+      return(private$.tiledb_vfs)
     }
   ),
   private = list(
@@ -122,6 +128,7 @@ SOMATileDBContext <- R6::R6Class(
         expr = names(as.vector(tiledb::config(private$.tiledb_ctx))),
         error = null
       ))
-    }
+    },
+    .tiledb_vfs = NULL
   )
 )

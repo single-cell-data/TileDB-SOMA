@@ -209,17 +209,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// tiledbsoma_vfs_is_dir
-bool tiledbsoma_vfs_is_dir(const std::string uri);
-RcppExport SEXP _tiledbsoma_tiledbsoma_vfs_is_dir(SEXP uriSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string >::type uri(uriSEXP);
-    rcpp_result_gen = Rcpp::wrap(tiledbsoma_vfs_is_dir(uri));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_soma_array_reader", (DL_FUNC) &_tiledbsoma_soma_array_reader, 9},
@@ -239,7 +228,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_libtiledbsoma_version", (DL_FUNC) &_tiledbsoma_libtiledbsoma_version, 1},
     {"_tiledbsoma_tiledb_embedded_version", (DL_FUNC) &_tiledbsoma_tiledb_embedded_version, 0},
     {"_tiledbsoma_tiledb_datatype_max_value", (DL_FUNC) &_tiledbsoma_tiledb_datatype_max_value, 1},
-    {"_tiledbsoma_tiledbsoma_vfs_is_dir", (DL_FUNC) &_tiledbsoma_tiledbsoma_vfs_is_dir, 1},
     {NULL, NULL, 0}
 };
 
