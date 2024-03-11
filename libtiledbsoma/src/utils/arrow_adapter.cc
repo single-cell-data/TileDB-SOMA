@@ -260,12 +260,21 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
         if (idx_col_it != idx_col_end) {
             auto idx_col_idx = std::distance(idx_col_begin, idx_col_it);
+            if ((strcmp(child->format, "U") == 0) |
+                (strcmp(child->format, "u") == 0)) {
+                type = TILEDB_STRING_ASCII;
+            }
+
             auto dim = Dimension::create(
                 *ctx,
                 child->name,
                 type,
-                domains->children[idx_col_idx]->buffers[1],
-                extents->children[idx_col_idx]->buffers[1]);
+                type == TILEDB_STRING_ASCII ?
+                    nullptr :
+                    domains->children[idx_col_idx]->buffers[1],
+                type == TILEDB_STRING_ASCII ?
+                    nullptr :
+                    extents->children[idx_col_idx]->buffers[1]);
 
             domain.add_dimension(dim);
         } else {

@@ -240,6 +240,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
             domains.append(slot_domain)
             extents.append([extent])
+            
+        print(index_column_names)
+        print(domains)
+        print(extents)
+
+        print(index_column_names)
+        print(pa.array(domains))
+        print(pa.array(extents))
 
         # TODO add as kw args
         clib.SOMADataFrame.create(
@@ -878,7 +886,7 @@ def _fill_out_slot_domain(
                 )
 
     elif isinstance(dtype, str):
-        slot_domain = None, None
+        slot_domain = "", ""
     elif np.issubdtype(dtype, NPInteger):
         iinfo = np.iinfo(cast(NPInteger, dtype))
         slot_domain = iinfo.min, iinfo.max - 1
@@ -943,7 +951,7 @@ def _find_extent_for_domain(
         extent = 64
 
     if isinstance(dtype, str):
-        return extent
+        return ""
 
     lo, hi = slot_domain
     if lo is None or hi is None:
