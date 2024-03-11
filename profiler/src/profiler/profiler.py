@@ -16,7 +16,7 @@ import tiledbsoma
 from .context_generator import host_context
 
 # import context_generator
-from .data import FileBasedProfileDB, ProfileData, ProfileDB, S3ProfileDB
+from .data import ProfileData, ProfileDB, S3ProfileDB
 
 GNU_TIME_FORMAT = (
     'Command being timed: "%C"\n'

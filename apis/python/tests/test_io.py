@@ -184,8 +184,10 @@ def test_add_matrices(tmp_path):
     See https://github.com/single-cell-data/TileDB-SOMA/issues/1565."""
     # Create a soma object from an anndata object
     soma_path = tmp_path.as_posix()
-    h5ad_path = HERE.parent / 'testdata/pbmc-small.h5ad'
-    soma_uri = soma.io.from_h5ad(soma_path, input_path=h5ad_path, measurement_name="RNA")
+    h5ad_path = HERE.parent / "testdata/pbmc-small.h5ad"
+    soma_uri = soma.io.from_h5ad(
+        soma_path, input_path=h5ad_path, measurement_name="RNA"
+    )
 
     # Synthesize some new data to be written into two matrices within the soma object (ensuring it's different from the
     # original data, so that writes must be performed)
