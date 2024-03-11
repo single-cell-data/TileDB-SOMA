@@ -358,3 +358,12 @@ size_t tiledb_datatype_max_value(const std::string& datatype) {
     else if (datatype == "UINT64") return std::numeric_limits<uint64_t>::max();
     else Rcpp::stop("currently unsupported datatype (%s)", datatype);
 }
+
+//' Local is_dir using local context
+//' @noRd
+// [[Rcpp::export]]
+bool tiledbsoma_vfs_is_dir(const std::string uri) {
+    auto ctx = tiledb::Context();
+    auto vfs = tiledb::VFS(ctx);
+    return vfs.is_dir(uri);
+}

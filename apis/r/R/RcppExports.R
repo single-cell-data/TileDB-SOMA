@@ -153,3 +153,9 @@ tiledb_datatype_max_value <- function(datatype) {
     .Call(`_tiledbsoma_tiledb_datatype_max_value`, datatype)
 }
 
+#' Local is_dir using local context
+#' @noRd
+tiledbsoma_vfs_is_dir <- function(uri) {
+    .Call(`_tiledbsoma_tiledbsoma_vfs_is_dir`, uri)
+}
+
