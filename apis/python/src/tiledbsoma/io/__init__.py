@@ -12,11 +12,13 @@ from .ingest import (
     from_h5ad,
     register_anndatas,
     register_h5ads,
-    to_anndata,
-    to_h5ad,
     update_matrix,
     update_obs,
     update_var,
+)
+from .outgest import (
+    to_anndata,
+    to_h5ad,
 )
 
 __all__ = (
