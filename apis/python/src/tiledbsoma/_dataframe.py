@@ -238,24 +238,19 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 slot_domain,
             )
 
-            domains.append(slot_domain)
-            extents.append([extent])
-            
-        print(index_column_names)
-        print(domains)
-        print(extents)
+            domains.append(pa.array(slot_domain))
+            extents.append(pa.array([extent]))
 
-        print(index_column_names)
-        print(pa.array(domains))
-        print(pa.array(extents))
+        domains = pa.StructArray.from_arrays(domains, names=index_column_names)
+        extents = pa.StructArray.from_arrays(extents, names=index_column_names)
 
         # TODO add as kw args
         clib.SOMADataFrame.create(
             uri,
             schema,
             index_column_names,
-            pa.array(domains),
-            pa.array(extents),
+            domains,
+            extents,
             context.native_context,
         )
         
