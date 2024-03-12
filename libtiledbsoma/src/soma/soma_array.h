@@ -539,7 +539,11 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     std::pair<T, T> non_empty_domain(const std::string& name) {
-        return arr_->non_empty_domain<T>(name);
+        try {
+            return arr_->non_empty_domain<T>(name);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
     }
 
     /**
@@ -549,7 +553,11 @@ class SOMAArray : public SOMAObject {
      */
     std::pair<std::string, std::string> non_empty_domain_var(
         const std::string& name) {
-        return arr_->non_empty_domain_var(name);
+        try {
+            return arr_->non_empty_domain_var(name);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
     }
 
     /**
