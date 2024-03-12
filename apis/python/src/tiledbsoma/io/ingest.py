@@ -406,29 +406,12 @@ def from_anndata(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
 
-    for key in anndata.obsm.keys():
-        if not isinstance(anndata.obsm[key], get_args(Matrix)):
-            raise TypeError(
-                f"obsm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
-            )
-
-    for key in anndata.obsp.keys():
-        if not isinstance(anndata.obsp[key], get_args(Matrix)):
-            raise TypeError(
-                f"obsp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
-            )
-
-    for key in anndata.varm.keys():
-        if not isinstance(anndata.varm[key], get_args(Matrix)):
-            raise TypeError(
-                f"varm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
-            )
-
-    for key in anndata.varp.keys():
-        if not isinstance(anndata.varp[key], get_args(Matrix)):
-            raise TypeError(
-                f"varp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
-            )
+    for ad_key in ["obsm", "obsp", "varm", "varp"]:
+        for key, val in getattr(anndata, ad_key).items():
+            if not isinstance(val, get_args(Matrix)):
+                raise TypeError(
+                    f"{ad_key} value at {key} is not of type {list(cl.__name__ for cl in get_args(Matrix))}: {type(val)}"
+                )
 
     # For single ingest (no append):
     #
