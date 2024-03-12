@@ -432,18 +432,18 @@ def from_anndata(
 
     # For single ingest (no append):
     #
-    # * obs, var, X, etc array indices map 1-1 to soma_joinid, soma_dim_0, soma_dim_1, etc.
+    # * obs, var, X, etc. array indices map 1-1 to soma_joinid, soma_dim_0, soma_dim_1, etc.
     #
     # * There is no need to look at a particular barcode column etc.
     #
     # For append mode:
     #
-    # * We require for mappings to be pre-computed and passed in
+    # * We require mappings to be pre-computed and passed in
     #
     # * The mappings are from obs-label/var-label to soma_joinid, soma_dim_0, soma_dim_1
     #   for all the H5AD/AnnData objects being ingested
     #
-    # * Here we select out the renumberings for the obs, var, X, etc array indices
+    # * Here we select out the renumberings for the obs, var, X, etc. array indices
     if registration_mapping is None:
         jidmaps = ExperimentIDMapping.from_isolated_anndata(
             anndata, measurement_name=measurement_name
@@ -455,7 +455,7 @@ def from_anndata(
 
     context = _validate_soma_tiledb_context(context)
 
-    # Without _at least_ an index, there is nothing to indicate the dimension indices.
+    # Without _at least_ one index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
@@ -547,7 +547,6 @@ def from_anndata(
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/X/DATA
-
             measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
             with _create_or_open_collection(
                 Collection,
@@ -2109,7 +2108,7 @@ def _find_sparse_chunk_size_backed(
     It turns out, though, as a peculiarity of AnnData backed matrices, that
     while it's prohibitively expensive to ask the 10,000 questions
     matrix[0,:].nnz, matrix[1,:].nnz, ...  matrix[9999,:].nnz, it's quite quick
-    to ask for matrix[0:9999,:].nnz.
+    to ask for matrix[0:10000,:].nnz.
 
     This is our way to thread the needle on good runtime performance with the
     AnnData backed-matrix API, while respecting remote resource limits:
@@ -2117,13 +2116,13 @@ def _find_sparse_chunk_size_backed(
     * Get the mean nnz for the entire matrix, along the desired axis.
       This needs to be computed only once, so we take it as an argument.
 
-    * Set our intial estimate of chunk size to be the goal_chunk_nnz
+    * Set our initial estimate of chunk size to be the goal_chunk_nnz
       over the mean_nnz. E.g. if our goal is 100M nnz per chunk, and the matrix
       has average 4000 nnz per row, then we try chunk size to be
       100,000,000/4,000 = 25,000.
 
     * While tasking for the nnzs of each of those 25,000 rows is prohibitively
-      expensive, we can quickly ask for the nnz of the continguous region of
+      expensive, we can quickly ask for the nnz of the contiguous region of
       25,000 rows.
 
     * Now, those 25,000 rows' sum nnz may or may not be reflective of the mean.
