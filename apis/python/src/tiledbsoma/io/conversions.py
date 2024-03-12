@@ -46,7 +46,7 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     E.g., float16 -> float32
     """
     if isinstance(x, (np.ndarray, sp.spmatrix)) or not isinstance(
-        x, pd.CategoricalDtype
+        x.dtype, pd.CategoricalDtype
     ):
         # mypy issues a spurious error here, but only when
         # _to_tiledb_supported_dtype is decorated with @typeguard_ignore???
