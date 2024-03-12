@@ -285,16 +285,20 @@ void SOMAArray::extend_enumeration(
     auto enmr = ArrayExperimental::get_enumeration(
         ctx, *arr_, std::string(name));
 
-    // TODO can be uint64_t
-    std::vector<uint64_t> offset_v(
-        (uint32_t*)offsets, (uint32_t*)offsets + num_elems + 1);
-    uint64_t data_size = offset_v[num_elems];
-
-    auto new_enmr = enmr.extend(
-        data, data_size, offset_v.data(), num_elems * sizeof(uint64_t));
-
     ArraySchemaEvolution se(ctx);
-    se.extend_enumeration(new_enmr);
+    if (offsets != nullptr) {
+        // TODO can be uint64_t
+        std::vector<uint64_t> offset_v(
+            (uint32_t*)offsets, (uint32_t*)offsets + num_elems + 1);
+        auto data_sz = offset_v[num_elems];
+        auto offset_ptr = offset_v.data();
+        auto offset_sz = num_elems * sizeof(uint64_t);
+        se.extend_enumeration(
+            enmr.extend(data, data_sz, offset_ptr, offset_sz));
+    } else {
+        auto data_sz = num_elems * tiledb::impl::type_size(enmr.type());
+        se.extend_enumeration(enmr.extend(data, data_sz, nullptr, 0));
+    }
     se.array_evolve(uri_);
 }
 
