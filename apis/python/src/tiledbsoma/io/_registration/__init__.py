@@ -41,7 +41,7 @@ for _all_ inputs, and ID mappings which contain int-to-int offset-to-join-ID map
 Example:
 
 - Input 1 has obs IDs ``["AAAT", "ACTG", "AGAG"]`` numbered 0, 1, 2 within input 1.
-- Input 1 has var IDs ``["AKT1", "APOE", "ESR1", "TP53", "VEGFA"]`` numbered 0, 1, 2, 3, 4 within input1.
+- Input 1 has var IDs ``["AKT1", "APOE", "ESR1", "TP53", "VEGFA"]`` numbered 0, 1, 2, 3, 4 within input 1.
 - Input 2 has obs IDs ``["CAAT", "CCTG", "CGAG"]`` numbered 0, 1, 2 within input 2.
 - Input 2 has var IDs ``["APOE", "EGFR", "TP53", "VEGFA"]`` numbered 0, 1, 2, 3 within input 2.
 
@@ -87,9 +87,9 @@ offsets to registered SOMA join IDs like this:
 
 - For input 2's ``obs``, ``AxisIDMapping`` of
 
-    3:3 (for CAAT)
-    4:4 (for CCTG)
-    5:5 (for CGAG)
+    0:3 (for CAAT)
+    1:4 (for CCTG)
+    2:5 (for CGAG)
 
 - For input 2's ``var``, ``AxisIDMapping`` of
 

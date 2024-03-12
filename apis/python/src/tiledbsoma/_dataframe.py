@@ -172,8 +172,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 If specified, overrides the default timestamp
                 used to open this object. If unset, uses the timestamp provided by
                 the context.
-            enumeration:
-                If specified, enumerate attributes with the given sequence of values.
 
 
         Returns:
@@ -370,8 +368,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     ) -> Self:
         """Writes an `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
         to the persistent object. As duplicate index values are not allowed, index values already
-        present in the object are overwritten
-        and new index values are added.
+        present in the object are overwritten and new index values are added.
 
         Args:
             values:
