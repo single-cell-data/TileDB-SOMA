@@ -108,11 +108,9 @@ void ManagedQuery::set_column_data(
             column_name, (void*)data.data(), column_buffer->data_size());
 
         if (column_buffer->is_var()) {
-            // Remove one offset for TileDB, which checks that the
-            // offsets and validity buffers are the same size
             auto offsets = column_buffer->offsets();
             query_->set_offsets_buffer(
-                column_name, offsets.data(), offsets.size() - 1);
+                column_name, offsets.data(), offsets.size());
         }
         if (column_buffer->is_nullable()) {
             auto validity = column_buffer->validity();
