@@ -83,7 +83,7 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     delete arrow_buffer;
 
     if (array->buffers != nullptr) {
-        delete [] array->buffers;
+        delete[] array->buffers;
     }
 
     struct ArrowArray* dict = array->dictionary;
