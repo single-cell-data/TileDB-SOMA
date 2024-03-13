@@ -82,6 +82,10 @@ jobs:
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 
+      - name: Install dataset packages from source (macOS)
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: cd apis/r && Rscript -e "remotes::install_deps(dependencies = 'Suggests', type = 'source', upgrade = FALSE)"
+
       - name: CMake
         uses: lukka/get-cmake@latest
 
