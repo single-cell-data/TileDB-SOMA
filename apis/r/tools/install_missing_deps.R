@@ -79,7 +79,11 @@ if (nrow(x = desc)) {
   message("Finding additional downstream dependencies")
   db <- utils::available.packages(repos = repos, type = pkgtype)
   deps <- unique(x = unlist(
-    x = tools::package_dependencies(packages = desc$Package, db = db),
+    x = tools::package_dependencies(
+      packages = desc$Package,
+      db = db,
+      recursive = TRUE
+    ),
     use.names = FALSE
   ))
   deps <- setdiff(x = deps, y = c(utils::sessionInfo()$basePkgs, desc$Package))
