@@ -86,14 +86,20 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t extents_ptr = (uintptr_t)(&extents);
                 py_extents.attr("_export_to_c")(extents_ptr);
 
-                SOMADataFrame::create(
-                    uri,
-                    std::make_shared<ArrowSchema>(schema),
-                    ColumnIndexInfo(
-                        index_columns_names,
-                        std::make_shared<ArrowArray>(domains),
-                        std::make_shared<ArrowArray>(extents)),
-                    context);
+                try{
+                    SOMADataFrame::create(
+                        uri,
+                        std::make_shared<ArrowSchema>(schema),
+                        ColumnIndexInfo(
+                            index_columns_names,
+                            std::make_shared<ArrowArray>(domains),
+                            std::make_shared<ArrowArray>(extents)),
+                        context);
+                }catch(const std::out_of_range& e){
+                    throw py::type_error(e.what());
+                }catch(const std::exception& e){
+                    TPY_ERROR_LOC(e.what());
+                }
             })
 
         .def_static(

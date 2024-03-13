@@ -464,18 +464,14 @@ std::string_view ArrowAdapter::to_arrow_format(
         {TILEDB_INT32, "i"},          {TILEDB_UINT32, "I"},
         {TILEDB_INT64, "l"},          {TILEDB_UINT64, "L"},
         {TILEDB_FLOAT32, "f"},        {TILEDB_FLOAT64, "g"},
-        {TILEDB_BOOL, "b"},           {TILEDB_TIME_SEC, "tts"},
-        {TILEDB_TIME_MS, "ttm"},      {TILEDB_TIME_US, "ttu"},
-        {TILEDB_TIME_NS, "ttn"},      {TILEDB_DATETIME_SEC, "tss:"},
-        {TILEDB_DATETIME_MS, "tsm:"}, {TILEDB_DATETIME_US, "tsu:"},
-        {TILEDB_DATETIME_NS, "tsn:"},
+        {TILEDB_BOOL, "b"},           
     };
 
     try {
         return _to_arrow_format_map.at(tiledb_dtype);
-    } catch (const std::out_of_range& err) {
-        throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter: Unsupported TileDB datatype: {} ",
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(fmt::format(
+            "ArrowAdapter: Unsupported TileDB type: {} ",
             tiledb::impl::type_to_str(tiledb_dtype)));
     }
 }
@@ -489,18 +485,14 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
         {"i", TILEDB_INT32},          {"I", TILEDB_UINT32},
         {"l", TILEDB_INT64},          {"L", TILEDB_UINT64},
         {"f", TILEDB_FLOAT32},        {"g", TILEDB_FLOAT64},
-        {"b", TILEDB_BOOL},           {"tts", TILEDB_TIME_SEC},
-        {"ttm", TILEDB_TIME_MS},      {"ttu", TILEDB_TIME_US},
-        {"ttn", TILEDB_TIME_NS},      {"tss:", TILEDB_DATETIME_SEC},
-        {"tsm:", TILEDB_DATETIME_MS}, {"tsu:", TILEDB_DATETIME_US},
-        {"tsn:", TILEDB_DATETIME_NS},
+        {"b", TILEDB_BOOL},           
     };
 
     try {
         return _to_tiledb_format_map.at(arrow_dtype);
-    } catch (const std::out_of_range& err) {
-        throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter: Unsupported arrow datatype: {} ", arrow_dtype));
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(fmt::format(
+            "ArrowAdapter: Unsupported Arrow type: {} ", arrow_dtype));
     }
 }
 
