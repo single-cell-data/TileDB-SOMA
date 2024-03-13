@@ -1298,7 +1298,6 @@ def _create_from_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
@@ -1308,7 +1307,6 @@ def _create_from_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
             axis_0_mapping=axis_0_mapping,
             axis_1_mapping=axis_1_mapping,
@@ -1601,7 +1599,6 @@ def update_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
@@ -1611,7 +1608,6 @@ def update_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
             axis_0_mapping=AxisIDMapping.identity(new_data.shape[0]),
             axis_1_mapping=AxisIDMapping.identity(new_data.shape[1]),
@@ -1725,7 +1721,6 @@ def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Union[Matrix, h5py.Dataset],
     tiledb_create_options: TileDBCreateOptions,
-    context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
@@ -2115,7 +2110,6 @@ def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
     matrix: Matrix,
     tiledb_create_options: TileDBCreateOptions,
-    context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
     axis_0_mapping: AxisIDMapping,
     axis_1_mapping: AxisIDMapping,
@@ -2732,7 +2726,6 @@ def _ingest_uns_ndarray(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
         )
 
