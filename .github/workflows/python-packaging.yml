@@ -124,10 +124,10 @@ jobs:
           #  cc: clang
           #  cxx: clang++
     steps:
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
       - name: Download artifacts
         uses: actions/download-artifact@v3
       - name: Install wheel
