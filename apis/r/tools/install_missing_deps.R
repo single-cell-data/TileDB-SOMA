@@ -64,9 +64,35 @@ desc <- desc[!desc$Installed, , drop = FALSE]
 
 if (nrow(x = desc)) {
   message(
-    "Installing ",
+    "Found ",
     nrow(x = desc),
-    ngettext(n = nrow(x = desc), msg1 = " package", msg2 = " packages")
+    " missing ",
+    ngettext(n = nrow(x = desc), msg1 = "dependency", msg2 = "dependencies")
+  )
+  message("Finding additional downstream dependencies")
+  db <- utils::available.packages(repos = repos, type = pkgtype)
+  deps <- unique(x = unlist(
+    x = tools::package_dependencies(packages = desc$Package, db = db),
+    use.names = FALSE
+  ))
+  deps <- setdiff(x = deps, y = c(utils::sessionInfo()$basePkgs, desc$Package))
+  deps <- Filter(
+    f = Negate(f = \(x) isTRUE(requireNamespace(x, quietly = TRUE))),
+    x = deps
+  )
+  if (length(x = deps)) {
+    message(
+      "Found ",
+      length(x = deps),
+      " additional ",
+      ngettext(n = length(x = deps), msg1 = "pacakge", msg2 = "packages")
+    )
+  }
+  pkgs <- union(x = desc$Package, y = deps)
+  message(
+    "Installing ",
+    length(x = pkgs),
+    ngettext(n = length(x = pkgs), msg1 = " package", msg2 = " packages")
   )
   install.packages(desc$Package, type = pkgtype, repos = repos)
 }
