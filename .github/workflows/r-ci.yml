@@ -84,7 +84,7 @@ jobs:
 
       - name: Install dataset packages from source (macOS)
         if: ${{ matrix.os == 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "setRepositories(ind = 1:3)" -e "remotes::install_deps(dependencies = 'Suggests', type = 'both', upgrade = FALSE)"
+        run: Rscript -e "install.packages(c('pbmc3k.tiledb', 'pbmc3k.sce'), type = 'both', repos = 'https://ghrr.github.io/drat)"
 
       - name: CMake
         uses: lukka/get-cmake@latest
