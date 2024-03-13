@@ -103,7 +103,9 @@ if (nrow(x = desc)) {
   message(
     "Installing ",
     length(x = pkgs),
-    ngettext(n = length(x = pkgs), msg1 = " package", msg2 = " packages")
+    ngettext(n = length(x = pkgs), msg1 = " package", msg2 = " packages"),
+    ":\n",
+    paste(" -", pkgs, collapse = "\n")
   )
-  install.packages(desc$Package, type = pkgtype, repos = repos)
+  install.packages(pkgs, type = pkgtype, repos = repos)
 }
