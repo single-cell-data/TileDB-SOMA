@@ -464,7 +464,9 @@ std::string_view ArrowAdapter::to_arrow_format(
         {TILEDB_INT32, "i"},          {TILEDB_UINT32, "I"},
         {TILEDB_INT64, "l"},          {TILEDB_UINT64, "L"},
         {TILEDB_FLOAT32, "f"},        {TILEDB_FLOAT64, "g"},
-        {TILEDB_BOOL, "b"},           
+        {TILEDB_BOOL, "b"},           {TILEDB_DATETIME_SEC, "tss:"},
+        {TILEDB_DATETIME_MS, "tsm:"}, {TILEDB_DATETIME_US, "tsu:"},
+        {TILEDB_DATETIME_NS, "tsn:"},
     };
 
     try {
@@ -485,7 +487,9 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
         {"i", TILEDB_INT32},          {"I", TILEDB_UINT32},
         {"l", TILEDB_INT64},          {"L", TILEDB_UINT64},
         {"f", TILEDB_FLOAT32},        {"g", TILEDB_FLOAT64},
-        {"b", TILEDB_BOOL},           
+        {"b", TILEDB_BOOL},           {"tss:", TILEDB_DATETIME_SEC},
+        {"tsm:", TILEDB_DATETIME_MS}, {"tsu:", TILEDB_DATETIME_US},
+        {"tsn:", TILEDB_DATETIME_NS},
     };
 
     try {

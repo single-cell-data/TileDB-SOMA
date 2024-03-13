@@ -238,8 +238,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 slot_domain,
             )
 
-            domains.append(pa.array(slot_domain))
-            extents.append(pa.array([extent]))
+            domains.append(pa.array(slot_domain, type=pa_type))
+            extents.append(pa.array([extent], type=pa_type))
 
         domains = pa.StructArray.from_arrays(domains, names=index_column_names)
         extents = pa.StructArray.from_arrays(extents, names=index_column_names)

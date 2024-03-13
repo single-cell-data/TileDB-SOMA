@@ -86,7 +86,7 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t extents_ptr = (uintptr_t)(&extents);
                 py_extents.attr("_export_to_c")(extents_ptr);
 
-                try{
+                try {
                     SOMADataFrame::create(
                         uri,
                         std::make_shared<ArrowSchema>(schema),
@@ -95,9 +95,9 @@ void load_soma_dataframe(py::module& m) {
                             std::make_shared<ArrowArray>(domains),
                             std::make_shared<ArrowArray>(extents)),
                         context);
-                }catch(const std::out_of_range& e){
+                } catch (const std::out_of_range& e) {
                     throw py::type_error(e.what());
-                }catch(const std::exception& e){
+                } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
             })
