@@ -10,10 +10,13 @@ from sys import stderr
 from typing import Any, Dict, Optional
 
 import somacore
-from context_generator import host_context
 
 import tiledbsoma
-from data import FileBasedProfileDB, ProfileData, ProfileDB
+
+from .context_generator import host_context
+
+# import context_generator
+from .data import FileBasedProfileDB, ProfileData, ProfileDB, S3ProfileDB
 
 GNU_TIME_FORMAT = (
     'Command being timed: "%C"\n'
@@ -96,6 +99,7 @@ def build_profile_data(
         custom_out=[prof1, prof2],
         **gnu_time_output_values,
     )
+
     return data
 
 
@@ -116,6 +120,10 @@ def main():
     parser.add_argument(
         "command",
         help="The command and its arguments to be profiled (as quoted, single-argument)",
+    )
+    parser.add_argument(
+        "db_path",
+        help="FileDB Path",
     )
     parser.add_argument(
         "-t",
@@ -183,12 +191,13 @@ def main():
             print(
                 f"Third profiler {args.prof2} missing output flamegraph file location"
             )
-
     p_stdout, p_stderr = p.communicate()
     if p1 is not None:
         p1.wait()
     if p2 is not None:
         p2.wait()
+    print("Profiler run done", file=stderr)
+    print("Profiler run done", file=stderr)
 
     p_stdout = p_stdout.decode("utf-8")
     print(f"The benchmarked process output:\n {p_stdout}", file=stderr)
@@ -197,7 +206,7 @@ def main():
         p_stderr.decode("utf-8"), p_stdout, args.prof1_output, args.prof2_output
     )
     # Add the run data to DB
-    db: ProfileDB = FileBasedProfileDB()
+    db: ProfileDB = S3ProfileDB(args.db_path)
     db_record_file = db.add(data)
     db.close()
 
