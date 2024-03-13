@@ -16,7 +16,7 @@ env:
   COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   _R_CHECK_TESTS_NLINES_: 0
   CATCHSEGV: "TRUE"
-  
+
 jobs:
   ci:
     strategy:
@@ -51,6 +51,11 @@ jobs:
 
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
+
+      - name: Set pkgType to binary (macOS)
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: cat("\noptions(pkgType = 'binary')\n", file = "~/.Rprofile", append = TRUE)
+        shell: Rscript {0}
 
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
@@ -116,4 +121,3 @@ jobs:
       - name: View Logs
         run: apis/r/tools/r-ci.sh dump_logs
         if: failure()
-
