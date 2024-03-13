@@ -398,9 +398,9 @@ Coverage() {
     # COVERAGE_TOKEN=${COVERAGE_TOKEN:-""}
     # COVERAGE_PATH=${COVERAGE_PATH:-"apis/r"}
     if [[ "${CATCHSEGV}" != "FALSE" ]] && [[ "Linux" == "${OS}" ]]; then
-        COVR="true" catchsegv Rscript -e 'setwd("apis/r"); library(covr); res <- package_coverage(relative_path="../..", line_exclusion=list("apis/r/src/nanoarrow.c", "apis/r/src/nanoarrow.h", "apis/r/R/roxygen.R", quiet=FALSE)); print(res); codecov(coverage=res, token="", flags="r")'
+        COVR="true" catchsegv Rscript -e 'setwd("apis/r"); library(covr); res <- package_coverage(relative_path="../..", line_exclusion=list("apis/r/src/nanoarrow.c", "apis/r/src/nanoarrow.h", "apis/r/R/roxygen.R"), quiet=FALSE); print(res); codecov(coverage=res, token="", flags="r")'
     else
-        COVR="true" Rscript -e 'setwd("apis/r"); library(covr); res <- package_coverage(relative_path="../..", line_exclusion=list("apis/r/src/nanoarrow.c", "apis/r/src/nanoarrow.h", "apis/r/R/roxygen.R", quiet=FALSE)); print(res); codecov(coverage=res, token="", flags="r")'
+        COVR="true" Rscript -e 'setwd("apis/r"); library(covr); res <- package_coverage(relative_path="../..", line_exclusion=list("apis/r/src/nanoarrow.c", "apis/r/src/nanoarrow.h", "apis/r/R/roxygen.R"), quiet=FALSE); print(res); codecov(coverage=res, token="", flags="r")'
     fi
 }
 
