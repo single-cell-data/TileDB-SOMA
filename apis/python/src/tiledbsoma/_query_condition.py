@@ -17,11 +17,7 @@ from . import pytiledbsoma as clib
 from ._exception import SOMAError
 from ._util import pa_types_is_string_or_bytes
 
-# In Python 3.7, a boolean literal like `True` is of type `ast.NameConstant`.
-# Above that, it's of type `ast.Constant`.
-QueryConditionNodeElem = Union[
-    ast.Name, ast.Constant, ast.NameConstant, ast.Call, ast.Num, ast.Str, ast.Bytes
-]
+QueryConditionNodeElem = Union[ast.Name, ast.Constant, ast.NameConstant, ast.Call]
 
 
 @attrs.define
@@ -287,12 +283,7 @@ class QueryConditionTree(ast.NodeVisitor):
             if att.func.id != "attr":
                 return False
 
-            return (
-                isinstance(att.args[0], ast.Constant)
-                or isinstance(att.args[0], ast.NameConstant)
-                or isinstance(att.args[0], ast.Str)
-                or isinstance(att.args[0], ast.Bytes)
-            )
+            return isinstance(att.args[0], (ast.Constant, ast.NameConstant))
 
         return isinstance(att, ast.Name)
 
@@ -332,13 +323,8 @@ class QueryConditionTree(ast.NodeVisitor):
 
             if isinstance(att_node, ast.Name):
                 att = str(att_node.id)
-            elif isinstance(att_node, ast.Constant) or isinstance(
-                att_node, ast.NameConstant
-            ):
+            elif isinstance(att_node, ast.Constant):
                 att = str(att_node.value)
-            elif isinstance(att_node, ast.Str) or isinstance(att_node, ast.Bytes):
-                # deprecated in 3.8
-                att = str(att_node.s)
             else:
                 raise SOMAError(
                     f"Incorrect type for attribute name: {ast.dump(att_node)}"
@@ -371,12 +357,6 @@ class QueryConditionTree(ast.NodeVisitor):
 
         if isinstance(val_node, ast.Constant) or isinstance(val_node, ast.NameConstant):
             val = val_node.value
-        elif isinstance(val_node, ast.Num):
-            # deprecated in 3.8
-            val = val_node.n
-        elif isinstance(val_node, ast.Str) or isinstance(val_node, ast.Bytes):
-            # deprecated in 3.8
-            val = val_node.s
         else:
             raise SOMAError(
                 f"Incorrect type for comparison value: {ast.dump(val_node)}"
@@ -504,15 +484,3 @@ class QueryConditionTree(ast.NodeVisitor):
                 )
 
             return node.operand
-
-    def visit_Num(self, node: ast.Num) -> ast.Num:
-        # deprecated in 3.8
-        return node
-
-    def visit_Str(self, node: ast.Str) -> ast.Str:
-        # deprecated in 3.8
-        return node
-
-    def visit_Bytes(self, node: ast.Bytes) -> ast.Bytes:
-        # deprecated in 3.8
-        return node
