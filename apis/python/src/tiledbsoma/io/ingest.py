@@ -1232,7 +1232,6 @@ def _write_dataframe_impl(
     return soma_df
 
 
-@typeguard_ignore
 def create_from_matrix(
     cls: Type[_NDArr],
     uri: str,
@@ -1259,7 +1258,6 @@ def create_from_matrix(
     )
 
 
-@typeguard_ignore
 def _create_from_matrix(
     cls: Type[_NDArr],
     uri: str,
