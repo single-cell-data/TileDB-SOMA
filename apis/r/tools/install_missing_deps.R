@@ -99,7 +99,7 @@ if (nrow(x = desc)) {
       ngettext(n = length(x = deps), msg1 = "pacakge", msg2 = "packages")
     )
   }
-  pkgs <- union(x = desc$Package, y = deps)
+  pkgs <- union(x = deps, y = desc$Package)
   message(
     "Installing ",
     length(x = pkgs),
