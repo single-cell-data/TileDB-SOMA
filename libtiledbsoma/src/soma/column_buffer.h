@@ -130,11 +130,10 @@ class ColumnBuffer {
         num_cells_ = num_elems;
 
         if (offsets != nullptr) {
-            // TODO this can be either a unit32_t or uint64_t pointer
             auto num_offsets = num_elems + 1;
             offsets_.resize(num_offsets);
             offsets_.assign(
-                (uint32_t*)offsets, (uint32_t*)offsets + num_offsets);
+                (uint64_t*)offsets, (uint64_t*)offsets + num_offsets);
 
             data_size_ = offsets_[num_offsets - 1];
             data_.resize(data_size_);

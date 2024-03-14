@@ -94,7 +94,11 @@ void write(SOMAArray& array, py::handle py_batch) {
         array.set_column_data(
             sch_->name, arr_->length, data, offsets, validities);
     }
-    array.write();
+    try {
+        array.write();
+    } catch (const std::exception& e) {
+        TPY_ERROR_LOC(e.what());
+    }
 }
 
 py::dict meta(SOMAArray& array) {
