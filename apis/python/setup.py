@@ -21,7 +21,6 @@ import subprocess
 import sys
 from typing import Optional
 
-import setuptools
 import setuptools.command.build_ext
 import wheel.bdist_wheel
 
