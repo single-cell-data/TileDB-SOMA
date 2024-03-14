@@ -1,10 +1,10 @@
 import pyarrow as pa
 from typeguard import install_import_hook
 
-# avoid typeguard by importing before calling install_import_hook
-from tiledbsoma import _query_condition  # noqa: F401
-
 install_import_hook("tiledbsoma")
+
+# TODO: `pytest tests/test_basic_anndata_io.py` segfaults without this here (likely other things as well)
+from tiledbsoma import _query_condition  # noqa: F401, E402
 
 """Types supported in a SOMA*NDArray """
 NDARRAY_ARROW_TYPES_SUPPORTED = [
