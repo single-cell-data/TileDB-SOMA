@@ -124,7 +124,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         #
         # The only exception is if the array has been created but no data have been written at
         # all, in which case the best we can do is use the schema shape.
-        handle: clib.DenseNDArrayWrapper = self._handle._handle
+        handle: clib.SOMADenseNDArray = self._handle._handle
 
         data_shape = handle.shape
         ned = self.non_empty_domain()

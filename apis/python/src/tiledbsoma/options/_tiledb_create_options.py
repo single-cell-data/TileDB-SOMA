@@ -168,7 +168,7 @@ class TileDBCreateOptions:
         """
         create_entry = _dig_platform_config(platform_config, cls, ("tiledb", "create"))
         if isinstance(create_entry, dict):
-            attrs: Tuple["attrs_.Attribute[Any]", ...] = cls.__attrs_attrs__
+            attrs: Tuple["attrs_.Attribute", ...] = cls.__attrs_attrs__
             attr_names = frozenset(a.name for a in attrs)
             # Explicitly opt out of type-checking for these kwargs.
             filered_create_entry: Dict[str, Any] = {

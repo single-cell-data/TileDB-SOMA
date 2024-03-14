@@ -38,7 +38,13 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
-RawHandle = Union[tiledb.Array, tiledb.Group, clib.SOMADataFrame]
+RawHandle = Union[
+    tiledb.Array,
+    tiledb.Group,
+    clib.SOMADataFrame,
+    clib.SOMASparseNDArray,
+    clib.SOMADenseNDArray,
+]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
 
@@ -350,7 +356,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.
-    def _do_initial_reads(self, reader: _RawHdl_co) -> None:  # type: ignore[misc]
+    def _do_initial_reads(self, reader: _RawHdl_co) -> None:
         """Final setup step before returning the Handle.
 
         This is passed a raw TileDB object opened in read mode, since writers
