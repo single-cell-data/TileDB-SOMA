@@ -3,7 +3,7 @@
 #
 # Licensed under the MIT License.
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple, no_type_check
 
 import pyarrow as pa
 import tiledb
@@ -57,6 +57,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         """
         return self._handle.non_empty_domain()
 
+    @no_type_check  # TODO: sometimes returns pyarrow.lib.Schema
     def _tiledb_array_schema(self) -> tiledb.ArraySchema:
         """Returns the TileDB array schema, for internal use."""
         return self._handle.schema

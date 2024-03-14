@@ -7,7 +7,17 @@
 Collection.
 """
 
-from typing import Callable, Dict, Optional, Type, TypeVar, Union, cast, overload
+from typing import (
+    Callable,
+    Dict,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+    no_type_check,
+    overload,
+)
 
 import somacore
 from somacore import options
@@ -29,6 +39,7 @@ from ._constants import (
 )
 from ._exception import SOMAError
 from ._funcs import typeguard_ignore
+from ._tiledb_object import TileDBObject
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -66,7 +77,7 @@ def open(
     uri: str,
     mode: options.OpenMode = "r",
     *,
-    soma_type: Union[Type["_tiledb_object.AnyTileDBObject"], str, None] = None,
+    soma_type: Union[Type[TileDBObject], str, None] = None,
     context: Optional[SOMATileDBContext] = None,
     tiledb_timestamp: Optional[OpenTimestamp] = None,
 ) -> "_tiledb_object.AnyTileDBObject":
@@ -130,6 +141,7 @@ def open(
         raise
 
 
+@no_type_check
 def _open_internal(
     opener: Callable[
         [str, options.OpenMode, SOMATileDBContext, Optional[OpenTimestamp]], _Wrapper
@@ -195,7 +207,7 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
     return obj_type
 
 
-@typeguard_ignore
+@no_type_check
 def _type_name_to_cls(type_name: str) -> Type["_tiledb_object.AnyTileDBObject"]:
     type_map: Dict[str, Type["_tiledb_object.AnyTileDBObject"]] = {
         t.soma_type.lower(): t  # type: ignore[attr-defined, misc]  # spurious

@@ -24,7 +24,6 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 
-from .ingest import _FSPathWrapper
 from .. import (
     Collection,
     DataFrame,
@@ -48,6 +47,7 @@ from ._common import (
     _UNS_OUTGEST_HINT_KEY,
     Matrix,
 )
+from .ingest import _FSPathWrapper
 
 
 # ----------------------------------------------------------------
