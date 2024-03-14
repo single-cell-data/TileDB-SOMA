@@ -120,7 +120,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         # 1,000,000x1,000,000 but only 100x200 cells were written -- then we need the non-empty
         # domain.
         #
-        # The non-empty domain is the corret choice in either case.
+        # The non-empty domain is the correct choice in either case.
         #
         # The only exception is if the array has been created but no data have been written at
         # all, in which case the best we can do is use the schema shape.
