@@ -125,8 +125,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         Args:
             coords:
-                A per-dimension tuple of scalar, slice, sequence of scalar or
-                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>`_
+                A per-dimension ``Sequence`` of scalar, slice, sequence of scalar or
+                `Arrow IntegerArray <https://arrow.apache.org/docs/python/generated/pyarrow.IntegerArray.html>` values
                 defining the region to read.
 
         Returns:
