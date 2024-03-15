@@ -508,13 +508,13 @@ def test_multiples_without_experiment(
         h5ad_file_names[permutation[2]],
         h5ad_file_names[permutation[3]],
     ]:
-        tiledbsoma.io.from_h5ad(  # typeguard: ignore
+        tiledbsoma.io.from_h5ad(
             experiment_uri,
             h5ad_file_name,
             measurement_name="measname",
             ingest_mode="write",
             registration_mapping=rd,
-        )  # typeguard: ignore
+        )
 
     expect_obs_soma_joinids = list(range(12))
     expect_var_soma_joinids = list(range(7))
