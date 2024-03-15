@@ -10,6 +10,7 @@ from scipy import sparse
 from somacore import options
 
 import tiledbsoma as soma
+from tests._util import raises
 from tiledbsoma import SOMATileDBContext, _factory
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
@@ -118,14 +119,12 @@ def test_experiment_query_all(soma_experiment):
         assert query.X("raw").tables().concat() == pa.concat_tables(
             query.X("raw").tables()
         )
-        assert sparse.vstack(
-            [
-                sp
-                for sp, _ in query.X("raw")
-                .blockwise(axis=0, reindex_disable_on_axis=[1])
-                .scipy()
-            ]
-        ).shape == (query.n_obs, query.n_vars)
+        raw = query.X("raw")
+        blockwise = raw.blockwise(axis=0, reindex_disable_on_axis=[1])
+        assert sparse.vstack([sp for sp, _ in blockwise.scipy()]).shape == (
+            query.n_obs,
+            query.n_vars,
+        )
 
         # read as anndata
         ad = query.to_anndata("raw")
@@ -512,7 +511,7 @@ def test_error_corners(soma_experiment: soma.Experiment):
     # Illegal layer name type
     for lyr_name in [True, 3, 99.3]:
         with soma_experiment.axis_query("RNA") as query:
-            with pytest.raises(KeyError):
+            with raises(KeyError):
                 next(query.X(lyr_name))
             with pytest.raises(ValueError):
                 next(query.obsp(lyr_name))
