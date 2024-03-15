@@ -36,7 +36,7 @@ import tiledbsoma.pytiledbsoma as clib
 
 from . import _util
 from ._exception import SOMAError
-from ._index_util import tiledbsoma_build_index
+from ._indexer import tiledbsoma_build_index
 from ._types import NTuple
 from .options import SOMATileDBContext
 
@@ -337,9 +337,11 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         """
         Private. Iterator over SparseNDArray producing sequence of scipy sparse matrix.
         """
-        yield from self._cs_reader(
-            _pool=self._threadpool
-        ) if self.compress else self._coo_reader(_pool=self._threadpool)
+        yield from (
+            self._cs_reader(_pool=self._threadpool)
+            if self.compress
+            else self._coo_reader(_pool=self._threadpool)
+        )
 
     def _sorted_tbl_reader(
         self, _pool: Optional[ThreadPoolExecutor] = None
