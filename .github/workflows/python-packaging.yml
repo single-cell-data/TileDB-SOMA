@@ -145,11 +145,9 @@ jobs:
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         # TODO: more thorough local smoke test
       - name: Smoke test in docker
-        # Repeat test in stock ubuntu 20.04 docker image. This uses an older pip
-        # version with the old dependency solver. see issue #1051
         if: ${{ matrix.platform == 'manylinux2014' }}
         run: |
-          docker run -v $(pwd):/mnt ubuntu:20.04 bash -ec "
+          docker run -v $(pwd):/mnt python:3.11 bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
