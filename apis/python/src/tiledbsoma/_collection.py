@@ -30,6 +30,7 @@ import somacore
 import somacore.collection
 import tiledb
 from somacore import options
+from typeguard import typeguard_ignore
 from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
@@ -188,7 +189,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
-    ) -> "AnyTileDBCollection":
+    ) -> AnyTileDBCollection:
         """Adds a new sub-collection to this collection.
 
         Args:
@@ -229,8 +230,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        child_cls: Type[AnyTileDBCollection] = kind or Collection
-        return self._add_new_element(
+        child_cls = kind or Collection
+        return self._add_new_element(  # type: ignore[no-any-return]
             key,
             child_cls,
             lambda create_uri: child_cls.create(
@@ -275,7 +276,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        return self._add_new_element(
+        return self._add_new_element(  # type: ignore[no-any-return]
             key,
             DataFrame,
             lambda create_uri: DataFrame.create(
@@ -292,7 +293,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         self, cls: Type[_NDArr], key: str, *, uri: Optional[str] = None, **kwargs: Any
     ) -> _NDArr:
         """Internal implementation of common NDArray-adding operations."""
-        return self._add_new_element(
+        return self._add_new_element(  # type: ignore[no-any-return]
             key,
             cls,
             lambda create_uri: cls.create(
@@ -376,6 +377,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         """
         return self._add_new_ndarray(SparseNDArray, key, **kwargs)
 
+    @typeguard_ignore  # type: ignore[misc]
     def _add_new_element(
         self,
         key: str,
@@ -683,6 +685,7 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     __slots__ = ()
 
 
+@typeguard_ignore  # type: ignore[misc]
 def _real_class(cls: Type[Any]) -> type:
     """Extracts the real class from a generic alias.
 
