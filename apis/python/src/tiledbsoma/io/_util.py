@@ -52,10 +52,6 @@ class _FSPathWrapper:
     so here we just proxy all attributes except ``__fspath__``.
     """
 
-    # Needed to make typeguard happy
-    # def __call__(self) -> None:
-    #     pass
-
     def __init__(self, obj: object, path: Path) -> None:
         self._obj = obj
         self._path = path
@@ -71,7 +67,7 @@ class _FSPathWrapper:
 def _hack_patch_anndata() -> ContextManager[object]:
     """Part Two of the ``_FSPathWrapper`` trick."""
 
-    @file_backing.AnnDataFileManager.filename.setter  # type: ignore
+    @file_backing.AnnDataFileManager.filename.setter  # type: ignore[misc]
     def filename(
         self: file_backing.AnnDataFileManager, filename: Union[Path, _FSPathWrapper]
     ) -> None:

@@ -356,7 +356,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.
-    def _do_initial_reads(self, reader: _RawHdl_co) -> None:
+    def _do_initial_reads(self, reader: RawHandle) -> None:
         """Final setup step before returning the Handle.
 
         This is passed a raw TileDB object opened in read mode, since writers
