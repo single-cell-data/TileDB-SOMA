@@ -496,7 +496,11 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
+        self,
+        sr: clib.SOMAArray,
+        dim_idx: int,
+        dim: Union[pa.Field, tiledb.Dim],
+        coord: object,
     ) -> bool:
         if coord is None:
             return True  # No constraint; select all in this dimension
@@ -570,7 +574,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self,
         sr: clib.SOMAArray,
         dim_idx: int,
-        dim: tiledb.Dim,
+        dim: Union[pa.Field, tiledb.Dim],
         coord: object,
     ) -> bool:
         if isinstance(coord, np.ndarray):
