@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -29,6 +29,7 @@ from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
+Domain = Sequence[Optional[Tuple[Any, Any] | List[Any]]]
 
 
 class DataFrame(TileDBArray, somacore.DataFrame):
@@ -131,7 +132,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         *,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        domain: Optional[Sequence[Optional[Tuple[Any, Any]]]] = None,
+        domain: Optional[Domain] = None,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
@@ -702,7 +703,7 @@ def _canonicalize_schema(
 def _build_tiledb_schema(
     schema: pa.Schema,
     index_column_names: Sequence[str],
-    domain: Optional[Sequence[Optional[Tuple[Any, Any]]]],
+    domain: Optional[Domain],
     tiledb_create_options: TileDBCreateOptions,
     context: SOMATileDBContext,
 ) -> tiledb.ArraySchema:
@@ -724,6 +725,13 @@ def _build_tiledb_schema(
         dtype = _arrow_types.tiledb_type_from_arrow_type(
             pa_type, is_indexed_column=True
         )
+
+        if isinstance(slot_domain, list):
+            if len(slot_domain) != 2:
+                raise ValueError(
+                    f"Domain slots must be tuples or lists of length 2; received {len(slot_domain)}-list {slot_domain}"
+                )
+            slot_domain = slot_domain[0], slot_domain[1]
 
         slot_domain = _fill_out_slot_domain(
             slot_domain, index_column_name, pa_type, dtype
