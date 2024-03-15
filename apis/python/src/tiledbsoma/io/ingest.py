@@ -2192,6 +2192,10 @@ def _find_sparse_chunk_size_backed(
     if start_index + chunk_size >= extent:
         return chunk_size
 
+    # The entire chunk is unoccupied sparse; the caller can skip over it
+    if chunk_nnz == 0:
+        return chunk_size
+
     # Compare initial estimate chunk nnz against the goal
     ratio = chunk_nnz / goal_chunk_nnz
 
