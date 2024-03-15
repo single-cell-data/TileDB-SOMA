@@ -9,9 +9,9 @@
 // https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
 
 #include "nanoarrow.hpp"
-//#ifndef ARROW_SCHEMA_AND_ARRAY_DEFINED
-//#include "carrow.h"
-//#endif
+// #ifndef ARROW_SCHEMA_AND_ARRAY_DEFINED
+// #include "carrow.h"
+// #endif
 
 namespace tiledbsoma {
 
