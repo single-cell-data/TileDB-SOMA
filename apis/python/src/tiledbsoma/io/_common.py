@@ -9,11 +9,11 @@ from typing import Union
 
 import h5py
 import scipy.sparse as sp
-from anndata._core.sparse_dataset import CSCDataset, CSRDataset
+from anndata._core.sparse_dataset import SparseDataset
 
 from tiledbsoma._types import NPNDArray
 
-SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, CSRDataset, CSCDataset]
+SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 DenseMatrix = Union[NPNDArray, h5py.Dataset]
 Matrix = Union[DenseMatrix, SparseMatrix]
 
