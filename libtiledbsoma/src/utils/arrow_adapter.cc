@@ -40,6 +40,9 @@ using namespace tiledb;
 
 void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     LOG_DEBUG("[ArrowAdapter] release_schema");
+    if (schema->name != nullptr)
+        LOG_DEBUG(
+            fmt::format("[ArrowAdapter] release_schema for {}", schema->name));
 
     if (schema->name != nullptr) {
         LOG_TRACE("[ArrowAdapter] release_schema schema->name");
@@ -61,10 +64,14 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
         for (auto i = 0; i < schema->n_children; i++) {
             if (schema->children[i] != nullptr) {
                 if (schema->children[i]->release != nullptr) {
-                    LOG_TRACE(fmt::format("[ArrowAdapter] release_schema schema->child {} release",i));
+                    LOG_TRACE(fmt::format(
+                        "[ArrowAdapter] release_schema schema->child {} "
+                        "release",
+                        i));
                     release_schema(schema->children[i]);
                 }
-                LOG_TRACE(fmt::format("[ArrowAdapter] release_schema schema->child {} free",i));
+                LOG_TRACE(fmt::format(
+                    "[ArrowAdapter] release_schema schema->child {} free", i));
                 free(schema->children[i]);
             }
         }
@@ -108,10 +115,13 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
         for (auto i = 0; i < array->n_children; i++) {
             if (array->children[i] != nullptr) {
                 if (array->children[i]->release != nullptr) {
-                    LOG_TRACE(fmt::format("[ArrowAdapter] release_schema array->child {} release",i));
+                    LOG_TRACE(fmt::format(
+                        "[ArrowAdapter] release_schema array->child {} release",
+                        i));
                     release_array(array->children[i]);
                 }
-                LOG_TRACE(fmt::format("[ArrowAdapter] release_schema array->child {} free",i));
+                LOG_TRACE(fmt::format(
+                    "[ArrowAdapter] release_schema array->child {} free", i));
                 free(array->children[i]);
             }
         }
@@ -121,9 +131,10 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     }
 
     if (array->dictionary != nullptr) {
-        // -- TODO: This can lead to segfault on some data sets and could be cause
+        // -- TODO: This can lead to segfault on some data sets and could be
+        // cause
         //          by how we fill arrow data structures.  This should pass.
-        //if (array->dictionary->release != nullptr) {
+        // if (array->dictionary->release != nullptr) {
         //    LOG_TRACE("[ArrowAdapter] release_array array->dict release");
         //    release_array(array->dictionary);
         //}
@@ -143,17 +154,21 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     auto nattr = tiledb_schema.attribute_num();
 
     std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
-    arrow_schema->format = "+s";
+    arrow_schema->format = strdup("+s");
     arrow_schema->n_children = ndim + nattr;
     arrow_schema->release = &ArrowAdapter::release_schema;
-    arrow_schema->children = (ArrowSchema**) malloc(arrow_schema->n_children * sizeof(ArrowSchema*)); //new ArrowSchema*[arrow_schema->n_children];
+    arrow_schema->children = (ArrowSchema**)malloc(
+        arrow_schema->n_children *
+        sizeof(ArrowSchema*));  // new ArrowSchema*[arrow_schema->n_children];
 
     ArrowSchema* child = nullptr;
 
     for (uint32_t i = 0; i < ndim; ++i) {
         auto dim = tiledb_schema.domain().dimension(i);
-        child = arrow_schema->children[i] = (ArrowSchema*) malloc(sizeof(ArrowSchema)); //new ArrowSchema;
-        child->format = ArrowAdapter::to_arrow_format(dim.type()).data();
+        child = arrow_schema->children[i] = (ArrowSchema*)malloc(
+            sizeof(ArrowSchema));  // new ArrowSchema;
+        child->format = strdup(
+            ArrowAdapter::to_arrow_format(dim.type()).data());
         child->name = strdup(dim.name().c_str());
         child->metadata = nullptr;
         child->flags = 0;
@@ -165,8 +180,10 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
 
     for (uint32_t i = 0; i < nattr; ++i) {
         auto attr = tiledb_schema.attribute(i);
-        child = arrow_schema->children[ndim + i] = (ArrowSchema*) malloc(sizeof(ArrowSchema)); //new ArrowSchema;
-        child->format = ArrowAdapter::to_arrow_format(attr.type()).data();
+        child = arrow_schema->children[ndim + i] = (ArrowSchema*)malloc(
+            sizeof(ArrowSchema));  // new ArrowSchema;
+        child->format = strdup(
+            ArrowAdapter::to_arrow_format(attr.type()).data());
         child->name = strdup(attr.name().c_str());
         child->metadata = nullptr;
         child->flags = attr.nullable() ? ARROW_FLAG_NULLABLE : 0;
@@ -179,7 +196,9 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         if (enmr_name.has_value()) {
             auto enmr = ArrayExperimental::get_enumeration(
                 *ctx, *tiledb_array, attr.name());
-            auto dict = new ArrowSchema;
+
+            auto dict = (ArrowSchema*)malloc(
+                sizeof(ArrowSchema));  // new ArrowSchema;
             if (enmr.type() == TILEDB_STRING_ASCII or
                 enmr.type() == TILEDB_CHAR) {
                 dict->format = strdup("z");
@@ -219,7 +238,7 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
 
             // Allocate a single byte to copy the bits into
             size_t sz = 1;
-            dst = malloc(sz); //new const void*[sz];
+            dst = malloc(sz);  // new const void*[sz];
             std::memcpy((void*)dst, &src, sz);
 
             return std::pair(dst, data.size());
@@ -290,8 +309,8 @@ bool ArrowAdapter::_isstr(const char* format) {
 
 inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
     if (ec != NANOARROW_OK)
-        throw TileDBSOMAError(fmt::format(
-                "ArrowAdapter: Arrow Error {} ", msg));
+        throw TileDBSOMAError(
+            fmt::format("ArrowAdapter: Arrow Error {} ", msg));
 }
 
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
@@ -304,8 +323,10 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     auto coltype = to_arrow_format(column->type()).data();
     auto natype = to_nanoarrow_type(coltype);
     exitIfError(ArrowSchemaInitFromType(sch, natype), "Bad schema init");
-    exitIfError(ArrowSchemaSetName(sch, column->name().data()), "Bad schema name");
-    exitIfError(ArrowSchemaAllocateChildren(sch, 0), "Bad schema children alloc");
+    exitIfError(
+        ArrowSchemaSetName(sch, column->name().data()), "Bad schema name");
+    exitIfError(
+        ArrowSchemaAllocateChildren(sch, 0), "Bad schema children alloc");
 
 #if 0
     schema->format = to_arrow_format(column->type()).data();
@@ -319,7 +340,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     schema->release = &release_schema;
     schema->private_data = nullptr;
 
-    int n_buffers = column->is_var() ? 3 : 2; // this will be 2 for enumerations and 3 for char vectors
+    int n_buffers = column->is_var() ? 3 :
+                                       2;  // this will be 2 for enumerations
+                                           // and 3 for char vectors
 
     // Create an ArrowBuffer to manage the lifetime of `column`.
     // - `arrow_buffer` holds a shared_ptr to `column`, which
@@ -337,10 +360,13 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
     array->length = column->size();
 
-    LOG_DEBUG(fmt::format("[ArrowAdapter] column type {} name {} nbuf {} {} nullable {}",
-                         to_arrow_format(column->type()).data(),
-                         column->name().data(), n_buffers, array->n_buffers, column->is_nullable()));
-
+    LOG_DEBUG(fmt::format(
+        "[ArrowAdapter] column type {} name {} nbuf {} {} nullable {}",
+        to_arrow_format(column->type()).data(),
+        column->name().data(),
+        n_buffers,
+        array->n_buffers,
+        column->is_nullable()));
 
 #if 0
     array->null_count = 0;
@@ -359,16 +385,18 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         column->name(),
         column.use_count()));
 
-    array->buffers = (const void**) malloc(sizeof(void*) * n_buffers); //new const void*[n_buffers];
+    array->buffers = (const void**)malloc(
+        sizeof(void*) * n_buffers);  // new const void*[n_buffers];
     assert(array->buffers != nullptr);
-    array->buffers[0] = nullptr;                                   // validity addressed below
+    array->buffers[0] = nullptr;  // validity addressed below
     array->buffers[n_buffers - 1] = column->data<void*>().data();  // data
     if (n_buffers == 3) {
         array->buffers[1] = column->offsets().data();  // offsets
     }
 
     if (column->is_nullable()) {
-        schema->flags |= ARROW_FLAG_NULLABLE; // turns out it is also set by default
+        schema->flags |= ARROW_FLAG_NULLABLE;  // turns out it is also set by
+                                               // default
 
         // Count nulls
         for (auto v : column->validity()) {
@@ -379,7 +407,8 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         column->validity_to_bitmap();
         array->buffers[0] = column->validity().data();
     } else {
-        schema->flags = 0;      // because ArrowSchemaInitFromType leads to NULLABLE set
+        schema->flags = 0;  // because ArrowSchemaInitFromType leads to NULLABLE
+                            // set
     }
 
     if (column->is_ordered()) {
@@ -392,16 +421,21 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     }
 
     if (column->has_enumeration()) {
-        auto dict_sch = (ArrowSchema*) malloc(sizeof(ArrowSchema)); //new ArrowSchema;
-        auto dict_arr = (ArrowArray*) malloc(sizeof(ArrowArray));  //new ArrowArray;
+        auto dict_sch = (ArrowSchema*)malloc(
+            sizeof(ArrowSchema));  // new ArrowSchema;
+        auto dict_arr = (ArrowArray*)malloc(
+            sizeof(ArrowArray));  // new ArrowArray;
 
         auto enmr = column->get_enumeration_info();
         auto dcoltype = to_arrow_format(enmr->type(), false).data();
         auto dnatype = to_nanoarrow_type(dcoltype);
 
-        exitIfError(ArrowSchemaInitFromType(dict_sch, dnatype), "Bad schema init");
+        exitIfError(
+            ArrowSchemaInitFromType(dict_sch, dnatype), "Bad schema init");
         exitIfError(ArrowSchemaSetName(dict_sch, ""), "Bad schema name");
-        exitIfError(ArrowSchemaAllocateChildren(dict_sch, 0), "Bad schema children alloc");
+        exitIfError(
+            ArrowSchemaAllocateChildren(dict_sch, 0),
+            "Bad schema children alloc");
 #if 0
         dict_sch->format = strdup(to_arrow_format(enmr->type(), false).data());
         dict_sch->name = nullptr;
@@ -414,11 +448,11 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         dict_sch->private_data = nullptr;
 #endif
 
-        exitIfError(ArrowArrayInitFromType(dict_arr, dnatype), "Bad array init");
-        exitIfError(ArrowArrayAllocateChildren(dict_arr, 0), "Bad array children alloc");
-        const int n_buf = ArrowAdapter::_isstr(dict_sch->format) ? 3 : 2;
-        dict_arr->buffers = (const void**) malloc(sizeof(void*) * n_buf); //new const void*[n_buf];
-        dict_arr->buffers[0] = nullptr;  // validity: none here
+        exitIfError(
+            ArrowArrayInitFromType(dict_arr, dnatype), "Bad array init");
+        exitIfError(
+            ArrowArrayAllocateChildren(dict_arr, 0),
+            "Bad array children alloc");
         dict_arr->release = &release_array;
 #if 0
         dict_arr->null_count = 0;
@@ -520,24 +554,41 @@ std::string_view ArrowAdapter::to_arrow_format(
 
 // FIXME: Add more types, maybe make it a map
 enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
-    if (sv == "i") 	 	   return NANOARROW_TYPE_INT32;
-    else if (sv == "c")    return NANOARROW_TYPE_INT8;
-    else if (sv == "C")    return NANOARROW_TYPE_UINT8;
-    else if (sv == "s")    return NANOARROW_TYPE_INT16;
-    else if (sv == "S")    return NANOARROW_TYPE_UINT16;
-    else if (sv == "I")    return NANOARROW_TYPE_UINT32;
-    else if (sv == "l")    return NANOARROW_TYPE_INT64;
-    else if (sv == "L")    return NANOARROW_TYPE_UINT64;
-    else if (sv == "f")    return NANOARROW_TYPE_FLOAT;
-    else if (sv == "g")    return NANOARROW_TYPE_DOUBLE;
-    else if (sv == "u")    return NANOARROW_TYPE_STRING;
-    else if (sv == "U")    return NANOARROW_TYPE_LARGE_STRING;
-    else if (sv == "b")    return NANOARROW_TYPE_BOOL;
-    else if (sv == "tss:") return NANOARROW_TYPE_INT64;      // NB time resolution set indepedently
-    else if (sv == "z")    return NANOARROW_TYPE_BINARY;
-    else if (sv == "Z")    return NANOARROW_TYPE_LARGE_BINARY;
-    else throw TileDBSOMAError(fmt::format(
-             "ArrowAdapter: Unsupported TileDB datatype string: {} ", sv));
+    if (sv == "i")
+        return NANOARROW_TYPE_INT32;
+    else if (sv == "c")
+        return NANOARROW_TYPE_INT8;
+    else if (sv == "C")
+        return NANOARROW_TYPE_UINT8;
+    else if (sv == "s")
+        return NANOARROW_TYPE_INT16;
+    else if (sv == "S")
+        return NANOARROW_TYPE_UINT16;
+    else if (sv == "I")
+        return NANOARROW_TYPE_UINT32;
+    else if (sv == "l")
+        return NANOARROW_TYPE_INT64;
+    else if (sv == "L")
+        return NANOARROW_TYPE_UINT64;
+    else if (sv == "f")
+        return NANOARROW_TYPE_FLOAT;
+    else if (sv == "g")
+        return NANOARROW_TYPE_DOUBLE;
+    else if (sv == "u")
+        return NANOARROW_TYPE_STRING;
+    else if (sv == "U")
+        return NANOARROW_TYPE_LARGE_STRING;
+    else if (sv == "b")
+        return NANOARROW_TYPE_BOOL;
+    else if (sv == "tss:")
+        return NANOARROW_TYPE_INT64;      // NB time resolution set indepedently
+    else if (sv == "z")
+        return NANOARROW_TYPE_BINARY;
+    else if (sv == "Z")
+        return NANOARROW_TYPE_LARGE_BINARY;
+    else
+        throw TileDBSOMAError(fmt::format(
+            "ArrowAdapter: Unsupported TileDB datatype string: {} ", sv));
 }
 
 }  // namespace tiledbsoma
