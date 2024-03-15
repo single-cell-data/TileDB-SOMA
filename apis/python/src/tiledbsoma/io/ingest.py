@@ -200,7 +200,7 @@ def register_anndatas(
 
 def from_h5ad(
     experiment_uri: str,
-    input_path: Union[Path, _FSPathWrapper],
+    input_path: Path,
     measurement_name: str,
     *,
     context: Optional[SOMATileDBContext] = None,

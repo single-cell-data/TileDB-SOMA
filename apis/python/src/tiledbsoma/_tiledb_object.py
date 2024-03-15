@@ -96,7 +96,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         if not isinstance(handle, cls._reader_wrapper_type):
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
-            handle,  # type: ignore
+            handle,  # type: ignore[arg-type]
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 

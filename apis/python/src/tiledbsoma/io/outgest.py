@@ -47,7 +47,7 @@ from ._common import (
     _UNS_OUTGEST_HINT_KEY,
     Matrix,
 )
-from .ingest import _FSPathWrapper
+from ._util import _FSPathWrapper
 
 
 # ----------------------------------------------------------------
