@@ -365,8 +365,8 @@ class QueryConditionTree(ast.NodeVisitor):
         return val
 
     def cast_val_to_dtype(
-        self, val: Union[str, int, float, bytes, np.int32], dtype: str
-    ) -> Union[str, int, float, bytes, np.int32]:
+        self, val: Union[str, int, float, bytes, np.int32, np.int64], dtype: str
+    ) -> Union[str, int, float, bytes, np.int32, np.int64]:
         if dtype != "string":
             try:
                 # this prevents numeric strings ("1", '123.32') from getting
