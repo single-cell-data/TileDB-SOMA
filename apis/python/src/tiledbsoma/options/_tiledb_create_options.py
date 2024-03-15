@@ -17,6 +17,7 @@ import attrs.validators as vld  # Short name because we use this a bunch.
 import tiledb
 from attr import Attribute
 from somacore import options
+from typeguard import typeguard_ignore
 from typing_extensions import Self, TypedDict
 
 # Most defaults are configured directly as default attribute values
@@ -81,10 +82,12 @@ class _ColumnConfig:
     tile: Optional[int] = attrs_.field(validator=vld.optional(vld.instance_of(int)))
 
     @classmethod
+    @typeguard_ignore  # type: ignore[misc]
     def from_dict(cls, input: _DictColumnSpec) -> Self:
         return cls(filters=input.get("filters"), tile=input.get("tile"))
 
 
+@typeguard_ignore  # type: ignore[misc]
 def _normalize_columns(
     input: Mapping[str, _DictColumnSpec]
 ) -> Mapping[str, _ColumnConfig]:
@@ -145,10 +148,10 @@ class TileDBCreateOptions:
         validator=vld.optional(vld.instance_of(str)), default=None
     )
     dims: Mapping[str, _ColumnConfig] = attrs_.field(
-        factory=dict, converter=_normalize_columns
+        factory=dict, converter=_normalize_columns  # type: ignore[misc]
     )
     attrs: Mapping[str, _ColumnConfig] = attrs_.field(
-        factory=dict, converter=_normalize_columns
+        factory=dict, converter=_normalize_columns  # type: ignore[misc]
     )
     consolidate_and_vacuum: bool = attrs_.field(
         validator=vld.instance_of(bool), default=False
