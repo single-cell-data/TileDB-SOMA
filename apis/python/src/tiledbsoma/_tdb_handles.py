@@ -558,13 +558,23 @@ class MetadataWrapper(MutableMapping[str, Any]):
         # Only try to get the writer if there are changes to be made.
         if isinstance(self.owner, DataFrameWrapper):
             meta = self.owner.meta
+            for key, mod in self._mods.items():
+                if mod in (_DictMod.ADDED, _DictMod.UPDATED):
+                    set_metadata = self.owner._handle.set_metadata
+                    val = self.cache[key]
+                    if isinstance(val, str):
+                        set_metadata(key, np.array([val], "S"))
+                    else:
+                        set_metadata(key, np.array([val]))
+                if mod is _DictMod.DELETED:
+                    self.owner._handle.delete_metadata()
         else:
             meta = self.owner.writer.meta
-        for key, mod in self._mods.items():
-            if mod in (_DictMod.ADDED, _DictMod.UPDATED):
-                meta[key] = self.cache[key]
-            if mod is _DictMod.DELETED:
-                del meta[key]
+            for key, mod in self._mods.items():
+                if mod in (_DictMod.ADDED, _DictMod.UPDATED):
+                    meta[key] = self.cache[key]
+                if mod is _DictMod.DELETED:
+                    del meta[key]
         # Temporary hack: When we flush writes, note that the cache
         # is back in sync with disk.
         self._mods.clear()

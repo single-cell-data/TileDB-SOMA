@@ -140,6 +140,17 @@ tiledb_datatype_t np_to_tdb_dtype(py::dtype type) {
     TPY_ERROR_LOC("could not handle numpy dtype");
 }
 
+bool is_tdb_str(tiledb_datatype_t type) {
+  switch (type) {
+  case TILEDB_STRING_ASCII:
+  case TILEDB_STRING_UTF8:
+  case TILEDB_CHAR:
+    return true;
+  default:
+    return false;
+  }
+}
+
 /**
  * @brief Convert ArrayBuffers to Arrow table.
  *
