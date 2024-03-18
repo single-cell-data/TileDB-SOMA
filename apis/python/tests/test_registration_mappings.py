@@ -391,7 +391,6 @@ def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-
 def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
@@ -1142,4 +1141,3 @@ def test_ealm_expose():
     # However, the pre-commit hook will strip out this import statement as "unused".
     # So, assert something.
     assert tiledbsoma.io.ExperimentAmbientLabelMapping is not None
-
