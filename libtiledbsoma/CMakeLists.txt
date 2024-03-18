@@ -187,10 +187,6 @@ if(MSVC)
 else()
   add_compile_options(-Wall -Wextra)
 
-  if(TILEDBSOMA_ENABLE_WERROR)
-    add_compile_options(-Werror)
-  endif()
-
   # Build-specific flags
   if(CMAKE_BUILD_TYPE MATCHES "Debug")
     add_compile_options(-DDEBUG -O0 -g3 -ggdb3 -gdwarf-3)
