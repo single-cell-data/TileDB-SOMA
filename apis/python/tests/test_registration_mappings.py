@@ -423,13 +423,6 @@ def test_multiples_without_experiment(
     h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name)
     h5ad4 = create_h5ad_canned(4, obs_field_name, var_field_name)
 
-    import shutil
-
-    shutil.copy(h5ad1, "/tmp/1.h5ad")
-    shutil.copy(h5ad2, "/tmp/2.h5ad")
-    shutil.copy(h5ad3, "/tmp/3.h5ad")
-    shutil.copy(h5ad4, "/tmp/4.h5ad")
-
     experiment_uri = (tmp_path / "exp").as_posix()
     h5ad_file_names = [h5ad1, h5ad2, h5ad3, h5ad4]
 
@@ -441,8 +434,6 @@ def test_multiples_without_experiment(
             measurement_name="measname",
             ingest_mode="write",
         )
-        shutil.rmtree("/tmp/soma", ignore_errors=True)
-        shutil.copytree(experiment_uri, "/tmp/soma")
         rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
             experiment_uri=experiment_uri,
             h5ad_file_names=h5ad_file_names,
