@@ -158,8 +158,8 @@ def anndata_larger():
         var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"],
         X_value_base=0,
         measurement_name="measname",
-        obs_field_name="obs_id",
-        var_field_name="var_id",
+        obs_field_name="cell_id",
+        var_field_name="gene_id",
     )
 
 
@@ -327,8 +327,8 @@ def test_pandas_indexing(args):
     assert actual_signature == args["expected_signature"]
 
 
-@pytest.mark.parametrize("obs_field_name", ["obs_id"])
-@pytest.mark.parametrize("var_field_name", ["var_id"])
+@pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_axis_mappings(obs_field_name, var_field_name):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     mapping = registration.AxisIDMapping.identity(10)
@@ -352,8 +352,8 @@ def test_axis_mappings(obs_field_name, var_field_name):
     assert d.id_mapping_from_values(keys).data == tuple(range(len(keys)))
 
 
-@pytest.mark.parametrize("obs_field_name", ["obs_id"])
-@pytest.mark.parametrize("var_field_name", ["var_id"])
+@pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_isolated_anndata_mappings(obs_field_name, var_field_name):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_anndata(
@@ -370,8 +370,8 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
     ).data == (6, 3, 4)
 
 
-@pytest.mark.parametrize("obs_field_name", ["obs_id"])
-@pytest.mark.parametrize("var_field_name", ["var_id"])
+@pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
     h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name)
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_h5ad(
@@ -389,8 +389,8 @@ def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
     ).data == (6, 3, 4)
 
 
-@pytest.mark.parametrize("obs_field_name", ["obs_id"])
-@pytest.mark.parametrize("var_field_name", ["var_id"])
+@pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
@@ -407,8 +407,8 @@ def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
     ).data == (6, 3, 4)
 
 
-@pytest.mark.parametrize("obs_field_name", ["obs_id"])
-@pytest.mark.parametrize("var_field_name", ["var_id"])
+@pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 @pytest.mark.parametrize("permutation", [[0, 1, 2, 3], [2, 3, 0, 1], [3, 2, 1, 0]])
 @pytest.mark.parametrize("solo_experiment_first", [True, False])
 def test_multiples_without_experiment(
@@ -684,8 +684,8 @@ def test_multiples_without_experiment(
         assert X.non_empty_domain() == ((0, 11), (0, 6))
 
 
-@pytest.mark.parametrize("obs_field_name", ["obs_id"])
-@pytest.mark.parametrize("var_field_name", ["var_id"])
+@pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_multiples_with_experiment(obs_field_name, var_field_name):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
     h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
@@ -747,8 +747,8 @@ def test_multiples_with_experiment(obs_field_name, var_field_name):
     }
 
 
-@pytest.mark.parametrize("obs_field_name", ["obs_id"])
-@pytest.mark.parametrize("var_field_name", ["var_id"])
+@pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_append_items_with_experiment(obs_field_name, var_field_name):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
     h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
@@ -861,8 +861,8 @@ def test_append_items_with_experiment(obs_field_name, var_field_name):
         assert all(actual_X == expect_X)
 
 
-@pytest.mark.parametrize("obs_field_name", ["obs_id"])
-@pytest.mark.parametrize("var_field_name", ["var_id"])
+@pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 @pytest.mark.parametrize("use_same_cells", [True, False])
 def test_append_with_disjoint_measurements(
     tmp_path, obs_field_name, var_field_name, use_same_cells
@@ -1119,8 +1119,8 @@ def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
         soma_larger,
         context=context,
-        obs_field_name="obs_id",
-        var_field_name="var_id",
+        obs_field_name="cell_id",
+        var_field_name="gene_id",
     )
 
     assert len(rd.obs_axis.data) == 1000

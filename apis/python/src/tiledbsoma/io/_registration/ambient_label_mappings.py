@@ -400,6 +400,8 @@ class ExperimentAmbientLabelMapping:
                 registration_data,
                 measurement_name=measurement_name,
                 append_obsm_varm=append_obsm_varm,
+                obs_field_name=obs_field_name,
+                var_field_name=var_field_name,
             )
 
         tiledbsoma.logging.logger.info("Registration: complete.")
@@ -459,6 +461,8 @@ class ExperimentAmbientLabelMapping:
                 registration_data,
                 measurement_name=measurement_name,
                 append_obsm_varm=append_obsm_varm,
+                obs_field_name=obs_field_name,
+                var_field_name=var_field_name,
             )
 
         tiledbsoma.logging.logger.info("Registration: complete.")
