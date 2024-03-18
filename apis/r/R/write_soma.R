@@ -228,9 +228,7 @@ write_soma.data.frame <- function(
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   # Write values unless in "resume" mode and uri exists
-  if (!(mode == "resume" &&
-      tiledb::tiledb_vfs_is_dir(uri = sdf$uri, vfs = sdf$tiledbsoma_ctx$vfs()))) {
-
+  if (!(mode == "resume" && sdf$exists())) {
     sdf$write(tbl)
     # Add to `soma_parent`
     if (is.character(key)) {
@@ -340,8 +338,7 @@ write_soma.matrix <- function(
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   # Write values unless in "resume" mode and uri exists
-  if (!(mode == "resume" &&
-        tiledb::tiledb_vfs_is_dir(uri = array$uri, vfs = array$tiledbsoma_ctx$vfs()))) {
+  if (!(mode == "resume" && array$exists())) {
     array$write(x)
     # Add to `soma_parent`
     if (is.character(key)) {
@@ -425,8 +422,7 @@ write_soma.TsparseMatrix <- function(
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   # Write values unless in "resume" mode and uri exists
-  if (!(mode == "resume" &&
-        tiledb::tiledb_vfs_is_dir(uri = array$uri, vfs = array$tiledbsoma_ctx$vfs()))) {
+  if (!(mode == "resume" && array$exists())) {
     array$write(x)
     # Add to `soma_parent`
     if (is.character(key)) {

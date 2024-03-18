@@ -15,10 +15,9 @@ SOMADataFrameCreate <- function(uri, schema, index_column_names = c("soma_joinid
     spdl::debug("[SOMADataFrameCreate] mode={}", mode)
     sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
                              internal_use_only = "allowed_use")
-    if (!(mode == "resume" &&
-          tiledb::tiledb_vfs_is_dir(uri = sdf$uri, vfs = sdf$tiledbsoma_ctx$vfs()))) {
+    if (!(mode == "resume" && sdf$exists())) {
         sdf$create(schema, index_column_names=index_column_names,
-                 platform_config=platform_config, internal_use_only = "allowed_use")
+                   platform_config=platform_config, internal_use_only = "allowed_use")
     }
     sdf
 }
@@ -55,8 +54,7 @@ SOMASparseNDArrayCreate <- function(uri, type, shape, mode = "write", platform_c
     snda <- SOMASparseNDArray$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
                                   internal_use_only = "allowed_use")
     spdl::debug("[SOMASparseArrayCreate] array at {}", snda$uri)
-    if (!(mode == "resume" &&
-          tiledb::tiledb_vfs_is_dir(uri = snda$uri, vfs = snda$tiledbsoma_ctx$vfs()))) {
+    if (!(mode == "resume" && snda$exists())) {
         spdl::debug("[SOMASparseArrayCreate] creating uri={}", snda$uri)
         snda$create(type, shape, platform_config=platform_config, internal_use_only = "allowed_use")
     }
@@ -94,8 +92,7 @@ SOMADenseNDArrayCreate <- function(uri, type, shape, mode = "write",
     spdl::debug("[SOMADenseArrayCreate] mode={}", mode)
     dnda <- SOMADenseNDArray$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
                                  internal_use_only = "allowed_use")
-    if (!(mode == "resume" &&
-          tiledb::tiledb_vfs_is_dir(uri = dnda$uri, vfs = dnda$tiledbsoma_ctx$vfs()))) {
+    if (!(mode == "resume" && dnda$exists())) {
         spdl::debug("[SOMADenseArrayCreate] creating uri={}", dnda$uri)
         dnda$create(type, shape, platform_config=platform_config, internal_use_only = "allowed_use")
     }
