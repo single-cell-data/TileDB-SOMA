@@ -39,7 +39,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
-    LOG_DEBUG(fmt::format("[ArrowAdapter] release_schema for {}", schema->name));
+    LOG_DEBUG("[ArrowAdapter] release_schema");
 
     if (schema->name != nullptr) {
         LOG_TRACE("[ArrowAdapter] release_schema schema->name");
@@ -48,7 +48,7 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     }
     if (schema->format != nullptr) {
         LOG_TRACE("[ArrowAdapter] release_schema schema->format");
-        free((void*)schema->format);
+        //free((void*)schema->format);
         schema->format = nullptr;
     }
     if (schema->metadata != nullptr) {
@@ -520,19 +520,22 @@ std::string_view ArrowAdapter::to_arrow_format(
 
 // FIXME: Add more types, maybe make it a map
 enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
-    if (sv == "i") 	 	 return NANOARROW_TYPE_INT32;
-    else if (sv == "c")  return NANOARROW_TYPE_INT8;
-    else if (sv == "C")  return NANOARROW_TYPE_UINT8;
-    else if (sv == "s")  return NANOARROW_TYPE_INT16;
-    else if (sv == "S")  return NANOARROW_TYPE_UINT16;
-    else if (sv == "I")  return NANOARROW_TYPE_UINT32;
-    else if (sv == "l")  return NANOARROW_TYPE_INT64;
-    else if (sv == "L")  return NANOARROW_TYPE_UINT64;
-    else if (sv == "f")  return NANOARROW_TYPE_FLOAT;
-    else if (sv == "g")  return NANOARROW_TYPE_DOUBLE;
-    else if (sv == "u")  return NANOARROW_TYPE_STRING;
-    else if (sv == "U")  return NANOARROW_TYPE_LARGE_STRING;
-    else if (sv == "b")  return NANOARROW_TYPE_BOOL;
+    if (sv == "i") 	 	   return NANOARROW_TYPE_INT32;
+    else if (sv == "c")    return NANOARROW_TYPE_INT8;
+    else if (sv == "C")    return NANOARROW_TYPE_UINT8;
+    else if (sv == "s")    return NANOARROW_TYPE_INT16;
+    else if (sv == "S")    return NANOARROW_TYPE_UINT16;
+    else if (sv == "I")    return NANOARROW_TYPE_UINT32;
+    else if (sv == "l")    return NANOARROW_TYPE_INT64;
+    else if (sv == "L")    return NANOARROW_TYPE_UINT64;
+    else if (sv == "f")    return NANOARROW_TYPE_FLOAT;
+    else if (sv == "g")    return NANOARROW_TYPE_DOUBLE;
+    else if (sv == "u")    return NANOARROW_TYPE_STRING;
+    else if (sv == "U")    return NANOARROW_TYPE_LARGE_STRING;
+    else if (sv == "b")    return NANOARROW_TYPE_BOOL;
+    else if (sv == "tss:") return NANOARROW_TYPE_INT64;      // NB time resolution set indepedently
+    else if (sv == "z")    return NANOARROW_TYPE_BINARY;
+    else if (sv == "Z")    return NANOARROW_TYPE_LARGE_BINARY;
     else throw TileDBSOMAError(fmt::format(
              "ArrowAdapter: Unsupported TileDB datatype string: {} ", sv));
 }
