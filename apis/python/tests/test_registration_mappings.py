@@ -3,6 +3,7 @@ Test join-id registrations for ingesting multiple AnnData objects into a single 
 """
 
 import math
+import tempfile
 from typing import Optional, Sequence
 
 import anndata as ad
@@ -19,7 +20,9 @@ def _create_anndata(
     *,
     obs_ids: Sequence[str],
     var_ids: Sequence[str],
-    X_base: int,
+    obs_field_name: str,
+    var_field_name: str,
+    X_value_base: int,
     measurement_name: str,
     raw_var_ids: Optional[Sequence[str]] = None,
     X_density: float = 0.3,
@@ -30,13 +33,13 @@ def _create_anndata(
     cell_types = [["B cell", "T cell"][e % 2] for e in range(n_obs)]
     obs = pd.DataFrame(
         data={
-            "obs_id": np.asarray(obs_ids),
+            obs_field_name: np.asarray(obs_ids),
             "cell_type": np.asarray(cell_types),
             "is_primary_data": np.asarray([True] * n_obs),
         },
         index=np.arange(n_obs).astype(str),
     )
-    obs.set_index("obs_id", inplace=True)
+    obs.set_index(obs_field_name, inplace=True)
 
     def _fake_mean(var_id):
         return math.sqrt(sum(ord(c) for c in var_id))
@@ -45,30 +48,30 @@ def _create_anndata(
         means = [_fake_mean(var_id) for var_id in arg_var_ids]
         var = pd.DataFrame(
             data={
-                "var_id": np.asarray(arg_var_ids),
+                var_field_name: np.asarray(arg_var_ids),
                 "means": np.asarray(means, dtype=np.float32),
             },
             index=np.arange(len(arg_var_ids)).astype(str),
         )
-        var.set_index("var_id", inplace=True)
+        var.set_index(var_field_name, inplace=True)
         return var
 
-    def _make_X(n_obs, n_var, X_base):
+    def _make_X(n_obs, n_var, X_value_base):
         X = np.zeros((n_obs, n_var))
         for i in range(n_obs):
             for j in range(n_var):
                 if (i + j) % 2 == 1:
-                    X[i, j] = X_base + 10 * i + j
+                    X[i, j] = X_value_base + 10 * i + j
         return X
 
     var = _make_var(var_ids)
-    X = _make_X(n_obs, n_var, X_base)
+    X = _make_X(n_obs, n_var, X_value_base)
 
     adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
 
     if raw_var_ids is not None:
         raw_var = _make_var(raw_var_ids)
-        raw_X = _make_X(n_obs, len(raw_var_ids), X_base)
+        raw_X = _make_X(n_obs, len(raw_var_ids), X_value_base)
         raw = ad.Raw(adata, var=raw_var, X=raw_X)
         adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype, raw=raw)
 
@@ -80,45 +83,31 @@ def create_h5ad(adata, path):
     return path
 
 
-@pytest.fixture
-def anndata1():
-    return _create_anndata(
-        obs_ids=["AAAT", "ACTG", "AGAG"],
-        var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA"],
-        raw_var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "RAW1", "RAW2"],
-        X_base=100,
-        measurement_name="measname",
-    )
+# This is the central data generator for this file. It makes one of four
+# datasets, varying cell and gene IDs.
+def create_anndata_canned(which: int, obs_field_name: str, var_field_name: str):
+    if which == 1:
+        obs_ids = ["AAAT", "ACTG", "AGAG"]
+        var_ids = ["AKT1", "APOE", "ESR1", "TP53", "VEGFA"]
+        raw_var_ids = ["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "RAW1", "RAW2"]
+        X_value_base = 100
 
+    elif which == 2:
+        obs_ids = ["CAAT", "CCTG", "CGAG"]
+        var_ids = ["APOE", "ESR1", "TP53", "VEGFA"]
+        raw_var_ids = ["APOE", "ESR1", "TP53", "VEGFA"]
+        X_value_base = 200
 
-@pytest.fixture
-def anndata2():
-    return _create_anndata(
-        obs_ids=["CAAT", "CCTG", "CGAG"],
-        var_ids=["APOE", "ESR1", "TP53", "VEGFA"],
-        raw_var_ids=["APOE", "ESR1", "TP53", "VEGFA"],
-        X_base=200,
-        measurement_name="measname",
-    )
+    elif which == 3:
+        obs_ids = ["GAAT", "GCTG", "GGAG"]
+        var_ids = ["APOE", "EGFR", "ESR1", "TP53", "VEGFA"]
+        raw_var_ids = ["APOE", "EGFR", "ESR1", "TP53", "VEGFA", "RAW1", "RAW3"]
+        X_value_base = 300
 
-
-@pytest.fixture
-def anndata3():
-    return _create_anndata(
-        obs_ids=["GAAT", "GCTG", "GGAG"],
-        var_ids=["APOE", "EGFR", "ESR1", "TP53", "VEGFA"],
-        raw_var_ids=["APOE", "EGFR", "ESR1", "TP53", "VEGFA", "RAW1", "RAW3"],
-        X_base=300,
-        measurement_name="measname",
-    )
-
-
-@pytest.fixture
-def anndata4():
-    return _create_anndata(
-        obs_ids=["TAAT", "TCTG", "TGAG"],
-        var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"],
-        raw_var_ids=[
+    elif which == 4:
+        obs_ids = ["TAAT", "TCTG", "TGAG"]
+        var_ids = ["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"]
+        raw_var_ids = [
             "AKT1",
             "APOE",
             "ESR1",
@@ -128,10 +117,38 @@ def anndata4():
             "RAW1",
             "RAW3",
             "RAW2",
-        ],
-        X_base=400,
+        ]
+        X_value_base = 400
+
+    else:
+        raise Exception(f"create_anndata_canned takes 1..4; got {which}")
+
+    return _create_anndata(
+        obs_ids=obs_ids,
+        var_ids=var_ids,
+        raw_var_ids=raw_var_ids,
+        X_value_base=X_value_base,
         measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
     )
+
+
+def create_h5ad_canned(which: int, obs_field_name: str, var_field_name: str):
+    tmp_path = tempfile.TemporaryDirectory()
+    anndata = create_anndata_canned(which, obs_field_name, var_field_name)
+    return create_h5ad(
+        anndata,
+        (tmp_path.name + f"{which}.h5ad"),
+    )
+
+
+def create_soma_canned(which: int, obs_field_name, var_field_name):
+    tmp_path = tempfile.TemporaryDirectory()
+    h5ad = create_h5ad_canned(which, obs_field_name, var_field_name)
+    uri = tmp_path.name + f"soma{which}"
+    tiledbsoma.io.from_h5ad(uri, h5ad, "measname")
+    return uri
 
 
 @pytest.fixture
@@ -139,41 +156,17 @@ def anndata_larger():
     return _create_anndata(
         obs_ids=["id_%08d" % e for e in range(1000)],
         var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"],
-        X_base=0,
+        X_value_base=0,
         measurement_name="measname",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
     )
 
 
 @pytest.fixture
-def h5ad1(tmp_path, anndata1):
-    return create_h5ad(anndata1, (tmp_path / "1.h5ad").as_posix())
-
-
-@pytest.fixture
-def h5ad2(tmp_path, anndata2):
-    return create_h5ad(anndata2, (tmp_path / "2.h5ad").as_posix())
-
-
-@pytest.fixture
-def h5ad3(tmp_path, anndata3):
-    return create_h5ad(anndata3, (tmp_path / "3.h5ad").as_posix())
-
-
-@pytest.fixture
-def h5ad4(tmp_path, anndata4):
-    return create_h5ad(anndata4, (tmp_path / "4.h5ad").as_posix())
-
-
-@pytest.fixture
-def soma1(tmp_path, h5ad1):
-    uri = (tmp_path / "soma1").as_posix()
-    tiledbsoma.io.from_h5ad(uri, h5ad1, "measname")
-    return uri
-
-
-@pytest.fixture
-def soma_larger(tmp_path, anndata_larger):
-    uri = (tmp_path / "soma-larger").as_posix()
+def soma_larger(anndata_larger):
+    tmp_path = tempfile.TemporaryDirectory()
+    uri = tmp_path.name + "soma-larger"
     tiledbsoma.io.from_anndata(uri, anndata_larger, "measname")
     return uri
 
@@ -334,12 +327,16 @@ def test_pandas_indexing(args):
     assert actual_signature == args["expected_signature"]
 
 
-def test_axis_mappings(anndata1):
+@pytest.mark.parametrize("obs_field_name", ["obs_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id"])
+def test_axis_mappings(obs_field_name, var_field_name):
+    anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     mapping = registration.AxisIDMapping.identity(10)
     assert mapping.data == tuple(range(10))
 
     dictionary = registration.AxisAmbientLabelMapping(
-        data={"a": 10, "b": 20, "c": 30}, field_name="obs_id"
+        data={"a": 10, "b": 20, "c": 30},
+        field_name=obs_field_name,
     )
     assert dictionary.id_mapping_from_values(["a", "b", "c"]).data == (10, 20, 30)
     assert dictionary.id_mapping_from_values(["c", "a"]).data == (30, 10)
@@ -347,7 +344,7 @@ def test_axis_mappings(anndata1):
 
     d = registration.AxisAmbientLabelMapping.from_isolated_dataframe(
         anndata1.obs,
-        index_field_name="obs_id",
+        index_field_name=obs_field_name,
     )
     assert d.id_mapping_from_values([]).data == ()
     assert d.id_mapping_from_values(["AAAT", "AGAG"]).data == (0, 2)
@@ -355,7 +352,10 @@ def test_axis_mappings(anndata1):
     assert d.id_mapping_from_values(keys).data == tuple(range(len(keys)))
 
 
-def test_isolated_anndata_mappings(anndata1):
+@pytest.mark.parametrize("obs_field_name", ["obs_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id"])
+def test_isolated_anndata_mappings(obs_field_name, var_field_name):
+    anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_anndata(
         anndata1, measurement_name="measname"
     )
@@ -370,7 +370,10 @@ def test_isolated_anndata_mappings(anndata1):
     ).data == (6, 3, 4)
 
 
-def test_isolated_h5ad_mappings(h5ad1):
+@pytest.mark.parametrize("obs_field_name", ["obs_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id"])
+def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
+    h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name)
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_h5ad(
         h5ad1,
         measurement_name="measname",
@@ -386,8 +389,13 @@ def test_isolated_h5ad_mappings(h5ad1):
     ).data == (6, 3, 4)
 
 
-def test_isolated_soma_experiment_mappings(soma1):
-    rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(soma1)
+@pytest.mark.parametrize("obs_field_name", ["obs_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id"])
+def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
+    soma1 = create_soma_canned(1, obs_field_name, var_field_name)
+    rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
+        soma1, obs_field_name=obs_field_name, var_field_name=var_field_name
+    )
     assert rd.obs_axis.id_mapping_from_values([]).data == ()
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
     assert rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data == (
@@ -399,17 +407,29 @@ def test_isolated_soma_experiment_mappings(soma1):
     ).data == (6, 3, 4)
 
 
+@pytest.mark.parametrize("obs_field_name", ["obs_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id"])
 @pytest.mark.parametrize("permutation", [[0, 1, 2, 3], [2, 3, 0, 1], [3, 2, 1, 0]])
 @pytest.mark.parametrize("solo_experiment_first", [True, False])
 def test_multiples_without_experiment(
     tmp_path,
-    h5ad1,
-    h5ad2,
-    h5ad3,
-    h5ad4,
+    obs_field_name,
+    var_field_name,
     permutation,
     solo_experiment_first,
 ):
+    h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name)
+    h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
+    h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name)
+    h5ad4 = create_h5ad_canned(4, obs_field_name, var_field_name)
+
+    import shutil
+
+    shutil.copy(h5ad1, "/tmp/1.h5ad")
+    shutil.copy(h5ad2, "/tmp/2.h5ad")
+    shutil.copy(h5ad3, "/tmp/3.h5ad")
+    shutil.copy(h5ad4, "/tmp/4.h5ad")
+
     experiment_uri = (tmp_path / "exp").as_posix()
     h5ad_file_names = [h5ad1, h5ad2, h5ad3, h5ad4]
 
@@ -421,12 +441,14 @@ def test_multiples_without_experiment(
             measurement_name="measname",
             ingest_mode="write",
         )
+        shutil.rmtree("/tmp/soma", ignore_errors=True)
+        shutil.copytree(experiment_uri, "/tmp/soma")
         rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
             experiment_uri=experiment_uri,
             h5ad_file_names=h5ad_file_names,
             measurement_name="measname",
-            obs_field_name="obs_id",
-            var_field_name="var_id",
+            obs_field_name=obs_field_name,
+            var_field_name=var_field_name,
         )
 
     else:
@@ -435,8 +457,8 @@ def test_multiples_without_experiment(
             experiment_uri=None,
             h5ad_file_names=h5ad_file_names,
             measurement_name="measname",
-            obs_field_name="obs_id",
-            var_field_name="var_id",
+            obs_field_name=obs_field_name,
+            var_field_name=var_field_name,
         )
 
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == (2, 8)
@@ -643,10 +665,10 @@ def test_multiples_without_experiment(
         var = exp.ms["measname"].var.read().concat()
 
         actual_obs_soma_joinids = obs["soma_joinid"].to_pylist()
-        actual_obs_obs_ids = obs["obs_id"].to_pylist()
+        actual_obs_obs_ids = obs[obs_field_name].to_pylist()
 
         actual_var_soma_joinids = var["soma_joinid"].to_pylist()
-        actual_var_var_ids = var["var_id"].to_pylist()
+        actual_var_var_ids = var[var_field_name].to_pylist()
 
         actual_X = exp.ms["measname"].X["data"].read().tables().concat().to_pandas()
 
@@ -671,13 +693,20 @@ def test_multiples_without_experiment(
         assert X.non_empty_domain() == ((0, 11), (0, 6))
 
 
-def test_multiples_with_experiment(soma1, h5ad2, h5ad3, h5ad4):
+@pytest.mark.parametrize("obs_field_name", ["obs_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id"])
+def test_multiples_with_experiment(obs_field_name, var_field_name):
+    soma1 = create_soma_canned(1, obs_field_name, var_field_name)
+    h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
+    h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name)
+    h5ad4 = create_h5ad_canned(4, obs_field_name, var_field_name)
+
     rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
         experiment_uri=soma1,
         h5ad_file_names=[h5ad2, h5ad3, h5ad4],
         measurement_name="measname",
-        obs_field_name="obs_id",
-        var_field_name="var_id",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
     )
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == (2, 8)
     assert rd.var_axes["measname"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (
@@ -727,13 +756,17 @@ def test_multiples_with_experiment(soma1, h5ad2, h5ad3, h5ad4):
     }
 
 
-def test_append_items_with_experiment(soma1, h5ad2):
+@pytest.mark.parametrize("obs_field_name", ["obs_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id"])
+def test_append_items_with_experiment(obs_field_name, var_field_name):
+    soma1 = create_soma_canned(1, obs_field_name, var_field_name)
+    h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
     rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
         experiment_uri=soma1,
         h5ad_file_names=[h5ad2],
         measurement_name="measname",
-        obs_field_name="obs_id",
-        var_field_name="var_id",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
     )
 
     adata2 = ad.read_h5ad(h5ad2)
@@ -793,10 +826,10 @@ def test_append_items_with_experiment(soma1, h5ad2):
         exp.ms["measname"].X["data"].read().tables().concat()
 
         actual_obs_soma_joinids = obs["soma_joinid"].to_pylist()
-        actual_obs_obs_ids = obs["obs_id"].to_pylist()
+        actual_obs_obs_ids = obs[obs_field_name].to_pylist()
 
         actual_var_soma_joinids = var["soma_joinid"].to_pylist()
-        actual_var_var_ids = var["var_id"].to_pylist()
+        actual_var_var_ids = var[var_field_name].to_pylist()
 
         assert actual_obs_soma_joinids == expect_obs_soma_joinids
         assert actual_var_soma_joinids == expect_var_soma_joinids
@@ -837,10 +870,14 @@ def test_append_items_with_experiment(soma1, h5ad2):
         assert all(actual_X == expect_X)
 
 
+@pytest.mark.parametrize("obs_field_name", ["obs_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id"])
 @pytest.mark.parametrize("use_same_cells", [True, False])
 def test_append_with_disjoint_measurements(
-    tmp_path, anndata1, anndata4, use_same_cells
+    tmp_path, obs_field_name, var_field_name, use_same_cells
 ):
+    anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
+    anndata4 = create_anndata_canned(4, obs_field_name, var_field_name)
     soma_uri = tmp_path.as_posix()
 
     tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="one")
@@ -856,8 +893,8 @@ def test_append_with_disjoint_measurements(
         soma_uri,
         [anndata2],
         measurement_name="two",
-        obs_field_name="obs_id",
-        var_field_name="var_id",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
     )
 
     tiledbsoma.io.from_anndata(
@@ -977,13 +1014,13 @@ def test_append_with_disjoint_measurements(
         var_two = exp.ms["two"].var.read().concat()
 
         actual_obs_soma_joinids = obs["soma_joinid"].to_pylist()
-        actual_obs_obs_ids = obs["obs_id"].to_pylist()
+        actual_obs_obs_ids = obs[obs_field_name].to_pylist()
 
         actual_var_one_soma_joinids = var_one["soma_joinid"].to_pylist()
-        actual_var_one_var_ids = var_one["var_id"].to_pylist()
+        actual_var_one_var_ids = var_one[var_field_name].to_pylist()
 
         actual_var_two_soma_joinids = var_two["soma_joinid"].to_pylist()
-        actual_var_two_var_ids = var_two["var_id"].to_pylist()
+        actual_var_two_var_ids = var_two[var_field_name].to_pylist()
 
         assert actual_obs_soma_joinids == expect_obs_soma_joinids
         assert actual_obs_obs_ids == expect_obs_obs_ids
@@ -1091,6 +1128,8 @@ def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
         soma_larger,
         context=context,
+        obs_field_name="obs_id",
+        var_field_name="var_id",
     )
 
     assert len(rd.obs_axis.data) == 1000
