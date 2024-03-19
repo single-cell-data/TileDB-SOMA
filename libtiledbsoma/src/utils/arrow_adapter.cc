@@ -301,16 +301,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
   exitIfError(ArrowSchemaSetName(sch, column->name().data()),
               "Bad schema name");
   exitIfError(ArrowSchemaAllocateChildren(sch, 0), "Bad schema children alloc");
-
-  schema->format = strdup(to_arrow_format(column->type()).data());
-  schema->name = strdup(column->name().data());
-  schema->metadata = nullptr;
-  schema->flags = 0;
-  schema->n_children = 0;
-  schema->children = nullptr;
-  schema->dictionary = nullptr;
+  // After allocating and initializing via nanoarrow we
+  // hook our custom release function in
   schema->release = &release_schema;
-  schema->private_data = nullptr;
 
   // this will be 3 for char vecs and 2 for enumerations
   int n_buffers = column->is_var() ? 3 : 2;
@@ -334,21 +327,15 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
       to_arrow_format(column->type()).data(), column->name().data(), n_buffers,
       array->n_buffers, column->is_nullable()));
 
-  array->null_count = 0;
-  array->offset = 0;
-  array->n_buffers = n_buffers;
-  array->n_children = 0;
-  array->buffers = nullptr;
-  array->children = nullptr;
-  array->dictionary = nullptr;
+  // After allocating and initializing via nanoarrow we
+  // hook our custom release function in
   array->release = &release_array;
   array->private_data = (void *)arrow_buffer;
 
   LOG_TRACE(fmt::format("[ArrowAdapter] create array name='{}' use_count={}",
                         column->name(), column.use_count()));
 
-  array->buffers = (const void **)malloc(
-      sizeof(void *) * n_buffers); // new const void*[n_buffers];
+  array->buffers = (const void **)malloc(sizeof(void *) * n_buffers);
   assert(array->buffers != nullptr);
   array->buffers[0] = nullptr; // validity addressed below
   array->buffers[n_buffers - 1] = column->data<void *>().data(); // data
@@ -408,31 +395,15 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     exitIfError(ArrowSchemaSetName(dict_sch, ""), "Bad schema name");
     exitIfError(ArrowSchemaAllocateChildren(dict_sch, 0),
                 "Bad schema children alloc");
-    dict_sch->format = strdup(to_arrow_format(enmr->type(), false).data());
-    dict_sch->name = nullptr;
-    dict_sch->metadata = nullptr;
-    dict_sch->flags = 0;
-    dict_sch->n_children = 0;
-    dict_sch->children = nullptr;
-    dict_sch->dictionary = nullptr;
     dict_sch->release = &release_schema;
-    dict_sch->private_data = nullptr;
 
     exitIfError(ArrowArrayInitFromType(dict_arr, dnatype), "Bad array init");
     exitIfError(ArrowArrayAllocateChildren(dict_arr, 0),
                 "Bad array children alloc");
     const int n_buf = strcmp(dict_sch->format, "u") == 0 ? 3 : 2;
-    dict_arr->null_count = 0;
-    dict_arr->offset = 0;
-    dict_arr->n_buffers = n_buf;
-    dict_arr->n_children = 0;
-    dict_arr->buffers = nullptr;
-    dict_arr->children = nullptr;
-    dict_arr->dictionary = nullptr;
-    dict_arr->release = &release_array;
-    dict_arr->private_data = nullptr;
     dict_arr->buffers = (const void **)malloc(sizeof(void *) * n_buf);
     dict_arr->buffers[0] = nullptr; // validity: none here
+    dict_arr->release = &release_array;
 
     // TODO string types currently get the data and offset
     // buffers from ColumnBuffer::enum_offsets and
