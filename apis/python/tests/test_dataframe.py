@@ -88,7 +88,6 @@ def test_dataframe(tmp_path, arrow_schema):
 
         # Read all
         table = sdf.read().concat()
-        print(table)
         assert table.num_rows == 5
         assert table.num_columns == 5
         assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]

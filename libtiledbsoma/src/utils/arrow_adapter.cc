@@ -250,6 +250,8 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     ArraySchema schema(*ctx, TILEDB_SPARSE);
     Domain domain(*ctx);
 
+    std::map<std::string, Dimension> dims;
+
     for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children; ++sch_idx) {
         auto child = arrow_schema->children[sch_idx];
         auto type = ArrowAdapter::to_tiledb_format(child->format);
@@ -275,7 +277,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     nullptr :
                     extents->children[idx_col_idx]->buffers[1]);
 
-            domain.add_dimension(dim);
+            dims.insert({dim.name(), dim});
         } else {
             Attribute attr(*ctx, child->name, type);
 
@@ -305,6 +307,8 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         }
     }
 
+    for (auto column_name : index_column_names)
+        domain.add_dimension(dims.at(column_name));
     schema.set_domain(domain);
 
     schema.check();
