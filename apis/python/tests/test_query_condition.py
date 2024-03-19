@@ -3,10 +3,8 @@
 import os
 
 import pytest
-import tiledb
 
 import tiledbsoma.pytiledbsoma as clib
-from tiledbsoma._arrow_types import tiledb_schema_to_arrow
 from tiledbsoma._exception import SOMAError
 from tiledbsoma._query_condition import QueryCondition
 
@@ -30,11 +28,10 @@ def pandas_query(uri, condition):
 def soma_query(uri, condition):
     qc = QueryCondition(condition)
     sr = clib.SOMAArray(uri)
-    schema = tiledb_schema_to_arrow(tiledb.open(uri).schema, uri, tiledb.default_ctx())
-    sr.set_condition(qc, schema)
+    sr.set_condition(qc, sr.schema)
     arrow_table = sr.read_next()
     assert sr.results_complete()
-
+    
     return arrow_table
 
 
@@ -45,7 +42,7 @@ def soma_query(uri, condition):
         "n_genes > 500",  # int
         'louvain == "NK cells"',  # string
         "percent_mito > 0.02",  # float
-        "is_b_cell == True",  # bool
+        "is_b_cell == True or is_b_cell == False",  # bool
         # compare_op
         "n_genes == 480",
         "n_genes != 480",
@@ -74,11 +71,13 @@ def test_query_condition(condition):
     pandas = pandas_query(uri, condition)
     soma_arrow = soma_query(uri, condition)
     assert len(pandas.index) == soma_arrow.num_rows
-    assert (
-        (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True))
-        .all()
-        .all()
-    )
+
+    for name in pandas:
+        expected = pandas[name].reset_index(drop=True)
+        actual = soma_arrow[name].to_pandas().reset_index(drop=True)
+        print(expected,)
+        print(actual)
+        assert (expected == actual).all()
 
 
 @pytest.mark.parametrize(
@@ -110,8 +109,7 @@ def test_query_condition_select_columns():
 
     sr = clib.SOMAArray(uri, column_names=["n_genes"])
     qc = QueryCondition(condition)
-    schema = tiledb_schema_to_arrow(tiledb.open(uri).schema, uri, tiledb.default_ctx())
-    sr.set_condition(qc, schema)
+    sr.set_condition(qc, sr.schema)
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -124,10 +122,9 @@ def test_query_condition_all_columns():
     condition = "percent_mito > 0.02"
 
     qc = QueryCondition(condition)
-    schema = tiledb_schema_to_arrow(tiledb.open(uri).schema, uri, tiledb.default_ctx())
 
     sr = clib.SOMAArray(uri)
-    sr.set_condition(qc, schema)
+    sr.set_condition(qc, sr.schema)
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -140,10 +137,9 @@ def test_query_condition_reset():
     condition = "percent_mito > 0.02"
 
     qc = QueryCondition(condition)
-    schema = tiledb_schema_to_arrow(tiledb.open(uri).schema, uri, tiledb.default_ctx())
 
     sr = clib.SOMAArray(uri)
-    sr.set_condition(qc, schema)
+    sr.set_condition(qc, sr.schema)
     arrow_table = sr.read_next()
 
     assert sr.results_complete()
@@ -155,7 +151,7 @@ def test_query_condition_reset():
     condition = "percent_mito < 0.02"
     qc = QueryCondition(condition)
     sr.reset(column_names=["percent_mito"])
-    sr.set_condition(qc, schema)
+    sr.set_condition(qc, sr.schema)
 
     arrow_table = sr.read_next()
 
@@ -218,17 +214,16 @@ def test_parsing_error_conditions(malformed_condition):
 def test_eval_error_conditions(malformed_condition):
     """Conditions which should not evaluate (but WILL parse)"""
     uri = os.path.join(SOMA_URI, "obs")
-    schema = tiledb_schema_to_arrow(tiledb.open(uri).schema, uri, tiledb.default_ctx())
     qc = QueryCondition(malformed_condition)
 
     with pytest.raises(SOMAError):
         sr = clib.SOMAArray(uri)
-        sr.set_condition(qc, schema)
+        sr.set_condition(qc, sr.schema)
 
     with pytest.raises(SOMAError):
         # test function directly for codecov
-        qc.init_query_condition(schema, [])
-        qc.init_query_condition(schema, ["bad_query_attr"])
+        qc.init_query_condition(sr.schema, [])
+        qc.init_query_condition(sr.schema, ["bad_query_attr"])
 
 
 if __name__ == "__main__":

@@ -120,7 +120,7 @@ py::dict meta(SOMAArray& array) {
     return results;
 }
 
-void set_metadata(SOMAArray& sr, const std::string &key, py::array value) {
+void set_metadata(SOMAArray& sr, const std::string& key, py::array value) {
     tiledb_datatype_t value_type = np_to_tdb_dtype(value.dtype());
 
     if (is_tdb_str(value_type) && value.size() > 1)
@@ -131,8 +131,8 @@ void set_metadata(SOMAArray& sr, const std::string &key, py::array value) {
         throw py::type_error("Only 1D Numpy arrays can be stored as metadata");
 
     auto value_num = is_tdb_str(value_type) ? value.nbytes() : value.size();
-    sr.set_metadata(key, value_type, value_num,
-                    value_num > 0 ? value.data() : nullptr);
+    sr.set_metadata(
+        key, value_type, value_num, value_num > 0 ? value.data() : nullptr);
 }
 
 py::tuple get_enum(SOMAArray& sr, std::string attr_name) {

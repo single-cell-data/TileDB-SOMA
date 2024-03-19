@@ -524,8 +524,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         # print(values)
         
         target_schema = []
-        for field in values.schema:
-            target_schema.append(self.schema.field(field.name))
+        for input_field in values.schema:
+            target_field = self.schema.field(input_field.name)
+            if pa.types.is_boolean(input_field.type):
+                target_schema.append(target_field.with_type(pa.uint8()))
+            else:
+                target_schema.append(target_field)
         values = values.cast(pa.schema(target_schema, values.schema.metadata))
         
         for batch in values.to_batches():

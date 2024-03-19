@@ -104,28 +104,8 @@ void ManagedQuery::set_column_data(
 
     if (is_sparse) {
         auto data = column_buffer->data<std::byte>();
-        // if (column_buffer->type() == TILEDB_BOOL) {
-        //     std::cout << column_name << std::endl;
-        //     std::cout << column_buffer->data_size() << std::endl;
-        //     std::vector<uint8_t> bool_output;
-        //     auto bool_data = column_buffer->data<bool>();
-        //     for (size_t i = 0; i * 8 < column_buffer->data_size(); ++i) {
-        //         for (size_t j = 0; j < 8; ++j) {
-        //             std::cout << ((bool_data[i] >> j) & 0x01);
-        //             bool_output.push_back((bool_data[i] >> j) & 0x01);
-        //         }
-        //     }
-        //     std::cout << std::endl;
-
-        //     query_->set_data_buffer(
-        //         column_name,
-        //         (void*)bool_output.data(),
-        //         column_buffer->data_size());
-        // } else {
         query_->set_data_buffer(
             column_name, (void*)data.data(), column_buffer->data_size());
-        // }
-
         if (column_buffer->is_var()) {
             auto offsets = column_buffer->offsets();
             query_->set_offsets_buffer(
@@ -142,17 +122,15 @@ void ManagedQuery::set_column_data(
             query_->set_data_buffer(
                 column_name, (void*)data.data(), column_buffer->data_size());
             if (column_buffer->is_var()) {
-                // Remove one offset for TileDB, which checks that the
-                // offsets and validity buffers are the same size
-                auto offsets = column_buffer->offsets();
-                query_->set_offsets_buffer(
-                    column_name, offsets.data(), offsets.size() - 1);
-            }
-            if (column_buffer->is_nullable()) {
-                auto validity = column_buffer->validity();
-                query_->set_validity_buffer(
-                    column_name, validity.data(), validity.size());
-            }
+            auto offsets = column_buffer->offsets();
+            query_->set_offsets_buffer(
+                column_name, offsets.data(), offsets.size());
+        }
+        if (column_buffer->is_nullable()) {
+            auto validity = column_buffer->validity();
+            query_->set_validity_buffer(
+                column_name, validity.data(), validity.size());
+        }
         } else {
             switch (column_buffer->type()) {
                 case TILEDB_STRING_ASCII:
