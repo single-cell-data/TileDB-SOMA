@@ -122,15 +122,15 @@ void ManagedQuery::set_column_data(
             query_->set_data_buffer(
                 column_name, (void*)data.data(), column_buffer->data_size());
             if (column_buffer->is_var()) {
-            auto offsets = column_buffer->offsets();
-            query_->set_offsets_buffer(
-                column_name, offsets.data(), offsets.size());
-        }
-        if (column_buffer->is_nullable()) {
-            auto validity = column_buffer->validity();
-            query_->set_validity_buffer(
-                column_name, validity.data(), validity.size());
-        }
+                auto offsets = column_buffer->offsets();
+                query_->set_offsets_buffer(
+                    column_name, offsets.data(), offsets.size());
+            }
+            if (column_buffer->is_nullable()) {
+                auto validity = column_buffer->validity();
+                query_->set_validity_buffer(
+                    column_name, validity.data(), validity.size());
+            }
         } else {
             switch (column_buffer->type()) {
                 case TILEDB_STRING_ASCII:

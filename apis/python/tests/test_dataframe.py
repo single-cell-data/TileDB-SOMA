@@ -154,7 +154,6 @@ def test_dataframe_with_enumeration(tmp_path):
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         df = sdf.read().concat()
-        print(df)
         np.testing.assert_array_equal(df["foo"].chunk(0).dictionary, enums["enmr1"])
         np.testing.assert_array_equal(df["bar"].chunk(0).dictionary, enums["enmr2"])
 
@@ -1160,11 +1159,8 @@ def test_extend_enumerations(tmp_path):
 
     with soma.open(str(tmp_path)) as soma_dataframe:
         df = soma_dataframe.read().concat().to_pandas()
-        print(df)
         for c in df:
-            # TODO bytes are being set to ascii - requires a fix in tiledb-py
-            # assert df[c].dtype == pandas_df[c].dtype
-            assert df[c].dtype.kind == pandas_df[c].dtype.kind
+            assert df[c].dtype == pandas_df[c].dtype
             if df[c].dtype == "category":
                 assert df[c].cat.categories.dtype == pandas_df[c].cat.categories.dtype
 

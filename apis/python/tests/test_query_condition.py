@@ -75,8 +75,6 @@ def test_query_condition(condition):
     for name in pandas:
         expected = pandas[name].reset_index(drop=True)
         actual = soma_arrow[name].to_pandas().reset_index(drop=True)
-        print(expected,)
-        print(actual)
         assert (expected == actual).all()
 
 

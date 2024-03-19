@@ -526,6 +526,10 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         target_schema = []
         for input_field in values.schema:
             target_field = self.schema.field(input_field.name)
+
+            if pa.types.is_dictionary(target_field.type) and not pa.types.is_dictionary(input_field.type):
+                raise ValueError(f"{input_field.name} requires dictionary entry")
+
             if pa.types.is_boolean(input_field.type):
                 target_schema.append(target_field.with_type(pa.uint8()))
             else:

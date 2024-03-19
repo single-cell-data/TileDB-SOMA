@@ -285,21 +285,258 @@ void SOMAArray::extend_enumeration(
     auto enmr = ArrayExperimental::get_enumeration(
         ctx, *arr_, std::string(name));
 
-    ArraySchemaEvolution se(ctx);
-    if (offsets != nullptr) {
-        // TODO can be uint64_t
-        std::vector<uint64_t> offset_v(
-            (uint32_t*)offsets, (uint32_t*)offsets + num_elems + 1);
-        auto data_sz = offset_v[num_elems];
-        auto offset_ptr = offset_v.data();
-        auto offset_sz = num_elems * sizeof(uint64_t);
-        se.extend_enumeration(
-            enmr.extend(data, data_sz, offset_ptr, offset_sz));
-    } else {
-        auto data_sz = num_elems * tiledb::impl::type_size(enmr.type());
-        se.extend_enumeration(enmr.extend(data, data_sz, nullptr, 0));
+    switch (enmr.type()) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR: {
+            std::vector<uint64_t> offsets_v(
+                (uint32_t*)offsets, (uint32_t*)offsets + num_elems + 1);
+            std::string data_v(
+                (char*)data, (char*)data + offsets_v[offsets_v.size() - 1]);
+            std::vector<std::string> enums_in_write;
+
+            for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
+                 ++offset_idx) {
+                auto beg = offsets_v[offset_idx];
+                auto sz = offsets_v[offset_idx + 1] - beg;
+                enums_in_write.push_back(data_v.substr(beg, sz));
+            }
+
+            std::vector<std::string> extend_values;
+            auto enums_existing = enmr.as_vector<std::string>();
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_BOOL:
+        case TILEDB_INT8: {
+            std::vector<int8_t> enums_in_write(
+                (int8_t*)data, (int8_t*)data + num_elems);
+            auto enums_existing = enmr.as_vector<int8_t>();
+            std::vector<int8_t> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(
+                    (void*)extend_values.data(), num_elems, nullptr, 0));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_UINT8: {
+            std::vector<uint8_t> enums_in_write(
+                (uint8_t*)data, (uint8_t*)data + num_elems);
+            auto enums_existing = enmr.as_vector<uint8_t>();
+            std::vector<uint8_t> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_INT16: {
+            std::vector<int16_t> enums_in_write(
+                (int16_t*)data, (int16_t*)data + num_elems);
+            auto enums_existing = enmr.as_vector<int16_t>();
+            std::vector<int16_t> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_UINT16: {
+            std::vector<uint16_t> enums_in_write(
+                (uint16_t*)data, (uint16_t*)data + num_elems);
+            auto enums_existing = enmr.as_vector<uint16_t>();
+            std::vector<int16_t> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_INT32: {
+            std::vector<int32_t> enums_in_write(
+                (int32_t*)data, (int32_t*)data + num_elems);
+            auto enums_existing = enmr.as_vector<int32_t>();
+            std::vector<int32_t> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_UINT32: {
+            std::vector<uint32_t> enums_in_write(
+                (uint32_t*)data, (uint32_t*)data + num_elems);
+            auto enums_existing = enmr.as_vector<uint32_t>();
+            std::vector<uint32_t> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_INT64: {
+            std::vector<int64_t> enums_in_write(
+                (int64_t*)data, (int64_t*)data + num_elems);
+            auto enums_existing = enmr.as_vector<int64_t>();
+            std::vector<int64_t> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_UINT64: {
+            std::vector<uint64_t> enums_in_write(
+                (uint64_t*)data, (uint64_t*)data + num_elems);
+            auto enums_existing = enmr.as_vector<uint64_t>();
+            std::vector<uint64_t> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_FLOAT32: {
+            std::vector<float> enums_in_write(
+                (float*)data, (float*)data + num_elems);
+            auto enums_existing = enmr.as_vector<float>();
+            std::vector<float> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        case TILEDB_FLOAT64: {
+            std::vector<double> enums_in_write(
+                (double*)data, (double*)data + num_elems);
+            auto enums_existing = enmr.as_vector<double>();
+            std::vector<double> extend_values;
+            for (auto enum_val : enums_in_write) {
+                if (std::find(
+                        enums_existing.begin(),
+                        enums_existing.end(),
+                        enum_val) == enums_existing.end()) {
+                    extend_values.push_back(enum_val);
+                }
+            }
+
+            if (extend_values.size() != 0) {
+                ArraySchemaEvolution se(ctx);
+                se.extend_enumeration(enmr.extend(extend_values));
+                se.array_evolve(uri_);
+            }
+            break;
+        }
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                tiledb::impl::type_to_str(enmr.type())));
     }
-    se.array_evolve(uri_);
 }
 
 void SOMAArray::set_column_data(
