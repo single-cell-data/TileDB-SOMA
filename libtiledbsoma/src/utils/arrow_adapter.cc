@@ -51,7 +51,7 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     }
     if (schema->format != nullptr) {
         LOG_TRACE("[ArrowAdapter] release_schema schema->format");
-        //free((void*)schema->format);
+        free((void*)schema->format);
         schema->format = nullptr;
     }
     if (schema->metadata != nullptr) {
