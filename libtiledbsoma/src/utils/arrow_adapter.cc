@@ -204,6 +204,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
                 dict->format = strdup(
                     ArrowAdapter::to_arrow_format(enmr.type(), false).data());
             }
+
             dict->name = strdup(enmr.name().c_str());
             dict->metadata = nullptr;
             dict->flags = 0;
@@ -311,7 +312,6 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
             fmt::format("ArrowAdapter: Arrow Error {} ", msg));
 }
 
-
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
 ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
@@ -337,8 +337,8 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     schema->release = &release_schema;
     schema->private_data = nullptr;
 
-    int n_buffers = column->is_var() ? 3 : // this will be 3 for char vecs
-                                       2;  // and 2 for enumerations
+    // this will be 3 for char vecs and 2 for enumerations
+    int n_buffers = column->is_var() ? 3 : 2;
 
     // Create an ArrowBuffer to manage the lifetime of `column`.
     // - `arrow_buffer` holds shared_ptr to `column`, increments
@@ -415,12 +415,16 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         // TODO: Put in ColumnBuffer
         size_t n = array->length;
         std::vector<int64_t> indata(n);
-        std::memcpy(indata.data(), column->data<double>().data(), sizeof(int64_t) * n);
+        std::memcpy(
+            indata.data(), column->data<double>().data(), sizeof(int64_t) * n);
         std::vector<int32_t> vec(n);
-        for (size_t i=0; i<n; i++) {
+        for (size_t i = 0; i < n; i++) {
             vec[i] = static_cast<int32_t>(indata[i]);
         }
-        std::memcpy((void*)array->buffers[n_buffers - 1], vec.data(), sizeof(int32_t) * n);
+        std::memcpy(
+            (void*)array->buffers[n_buffers - 1],
+            vec.data(),
+            sizeof(int32_t) * n);
     }
 
     if (column->has_enumeration()) {
@@ -457,8 +461,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         dict_arr->release = &release_array;
         const int n_buf = strcmp(dict_sch->format, "u") == 0 ? 3 : 2;
         dict_arr->private_data = nullptr;
-        dict_arr->buffers = (const void**)malloc(
-            sizeof(void*) * n_buf);
+        dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buf);
         dict_arr->buffers[0] = nullptr;  // validity: none here
 
         // TODO string types currently get the data and offset
@@ -579,11 +582,11 @@ enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
     else if (sv == "b")
         return NANOARROW_TYPE_BOOL;
     else if (sv == "tss:")
-        return NANOARROW_TYPE_INT64;      // NB time resolution set indepedently
+        return NANOARROW_TYPE_INT64;  // NB time resolution set indepedently
     else if (sv == "tsm:")
-        return NANOARROW_TYPE_INT64;      // NB time resolution set indepedently
+        return NANOARROW_TYPE_INT64;  // NB time resolution set indepedently
     else if (sv == "tdD")
-        return NANOARROW_TYPE_DOUBLE;     // R Date: fractional days since epoch
+        return NANOARROW_TYPE_DOUBLE;  // R Date: fractional days since epoch
     else if (sv == "z")
         return NANOARROW_TYPE_BINARY;
     else if (sv == "Z")
