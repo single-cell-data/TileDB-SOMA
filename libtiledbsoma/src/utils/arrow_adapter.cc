@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2022-2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -131,9 +131,8 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     }
 
     if (array->dictionary != nullptr) {
-        // -- TODO: This can lead to segfault on some data sets and could be
-        // cause
-        //          by how we fill arrow data structures.  This should pass.
+        // TODO: This can lead to segfault on some data sets, could be caused
+        //       by how we fill arrow data structures.  This should pass.
         // if (array->dictionary->release != nullptr) {
         //    LOG_TRACE("[ArrowAdapter] release_array array->dict release");
         //    release_array(array->dictionary);
@@ -158,15 +157,14 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     arrow_schema->n_children = ndim + nattr;
     arrow_schema->release = &ArrowAdapter::release_schema;
     arrow_schema->children = (ArrowSchema**)malloc(
-        arrow_schema->n_children *
-        sizeof(ArrowSchema*));  // new ArrowSchema*[arrow_schema->n_children];
+        arrow_schema->n_children * sizeof(ArrowSchema*));
 
     ArrowSchema* child = nullptr;
 
     for (uint32_t i = 0; i < ndim; ++i) {
         auto dim = tiledb_schema.domain().dimension(i);
         child = arrow_schema->children[i] = (ArrowSchema*)malloc(
-            sizeof(ArrowSchema));  // new ArrowSchema;
+            sizeof(ArrowSchema));
         child->format = strdup(
             ArrowAdapter::to_arrow_format(dim.type()).data());
         child->name = strdup(dim.name().c_str());
@@ -181,7 +179,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     for (uint32_t i = 0; i < nattr; ++i) {
         auto attr = tiledb_schema.attribute(i);
         child = arrow_schema->children[ndim + i] = (ArrowSchema*)malloc(
-            sizeof(ArrowSchema));  // new ArrowSchema;
+            sizeof(ArrowSchema));
         child->format = strdup(
             ArrowAdapter::to_arrow_format(attr.type()).data());
         child->name = strdup(attr.name().c_str());
@@ -238,7 +236,7 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
 
             // Allocate a single byte to copy the bits into
             size_t sz = 1;
-            dst = malloc(sz);  // new const void*[sz];
+            dst = malloc(sz);
             std::memcpy((void*)dst, &src, sz);
 
             return std::pair(dst, data.size());
@@ -313,6 +311,7 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
             fmt::format("ArrowAdapter: Arrow Error {} ", msg));
 }
 
+
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
 ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
@@ -338,27 +337,24 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     schema->release = &release_schema;
     schema->private_data = nullptr;
 
-    int n_buffers = column->is_var() ? 3 :
-                                       2;  // this will be 2 for enumerations
-                                           // and 3 for char vectors
+    int n_buffers = column->is_var() ? 3 : // this will be 3 for char vecs
+                                       2;  // and 2 for enumerations
 
     // Create an ArrowBuffer to manage the lifetime of `column`.
-    // - `arrow_buffer` holds a shared_ptr to `column`, which
-    // increments
+    // - `arrow_buffer` holds shared_ptr to `column`, increments
     //   the use count and keeps the ColumnBuffer data alive.
     // - When the arrow array is released, `array->release()` is
-    // called with
-    //   `arrow_buffer` in `private_data`. `arrow_buffer` is
-    //   deleted, which decrements the the `column` use count. When
-    //   the `column` use count reaches 0, the ColumnBuffer data
-    //   will be deleted.
+    //   called with `arrow_buffer` in `private_data`.
+    //   `arrow_buffer` is deleted, which decrements the the
+    //   `column` use count. When the `column` use count reaches
+    //   0, the ColumnBuffer data will be deleted.
     auto arrow_buffer = new ArrowBuffer(column);
 
     exitIfError(ArrowArrayInitFromType(arr, natype), "Bad array init");
     exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
     array->length = column->size();
 
-    LOG_DEBUG(fmt::format(
+    LOG_TRACE(fmt::format(
         "[ArrowAdapter] column type {} name {} nbuf {} {} nullable {}",
         to_arrow_format(column->type()).data(),
         column->name().data(),
@@ -391,8 +387,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     }
 
     if (column->is_nullable()) {
-        schema->flags |= ARROW_FLAG_NULLABLE;  // turns out it is also set by
-                                               // default
+        schema->flags |= ARROW_FLAG_NULLABLE;  // it is also set by default
 
         // Count nulls
         for (auto v : column->validity()) {
@@ -403,8 +398,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         column->validity_to_bitmap();
         array->buffers[0] = column->validity().data();
     } else {
-        schema->flags = 0;  // because ArrowSchemaInitFromType leads to NULLABLE
-                            // set
+        schema->flags = 0;  // as ArrowSchemaInitFromType leads to NULLABLE set
     }
 
     if (column->is_ordered()) {
@@ -414,6 +408,19 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     // Workaround to cast TILEDB_BOOL from uint8 to 1-bit Arrow boolean
     if (column->type() == TILEDB_BOOL) {
         column->data_to_bitmap();
+    }
+
+    // Workaround for date
+    if (column->type() == TILEDB_DATETIME_DAY) {
+        // TODO: Put in ColumnBuffer
+        size_t n = array->length;
+        std::vector<int64_t> indata(n);
+        std::memcpy(indata.data(), column->data<double>().data(), sizeof(int64_t) * n);
+        std::vector<int32_t> vec(n);
+        for (size_t i=0; i<n; i++) {
+            vec[i] = static_cast<int32_t>(indata[i]);
+        }
+        std::memcpy((void*)array->buffers[n_buffers - 1], vec.data(), sizeof(int32_t) * n);
     }
 
     if (column->has_enumeration()) {
@@ -449,6 +456,10 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
             "Bad array children alloc");
         dict_arr->release = &release_array;
         const int n_buf = strcmp(dict_sch->format, "u") == 0 ? 3 : 2;
+        dict_arr->private_data = nullptr;
+        dict_arr->buffers = (const void**)malloc(
+            sizeof(void*) * n_buf);
+        dict_arr->buffers[0] = nullptr;  // validity: none here
 
         // TODO string types currently get the data and offset
         // buffers from ColumnBuffer::enum_offsets and
@@ -521,6 +532,8 @@ std::string_view ArrowAdapter::to_arrow_format(
             return "ttu";
         case TILEDB_TIME_NS:
             return "ttn";
+        case TILEDB_DATETIME_DAY:
+            return "tdD";
         case TILEDB_DATETIME_SEC:
             return "tss:";
         case TILEDB_DATETIME_MS:
@@ -567,6 +580,10 @@ enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
         return NANOARROW_TYPE_BOOL;
     else if (sv == "tss:")
         return NANOARROW_TYPE_INT64;      // NB time resolution set indepedently
+    else if (sv == "tsm:")
+        return NANOARROW_TYPE_INT64;      // NB time resolution set indepedently
+    else if (sv == "tdD")
+        return NANOARROW_TYPE_DOUBLE;     // R Date: fractional days since epoch
     else if (sv == "z")
         return NANOARROW_TYPE_BINARY;
     else if (sv == "Z")
