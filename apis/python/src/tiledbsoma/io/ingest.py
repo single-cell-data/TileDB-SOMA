@@ -96,8 +96,7 @@ def add_metadata(
     obj: TileDBObject[Any], additional_metadata: AdditionalMetadata
 ) -> None:
     if additional_metadata:
-        if obj.closed:
-            raise SOMAError("cannot add metadata to a closed object")
+        obj.verify_open_for_writing()
         obj.metadata.update(additional_metadata)
 
 
@@ -825,8 +824,7 @@ def append_obs(
     Lifecycle:
         Experimental.
     """
-    if exp.closed or exp.mode != "w":
-        raise SOMAError(f"Experiment must be open for write: {exp.uri}")
+    exp.verify_open_for_writing()
 
     # Map the user-level ingest mode to a set of implementation-level boolean flags.
     # See comments in from_anndata.
@@ -884,8 +882,7 @@ def append_var(
     Lifecycle:
         Experimental.
     """
-    if exp.closed or exp.mode != "w":
-        raise SOMAError(f"Experiment must be open for write: {exp.uri}")
+    exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
         raise SOMAError(
             f"Experiment {exp.uri} has no measurement named {measurement_name}"
@@ -961,8 +958,7 @@ def append_X(
     Lifecycle:
         Experimental.
     """
-    if exp.closed or exp.mode != "w":
-        raise SOMAError(f"Experiment must be open for write: {exp.uri}")
+    exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
         raise SOMAError(
             f"Experiment {exp.uri} has no measurement named {measurement_name}"
@@ -1007,8 +1003,7 @@ def _maybe_set(
     *,
     use_relative_uri: Optional[bool],
 ) -> None:
-    if coll.closed or coll.mode != "w":
-        raise SOMAError(f"Collection must be open for write: {coll.uri}")
+    coll.verify_open_for_writing()
     try:
         coll.set(key, value, use_relative_uri=use_relative_uri)
     except SOMAError:
@@ -1558,8 +1553,7 @@ def _update_dataframe(
     new_data = (
         new_data.copy()
     )  # Further operations are in-place for parsimony of memory usage
-    if sdf.closed or sdf.mode != "w":
-        raise SOMAError(f"DataFrame must be open for write: {sdf.uri}")
+    sdf.verify_open_for_writing()
     old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)
     new_sig = signatures._string_dict_from_pandas_dataframe(
         new_data, default_index_name
@@ -1756,8 +1750,7 @@ def add_X_layer(
     Lifecycle:
         Experimental.
     """
-    if exp.closed or exp.mode != "w":
-        raise SOMAError(f"Experiment must be open for write: {exp.uri}")
+    exp.verify_open_for_writing()
     add_matrix_to_collection(
         exp,
         measurement_name,
