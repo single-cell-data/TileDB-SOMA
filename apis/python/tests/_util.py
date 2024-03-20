@@ -12,6 +12,6 @@ def raises_no_typeguard(exc: Type[Exception], *args: Any, **kwargs: Any):
     Otherwise, most errors end up manifesting as ``TypeCheckError``s, during tests (thanks to
     ``typeguard``'s import hook).
     """
-    with suppress_type_checks:
+    with suppress_type_checks():
         with pytest.raises(exc, *args, **kwargs):
             yield

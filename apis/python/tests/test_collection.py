@@ -7,9 +7,11 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
+from typeguard import suppress_type_checks
 from typing_extensions import Literal
 
 import tiledbsoma as soma
+from tests._util import raises_no_typeguard
 from tiledbsoma import _collection, _factory, _tiledb_object
 from tiledbsoma._exception import DoesNotExistError
 from tiledbsoma.options import SOMATileDBContext
@@ -385,14 +387,15 @@ def test_cascading_close(tmp_path: pathlib.Path):
     ],
 )
 def test_real_class(in_type, want):
-    assert _collection._real_class(in_type) is want
+    with suppress_type_checks():
+        assert _collection._real_class(in_type) is want
 
 
 @pytest.mark.parametrize(
     "in_type", (Union[int, str], Literal["bacon"], TypeVar("_T", bound=List))
 )
 def test_real_class_fail(in_type):
-    with pytest.raises(TypeError):
+    with raises_no_typeguard(TypeError):
         _collection._real_class(in_type)
 
 
