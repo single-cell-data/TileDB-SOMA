@@ -61,7 +61,7 @@ from .._funcs import typeguard_ignore
 from .._tdb_handles import RawHandle
 from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
-from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
+from .._types import INGEST_MODES, IngestMode, Metadatum, NPNDArray, Path
 from ..options import SOMATileDBContext
 from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
@@ -87,6 +87,18 @@ from ._util import read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
+
+
+AdditionalMetadata = Optional[Dict[str, Metadatum]]
+
+
+def add_metadata(
+    obj: TileDBObject[Any], additional_metadata: AdditionalMetadata
+) -> None:
+    if additional_metadata:
+        if obj.closed:
+            raise SOMAError("cannot add metadata to a closed object")
+        obj.metadata.update(additional_metadata)
 
 
 # ----------------------------------------------------------------
@@ -215,6 +227,7 @@ def from_h5ad(
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
     uns_keys: Optional[Sequence[str]] = None,
+    additional_metadata: AdditionalMetadata = None,
 ) -> str:
     """Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
 
@@ -332,6 +345,7 @@ def from_h5ad(
         X_kind=X_kind,
         registration_mapping=registration_mapping,
         uns_keys=uns_keys,
+        additional_metadata=additional_metadata,
     )
 
     # Close the input handle now that we're done processinig the file-backed
@@ -367,6 +381,7 @@ def from_anndata(
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
     uns_keys: Optional[Sequence[str]] = None,
+    additional_metadata: AdditionalMetadata = None,
 ) -> str:
     """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
 
@@ -459,6 +474,7 @@ def from_anndata(
     ingest_ctx: IngestCtx = dict(
         context=context,
         ingestion_params=ingestion_params,
+        additional_metadata=additional_metadata,
     )
 
     # Must be done first, to create the parent directory.
@@ -1007,6 +1023,7 @@ def _create_or_open_collection(
     *,
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
+    additional_metadata: AdditionalMetadata = None,
 ) -> Experiment:
     ...
 
@@ -1018,6 +1035,7 @@ def _create_or_open_collection(
     *,
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
+    additional_metadata: AdditionalMetadata = None,
 ) -> Measurement:
     ...
 
@@ -1029,6 +1047,7 @@ def _create_or_open_collection(
     *,
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
+    additional_metadata: AdditionalMetadata = None,
 ) -> Collection[_TDBO]:
     ...
 
@@ -1040,6 +1059,7 @@ def _create_or_open_collection(
     *,
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
+    additional_metadata: AdditionalMetadata = None,
 ) -> CollectionBase[_TDBO]:
     try:
         thing = cls.open(uri, "w", context=context)
@@ -1049,9 +1069,12 @@ def _create_or_open_collection(
         # It already exists. Are we resuming?
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{uri} already exists")
+        add_metadata(thing, additional_metadata)
         return thing
 
-    return cls.create(uri, context=context)
+    coll = cls.create(uri, context=context)
+    add_metadata(coll, additional_metadata)
+    return coll
 
 
 # Spellings compatible with 1.2.7:
@@ -1178,6 +1201,7 @@ def _write_dataframe(
     id_column_name: Optional[str],
     *,
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
     axis_mapping: AxisIDMapping,
@@ -1213,6 +1237,7 @@ def _write_dataframe(
         df_uri,
         id_column_name,
         ingestion_params=ingestion_params,
+        additional_metadata=additional_metadata,
         original_index_name=original_index_name,
         platform_config=platform_config,
         context=context,
@@ -1225,6 +1250,7 @@ def _write_dataframe_impl(
     id_column_name: Optional[str],
     *,
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
     original_index_name: Optional[str] = None,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
@@ -1273,6 +1299,7 @@ def _write_dataframe_impl(
             f"Wrote schema {soma_df.uri}",
             _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),
         )
+        add_metadata(soma_df, additional_metadata)
         return soma_df
 
     tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
@@ -1284,6 +1311,7 @@ def _write_dataframe_impl(
     soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(
         original_index_name
     )
+    add_metadata(soma_df, additional_metadata)
 
     logging.log_io(
         f"Wrote   {soma_df.uri}",
@@ -1326,6 +1354,7 @@ def _create_from_matrix(
     matrix: Union[Matrix, h5py.Dataset],
     *,
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
     axis_0_mapping: AxisIDMapping,
@@ -1380,6 +1409,7 @@ def _create_from_matrix(
             ),
             context=context,
             ingestion_params=ingestion_params,
+            additional_metadata=additional_metadata,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
         _write_matrix_to_sparseNDArray(
@@ -1390,6 +1420,7 @@ def _create_from_matrix(
             ),
             context=context,
             ingestion_params=ingestion_params,
+            additional_metadata=additional_metadata,
             axis_0_mapping=axis_0_mapping,
             axis_1_mapping=axis_1_mapping,
         )
@@ -1683,6 +1714,7 @@ def update_matrix(
             ),
             context=context,
             ingestion_params=ingestion_params,
+            additional_metadata=None,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
         _write_matrix_to_sparseNDArray(
@@ -1693,6 +1725,7 @@ def update_matrix(
             ),
             context=context,
             ingestion_params=ingestion_params,
+            additional_metadata=None,
             axis_0_mapping=AxisIDMapping.identity(new_data.shape[0]),
             axis_1_mapping=AxisIDMapping.identity(new_data.shape[1]),
         )
@@ -1807,8 +1840,11 @@ def _write_matrix_to_denseNDArray(
     tiledb_create_options: TileDBCreateOptions,
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
+
+    add_metadata(soma_ndarray, additional_metadata)
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
@@ -2197,6 +2233,7 @@ def _write_matrix_to_sparseNDArray(
     tiledb_create_options: TileDBCreateOptions,
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata,
     axis_0_mapping: AxisIDMapping,
     axis_1_mapping: AxisIDMapping,
 ) -> None:
@@ -2250,6 +2287,8 @@ def _write_matrix_to_sparseNDArray(
                 f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}"
             )
             return
+
+    add_metadata(soma_ndarray, additional_metadata)
 
     # Write all at once?
     if not tiledb_create_options.write_X_chunked:
@@ -2485,6 +2524,7 @@ def _maybe_ingest_uns(
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool],
     uns_keys: Optional[Sequence[str]] = None,
+    additional_metadata: AdditionalMetadata = None,
 ) -> None:
     # Don't try to ingest an empty uns.
     if not uns:
@@ -2498,6 +2538,7 @@ def _maybe_ingest_uns(
         ingestion_params=ingestion_params,
         use_relative_uri=use_relative_uri,
         uns_keys=uns_keys,
+        additional_metadata=additional_metadata,
     )
 
 
@@ -2512,12 +2553,14 @@ def _ingest_uns_dict(
     use_relative_uri: Optional[bool],
     uns_keys: Optional[Sequence[str]] = None,
     level: int = 0,
+    additional_metadata: AdditionalMetadata = None,
 ) -> None:
     with _create_or_open_collection(
         Collection,
         _util.uri_joinpath(parent.uri, parent_key),
         ingestion_params=ingestion_params,
         context=context,
+        additional_metadata=additional_metadata,
     ) as coll:
         _maybe_set(parent, parent_key, coll, use_relative_uri=use_relative_uri)
         coll.metadata[_TILEDBSOMA_TYPE] = "uns"
@@ -2531,6 +2574,7 @@ def _ingest_uns_dict(
                 platform_config=platform_config,
                 context=context,
                 ingestion_params=ingestion_params,
+                additional_metadata=additional_metadata,
                 use_relative_uri=use_relative_uri,
                 level=level + 1,
             )
@@ -2547,6 +2591,7 @@ def _ingest_uns_node(
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
     use_relative_uri: Optional[bool],
     level: int,
 ) -> None:
@@ -2569,6 +2614,7 @@ def _ingest_uns_node(
             platform_config=platform_config,
             context=context,
             ingestion_params=ingestion_params,
+            additional_metadata=additional_metadata,
             use_relative_uri=use_relative_uri,
             level=level + 1,
         )
@@ -2583,6 +2629,7 @@ def _ingest_uns_node(
             platform_config=platform_config,
             context=context,
             ingestion_params=ingestion_params,
+            additional_metadata=additional_metadata,
             axis_mapping=AxisIDMapping.identity(num_rows),
         ) as df:
             _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
@@ -2608,6 +2655,7 @@ def _ingest_uns_node(
                 context=context,
                 use_relative_uri=use_relative_uri,
                 ingestion_params=ingestion_params,
+                additional_metadata=additional_metadata,
             )
         else:
             _ingest_uns_ndarray(
@@ -2618,6 +2666,7 @@ def _ingest_uns_node(
                 context=context,
                 use_relative_uri=use_relative_uri,
                 ingestion_params=ingestion_params,
+                additional_metadata=additional_metadata,
             )
         return
 
@@ -2636,6 +2685,7 @@ def _ingest_uns_string_array(
     *,
     use_relative_uri: Optional[bool],
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
 ) -> None:
     """
     Ingest an uns string array. In the SOMA data model, we have NDArrays _of number only_ ...
@@ -2666,6 +2716,7 @@ def _ingest_uns_string_array(
         context=context,
         use_relative_uri=use_relative_uri,
         ingestion_params=ingestion_params,
+        additional_metadata=additional_metadata,
     )
 
 
@@ -2678,6 +2729,7 @@ def _ingest_uns_1d_string_array(
     *,
     use_relative_uri: Optional[bool],
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
 ) -> None:
     """Helper for ``_ingest_uns_string_array``"""
     n = len(value)
@@ -2702,6 +2754,7 @@ def _ingest_uns_1d_string_array(
         ingestion_params=ingestion_params,
         platform_config=platform_config,
         context=context,
+        additional_metadata=additional_metadata,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
         # Since ND arrays in the SOMA data model are arrays _of number_,
@@ -2720,6 +2773,7 @@ def _ingest_uns_2d_string_array(
     *,
     use_relative_uri: Optional[bool],
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
 ) -> None:
     """Helper for ``_ingest_uns_string_array``. Even if the 2D array is 1xN or Nx1, we
     must nonetheless keep this as 2D rather than flattening to length-N 1D. That's because
@@ -2745,6 +2799,7 @@ def _ingest_uns_2d_string_array(
         ingestion_params=ingestion_params,
         platform_config=platform_config,
         context=context,
+        additional_metadata=additional_metadata,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
         # Since ND arrays in the SOMA data model are arrays _of number_,
@@ -2763,6 +2818,7 @@ def _ingest_uns_ndarray(
     *,
     use_relative_uri: Optional[bool],
     ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
 ) -> None:
     arr_uri = _util.uri_joinpath(coll.uri, key)
 
@@ -2814,6 +2870,7 @@ def _ingest_uns_ndarray(
             ),
             context=context,
             ingestion_params=ingestion_params,
+            additional_metadata=additional_metadata,
         )
 
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
