@@ -21,6 +21,7 @@ from typing import (
     Sequence,
     Tuple,
     Type,
+    TypedDict,
     TypeVar,
     Union,
     cast,
@@ -343,6 +344,12 @@ def from_h5ad(
     return uri
 
 
+class IngestCtx(TypedDict):
+    context: Optional[SOMATileDBContext]
+    ingestion_params: IngestionParams
+    additional_metadata: AdditionalMetadata
+
+
 # ----------------------------------------------------------------
 def from_anndata(
     experiment_uri: str,
@@ -449,10 +456,13 @@ def from_anndata(
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {experiment_uri}")
 
-    # Must be done first, to create the parent directory.
-    experiment = _create_or_open_collection(
-        Experiment, experiment_uri, ingestion_params=ingestion_params, context=context
+    ingest_ctx: IngestCtx = dict(
+        context=context,
+        ingestion_params=ingestion_params,
     )
+
+    # Must be done first, to create the parent directory.
+    experiment = _create_or_open_collection(Experiment, experiment_uri, **ingest_ctx)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
@@ -462,9 +472,8 @@ def from_anndata(
         conversions.decategoricalize_obs_or_var(anndata.obs),
         id_column_name=obs_id_name,
         platform_config=platform_config,
-        context=context,
-        ingestion_params=ingestion_params,
         axis_mapping=jidmaps.obs_axis,
+        **ingest_ctx,
     ) as obs:
         _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
@@ -481,8 +490,7 @@ def from_anndata(
     with _create_or_open_collection(
         Collection[Measurement],
         experiment_ms_uri,
-        ingestion_params=ingestion_params,
-        context=context,
+        **ingest_ctx,
     ) as ms:
         _maybe_set(experiment, "ms", ms, use_relative_uri=use_relative_uri)
 
@@ -492,8 +500,7 @@ def from_anndata(
         with _create_or_open_collection(
             Measurement,
             measurement_uri,
-            ingestion_params=ingestion_params,
-            context=context,
+            **ingest_ctx,
         ) as measurement:
             _maybe_set(
                 ms, measurement_name, measurement, use_relative_uri=use_relative_uri
@@ -505,10 +512,9 @@ def from_anndata(
                 measurement,
                 anndata.uns,
                 platform_config=platform_config,
-                context=context,
-                ingestion_params=ingestion_params,
                 use_relative_uri=use_relative_uri,
                 uns_keys=uns_keys,
+                **ingest_ctx,
             )
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -518,10 +524,9 @@ def from_anndata(
                 conversions.decategoricalize_obs_or_var(anndata.var),
                 id_column_name=var_id_name,
                 platform_config=platform_config,
-                context=context,
-                ingestion_params=ingestion_params,
                 # Layer existence is pre-checked in the registration phase
                 axis_mapping=jidmaps.var_axes[measurement_name],
+                **ingest_ctx,
             ) as var:
                 _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
 
@@ -532,8 +537,7 @@ def from_anndata(
             with _create_or_open_collection(
                 Collection,
                 measurement_X_uri,
-                ingestion_params=ingestion_params,
-                context=context,
+                **ingest_ctx,
             ) as x:
                 _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
 
@@ -557,11 +561,10 @@ def from_anndata(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, X_layer_name),
                         anndata.X,
-                        ingestion_params=ingestion_params,
                         platform_config=platform_config,
-                        context=context,
                         axis_0_mapping=jidmaps.obs_axis,
                         axis_1_mapping=jidmaps.var_axes[measurement_name],
+                        **ingest_ctx,
                     ) as data:
                         _maybe_set(
                             x, X_layer_name, data, use_relative_uri=use_relative_uri
@@ -572,11 +575,10 @@ def from_anndata(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, layer_name),
                         layer,
-                        ingestion_params=ingestion_params,
                         platform_config=platform_config,
-                        context=context,
                         axis_0_mapping=jidmaps.obs_axis,
                         axis_1_mapping=jidmaps.var_axes[measurement_name],
+                        **ingest_ctx,
                     ) as layer_data:
                         _maybe_set(
                             x, layer_name, layer_data, use_relative_uri=use_relative_uri
@@ -589,8 +591,7 @@ def from_anndata(
                     with _create_or_open_collection(
                         Collection,
                         obsm_uri,
-                        ingestion_params=ingestion_params,
-                        context=context,
+                        **ingest_ctx,
                     ) as obsm:
                         _maybe_set(
                             measurement, "obsm", obsm, use_relative_uri=use_relative_uri
@@ -606,11 +607,10 @@ def from_anndata(
                                 conversions.to_tiledb_supported_array_type(
                                     key, anndata.obsm[key]
                                 ),
-                                ingestion_params=ingestion_params,
                                 platform_config=platform_config,
-                                context=context,
                                 axis_0_mapping=jidmaps.obs_axis,
                                 axis_1_mapping=AxisIDMapping.identity(num_cols),
+                                **ingest_ctx,
                             ) as arr:
                                 _maybe_set(
                                     obsm, key, arr, use_relative_uri=use_relative_uri
@@ -623,8 +623,7 @@ def from_anndata(
                     with _create_or_open_collection(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varm"),
-                        ingestion_params=ingestion_params,
-                        context=context,
+                        **ingest_ctx,
                     ) as varm:
                         _maybe_set(
                             measurement, "varm", varm, use_relative_uri=use_relative_uri
@@ -640,11 +639,10 @@ def from_anndata(
                                 conversions.to_tiledb_supported_array_type(
                                     key, anndata.varm[key]
                                 ),
-                                ingestion_params=ingestion_params,
                                 platform_config=platform_config,
-                                context=context,
                                 axis_0_mapping=jidmaps.var_axes[measurement_name],
                                 axis_1_mapping=AxisIDMapping.identity(num_cols),
+                                **ingest_ctx,
                             ) as darr:
                                 _maybe_set(
                                     varm,
@@ -658,8 +656,7 @@ def from_anndata(
                     with _create_or_open_collection(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "obsp"),
-                        ingestion_params=ingestion_params,
-                        context=context,
+                        **ingest_ctx,
                     ) as obsp:
                         _maybe_set(
                             measurement, "obsp", obsp, use_relative_uri=use_relative_uri
@@ -671,11 +668,10 @@ def from_anndata(
                                 conversions.to_tiledb_supported_array_type(
                                     key, anndata.obsp[key]
                                 ),
-                                ingestion_params=ingestion_params,
                                 platform_config=platform_config,
-                                context=context,
                                 axis_0_mapping=jidmaps.obs_axis,
                                 axis_1_mapping=jidmaps.obs_axis,
+                                **ingest_ctx,
                             ) as sarr:
                                 _maybe_set(
                                     obsp,
@@ -689,8 +685,7 @@ def from_anndata(
                     with _create_or_open_collection(
                         Collection,
                         _util.uri_joinpath(measurement.uri, "varp"),
-                        ingestion_params=ingestion_params,
-                        context=context,
+                        **ingest_ctx,
                     ) as varp:
                         _maybe_set(
                             measurement, "varp", varp, use_relative_uri=use_relative_uri
@@ -702,11 +697,10 @@ def from_anndata(
                                 conversions.to_tiledb_supported_array_type(
                                     key, anndata.varp[key]
                                 ),
-                                ingestion_params=ingestion_params,
                                 platform_config=platform_config,
-                                context=context,
                                 axis_0_mapping=jidmaps.var_axes[measurement_name],
                                 axis_1_mapping=jidmaps.var_axes[measurement_name],
+                                **ingest_ctx,
                             ) as sarr:
                                 _maybe_set(
                                     varp,
@@ -722,8 +716,7 @@ def from_anndata(
                     with _create_or_open_collection(
                         Measurement,
                         raw_uri,
-                        ingestion_params=ingestion_params,
-                        context=context,
+                        **ingest_ctx,
                     ) as raw_measurement:
                         _maybe_set(
                             ms,
@@ -736,10 +729,9 @@ def from_anndata(
                             _util.uri_joinpath(raw_uri, "var"),
                             conversions.decategoricalize_obs_or_var(anndata.raw.var),
                             id_column_name=var_id_name,
-                            ingestion_params=ingestion_params,
                             platform_config=platform_config,
-                            context=context,
                             axis_mapping=jidmaps.var_axes["raw"],
+                            **ingest_ctx,
                         ) as var:
                             _maybe_set(
                                 raw_measurement,
@@ -752,8 +744,7 @@ def from_anndata(
                         with _create_or_open_collection(
                             Collection,
                             raw_X_uri,
-                            ingestion_params=ingestion_params,
-                            context=context,
+                            **ingest_ctx,
                         ) as rm_x:
                             _maybe_set(
                                 raw_measurement,
@@ -766,11 +757,10 @@ def from_anndata(
                                 SparseNDArray,
                                 _util.uri_joinpath(raw_X_uri, raw_X_layer_name),
                                 anndata.raw.X,
-                                ingestion_params=ingestion_params,
                                 platform_config=platform_config,
-                                context=context,
                                 axis_0_mapping=jidmaps.obs_axis,
                                 axis_1_mapping=jidmaps.var_axes["raw"],
+                                **ingest_ctx,
                             ) as rm_x_data:
                                 _maybe_set(
                                     rm_x,
