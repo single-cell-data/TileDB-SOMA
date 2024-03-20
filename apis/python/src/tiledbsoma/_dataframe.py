@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -29,8 +29,8 @@ from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
-# TODO: in Python ≥3.10, this can be `Tuple[Any, Any] | List[Any]`. In Python <3.10 it raises `TypeError: unsupported operand type(s) for |: '_GenericAlias' and '_GenericAlias'`
-Domain = Sequence[Optional[Sequence[Any]]]
+AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
+Domain = Sequence[AxisDomain]
 
 
 class DataFrame(TileDBArray, somacore.DataFrame):
@@ -721,18 +721,7 @@ def _build_tiledb_schema(
             )
 
     dims = []
-    for index_column_name, _slot_domain in zip(index_column_names, domain):
-        # TODO: this can be cleaned up a bit in Python ≥3.10 (see note on ``Domain`` type above)
-        if _slot_domain is not None:
-            if not isinstance(_slot_domain, tuple):
-                if len(_slot_domain) != 2:
-                    raise ValueError(
-                        f"Domain slots must be tuples or lists of length 2; received {len(_slot_domain)}-list {_slot_domain}"
-                    )
-            slot_domain = _slot_domain[0], _slot_domain[1]
-        else:
-            slot_domain = None
-
+    for index_column_name, slot_domain in zip(index_column_names, domain):
         pa_type = schema.field(index_column_name).type
         dtype = _arrow_types.tiledb_type_from_arrow_type(
             pa_type, is_indexed_column=True
@@ -828,7 +817,7 @@ def _build_tiledb_schema(
 
 
 def _fill_out_slot_domain(
-    slot_domain: Optional[Tuple[Any, Any]],
+    slot_domain: AxisDomain,
     index_column_name: str,
     pa_type: pa.DataType,
     dtype: Any,
@@ -864,7 +853,11 @@ def _fill_out_slot_domain(
                 raise ValueError(
                     f"soma_joinid indices cannot be negative; got upper bound {hi}"
                 )
-
+        if len(slot_domain) != 2:
+            raise ValueError(
+                f"domain must be a two-tuple; got {len(slot_domain)} elements"
+            )
+        slot_domain = slot_domain[0], slot_domain[1]
     elif isinstance(dtype, str):
         slot_domain = None, None
     elif np.issubdtype(dtype, NPInteger):

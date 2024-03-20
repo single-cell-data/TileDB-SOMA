@@ -152,7 +152,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     @classmethod
     def _validate_args(
         cls,
-        shape: Union[NTuple, list[int]],
+        shape: Union[NTuple, Sequence[int]],
         axis: Union[int, Sequence[int]],
         size: Optional[Union[int, Sequence[int]]] = None,
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
@@ -229,7 +229,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         """Private"""
         return EagerIterator(x, pool=_pool) if self.eager else x
 
-    def _table_reader(self) -> Generator[BlockwiseTableReadIterResult, None, None]:
+    def _table_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
         """Private. Blockwise table reader. Helper function for sub-class use"""
         kwargs: Dict[str, object] = {"result_order": self.sr.result_order}
         for coord_chunk in _coords_strider(

@@ -10,7 +10,7 @@ from scipy import sparse
 from somacore import options
 
 import tiledbsoma as soma
-from tests._util import raises
+from tests._util import raises_no_typeguard
 from tiledbsoma import SOMATileDBContext, _factory
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
@@ -511,7 +511,7 @@ def test_error_corners(soma_experiment: soma.Experiment):
     # Illegal layer name type
     for lyr_name in [True, 3, 99.3]:
         with soma_experiment.axis_query("RNA") as query:
-            with raises(KeyError):
+            with raises_no_typeguard(KeyError):
                 next(query.X(lyr_name))
             with pytest.raises(ValueError):
                 next(query.obsp(lyr_name))

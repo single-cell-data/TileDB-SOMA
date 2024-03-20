@@ -51,7 +51,7 @@ from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
-_TDBO = TypeVar("_TDBO", bound=AnyTileDBObject)
+_TDBO = TypeVar("_TDBO", bound=TileDBObject)  # type: ignore[type-arg]
 _Coll = TypeVar("_Coll", bound="CollectionBase[AnyTileDBObject]")
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 

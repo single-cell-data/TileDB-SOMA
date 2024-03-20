@@ -354,8 +354,6 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
             timestamp=(0, timestamp),
         )
 
-    # Covariant types should normally not be in parameters, but this is for
-    # internal use only so it's OK.
     def _do_initial_reads(self, reader: RawHandle) -> None:
         """Final setup step before returning the Handle.
 

@@ -2,7 +2,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-from tests._util import raises
+from tests._util import raises_no_typeguard
 
 # Checking that objects _do_ exist is already done (thoroughly) in other tests. Here
 # we primarily focus on the negative cases.
@@ -42,7 +42,7 @@ def test_tiledbobject_exists_nonexistent_path(uri, somaclass):
     ],
 )
 def test_tiledbobject_exists_invalid_uri_type(uri, somaclass):
-    with raises(TypeError):
+    with raises_no_typeguard(TypeError):
         somaclass.exists(uri)
 
 
