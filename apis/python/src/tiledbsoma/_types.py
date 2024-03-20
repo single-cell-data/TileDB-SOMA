@@ -56,3 +56,6 @@ ArrowReadResult = Union[
 Slice = types.Slice
 is_nonstringy_sequence = types.is_nonstringy_sequence
 is_slice_of = types.is_slice_of
+
+Metadatum = Union[bytes, float, int, str]
+METADATA_TYPES = (bytes, float, int, str)
