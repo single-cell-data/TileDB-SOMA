@@ -2,11 +2,11 @@
 # Copyright (c) 2021-2024 TileDB, Inc.
 #
 # Licensed under the MIT License.
-
+from contextlib import contextmanager
 from typing import (
     ContextManager,
+    Iterator,
     Optional,
-    Tuple,
     Union,
 )
 from unittest import mock
@@ -18,22 +18,20 @@ from anndata._core import file_backing
 from .._types import Path
 
 
+@contextmanager
 def read_h5ad(
     input_path: Path, *, mode: str = "r", ctx: Optional[tiledb.Ctx] = None
-) -> Tuple[tiledb.vfs.FileIO, ad.AnnData]:
+) -> Iterator[ad.AnnData]:
     """
-    This lets us ingest H5AD with "r" (backed mode) from S3 URIs.  The caller must close the
-    returned handle after processing the returned backed AnnData object.
+    This lets us ingest H5AD with "r" (backed mode) from S3 URIs.
     """
-
-    # Ideally we'd do a with-open-as. However, since we're returning an AnnData
-    # object in backed mode, everything the caller does will have to be done
-    # with a still-open handle. Therefore, we need to return the backed
-    # AnnData object _and_ the open handle.
     input_handle = tiledb.VFS(ctx=ctx).open(input_path)
-    with _hack_patch_anndata():
-        anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)
-    return (input_handle, anndata)
+    try:
+        with _hack_patch_anndata():
+            anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)
+            yield anndata
+    finally:
+        input_handle.close()
 
 
 # This trick lets us ingest H5AD with "r" (backed mode) from S3 URIs.  While h5ad
