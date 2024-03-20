@@ -367,8 +367,16 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     column->data_to_bitmap();
   }
 
+  // Workaround for datetime
+  if (column->type() == TILEDB_DATETIME_MS || column->type() == TILEDB_DATETIME_SEC) {
+    free((void*)schema->format);       // free the 'storage' format
+    schema->format = strdup(to_arrow_format(column->type()).data());
+  }
+
   // Workaround for date
   if (column->type() == TILEDB_DATETIME_DAY) {
+    free((void*)schema->format);       // free the 'storage' format
+    schema->format = strdup(to_arrow_format(column->type()).data());
     // TODO: Put in ColumnBuffer
     size_t n = array->length;
     std::vector<int64_t> indata(n);
@@ -383,9 +391,8 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
   }
 
   if (column->has_enumeration()) {
-    auto dict_sch =
-        (ArrowSchema *)malloc(sizeof(ArrowSchema)); // new ArrowSchema;
-    auto dict_arr = (ArrowArray *)malloc(sizeof(ArrowArray)); // new ArrowArray;
+    auto dict_sch = (ArrowSchema *)malloc(sizeof(ArrowSchema));
+    auto dict_arr = (ArrowArray *)malloc(sizeof(ArrowArray));
 
     auto enmr = column->get_enumeration_info();
     auto dcoltype = to_arrow_format(enmr->type(), false).data();
