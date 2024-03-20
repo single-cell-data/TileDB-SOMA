@@ -10,6 +10,7 @@ from typing_extensions import Self
 import tiledbsoma
 import tiledbsoma.logging
 from tiledbsoma._arrow_types import df_to_arrow
+from tiledbsoma.io._util import read_h5ad  # Allow us to read over S3 in backed mode
 from tiledbsoma.options import SOMATileDBContext
 
 _EQUIVALENCES = {
@@ -198,8 +199,10 @@ class Signature:
         """
         See ``from_anndata``.
         """
-        adata = ad.read_h5ad(h5ad_file_name, "r")
-        return cls.from_anndata(adata, default_X_layer_name=default_X_layer_name)
+        handle, adata = read_h5ad(h5ad_file_name, mode="r")
+        retval = cls.from_anndata(adata, default_X_layer_name=default_X_layer_name)
+        handle.close()
+        return retval
 
     @classmethod
     def from_soma_experiment(
