@@ -8,6 +8,7 @@ from typing_extensions import Self
 
 import tiledbsoma
 import tiledbsoma.logging
+from tiledbsoma.io._util import read_h5ad  # Allow us to read over S3 in backed mode
 from tiledbsoma.options import SOMATileDBContext
 
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
@@ -187,13 +188,15 @@ class ExperimentAmbientLabelMapping:
         experiment, not in append mode, but allowing us to still have the bulk of the ingestor code
         to be non-duplicated between non-append mode and append mode.
         """
-        adata = ad.read_h5ad(h5ad_file_name, "r")
-        return cls.from_isolated_anndata(
+        handle, adata = read_h5ad(h5ad_file_name, mode="r")
+        retval = cls.from_isolated_anndata(
             adata,
             measurement_name=measurement_name,
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
         )
+        handle.close()
+        return retval
 
     @classmethod
     def from_isolated_soma_experiment(
@@ -421,9 +424,8 @@ class ExperimentAmbientLabelMapping:
         """Extends registration data to one more H5AD input file."""
         tiledbsoma.logging.logger.info(f"Registration: registering {h5ad_file_name}.")
 
-        adata = ad.read_h5ad(h5ad_file_name, "r")
-
-        return cls.from_anndata_append_on_experiment(
+        handle, adata = read_h5ad(h5ad_file_name, mode="r")
+        retval = cls.from_anndata_append_on_experiment(
             adata,
             previous,
             measurement_name=measurement_name,
@@ -431,6 +433,8 @@ class ExperimentAmbientLabelMapping:
             var_field_name=var_field_name,
             append_obsm_varm=append_obsm_varm,
         )
+        handle.close()
+        return retval
 
     @classmethod
     def from_h5ad_appends_on_experiment(
