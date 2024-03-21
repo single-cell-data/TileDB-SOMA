@@ -109,47 +109,15 @@ class IngestionParams:
         ingest_mode: _IngestMode,
         label_mapping: Optional[ExperimentAmbientLabelMapping],
     ) -> None:
-        if ingest_mode == "schema_only":
-            self.write_schema_no_data = True
-            self.error_if_already_exists = True
-            self.skip_existing_nonempty_domain = False
-            self.appending = False
-
-        elif ingest_mode == "write":
-            if label_mapping is None:
-                self.write_schema_no_data = False
-                self.error_if_already_exists = True
-                self.skip_existing_nonempty_domain = False
-                self.appending = False
-            else:
-                # append mode, but, the user supplying non-null registration information suffices
-                # for us to understand "append"
-                self.write_schema_no_data = False
-                self.error_if_already_exists = False
-                self.skip_existing_nonempty_domain = False
-                self.appending = True
-
-        elif ingest_mode == "resume":
-            if label_mapping is None:
-                self.write_schema_no_data = False
-                self.error_if_already_exists = False
-                self.skip_existing_nonempty_domain = True
-                self.appending = False
-            else:
-                # resume-append mode, but, the user supplying non-null registration information
-                # suffices for us to understand "resume-append"
-                self.write_schema_no_data = False
-                self.error_if_already_exists = False
-                self.skip_existing_nonempty_domain = True
-                self.appending = True
-
-        elif ingest_mode == "update":
-            self.write_schema_no_data = False
-            self.error_if_already_exists = False
-            self.skip_existing_nonempty_domain = False
-            self.appending = False
-
-        else:
+        self.write_schema_no_data = ingest_mode == "schema_only"
+        self.error_if_already_exists = ingest_mode == "schema_only" or (
+            ingest_mode == "write" and label_mapping is None
+        )
+        self.skip_existing_nonempty_domain = ingest_mode == "resume"
+        self.appending = (
+            ingest_mode in ("write", "resume") and label_mapping is not None
+        )
+        if ingest_mode not in _INGEST_MODES:
             raise SOMAError(
                 f'expected ingest_mode to be one of {_INGEST_MODES}; got "{ingest_mode}"'
             )
