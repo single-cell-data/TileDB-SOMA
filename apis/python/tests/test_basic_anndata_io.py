@@ -21,37 +21,20 @@ from tiledbsoma._util import (
     anndata_dataframe_unmodified_nan_safe,
 )
 
-HERE = Path(__file__).parent
-
-
-@pytest.fixture
-def h5ad_file(request):
-    # pbmc-small is faster for automated unit-test / CI runs.
-    input_path = HERE.parent / "testdata/pbmc-small.h5ad"
-    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
-    return input_path
-
-
-@pytest.fixture
-def h5ad_file_extended(request):
-    # This has more component arrays in it
-    input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
-    return input_path
+from ._util import TESTDATA
 
 
 @pytest.fixture
 def h5ad_file_with_obsm_holes(request):
     # This has zeroes in an obsm matrix so nnz is not num_rows * num_cols
-    input_path = HERE.parent / "testdata/pbmc3k-with-obsm-zero.h5ad"
-    return input_path
+    return TESTDATA / "pbmc3k-with-obsm-zero.h5ad"
 
 
 @pytest.fixture
 def h5ad_file_uns_string_arrays(request):
     # This has uns["louvain_colors"] with dtype.char == "U".
     # It also has uns["more_colors"] in the form '[[...]]', as often occurs in the wild.
-    input_path = HERE.parent / "testdata/pbmc3k.h5ad"
-    return input_path
+    return TESTDATA / "pbmc3k.h5ad"
 
 
 @pytest.fixture
@@ -68,15 +51,13 @@ def h5ad_file_categorical_int_nan(request):
     #   s[0] = math.nan
     #   adata.obs["categ_int_nan"] = s
     #   adata.write_h5ad("categorical_int_nan.h5ad")
-    input_path = HERE.parent / "testdata/categorical_int_nan.h5ad"
-    return input_path
+    return TESTDATA / "categorical_int_nan.h5ad"
 
 
 @pytest.fixture
 def h5ad_file_X_empty(request):
     """adata.X is a zero-cell sparse matrix"""
-    input_path = HERE.parent / "testdata/x-empty.h5ad"
-    return input_path
+    return TESTDATA / "x-empty.h5ad"
 
 
 @pytest.fixture
@@ -85,13 +66,7 @@ def h5ad_file_X_none(request):
     adata.X has Python value None if read in non-backed mode; if read in backed
     mode, adata.X is not present as an attribute of adata.
     """
-    input_path = HERE.parent / "testdata/x-none.h5ad"
-    return input_path
-
-
-@pytest.fixture
-def adata(h5ad_file):
-    return anndata.read_h5ad(h5ad_file)
+    return TESTDATA / "x-none.h5ad"
 
 
 @pytest.mark.parametrize(
@@ -305,9 +280,9 @@ def _get_fragment_count(array_uri):
 @pytest.mark.parametrize(
     "resume_mode_h5ad_file",
     [
-        HERE.parent / "testdata/pbmc-small-x-dense.h5ad",
-        HERE.parent / "testdata/pbmc-small-x-csr.h5ad",
-        HERE.parent / "testdata/pbmc-small-x-csc.h5ad",
+        TESTDATA / "pbmc-small-x-dense.h5ad",
+        TESTDATA / "pbmc-small-x-csr.h5ad",
+        TESTDATA / "pbmc-small-x-csc.h5ad",
     ],
 )
 def test_resume_mode(adata, resume_mode_h5ad_file):
@@ -417,19 +392,20 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
 
 
 @pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])
-def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended, ingest_uns_keys):
+def test_ingest_uns(
+    tmp_path: pathlib.Path, h5ad_file_extended, adata_extended, ingest_uns_keys
+):
     tmp_uri = tmp_path.as_uri()
-    original = anndata.read(h5ad_file_extended)
-    adata = anndata.read(h5ad_file_extended)
+    adata_extended2 = anndata.read(h5ad_file_extended)
     uri = tiledbsoma.io.from_anndata(
         tmp_uri,
-        adata,
+        adata_extended2,
         measurement_name="hello",
         uns_keys=ingest_uns_keys,
     )
 
-    assert anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert anndata_dataframe_unmodified(original.var, adata.var)
+    assert anndata_dataframe_unmodified(adata_extended.obs, adata_extended2.obs)
+    assert anndata_dataframe_unmodified(adata_extended.var, adata_extended2.var)
 
     with tiledbsoma.Experiment.open(uri) as exp:
         uns = exp.ms["hello"]["uns"]
@@ -459,7 +435,9 @@ def test_ingest_uns(tmp_path: pathlib.Path, h5ad_file_extended, ingest_uns_keys)
             assert isinstance(random_state, tiledbsoma.DenseNDArray)
             assert np.array_equal(random_state.read().to_numpy(), np.array([0]))
             got_pca_variance = uns["pca"]["variance"].read().to_numpy()
-            assert np.array_equal(got_pca_variance, adata.uns["pca"]["variance"])
+            assert np.array_equal(
+                got_pca_variance, adata_extended2.uns["pca"]["variance"]
+            )
         else:
             assert set(uns) == set(ingest_uns_keys)
 

@@ -1,7 +1,5 @@
 import tempfile
-from pathlib import Path
 
-import anndata
 import pytest
 import tiledb
 
@@ -9,21 +7,6 @@ import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_options as tco
 from tiledbsoma._util import anndata_dataframe_unmodified
-
-HERE = Path(__file__).parent
-
-
-@pytest.fixture
-def h5ad_file(request):
-    # pbmc-small is faster for automated unit-test / CI runs.
-    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
-    input_path = HERE.parent / "testdata/pbmc-small.h5ad"
-    return input_path
-
-
-@pytest.fixture
-def adata(h5ad_file):
-    return anndata.read_h5ad(h5ad_file)
 
 
 @pytest.mark.skip(reason="No longer return ArraySchema - see note in test")
