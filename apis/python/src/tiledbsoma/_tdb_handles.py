@@ -35,7 +35,7 @@ from typing_extensions import Literal, Self
 
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
-from ._types import OpenTimestamp
+from ._types import METADATA_TYPES, Metadatum, OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
 RawHandle = Union[tiledb.Array, tiledb.Group, clib.SOMADataFrame]
@@ -571,7 +571,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
         return f"<{prefix} {self.cache}>"
 
 
-def _check_metadata_type(key: str, obj: object) -> None:
+def _check_metadata_type(key: str, obj: Metadatum) -> None:
     """Pre-checks that a metadata entry can be stored in an array.
 
     These checks are reproduced from the TileDB Python metadata-setting methods,
@@ -583,6 +583,6 @@ def _check_metadata_type(key: str, obj: object) -> None:
     """
     if not isinstance(key, str):
         raise TypeError(f"metadata keys must be strings, not {type(key)}")
-    if isinstance(obj, (bytes, float, int, str)):
+    if isinstance(obj, METADATA_TYPES):
         return
     raise TypeError(f"cannot store {type(obj)} instance as metadata")
