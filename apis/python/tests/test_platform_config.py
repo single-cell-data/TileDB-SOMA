@@ -6,7 +6,7 @@ import tiledb
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_options as tco
-from tiledbsoma._util import anndata_dataframe_unmodified
+from tiledbsoma._util import verify_obs_var
 
 
 @pytest.mark.skip(reason="No longer return ArraySchema - see note in test")
@@ -51,8 +51,7 @@ def test_platform_config(adata):
                 }
             },
         )
-        assert anndata_dataframe_unmodified(original.obs, adata.obs)
-        assert anndata_dataframe_unmodified(original.var, adata.var)
+        verify_obs_var(original, adata)
 
         with tiledbsoma.Experiment.open(output_path) as exp:
             x_data = exp.ms["RNA"].X["data"]
