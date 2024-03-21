@@ -37,6 +37,7 @@ from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, is_does_not_exist_error
+from ._funcs import typeguard_ignore
 from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject, TileDBObject
 from ._types import OpenTimestamp
@@ -50,7 +51,7 @@ from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 # A collection can hold any sub-type of TileDBObject
 CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
-_TDBO = TypeVar("_TDBO", bound=AnyTileDBObject)
+_TDBO = TypeVar("_TDBO", bound=TileDBObject)  # type: ignore[type-arg]
 _Coll = TypeVar("_Coll", bound="CollectionBase[AnyTileDBObject]")
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 
@@ -188,7 +189,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
-    ) -> "AnyTileDBCollection":
+    ) -> AnyTileDBCollection:
         """Adds a new sub-collection to this collection.
 
         Args:
@@ -229,7 +230,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        child_cls: Type[AnyTileDBCollection] = kind or Collection
+        child_cls = kind or Collection
         return self._add_new_element(
             key,
             child_cls,
@@ -376,6 +377,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         """
         return self._add_new_ndarray(SparseNDArray, key, **kwargs)
 
+    @typeguard_ignore
     def _add_new_element(
         self,
         key: str,
@@ -442,7 +444,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                     entry.entry.wrapper_type.open, uri, mode, context, timestamp
                 )
             # Since we just opened this object, we own it and should close it.
-            self._close_stack.enter_context(entry.soma)
+            self._close_stack.enter_context(entry.soma)  # type: ignore[arg-type]
         return cast(CollectionElementType, entry.soma)
 
     def set(
@@ -683,6 +685,7 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     __slots__ = ()
 
 
+@typeguard_ignore
 def _real_class(cls: Type[Any]) -> type:
     """Extracts the real class from a generic alias.
 

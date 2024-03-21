@@ -292,7 +292,7 @@ def anndata_dataframe_unmodified(old: pd.DataFrame, new: pd.DataFrame) -> bool:
     Checks that we didn't mutate the object while ingesting. Intended for unit tests.
     """
     try:
-        return (old == new).all().all()
+        return bool((old == new).all().all())
     except ValueError:
         # Can be thrown when columns don't match -- which is what we check for
         return False

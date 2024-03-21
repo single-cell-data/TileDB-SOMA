@@ -25,6 +25,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    no_type_check,
     overload,
 )
 
@@ -1046,7 +1047,7 @@ def _create_or_open_collection(
     ...
 
 
-@typeguard_ignore
+@no_type_check
 def _create_or_open_collection(
     cls: Type[CollectionBase[_TDBO]],
     uri: str,

@@ -4,6 +4,7 @@ from typing import Any, Dict
 import numpy as np
 import pyarrow as pa
 import pytest
+from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
 from tests._util import raises_no_typeguard
@@ -108,7 +109,8 @@ def test_metadata(soma_object):
         assert "'foobar': " in meta_repr
         assert "'my': 'enemies'" in meta_repr
     # ...but closed metadata does not.
-    meta_repr_closed = repr(second_read.metadata)
+    with suppress_type_checks():  # type checking eagerly evaluates properties including `len`, which fails on a closed object
+        meta_repr_closed = repr(second_read.metadata)
     assert "foobar" not in meta_repr_closed
 
 

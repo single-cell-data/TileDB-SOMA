@@ -10,6 +10,7 @@ import tiledbsoma as soma
 from tiledbsoma.options import SOMATileDBContext
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
+from ._util import raises_no_typeguard
 
 
 @pytest.mark.parametrize(
@@ -24,7 +25,7 @@ def test_dense_nd_array_create_ok(
     """
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
 
-    with pytest.raises(TypeError):
+    with raises_no_typeguard(TypeError):
         soma.DenseNDArray.create(
             tmp_path.as_posix(), type=element_type.to_pandas_dtype(), shape=shape
         )
@@ -75,7 +76,7 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
     # random sample -- written to entire array
     data = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
     coords = tuple(slice(0, dim_len) for dim_len in shape)
-    with pytest.raises(TypeError):
+    with raises_no_typeguard(TypeError):
         a.write(coords, data)
     a.write(coords, pa.Tensor.from_numpy(data))
     del a
@@ -343,7 +344,7 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
         a.write(coords=write_coords, values=pa.Tensor.from_numpy(npa))
 
     with soma.DenseNDArray.open(tmp_path.as_posix()) as a:
-        with pytest.raises(io["throws"]):
+        with raises_no_typeguard(io["throws"]):
             a.read(coords=read_coords).to_numpy()
 
 

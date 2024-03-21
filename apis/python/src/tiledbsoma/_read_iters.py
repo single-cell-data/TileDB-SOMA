@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
     Dict,
+    Generator,
     Iterator,
     List,
     Optional,
@@ -72,6 +73,9 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
     def concat(self) -> pa.Table:
         """Concatenate remainder of iterator, and return as a single `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_"""
         return pa.concat_tables(self)
+
+
+_EagerRT = TypeVar("_EagerRT")
 
 
 class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
@@ -148,7 +152,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     @classmethod
     def _validate_args(
         cls,
-        shape: NTuple,
+        shape: Union[NTuple, Sequence[int]],
         axis: Union[int, Sequence[int]],
         size: Optional[Union[int, Sequence[int]]] = None,
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
@@ -219,15 +223,13 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         """
         raise NotImplementedError("Blockwise iterators do not support concat operation")
 
-    _EagerRT = TypeVar("_EagerRT")
-
     def _maybe_eager_iterator(
         self, x: Iterator[_EagerRT], _pool: Optional[ThreadPoolExecutor] = None
     ) -> Iterator[_EagerRT]:
         """Private"""
         return EagerIterator(x, pool=_pool) if self.eager else x
 
-    def _table_reader(self) -> BlockwiseSingleAxisTableIter:
+    def _table_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
         """Private. Blockwise table reader. Helper function for sub-class use"""
         kwargs: Dict[str, object] = {"result_order": self.sr.result_order}
         for coord_chunk in _coords_strider(
@@ -247,7 +249,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     def _reindexed_table_reader(
         self,
         _pool: Optional[ThreadPoolExecutor] = None,
-    ) -> BlockwiseSingleAxisTableIter:
+    ) -> Generator[BlockwiseTableReadIterResult, None, None]:
         """Private. Blockwise table reader w/ reindexing. Helper function for sub-class use"""
         for tbl, coords in self._maybe_eager_iterator(self._table_reader(), _pool):
             pytbl = {}

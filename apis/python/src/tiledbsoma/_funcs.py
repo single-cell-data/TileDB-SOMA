@@ -21,19 +21,18 @@ _T = TypeVar("_T")
 _CT = TypeVar("_CT", bound=Callable[..., Any])
 
 
-# Define a typeguard_ignore function so that we can use the `@typeguard_ignore`
-# decorator without having to depend upon typeguard at runtime.
-def typeguard_ignore(f: Callable[_Params, _T]) -> Callable[_Params, _T]:
-    """No-op. Returns the argument unchanged."""
-    return f
-
-
 try:
     import typeguard
 
-    typeguard_ignore = typeguard.typeguard_ignore  # noqa: F811
+    def typeguard_ignore(f: Callable[_Params, _T]) -> Callable[_Params, _T]:
+        return typeguard.typeguard_ignore(f)  # type: ignore[no-any-return]
+
 except ImportError:
-    pass
+    # Define a typeguard_ignore function so that we can use the `@typeguard_ignore`
+    # decorator without having to depend upon typeguard at runtime.
+    def typeguard_ignore(f: Callable[_Params, _T]) -> Callable[_Params, _T]:
+        """No-op. Returns the argument unchanged."""
+        return f
 
 
 def forwards_kwargs_to(
