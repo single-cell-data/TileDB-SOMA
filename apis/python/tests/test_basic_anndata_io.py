@@ -239,21 +239,21 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         "othername",
     ],
 )
-def test_named_X_layers(h5ad_file, X_layer_name):
+def test_named_X_layers(h5ad_path, X_layer_name):
     tempdir = tempfile.TemporaryDirectory()
     soma_path = tempdir.name
 
     if X_layer_name is None:
         tiledbsoma.io.from_h5ad(
             soma_path,
-            h5ad_file.as_posix(),
+            h5ad_path.as_posix(),
             "RNA",
             ingest_mode="write",
         )
     else:
         tiledbsoma.io.from_h5ad(
             soma_path,
-            h5ad_file.as_posix(),
+            h5ad_path.as_posix(),
             "RNA",
             ingest_mode="write",
             X_layer_name=X_layer_name,

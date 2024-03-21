@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import anndata as ad
 import numpy as np
 import pyarrow as pa
@@ -10,8 +8,6 @@ import tiledbsoma as soma
 import tiledbsoma.io as somaio
 from tiledbsoma import _factory
 from tiledbsoma.options._tiledb_create_options import TileDBCreateOptions
-
-HERE = Path(__file__).parent
 
 
 @pytest.fixture
@@ -178,15 +174,13 @@ def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
             assert list(pdf["foo"]) == pydict["foo"]
 
 
-def test_add_matrices(tmp_path):
+def test_add_matrices(tmp_path, h5ad_path):
     """Test multiple add_matrix_to_collection calls can be issued on the same soma object.
 
     See https://github.com/single-cell-data/TileDB-SOMA/issues/1565."""
     # Create a soma object from an anndata object
-    soma_path = tmp_path.as_posix()
-    h5ad_path = HERE.parent / "testdata/pbmc-small.h5ad"
     soma_uri = soma.io.from_h5ad(
-        soma_path, input_path=h5ad_path, measurement_name="RNA"
+        tmp_path.as_posix(), input_path=h5ad_path, measurement_name="RNA"
     )
 
     # Synthesize some new data to be written into two matrices within the soma object (ensuring it's different from the

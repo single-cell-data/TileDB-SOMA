@@ -10,14 +10,14 @@ from ._util import TESTDATA
 
 
 @pytest.fixture
-def h5ad_file(request):
+def h5ad_path(request):
     # pbmc-small is faster for automated unit-test / CI runs.
     return TESTDATA / "pbmc-small.h5ad"
 
 
 @pytest.fixture
-def adata(h5ad_file):
-    return anndata.read_h5ad(h5ad_file)
+def adata(h5ad_path):
+    return anndata.read_h5ad(h5ad_path)
 
 
 @pytest.fixture
@@ -32,9 +32,9 @@ def adata_extended(h5ad_file_extended):
 
 
 @pytest.fixture
-def pbmc_small(h5ad_file):
+def pbmc_small(h5ad_path):
     """Ingest an ``AnnData``, yield a ``TestCase`` with the original and new AnnData objects."""
     with TemporaryDirectory() as exp_path:
-        tiledbsoma.io.from_h5ad(exp_path, h5ad_file, measurement_name="RNA")
+        tiledbsoma.io.from_h5ad(exp_path, h5ad_path, measurement_name="RNA")
         with tiledbsoma.Experiment.open(exp_path) as exp:
             yield exp
