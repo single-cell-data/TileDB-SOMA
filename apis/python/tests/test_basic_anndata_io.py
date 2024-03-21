@@ -14,7 +14,8 @@ import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma import _constants, _factory
+from tiledbsoma import Experiment, _constants, _factory
+from tiledbsoma._tiledb_object import TileDBObject
 from tiledbsoma._util import (
     anndata_dataframe_unmodified,
     anndata_dataframe_unmodified_nan_safe,
@@ -716,6 +717,39 @@ def test_export_anndata(adata):
         assert readback.obsp[key].shape == adata.obsp[key].shape
     for key in adata.varp.keys():
         assert readback.varp[key].shape == adata.varp[key].shape
+
+
+def test_ingest_additional_metadata(adata):
+    tempdir = tempfile.TemporaryDirectory()
+    output_path = tempdir.name
+
+    additional_metadata = {"key1": "val1", "key2": "val2"}
+
+    tiledbsoma.io.from_anndata(
+        output_path,
+        adata,
+        measurement_name="RNA",
+        additional_metadata=additional_metadata,
+    )
+
+    def check(tdbo: TileDBObject):
+        for k, v in additional_metadata.items():
+            assert tdbo.metadata[k] == v
+
+    with _factory.open(output_path, soma_type=Experiment) as exp:
+        check(exp)
+        check(exp.obs)
+        rna = exp.ms["RNA"]
+        check(rna)
+        check(rna.X)
+        check(rna.obsm)
+        check(rna.obsp)
+        check(rna.varm)
+        # No varp in pbmc-small.h5ad
+
+        raw = exp.ms["raw"]
+        check(raw)
+        check(raw.X)
 
 
 def test_null_obs(adata, tmp_path: Path):

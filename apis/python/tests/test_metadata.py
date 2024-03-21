@@ -6,6 +6,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
+from tests._util import raises_no_typeguard
 from tiledbsoma import _factory
 
 """"
@@ -213,7 +214,7 @@ def test_metadata_marshalling_OK(soma_object, test_value):
 def test_metadata_marshalling_FAIL(soma_object, bad_value):
     """Verify that unsupported metadata types raise an error immediately."""
 
-    with pytest.raises(TypeError):
+    with raises_no_typeguard(TypeError):
         soma_object.metadata["test_value"] = bad_value
 
     assert "test_value" not in soma_object.metadata
