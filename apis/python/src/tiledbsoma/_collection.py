@@ -434,13 +434,9 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             context = self.context
             timestamp = self.tiledb_timestamp_ms
 
-            try:
-                wrapper = _tdb_handles.open(uri, mode, context, timestamp)
-                entry.soma = _factory.reify_handle(wrapper)
-            except SOMAError:
-                entry.soma = _factory._open_internal(
-                    entry.entry.wrapper_type.open, uri, mode, context, timestamp
-                )
+            wrapper = _tdb_handles.open(uri, mode, context, timestamp)
+            entry.soma = _factory.reify_handle(wrapper)
+            
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)
         return cast(CollectionElementType, entry.soma)

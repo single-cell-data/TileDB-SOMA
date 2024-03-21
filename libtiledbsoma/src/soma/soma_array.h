@@ -179,8 +179,7 @@ class SOMAArray : public SOMAObject {
         , mq_(std::make_unique<ManagedQuery>(
               other.arr_, other.ctx_->tiledb_ctx(), other.name_))
         , arr_(other.arr_)
-        , first_read_next_(other.first_read_next_)
-        , submitted_(other.submitted_) {
+        , first_read_next_(other.first_read_next_) {
     }
 
     SOMAArray(SOMAArray&&) = default;
@@ -704,6 +703,26 @@ class SOMAArray : public SOMAObject {
     //===================================================================
     //= private non-static
     //===================================================================
+
+    template <typename T>
+    void _extend_value_helper(T* data, uint64_t num_elems, Enumeration enmr) {
+        std::vector<T> enums_in_write((T*)data, (T*)data + num_elems);
+        auto enums_existing = enmr.as_vector<T>();
+        std::vector<T> extend_values;
+        for (auto enum_val : enums_in_write) {
+            if (std::find(
+                    enums_existing.begin(), enums_existing.end(), enum_val) ==
+                enums_existing.end()) {
+                extend_values.push_back(enum_val);
+            }
+        }
+
+        if (extend_values.size() != 0) {
+            ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+            se.extend_enumeration(enmr.extend(extend_values));
+            se.array_evolve(uri_);
+        }
+    }
 
     // Fills the metadata cache upon opening the array.
     void fill_metadata_cache();
