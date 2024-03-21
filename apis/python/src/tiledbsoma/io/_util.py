@@ -7,6 +7,7 @@ from typing import (
     ContextManager,
     Optional,
     Tuple,
+    Union,
 )
 from unittest import mock
 
@@ -38,6 +39,7 @@ def read_h5ad(
 # This trick lets us ingest H5AD with "r" (backed mode) from S3 URIs.  While h5ad
 # supports any file-like object, AnnData specifically wants only an `os.PathLike`
 # object. The only thing it does with the PathLike is to use it to get the filename.
+# @typeguard_ignore
 class _FSPathWrapper:
     """Tricks anndata into thinking a file-like object is an ``os.PathLike``.
 
@@ -61,11 +63,14 @@ class _FSPathWrapper:
         return getattr(self._obj, name)
 
 
+# @typeguard_ignore
 def _hack_patch_anndata() -> ContextManager[object]:
     """Part Two of the ``_FSPathWrapper`` trick."""
 
-    @file_backing.AnnDataFileManager.filename.setter  # type: ignore
-    def filename(self: file_backing.AnnDataFileManager, filename: Path) -> None:
+    @file_backing.AnnDataFileManager.filename.setter  # type: ignore[misc]
+    def filename(
+        self: file_backing.AnnDataFileManager, filename: Union[Path, _FSPathWrapper]
+    ) -> None:
         self._filename = filename
 
     return mock.patch.object(file_backing.AnnDataFileManager, "filename", filename)
