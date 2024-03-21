@@ -2,6 +2,7 @@
 This file is separate from _util.py, due to a circular-import issue with
 SOMATileDBContext which would otherwise ensue.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Union
@@ -29,19 +30,16 @@ def tiledbsoma_build_index(
     ],
     *,
     context: Optional["SOMATileDBContext"] = None,
-    thread_count: int = 4,
 ) -> IndexLike:
     """
     Returns an ``IndexLike`` re-indexer.
     The reindexer has an API similar to :meth:`pd.Index.get_indexer`
 
     Args:
-        keys:
+       keys:
            Integer keys used to build the index (hash) table.
        context:
            ``SOMATileDBContext`` object containing concurrecy level (exclusive with thread_count).
-       thread_count:
-           Concurrency level when the user does not want to use ``context``.
 
     Lifecycle:
         Experimental.
