@@ -368,7 +368,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
   }
 
   // Workaround for datetime
-  if (column->type() == TILEDB_DATETIME_MS || column->type() == TILEDB_DATETIME_SEC) {
+  if (column->type() == TILEDB_DATETIME_SEC ||
+      column->type() == TILEDB_DATETIME_MS  ||
+      column->type() == TILEDB_DATETIME_NS) {
     free((void*)schema->format);       // free the 'storage' format
     schema->format = strdup(to_arrow_format(column->type()).data());
   }
@@ -533,8 +535,10 @@ enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
     return NANOARROW_TYPE_INT64; // NB time resolution set indepedently
   else if (sv == "tsm:")
     return NANOARROW_TYPE_INT64; // NB time resolution set indepedently
+  else if (sv == "tsn:")
+    return NANOARROW_TYPE_INT64; // NB time resolution set indepedently
   else if (sv == "tdD")
-    return NANOARROW_TYPE_DOUBLE; // R Date: fractional days since epoch
+    return NANOARROW_TYPE_INT32; // R Date: fractional days since epoch
   else if (sv == "z")
     return NANOARROW_TYPE_BINARY;
   else if (sv == "Z")
