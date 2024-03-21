@@ -179,7 +179,11 @@ class SOMAArray : public SOMAObject {
         , mq_(std::make_unique<ManagedQuery>(
               other.arr_, other.ctx_->tiledb_ctx(), other.name_))
         , arr_(other.arr_)
-        , first_read_next_(other.first_read_next_) {
+        , meta_cache_arr_(other.meta_cache_arr_)
+        , first_read_next_(other.first_read_next_)
+        , submitted_(other.submitted_)
+        , array_buffer_(other.array_buffer_) {
+        fill_metadata_cache();
     }
 
     SOMAArray(SOMAArray&&) = default;

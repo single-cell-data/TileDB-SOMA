@@ -163,7 +163,6 @@ SOMAArray::SOMAArray(
 
 void SOMAArray::fill_metadata_cache() {
     if (arr_->query_type() == TILEDB_WRITE) {
-        std::cout << "in write path" << std::endl;
         meta_cache_arr_ = std::make_shared<Array>(
             *ctx_->tiledb_ctx(),
             uri_,
@@ -173,6 +172,8 @@ void SOMAArray::fill_metadata_cache() {
     } else {
         meta_cache_arr_ = arr_;
     }
+
+    metadata_.clear();
 
     for (uint64_t idx = 0; idx < meta_cache_arr_->metadata_num(); ++idx) {
         std::string key;
@@ -184,9 +185,6 @@ void SOMAArray::fill_metadata_cache() {
         MetadataValue mdval(value_type, value_num, value);
         std::pair<std::string, const MetadataValue> mdpair(key, mdval);
         metadata_.insert(mdpair);
-        std::cout << "fill_metadata_cache" << std::endl;
-        std::cout << key << " " << std::string((const char*)value, value_num)
-                  << std::endl;
     }
 }
 
@@ -687,16 +685,6 @@ std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
         return std::nullopt;
 
     return metadata_[key];
-
-    // tiledb_datatype_t value_type;
-    // uint32_t value_num;
-    // const void* value;
-
-    // meta_cache_arr_->get_metadata(key, &value_type, &value_num, &value);
-    // std::cout << "get_metadata: " << std::string((const char*)value,
-    // value_num)
-    //           << std::endl;
-    // return MetadataValue(value_type, value_num, value);
 }
 
 std::map<std::string, MetadataValue> SOMAArray::get_metadata() {

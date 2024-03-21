@@ -29,8 +29,6 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         if (!array_->type().has_value())
             throw TileDBSOMAError("SOMAArray has no type info");
 
-        std::cout << "in soma object open" << std::endl;
-
         if (array_->type() == "SOMADataFrame") {
             return std::make_unique<SOMADataFrame>(*array_);
         } else if (array_->type() == "SOMASparseNDArray") {
@@ -69,8 +67,6 @@ const std::optional<std::string> SOMAObject::type() {
     const char* dtype = (const char*)std::get<MetadataInfo::value>(
         *soma_object_type);
     uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
-
-    std::cout << "soma object type is " << std::string(dtype, sz) << std::endl;
 
     return std::string(dtype, sz);
 }
