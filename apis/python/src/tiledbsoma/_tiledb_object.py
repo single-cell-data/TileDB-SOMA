@@ -214,6 +214,17 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         return self._handle.mode
 
+    def verify_open_for_writing(self) -> None:
+        """Raises an error if the object is not open for writing."""
+        if self.closed:
+            raise SOMAError(
+                f"{self.__class__.__name__} ({self.uri}) must be open for writing (closed)"
+            )
+        if self.mode != "w":
+            raise SOMAError(
+                f"{self.__class__.__name__} ({self.uri}) must be open for writing (open for reading)"
+            )
+
     @property
     def tiledb_timestamp(self) -> datetime.datetime:
         """The time that this object was opened in UTC."""
