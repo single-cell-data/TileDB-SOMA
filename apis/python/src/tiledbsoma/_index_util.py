@@ -4,9 +4,11 @@ SOMATileDBContext which would otherwise ensue.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
+import pandas as pd
+import pyarrow as pa
 from somacore.query.types import IndexLike
 
 from tiledbsoma import pytiledbsoma as clib
@@ -16,7 +18,15 @@ if TYPE_CHECKING:
 
 
 def tiledbsoma_build_index(
-    keys: np.typing.NDArray[np.int64],
+    keys: Union[  # type: ignore[type-arg]
+        np.typing.NDArray[np.int64],
+        pa.Array,
+        pa.IntegerArray,
+        pd.Series,
+        pd.arrays.IntegerArray,
+        pa.ChunkedArray,
+        list[int],
+    ],
     *,
     context: Optional["SOMATileDBContext"] = None,
     thread_count: int = 4,

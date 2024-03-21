@@ -7,6 +7,7 @@ from typing import (
     Sequence,
     Tuple,
     Type,
+    TypedDict,
     TypeVar,
     Union,
     cast,
@@ -16,7 +17,7 @@ import attrs as attrs_  # We use the name `attrs` later.
 import attrs.validators as vld  # Short name because we use this a bunch.
 import tiledb
 from somacore import options
-from typing_extensions import Self, TypedDict
+from typing_extensions import Self
 
 # Most defaults are configured directly as default attribute values
 # within TileDBCreateOptions.
@@ -168,7 +169,7 @@ class TileDBCreateOptions:
         """
         create_entry = _dig_platform_config(platform_config, cls, ("tiledb", "create"))
         if isinstance(create_entry, dict):
-            attrs: Tuple["attrs_.Attribute[Any]", ...] = cls.__attrs_attrs__
+            attrs: Tuple[attrs_.Attribute, ...] = cls.__attrs_attrs__  # type: ignore[type-arg]
             attr_names = frozenset(a.name for a in attrs)
             # Explicitly opt out of type-checking for these kwargs.
             filered_create_entry: Dict[str, Any] = {

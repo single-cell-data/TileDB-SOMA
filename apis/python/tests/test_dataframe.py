@@ -10,6 +10,7 @@ import tiledb
 from pandas.api.types import union_categoricals
 
 import tiledbsoma as soma
+from tests._util import raises_no_typeguard
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def test_dataframe(tmp_path, arrow_schema):
     with pytest.raises(ValueError):
         # requires one or more index columns
         soma.DataFrame.create(uri, schema=asch, index_column_names=[])
-    with pytest.raises(TypeError):
+    with raises_no_typeguard(TypeError):
         # invalid schema type
         soma.DataFrame.create(uri, schema=asch.to_string(), index_column_names=[])
     with pytest.raises(ValueError):
@@ -78,7 +79,7 @@ def test_dataframe(tmp_path, arrow_schema):
 
             sdf.write(rb)
 
-            with pytest.raises(TypeError):
+            with raises_no_typeguard(TypeError):
                 # non-arrow write
                 sdf.write(rb.to_pandas)
 
@@ -946,7 +947,7 @@ def test_result_order(tmp_path):
             15,
         ]
 
-        with pytest.raises(ValueError):
+        with raises_no_typeguard(ValueError):
             next(sdf.read(result_order="bogus"))
 
 

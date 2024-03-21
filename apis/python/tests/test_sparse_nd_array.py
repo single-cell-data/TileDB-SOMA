@@ -19,6 +19,7 @@ from tiledbsoma import _factory
 from tiledbsoma.options import SOMATileDBContext
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
+from ._util import raises_no_typeguard
 
 AnySparseTensor = Union[pa.SparseCOOTensor, pa.SparseCSRMatrix, pa.SparseCSCMatrix]
 
@@ -35,7 +36,7 @@ def test_sparse_nd_array_create_ok(
     """
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
 
-    with pytest.raises(TypeError):
+    with raises_no_typeguard(TypeError):
         # non-arrow write
         soma.SparseNDArray.create(
             tmp_path.as_posix(), type=element_type.to_pandas_dtype(), shape=shape
@@ -248,7 +249,7 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     # so we must be prepared for StopIteration on reading them. It simplifies unit-test logic to use
     # occupation density of 1.0 for this test.
     data = create_random_tensor(format, shape, np.float64, 1.0)
-    with pytest.raises(TypeError):
+    with raises_no_typeguard(TypeError):
         # non-arrow write
         a.write(data.to_numpy())
     a.write(data)
@@ -963,9 +964,9 @@ def test_sparse_nd_array_error_corners(tmp_path):
         )
 
         # Write should reject unknown types
-        with pytest.raises(TypeError):
+        with raises_no_typeguard(TypeError):
             a.write(pa.array(np.zeros((99,), dtype=np.uint32)))
-        with pytest.raises(TypeError):
+        with raises_no_typeguard(TypeError):
             a.write(pa.chunked_array([np.zeros((99,), dtype=np.uint32)]))
 
         # Write should reject wrong dimensionality

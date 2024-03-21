@@ -13,7 +13,6 @@
 # Based on ideas from https://github.com/pybind/cmake_example
 # The `bld` script here is reused for pip install, CI, and local builds.
 
-# type: ignore
 import ctypes
 import os
 import pathlib
@@ -22,7 +21,6 @@ import subprocess
 import sys
 from typing import Optional
 
-import setuptools
 import setuptools.command.build_ext
 import wheel.bdist_wheel
 
@@ -338,7 +336,7 @@ setuptools.setup(
             "black",
             "ruff",
             "pytest",
-            "typeguard<3.0",
+            "typeguard>=4",
         ]
     },
     python_requires=">=3.8",
