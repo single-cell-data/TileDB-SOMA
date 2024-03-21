@@ -567,7 +567,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
                     else:
                         set_metadata(key, np.array([val]))
                 if mod is _DictMod.DELETED:
-                    self.owner._handle.delete_metadata()
+                    self.owner._handle.delete_metadata(key)
         else:
             meta = self.owner.writer.meta
             for key, mod in self._mods.items():
