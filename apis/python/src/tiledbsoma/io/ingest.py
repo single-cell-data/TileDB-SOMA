@@ -16,6 +16,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -56,11 +57,17 @@ from .._collection import AnyTileDBCollection
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
 from .._exception import DoesNotExistError, SOMAError
-from .._funcs import typeguard_ignore
 from .._tdb_handles import RawHandle
 from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
-from .._types import INGEST_MODES, IngestMode, NPNDArray, Path
+from .._types import (
+    _INGEST_MODES,
+    INGEST_MODES,
+    IngestMode,
+    NPNDArray,
+    Path,
+    _IngestMode,
+)
 from ..options import SOMATileDBContext
 from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
@@ -99,7 +106,7 @@ class IngestionParams:
 
     def __init__(
         self,
-        ingest_mode: str,
+        ingest_mode: _IngestMode,
         label_mapping: Optional[ExperimentAmbientLabelMapping],
     ) -> None:
         if ingest_mode == "schema_only":
@@ -144,7 +151,7 @@ class IngestionParams:
 
         else:
             raise SOMAError(
-                f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
+                f'expected ingest_mode to be one of {_INGEST_MODES}; got "{ingest_mode}"'
             )
 
 
@@ -980,7 +987,7 @@ def _create_or_open_coll(
     cls: Type[Experiment],
     uri: str,
     *,
-    ingest_mode: str,
+    ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
 ) -> Experiment:
     ...
@@ -991,7 +998,7 @@ def _create_or_open_coll(
     cls: Type[Measurement],
     uri: str,
     *,
-    ingest_mode: str,
+    ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
 ) -> Measurement:
     ...
@@ -1002,18 +1009,17 @@ def _create_or_open_coll(
     cls: Type[Collection[_TDBO]],
     uri: str,
     *,
-    ingest_mode: str,
+    ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
 ) -> Collection[_TDBO]:
     ...
 
 
-@typeguard_ignore
 def _create_or_open_coll(
     cls: Type[Any],
     uri: str,
     *,
-    ingest_mode: str,
+    ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
 ) -> Any:
     return _create_or_open_collection(
