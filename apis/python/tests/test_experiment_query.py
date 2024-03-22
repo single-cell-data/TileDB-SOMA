@@ -907,6 +907,7 @@ def test_experiment_query_uses_threadpool_from_context(soma_experiment):
         pool.submit.assert_called()
 
 
+@pytest.mark.skip("raises ArrowInvalid in TileDB<2.21; see #1988 / #2299")
 def test_empty_categorical_query(pbmc_small):
     q = pbmc_small.axis_query(
         measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "g1"')
