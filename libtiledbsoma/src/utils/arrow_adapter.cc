@@ -240,6 +240,14 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
     }
 }
 
+bool ArrowAdapter::_isstr(const char* format) {
+    if ((strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
+        (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0)) {
+        return true;
+    }
+    return false;
+}
+
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
 ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
@@ -329,14 +337,19 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         dict_sch->release = &release_schema;
         dict_sch->private_data = nullptr;
 
+        const int n_buf = ArrowAdapter::_isstr(dict_sch->format) ? 3 : 2;
         dict_arr->null_count = 0;
         dict_arr->offset = 0;
+        dict_arr->n_buffers = n_buf;
         dict_arr->n_children = 0;
         dict_arr->buffers = nullptr;
         dict_arr->children = nullptr;
         dict_arr->dictionary = nullptr;
         dict_arr->release = &release_array;
         dict_arr->private_data = nullptr;
+
+        dict_arr->buffers = new const void*[n_buf];
+        dict_arr->buffers[0] = nullptr;  // validity: none here
 
         // TODO string types currently get the data and offset
         // buffers from ColumnBuffer::enum_offsets and
@@ -348,26 +361,15 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         // returns std::optional where std::nullopt indicates the
         // column does not contain enumerated values.
         if (enmr->type() == TILEDB_STRING_ASCII or
-            enmr->type() == TILEDB_STRING_UTF8 or enmr->type() == TILEDB_CHAR or
-            enmr->type() == TILEDB_BLOB) {
-            const int n_buf = 3;
-            dict_arr->n_buffers = n_buf;
-            dict_arr->buffers = new const void*[n_buf];
-
+            enmr->type() == TILEDB_STRING_UTF8 or enmr->type() == TILEDB_CHAR) {
             auto dict_vec = enmr->as_vector<std::string>();
             column->convert_enumeration();
-            dict_arr->buffers[0] = nullptr;  // validity: none here
             dict_arr->buffers[1] = column->enum_offsets().data();
             dict_arr->buffers[2] = column->enum_string().data();
             dict_arr->length = dict_vec.size();
         } else {
-            const int n_buf = 2;
-            dict_arr->n_buffers = n_buf;
-            dict_arr->buffers = new const void*[n_buf];
-
             auto [dict_data, dict_length] = _get_data_and_length(
                 *enmr, dict_arr->buffers[1]);
-            dict_arr->buffers[0] = nullptr;  // validity: none here
             dict_arr->buffers[1] = dict_data;
             dict_arr->length = dict_length;
         }
@@ -383,8 +385,6 @@ std::string_view ArrowAdapter::to_arrow_format(
     tiledb_datatype_t datatype, bool use_large) {
     switch (datatype) {
         case TILEDB_STRING_ASCII:
-            return use_large ? "Z" : "z";  // large because TileDB
-                                           // uses 64bit offsets
         case TILEDB_STRING_UTF8:
             return use_large ? "U" : "u";  // large because TileDB
                                            // uses 64bit offsets
