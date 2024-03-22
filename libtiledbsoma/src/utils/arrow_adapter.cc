@@ -377,6 +377,8 @@ std::string_view ArrowAdapter::to_arrow_format(
     tiledb_datatype_t datatype, bool use_large) {
     switch (datatype) {
         case TILEDB_STRING_ASCII:
+            return use_large ? "Z" : "z";  // large because TileDB
+                                           // uses 64bit offsets
         case TILEDB_STRING_UTF8:
             return use_large ? "U" : "u";  // large because TileDB
                                            // uses 64bit offsets
