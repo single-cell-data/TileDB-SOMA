@@ -13,7 +13,6 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
     Dict,
-    Generator,
     Iterator,
     List,
     Optional,
@@ -249,7 +248,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     def _reindexed_table_reader(
         self,
         _pool: Optional[ThreadPoolExecutor] = None,
-    ) -> Generator[BlockwiseTableReadIterResult, None, None]:
+    ) -> Iterator[BlockwiseTableReadIterResult]:
         """Private. Blockwise table reader w/ reindexing. Helper function for sub-class use"""
         for tbl, coords in self._maybe_eager_iterator(self._table_reader(), _pool):
             pytbl = {}
