@@ -148,6 +148,7 @@ def arrow_type_from_tiledb_dtype(
 def tiledb_schema_to_arrow(
     tdb_schema: tiledb.ArraySchema, uri: str, ctx: tiledb.ctx.Ctx
 ) -> pa.Schema:
+    print("XXX")
     arrow_schema_dict = {}
     dom = tdb_schema.domain
     for i in range(dom.ndim):
@@ -170,6 +171,7 @@ def tiledb_schema_to_arrow(
             if A is None:
                 A = tiledb.open(uri, ctx=ctx)
             info = A.enum(attr.enum_label)
+            print("XXX", attr.enum_label, info)
             arrow_schema_dict[name] = pa.dictionary(
                 index_type=arrow_type_from_tiledb_dtype(attr.dtype),
                 value_type=arrow_type_from_tiledb_dtype(

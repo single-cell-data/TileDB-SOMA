@@ -101,7 +101,7 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     array->release = nullptr;
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
+std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array( // XXX LOOKING AT
     std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
     auto tiledb_schema = tiledb_array->schema();
     auto ndim = tiledb_schema.domain().ndim();
@@ -128,8 +128,10 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         child->release = &ArrowAdapter::release_schema;
     }
 
+    printf("\n");
     for (uint32_t i = 0; i < nattr; ++i) {
         auto attr = tiledb_schema.attribute(i);
+        printf("i=%d ATTR %s\n", i, attr.name().c_str());
         child = arrow_schema->children[ndim + i] = new ArrowSchema;
         child->format = ArrowAdapter::to_arrow_format(attr.type()).data();
         child->name = strdup(attr.name().c_str());
@@ -373,8 +375,58 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     return std::pair(std::move(array), std::move(schema));
 }
 
-std::string_view ArrowAdapter::to_arrow_format(
+// api/c_api/datatype/datatype_api_enum.h
+
+//#ifdef TILEDB_DATATYPE_ENUM
+//  /** 32-bit signed integer */
+//  TILEDB_DATATYPE_ENUM(INT32) = 0,
+//  /** 64-bit signed integer */
+//  TILEDB_DATATYPE_ENUM(INT64) = 1,
+//  /** 32-bit floating point value */
+//  TILEDB_DATATYPE_ENUM(FLOAT32) = 2,
+//  /** 64-bit floating point value */
+//  TILEDB_DATATYPE_ENUM(FLOAT64) = 3,
+//  /** Character */
+//  TILEDB_DATATYPE_ENUM(CHAR) = 4,
+//  /** 8-bit signed integer */
+//  TILEDB_DATATYPE_ENUM(INT8) = 5,
+//  /** 8-bit unsigned integer */
+//  TILEDB_DATATYPE_ENUM(UINT8) = 6,
+//  /** 16-bit signed integer */
+//  TILEDB_DATATYPE_ENUM(INT16) = 7,
+//  /** 16-bit unsigned integer */
+//  TILEDB_DATATYPE_ENUM(UINT16) = 8,
+//  /** 32-bit unsigned integer */
+//  TILEDB_DATATYPE_ENUM(UINT32) = 9,
+//  /** 64-bit unsigned integer */
+//  TILEDB_DATATYPE_ENUM(UINT64) = 10,
+//  /** ASCII string */
+//  TILEDB_DATATYPE_ENUM(STRING_ASCII) = 11,
+//  /** UTF-8 string */
+//  TILEDB_DATATYPE_ENUM(STRING_UTF8) = 12,
+//  /** UTF-16 string */
+//  TILEDB_DATATYPE_ENUM(STRING_UTF16) = 13,
+//  /** UTF-32 string */
+//  TILEDB_DATATYPE_ENUM(STRING_UTF32) = 14,
+//  /** UCS2 string */
+//  TILEDB_DATATYPE_ENUM(STRING_UCS2) = 15,
+//  /** UCS4 string */
+//  TILEDB_DATATYPE_ENUM(STRING_UCS4) = 16,
+//  /** This can be any datatype. Must store (type tag, value) pairs. */
+//  TILEDB_DATATYPE_ENUM(ANY) = 17,
+//  /** Datetime with year resolution */
+//  TILEDB_DATATYPE_ENUM(DATETIME_YEAR) = 18,
+//  /** Datetime with month resolution */
+//  TILEDB_DATATYPE_ENUM(DATETIME_MONTH) = 19,
+//  /** Datetime with week resolution */
+//  TILEDB_DATATYPE_ENUM(DATETIME_WEEK) = 20,
+//  /** Datetime with day resolution */
+//  TILEDB_DATATYPE_ENUM(DATETIME_DAY) = 21,
+//  /** Datetime with hour resolution */
+
+std::string_view ArrowAdapter::to_arrow_format( // XXX LOOKING AT
     tiledb_datatype_t datatype, bool use_large) {
+    std::cout << "DATATYPE " << datatype << "\n";
     switch (datatype) {
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:

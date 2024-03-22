@@ -40,13 +40,16 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         Lifecycle:
             Experimental.
         """
+        print("AAA")
         if isinstance(
             self._tiledb_array_schema(),
             tiledb.ArraySchema,
         ):
+            print("BBB")
             return tiledb_schema_to_arrow(
                 self._tiledb_array_schema(), self.uri, self._ctx
             )
+        print("CCC")
         return self._tiledb_array_schema()
 
     def non_empty_domain(self) -> Tuple[Tuple[Any, Any], ...]:
@@ -62,6 +65,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
 
     def _tiledb_array_schema(self) -> Union[pa.Schema, tiledb.ArraySchema]:
         """Returns the TileDB array schema, for internal use."""
+        print("DDD", type(self._handle))
         return self._handle.schema
 
     def _tiledb_array_keys(self) -> Tuple[str, ...]:
