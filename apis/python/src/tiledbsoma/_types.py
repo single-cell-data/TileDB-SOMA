@@ -5,7 +5,7 @@
 
 import datetime
 import pathlib
-from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union, get_args
 
 import numpy as np
 import numpy.typing as npt
@@ -35,7 +35,12 @@ Labels = Union[Sequence[str], pd.Index]
 NTuple = Tuple[int, ...]
 
 IngestMode = Literal["write", "schema_only", "resume"]  # for static-analysis checks
-INGEST_MODES = ("write", "schema_only", "resume")  # for run-time checks
+INGEST_MODES = get_args(IngestMode)  # for run-time checks
+
+# Internal version of ``IngestMode`` that includes "update"; see ``IngestionParams``.
+_IngestMode = Union[IngestMode, Literal["update"]]
+_INGEST_MODES = INGEST_MODES + ("update",)
+
 
 OpenTimestamp = Union[int, datetime.datetime]
 """Types that can be used as a timestamp to open a TileDB object.
