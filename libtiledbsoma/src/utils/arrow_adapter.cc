@@ -101,8 +101,10 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     array->release = nullptr;
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array( // XXX LOOKING AT
-    std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
+std::unique_ptr<ArrowSchema>
+ArrowAdapter::arrow_schema_from_tiledb_array(  // XXX LOOKING AT
+    std::shared_ptr<Context> ctx,
+    std::shared_ptr<Array> tiledb_array) {
     auto tiledb_schema = tiledb_array->schema();
     auto ndim = tiledb_schema.domain().ndim();
     auto nattr = tiledb_schema.attribute_num();
@@ -424,8 +426,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
 //  TILEDB_DATATYPE_ENUM(DATETIME_DAY) = 21,
 //  /** Datetime with hour resolution */
 
-std::string_view ArrowAdapter::to_arrow_format( // XXX LOOKING AT
-    tiledb_datatype_t datatype, bool use_large) {
+std::string_view ArrowAdapter::to_arrow_format(  // XXX LOOKING AT
+    tiledb_datatype_t datatype,
+    bool use_large) {
     std::cout << "DATATYPE " << datatype << "\n";
     switch (datatype) {
         case TILEDB_STRING_ASCII:
