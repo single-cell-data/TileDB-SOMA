@@ -36,7 +36,7 @@ import tiledbsoma.pytiledbsoma as clib
 
 from . import _util
 from ._exception import SOMAError
-from ._indexer import tiledbsoma_build_index
+from ._indexer import IntIndexer
 from ._types import NTuple
 from .options import SOMATileDBContext
 
@@ -138,10 +138,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.axes_to_reindex = set(range(self.ndim)) - set(self.reindex_disable_on_axis)
         assert context is not None
         self.minor_axes_indexer = {
-            d: tiledbsoma_build_index(
-                self.joinids[d].to_numpy(),
-                context=context,
-            )
+            d: IntIndexer(self.joinids[d].to_numpy(), context=context)
             for d in (self.axes_to_reindex - set((self.major_axis,)))
         }
 
@@ -257,9 +254,8 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
                 if d in self.axes_to_reindex:
                     if d == self.major_axis:
                         assert self.context is not None
-                        col = tiledbsoma_build_index(
-                            coords[self.major_axis],
-                            context=self.context,
+                        col = IntIndexer(
+                            coords[self.major_axis], context=self.context
                         ).get_indexer(
                             col.to_numpy(),
                         )

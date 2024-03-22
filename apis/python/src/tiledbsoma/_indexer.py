@@ -11,7 +11,6 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-from somacore.query.types import IndexLike
 
 from tiledbsoma import pytiledbsoma as clib
 
@@ -19,37 +18,12 @@ if TYPE_CHECKING:
     from .options import SOMATileDBContext
 
 
-def tiledbsoma_build_index(
-    keys: Union[  # type: ignore[type-arg]
-        npt.NDArray[np.int64],
-        pa.Array,
-        pa.IntegerArray,
-        pd.Series,
-        pd.arrays.IntegerArray,
-        pa.ChunkedArray,
-        list[int],
-    ],
-    *,
-    context: Optional["SOMATileDBContext"] = None,
-) -> IndexLike:
-    """
-    Returns an ``IndexLike`` re-indexer.
-    The reindexer has an API similar to :meth:`pd.Index.get_indexer`
-
-    Args:
-       keys:
-           Integer keys used to build the index (hash) table.
-       context:
-           ``SOMATileDBContext`` object containing concurrecy level (exclusive with thread_count).
+class IntIndexer:
+    """A re-indexer for unique integer indices.
 
     Lifecycle:
         Experimental.
     """
-    return IntIndex(keys, context=context)
-
-
-class IntIndex:
-    """TODO: Add IntIndex class docstring before merging."""
 
     def __init__(
         self,
@@ -65,16 +39,13 @@ class IntIndex:
         *,
         context: Optional["SOMATileDBContext"] = None,
     ):
-        """TODO: Add IntIndex.__init__ docstring before merging.
-            Returns an ``IndexLike`` re-indexer.
-            The reindexer has an API similar to :meth:`pd.Index.get_indexer`
+        """Initialize re-indexer for provied indices.
 
         Args:
-           keys:
+           data:
                Integer keys used to build the index (hash) table.
            context:
-               ``SOMATileDBContext`` object containing concurrecy level (exclusive with
-               thread_count).
+               ``SOMATileDBContext`` object containing concurrecy level.
 
         Lifecycle:
             Experimental.
@@ -97,7 +68,13 @@ class IntIndex:
             list[int],
         ],
     ) -> Any:
-        """Something compatible with Pandas' Index.get_indexer method."""
+        """Compute underlying indices of index for target data.
+
+        Compatible with Pandas' Index.get_indexer method.
+
+        Args:
+            target: Data to return re-index data for.
+        """
         return (
             self._reindexer.get_indexer_pyarrow(target)
             if isinstance(target, (pa.Array, pa.ChunkedArray))
