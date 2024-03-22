@@ -148,15 +148,17 @@ void load_reindexer(py::module& m) {
         // looked up values into previously allocated array (works for the
         // cases in which python and R pre-allocate the array)
         .def(
-            "get_indexer",
+            "get_indexer_general",
             [](IntIndexer& indexer, py::array_t<int64_t> lookups) {
                 return get_indexer_general(indexer, lookups);
             })
         // If the input is not arrow (does not have _export_to_c attribute),
         // it will be handled using a general input method.
-        .def("get_indexer", [](IntIndexer& indexer, py::object py_arrow_array) {
-            return get_indexer_py_arrow(indexer, py_arrow_array);
-        });
+        .def(
+            "get_indexer_pyarrow",
+            [](IntIndexer& indexer, py::object py_arrow_array) {
+                return get_indexer_py_arrow(indexer, py_arrow_array);
+            });
 }
 
 }  // namespace libtiledbsomacpp
