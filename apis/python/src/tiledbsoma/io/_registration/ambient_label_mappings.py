@@ -188,15 +188,13 @@ class ExperimentAmbientLabelMapping:
         experiment, not in append mode, but allowing us to still have the bulk of the ingestor code
         to be non-duplicated between non-append mode and append mode.
         """
-        handle, adata = read_h5ad(h5ad_file_name, mode="r")
-        retval = cls.from_isolated_anndata(
-            adata,
-            measurement_name=measurement_name,
-            obs_field_name=obs_field_name,
-            var_field_name=var_field_name,
-        )
-        handle.close()
-        return retval
+        with read_h5ad(h5ad_file_name, mode="r") as adata:
+            return cls.from_isolated_anndata(
+                adata,
+                measurement_name=measurement_name,
+                obs_field_name=obs_field_name,
+                var_field_name=var_field_name,
+            )
 
     @classmethod
     def from_isolated_soma_experiment(
@@ -424,17 +422,15 @@ class ExperimentAmbientLabelMapping:
         """Extends registration data to one more H5AD input file."""
         tiledbsoma.logging.logger.info(f"Registration: registering {h5ad_file_name}.")
 
-        handle, adata = read_h5ad(h5ad_file_name, mode="r")
-        retval = cls.from_anndata_append_on_experiment(
-            adata,
-            previous,
-            measurement_name=measurement_name,
-            obs_field_name=obs_field_name,
-            var_field_name=var_field_name,
-            append_obsm_varm=append_obsm_varm,
-        )
-        handle.close()
-        return retval
+        with read_h5ad(h5ad_file_name, mode="r") as adata:
+            return cls.from_anndata_append_on_experiment(
+                adata,
+                previous,
+                measurement_name=measurement_name,
+                obs_field_name=obs_field_name,
+                var_field_name=var_field_name,
+                append_obsm_varm=append_obsm_varm,
+            )
 
     @classmethod
     def from_h5ad_appends_on_experiment(
