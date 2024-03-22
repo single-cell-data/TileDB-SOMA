@@ -7,7 +7,7 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 from scipy import sparse
-from somacore import options
+from somacore import AxisQuery, options
 
 import tiledbsoma as soma
 from tests._util import raises_no_typeguard
@@ -905,3 +905,17 @@ def test_experiment_query_uses_threadpool_from_context(soma_experiment):
         assert adata is not None
 
         pool.submit.assert_called()
+
+
+def test_empty_categorical_query(pbmc_small):
+    q = pbmc_small.axis_query(
+        measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "g1"')
+    )
+    obs = q.obs().concat()
+    assert len(obs) == 44
+
+    q = pbmc_small.axis_query(
+        measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "foo"')
+    )
+    obs = q.obs().concat()
+    assert len(obs) == 0

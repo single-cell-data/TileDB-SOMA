@@ -1,85 +1,109 @@
 import tempfile
-from pathlib import Path
+from contextlib import nullcontext
+from dataclasses import dataclass, fields
 
-import anndata
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
+from anndata import AnnData
+from pyarrow import Schema
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma._util import anndata_dataframe_unmodified
+from tiledbsoma._util import anndata_dataframe_unmodified, verify_obs_var
 
-HERE = Path(__file__).parent
+
+@dataclass
+class TestCase:
+    exp_path: str
+    original: AnnData
+    new: AnnData
+    new_obs: pd.DataFrame
+    new_var: pd.DataFrame
+    o1: Schema
+    v1: Schema
 
 
 @pytest.fixture
-def h5ad_file(request):
-    # pbmc-small is faster for automated unit-test / CI runs.
-    input_path = HERE.parent / "testdata/pbmc-small.h5ad"
-    # input_path = HERE.parent / "testdata/pbmc3k_processed.h5ad"
-    return input_path
+def case(request, adata) -> TestCase:
+    """Ingest an ``AnnData``, yield a ``TestCase`` with the original and new AnnData objects."""
+    with tempfile.TemporaryDirectory() as exp_path:
+        original = adata.copy()
+        tiledbsoma.io.from_anndata(exp_path, adata, measurement_name="RNA")
+        verify_obs_var(original, adata)
+        readback = request.param
+        with tiledbsoma.Experiment.open(exp_path) as exp:
+            o1 = exp.obs.schema
+            v1 = exp.ms["RNA"].var.schema
+            if readback:
+                new_obs = exp.obs.read().concat().to_pandas()
+                new_var = exp.ms["RNA"].var.read().concat().to_pandas()
+            else:
+                new_obs = adata.obs
+                new_var = adata.var
+
+            yield TestCase(
+                exp_path=exp_path,
+                original=original,
+                new=adata,
+                new_obs=new_obs,
+                new_var=new_var,
+                o1=o1,
+                v1=v1,
+            )
 
 
-@pytest.fixture
-def adata(h5ad_file):
-    return anndata.read_h5ad(h5ad_file)
+def create_member_fixture(name):
+    """Create a ``pytest.fixture`` for a ``TestCase`` field."""
+
+    @pytest.fixture
+    def member_fixture(case):
+        return getattr(case, name)
+
+    return member_fixture
 
 
-@pytest.mark.parametrize("readback", [False, True])
-def test_no_change(adata, readback):
-    tempdir = tempfile.TemporaryDirectory()
-    output_path = tempdir.name
-    original = adata.copy()
-    tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert anndata_dataframe_unmodified(original.var, adata.var)
+for field in fields(TestCase):
+    """Create ``pytest.fixture``s for each ``TestCase`` field."""
+    globals()[field.name] = create_member_fixture(field.name)
 
-    with tiledbsoma.Experiment.open(output_path) as exp:
-        o1 = exp.obs.schema
-        v1 = exp.ms["RNA"].var.schema
 
-        if readback:
-            new_obs = exp.obs.read().concat().to_pandas()
-            new_var = exp.ms["RNA"].var.read().concat().to_pandas()
-        else:
-            new_obs = adata.obs
-            new_var = adata.var
-
-    with tiledbsoma.Experiment.open(output_path, "w") as exp:
-        tiledbsoma.io.update_obs(exp, new_obs)
-        tiledbsoma.io.update_var(exp, new_var, "RNA")
-    assert anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert anndata_dataframe_unmodified(original.var, adata.var)
-
-    with tiledbsoma.Experiment.open(output_path) as exp:
+def verify_schemas(exp_path, o1, v1):
+    """Read {obs,var} schemas, verify they match initial versions."""
+    with tiledbsoma.Experiment.open(exp_path) as exp:
         o2 = exp.obs.schema
         v2 = exp.ms["RNA"].var.schema
-
     assert o1 == o2
     assert v1 == v2
 
 
-@pytest.mark.parametrize("readback", [False, True])
-def test_add(adata, readback):
-    tempdir = tempfile.TemporaryDirectory()
-    output_path = tempdir.name
-    original = adata.copy()
-    tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert anndata_dataframe_unmodified(original.var, adata.var)
+def verify_updates(exp_path, obs, var, exc=False):
+    obs0 = obs.copy()
+    var0 = var.copy()
 
-    with tiledbsoma.Experiment.open(output_path) as exp:
-        exp.ms["RNA"].var.schema
+    def ctx():
+        return pytest.raises(ValueError) if exc else nullcontext()
 
-        if readback:
-            new_obs = exp.obs.read().concat().to_pandas()
-            new_var = exp.ms["RNA"].var.read().concat().to_pandas()
-        else:
-            new_obs = adata.obs
-            new_var = adata.var
+    with tiledbsoma.Experiment.open(exp_path, "w") as exp:
+        with ctx():
+            tiledbsoma.io.update_obs(exp, obs)
+        with ctx():
+            tiledbsoma.io.update_var(exp, var, "RNA")
 
+    assert anndata_dataframe_unmodified(obs0, obs)
+    assert anndata_dataframe_unmodified(var0, var)
+
+
+@pytest.mark.parametrize("case", [False, True], indirect=True)
+def test_no_change(exp_path, original, new, new_obs, new_var, o1, v1):
+    verify_updates(exp_path, new_obs, new_var)
+    verify_schemas(exp_path, o1, v1)
+    verify_obs_var(original, new)
+
+
+@pytest.mark.parametrize("case", [False, True], indirect=True)
+def test_add(exp_path, new_obs, new_var):
     # boolean
     new_obs["is_g1"] = new_obs["groups"] == "g1"
     # int
@@ -91,15 +115,9 @@ def test_add(adata, readback):
 
     new_var["vst.mean.sq"] = new_var["vst.mean"] ** 2
 
-    new_obs_save = new_obs.copy()
-    new_var_save = new_var.copy()
-    with tiledbsoma.Experiment.open(output_path, "w") as exp:
-        tiledbsoma.io.update_obs(exp, new_obs)
-        tiledbsoma.io.update_var(exp, new_var, "RNA")
-    assert anndata_dataframe_unmodified(new_obs, new_obs_save)
-    assert anndata_dataframe_unmodified(new_var, new_var_save)
+    verify_updates(exp_path, new_obs, new_var)
 
-    with tiledbsoma.Experiment.open(output_path) as exp:
+    with tiledbsoma.Experiment.open(exp_path) as exp:
         o2 = exp.obs.schema
         v2 = exp.ms["RNA"].var.schema
         obs = exp.obs.read().concat().to_pandas()
@@ -114,37 +132,14 @@ def test_add(adata, readback):
     assert v2.field("vst.mean.sq").type == pa.float64()
 
 
-@pytest.mark.parametrize("readback", [False, True])
-def test_drop(adata, readback):
-    tempdir = tempfile.TemporaryDirectory()
-    output_path = tempdir.name
-    original = adata.copy()
-    tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert anndata_dataframe_unmodified(original.var, adata.var)
-
-    with tiledbsoma.Experiment.open(output_path) as exp:
-        exp.ms["RNA"].var.schema
-
-        if readback:
-            new_obs = exp.obs.read().concat().to_pandas()
-            new_var = exp.ms["RNA"].var.read().concat().to_pandas()
-        else:
-            new_obs = adata.obs
-            new_var = adata.var
-
+@pytest.mark.parametrize("case", [False, True], indirect=True)
+def test_drop(exp_path, new_obs, new_var):
     del new_obs["groups"]
     del new_var["vst.mean"]
 
-    new_obs_save = new_obs.copy()
-    new_var_save = new_var.copy()
-    with tiledbsoma.Experiment.open(output_path, "w") as exp:
-        tiledbsoma.io.update_obs(exp, new_obs)
-        tiledbsoma.io.update_var(exp, new_var, "RNA")
-    assert anndata_dataframe_unmodified(new_obs, new_obs_save)
-    assert anndata_dataframe_unmodified(new_var, new_var_save)
+    verify_updates(exp_path, new_obs, new_var)
 
-    with tiledbsoma.Experiment.open(output_path) as exp:
+    with tiledbsoma.Experiment.open(exp_path) as exp:
         o2 = exp.obs.schema
         v2 = exp.ms["RNA"].var.schema
 
@@ -154,110 +149,43 @@ def test_drop(adata, readback):
         v2.field("vst.mean")
 
 
-@pytest.mark.parametrize("readback", [False, True])
-def test_change(adata, readback):
-    tempdir = tempfile.TemporaryDirectory()
-    output_path = tempdir.name
-    original = adata.copy()
-    tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert anndata_dataframe_unmodified(original.var, adata.var)
-
-    with tiledbsoma.Experiment.open(output_path) as exp:
-        o1 = exp.obs.schema
-        v1 = exp.ms["RNA"].var.schema
-
-        if readback:
-            new_obs = exp.obs.read().concat().to_pandas()
-            new_var = exp.ms["RNA"].var.read().concat().to_pandas()
-        else:
-            new_obs = adata.obs
-            new_var = adata.var
-
+@pytest.mark.parametrize("case", [False, True], indirect=True)
+def test_change(exp_path, new_obs, new_var, o1, v1):
     new_obs["groups"] = np.arange(new_obs.shape[0], dtype=np.int16)
     new_var["vst.mean"] = np.arange(new_var.shape[0], dtype=np.int32)
-
-    new_obs_save = new_obs.copy()
-    new_var_save = new_var.copy()
-    with tiledbsoma.Experiment.open(output_path, "w") as exp:
-        with pytest.raises(ValueError):
-            tiledbsoma.io.update_obs(exp, new_obs)
-        with pytest.raises(ValueError):
-            tiledbsoma.io.update_var(exp, new_var, "RNA")
-    assert anndata_dataframe_unmodified(new_obs, new_obs_save)
-    assert anndata_dataframe_unmodified(new_var, new_var_save)
-
-    with tiledbsoma.Experiment.open(output_path) as exp:
-        o2 = exp.obs.schema
-        v2 = exp.ms["RNA"].var.schema
-
-    assert o1 == o2
-    assert v1 == v2
+    verify_updates(exp_path, new_obs, new_var, exc=True)
+    verify_schemas(exp_path, o1, v1)
 
 
-@pytest.mark.parametrize("readback", [False, True])
+@pytest.mark.parametrize("case", [False, True], indirect=True)
 @pytest.mark.parametrize("shift_and_exc", [[0, None], [1, ValueError]])
-def test_change_counts(adata, readback, shift_and_exc):
+def test_change_counts(
+    exp_path, original, new, new_obs, new_var, shift_and_exc, o1, v1
+):
     shift, exc = shift_and_exc
-    tempdir = tempfile.TemporaryDirectory()
-    output_path = tempdir.name
-    original = adata.copy()
-    tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
-    assert anndata_dataframe_unmodified(original.obs, adata.obs)
-    assert anndata_dataframe_unmodified(original.var, adata.var)
 
-    with tiledbsoma.Experiment.open(output_path) as exp:
-        o1 = exp.obs.schema
-        v1 = exp.ms["RNA"].var.schema
+    new_nobs = len(new_obs)
+    new_nvar = len(new_var)
 
-        if readback:
-            old_obs = exp.obs.read().concat().to_pandas()
-            old_var = exp.ms["RNA"].var.read().concat().to_pandas()
-        else:
-            old_obs = adata.obs
-            old_var = adata.var
+    new_nobs2 = new_nobs + shift
+    new_nvar2 = new_nvar + shift
 
-    old_nobs = len(old_obs)
-    old_nvar = len(old_var)
-
-    new_nobs = old_nobs + shift
-    new_nvar = old_nvar + shift
-
-    new_obs = pd.DataFrame(
+    new_obs2 = pd.DataFrame(
         data={
-            "somebool": np.asarray([True] * new_nobs),
+            "somebool": np.asarray([True] * new_nobs2),
         },
-        index=np.arange(new_nobs).astype(str),
+        index=np.arange(new_nobs2).astype(str),
     )
-    new_var = pd.DataFrame(
+    new_var2 = pd.DataFrame(
         data={
-            "somebool": np.asarray([True] * new_nvar),
+            "somebool": np.asarray([True] * new_nvar2),
         },
-        index=np.arange(new_nvar).astype(str),
+        index=np.arange(new_nvar2).astype(str),
     )
 
     if exc is None:
-        new_obs_save = new_obs.copy()
-        new_var_save = new_var.copy()
-        with tiledbsoma.Experiment.open(output_path, "w") as exp:
-            tiledbsoma.io.update_obs(exp, new_obs)
-            tiledbsoma.io.update_var(exp, new_var, measurement_name="RNA")
-
-        assert anndata_dataframe_unmodified(new_obs, new_obs_save)
-        assert anndata_dataframe_unmodified(new_var, new_var_save)
-
+        verify_updates(exp_path, new_obs2, new_var2)
     else:
-        with tiledbsoma.Experiment.open(output_path, "w") as exp:
-            with pytest.raises(exc):
-                tiledbsoma.io.update_obs(exp, new_obs)
-            with pytest.raises(exc):
-                tiledbsoma.io.update_var(exp, new_var, measurement_name="RNA")
-
-        assert anndata_dataframe_unmodified(original.obs, adata.obs)
-        assert anndata_dataframe_unmodified(original.var, adata.var)
-
-        with tiledbsoma.Experiment.open(output_path) as exp:
-            o2 = exp.obs.schema
-            v2 = exp.ms["RNA"].var.schema
-            assert o1 == o2
-            assert v1 == v2
+        verify_updates(exp_path, new_obs2, new_var2, exc=True)
+        verify_obs_var(original, new)
+        verify_schemas(exp_path, o1, v1)
