@@ -329,19 +329,14 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         dict_sch->release = &release_schema;
         dict_sch->private_data = nullptr;
 
-        const int n_buf = strcmp(dict_sch->format, "u") == 0 ? 3 : 2;
         dict_arr->null_count = 0;
         dict_arr->offset = 0;
-        dict_arr->n_buffers = n_buf;
         dict_arr->n_children = 0;
         dict_arr->buffers = nullptr;
         dict_arr->children = nullptr;
         dict_arr->dictionary = nullptr;
         dict_arr->release = &release_array;
         dict_arr->private_data = nullptr;
-
-        dict_arr->buffers = new const void*[n_buf];
-        dict_arr->buffers[0] = nullptr;  // validity: none here
 
         // TODO string types currently get the data and offset
         // buffers from ColumnBuffer::enum_offsets and
@@ -353,17 +348,26 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         // returns std::optional where std::nullopt indicates the
         // column does not contain enumerated values.
         if (enmr->type() == TILEDB_STRING_ASCII or
-            enmr->type() == TILEDB_STRING_UTF8 or
-            enmr->type() == TILEDB_CHAR or
+            enmr->type() == TILEDB_STRING_UTF8 or enmr->type() == TILEDB_CHAR or
             enmr->type() == TILEDB_BLOB) {
+            const int n_buf = 3;
+            dict_arr->n_buffers = n_buf;
+            dict_arr->buffers = new const void*[n_buf];
+
             auto dict_vec = enmr->as_vector<std::string>();
             column->convert_enumeration();
+            dict_arr->buffers[0] = nullptr;  // validity: none here
             dict_arr->buffers[1] = column->enum_offsets().data();
             dict_arr->buffers[2] = column->enum_string().data();
             dict_arr->length = dict_vec.size();
         } else {
+            const int n_buf = 2;
+            dict_arr->n_buffers = n_buf;
+            dict_arr->buffers = new const void*[n_buf];
+
             auto [dict_data, dict_length] = _get_data_and_length(
                 *enmr, dict_arr->buffers[1]);
+            dict_arr->buffers[0] = nullptr;  // validity: none here
             dict_arr->buffers[1] = dict_data;
             dict_arr->length = dict_length;
         }
