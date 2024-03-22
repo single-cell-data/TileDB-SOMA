@@ -324,32 +324,26 @@ def from_h5ad(
 
     logging.log_io(None, f"START  READING {input_path}")
 
-    # The input handle needs to remain open while we process the file-backed
-    # AnnData object.
-    input_handle, anndata = read_h5ad(input_path, mode="r", ctx=context.tiledb_ctx)
-    logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
+    with read_h5ad(input_path, mode="r", ctx=context.tiledb_ctx) as anndata:
+        logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
 
-    uri = from_anndata(
-        experiment_uri,
-        anndata,
-        measurement_name,
-        context=context,
-        platform_config=platform_config,
-        obs_id_name=obs_id_name,
-        var_id_name=var_id_name,
-        X_layer_name=X_layer_name,
-        raw_X_layer_name=raw_X_layer_name,
-        ingest_mode=ingest_mode,
-        use_relative_uri=use_relative_uri,
-        X_kind=X_kind,
-        registration_mapping=registration_mapping,
-        uns_keys=uns_keys,
-        additional_metadata=additional_metadata,
-    )
-
-    # Close the input handle now that we're done processinig the file-backed
-    # AnnData object.
-    input_handle.close()
+        uri = from_anndata(
+            experiment_uri,
+            anndata,
+            measurement_name,
+            context=context,
+            platform_config=platform_config,
+            obs_id_name=obs_id_name,
+            var_id_name=var_id_name,
+            X_layer_name=X_layer_name,
+            raw_X_layer_name=raw_X_layer_name,
+            ingest_mode=ingest_mode,
+            use_relative_uri=use_relative_uri,
+            X_kind=X_kind,
+            registration_mapping=registration_mapping,
+            uns_keys=uns_keys,
+            additional_metadata=additional_metadata,
+        )
 
     logging.log_io(
         None, _util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path} {uri}")
