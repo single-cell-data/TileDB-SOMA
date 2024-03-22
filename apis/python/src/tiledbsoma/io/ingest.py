@@ -16,6 +16,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -57,11 +58,18 @@ from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
 from .._exception import DoesNotExistError, SOMAError
-from .._funcs import typeguard_ignore
 from .._tdb_handles import RawHandle
 from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
-from .._types import INGEST_MODES, IngestMode, Metadatum, NPNDArray, Path
+from .._types import (
+    _INGEST_MODES,
+    INGEST_MODES,
+    IngestMode,
+    Metadatum,
+    NPNDArray,
+    Path,
+    _IngestMode,
+)
 from ..options import SOMATileDBContext
 from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_options import TileDBCreateOptions
@@ -111,7 +119,7 @@ class IngestionParams:
 
     def __init__(
         self,
-        ingest_mode: str,
+        ingest_mode: _IngestMode,
         label_mapping: Optional[ExperimentAmbientLabelMapping],
     ) -> None:
         if ingest_mode == "schema_only":
@@ -156,7 +164,7 @@ class IngestionParams:
 
         else:
             raise SOMAError(
-                f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
+                f'expected ingest_mode to be one of {_INGEST_MODES}; got "{ingest_mode}"'
             )
 
 
@@ -400,44 +408,27 @@ def from_anndata(
             "Second argument is not an AnnData object -- did you want from_h5ad?"
         )
 
-    for key in anndata.obsm.keys():
-        if not isinstance(anndata.obsm[key], get_args(Matrix)):
-            raise TypeError(
-                f"obsm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
-            )
-
-    for key in anndata.obsp.keys():
-        if not isinstance(anndata.obsp[key], get_args(Matrix)):
-            raise TypeError(
-                f"obsp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
-            )
-
-    for key in anndata.varm.keys():
-        if not isinstance(anndata.varm[key], get_args(Matrix)):
-            raise TypeError(
-                f"varm value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
-            )
-
-    for key in anndata.varp.keys():
-        if not isinstance(anndata.varp[key], get_args(Matrix)):
-            raise TypeError(
-                f"varp value at {key} in not of type {list(cl.__name__ for cl in get_args(Matrix))}"
-            )
+    for ad_key in ["obsm", "obsp", "varm", "varp"]:
+        for key, val in getattr(anndata, ad_key).items():
+            if not isinstance(val, get_args(Matrix)):
+                raise TypeError(
+                    f"{ad_key} value at {key} is not of type {list(cl.__name__ for cl in get_args(Matrix))}: {type(val)}"
+                )
 
     # For single ingest (no append):
     #
-    # * obs, var, X, etc array indices map 1-1 to soma_joinid, soma_dim_0, soma_dim_1, etc.
+    # * obs, var, X, etc. array indices map 1-1 to soma_joinid, soma_dim_0, soma_dim_1, etc.
     #
     # * There is no need to look at a particular barcode column etc.
     #
     # For append mode:
     #
-    # * We require for mappings to be pre-computed and passed in
+    # * We require mappings to be pre-computed and passed in
     #
     # * The mappings are from obs-label/var-label to soma_joinid, soma_dim_0, soma_dim_1
     #   for all the H5AD/AnnData objects being ingested
     #
-    # * Here we select out the renumberings for the obs, var, X, etc array indices
+    # * Here we select out the renumberings for the obs, var, X, etc. array indices
     if registration_mapping is None:
         jidmaps = ExperimentIDMapping.from_isolated_anndata(
             anndata, measurement_name=measurement_name
@@ -449,7 +440,7 @@ def from_anndata(
 
     context = _validate_soma_tiledb_context(context)
 
-    # Without _at least_ an index, there is nothing to indicate the dimension indices.
+    # Without _at least_ one index, there is nothing to indicate the dimension indices.
     if anndata.obs.index.empty or anndata.var.index.empty:
         raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
 
@@ -541,7 +532,6 @@ def from_anndata(
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/X/DATA
-
             measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
             with _create_or_open_collection(
                 Collection,
@@ -595,128 +585,62 @@ def from_anndata(
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/OBSM,VARM,OBSP,VARP
-                if len(anndata.obsm.keys()) > 0:  # do not create an empty collection
-                    obsm_uri = _util.uri_joinpath(measurement_uri, "obsm")
-                    with _create_or_open_collection(
-                        Collection,
-                        obsm_uri,
-                        **ingest_ctx,
-                    ) as obsm:
-                        _maybe_set(
-                            measurement, "obsm", obsm, use_relative_uri=use_relative_uri
-                        )
-                        for key in anndata.obsm.keys():
-                            num_cols = anndata.obsm[key].shape[1]
-                            with _create_from_matrix(
-                                # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
-                                # consider a use-dense flag at the tiledbsoma.io API
-                                # DenseNDArray,
-                                SparseNDArray,
-                                _util.uri_joinpath(obsm.uri, key),
-                                conversions.to_tiledb_supported_array_type(
-                                    key, anndata.obsm[key]
-                                ),
-                                platform_config=platform_config,
-                                axis_0_mapping=jidmaps.obs_axis,
-                                axis_1_mapping=AxisIDMapping.identity(num_cols),
-                                **ingest_ctx,
-                            ) as arr:
-                                _maybe_set(
-                                    obsm, key, arr, use_relative_uri=use_relative_uri
+                def _ingest_obs_var_m_p(
+                    ad_key: Literal["obsm", "varm", "obsp", "varp"],
+                    axis_0_mapping: AxisIDMapping,
+                    axis_1_mapping: Optional[AxisIDMapping] = None,
+                ) -> None:
+                    ad_val = getattr(anndata, ad_key)
+                    if len(ad_val.keys()) > 0:  # do not create an empty collection
+                        ad_val_uri = _util.uri_joinpath(measurement_uri, ad_key)
+                        with _create_or_open_collection(
+                            Collection,
+                            ad_val_uri,
+                            **ingest_ctx,
+                        ) as coll:
+                            _maybe_set(
+                                measurement,
+                                ad_key,
+                                coll,
+                                use_relative_uri=use_relative_uri,
+                            )
+                            for key in ad_val.keys():
+                                val = ad_val[key]
+                                num_cols = val.shape[1]
+                                _axis_1_mapping = (
+                                    axis_1_mapping
+                                    if axis_1_mapping
+                                    else AxisIDMapping.identity(num_cols)
                                 )
-                            arr.close()
-                    measurement.obsm.close()
+                                with _create_from_matrix(
+                                    # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
+                                    # consider a use-dense flag at the tiledbsoma.io API
+                                    # DenseNDArray,
+                                    SparseNDArray,
+                                    _util.uri_joinpath(ad_val_uri, key),
+                                    conversions.to_tiledb_supported_array_type(
+                                        key, val
+                                    ),
+                                    platform_config=platform_config,
+                                    axis_0_mapping=axis_0_mapping,
+                                    axis_1_mapping=_axis_1_mapping,
+                                    **ingest_ctx,
+                                ) as arr:
+                                    _maybe_set(
+                                        coll,
+                                        key,
+                                        arr,
+                                        use_relative_uri=use_relative_uri,
+                                    )
 
-                if len(anndata.varm.keys()) > 0:  # do not create an empty collection
-                    _util.uri_joinpath(measurement_uri, "varm")
-                    with _create_or_open_collection(
-                        Collection,
-                        _util.uri_joinpath(measurement.uri, "varm"),
-                        **ingest_ctx,
-                    ) as varm:
-                        _maybe_set(
-                            measurement, "varm", varm, use_relative_uri=use_relative_uri
-                        )
-                        for key in anndata.varm.keys():
-                            num_cols = anndata.varm[key].shape[1]
-                            with _create_from_matrix(
-                                # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
-                                # consider a use-dense flag at the tiledbsoma.io API
-                                # DenseNDArray,
-                                SparseNDArray,
-                                _util.uri_joinpath(varm.uri, key),
-                                conversions.to_tiledb_supported_array_type(
-                                    key, anndata.varm[key]
-                                ),
-                                platform_config=platform_config,
-                                axis_0_mapping=jidmaps.var_axes[measurement_name],
-                                axis_1_mapping=AxisIDMapping.identity(num_cols),
-                                **ingest_ctx,
-                            ) as darr:
-                                _maybe_set(
-                                    varm,
-                                    key,
-                                    darr,
-                                    use_relative_uri=use_relative_uri,
-                                )
-
-                if len(anndata.obsp.keys()) > 0:  # do not create an empty collection
-                    _util.uri_joinpath(measurement_uri, "obsp")
-                    with _create_or_open_collection(
-                        Collection,
-                        _util.uri_joinpath(measurement.uri, "obsp"),
-                        **ingest_ctx,
-                    ) as obsp:
-                        _maybe_set(
-                            measurement, "obsp", obsp, use_relative_uri=use_relative_uri
-                        )
-                        for key in anndata.obsp.keys():
-                            with _create_from_matrix(
-                                SparseNDArray,
-                                _util.uri_joinpath(obsp.uri, key),
-                                conversions.to_tiledb_supported_array_type(
-                                    key, anndata.obsp[key]
-                                ),
-                                platform_config=platform_config,
-                                axis_0_mapping=jidmaps.obs_axis,
-                                axis_1_mapping=jidmaps.obs_axis,
-                                **ingest_ctx,
-                            ) as sarr:
-                                _maybe_set(
-                                    obsp,
-                                    key,
-                                    sarr,
-                                    use_relative_uri=use_relative_uri,
-                                )
-
-                if len(anndata.varp.keys()) > 0:  # do not create an empty collection
-                    _util.uri_joinpath(measurement_uri, "obsp")
-                    with _create_or_open_collection(
-                        Collection,
-                        _util.uri_joinpath(measurement.uri, "varp"),
-                        **ingest_ctx,
-                    ) as varp:
-                        _maybe_set(
-                            measurement, "varp", varp, use_relative_uri=use_relative_uri
-                        )
-                        for key in anndata.varp.keys():
-                            with _create_from_matrix(
-                                SparseNDArray,
-                                _util.uri_joinpath(varp.uri, key),
-                                conversions.to_tiledb_supported_array_type(
-                                    key, anndata.varp[key]
-                                ),
-                                platform_config=platform_config,
-                                axis_0_mapping=jidmaps.var_axes[measurement_name],
-                                axis_1_mapping=jidmaps.var_axes[measurement_name],
-                                **ingest_ctx,
-                            ) as sarr:
-                                _maybe_set(
-                                    varp,
-                                    key,
-                                    sarr,
-                                    use_relative_uri=use_relative_uri,
-                                )
+                _ingest_obs_var_m_p("obsm", jidmaps.obs_axis)
+                _ingest_obs_var_m_p("varm", jidmaps.var_axes[measurement_name])
+                _ingest_obs_var_m_p("obsp", jidmaps.obs_axis, jidmaps.obs_axis)
+                _ingest_obs_var_m_p(
+                    "varp",
+                    jidmaps.var_axes[measurement_name],
+                    jidmaps.var_axes[measurement_name],
+                )
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/RAW
@@ -1072,7 +996,7 @@ def _create_or_open_coll(
     cls: Type[Experiment],
     uri: str,
     *,
-    ingest_mode: str,
+    ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
 ) -> Experiment:
     ...
@@ -1083,7 +1007,7 @@ def _create_or_open_coll(
     cls: Type[Measurement],
     uri: str,
     *,
-    ingest_mode: str,
+    ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
 ) -> Measurement:
     ...
@@ -1094,18 +1018,17 @@ def _create_or_open_coll(
     cls: Type[Collection[_TDBO]],
     uri: str,
     *,
-    ingest_mode: str,
+    ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
 ) -> Collection[_TDBO]:
     ...
 
 
-@typeguard_ignore
 def _create_or_open_coll(
     cls: Type[Any],
     uri: str,
     *,
-    ingest_mode: str,
+    ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
 ) -> Any:
     return _create_or_open_collection(
@@ -1309,7 +1232,6 @@ def _write_dataframe_impl(
     return soma_df
 
 
-@typeguard_ignore
 def create_from_matrix(
     cls: Type[_NDArr],
     uri: str,
@@ -1336,7 +1258,6 @@ def create_from_matrix(
     )
 
 
-@typeguard_ignore
 def _create_from_matrix(
     cls: Type[_NDArr],
     uri: str,
@@ -1396,7 +1317,6 @@ def _create_from_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
         )
@@ -1407,7 +1327,6 @@ def _create_from_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
             axis_0_mapping=axis_0_mapping,
@@ -1700,7 +1619,6 @@ def update_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
             additional_metadata=None,
         )
@@ -1711,7 +1629,6 @@ def update_matrix(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
             additional_metadata=None,
             axis_0_mapping=AxisIDMapping.identity(new_data.shape[0]),
@@ -1825,7 +1742,6 @@ def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Union[Matrix, h5py.Dataset],
     tiledb_create_options: TileDBCreateOptions,
-    context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
@@ -2103,7 +2019,7 @@ def _find_sparse_chunk_size_backed(
     It turns out, though, as a peculiarity of AnnData backed matrices, that
     while it's prohibitively expensive to ask the 10,000 questions
     matrix[0,:].nnz, matrix[1,:].nnz, ...  matrix[9999,:].nnz, it's quite quick
-    to ask for matrix[0:9999,:].nnz.
+    to ask for matrix[0:10000,:].nnz.
 
     This is our way to thread the needle on good runtime performance with the
     AnnData backed-matrix API, while respecting remote resource limits:
@@ -2111,13 +2027,13 @@ def _find_sparse_chunk_size_backed(
     * Get the mean nnz for the entire matrix, along the desired axis.
       This needs to be computed only once, so we take it as an argument.
 
-    * Set our intial estimate of chunk size to be the goal_chunk_nnz
+    * Set our initial estimate of chunk size to be the goal_chunk_nnz
       over the mean_nnz. E.g. if our goal is 100M nnz per chunk, and the matrix
       has average 4000 nnz per row, then we try chunk size to be
       100,000,000/4,000 = 25,000.
 
     * While tasking for the nnzs of each of those 25,000 rows is prohibitively
-      expensive, we can quickly ask for the nnz of the continguous region of
+      expensive, we can quickly ask for the nnz of the contiguous region of
       25,000 rows.
 
     * Now, those 25,000 rows' sum nnz may or may not be reflective of the mean.
@@ -2218,7 +2134,6 @@ def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
     matrix: Matrix,
     tiledb_create_options: TileDBCreateOptions,
-    context: Optional[SOMATileDBContext],
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata,
     axis_0_mapping: AxisIDMapping,
@@ -2855,7 +2770,6 @@ def _ingest_uns_ndarray(
             tiledb_create_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
-            context=context,
             ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
         )
