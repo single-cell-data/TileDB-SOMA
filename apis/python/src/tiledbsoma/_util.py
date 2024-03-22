@@ -13,6 +13,7 @@ from typing import Any, Optional, Tuple, Type, TypeVar
 import pandas as pd
 import pyarrow as pa
 import somacore
+from anndata import AnnData
 from somacore import options
 
 from . import pytiledbsoma as clib
@@ -311,3 +312,13 @@ def anndata_dataframe_unmodified_nan_safe(old: pd.DataFrame, new: pd.DataFrame) 
     if any(old.keys() != new.keys()):
         return False
     return True
+
+
+def verify_obs_var(ad0: AnnData, ad1: AnnData, nan_safe: bool = False) -> None:
+    """Verify that two ``AnnData``'s ``obs`` and ``var`` dataframes are equivalent."""
+    if nan_safe:
+        assert anndata_dataframe_unmodified_nan_safe(ad0.obs, ad1.obs)
+        assert anndata_dataframe_unmodified_nan_safe(ad0.var, ad1.var)
+    else:
+        assert anndata_dataframe_unmodified(ad0.obs, ad1.obs)
+        assert anndata_dataframe_unmodified(ad0.var, ad1.var)

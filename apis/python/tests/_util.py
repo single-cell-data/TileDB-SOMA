@@ -1,8 +1,13 @@
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any, Type
 
 import pytest
 from typeguard import suppress_type_checks
+
+HERE = Path(__file__).parent
+PY_ROOT = HERE.parent
+TESTDATA = PY_ROOT / "testdata"
 
 
 @contextmanager
