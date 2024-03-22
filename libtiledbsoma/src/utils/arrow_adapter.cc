@@ -353,9 +353,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         // returns std::optional where std::nullopt indicates the
         // column does not contain enumerated values.
         if (enmr->type() == TILEDB_STRING_ASCII or
-            enmr->type() == TILEDB_STRING_UTF8 or
-            enmr->type() == TILEDB_CHAR or
-            enmr->type() == TILEDB_BLOB) {
+            enmr->type() == TILEDB_STRING_UTF8) {
             auto dict_vec = enmr->as_vector<std::string>();
             column->convert_enumeration();
             dict_arr->buffers[1] = column->enum_offsets().data();
