@@ -199,10 +199,8 @@ class Signature:
         """
         See ``from_anndata``.
         """
-        handle, adata = read_h5ad(h5ad_file_name, mode="r")
-        retval = cls.from_anndata(adata, default_X_layer_name=default_X_layer_name)
-        handle.close()
-        return retval
+        with read_h5ad(h5ad_file_name, mode="r") as adata:
+            return cls.from_anndata(adata, default_X_layer_name=default_X_layer_name)
 
     @classmethod
     def from_soma_experiment(
