@@ -1,4 +1,5 @@
 from concurrent import futures
+from contextlib import nullcontext
 from typing import Tuple
 from unittest import mock
 
@@ -6,6 +7,8 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
+import tiledb
+from pyarrow import ArrowInvalid
 from scipy import sparse
 from somacore import AxisQuery, options
 
@@ -917,5 +920,12 @@ def test_empty_categorical_query(pbmc_small):
     q = pbmc_small.axis_query(
         measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "foo"')
     )
-    obs = q.obs().concat()
-    assert len(obs) == 0
+    # Empty query on a categorical column raised ArrowInvalid before TileDB 2.21; see https://github.com/single-cell-data/TileDB-SOMA/pull/2299
+    ctx = (
+        nullcontext()
+        if tiledb.libtiledb.version() >= (2, 21)
+        else pytest.raises(ArrowInvalid)
+    )
+    with ctx:
+        obs = q.obs().concat()
+        assert len(obs) == 0
