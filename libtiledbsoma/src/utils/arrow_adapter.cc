@@ -145,8 +145,13 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
             auto enmr = ArrayExperimental::get_enumeration(
                 *ctx, *tiledb_array, attr.name());
             auto dict = new ArrowSchema;
-            dict->format = strdup(
-                ArrowAdapter::to_arrow_format(enmr.type(), false).data());
+            if (enmr.type() == TILEDB_STRING_ASCII or
+                enmr.type() == TILEDB_CHAR) {
+                dict->format = strdup("z");
+            } else {
+                dict->format = strdup(
+                    ArrowAdapter::to_arrow_format(enmr.type(), false).data());
+            }
             dict->name = strdup(enmr.name().c_str());
             dict->metadata = nullptr;
             dict->flags = 0;
@@ -327,7 +332,13 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         auto dict_arr = new ArrowArray;
 
         auto enmr = column->get_enumeration_info();
-        dict_sch->format = strdup(to_arrow_format(enmr->type(), false).data());
+        if (enmr->type() == TILEDB_STRING_ASCII or
+            enmr->type() == TILEDB_CHAR) {
+            dict_sch->format = strdup("z");
+        } else {
+            dict_sch->format = strdup(
+                to_arrow_format(enmr->type(), false).data());
+        }
         dict_sch->name = nullptr;
         dict_sch->metadata = nullptr;
         dict_sch->flags = 0;
