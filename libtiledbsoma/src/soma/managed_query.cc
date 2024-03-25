@@ -56,7 +56,7 @@ ManagedQuery::ManagedQuery(
 
 void ManagedQuery::close() {
     if (query_future_.valid()) {
-        query_future_.wait();
+        query_future_.get();
     }
     array_->close();
 }
@@ -168,7 +168,7 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
 
     if (query_future_.valid()) {
         LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
-        query_future_.wait();
+        query_future_.get();
     } else {
         throw TileDBSOMAError(
             fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
