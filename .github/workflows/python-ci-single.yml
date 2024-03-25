@@ -100,11 +100,8 @@ jobs:
 #          dist
 #        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
-    - name: Install testing prereqs
-      run: python -m pip -v install -U pip pytest-cov 'typeguard==4.1.5' types-setuptools sparse
-
     - name: Install tiledbsoma
-      run: python -m pip -v install -e apis/python
+      run: python -m pip -v install -e apis/python[dev]
       env:
         CC: ${{ inputs.cc }}
         CXX: ${{ inputs.cxx }}
