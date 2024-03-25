@@ -147,6 +147,89 @@ test_that("querying by value filters", {
   experiment$close()
 })
 
+test_that("query by value filters with enums", {
+  skip_if(!extended_tests())
+  uri <- withr::local_tempdir("soma-experiment-query-enum-filters")
+  n_obs <- 1001L
+  n_var <- 99L
+
+  obs_label_values <- c("1003", "1007", "1038", "1099")
+  var_label_values <- c("1018", "1034", "1067")
+
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
+  )
+  on.exit(experiment$close())
+
+  obs_tbl <- experiment$obs$read()$concat()
+  obs_tbl$enum <- factor(
+    sample(c("red", "blue", "green"), size = n_obs, replace = TRUE),
+    levels = c("red", "blue", "green")
+  )
+
+  experiment$close()
+  experiment <- SOMAExperimentOpen(experiment$uri, mode = "WRITE")
+  experiment$update_obs(obs_tbl)
+
+  experiment$close()
+  experiment <- SOMAExperimentOpen(experiment$uri, mode = "READ")
+
+  # Test enum query with present level
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(value_filter = "enum == 'green'")
+  )
+  expect_equal(query$n_obs, sum(as.vector(obs_tbl$enum$as_vector()) == "green"))
+  obs_df <- as.data.frame(query$obs()$concat())
+  expect_s3_class(obs_df$enum, "factor")
+  expect_identical(levels(obs_df$enum), c("red", "blue", "green"))
+  expect_identical(unique(as.vector(obs_df$enum)), "green")
+
+  # Test enum query with present and missing level
+  core <- list(
+    tiledbsoma = numeric_version(tiledbsoma:::libtiledbsoma_version(TRUE)),
+    tiledb.r = numeric_version(paste(tiledb::tiledb_version(), collapse = '.'))
+  )
+  skip_if(
+    any(vapply(core, \(x) x < '2.21', FUN.VALUE = logical(1L))),
+    message = "Handling of missing enum levels is implemented in Core 2.21 and higher"
+  )
+
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(value_filter = "enum == 'green' || enum == 'purple'")
+  )
+  expect_equal(query$n_obs, sum(as.vector(obs_tbl$enum$as_vector()) == "green"))
+  obs_df <- as.data.frame(query$obs()$concat())
+  expect_s3_class(obs_df$enum, "factor")
+  expect_identical(levels(obs_df$enum), c("red", "blue", "green"))
+  expect_identical(unique(as.vector(obs_df$enum)), "green")
+
+  # Test enum query for everything except missing level
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(value_filter = "enum != 'purple'")
+  )
+  expect_equal(query$n_obs, n_obs)
+  obs_df <- as.data.frame(query$obs()$concat())
+  expect_equal(nrow(obs_df), n_obs)
+
+  # Test enum query with missing level
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(value_filter = "enum == 'purple'")
+  )
+  expect_equal(query$n_obs, 0L)
+})
+
 test_that("querying by both coordinates and value filters", {
   skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-experiment-query-coords-and-value-filters")
