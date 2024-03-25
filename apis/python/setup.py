@@ -336,7 +336,7 @@ setuptools.setup(
             "black",
             "ruff",
             "pytest",
-            "typeguard>=4",
+            "typeguard==4.1.5",
         ]
     },
     python_requires=">=3.8",
