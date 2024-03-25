@@ -178,7 +178,7 @@ test_that("query by value filters with enums", {
   experiment$close()
   experiment <- SOMAExperimentOpen(experiment$uri, mode = "READ")
 
-  # Test enum query
+  # Test enum query with present level
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
@@ -190,14 +190,44 @@ test_that("query by value filters with enums", {
   expect_identical(levels(obs_df$enum), c("red", "blue", "green"))
   expect_identical(unique(as.vector(obs_df$enum)), "green")
 
+  # Test enum query with present and missing level
+  core <- list(
+    tiledbsoma = numeric_version(tiledbsoma:::libtiledbsoma_version(TRUE)),
+    tiledb.r = numeric_version(paste(tiledb::tiledb_version(), collapse = '.'))
+  )
+  skip_if(
+    any(vapply(core, \(x) x < '2.21', FUN.VALUE = logical(1L))),
+    message = "Handling of missing enum levels is implemented in Core 2.21 and higher"
+  )
+
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(value_filter = "enum == 'green' || enum == 'purple'")
+  )
+  expect_equal(query$n_obs, sum(as.vector(obs_tbl$enum$as_vector()) == "green"))
+  obs_df <- as.data.frame(query$obs()$concat())
+  expect_s3_class(obs_df$enum, "factor")
+  expect_identical(levels(obs_df$enum), c("red", "blue", "green"))
+  expect_identical(unique(as.vector(obs_df$enum)), "green")
+
+  # Test enum query for everything except missing level
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(value_filter = "enum != 'purple'")
+  )
+  expect_equal(query$n_obs, n_obs)
+  obs_df <- as.data.frame(query$obs()$concat())
+  expect_equal(nrow(obs_df), n_obs)
+
   # Test enum query with missing level
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
     obs_query = SOMAAxisQuery$new(value_filter = "enum == 'purple'")
   )
-  # TODO: currently never ends
-  # expect_error(query$obs()$concat())
+  expect_equal(query$n_obs, 0L)
 })
 
 test_that("querying by both coordinates and value filters", {
