@@ -1396,6 +1396,26 @@ def test_enum_schema_report(tmp_path):
         arrow_table = pa.Table.from_pandas(pandas_df, preserve_index=False)
         sdf.write(arrow_table)
 
+    # Double-check against TileDB-Py reporting
+    with tiledb.open(uri) as A:
+        for i in range(A.schema.nattr):
+            attr = A.schema.attr(i)
+            try:
+                index_type = attr.dtype
+                value_type = A.enum(attr.name).dtype
+            except tiledb.cc.TileDBError:
+                pass  # not an enum attr
+            if attr.name == "int_cat":
+                assert index_type.name == "int8"
+                assert value_type.name == "int64"
+            elif attr.name == "str_cat":
+                assert index_type.name == "int8"
+                assert value_type.name == "str32"
+            elif attr.name == "byte_cat":
+                assert index_type.name == "int8"
+                assert value_type.name == "bytes"
+
+    # Verify SOMA Arrow schema
     with soma.open(uri) as sdf:
         f = sdf.schema.field("int_cat")
         assert f.type.index_type == pa.int8()
