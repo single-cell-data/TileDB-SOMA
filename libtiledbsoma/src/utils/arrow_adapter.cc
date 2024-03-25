@@ -244,8 +244,14 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
 ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     std::shared_ptr<ArrowSchema> arrow_schema,
-    ColumnIndexInfo index_column_info) {
+    ColumnIndexInfo index_column_info,
+    PlatformConfig platform_config) {
     auto [index_column_names, domains, extents] = index_column_info;
+
+    std::cout << (platform_config["tiledb"]["create"]["allows_duplicates"] ?
+                      "yes" :
+                      "No")
+              << std::endl;
 
     ArraySchema schema(*ctx, TILEDB_SPARSE);
     Domain domain(*ctx);

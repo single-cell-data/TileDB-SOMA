@@ -41,6 +41,9 @@ using ColumnIndexInfo = std::tuple<
     std::shared_ptr<ArrowArray>   // tile extent
     >;
 
+using PlatformConfig =
+    std::map<std::string, std::map<std::string, std::map<std::string, bool>>>;
+
 class ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema);
@@ -70,7 +73,8 @@ class ArrowAdapter {
     static ArraySchema tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         std::shared_ptr<ArrowSchema> arrow_schema,
-        ColumnIndexInfo index_column_info);
+        ColumnIndexInfo index_column_info,
+        PlatformConfig platform_config);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.

@@ -244,8 +244,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         domains = pa.StructArray.from_arrays(domains, names=index_column_names)
         extents = pa.StructArray.from_arrays(extents, names=index_column_names)
         
-        print(index_column_names)
-
+        print(platform_config)
+        
         # TODO add as kw args
         clib.SOMADataFrame.create(
             uri,
@@ -398,11 +398,6 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), handle.schema)
-        
-        print("sr.schema:")
-        print(sr.schema)
-        print("coords:")
-        print(coords)
 
         self._set_reader_coords(sr, coords)
 
