@@ -185,7 +185,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     def add_new_collection(
         self,
         key: str,
-        kind: Optional[Type[AnyTileDBCollection]] = None,
+        kind: Optional[Type[CollectionBase]] = None,  # type: ignore[type-arg]
         *,
         uri: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
@@ -377,7 +377,6 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         """
         return self._add_new_ndarray(SparseNDArray, key, **kwargs)
 
-    @typeguard_ignore
     def _add_new_element(
         self,
         key: str,
@@ -444,7 +443,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                     entry.entry.wrapper_type.open, uri, mode, context, timestamp
                 )
             # Since we just opened this object, we own it and should close it.
-            self._close_stack.enter_context(entry.soma)  # type: ignore[arg-type]
+            self._close_stack.enter_context(entry.soma)
         return cast(CollectionElementType, entry.soma)
 
     def set(
