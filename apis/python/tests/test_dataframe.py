@@ -1371,3 +1371,6 @@ def test_enum_extend_past_numerical_limit(tmp_path):
 
 def test_write_str_empty_ned(tmp_path):
     tmp_path.as_posix()
+
+def test_foo():
+    assert 1+1 == 2
