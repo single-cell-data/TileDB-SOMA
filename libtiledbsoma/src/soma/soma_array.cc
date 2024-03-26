@@ -561,19 +561,22 @@ void SOMAArray::set_metadata(
 }
 
 void SOMAArray::delete_metadata(const std::string& key) {
-    if (key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
+    if (key.compare(SOMA_OBJECT_TYPE_KEY) == 0) {
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be deleted.");
+    }
 
-    if (key.compare(ENCODING_VERSION_KEY) == 0)
+    if (key.compare(ENCODING_VERSION_KEY) == 0) {
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be deleted.");
+    }
 
     arr_->delete_metadata(key);
     metadata_.erase(key);
 }
 
 std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
-    if (metadata_.count(key) == 0)
+    if (metadata_.count(key) == 0) {
         return std::nullopt;
+    }
 
     return metadata_[key];
 }
