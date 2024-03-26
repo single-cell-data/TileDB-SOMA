@@ -537,6 +537,8 @@ enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
     return NANOARROW_TYPE_INT64; // NB time resolution set indepedently
   else if (sv == "tsn:")
     return NANOARROW_TYPE_INT64; // NB time resolution set indepedently
+  else if (sv == "tsu:")
+    return NANOARROW_TYPE_INT64; // NB time resolution set indepedently
   else if (sv == "tdD")
     return NANOARROW_TYPE_INT32; // R Date: fractional days since epoch
   else if (sv == "z")
