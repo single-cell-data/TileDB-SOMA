@@ -7,8 +7,8 @@ import datetime
 import functools
 import threading
 import time
-from concurrent import futures
-from typing import Any, Dict, Mapping, Optional, Union
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, Literal, Mapping, Optional, Union
 
 import tiledb
 from somacore import ContextBase
@@ -46,8 +46,8 @@ def _maybe_timestamp_ms(input: Optional[OpenTimestamp]) -> Optional[int]:
     return to_timestamp_ms(input)
 
 
-_SENTINEL = object()
-"""Sentinel object to distinguish default parameters from None."""
+_Unset = Literal["__unset__"]
+_UNSET: _Unset = "__unset__"
 
 
 class SOMATileDBContext(ContextBase):
@@ -68,7 +68,7 @@ class SOMATileDBContext(ContextBase):
         tiledb_ctx: Optional[tiledb.Ctx] = None,
         tiledb_config: Optional[Dict[str, Union[str, float]]] = None,
         timestamp: Optional[OpenTimestamp] = None,
-        threadpool: Optional[futures.ThreadPoolExecutor] = None,
+        threadpool: Optional[ThreadPoolExecutor] = None,
     ) -> None:
         """Initializes a new SOMATileDBContext.
 
@@ -138,7 +138,7 @@ class SOMATileDBContext(ContextBase):
         """The TileDB context to use, either provided or lazily constructed."""
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
 
-        self.threadpool = threadpool or futures.ThreadPoolExecutor()
+        self.threadpool = threadpool or ThreadPoolExecutor()
         """User specified threadpool. If None, we'll instantiate one ourselves."""
         self._native_context: Optional[clib.SOMAContext] = None
         """Lazily construct clib.SOMAContext."""
@@ -219,8 +219,8 @@ class SOMATileDBContext(ContextBase):
         *,
         tiledb_config: Optional[Dict[str, Any]] = None,
         tiledb_ctx: Optional[tiledb.Ctx] = None,
-        timestamp: Optional[OpenTimestamp] = _SENTINEL,  # type: ignore[assignment]
-        threadpool: Optional[futures.ThreadPoolExecutor] = _SENTINEL,  # type: ignore[assignment]
+        timestamp: Union[None, OpenTimestamp, _Unset] = _UNSET,
+        threadpool: Union[None, ThreadPoolExecutor, _Unset] = _UNSET,
     ) -> Self:
         """Create a copy of the context, merging changes.
 
@@ -259,12 +259,14 @@ class SOMATileDBContext(ContextBase):
                 new_config = self._internal_tiledb_config()
                 new_config.update(tiledb_config)
                 tiledb_config = {k: v for (k, v) in new_config.items() if v is not None}
-            if timestamp is _SENTINEL:
+
+            if timestamp == _UNSET:
                 # Keep the existing timestamp if not overridden.
                 timestamp = self._timestamp_ms
-            if threadpool is _SENTINEL:
+            if threadpool == _UNSET:
                 # Keep the existing threadpool if not overridden.
                 threadpool = self.threadpool
+
         return type(self)(
             tiledb_config=tiledb_config,
             tiledb_ctx=tiledb_ctx,

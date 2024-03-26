@@ -122,7 +122,7 @@ def open(
         Experimental.
     """
     context = _validate_soma_tiledb_context(context)
-    obj: TileDBObject[_Wrapper] = _open_internal(  # type: ignore[no-untyped-call,valid-type]
+    obj: TileDBObject[_Wrapper] = _open_internal(  # type: ignore[valid-type]
         _tdb_handles.open, uri, mode, context, tiledb_timestamp
     )
     try:
@@ -143,7 +143,6 @@ def open(
         raise
 
 
-@no_type_check
 def _open_internal(
     opener: Callable[
         [str, options.OpenMode, SOMATileDBContext, Optional[OpenTimestamp]], _Wrapper
