@@ -332,13 +332,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         auto dict_arr = new ArrowArray;
 
         auto enmr = column->get_enumeration_info();
-        if (enmr->type() == TILEDB_STRING_ASCII or
-            enmr->type() == TILEDB_CHAR) {
-            dict_sch->format = strdup("z");
-        } else {
-            dict_sch->format = strdup(
-                to_arrow_format(enmr->type(), false).data());
-        }
+        dict_sch->format = strdup(to_arrow_format(enmr->type(), false).data());
         dict_sch->name = nullptr;
         dict_sch->metadata = nullptr;
         dict_sch->flags = 0;
