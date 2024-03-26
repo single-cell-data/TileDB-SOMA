@@ -1371,3 +1371,60 @@ def test_enum_extend_past_numerical_limit(tmp_path):
 
 def test_write_str_empty_ned(tmp_path):
     tmp_path.as_posix()
+
+
+def test_enum_schema_report(tmp_path):
+    uri = tmp_path.as_posix()
+
+    pandas_df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3, 4, 5], dtype=np.int64),
+            "int_cat": pd.Series([10, 20, 10, 20, 20, 20], dtype="category"),
+            "int": pd.Series([10, 20, 10, 20, 20, 20]),
+            "str_cat": pd.Series(["A", "B", "A", "B", "B", "B"], dtype="category"),
+            "str": pd.Series(["A", "B", "A", "B", "B", "B"]),
+            "byte_cat": pd.Series(
+                [b"A", b"B", b"A", b"B", b"B", b"B"], dtype="category"
+            ),
+            "byte": pd.Series([b"A", b"B", b"A", b"B", b"B", b"B"]),
+        },
+    )
+
+    arrow_schema = pa.Schema.from_pandas(pandas_df, preserve_index=False)
+
+    with soma.DataFrame.create(uri, schema=arrow_schema) as sdf:
+        arrow_table = pa.Table.from_pandas(pandas_df, preserve_index=False)
+        sdf.write(arrow_table)
+
+    # Double-check against TileDB-Py reporting
+    with tiledb.open(uri) as A:
+        for i in range(A.schema.nattr):
+            attr = A.schema.attr(i)
+            try:
+                index_type = attr.dtype
+                value_type = A.enum(attr.name).dtype
+            except tiledb.cc.TileDBError:
+                pass  # not an enum attr
+            if attr.name == "int_cat":
+                assert index_type.name == "int8"
+                assert value_type.name == "int64"
+            elif attr.name == "str_cat":
+                assert index_type.name == "int8"
+                assert value_type.name == "str32"
+            elif attr.name == "byte_cat":
+                assert index_type.name == "int8"
+                assert value_type.name == "bytes"
+
+    # Verify SOMA Arrow schema
+    with soma.open(uri) as sdf:
+        f = sdf.schema.field("int_cat")
+        assert f.type.index_type == pa.int8()
+        assert f.type.value_type == pa.int64()
+
+        f = sdf.schema.field("str_cat")
+        assert f.type.index_type == pa.int8()
+        assert f.type.value_type == pa.string()
+
+        f = sdf.schema.field("byte_cat")
+        assert f.type.index_type == pa.int8()
+        assert f.type.value_type == pa.binary()

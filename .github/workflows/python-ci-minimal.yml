@@ -19,7 +19,10 @@ on:
 jobs:
   build:
     strategy:
-      fail-fast: true
+      # TEMP: PLEASE DO NOT COMMIT
+      # fail-fast: true
+      fail-fast: false
+
       matrix:
         os: [ubuntu-22.04, macos-12]
         python-version: ['3.8', '3.11']
