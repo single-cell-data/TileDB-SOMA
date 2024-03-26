@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -19,7 +19,7 @@ IndexerDataType = Union[
     pd.Series,
     pd.arrays.IntegerArray,
     pa.ChunkedArray,
-    list[int],
+    List[int],
 ]
 
 
