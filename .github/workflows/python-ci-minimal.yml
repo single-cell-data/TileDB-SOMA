@@ -19,9 +19,7 @@ on:
 jobs:
   build:
     strategy:
-      # TEMP: PLEASE DO NOT COMMIT
-      # fail-fast: true
-      fail-fast: false
+      fail-fast: true
 
       matrix:
         os: [ubuntu-22.04, macos-12]
