@@ -272,6 +272,7 @@ void ManagedQuery::setup_read() {
 
 void ManagedQuery::submit_write() {
     query_->submit();
+    query_->finalize();
 }
 
 void ManagedQuery::submit_read() {
