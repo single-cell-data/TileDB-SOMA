@@ -35,6 +35,7 @@
 #ifndef SOMA_OBJECT
 #define SOMA_OBJECT
 
+#include <filesystem>
 #include <map>
 #include <string>
 #include <tiledb/tiledb>
@@ -55,7 +56,7 @@ class SOMAObject {
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Return a constant string describing the type of the object.

@@ -52,15 +52,17 @@ class SOMADataFrame : public SOMAArray {
     /**
      * @brief Create a SOMADataFrame object at the given URI.
      *
-     * @param uri URI to create the SOMADataFrame
+     * @param uri URI to create the SOMAArray
      * @param schema TileDB ArraySchema
-     * @param platform_config Optional config parameter dictionary
-     * @return std::shared_ptr<SOMADataFrame> opened in read mode
+     * @param ctx SOMAContext
+     * @param timestamp Optional pair indicating timestamp start and end
+     * @return std::unique_ptr<SOMADataFrame>
      */
     static std::unique_ptr<SOMADataFrame> create(
         std::string_view uri,
         ArraySchema schema,
-        std::shared_ptr<SOMAContext> ctx);
+        std::shared_ptr<SOMAContext> ctx,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.
@@ -76,7 +78,7 @@ class SOMADataFrame : public SOMAArray {
      * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::shared_ptr<SOMADataFrame> SOMADataFrame
+     * @return std::unique_ptr<SOMADataFrame>
      */
     static std::unique_ptr<SOMADataFrame> open(
         std::string_view uri,
@@ -84,7 +86,7 @@ class SOMADataFrame : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names = {},
         ResultOrder result_order = ResultOrder::automatic,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Check if the SOMADataFrame exists at the URI.
@@ -114,7 +116,7 @@ class SOMADataFrame : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names,
         ResultOrder result_order,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt)
+        std::optional<TimestampRange> timestamp = std::nullopt)
         : SOMAArray(
               mode,
               uri,

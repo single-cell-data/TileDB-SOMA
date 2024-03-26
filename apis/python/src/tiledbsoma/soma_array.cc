@@ -39,6 +39,25 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
+py::dict meta(SOMAArray& array) {
+    py::dict results;
+
+    for (auto [key, val] : array.get_metadata()) {
+        auto [tdb_type, value_num, value] = val;
+
+        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII) {
+            auto py_buf = py::array(py::dtype("|S1"), value_num, value);
+            auto res = py_buf.attr("tobytes")().attr("decode")("UTF-8");
+            results[py::str(key)] = res;
+        } else {
+            py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+            auto res = py::array(value_type, value_num, value).attr("item")(0);
+            results[py::str(key)] = res;
+        }
+    }
+    return results;
+}
+
 py::tuple get_enum(SOMAArray& sr, std::string attr_name) {
     auto attr_to_enmrs = sr.get_attr_to_enum_mapping();
     if (attr_to_enmrs.count(attr_name) == 0)
@@ -644,31 +663,7 @@ void load_soma_array(py::module& m) {
             "get_metadata",
             py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
 
-        .def_property_readonly(
-            "meta",
-            [](SOMAArray& soma_dataframe) -> py::dict {
-                py::dict results;
-
-                for (auto const& [key, val] : soma_dataframe.get_metadata()) {
-                    tiledb_datatype_t tdb_type = std::get<MetadataInfo::dtype>(
-                        val);
-                    uint32_t value_num = std::get<MetadataInfo::num>(val);
-                    const void* value = std::get<MetadataInfo::value>(val);
-
-                    if (tdb_type == TILEDB_STRING_UTF8) {
-                        results[py::str(key)] = py::str(
-                            std::string((const char*)value, value_num));
-                    } else if (tdb_type == TILEDB_STRING_ASCII) {
-                        results[py::str(key)] = py::bytes(
-                            std::string((const char*)value, value_num));
-                    } else {
-                        py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
-                        results[py::str(key)] = py::array(
-                            value_type, value_num, value);
-                    }
-                }
-                return results;
-            })
+        .def_property_readonly("meta", meta)
 
         .def("has_metadata", &SOMAArray::has_metadata)
 
