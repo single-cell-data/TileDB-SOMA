@@ -145,8 +145,13 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
             auto enmr = ArrayExperimental::get_enumeration(
                 *ctx, *tiledb_array, attr.name());
             auto dict = new ArrowSchema;
-            dict->format = strdup(
-                ArrowAdapter::to_arrow_format(enmr.type(), false).data());
+            if (enmr.type() == TILEDB_STRING_ASCII or
+                enmr.type() == TILEDB_CHAR) {
+                dict->format = strdup("z");
+            } else {
+                dict->format = strdup(
+                    ArrowAdapter::to_arrow_format(enmr.type(), false).data());
+            }
             dict->name = strdup(enmr.name().c_str());
             dict->metadata = nullptr;
             dict->flags = 0;
@@ -240,6 +245,14 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
     }
 }
 
+bool ArrowAdapter::_isstr(const char* format) {
+    if ((strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
+        (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0)) {
+        return true;
+    }
+    return false;
+}
+
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
 ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
@@ -329,7 +342,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         dict_sch->release = &release_schema;
         dict_sch->private_data = nullptr;
 
-        const int n_buf = strcmp(dict_sch->format, "u") == 0 ? 3 : 2;
+        const int n_buf = ArrowAdapter::_isstr(dict_sch->format) ? 3 : 2;
         dict_arr->null_count = 0;
         dict_arr->offset = 0;
         dict_arr->n_buffers = n_buf;
@@ -353,7 +366,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         // returns std::optional where std::nullopt indicates the
         // column does not contain enumerated values.
         if (enmr->type() == TILEDB_STRING_ASCII or
-            enmr->type() == TILEDB_STRING_UTF8) {
+            enmr->type() == TILEDB_STRING_UTF8 or enmr->type() == TILEDB_CHAR) {
             auto dict_vec = enmr->as_vector<std::string>();
             column->convert_enumeration();
             dict_arr->buffers[1] = column->enum_offsets().data();
