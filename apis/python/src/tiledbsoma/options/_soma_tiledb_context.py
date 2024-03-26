@@ -8,7 +8,7 @@ import functools
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, Mapping, Optional, Type, Union, cast
+from typing import Any, Dict, Literal, Mapping, Optional, Union
 
 import tiledb
 from somacore import ContextBase
@@ -46,10 +46,8 @@ def _maybe_timestamp_ms(input: Optional[OpenTimestamp]) -> Optional[int]:
     return to_timestamp_ms(input)
 
 
-class _SENTINEL:
-    """Sentinel object to distinguish default parameters from None."""
-
-    pass
+_Unset = Literal["__unset__"]
+_UNSET: _Unset = "__unset__"
 
 
 class SOMATileDBContext(ContextBase):
@@ -221,8 +219,8 @@ class SOMATileDBContext(ContextBase):
         *,
         tiledb_config: Optional[Dict[str, Any]] = None,
         tiledb_ctx: Optional[tiledb.Ctx] = None,
-        timestamp: Union[None, OpenTimestamp, Type[_SENTINEL]] = _SENTINEL,
-        threadpool: Union[None, ThreadPoolExecutor, Type[_SENTINEL]] = _SENTINEL,
+        timestamp: Union[None, OpenTimestamp, _Unset] = _UNSET,
+        threadpool: Union[None, ThreadPoolExecutor, _Unset] = _UNSET,
     ) -> Self:
         """Create a copy of the context, merging changes.
 
@@ -262,18 +260,18 @@ class SOMATileDBContext(ContextBase):
                 new_config.update(tiledb_config)
                 tiledb_config = {k: v for (k, v) in new_config.items() if v is not None}
 
-            if timestamp is _SENTINEL:
+            if timestamp == _UNSET:
                 # Keep the existing timestamp if not overridden.
                 timestamp = self._timestamp_ms
-            if threadpool is _SENTINEL:
+            if threadpool == _UNSET:
                 # Keep the existing threadpool if not overridden.
                 threadpool = self.threadpool
 
         return type(self)(
             tiledb_config=tiledb_config,
             tiledb_ctx=tiledb_ctx,
-            timestamp=cast(Optional[OpenTimestamp], timestamp),
-            threadpool=cast(Optional[ThreadPoolExecutor], threadpool),
+            timestamp=timestamp,
+            threadpool=threadpool,
         )
 
     def _open_timestamp_ms(self, in_timestamp: Optional[OpenTimestamp]) -> int:
