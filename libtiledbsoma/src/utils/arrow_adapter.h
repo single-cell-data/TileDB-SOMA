@@ -41,8 +41,22 @@ using ColumnIndexInfo = std::tuple<
     std::shared_ptr<ArrowArray>   // tile extent
     >;
 
-using PlatformConfig =
-    std::map<std::string, std::map<std::string, std::map<std::string, bool>>>;
+class PlatformConfig {
+   public:
+    uint64_t dataframe_dim_zstd_level = 3;
+    uint64_t sparse_nd_array_dim_zstd_level = 3;
+    bool write_X_chunked = true;
+    uint64_t goal_chunk_nnz = 100000000;
+    uint64_t remote_cap_nbytes = 2400000000;
+    uint64_t capacity = 100000;
+    std::vector<std::string> offsets_filters = {
+        "DoubleDeltaFilter", "BitWidthReductionFilter", "ZstdFilter"};
+    std::vector<std::string> validity_filters;
+    bool allows_duplicates = false;
+    std::optional<std::string> tile_order = std::nullopt;
+    std::optional<std::string> cell_order = std::nullopt;
+    bool consolidate_and_vacuum = false;
+};
 
 class ArrowAdapter {
    public:
@@ -74,7 +88,7 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx,
         std::shared_ptr<ArrowSchema> arrow_schema,
         ColumnIndexInfo index_column_info,
-        PlatformConfig platform_config);
+        std::optional<PlatformConfig> platform_config);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.

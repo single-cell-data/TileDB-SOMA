@@ -46,12 +46,18 @@ void SOMAMeasurement::create(
     std::shared_ptr<ArrowSchema> schema,
     ColumnIndexInfo index_columns,
     std::shared_ptr<SOMAContext> ctx,
+    std::optional<PlatformConfig> platform_config,
     std::optional<TimestampRange> timestamp) {
     std::string exp_uri(uri);
 
     SOMAGroup::create(ctx, exp_uri, "SOMAMeasurement", timestamp);
     SOMADataFrame::create(
-        exp_uri + "/var", schema, index_columns, ctx, timestamp);
+        exp_uri + "/var",
+        schema,
+        index_columns,
+        ctx,
+        platform_config,
+        timestamp);
     SOMACollection::create(exp_uri + "/X", ctx, timestamp);
     SOMACollection::create(exp_uri + "/obsm", ctx, timestamp);
     SOMACollection::create(exp_uri + "/obsp", ctx, timestamp);

@@ -111,8 +111,9 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
     std::shared_ptr<ArrowSchema> schema,
-    ColumnIndexInfo index_columns) {
-    SOMAExperiment::create(uri, schema, index_columns, ctx);
+    ColumnIndexInfo index_columns,
+    std::optional<PlatformConfig> platform_config) {
+    SOMAExperiment::create(uri, schema, index_columns, ctx, platform_config);
     std::shared_ptr<SOMAExperiment> member = SOMAExperiment::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
@@ -141,8 +142,9 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
     std::shared_ptr<ArrowSchema> schema,
-    ColumnIndexInfo index_columns) {
-    SOMADataFrame::create(uri, schema, index_columns, ctx);
+    ColumnIndexInfo index_columns,
+    std::optional<PlatformConfig> platform_config) {
+    SOMADataFrame::create(uri, schema, index_columns, ctx, platform_config);
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));

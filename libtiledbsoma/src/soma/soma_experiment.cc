@@ -46,12 +46,18 @@ void SOMAExperiment::create(
     std::shared_ptr<ArrowSchema> schema,
     ColumnIndexInfo index_columns,
     std::shared_ptr<SOMAContext> ctx,
+    std::optional<PlatformConfig> platform_config,
     std::optional<TimestampRange> timestamp) {
     std::string exp_uri(uri);
 
     SOMAGroup::create(ctx, exp_uri, "SOMAExperiment", timestamp);
     SOMADataFrame::create(
-        exp_uri + "/obs", schema, index_columns, ctx, timestamp);
+        exp_uri + "/obs",
+        schema,
+        index_columns,
+        ctx,
+        platform_config,
+        timestamp);
     SOMACollection::create(exp_uri + "/ms", ctx, timestamp);
 
     auto name = std::string(std::filesystem::path(uri).filename());

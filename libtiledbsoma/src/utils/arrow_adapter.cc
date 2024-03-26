@@ -245,16 +245,66 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     std::shared_ptr<ArrowSchema> arrow_schema,
     ColumnIndexInfo index_column_info,
-    PlatformConfig platform_config) {
+    std::optional<PlatformConfig> platform_config) {
     auto [index_column_names, domains, extents] = index_column_info;
-
-    std::cout << (platform_config["tiledb"]["create"]["allows_duplicates"] ?
-                      "yes" :
-                      "No")
-              << std::endl;
 
     ArraySchema schema(*ctx, TILEDB_SPARSE);
     Domain domain(*ctx);
+
+    if (platform_config) {
+        std::map<std::string, tiledb_filter_type_t> convert_filter = {
+            {"GzipFilter", TILEDB_FILTER_GZIP},
+            {"ZstdFilter", TILEDB_FILTER_ZSTD},
+            {"LZ4Filter", TILEDB_FILTER_LZ4},
+            {"Bzip2Filter", TILEDB_FILTER_BZIP2},
+            {"RleFilter", TILEDB_FILTER_RLE},
+            {"DeltaFilter", TILEDB_FILTER_DELTA},
+            {"DoubleDeltaFilter", TILEDB_FILTER_DOUBLE_DELTA},
+            {"BitWidthReductionFilter", TILEDB_FILTER_BIT_WIDTH_REDUCTION},
+            {"BitShuffleFilter", TILEDB_FILTER_BITSHUFFLE},
+            {"ByteShuffleFilter", TILEDB_FILTER_BYTESHUFFLE},
+            {"PositiveDeltaFilter", TILEDB_FILTER_POSITIVE_DELTA},
+            {"ChecksumMD5Filter", TILEDB_FILTER_CHECKSUM_MD5},
+            {"ChecksumSHA256Filter", TILEDB_FILTER_CHECKSUM_SHA256},
+            {"DictionaryFilter", TILEDB_FILTER_DICTIONARY},
+            {"FloatScaleFilter", TILEDB_FILTER_SCALE_FLOAT},
+            {"XORFilter", TILEDB_FILTER_XOR},
+            {"WebpFilter", TILEDB_FILTER_WEBP},
+            {"NoOpFilter", TILEDB_FILTER_NONE},
+        };
+
+        schema.set_capacity(platform_config->capacity);
+
+        if (platform_config->offsets_filters.size() != 0) {
+            FilterList offset_filter_list(*ctx);
+            for (auto offset : platform_config->offsets_filters) {
+                offset_filter_list.add_filter(
+                    Filter(*ctx, convert_filter[offset]));
+            }
+            schema.set_offsets_filter_list(offset_filter_list);
+        }
+
+        if (platform_config->validity_filters.size() != 0) {
+            FilterList validity_filter_list(*ctx);
+            for (auto validity : platform_config->validity_filters) {
+                validity_filter_list.add_filter(
+                    Filter(*ctx, convert_filter[validity]));
+            }
+            schema.set_validity_filter_list(validity_filter_list);
+        }
+
+        schema.set_allows_dups(platform_config->allows_duplicates);
+
+        if (platform_config->tile_order)
+            schema.set_tile_order(
+                platform_config->tile_order == "row" ? TILEDB_ROW_MAJOR :
+                                                       TILEDB_COL_MAJOR);
+
+        if (platform_config->cell_order)
+            schema.set_cell_order(
+                platform_config->cell_order == "row" ? TILEDB_ROW_MAJOR :
+                                                       TILEDB_COL_MAJOR);
+    }
 
     std::map<std::string, Dimension> dims;
 

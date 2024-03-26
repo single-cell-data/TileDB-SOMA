@@ -60,6 +60,7 @@ class SOMAMeasurement : public SOMACollection {
         std::shared_ptr<ArrowSchema> schema,
         ColumnIndexInfo index_columns,
         std::shared_ptr<SOMAContext> ctx,
+        std::optional<PlatformConfig> platform_config = std::nullopt,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**

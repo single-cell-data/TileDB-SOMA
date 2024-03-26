@@ -244,7 +244,23 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         domains = pa.StructArray.from_arrays(domains, names=index_column_names)
         extents = pa.StructArray.from_arrays(extents, names=index_column_names)
         
-        print(platform_config)
+        plt_cfg = None
+        if platform_config:
+            ops = TileDBCreateOptions.from_platform_config(platform_config)
+            plt_cfg = clib.PlatformConfig()
+            plt_cfg.dataframe_dim_zstd_level = ops.dataframe_dim_zstd_level
+            plt_cfg.sparse_nd_array_dim_zstd_level = ops.sparse_nd_array_dim_zstd_level
+            plt_cfg.write_X_chunked = ops.write_X_chunked
+            plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
+            plt_cfg.capacity = ops.capacity
+            if ops.offsets_filters:
+                plt_cfg.offsets_filters = [info["_type"] for info in ops.offsets_filters]
+            if ops.validity_filters:
+                plt_cfg.validity_filters = [info["_type"] for info in ops.validity_filters]
+            plt_cfg.allows_duplicates = ops.allows_duplicates
+            plt_cfg.tile_order = ops.tile_order
+            plt_cfg.cell_order = ops.cell_order
+            plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
         
         # TODO add as kw args
         clib.SOMADataFrame.create(
@@ -254,6 +270,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             domains,
             extents,
             context.native_context,
+            plt_cfg,
         )
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
