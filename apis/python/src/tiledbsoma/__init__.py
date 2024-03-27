@@ -157,7 +157,7 @@ from ._general_utilities import (
     get_storage_engine,
     show_package_versions,
 )
-from ._indexer import IntIndexer
+from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
 from .options import SOMATileDBContext, TileDBCreateOptions
@@ -193,6 +193,7 @@ __all__ = [
     "SOMATileDBContext",
     "SparseNDArray",
     "TileDBCreateOptions",
+    "tiledbsoma_build_index",
     "tiledbsoma_stats_disable",
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
