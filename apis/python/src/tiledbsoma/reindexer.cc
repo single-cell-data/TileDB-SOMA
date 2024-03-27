@@ -147,16 +147,10 @@ void load_reindexer(py::module& m) {
         // Perform lookup for a large input array of keys and writes the
         // looked up values into previously allocated array (works for the
         // cases in which python and R pre-allocate the array)
-        .def(
-            "get_indexer",
-            [](IntIndexer& indexer, py::array_t<int64_t> lookups) {
-                return get_indexer_general(indexer, lookups);
-            })
+        .def("get_indexer_general", get_indexer_general)
         // If the input is not arrow (does not have _export_to_c attribute),
         // it will be handled using a general input method.
-        .def("get_indexer", [](IntIndexer& indexer, py::object py_arrow_array) {
-            return get_indexer_py_arrow(indexer, py_arrow_array);
-        });
+        .def("get_indexer_pyarrow", get_indexer_py_arrow);
 }
 
 }  // namespace libtiledbsomacpp
