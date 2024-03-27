@@ -6,6 +6,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+from somacore.query.types import IndexLike
 
 from tiledbsoma import pytiledbsoma as clib
 
@@ -23,6 +24,26 @@ IndexerDataType = Union[
 ]
 
 
+def tiledbsoma_build_index(
+    data: IndexerDataType, *, context: Optional["SOMATileDBContext"] = None
+) -> IndexLike:
+    """Initialize re-indexer for provided indices.
+
+    Deprecated. Provides the same functionality as the``IntIndexer`` class.
+
+    Args:
+       data:
+           Integer keys used to build the index (hash) table.
+       context:
+           ``SOMATileDBContext`` object containing concurrecy level.
+
+    Lifecycle:
+        Deprecated.
+    """
+
+    return IntIndexer(data, context=context)
+
+
 class IntIndexer:
     """A re-indexer for unique integer indices.
 
@@ -33,7 +54,7 @@ class IntIndexer:
     def __init__(
         self, data: IndexerDataType, *, context: Optional["SOMATileDBContext"] = None
     ):
-        """Initialize re-indexer for provied indices.
+        """Initialize re-indexer for provided indices.
 
         Args:
            data:
