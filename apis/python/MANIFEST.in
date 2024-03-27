@@ -3,3 +3,4 @@ include src/tiledbsoma/*.cc
 include src/tiledbsoma/*.h
 graft dist_links
 prune dist_links/libtiledbsoma/test/__pycache__
+include requirements_dev.txt
