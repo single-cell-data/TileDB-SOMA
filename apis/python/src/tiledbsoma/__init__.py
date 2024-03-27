@@ -193,6 +193,7 @@ __all__ = [
     "SOMATileDBContext",
     "SparseNDArray",
     "TileDBCreateOptions",
+    "tiledbsoma_build_index",
     "tiledbsoma_stats_disable",
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
