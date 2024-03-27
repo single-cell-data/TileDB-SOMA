@@ -106,7 +106,7 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     delete arrow_buffer;
 
     if (array->buffers != nullptr) {
-        delete[] array->buffers;
+        free(array->buffers);
         array->buffers = nullptr;
     }
 
