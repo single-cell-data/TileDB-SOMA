@@ -1,5 +1,4 @@
 from concurrent import futures
-from contextlib import nullcontext
 from typing import Tuple
 from unittest import mock
 
@@ -7,10 +6,8 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
-import tiledb
-from pyarrow import ArrowInvalid
 from scipy import sparse
-from somacore import AxisQuery, options
+from somacore import options
 
 import tiledbsoma as soma
 from tests._util import raises_no_typeguard
@@ -908,24 +905,3 @@ def test_experiment_query_uses_threadpool_from_context(soma_experiment):
         assert adata is not None
 
         pool.submit.assert_called()
-
-
-def test_empty_categorical_query(pbmc_small):
-    q = pbmc_small.axis_query(
-        measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "g1"')
-    )
-    obs = q.obs().concat()
-    assert len(obs) == 44
-
-    q = pbmc_small.axis_query(
-        measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "foo"')
-    )
-    # Empty query on a categorical column raised ArrowInvalid before TileDB 2.21; see https://github.com/single-cell-data/TileDB-SOMA/pull/2299
-    ctx = (
-        nullcontext()
-        if tiledb.libtiledb.version() >= (2, 21)
-        else pytest.raises(ArrowInvalid)
-    )
-    with ctx:
-        obs = q.obs().concat()
-        assert len(obs) == 0

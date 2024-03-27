@@ -332,12 +332,7 @@ setuptools.setup(
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
-        "dev": [
-            "black",
-            "ruff",
-            "pytest",
-            "typeguard>=4",
-        ]
+        "dev": open("requirements_dev.txt").read(),
     },
     python_requires=">=3.8",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
