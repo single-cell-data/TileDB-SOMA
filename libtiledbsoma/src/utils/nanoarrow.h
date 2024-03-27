@@ -2512,17 +2512,13 @@ static inline void _ArrowBitsUnpackInt32(const uint8_t word, int32_t* out) {
 }
 
 static inline void _ArrowBitmapPackInt8(const int8_t* values, uint8_t* out) {
-    *out = (uint8_t)(values[0] | ((values[1] + 0x1) & 0x2) |
-                     ((values[2] + 0x3) & 0x4) | ((values[3] + 0x7) & 0x8) |
-                     ((values[4] + 0xf) & 0x10) | ((values[5] + 0x1f) & 0x20) |
-                     ((values[6] + 0x3f) & 0x40) | ((values[7] + 0x7f) & 0x80));
+    *out =
+        (uint8_t)(values[0] | ((values[1] + 0x1) & 0x2) | ((values[2] + 0x3) & 0x4) | ((values[3] + 0x7) & 0x8) | ((values[4] + 0xf) & 0x10) | ((values[5] + 0x1f) & 0x20) | ((values[6] + 0x3f) & 0x40) | ((values[7] + 0x7f) & 0x80));
 }
 
 static inline void _ArrowBitmapPackInt32(const int32_t* values, uint8_t* out) {
-    *out = (uint8_t)(values[0] | ((values[1] + 0x1) & 0x2) |
-                     ((values[2] + 0x3) & 0x4) | ((values[3] + 0x7) & 0x8) |
-                     ((values[4] + 0xf) & 0x10) | ((values[5] + 0x1f) & 0x20) |
-                     ((values[6] + 0x3f) & 0x40) | ((values[7] + 0x7f) & 0x80));
+    *out =
+        (uint8_t)(values[0] | ((values[1] + 0x1) & 0x2) | ((values[2] + 0x3) & 0x4) | ((values[3] + 0x7) & 0x8) | ((values[4] + 0xf) & 0x10) | ((values[5] + 0x1f) & 0x20) | ((values[6] + 0x3f) & 0x40) | ((values[7] + 0x7f) & 0x80));
 }
 
 static inline int8_t ArrowBitGet(const uint8_t* bits, int64_t i) {
@@ -2634,10 +2630,10 @@ static inline void ArrowBitsSetTo(
 
     if (bytes_end == bytes_begin + 1) {
         // set bits within a single byte
-        const uint8_t only_byte_mask = i_end % 8 == 0 ?
-                                           first_byte_mask :
-                                           (uint8_t)(first_byte_mask |
-                                                     last_byte_mask);
+        const uint8_t
+            only_byte_mask = i_end % 8 == 0 ?
+                                 first_byte_mask :
+                                 (uint8_t)(first_byte_mask | last_byte_mask);
         bits[bytes_begin] &= only_byte_mask;
         bits[bytes_begin] |= (uint8_t)(fill_byte & ~only_byte_mask);
         return;
@@ -2682,10 +2678,10 @@ static inline int64_t ArrowBitCountSet(
         const uint8_t first_byte_mask = _ArrowkPrecedingBitmask[i_end % 8];
         const uint8_t last_byte_mask = _ArrowkTrailingBitmask[i_begin % 8];
 
-        const uint8_t only_byte_mask = i_end % 8 == 0 ?
-                                           last_byte_mask :
-                                           (uint8_t)(first_byte_mask &
-                                                     last_byte_mask);
+        const uint8_t
+            only_byte_mask = i_end % 8 == 0 ?
+                                 last_byte_mask :
+                                 (uint8_t)(first_byte_mask & last_byte_mask);
 
         const uint8_t byte_masked = bits[bytes_begin] & only_byte_mask;
         return _ArrowkBytePopcount[byte_masked];
