@@ -1,3 +1,7 @@
+# 1.9.1
+
+* This release contains a single Python-only mod
+
 # 1.9.0
 
 ## Changes
