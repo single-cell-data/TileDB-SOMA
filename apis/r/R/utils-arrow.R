@@ -66,12 +66,14 @@ tiledb_type_from_arrow_type <- function(x, is_dim) {
     utf8 = "UTF8",
     string = "UTF8",
     large_utf8 = "UTF8",
-    # date32 = "date32",
+    # based on what TileDB supports
+    date32 = "DATETIME_DAY",
     # date64 = "date64",
     # time32 = "time32",
     # time64 = "time64",
     # null = "null",
-    # timestamp = "timestamp",
+    # based on what TileDB supports with a default msec res.
+    timestamp = "DATETIME_MS",
     # decimal128 = "decimal128",
     # decimal256 = "decimal256",
     # struct = "struct",
@@ -240,11 +242,10 @@ arrow_schema_from_tiledb_schema <- function(x) {
   arrow::schema(c(dimfields, attfields))
 }
 
-#' Validate external pointer to ArrowArray
+#' Validate external pointer to ArrowArray which is embedded in a nanoarrow S3 type
 #' @noRd
 check_arrow_pointers <- function(arrlst) {
-    stopifnot("First argument must be an external pointer to ArrowArray" = check_arrow_array_tag(arrlst[[1]]),
-              "Second argument must be an external pointer to ArrowSchema" = check_arrow_schema_tag(arrlst[[2]]))
+    stopifnot(inherits(arrlst, "nanoarrow_array"))
 }
 
 #' Validate compatibility of Arrow data types

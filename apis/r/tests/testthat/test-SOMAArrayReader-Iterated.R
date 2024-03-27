@@ -29,9 +29,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
     expect_true(is.data.frame(rl))
     expect_equal(nrow(rl), 4848644)
     expect_equal(ncol(rl), 3)
-
     rm(sr)
-    #gc()
+    gc()
 
     srret <- sr_setup(uri, config=as.character(config), dim_points=list(soma_dim_0=as.integer64(1)))
     sr <- srret$sr
@@ -50,7 +49,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
     expect_equal(ncol(rl), 3)
 
     rm(sr)
-    #gc()
+    gc()
 
     srret <- sr_setup(uri, config=as.character(config), dim_range=list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
     sr <- srret$sr
@@ -195,6 +194,7 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
 test_that("Dimension Point and Ranges Bounds", {
     skip_if(!extended_tests() || covr_tests())
     ctx <- tiledbsoma::SOMATileDBContext$new()
+
     config <- as.character(tiledb::config(ctx$context()))
     human_experiment <- load_dataset("soma-exp-pbmc-small", tiledbsoma_ctx = ctx)
     X <- human_experiment$ms$get("RNA")$X$get("data")
@@ -207,7 +207,7 @@ test_that("Dimension Point and Ranges Bounds", {
     sr <- srret$sr
 
     chunk <- sr_next(sr)
-    at <- arrow::as_arrow_table(arrow::RecordBatch$import_from_c(chunk$array_data, chunk$schema))
+    at <- arrow::as_arrow_table(chunk)
     expect_equal(at$num_rows, 5)
     expect_equal(at$num_columns, 3)
     rm(sr)
@@ -220,7 +220,7 @@ test_that("Dimension Point and Ranges Bounds", {
     sr <- srret$sr
 
     chunk <- sr_next(sr)
-    at <- arrow::as_arrow_table(arrow::RecordBatch$import_from_c(chunk$array_data, chunk$schema))
+    at <- arrow::as_arrow_table(chunk)
     expect_equal(at$num_rows, 2)
     expect_equal(at$num_columns, 3)
 

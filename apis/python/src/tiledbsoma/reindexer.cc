@@ -31,7 +31,7 @@
  */
 
 #include <tiledbsoma/reindexer/reindexer.h>
-#include <tiledbsoma/utils/carrow.h>
+// #include <tiledbsoma/utils/carrow.h>
 #include "common.h"
 
 #define DENUM(x) .value(#x, TILEDB_##x)
