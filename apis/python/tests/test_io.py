@@ -171,3 +171,4 @@ def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
         with soma.DataFrame.open(uri) as sdf:
             pdf = sdf.read().concat().to_pandas()
             assert list(pdf["foo"]) == pydict["foo"]
+            assert list(pdf["bar"]) == pydict["bar"]

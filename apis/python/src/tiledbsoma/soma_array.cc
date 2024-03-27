@@ -91,9 +91,25 @@ void write(SOMAArray& array, py::handle py_batch) {
             }
         }
 
+        auto np = py::module::import("numpy");
+        auto table_offset = arr_->offset;
+        auto data_size = tiledb::impl::type_size(ArrowAdapter::to_tiledb_format(sch_->format));
+
+        if(offsets){
+            offsets += table_offset;
+        }
+        if(validities){
+            validities += table_offset;
+        }
+
         array.set_column_data(
-            sch_->name, arr_->length, data, offsets, validities);
+            sch_->name,
+            arr_->length,
+            (char*)data + table_offset * data_size,
+            offsets,
+            nullptr);
     }
+
     try {
         array.write();
     } catch (const std::exception& e) {

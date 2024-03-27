@@ -455,6 +455,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         _util.check_type("values", values, (pa.Table,))
 
         target_schema = []
+        print("self.schema")
+        print(self.schema)
         for input_field in values.schema:
             target_field = self.schema.field(input_field.name)
 
@@ -465,11 +467,9 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 target_schema.append(target_field.with_type(pa.uint8()))
             else:
                 target_schema.append(target_field)
+        # print(values)
         values = values.cast(pa.schema(target_schema, values.schema.metadata))
-        
-        print("HELLLLOOOOOOOOOOOOOOOOO")
-        print()
-        
+
         for batch in values.to_batches():
             self._handle.write(batch)
             
