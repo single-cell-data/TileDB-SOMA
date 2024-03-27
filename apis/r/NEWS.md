@@ -1,6 +1,6 @@
 # 1.9.1
 
-* This release contains a single Python-only mod
+* This release contains a single Python-only modification for its build process
 
 # 1.9.0
 
