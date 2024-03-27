@@ -197,6 +197,8 @@ def find_or_build_package_data(setuptools_cmd):
                     package_data.append(f.name)
                 assert package_data, f"tiledb artifacts absent from {lib_dir}"
 
+        package_data.append(this_dir / "requirements_dev.txt")
+
         # Install shared libraries inside the Python module via package_data.
         print(f"  adding to package_data: {package_data}")
         setuptools_cmd.distribution.package_data["tiledbsoma"] = package_data
