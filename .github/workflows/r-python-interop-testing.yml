@@ -76,11 +76,8 @@ jobs:
           cache: pip
           cache-dependency-path: ./apis/python/setup.py
 
-      - name: Install testing prereqs
-        run: python -m pip -v install -U pip pytest-cov 'typeguard>=4' types-setuptools
-
       - name: Install tiledbsoma
-        run: python -m pip -v install -e apis/python
+        run: python -m pip -v install -e apis/python[dev]
 
       - name: Show package versions
         run: |
