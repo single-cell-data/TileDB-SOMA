@@ -1184,6 +1184,7 @@ def _write_dataframe_impl(
     *,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
+    index_column_names: Sequence[str] = (SOMA_JOINID,),
     original_index_name: Optional[str] = None,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
@@ -1209,6 +1210,7 @@ def _write_dataframe_impl(
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
+            index_column_names=index_column_names,
             platform_config=platform_config,
             context=context,
         )
