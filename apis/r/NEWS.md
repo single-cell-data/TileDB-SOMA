@@ -1,3 +1,7 @@
+# 1.9.2
+
+* This release contains a single Python-only modification for an API backward-compatibility update
+
 # 1.9.1
 
 * This release contains a single Python-only modification for its build process
