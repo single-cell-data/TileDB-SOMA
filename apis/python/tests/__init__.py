@@ -3,9 +3,6 @@ from typeguard import install_import_hook
 
 install_import_hook("tiledbsoma")
 
-# TODO: `clib.SOMAObject.open` segfaults if this import is removed: https://github.com/single-cell-data/TileDB-SOMA/issues/2293
-from tiledbsoma import _query_condition  # noqa: F401, E402
-
 """Types supported in a SOMA*NDArray """
 NDARRAY_ARROW_TYPES_SUPPORTED = [
     pa.bool_(),
