@@ -7,40 +7,31 @@
 Intermediate type to choose result format when reading a sparse array
 }
 \keyword{internal}
+\section{Super class}{
+\code{\link[tiledbsoma:SOMASparseNDArrayReadBase]{tiledbsoma::SOMASparseNDArrayReadBase}} -> \code{SOMASparseNDArrayRead}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-SOMASparseNDArrayRead-new}{\code{SOMASparseNDArrayRead$new()}}
 \item \href{#method-SOMASparseNDArrayRead-sparse_matrix}{\code{SOMASparseNDArrayRead$sparse_matrix()}}
 \item \href{#method-SOMASparseNDArrayRead-tables}{\code{SOMASparseNDArrayRead$tables()}}
-\item \href{#method-SOMASparseNDArrayRead-clone}{\code{SOMASparseNDArrayRead$clone()}}
+\item \href{#method-SOMASparseNDArrayRead-blockwise}{\code{SOMASparseNDArrayRead$blockwise()}}
 }
 }
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMASparseNDArrayRead-new"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMASparseNDArrayRead-new}{}}}
-\subsection{Method \code{new()}}{
-Create (lifecycle: experimental)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayRead$new(sr, shape)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{sr}}{soma read pointer}
-
-\item{\code{shape}}{Shape of the full matrix}
-}
-\if{html}{\out{</div>}}
-}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMASparseNDArrayReadBase" data-id="initialize"><a href='../../tiledbsoma/html/SOMASparseNDArrayReadBase.html#method-SOMASparseNDArrayReadBase-initialize'><code>tiledbsoma::SOMASparseNDArrayReadBase$initialize()</code></a></span></li>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMASparseNDArrayRead-sparse_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArrayRead-sparse_matrix}{}}}
 \subsection{Method \code{sparse_matrix()}}{
 Read as a sparse matrix (lifecycle: experimental). Returns
-an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or \link{matrixZeroBasedView} of it.
+an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or
+\link{matrixZeroBasedView} of it.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayRead$sparse_matrix(zero_based = FALSE)}\if{html}{\out{</div>}}
 }
@@ -48,8 +39,9 @@ an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or \link{matrixZeroBasedVi
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{zero_based}}{Logical, if \code{TRUE} returns iterator of \link{matrixZeroBasedView}
-if \code{FALSE} returns iterator of Matrix::\link[Matrix]{dgTMatrix-class}.}
+\item{\code{zero_based}}{Logical, if \code{TRUE} returns iterator of
+\link{matrixZeroBasedView} if \code{FALSE} returns iterator of
+Matrix::\link[Matrix]{dgTMatrix-class}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -72,20 +64,35 @@ Returns an iterator of arrow::\link[arrow]{Table}.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMASparseNDArrayRead-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMASparseNDArrayRead-clone}{}}}
-\subsection{Method \code{clone()}}{
-The objects of this class are cloneable with this method.
+\if{html}{\out{<a id="method-SOMASparseNDArrayRead-blockwise"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMASparseNDArrayRead-blockwise}{}}}
+\subsection{Method \code{blockwise()}}{
+Read in a blockwise fashion
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayRead$clone(deep = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayRead$blockwise(
+  axis,
+  ...,
+  size = NULL,
+  reindex_disable_on_axis = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{deep}}{Whether to make a deep clone.}
+\item{\code{axis}}{Axis to iterate over in a blockwise manner}
+
+\item{\code{...}}{Ignored}
+
+\item{\code{size}}{The size of each blockwise chunk to generate}
+
+\item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed;
+currently not yet implemented}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{\link{SOMASparseNDArrayBlockwiseRead}} iterated reader
 }
 }
 }
