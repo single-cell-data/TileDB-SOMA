@@ -40,6 +40,7 @@
   x,
   uri,
   soma_parent,
+  mode = "write",
   ...,
   key = NULL,
   platform_config = NULL,
@@ -51,6 +52,7 @@
   x,
   uri,
   soma_parent,
+  mode = "write",
   df_index = NULL,
   index_column_names = "soma_joinid",
   ...,
@@ -64,6 +66,7 @@
   x,
   uri,
   soma_parent,
+  mode = "write",
   sparse = TRUE,
   type = NULL,
   transpose = FALSE,
@@ -78,6 +81,7 @@
   x,
   uri,
   soma_parent,
+  mode = "write",
   sparse = TRUE,
   type = NULL,
   transpose = FALSE,
@@ -92,6 +96,7 @@
   x,
   uri,
   soma_parent,
+  mode = "write",
   type = NULL,
   transpose = FALSE,
   ...,
@@ -136,6 +141,8 @@ relative or aboslute}
 determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}}
 
 \item{transpose}{Transpose \code{x} before writing}
+
+\item{mode}{Ingestion mode: one of \code{write} or \code{resume}}
 
 \item{key}{Optionally register the resulting \code{SOMADataFrame} in
 \code{soma_parent} as \code{key}; pass \code{NULL} to prevent registration

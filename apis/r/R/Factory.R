@@ -4,15 +4,21 @@
 #' @param uri URI for the TileDB object
 #' @param schema schema Arrow schema argument passed on to DataFrame$create()
 #' @param index_column_names Index column names passed on to DataFrame$create()
+#' @param mode Ingestion mode: one of \code{write} or \code{resume}
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
 SOMADataFrameCreate <- function(uri, schema, index_column_names = c("soma_joinid"),
-                                platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
-    sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp, internal_use_only = "allowed_use")
-    sdf$create(schema, index_column_names=index_column_names, platform_config=platform_config, internal_use_only = "allowed_use")
-
+                                mode = "write", platform_config = NULL,
+                                tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    spdl::debug("[SOMADataFrameCreate] mode={}", mode)
+    sdf <- SOMADataFrame$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
+                             internal_use_only = "allowed_use")
+    if (!(mode == "resume" && sdf$exists())) {
+        sdf$create(schema, index_column_names=index_column_names,
+                   platform_config=platform_config, internal_use_only = "allowed_use")
+    }
     sdf
 }
 
@@ -37,15 +43,21 @@ SOMADataFrameOpen <- function(uri, mode="READ",
 #' @param uri URI for the TileDB object
 #' @param type An [Arrow type][arrow::data-type] defining the type of each element in the array.
 #' @param shape A vector of integers defining the shape of the array.
+#' @param mode Ingestion mode: one of \code{write} or \code{resume}
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
-SOMASparseNDArrayCreate <- function(uri, type, shape,
-                                    platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+SOMASparseNDArrayCreate <- function(uri, type, shape, mode = "write", platform_config = NULL,
+                                    tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    spdl::debug("[SOMASparseArrayCreate] mode={}", mode)
     snda <- SOMASparseNDArray$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
                                   internal_use_only = "allowed_use")
-    snda$create(type, shape, platform_config=platform_config, internal_use_only = "allowed_use")
+    spdl::debug("[SOMASparseArrayCreate] array at {}", snda$uri)
+    if (!(mode == "resume" && snda$exists())) {
+        spdl::debug("[SOMASparseArrayCreate] creating uri={}", snda$uri)
+        snda$create(type, shape, platform_config=platform_config, internal_use_only = "allowed_use")
+    }
     snda
 }
 
@@ -70,15 +82,20 @@ SOMASparseNDArrayOpen <- function(uri, mode="READ",
 #' @param uri URI for the TileDB object
 #' @param type An [Arrow type][arrow::data-type] defining the type of each element in the array.
 #' @param shape A vector of integers defining the shape of the array.
+#' @param mode Ingestion mode: one of \code{write} or \code{resume}
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
 #' @export
-SOMADenseNDArrayCreate <- function(uri, type, shape,
+SOMADenseNDArrayCreate <- function(uri, type, shape, mode = "write",
                                    platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+    spdl::debug("[SOMADenseArrayCreate] mode={}", mode)
     dnda <- SOMADenseNDArray$new(uri, platform_config, tiledbsoma_ctx, tiledb_timestamp,
                                  internal_use_only = "allowed_use")
-    dnda$create(type, shape, platform_config=platform_config, internal_use_only = "allowed_use")
+    if (!(mode == "resume" && dnda$exists())) {
+        spdl::debug("[SOMADenseArrayCreate] creating uri={}", dnda$uri)
+        dnda$create(type, shape, platform_config=platform_config, internal_use_only = "allowed_use")
+    }
     dnda
 }
 
