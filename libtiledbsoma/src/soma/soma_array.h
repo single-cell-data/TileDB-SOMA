@@ -709,7 +709,11 @@ class SOMAArray : public SOMAObject {
     //===================================================================
 
     template <typename T>
-    void _extend_value_helper(T* data, uint64_t num_elems, Enumeration enmr) {
+    void _extend_value_helper(
+        T* data,
+        uint64_t num_elems,
+        Enumeration enmr,
+        uint64_t index_dtype_width) {
         std::vector<T> enums_in_write((T*)data, (T*)data + num_elems);
         auto enums_existing = enmr.as_vector<T>();
         std::vector<T> extend_values;
@@ -722,6 +726,27 @@ class SOMAArray : public SOMAObject {
         }
 
         if (extend_values.size() != 0) {
+            // Check that we extend the enumeration values without overflowing
+            uint64_t max_capacity;
+            if (index_dtype_width == 1) {
+                max_capacity = std::numeric_limits<uint8_t>::max();
+            } else if (index_dtype_width == 2) {
+                max_capacity = std::numeric_limits<uint16_t>::max();
+            } else if (index_dtype_width == 4) {
+                max_capacity = std::numeric_limits<uint32_t>::max();
+            } else if (index_dtype_width == 8) {
+                max_capacity = std::numeric_limits<uint64_t>::max();
+            } else {
+                throw TileDBSOMAError(
+                    "Saw invalid size for integer when extending enums");
+            }
+
+            auto free_capacity = max_capacity - enums_existing.size();
+            if (free_capacity < extend_values.size()) {
+                throw TileDBSOMAError(
+                    "Cannot extend enumeration; reached maximum capacity");
+            }
+
             ArraySchemaEvolution se(*ctx_->tiledb_ctx());
             se.extend_enumeration(enmr.extend(extend_values));
             se.array_evolve(uri_);

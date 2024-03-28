@@ -93,12 +93,13 @@ void write(SOMAArray& array, py::handle py_batch) {
 
         auto np = py::module::import("numpy");
         auto table_offset = arr_->offset;
-        auto data_size = tiledb::impl::type_size(ArrowAdapter::to_tiledb_format(sch_->format));
+        auto data_size = tiledb::impl::type_size(
+            ArrowAdapter::to_tiledb_format(sch_->format));
 
-        if(offsets){
+        if (offsets) {
             offsets += table_offset;
         }
-        if(validities){
+        if (validities) {
             validities += table_offset;
         }
 

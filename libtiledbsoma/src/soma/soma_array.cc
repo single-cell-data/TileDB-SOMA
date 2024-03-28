@@ -285,6 +285,9 @@ void SOMAArray::extend_enumeration(
     auto enmr = ArrayExperimental::get_enumeration(
         *ctx_->tiledb_ctx(), *arr_, std::string(name));
 
+    auto index_dtype_width = 
+        tiledb_schema()->attribute(std::string(name)).type();
+
     switch (enmr.type()) {
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
@@ -314,6 +317,28 @@ void SOMAArray::extend_enumeration(
             }
 
             if (extend_values.size() != 0) {
+                // Check that we extend the enumeration values without
+                // overflowing
+                uint64_t max_capacity;
+                if (index_dtype_width == 1) {
+                    max_capacity = std::numeric_limits<uint8_t>::max();
+                } else if (index_dtype_width == 2) {
+                    max_capacity = std::numeric_limits<uint16_t>::max();
+                } else if (index_dtype_width == 4) {
+                    max_capacity = std::numeric_limits<uint32_t>::max();
+                } else if (index_dtype_width == 8) {
+                    max_capacity = std::numeric_limits<uint64_t>::max();
+                } else {
+                    throw TileDBSOMAError(
+                        "Saw invalid size for integer when extending enums");
+                }
+
+                auto free_capacity = max_capacity - enums_existing.size();
+                if (free_capacity < extend_values.size()) {
+                    throw TileDBSOMAError(
+                        "Cannot extend enumeration; reached maximum capacity");
+                }
+
                 ArraySchemaEvolution se(*ctx_->tiledb_ctx());
                 se.extend_enumeration(enmr.extend(extend_values));
                 se.array_evolve(uri_);
@@ -322,43 +347,53 @@ void SOMAArray::extend_enumeration(
         }
         case TILEDB_BOOL:
         case TILEDB_INT8: {
-            SOMAArray::_extend_value_helper((int8_t*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (int8_t*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         case TILEDB_UINT8: {
-            SOMAArray::_extend_value_helper((uint8_t*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (uint8_t*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         case TILEDB_INT16: {
-            SOMAArray::_extend_value_helper((int16_t*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (int16_t*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         case TILEDB_UINT16: {
-            SOMAArray::_extend_value_helper((uint16_t*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (uint16_t*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         case TILEDB_INT32: {
-            SOMAArray::_extend_value_helper((int32_t*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (int32_t*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         case TILEDB_UINT32: {
-            SOMAArray::_extend_value_helper((uint32_t*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (uint32_t*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         case TILEDB_INT64: {
-            SOMAArray::_extend_value_helper((int64_t*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (int64_t*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         case TILEDB_UINT64: {
-            SOMAArray::_extend_value_helper((uint64_t*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (uint64_t*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         case TILEDB_FLOAT32: {
-            SOMAArray::_extend_value_helper((float*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (float*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         case TILEDB_FLOAT64: {
-            SOMAArray::_extend_value_helper((double*)data, num_elems, enmr);
+            SOMAArray::_extend_value_helper(
+                (double*)data, num_elems, enmr, index_dtype_width);
             break;
         }
         default:
