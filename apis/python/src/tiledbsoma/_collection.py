@@ -125,6 +125,26 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
+    
+    @classmethod
+    def open(
+        cls,
+        uri: str,
+        mode: options.OpenMode = "r",
+        *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: Optional[SOMATileDBContext] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> Self:
+        """Opens this specific type of SOMA object."""
+        return super().open(
+            uri,
+            mode,
+            tiledb_timestamp=tiledb_timestamp,
+            context=context,
+            platform_config=platform_config,
+            soma_type="SOMAGroup",
+        )
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
@@ -150,6 +170,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         This is loaded at startup when we have a read handle.
         """
         self._mutated_keys: Set[str] = set()
+        
 
     # Overloads to allow type inference to work when doing:
     #
@@ -687,6 +708,26 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     """
 
     __slots__ = ()
+
+    @classmethod
+    def open(
+        cls,
+        uri: str,
+        mode: options.OpenMode = "r",
+        *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: Optional[SOMATileDBContext] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> Self:
+        """Opens this specific type of SOMA object."""
+        return super().open(
+            uri,
+            mode,
+            tiledb_timestamp=tiledb_timestamp,
+            context=context,
+            platform_config=platform_config,
+            soma_type="SOMACollection",
+        )
 
 
 @typeguard_ignore

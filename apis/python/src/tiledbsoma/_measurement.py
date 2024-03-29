@@ -6,15 +6,18 @@
 """Implementation of a SOMA Measurement.
 """
 
-from typing import Union
+from typing import Optional, Union
 
-from somacore import measurement
+from somacore import measurement, options
+from typing_extensions import Self
 
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject
+from ._types import OpenTimestamp
+from .options._soma_tiledb_context import SOMATileDBContext
 
 
 class Measurement(  # type: ignore[misc]  # __eq__ false positive
@@ -79,3 +82,23 @@ class Measurement(  # type: ignore[misc]  # __eq__ false positive
         "varm": ("SOMACollection",),
         "varp": ("SOMACollection",),
     }
+
+    @classmethod
+    def open(
+        cls,
+        uri: str,
+        mode: options.OpenMode = "r",
+        *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: Optional[SOMATileDBContext] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> Self:
+        """Opens this specific type of SOMA object."""
+        return super().open(
+            uri,
+            mode,
+            tiledb_timestamp=tiledb_timestamp,
+            context=context,
+            platform_config=platform_config,
+            soma_type="SOMAMeasurement",
+        )

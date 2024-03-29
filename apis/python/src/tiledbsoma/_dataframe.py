@@ -127,6 +127,26 @@ class DataFrame(TileDBArray, somacore.DataFrame):
     _reader_wrapper_type = DataFrameWrapper
 
     @classmethod
+    def open(
+        cls,
+        uri: str,
+        mode: options.OpenMode = "r",
+        *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: Optional[SOMATileDBContext] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> Self:
+        """Opens this specific type of SOMA object."""
+        return super().open(
+            uri,
+            mode,
+            tiledb_timestamp=tiledb_timestamp,
+            context=context,
+            platform_config=platform_config,
+            soma_type="SOMADataFrame",
+        )
+
+    @classmethod
     def create(
         cls,
         uri: str,
@@ -339,6 +359,21 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self._check_open_read()
 
         handle = self._handle._handle
+
+        # Before:
+        # SELF     IS A <class 'tiledbsoma._dataframe.DataFrame'>
+        # SELF.H   IS A <class 'tiledbsoma._tdb_handles.DataFrameWrapper'>
+        # SELF.H.H IS A <class 'tiledbsoma.pytiledbsoma.SOMADataFrame'>
+
+        # After:
+        # SELF     IS A <class 'tiledbsoma._dataframe.DataFrame'>
+        # SELF.H   IS A <class 'tiledbsoma._tdb_handles.ArrayWrapper'>
+        # SELF.H.H IS A <class 'tiledb.SparseArray'>
+
+        print("SELF     IS A", type(self))
+        print("SELF.H   IS A", type(self._handle))
+        print("SELF.H.H IS A", type(self._handle._handle))
+        #raise Exception("WAMI")
 
         context = handle.context()
         if platform_config is not None:
