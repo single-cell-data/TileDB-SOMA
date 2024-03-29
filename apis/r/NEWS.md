@@ -4,6 +4,7 @@
 
 * Add support for ingestion of `SeuratCommand` logs
 * Add support for outgestion of `SeuratCommand` logs
+* Add support for reading `*m` and `*p` layers from `SOMAExperimentAxisQuery`
 
 # 1.7.0
 
