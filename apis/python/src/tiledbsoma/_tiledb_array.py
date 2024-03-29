@@ -7,7 +7,8 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import pyarrow as pa
 import tiledb
-from somacore.options import ResultOrder, ResultOrderStr
+from somacore import options
+from typing_extensions import Self
 
 from . import _tdb_handles, _util
 
@@ -31,6 +32,27 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
     __slots__ = ()
 
     _wrapper_type = _tdb_handles.ArrayWrapper
+
+    @classmethod
+    def open(
+        cls,
+        uri: str,
+        mode: options.OpenMode = "r",
+        *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: Optional[SOMATileDBContext] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        clib_type: Optional[str] = None,
+    ) -> Self:
+        """Opens this specific type of SOMA object."""
+        return super().open(
+            uri,
+            mode,
+            tiledb_timestamp=tiledb_timestamp,
+            context=context,
+            platform_config=platform_config,
+            clib_type="SOMAArray",
+        )
 
     @property
     def schema(self) -> pa.Schema:
@@ -87,7 +109,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         schema: Optional[tiledb.ArraySchema] = None,
         column_names: Optional[Sequence[str]] = None,
         query_condition: Optional[tiledb.QueryCondition] = None,
-        result_order: Optional[ResultOrderStr] = None,
+        result_order: Optional[options.ResultOrderStr] = None,
     ) -> clib.SOMAArray:
         """Constructs a C++ SOMAArray using appropriate context/config/etc."""
         # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
@@ -103,7 +125,9 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
                 "row-major": clib.ResultOrder.rowmajor,
                 "column-major": clib.ResultOrder.colmajor,
             }
-            result_order_enum = result_order_map[ResultOrder(result_order).value]
+            result_order_enum = result_order_map[
+                options.ResultOrder(result_order).value
+            ]
             kwargs["result_order"] = result_order_enum
 
         soma_array = clib.SOMAArray(

@@ -18,36 +18,52 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
-    auto obj = tiledb::Object::object(*ctx->tiledb_ctx(), std::string(uri));
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp,
+    std::optional<std::string> soma_type) {
+    if (soma_type == std::nullopt) {
+        auto tiledb_type = Object::object(*ctx->tiledb_ctx(), std::string(uri))
+                               .type();
+        switch (tiledb_type) {
+            case Object::Type::Array:
+                soma_type = "SOMAArray";
+                break;
+            case Object::Type::Group:
+                soma_type = "SOMAGroup";
+                break;
+            default:
+                throw TileDBSOMAError("Saw invalid TileDB type");
+        }
+    }
 
-    if (obj.type() == tiledb::Object::Type::Array) {
+    if (soma_type == "SOMAArray") {
         auto array_ = SOMAArray::open(
             mode, uri, ctx, "", {}, "auto", ResultOrder::automatic, timestamp);
+        auto array_type = array_->type();
 
-        if (!array_->type().has_value())
+        if (!array_type.has_value())
             throw TileDBSOMAError("SOMAArray has no type info");
 
-        if (array_->type() == "SOMADataFrame") {
+        if (array_type == "SOMADataFrame") {
             return std::make_unique<SOMADataFrame>(*array_);
-        } else if (array_->type() == "SOMASparseNDArray") {
+        } else if (array_type == "SOMASparseNDArray") {
             return std::make_unique<SOMASparseNDArray>(*array_);
-        } else if (array_->type() == "SOMADenseNDArray") {
+        } else if (array_type == "SOMADenseNDArray") {
             return std::make_unique<SOMADenseNDArray>(*array_);
         } else {
             throw TileDBSOMAError("Saw invalid SOMAArray type");
         }
-    } else if (obj.type() == tiledb::Object::Type::Group) {
+    } else if (soma_type == "SOMAGroup") {
         auto group_ = SOMAGroup::open(mode, uri, ctx, "", timestamp);
+        auto group_type = group_->type();
 
-        if (!group_->type().has_value())
+        if (!group_type.has_value())
             throw TileDBSOMAError("SOMAGroup has no type info");
 
-        if (group_->type() == "SOMACollection") {
+        if (group_type == "SOMACollection") {
             return std::make_unique<SOMACollection>(*group_);
-        } else if (group_->type() == "SOMAExperiment") {
+        } else if (group_type == "SOMAExperiment") {
             return std::make_unique<SOMAExperiment>(*group_);
-        } else if (group_->type() == "SOMAMeasurement") {
+        } else if (group_type == "SOMAMeasurement") {
             return std::make_unique<SOMAMeasurement>(*group_);
         } else {
             throw TileDBSOMAError("Saw invalid SOMAGroup type");
