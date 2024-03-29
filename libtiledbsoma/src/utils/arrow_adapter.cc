@@ -44,24 +44,24 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     for (int i = 0; i < schema->n_children; ++i) {
         struct ArrowSchema* child = schema->children[i];
         if (schema->name != nullptr) {
-            free((void*)schema->name);
+            // EXPERIMENTAL free((void*)schema->name);
             schema->name = nullptr;
         }
         if (child->release != NULL) {
             child->release(child);
         }
-        free(child);
+        // EXPERIMENTAL free(child);
     }
-    free(schema->children);
+    // EXPERIMENTAL free(schema->children);
 
     struct ArrowSchema* dict = schema->dictionary;
     if (dict != nullptr) {
         if (dict->format != nullptr) {
-            free((void*)dict->format);
+            // EXPERIMENTAL free((void*)dict->format);
             dict->format = nullptr;
         }
         if (dict->release != nullptr) {
-            delete dict;
+            // EXPERIMENTAL delete dict;
             dict = nullptr;
         }
     }
@@ -80,20 +80,20 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     // Delete the ArrowBuffer, which was allocated with new.
     // If the ArrowBuffer.buffer_ shared_ptr is the last reference to the
     // underlying ColumnBuffer, the ColumnBuffer will be deleted.
-    delete arrow_buffer;
+    // EXPERIMENTAL delete arrow_buffer;
 
     if (array->buffers != nullptr) {
-        free(array->buffers);
+        // EXPERIMENTAL free(array->buffers);
     }
 
     struct ArrowArray* dict = array->dictionary;
     if (dict != nullptr) {
         if (dict->buffers != nullptr) {
-            free(dict->buffers);
+            // EXPERIMENTAL free(dict->buffers);
             dict->buffers = nullptr;
         }
         if (dict->release != nullptr) {
-            delete dict;
+            // EXPERIMENTAL delete dict;
             dict = nullptr;
         }
     }
