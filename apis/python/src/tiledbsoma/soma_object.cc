@@ -62,17 +62,23 @@ void load_soma_object(py::module& m) {
                         uri, mode, context, timestamp, clib_type);
                     auto soma_obj_type = soma_obj->type();
                     if (soma_obj_type == "SOMADataFrame")
-                        return py::cast(dynamic_cast<SOMADataFrame&>(*soma_obj));
+                        return py::cast(
+                            dynamic_cast<SOMADataFrame&>(*soma_obj));
                     else if (soma_obj_type == "SOMASparseNDArray")
-                        return py::cast(dynamic_cast<SOMASparseNDArray&>(*soma_obj));
+                        return py::cast(
+                            dynamic_cast<SOMASparseNDArray&>(*soma_obj));
                     else if (soma_obj_type == "SOMADenseNDArray")
-                        return py::cast(dynamic_cast<SOMADenseNDArray&>(*soma_obj));
+                        return py::cast(
+                            dynamic_cast<SOMADenseNDArray&>(*soma_obj));
                     else if (soma_obj_type == "SOMACollection")
-                        return py::cast(dynamic_cast<SOMACollection&>(*soma_obj));
+                        return py::cast(
+                            dynamic_cast<SOMACollection&>(*soma_obj));
                     else if (soma_obj_type == "SOMAExperiment")
-                        return py::cast(dynamic_cast<SOMAExperiment&>(*soma_obj));
+                        return py::cast(
+                            dynamic_cast<SOMAExperiment&>(*soma_obj));
                     else if (soma_obj_type == "SOMAMeasurement")
-                        return py::cast(dynamic_cast<SOMAMeasurement&>(*soma_obj));
+                        return py::cast(
+                            dynamic_cast<SOMAMeasurement&>(*soma_obj));
                     return py::none();
                 } catch (...) {
                     return py::none();
