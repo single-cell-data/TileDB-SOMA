@@ -6,18 +6,15 @@
 """Implementation of a SOMA Measurement.
 """
 
-from typing import Optional, Union
+from typing import Union
 
-from somacore import measurement, options
-from typing_extensions import Self
+from somacore import measurement
 
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject
-from ._types import OpenTimestamp
-from .options._soma_tiledb_context import SOMATileDBContext
 
 
 class Measurement(  # type: ignore[misc]  # __eq__ false positive

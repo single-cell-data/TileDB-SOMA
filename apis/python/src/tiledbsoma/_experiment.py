@@ -8,7 +8,7 @@
 import functools
 from typing import Any, Optional
 
-from somacore import experiment, options, query
+from somacore import experiment, query
 from typing_extensions import Self
 
 from ._collection import Collection, CollectionBase
@@ -17,8 +17,6 @@ from ._indexer import IntIndexer
 from ._measurement import Measurement
 from ._tdb_handles import Wrapper
 from ._tiledb_object import AnyTileDBObject
-from ._types import OpenTimestamp
-from .options._soma_tiledb_context import SOMATileDBContext
 
 
 class Experiment(  # type: ignore[misc]  # __eq__ false positive
@@ -71,7 +69,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),
     }
-    
+
     @classmethod
     def _set_create_metadata(cls, handle: Wrapper[Any]) -> None:
         # Root SOMA objects include a `dataset_type` entry to allow the

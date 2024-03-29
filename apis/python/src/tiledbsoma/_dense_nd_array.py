@@ -19,9 +19,7 @@ from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._exception import SOMAError
 from ._tdb_handles import DenseNDArrayWrapper
-from ._types import OpenTimestamp
 from ._util import dense_indices_to_shape
-from .options._soma_tiledb_context import SOMATileDBContext
 from .options._tiledb_create_options import TileDBCreateOptions
 
 
@@ -76,26 +74,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     __slots__ = ()
 
     _reader_wrapper_type = DenseNDArrayWrapper
-
-    @classmethod
-    def open(
-        cls,
-        uri: str,
-        mode: options.OpenMode = "r",
-        *,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-    ) -> Self:
-        """Opens this specific type of SOMA object."""
-        return super().open(
-            uri,
-            mode,
-            tiledb_timestamp=tiledb_timestamp,
-            context=context,
-            platform_config=platform_config,
-            soma_type="SOMADenseNDArray",
-        )
 
     def read(
         self,

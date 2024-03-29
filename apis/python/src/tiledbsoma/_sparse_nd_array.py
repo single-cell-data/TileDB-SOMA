@@ -39,8 +39,7 @@ from ._read_iters import (
     TableReadIter,
 )
 from ._tdb_handles import SparseNDArrayWrapper
-from ._types import NTuple, OpenTimestamp
-from .options._soma_tiledb_context import SOMATileDBContext
+from ._types import NTuple
 from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
@@ -101,26 +100,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     # Inherited from somacore
     # * ndim accessor
     # * is_sparse: Final = True
-
-    @classmethod
-    def open(
-        cls,
-        uri: str,
-        mode: options.OpenMode = "r",
-        *,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-    ) -> Self:
-        """Opens this specific type of SOMA object."""
-        return super().open(
-            uri,
-            mode,
-            tiledb_timestamp=tiledb_timestamp,
-            context=context,
-            platform_config=platform_config,
-            soma_type="SOMASparseNDArray",
-        )
 
     @property
     def nnz(self) -> int:

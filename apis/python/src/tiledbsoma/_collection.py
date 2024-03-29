@@ -125,7 +125,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
-    
+
     @classmethod
     def open(
         cls,
@@ -135,6 +135,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         tiledb_timestamp: Optional[OpenTimestamp] = None,
         context: Optional[SOMATileDBContext] = None,
         platform_config: Optional[options.PlatformConfig] = None,
+        clib_type: Optional[str] = None,
     ) -> Self:
         """Opens this specific type of SOMA object."""
         return super().open(
@@ -170,7 +171,6 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         This is loaded at startup when we have a read handle.
         """
         self._mutated_keys: Set[str] = set()
-        
 
     # Overloads to allow type inference to work when doing:
     #

@@ -259,7 +259,7 @@ AnyWrapper = Wrapper[RawHandle]
 
 class ArrayWrapper(Wrapper[tiledb.Array]):
     """Wrapper around a TileDB Array handle."""
-    
+
     clib_type = "SOMAArray"
 
     @classmethod
@@ -326,7 +326,7 @@ class GroupEntry:
 
 class GroupWrapper(Wrapper[tiledb.Group]):
     """Wrapper around a TileDB Group handle."""
-    
+
     clib_type = "SOMAGroup"
 
     @classmethod
