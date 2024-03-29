@@ -436,7 +436,12 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             timestamp = self.tiledb_timestamp_ms
 
             try:
-                wrapper = _tdb_handles.open(uri, mode, context, timestamp)
+                soma_type = None
+                if entry.entry.wrapper_type == _tdb_handles.ArrayWrapper:
+                    soma_type = "SOMAArray"
+                elif entry.entry.wrapper_type == _tdb_handles.GroupWrapper:
+                    soma_type = "SOMAGroup"
+                wrapper = _tdb_handles.open(uri, mode, context, timestamp, soma_type)
                 entry.soma = _factory.reify_handle(wrapper)
             except SOMAError:
                 entry.soma = _factory._open_internal(

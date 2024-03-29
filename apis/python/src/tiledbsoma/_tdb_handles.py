@@ -54,6 +54,7 @@ def open(
     mode: options.OpenMode,
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp],
+    soma_type: Optional[str] = None,
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
@@ -62,7 +63,11 @@ def open(
     # if there is not a valid SOMAObject at the given URI, this
     # returns None
     soma_object = clib.SOMAObject.open(
-        uri, open_mode, context.native_context, timestamp=(0, timestamp_ms)
+        uri=uri,
+        mode=open_mode,
+        context=context.native_context,
+        timestamp=(0, timestamp_ms),
+        soma_type=soma_type,
     )
 
     # Avoid creating a TileDB-Py Ctx unless necessary
