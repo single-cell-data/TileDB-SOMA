@@ -71,27 +71,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),
     }
-
-    @classmethod
-    def open(
-        cls,
-        uri: str,
-        mode: options.OpenMode = "r",
-        *,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-    ) -> Self:
-        """Opens this specific type of SOMA object."""
-        return super().open(
-            uri,
-            mode,
-            tiledb_timestamp=tiledb_timestamp,
-            context=context,
-            platform_config=platform_config,
-            soma_type="SOMAExperiment",
-        )
-
+    
     @classmethod
     def _set_create_metadata(cls, handle: Wrapper[Any]) -> None:
         # Root SOMA objects include a `dataset_type` entry to allow the

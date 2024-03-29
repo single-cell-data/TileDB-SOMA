@@ -60,7 +60,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         tiledb_timestamp: Optional[OpenTimestamp] = None,
         context: Optional[SOMATileDBContext] = None,
         platform_config: Optional[options.PlatformConfig] = None,
-        soma_type: Optional[str] = None,
+        clib_type: Optional[str] = None,
     ) -> Self:
         """Opens this specific type of SOMA object.
 
@@ -94,7 +94,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
         handle = _tdb_handles.open(
-            uri, mode, context, tiledb_timestamp, soma_type=soma_type
+            uri, mode, context, tiledb_timestamp, clib_type=clib_type
         )
         if not isinstance(handle, cls._reader_wrapper_type):
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)

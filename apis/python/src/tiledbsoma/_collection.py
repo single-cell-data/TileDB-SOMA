@@ -143,7 +143,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             tiledb_timestamp=tiledb_timestamp,
             context=context,
             platform_config=platform_config,
-            soma_type="SOMAGroup",
+            clib_type="SOMAGroup",
         )
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
@@ -457,12 +457,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             timestamp = self.tiledb_timestamp_ms
 
             try:
-                soma_type = None
-                if entry.entry.wrapper_type == _tdb_handles.ArrayWrapper:
-                    soma_type = "SOMAArray"
-                elif entry.entry.wrapper_type == _tdb_handles.GroupWrapper:
-                    soma_type = "SOMAGroup"
-                wrapper = _tdb_handles.open(uri, mode, context, timestamp, soma_type)
+                clib_type = entry.entry.wrapper_type.clib_type
+                wrapper = _tdb_handles.open(uri, mode, context, timestamp, clib_type)
                 entry.soma = _factory.reify_handle(wrapper)
             except SOMAError:
                 entry.soma = _factory._open_internal(
@@ -708,26 +704,6 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     """
 
     __slots__ = ()
-
-    @classmethod
-    def open(
-        cls,
-        uri: str,
-        mode: options.OpenMode = "r",
-        *,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-    ) -> Self:
-        """Opens this specific type of SOMA object."""
-        return super().open(
-            uri,
-            mode,
-            tiledb_timestamp=tiledb_timestamp,
-            context=context,
-            platform_config=platform_config,
-            soma_type="SOMACollection",
-        )
 
 
 @typeguard_ignore

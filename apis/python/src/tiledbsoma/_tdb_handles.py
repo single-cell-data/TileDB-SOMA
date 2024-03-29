@@ -54,7 +54,7 @@ def open(
     mode: options.OpenMode,
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp],
-    soma_type: Optional[str] = None,
+    clib_type: Optional[str] = None,
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
@@ -79,16 +79,15 @@ def open(
         mode=open_mode,
         context=context.native_context,
         timestamp=(0, timestamp_ms),
-        soma_type=soma_type,
+        clib_type=clib_type,
     )
 
     # Avoid creating a TileDB-Py Ctx unless necessary
-    if soma_type is None:
-        soma_type = (
-            soma_object.type
-            if soma_object is not None
-            else tiledb.object_type(uri, ctx=context.tiledb_ctx)
-        )
+    soma_type = (
+        soma_object.type
+        if soma_object is not None
+        else tiledb.object_type(uri, ctx=context.tiledb_ctx)
+    )
 
     if not soma_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
@@ -134,6 +133,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     timestamp_ms: int
     _handle: _RawHdl_co
     closed: bool = attrs.field(default=False, init=False)
+    clib_type: Optional[str] = None
 
     @classmethod
     def open(
@@ -259,6 +259,8 @@ AnyWrapper = Wrapper[RawHandle]
 
 class ArrayWrapper(Wrapper[tiledb.Array]):
     """Wrapper around a TileDB Array handle."""
+    
+    clib_type = "SOMAArray"
 
     @classmethod
     def _opener(
@@ -324,6 +326,8 @@ class GroupEntry:
 
 class GroupWrapper(Wrapper[tiledb.Group]):
     """Wrapper around a TileDB Group handle."""
+    
+    clib_type = "SOMAGroup"
 
     @classmethod
     def _opener(

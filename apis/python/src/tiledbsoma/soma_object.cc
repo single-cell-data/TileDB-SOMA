@@ -56,23 +56,23 @@ void load_soma_object(py::module& m) {
                OpenMode mode,
                std::shared_ptr<SOMAContext> context,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp,
-               std::optional<std::string> soma_type) -> py::object {
+               std::optional<std::string> clib_type) -> py::object {
                 try {
-                    auto obj = SOMAObject::open(
-                        uri, mode, context, timestamp, soma_type);
-                    auto obj_type = obj->type();
-                    if (obj_type == "SOMADataFrame")
-                        return py::cast(dynamic_cast<SOMADataFrame&>(*obj));
-                    else if (obj_type == "SOMASparseNDArray")
-                        return py::cast(dynamic_cast<SOMASparseNDArray&>(*obj));
-                    else if (obj_type == "SOMADenseNDArray")
-                        return py::cast(dynamic_cast<SOMADenseNDArray&>(*obj));
-                    else if (obj_type == "SOMACollection")
-                        return py::cast(dynamic_cast<SOMACollection&>(*obj));
-                    else if (obj_type == "SOMAExperiment")
-                        return py::cast(dynamic_cast<SOMAExperiment&>(*obj));
-                    else if (obj_type == "SOMAMeasurement")
-                        return py::cast(dynamic_cast<SOMAMeasurement&>(*obj));
+                    auto soma_obj = SOMAObject::open(
+                        uri, mode, context, timestamp, clib_type);
+                    auto soma_obj_type = soma_obj->type();
+                    if (soma_obj_type == "SOMADataFrame")
+                        return py::cast(dynamic_cast<SOMADataFrame&>(*soma_obj));
+                    else if (soma_obj_type == "SOMASparseNDArray")
+                        return py::cast(dynamic_cast<SOMASparseNDArray&>(*soma_obj));
+                    else if (soma_obj_type == "SOMADenseNDArray")
+                        return py::cast(dynamic_cast<SOMADenseNDArray&>(*soma_obj));
+                    else if (soma_obj_type == "SOMACollection")
+                        return py::cast(dynamic_cast<SOMACollection&>(*soma_obj));
+                    else if (soma_obj_type == "SOMAExperiment")
+                        return py::cast(dynamic_cast<SOMAExperiment&>(*soma_obj));
+                    else if (soma_obj_type == "SOMAMeasurement")
+                        return py::cast(dynamic_cast<SOMAMeasurement&>(*soma_obj));
                     return py::none();
                 } catch (...) {
                     return py::none();
@@ -83,7 +83,7 @@ void load_soma_object(py::module& m) {
             "context"_a,
             py::kw_only(),
             "timestamp"_a = py::none(),
-            "soma_type"_a = py::none())
+            "clib_type"_a = py::none())
         .def_property_readonly("type", &SOMAObject::type);
 };
 }  // namespace libtiledbsomacpp
