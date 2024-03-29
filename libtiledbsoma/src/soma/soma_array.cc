@@ -457,7 +457,7 @@ void SOMAArray::write() {
     mq_->submit_write();
 
     mq_->reset();
-    // array_buffer_ = nullptr;
+    clear_column_data();
 }
 
 uint64_t SOMAArray::nnz() {
