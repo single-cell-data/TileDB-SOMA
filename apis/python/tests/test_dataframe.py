@@ -1334,7 +1334,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
     soma.DataFrame.create(uri, schema=schema).close()
 
     n_elem = 132
-    n_cats = 128
+    n_cats = 127
     df1 = pd.DataFrame(
         {
             "soma_joinid": pd.Series(np.arange(n_elem), dtype=np.int64),
@@ -1361,7 +1361,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
 
     # cannot add additional categories as already maxed out earlier
     tbl = pa.Table.from_pandas(df2, preserve_index=False)
-    with pytest.raises(ValueError):
+    with pytest.raises(soma.SOMAError):
         with soma.open(uri, mode="w") as A:
             A.write(tbl)
 
