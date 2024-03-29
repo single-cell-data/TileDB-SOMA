@@ -126,6 +126,27 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
+    @classmethod
+    def open(
+        cls,
+        uri: str,
+        mode: options.OpenMode = "r",
+        *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: Optional[SOMATileDBContext] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        clib_type: Optional[str] = None,
+    ) -> Self:
+        """Opens this specific type of SOMA object."""
+        return super().open(
+            uri,
+            mode,
+            tiledb_timestamp=tiledb_timestamp,
+            context=context,
+            platform_config=platform_config,
+            clib_type="SOMAGroup",
+        )
+
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
     _subclass_constrained_soma_types: ClassVar[Dict[str, Tuple[str, ...]]] = {}
@@ -436,7 +457,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             timestamp = self.tiledb_timestamp_ms
 
             try:
-                wrapper = _tdb_handles.open(uri, mode, context, timestamp)
+                clib_type = entry.entry.wrapper_type.clib_type
+                wrapper = _tdb_handles.open(uri, mode, context, timestamp, clib_type)
                 entry.soma = _factory.reify_handle(wrapper)
             except SOMAError:
                 entry.soma = _factory._open_internal(

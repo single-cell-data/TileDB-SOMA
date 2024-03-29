@@ -54,35 +54,52 @@ def open(
     mode: options.OpenMode,
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp],
+    clib_type: Optional[str] = None,
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+
+    # raise("WAMI")
+
+    # Traceback (most recent call last):
+    #   File "/home/ubuntu/Desktop/awol-perf/./aw3.py", line 20, in <module>
+    #     exp = tiledbsoma.Experiment.open(SOMA_URI)
+    #   File "/home/ubuntu/git/single-cell-data/TileDB-SOMA/apis/python/src/tiledbsoma/_tiledb_object.py", line 96, in open
+    #     handle = _tdb_handles.open(uri, mode, context, tiledb_timestamp)
+    #   File "/home/ubuntu/git/single-cell-data/TileDB-SOMA/apis/python/src/tiledbsoma/_tdb_handles.py", line 63, in open
+    #     raise("WAMI")
+    # TypeError: exceptions must derive from BaseException
+
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
     # if there is not a valid SOMAObject at the given URI, this
     # returns None
     soma_object = clib.SOMAObject.open(
-        uri, open_mode, context.native_context, timestamp=(0, timestamp_ms)
+        uri=uri,
+        mode=open_mode,
+        context=context.native_context,
+        timestamp=(0, timestamp_ms),
+        clib_type=clib_type,
     )
 
     # Avoid creating a TileDB-Py Ctx unless necessary
-    obj_type = (
+    soma_type = (
         soma_object.type
         if soma_object is not None
         else tiledb.object_type(uri, ctx=context.tiledb_ctx)
     )
 
-    if not obj_type:
+    if not soma_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
-    if open_mode == clib.OpenMode.read and obj_type == "SOMADataFrame":
+    if open_mode == clib.OpenMode.read and soma_type == "SOMADataFrame":
         return DataFrameWrapper._from_soma_object(soma_object, context)
-    if open_mode == clib.OpenMode.read and obj_type == "SOMADenseNDArray":
+    if open_mode == clib.OpenMode.read and soma_type == "SOMADenseNDArray":
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
-    if open_mode == clib.OpenMode.read and obj_type == "SOMASparseNDArray":
+    if open_mode == clib.OpenMode.read and soma_type == "SOMASparseNDArray":
         return SparseNDArrayWrapper._from_soma_object(soma_object, context)
 
-    if obj_type in (
+    if soma_type in (
         "SOMADataFrame",
         "SOMADenseNDArray",
         "SOMASparseNDArray",
@@ -90,7 +107,7 @@ def open(
     ):
         return ArrayWrapper.open(uri, mode, context, timestamp)
 
-    if obj_type in (
+    if soma_type in (
         "SOMACollection",
         "SOMAExperiment",
         "SOMAMeasurement",
@@ -99,7 +116,7 @@ def open(
         return GroupWrapper.open(uri, mode, context, timestamp)
 
     # Invalid object
-    raise SOMAError(f"{uri!r} has unknown storage type {obj_type!r}")
+    raise SOMAError(f"{uri!r} has unknown storage type {soma_type!r}")
 
 
 @attrs.define(eq=False, hash=False, slots=False)
@@ -116,6 +133,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     timestamp_ms: int
     _handle: _RawHdl_co
     closed: bool = attrs.field(default=False, init=False)
+    clib_type: Optional[str] = None
 
     @classmethod
     def open(
@@ -242,6 +260,8 @@ AnyWrapper = Wrapper[RawHandle]
 class ArrayWrapper(Wrapper[tiledb.Array]):
     """Wrapper around a TileDB Array handle."""
 
+    clib_type = "SOMAArray"
+
     @classmethod
     def _opener(
         cls,
@@ -306,6 +326,8 @@ class GroupEntry:
 
 class GroupWrapper(Wrapper[tiledb.Group]):
     """Wrapper around a TileDB Group handle."""
+
+    clib_type = "SOMAGroup"
 
     @classmethod
     def _opener(
