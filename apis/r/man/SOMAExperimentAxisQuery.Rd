@@ -59,6 +59,10 @@ this in the class.
 \item \href{#method-SOMAExperimentAxisQuery-obs_joinids}{\code{SOMAExperimentAxisQuery$obs_joinids()}}
 \item \href{#method-SOMAExperimentAxisQuery-var_joinids}{\code{SOMAExperimentAxisQuery$var_joinids()}}
 \item \href{#method-SOMAExperimentAxisQuery-X}{\code{SOMAExperimentAxisQuery$X()}}
+\item \href{#method-SOMAExperimentAxisQuery-obsm}{\code{SOMAExperimentAxisQuery$obsm()}}
+\item \href{#method-SOMAExperimentAxisQuery-varm}{\code{SOMAExperimentAxisQuery$varm()}}
+\item \href{#method-SOMAExperimentAxisQuery-obsp}{\code{SOMAExperimentAxisQuery$obsp()}}
+\item \href{#method-SOMAExperimentAxisQuery-varp}{\code{SOMAExperimentAxisQuery$varp()}}
 \item \href{#method-SOMAExperimentAxisQuery-read}{\code{SOMAExperimentAxisQuery$read()}}
 \item \href{#method-SOMAExperimentAxisQuery-to_sparse_matrix}{\code{SOMAExperimentAxisQuery$to_sparse_matrix()}}
 \item \href{#method-SOMAExperimentAxisQuery-to_seurat}{\code{SOMAExperimentAxisQuery$to_seurat()}}
@@ -163,6 +167,74 @@ Retrieves an \code{X} layer as a link{SOMASparseNDArrayRead}
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{layer_name}}{The name of the layer to retrieve.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-obsm"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-obsm}{}}}
+\subsection{Method \code{obsm()}}{
+Retrieves an \code{obsm} layer as a \code{\link{SOMASparseNDArrayRead}}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$obsm(layer_name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{layer_name}}{The name of the layer to retrieve}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-varm"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-varm}{}}}
+\subsection{Method \code{varm()}}{
+Retrieves a \code{varm} layer as a \code{\link{SOMASparseNDArrayRead}}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$varm(layer_name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{layer_name}}{The name of the layer to retrieve}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-obsp"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-obsp}{}}}
+\subsection{Method \code{obsp()}}{
+Retrieves an \code{obsp} layer as a \code{\link{SOMASparseNDArrayRead}}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$obsp(layer_name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{layer_name}}{The name of the layer to retrieve}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAExperimentAxisQuery-varp"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-varp}{}}}
+\subsection{Method \code{varp()}}{
+Retrieves a \code{varp} layer as a \code{\link{SOMASparseNDArrayRead}}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$varp(layer_name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{layer_name}}{The name of the layer to retrieve}
 }
 \if{html}{\out{</div>}}
 }
