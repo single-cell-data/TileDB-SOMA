@@ -1256,3 +1256,47 @@ def test_outgest_X_layers(tmp_path):
         assert bdata.X is not None
         assert len(bdata.layers) == 2
         assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
+
+
+@pytest.mark.parametrize("rename_obs_index", [False, True])
+@pytest.mark.parametrize("dtype", ["float64", "string"])
+def test_string_nan_append_small(adata, rename_obs_index, dtype):
+    adata.obsm = None
+    adata.varm = None
+    adata.obsp = None
+    adata.varp = None
+    adata.uns = dict()
+
+    # Add empty column to obs
+    adata.obs['batch_id'] = np.nan
+    adata.obs['batch_id'] = adata.obs['batch_id'].astype(dtype)
+
+    # Create a copy of the anndata object
+    adata2 = adata.copy()
+    if rename_obs_index:
+        adata2.obs.index = adata.obs.index + "-2"
+
+    # Initial ingest
+    SOMA_URI = tempfile.mkdtemp(prefix="soma-exp-")
+    tiledbsoma.io.from_anndata(
+        experiment_uri=SOMA_URI,
+        anndata=adata,
+        measurement_name="RNA"
+    )
+
+    # Register the second anndata object
+    rd = tiledbsoma.io.register_anndatas(
+        experiment_uri=SOMA_URI,
+        adatas=[adata2],
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id"
+    )
+
+    # Append the second anndata object
+    tiledbsoma.io.from_anndata(
+        experiment_uri=SOMA_URI,
+        anndata=adata2,
+        measurement_name="RNA",
+        registration_mapping=rd
+    )
