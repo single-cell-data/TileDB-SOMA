@@ -198,7 +198,7 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
             null_fields.add(k)
 
         # Handle special cases for all null columns where the dtype is "object"
-        # or "category" and must be expliitly casted to the correct pandas
+        # or "category" and must be explicitly casted to the correct pandas
         # extension dtype.
         #
         # Note: with
