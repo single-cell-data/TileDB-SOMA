@@ -1058,7 +1058,7 @@ def _extract_new_values_for_append(
     * obsm is obs x M, and varm is var x N
       o This means means they "grow down"
     * obsp is obs x obs, and varp is var x var
-      o This means means they _would_ grow block-diagonally -- but
+      o This means they _would_ grow block-diagonally -- but
         (for biological reasons) we disallow append of obsp and varp
 
     Reviewing the above, we can see that "just write the data" is almost always the right way to
