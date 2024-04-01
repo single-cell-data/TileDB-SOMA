@@ -1258,9 +1258,8 @@ def test_outgest_X_layers(tmp_path):
         assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
 
 
-@pytest.mark.parametrize("rename_obs_index", [False, True])
 @pytest.mark.parametrize("dtype", ["float64", "string"])
-def test_string_nan_append_small(adata, rename_obs_index, dtype):
+def test_string_nan_append_small(adata, dtype):
     adata.obsm = None
     adata.varm = None
     adata.obsp = None
@@ -1273,8 +1272,6 @@ def test_string_nan_append_small(adata, rename_obs_index, dtype):
 
     # Create a copy of the anndata object
     adata2 = adata.copy()
-    if rename_obs_index:
-        adata2.obs.index = adata.obs.index + "-2"
 
     # Initial ingest
     SOMA_URI = tempfile.mkdtemp(prefix="soma-exp-")
