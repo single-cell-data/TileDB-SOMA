@@ -5,15 +5,18 @@ import tiledbsoma.io
 import tempfile
 
 
-def test_string_nan_append():
-    # Load example anndata
-    adat1 = sc.datasets.pbmc3k()
+def test_string_nan_append(adata):
+    adat1 = adata
+    adat1.obsm = None
+    adat1.varm = None
+    adat1.obsp = None
+    adat1.varp = None
 
     # Add empty column to obs
     adat1.obs['batch_id'] = np.nan
     adat1.obs['batch_id'] = adat1.obs['batch_id'].astype('string')
 
-    # Create a copy of the anndata object with new obs ids
+    # Create a copy of the anndata object
     adat2 = adat1.copy()
 
     # Initial ingest
