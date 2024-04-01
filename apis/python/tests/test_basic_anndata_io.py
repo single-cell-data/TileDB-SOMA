@@ -1267,8 +1267,8 @@ def test_string_nan_append_small(adata, dtype):
     adata.uns = dict()
 
     # Add empty column to obs
-    adata.obs['batch_id'] = np.nan
-    adata.obs['batch_id'] = adata.obs['batch_id'].astype(dtype)
+    adata.obs["batch_id"] = np.nan
+    adata.obs["batch_id"] = adata.obs["batch_id"].astype(dtype)
 
     # Create a copy of the anndata object
     adata2 = adata.copy()
@@ -1276,9 +1276,7 @@ def test_string_nan_append_small(adata, dtype):
     # Initial ingest
     SOMA_URI = tempfile.mkdtemp(prefix="soma-exp-")
     tiledbsoma.io.from_anndata(
-        experiment_uri=SOMA_URI,
-        anndata=adata,
-        measurement_name="RNA"
+        experiment_uri=SOMA_URI, anndata=adata, measurement_name="RNA"
     )
 
     # Register the second anndata object
@@ -1287,7 +1285,7 @@ def test_string_nan_append_small(adata, dtype):
         adatas=[adata2],
         measurement_name="RNA",
         obs_field_name="obs_id",
-        var_field_name="var_id"
+        var_field_name="var_id",
     )
 
     # Append the second anndata object
@@ -1295,5 +1293,5 @@ def test_string_nan_append_small(adata, dtype):
         experiment_uri=SOMA_URI,
         anndata=adata2,
         measurement_name="RNA",
-        registration_mapping=rd
+        registration_mapping=rd,
     )
