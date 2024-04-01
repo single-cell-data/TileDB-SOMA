@@ -407,7 +407,7 @@ class SOMAArray : public SOMAObject {
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
-    void extend_enumeration(
+    Enumeration extend_enumeration(
         std::string_view name,
         uint64_t num_elems,
         const void* data,
@@ -709,7 +709,7 @@ class SOMAArray : public SOMAObject {
     //===================================================================
 
     template <typename T>
-    void _extend_value_helper(
+    Enumeration _extend_value_helper(
         T* data, uint64_t num_elems, Enumeration enmr, uint64_t max_capacity) {
         std::vector<T> enums_in_write((T*)data, (T*)data + num_elems);
         auto enums_existing = enmr.as_vector<T>();
@@ -728,11 +728,12 @@ class SOMAArray : public SOMAObject {
                 throw TileDBSOMAError(
                     "Cannot extend enumeration; reached maximum capacity");
             }
-
             ArraySchemaEvolution se(*ctx_->tiledb_ctx());
             se.extend_enumeration(enmr.extend(extend_values));
             se.array_evolve(uri_);
         }
+
+        return enmr.extend(extend_values);
     }
 
     // Fills the metadata cache upon opening the array.

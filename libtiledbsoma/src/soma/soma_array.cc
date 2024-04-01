@@ -277,7 +277,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     return mq_->results();
 }
 
-void SOMAArray::extend_enumeration(
+Enumeration SOMAArray::extend_enumeration(
     std::string_view name,
     uint64_t num_elems,
     const void* data,
@@ -353,64 +353,44 @@ void SOMAArray::extend_enumeration(
                     throw TileDBSOMAError(
                         "Cannot extend enumeration; reached maximum capacity");
                 }
-
                 ArraySchemaEvolution se(*ctx_->tiledb_ctx());
                 se.extend_enumeration(enmr.extend(extend_values));
                 se.array_evolve(uri_);
             }
-            break;
+
+            return enmr.extend(extend_values);
         }
         case TILEDB_BOOL:
-        case TILEDB_INT8: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_INT8:
+            return SOMAArray::_extend_value_helper(
                 (int8_t*)data, num_elems, enmr, max_capacity);
-            break;
-        }
-        case TILEDB_UINT8: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_UINT8:
+            return SOMAArray::_extend_value_helper(
                 (uint8_t*)data, num_elems, enmr, max_capacity);
-            break;
-        }
-        case TILEDB_INT16: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_INT16:
+            return SOMAArray::_extend_value_helper(
                 (int16_t*)data, num_elems, enmr, max_capacity);
-            break;
-        }
-        case TILEDB_UINT16: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_UINT16:
+            return SOMAArray::_extend_value_helper(
                 (uint16_t*)data, num_elems, enmr, max_capacity);
-            break;
-        }
-        case TILEDB_INT32: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_INT32:
+            return SOMAArray::_extend_value_helper(
                 (int32_t*)data, num_elems, enmr, max_capacity);
-            break;
-        }
-        case TILEDB_UINT32: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_UINT32:
+            return SOMAArray::_extend_value_helper(
                 (uint32_t*)data, num_elems, enmr, max_capacity);
-            break;
-        }
-        case TILEDB_INT64: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_INT64:
+            return SOMAArray::_extend_value_helper(
                 (int64_t*)data, num_elems, enmr, max_capacity);
-            break;
-        }
-        case TILEDB_UINT64: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_UINT64:
+            return SOMAArray::_extend_value_helper(
                 (uint64_t*)data, num_elems, enmr, max_capacity);
-            break;
-        }
-        case TILEDB_FLOAT32: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_FLOAT32:
+            return SOMAArray::_extend_value_helper(
                 (float*)data, num_elems, enmr, max_capacity);
-            break;
-        }
-        case TILEDB_FLOAT64: {
-            SOMAArray::_extend_value_helper(
+        case TILEDB_FLOAT64:
+            return SOMAArray::_extend_value_helper(
                 (double*)data, num_elems, enmr, max_capacity);
-            break;
-        }
         default:
             throw TileDBSOMAError(fmt::format(
                 "ArrowAdapter: Unsupported TileDB dict datatype: {} ",

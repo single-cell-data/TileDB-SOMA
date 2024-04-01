@@ -63,33 +63,34 @@ void write(SOMAArray& array, py::handle py_batch) {
             data = arr_->buffers[1];
         }
 
-        if (attributes.find(sch_->name) != attributes.end()) {
-            auto enmr_name = AttributeExperimental::get_enumeration_name(
-                *array.ctx()->tiledb_ctx(), attributes.at(sch_->name));
+        // if (attributes.find(sch_->name) != attributes.end()) {
+        //     auto enmr_name = AttributeExperimental::get_enumeration_name(
+        //         *array.ctx()->tiledb_ctx(), attributes.at(sch_->name));
 
-            if (enmr_name.has_value()) {
-                auto dict = arr_->dictionary;
-                if (!dict) {
-                    array.clear_column_data();
-                    throw py::value_error(
-                        "Saw non-dictionary column passed to enumerated type");
-                }
+        //     if (enmr_name.has_value()) {
+        //         auto dict = arr_->dictionary;
+        //         if (!dict) {
+        //             array.clear_column_data();
+        //             throw py::value_error(
+        //                 "Saw non-dictionary column passed to enumerated
+        //                 type");
+        //         }
 
-                const void* enmr_data;
-                uint64_t* enmr_offsets = nullptr;
-                if (dict->n_buffers == 3) {
-                    enmr_offsets = (uint64_t*)dict->buffers[1];
-                    enmr_data = dict->buffers[2];
-                } else {
-                    enmr_data = dict->buffers[1];
-                }
+        // const void* enmr_data;
+        // uint64_t* enmr_offsets = nullptr;
+        // if (dict->n_buffers == 3) {
+        //     enmr_offsets = (uint64_t*)dict->buffers[1];
+        //     enmr_data = dict->buffers[2];
+        // } else {
+        //     enmr_data = dict->buffers[1];
+        // }
 
-                if (dict->length != 0) {
-                    array.extend_enumeration(
-                        sch_->name, dict->length, enmr_data, enmr_offsets);
-                }
-            }
-        }
+        // if (dict->length != 0) {
+        //     array.extend_enumeration(
+        //         sch_->name, dict->length, enmr_data, enmr_offsets);
+        // }
+        //     }
+        // }
 
         auto np = py::module::import("numpy");
         auto table_offset = arr_->offset;
@@ -758,6 +759,71 @@ void load_soma_array(py::module& m) {
             })
 
         .def_property_readonly("dimension_names", &SOMAArray::dimension_names)
+
+        .def(
+            "extend_enumeration",
+            [](SOMAArray& array, py::handle py_batch) -> py::object {
+                ArrowSchema arrow_schema;
+                ArrowArray arrow_array;
+                uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
+                uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
+                py_batch.attr("_export_to_c")(
+                    arrow_array_ptr, arrow_schema_ptr);
+
+                auto dict = arrow_array.dictionary;
+                const void* enmr_data;
+                uint64_t* enmr_offsets = nullptr;
+                if (dict->n_buffers == 3) {
+                    enmr_offsets = (uint64_t*)dict->buffers[1];
+                    enmr_data = dict->buffers[2];
+                } else {
+                    enmr_data = dict->buffers[1];
+                }
+
+                if (dict->length != 0) {
+                    auto new_enmr = array.extend_enumeration(
+                        arrow_schema.name,
+                        dict->length,
+                        enmr_data,
+                        enmr_offsets);
+
+                    auto emdr_format = arrow_schema.dictionary->format;
+                    switch (ArrowAdapter::to_tiledb_format(emdr_format)) {
+                        case TILEDB_STRING_ASCII:
+                        case TILEDB_STRING_UTF8:
+                        case TILEDB_CHAR:
+                            return py::cast(new_enmr.as_vector<std::string>());
+                        case TILEDB_BOOL:
+                        case TILEDB_INT8:
+                            return py::cast(new_enmr.as_vector<int8_t>());
+                        case TILEDB_UINT8:
+                            return py::cast(new_enmr.as_vector<uint8_t>());
+                        case TILEDB_INT16:
+                            return py::cast(new_enmr.as_vector<int16_t>());
+                        case TILEDB_UINT16:
+                            return py::cast(new_enmr.as_vector<uint16_t>());
+                        case TILEDB_INT32:
+                            return py::cast(new_enmr.as_vector<int32_t>());
+                        case TILEDB_UINT32:
+                            return py::cast(new_enmr.as_vector<uint32_t>());
+                        case TILEDB_INT64:
+                            return py::cast(new_enmr.as_vector<int64_t>());
+                        case TILEDB_UINT64:
+                            return py::cast(new_enmr.as_vector<uint64_t>());
+                        case TILEDB_FLOAT32:
+                            return py::cast(new_enmr.as_vector<float>());
+                        case TILEDB_FLOAT64:
+                            return py::cast(new_enmr.as_vector<double>());
+                        default:
+                            throw TileDBSOMAError(
+                                "extend_enumeration: Unsupported dict "
+                                "datatype");
+                    }
+
+                } else {
+                    return py::cast(std::vector<std::string>());
+                }
+            })
 
         .def("set_metadata", set_metadata)
 

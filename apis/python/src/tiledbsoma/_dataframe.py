@@ -458,8 +458,15 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         for input_field in values.schema:
             target_field = self.schema.field(input_field.name)
 
-            if pa.types.is_dictionary(target_field.type) and not pa.types.is_dictionary(input_field.type):
-                raise ValueError(f"{input_field.name} requires dictionary entry")
+            if pa.types.is_dictionary(target_field.type):
+                if not pa.types.is_dictionary(input_field.type):
+                    raise ValueError(f"{input_field.name} requires dictionary entry")
+                # extend enums in array schema as necessary
+                # get evolved enums
+                col = values.column(input_field.name).combine_chunks()
+                new_enums = self._handle._handle.extend_enumeration(col)
+                print(new_enums)
+                # cast that in table
 
             if pa.types.is_boolean(input_field.type):
                 target_schema.append(target_field.with_type(pa.uint8()))
