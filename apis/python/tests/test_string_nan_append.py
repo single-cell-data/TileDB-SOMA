@@ -1,3 +1,5 @@
+from contextlib import nullcontext
+
 import pytest
 import scanpy as sc
 import numpy as np
@@ -6,7 +8,17 @@ import tiledbsoma.io
 import tempfile
 
 
-def write_adatats(adat1, adat2):
+@pytest.fixture
+def adata_simple(adata):
+    adata.obsm = None
+    adata.varm = None
+    adata.obsp = None
+    adata.varp = None
+    adata.uns = dict()
+    return adata
+
+
+def write_ads(adat1, adat2, exc=None):
     # Initial ingest
     SOMA_URI = tempfile.mkdtemp(prefix="soma-exp-")
     tiledbsoma.io.from_anndata(
@@ -24,34 +36,32 @@ def write_adatats(adat1, adat2):
         var_field_name="var_id"
     )
 
-    # Append the second anndata object
-    tiledbsoma.io.from_anndata(
-        experiment_uri=SOMA_URI,
-        anndata=adat2,
-        measurement_name="RNA",
-        registration_mapping=rd
-    )
+    ctx = pytest.raises(exc) if exc else nullcontext()
+    with ctx:
+        # Append the second anndata object
+        tiledbsoma.io.from_anndata(
+            experiment_uri=SOMA_URI,
+            anndata=adat2,
+            measurement_name="RNA",
+            registration_mapping=rd
+        )
 
 
 @pytest.mark.parametrize("rename_obs_index", [False, True])
-def test_string_nan_append_small(adata, rename_obs_index):
-    adat1 = adata
-    adat1.obsm = None
-    adat1.varm = None
-    adat1.obsp = None
-    adat1.varp = None
-    adat1.uns = dict()
+@pytest.mark.parametrize("dtype", ["float64", "string"])
+def test_string_nan_append_small(adata_simple, rename_obs_index, dtype):
+    adat1 = adata_simple
 
     # Add empty column to obs
     adat1.obs['batch_id'] = np.nan
-    adat1.obs['batch_id'] = adat1.obs['batch_id'].astype('string')
+    adat1.obs['batch_id'] = adat1.obs['batch_id'].astype(dtype)
 
     # Create a copy of the anndata object
     adat2 = adat1.copy()
     if rename_obs_index:
         adat2.obs.index = adat1.obs.index + "-2"
 
-    write_adatats(adat1, adat2)
+    write_ads(adat1, adat2)
 
 
 @pytest.mark.parametrize("rename_obs_index", [False, True])
@@ -67,4 +77,10 @@ def test_string_nan_append_3k(rename_obs_index):
     if rename_obs_index:
         adat2.obs.index = adat1.obs.index.str.replace("1", "2")
 
-    write_adatats(adat1, adat2)
+    write_ads(adat1, adat2)
+
+
+def test_empty_append(adata_simple):
+    adat1 = adata_simple
+    adat2 = adat1[0:0].copy()
+    write_ads(adat1, adat2, exc=NotImplementedError)
