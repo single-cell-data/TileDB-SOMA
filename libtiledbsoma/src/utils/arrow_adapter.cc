@@ -96,15 +96,15 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
 void ArrowAdapter::release_array(struct ArrowArray* array) {
     auto arrow_buffer = static_cast<ArrowBuffer*>(array->private_data);
     if (arrow_buffer != nullptr) {
-      LOG_TRACE(fmt::format(
-          "[ArrowAdapter] release_array {} use_count={}",
-          arrow_buffer->buffer_->name(),
-          arrow_buffer->buffer_.use_count()));
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] release_array {} use_count={}",
+            arrow_buffer->buffer_->name(),
+            arrow_buffer->buffer_.use_count()));
 
-      // Delete the ArrowBuffer, which was allocated with new.
-      // If the ArrowBuffer.buffer_ shared_ptr is the last reference to the
-      // underlying ColumnBuffer, the ColumnBuffer will be deleted.
-      delete arrow_buffer;
+        // Delete the ArrowBuffer, which was allocated with new.
+        // If the ArrowBuffer.buffer_ shared_ptr is the last reference to the
+        // underlying ColumnBuffer, the ColumnBuffer will be deleted.
+        delete arrow_buffer;
     }
 
     if (array->buffers != nullptr) {
