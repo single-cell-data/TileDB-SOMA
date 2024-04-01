@@ -1216,7 +1216,8 @@ def _write_dataframe_impl(
 
     tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
 
-    _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
+    if arrow_table:
+        _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
 
     # Save the original index name for outgest. We use JSON for elegant indication of index name
     # being None (in Python anyway).
