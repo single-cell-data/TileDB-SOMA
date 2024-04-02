@@ -1219,6 +1219,7 @@ def _write_arrow_table(
         )
         handle.write(arrow_table)
 
+
 def _write_dataframe(
     df_uri: str,
     df: pd.DataFrame,

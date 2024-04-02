@@ -31,7 +31,7 @@ def soma_query(uri, condition):
     sr.set_condition(qc, sr.schema)
     arrow_table = sr.read_next()
     assert sr.results_complete()
-    
+
     return arrow_table
 
 

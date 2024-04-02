@@ -731,9 +731,10 @@ class SOMAArray : public SOMAObject {
             ArraySchemaEvolution se(*ctx_->tiledb_ctx());
             se.extend_enumeration(enmr.extend(extend_values));
             se.array_evolve(uri_);
+            return enmr.extend(extend_values);
         }
 
-        return enmr.extend(extend_values);
+        return enmr;
     }
 
     // Fills the metadata cache upon opening the array.

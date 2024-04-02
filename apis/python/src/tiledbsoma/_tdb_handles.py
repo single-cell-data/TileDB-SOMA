@@ -47,7 +47,7 @@ def open(
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
-    timestamp: Optional[OpenTimestamp]
+    timestamp: Optional[OpenTimestamp],
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
@@ -68,7 +68,7 @@ def open(
 
     if not obj_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
-    
+
     if obj_type == "SOMADataFrame":
         return DataFrameWrapper._from_soma_object(soma_object, context)
     if open_mode == clib.OpenMode.read and obj_type == "SOMADenseNDArray":

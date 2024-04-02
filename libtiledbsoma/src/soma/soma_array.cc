@@ -356,9 +356,10 @@ Enumeration SOMAArray::extend_enumeration(
                 ArraySchemaEvolution se(*ctx_->tiledb_ctx());
                 se.extend_enumeration(enmr.extend(extend_values));
                 se.array_evolve(uri_);
+                return enmr.extend(extend_values);
             }
 
-            return enmr.extend(extend_values);
+            return enmr;
         }
         case TILEDB_BOOL:
         case TILEDB_INT8:

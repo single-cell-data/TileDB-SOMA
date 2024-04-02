@@ -9,6 +9,7 @@ Implementation of a SOMA DataFrame
 from typing import Any, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import somacore
 import tiledb
@@ -243,7 +244,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         domains = pa.StructArray.from_arrays(domains, names=index_column_names)
         extents = pa.StructArray.from_arrays(extents, names=index_column_names)
-        
+
         plt_cfg = None
         if platform_config:
             ops = TileDBCreateOptions.from_platform_config(platform_config)
@@ -254,14 +255,18 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
             plt_cfg.capacity = ops.capacity
             if ops.offsets_filters:
-                plt_cfg.offsets_filters = [info["_type"] for info in ops.offsets_filters]
+                plt_cfg.offsets_filters = [
+                    info["_type"] for info in ops.offsets_filters
+                ]
             if ops.validity_filters:
-                plt_cfg.validity_filters = [info["_type"] for info in ops.validity_filters]
+                plt_cfg.validity_filters = [
+                    info["_type"] for info in ops.validity_filters
+                ]
             plt_cfg.allows_duplicates = ops.allows_duplicates
             plt_cfg.tile_order = ops.tile_order
             plt_cfg.cell_order = ops.cell_order
             plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
-        
+
         # TODO add as kw args
         clib.SOMADataFrame.create(
             uri,
@@ -455,18 +460,31 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         _util.check_type("values", values, (pa.Table,))
 
         target_schema = []
-        for input_field in values.schema:
-            target_field = self.schema.field(input_field.name)
+        for i, input_field in enumerate(values.schema):
+            name = input_field.name
+            target_field = self.schema.field(name)
 
             if pa.types.is_dictionary(target_field.type):
                 if not pa.types.is_dictionary(input_field.type):
-                    raise ValueError(f"{input_field.name} requires dictionary entry")
-                # extend enums in array schema as necessary
-                # get evolved enums
-                col = values.column(input_field.name).combine_chunks()
-                new_enums = self._handle._handle.extend_enumeration(col)
-                print(new_enums)
-                # cast that in table
+                    raise ValueError(f"{name} requires dictionary entry")
+                col = values.column(name).combine_chunks()
+                new_enmr = self._handle._handle.extend_enumeration(name, col)
+                
+                if pa.types.is_binary(
+                    target_field.type.value_type
+                ) or pa.types.is_large_binary(target_field.type.value_type):
+                    new_enmr = np.array(new_enmr, "S")
+                elif pa.types.is_boolean(target_field.type.value_type):
+                    new_enmr = np.array(new_enmr, bool)
+                    
+                df = pd.Categorical(
+                    col.to_pandas(),
+                    ordered=target_field.type.ordered,
+                    categories=new_enmr,
+                )
+                values = values.set_column(
+                    i, name, pa.DictionaryArray.from_pandas(df, type=target_field.type)
+                )
 
             if pa.types.is_boolean(input_field.type):
                 target_schema.append(target_field.with_type(pa.uint8()))
@@ -476,7 +494,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
 
         for batch in values.to_batches():
             self._handle.write(batch)
-            
+
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
             platform_config
         )
