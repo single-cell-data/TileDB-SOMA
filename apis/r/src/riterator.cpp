@@ -5,9 +5,9 @@
 
 //#define RCPP_DEBUG_LEVEL 5
 
-#include <Rcpp.h>               // for R interface to C++
-#include <nanoarrow/r.h>		// for C interface to Arrow
-#include <nanoarrow.h>
+#include <Rcpp.h>          			     // for R interface to C++
+#include <nanoarrow/r.h>				 // for C interface to Arrow (via R package nanoarrow)
+#include <tiledbsoma/utils/nanoarrow.h>
 
 #include <tiledb/tiledb>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4

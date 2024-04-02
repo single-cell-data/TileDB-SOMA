@@ -4,9 +4,9 @@
 #define TILEDB_NO_API_DEPRECATION_WARNINGS
 #endif
 
-#include <Rcpp.h>               // for R interface to C++
-#include <nanoarrow.h>          // for C interface to Arrow
-#include <RcppInt64>            // for fromInteger64
+#include <Rcpp.h>               			// for R interface to C++
+#include <tiledbsoma/utils/nanoarrow.h>     // for C interface to Arrow
+#include <RcppInt64>            			// for fromInteger64
 
 // We get these via nanoarrow and must cannot include carrow.h again
 #define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
