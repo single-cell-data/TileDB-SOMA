@@ -174,7 +174,7 @@ if(SANITIZER)
   endif()
 endif()
 
-# Install header files 
+# Install header files
 # target_sources FILE_SET is preferred with cmake>=3.23
 # TODO Uncomment after finishing Python and R bindings
 # set(TILEDB_SOMA_PUBLIC_HEADERS
@@ -189,21 +189,21 @@ endif()
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/logger_public.h
 # )
 
-install(FILES 
+install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/enums.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/logger_public.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.h  
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.h  
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.h 
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.h 
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.h 
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h
   DESTINATION "include/tiledbsoma/soma"
 )
@@ -214,7 +214,6 @@ install(FILES
 )
 
 install(FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/carrow.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.hpp
   DESTINATION "include/tiledbsoma/utils/"
@@ -226,11 +225,10 @@ install(FILES
 )
 
 install(FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.h  
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/carrow.h  
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/common.h  
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h  
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/common.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h
 
   DESTINATION "include/tiledbsoma/utils"
