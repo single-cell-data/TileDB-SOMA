@@ -168,7 +168,7 @@ bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
 //' @noRd
 //' @import nanoarrow
 // [[Rcpp::export]]
-nanoarrowXPtr create_empty_arrow_table() {
+SEXP create_empty_arrow_table() {
     int ncol = 0;
 
     // Schema first
@@ -193,7 +193,7 @@ nanoarrowXPtr create_empty_arrow_table() {
 
 
 // [[Rcpp::export]]
-nanoarrowXPtr sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
+SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
    check_xptr_tag<tdbs::SOMAArray>(sr);
 
    if (sr_complete(sr)) {

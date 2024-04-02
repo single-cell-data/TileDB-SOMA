@@ -12,7 +12,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // soma_array_reader
-nanoarrowXPtr soma_array_reader(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, const std::string& loglevel, Rcpp::Nullable<Rcpp::CharacterVector> config);
+SEXP soma_array_reader(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, const std::string& loglevel, Rcpp::Nullable<Rcpp::CharacterVector> config);
 RcppExport SEXP _tiledbsoma_soma_array_reader(SEXP uriSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP loglevelSEXP, SEXP configSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -130,7 +130,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // create_empty_arrow_table
-nanoarrowXPtr create_empty_arrow_table();
+SEXP create_empty_arrow_table();
 RcppExport SEXP _tiledbsoma_create_empty_arrow_table() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -140,7 +140,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // sr_next
-nanoarrowXPtr sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr);
+SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr);
 RcppExport SEXP _tiledbsoma_sr_next(SEXP srSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

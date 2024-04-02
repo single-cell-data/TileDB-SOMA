@@ -63,10 +63,6 @@ struct ContextWrapper {
 };
 typedef struct ContextWrapper ctx_wrap_t;
 
-// some lipstick on the (plain C language) pig that is a SEXP:
-// allowing the nanoarrow ArrowArray XPtr be typedef'ed
-typedef SEXP nanoarrowXPtr;
-
 inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
     if (ec != NANOARROW_OK) Rcpp::stop(msg);
 }
