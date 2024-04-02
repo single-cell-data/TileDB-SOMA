@@ -311,6 +311,14 @@ def from_h5ad(
           The default is to ingest them all. Use ``uns_keys=[]``
           to not ingest any ``uns`` keys.
 
+        additional_metadata: Optional metadata to add to the ``Experiment`` and all descendents.
+          This is a coarse-grained mechanism for setting key-value pairs on all SOMA objects in an
+          ``Experiment`` hierarchy. Metadata for particular objects is more commonly set like:
+
+              with soma.open(uri, 'w') as exp:
+                  exp.metadata.update({"aaa": "BBB"})
+                  exp.obs.metadata.update({"ccc": 123})
+
     Returns:
         The URI of the newly created experiment.
 
