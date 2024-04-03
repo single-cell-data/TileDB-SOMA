@@ -91,13 +91,17 @@ target_compile_options(
 set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_include_directories(TILEDB_SOMA_OBJECTS
+  PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
+)
+
+target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor
   ${CMAKE_CURRENT_SOURCE_DIR}/soma
   ${CMAKE_CURRENT_SOURCE_DIR}/external/khash
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
   $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
   ${pybind11_INCLUDE_DIRS}
