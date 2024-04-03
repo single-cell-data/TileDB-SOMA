@@ -4,9 +4,9 @@
 #define TILEDB_NO_API_DEPRECATION_WARNINGS
 #endif
 
-#include <Rcpp.h>               // for R interface to C++
-#include <nanoarrow.h>          // for C interface to Arrow
-#include <RcppInt64>            // for fromInteger64
+#include <Rcpp.h>               			// for R interface to C++
+#include <tiledbsoma/utils/nanoarrow.h>     // for C interface to Arrow
+#include <RcppInt64>            			// for fromInteger64
 
 // We get these via nanoarrow and must cannot include carrow.h again
 #define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
@@ -205,7 +205,7 @@ Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64
 }
 
 extern "C" {
-    void ArrowArrayRelease(struct ArrowArray *array); 		// made non-static in nanoarrow.c
+    void ArrowArrayReleaseInternal(struct ArrowArray *array); 		    // non-static in nanoarrow.c
     ArrowErrorCode ArrowArraySetStorageType(struct ArrowArray* array,	// ditto
                                             enum ArrowType storage_type);
 }
@@ -222,7 +222,7 @@ Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t 
     array->buffers = NULL;
     array->children = NULL;
     array->dictionary = NULL;
-    array->release = &ArrowArrayRelease;
+    array->release = &ArrowArrayReleaseInternal;
     array->private_data = NULL;
 
     auto private_data = (struct ArrowArrayPrivateData*) ArrowMalloc(sizeof(struct ArrowArrayPrivateData));

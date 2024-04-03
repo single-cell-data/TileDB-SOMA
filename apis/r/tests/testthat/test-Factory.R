@@ -16,7 +16,7 @@ test_that("DataFrame Factory", {
     # Check opening to read
     expect_silent(d3 <- SOMADataFrameOpen(uri))
     expect_silent(chk <- d3$read()$concat())
-    expect_equal(tbl, chk)
+    expect_equal(tibble::as_tibble(tbl), tibble::as_tibble(chk))
 })
 
 test_that("DataFrame Factory with specified index_column_names", {
@@ -35,7 +35,7 @@ test_that("DataFrame Factory with specified index_column_names", {
     expect_silent(d3 <- SOMADataFrameOpen(uri))
     expect_equal(d3$mode(), "READ")
     expect_silent(chk <- d3$read()$concat())
-    expect_equal(tbl, chk)
+    expect_equal(tibble::as_tibble(tbl), tibble::as_tibble(chk))
     d3$close()
     expect_equal(d3$mode(), "CLOSED")
 })
