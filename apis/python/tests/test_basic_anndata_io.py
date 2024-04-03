@@ -1258,13 +1258,11 @@ def test_outgest_X_layers(tmp_path):
         assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
 
 
-@pytest.mark.parametrize("dtype", ["float64", "string"])  # new column dtype
-@pytest.mark.parametrize(
-    "nans", ["all", "none", "some"]
-)  # how many `nan`s in new column?
-@pytest.mark.parametrize(
-    "new_obs_ids", ["all", "none", "half"]
-)  # how many new obs IDs?
+# fmt: off
+@pytest.mark.parametrize("dtype", ["float64", "string"])          # new column dtype
+@pytest.mark.parametrize("nans", ["all", "none", "some"])         # how many `nan`s in new column?
+@pytest.mark.parametrize("new_obs_ids", ["all", "none", "half"])  # how many new obs IDs?
+# fmt: on
 def test_nan_append(adata, dtype, nans, new_obs_ids):
     """Test append-ingesting an AnnData object, including a new `obs` column with various properties:
 
