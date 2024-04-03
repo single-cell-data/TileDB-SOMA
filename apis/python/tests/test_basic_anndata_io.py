@@ -1259,7 +1259,9 @@ def test_outgest_X_layers(tmp_path):
 
 
 @pytest.mark.parametrize("dtype", ["float64", "string"])
-def test_string_nan_append_small(adata, dtype):
+@pytest.mark.parametrize("all_nans", [False, True])
+@pytest.mark.parametrize("new_obs_ids", [False, True])
+def test_nan_append(adata, dtype, all_nans, new_obs_ids):
     adata.obsm = None
     adata.varm = None
     adata.obsp = None
@@ -1267,11 +1269,17 @@ def test_string_nan_append_small(adata, dtype):
     adata.uns = dict()
 
     # Add empty column to obs
-    adata.obs["batch_id"] = np.nan
-    adata.obs["batch_id"] = adata.obs["batch_id"].astype(dtype)
+    obs = adata.obs
+    obs["batch_id"] = np.nan
+    if not all_nans:
+        elem = "batch_id" if dtype == "string" else 1.0
+        obs.loc[obs.index.tolist()[0], "batch_id"] = elem
+    obs["batch_id"] = obs["batch_id"].astype(dtype)
 
     # Create a copy of the anndata object
     adata2 = adata.copy()
+    if new_obs_ids:
+        adata2.obs.index = adata2.obs.index + "_2"
 
     # Initial ingest
     SOMA_URI = tempfile.mkdtemp(prefix="soma-exp-")
