@@ -182,13 +182,15 @@ class ExperimentAmbientLabelMapping:
         measurement_name: str,
         obs_field_name: Optional[str] = None,
         var_field_name: Optional[str] = None,
+        context: Optional[SOMATileDBContext] = None,
     ) -> Self:
         """Factory method to compute label-to-SOMA-join-ID mappings for a single input file in
         isolation. This is used when a user is ingesting a single AnnData/H5AD to a single SOMA
         experiment, not in append mode, but allowing us to still have the bulk of the ingestor code
         to be non-duplicated between non-append mode and append mode.
         """
-        with read_h5ad(h5ad_file_name, mode="r") as adata:
+        tiledb_ctx = None if context is None else context.tiledb_ctx
+        with read_h5ad(h5ad_file_name, mode="r", ctx=tiledb_ctx) as adata:
             return cls.from_isolated_anndata(
                 adata,
                 measurement_name=measurement_name,
@@ -349,7 +351,7 @@ class ExperimentAmbientLabelMapping:
 
         if experiment_uri is not None and tiledbsoma.Experiment.exists(experiment_uri):
             # Pre-check
-            with tiledbsoma.Experiment.open(experiment_uri) as exp:
+            with tiledbsoma.Experiment.open(experiment_uri, context=context) as exp:
                 if measurement_name not in exp.ms:
                     raise ValueError(
                         f"cannot append: target measurement {measurement_name} is not in experiment {experiment_uri}"
@@ -418,11 +420,13 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: str = "obs_id",
         var_field_name: str = "var_id",
         append_obsm_varm: bool = False,
+        context: Optional[SOMATileDBContext] = None,
     ) -> Self:
         """Extends registration data to one more H5AD input file."""
         tiledbsoma.logging.logger.info(f"Registration: registering {h5ad_file_name}.")
 
-        with read_h5ad(h5ad_file_name, mode="r") as adata:
+        tiledb_ctx = None if context is None else context.tiledb_ctx
+        with read_h5ad(h5ad_file_name, mode="r", ctx=tiledb_ctx) as adata:
             return cls.from_anndata_append_on_experiment(
                 adata,
                 previous,
@@ -463,6 +467,7 @@ class ExperimentAmbientLabelMapping:
                 append_obsm_varm=append_obsm_varm,
                 obs_field_name=obs_field_name,
                 var_field_name=var_field_name,
+                context=context,
             )
 
         tiledbsoma.logging.logger.info("Registration: complete.")
