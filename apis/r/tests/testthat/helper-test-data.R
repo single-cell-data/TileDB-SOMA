@@ -39,19 +39,20 @@ create_dense_matrix_with_int_dims <- function(nrows = 10, ncols = 5, seed = 1) {
 }
 
 create_arrow_schema <- function(foo_first = TRUE) {
+  bl <- FALSE
   if (foo_first) {
     arrow::schema(
-      arrow::field("foo", arrow::int32(), nullable = FALSE),
-      arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
-      arrow::field("bar", arrow::float64(), nullable = FALSE),
-      arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
+      arrow::field("foo", arrow::int32(), nullable = bl),
+      arrow::field("soma_joinid", arrow::int64(), nullable = bl),
+      arrow::field("bar", arrow::float64(), nullable = bl),
+      arrow::field("baz", arrow::large_utf8(), nullable = bl)
     )
   } else {
     arrow::schema(
-      arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
-      arrow::field("foo", arrow::int32(), nullable = FALSE),
-      arrow::field("bar", arrow::float64(), nullable = FALSE),
-      arrow::field("baz", arrow::large_utf8(), nullable = FALSE)
+      arrow::field("soma_joinid", arrow::int64(), nullable = bl),
+      arrow::field("foo", arrow::int32(), nullable = bl),
+      arrow::field("bar", arrow::float64(), nullable = bl),
+      arrow::field("baz", arrow::large_utf8(), nullable = bl)
     )
   }
 }
