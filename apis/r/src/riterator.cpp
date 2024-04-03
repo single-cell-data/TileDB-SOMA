@@ -9,7 +9,6 @@
 #include <nanoarrow/r.h>				 // for C interface to Arrow (via R package nanoarrow)
 #include <tiledbsoma/utils/nanoarrow.h>
 #include <RcppInt64>            // for fromInteger64
-#include <nanoarrow.h>          // for C interface to Arrow
 
 #include <tiledb/tiledb>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4

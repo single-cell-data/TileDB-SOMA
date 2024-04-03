@@ -47,8 +47,6 @@ Imports:
     tools,
     tibble,
     nanoarrow
-    itertools,
-    iterators
 LinkingTo:
     Rcpp,
     RcppSpdlog,
