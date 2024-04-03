@@ -1,4 +1,4 @@
-#include "tiledbsoma/nanoarrow/nanoarrow.h"
+#include "tiledbsoma/utils/nanoarrow.h"
 
 // We need three entry points from nanoarrow that are declared 'static' in the official
 // (now vendored) C library so we bring them here
