@@ -57,7 +57,8 @@ void load_soma_dataframe(py::module& m) {
                py::object py_domains,
                py::object py_extents,
                std::shared_ptr<SOMAContext> context,
-               std::optional<PlatformConfig> platform_config) {
+               std::optional<PlatformConfig> platform_config,
+               std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
                 ArrowSchema schema;
                 uintptr_t schema_ptr = (uintptr_t)(&schema);
                 py_schema.attr("_export_to_c")(schema_ptr);
@@ -96,7 +97,8 @@ void load_soma_dataframe(py::module& m) {
                             std::make_shared<ArrowArray>(domains),
                             std::make_shared<ArrowArray>(extents)),
                         context,
-                        platform_config);
+                        platform_config,
+                        timestamp);
                 } catch (const std::out_of_range& e) {
                     throw py::type_error(e.what());
                 } catch (const std::exception& e) {

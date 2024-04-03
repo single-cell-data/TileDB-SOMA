@@ -268,6 +268,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
 
         # TODO add as kw args
+        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         clib.SOMADataFrame.create(
             uri,
             schema,
@@ -276,6 +277,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             extents,
             context.native_context,
             plt_cfg,
+            (0, timestamp_ms)
         )
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)

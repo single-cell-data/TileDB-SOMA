@@ -486,6 +486,7 @@ def test_issue919(tmp_path):
             expt.add_new_dataframe(
                 "df", schema=schema, index_column_names=["soma_joinid"]
             )
+            assert expt["df"].tiledb_timestamp_ms == 100
 
         with soma.Collection.open(uri, context=context) as c:
             assert "df" in c["expt"] and "causes_bug" in c["expt"]
