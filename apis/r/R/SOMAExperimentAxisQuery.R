@@ -115,6 +115,139 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       ))
     },
 
+    #' @description Retrieves an `obsm` layer as a \code{\link{SOMASparseNDArrayRead}}
+    #' @param layer_name The name of the layer to retrieve
+    #'
+    obsm = function(layer_name) {
+      layers <- tryCatch(
+        self$ms$obsm$names(),
+        error = function(...) character()
+      )
+      if (!length(layers)) {
+        stop(errorCondition(
+          "No obsm layers present",
+          class = c("noObsmLayersError", "noLayersError"),
+          call = FALSE
+        ))
+      }
+      stopifnot(
+        "Must specify an obsm layer name" = !missing(layer_name),
+        "Must specify a single obsm layer name" = is_scalar_character(layer_name),
+        assert_subset(layer_name, layers, "layer")
+      )
+
+      obsm_layer <- self$ms$obsm$get(layer_name)
+      stopifnot(
+        "obsm layer must be a SOMASparseNDArray" =
+          inherits(obsm_layer, "SOMASparseNDArray")
+      )
+
+      # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
+      return(obsm_layer$read(coords = list(
+        self$obs_joinids()$as_vector(),
+        seq.int(0L, as.integer(obsm_layer$shape()[2L]) - 1L)
+      )))
+    },
+
+    #' @description Retrieves a `varm` layer as a \code{\link{SOMASparseNDArrayRead}}
+    #' @param layer_name The name of the layer to retrieve
+    #'
+    varm = function(layer_name) {
+      layers <- tryCatch(
+        self$ms$varm$names(),
+        error = function(...) character()
+      )
+      if (!length(layers)) {
+        stop(errorCondition(
+          "No varm layers present",
+          class = c("noVarmLayersError", "noLayersError"),
+          call = FALSE
+        ))
+      }
+      stopifnot(
+        "Must specify an varm layer name" = !missing(layer_name),
+        "Must specify a single varm layer name" = is_scalar_character(layer_name),
+        assert_subset(layer_name, layers, "layer")
+      )
+
+      varm_layer <- self$ms$varm$get(layer_name)
+      stopifnot(
+        "varm layer must be a SOMASparseNDArray" =
+          inherits(varm_layer, "SOMASparseNDArray")
+      )
+
+      # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
+      return(varm_layer$read(coords = list(
+        self$var_joinids()$as_vector(),
+        seq.int(0L, as.integer(varm_layer$shape()[2L]) - 1L)
+      )))
+    },
+
+    #' @description Retrieves an `obsp` layer as a \code{\link{SOMASparseNDArrayRead}}
+    #' @param layer_name The name of the layer to retrieve
+    #'
+    obsp = function(layer_name) {
+      layers <- tryCatch(
+        self$ms$obsp$names(),
+        error = function(...) character()
+      )
+      if (!length(layers)) {
+        stop(errorCondition(
+          "No obsp layers present",
+          class = c("noObspLayersError", "noLayersError"),
+          call = FALSE
+        ))
+      }
+      stopifnot(
+        "Must specify an obsp layer name" = !missing(layer_name),
+        "Must specify a single obsp layer name" = is_scalar_character(layer_name),
+        assert_subset(layer_name, layers, "layer")
+      )
+
+      obsp_layer <- self$ms$obsp$get(layer_name)
+      stopifnot(
+        "obsp layer must be a SOMASparseNDArray" =
+          inherits(obsp_layer, "SOMASparseNDArray")
+      )
+
+      # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
+      obs_ids <- self$obs_joinids()$as_vector()
+      return(obsp_layer$read(coords = list(obs_ids, obs_ids)))
+    },
+
+    #' @description Retrieves a `varp` layer as a \code{\link{SOMASparseNDArrayRead}}
+    #' @param layer_name The name of the layer to retrieve
+    #'
+    varp = function(layer_name) {
+      layers <- tryCatch(
+        self$ms$varp$names(),
+        error = function(...) character()
+      )
+      if (!length(layers)) {
+        stop(errorCondition(
+          "No varp layers present",
+          class = c("noVarpLayersError", "noLayersError"),
+          call = FALSE
+        ))
+      }
+      stopifnot(
+        "Must specify an varp layer name" = !missing(layer_name),
+        "Must specify a single varp layer name" = is_scalar_character(layer_name),
+        assert_subset(layer_name, layers, "layer")
+      )
+
+      varp_layer <- self$ms$varp$get(layer_name)
+      stopifnot(
+        "varp layer must be a SOMASparseNDArray" =
+          inherits(varp_layer, "SOMASparseNDArray")
+      )
+
+      # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
+      var_ids <- self$var_joinids()$as_vector()
+      return(varp_layer$read(coords = list(var_ids, var_ids)))
+    },
+
+
     #' @description Reads the entire query result as a list of
     #' [`arrow::Table`]s. This is a low-level routine intended to be used by
     #' loaders for other in-core formats, such as `Seurat`, which can be created
