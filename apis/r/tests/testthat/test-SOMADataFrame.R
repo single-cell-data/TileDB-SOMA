@@ -783,7 +783,7 @@ test_that("missing levels in enums", {
 
 
 test_that("factor levels can grow without overlap", {
-
+    skip_if(!extended_tests())
     uri <- tempfile()
     schema <- arrow::schema(arrow::field(name = "soma_joinid", type = arrow::int64()),
                             arrow::field(name = "obs_col_like",
@@ -822,6 +822,7 @@ test_that("factor levels can grow without overlap", {
 })
 
 test_that("factor levels cannot extend beyond index limit", {
+    skip_if(!extended_tests())
     for (tp in c("INT8", "UINT8")) {
         uri <- tempfile()
         idx_type <- if (tp == "INT8") arrow::int8() else arrow::uint8()

@@ -92,6 +92,12 @@ sr_complete <- function(sr) {
     .Call(`_tiledbsoma_sr_complete`, sr)
 }
 
+#' @noRd
+#' @import nanoarrow
+create_empty_arrow_table <- function() {
+    .Call(`_tiledbsoma_create_empty_arrow_table`)
+}
+
 sr_next <- function(sr) {
     .Call(`_tiledbsoma_sr_next`, sr)
 }
