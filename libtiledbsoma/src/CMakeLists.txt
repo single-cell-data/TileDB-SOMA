@@ -72,10 +72,10 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.c
 
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/src/nanoarrow/nanoarrow.c
 )
 
 message(STATUS "Building TileDB without deprecation warnings")
@@ -97,6 +97,7 @@ target_include_directories(TILEDB_SOMA_OBJECTS
   ${CMAKE_CURRENT_SOURCE_DIR}/soma
   ${CMAKE_CURRENT_SOURCE_DIR}/external/khash
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
   $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
   ${pybind11_INCLUDE_DIRS}
@@ -217,12 +218,6 @@ install(FILES
 )
 
 install(FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.hpp
-  DESTINATION "include/tiledbsoma/utils/"
-)
-
-install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/tiledbsoma
   DESTINATION "include/tiledbsoma"
 )
@@ -240,6 +235,12 @@ install(FILES
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span/span.hpp
   DESTINATION "include/tiledbsoma/soma/span"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow/nanoarrow.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow/nanoarrow.hpp
+  DESTINATION "include/tiledbsoma/nanoarrow"
 )
 
 
