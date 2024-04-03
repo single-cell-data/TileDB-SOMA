@@ -49,6 +49,9 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 # ###########################################################
 # Common object library
 # ###########################################################
+set_source_files_properties(
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.c PROPERTIES LANGUAGE CXX)
+
 add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.cc
