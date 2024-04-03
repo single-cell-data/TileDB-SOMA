@@ -58,7 +58,7 @@ TileDBObject <- R6::R6Class(
     #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
     #'
     is_open = function() {
-      !is.null(private$.mode)
+      return(self$mode() != 'CLOSED')
     },
 
     # TODO: make this an active

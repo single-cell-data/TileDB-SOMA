@@ -24,6 +24,7 @@ Base class for representing an individual TileDB array.
 \itemize{
 \item \href{#method-TileDBArray-open}{\code{TileDBArray$open()}}
 \item \href{#method-TileDBArray-close}{\code{TileDBArray$close()}}
+\item \href{#method-TileDBArray-reopen}{\code{TileDBArray$reopen()}}
 \item \href{#method-TileDBArray-print}{\code{TileDBArray$print()}}
 \item \href{#method-TileDBArray-tiledb_array}{\code{TileDBArray$tiledb_array()}}
 \item \href{#method-TileDBArray-get_metadata}{\code{TileDBArray$get_metadata()}}
@@ -89,6 +90,31 @@ Close the SOMA object.
 
 \subsection{Returns}{
 The object, invisibly
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-reopen"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-reopen}{}}}
+\subsection{Method \code{reopen()}}{
+Close and reopen the TileDB object in a new mode
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$reopen(mode = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mode}}{New mode to open the object in; choose from:
+\itemize{
+\item \dQuote{\code{READ}}
+\item \dQuote{\code{WRITE}}
+}
+By default, reopens in the opposite mode of the current mode}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}

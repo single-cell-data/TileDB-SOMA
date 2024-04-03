@@ -203,7 +203,7 @@ test_that("Write SeuratCommand mechanics", {
 
   uri <- withr::local_tempdir('write-command-log')
   uns <- SOMACollectionCreate(uri)
-  on.exit(uns$close, add = TRUE)
+  on.exit(uns$close(), add = TRUE, after = FALSE)
 
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   for (cmd in SeuratObject::Command(pbmc_small)) {
@@ -214,9 +214,7 @@ test_that("Write SeuratCommand mechanics", {
     expect_s3_class(cmdgrp <- uns$get('seurat_commands'), 'SOMACollection')
 
     expect_s3_class(cmddf <- cmdgrp$get(cmd), 'SOMADataFrame')
-    expect_identical(cmddf$mode(), 'CLOSED')
-
-    expect_no_condition(cmddf <- cmddf$open('READ', internal_use_only = 'allowed_use'))
+    expect_invisible(cmddf$reopen("READ"))
     on.exit(cmddf$close(), add = TRUE, after = FALSE)
 
     # Test qualities of the SOMADataFrame

@@ -49,6 +49,29 @@ TileDBArray <- R6::R6Class(
       invisible(self)
     },
 
+    #' @description Close and reopen the TileDB object in a new mode
+    #'
+    #' @param mode New mode to open the object in; choose from:
+    #' \itemize{
+    #'  \item \dQuote{\code{READ}}
+    #'  \item \dQuote{\code{WRITE}}
+    #' }
+    #' By default, reopens in the opposite mode of the current mode
+    #'
+    #' @return Invisibly returns \code{self}
+    #'
+    reopen = function(mode = NULL) {
+      modes <- c(READ = 'WRITE', WRITE = 'READ')
+      oldmode <- self$mode()
+      mode <- mode %||% modes[oldmode]
+      mode <- match.arg(mode, choices = modes)
+      if (mode != oldmode) {
+        self$close()
+        self$open(mode, internal_use_only = 'allowed_use')
+      }
+      return(invisible(self))
+    },
+
     #' @description Print summary of the array. (lifecycle: experimental)
     print = function() {
       super$print()
@@ -289,17 +312,17 @@ TileDBArray <- R6::R6Class(
 
   private = list(
 
-    # Reopen the array in a different mode
-    reopen = function(mode = c("READ", "WRITE")) {
-      mode <- match.arg(mode)
-      if (private$.mode == mode) {
-        return(invisible(self))
-      }
-      self$close()
-      invisible(
-        self$open(mode = mode, internal_use_only = "allowed_use")
-      )
-    },
+    # # Reopen the array in a different mode
+    # reopen = function(mode = c("READ", "WRITE")) {
+    #   mode <- match.arg(mode)
+    #   if (private$.mode == mode) {
+    #     return(invisible(self))
+    #   }
+    #   self$close()
+    #   invisible(
+    #     self$open(mode = mode, internal_use_only = "allowed_use")
+    #   )
+    # },
 
     # Internal pointer to the TileDB array.
     #
