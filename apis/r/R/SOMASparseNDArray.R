@@ -54,7 +54,7 @@ SOMASparseNDArray <- R6::R6Class(
                      timestamp_end = private$tiledb_timestamp,
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
-      SOMASparseNDArrayRead$new(rl$sr, shape = self$shape())
+      SOMASparseNDArrayRead$new(rl$sr, self, coords)
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: experimental)
