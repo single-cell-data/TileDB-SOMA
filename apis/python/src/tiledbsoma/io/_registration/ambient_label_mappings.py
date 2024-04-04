@@ -349,7 +349,10 @@ class ExperimentAmbientLabelMapping:
     ) -> Self:
         """Acquires label-to-ID mappings from the baseline, already-written SOMA experiment."""
 
-        if experiment_uri is not None and tiledbsoma.Experiment.exists(experiment_uri):
+        if experiment_uri is not None:
+            if not tiledbsoma.Experiment.exists(experiment_uri):
+                raise ValueError("cannot find experiment at URI {experiment_uri}")
+
             # Pre-check
             with tiledbsoma.Experiment.open(experiment_uri, context=context) as exp:
                 if measurement_name not in exp.ms:
@@ -387,7 +390,10 @@ class ExperimentAmbientLabelMapping:
         context: Optional[SOMATileDBContext] = None,
     ) -> Self:
         """Extends registration data from the baseline, already-written SOMA
-        experiment to include multiple H5AD input files."""
+        experiment to include multiple H5AD input files. If ``experiment_uri``
+        is ``None`` then you will be computing registrations only for the input
+        ``AnnData`` objects. If ``experiment_uri`` is not ``None`` then it is
+        an error if the experiment is not accessible."""
 
         registration_data = cls._acquire_experiment_mappings(
             experiment_uri,
