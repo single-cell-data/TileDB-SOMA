@@ -12,10 +12,22 @@ Do NOT merge into main.
 
 import json
 import pathlib
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+from PIL import Image
 import scanpy
 
 from .. import Collection, DataFrame, DenseNDArray, Experiment, SparseNDArray
@@ -87,14 +99,14 @@ def from_visium(
         else input_path / "filtered_feature_bc_matrix.h5"
     )
 
-    # Note: Hard-coded for Space Range version >= 2
+    # TODO: Generalize - this is hard-coded for Space Ranger version 2
     input_tissue_positions = input_path / "spatial/tissue_positions.csv"
     input_scale_factors = input_path / "spatial/scalefactors_json.json"
 
-    # input_images = {
-    #    "hires": input_path / "spatial/tissue_hires_image.png",
-    #    "lowres": input_path / "spatial/tissue_lowres_image.png",
-    # }
+    # TODO: Generalize - hard-coded for Space Ranger version 2
+    input_hires = input_path / "spatial/tissue_hires_image.png"
+    input_lowres = input_path / "spatial/tissue_lowres_image.png"
+    input_fullres = None
 
     # Create the
     anndata = scanpy.read_10x_h5(input_gene_expression)
@@ -126,8 +138,12 @@ def from_visium(
     with open(input_scale_factors, mode="r", encoding="utf-8") as scale_factors_json:
         scale_factors = json.load(scale_factors_json)
 
+    # TODO: The `obs_df` should be in dataframe with only soma_joinid and obs_id. Not
+    # currently bothering to check/enforce this.
     with Experiment.open(uri, mode="r", context=context) as experiment:
         obs_df = experiment.obs.read().concat().to_pandas()
+
+    # Add spatial information to the experiment.
     with Experiment.open(uri, mode="w", context=context) as experiment:
         spatial_uri = f"{uri}/spatial"
         with _create_or_open_collection(
@@ -143,9 +159,10 @@ def from_visium(
                 _maybe_set(
                     spatial, scene_name, scene, use_relative_uri=use_relative_uri
                 )
+
                 obs_locations_uri = f"{scene_uri}/obs_locations"
-                # TODO: The `obs_df` on the next line should be a dataframe with only
-                # soma_joinid and obs_id. Not currently bothering to check/enforce this.
+
+                # Write spot data and add to the scene.
                 with _write_visium_spot_dataframe(
                     obs_locations_uri,
                     input_tissue_positions,
@@ -160,7 +177,21 @@ def from_visium(
                         obs_locations,
                         use_relative_uri=use_relative_uri,
                     )
-                # images_uri = f"{scene_uri}/images"
+
+                # Write image data and add to the scene.
+                images_uri = f"{scene_uri}/images"
+                with _write_visium_images(
+                    images_uri,
+                    scale_factors,
+                    input_hires=input_hires,
+                    input_lowres=input_lowres,
+                    input_fullres=input_fullres,
+                    use_relative_uri=use_relative_uri,
+                    **ingest_ctx,
+                ) as images:
+                    _maybe_set(
+                        scene, "images", images, use_relative_uri=use_relative_uri
+                    )
     return uri
 
 
@@ -205,13 +236,105 @@ def _write_visium_spot_dataframe(
 
 
 def _write_visium_images(
-    image_uri: str,
-    input_images: Dict[str, pathlib.Path],
-    input_scale_factors: Dict[str, Any],
+    uri: str,
+    scale_factors: Dict[str, Any],
     *,
+    input_hires: Optional[pathlib.Path],
+    input_lowres: Optional[pathlib.Path],
+    input_fullres: Optional[pathlib.Path],
     ingestion_params: IngestionParams,
     additional_metadata: "AdditionalMetadata" = None,
     platform_config: Optional["PlatformConfig"] = None,
     context: Optional["SOMATileDBContext"] = None,
+    use_relative_uri: Optional[bool] = None,
 ) -> Collection[DenseNDArray]:
-    raise NotImplementedError()
+    input_images: Dict[str, Tuple[pathlib.Path, List[float]]] = {}
+    if input_fullres is not None:
+        input_images["fullres"] = (input_fullres, [1.0, 1.0, 1.0])
+    if input_hires is not None:
+        scale = 1.0 / scale_factors["tissue_hires_scalef"]
+        input_images["hires"] = (input_hires, [1.0, scale, scale])
+    if input_lowres is not None:
+        scale = 1.0 / scale_factors["tissue_lowres_scalef"]
+        input_images["lowres"] = (input_lowres, [1.0, scale, scale])
+    axes_metadata = [
+        {"name": "c", "type": "channel"},
+        {"name": "y", "type": "space", "unit": "micrometer"},
+        {"name": "x", "type": "space", "unit": "micrometer"},
+    ]
+    return _write_multiscale_images(
+        uri,
+        input_images,
+        axes_metadata=axes_metadata,
+        ingestion_params=ingestion_params,
+        additional_metadata=additional_metadata,
+        platform_config=platform_config,
+        context=context,
+        use_relative_uri=use_relative_uri,
+    )
+
+
+def _write_multiscale_images(
+    uri: str,
+    input_images: Dict[str, Tuple[pathlib.Path, List[float]]],
+    *,
+    axes_metadata: List[Dict[str, str]],
+    ingestion_params: IngestionParams,
+    additional_metadata: "AdditionalMetadata" = None,
+    platform_config: Optional["PlatformConfig"] = None,
+    context: Optional["SOMATileDBContext"] = None,
+    use_relative_uri: Optional[bool] = None,
+) -> Collection[DenseNDArray]:
+    """TODO: Write full docs for this function
+
+    TODO: Need to add in collection level metadata. In this case it will be
+
+    """
+    collection = _create_or_open_collection(
+        Collection[DenseNDArray],
+        uri,
+        ingestion_params=ingestion_params,
+        additional_metadata=additional_metadata,
+        context=context,
+    )
+    datasets_metadata = []
+    for image_name, (image_path, image_scales) in input_images.items():
+        datasets_metadata.append(
+            {
+                "path": image_name,
+                "coordinateTransforms": [{"type": "scale", "scale": image_scales}],
+            }
+        )
+        image_uri = f"{uri}/{image_name}"
+
+        # TODO: Need to create new imaging type with dimensions 'c', 'y', 'x'
+        im = np.transpose(np.array(Image.open(image_path)), (2, 0, 1))
+        image_array = DenseNDArray.create(
+            image_uri,
+            type=pa.from_numpy_dtype(im.dtype),
+            shape=im.shape,
+            platform_config=platform_config,
+            context=context,
+        )
+        tensor = pa.Tensor.from_numpy(im)
+        image_array.write(
+            (slice(None), slice(None), slice(None)),
+            tensor,
+            platform_config=platform_config,
+        )
+        _maybe_set(
+            collection, image_name, image_array, use_relative_uri=use_relative_uri
+        )
+    metadata_blob = json.dumps(
+        {
+            "multiscales": [
+                {
+                    "version": "0.1.0-dev",
+                    "name": "visium-example",
+                    "datasets": datasets_metadata,
+                }
+            ]
+        }
+    )
+    collection.metadata.update({"multiscales": metadata_blob})
+    return collection

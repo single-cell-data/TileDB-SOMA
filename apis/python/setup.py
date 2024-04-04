@@ -333,6 +333,7 @@ setuptools.setup(
     ],
     extras_require={
         "dev": open("requirements_dev.txt").read(),
+        "spatial": ["tifffile", "pillow"],
     },
     python_requires=">=3.8",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
