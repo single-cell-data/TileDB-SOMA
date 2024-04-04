@@ -120,8 +120,40 @@ def create_anndata_canned(which: int, obs_field_name: str, var_field_name: str):
         ]
         X_value_base = 400
 
+    elif which == 8:
+        obs_ids = ["TAAT", "TCTG", "TGAG", "DUP", "DUP"]
+        var_ids = ["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"]
+        raw_var_ids = [
+            "AKT1",
+            "APOE",
+            "ESR1",
+            "TP53",
+            "VEGFA",
+            "ZZZ3",
+            "RAW1",
+            "RAW3",
+            "RAW2",
+        ]
+        X_value_base = 800
+
+    elif which == 9:
+        obs_ids = ["TAAT", "TCTG", "TGAG"]
+        var_ids = ["AKT1", "DUP", "ESR1", "TP53", "DUP", "ZZZ3"]
+        raw_var_ids = [
+            "AKT1",
+            "APOE",
+            "ESR1",
+            "TP53",
+            "VEGFA",
+            "ZZZ3",
+            "RAW1",
+            "RAW3",
+            "RAW2",
+        ]
+        X_value_base = 900
+
     else:
-        raise Exception(f"create_anndata_canned takes 1..4; got {which}")
+        raise Exception(f"create_anndata_canned got unrecognized which={which}")
 
     return _create_anndata(
         obs_ids=obs_ids,
@@ -1130,3 +1162,50 @@ def test_ealm_expose():
     # However, the pre-commit hook will strip out this import statement as "unused".
     # So, assert something.
     assert tiledbsoma.io.ExperimentAmbientLabelMapping is not None
+
+
+@pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
+@pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
+@pytest.mark.parametrize(
+    "dataset_ids_and_exc",
+    [
+        [None, 2],
+        [ValueError, 8],
+        [ValueError, 9],
+    ],
+)
+def test_append_with_nonunique_field_values(
+    tmp_path,
+    obs_field_name,
+    var_field_name,
+    dataset_ids_and_exc,
+):
+    """Verifies that we do a proactive check for uniqueness of obs/var registration-field values"""
+    ida = 1
+    exc, idb = dataset_ids_and_exc
+    measurement_name = "test"
+
+    anndataa = create_anndata_canned(ida, obs_field_name, var_field_name)
+    anndatab = create_anndata_canned(idb, obs_field_name, var_field_name)
+    soma_uri = tmp_path.as_posix()
+
+    tiledbsoma.io.from_anndata(soma_uri, anndataa, measurement_name=measurement_name)
+
+    if exc is None:
+        # Implicitly expect no throw
+        tiledbsoma.io.register_anndatas(
+            soma_uri,
+            [anndatab],
+            measurement_name=measurement_name,
+            obs_field_name=obs_field_name,
+            var_field_name=var_field_name,
+        )
+    else:
+        with pytest.raises(exc):
+            tiledbsoma.io.register_anndatas(
+                soma_uri,
+                [anndatab],
+                measurement_name=measurement_name,
+                obs_field_name=obs_field_name,
+                var_field_name=var_field_name,
+            )
