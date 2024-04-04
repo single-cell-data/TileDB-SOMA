@@ -21,10 +21,11 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pacomp
 import somacore
-import tiledb
 from somacore import options
 from somacore.options import PlatformConfig
 from typing_extensions import Self
+
+import tiledb
 
 from . import _util
 

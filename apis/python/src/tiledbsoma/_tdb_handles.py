@@ -28,10 +28,11 @@ from typing import (
 import attrs
 import numpy as np
 import pyarrow as pa
-import tiledb
 from numpy.typing import DTypeLike
 from somacore import options
 from typing_extensions import Literal, Self
+
+import tiledb
 
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error

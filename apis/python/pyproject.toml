@@ -23,5 +23,11 @@ extend-select = ["I001"]
 fix = true
 exclude = ["*.cc"]
 
-[tool.ruff.isort]
-known-first-party = ["tiledbsoma"]
+[tool.ruff.lint.isort]
+# HACK: tiledb needs to come after tiledbsoma: https://github.com/single-cell-data/TileDB-SOMA/issues/2293
+section-order = ["future", "standard-library", "third-party", "tiledbsoma", "tiledb", "first-party", "local-folder"]
+no-lines-before = ["tiledb"]
+
+[tool.ruff.lint.isort.sections]
+"tiledbsoma" = ["tiledbsoma"]
+"tiledb" = ["tiledb"]
