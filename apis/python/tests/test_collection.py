@@ -11,10 +11,11 @@ from typeguard import suppress_type_checks
 from typing_extensions import Literal
 
 import tiledbsoma as soma
-from tests._util import raises_no_typeguard
 from tiledbsoma import _collection, _factory, _tiledb_object
 from tiledbsoma._exception import DoesNotExistError
 from tiledbsoma.options import SOMATileDBContext
+
+from tests._util import raises_no_typeguard
 
 
 # ----------------------------------------------------------------

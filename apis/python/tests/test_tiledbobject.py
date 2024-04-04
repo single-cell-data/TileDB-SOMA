@@ -2,6 +2,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
+
 from tests._util import raises_no_typeguard
 
 # Checking that objects _do_ exist is already done (thoroughly) in other tests. Here

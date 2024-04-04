@@ -15,9 +15,10 @@ from typing import (
 
 import attrs as attrs_  # We use the name `attrs` later.
 import attrs.validators as vld  # Short name because we use this a bunch.
-import tiledb
 from somacore import options
 from typing_extensions import Self
+
+import tiledb
 
 # Most defaults are configured directly as default attribute values
 # within TileDBCreateOptions.

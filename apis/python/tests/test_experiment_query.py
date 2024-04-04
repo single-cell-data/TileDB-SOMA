@@ -7,16 +7,17 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
-import tiledb
 from pyarrow import ArrowInvalid
 from scipy import sparse
 from somacore import AxisQuery, options
 
 import tiledbsoma as soma
-from tests._util import raises_no_typeguard
 from tiledbsoma import SOMATileDBContext, _factory
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
+import tiledb
+
+from tests._util import raises_no_typeguard
 
 # Number of features for the embeddings layer
 N_FEATURES = 50

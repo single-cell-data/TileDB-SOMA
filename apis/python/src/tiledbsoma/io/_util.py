@@ -13,8 +13,9 @@ from typing import (
 from unittest import mock
 
 import anndata as ad
-import tiledb
 from anndata._core import file_backing
+
+import tiledb
 
 from .._types import Path
 
