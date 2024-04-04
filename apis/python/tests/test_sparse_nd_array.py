@@ -12,11 +12,11 @@ import numpy as np
 import pyarrow as pa
 import pytest
 import scipy.sparse as sparse
-import tiledb
 
 import tiledbsoma as soma
 from tiledbsoma import _factory
 from tiledbsoma.options import SOMATileDBContext
+import tiledb
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 from ._util import raises_no_typeguard

@@ -7,8 +7,9 @@ import pytest
 from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
-from tests._util import raises_no_typeguard
 from tiledbsoma import _factory
+
+from tests._util import raises_no_typeguard
 
 """"
 Metadata handling tests for all SOMA foundational datatypes.

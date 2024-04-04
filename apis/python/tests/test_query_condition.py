@@ -3,12 +3,12 @@
 import os
 
 import pytest
-import tiledb
 
 import tiledbsoma.pytiledbsoma as clib
 from tiledbsoma._arrow_types import tiledb_schema_to_arrow
 from tiledbsoma._exception import SOMAError
 from tiledbsoma._query_condition import QueryCondition
+import tiledb
 
 VERBOSE = False
 

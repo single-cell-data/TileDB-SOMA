@@ -1,9 +1,9 @@
 import numpy as np
 import pyarrow as pa
 import pytest
-import tiledb
 
 import tiledbsoma as soma
+import tiledb
 
 
 @pytest.fixture

@@ -12,9 +12,10 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import somacore
-import tiledb
 from somacore import options
 from typing_extensions import Self
+
+import tiledb
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib

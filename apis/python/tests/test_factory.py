@@ -3,10 +3,10 @@ from typing import Type
 
 import numpy as np
 import pytest
-import tiledb
 
 import tiledbsoma as soma
 from tiledbsoma import _constants
+import tiledb
 
 UNKNOWN_ENCODING_VERSION = "3141596"
 

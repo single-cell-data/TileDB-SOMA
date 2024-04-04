@@ -2,6 +2,7 @@ import pytest
 
 import tiledbsoma
 import tiledbsoma.io
+
 from tests._util import PY_ROOT
 
 

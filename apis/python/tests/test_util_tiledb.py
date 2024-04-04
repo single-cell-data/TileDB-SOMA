@@ -1,8 +1,8 @@
 import pyarrow as pa
 import pytest
-import tiledb
 
 import tiledbsoma as soma
+import tiledb
 
 
 def test_stats(tmp_path, capsys: pytest.CaptureFixture[str]):

@@ -36,10 +36,11 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-import tiledb
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 from typing_extensions import get_args
+
+import tiledb
 
 from .. import (
     Collection,

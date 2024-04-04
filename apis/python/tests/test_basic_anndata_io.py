@@ -10,13 +10,13 @@ import pandas as pd
 import pytest
 import scipy
 import somacore
-import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
 from tiledbsoma._tiledb_object import TileDBObject
 from tiledbsoma._util import verify_obs_var
+import tiledb
 
 from ._util import TESTDATA
 

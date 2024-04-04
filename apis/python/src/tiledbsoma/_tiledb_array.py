@@ -6,9 +6,10 @@
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import pyarrow as pa
-import tiledb
 from somacore import options
 from typing_extensions import Self
+
+import tiledb
 
 from . import _tdb_handles, _util
 

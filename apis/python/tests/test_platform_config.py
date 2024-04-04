@@ -1,12 +1,12 @@
 import tempfile
 
 import pytest
-import tiledb
 
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_options as tco
 from tiledbsoma._util import verify_obs_var
+import tiledb
 
 
 @pytest.mark.skip(reason="No longer return ArraySchema - see note in test")
