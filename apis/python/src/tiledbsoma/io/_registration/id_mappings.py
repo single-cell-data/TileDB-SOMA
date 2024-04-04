@@ -68,12 +68,22 @@ class ExperimentIDMapping:
         return cls(obs_axis=obs_mapping, var_axes=var_axes)
 
 
+def _check_dataframe_values(values: List[str], field_name: str) -> List[str]:
+    if len(values) != len(set(values)):
+        raise ValueError(
+            "non-unique registration values have been provided in field {field_name}"
+        )
+    return values
+
+
 def get_dataframe_values(df: pd.DataFrame, field_name: str) -> List[str]:
     """Extracts the label values (e.g. cell barcode, gene symbol) from an AnnData/H5AD
     ``obs`` or ``var`` dataframe."""
     if field_name in df:
-        return [str(e) for e in df[field_name]]
-    if df.index.name in (field_name, "index", None):
-        return list(df.index)
+        values = [str(e) for e in df[field_name]]
+    elif df.index.name in (field_name, "index", None):
+        values = list(df.index)
+    else:
+        raise ValueError(f"could not find field name {field_name} in dataframe")
 
-    raise ValueError(f"could not find field name {field_name} in dataframe")
+    return _check_dataframe_values(values, field_name)
