@@ -3,9 +3,9 @@ import time
 from unittest import mock
 
 import pytest
-import tiledb
 
 import tiledbsoma.options._soma_tiledb_context as stc
+import tiledb
 
 
 @pytest.fixture(autouse=True)

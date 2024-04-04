@@ -32,6 +32,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+
 import tiledb
 
 _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {

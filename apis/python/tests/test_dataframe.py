@@ -6,10 +6,11 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 import somacore
-import tiledb
 from pandas.api.types import union_categoricals
 
 import tiledbsoma as soma
+import tiledb
+
 from tests._util import raises_no_typeguard
 
 

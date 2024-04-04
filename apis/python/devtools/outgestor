@@ -18,11 +18,10 @@ import logging
 import os
 import sys
 
-import tiledb
-
 import tiledbsoma
 import tiledbsoma._util
 import tiledbsoma.io
+import tiledb
 
 logger = logging.getLogger("tiledbsoma")
 

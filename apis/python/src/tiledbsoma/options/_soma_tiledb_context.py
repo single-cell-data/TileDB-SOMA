@@ -10,9 +10,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, Literal, Mapping, Optional, Union
 
-import tiledb
 from somacore import ContextBase
 from typing_extensions import Self
+
+import tiledb
 
 from .. import pytiledbsoma as clib
 from .._types import OpenTimestamp

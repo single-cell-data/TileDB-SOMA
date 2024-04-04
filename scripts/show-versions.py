@@ -8,9 +8,9 @@ import pandas as pd
 import pyarrow as pa
 import scanpy as sc
 import scipy as sp
-import tiledb
 
 import tiledbsoma
+import tiledb
 
 print("tiledbsoma.__version__   ", tiledbsoma.__version__)
 print("tiledb.version()         ", ".".join(str(e) for e in tiledb.version()))

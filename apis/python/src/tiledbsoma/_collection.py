@@ -28,9 +28,10 @@ from typing import (
 import attrs
 import somacore
 import somacore.collection
-import tiledb
 from somacore import options
 from typing_extensions import Self
+
+import tiledb
 
 from . import _funcs, _tdb_handles
 from ._common_nd_array import NDArray

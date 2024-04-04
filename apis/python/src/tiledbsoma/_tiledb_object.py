@@ -8,9 +8,10 @@ from contextlib import ExitStack
 from typing import Any, Generic, MutableMapping, Optional, Type, TypeVar, Union
 
 import somacore
-import tiledb
 from somacore import options
 from typing_extensions import Self
+
+import tiledb
 
 from . import _constants, _tdb_handles
 from ._exception import SOMAError
