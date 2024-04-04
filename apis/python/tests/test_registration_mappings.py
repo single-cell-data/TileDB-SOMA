@@ -1164,6 +1164,23 @@ def test_ealm_expose():
     assert tiledbsoma.io.ExperimentAmbientLabelMapping is not None
 
 
+def test_append_registration_with_nonexistent_storage(tmp_path):
+    anndata1 = create_anndata_canned(1, "obs_id", "var_id")
+    anndata2 = create_anndata_canned(2, "obs_id", "var_id")
+    soma_uri = tmp_path.as_posix()
+
+    tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="RNA")
+
+    with pytest.raises(ValueError):
+        tiledbsoma.io.register_anndatas(
+            soma_uri + "-nonesuch",
+            [anndata2],
+            measurement_name="RNA",
+            obs_field_name="obs_id",
+            var_field_name="var_id",
+        )
+
+
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 @pytest.mark.parametrize(
