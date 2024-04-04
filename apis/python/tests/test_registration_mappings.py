@@ -1,9 +1,9 @@
 """
 Test join-id registrations for ingesting multiple AnnData objects into a single SOMA Experiment.
 """
-
 import math
 import tempfile
+from contextlib import nullcontext
 from typing import Optional, Sequence
 
 import anndata as ad
@@ -1191,8 +1191,8 @@ def test_append_with_nonunique_field_values(
 
     tiledbsoma.io.from_anndata(soma_uri, anndataa, measurement_name=measurement_name)
 
-    if exc is None:
-        # Implicitly expect no throw
+    ctx = pytest.raises(exc) if exc else nullcontext()
+    with ctx:
         tiledbsoma.io.register_anndatas(
             soma_uri,
             [anndatab],
@@ -1200,12 +1200,3 @@ def test_append_with_nonunique_field_values(
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
         )
-    else:
-        with pytest.raises(exc):
-            tiledbsoma.io.register_anndatas(
-                soma_uri,
-                [anndatab],
-                measurement_name=measurement_name,
-                obs_field_name=obs_field_name,
-                var_field_name=var_field_name,
-            )
