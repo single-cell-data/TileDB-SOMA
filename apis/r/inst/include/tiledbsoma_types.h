@@ -15,7 +15,7 @@
 #define TILEDB_NO_API_DEPRECATION_WARNINGS
 #endif
 
-#include <tiledbsoma/nanoarrow/nanoarrow.h> // for C interface to Arrow
+#include <nanoarrow/nanoarrow.h>            // for C interface to Arrow
 #include <tiledb/tiledb>					// for QueryCondition etc
 #define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
 #include <tiledbsoma/tiledbsoma>

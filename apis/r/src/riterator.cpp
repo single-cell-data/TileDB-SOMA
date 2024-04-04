@@ -5,7 +5,7 @@
 
 #include <Rcpp.h>                        // for R interface to C++
 #include <nanoarrow/r.h>                 // for C interface to Arrow (via R package nanoarrow)
-#include <tiledbsoma/nanoarrow/nanoarrow.h>
+#include <nanoarrow/nanoarrow.h>
 #include <RcppInt64>                    // for fromInteger64
 
 #include <tiledb/tiledb>

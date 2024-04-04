@@ -24,9 +24,6 @@ const tiledb_xptr_object tiledb_xptr_vlv_buf_t                   { 180 };
 const tiledb_xptr_object tiledb_xptr_query_buf_t                 { 190 };
 
 // the definitions above are internal to tiledb-r but we need a new value here if we want tag the external pointer
-const tiledb_xptr_object tiledb_arrow_array_t                    { 300 };
-const tiledb_xptr_object tiledb_arrow_schema_t                   { 310 };
-
 const tiledb_xptr_object tiledb_soma_reader_t                    { 500 };
 
 // templated checkers for external pointer tags
@@ -51,10 +48,6 @@ template <> inline const int32_t XPtrTagType<tiledb::VFS>                  = til
 // template <> inline const int32_t XPtrTagType<vlc_buf_t>                    = tiledb_xptr_vlc_buf_t;
 // template <> inline const int32_t XPtrTagType<vlv_buf_t>                    = tiledb_xptr_vlv_buf_t;
 // template <> inline const int32_t XPtrTagType<query_buf_t>                  = tiledb_xptr_query_buf_t;
-
-
-template <> inline const int32_t XPtrTagType<ArrowArray>             	   = tiledb_arrow_array_t;
-template <> inline const int32_t XPtrTagType<ArrowSchema>             	   = tiledb_arrow_schema_t;
 
 template <> inline const int32_t XPtrTagType<tdbs::SOMAArray>             = tiledb_soma_reader_t;
 
@@ -81,4 +74,3 @@ template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
 // in rinterface.cpp
 Rcpp::XPtr<ArrowSchema> schema_owning_xptr(void);
 Rcpp::XPtr<ArrowArray> array_owning_xptr(void);
-

@@ -9,6 +9,6 @@ URL: https://github.com/single-cell-data/TileDB-SOMA
 Version: @VERSION@
 Requires: @PKGCONF_REQ_PUB@
 Requires.private: @PKGCONF_REQ_PRIV@
-Cflags: -I"${includedir}"
+Cflags: -I"${includedir}" -I"${includedir}/tiledbsoma"
 Libs: -L"${libdir}" -ltiledbsoma
 Libs.private: -L"${libdir}" -ltiledbsoma @PKGCONF_LIBS_PRIV@
