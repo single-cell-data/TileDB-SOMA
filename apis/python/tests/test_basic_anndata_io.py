@@ -1258,8 +1258,23 @@ def test_outgest_X_layers(tmp_path):
         assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
 
 
-@pytest.mark.parametrize("dtype", ["float64", "string"])
-def test_string_nan_append_small(adata, dtype):
+# fmt: off
+@pytest.mark.parametrize("dtype", ["float64", "string"])          # new column dtype
+@pytest.mark.parametrize("nans", ["all", "none", "some"])         # how many `nan`s in new column?
+@pytest.mark.parametrize("new_obs_ids", ["all", "none", "half"])  # how many new obs IDs?
+# fmt: on
+def test_nan_append(adata, dtype, nans, new_obs_ids):
+    """Test append-ingesting an AnnData object, including a new `obs` column with various properties:
+
+    - {all,some,none} of its values are `nan`
+    - dtype string or float
+    - {all,none,half} of its obs IDs already present in the 1st AnnData.
+
+    Prompted by observing a failure when all obs IDs are already present, and a new column has string dtype and contains
+    at least one `nan`. See also:
+    - https://github.com/single-cell-data/TileDB-SOMA/pull/2357
+    - https://github.com/single-cell-data/TileDB-SOMA/pull/2364
+    """
     adata.obsm = None
     adata.varm = None
     adata.obsp = None
@@ -1267,11 +1282,27 @@ def test_string_nan_append_small(adata, dtype):
     adata.uns = dict()
 
     # Add empty column to obs
-    adata.obs["batch_id"] = np.nan
-    adata.obs["batch_id"] = adata.obs["batch_id"].astype(dtype)
+    obs = adata.obs
+    if nans == "all":
+        obs["batch_id"] = np.nan
+    else:
+        elem = "batch_id" if dtype == "string" else 1.23
+        if nans == "some":
+            obs["batch_id"] = np.nan
+            obs.loc[obs.index.tolist()[0], "batch_id"] = elem
+        else:
+            obs["batch_id"] = elem
+
+    obs["batch_id"] = obs["batch_id"].astype(dtype)
 
     # Create a copy of the anndata object
     adata2 = adata.copy()
+    obs2 = adata2.obs
+    if new_obs_ids == "all":
+        obs2.index = obs2.index + "_2"
+    elif new_obs_ids == "half":
+        half = len(obs2) // 2
+        obs2.index = obs2.index[:half].tolist() + (obs2.index[half:] + "_2").tolist()
 
     # Initial ingest
     SOMA_URI = tempfile.mkdtemp(prefix="soma-exp-")
