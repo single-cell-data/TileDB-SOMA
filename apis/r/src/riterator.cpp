@@ -20,8 +20,6 @@
 
 #include "rutilities.h"         // local declarations
 #include "xptr-utils.h"         // xptr taggging utilitie
-Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children);
-Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children);
 
 namespace tdbs = tiledbsoma;
 
