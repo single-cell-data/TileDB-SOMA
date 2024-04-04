@@ -18,8 +18,6 @@ import logging
 import os
 import sys
 
-import tiledb
-
 import tiledbsoma
 import tiledbsoma._util
 import tiledbsoma.io
@@ -28,6 +26,11 @@ logger = logging.getLogger("tiledbsoma")
 
 
 def main():
+    # The pre-commit-hook linter insists on moving import tiledb before import
+    # tiledbsoma but we want it after
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/2293
+    import tiledb
+
     parser = argparse.ArgumentParser(
         description="Outgest soma data from TileDB group structure to anndata/h5ad"
     )

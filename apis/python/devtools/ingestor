@@ -16,7 +16,6 @@ import os
 import sys
 from typing import Optional
 
-import tiledb
 from somacore import options
 
 import tiledbsoma
@@ -30,6 +29,11 @@ from tiledbsoma.options import SOMATileDBContext
 
 # ================================================================
 def main():
+    # The pre-commit-hook linter insists on moving import tiledb before import
+    # tiledbsoma but we want it after
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/2293
+    import tiledb
+
     parser = argparse.ArgumentParser(
         description="Ingest SOMA data from anndata/h5ad into TileDB group structure"
     )
@@ -262,6 +266,11 @@ def ingest_one(
     measurement_name: str,
     appending: bool,
 ):
+    # The pre-commit-hook linter insists on moving import tiledb before import
+    # tiledbsoma but we want it after
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/2293
+    import tiledb
+
     # This will be a very common command-line thing to do since the arg is `--ingest-mode` not
     # `--ingest_mode`. Let's be kind and supportive about it.
     if ingest_mode == "schema-only":
