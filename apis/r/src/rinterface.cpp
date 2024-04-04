@@ -43,10 +43,6 @@ Rcpp::XPtr<ArrowArray> array_owning_xptr(void) {
 
 namespace tdbs = tiledbsoma;
 
-Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children);
-Rcpp::XPtr<ArrowArray> array_setup_struct(Rcpp::XPtr<ArrowArray> arrxp, int64_t n_children);
-
-
 //' @noRd
 // [[Rcpp::export(soma_array_reader_impl)]]
 SEXP soma_array_reader(const std::string& uri,
