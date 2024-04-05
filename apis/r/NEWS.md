@@ -6,7 +6,7 @@
 * Add support for outgestion of `SeuratCommand` logs
 * Add support for reading `*m` and `*p` layers from `SOMAExperimentAxisQuery`
 * Add support for blockwise iteration
-* Expose `TileDBArray$reopen()`
+* Make `reopen()` a public method for all `TileDBObjects`
 
 # 1.7.0
 
