@@ -3,20 +3,15 @@
 #define TILEDB_NO_API_DEPRECATION_WARNINGS
 #endif
 
-//#define RCPP_DEBUG_LEVEL 5
-
-#include <Rcpp.h>          			     // for R interface to C++
-#include <nanoarrow/r.h>				 // for C interface to Arrow (via R package nanoarrow)
-#include <tiledbsoma/utils/nanoarrow.h>
-#include <RcppInt64>            // for fromInteger64
+#include <Rcpp.h>                        // for R interface to C++
+#include <nanoarrow/r.h>                 // for C interface to Arrow (via R package nanoarrow)
+#include <nanoarrow/nanoarrow.h>
+#include <RcppInt64>                    // for fromInteger64
 
 #include <tiledb/tiledb>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
 #include <tiledb/tiledb_experimental>
 #endif
-
-// We get these via nanoarrow and must not include carrow.h again
-#define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
 #include <tiledbsoma/tiledbsoma>
 
 #include "rutilities.h"         // local declarations
