@@ -454,8 +454,7 @@ ArrowErrorCode ArrowDecimalAppendDigitsToBuffer(const struct ArrowDecimal* decim
 
 #include "nanoarrow.h"
 
-// -- changed for tiledb-r  static
-void ArrowSchemaReleaseInternal(struct ArrowSchema* schema) {
+static void ArrowSchemaReleaseInternal(struct ArrowSchema* schema) {
   if (schema->format != NULL) ArrowFree((void*)schema->format);
   if (schema->name != NULL) ArrowFree((void*)schema->name);
   if (schema->metadata != NULL) ArrowFree((void*)schema->metadata);
@@ -1714,7 +1713,7 @@ int64_t ArrowSchemaToString(const struct ArrowSchema* schema, char* out, int64_t
   }
 
   if (out == NULL) {
-    return snprintf(out, n, "[invalid: out is released]");
+    return 0;
   }
 
   struct ArrowSchemaView schema_view;
@@ -2029,8 +2028,7 @@ ArrowErrorCode ArrowMetadataBuilderRemove(struct ArrowBuffer* buffer,
 
 #include "nanoarrow.h"
 
-// -- changed for tiledb-r  static
-void ArrowArrayReleaseInternal(struct ArrowArray* array) {
+static void ArrowArrayReleaseInternal(struct ArrowArray* array) {
   // Release buffers held by this array
   struct ArrowArrayPrivateData* private_data =
       (struct ArrowArrayPrivateData*)array->private_data;
@@ -2073,8 +2071,7 @@ void ArrowArrayReleaseInternal(struct ArrowArray* array) {
   array->release = NULL;
 }
 
-// -- changed for tiledb-r  static
-ArrowErrorCode ArrowArraySetStorageType(struct ArrowArray* array,
+static ArrowErrorCode ArrowArraySetStorageType(struct ArrowArray* array,
                                                enum ArrowType storage_type) {
   switch (storage_type) {
     case NANOARROW_TYPE_UNINITIALIZED:

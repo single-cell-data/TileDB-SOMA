@@ -46,7 +46,7 @@ export CXX="`${R_HOME}/bin/R CMD config CXX`"
 export CMAKE_OSX_ARCHITECTURES="`uname -m`"
 tools/build_libtiledbsoma.sh
 
-pkgincl="-I../inst/tiledb/include -I../inst/tiledbsoma/include"
+pkgincl="-I../inst/tiledb/include -I../inst/tiledbsoma/include -I../inst/tiledbsoma/include/tiledbsoma"
 pkglibs="-ltiledb -L../inst/tiledb/lib -ltiledbsoma -L../inst/tiledbsoma/lib"
 rpath="-Wl,-rpath,'\$\$ORIGIN/../tiledb/lib' -Wl,-rpath,'\$\$ORIGIN/../tiledbsoma/lib'"
 macosver=`${R_HOME}/bin/Rscript -e 'if (Sys.info()["sysname"] == "Darwin") cat("-mmacosx-version-min=11.0") else cat("")'`

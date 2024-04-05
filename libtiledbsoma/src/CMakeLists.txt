@@ -50,7 +50,7 @@ message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 # Common object library
 # ###########################################################
 set_source_files_properties(
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.c PROPERTIES LANGUAGE CXX)
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/src/nanoarrow/nanoarrow.c PROPERTIES LANGUAGE CXX)
 
 add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.cc
@@ -72,10 +72,10 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.c
 
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/src/nanoarrow/nanoarrow.c
 )
 
 message(STATUS "Building TileDB without deprecation warnings")
@@ -89,6 +89,11 @@ target_compile_options(
 )
 
 set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+target_include_directories(TILEDB_SOMA_OBJECTS
+  PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
+)
 
 target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
@@ -217,12 +222,6 @@ install(FILES
 )
 
 install(FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/nanoarrow.hpp
-  DESTINATION "include/tiledbsoma/utils/"
-)
-
-install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/tiledbsoma/tiledbsoma
   DESTINATION "include/tiledbsoma"
 )
@@ -240,6 +239,12 @@ install(FILES
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span/span.hpp
   DESTINATION "include/tiledbsoma/soma/span"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow/nanoarrow.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow/nanoarrow.hpp
+  DESTINATION "include/tiledbsoma/nanoarrow"
 )
 
 
