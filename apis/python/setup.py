@@ -217,6 +217,7 @@ class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
 INC_DIRS = [
     "dist_links/libtiledbsoma/include",
     "dist_links/libtiledbsoma/external/include",
+    "dist_links/libtiledbsoma/src/external/include",
     "../../build/externals/install/include",
     str(tiledbsoma_dir / "include"),
     str(tiledbsoma_dir / "include/tiledbsoma"),
