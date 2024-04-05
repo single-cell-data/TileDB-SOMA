@@ -276,7 +276,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             extents,
             context.native_context,
             plt_cfg,
-            (0, timestamp_ms)
+            (0, timestamp_ms),
         )
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
@@ -469,15 +469,23 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 if not pa.types.is_dictionary(input_field.type):
                     raise ValueError(f"{name} requires dictionary entry")
                 col = values.column(name).combine_chunks()
+                if pa.types.is_boolean(target_field.type.value_type):
+                    col = col.cast(
+                        pa.dictionary(
+                            target_field.type.index_type,
+                            pa.uint8(),
+                            target_field.type.ordered,
+                        )
+                    )
                 new_enmr = self._handle._handle.extend_enumeration(name, col)
-                
+
                 if pa.types.is_binary(
                     target_field.type.value_type
                 ) or pa.types.is_large_binary(target_field.type.value_type):
                     new_enmr = np.array(new_enmr, "S")
                 elif pa.types.is_boolean(target_field.type.value_type):
                     new_enmr = np.array(new_enmr, bool)
-                    
+
                 df = pd.Categorical(
                     col.to_pandas(),
                     ordered=target_field.type.ordered,

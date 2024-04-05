@@ -16,6 +16,7 @@ import os
 import sys
 from typing import Optional
 
+import tiledb
 from somacore import options
 
 import tiledbsoma
@@ -25,7 +26,6 @@ import tiledbsoma._util
 import tiledbsoma.io
 import tiledbsoma.logging
 from tiledbsoma.options import SOMATileDBContext
-import tiledb
 
 
 # ================================================================
