@@ -1,3 +1,7 @@
+# 1.9.4
+
+* This release contains an in-progress blockwise iterator, work on which will be completed in a subsequent release.
+
 # 1.9.3
 
 * This release contains a single Python-only performance improvment
