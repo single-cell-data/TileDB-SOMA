@@ -129,7 +129,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
                     handle._do_initial_reads(auxiliary_reader)
             else:
                 handle._do_initial_reads(tdb)
-        except tiledb.TileDBError as tdbe:
+        except (RuntimeError, tiledb.TileDBError) as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(f"{uri!r} does not exist") from tdbe
             raise

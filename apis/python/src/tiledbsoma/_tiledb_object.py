@@ -270,7 +270,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 if not isinstance(md_type, str):
                     return False
                 return md_type.lower() == cls.soma_type.lower()
-        except (SOMAError, tiledb.cc.TileDBError):
+        except (RuntimeError, SOMAError, tiledb.cc.TileDBError):
             return False
 
     @classmethod
