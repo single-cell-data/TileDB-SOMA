@@ -314,7 +314,7 @@ SOMADataFrame <- R6::R6Class(
       # - validate number of rows in values matches number of rows in array
       # - add original soma_joinids to values if not present
       spdl::debug("[SOMADataFrame update]: Retrieving existing soma_joinids")
-      private$reopen(mode = "READ")
+      self$reopen(mode = "READ")
       joinids <- self$read(column_names = "soma_joinid")$concat()$soma_joinid
       if (length(joinids) != nrow(values)) {
         stop(
@@ -392,7 +392,7 @@ SOMADataFrame <- R6::R6Class(
       se <- tiledb::tiledb_array_schema_evolution_array_evolve(se, self$uri)
 
       # Reopen array for writing with new schema
-      private$reopen(mode = "WRITE")
+      self$reopen(mode = "WRITE")
       spdl::info("[SOMADataFrame update]: Writing new data")
       self$write(values)
     }

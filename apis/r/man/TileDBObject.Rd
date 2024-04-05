@@ -25,6 +25,7 @@ TileDBGroup classes. (lifecycle: experimental)
 \item \href{#method-TileDBObject-class}{\code{TileDBObject$class()}}
 \item \href{#method-TileDBObject-is_open}{\code{TileDBObject$is_open()}}
 \item \href{#method-TileDBObject-mode}{\code{TileDBObject$mode()}}
+\item \href{#method-TileDBObject-reopen}{\code{TileDBObject$reopen()}}
 \item \href{#method-TileDBObject-print}{\code{TileDBObject$print()}}
 \item \href{#method-TileDBObject-exists}{\code{TileDBObject$exists()}}
 \item \href{#method-TileDBObject-clone}{\code{TileDBObject$clone()}}
@@ -97,6 +98,31 @@ Get the mode of the object
 \subsection{Returns}{
 If the object is closed, returns \dQuote{\code{CLOSED}};
 otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBObject-reopen"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBObject-reopen}{}}}
+\subsection{Method \code{reopen()}}{
+Close and reopen the TileDB object in a new mode
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$reopen(mode = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mode}}{New mode to open the object in; choose from:
+\itemize{
+\item \dQuote{\code{READ}}
+\item \dQuote{\code{WRITE}}
+}
+By default, reopens in the opposite mode of the current mode}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}

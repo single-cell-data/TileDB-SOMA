@@ -289,18 +289,6 @@ TileDBArray <- R6::R6Class(
 
   private = list(
 
-    # Reopen the array in a different mode
-    reopen = function(mode = c("READ", "WRITE")) {
-      mode <- match.arg(mode)
-      if (private$.mode == mode) {
-        return(invisible(self))
-      }
-      self$close()
-      invisible(
-        self$open(mode = mode, internal_use_only = "allowed_use")
-      )
-    },
-
     # Internal pointer to the TileDB array.
     #
     # Important implementation note:

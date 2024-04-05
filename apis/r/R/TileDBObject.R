@@ -58,7 +58,7 @@ TileDBObject <- R6::R6Class(
     #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
     #'
     is_open = function() {
-      !is.null(private$.mode)
+      return(self$mode() != 'CLOSED')
     },
 
     # TODO: make this an active
@@ -73,6 +73,29 @@ TileDBObject <- R6::R6Class(
       } else {
         private$.mode
       }
+    },
+
+    #' @description Close and reopen the TileDB object in a new mode
+    #'
+    #' @param mode New mode to open the object in; choose from:
+    #' \itemize{
+    #'  \item \dQuote{\code{READ}}
+    #'  \item \dQuote{\code{WRITE}}
+    #' }
+    #' By default, reopens in the opposite mode of the current mode
+    #'
+    #' @return Invisibly returns \code{self}
+    #'
+    reopen = function(mode = NULL) {
+      modes <- c(READ = 'WRITE', WRITE = 'READ')
+      oldmode <- self$mode()
+      mode <- mode %||% modes[oldmode]
+      mode <- match.arg(mode, choices = modes)
+      if (mode != oldmode) {
+        self$close()
+        self$open(mode, internal_use_only = 'allowed_use')
+      }
+      return(invisible(self))
     },
 
     #' @description Print-friendly representation of the object.
