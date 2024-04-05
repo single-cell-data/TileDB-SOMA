@@ -77,6 +77,13 @@ jobs:
       #
       # Please see https://github.com/single-cell-data/TileDB-SOMA/wiki/Branches-and-releases which
       # is crucial for anyone doing releases of TileDB-SOMA.
+      #
+      # Please edit both files in the same way:
+      # * r-ci.yml
+      # * r-python-interop-testing.yml
+      #
+      # Do not remove these comments until such time as we have eliminated our dependency on
+      # the TileDB-R package.
 
       #- name: Install r-universe build of tiledb-r (macOS)
       #  if: ${{ matrix.os == 'macOS-latest' }}
