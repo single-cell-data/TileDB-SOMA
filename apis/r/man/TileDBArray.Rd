@@ -24,7 +24,6 @@ Base class for representing an individual TileDB array.
 \itemize{
 \item \href{#method-TileDBArray-open}{\code{TileDBArray$open()}}
 \item \href{#method-TileDBArray-close}{\code{TileDBArray$close()}}
-\item \href{#method-TileDBArray-reopen}{\code{TileDBArray$reopen()}}
 \item \href{#method-TileDBArray-print}{\code{TileDBArray$print()}}
 \item \href{#method-TileDBArray-tiledb_array}{\code{TileDBArray$tiledb_array()}}
 \item \href{#method-TileDBArray-get_metadata}{\code{TileDBArray$get_metadata()}}
@@ -46,13 +45,14 @@ Base class for representing an individual TileDB array.
 }
 }
 \if{html}{\out{
-<details open><summary>Inherited methods</summary>
+<details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -90,31 +90,6 @@ Close the SOMA object.
 
 \subsection{Returns}{
 The object, invisibly
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-reopen"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-reopen}{}}}
-\subsection{Method \code{reopen()}}{
-Close and reopen the TileDB object in a new mode
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$reopen(mode = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{mode}}{New mode to open the object in; choose from:
-\itemize{
-\item \dQuote{\code{READ}}
-\item \dQuote{\code{WRITE}}
-}
-By default, reopens in the opposite mode of the current mode}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisibly returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}
