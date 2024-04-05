@@ -1712,6 +1712,10 @@ int64_t ArrowSchemaToString(const struct ArrowSchema* schema, char* out, int64_t
     return snprintf(out, n, "[invalid: schema is released]");
   }
 
+  if (out == NULL) {
+    return 0;
+  }
+
   struct ArrowSchemaView schema_view;
   struct ArrowError error;
 
