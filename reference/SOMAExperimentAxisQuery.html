@@ -54,7 +54,7 @@ this in the class.
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.4</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -182,6 +182,10 @@ this in the class.</p>
 <li><p><a href="#method-SOMAExperimentAxisQuery-obs_joinids"><code>SOMAExperimentAxisQuery$obs_joinids()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-var_joinids"><code>SOMAExperimentAxisQuery$var_joinids()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-X"><code>SOMAExperimentAxisQuery$X()</code></a></p></li>
+<li><p><a href="#method-SOMAExperimentAxisQuery-obsm"><code>SOMAExperimentAxisQuery$obsm()</code></a></p></li>
+<li><p><a href="#method-SOMAExperimentAxisQuery-varm"><code>SOMAExperimentAxisQuery$varm()</code></a></p></li>
+<li><p><a href="#method-SOMAExperimentAxisQuery-obsp"><code>SOMAExperimentAxisQuery$obsp()</code></a></p></li>
+<li><p><a href="#method-SOMAExperimentAxisQuery-varp"><code>SOMAExperimentAxisQuery$varp()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-read"><code>SOMAExperimentAxisQuery$read()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-to_sparse_matrix"><code>SOMAExperimentAxisQuery$to_sparse_matrix()</code></a></p></li>
 <li><p><a href="#method-SOMAExperimentAxisQuery-to_seurat"><code>SOMAExperimentAxisQuery$to_seurat()</code></a></p></li>
@@ -284,13 +288,77 @@ axis.</p></dd>
 </dl><p></p></div>
 </div>
 
+</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-obsm"></a><div class="section">
+<h3 id="method-obsm-">Method <code>obsm()</code><a class="anchor" aria-label="anchor" href="#method-obsm-"></a></h3>
+<p>Retrieves an <code>obsm</code> layer as a <code><a href="SOMASparseNDArrayRead.html">SOMASparseNDArrayRead</a></code></p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">obsm</span><span class="op">(</span><span class="va">layer_name</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>layer_name</code></dt>
+<dd><p>The name of the layer to retrieve</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-varm"></a><div class="section">
+<h3 id="method-varm-">Method <code>varm()</code><a class="anchor" aria-label="anchor" href="#method-varm-"></a></h3>
+<p>Retrieves a <code>varm</code> layer as a <code><a href="SOMASparseNDArrayRead.html">SOMASparseNDArrayRead</a></code></p><div class="section">
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">varm</span><span class="op">(</span><span class="va">layer_name</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>layer_name</code></dt>
+<dd><p>The name of the layer to retrieve</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-obsp"></a><div class="section">
+<h3 id="method-obsp-">Method <code>obsp()</code><a class="anchor" aria-label="anchor" href="#method-obsp-"></a></h3>
+<p>Retrieves an <code>obsp</code> layer as a <code><a href="SOMASparseNDArrayRead.html">SOMASparseNDArrayRead</a></code></p><div class="section">
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">obsp</span><span class="op">(</span><span class="va">layer_name</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>layer_name</code></dt>
+<dd><p>The name of the layer to retrieve</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
+</div><p></p><hr><a id="method-SOMAExperimentAxisQuery-varp"></a><div class="section">
+<h3 id="method-varp-">Method <code>varp()</code><a class="anchor" aria-label="anchor" href="#method-varp-"></a></h3>
+<p>Retrieves a <code>varp</code> layer as a <code><a href="SOMASparseNDArrayRead.html">SOMASparseNDArrayRead</a></code></p><div class="section">
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">varp</span><span class="op">(</span><span class="va">layer_name</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>layer_name</code></dt>
+<dd><p>The name of the layer to retrieve</p></dd>
+
+
+</dl><p></p></div>
+</div>
+
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-read"></a><div class="section">
 <h3 id="method-read-">Method <code>read()</code><a class="anchor" aria-label="anchor" href="#method-read-"></a></h3>
 <p>Reads the entire query result as a list of
 <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code>s. This is a low-level routine intended to be used by
 loaders for other in-core formats, such as <code>Seurat</code>, which can be created
 from the resulting Tables.</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span></span>
 <span>  X_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  obs_column_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -299,7 +367,7 @@ from the resulting Tables.</p><div class="section">
 </div>
 
 <div class="section">
-<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>X_layers</code></dt>
 <dd><p>The name(s) of the <code>X</code> layer(s) to read and return.</p></dd>
 
@@ -329,7 +397,7 @@ range of values present in “<code>soma_dim_1</code>”; this ensures
 that gaps in this axis are preserved (eg. when a query for
 “<code>obs</code>” that results in selecting entries that are all zero
 for a given PC)</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_sparse_matrix</span><span class="op">(</span></span>
 <span>  <span class="va">collection</span>,</span>
 <span>  <span class="va">layer_name</span>,</span>
@@ -339,7 +407,7 @@ for a given PC)</p><div class="section">
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>collection</code></dt>
 <dd><p>The <code><a href="SOMACollection.html">SOMACollection</a></code> containing the layer of
 interest, either: <code>"X"</code>, <code>"obsm"</code>, <code>"varm"</code>, <code>"obsp"</code>, or <code>"varp"</code>.</p></dd>
@@ -366,7 +434,7 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat"></a><div class="section">
 <h3 id="method-to-seurat-">Method <code>to_seurat()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-"></a></h3>
 <p>Loads the query as a <code><a href="https://rdrr.io/pkg/SeuratObject/man/Seurat-class.html" class="external-link">Seurat</a></code> object</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat</span><span class="op">(</span></span>
 <span>  X_layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="st">"counts"</span>, data <span class="op">=</span> <span class="st">"logcounts"</span><span class="op">)</span>,</span>
 <span>  obs_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -380,7 +448,7 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 </div>
 
 <div class="section">
-<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>X_layers</code></dt>
 <dd><p>A named character of X layers to add to the Seurat assay where the names are the names of Seurat slots and the values are the names of layers within <code>X</code>; names should be one of: </p><ul><li><p>“<code>counts</code>” to add the layer as <code>counts</code></p></li>
 <li><p>“<code>data</code>” to add the layer as <code>data</code></p></li>
@@ -426,7 +494,7 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat_assay"></a><div class="section">
 <h3 id="method-to-seurat-assay-">Method <code>to_seurat_assay()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-assay-"></a></h3>
 <p>Loads the query as a Seurat <code><a href="https://rdrr.io/pkg/SeuratObject/man/Assay-class.html" class="external-link">Assay</a></code></p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat_assay</span><span class="op">(</span></span>
 <span>  X_layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="st">"counts"</span>, data <span class="op">=</span> <span class="st">"logcounts"</span><span class="op">)</span>,</span>
 <span>  obs_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -436,7 +504,7 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 </div>
 
 <div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>X_layers</code></dt>
 <dd><p>A named character of X layers to add to the Seurat assay where the names are the names of Seurat slots and the values are the names of layers within <code>X</code>; names should be one of: </p><ul><li><p>“<code>counts</code>” to add the layer as <code>counts</code></p></li>
 <li><p>“<code>data</code>” to add the layer as <code>data</code></p></li>
@@ -467,7 +535,7 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 <h3 id="method-to-seurat-reduction-">Method <code>to_seurat_reduction()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-reduction-"></a></h3>
 <p>Loads the query as a Seurat
 <a href="https://rdrr.io/pkg/SeuratObject/man/DimReduc-class.html" class="external-link">dimensional reduction</a></p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat_reduction</span><span class="op">(</span></span>
 <span>  <span class="va">obsm_layer</span>,</span>
 <span>  varm_layer <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -477,7 +545,7 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 </div>
 
 <div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>obsm_layer</code></dt>
 <dd><p>Name of array in <code>obsm</code> to load as the
 cell embeddings</p></dd>
@@ -507,12 +575,12 @@ from <code>obsm_layer</code></p></dd>
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat_graph"></a><div class="section">
 <h3 id="method-to-seurat-graph-">Method <code>to_seurat_graph()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-graph-"></a></h3>
 <p>Loads the query as a Seurat <a href="https://rdrr.io/pkg/SeuratObject/man/Graph-class.html" class="external-link">graph</a></p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat_graph</span><span class="op">(</span><span class="va">obsp_layer</span>, obs_index <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
+<h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>obsp_layer</code></dt>
 <dd><p>Name of array in <code>obsp</code> to load as the graph</p></dd>
 
@@ -532,7 +600,7 @@ from <code>obsm_layer</code></p></dd>
 <h3 id="method-to-single-cell-experiment-">Method <code>to_single_cell_experiment()</code><a class="anchor" aria-label="anchor" href="#method-to-single-cell-experiment-"></a></h3>
 <p>Loads the query as a
 <code>SingleCellExperiment</code> object</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_single_cell_experiment</span><span class="op">(</span></span>
 <span>  X_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  obs_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -546,7 +614,7 @@ from <code>obsm_layer</code></p></dd>
 </div>
 
 <div class="section">
-<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
+<h4 id="arguments-14">Arguments<a class="anchor" aria-label="anchor" href="#arguments-14"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>X_layers</code></dt>
 <dd><p>A character vector of X layers to add as assays in the main experiment; may optionally be named to set the name of the resulting assay (eg. <code>X_layers = c(counts = "raw")</code> will load in X layer “<code>raw</code>” as assay “<code>counts</code>”); by default, loads in all X layers</p></dd>
 
@@ -589,12 +657,12 @@ from <code>obsm_layer</code></p></dd>
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
+<h4 id="arguments-15">Arguments<a class="anchor" aria-label="anchor" href="#arguments-15"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
