@@ -505,8 +505,8 @@ ArrowTable ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
 }
 
 bool ArrowAdapter::_isvar(const char* format) {
-    if ((strcmp(format, "U") == 0) | (strcmp(format, "Z") == 0) |
-        (strcmp(format, "u") == 0) | (strcmp(format, "z") == 0)) {
+    if ((strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
+        (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0)) {
         return true;
     }
     return false;

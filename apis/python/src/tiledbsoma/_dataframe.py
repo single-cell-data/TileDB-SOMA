@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import somacore
-import tiledb
 from somacore import options
 from typing_extensions import Self
 
@@ -506,7 +505,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         return self
 
     def _set_reader_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: tiledb.Dim, coord: object
+        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: object
     ) -> bool:
         if coord is None:
             return True  # No constraint; select all in this dimension
@@ -580,7 +579,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self,
         sr: clib.SOMAArray,
         dim_idx: int,
-        dim: tiledb.Dim,
+        dim: pa.Field,
         coord: object,
     ) -> bool:
         if isinstance(coord, np.ndarray):
@@ -703,120 +702,6 @@ def _canonicalize_schema(
             )
 
     return schema
-
-
-def _build_tiledb_schema(
-    schema: pa.Schema,
-    index_column_names: Sequence[str],
-    domain: Optional[Sequence[Optional[Tuple[Any, Any]]]],
-    tiledb_create_options: TileDBCreateOptions,
-    context: SOMATileDBContext,
-) -> tiledb.ArraySchema:
-    """Converts an Arrow schema into a TileDB ArraySchema for creation."""
-
-    if domain is None:
-        domain = tuple(None for _ in index_column_names)
-    else:
-        ndom = len(domain)
-        nidx = len(index_column_names)
-        if ndom != nidx:
-            raise ValueError(
-                f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
-            )
-
-    dims = []
-    for index_column_name, slot_domain in zip(index_column_names, domain):
-        pa_type = schema.field(index_column_name).type
-        dtype = _arrow_types.tiledb_type_from_arrow_type(
-            pa_type, is_indexed_column=True
-        )
-
-        slot_domain = _fill_out_slot_domain(
-            slot_domain, index_column_name, pa_type, dtype
-        )
-
-        extent = _find_extent_for_domain(
-            index_column_name, tiledb_create_options, dtype, slot_domain
-        )
-
-        dim = tiledb.Dim(
-            name=index_column_name,
-            domain=slot_domain,
-            tile=extent,
-            dtype=dtype,
-            filters=tiledb_create_options.dim_filters_tiledb(
-                index_column_name,
-                [
-                    dict(
-                        _type="ZstdFilter",
-                        level=tiledb_create_options.dataframe_dim_zstd_level,
-                    )
-                ],
-            ),
-        )
-        dims.append(dim)
-
-    dom = tiledb.Domain(dims, ctx=context.tiledb_ctx)
-
-    attrs = []
-    enums = []
-    metadata = schema.metadata or {}
-    for pa_attr in schema:
-        attr_name = pa_attr.name
-
-        if attr_name in index_column_names:
-            continue
-
-        has_enum = pa.types.is_dictionary(pa_attr.type)
-
-        if has_enum:
-            enmr_dtype: np.dtype[Any]
-            vtype = pa_attr.type.value_type
-            if pa.types.is_large_string(vtype) or pa.types.is_string(vtype):
-                enmr_dtype = np.dtype("U")
-            elif pa.types.is_large_binary(vtype) or pa.types.is_binary(vtype):
-                enmr_dtype = np.dtype("S")
-            else:
-                enmr_dtype = np.dtype(vtype.to_pandas_dtype())
-            enums.append(
-                tiledb.Enumeration(
-                    name=attr_name,
-                    ordered=pa_attr.type.ordered,
-                    dtype=enmr_dtype,
-                )
-            )
-
-        attr = tiledb.Attr(
-            name=attr_name,
-            dtype=_arrow_types.tiledb_type_from_arrow_type(
-                schema.field(attr_name).type
-            ),
-            nullable=metadata.get(attr_name.encode("utf-8")) == b"nullable",
-            filters=tiledb_create_options.attr_filters_tiledb(
-                attr_name, ["ZstdFilter"]
-            ),
-            enum_label=attr_name if has_enum else None,
-            ctx=context.tiledb_ctx,
-        )
-        attrs.append(attr)
-
-    cell_order, tile_order = tiledb_create_options.cell_tile_orders()
-
-    return tiledb.ArraySchema(
-        domain=dom,
-        attrs=attrs,
-        enums=enums,
-        sparse=True,
-        allows_duplicates=tiledb_create_options.allows_duplicates,
-        offsets_filters=tiledb_create_options.offsets_filters_tiledb(),
-        validity_filters=tiledb_create_options.validity_filters_tiledb(),
-        capacity=tiledb_create_options.capacity,
-        cell_order=cell_order,
-        # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
-        # col-major tile order: so we write ``X`` with row-major tile order.
-        tile_order=tile_order,
-        ctx=context.tiledb_ctx,
-    )
 
 
 def _fill_out_slot_domain(
