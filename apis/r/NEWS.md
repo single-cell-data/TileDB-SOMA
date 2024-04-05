@@ -1,6 +1,7 @@
 # 1.9.4
 
 * This release contains an in-progress blockwise iterator, work on which will be completed in a subsequent release.
+* Reverted nanoarrow use to vendored versions and refactored the use throughout R and adjusted the build steps accordingly.
 
 # 1.9.3
 
