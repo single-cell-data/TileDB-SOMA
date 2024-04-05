@@ -48,13 +48,30 @@ jobs:
           Rscript -e 'remotes::install_deps("0.25.0.tar.gz")'
           R CMD INSTALL 0.25.0.tar.gz    # as 0.25.0 is needed by TileDB-SOMA 1.9
 
-      - name: Install r-universe build of tiledb-r (macOS)
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+      # Uncomment these next two stanzas as needed whenever we've just released a new tiledb-r for
+      # which source is available but CRAN releases (and hence update r2u binaries) are not yet:
+      #
+      # IMPORTANT: these two stanzas should remain uncommented _only_ during the propagation time
+      # between (a) publication of source for a new TileDB-R _upon which_ TileDB-SOMA depends in its
+      # apis/R/DESCRIPTION file and (b) appearance of binaries.
+      #
+      # Please see https://github.com/single-cell-data/TileDB-SOMA/wiki/Branches-and-releases which
+      # is crucial for anyone doing releases of TileDB-SOMA.
+      #
+      # Please edit both files in the same way:
+      # * r-ci.yml
+      # * r-python-interop-testing.yml
+      #
+      # Do not remove these comments until such time as we have eliminated our dependency on
+      # the TileDB-R package.
 
-      - name: Install r-universe build of tiledb-r (linux)
-        if: ${{ matrix.os != 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
+      #- name: Install r-universe build of tiledb-r (macOS)
+      #  if: ${{ matrix.os == 'macOS-latest' }}
+      #  run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+
+      #- name: Install r-universe build of tiledb-r (linux)
+      #  if: ${{ matrix.os != 'macOS-latest' }}
+      #  run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
       - name: Build and install libtiledbsoma
         run: sudo scripts/bld --prefix=/usr/local && sudo ldconfig
