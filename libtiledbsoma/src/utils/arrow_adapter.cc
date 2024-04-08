@@ -298,14 +298,6 @@ std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
     }
 }
 
-bool ArrowAdapter::_isstr(const char* format) {
-    if ((strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
-        (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0)) {
-        return true;
-    }
-    return false;
-}
-
 inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
     if (ec != NANOARROW_OK)
         throw TileDBSOMAError(
@@ -358,6 +350,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     // After allocating and initializing via nanoarrow we
     // hook our custom release function in
     array->release = &release_array;
+    if (array->private_data != nullptr) {  // as we use nanoarrow's init
+        free(array->private_data);         // free what was allocated before
+    }                                      // assigning our ArrowBuffer pointer
     array->private_data = (void*)arrow_buffer;
 
     LOG_TRACE(fmt::format(
@@ -445,10 +440,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         exitIfError(
             ArrowArrayAllocateChildren(dict_arr, 0),
             "Bad array children alloc");
-        const int n_buf = ArrowAdapter::_isstr(dict_sch->format) == true ? 3 :
-                                                                           2;
-        dict_arr->buffers = (const void**)malloc(sizeof(void*) * n_buf);
-        dict_arr->buffers[0] = nullptr;  // validity: none here
+        // hook up our custom release function
         dict_arr->release = &release_array;
 
         // TODO string types currently get the data and offset
