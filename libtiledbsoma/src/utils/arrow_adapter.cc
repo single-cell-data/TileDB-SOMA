@@ -358,6 +358,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     // After allocating and initializing via nanoarrow we
     // hook our custom release function in
     array->release = &release_array;
+    if (array->private_data != nullptr) { // as we use nanoarrow's init
+        free(array->private_data);        // free what was allocated before
+    }                                     // assigning our ArrowBuffer pointer
     array->private_data = (void*)arrow_buffer;
 
     LOG_TRACE(fmt::format(
