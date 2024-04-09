@@ -350,7 +350,7 @@ class ExperimentAmbientLabelMapping:
         """Acquires label-to-ID mappings from the baseline, already-written SOMA experiment."""
 
         if experiment_uri is not None:
-            if not tiledbsoma.Experiment.exists(experiment_uri):
+            if not tiledbsoma.Experiment.exists(experiment_uri, context=context):
                 raise ValueError("cannot find experiment at URI {experiment_uri}")
 
             # Pre-check
