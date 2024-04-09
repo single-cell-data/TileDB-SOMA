@@ -35,7 +35,6 @@ Imports:
     stats,
     bit64,
     tiledb (>= 0.25.0),
-    arrow,
     utils,
     fs,
     glue,
@@ -69,7 +68,8 @@ Suggests:
     S4Vectors,
     jsonlite,
     iterators,
-    itertools
+    itertools,
+    arrow
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix

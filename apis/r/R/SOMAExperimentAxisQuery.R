@@ -3,6 +3,8 @@
 #'
 NULL
 
+# ' @ importFrom arrow concat_arrays
+
 #' `SOMAExperiment` Axis Query
 #' @description Perform an axis-based query against a [`SOMAExperiment`].
 #'
@@ -23,7 +25,6 @@ NULL
 #' to the underlying X NDArray. Accessors such as `n_obs` and `n_vars` codify
 #' this in the class.
 #'
-#' @importFrom arrow concat_arrays
 #' @export
 SOMAExperimentAxisQuery <- R6::R6Class(
   classname = "SOMAExperimentAxisQuery",

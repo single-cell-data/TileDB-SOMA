@@ -142,9 +142,10 @@ SOMA_ENCODING_VERSION_METADATA_KEY <- "soma_encoding_version"
 SOMA_ENCODING_VERSION <- "1"
 
 #' @importFrom Matrix as.matrix
-#' @importFrom arrow RecordBatch
 #' @import R6 methods utils
 ##' @importFrom Rcpp evalCpp
 ##' @importFrom spdl setup
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL
+
+# '  @ importFrom arrow RecordBatch
