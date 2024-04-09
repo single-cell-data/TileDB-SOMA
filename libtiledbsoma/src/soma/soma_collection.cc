@@ -52,7 +52,7 @@ std::unique_ptr<SOMACollection> SOMACollection::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    std::optional<TimestampRange> timestamp) {
     return std::make_unique<SOMACollection>(mode, uri, ctx, timestamp);
 }
 

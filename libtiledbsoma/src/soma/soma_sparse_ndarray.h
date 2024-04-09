@@ -61,7 +61,7 @@ class SOMASparseNDArray : public SOMAArray {
         std::string_view uri,
         ArraySchema schema,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open and return a SOMASparseNDArray object at the given URI.
@@ -85,7 +85,7 @@ class SOMASparseNDArray : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names = {},
         ResultOrder result_order = ResultOrder::automatic,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Check if the SOMASparseNDArray exists at the URI.
@@ -114,7 +114,7 @@ class SOMASparseNDArray : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names,
         ResultOrder result_order,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp)
+        std::optional<TimestampRange> timestamp)
         : SOMAArray(
               mode,
               uri,

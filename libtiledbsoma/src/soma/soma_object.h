@@ -56,7 +56,7 @@ class SOMAObject {
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt,
+        std::optional<TimestampRange> timestamp = std::nullopt,
         std::optional<std::string> soma_type = std::nullopt);
 
     /**

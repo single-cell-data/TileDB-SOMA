@@ -43,7 +43,7 @@ void SOMASparseNDArray::create(
     std::string_view uri,
     ArraySchema schema,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    std::optional<TimestampRange> timestamp) {
     SOMAArray::create(ctx, uri, schema, "SOMASparseNDArray", timestamp);
 }
 
@@ -53,7 +53,7 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::shared_ptr<SOMAContext> ctx,
     std::vector<std::string> column_names,
     ResultOrder result_order,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    std::optional<TimestampRange> timestamp) {
     return std::make_unique<SOMASparseNDArray>(
         mode, uri, ctx, column_names, result_order, timestamp);
 }

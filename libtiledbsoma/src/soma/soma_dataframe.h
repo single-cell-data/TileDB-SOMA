@@ -62,7 +62,7 @@ class SOMADataFrame : public SOMAArray {
         ColumnIndexInfo index_columns,
         std::shared_ptr<SOMAContext> ctx,
         std::optional<PlatformConfig> platform_config = std::nullopt,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.
@@ -86,7 +86,7 @@ class SOMADataFrame : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names = {},
         ResultOrder result_order = ResultOrder::automatic,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Check if the SOMADataFrame exists at the URI.
@@ -116,7 +116,7 @@ class SOMADataFrame : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names,
         ResultOrder result_order,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt)
+        std::optional<TimestampRange> timestamp = std::nullopt)
         : SOMAArray(
               mode,
               uri,

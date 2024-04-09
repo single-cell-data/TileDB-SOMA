@@ -79,7 +79,7 @@ std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    std::optional<TimestampRange> timestamp) {
     return std::make_unique<SOMAMeasurement>(mode, uri, ctx, timestamp);
 }
 }  // namespace tiledbsoma

@@ -76,7 +76,7 @@ class SOMAExperiment : public SOMACollection {
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -86,7 +86,7 @@ class SOMAExperiment : public SOMACollection {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt)
+        std::optional<TimestampRange> timestamp = std::nullopt)
         : SOMACollection(mode, uri, ctx, timestamp) {
     }
 
