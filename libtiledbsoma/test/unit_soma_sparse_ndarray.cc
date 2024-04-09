@@ -80,27 +80,33 @@ TEST_CASE("SOMASparseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-sparse-ndarray-basic";
 
-    auto soma_sparse = SOMASparseNDArray::create(
-        uri, create_schema(*ctx->tiledb_ctx()), ctx);
+    SOMASparseNDArray::create(
+        uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
+
+    auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
+    REQUIRE(soma_sparse->uri() == uri);
+    REQUIRE(soma_sparse->ctx() == ctx);
+    REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
+    REQUIRE(soma_sparse->is_sparse() == true);
+    auto schema = soma_sparse->tiledb_schema();
+    REQUIRE(schema->has_attribute("a0"));
+    REQUIRE(schema->domain().has_dimension("d0"));
+    REQUIRE(soma_sparse->ndim() == 1);
+    REQUIRE(soma_sparse->nnz() == 0);
+    soma_sparse->close();
 
     std::vector<int64_t> d0(10);
     for (int j = 0; j < 10; j++)
         d0[j] = j;
     std::vector<int> a0(10, 1);
 
-    auto array_buffer = std::make_shared<ArrayBuffers>();
-    auto tdb_arr = std::make_shared<Array>(
-        *ctx->tiledb_ctx(), uri, TILEDB_READ);
-    array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
-    array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
-
-    soma_sparse->write(array_buffer);
+    soma_sparse->open(OpenMode::write);
+    soma_sparse->set_column_data("a0", a0.size(), a0.data());
+    soma_sparse->set_column_data("d0", d0.size(), d0.data());
+    soma_sparse->write();
     soma_sparse->close();
 
     soma_sparse->open(OpenMode::read);
-    REQUIRE(soma_sparse->uri() == uri);
-    REQUIRE(soma_sparse->ctx() == ctx);
-    REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
     while (auto batch = soma_sparse->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();

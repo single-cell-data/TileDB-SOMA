@@ -58,8 +58,8 @@ const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 
 namespace {
 ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
-    // SOMADenseNDArray is actually a TILEDB_SPARSE under the hood
-    ArraySchema schema(ctx, TILEDB_SPARSE);
+    // Create schema
+    ArraySchema schema(ctx, TILEDB_DENSE);
 
     auto dim = Dimension::create<int64_t>(ctx, "d0", {0, 1000});
 
@@ -80,32 +80,37 @@ TEST_CASE("SOMADenseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-dense-ndarray-basic";
 
-    auto soma_dense = SOMADenseNDArray::create(
-        uri, create_schema(*ctx->tiledb_ctx()), ctx);
+    SOMADenseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx);
 
-    std::vector<int64_t> d0(10);
-    for (int j = 0; j < 10; j++)
-        d0[j] = j;
-    std::vector<int> a0(10, 1);
-
-    auto array_buffer = std::make_shared<ArrayBuffers>();
-    auto tdb_arr = std::make_shared<Array>(
-        *ctx->tiledb_ctx(), uri, TILEDB_READ);
-    array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
-    array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
-
-    soma_dense->write(array_buffer);
-    soma_dense->close();
-
-    soma_dense->open(OpenMode::read);
+    auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_dense->uri() == uri);
     REQUIRE(soma_dense->ctx() == ctx);
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
+    REQUIRE(soma_dense->is_sparse() == false);
+    auto schema = soma_dense->tiledb_schema();
+    REQUIRE(schema->has_attribute("a0"));
+    REQUIRE(schema->domain().has_dimension("d0"));
+    REQUIRE(soma_dense->ndim() == 1);
+    REQUIRE(soma_dense->shape() == std::vector<int64_t>{1001});
+    soma_dense->close();
+
+    std::vector<int64_t> d0{1, 10};
+    std::vector<int> a0(10, 1);
+
+    soma_dense->open(OpenMode::write);
+    soma_dense->set_column_data("a0", a0.size(), a0.data());
+    soma_dense->set_column_data("d0", d0.size(), d0.data());
+    soma_dense->write();
+    soma_dense->close();
+
+    soma_dense->open(OpenMode::read);
     while (auto batch = soma_dense->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
         auto a0span = arrbuf->at("a0")->data<int>();
-        REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
+        REQUIRE(
+            std::vector<int64_t>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10} ==
+            std::vector<int64_t>(d0span.begin(), d0span.end()));
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
     soma_dense->close();

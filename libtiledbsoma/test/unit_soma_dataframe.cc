@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,77 +30,37 @@
  * This file manages unit tests for the SOMADataFrame class
  */
 
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/matchers/catch_matchers_exception.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <catch2/matchers/catch_matchers_predicate.hpp>
-#include <catch2/matchers/catch_matchers_string.hpp>
-#include <catch2/matchers/catch_matchers_templated.hpp>
-#include <catch2/matchers/catch_matchers_vector.hpp>
-#include <numeric>
-#include <random>
-
-#include <tiledb/tiledb>
-#include <tiledbsoma/tiledbsoma>
-#include "utils/util.h"
-
-using namespace tiledb;
-using namespace tiledbsoma;
-using namespace Catch::Matchers;
-
-#ifndef TILEDBSOMA_SOURCE_ROOT
-#define TILEDBSOMA_SOURCE_ROOT "not_defined"
-#endif
-
-const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
-
-namespace {
-ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
-    // Create schema
-    ArraySchema schema(ctx, TILEDB_SPARSE);
-
-    auto dim = Dimension::create<int64_t>(ctx, "d0", {0, 1000});
-
-    Domain domain(ctx);
-    domain.add_dimension(dim);
-    schema.set_domain(domain);
-
-    auto attr = Attribute::create<int>(ctx, "a0");
-    schema.add_attribute(attr);
-    schema.set_allows_dups(allow_duplicates);
-    schema.check();
-
-    return schema;
-}
-};  // namespace
+#include "common.h"
 
 TEST_CASE("SOMADataFrame: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-dataframe-basic";
 
-    auto soma_dataframe = SOMADataFrame::create(
-        uri, create_schema(*ctx->tiledb_ctx()), ctx);
+    auto [schema, index_columns] = helper::create_arrow_schema();
+    SOMADataFrame::create(uri, schema, index_columns, ctx);
+
+    auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
+    REQUIRE(soma_dataframe->uri() == uri);
+    REQUIRE(soma_dataframe->ctx() == ctx);
+    REQUIRE(soma_dataframe->type() == "SOMADataFrame");
+    std::vector<std::string> expected_index_column_names = {"d0"};
+    REQUIRE(
+        soma_dataframe->index_column_names() == expected_index_column_names);
+    REQUIRE(soma_dataframe->count() == 0);
+    soma_dataframe->close();
 
     std::vector<int64_t> d0(10);
     for (int j = 0; j < 10; j++)
         d0[j] = j;
     std::vector<int> a0(10, 1);
 
-    auto array_buffer = std::make_shared<ArrayBuffers>();
-    auto tdb_arr = std::make_shared<Array>(
-        *ctx->tiledb_ctx(), uri, TILEDB_READ);
-    array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
-    array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
-
-    soma_dataframe->write(array_buffer);
+    soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
+    soma_dataframe->set_column_data("a0", a0.size(), a0.data());
+    soma_dataframe->set_column_data("d0", d0.size(), d0.data());
+    soma_dataframe->write();
     soma_dataframe->close();
 
-    soma_dataframe->open(OpenMode::read);
-    REQUIRE(soma_dataframe->uri() == uri);
-    REQUIRE(soma_dataframe->ctx() == ctx);
-    REQUIRE(soma_dataframe->type() == "SOMADataFrame");
+    soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
     while (auto batch = soma_dataframe->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at("d0")->data<int64_t>();
@@ -119,8 +79,9 @@ TEST_CASE("SOMADataFrame: basic") {
 TEST_CASE("SOMADataFrame: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-collection";
+    auto [schema, index_columns] = helper::create_arrow_schema();
     SOMADataFrame::create(
-        uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
+        uri, schema, index_columns, ctx, std::nullopt, TimestampRange(0, 2));
 
     auto soma_dataframe = SOMADataFrame::open(
         uri,
