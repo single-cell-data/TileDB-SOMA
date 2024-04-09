@@ -62,7 +62,9 @@ class SOMACollection : public SOMAGroup {
      * @param uri URI to create the SOMACollection
      */
     static std::unique_ptr<SOMACollection> create(
-        std::string_view uri, std::shared_ptr<SOMAContext> ctx);
+        std::string_view uri,
+        std::shared_ptr<SOMAContext> ctx,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open a group at the specified URI and return SOMACollection
@@ -78,7 +80,7 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -97,7 +99,7 @@ class SOMACollection : public SOMAGroup {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp)
+        std::optional<TimestampRange> timestamp)
         : SOMAGroup(
               mode,
               uri,

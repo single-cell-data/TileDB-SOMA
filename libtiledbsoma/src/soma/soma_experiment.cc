@@ -44,18 +44,23 @@ using namespace tiledb;
 std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
     std::string_view uri,
     ArraySchema schema,
-    std::shared_ptr<SOMAContext> ctx) {
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<TimestampRange> timestamp) {
     std::string exp_uri(uri);
 
-    SOMAGroup::create(ctx, exp_uri, "SOMAExperiment");
-    SOMADataFrame::create(exp_uri + "/obs", schema, ctx);
-    SOMACollection::create(exp_uri + "/ms", ctx);
+    auto soma_group = SOMAGroup::create(ctx, uri, "SOMAExperiment", timestamp);
+    SOMADataFrame::create(exp_uri + "/obs", schema, ctx, timestamp);
+    SOMACollection::create(exp_uri + "/ms", ctx, timestamp);
+    soma_group->set(exp_uri + "/obs", URIType::absolute, "obs");
+    soma_group->set(exp_uri + "/ms", URIType::absolute, "ms");
+    return std::make_unique<SOMAExperiment>(*soma_group);
+}
 
-    auto group = SOMAGroup::open(OpenMode::write, exp_uri, ctx);
-    group->set(exp_uri + "/obs", URIType::absolute, "obs");
-    group->set(exp_uri + "/ms", URIType::absolute, "ms");
-    group->close();
-
-    return std::make_unique<SOMAExperiment>(OpenMode::read, exp_uri, ctx);
+std::unique_ptr<SOMAExperiment> SOMAExperiment::open(
+    std::string_view uri,
+    OpenMode mode,
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<TimestampRange> timestamp) {
+    return std::make_unique<SOMAExperiment>(mode, uri, ctx, timestamp);
 }
 }  // namespace tiledbsoma

@@ -35,6 +35,7 @@
 #ifndef SOMA_OBJECT
 #define SOMA_OBJECT
 
+#include <filesystem>
 #include <map>
 #include <string>
 #include <tiledb/tiledb>

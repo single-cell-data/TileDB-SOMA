@@ -57,7 +57,24 @@ class SOMAExperiment : public SOMACollection {
     static std::unique_ptr<SOMAExperiment> create(
         std::string_view uri,
         ArraySchema schema,
-        std::shared_ptr<SOMAContext> ctx);
+        std::shared_ptr<SOMAContext> ctx,
+        std::optional<TimestampRange> timestamp = std::nullopt);
+
+    /**
+     * @brief Open a group at the specified URI and return SOMAExperiment
+     * object.
+     *
+     * @param uri URI of the array
+     * @param mode read or write
+     * @param ctx TileDB context
+     * @param timestamp Optional pair indicating timestamp start and end
+     * @return std::shared_ptr<SOMAExperiment> SOMAExperiment
+     */
+    static std::unique_ptr<SOMAExperiment> open(
+        std::string_view uri,
+        OpenMode mode,
+        std::shared_ptr<SOMAContext> ctx,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -67,7 +84,7 @@ class SOMAExperiment : public SOMACollection {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt)
+        std::optional<TimestampRange> timestamp = std::nullopt)
         : SOMACollection(mode, uri, ctx, timestamp) {
     }
 
@@ -79,6 +96,8 @@ class SOMAExperiment : public SOMACollection {
     SOMAExperiment(const SOMAExperiment&) = default;
     SOMAExperiment(SOMAExperiment&&) = default;
     ~SOMAExperiment() = default;
+
+    using SOMACollection::open;
 
    private:
     //===================================================================
