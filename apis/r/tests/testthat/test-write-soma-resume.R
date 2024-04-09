@@ -195,7 +195,36 @@ test_that("Resume-mode dense arrays", {
   skip_if(!extended_tests())
   skip_if_not_installed('datasets')
 
+  collection <- SOMACollectionCreate(withr::local_tempdir("dense-array-resume"))
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
   mat <- get(x = 'state.x77', envir = getNamespace('datasets'))
+
+  # Resume mode should always fail for dense arrays
+  expect_s3_class(
+    sda <- write_soma(
+      mat,
+      uri = "state-x77",
+      soma_parent = collection,
+      sparse = FALSE
+    ),
+    "SOMADenseNDArray"
+  )
+  on.exit(sda$close(), add = TRUE, after = FALSE)
+
+  expect_error(write_soma(
+    mat,
+    uri = "state-x77",
+    soma_parent = collection,
+    sparse = FALSE
+  ))
+  expect_error(write_soma(
+    mat,
+    uri = "state-x77",
+    soma_parent = collection,
+    sparse = FALSE,
+    ingest_mode = "resume"
+  ))
 })
 
 test_that("Resume-mode Seurat", {
