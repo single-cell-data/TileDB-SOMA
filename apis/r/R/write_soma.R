@@ -68,6 +68,7 @@ write_soma.character <- function(
   soma_parent,
   ...,
   key = NULL,
+  ingest_mode = 'write',
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -79,6 +80,7 @@ write_soma.character <- function(
     df_index = 'values',
     ...,
     key = key,
+    ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx,
     relative = relative
@@ -131,6 +133,7 @@ write_soma.data.frame <- function(
   index_column_names = 'soma_joinid',
   ...,
   key = NULL,
+  ingest_mode = 'write',
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -144,6 +147,7 @@ write_soma.data.frame <- function(
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key))
   )
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
   # Create a proper URI
   uri <- .check_soma_uri(
     uri = uri,
@@ -183,6 +187,7 @@ write_soma.data.frame <- function(
   df_index <- df_index %||% attr(x = x, which = 'index')
   if (is.null(df_index)) {
     x <- .df_index(x = x, ...)
+    # x <- .df_index(x = x)
     df_index <- attr(x = x, which = 'index')
   }
   if (!df_index %in% names(x)) {
@@ -214,22 +219,44 @@ write_soma.data.frame <- function(
     uri = uri,
     schema = tbl$schema,
     index_column_names = index_column_names,
+    ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   # Write values
+  if (ingest_mode %in% c('resume')) {
+    join_ids <- .read_soma_joinids(sdf)
+    idx <- which(!x$soma_joinid %in% join_ids)
+    if (!length(idx)) {
+      return(sdf)
+    }
+    tbl <- tbl[idx, ]
+  }
   sdf$write(tbl)
   # Add to `soma_parent`
   if (is.character(key)) {
-    soma_parent$set(
-      sdf,
-      name = key,
-      relative = ifelse(
-        startsWith(x = sdf$uri, 'tiledb://'),
-        yes = FALSE,
-        no = relative
+    if (key %in% soma_parent$names()) {
+      if (sdf$uri != soma_parent$get(key)$uri) {
+        stop(
+          "Already found a ",
+          soma_parent$get(key)$class(),
+          " stored as ",
+          sQuote(key),
+          " in the parent collection",
+          call. = FALSE
+        )
+      }
+    } else {
+      soma_parent$set(
+        sdf,
+        name = key,
+        relative = ifelse(
+          startsWith(x = sdf$uri, 'tiledb://'),
+          yes = FALSE,
+          no = relative
+        )
       )
-    )
+    }
   }
   # Return
   return(sdf)
@@ -262,6 +289,7 @@ write_soma.matrix <- function(
   transpose = FALSE,
   ...,
   key = NULL,
+  ingest_mode = 'write',
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -273,6 +301,7 @@ write_soma.matrix <- function(
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key))
   )
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
   if (!isTRUE(sparse) && inherits(x = x, what = 'sparseMatrix')) {
     stop(
       "A sparse matrix was provided and a dense array was asked for",
@@ -289,10 +318,19 @@ write_soma.matrix <- function(
       transpose = transpose,
       ...,
       key = key,
+      ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
       relative = relative
     ))
+  }
+  if (ingest_mode != "write") {
+    stop(
+      "Ingestion mode of ",
+      sQuote(ingest_mode, q = FALSE),
+      " is not supported with dense arrays",
+      call. = FALSE
+    )
   }
   # Create a dense array
   if (inherits(x = x, what = 'Matrix')) {
@@ -364,6 +402,7 @@ write_soma.TsparseMatrix <- function(
   transpose = FALSE,
   ...,
   key = NULL,
+  ingest_mode = 'write',
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -377,6 +416,7 @@ write_soma.TsparseMatrix <- function(
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key))
   )
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
   # Create a proper URI
   uri <- .check_soma_uri(
     uri = uri,
@@ -395,10 +435,14 @@ write_soma.TsparseMatrix <- function(
     uri = uri,
     type = type %||% arrow::infer_type(methods::slot(object = x, name = 'x')),
     shape = dim(x),
+    ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   # Write values
+  if (ingest_mode %in% c('resume')) {
+    # join_ids <- .read_soma_joinids(sdf)
+  }
   array$write(x)
   # Add to `soma_parent`
   if (is.character(key)) {
@@ -487,7 +531,7 @@ write_soma.TsparseMatrix <- function(
     }
     uri <- file_path(soma_parent$uri %||% R_user_dir('tiledbsoma'), uri)
   } else if (!is_remote_uri(uri)) {
-    dir.create(dirname(uri), recursive = TRUE)
+    dir.create(dirname(uri), showWarnings = FALSE, recursive = TRUE)
   }
   return(uri)
 }

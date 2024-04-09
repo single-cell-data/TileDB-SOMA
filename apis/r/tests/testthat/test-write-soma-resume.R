@@ -77,7 +77,112 @@ test_that("Resume-mode data frames", {
   skip_if(!extended_tests())
   skip_if_not_installed('datasets')
 
+  collection <- SOMACollectionCreate(withr::local_tempdir("dataframe-resume"))
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
   co2 <- get_data('CO2', package = 'datasets')
+
+  # Test resume-mode when writing data.frames
+  uri <- "co2-complete"
+  expect_s3_class(
+    sdf <- write_soma(co2, uri = uri, soma_parent = collection),
+    "SOMADataFrame"
+  )
+  on.exit(sdf$close(), add = TRUE, after = FALSE)
+
+  sdf$reopen("READ")
+  df <- as.data.frame(sdf$read()$concat())
+  for (i in names(co2)) {
+    expect_identical(
+      df[[i]],
+      co2[[i]],
+      label = sprintf("df[['%s']]", i),
+      expected.label = sprintf("co2[['%s']]", i)
+    )
+  }
+
+  # Expect error when writing to existing array
+  expect_error(write_soma(co2, uri = uri, soma_parent = collection))
+
+  # Expect seamless pass when resuming writing to exisitng array
+  expect_s3_class(
+    sdfr <- write_soma(
+      co2,
+      uri = uri,
+      soma_parent = collection,
+      ingest_mode = "resume"
+    ),
+    "SOMADataFrame"
+  )
+  on.exit(sdfr$close(), add = TRUE, after = FALSE)
+  expect_identical(sdf$uri, sdfr$uri)
+
+  sdfr$reopen("READ")
+  dfr <- as.data.frame(sdfr$read()$concat())
+  for (i in names(co2)) {
+    for (i in names(co2)) {
+      expect_identical(
+        dfr[[i]],
+        co2[[i]],
+        label = sprintf("dfr[['%s']]", i),
+        expected.label = sprintf("co2[['%s']]", i)
+      )
+    }
+  }
+
+  # Test resume-mode with partial writes
+  idx <- seq.int(1L, floor(nrow(co2) / 3))
+  co2p <- co2[idx, , drop = FALSE]
+  uri <- "co2-parital"
+  expect_s3_class(
+    sdfp <- write_soma(co2p, uri = uri, soma_parent = collection),
+    "SOMADataFrame"
+  )
+  on.exit(sdfp$close(), add = TRUE, after = FALSE)
+
+  sdfp$reopen("READ")
+  dfp <- as.data.frame(sdfp$read()$concat())
+  for (i in names(co2)) {
+    for (i in names(co2)) {
+      expect_identical(
+        dfp[[i]],
+        co2[[i]][idx],
+        label = sprintf("dfp[['%s']]", i),
+        expected.label = sprintf("co2[['%s']]", i)
+      )
+      expect_false(
+        identical(dfp[[i]], co2[[i]]),
+        info = "partial write is not identical to original data",
+        label = sprintf("dfp[['%s']] != co2[['%s']]", i, i)
+      )
+    }
+  }
+
+  expect_s3_class(
+    sdfc <- write_soma(
+      co2,
+      uri = uri,
+      soma_parent = collection,
+      ingest_mode = "resume"
+    ),
+    "SOMADataFrame"
+  )
+  on.exit(sdfc$close())
+  expect_identical(sdfc$uri, sdfp$uri)
+
+  sdfc$reopen("READ")
+  dfc <- as.data.frame(sdfc$read()$concat())
+  for (i in names(co2)) {
+    for (i in names(co2)) {
+      expect_identical(
+        dfc[[i]],
+        co2[[i]],
+        label = sprintf("dfc[['%s']]", i),
+        expected.label = sprintf("co2[['%s']]", i)
+      )
+    }
+  }
+
 })
 
 test_that("Resume-mode sparse arrays", {

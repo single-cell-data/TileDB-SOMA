@@ -42,6 +42,7 @@
   soma_parent,
   ...,
   key = NULL,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -55,6 +56,7 @@
   index_column_names = "soma_joinid",
   ...,
   key = NULL,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -69,6 +71,7 @@
   transpose = FALSE,
   ...,
   key = NULL,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -83,6 +86,7 @@
   transpose = FALSE,
   ...,
   key = NULL,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -96,6 +100,7 @@
   transpose = FALSE,
   ...,
   key = NULL,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
