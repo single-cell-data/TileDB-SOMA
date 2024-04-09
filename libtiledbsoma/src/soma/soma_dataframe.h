@@ -145,9 +145,9 @@ class SOMADataFrame : public SOMAArray {
     /**
      * Return the data schema, in the form of a ArrowSchema.
      *
-     * @return std::unique_ptr<ArrowSchema>
+     * @return std::shared_ptr<ArrowSchema>
      */
-    std::unique_ptr<ArrowSchema> schema() const;
+    std::shared_ptr<ArrowSchema> schema() const;
 
     /**
      * Return the index (dimension) column names.

@@ -38,7 +38,9 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
+#include "../utils/arrow_adapter.h"
 #include "../utils/common.h"
+#include "soma_context.h"
 #include "span/span.hpp"
 
 namespace tiledbsoma {
@@ -68,28 +70,6 @@ class ColumnBuffer {
      */
     static std::shared_ptr<ColumnBuffer> create(
         std::shared_ptr<Array> array, std::string_view name);
-
-    /**
-     * @brief Create a ColumnBuffer from a schema, column name, and data.
-     *
-     * @param array TileDB array
-     * @param name TileDB dimension or attribute name
-     * @param data Data to set in buffer
-     * @return ColumnBuffer
-     */
-    template <typename T>
-    static std::shared_ptr<ColumnBuffer> create(
-        std::shared_ptr<Array> array,
-        std::string_view name,
-        std::vector<T> data) {
-        auto column_buff = ColumnBuffer::create(array, name);
-        column_buff->num_cells_ = data.size();
-        column_buff->data_.resize(data.size());
-        column_buff->data_.assign(
-            reinterpret_cast<std::byte*>(data.data()),
-            reinterpret_cast<std::byte*>(data.data() + data.size()));
-        return column_buff;
-    }
 
     /**
      * @brief Convert a bytemap to a bitmap in place.
@@ -137,6 +117,45 @@ class ColumnBuffer {
     void attach(Query& query);
 
     /**
+     * @brief Set the ColumnBuffer's data.
+     *
+     * @param data pointer to the beginning of the data to write
+     * @param num_elems the number of elements in the column
+     */
+    void set_data(
+        uint64_t num_elems,
+        const void* data,
+        uint64_t* offsets = nullptr,
+        uint8_t* validity = nullptr) {
+        num_cells_ = num_elems;
+
+        if (offsets != nullptr) {
+            auto num_offsets = num_elems + 1;
+            offsets_.resize(num_offsets);
+            offsets_.assign(
+                (uint64_t*)offsets, (uint64_t*)offsets + num_offsets);
+
+            data_size_ = offsets_[num_offsets - 1];
+            data_.resize(data_size_);
+            data_.assign((std::byte*)data, (std::byte*)data + data_size_);
+        } else {
+            data_size_ = num_elems;
+            data_.resize(num_elems);
+            data_.assign(
+                (std::byte*)data, (std::byte*)data + num_elems * type_size_);
+        }
+
+        if (is_nullable_) {
+            if (validity != nullptr) {
+                validity_.assign(validity, validity + num_elems);
+            } else {
+                validity_.resize(num_elems);
+                std::fill(validity_.begin(), validity_.end(), 1);
+            }
+        }
+    }
+
+    /**
      * @brief Size num_cells_ to match the read query results.
      *
      * @param query TileDB query
@@ -150,6 +169,15 @@ class ColumnBuffer {
      */
     size_t size() const {
         return num_cells_;
+    }
+
+    /**
+     * @brief Return size of the data buffer.
+     *
+     * @return uint64_t
+     */
+    uint64_t data_size() {
+        return data_size_;
     }
 
     /**
@@ -342,7 +370,7 @@ class ColumnBuffer {
     /**
      * @brief Allocate and return a ColumnBuffer.
      *
-     * @param array TileDB array
+     * @param config TileDB Config
      * @param name Column name
      * @param type TileDB datatype
      * @param is_var True if variable length data
@@ -352,7 +380,7 @@ class ColumnBuffer {
      * @return ColumnBuffer
      */
     static std::shared_ptr<ColumnBuffer> alloc(
-        ArraySchema schema,
+        Config config,
         std::string_view name,
         tiledb_datatype_t type,
         bool is_var,
@@ -369,6 +397,9 @@ class ColumnBuffer {
 
     // Data type of the column from the schema.
     tiledb_datatype_t type_;
+
+    // Data size which is calculated different for var vs non-var
+    uint64_t data_size_;
 
     // Bytes per element.
     uint64_t type_size_;

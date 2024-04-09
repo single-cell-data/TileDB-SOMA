@@ -60,9 +60,8 @@ class SOMAArray : public SOMAObject {
      * @param ctx SOMAContext
      * @param uri URI to create the SOMAArray
      * @param schema TileDB ArraySchema
-     * @param soma_type SOMADataFrame, SOMADenseNDArray, or SOMASparseNDArray
-     * @param timestamp Optional pair indicating timestamp start and end
-     * @return std::unique_ptr<SOMAArray>
+     * @param soma_type SOMADataFrame, SOMADenseNDArray, or
+     * SOMASparseNDArray
      */
     static std::unique_ptr<SOMAArray> create(
         std::shared_ptr<SOMAContext> ctx,
@@ -84,7 +83,7 @@ class SOMAArray : public SOMAObject {
      * @param result_order Read result order: automatic (default), rowmajor,
      * or colmajor
      * @param timestamp Optional pair indicating timestamp start and end
-     * @return std::unique_ptr<SOMAArray>
+     * @return std::unique_ptr<SOMAArray> SOMAArray
      */
     static std::unique_ptr<SOMAArray> open(
         OpenMode mode,
@@ -175,13 +174,15 @@ class SOMAArray : public SOMAObject {
         , batch_size_(other.batch_size_)
         , result_order_(other.result_order_)
         , metadata_(other.metadata_)
-        , meta_cache_arr_(other.meta_cache_arr_)
         , timestamp_(other.timestamp_)
         , mq_(std::make_unique<ManagedQuery>(
               other.arr_, other.ctx_->tiledb_ctx(), other.name_))
         , arr_(other.arr_)
+        , meta_cache_arr_(other.meta_cache_arr_)
         , first_read_next_(other.first_read_next_)
-        , submitted_(other.submitted_) {
+        , submitted_(other.submitted_)
+        , array_buffer_(other.array_buffer_) {
+        fill_metadata_cache();
     }
 
     SOMAArray(
@@ -410,18 +411,24 @@ class SOMAArray : public SOMAObject {
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
-    /**
-     * @brief Set the write data for a column.
-     *
-     * @param column_name Column name
-     * @param buff Buffer array pointer with elements of the column type.
-     * @param nelements Number of array elements in buffer
-     */
+    Enumeration extend_enumeration(
+        std::string_view name,
+        uint64_t num_elems,
+        const void* data,
+        uint64_t* offsets);
+
     void set_column_data(
-        std::string_view column_name,
-        std::shared_ptr<ColumnBuffer> column_buffer) {
-        mq_->set_column_data(std::string(column_name), column_buffer);
-    }
+        std::string_view name,
+        uint64_t num_elems,
+        const void* data,
+        uint64_t* offsets = nullptr,
+        uint8_t* validity = nullptr);
+
+    void set_array_data(
+        std::unique_ptr<ArrowSchema> arrow_schema,
+        std::unique_ptr<ArrowArray> arrow_array);
+
+    void clear_column_data();
 
     /**
      * @brief Write ArrayBuffers data to the array.
@@ -445,7 +452,7 @@ class SOMAArray : public SOMAObject {
      *
      * @param buffers The ArrayBuffers to write to the array
      */
-    void write(std::shared_ptr<ArrayBuffers> buffers);
+    void write();
 
     /**
      * @brief Check if the query is complete.
@@ -515,9 +522,9 @@ class SOMAArray : public SOMAObject {
     /**
      * @brief Get the Arrow schema of the array.
      *
-     * @return std::unique_ptr<ArrowSchema> Schema
+     * @return std::shared_ptr<std::unique_ptr<ArrowSchema>> Schema
      */
-    std::unique_ptr<ArrowSchema> arrow_schema() const {
+    std::shared_ptr<ArrowSchema> arrow_schema() const {
         return ArrowAdapter::arrow_schema_from_tiledb_array(
             ctx_->tiledb_ctx(), arr_);
     }
@@ -543,7 +550,11 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     std::pair<T, T> non_empty_domain(const std::string& name) {
-        return arr_->non_empty_domain<T>(name);
+        try {
+            return arr_->non_empty_domain<T>(name);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
     }
 
     /**
@@ -553,7 +564,11 @@ class SOMAArray : public SOMAObject {
      */
     std::pair<std::string, std::string> non_empty_domain_var(
         const std::string& name) {
-        return arr_->non_empty_domain_var(name);
+        try {
+            return arr_->non_empty_domain_var(name);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
     }
 
     /**
@@ -701,9 +716,36 @@ class SOMAArray : public SOMAObject {
     //= private non-static
     //===================================================================
 
-    /**
-     * Fills the metadata cache upon opening the array.
-     */
+    template <typename T>
+    Enumeration _extend_value_helper(
+        T* data, uint64_t num_elems, Enumeration enmr, uint64_t max_capacity) {
+        std::vector<T> enums_in_write((T*)data, (T*)data + num_elems);
+        auto enums_existing = enmr.as_vector<T>();
+        std::vector<T> extend_values;
+        for (auto enum_val : enums_in_write) {
+            if (std::find(
+                    enums_existing.begin(), enums_existing.end(), enum_val) ==
+                enums_existing.end()) {
+                extend_values.push_back(enum_val);
+            }
+        }
+
+        if (extend_values.size() != 0) {
+            auto free_capacity = max_capacity - enums_existing.size();
+            if (free_capacity < extend_values.size()) {
+                throw TileDBSOMAError(
+                    "Cannot extend enumeration; reached maximum capacity");
+            }
+            ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+            se.extend_enumeration(enmr.extend(extend_values));
+            se.array_evolve(uri_);
+            return enmr.extend(extend_values);
+        }
+
+        return enmr;
+    }
+
+    // Fills the metadata cache upon opening the array.
     void fill_metadata_cache();
 
     // SOMAArray URI
@@ -721,17 +763,8 @@ class SOMAArray : public SOMAObject {
     // Result order
     ResultOrder result_order_;
 
-    // Metadata values need to be accessible in write mode as well. When adding
-    // or deleting values in the array, instead of closing to update to
-    // metadata; then reopening to read the array; and again reopening to
-    // restore the array back to write mode, we just store the modifications to
-    // this cache
+    // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
-
-    // Array associated with metadata_. We need to keep this read-mode array
-    // alive in order for the metadata value pointers in the cache to be
-    // accessible
-    std::shared_ptr<Array> meta_cache_arr_;
 
     // Read timestamp range (start, end)
     std::optional<TimestampRange> timestamp_;
@@ -742,6 +775,11 @@ class SOMAArray : public SOMAObject {
     // Array associated with mq_
     std::shared_ptr<Array> arr_;
 
+    // Array associated with metadata_. Metadata values need to be accessible in
+    // write mode as well. We need to keep this read-mode array alive in order
+    // for the metadata value pointers in the cache to be accessible
+    std::shared_ptr<Array> meta_cache_arr_;
+
     // True if this is the first call to read_next()
     bool first_read_next_ = true;
 
@@ -750,6 +788,9 @@ class SOMAArray : public SOMAObject {
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t nnz_slow();
+
+    // ArrayBuffers to hold ColumnBuffers alive when submitting to write query
+    std::shared_ptr<ArrayBuffers> array_buffer_ = nullptr;
 };
 
 }  // namespace tiledbsoma
