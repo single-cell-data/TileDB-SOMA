@@ -52,17 +52,17 @@ class SOMADataFrame : public SOMAArray {
     /**
      * @brief Create a SOMADataFrame object at the given URI.
      *
-     * @param uri URI to create the SOMAArray
+     * @param uri URI to create the SOMADataFrame
      * @param schema TileDB ArraySchema
-     * @param ctx SOMAContext
-     * @param timestamp Optional pair indicating timestamp start and end
-     * @return std::unique_ptr<SOMADataFrame>
+     * @param platform_config Optional config parameter dictionary
      */
-    static std::unique_ptr<SOMADataFrame> create(
+    static void create(
         std::string_view uri,
-        ArraySchema schema,
+        std::shared_ptr<ArrowSchema> schema,
+        ColumnIndexInfo index_columns,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::optional<PlatformConfig> platform_config = std::nullopt,
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.
@@ -78,7 +78,7 @@ class SOMADataFrame : public SOMAArray {
      * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::unique_ptr<SOMADataFrame>
+     * @return std::shared_ptr<SOMADataFrame> SOMADataFrame
      */
     static std::unique_ptr<SOMADataFrame> open(
         std::string_view uri,
@@ -86,7 +86,7 @@ class SOMADataFrame : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names = {},
         ResultOrder result_order = ResultOrder::automatic,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Check if the SOMADataFrame exists at the URI.
@@ -116,7 +116,7 @@ class SOMADataFrame : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names,
         ResultOrder result_order,
-        std::optional<TimestampRange> timestamp = std::nullopt)
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt)
         : SOMAArray(
               mode,
               uri,
@@ -142,9 +142,9 @@ class SOMADataFrame : public SOMAArray {
     /**
      * Return the data schema, in the form of a ArrowSchema.
      *
-     * @return std::unique_ptr<ArrowSchema>
+     * @return std::shared_ptr<ArrowSchema>
      */
-    std::unique_ptr<ArrowSchema> schema() const;
+    std::shared_ptr<ArrowSchema> schema() const;
 
     /**
      * Return the index (dimension) column names.

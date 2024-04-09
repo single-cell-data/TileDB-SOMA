@@ -61,7 +61,7 @@ class SOMACollection : public SOMAGroup {
      * @param ctx TileDB context
      * @param uri URI to create the SOMACollection
      */
-    static std::unique_ptr<SOMACollection> create(
+    static void create(
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
         std::optional<TimestampRange> timestamp = std::nullopt);
@@ -80,7 +80,7 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     //===================================================================
     //= public non-static
@@ -99,7 +99,7 @@ class SOMACollection : public SOMAGroup {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp)
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp)
         : SOMAGroup(
               mode,
               uri,
@@ -157,7 +157,9 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        ArraySchema schema);
+        std::shared_ptr<ArrowSchema> schema,
+        ColumnIndexInfo index_columns,
+        std::optional<PlatformConfig> platform_config = std::nullopt);
 
     /**
      * Create and add a SOMAMeasurement to the SOMACollection.
@@ -172,7 +174,8 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        ArraySchema schema);
+        std::shared_ptr<ArrowSchema> schema,
+        ColumnIndexInfo index_columns);
 
     /**
      * Create and add a SOMADataFrame to the SOMACollection.
@@ -187,7 +190,9 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        ArraySchema schema);
+        std::shared_ptr<ArrowSchema> schema,
+        ColumnIndexInfo index_columns,
+        std::optional<PlatformConfig> platform_config = std::nullopt);
 
     /**
      * Create and add a SOMADenseNDArray to the SOMACollection.

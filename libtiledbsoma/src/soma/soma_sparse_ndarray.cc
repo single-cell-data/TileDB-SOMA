@@ -39,14 +39,12 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
+void SOMASparseNDArray::create(
     std::string_view uri,
     ArraySchema schema,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<TimestampRange> timestamp) {
-    auto soma_array = SOMAArray::create(
-        ctx, uri, schema, "SOMASparseNDArray", timestamp);
-    return std::make_unique<SOMASparseNDArray>(*soma_array);
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    SOMAArray::create(ctx, uri, schema, "SOMASparseNDArray", timestamp);
 }
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
@@ -55,7 +53,7 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::shared_ptr<SOMAContext> ctx,
     std::vector<std::string> column_names,
     ResultOrder result_order,
-    std::optional<TimestampRange> timestamp) {
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMASparseNDArray>(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
@@ -74,7 +72,7 @@ bool SOMASparseNDArray::exists(std::string_view uri) {
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
+std::shared_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return this->arrow_schema();
 }
 }  // namespace tiledbsoma

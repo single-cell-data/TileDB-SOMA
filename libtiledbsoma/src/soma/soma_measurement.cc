@@ -41,36 +41,45 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMAMeasurement> SOMAMeasurement::create(
+void SOMAMeasurement::create(
     std::string_view uri,
-    ArraySchema schema,
+    std::shared_ptr<ArrowSchema> schema,
+    ColumnIndexInfo index_columns,
     std::shared_ptr<SOMAContext> ctx,
+    std::optional<PlatformConfig> platform_config,
     std::optional<TimestampRange> timestamp) {
     std::string exp_uri(uri);
 
-    auto soma_group = SOMAGroup::create(
-        ctx, exp_uri, "SOMAMeasurement", timestamp);
-    SOMADataFrame::create(exp_uri + "/var", schema, ctx, timestamp);
+    SOMAGroup::create(ctx, exp_uri, "SOMAMeasurement", timestamp);
+    SOMADataFrame::create(
+        exp_uri + "/var",
+        schema,
+        index_columns,
+        ctx,
+        platform_config,
+        timestamp);
     SOMACollection::create(exp_uri + "/X", ctx, timestamp);
     SOMACollection::create(exp_uri + "/obsm", ctx, timestamp);
     SOMACollection::create(exp_uri + "/obsp", ctx, timestamp);
     SOMACollection::create(exp_uri + "/varm", ctx, timestamp);
     SOMACollection::create(exp_uri + "/varp", ctx, timestamp);
 
-    soma_group->set(exp_uri + "/var", URIType::absolute, "var");
-    soma_group->set(exp_uri + "/X", URIType::absolute, "X");
-    soma_group->set(exp_uri + "/obsm", URIType::absolute, "obsm");
-    soma_group->set(exp_uri + "/obsp", URIType::absolute, "obsp");
-    soma_group->set(exp_uri + "/varm", URIType::absolute, "varm");
-    soma_group->set(exp_uri + "/varp", URIType::absolute, "varp");
-    return std::make_unique<SOMAMeasurement>(*soma_group);
+    auto name = std::string(std::filesystem::path(uri).filename());
+    auto group = SOMAGroup::open(OpenMode::write, uri, ctx, name, timestamp);
+    group->set(exp_uri + "/var", URIType::absolute, "var");
+    group->set(exp_uri + "/X", URIType::absolute, "X");
+    group->set(exp_uri + "/obsm", URIType::absolute, "obsm");
+    group->set(exp_uri + "/obsp", URIType::absolute, "obsp");
+    group->set(exp_uri + "/varm", URIType::absolute, "varm");
+    group->set(exp_uri + "/varp", URIType::absolute, "varp");
+    group->close();
 }
 
 std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<TimestampRange> timestamp) {
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMAMeasurement>(mode, uri, ctx, timestamp);
 }
 }  // namespace tiledbsoma

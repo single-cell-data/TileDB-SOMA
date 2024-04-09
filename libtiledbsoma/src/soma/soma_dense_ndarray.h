@@ -52,17 +52,16 @@ class SOMADenseNDArray : public SOMAArray {
     /**
      * @brief Create a SOMADenseNDArray object at the given URI.
      *
-     * @param uri URI to create the SOMAArray
+     * @param uri URI to create the SOMADenseNDArray
      * @param schema TileDB ArraySchema
-     * @param ctx SOMAContext
-     * @param timestamp Optional pair indicating timestamp start and end
-     * @return std::unique_ptr<SOMADenseNDArray>
+     * @param platform_config Optional config parameter dictionary
+     * @return std::shared_ptr<SOMADenseNDArray> opened in read mode
      */
-    static std::unique_ptr<SOMADenseNDArray> create(
+    static void create(
         std::string_view uri,
         ArraySchema schema,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Open and return a SOMADenseNDArray object at the given URI.
@@ -78,7 +77,7 @@ class SOMADenseNDArray : public SOMAArray {
      * open this object. If unset, uses the timestamp provided by the context.
      * @param result_order Read result order: automatic (default), rowmajor, or
      * colmajor
-     * @return std::shared_ptr<SOMADenseNDArray>
+     * @return std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray
      */
     static std::unique_ptr<SOMADenseNDArray> open(
         std::string_view uri,
@@ -86,7 +85,7 @@ class SOMADenseNDArray : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names = {},
         ResultOrder result_order = ResultOrder::automatic,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp = std::nullopt);
 
     /**
      * @brief Check if the SOMADenseNDArray exists at the URI.
@@ -115,7 +114,7 @@ class SOMADenseNDArray : public SOMAArray {
         std::shared_ptr<SOMAContext> ctx,
         std::vector<std::string> column_names,
         ResultOrder result_order,
-        std::optional<TimestampRange> timestamp)
+        std::optional<std::pair<uint64_t, uint64_t>> timestamp)
         : SOMAArray(
               mode,
               uri,
@@ -152,7 +151,7 @@ class SOMADenseNDArray : public SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    std::unique_ptr<ArrowSchema> schema() const;
+    std::shared_ptr<ArrowSchema> schema() const;
 };
 }  // namespace tiledbsoma
 

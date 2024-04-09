@@ -138,11 +138,14 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         }
         std::vector<int> a0(num_cells_per_fragment, frag_num);
 
+        auto array_buffer = std::make_shared<ArrayBuffers>();
+        auto tdb_arr = std::make_shared<Array>(
+            *ctx->tiledb_ctx(), uri, TILEDB_READ);
+        array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
+        array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
+
         // Write data to array
-        soma_array->set_column_data("a0", a0.size(), a0.data());
-        soma_array->set_column_data("d0", d0.size(), d0.data());
-        soma_array->write();
-        soma_array->close();
+        soma_array->write(array_buffer);
     }
 
     // Read from TileDB Array to get expected data

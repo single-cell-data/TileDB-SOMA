@@ -29,7 +29,6 @@
  *
  *   This file defines the SOMADenseNDArray class.
  */
-
 #include "soma_dense_ndarray.h"
 
 namespace tiledbsoma {
@@ -39,14 +38,12 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::create(
+void SOMADenseNDArray::create(
     std::string_view uri,
     ArraySchema schema,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<TimestampRange> timestamp) {
-    auto soma_array = SOMAArray::create(
-        ctx, uri, schema, "SOMADenseNDArray", timestamp);
-    return std::make_unique<SOMADenseNDArray>(*soma_array);
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+    SOMAArray::create(ctx, uri, schema, "SOMADenseNDArray", timestamp);
 }
 
 std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
@@ -55,7 +52,7 @@ std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
     std::shared_ptr<SOMAContext> ctx,
     std::vector<std::string> column_names,
     ResultOrder result_order,
-    std::optional<TimestampRange> timestamp) {
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMADenseNDArray>(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
@@ -74,7 +71,7 @@ bool SOMADenseNDArray::exists(std::string_view uri) {
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMADenseNDArray::schema() const {
+std::shared_ptr<ArrowSchema> SOMADenseNDArray::schema() const {
     return this->arrow_schema();
 }
 

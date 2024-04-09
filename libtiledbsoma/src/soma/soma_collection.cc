@@ -41,19 +41,18 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMACollection> SOMACollection::create(
+void SOMACollection::create(
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
-    auto soma_group = SOMAGroup::create(ctx, uri, "SOMACollection", timestamp);
-    return std::make_unique<SOMACollection>(*soma_group);
+    SOMAGroup::create(ctx, uri, "SOMACollection", timestamp);
 }
 
 std::unique_ptr<SOMACollection> SOMACollection::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<TimestampRange> timestamp) {
+    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
     return std::make_unique<SOMACollection>(mode, uri, ctx, timestamp);
 }
 
@@ -111,8 +110,10 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    ArraySchema schema) {
-    SOMAExperiment::create(uri, schema, ctx);
+    std::shared_ptr<ArrowSchema> schema,
+    ColumnIndexInfo index_columns,
+    std::optional<PlatformConfig> platform_config) {
+    SOMAExperiment::create(uri, schema, index_columns, ctx, platform_config);
     std::shared_ptr<SOMAExperiment> member = SOMAExperiment::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
@@ -125,8 +126,9 @@ std::shared_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    ArraySchema schema) {
-    SOMAMeasurement::create(uri, schema, ctx);
+    std::shared_ptr<ArrowSchema> schema,
+    ColumnIndexInfo index_columns) {
+    SOMAMeasurement::create(uri, schema, index_columns, ctx);
     std::shared_ptr<SOMAMeasurement> member = SOMAMeasurement::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
@@ -139,8 +141,10 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    ArraySchema schema) {
-    SOMADataFrame::create(uri, schema, ctx);
+    std::shared_ptr<ArrowSchema> schema,
+    ColumnIndexInfo index_columns,
+    std::optional<PlatformConfig> platform_config) {
+    SOMADataFrame::create(uri, schema, index_columns, ctx, platform_config);
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
