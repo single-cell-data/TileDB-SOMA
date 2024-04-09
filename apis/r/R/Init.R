@@ -12,14 +12,14 @@
     }
 }
 
-## A _possible_ .onAttach() function -- these are not allowed to use cat() etc but _must_ communicate
-## via packageStartupMessage() as this function can be 'muzzled' as desired. See Writing R Extensions.
-## .onAttach <- function(libname, pkgname) {
-##     if (interactive()) {
-##         packageStartupMessage("TileDB-SOMA R package ", packageVersion(pkgname),
-##                               " with TileDB Embedded ", format(tiledb::tiledb_version(TRUE)),
-##                               " on ", utils::osVersion,
-##                               ".\nSee https://github.com/single-cell-data for more information ",
-##                               "about the SOMA project.")
-##     }
-## }
+## An .onAttach() function is not allowed to use cat() etc but _must_ communicate via
+## packageStartupMessage() as this function can be 'muzzled' as desired. See Writing R Extensions.
+.onAttach <- function(libname, pkgname) {
+    if (interactive()) {
+        packageStartupMessage("TileDB-SOMA R package ", packageVersion(pkgname),
+                              " with TileDB Embedded ", format(tiledb::tiledb_version(TRUE)),
+                              " on ", utils::osVersion,
+                              ".\nSee https://github.com/single-cell-data for more information ",
+                              "about the SOMA project.")
+    }
+}
