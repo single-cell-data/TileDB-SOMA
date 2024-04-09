@@ -31,6 +31,32 @@ struct ArrowBuffer {
     std::shared_ptr<ColumnBuffer> buffer_;
 };
 
+using ArrowTable =
+    std::pair<std::shared_ptr<ArrowArray>, std::shared_ptr<ArrowSchema>>;
+
+using ColumnIndexInfo = std::tuple<
+    std::vector<std::string>,     // name of column
+    std::shared_ptr<ArrowArray>,  // domain
+    std::shared_ptr<ArrowArray>   // tile extent
+    >;
+
+class PlatformConfig {
+   public:
+    uint64_t dataframe_dim_zstd_level = 3;
+    uint64_t sparse_nd_array_dim_zstd_level = 3;
+    bool write_X_chunked = true;
+    uint64_t goal_chunk_nnz = 100000000;
+    uint64_t remote_cap_nbytes = 2400000000;
+    uint64_t capacity = 100000;
+    std::vector<std::string> offsets_filters = {
+        "DoubleDeltaFilter", "BitWidthReductionFilter", "ZstdFilter"};
+    std::vector<std::string> validity_filters;
+    bool allows_duplicates = false;
+    std::optional<std::string> tile_order = std::nullopt;
+    std::optional<std::string> cell_order = std::nullopt;
+    bool consolidate_and_vacuum = false;
+};
+
 class ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema);
@@ -47,17 +73,41 @@ class ArrowAdapter {
     static std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
     to_arrow(std::shared_ptr<ColumnBuffer> column);
 
+    /**
+     * @brief Create a an ArrowSchema from TileDB Schema
+     *
+     * @return ArrowSchema
+     */
     static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
 
     /**
+     * @brief Create a TileDB ArraySchema from ArrowSchema
+     *
+     * @return tiledb::ArraySchema
+     */
+    static ArraySchema tiledb_schema_from_arrow_schema(
+        std::shared_ptr<Context> ctx,
+        std::shared_ptr<ArrowSchema> arrow_schema,
+        ColumnIndexInfo index_column_info,
+        std::optional<PlatformConfig> platform_config);
+
+    /**
      * @brief Get Arrow format string from TileDB datatype.
+     *
+     * @param tiledb_dtype TileDB datatype.
+     * @return std::string_view Arrow format string.
+     */
+    static std::string_view to_arrow_format(
+        tiledb_datatype_t tiledb_dtype, bool use_large = true);
+
+    /**
+     * @brief Get TileDB datatype from Arrow format string.
      *
      * @param datatype TileDB datatype.
      * @return std::string_view Arrow format string.
      */
-    static std::string_view to_arrow_format(
-        tiledb_datatype_t datatype, bool use_large = true);
+    static tiledb_datatype_t to_tiledb_format(std::string_view arrow_dtype);
 
     static enum ArrowType to_nanoarrow_type(std::string_view sv);
 
@@ -72,6 +122,11 @@ class ArrowAdapter {
         std::memcpy((void*)dst, src.data(), sz);
         return dst;
     }
+
+    static std::optional<std::pair<const void*, const void*>> _get_dim_info(
+        std::string_view dim_name, ArrowTable index_columns);
+
+    static bool _isvar(const char* format);
 };
 };  // namespace tiledbsoma
 

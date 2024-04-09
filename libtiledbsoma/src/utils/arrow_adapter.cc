@@ -221,6 +221,137 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     return arrow_schema;
 }
 
+ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
+    std::shared_ptr<Context> ctx,
+    std::shared_ptr<ArrowSchema> arrow_schema,
+    ColumnIndexInfo index_column_info,
+    std::optional<PlatformConfig> platform_config) {
+    auto [index_column_names, domains, extents] = index_column_info;
+
+    ArraySchema schema(*ctx, TILEDB_SPARSE);
+    Domain domain(*ctx);
+
+    if (platform_config) {
+        std::map<std::string, tiledb_filter_type_t> convert_filter = {
+            {"GzipFilter", TILEDB_FILTER_GZIP},
+            {"ZstdFilter", TILEDB_FILTER_ZSTD},
+            {"LZ4Filter", TILEDB_FILTER_LZ4},
+            {"Bzip2Filter", TILEDB_FILTER_BZIP2},
+            {"RleFilter", TILEDB_FILTER_RLE},
+            {"DeltaFilter", TILEDB_FILTER_DELTA},
+            {"DoubleDeltaFilter", TILEDB_FILTER_DOUBLE_DELTA},
+            {"BitWidthReductionFilter", TILEDB_FILTER_BIT_WIDTH_REDUCTION},
+            {"BitShuffleFilter", TILEDB_FILTER_BITSHUFFLE},
+            {"ByteShuffleFilter", TILEDB_FILTER_BYTESHUFFLE},
+            {"PositiveDeltaFilter", TILEDB_FILTER_POSITIVE_DELTA},
+            {"ChecksumMD5Filter", TILEDB_FILTER_CHECKSUM_MD5},
+            {"ChecksumSHA256Filter", TILEDB_FILTER_CHECKSUM_SHA256},
+            {"DictionaryFilter", TILEDB_FILTER_DICTIONARY},
+            {"FloatScaleFilter", TILEDB_FILTER_SCALE_FLOAT},
+            {"XORFilter", TILEDB_FILTER_XOR},
+            {"WebpFilter", TILEDB_FILTER_WEBP},
+            {"NoOpFilter", TILEDB_FILTER_NONE},
+        };
+
+        schema.set_capacity(platform_config->capacity);
+
+        if (platform_config->offsets_filters.size() != 0) {
+            FilterList offset_filter_list(*ctx);
+            for (auto offset : platform_config->offsets_filters) {
+                offset_filter_list.add_filter(
+                    Filter(*ctx, convert_filter[offset]));
+            }
+            schema.set_offsets_filter_list(offset_filter_list);
+        }
+
+        if (platform_config->validity_filters.size() != 0) {
+            FilterList validity_filter_list(*ctx);
+            for (auto validity : platform_config->validity_filters) {
+                validity_filter_list.add_filter(
+                    Filter(*ctx, convert_filter[validity]));
+            }
+            schema.set_validity_filter_list(validity_filter_list);
+        }
+
+        schema.set_allows_dups(platform_config->allows_duplicates);
+
+        if (platform_config->tile_order)
+            schema.set_tile_order(
+                platform_config->tile_order == "row" ? TILEDB_ROW_MAJOR :
+                                                       TILEDB_COL_MAJOR);
+
+        if (platform_config->cell_order)
+            schema.set_cell_order(
+                platform_config->cell_order == "row" ? TILEDB_ROW_MAJOR :
+                                                       TILEDB_COL_MAJOR);
+    }
+
+    std::map<std::string, Dimension> dims;
+
+    for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children; ++sch_idx) {
+        auto child = arrow_schema->children[sch_idx];
+        auto type = ArrowAdapter::to_tiledb_format(child->format);
+
+        auto idx_col_begin = index_column_names.begin();
+        auto idx_col_end = index_column_names.end();
+        auto idx_col_it = std::find(idx_col_begin, idx_col_end, child->name);
+
+        if (idx_col_it != idx_col_end) {
+            auto idx_col_idx = std::distance(idx_col_begin, idx_col_it);
+            if (ArrowAdapter::_isvar(child->format)) {
+                type = TILEDB_STRING_ASCII;
+            }
+
+            auto dim = Dimension::create(
+                *ctx,
+                child->name,
+                type,
+                type == TILEDB_STRING_ASCII ?
+                    nullptr :
+                    domains->children[idx_col_idx]->buffers[1],
+                type == TILEDB_STRING_ASCII ?
+                    nullptr :
+                    extents->children[idx_col_idx]->buffers[1]);
+
+            dims.insert({dim.name(), dim});
+        } else {
+            Attribute attr(*ctx, child->name, type);
+
+            if (child->flags & ARROW_FLAG_NULLABLE) {
+                attr.set_nullable(true);
+            }
+
+            if (ArrowAdapter::_isvar(child->format)) {
+                attr.set_cell_val_num(TILEDB_VAR_NUM);
+            }
+
+            if (child->dictionary != nullptr) {
+                auto enmr_format = child->dictionary->format;
+                auto enmr_type = ArrowAdapter::to_tiledb_format(enmr_format);
+                auto enmr = Enumeration::create_empty(
+                    *ctx,
+                    child->name,
+                    enmr_type,
+                    ArrowAdapter::_isvar(enmr_format) ? TILEDB_VAR_NUM : 1,
+                    child->flags & ARROW_FLAG_DICTIONARY_ORDERED);
+                ArraySchemaExperimental::add_enumeration(*ctx, schema, enmr);
+                AttributeExperimental::set_enumeration_name(
+                    *ctx, attr, child->name);
+            }
+
+            schema.add_attribute(attr);
+        }
+    }
+
+    for (auto column_name : index_column_names)
+        domain.add_dimension(dims.at(column_name));
+    schema.set_domain(domain);
+
+    schema.check();
+
+    return schema;
+}
+
 std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
     Enumeration& enmr, const void* dst) {
     switch (enmr.type()) {
@@ -473,63 +604,60 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     return std::pair(std::move(array), std::move(schema));
 }
 
-std::string_view ArrowAdapter::to_arrow_format(
-    tiledb_datatype_t datatype, bool use_large) {
-    switch (datatype) {
-        case TILEDB_STRING_ASCII:
-        case TILEDB_STRING_UTF8:
-            return use_large ? "U" : "u";  // large because TileDB
-                                           // uses 64bit offsets
-        case TILEDB_CHAR:
-        case TILEDB_BLOB:
-            return use_large ? "Z" : "z";  // large because TileDB
-                                           // uses 64bit offsets
-        case TILEDB_BOOL:
-            return "b";
-        case TILEDB_INT32:
-            return "i";
-        case TILEDB_INT64:
-            return "l";
-        case TILEDB_FLOAT32:
-            return "f";
-        case TILEDB_FLOAT64:
-            return "g";
-        case TILEDB_INT8:
-            return "c";
-        case TILEDB_UINT8:
-            return "C";
-        case TILEDB_INT16:
-            return "s";
-        case TILEDB_UINT16:
-            return "S";
-        case TILEDB_UINT32:
-            return "I";
-        case TILEDB_UINT64:
-            return "L";
-        case TILEDB_TIME_SEC:
-            return "tts";
-        case TILEDB_TIME_MS:
-            return "ttm";
-        case TILEDB_TIME_US:
-            return "ttu";
-        case TILEDB_TIME_NS:
-            return "ttn";
-        case TILEDB_DATETIME_DAY:
-            return "tdD";
-        case TILEDB_DATETIME_SEC:
-            return "tss:";
-        case TILEDB_DATETIME_MS:
-            return "tsm:";
-        case TILEDB_DATETIME_US:
-            return "tsu:";
-        case TILEDB_DATETIME_NS:
-            return "tsn:";
-        default:
-            break;
+bool ArrowAdapter::_isvar(const char* format) {
+    if ((strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
+        (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0)) {
+        return true;
     }
-    throw TileDBSOMAError(fmt::format(
-        "ArrowAdapter: Unsupported TileDB datatype: {} ",
-        tiledb::impl::type_to_str(datatype)));
+    return false;
+}
+
+std::string_view ArrowAdapter::to_arrow_format(
+    tiledb_datatype_t tiledb_dtype, bool use_large) {
+    auto u = use_large ? "U" : "u";
+    auto z = use_large ? "Z" : "z";
+    std::map<tiledb_datatype_t, std::string_view> _to_arrow_format_map = {
+        {TILEDB_STRING_ASCII, u},     {TILEDB_CHAR, z},
+        {TILEDB_STRING_UTF8, u},      {TILEDB_BLOB, z},
+        {TILEDB_INT8, "c"},           {TILEDB_UINT8, "C"},
+        {TILEDB_INT16, "s"},          {TILEDB_UINT16, "S"},
+        {TILEDB_INT32, "i"},          {TILEDB_UINT32, "I"},
+        {TILEDB_INT64, "l"},          {TILEDB_UINT64, "L"},
+        {TILEDB_FLOAT32, "f"},        {TILEDB_FLOAT64, "g"},
+        {TILEDB_BOOL, "b"},           {TILEDB_DATETIME_SEC, "tss:"},
+        {TILEDB_DATETIME_MS, "tsm:"}, {TILEDB_DATETIME_US, "tsu:"},
+        {TILEDB_DATETIME_NS, "tsn:"},
+    };
+
+    try {
+        return _to_arrow_format_map.at(tiledb_dtype);
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(fmt::format(
+            "ArrowAdapter: Unsupported TileDB type: {} ",
+            tiledb::impl::type_to_str(tiledb_dtype)));
+    }
+}
+
+tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
+    std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
+        {"u", TILEDB_STRING_UTF8},    {"U", TILEDB_STRING_UTF8},
+        {"z", TILEDB_CHAR},           {"Z", TILEDB_CHAR},
+        {"c", TILEDB_INT8},           {"C", TILEDB_UINT8},
+        {"s", TILEDB_INT16},          {"S", TILEDB_UINT16},
+        {"i", TILEDB_INT32},          {"I", TILEDB_UINT32},
+        {"l", TILEDB_INT64},          {"L", TILEDB_UINT64},
+        {"f", TILEDB_FLOAT32},        {"g", TILEDB_FLOAT64},
+        {"b", TILEDB_BOOL},           {"tss:", TILEDB_DATETIME_SEC},
+        {"tsm:", TILEDB_DATETIME_MS}, {"tsu:", TILEDB_DATETIME_US},
+        {"tsn:", TILEDB_DATETIME_NS},
+    };
+
+    try {
+        return _to_tiledb_format_map.at(arrow_dtype);
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(fmt::format(
+            "ArrowAdapter: Unsupported Arrow type: {} ", arrow_dtype));
+    }
 }
 
 // FIXME: Add more types, maybe make it a map
