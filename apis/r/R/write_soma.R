@@ -235,28 +235,7 @@ write_soma.data.frame <- function(
   sdf$write(tbl)
   # Add to `soma_parent`
   if (is.character(key)) {
-    if (key %in% soma_parent$names()) {
-      if (sdf$uri != soma_parent$get(key)$uri) {
-        stop(
-          "Already found a ",
-          soma_parent$get(key)$class(),
-          " stored as ",
-          sQuote(key),
-          " in the parent collection",
-          call. = FALSE
-        )
-      }
-    } else {
-      soma_parent$set(
-        sdf,
-        name = key,
-        relative = ifelse(
-          startsWith(x = sdf$uri, 'tiledb://'),
-          yes = FALSE,
-          no = relative
-        )
-      )
-    }
+    .register_soma_object(sdf, soma_parent, key, relative)
   }
   # Return
   return(sdf)
@@ -361,7 +340,7 @@ write_soma.matrix <- function(
   array$write(x)
   # Add to `soma_parent`
   if (is.character(key)) {
-    soma_parent$set(array, name = key, relative = relative)
+    .register_soma_object(array, soma_parent, key, relative)
   }
   # Return
   return(array)
@@ -446,7 +425,7 @@ write_soma.TsparseMatrix <- function(
   array$write(x)
   # Add to `soma_parent`
   if (is.character(key)) {
-    soma_parent$set(array, name = key, relative = relative)
+    .register_soma_object(array, soma_parent, key, relative)
   }
   # Return
   return(array)
@@ -534,4 +513,33 @@ write_soma.TsparseMatrix <- function(
     dir.create(dirname(uri), showWarnings = FALSE, recursive = TRUE)
   }
   return(uri)
+}
+
+.register_soma_object <- function(x, soma_parent, key, relative = TRUE) {
+  stopifnot(
+    "'x' must be a SOMA object" = inherits(x, c('SOMAArrayBase', 'SOMACollectionBase')),
+    "'soma_parent' must be a SOMA collection" = inherits(soma_parent, 'SOMACollectionBase'),
+    "'key' must be a single character value" = is_scalar_character(key) && nzchar(key),
+    "'relative' must be a single logical value" = is_scalar_logical(relative)
+  )
+  if (key %in% soma_parent$names()) {
+    existing <- soma_parent$get(key)
+    if (existing$uri == x$uri && inherits(existing, x$class())) {
+      return(invisible(NULL))
+    }
+    stop(
+      "Already found a ",
+      existing$class(),
+      " stored as ",
+      sQuote(key),
+      " in the parent collection",
+      call. = FALSE
+    )
+  }
+  soma_parent$set(
+    x,
+    name = key,
+    relative = ifelse(startsWith(x$uri, 'tiledb://'), yes = FALSE, no = relative)
+  )
+  return(invisible(NULL))
 }
