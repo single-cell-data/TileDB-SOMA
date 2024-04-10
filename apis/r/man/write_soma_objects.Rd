@@ -72,6 +72,7 @@
   ...,
   key = NULL,
   ingest_mode = "write",
+  shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -87,6 +88,7 @@
   ...,
   key = NULL,
   ingest_mode = "write",
+  shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -101,6 +103,7 @@
   ...,
   key = NULL,
   ingest_mode = "write",
+  shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -145,6 +148,9 @@ determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}}
 \item{key}{Optionally register the resulting \code{SOMADataFrame} in
 \code{soma_parent} as \code{key}; pass \code{NULL} to prevent registration
 to handle manually}
+
+\item{shape}{A vector of two positive integers giving the on-disk shape of
+the array; defaults to \code{dim(x)}}
 }
 \value{
 The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or

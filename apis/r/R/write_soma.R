@@ -250,6 +250,8 @@ write_soma.data.frame <- function(
 #' (eg. \code{\link[arrow:data-type]{arrow::int32}()}); by default, attempts to
 #' determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}
 #' @param transpose Transpose \code{x} before writing
+#' @param shape A vector of two positive integers giving the on-disk shape of
+#' the array; defaults to \code{dim(x)}
 #'
 #' @rdname write_soma_objects
 #'
@@ -272,6 +274,7 @@ write_soma.matrix <- function(
   ...,
   key = NULL,
   ingest_mode = 'write',
+  shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -281,7 +284,9 @@ write_soma.matrix <- function(
     "'type' must be an Arrow type" = is.null(type) || is_arrow_data_type(type),
     "'transpose' must be a single logical value" = is_scalar_logical(transpose),
     "'key' must be a single character value" = is.null(key) ||
-      (is_scalar_character(key) && nzchar(key))
+      (is_scalar_character(key) && nzchar(key)),
+    "'shape' must be a vector of two postiive integers" = is.null(shape) ||
+      (rlang::is_integerish(shape, n = 2L, finite = TRUE) && all(shape > 0L))
   )
   ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
   if (!isTRUE(sparse) && inherits(x = x, what = 'sparseMatrix')) {
@@ -301,6 +306,7 @@ write_soma.matrix <- function(
       ...,
       key = key,
       ingest_mode = ingest_mode,
+      shape = shape,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx,
       relative = relative
@@ -331,11 +337,22 @@ write_soma.matrix <- function(
   if (isTRUE(transpose)) {
     x <- t(x)
   }
+  # Check the shape
+  if (!is.null(shape) && any(shape < dim(x))) {
+    stop(
+      "Requested an array of shape (",
+      paste(shape, collapse = ', '),
+      "), but was given a matrix with a larger shape (",
+      paste(dim(x), collapse = ', '),
+      ")",
+      call. = FALSE
+    )
+  }
   # Create the array
   array <- SOMADenseNDArrayCreate(
     uri = uri,
     type = type %||% arrow::infer_type(x),
-    shape = dim(x),
+    shape = shape %||% dim(x),
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
