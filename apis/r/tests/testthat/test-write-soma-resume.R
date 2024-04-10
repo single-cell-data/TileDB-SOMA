@@ -409,6 +409,9 @@ test_that("Resume-mode Seurat", {
     )
   }
 
+  expr$close()
+  gc()
+
   # Test resume-mode with partial writes
   idx <- seq.int(1L, floor(ncol(pbmc_small) / 3))
   pbmc_partial <- subset(pbmc_small, cells = idx)
@@ -416,8 +419,8 @@ test_that("Resume-mode Seurat", {
     if (inherits(i, "Assay")) {
       next
     }
-    DefaultAssay(pbmc_partial[[i]]) <- DefaultAssay(pbmc_partial[[i]]) %||%
-      DefaultAssay(pbmc_partial)
+    SeuratObject::DefaultAssay(pbmc_partial[[i]]) <- SeuratObject::DefaultAssay(pbmc_partial[[i]]) %||%
+      SeuratObject::DefaultAssay(pbmc_partial)
   }
 
   expect_type(
@@ -457,12 +460,11 @@ test_that("Resume-mode Seurat", {
     )
   }
 
+  expp$close()
+  gc()
+
   expect_type(
-    uric <- write_soma(
-      pbmc_small,
-      uri = urip,
-      ingest_mode = "resume"
-    ),
+    uric <- write_soma(pbmc_small, uri = urip, ingest_mode = "resume"),
     "character"
   )
   expect_identical(uric, urip)
