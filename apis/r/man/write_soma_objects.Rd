@@ -149,6 +149,13 @@ determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}}
 \code{soma_parent} as \code{key}; pass \code{NULL} to prevent registration
 to handle manually}
 
+\item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
+\itemize{
+\item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+\item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
+exists, simply open it for writing
+}}
+
 \item{shape}{A vector of two positive integers giving the on-disk shape of
 the array; defaults to \code{dim(x)}}
 }

@@ -35,6 +35,12 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #' @param soma_parent The parent \link[tiledbsoma:SOMACollection]{collection}
 #' (eg. a \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
 #' \code{\link{SOMAMeasurement}})
+#' @param ingest_mode Ingestion mode when creating the SOMA; choose from:
+#' \itemize{
+#'  \item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+#'  \item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
+#'   exists, simply open it for writing
+#' }
 #' @param relative \strong{\[Internal use only\]} Is \code{uri}
 #' relative or aboslute
 #'
