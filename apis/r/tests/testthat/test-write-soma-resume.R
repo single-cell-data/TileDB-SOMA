@@ -496,13 +496,402 @@ test_that("Resume-mode Seurat", {
 })
 
 test_that("Resume-mode SingleCellExperiment", {
-  skip_if(TRUE)
   skip_if(!extended_tests())
-  skip_if_not_installed('pbmc3k.sce')
-  suppressMessages(skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c')))
+  skip_if_not_installed("pbmc3k.sce")
+  suppressMessages(skip_if_not_installed("SingleCellExperiment", .MINIMUM_SCE_VERSION("c")))
 
-  sce <- get_data('pbmc3k.final', package = 'pbmc3k.sce')
-  SingleCellExperiment::mainExpName(sce) <- 'RNA'
+  sce <- get_data('pbmc3k.final', package = "pbmc3k.sce")
+  SingleCellExperiment::mainExpName(sce) <- "RNA"
 
-  uri <- withr::local_tempdir('single-cell-experiment')
+  # Test resume-mode when writing Seurat object
+  expect_type(
+    uri <- write_soma(sce, uri = withr::local_tempdir("single-cell-experiment")),
+    "character"
+  )
+  exp <- SOMAExperimentOpen(uri)
+  on.exit(exp$close(), add = TRUE, after = FALSE)
+
+  obj <- SOMAExperimentAxisQuery$new(exp, "RNA")$to_single_cell_experiment(
+    obs_index = "obs_id",
+    var_index = "var_id"
+  )
+
+  expect_identical(dim(obj), dim(sce))
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(obj)),
+    sort(SummarizedExperiment::assayNames(sce)),
+    label = 'assayNames(obj)',
+    expected.label = 'assayNames(sce)'
+  )
+  for (i in SummarizedExperiment::assayNames(sce)) {
+    expect_identical(
+      dim(SummarizedExperiment::assay(obj, i)),
+      dim(SummarizedExperiment::assay(sce, i)),
+      label = sprintf("dim(assay(obj, '%s'))", i),
+      expected.label = sprintf("dim(assay(sce, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(obj)),
+    sort(SingleCellExperiment::reducedDimNames(sce)),
+    label = 'reducedDimNames(obj)',
+    expected.label = 'reducedDimNames(sce)'
+  )
+  for (i in SingleCellExperiment::reducedDimNames(sce)) {
+    expect_identical(
+      dim(SingleCellExperiment::reducedDim(obj, i)),
+      dim(SingleCellExperiment::reducedDim(sce, i)),
+      label = sprintf("dim(reducedDim(obj, '%s'))", i),
+      expected.label = sprintf("dim(reducedDim(sce, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::colPairNames(obj)),
+    sort(SingleCellExperiment::colPairNames(sce)),
+    label = 'colPairNames(obj)',
+    expected.label = 'colPairNames(sce)'
+  )
+  for (i in SingleCellExperiment::colPairNames(sce)) {
+    expect_identical(
+      dim(SingleCellExperiment::colPair(obj, i)),
+      dim(SingleCellExperiment::colPair(sce, i)),
+      label = sprintf("dim(colPair(obj, '%s'))", i),
+      expected.label = sprintf("dim(colPair(sce, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::rowPairNames(obj)),
+    sort(SingleCellExperiment::rowPairNames(sce)),
+    label = 'rowPairNames(obj)',
+    expected.label = 'rowPairNames(sce)'
+  )
+  for (i in SingleCellExperiment::rowPairNames(sce)) {
+    expect_identical(
+      dim(SingleCellExperiment::rowPair(obj, i)),
+      dim(SingleCellExperiment::rowPair(sce, i)),
+      label = sprintf("dim(rowPair(obj, '%s'))", i),
+      expected.label = sprintf("dim(rowPair(sce, '%s'))", i)
+    )
+  }
+
+  for (i in names(SummarizedExperiment::colData(sce))) {
+    expect_equivalent(
+      SummarizedExperiment::colData(obj)[[i]],
+      SummarizedExperiment::colData(sce)[[i]],
+      label = sprintf("colData(obj)[['%s']]", i),
+      expected.label = sprintf("colData(sce)[['%s']]", i)
+    )
+  }
+
+  for (i in names(SummarizedExperiment::rowData(sce))) {
+    expect_equivalent(
+      SummarizedExperiment::rowData(obj)[[i]],
+      SummarizedExperiment::rowData(sce)[[i]],
+      label = sprintf("rowData(obj)[['%s']]", i),
+      expected.label = sprintf("rowData(sce)[['%s']]", i)
+    )
+  }
+
+  exp$close()
+  gc()
+
+  # Expect error when writing to existing array
+  expect_error(write_soma(sce, uri = uri))
+
+  # Expect seamless pass when resuming writing to exisitng experiment
+  expect_type(
+    urir <- write_soma(sce, uri = uri, ingest_mode = "resume"),
+    "character"
+  )
+  expect_identical(urir, uri)
+
+  expr <- SOMAExperimentOpen(urir)
+  on.exit(expr$close(), add = TRUE, after = FALSE)
+
+  objr <- SOMAExperimentAxisQuery$new(expr, "RNA")$to_single_cell_experiment(
+    obs_index = "obs_id",
+    var_index = "var_id"
+  )
+
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(objr)),
+    sort(SummarizedExperiment::assayNames(sce)),
+    label = 'assayNames(objr)',
+    expected.label = 'assayNames(sce)'
+  )
+  for (i in SummarizedExperiment::assayNames(sce)) {
+    expect_identical(
+      dim(SummarizedExperiment::assay(objr, i)),
+      dim(SummarizedExperiment::assay(sce, i)),
+      label = sprintf("dim(assay(objr, '%s'))", i),
+      expected.label = sprintf("dim(assay(sce, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(objr)),
+    sort(SingleCellExperiment::reducedDimNames(sce)),
+    label = 'reducedDimNames(objr)',
+    expected.label = 'reducedDimNames(sce)'
+  )
+  for (i in SingleCellExperiment::reducedDimNames(sce)) {
+    expect_identical(
+      dim(SingleCellExperiment::reducedDim(objr, i)),
+      dim(SingleCellExperiment::reducedDim(sce, i)),
+      label = sprintf("dim(reducedDim(objr, '%s'))", i),
+      expected.label = sprintf("dim(reducedDim(sce, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::colPairNames(objr)),
+    sort(SingleCellExperiment::colPairNames(sce)),
+    label = 'colPairNames(objr)',
+    expected.label = 'colPairNames(sce)'
+  )
+  for (i in SingleCellExperiment::colPairNames(sce)) {
+    expect_identical(
+      dim(SingleCellExperiment::colPair(objr, i)),
+      dim(SingleCellExperiment::colPair(sce, i)),
+      label = sprintf("dim(colPair(objr, '%s'))", i),
+      expected.label = sprintf("dim(colPair(sce, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::rowPairNames(objr)),
+    sort(SingleCellExperiment::rowPairNames(sce)),
+    label = 'rowPairNames(objr)',
+    expected.label = 'rowPairNames(sce)'
+  )
+  for (i in SingleCellExperiment::rowPairNames(sce)) {
+    expect_identical(
+      dim(SingleCellExperiment::rowPair(objr, i)),
+      dim(SingleCellExperiment::rowPair(sce, i)),
+      label = sprintf("dim(rowPair(objr, '%s'))", i),
+      expected.label = sprintf("dim(rowPair(sce, '%s'))", i)
+    )
+  }
+
+  for (i in names(SummarizedExperiment::colData(sce))) {
+    expect_equivalent(
+      SummarizedExperiment::colData(objr)[[i]],
+      SummarizedExperiment::colData(sce)[[i]],
+      label = sprintf("colData(objr)[['%s']]", i),
+      expected.label = sprintf("colData(sce)[['%s']]", i)
+    )
+  }
+
+  for (i in names(SummarizedExperiment::rowData(sce))) {
+    expect_equivalent(
+      SummarizedExperiment::rowData(objr)[[i]],
+      SummarizedExperiment::rowData(sce)[[i]],
+      label = sprintf("rowData(objr)[['%s']]", i),
+      expected.label = sprintf("rowData(sce)[['%s']]", i)
+    )
+  }
+
+  expr$close()
+  gc()
+
+  # Test resume-mode with partial writes
+  idx <- seq.int(1L, floor(ncol(sce) / 3))
+  sce_partial <- sce[, idx]
+
+  expect_type(
+    urip <- write_soma(
+      sce_partial,
+      uri = withr::local_tempdir("single-cell-experiment-partial"),
+      shape = dim(sce)
+    ),
+    "character"
+  )
+
+  expp <- SOMAExperimentOpen(urip)
+  on.exit(expp$close(), add = TRUE, after = FALSE)
+
+  objp <- SOMAExperimentAxisQuery$new(expp, "RNA")$to_single_cell_experiment(
+    obs_index = "obs_id",
+    var_index = "var_id"
+  )
+
+  expect_identical(dim(objp), dim(sce_partial))
+
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(objp)),
+    sort(SummarizedExperiment::assayNames(sce_partial)),
+    label = 'assayNames(objp)',
+    expected.label = 'assayNames(sce_partial)'
+  )
+  for (i in SummarizedExperiment::assayNames(sce_partial)) {
+    expect_identical(
+      dim(SummarizedExperiment::assay(objp, i)),
+      dim(SummarizedExperiment::assay(sce_partial, i)),
+      label = sprintf("dim(assay(objp, '%s'))", i),
+      expected.label = sprintf("dim(assay(sce_partial, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(objp)),
+    sort(SingleCellExperiment::reducedDimNames(sce_partial)),
+    label = 'reducedDimNames(objp)',
+    expected.label = 'reducedDimNames(sce_partial)'
+  )
+  for (i in SingleCellExperiment::reducedDimNames(sce_partial)) {
+    expect_identical(
+      dim(SingleCellExperiment::reducedDim(objp, i)),
+      dim(SingleCellExperiment::reducedDim(sce_partial, i)),
+      label = sprintf("dim(reducedDim(objp, '%s'))", i),
+      expected.label = sprintf("dim(reducedDim(sce_partial, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::colPairNames(objp)),
+    sort(SingleCellExperiment::colPairNames(sce_partial)),
+    label = 'colPairNames(objp)',
+    expected.label = 'colPairNames(sce_partial)'
+  )
+  for (i in SingleCellExperiment::colPairNames(sce_partial)) {
+    expect_identical(
+      dim(SingleCellExperiment::colPair(objp, i)),
+      dim(SingleCellExperiment::colPair(sce_partial, i)),
+      label = sprintf("dim(colPair(objp, '%s'))", i),
+      expected.label = sprintf("dim(colPair(sce_partial, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::rowPairNames(objp)),
+    sort(SingleCellExperiment::rowPairNames(sce_partial)),
+    label = 'rowPairNames(objp)',
+    expected.label = 'rowPairNames(sce_partial)'
+  )
+  for (i in SingleCellExperiment::rowPairNames(sce_partial)) {
+    expect_identical(
+      dim(SingleCellExperiment::rowPair(objp, i)),
+      dim(SingleCellExperiment::rowPair(sce_partial, i)),
+      label = sprintf("dim(rowPair(objp, '%s'))", i),
+      expected.label = sprintf("dim(rowPair(sce_partial, '%s'))", i)
+    )
+  }
+
+  for (i in names(SummarizedExperiment::colData(sce_partial))) {
+    expect_equivalent(
+      SummarizedExperiment::colData(objp)[[i]],
+      SummarizedExperiment::colData(sce_partial)[[i]],
+      label = sprintf("colData(objp)[['%s']]", i),
+      expected.label = sprintf("colData(sce_partial)[['%s']]", i)
+    )
+  }
+
+  for (i in names(SummarizedExperiment::rowData(sce_partial))) {
+    expect_equivalent(
+      SummarizedExperiment::rowData(objp)[[i]],
+      SummarizedExperiment::rowData(sce_partial)[[i]],
+      label = sprintf("rowData(objp)[['%s']]", i),
+      expected.label = sprintf("rowData(sce_partial)[['%s']]", i)
+    )
+  }
+
+  expp$close()
+  gc()
+
+  expect_type(
+    uric <- write_soma(sce, uri = urip, ingest_mode = "resume"),
+    "character"
+  )
+  expect_identical(uric, urip)
+
+  expc <- SOMAExperimentOpen(uric)
+  on.exit(expc$close(), add = TRUE, after = FALSE)
+
+  objc <- SOMAExperimentAxisQuery$new(expc, "RNA")$to_single_cell_experiment(
+    obs_index = "obs_id",
+    var_index = "var_id"
+  )
+
+  expect_identical(dim(objc), dim(sce))
+
+  expect_identical(
+    sort(SummarizedExperiment::assayNames(objc)),
+    sort(SummarizedExperiment::assayNames(sce)),
+    label = 'assayNames(objc)',
+    expected.label = 'assayNames(sce)'
+  )
+  for (i in SummarizedExperiment::assayNames(sce)) {
+    expect_identical(
+      dim(SummarizedExperiment::assay(objc, i)),
+      dim(SummarizedExperiment::assay(sce, i)),
+      label = sprintf("dim(assay(objc, '%s'))", i),
+      expected.label = sprintf("dim(assay(sce, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::reducedDimNames(objc)),
+    sort(SingleCellExperiment::reducedDimNames(sce)),
+    label = 'reducedDimNames(objc)',
+    expected.label = 'reducedDimNames(sce)'
+  )
+  for (i in SingleCellExperiment::reducedDimNames(sce)) {
+    expect_identical(
+      dim(SingleCellExperiment::reducedDim(objc, i)),
+      dim(SingleCellExperiment::reducedDim(sce, i)),
+      label = sprintf("dim(reducedDim(objc, '%s'))", i),
+      expected.label = sprintf("dim(reducedDim(sce, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::colPairNames(objc)),
+    sort(SingleCellExperiment::colPairNames(sce)),
+    label = 'colPairNames(objc)',
+    expected.label = 'colPairNames(sce)'
+  )
+  for (i in SingleCellExperiment::colPairNames(sce)) {
+    expect_identical(
+      dim(SingleCellExperiment::colPair(objc, i)),
+      dim(SingleCellExperiment::colPair(sce, i)),
+      label = sprintf("dim(colPair(objc, '%s'))", i),
+      expected.label = sprintf("dim(colPair(sce, '%s'))", i)
+    )
+  }
+
+  expect_identical(
+    sort(SingleCellExperiment::rowPairNames(objc)),
+    sort(SingleCellExperiment::rowPairNames(sce)),
+    label = 'rowPairNames(objc)',
+    expected.label = 'rowPairNames(sce)'
+  )
+  for (i in SingleCellExperiment::rowPairNames(sce)) {
+    expect_identical(
+      dim(SingleCellExperiment::rowPair(objc, i)),
+      dim(SingleCellExperiment::rowPair(sce, i)),
+      label = sprintf("dim(rowPair(objc, '%s'))", i),
+      expected.label = sprintf("dim(rowPair(sce, '%s'))", i)
+    )
+  }
+
+  for (i in names(SummarizedExperiment::colData(sce))) {
+    expect_equivalent(
+      SummarizedExperiment::colData(objc)[[i]],
+      SummarizedExperiment::colData(sce)[[i]],
+      label = sprintf("colData(objc)[['%s']]", i),
+      expected.label = sprintf("colData(sce)[['%s']]", i)
+    )
+  }
+
+  for (i in names(SummarizedExperiment::rowData(sce))) {
+    expect_equivalent(
+      SummarizedExperiment::rowData(objc)[[i]],
+      SummarizedExperiment::rowData(sce)[[i]],
+      label = sprintf("rowData(objc)[['%s']]", i),
+      expected.label = sprintf("rowData(sce)[['%s']]", i)
+    )
+  }
 })
