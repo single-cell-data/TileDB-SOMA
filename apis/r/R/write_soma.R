@@ -227,12 +227,15 @@ write_soma.data.frame <- function(
   if (ingest_mode %in% c('resume')) {
     join_ids <- .read_soma_joinids(sdf)
     idx <- which(!x$soma_joinid %in% join_ids)
-    if (!length(idx)) {
-      return(sdf)
+    tbl <- if (length(idx)) {
+      tbl[idx, , drop = FALSE]
+    } else {
+      NULL
     }
-    tbl <- tbl[idx, ]
   }
-  sdf$write(tbl)
+  if (!is.null(tbl)) {
+    sdf$write(tbl)
+  }
   # Add to `soma_parent`
   if (is.character(key)) {
     .register_soma_object(sdf, soma_parent, key, relative)
@@ -382,6 +385,7 @@ write_soma.TsparseMatrix <- function(
   ...,
   key = NULL,
   ingest_mode = 'write',
+  shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -393,7 +397,9 @@ write_soma.TsparseMatrix <- function(
       (R6::is.R6(type) && inherits(x = type, what = 'DataType')),
     "'transpose' must be a single logical value" = is_scalar_logical(transpose),
     "'key' must be a single character value" = is.null(key) ||
-      (is_scalar_character(key) && nzchar(key))
+      (is_scalar_character(key) && nzchar(key)),
+    "'shape' must be a vector of two postiive integers" = is.null(shape) ||
+      (rlang::is_integerish(shape, n = 2L, finite = TRUE) && all(shape > 0L))
   )
   ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
   # Create a proper URI
@@ -409,20 +415,58 @@ write_soma.TsparseMatrix <- function(
   if (isTRUE(transpose)) {
     x <- Matrix::t(x)
   }
+  # Check the shape
+  if (!is.null(shape) && any(shape < dim(x))) {
+    stop(
+      "Requested an array of shape (",
+      paste(shape, collapse = ', '),
+      "), but was given a matrix with a larger shape (",
+      paste(dim(x), collapse = ', '),
+      ")",
+      call. = FALSE
+    )
+  }
   # Create the array
   array <- SOMASparseNDArrayCreate(
     uri = uri,
     type = type %||% arrow::infer_type(methods::slot(object = x, name = 'x')),
-    shape = dim(x),
+    shape = shape %||% dim(x),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   # Write values
   if (ingest_mode %in% c('resume')) {
-    # join_ids <- .read_soma_joinids(sdf)
+    if (array$ndim() != 2L) {
+      stop(
+        "Attempting to resume writing a matrix to a sparse array with more than two dimensions",
+        call. = FALSE
+      )
+    }
+    row_ids <- .read_soma_joinids(array, axis = 0L)
+    col_ids <- .read_soma_joinids(array, axis = 1L)
+    tbl <- data.frame(
+      i = bit64::as.integer64(slot(x, 'i')),
+      j = bit64::as.integer64(slot(x, 'j')),
+      x = slot(x, 'x')
+    )
+    tbl <- tbl[-which(tbl$i %in% row_ids & tbl$j %in% col_ids), , drop = FALSE]
+    x <- if (nrow(tbl)) {
+      Matrix::sparseMatrix(
+        i = as.integer(tbl$i),
+        j = as.integer(tbl$j),
+        x = tbl$x,
+        dims = dim(x),
+        index1 = FALSE,
+        repr = 'T'
+      )
+    } else {
+      NULL
+    }
   }
-  array$write(x)
+  if (!is.null(x)) {
+    array$write(x)
+  }
   # Add to `soma_parent`
   if (is.character(key)) {
     .register_soma_object(array, soma_parent, key, relative)

@@ -182,13 +182,108 @@ test_that("Resume-mode data frames", {
       )
     }
   }
-
 })
 
 test_that("Resume-mode sparse arrays", {
   skip_if(!extended_tests())
 
-  mat <- get_data('KNex', package = 'Matrix')$mm
+  collection <- SOMACollectionCreate(withr::local_tempdir("sparse-array-resume"))
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
+  knex <- as(get_data('KNex', package = 'Matrix')$mm, "TsparseMatrix")
+
+  # Test resume-mode when writing sparse arrays
+  uri <- "knex-complete"
+  expect_s3_class(
+    ssa <- write_soma(knex, uri = uri, soma_parent = collection),
+    "SOMASparseNDArray"
+  )
+  on.exit(ssa$close(), add = TRUE, after = FALSE)
+
+  ssa$reopen("READ")
+  mat <- ssa$read()$sparse_matrix()$concat()
+  expect_equal(
+    as.matrix(mat),
+    as.matrix(knex),
+    label = "mat",
+    expected.label = "knex"
+  )
+
+  # Expect error when writing to existing array
+  expect_error(write_soma(knex, uri = uri, soma_parent = collection))
+
+  # Expect seamless pass when resuming writing to complete existing array
+  expect_s3_class(
+    ssar <- write_soma(
+      knex,
+      uri = uri,
+      soma_parent = collection,
+      ingest_mode = "resume"
+    ),
+    "SOMASparseNDArray"
+  )
+  on.exit(ssar$close(), add = TRUE, after = FALSE)
+  expect_identical(ssar$uri, ssa$uri)
+
+  ssar$reopen("READ")
+  matr <- ssar$read()$sparse_matrix()$concat()
+  expect_identical(
+    as.matrix(matr),
+    as.matrix(knex),
+    label = "matr",
+    expected.label = "knex"
+  )
+
+  # Test resume-mode with partial writes
+  idx <- seq.int(1L, floor(nrow(knex) / 3))
+  knexp <- knex[idx, , drop = FALSE]
+  uri <- "knex-parital"
+  expect_s3_class(
+    ssap <- write_soma(knexp, uri = uri, soma_parent = collection, shape = dim(knex)),
+    "SOMASparseNDArray"
+  )
+  on.exit(ssap$close(), add = TRUE, after = FALSE)
+
+  ssap$reopen("READ")
+  matp <- ssap$read()$sparse_matrix()$concat()
+  expect_identical(dim(matp), dim(knex))
+  expect_identical(max(matp@i) + 1L, max(idx), label = "max(matp@i)")
+  expect_equal(
+    as.matrix(matp[idx, , drop = FALSE]),
+    as.matrix(knexp),
+    label = "matp",
+    expected.label = "knexp"
+  )
+
+  expect_s3_class(
+    ssac <- write_soma(
+      knex,
+      uri = uri,
+      soma_parent = collection,
+      ingest_mode = "resume"
+    ),
+    "SOMASparseNDArray"
+  )
+  on.exit(ssac$close())
+  expect_identical(ssac$uri, ssap$uri)
+
+  ssac$reopen("READ")
+  matc <- ssac$read()$sparse_matrix()$concat()
+  expect_identical(dim(matc), dim(knex))
+  expect_identical(max(matc@i) + 1L, nrow(knex))
+  expect_identical(
+    as.matrix(matc),
+    as.matrix(knex),
+    label = "matc",
+    expected.label = "knex"
+  )
+  bbox <- tryCatch(
+    as.integer(ssac$used_shape(simplify = TRUE, index1 = TRUE)),
+    error = function(...) NULL
+  )
+  if (!is.null(bbox)) {
+    expect_identical(bbox, dim(knex))
+  }
 })
 
 test_that("Resume-mode dense arrays", {

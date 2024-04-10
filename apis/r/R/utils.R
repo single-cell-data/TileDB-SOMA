@@ -138,7 +138,7 @@ uns_hint <- function(type = c('1d', '2d')) {
 .read_soma_joinids.SOMASparseNDArray <- function(x, axis = 0L, ...) {
   stopifnot(
     "'axis' must be a single positive integer" = is.integer(axis) &&
-      length(axis) == 1L,
+      length(axis) == 1L
   )
   if (axis < 0L || axis >= length(x$dimnames())) {
     stop("'axis' must be between 0 and ", length(x$dimnames()), call. = FALSE)
