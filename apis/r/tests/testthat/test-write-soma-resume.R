@@ -167,7 +167,7 @@ test_that("Resume-mode data frames", {
     ),
     "SOMADataFrame"
   )
-  on.exit(sdfc$close())
+  on.exit(sdfc$close(), add = TRUE, after = FALSE)
   expect_identical(sdfc$uri, sdfp$uri)
 
   sdfc$reopen("READ")
@@ -264,7 +264,7 @@ test_that("Resume-mode sparse arrays", {
     ),
     "SOMASparseNDArray"
   )
-  on.exit(ssac$close())
+  on.exit(ssac$close(), add = TRUE, after = FALSE)
   expect_identical(ssac$uri, ssap$uri)
 
   ssac$reopen("READ")
@@ -323,13 +323,170 @@ test_that("Resume-mode dense arrays", {
 })
 
 test_that("Resume-mode Seurat", {
-  skip_if(TRUE)
   skip_if(!extended_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
 
-  pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
 
-  uri <- withr::local_tempdir(SeuratObject::Project(pbmc_small))
+  # Test resume-mode when writing Seurat object
+  expect_type(
+    uri <- write_soma(
+      pbmc_small,
+      uri = withr::local_tempdir(SeuratObject::Project(pbmc_small))
+    ),
+    "character"
+  )
+  exp <- SOMAExperimentOpen(uri)
+  on.exit(exp$close(), add = TRUE, after = FALSE)
+
+  layers <- exp$ms$get("RNA")$X$names()
+  names(layers) <- gsub("_", ".", layers)
+
+  obj <- suppressWarnings(SOMAExperimentAxisQuery$new(exp, "RNA")$to_seurat(
+    layers,
+    obs_index = "obs_id",
+    var_index = "var_id"
+  ))
+
+  expect_identical(
+    sort(names(obj)),
+    sort(names(pbmc_small)),
+    label = "names(obj)",
+    expected.label = "names(pbmc_small)"
+  )
+
+  for (i in names(obj)) {
+    expect_s4_class(obj[[i]], class(pbmc_small[[i]]))
+    expect_identical(dim(obj[[i]]), dim(pbmc_small[[i]]))
+  }
+
+  for (i in names(pbmc_small[[]])) {
+    expect_identical(
+      obj[[i]],
+      pbmc_small[[i]],
+      label = sprintf("obj[['%s']]", i),
+      expected.label = sprintf("pbmc_small[['%s']]", i)
+    )
+  }
+
+  # Expect error when writing to existing array
+  expect_error(write_soma(pbmc_small, uri = uri))
+
+  # Expect seamless pass when resuming writing to exisitng experiment
+  expect_type(
+    urir <- write_soma(pbmc_small, uri = uri, ingest_mode = "resume"),
+    "character"
+  )
+  expect_identical(urir, uri)
+
+  expr <- SOMAExperimentOpen(urir)
+  on.exit(expr$close(), add = TRUE, after = FALSE)
+
+  objr <- suppressWarnings(SOMAExperimentAxisQuery$new(expr, "RNA")$to_seurat(
+    layers,
+    obs_index = "obs_id",
+    var_index = "var_id"
+  ))
+
+  expect_identical(
+    sort(names(objr)),
+    sort(names(pbmc_small)),
+    label = "names(objr)",
+    expected.label = "names(pbmc_small)"
+  )
+
+  for (i in names(objr)) {
+    expect_s4_class(objr[[i]], class(pbmc_small[[i]]))
+    expect_identical(dim(objr[[i]]), dim(pbmc_small[[i]]))
+  }
+
+  for (i in names(pbmc_small[[]])) {
+    expect_identical(
+      objr[[i]],
+      pbmc_small[[i]],
+      label = sprintf("objr[['%s']]", i),
+      expected.label = sprintf("pbmc_small[['%s']]", i)
+    )
+  }
+
+  # Test resume-mode with partial writes
+  idx <- seq.int(1L, floor(ncol(pbmc_small) / 3))
+  pbmc_partial <- suppressWarnings(SeuratObject::UpdateSeuratObject(subset(
+    pbmc_small,
+    cells = idx
+  )))
+
+  expect_type(
+    urip <- write_soma(
+      pbmc_partial,
+      uri = withr::local_tempdir("pbmc-partial"),
+      shape = dim(pbmc_small)
+    ),
+    "character"
+  )
+
+  expp <- SOMAExperimentOpen(urip)
+  on.exit(expp$close(), add = TRUE, after = FALSE)
+
+  layers <- expp$ms$get("RNA")$X$names()
+  names(layers) <- gsub("_", ".", layers)
+
+  objp <- suppressWarnings(SOMAExperimentAxisQuery$new(expp, "RNA")$to_seurat(
+    layers,
+    obs_index = "obs_id",
+    var_index = "var_id"
+  ))
+
+  expect_identical(dim(objp), dim(pbmc_partial))
+
+  for (i in names(objp)) {
+    expect_s4_class(objp[[i]], class(pbmc_partial[[i]]))
+    expect_identical(dim(objp[[i]]), dim(pbmc_partial[[i]]))
+  }
+
+  for (i in names(pbmc_partial[[]])) {
+    expect_identical(
+      objp[[i]],
+      pbmc_partial[[i]],
+      label = sprintf("objp[['%s']]", i),
+      expected.label = sprintf("pbmc_partial[['%s']]", i)
+    )
+  }
+
+  expect_type(
+    uric <- write_soma(
+      pbmc_small,
+      uri = urip,
+      ingest_mode = "resume"
+    ),
+    "character"
+  )
+  expect_identical(uric, urip)
+
+  expc <- SOMAExperimentOpen(uric)
+  on.exit(expc$close(), add = TRUE, after = FALSE)
+
+  objc <- suppressWarnings(SOMAExperimentAxisQuery$new(expc, "RNA")$to_seurat(
+    layers,
+    obs_index = "obs_id",
+    var_index = "var_id"
+  ))
+
+  expect_identical(dim(objc), dim(pbmc_small))
+
+  for (i in names(objc)) {
+    expect_s4_class(objc[[i]], class(pbmc_small[[i]]))
+    expect_identical(dim(objc[[i]]), dim(pbmc_small[[i]]))
+  }
+
+  for (i in names(pbmc_small[[]])) {
+    expect_identical(
+      objc[[i]],
+      pbmc_small[[i]],
+      label = sprintf("objc[['%s']]", i),
+      expected.label = sprintf("pbmc_small[['%s']]", i)
+    )
+  }
 })
 
 test_that("Resume-mode SingleCellExperiment", {
