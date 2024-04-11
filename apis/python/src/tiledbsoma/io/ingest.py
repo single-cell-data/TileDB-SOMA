@@ -987,7 +987,6 @@ def _create_or_open_collection(
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
 ) -> CollectionBase[_TDBO]:
-
     try:
         coll = cls.create(uri, context=context)
     except AlreadyExistsError:
