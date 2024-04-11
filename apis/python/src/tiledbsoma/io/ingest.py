@@ -987,18 +987,15 @@ def _create_or_open_collection(
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
 ) -> CollectionBase[_TDBO]:
+
     try:
-        thing = cls.open(uri, "w", context=context)
-    except DoesNotExistError:
-        pass  # This is always OK; make a new one.
-    else:
+        coll = cls.create(uri, context=context)
+    except AlreadyExistsError:
         # It already exists. Are we resuming?
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{uri} already exists")
-        add_metadata(thing, additional_metadata)
-        return thing
+        coll = cls.open(uri, "w", context=context)
 
-    coll = cls.create(uri, context=context)
     add_metadata(coll, additional_metadata)
     return coll
 
