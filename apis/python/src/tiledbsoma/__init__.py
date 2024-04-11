@@ -156,6 +156,7 @@ from ._general_utilities import (
     get_SOMA_version,
     get_storage_engine,
     show_package_versions,
+    verify_core_versions,
 )
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
@@ -167,6 +168,8 @@ from .pytiledbsoma import (
     tiledbsoma_stats_enable,
     tiledbsoma_stats_reset,
 )
+
+verify_core_versions()
 
 __version__ = get_implementation_version()
 
