@@ -20,6 +20,7 @@ import tiledb
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
+from ._exception import AlreadyExistsError, is_already_exists_error
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._tdb_handles import DataFrameWrapper
@@ -217,11 +218,16 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             TileDBCreateOptions.from_platform_config(platform_config),
             context,
         )
-        handle = cls._create_internal(uri, tdb_schema, context, tiledb_timestamp)
-        return cls(
-            handle,
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
+        try:
+            handle = cls._create_internal(uri, tdb_schema, context, tiledb_timestamp)
+            return cls(
+                handle,
+                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            )
+        except tiledb.TileDBError as tdbe:
+            if is_already_exists_error(tdbe):
+                raise AlreadyExistsError(f"{uri!r} already exists")
+            raise
 
     def keys(self) -> Tuple[str, ...]:
         """Returns the names of the columns when read back as a dataframe.

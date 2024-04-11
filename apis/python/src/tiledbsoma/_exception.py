@@ -55,6 +55,46 @@ def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
     return False
 
 
+class AlreadyExistsError(SOMAError):
+    """Raised when attempting to create an already existing SOMA object.
+
+    Lifecycle: experimental
+    """
+
+    pass
+
+
+def is_already_exists_error(e: tiledb.TileDBError) -> bool:
+    """Given a TileDBError, return true if it indicates the object already exists
+
+    Lifecycle: experimental
+
+    Example:
+        XXX EDIT ME
+        try:
+            with tiledb.open(uri):
+                ...
+        except tiledb.TileDBError as e:
+            if is_does_not_exist_error(e):
+                ...
+            raise e
+    """
+    stre = str(e)
+    # Local-disk/S3 does-not-exist exceptions say 'Group does not exist'; TileDB Cloud
+    # does-not-exist exceptions are worded less clearly.
+    if (
+        "lready exists"
+        in stre
+        # XXX
+        # or "Unrecognized array" in stre
+        # or "HTTP code 401" in stre
+        # or "HTTP code 404" in stre
+    ):
+        return True
+
+    return False
+
+
 def is_duplicate_group_key_error(e: tiledb.TileDBError) -> bool:
     """Given a TileDBError, return try if it indicates a duplicate member
     add request in a tiledb.Group.
