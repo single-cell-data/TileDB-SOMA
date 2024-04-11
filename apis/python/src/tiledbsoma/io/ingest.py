@@ -58,7 +58,11 @@ from .._arrow_types import df_to_arrow, tiledb_type_from_arrow_type
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
-from .._exception import DoesNotExistError, SOMAError
+from .._exception import (
+    AlreadyExistsError,
+    DoesNotExistError,
+    SOMAError,
+)
 from .._tdb_handles import RawHandle
 from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
@@ -1194,15 +1198,18 @@ def _write_dataframe_impl(
         )
 
     try:
-        soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
-    except DoesNotExistError:
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
             platform_config=platform_config,
             context=context,
         )
-    else:
+    except AlreadyExistsError:
+        if ingestion_params.error_if_already_exists:
+            raise SOMAError(f"{soma_df.uri} already exists")
+
+        soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
+
         if ingestion_params.skip_existing_nonempty_domain:
             storage_ned = _read_nonempty_domain(soma_df)
             dim_range = ((int(df.index.min()), int(df.index.max())),)
@@ -1212,8 +1219,6 @@ def _write_dataframe_impl(
                     _util.format_elapsed(s, f"SKIPPED {soma_df.uri}"),
                 )
                 return soma_df
-        elif ingestion_params.error_if_already_exists:
-            raise SOMAError(f"{soma_df.uri} already exists")
 
     if ingestion_params.write_schema_no_data:
         logging.log_io(

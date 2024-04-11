@@ -37,7 +37,12 @@ from . import _funcs, _tdb_handles
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
-from ._exception import SOMAError, is_does_not_exist_error
+from ._exception import (
+    AlreadyExistsError,
+    SOMAError,
+    is_already_exists_error,
+    is_does_not_exist_error,
+)
 from ._funcs import typeguard_ignore
 from ._sparse_nd_array import SparseNDArray
 from ._tiledb_object import AnyTileDBObject, TileDBObject
@@ -119,13 +124,18 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             Experimental.
         """
         context = _validate_soma_tiledb_context(context)
-        tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
-        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-        cls._set_create_metadata(handle)
-        return cls(
-            handle,
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
+        try:
+            tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
+            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+            cls._set_create_metadata(handle)
+            return cls(
+                handle,
+                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            )
+        except tiledb.TileDBError as tdbe:
+            if is_already_exists_error(tdbe):
+                raise AlreadyExistsError(f"{uri!r} already exists")
+            raise
 
     @classmethod
     def open(

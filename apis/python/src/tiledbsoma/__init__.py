@@ -147,7 +147,7 @@ from ._collection import Collection
 from ._constants import SOMA_JOINID
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
-from ._exception import DoesNotExistError, SOMAError
+from ._exception import AlreadyExistsError, DoesNotExistError, SOMAError
 from ._experiment import Experiment
 from ._factory import open
 from ._general_utilities import (
@@ -171,6 +171,7 @@ from .pytiledbsoma import (
 __version__ = get_implementation_version()
 
 __all__ = [
+    "AlreadyExistsError",
     "AxisColumnNames",
     "AxisQuery",
     "Collection",

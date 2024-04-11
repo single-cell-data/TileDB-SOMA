@@ -16,6 +16,7 @@ from typing_extensions import Self
 import tiledb
 
 from . import _arrow_types, _util
+from ._exception import AlreadyExistsError, is_already_exists_error
 from ._tiledb_array import TileDBArray
 from ._types import OpenTimestamp
 from .options._soma_tiledb_context import (
@@ -91,11 +92,16 @@ class NDArray(TileDBArray, somacore.NDArray):
             context,
             is_sparse=cls.is_sparse,
         )
-        handle = cls._create_internal(uri, schema, context, tiledb_timestamp)
-        return cls(
-            handle,
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
+        try:
+            handle = cls._create_internal(uri, schema, context, tiledb_timestamp)
+            return cls(
+                handle,
+                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            )
+        except tiledb.TileDBError as tdbe:
+            if is_already_exists_error(tdbe):
+                raise AlreadyExistsError(f"{uri!r} already exists")
+            raise
 
     @property
     def shape(self) -> Tuple[int, ...]:
