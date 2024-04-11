@@ -1293,10 +1293,6 @@ def _create_from_matrix(
     logging.log_io(None, f"START  WRITING {uri}")
 
     try:
-        soma_ndarray = cls.open(
-            uri, "w", platform_config=platform_config, context=context
-        )
-    except DoesNotExistError:
         # A SparseNDArray must be appendable in soma.io.
         shape = [None for _ in matrix.shape] if cls.is_sparse else matrix.shape
         soma_ndarray = cls.create(
@@ -1306,9 +1302,12 @@ def _create_from_matrix(
             platform_config=platform_config,
             context=context,
         )
-    else:
+    except AlreadyExistsError:
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{soma_ndarray.uri} already exists")
+        soma_ndarray = cls.open(
+            uri, "w", platform_config=platform_config, context=context
+        )
 
     if ingestion_params.write_schema_no_data:
         logging.log_io(
