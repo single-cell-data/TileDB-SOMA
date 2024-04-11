@@ -2750,8 +2750,6 @@ def _ingest_uns_ndarray(
         logging.log_io(msg, msg)
         return
     try:
-        soma_arr = _factory.open(arr_uri, "w", soma_type=DenseNDArray, context=context)
-    except DoesNotExistError:
         soma_arr = DenseNDArray.create(
             arr_uri,
             type=pa_dtype,
@@ -2759,6 +2757,8 @@ def _ingest_uns_ndarray(
             platform_config=platform_config,
             context=context,
         )
+    except AlreadyExistsError:
+        soma_arr = _factory.open(arr_uri, "w", soma_type=DenseNDArray, context=context)
 
     # If resume mode: don't re-write existing data. This is the user's explicit request
     # that we not re-write things that have already been written.
