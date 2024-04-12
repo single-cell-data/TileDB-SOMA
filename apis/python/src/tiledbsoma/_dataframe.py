@@ -188,6 +188,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 an undefined column name.
             ValueError:
                 If the ``schema`` specifies illegal column names.
+            tiledbsoma.AlreadyExistsError:
+                If the underlying object already exists at the given URI.
             TileDBError:
                 If unable to create the underlying object.
 

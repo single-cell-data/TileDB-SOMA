@@ -117,6 +117,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 the context.
 
         Raises:
+            tiledbsoma.AlreadyExistsError:
+                If the underlying object already exists at the given URI.
             TileDBError:
                 If unable to create the underlying object.
 
