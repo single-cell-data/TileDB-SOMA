@@ -70,12 +70,11 @@ def is_already_exists_error(e: tiledb.TileDBError) -> bool:
     Lifecycle: experimental
 
     Example:
-        XXX EDIT ME
         try:
-            with tiledb.open(uri):
+            tiledb.Array.create(uri, schema, ctx=ctx)
                 ...
         except tiledb.TileDBError as e:
-            if is_does_not_exist_error(e):
+            if is_already_exists_error(e):
                 ...
             raise e
     """
