@@ -169,6 +169,9 @@ from .pytiledbsoma import (
     tiledbsoma_stats_reset,
 )
 
+# Ensure TileDB-Py and libtiledbsoma have matching core versions; if they don't, undefined behavior
+# / segfaults may ensue. Once libtiledbsoma is the only "path to core" (cf. #1632), this can be
+# removed.
 verify_core_versions()
 
 __version__ = get_implementation_version()
