@@ -55,6 +55,36 @@ def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
     return False
 
 
+class AlreadyExistsError(SOMAError):
+    """Raised when attempting to create an already existing SOMA object.
+
+    Lifecycle: experimental
+    """
+
+    pass
+
+
+def is_already_exists_error(e: tiledb.TileDBError) -> bool:
+    """Given a TileDBError, return true if it indicates the object already exists
+
+    Lifecycle: experimental
+
+    Example:
+        try:
+            tiledb.Array.create(uri, schema, ctx=ctx)
+                ...
+        except tiledb.TileDBError as e:
+            if is_already_exists_error(e):
+                ...
+            raise e
+    """
+    stre = str(e)
+    # Local-disk, S3, and TileDB Cloud exceptions all have the substring
+    # "already exists". Here we lower-case the exception message just
+    # in case someone ever uppercases it on the other end.
+    return "already exists" in stre.lower()
+
+
 def is_duplicate_group_key_error(e: tiledb.TileDBError) -> bool:
     """Given a TileDBError, return try if it indicates a duplicate member
     add request in a tiledb.Group.
