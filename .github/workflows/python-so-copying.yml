@@ -139,7 +139,7 @@ jobs:
           ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
 
   macos:
-    runs-on: macos-12
+    runs-on: macos-13
     name: "macos TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
@@ -153,6 +153,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # for setuptools-scm
+      - name: Check if System Integrity Protection (SIP) is enabled
+        run: csrutil status
       - name: Install pre-built libtiledb
         if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
         run: |
