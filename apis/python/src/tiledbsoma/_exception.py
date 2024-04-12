@@ -79,16 +79,10 @@ def is_already_exists_error(e: tiledb.TileDBError) -> bool:
             raise e
     """
     stre = str(e)
-    # Local-disk/S3 does-not-exist exceptions say 'Group does not exist'; TileDB Cloud
-    # does-not-exist exceptions are worded less clearly.
-    if (
-        "lready exists"
-        in stre
-        # XXX
-        # or "Unrecognized array" in stre
-        # or "HTTP code 401" in stre
-        # or "HTTP code 404" in stre
-    ):
+    # Local-disk, S3, and TileDB Cloud exceptions all have the substring
+    # "already exists". Here we lower-case the exception message just
+    # in case someone ever uppercases it on the other end.
+    if "already exists" in stre.lower():
         return True
 
     return False
