@@ -82,10 +82,7 @@ def is_already_exists_error(e: tiledb.TileDBError) -> bool:
     # Local-disk, S3, and TileDB Cloud exceptions all have the substring
     # "already exists". Here we lower-case the exception message just
     # in case someone ever uppercases it on the other end.
-    if "already exists" in stre.lower():
-        return True
-
-    return False
+    return "already exists" in stre.lower()
 
 
 def is_duplicate_group_key_error(e: tiledb.TileDBError) -> bool:
