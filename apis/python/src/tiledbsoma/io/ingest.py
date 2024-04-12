@@ -1204,7 +1204,7 @@ def _write_dataframe_impl(
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{soma_df.uri} already exists")
 
-        soma_df = _factory.open(df_uri, "w", soma_type=DataFrame, context=context)
+        soma_df = DataFrame.open(df_uri, "w", context=context)
 
         if ingestion_params.skip_existing_nonempty_domain:
             storage_ned = _read_nonempty_domain(soma_df)
@@ -2757,7 +2757,7 @@ def _ingest_uns_ndarray(
             context=context,
         )
     except AlreadyExistsError:
-        soma_arr = _factory.open(arr_uri, "w", soma_type=DenseNDArray, context=context)
+        soma_arr = DenseNDArray.open(arr_uri, "w", context=context)
 
     # If resume mode: don't re-write existing data. This is the user's explicit request
     # that we not re-write things that have already been written.
