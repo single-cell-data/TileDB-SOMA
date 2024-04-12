@@ -43,7 +43,7 @@ using namespace tiledb;
 
 void SOMAMeasurement::create(
     std::string_view uri,
-    std::shared_ptr<ArrowSchema> schema,
+    std::unique_ptr<ArrowSchema> schema,
     ColumnIndexInfo index_columns,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<PlatformConfig> platform_config,
@@ -53,7 +53,7 @@ void SOMAMeasurement::create(
     SOMAGroup::create(ctx, exp_uri, "SOMAMeasurement", timestamp);
     SOMADataFrame::create(
         exp_uri + "/var",
-        schema,
+        std::move(schema),
         index_columns,
         ctx,
         platform_config,

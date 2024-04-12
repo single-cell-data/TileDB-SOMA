@@ -51,9 +51,9 @@ ArraySchema create_schema(Context& ctx, bool allow_duplicates) {
     return schema;
 }
 
-std::pair<std::shared_ptr<ArrowSchema>, ColumnIndexInfo> create_arrow_schema() {
+std::pair<std::unique_ptr<ArrowSchema>, ColumnIndexInfo> create_arrow_schema() {
     // Create ArrowSchema
-    auto arrow_schema = std::make_shared<ArrowSchema>();
+    auto arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = "+s";
     arrow_schema->n_children = 2;
     arrow_schema->dictionary = nullptr;
@@ -128,6 +128,6 @@ std::pair<std::shared_ptr<ArrowSchema>, ColumnIndexInfo> create_arrow_schema() {
     ColumnIndexInfo index_columns_info = std::tuple(
         index_column_names, domains, tiles);
 
-    return std::pair(arrow_schema, index_columns_info);
+    return std::pair(std::move(arrow_schema), index_columns_info);
 }
 }  // namespace helper

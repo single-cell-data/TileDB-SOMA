@@ -223,7 +223,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
 
 ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
-    std::shared_ptr<ArrowSchema> arrow_schema,
+    std::unique_ptr<ArrowSchema> arrow_schema,
     ColumnIndexInfo index_column_info,
     std::optional<PlatformConfig> platform_config) {
     auto [index_column_names, domains, extents] = index_column_info;

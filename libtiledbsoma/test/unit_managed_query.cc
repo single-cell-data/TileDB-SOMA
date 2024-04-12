@@ -81,7 +81,7 @@ auto create_array(const std::string& uri, Context& ctx) {
     schema.check();
 
     // Create array and open for writing
-    Array::create(uri, schema);
+    Array::create(uri, std::move(schema));
     Array array(ctx, uri, TILEDB_WRITE);
 
     std::vector<std::string> d0 = {

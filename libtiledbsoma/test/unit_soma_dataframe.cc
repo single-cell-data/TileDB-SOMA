@@ -37,7 +37,7 @@ TEST_CASE("SOMADataFrame: basic") {
     std::string uri = "mem://unit-test-dataframe-basic";
 
     auto [schema, index_columns] = helper::create_arrow_schema();
-    SOMADataFrame::create(uri, schema, index_columns, ctx);
+    SOMADataFrame::create(uri, std::move(schema), index_columns, ctx);
 
     auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_dataframe->uri() == uri);
@@ -85,7 +85,12 @@ TEST_CASE("SOMADataFrame: metadata") {
     std::string uri = "mem://unit-test-collection";
     auto [schema, index_columns] = helper::create_arrow_schema();
     SOMADataFrame::create(
-        uri, schema, index_columns, ctx, std::nullopt, TimestampRange(0, 2));
+        uri,
+        std::move(schema),
+        index_columns,
+        ctx,
+        std::nullopt,
+        TimestampRange(0, 2));
 
     auto soma_dataframe = SOMADataFrame::open(
         uri,

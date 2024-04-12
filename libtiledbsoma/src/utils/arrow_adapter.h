@@ -88,7 +88,7 @@ class ArrowAdapter {
      */
     static ArraySchema tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
-        std::shared_ptr<ArrowSchema> arrow_schema,
+        std::unique_ptr<ArrowSchema> arrow_schema,
         ColumnIndexInfo index_column_info,
         std::optional<PlatformConfig> platform_config);
 
