@@ -73,6 +73,7 @@ std::pair<std::unique_ptr<ArrowSchema>, ColumnIndexInfo> create_arrow_schema() {
     attr->format = "l";
     attr->name = "a0";
     attr->n_children = 0;
+    attr->flags = 0;
     attr->dictionary = nullptr;
     attr->release = &ArrowAdapter::release_schema;
 
