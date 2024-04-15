@@ -151,7 +151,10 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
 
     // Read from TileDB Array to get expected data
     Array tiledb_array(
-        *ctx->tiledb_ctx(), uri, TILEDB_READ, timestamp + num_fragments - 1);
+        *ctx->tiledb_ctx(),
+        uri,
+        TILEDB_READ,
+        TemporalPolicy(TimeTravel, timestamp + num_fragments - 1));
     tiledb_array.reopen();
 
     std::vector<int64_t> expected_d0(num_cells_per_fragment * num_fragments);
