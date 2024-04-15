@@ -198,7 +198,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
             auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
             dict->format = strdup(
                 ArrowAdapter::to_arrow_format(enmr.type(), false).data());
-            if (enmr.type() == TILEDB_STRING_ASCII or
+            if (enmr.type() == TILEDB_STRING_ASCII ||
                 enmr.type() == TILEDB_CHAR) {
                 dict->format = strdup("z");
             } else {
@@ -452,8 +452,8 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         // future refactor as ColumnBuffer::get_enumeration_info
         // returns std::optional where std::nullopt indicates the
         // column does not contain enumerated values.
-        if (enmr->type() == TILEDB_STRING_ASCII or
-            enmr->type() == TILEDB_STRING_UTF8 or enmr->type() == TILEDB_CHAR) {
+        if (enmr->type() == TILEDB_STRING_ASCII ||
+            enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR) {
             auto dict_vec = enmr->as_vector<std::string>();
             column->convert_enumeration();
             dict_arr->buffers[1] = column->enum_offsets().data();

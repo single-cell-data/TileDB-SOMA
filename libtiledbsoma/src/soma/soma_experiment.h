@@ -97,8 +97,6 @@ class SOMAExperiment : public SOMACollection {
     SOMAExperiment(SOMAExperiment&&) = default;
     ~SOMAExperiment() = default;
 
-    using SOMACollection::open;
-
    private:
     //===================================================================
     //= private non-static

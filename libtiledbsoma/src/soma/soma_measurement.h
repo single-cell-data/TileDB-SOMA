@@ -97,8 +97,6 @@ class SOMAMeasurement : public SOMACollection {
     SOMAMeasurement(SOMAMeasurement&&) = default;
     ~SOMAMeasurement() = default;
 
-    using SOMACollection::open;
-
    private:
     //===================================================================
     //= private non-static
