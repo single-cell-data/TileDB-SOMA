@@ -314,7 +314,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     soma_experiment->close();
 
     // Read metadata
-    soma_experiment->open(OpenMode::read, TimestampRange(0, 2));
+    soma_experiment = SOMAExperiment::open(
+        uri, OpenMode::read, ctx, TimestampRange(0, 2));
     REQUIRE(soma_experiment->metadata_num() == 3);
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
     REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
@@ -326,7 +327,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     soma_experiment->close();
 
     // md should not be available at (2, 2)
-    soma_experiment->open(OpenMode::read, TimestampRange(2, 2));
+    soma_experiment = SOMAExperiment::open(
+        uri, OpenMode::read, ctx, TimestampRange(2, 2));
     REQUIRE(soma_experiment->metadata_num() == 2);
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
     REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
@@ -334,7 +336,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     soma_experiment->close();
 
     // Metadata should also be retrievable in write mode
-    soma_experiment->open(OpenMode::write, TimestampRange(0, 2));
+    soma_experiment = SOMAExperiment::open(
+        uri, OpenMode::write, ctx, TimestampRange(0, 2));
     REQUIRE(soma_experiment->metadata_num() == 3);
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
     REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
@@ -349,7 +352,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     soma_experiment->close();
 
     // Confirm delete in read mode
-    soma_experiment->open(OpenMode::read, TimestampRange(0, 2));
+    soma_experiment = SOMAExperiment::open(
+        uri, OpenMode::read, ctx, TimestampRange(0, 2));
     REQUIRE(!soma_experiment->has_metadata("md"));
     REQUIRE(soma_experiment->metadata_num() == 2);
 }
@@ -367,7 +371,8 @@ TEST_CASE("SOMAMeasurement: metadata") {
     soma_measurement->close();
 
     // Read metadata
-    soma_measurement->open(OpenMode::read, TimestampRange(0, 2));
+    soma_measurement = SOMAMeasurement::open(
+        uri, OpenMode::read, ctx, TimestampRange(0, 2));
     REQUIRE(soma_measurement->metadata_num() == 3);
     REQUIRE(soma_measurement->has_metadata("soma_object_type"));
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
@@ -379,7 +384,8 @@ TEST_CASE("SOMAMeasurement: metadata") {
     soma_measurement->close();
 
     // md should not be available at (2, 2)
-    soma_measurement->open(OpenMode::read, TimestampRange(2, 2));
+    soma_measurement = SOMAMeasurement::open(
+        uri, OpenMode::read, ctx, TimestampRange(2, 2));
     REQUIRE(soma_measurement->metadata_num() == 2);
     REQUIRE(soma_measurement->has_metadata("soma_object_type"));
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
@@ -387,7 +393,8 @@ TEST_CASE("SOMAMeasurement: metadata") {
     soma_measurement->close();
 
     // Metadata should also be retrievable in write mode
-    soma_measurement->open(OpenMode::write, TimestampRange(0, 2));
+    soma_measurement = SOMAMeasurement::open(
+        uri, OpenMode::write, ctx, TimestampRange(0, 2));
     REQUIRE(soma_measurement->metadata_num() == 3);
     REQUIRE(soma_measurement->has_metadata("soma_object_type"));
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
@@ -402,7 +409,8 @@ TEST_CASE("SOMAMeasurement: metadata") {
     soma_measurement->close();
 
     // Confirm delete in read mode
-    soma_measurement->open(OpenMode::read, TimestampRange(0, 2));
+    soma_measurement = SOMAMeasurement::open(
+        uri, OpenMode::read, ctx, TimestampRange(0, 2));
     REQUIRE(!soma_measurement->has_metadata("md"));
     REQUIRE(soma_measurement->metadata_num() == 2);
 }
