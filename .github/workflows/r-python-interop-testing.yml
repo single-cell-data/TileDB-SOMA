@@ -41,7 +41,7 @@ jobs:
       - name: MkVars
         run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
-      # WIP (NOT READY FOR REVIEW) -- LOOKING FOR GREEN CI
+      # NOT SURE THIS IS CORRECT YET -- LOOKING FOR GREEN CI
       #- name: Install 0.25 build of tiledb-r with core 2.21
       #  run: |
       #    cd apis/r
@@ -104,7 +104,7 @@ jobs:
       - name: Update Packages
         run: Rscript -e 'update.packages(ask=FALSE)'
 
-      # WIP (NOT READY FOR REVIEW) -- LOOKING FOR GREEN CI
+      # NOT SURE THIS IS CORRECT YET -- LOOKING FOR GREEN CI
       #- name: Re-install 0.25 build of tiledb-r with core 2.21
       #  run: |
       #    cd apis/r
