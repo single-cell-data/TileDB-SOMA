@@ -41,10 +41,20 @@ jobs:
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
 
+      - name: Show matrix OS
+        run: echo "matrix.os:" ${{ matrix.os }}
+
+      - name: Linux CPU info
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: cat /proc/cpuinfo
+
+      - name: MacOS CPU info
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: sysctl -a | grep cpu
+
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
 
-        
       # Please see https://github.com/single-cell-data/TileDB-SOMA/wiki/Branches-and-releases which
       # is crucial for anyone doing releases of TileDB-SOMA.
       #
@@ -58,8 +68,6 @@ jobs:
       # Do not remove these comments until such time as we have eliminated our dependency on
       # the TileDB-R package.
 
-
-      
       - name: Install Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 

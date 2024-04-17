@@ -35,8 +35,17 @@ jobs:
       - name: Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 
+      - name: Show matrix OS
+        run: echo "matrix.os:" ${{ matrix.os }}
 
-        
+      - name: Linux CPU info
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: cat /proc/cpuinfo
+
+      - name: MacOS CPU info
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: sysctl -a | grep cpu
+
       # Please see https://github.com/single-cell-data/TileDB-SOMA/wiki/Branches-and-releases which
       # is crucial for anyone doing releases of TileDB-SOMA.
       #
@@ -49,7 +58,6 @@ jobs:
       #
       # Do not remove these comments until such time as we have eliminated our dependency on
       # the TileDB-R package.
-
 
       # -- Linux case of refining TileDB-R and TileDB-SOMA interdependence
       # We uninstall the bspm-installed tiledb which came from CRAN and is 'too new' (and as bspm /
@@ -69,8 +77,6 @@ jobs:
         if: ${{ matrix.os == 'macOS-latest' }}
         run: Rscript -e 'remove.packages("tiledb"); install.packages("tiledb", repos="https://tiledb-inc.r-universe.dev")'
 
-
-        
       - name: Build and install libtiledbsoma
         run: sudo scripts/bld --prefix=/usr/local && sudo ldconfig
 
