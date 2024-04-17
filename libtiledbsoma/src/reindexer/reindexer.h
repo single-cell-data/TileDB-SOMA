@@ -34,7 +34,6 @@
 #define TILEDBSOMA_REINDEXER_H
 
 #include <assert.h>
-#include <unistd.h>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -64,7 +63,7 @@ class IntIndexer {
      * @param size // Number of key array
      * @return and array of looked up value (same size as keys)
      */
-    void lookup(const int64_t* keys, int64_t* results, int size);
+    void lookup(const int64_t* keys, int64_t* results, size_t size);
     void lookup(
         const std::vector<int64_t>& keys, std::vector<int64_t>& results) {
         if (keys.size() != results.size())
@@ -89,7 +88,7 @@ class IntIndexer {
     /*
      * Number of elements in the map set by map_locations
      */
-    int map_size_ = 0;
+    size_t map_size_ = 0;
 };
 
 }  // namespace tiledbsoma

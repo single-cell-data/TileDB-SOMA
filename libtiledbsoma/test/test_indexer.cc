@@ -53,7 +53,8 @@ KHASH_MAP_INIT_INT64(m64, int64_t)
 // exception.
 std::vector<bool> uniqueness = {false, false, true, true, true};
 
-bool run_test(int id, std::vector<int64_t> keys, std::vector<int64_t> lookups) {
+bool run_test(
+    size_t id, std::vector<int64_t> keys, std::vector<int64_t> lookups) {
     try {
         std::vector<int64_t> indexer_results;
         indexer_results.resize(lookups.size());

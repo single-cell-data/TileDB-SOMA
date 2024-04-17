@@ -119,7 +119,7 @@ class SOMASparseNDArray : public SOMAArray {
               mode,
               uri,
               ctx,
-              std::string(std::filesystem::path(uri).filename()),  // array name
+              std::filesystem::path(uri).filename().string(),  // array name
               column_names,
               "auto",  // batch_size
               result_order,

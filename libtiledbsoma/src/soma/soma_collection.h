@@ -104,7 +104,7 @@ class SOMACollection : public SOMAGroup {
               mode,
               uri,
               ctx,
-              std::string(std::filesystem::path(uri).filename()),  // group name
+              std::filesystem::path(uri).filename().string(),  // group name
               timestamp){};
 
     SOMACollection(const SOMAGroup& other)
