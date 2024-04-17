@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2023 TileDB, Inc.
+ * @copyright Copyright (c) 2023-2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,9 +53,9 @@ class SOMADenseNDArray : public SOMAArray {
      * @brief Create a SOMADenseNDArray object at the given URI.
      *
      * @param uri URI to create the SOMADenseNDArray
-     * @param schema TileDB ArraySchema
-     * @param platform_config Optional config parameter dictionary
-     * @return std::shared_ptr<SOMADenseNDArray> opened in read mode
+     * @param schema Arrow schema
+     * @param ctx SOMAContext
+     * @param timestamp Optional the timestamp range to write SOMA metadata info
      */
     static void create(
         std::string_view uri,
@@ -66,18 +66,17 @@ class SOMADenseNDArray : public SOMAArray {
     /**
      * @brief Open and return a SOMADenseNDArray object at the given URI.
      *
-     * @param mode read or write
      * @param uri URI to create the SOMADenseNDArray
+     * @param mode read or write
+     * @param ctx SOMAContext
      * @param column_names A list of column names to use as user-defined index
      * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
      * exist in the schema, and at least one index column name is required.
-     * @param platform_config Platform-specific options used to create this
-     * SOMADenseNDArray
-     * @param timestamp If specified, overrides the default timestamp used to
-     * open this object. If unset, uses the timestamp provided by the context.
      * @param result_order Read result order: automatic (default), rowmajor, or
      * colmajor
-     * @return std::shared_ptr<SOMADenseNDArray> SOMADenseNDArray
+     * @param timestamp If specified, overrides the default timestamp used to
+     * open this object. If unset, uses the timestamp provided by the context.
+     * @return std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray
      */
     static std::unique_ptr<SOMADenseNDArray> open(
         std::string_view uri,
@@ -104,6 +103,7 @@ class SOMADenseNDArray : public SOMAArray {
      * @param mode read or write
      * @param uri URI of the array
      * @param ctx TileDB context
+     * @param column_names Columns to read
      * @param result_order Read result order: automatic (default), rowmajor, or
      * colmajor
      * @param timestamp Timestamp

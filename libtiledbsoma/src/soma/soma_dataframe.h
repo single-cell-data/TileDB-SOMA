@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2023 TileDB, Inc.
+ * @copyright Copyright (c) 2023-2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,8 +53,12 @@ class SOMADataFrame : public SOMAArray {
      * @brief Create a SOMADataFrame object at the given URI.
      *
      * @param uri URI to create the SOMADataFrame
-     * @param schema TileDB ArraySchema
+     * @param schema Arrow schema
+     * @param index_columns The index column names with associated domains 
+     * and tile extents per dimension
+     * @param ctx SOMAContext
      * @param platform_config Optional config parameter dictionary
+     * @param timestamp Optional the timestamp range to write SOMA metadata info
      */
     static void create(
         std::string_view uri,
@@ -67,18 +71,17 @@ class SOMADataFrame : public SOMAArray {
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.
      *
-     * @param mode read or write
      * @param uri URI to create the SOMADataFrame
+     * @param mode read or write
+     * @param ctx SOMAContext
      * @param column_names A list of column names to use as user-defined index
      * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
      * exist in the schema, and at least one index column name is required.
-     * @param platform_config Platform-specific options used to create this
-     * DataFrame
      * @param result_order Read result order: automatic (default), rowmajor, or
      * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::shared_ptr<SOMADataFrame> SOMADataFrame
+     * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
      */
     static std::unique_ptr<SOMADataFrame> open(
         std::string_view uri,
@@ -142,7 +145,7 @@ class SOMADataFrame : public SOMAArray {
     /**
      * Return the data schema, in the form of a ArrowSchema.
      *
-     * @return std::shared_ptr<ArrowSchema>
+     * @return std::unique_ptr<ArrowSchema>
      */
     std::unique_ptr<ArrowSchema> schema() const;
 
