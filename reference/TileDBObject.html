@@ -12,7 +12,7 @@ TileDBGroup classes. (lifecycle: experimental)"><!-- mathjax --><script src="htt
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.10.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,6 +91,7 @@ TileDBGroup classes. (lifecycle: experimental)</p>
 <li><p><a href="#method-TileDBObject-class"><code>TileDBObject$class()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-is_open"><code>TileDBObject$is_open()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-mode"><code>TileDBObject$mode()</code></a></p></li>
+<li><p><a href="#method-TileDBObject-reopen"><code>TileDBObject$reopen()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-print"><code>TileDBObject$print()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-exists"><code>TileDBObject$exists()</code></a></p></li>
 <li><p><a href="#method-TileDBObject-clone"><code>TileDBObject$clone()</code></a></p></li>
@@ -166,10 +167,32 @@ as <code>new()</code> is considered internal and should not be called directly.<
 otherwise returns the mode (eg. “<code>READ</code>”) of the object</p>
 </div>
 
+</div><p></p><hr><a id="method-TileDBObject-reopen"></a><div class="section">
+<h3 id="method-reopen-">Method <code>reopen()</code><a class="anchor" aria-label="anchor" href="#method-reopen-"></a></h3>
+<p>Close and reopen the TileDB object in a new mode</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">reopen</span><span class="op">(</span>mode <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>mode</code></dt>
+<dd><p>New mode to open the object in; choose from:</p><ul><li><p>“<code>READ</code>”</p></li>
+<li><p>“<code>WRITE</code>”</p></li>
+</ul><p>By default, reopens in the opposite mode of the current mode</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p>Invisibly returns <code>self</code></p>
+</div>
+
 </div><p></p><hr><a id="method-TileDBObject-print"></a><div class="section">
 <h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
 <p>Print-friendly representation of the object.</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -177,24 +200,24 @@ otherwise returns the mode (eg. “<code>READ</code>”) of the object</p>
 </div><p></p><hr><a id="method-TileDBObject-exists"></a><div class="section">
 <h3 id="method-exists-">Method <code><a href="https://rdrr.io/r/base/exists.html" class="external-link">exists()</a></code><a class="anchor" aria-label="anchor" href="#method-exists-"></a></h3>
 <p>Check if the object exists. (lifecycle: experimental)</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">exists</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
 <p><code>TRUE`` if the object exists, </code>FALSE` otherwise.</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBObject-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBObject</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

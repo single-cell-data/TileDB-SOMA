@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.9.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.10.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,48 +63,34 @@
 
 
     <div class="section level2">
+    <h2 id="super-class">Super class<a class="anchor" aria-label="anchor" href="#super-class"></a></h2>
+    <p><code><a href="SOMASparseNDArrayReadBase.html">tiledbsoma::SOMASparseNDArrayReadBase</a></code> -&gt; <code>SOMASparseNDArrayRead</code></p>
+    </div>
+    <div class="section level2">
     <h2 id="methods">Methods<a class="anchor" aria-label="anchor" href="#methods"></a></h2>
     
 <div class="section">
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 
-<ul><li><p><a href="#method-SOMASparseNDArrayRead-new"><code>SOMASparseNDArrayRead$new()</code></a></p></li>
-<li><p><a href="#method-SOMASparseNDArrayRead-sparse_matrix"><code>SOMASparseNDArrayRead$sparse_matrix()</code></a></p></li>
+<ul><li><p><a href="#method-SOMASparseNDArrayRead-sparse_matrix"><code>SOMASparseNDArrayRead$sparse_matrix()</code></a></p></li>
 <li><p><a href="#method-SOMASparseNDArrayRead-tables"><code>SOMASparseNDArrayRead$tables()</code></a></p></li>
-<li><p><a href="#method-SOMASparseNDArrayRead-clone"><code>SOMASparseNDArrayRead$clone()</code></a></p></li>
-</ul></div><p></p><hr><a id="method-SOMASparseNDArrayRead-new"></a><div class="section">
-<h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
-<p>Create (lifecycle: experimental)</p><div class="section">
-<h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/SOMASparseNDArrayRead.html">SOMASparseNDArrayRead</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">sr</span>, <span class="va">shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>sr</code></dt>
-<dd><p>soma read pointer</p></dd>
-
-
-<dt><code>shape</code></dt>
-<dd><p>Shape of the full matrix</p></dd>
-
-
-</dl><p></p></div>
-</div>
-
-</div><p></p><hr><a id="method-SOMASparseNDArrayRead-sparse_matrix"></a><div class="section">
+<li><p><a href="#method-SOMASparseNDArrayRead-blockwise"><code>SOMASparseNDArrayRead$blockwise()</code></a></p></li>
+</ul></div><p><details open><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMASparseNDArrayReadBase" data-id="initialize"><a href="SOMASparseNDArrayReadBase.html#method-initialize"><code>tiledbsoma::SOMASparseNDArrayReadBase$initialize()</code></a></span></li>
+</ul></details></p><hr><a id="method-SOMASparseNDArrayRead-sparse_matrix"></a><div class="section">
 <h3 id="method-sparse-matrix-">Method <code>sparse_matrix()</code><a class="anchor" aria-label="anchor" href="#method-sparse-matrix-"></a></h3>
 <p>Read as a sparse matrix (lifecycle: experimental). Returns
-an iterator of Matrix::<a href="https://rdrr.io/pkg/Matrix/man/dgTMatrix-class.html" class="external-link">dgTMatrix-class</a> or <a href="matrixZeroBasedView.html">matrixZeroBasedView</a> of it.</p><div class="section">
-<h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
+an iterator of Matrix::<a href="https://rdrr.io/pkg/Matrix/man/dgTMatrix-class.html" class="external-link">dgTMatrix-class</a> or
+<a href="matrixZeroBasedView.html">matrixZeroBasedView</a> of it.</p><div class="section">
+<h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArrayRead</span><span class="op">$</span><span class="fu">sparse_matrix</span><span class="op">(</span>zero_based <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>zero_based</code></dt>
-<dd><p>Logical, if <code>TRUE</code> returns iterator of <a href="matrixZeroBasedView.html">matrixZeroBasedView</a>
-if <code>FALSE</code> returns iterator of Matrix::<a href="https://rdrr.io/pkg/Matrix/man/dgTMatrix-class.html" class="external-link">dgTMatrix-class</a>.</p></dd>
+<dd><p>Logical, if <code>TRUE</code> returns iterator of
+<a href="matrixZeroBasedView.html">matrixZeroBasedView</a> if <code>FALSE</code> returns iterator of
+Matrix::<a href="https://rdrr.io/pkg/Matrix/man/dgTMatrix-class.html" class="external-link">dgTMatrix-class</a>.</p></dd>
 
 
 </dl><p></p></div>
@@ -118,7 +104,7 @@ if <code>FALSE</code> returns iterator of Matrix::<a href="https://rdrr.io/pkg/M
 <h3 id="method-tables-">Method <code>tables()</code><a class="anchor" aria-label="anchor" href="#method-tables-"></a></h3>
 <p>Read as a arrow::<a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">Table</a> (lifecycle: experimental).
 Returns an iterator of arrow::<a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">Table</a>.</p><div class="section">
-<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArrayRead</span><span class="op">$</span><span class="fu">tables</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -127,20 +113,42 @@ Returns an iterator of arrow::<a href="https://arrow.apache.org/docs/r/reference
 <p><a href="TableReadIter.html">TableReadIter</a></p>
 </div>
 
-</div><p></p><hr><a id="method-SOMASparseNDArrayRead-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
-<p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArrayRead</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><hr><a id="method-SOMASparseNDArrayRead-blockwise"></a><div class="section">
+<h3 id="method-blockwise-">Method <code>blockwise()</code><a class="anchor" aria-label="anchor" href="#method-blockwise-"></a></h3>
+<p>Read in a blockwise fashion</p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArrayRead</span><span class="op">$</span><span class="fu">blockwise</span><span class="op">(</span></span>
+<span>  <span class="va">axis</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reindex_disable_on_axis <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>deep</code></dt>
-<dd><p>Whether to make a deep clone.</p></dd>
+<h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>axis</code></dt>
+<dd><p>Axis to iterate over in a blockwise manner</p></dd>
+
+
+<dt><code>...</code></dt>
+<dd><p>Ignored</p></dd>
+
+
+<dt><code>size</code></dt>
+<dd><p>The size of each blockwise chunk to generate</p></dd>
+
+
+<dt><code>reindex_disable_on_axis</code></dt>
+<dd><p>Additional axes that will not be re-indexed;
+currently not yet implemented</p></dd>
 
 
 </dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p>A <code><a href="SOMASparseNDArrayBlockwiseRead.html">SOMASparseNDArrayBlockwiseRead</a></code> iterated reader</p>
 </div>
 
 </div>

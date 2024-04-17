@@ -31,7 +31,19 @@
     <loc>/news/index.html</loc>
   </url>
   <url>
+    <loc>/reference/BlockwiseReadIterBase.html</loc>
+  </url>
+  <url>
+    <loc>/reference/BlockwiseSparseReadIter.html</loc>
+  </url>
+  <url>
+    <loc>/reference/BlockwiseTableReadIter.html</loc>
+  </url>
+  <url>
     <loc>/reference/ConfigList.html</loc>
+  </url>
+  <url>
+    <loc>/reference/CoordsStrider.html</loc>
   </url>
   <url>
     <loc>/reference/EphemeralCollection.html</loc>
@@ -130,6 +142,9 @@
     <loc>/reference/SOMASparseNDArray.html</loc>
   </url>
   <url>
+    <loc>/reference/SOMASparseNDArrayBlockwiseRead.html</loc>
+  </url>
+  <url>
     <loc>/reference/SOMASparseNDArrayCreate.html</loc>
   </url>
   <url>
@@ -137,6 +152,9 @@
   </url>
   <url>
     <loc>/reference/SOMASparseNDArrayRead.html</loc>
+  </url>
+  <url>
+    <loc>/reference/SOMASparseNDArrayReadBase.html</loc>
   </url>
   <url>
     <loc>/reference/SOMATileDBContext.html</loc>
