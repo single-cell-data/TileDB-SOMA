@@ -54,7 +54,7 @@ class SOMADataFrame : public SOMAArray {
      *
      * @param uri URI to create the SOMADataFrame
      * @param schema Arrow schema
-     * @param index_columns The index column names with associated domains 
+     * @param index_columns The index column names with associated domains
      * and tile extents per dimension
      * @param ctx SOMAContext
      * @param platform_config Optional config parameter dictionary
