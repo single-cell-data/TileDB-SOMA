@@ -32,12 +32,12 @@ struct ArrowBuffer {
 };
 
 using ArrowTable =
-    std::pair<std::shared_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>;
+    std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>;
 
 using ColumnIndexInfo = std::tuple<
     std::vector<std::string>,     // name of column
-    std::shared_ptr<ArrowArray>,  // domain
-    std::shared_ptr<ArrowArray>   // tile extent
+    std::unique_ptr<ArrowArray>,  // domain
+    std::unique_ptr<ArrowArray>   // tile extent
     >;
 
 class PlatformConfig {
