@@ -111,14 +111,6 @@ jobs:
       - name: Update Packages
         run: Rscript -e 'update.packages(ask=FALSE)'
 
-      # NOT SURE THIS IS CORRECT YET -- LOOKING FOR GREEN CI
-      #- name: Re-install 0.25 build of tiledb-r with core 2.21
-      #  run: |
-      #    cd apis/r
-      #    wget https://github.com/TileDB-Inc/TileDB-R/archive/refs/tags/0.25.0.tar.gz
-      #    Rscript -e 'remotes::install_deps("0.25.0.tar.gz")'
-      #    R CMD INSTALL 0.25.0.tar.gz    # as 0.25.0 is needed by SOMA 1.9
-
       - name: Show package versions
         run: |
           python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
