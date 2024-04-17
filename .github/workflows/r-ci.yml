@@ -36,31 +36,15 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Show matrix OS
-        run: echo "matrix.os:" ${{ matrix.os }}
-
-      - name: Linux CPU info
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: cat /proc/cpuinfo
-
-      - name: MacOS CPU info
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: sysctl -a | grep cpu
+      - uses: actions/checkout@v4
 
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
 
-      - name: Set pkgType to binary (macOS)
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: cat("\noptions(pkgType = 'binary')\n", file = "~/.Rprofile", append = TRUE)
-        shell: Rscript {0}
-
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
 
-
+        
       # Please see https://github.com/single-cell-data/TileDB-SOMA/wiki/Branches-and-releases which
       # is crucial for anyone doing releases of TileDB-SOMA.
       #
@@ -74,64 +58,28 @@ jobs:
       # Do not remove these comments until such time as we have eliminated our dependency on
       # the TileDB-R package.
 
-      - name: Install r-universe build of tiledb-r (macOS)
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://tiledb-inc.r-universe.dev', 'https://cloud.r-project.org'))"
 
-      - name: Install r-universe build of tiledb-r (linux)
-        if: ${{ matrix.os != 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://tiledb-inc.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
-
-      - name: Dependencies
+      
+      - name: Install Dependencies
         run: cd apis/r && tools/r-ci.sh install_all
 
-      - name: Install dataset packages from source (macOS)
+      # -- Linux case of refining TileDB-R and TileDB-SOMA interdependence
+      # We uninstall the bspm-installed tiledb which came from CRAN and is 'too new' (and as bspm /
+      # r2u give us system binaries we use apt to uninstall) 
+      # We then take advantage of the Ubuntu binary at the r-universe which requires use of a
+      # different repos path (as documented for r-universe) 
+      - name: Install matching r-universe build of tiledb-r (Linux)
+        if: ${{ matrix.os != 'macOS-latest' }}
+        run: |
+          sudo apt purge r-cran-tiledb            
+          Rscript -e 'bspm::disable(); install.packages("tiledb", repos="https://tiledb-inc.r-universe.dev/bin/linux/jammy/4.3")'
+
+      # -- macOS case of refining TileDB-R and TileDB-SOMA interdependence
+      # We uninstall the tiledb which came from CRAN 
+      # We then install it from the r-universe containing the matching build
+      - name: Install matching r-universe build of tiledb-r (macOS)
         if: ${{ matrix.os == 'macOS-latest' }}
-        run: cd apis/r && _CI_PKG_TYPE_=both _CI_USE_BIOC_=true Rscript tools/install_missing_deps.R
-
-      - name: CMake
-        uses: lukka/get-cmake@latest
-
-      #- name: MkVars
-      #  run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
-
-      #- name: Build and install libtiledbsoma
-      #  run: sudo scripts/bld --prefix=/usr/local
-
-      #- name: Call ldconfig
-      #  if: ${{ matrix.os == 'ubuntu-latest' }}
-      #  run: sudo ldconfig
-      #
-      - name: Update Packages
-        run: Rscript -e 'update.packages(ask=FALSE)'
-
-      # NOT SURE THIS IS CORRECT YET -- LOOKING FOR GREEN CI
-      #- name: Install 0.25 build of tiledb-r with core 2.21
-      #  run: |
-      #    cd apis/r
-      #    wget https://github.com/TileDB-Inc/TileDB-R/archive/refs/tags/0.25.0.tar.gz
-      #    Rscript -e 'remotes::install_deps("0.25.0.tar.gz")'
-      #    R CMD INSTALL 0.25.0.tar.gz    # as 0.25.0 is needed by TileDB-SOMA 1.9
-
-      # NOT SURE THIS IS CORRECT YET -- LOOKING FOR GREEN CI
-      #- name: Re-install 0.25 build of tiledb-r with core 2.21
-      #  run: |
-      #    cd apis/r
-      #    wget https://github.com/TileDB-Inc/TileDB-R/archive/refs/tags/0.25.0.tar.gz
-      #    Rscript -e 'remotes::install_deps("0.25.0.tar.gz")'
-      #    R CMD INSTALL 0.25.0.tar.gz    # as 0.25.0 is needed by SOMA 1.9
-
-      # - name: Build Package
-      #   run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
-
-      # - name: Install Package
-      #   run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
-
-      # - name: Diagnostics
-      #   run: Rscript -e 'print(Sys.info())'
-
-      # - name: Downgrade TileDB-R if needed
-      #   run: cd apis/r && Rscript tools/controlled_downgrade.R
+        run: Rscript -e 'remove.packages("tiledb"); install.packages("tiledb", repos="https://tiledb-inc.r-universe.dev")'
 
       - name: Test
         if: ${{ matrix.covr == 'no' }}
