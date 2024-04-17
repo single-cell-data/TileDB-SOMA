@@ -32,7 +32,7 @@ struct ArrowBuffer {
 };
 
 using ArrowTable =
-    std::pair<std::shared_ptr<ArrowArray>, std::shared_ptr<ArrowSchema>>;
+    std::pair<std::shared_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>;
 
 using ColumnIndexInfo = std::tuple<
     std::vector<std::string>,     // name of column

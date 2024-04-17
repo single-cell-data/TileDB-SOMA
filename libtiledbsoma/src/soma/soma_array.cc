@@ -502,10 +502,6 @@ void SOMAArray::set_array_data(
     }
 };
 
-void SOMAArray::clear_column_data() {
-    array_buffer_ = nullptr;
-}
-
 void SOMAArray::write() {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
@@ -513,7 +509,7 @@ void SOMAArray::write() {
     mq_->submit_write();
 
     mq_->reset();
-    clear_column_data();
+    array_buffer_ = nullptr;
 }
 
 uint64_t SOMAArray::nnz() {

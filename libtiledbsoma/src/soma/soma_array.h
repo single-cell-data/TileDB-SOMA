@@ -411,12 +411,16 @@ class SOMAArray : public SOMAObject {
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
-    Enumeration extend_enumeration(
-        std::string_view name,
-        uint64_t num_elems,
-        const void* data,
-        uint64_t* offsets);
-
+    /**
+     * @brief Set the write buffers for a single column.
+     *
+     * @param name Name of the column
+     * @param num_elems Number of elements to write
+     * @param data Pointer to the beginning of the data buffer
+     * @param offsets Optional pointer to the beginning of the offsets buffer
+     * @param validity Optional pointer to the beginning of the validities
+     * buffer
+     */
     void set_column_data(
         std::string_view name,
         uint64_t num_elems,
@@ -424,33 +428,28 @@ class SOMAArray : public SOMAObject {
         uint64_t* offsets = nullptr,
         uint8_t* validity = nullptr);
 
+    /**
+     * @brief Set the write buffers for an Arrow Table or Batch as represented
+     * by an ArrowSchema and ArrowArray.
+     *
+     * @param arrow_schema
+     * @param arrow_array
+     */
     void set_array_data(
         std::unique_ptr<ArrowSchema> arrow_schema,
         std::unique_ptr<ArrowArray> arrow_array);
 
-    void clear_column_data();
-
     /**
-     * @brief Write ArrayBuffers data to the array.
+     * @brief Write ArrayBuffers data to the array after setting write buffers.
      *
      * An example use model:
      *
-     *   auto writer = SOMAArray::open(TILEDB_WRITE, uri);
-     *
-     *   std::vector<int> att{0, 1, 2, 3, 4, 5};
-     *   std::vector<int> dim{0, 1, 2, 3, 4, 5};
-     *
-     *   auto schema = *soma_array->schema();
-     *   auto array_buffer = std::make_shared<ArrayBuffers>();
-     *   array_buffer->emplace("att", ColumnBuffer::create(schema, "att",
-     * att)); array_buffer->emplace("dim", ColumnBuffer::create(schema,
-     * "dim", dim));
-     *
-     *   std::vector<int> x(10, 1);
-     *   writer->write(array_buffer);
-     *   writer->close();
-     *
-     * @param buffers The ArrayBuffers to write to the array
+     *   auto array = SOMAArray::open(TILEDB_WRITE, uri);
+     *   array.set_array_data(
+     *      std::make_unique<ArrowSchema>(arrow_schema),
+     *      std::make_unique<ArrowArray>(arrow_array));
+     *   array.write();
+     *   array.close();
      */
     void write();
 
@@ -522,9 +521,9 @@ class SOMAArray : public SOMAObject {
     /**
      * @brief Get the Arrow schema of the array.
      *
-     * @return std::shared_ptr<std::unique_ptr<ArrowSchema>> Schema
+     * @return std::unique_ptr<std::unique_ptr<ArrowSchema>> Schema
      */
-    std::shared_ptr<ArrowSchema> arrow_schema() const {
+    std::unique_ptr<ArrowSchema> arrow_schema() const {
         return ArrowAdapter::arrow_schema_from_tiledb_array(
             ctx_->tiledb_ctx(), arr_);
     }
@@ -715,6 +714,12 @@ class SOMAArray : public SOMAObject {
     //===================================================================
     //= private non-static
     //===================================================================
+
+    Enumeration extend_enumeration(
+        std::string_view name,
+        uint64_t num_elems,
+        const void* data,
+        uint64_t* offsets);
 
     template <typename T>
     Enumeration _extend_value_helper(
