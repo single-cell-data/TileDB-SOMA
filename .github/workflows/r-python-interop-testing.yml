@@ -108,16 +108,5 @@ jobs:
           echo
           Rscript -e 'tiledbsoma::show_package_versions()'
 
-      - name: Update Packages
-        run: Rscript -e 'update.packages(ask=FALSE)'
-
-      - name: Show package versions
-        run: |
-          python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
-          echo
-          python scripts/show-versions.py
-          echo
-          Rscript -e 'tiledbsoma::show_package_versions()'
-
       - name: Interop Tests
         run: python -m pytest apis/system/tests/
