@@ -54,10 +54,12 @@ class SOMAExperiment : public SOMACollection {
      * @param schema TileDB ArraySchema
      * @param platform_config Optional config parameter dictionary
      */
-    static std::unique_ptr<SOMAExperiment> create(
+    static void create(
         std::string_view uri,
-        ArraySchema schema,
+        std::unique_ptr<ArrowSchema> schema,
+        ColumnIndexInfo index_columns,
         std::shared_ptr<SOMAContext> ctx,
+        std::optional<PlatformConfig> platform_config = std::nullopt,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**

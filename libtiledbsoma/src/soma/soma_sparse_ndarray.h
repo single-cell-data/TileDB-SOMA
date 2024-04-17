@@ -52,13 +52,12 @@ class SOMASparseNDArray : public SOMAArray {
     /**
      * @brief Create a SOMASparseNDArray object at the given URI.
      *
-     * @param uri URI to create the SOMAArray
-     * @param schema TileDB ArraySchema
+     * @param uri URI to create the SOMASparseNDArray
+     * @param schema Arrow schema
      * @param ctx SOMAContext
-     * @param timestamp Optional pair indicating timestamp start and end
-     * @return std::unique_ptr<SOMASparseNDArray>
+     * @param timestamp Optional the timestamp range to write SOMA metadata info
      */
-    static std::unique_ptr<SOMASparseNDArray> create(
+    static void create(
         std::string_view uri,
         ArraySchema schema,
         std::shared_ptr<SOMAContext> ctx,
@@ -67,18 +66,17 @@ class SOMASparseNDArray : public SOMAArray {
     /**
      * @brief Open and return a SOMASparseNDArray object at the given URI.
      *
-     * @param mode read or write
      * @param uri URI to create the SOMASparseNDArray
+     * @param mode read or write
+     * @param ctx SOMAContext
      * @param column_names A list of column names to use as user-defined index
      * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
      * exist in the schema, and at least one index column name is required.
-     * @param platform_config Platform-specific options used to create this
-     * SOMASparseNDArray
      * @param result_order Read result order: automatic (default), rowmajor, or
      * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::unique_ptr<SOMASparseNDArray>
+     * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
      */
     static std::unique_ptr<SOMASparseNDArray> open(
         std::string_view uri,
@@ -105,6 +103,7 @@ class SOMASparseNDArray : public SOMAArray {
      * @param mode read or write
      * @param uri URI of the array
      * @param ctx TileDB context
+     * @param column_names Columns to read
      * @param result_order Read result order: automatic (default), rowmajor, or
      * colmajor
      * @param timestamp Timestamp
@@ -139,7 +138,7 @@ class SOMASparseNDArray : public SOMAArray {
     using SOMAArray::open;
 
     /**
-     * Return whether the NDArray is sparse.
+     * Return whether the SOMASparseNDArray is sparse.
      *
      * @return true
      */

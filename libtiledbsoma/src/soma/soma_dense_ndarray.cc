@@ -29,7 +29,6 @@
  *
  *   This file defines the SOMADenseNDArray class.
  */
-
 #include "soma_dense_ndarray.h"
 
 namespace tiledbsoma {
@@ -39,14 +38,12 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::create(
+void SOMADenseNDArray::create(
     std::string_view uri,
     ArraySchema schema,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
-    auto soma_array = SOMAArray::create(
-        ctx, uri, schema, "SOMADenseNDArray", timestamp);
-    return std::make_unique<SOMADenseNDArray>(*soma_array);
+    SOMAArray::create(ctx, uri, schema, "SOMADenseNDArray", timestamp);
 }
 
 std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(

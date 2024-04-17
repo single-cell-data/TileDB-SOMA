@@ -91,7 +91,7 @@ std::tuple<std::string, uint64_t> create_array(
         schema.check();
 
         // Create array
-        Array::create(uri, schema);
+        Array::create(uri, std::move(schema));
     }
 
     // Open array for writing

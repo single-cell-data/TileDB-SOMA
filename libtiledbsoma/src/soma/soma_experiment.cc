@@ -41,19 +41,31 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMAExperiment> SOMAExperiment::create(
+void SOMAExperiment::create(
     std::string_view uri,
-    ArraySchema schema,
+    std::unique_ptr<ArrowSchema> schema,
+    ColumnIndexInfo index_columns,
     std::shared_ptr<SOMAContext> ctx,
+    std::optional<PlatformConfig> platform_config,
     std::optional<TimestampRange> timestamp) {
     std::string exp_uri(uri);
 
-    auto soma_group = SOMAGroup::create(ctx, uri, "SOMAExperiment", timestamp);
-    SOMADataFrame::create(exp_uri + "/obs", schema, ctx, timestamp);
+    SOMAGroup::create(ctx, exp_uri, "SOMAExperiment", timestamp);
+    SOMADataFrame::create(
+        exp_uri + "/obs",
+        std::move(schema),
+        index_columns,
+        ctx,
+        platform_config,
+        timestamp);
     SOMACollection::create(exp_uri + "/ms", ctx, timestamp);
-    soma_group->set(exp_uri + "/obs", URIType::absolute, "obs");
-    soma_group->set(exp_uri + "/ms", URIType::absolute, "ms");
-    return std::make_unique<SOMAExperiment>(*soma_group);
+
+    auto name = std::string(std::filesystem::path(uri).filename());
+    auto group = SOMAGroup::open(
+        OpenMode::write, exp_uri, ctx, name, timestamp);
+    group->set(exp_uri + "/obs", URIType::absolute, "obs");
+    group->set(exp_uri + "/ms", URIType::absolute, "ms");
+    group->close();
 }
 
 std::unique_ptr<SOMAExperiment> SOMAExperiment::open(

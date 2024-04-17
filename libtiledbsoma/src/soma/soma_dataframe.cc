@@ -39,14 +39,16 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMADataFrame> SOMADataFrame::create(
+void SOMADataFrame::create(
     std::string_view uri,
-    ArraySchema schema,
+    std::unique_ptr<ArrowSchema> schema,
+    ColumnIndexInfo index_columns,
     std::shared_ptr<SOMAContext> ctx,
+    std::optional<PlatformConfig> platform_config,
     std::optional<TimestampRange> timestamp) {
-    auto soma_array = SOMAArray::create(
-        ctx, uri, schema, "SOMADataFrame", timestamp);
-    return std::make_unique<SOMADataFrame>(*soma_array);
+    auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
+        ctx->tiledb_ctx(), std::move(schema), index_columns, platform_config);
+    SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame", timestamp);
 }
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::open(

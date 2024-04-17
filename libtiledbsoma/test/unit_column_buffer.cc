@@ -74,7 +74,7 @@ static std::shared_ptr<Array> create_array(
     attr.set_cell_val_num(TILEDB_VAR_NUM);
     schema.add_attribute(attr);
 
-    Array::create(uri, schema);
+    Array::create(uri, std::move(schema));
     return std::make_shared<Array>(ctx, uri, TILEDB_READ);
 }
 

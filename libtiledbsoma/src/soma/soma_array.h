@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022-2023 TileDB, Inc.
+ * @copyright Copyright (c) 2022-2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -102,8 +102,7 @@ class SOMAArray : public SOMAObject {
      *
      * @param mode read or write
      * @param uri URI of the array
-     * @param name Name of the array
-     * @param platform_config Config parameter dictionary
+     * @param ctx SOMAContext
      * @param column_names Columns to read
      * @param batch_size Read batch size
      * @param result_order Read result order: automatic (default), rowmajor,
@@ -152,8 +151,8 @@ class SOMAArray : public SOMAObject {
      *
      * @param mode read or write
      * @param uri URI of the array
+     * @param ctx SOMAContext
      * @param name name of the array
-     * @param platform_config Config parameter dictionary
      * @param column_names Columns to read
      * @param batch_size Batch size
      * @param result_order Result order

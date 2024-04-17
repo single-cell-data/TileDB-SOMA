@@ -86,7 +86,8 @@ std::tuple<std::string, uint64_t> create_array(
     schema.check();
 
     // Create array
-    SOMAArray::create(ctx, uri, schema, "NONE", TimestampRange(0, 2));
+    SOMAArray::create(
+        ctx, uri, std::move(schema), "NONE", TimestampRange(0, 2));
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -146,7 +147,6 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
 
         // Write data to array
         soma_array->write(array_buffer);
-        soma_array->close();
     }
 
     // Read from TileDB Array to get expected data
@@ -463,7 +463,7 @@ TEST_CASE("SOMAArray: Enumeration") {
         *ctx->tiledb_ctx(), attr, "rbg");
     schema.add_attribute(attr);
 
-    Array::create(uri, schema);
+    Array::create(uri, std::move(schema));
 
     auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
     auto attr_to_enum = soma_array->get_attr_to_enum_mapping();

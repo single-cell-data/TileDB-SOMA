@@ -39,14 +39,12 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::create(
+void SOMASparseNDArray::create(
     std::string_view uri,
     ArraySchema schema,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
-    auto soma_array = SOMAArray::create(
-        ctx, uri, schema, "SOMASparseNDArray", timestamp);
-    return std::make_unique<SOMASparseNDArray>(*soma_array);
+    SOMAArray::create(ctx, uri, schema, "SOMASparseNDArray", timestamp);
 }
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(

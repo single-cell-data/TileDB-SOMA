@@ -31,10 +31,8 @@
  */
 
 #include <reindexer/reindexer.h>
-#include <soma/soma_context.h>
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <tiledb/tiledb>
 #include <unordered_map>
@@ -59,9 +57,8 @@ bool run_test(int id, std::vector<int64_t> keys, std::vector<int64_t> lookups) {
     try {
         std::vector<int64_t> indexer_results;
         indexer_results.resize(lookups.size());
-        auto context = std::make_shared<tiledbsoma::SOMAContext>();
 
-        tiledbsoma::IntIndexer indexer(context);
+        tiledbsoma::IntIndexer indexer;
         indexer.map_locations(keys);
         auto* hash = kh_init(m64);
         int ret;

@@ -27,6 +27,8 @@ find_package(Catch_EP REQUIRED)
 
 add_executable(unit_soma
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
+    common.cc
+    common.h
     unit_column_buffer.cc
     unit_managed_query.cc
     unit_soma_array.cc

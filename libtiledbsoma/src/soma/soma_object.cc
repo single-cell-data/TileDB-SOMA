@@ -18,7 +18,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<std::pair<uint64_t, uint64_t>> timestamp,
+    std::optional<TimestampRange> timestamp,
     std::optional<std::string> soma_type) {
     if (soma_type == std::nullopt) {
         auto tiledb_type = Object::object(*ctx->tiledb_ctx(), std::string(uri))
