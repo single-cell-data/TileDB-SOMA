@@ -300,7 +300,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             if is_not_createable_error(tdbe):
                 raise NotCreateableError(f"{uri!r} cannot be created")
             raise
-        
+
     def keys(self) -> Tuple[str, ...]:
         """Returns the names of the columns when read back as a dataframe.
 
