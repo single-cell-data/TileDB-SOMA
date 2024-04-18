@@ -34,6 +34,7 @@ namespace tiledbsoma {
 
 py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num);
 tiledb_datatype_t np_to_tdb_dtype(py::dtype type);
+bool is_tdb_str(tiledb_datatype_t type);
 std::optional<py::object> to_table(
     std::optional<std::shared_ptr<ArrayBuffers>> buffers);
 

@@ -94,6 +94,26 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         },
         "Print TileDB internal statistics. Lifecycle: experimental.");
 
+    py::class_<PlatformConfig>(m, "PlatformConfig")
+        .def(py::init<>())
+        .def_readwrite(
+            "dataframe_dim_zstd_level",
+            &PlatformConfig::dataframe_dim_zstd_level)
+        .def_readwrite(
+            "sparse_nd_array_dim_zstd_level",
+            &PlatformConfig::sparse_nd_array_dim_zstd_level)
+        .def_readwrite("write_X_chunked", &PlatformConfig::write_X_chunked)
+        .def_readwrite("goal_chunk_nnz", &PlatformConfig::goal_chunk_nnz)
+        .def_readwrite("remote_cap_nbytes", &PlatformConfig::remote_cap_nbytes)
+        .def_readwrite("capacity", &PlatformConfig::capacity)
+        .def_readwrite("offsets_filters", &PlatformConfig::offsets_filters)
+        .def_readwrite("validity_filters", &PlatformConfig::validity_filters)
+        .def_readwrite("allows_duplicates", &PlatformConfig::allows_duplicates)
+        .def_readwrite("tile_order", &PlatformConfig::tile_order)
+        .def_readwrite("cell_order", &PlatformConfig::cell_order)
+        .def_readwrite(
+            "consolidate_and_vacuum", &PlatformConfig::consolidate_and_vacuum);
+
     load_soma_context(m);
     load_soma_object(m);
     load_soma_array(m);

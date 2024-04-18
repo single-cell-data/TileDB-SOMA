@@ -42,6 +42,7 @@ from .options._soma_tiledb_context import SOMATileDBContext
 RawHandle = Union[
     tiledb.Array,
     tiledb.Group,
+    clib.SOMAArray,
     clib.SOMADataFrame,
     clib.SOMASparseNDArray,
     clib.SOMADenseNDArray,
@@ -93,7 +94,7 @@ def open(
     if not soma_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
-    if open_mode == clib.OpenMode.read and soma_type == "SOMADataFrame":
+    if soma_type == "SOMADataFrame":
         return DataFrameWrapper._from_soma_object(soma_object, context)
     if open_mode == clib.OpenMode.read and soma_type == "SOMADenseNDArray":
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
@@ -155,7 +156,9 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
                     handle._do_initial_reads(auxiliary_reader)
             else:
                 handle._do_initial_reads(tdb)
-        except tiledb.TileDBError as tdbe:
+
+        # TODO macOS throws RuntimeError
+        except (RuntimeError, tiledb.TileDBError) as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(f"{uri!r} does not exist") from tdbe
             raise
@@ -175,7 +178,9 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
                     handle._do_initial_reads(auxiliary_reader)
             else:
                 handle._do_initial_reads(soma_object)
-        except tiledb.TileDBError as tdbe:
+
+        # TODO macOS throws RuntimeError
+        except (RuntimeError, tiledb.TileDBError) as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(f"{handle.uri!r} does not exist") from tdbe
             raise
@@ -366,7 +371,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         mode: options.OpenMode,
         context: SOMATileDBContext,
         timestamp: int,
-    ) -> clib.SOMADenseNDArray:
+    ) -> clib.SOMAArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
         return cls._WRAPPED_TYPE.open(
             uri,
@@ -392,7 +397,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 
     @property
     def meta(self) -> "MetadataWrapper":
-        return MetadataWrapper(self, dict(self._handle.meta))
+        return self.metadata
 
     @property
     def ndim(self) -> int:
@@ -455,6 +460,9 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     @property
     def count(self) -> int:
         return int(self._handle.count)
+
+    def write(self, values: pa.RecordBatch) -> None:
+        self._handle.write(values)
 
 
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
@@ -581,12 +589,25 @@ class MetadataWrapper(MutableMapping[str, Any]):
             # There were no changes (e.g., it's a read handle).  Do nothing.
             return
         # Only try to get the writer if there are changes to be made.
-        meta = self.owner.writer.meta
-        for key, mod in self._mods.items():
-            if mod in (_DictMod.ADDED, _DictMod.UPDATED):
-                meta[key] = self.cache[key]
-            if mod is _DictMod.DELETED:
-                del meta[key]
+        if isinstance(self.owner, DataFrameWrapper):
+            meta = self.owner.meta
+            for key, mod in self._mods.items():
+                if mod in (_DictMod.ADDED, _DictMod.UPDATED):
+                    set_metadata = self.owner._handle.set_metadata
+                    val = self.cache[key]
+                    if isinstance(val, str):
+                        set_metadata(key, np.array([val], "S"))
+                    else:
+                        set_metadata(key, np.array([val]))
+                if mod is _DictMod.DELETED:
+                    self.owner._handle.delete_metadata(key)
+        else:
+            meta = self.owner.writer.meta
+            for key, mod in self._mods.items():
+                if mod in (_DictMod.ADDED, _DictMod.UPDATED):
+                    meta[key] = self.cache[key]
+                if mod is _DictMod.DELETED:
+                    del meta[key]
         # Temporary hack: When we flush writes, note that the cache
         # is back in sync with disk.
         self._mods.clear()

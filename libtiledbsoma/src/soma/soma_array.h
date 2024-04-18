@@ -411,6 +411,12 @@ class SOMAArray : public SOMAObject {
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
+    Enumeration extend_enumeration(
+        std::string_view name,
+        uint64_t num_elems,
+        const void* data,
+        uint64_t* offsets);
+
     /**
      * @brief Set the write buffers for a single column.
      *
@@ -521,9 +527,9 @@ class SOMAArray : public SOMAObject {
     /**
      * @brief Get the Arrow schema of the array.
      *
-     * @return std::unique_ptr<ArrowSchema> Schema
+     * @return std::shared_ptr<std::unique_ptr<ArrowSchema>> Schema
      */
-    std::unique_ptr<ArrowSchema> arrow_schema() const {
+    std::shared_ptr<ArrowSchema> arrow_schema() const {
         return ArrowAdapter::arrow_schema_from_tiledb_array(
             ctx_->tiledb_ctx(), arr_);
     }
@@ -714,12 +720,6 @@ class SOMAArray : public SOMAObject {
     //===================================================================
     //= private non-static
     //===================================================================
-
-    Enumeration extend_enumeration(
-        std::string_view name,
-        uint64_t num_elems,
-        const void* data,
-        uint64_t* offsets);
 
     template <typename T>
     Enumeration _extend_value_helper(

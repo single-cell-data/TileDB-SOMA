@@ -39,6 +39,24 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
+void write(SOMAArray& array, py::handle py_batch) {
+    ArrowSchema arrow_schema;
+    ArrowArray arrow_array;
+    uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
+    uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
+    py_batch.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
+
+    array.set_array_data(
+        std::make_unique<ArrowSchema>(arrow_schema),
+        std::make_unique<ArrowArray>(arrow_array));
+
+    try {
+        array.write();
+    } catch (const std::exception& e) {
+        TPY_ERROR_LOC(e.what());
+    }
+}
+
 py::dict meta(SOMAArray& array) {
     py::dict results;
 
@@ -56,6 +74,21 @@ py::dict meta(SOMAArray& array) {
         }
     }
     return results;
+}
+
+void set_metadata(SOMAArray& sr, const std::string& key, py::array value) {
+    tiledb_datatype_t value_type = np_to_tdb_dtype(value.dtype());
+
+    if (is_tdb_str(value_type) && value.size() > 1)
+        throw py::type_error("array/list of strings not supported");
+
+    py::buffer_info value_buffer = value.request();
+    if (value_buffer.ndim != 1)
+        throw py::type_error("Only 1D Numpy arrays can be stored as metadata");
+
+    auto value_num = is_tdb_str(value_type) ? value.nbytes() : value.size();
+    sr.set_metadata(
+        key, value_type, value_num, value_num > 0 ? value.data() : nullptr);
 }
 
 py::tuple get_enum(SOMAArray& sr, std::string attr_name) {
@@ -139,6 +172,14 @@ void load_soma_array(py::module& m) {
             "result_order"_a = ResultOrder::automatic,
             "platform_config"_a = py::dict(),
             "timestamp"_a = py::none())
+
+        .def("__enter__", [](SOMAArray& reader) { return reader; })
+        .def(
+            "__exit__",
+            [](SOMAArray& reader,
+               py::object exc_type,
+               py::object exc_value,
+               py::object traceback) { reader.close(); })
 
         .def(
             "set_condition",
@@ -532,6 +573,8 @@ void load_soma_array(py::module& m) {
                 return std::nullopt;
             })
 
+        .def("write", write)
+
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 
         .def_property_readonly("shape", &SOMAArray::shape)
@@ -655,7 +698,123 @@ void load_soma_array(py::module& m) {
 
         .def_property_readonly("dimension_names", &SOMAArray::dimension_names)
 
-        .def("set_metadata", &SOMAArray::set_metadata)
+        .def(
+            "extend_enumeration",
+            [](SOMAArray& array,
+               std::string attr_name,
+               py::handle py_batch) -> py::array {
+                ArrowSchema arrow_schema;
+                ArrowArray arrow_array;
+                uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
+                uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
+                py_batch.attr("_export_to_c")(
+                    arrow_array_ptr, arrow_schema_ptr);
+
+                auto dict = arrow_array.dictionary;
+                const void* enmr_data;
+                uint64_t* enmr_offsets = nullptr;
+                if (dict->n_buffers == 3) {
+                    enmr_offsets = (uint64_t*)dict->buffers[1];
+                    enmr_data = dict->buffers[2];
+                } else {
+                    enmr_data = dict->buffers[1];
+                }
+
+                if (dict->length != 0) {
+                    auto new_enmr = array.extend_enumeration(
+                        attr_name, dict->length, enmr_data, enmr_offsets);
+
+                    auto emdr_format = arrow_schema.dictionary->format;
+                    switch (ArrowAdapter::to_tiledb_format(emdr_format)) {
+                        case TILEDB_STRING_ASCII:
+                        case TILEDB_CHAR:
+                        case TILEDB_STRING_UTF8: {
+                            auto result = new_enmr.as_vector<std::string>();
+                            return py::array(py::cast(result));
+                        }
+                        case TILEDB_BOOL:
+                        case TILEDB_INT8: {
+                            auto result = new_enmr.as_vector<int8_t>();
+                            return py::array(
+                                py::dtype("int8"),
+                                result.size(),
+                                result.data());
+                        }
+                        case TILEDB_UINT8: {
+                            auto result = new_enmr.as_vector<uint8_t>();
+                            return py::array(
+                                py::dtype("uint8"),
+                                result.size(),
+                                result.data());
+                        }
+                        case TILEDB_INT16: {
+                            auto result = new_enmr.as_vector<int16_t>();
+                            return py::array(
+                                py::dtype("int16"),
+                                result.size(),
+                                result.data());
+                        }
+                        case TILEDB_UINT16: {
+                            auto result = new_enmr.as_vector<uint16_t>();
+                            return py::array(
+                                py::dtype("uint16"),
+                                result.size(),
+                                result.data());
+                        }
+                        case TILEDB_INT32: {
+                            auto result = new_enmr.as_vector<int32_t>();
+                            return py::array(
+                                py::dtype("int32"),
+                                result.size(),
+                                result.data());
+                        }
+                        case TILEDB_UINT32: {
+                            auto result = new_enmr.as_vector<uint32_t>();
+                            return py::array(
+                                py::dtype("uint32"),
+                                result.size(),
+                                result.data());
+                        }
+                        case TILEDB_INT64: {
+                            auto result = new_enmr.as_vector<int64_t>();
+                            return py::array(
+                                py::dtype("int64"),
+                                result.size(),
+                                result.data());
+                        }
+                        case TILEDB_UINT64: {
+                            auto result = new_enmr.as_vector<uint64_t>();
+                            return py::array(
+                                py::dtype("uint64"),
+                                result.size(),
+                                result.data());
+                        }
+                        case TILEDB_FLOAT32: {
+                            auto result = new_enmr.as_vector<float>();
+                            return py::array(
+                                py::dtype("float32"),
+                                result.size(),
+                                result.data());
+                        }
+                        case TILEDB_FLOAT64: {
+                            auto result = new_enmr.as_vector<double>();
+                            return py::array(
+                                py::dtype("float64"),
+                                result.size(),
+                                result.data());
+                        }
+                        default:
+                            throw TileDBSOMAError(
+                                "extend_enumeration: Unsupported dict "
+                                "datatype");
+                    }
+
+                } else {
+                    return py::array();
+                }
+            })
+
+        .def("set_metadata", set_metadata)
 
         .def("delete_metadata", &SOMAArray::delete_metadata)
 
