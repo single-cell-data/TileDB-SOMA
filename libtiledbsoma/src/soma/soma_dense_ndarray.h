@@ -151,7 +151,7 @@ class SOMADenseNDArray : public SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    std::shared_ptr<ArrowSchema> schema() const;
+    std::unique_ptr<ArrowSchema> schema() const;
 };
 }  // namespace tiledbsoma
 

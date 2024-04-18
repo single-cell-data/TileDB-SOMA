@@ -71,7 +71,7 @@ bool SOMADenseNDArray::exists(std::string_view uri) {
 //= public non-static
 //===================================================================
 
-std::shared_ptr<ArrowSchema> SOMADenseNDArray::schema() const {
+std::unique_ptr<ArrowSchema> SOMADenseNDArray::schema() const {
     return this->arrow_schema();
 }
 
