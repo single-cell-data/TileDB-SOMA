@@ -149,7 +149,7 @@ class SOMASparseNDArray : public SOMAArray {
     /**
      * Return the data schema, in the form of an ArrowSchema.
      *
-     * @return std::shared_ptr<ArrowSchema>
+     * @return std::unique_ptr<ArrowSchema>
      */
     std::unique_ptr<ArrowSchema> schema() const;
 };
