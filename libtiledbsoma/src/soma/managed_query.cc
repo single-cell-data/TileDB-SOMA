@@ -96,6 +96,128 @@ void ManagedQuery::select_columns(
     }
 }
 
+void ManagedQuery::set_column_data(
+    std::shared_ptr<ColumnBuffer> column_buffer) {
+    auto column_name = std::string(column_buffer->name());
+    bool has_attr = schema_->has_attribute(column_name);
+    bool is_sparse = array_->schema().array_type() == TILEDB_SPARSE;
+
+    if (is_sparse) {
+        auto data = column_buffer->data<std::byte>();
+        query_->set_data_buffer(
+            column_name, (void*)data.data(), column_buffer->data_size());
+        if (column_buffer->is_var()) {
+            auto offsets = column_buffer->offsets();
+            query_->set_offsets_buffer(
+                column_name, offsets.data(), offsets.size());
+        }
+        if (column_buffer->is_nullable()) {
+            auto validity = column_buffer->validity();
+            query_->set_validity_buffer(
+                column_name, validity.data(), validity.size());
+        }
+    } else {
+        if (has_attr) {
+            auto data = column_buffer->data<std::byte>();
+            query_->set_data_buffer(
+                column_name, (void*)data.data(), column_buffer->data_size());
+            if (column_buffer->is_var()) {
+                auto offsets = column_buffer->offsets();
+                query_->set_offsets_buffer(
+                    column_name, offsets.data(), offsets.size());
+            }
+            if (column_buffer->is_nullable()) {
+                auto validity = column_buffer->validity();
+                query_->set_validity_buffer(
+                    column_name, validity.data(), validity.size());
+            }
+        } else {
+            switch (column_buffer->type()) {
+                case TILEDB_STRING_ASCII:
+                case TILEDB_STRING_UTF8:
+                case TILEDB_CHAR:
+                case TILEDB_BLOB:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<std::string>()[0],
+                        column_buffer->data<std::string>()[1]);
+                    break;
+                case TILEDB_FLOAT32:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<float>()[0],
+                        column_buffer->data<float>()[1]);
+                    break;
+                case TILEDB_FLOAT64:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<double>()[0],
+                        column_buffer->data<double>()[1]);
+                    break;
+                case TILEDB_UINT8:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<uint8_t>()[0],
+                        column_buffer->data<uint8_t>()[1]);
+                    break;
+                case TILEDB_INT8:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<int8_t>()[0],
+                        column_buffer->data<int8_t>()[1]);
+                    break;
+                case TILEDB_UINT16:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<uint16_t>()[0],
+                        column_buffer->data<uint16_t>()[1]);
+                    break;
+                case TILEDB_INT16:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<int16_t>()[0],
+                        column_buffer->data<int16_t>()[1]);
+                    break;
+                case TILEDB_UINT32:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<uint32_t>()[0],
+                        column_buffer->data<uint32_t>()[1]);
+                    break;
+                case TILEDB_INT32:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<int32_t>()[0],
+                        column_buffer->data<int32_t>()[1]);
+                    break;
+                case TILEDB_UINT64:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<uint64_t>()[0],
+                        column_buffer->data<uint64_t>()[1]);
+                    break;
+                case TILEDB_INT64:
+                case TILEDB_TIME_SEC:
+                case TILEDB_TIME_MS:
+                case TILEDB_TIME_US:
+                case TILEDB_TIME_NS:
+                case TILEDB_DATETIME_SEC:
+                case TILEDB_DATETIME_MS:
+                case TILEDB_DATETIME_US:
+                case TILEDB_DATETIME_NS:
+                    subarray_->add_range(
+                        column_name,
+                        column_buffer->data<int64_t>()[0],
+                        column_buffer->data<int64_t>()[1]);
+                    break;
+                default:
+                    break;
+            }
+            query_->set_subarray(*subarray_);
+        }
+    }
+}
+
 void ManagedQuery::setup_read() {
     // If the query is complete, return so we do not submit it again
     auto status = query_->query_status();
@@ -150,6 +272,7 @@ void ManagedQuery::setup_read() {
 
 void ManagedQuery::submit_write() {
     query_->submit();
+    query_->finalize();
 }
 
 void ManagedQuery::submit_read() {
@@ -168,7 +291,7 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
 
     if (query_future_.valid()) {
         LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
-        query_future_.get();
+        query_future_.wait();
     } else {
         throw TileDBSOMAError(
             fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
@@ -237,5 +360,4 @@ void ManagedQuery::check_column_name(const std::string& name) {
             name));
     }
 }
-
 };  // namespace tiledbsoma

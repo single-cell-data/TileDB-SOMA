@@ -100,14 +100,10 @@ TEST_CASE("SOMASparseNDArray: basic") {
         d0[j] = j;
     std::vector<int> a0(10, 1);
 
-    auto array_buffer = std::make_shared<ArrayBuffers>();
-    auto tdb_arr = std::make_shared<Array>(
-        *ctx->tiledb_ctx(), uri, TILEDB_READ);
-    array_buffer->emplace("a0", ColumnBuffer::create(tdb_arr, "a0", a0));
-    array_buffer->emplace("d0", ColumnBuffer::create(tdb_arr, "d0", d0));
-
     soma_sparse->open(OpenMode::write);
-    soma_sparse->write(array_buffer);
+    soma_sparse->set_column_data("a0", a0.size(), a0.data());
+    soma_sparse->set_column_data("d0", d0.size(), d0.data());
+    soma_sparse->write();
     soma_sparse->close();
 
     soma_sparse->open(OpenMode::read);
