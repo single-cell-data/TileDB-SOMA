@@ -36,8 +36,8 @@ using ArrowTable =
 
 using ColumnIndexInfo = std::tuple<
     std::vector<std::string>,     // name of column
-    std::unique_ptr<ArrowArray>,  // domain
-    std::unique_ptr<ArrowArray>   // tile extent
+    std::shared_ptr<ArrowArray>,  // domain
+    std::shared_ptr<ArrowArray>   // tile extent
     >;
 
 class PlatformConfig {
