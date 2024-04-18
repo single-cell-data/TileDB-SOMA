@@ -1397,7 +1397,6 @@ def test_enum_schema_report(tmp_path):
 
     # Double-check against TileDB-Py reporting
     with tiledb.open(uri) as A:
-        print(A.schema)
         for i in range(A.schema.nattr):
             attr = A.schema.attr(i)
             try:
