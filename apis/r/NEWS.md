@@ -1,3 +1,7 @@
+# 1.10.1
+
+* This release contains a single Python-only bug fix
+
 # 1.10.0
 
 ## Changes
