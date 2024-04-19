@@ -20,7 +20,12 @@ import tiledb
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
-from ._exception import AlreadyExistsError, is_already_exists_error
+from ._exception import (
+    AlreadyExistsError,
+    NotCreateableError,
+    is_already_exists_error,
+    is_not_createable_error,
+)
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._tdb_handles import DataFrameWrapper
@@ -190,6 +195,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 If the ``schema`` specifies illegal column names.
             tiledbsoma.AlreadyExistsError:
                 If the underlying object already exists at the given URI.
+            tiledbsoma.NotCreateableError:
+                If the URI is malformed for a particular storage backend.
             TileDBError:
                 If unable to create the underlying object.
 
@@ -229,6 +236,8 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         except tiledb.TileDBError as tdbe:
             if is_already_exists_error(tdbe):
                 raise AlreadyExistsError(f"{uri!r} already exists")
+            if is_not_createable_error(tdbe):
+                raise NotCreateableError(f"{uri!r} cannot be created")
             raise
 
     def keys(self) -> Tuple[str, ...]:
