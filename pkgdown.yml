@@ -1,10 +1,10 @@
 pandoc: 2.7.3
-pkgdown: 2.0.8
+pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
   soma-experiment-queries: soma-experiment-queries.html
   soma-objects: soma-objects.html
   soma-reading: soma-reading.html
   UsingPlatformConfig: UsingPlatformConfig.html
-last_built: 2024-04-17T16:07Z
+last_built: 2024-04-19T19:47Z
 
