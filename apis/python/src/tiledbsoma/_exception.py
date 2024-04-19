@@ -85,6 +85,51 @@ def is_already_exists_error(e: tiledb.TileDBError) -> bool:
     return "already exists" in stre.lower()
 
 
+class NotCreateableError(SOMAError):
+    """Raised when attempting to create an already existing SOMA object.
+
+    Lifecycle: experimental
+    """
+
+    pass
+
+
+def is_not_createable_error(e: tiledb.TileDBError) -> bool:
+    """Given a TileDBError, return true if it indicates the object cannot be created
+
+    Lifecycle: experimental
+
+    Example:
+        try:
+            tiledb.Array.create(uri, schema, ctx=ctx)
+                ...
+        except tiledb.TileDBError as e:
+            if is_not_createable_error(e):
+                ...
+            raise e
+    """
+    stre = str(e)
+    # Context:
+    # * A recurring paradigm in tiledbsoma.io is open for write (if exists) else create --
+    #   or, equivalently, create (if doesn't already exist), else open for write
+    # * A priori either seems fine
+    # * There are performance implications for trying the create first: when an
+    #   object _does_ already exist we get that quickly.
+    # * Therefore it's more performant to try-create-catch-open-for-write
+    # * However we have the following semantics for cloud URIs:
+    #   o For writes: must be "creation URIs" of the form "tiledb://namespace/s3://bucket/some/path"
+    #   o For read:   can be "creation URIs" _or_ non-creation URIs of the form
+    #     "tiledb://namespace/groupname" or "tiledb://namespace/uuid"
+    # * Put together: when we try-create-catch-open-for-write, _and when_ the URI provided
+    #   is a non-creation URI, we need to catch that fact and treat it as a non-error.
+    stre = stre.lower()
+    if "storage backend local not supported" in stre:
+        return True
+    if "storage backend not supported: local" in stre:
+        return True
+    return False
+
+
 def is_duplicate_group_key_error(e: tiledb.TileDBError) -> bool:
     """Given a TileDBError, return try if it indicates a duplicate member
     add request in a tiledb.Group.

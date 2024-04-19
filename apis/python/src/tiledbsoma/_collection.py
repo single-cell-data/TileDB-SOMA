@@ -39,9 +39,11 @@ from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import (
     AlreadyExistsError,
+    NotCreateableError,
     SOMAError,
     is_already_exists_error,
     is_does_not_exist_error,
+    is_not_createable_error,
 )
 from ._funcs import typeguard_ignore
 from ._sparse_nd_array import SparseNDArray
@@ -119,6 +121,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         Raises:
             tiledbsoma.AlreadyExistsError:
                 If the underlying object already exists at the given URI.
+            tiledbsoma.NotCreateableError:
+                If the URI is malformed for a particular storage backend.
             TileDBError:
                 If unable to create the underlying object.
 
@@ -137,6 +141,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         except tiledb.TileDBError as tdbe:
             if is_already_exists_error(tdbe):
                 raise AlreadyExistsError(f"{uri!r} already exists")
+            if is_not_createable_error(tdbe):
+                raise NotCreateableError(f"{uri!r} cannot be created")
             raise
 
     @classmethod

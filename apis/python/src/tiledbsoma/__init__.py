@@ -147,7 +147,12 @@ from ._collection import Collection
 from ._constants import SOMA_JOINID
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
-from ._exception import AlreadyExistsError, DoesNotExistError, SOMAError
+from ._exception import (
+    AlreadyExistsError,
+    DoesNotExistError,
+    NotCreateableError,
+    SOMAError,
+)
 from ._experiment import Experiment
 from ._factory import open
 from ._general_utilities import (
@@ -192,6 +197,7 @@ __all__ = [
     "get_storage_engine",
     "IntIndexer",
     "Measurement",
+    "NotCreateableError",
     "open",
     "ResultOrder",
     "show_package_versions",
