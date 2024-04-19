@@ -16,7 +16,12 @@ from typing_extensions import Self
 import tiledb
 
 from . import _arrow_types, _util
-from ._exception import AlreadyExistsError, is_already_exists_error
+from ._exception import (
+    AlreadyExistsError,
+    NotCreateableError,
+    is_already_exists_error,
+    is_not_createable_error,
+)
 from ._tiledb_array import TileDBArray
 from ._types import OpenTimestamp
 from .options._soma_tiledb_context import (
@@ -80,6 +85,8 @@ class NDArray(TileDBArray, somacore.NDArray):
                 If the ``shape`` is unsupported.
             tiledbsoma.AlreadyExistsError:
                 If the underlying object already exists at the given URI.
+            tiledbsoma.NotCreateableError:
+                If the URI is malformed for a particular storage backend.
             TileDBError:
                 If unable to create the underlying object.
 
@@ -103,6 +110,8 @@ class NDArray(TileDBArray, somacore.NDArray):
         except tiledb.TileDBError as tdbe:
             if is_already_exists_error(tdbe):
                 raise AlreadyExistsError(f"{uri!r} already exists")
+            if is_not_createable_error(tdbe):
+                raise NotCreateableError(f"{uri!r} cannot be created")
             raise
 
     @property

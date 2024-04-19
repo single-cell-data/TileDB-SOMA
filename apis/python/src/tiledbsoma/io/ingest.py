@@ -61,6 +61,7 @@ from .._constants import SOMA_JOINID
 from .._exception import (
     AlreadyExistsError,
     DoesNotExistError,
+    NotCreateableError,
     SOMAError,
 )
 from .._tdb_handles import RawHandle
@@ -989,7 +990,7 @@ def _create_or_open_collection(
 ) -> CollectionBase[_TDBO]:
     try:
         coll = cls.create(uri, context=context)
-    except AlreadyExistsError:
+    except (AlreadyExistsError, NotCreateableError):
         # It already exists. Are we resuming?
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{uri} already exists")
@@ -1200,7 +1201,7 @@ def _write_dataframe_impl(
             platform_config=platform_config,
             context=context,
         )
-    except AlreadyExistsError:
+    except (AlreadyExistsError, NotCreateableError):
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{soma_df.uri} already exists")
 
@@ -1301,7 +1302,7 @@ def _create_from_matrix(
             platform_config=platform_config,
             context=context,
         )
-    except AlreadyExistsError:
+    except (AlreadyExistsError, NotCreateableError):
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{soma_ndarray.uri} already exists")
         soma_ndarray = cls.open(
@@ -2756,7 +2757,7 @@ def _ingest_uns_ndarray(
             platform_config=platform_config,
             context=context,
         )
-    except AlreadyExistsError:
+    except (AlreadyExistsError, NotCreateableError):
         soma_arr = DenseNDArray.open(arr_uri, "w", context=context)
 
     # If resume mode: don't re-write existing data. This is the user's explicit request
