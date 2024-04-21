@@ -1402,7 +1402,6 @@ def test_enum_schema_report(tmp_path):
             try:
                 index_type = attr.dtype
                 value_type = A.enum(attr.name).dtype
-                print(attr.name, value_type)
             except tiledb.cc.TileDBError:
                 pass  # not an enum attr
             if attr.name == "int_cat":
