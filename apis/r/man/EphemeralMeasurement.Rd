@@ -4,7 +4,7 @@
 \alias{EphemeralMeasurement}
 \title{Ephemeral SOMA Measurement}
 \description{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("measurement")}
+NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_cls("measurement")}
 }
 \keyword{internal}
 \section{Super classes}{
@@ -13,17 +13,17 @@
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{var}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("var")}}
+\item{\code{var}}{NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("var")}}
 
-\item{\code{X}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("X")}}
+\item{\code{X}}{NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("X")}}
 
-\item{\code{obsm}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsm")}}
+\item{\code{obsm}}{NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("obsm")}}
 
-\item{\code{obsp}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsp")}}
+\item{\code{obsp}}{NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("obsp")}}
 
-\item{\code{varm}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varm")}}
+\item{\code{varm}}{NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("varm")}}
 
-\item{\code{varp}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varp")}}
+\item{\code{varp}}{NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("varp")}}
 
 \item{\code{soma_type}}{The SOMA object type}
 }

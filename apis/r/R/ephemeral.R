@@ -1,6 +1,6 @@
 #' Ephemeral Collection Base
 #'
-#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection", TRUE)}
+#' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection", TRUE)}
 #'
 #' @keywords internal
 #' @export
@@ -53,17 +53,17 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override TileDBGroup private methods
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
-    #' @param mode \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param mode NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_error()}
     #'
     open = function(mode) {
       private$.ephemeral_error('opened')
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @return Invisibly returns \code{NULL}
     #'
@@ -77,7 +77,7 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(NULL))
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
     #' @return Returns \code{FALSE} as ephemeral collections do not
     #' exist on-disk
@@ -98,9 +98,9 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
-    #' @param param \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param param NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
     #' @return Returns \code{NULL} as ephemeral collections do not have an
     #' on-disk configuration
@@ -135,7 +135,7 @@ EphemeralCollectionBase <- R6::R6Class(
     #' @param object A TileDB object (eg. \code{\link{TileDBGroup}}) to add
     #' to the collection
     #' @param name A name to add \code{object} as
-    #' @param relative \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param relative NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
     #' @return \[chainable] Invisibly returns \code{self} with \code{object}
     #' added as \code{name}
@@ -185,19 +185,19 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
-    #' @param metadata \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param metadata NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_error()}
     #'
     set_metadata = function(metadata) {
       private$.ephemeral_error('edited')
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
-    #' @param key \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param key NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
     #' @return An empty list
     #'
@@ -212,41 +212,41 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override SOMACollectionBase methods
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
-    #' @param object,key \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param object,key NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_error()}
     #'
     add_new_collection = function(object, key) {
       private$.ephemeral_error()
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
-    #' @param key,schema,index_column_names \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param key,schema,index_column_names NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_error()}
     #'
     add_new_dataframe = function(key, schema, index_column_names) {
       private$.ephemeral_error()
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
-    #' @param key,type,shape \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param key,type,shape NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_error()}
     #'
     add_new_dense_ndarray = function(key, type, shape) {
       private$.ephemeral_error()
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
     #'
-    #' @param key,type,shape \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param key,type,shape NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_param()}
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_error()}
     #'
     add_new_sparse_ndarray = function(key, type, shape) {
       private$.ephemeral_error()
@@ -264,7 +264,7 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override SOMACollectionBase fields
-    #' @field soma_type \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
+    #' @field soma_type NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     soma_type = function(value) {
       if (!missing(value)) {
         private$.read_only_error('soma_type')
@@ -273,7 +273,7 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override TileDBObject fields
-    #' @field platform_config \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
+    #' @field platform_config NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     platform_config = function(value) {
       if (!missing(value)) {
         private$.read_only_error('platform_config')
@@ -281,7 +281,7 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.ephemeral_error('custom', 'and have no configuration')
     },
 
-    #' @field tiledbsoma_ctx \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
+    #' @field tiledbsoma_ctx NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     tiledbsoma_ctx = function(value) {
       if (!missing(value)) {
         private$.read_only_error('tiledbsoma_ctx')
@@ -289,7 +289,7 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.ephemeral_error('custom', 'and have no context')
     },
 
-    #' @field object \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
+    #' @field object NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     object = function(value) {
       if (!missing(value)) {
         private$.read_only_error('object')
@@ -375,7 +375,7 @@ EphemeralCollectionBase <- R6::R6Class(
 
 #' Ephemeral Collections
 #'
-#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection")}
+#' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection")}
 #'
 #' @keywords internal
 #'
@@ -398,7 +398,7 @@ EphemeralCollection <- R6::R6Class(
 
 #' Ephemeral SOMA Measurement
 #'
-#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("measurement")}
+#' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_cls("measurement")}
 #'
 #' @keywords internal
 #'
@@ -409,7 +409,7 @@ EphemeralMeasurement <- R6::R6Class(
   inherit = EphemeralCollectionBase,
 
   active = list(
-    #' @field var \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("var")}
+    #' @field var NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("var")}
     var = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -418,7 +418,7 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field X \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("X")}
+    #' @field X NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("X")}
     X = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -427,7 +427,7 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field obsm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsm")}
+    #' @field obsm NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("obsm")}
     obsm = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -436,7 +436,7 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field obsp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsp")}
+    #' @field obsp NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("obsp")}
     obsp = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -445,7 +445,7 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field varm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varm")}
+    #' @field varm NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("varm")}
     varm = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -454,7 +454,7 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field varp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varp")}
+    #' @field varp NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("varp")}
     varp = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -475,7 +475,7 @@ EphemeralMeasurement <- R6::R6Class(
 
 #' Ephemeral SOMA Experiment
 #'
-#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("experiment")}
+#' @description NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_cls("experiment")}
 #'
 #' @keywords internal
 #'
@@ -486,7 +486,7 @@ EphemeralExperiment <- R6::R6Class(
   inherit = EphemeralCollectionBase,
 
   active = list(
-    #' @field obs \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obs")}
+    #' @field obs NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("obs")}
     obs = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -495,7 +495,7 @@ EphemeralExperiment <- R6::R6Class(
       )
     },
 
-    #' @field ms \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("ms")}
+    #' @field ms NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("ms")}
     ms = function(value) {
       private$get_or_set_soma_field(
         value = value,

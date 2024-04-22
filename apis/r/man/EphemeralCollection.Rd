@@ -4,7 +4,7 @@
 \alias{EphemeralCollection}
 \title{Ephemeral Collections}
 \description{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection")}
+NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection")}
 }
 \keyword{internal}
 \section{Super classes}{

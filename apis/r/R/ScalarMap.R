@@ -12,7 +12,7 @@ ScalarMap <- R6::R6Class(
   inherit = MappingBase,
   public = list(
     #' @param type Limit the \code{ScalarMap} to a preset type; choose from:
-    #' \Sexpr[results=rd]{tiledbsoma:::rd_atomic()}
+    #' NOPENOPENOPE[results=rd]{tiledbsoma:::rd_atomic()}
     #'
     #' @return An instantiated \code{ScalarMap} object with the
     #' type set to \code{type}

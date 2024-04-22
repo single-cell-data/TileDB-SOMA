@@ -4,7 +4,7 @@
 \alias{EphemeralExperiment}
 \title{Ephemeral SOMA Experiment}
 \description{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("experiment")}
+NOPENOPENOPE[results=rd]{tiledbsoma:::rd_ephemeral_cls("experiment")}
 }
 \keyword{internal}
 \section{Super classes}{
@@ -13,9 +13,9 @@
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{obs}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obs")}}
+\item{\code{obs}}{NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("obs")}}
 
-\item{\code{ms}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("ms")}}
+\item{\code{ms}}{NOPENOPENOPE[results=rd]{tiledbsoma:::rd_soma_field("ms")}}
 
 \item{\code{soma_type}}{The SOMA object type}
 }

@@ -13,7 +13,7 @@ MappingBase <- R6::R6Class(
   public = list(
     #' @param ... Ignored
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_return_virtual()}
+    #' @return NOPENOPENOPE[results=rd]{tiledbsoma:::rd_return_virtual()}
     #'
     initialize = function(...) {
       calls <- vapply_char(
