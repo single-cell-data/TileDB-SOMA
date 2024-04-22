@@ -21,6 +21,7 @@ from ._constants import SOMA_JOINID
 from ._exception import (
     AlreadyExistsError,
     NotCreateableError,
+    SOMAError,
     is_already_exists_error,
     is_not_createable_error,
 )
@@ -297,7 +298,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         except SOMAError as e:
             if is_already_exists_error(e):
                 raise AlreadyExistsError(f"{uri!r} already exists")
-            if is_not_createable_error(tdbe):
+            if is_not_createable_error(e):
                 raise NotCreateableError(f"{uri!r} cannot be created")
             raise
 
