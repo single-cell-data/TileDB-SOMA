@@ -1,5 +1,20 @@
 #!/bin/sh
 
+echo
+echo
+echo "================================================================"
+echo "ENTER tools/build_libtiledbsoma.sh.in"
+echo
+echo
+
+echo "----------------------------------------------------------------"
+echo PWD
+pwd
+
+echo "----------------------------------------------------------------"
+echo "LS -L"
+ls -l
+
 if [ ! -d src/libtiledbsoma ]; then
     echo "No 'src/libtiledbsoma' directory. Exiting."
     exit 1
@@ -29,6 +44,14 @@ cd ${cwd}
 
 rm -rf src/libtiledbsoma/build-lib
 
+echo "----------------------------------------------------------------"
+echo "LS -L INST/TILEDBSOMA"
+ls -l inst/tiledbsoma
+
+echo "----------------------------------------------------------------"
+echo "LS -L INST/TILEDBSOMA/*"
+ls -l inst/tiledbsoma/*
+
 ## Case of RedHat and related distros
 if [ -d inst/tiledbsoma/lib64 ]; then
     ## we can assume lib/ exists as the libtiledb.so.* is already there
@@ -40,3 +63,10 @@ if [ -f inst/tiledbsoma/lib/libtiledb.so.* ]; then
     ## not needed as inst/tiledb/lib/libtiledb.so.* is linked instead
     rm -f inst/tiledbsoma/lib/libtiledb.so.*
 fi
+
+echo
+echo
+echo "================================================================"
+echo "EXIT tools/build_libtiledbsoma.sh.in"
+echo
+echo
