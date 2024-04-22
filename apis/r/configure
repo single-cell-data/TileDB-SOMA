@@ -1,5 +1,8 @@
 #!/bin/sh
 
+echo "================================================================"
+echo "APIS/R/CONFIGURE ENTER"
+
 ## This allow for standard CRAN override preference for both a settable R_HOME
 ## with fallback to query R in $PATH for the value it has so it works both
 ## explicitly, implicitly from the running R instance or by pointing at alternate
@@ -44,6 +47,20 @@ ${R_HOME}/bin/Rscript tools/check_cmake_and_git.R
 export CC="`${R_HOME}/bin/R CMD config CC`"
 export CXX="`${R_HOME}/bin/R CMD config CXX`"
 export CMAKE_OSX_ARCHITECTURES="`uname -m`"
+
+echo "----------------------------------------------------------------"
+echo "CATTING TOOLS/BUILD_LIBTILEDBSOMA.SH.IN"
+
+cat tools/build_libtiledbsoma.sh.in
+
+echo "----------------------------------------------------------------"
+echo "CATTING TOOLS/BUILD_LIBTILEDBSOMA.SH"
+
+cat tools/build_libtiledbsoma.sh
+
+echo "----------------------------------------------------------------"
+echo "CALLING TOOLS/BUILD_LIBTILEDBSOMA.SH"
+
 tools/build_libtiledbsoma.sh
 
 pkgincl="-I../inst/tiledb/include -I../inst/tiledbsoma/include -I../inst/tiledbsoma/include/tiledbsoma"
