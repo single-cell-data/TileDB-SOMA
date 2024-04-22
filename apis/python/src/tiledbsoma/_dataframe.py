@@ -256,7 +256,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
         )
-        
+
         plt_cfg = None
         if platform_config:
             ops = TileDBCreateOptions.from_platform_config(platform_config)
