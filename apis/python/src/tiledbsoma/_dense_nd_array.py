@@ -18,7 +18,7 @@ from . import _util
 from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._exception import SOMAError
-from ._tdb_handles import DenseNDArrayWrapper
+from ._tdb_handles import ArrayWrapper, DenseNDArrayWrapper
 from ._util import dense_indices_to_shape
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -73,6 +73,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     __slots__ = ()
 
+    _wrapper_type = ArrayWrapper
     _reader_wrapper_type = DenseNDArrayWrapper
 
     def read(

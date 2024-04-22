@@ -39,7 +39,7 @@ from ._read_iters import (
     SparseCOOTensorReadIter,
     TableReadIter,
 )
-from ._tdb_handles import SparseNDArrayWrapper
+from ._tdb_handles import ArrayWrapper, SparseNDArrayWrapper
 from ._types import NTuple
 from .options._tiledb_create_options import TileDBCreateOptions
 
@@ -96,6 +96,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     __slots__ = ()
 
+    _wrapper_type = ArrayWrapper
     _reader_wrapper_type = SparseNDArrayWrapper
 
     # Inherited from somacore

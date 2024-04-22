@@ -50,6 +50,72 @@ void load_soma_dataframe(py::module& m) {
     py::class_<SOMADataFrame, SOMAArray, SOMAObject>(m, "SOMADataFrame")
 
         .def_static(
+            "create",
+            [](std::string_view uri,
+               py::object py_schema,
+               std::vector<std::string> index_columns_names,
+               py::object py_domains,
+               py::object py_extents,
+               std::shared_ptr<SOMAContext> context,
+               std::optional<PlatformConfig> platform_config,
+               std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+                ArrowSchema schema;
+                uintptr_t schema_ptr = (uintptr_t)(&schema);
+                py_schema.attr("_export_to_c")(schema_ptr);
+
+                for (int64_t sch_idx = 0; sch_idx < schema.n_children;
+                     ++sch_idx) {
+                    auto child = schema.children[sch_idx];
+                    auto metadata = py_schema.attr("metadata");
+                    if (py::hasattr(metadata, "get")) {
+                        auto val = metadata.attr("get")(
+                            py::str(child->name).attr("encode")("utf-8"));
+
+                        if (val != py::none() &&
+                            val.cast<std::string>() == "nullable") {
+                            child->flags &= ARROW_FLAG_NULLABLE;
+                        } else {
+                            child->flags &= ~ARROW_FLAG_NULLABLE;
+                        }
+                    }
+                }
+
+                ArrowArray domains;
+                uintptr_t domains_ptr = (uintptr_t)(&domains);
+                py_domains.attr("_export_to_c")(domains_ptr);
+
+                ArrowArray extents;
+                uintptr_t extents_ptr = (uintptr_t)(&extents);
+                py_extents.attr("_export_to_c")(extents_ptr);
+
+                try {
+                    SOMADataFrame::create(
+                        uri,
+                        std::make_unique<ArrowSchema>(schema),
+                        ColumnIndexInfo(
+                            index_columns_names,
+                            std::make_shared<ArrowArray>(domains),
+                            std::make_shared<ArrowArray>(extents)),
+                        context,
+                        platform_config,
+                        timestamp);
+                } catch (const std::out_of_range& e) {
+                    throw py::type_error(e.what());
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
+            "uri"_a,
+            py::kw_only(),
+            "schema"_a,
+            "index_column_names"_a,
+            "domains"_a,
+            "extents"_a,
+            "ctx"_a,
+            "platform_config"_a,
+            "timestamp"_a = py::none())
+
+        .def_static(
             "open",
             py::overload_cast<
                 std::string_view,

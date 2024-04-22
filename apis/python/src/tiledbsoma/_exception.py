@@ -6,6 +6,8 @@
 """Exceptions.
 """
 
+from typing import Union
+
 import tiledb
 
 
@@ -27,7 +29,7 @@ class DoesNotExistError(SOMAError):
     pass
 
 
-def is_does_not_exist_error(e: tiledb.TileDBError) -> bool:
+def is_does_not_exist_error(e: Union[RuntimeError, tiledb.TileDBError]) -> bool:
     """Given a TileDBError, return true if it indicates the object does not exist
 
     Lifecycle: maturing
@@ -64,7 +66,7 @@ class AlreadyExistsError(SOMAError):
     pass
 
 
-def is_already_exists_error(e: tiledb.TileDBError) -> bool:
+def is_already_exists_error(e: Union[SOMAError, tiledb.TileDBError]) -> bool:
     """Given a TileDBError, return true if it indicates the object already exists
 
     Lifecycle: experimental

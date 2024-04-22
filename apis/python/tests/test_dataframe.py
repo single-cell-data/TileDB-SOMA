@@ -121,9 +121,9 @@ def test_dataframe(tmp_path, arrow_schema):
     with soma.DataFrame.open(tmp_path.as_posix(), "r") as A:
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADataFrame)
 
-    # Ensure write mode uses Python object
+    # Ensure write mode uses clib object
     with soma.DataFrame.open(tmp_path.as_posix(), "w") as A:
-        assert isinstance(A._handle._handle, tiledb.Array)
+        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADataFrame)
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
@@ -1161,9 +1161,7 @@ def test_extend_enumerations(tmp_path):
     with soma.open(str(tmp_path)) as soma_dataframe:
         df = soma_dataframe.read().concat().to_pandas()
         for c in df:
-            # TODO bytes are being set to ascii - requires a fix in tiledb-py
-            # assert df[c].dtype == pandas_df[c].dtype
-            assert df[c].dtype.kind == pandas_df[c].dtype.kind
+            assert df[c].dtype == pandas_df[c].dtype
             if df[c].dtype == "category":
                 assert df[c].cat.categories.dtype == pandas_df[c].cat.categories.dtype
 
@@ -1338,7 +1336,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
     soma.DataFrame.create(uri, schema=schema).close()
 
     n_elem = 132
-    n_cats = 128
+    n_cats = 127
     df1 = pd.DataFrame(
         {
             "soma_joinid": pd.Series(np.arange(n_elem), dtype=np.int64),
@@ -1365,7 +1363,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
 
     # cannot add additional categories as already maxed out earlier
     tbl = pa.Table.from_pandas(df2, preserve_index=False)
-    with pytest.raises(ValueError):
+    with pytest.raises((RuntimeError, soma.SOMAError)):
         with soma.open(uri, mode="w") as A:
             A.write(tbl)
 
@@ -1414,7 +1412,7 @@ def test_enum_schema_report(tmp_path):
                 assert value_type.name == "str32"
             elif attr.name == "byte_cat":
                 assert index_type.name == "int8"
-                assert value_type.name == "bytes"
+                assert value_type.name == "bytes8"
 
     # Verify SOMA Arrow schema
     with soma.open(uri) as sdf:

@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, List, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -15,14 +15,13 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
-import tiledb
-
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._exception import (
     AlreadyExistsError,
     NotCreateableError,
+    SOMAError,
     is_already_exists_error,
     is_not_createable_error,
 )
@@ -131,6 +130,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         it must be ``None``.
     """
 
+    _wrapper_type = DataFrameWrapper
     _reader_wrapper_type = DataFrameWrapper
 
     @classmethod
@@ -220,23 +220,85 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
-        tdb_schema = _build_tiledb_schema(
-            schema,
-            index_column_names,
-            domain,
-            TileDBCreateOptions.from_platform_config(platform_config),
-            context,
-        )
+        if domain is None:
+            domain = tuple(None for _ in index_column_names)
+        else:
+            ndom = len(domain)
+            nidx = len(index_column_names)
+            if ndom != nidx:
+                raise ValueError(
+                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
+                )
+
+        domains = []
+        extents = []
+        for index_column_name, slot_domain in zip(index_column_names, domain):
+            pa_type = schema.field(index_column_name).type
+            dtype = _arrow_types.tiledb_type_from_arrow_type(
+                pa_type, is_indexed_column=True
+            )
+
+            slot_domain = _fill_out_slot_domain(
+                slot_domain, index_column_name, pa_type, dtype
+            )
+
+            extent = _find_extent_for_domain(
+                index_column_name,
+                TileDBCreateOptions.from_platform_config(platform_config),
+                dtype,
+                slot_domain,
+            )
+
+            domains.append(pa.array(slot_domain, type=pa_type))
+            extents.append(pa.array([extent], type=pa_type))
+
+        domains = pa.StructArray.from_arrays(domains, names=index_column_names)
+        extents = pa.StructArray.from_arrays(extents, names=index_column_names)
+
+        plt_cfg = None
+        if platform_config:
+            ops = TileDBCreateOptions.from_platform_config(platform_config)
+            plt_cfg = clib.PlatformConfig()
+            plt_cfg.dataframe_dim_zstd_level = ops.dataframe_dim_zstd_level
+            plt_cfg.sparse_nd_array_dim_zstd_level = ops.sparse_nd_array_dim_zstd_level
+            plt_cfg.write_X_chunked = ops.write_X_chunked
+            plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
+            plt_cfg.capacity = ops.capacity
+            if ops.offsets_filters:
+                plt_cfg.offsets_filters = [
+                    info["_type"] for info in ops.offsets_filters
+                ]
+            if ops.validity_filters:
+                plt_cfg.validity_filters = [
+                    info["_type"] for info in ops.validity_filters
+                ]
+            plt_cfg.allows_duplicates = ops.allows_duplicates
+            plt_cfg.tile_order = ops.tile_order
+            plt_cfg.cell_order = ops.cell_order
+            plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
+
+        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
-            handle = cls._create_internal(uri, tdb_schema, context, tiledb_timestamp)
+            clib.SOMADataFrame.create(
+                uri,
+                schema=schema,
+                index_column_names=index_column_names,
+                domains=domains,
+                extents=extents,
+                ctx=context.native_context,
+                platform_config=plt_cfg,
+                timestamp=(0, timestamp_ms),
+            )
+
+            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
             return cls(
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
-        except tiledb.TileDBError as tdbe:
-            if is_already_exists_error(tdbe):
+        except SOMAError as e:
+            if is_already_exists_error(e):
                 raise AlreadyExistsError(f"{uri!r} already exists")
-            if is_not_createable_error(tdbe):
+            if is_not_createable_error(e):
                 raise NotCreateableError(f"{uri!r} cannot be created")
             raise
 
@@ -413,110 +475,62 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
-        dim_cols_map: Dict[str, pd.DataFrame] = {}
-        attr_cols_map: Dict[str, pd.DataFrame] = {}
-        dim_names_set = self.index_column_names
-        n = None
+        target_schema = []
+        for i, input_field in enumerate(values.schema):
+            name = input_field.name
+            target_field = self.schema.field(name)
 
-        se: Optional[tiledb.schema_evolution.ArraySchemaEvolution] = None
-
-        for col_info in values.schema:
-            name = col_info.name
-            col = values.column(name).combine_chunks()
-            n = len(col)
-
-            if self._handle.schema.has_attr(name):
-                attr = self._handle.schema.attr(name)
-
-                # Add the enumeration values to the TileDB Array from ArrowArray
-                if attr.enum_label is not None:
-                    if not pa.types.is_dictionary(col_info.type):
-                        raise ValueError(
-                            "Expected dictionary type for enumerated attribute "
-                            f"{name} but saw {col.type}"
+            if pa.types.is_dictionary(target_field.type):
+                if not pa.types.is_dictionary(input_field.type):
+                    raise ValueError(f"{name} requires dictionary entry")
+                col = values.column(name).combine_chunks()
+                if pa.types.is_boolean(target_field.type.value_type):
+                    col = col.cast(
+                        pa.dictionary(
+                            target_field.type.index_type,
+                            pa.uint8(),
+                            target_field.type.ordered,
                         )
-
-                    enmr = self._handle.enum(attr.name)
-
-                    # get new enumeration values by taking the set difference
-                    # while maintaining ordering
-                    update_vals = np.setdiff1d(
-                        col.dictionary, enmr.values(), assume_unique=True
                     )
+                new_enmr = self._handle._handle.extend_enumeration(name, col)
 
-                    index_capacity_current = len(enmr.values()) + len(update_vals)
-                    index_capacity_max = np.iinfo(
-                        col_info.type.index_type.to_pandas_dtype()
-                    ).max
-                    if index_capacity_max < index_capacity_current:
-                        raise ValueError(
-                            f"Too many enumeration values ({index_capacity_current}) "
-                            "for index type {col_info.type.index_type}"
-                        )
+                if pa.types.is_binary(
+                    target_field.type.value_type
+                ) or pa.types.is_large_binary(target_field.type.value_type):
+                    new_enmr = np.array(new_enmr, "S")
+                elif pa.types.is_boolean(target_field.type.value_type):
+                    new_enmr = np.array(new_enmr, bool)
 
-                    # only extend if there are new values
-                    if len(update_vals) != 0:
-                        if se is None:
-                            se = tiledb.ArraySchemaEvolution(self.context.tiledb_ctx)
-                        if np.issubdtype(enmr.dtype.type, np.str_):
-                            extend_vals = np.array(update_vals, "U")
-                        elif np.issubdtype(enmr.dtype.type, np.bytes_):
-                            extend_vals = np.array(update_vals, "S")
-                        else:
-                            extend_vals = np.array(update_vals, enmr.dtype)
-                        new_enmr = enmr.extend(extend_vals)
-                        df = pd.Categorical(col.to_pandas(), new_enmr.values())
-                        col = pa.DictionaryArray.from_pandas(df)
-                        se.extend_enumeration(new_enmr)
+                df = pd.Categorical(
+                    col.to_pandas(),
+                    ordered=target_field.type.ordered,
+                    categories=new_enmr,
+                )
+                values = values.set_column(
+                    i, name, pa.DictionaryArray.from_pandas(df, type=target_field.type)
+                )
 
-            cols_map = dim_cols_map if name in dim_names_set else attr_cols_map
-            schema = self._handle.schema
-            if pa.types.is_dictionary(col.type):
-                if (
-                    name not in dim_names_set
-                    and schema.attr(name).enum_label is not None
-                ):
-                    cols_map[name] = col.indices.to_pandas()
-                else:
-                    cols_map[name] = col
-
+            if pa.types.is_boolean(input_field.type):
+                target_schema.append(target_field.with_type(pa.uint8()))
             else:
-                if name not in dim_names_set:
-                    if schema.attr(name).enum_label is not None:
-                        raise ValueError(
-                            f"Categorical column {name} must be presented with categorical data"
-                        )
+                target_schema.append(target_field)
+        values = values.cast(pa.schema(target_schema, values.schema.metadata))
 
-                cols_map[name] = col.to_pandas()
+        for batch in values.to_batches():
+            self._handle._handle.write(batch)
 
-        if se is not None:
-            se.array_evolve(uri=self.uri)
-
-        if n is None:
-            raise ValueError(f"did not find any column names in {values.schema.names}")
-
-        # We need to produce the dim cols in the same order as they're present in the TileDB schema
-        # (tracked by self.index_column_names). This is important in the multi-index case.  Suppose
-        # the Arrow schema has two index columns in the order "burger" and "meister", and suppose
-        # the user set index_column_names = ["meister", "burger"] when creating the TileDB schema.
-        # Then the above for-loop over the Arrow schema will find the former ordering, but for the
-        # ``writer[dims] = attrs`` below we must have dims with the latter ordering.
-        dim_cols_list = [dim_cols_map[name] for name in self.index_column_names]
-        dim_cols_tuple = tuple(dim_cols_list)
-        self._handle.writer[dim_cols_tuple] = attr_cols_map
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
             platform_config
         )
         if tiledb_create_options.consolidate_and_vacuum:
             self._consolidate_and_vacuum()
-
         return self
 
     def _set_reader_coord(
         self,
         sr: clib.SOMAArray,
         dim_idx: int,
-        dim: Union[pa.Field, tiledb.Dim],
+        dim: pa.Field,
         coord: object,
     ) -> bool:
         if coord is None:
@@ -591,7 +605,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         self,
         sr: clib.SOMAArray,
         dim_idx: int,
-        dim: Union[pa.Field, tiledb.Dim],
+        dim: pa.Field,
         coord: object,
     ) -> bool:
         if isinstance(coord, np.ndarray):
@@ -716,121 +730,6 @@ def _canonicalize_schema(
     return schema
 
 
-def _build_tiledb_schema(
-    schema: pa.Schema,
-    index_column_names: Sequence[str],
-    domain: Optional[Domain],
-    tiledb_create_options: TileDBCreateOptions,
-    context: SOMATileDBContext,
-) -> tiledb.ArraySchema:
-    """Converts an Arrow schema into a TileDB ArraySchema for creation."""
-
-    if domain is None:
-        domain = tuple(None for _ in index_column_names)
-    else:
-        ndom = len(domain)
-        nidx = len(index_column_names)
-        if ndom != nidx:
-            raise ValueError(
-                f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
-            )
-
-    dims = []
-    for index_column_name, slot_domain in zip(index_column_names, domain):
-        pa_type = schema.field(index_column_name).type
-        dtype = _arrow_types.tiledb_type_from_arrow_type(
-            pa_type, is_indexed_column=True
-        )
-
-        slot_domain = _fill_out_slot_domain(
-            slot_domain, index_column_name, pa_type, dtype
-        )
-
-        extent = _find_extent_for_domain(
-            index_column_name, tiledb_create_options, dtype, slot_domain
-        )
-
-        dim = tiledb.Dim(
-            name=index_column_name,
-            domain=slot_domain,
-            tile=extent,
-            dtype=dtype,
-            filters=tiledb_create_options.dim_filters_tiledb(
-                index_column_name,
-                [
-                    dict(
-                        _type="ZstdFilter",
-                        level=tiledb_create_options.dataframe_dim_zstd_level,
-                    )
-                ],
-            ),
-        )
-        dims.append(dim)
-
-    dom = tiledb.Domain(dims, ctx=context.tiledb_ctx)
-
-    attrs = []
-    enums = []
-    metadata = schema.metadata or {}
-    for pa_attr in schema:
-        attr_name = pa_attr.name
-
-        if attr_name in index_column_names:
-            continue
-
-        has_enum = pa.types.is_dictionary(pa_attr.type)
-
-        if has_enum:
-            # TODO; make this `np.dtype[Any]` in Python ≥3.9
-            enmr_dtype: np.dtype  # type: ignore[type-arg]
-            vtype = pa_attr.type.value_type
-            if pa.types.is_large_string(vtype) or pa.types.is_string(vtype):
-                enmr_dtype = np.dtype("U")
-            elif pa.types.is_large_binary(vtype) or pa.types.is_binary(vtype):
-                enmr_dtype = np.dtype("S")
-            else:
-                enmr_dtype = np.dtype(vtype.to_pandas_dtype())
-            enums.append(
-                tiledb.Enumeration(
-                    name=attr_name,
-                    ordered=pa_attr.type.ordered,
-                    dtype=enmr_dtype,
-                )
-            )
-
-        attr = tiledb.Attr(
-            name=attr_name,
-            dtype=_arrow_types.tiledb_type_from_arrow_type(
-                schema.field(attr_name).type
-            ),
-            nullable=metadata.get(attr_name.encode("utf-8")) == b"nullable",
-            filters=tiledb_create_options.attr_filters_tiledb(
-                attr_name, ["ZstdFilter"]
-            ),
-            enum_label=attr_name if has_enum else None,
-            ctx=context.tiledb_ctx,
-        )
-        attrs.append(attr)
-
-    cell_order, tile_order = tiledb_create_options.cell_tile_orders()
-
-    return tiledb.ArraySchema(
-        domain=dom,
-        attrs=attrs,
-        enums=enums,
-        sparse=True,
-        allows_duplicates=tiledb_create_options.allows_duplicates,
-        offsets_filters=tiledb_create_options.offsets_filters_tiledb(),
-        validity_filters=tiledb_create_options.validity_filters_tiledb(),
-        capacity=tiledb_create_options.capacity,
-        cell_order=cell_order,
-        # As of TileDB core 2.8.2, we cannot consolidate string-indexed sparse arrays with
-        # col-major tile order: so we write ``X`` with row-major tile order.
-        tile_order=tile_order,
-        ctx=context.tiledb_ctx,
-    )
-
-
 def _fill_out_slot_domain(
     slot_domain: AxisDomain,
     index_column_name: str,
@@ -874,7 +773,7 @@ def _fill_out_slot_domain(
             )
         slot_domain = slot_domain[0], slot_domain[1]
     elif isinstance(dtype, str):
-        slot_domain = None, None
+        slot_domain = "", ""
     elif np.issubdtype(dtype, NPInteger):
         iinfo = np.iinfo(cast(NPInteger, dtype))
         slot_domain = iinfo.min, iinfo.max - 1
@@ -939,7 +838,7 @@ def _find_extent_for_domain(
         extent = 64
 
     if isinstance(dtype, str):
-        return extent
+        return ""
 
     lo, hi = slot_domain
     if lo is None or hi is None:

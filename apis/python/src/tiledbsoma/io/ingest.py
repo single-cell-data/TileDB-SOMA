@@ -1889,9 +1889,10 @@ def _write_matrix_to_denseNDArray(
 def _read_nonempty_domain(arr: TileDBArray) -> Any:
     try:
         return arr._handle.non_empty_domain()
-    except SOMAError:
+    except (SOMAError, RuntimeError):
         # This means that we're open in write-only mode.
         # Reopen the array in read mode.
+        # TODO macOS throws RuntimeError instead of SOMAError
         pass
 
     cls = type(arr)

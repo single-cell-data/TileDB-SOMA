@@ -40,7 +40,10 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Experimental.
     """
 
-    _wrapper_type: Type[_WrapperType_co]
+    _wrapper_type: Union[
+        Type[_WrapperType_co],
+        Type[_tdb_handles.DataFrameWrapper],
+    ]
     """Class variable of the Wrapper class used to open this object type."""
 
     _reader_wrapper_type: Union[
@@ -106,7 +109,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     def __init__(
         self,
-        handle: Union[_WrapperType_co],
+        handle: Union[_WrapperType_co, _tdb_handles.DataFrameWrapper],
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ):
@@ -285,7 +288,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 if not isinstance(md_type, str):
                     return False
                 return md_type.lower() == cls.soma_type.lower()
-        except (SOMAError, tiledb.cc.TileDBError):
+        except (RuntimeError, SOMAError, tiledb.cc.TileDBError):
             return False
 
     @classmethod

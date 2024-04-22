@@ -32,8 +32,6 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
 
     __slots__ = ()
 
-    _wrapper_type = _tdb_handles.ArrayWrapper
-
     @classmethod
     def open(
         cls,
@@ -203,7 +201,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         schema: tiledb.ArraySchema,
         context: SOMATileDBContext,
         tiledb_timestamp: Optional[OpenTimestamp],
-    ) -> _tdb_handles.ArrayWrapper:
+    ) -> Union[_tdb_handles.ArrayWrapper, _tdb_handles.DataFrameWrapper]:
         """Creates the TileDB Array for this type and returns an opened handle.
 
         This does the work of creating a TileDB Array with the provided schema
