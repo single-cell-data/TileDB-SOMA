@@ -50,7 +50,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     std::string sub_uri = "mem://unit-test-add-sparse-ndarray/sub";
 
     SOMACollection::create(base_uri, ctx);
-    auto [arrow_schema, index_columns] = helper::create_arrow_schema();
+    auto index_columns = helper::create_column_index_info();
     auto schema = helper::create_schema(*ctx->tiledb_ctx(), true);
 
     std::map<std::string, std::string> expected_map{
@@ -58,7 +58,13 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
     auto soma_sparse = soma_collection->add_new_sparse_ndarray(
-        "sparse_ndarray", sub_uri, URIType::absolute, ctx, schema);
+        "sparse_ndarray",
+        sub_uri,
+        URIType::absolute,
+        ctx,
+        "l",
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)));
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     REQUIRE(soma_sparse->uri() == sub_uri);
     REQUIRE(soma_sparse->ctx() == ctx);

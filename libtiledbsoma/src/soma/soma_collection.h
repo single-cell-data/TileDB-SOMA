@@ -192,7 +192,8 @@ class SOMACollection : public SOMAGroup {
         std::shared_ptr<SOMAContext> ctx,
         std::unique_ptr<ArrowSchema> schema,
         ArrowTable index_columns,
-        std::optional<PlatformConfig> platform_config = std::nullopt);
+        std::optional<PlatformConfig> platform_config = std::nullopt,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * Create and add a SOMADenseNDArray to the SOMACollection.
@@ -222,7 +223,10 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        ArraySchema schema);
+        std::string_view format,
+        ArrowTable index_columns,
+        std::optional<PlatformConfig> platform_config = std::nullopt,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
    protected:
     //===================================================================

@@ -98,7 +98,7 @@ std::shared_ptr<SOMACollection> SOMACollection::add_new_collection(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx) {
     SOMACollection::create(uri, ctx);
-    std::shared_ptr<SOMACollection> member = SOMAExperiment::open(
+    std::shared_ptr<SOMACollection> member = SOMACollection::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
     children_[std::string(key)] = member;
@@ -154,14 +154,16 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     std::shared_ptr<SOMAContext> ctx,
     std::unique_ptr<ArrowSchema> schema,
     ArrowTable index_columns,
-    std::optional<PlatformConfig> platform_config) {
+    std::optional<PlatformConfig> platform_config,
+    std::optional<TimestampRange> timestamp) {
     SOMADataFrame::create(
         uri,
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        platform_config);
+        platform_config,
+        timestamp);
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
@@ -188,8 +190,18 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    ArraySchema schema) {
-    SOMASparseNDArray::create(uri, std::move(schema), ctx);
+    std::string_view format,
+    ArrowTable index_columns,
+    std::optional<PlatformConfig> platform_config,
+    std::optional<TimestampRange> timestamp) {
+    SOMASparseNDArray::create(
+        uri,
+        format,
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        platform_config,
+        timestamp);
     std::shared_ptr<SOMASparseNDArray> member = SOMASparseNDArray::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));

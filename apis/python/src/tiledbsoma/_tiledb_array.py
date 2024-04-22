@@ -201,7 +201,11 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         schema: tiledb.ArraySchema,
         context: SOMATileDBContext,
         tiledb_timestamp: Optional[OpenTimestamp],
-    ) -> Union[_tdb_handles.ArrayWrapper, _tdb_handles.DataFrameWrapper]:
+    ) -> Union[
+        _tdb_handles.ArrayWrapper,
+        _tdb_handles.DataFrameWrapper,
+        _tdb_handles.SparseNDArrayWrapper,
+    ]:
         """Creates the TileDB Array for this type and returns an opened handle.
 
         This does the work of creating a TileDB Array with the provided schema

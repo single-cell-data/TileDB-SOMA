@@ -59,8 +59,10 @@ class SOMASparseNDArray : public SOMAArray {
      */
     static void create(
         std::string_view uri,
-        ArraySchema schema,
+        std::string_view format,
+        ArrowTable index_columns,
         std::shared_ptr<SOMAContext> ctx,
+        std::optional<PlatformConfig> platform_config,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**

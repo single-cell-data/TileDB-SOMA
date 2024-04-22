@@ -50,6 +50,24 @@ _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
     pa.date32(): TypeError("32-bit date - unsupported type (use TimestampType)"),
     pa.date64(): TypeError("64-bit date - unsupported type (use TimestampType)"),
 }
+
+_PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
+    pa.bool_(): "b",
+    pa.int8(): "c",
+    pa.int16(): "s",
+    pa.int32(): "i",
+    pa.int64(): "l",
+    pa.uint8(): "C",
+    pa.uint16(): "S",
+    pa.uint32(): "I",
+    pa.uint64(): "L",
+    pa.float32(): "f",
+    pa.float64(): "g",
+    pa.timestamp("s"): "tss:",
+    pa.timestamp("ms"): "tsm:",
+    pa.timestamp("us"): "tsu:",
+    pa.timestamp("ns"): "tsn:",
+}
 """Dict of types unsupported by to_pandas_dtype, which require overrides for
 use in TileDB Attributes (aka DataFrame non-indexe columns).
 
@@ -237,3 +255,9 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
         arrow_table = arrow_table.replace_schema_metadata(md)
 
     return arrow_table
+
+
+def pyarrow_to_carrow_type(pa_type: pa.DataType) -> str:
+    if pa_type not in _PYARROW_TO_CARROW:
+        raise TypeError(f"Invalid pyarrow type {pa_type}")
+    return _PYARROW_TO_CARROW[pa_type]

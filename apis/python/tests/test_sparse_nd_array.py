@@ -64,7 +64,7 @@ def test_sparse_nd_array_create_ok(
 
     # Ensure write mode uses Python object
     with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
-        assert isinstance(A._handle._handle, tiledb.Array)
+        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMASparseNDArray)
 
 
 @pytest.mark.parametrize("shape", [(10,)])
@@ -362,9 +362,9 @@ def test_sparse_nd_array_shaping(tmp_path, shape_is_nones, element_type):
         with soma.SparseNDArray.open(uri, "w") as snda:
             snda.write(batch2)
     else:
-        # tiledb.cc.TileDBError: [TileDB::Dimension] Error: Coordinate 2
-        # is out of domain bounds [0, 1] on dimension 'soma_dim_0'
-        with pytest.raises(tiledb.cc.TileDBError):
+        # tiledbsoma._exception.SOMAError: [TileDB::Dimension] Error:
+        # Coordinate 2 is out of domain bounds [0, 1] on dimension 'soma_dim_0'
+        with pytest.raises(soma.SOMAError):
             with soma.SparseNDArray.open(uri, "w") as snda:
                 snda.write(batch2)
 
