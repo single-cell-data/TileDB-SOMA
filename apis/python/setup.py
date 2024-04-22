@@ -329,8 +329,7 @@ setuptools.setup(
         "pyarrow>=9.0.0; platform_system!='Darwin'",
         "scanpy>=1.9.2",
         "scipy",
-        # Note: the somacore version is in .pre-commit-config.yaml too
-        "somacore==1.0.11",
+        "somacore @ git+https://github.com/single-cell-data/SOMA.git@spatial",  # DO NOT MERGE TO MAIN
         "tiledb~=0.28.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
