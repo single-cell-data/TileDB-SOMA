@@ -313,7 +313,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 dims.insert({dim.name(), dim});
                 isattr = false;
                 break;
-            } 
+            }
         }
         if (isattr) {
             Attribute attr(*ctx, child->name, type);
