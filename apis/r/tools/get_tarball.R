@@ -21,6 +21,7 @@ if (isMac) {
       stop("Unsupported Mac architecture. Please have TileDB Core installed locally.")
     }
 } else if (isLinux) {
+    # TODO: LOOK AT THIS
     url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.22.0/tiledb-linux-x86_64-2.22.0-52e981e.tar.gz"
 } else {
     stop("Unsupported platform for downloading artifacts. Please have TileDB Core installed locally.")
