@@ -224,9 +224,10 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
 ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     std::unique_ptr<ArrowSchema> arrow_schema,
-    ColumnIndexInfo index_column_info,
+    ArrowTable index_column_info,
     std::optional<PlatformConfig> platform_config) {
-    auto [index_column_names, domains, extents] = index_column_info;
+    auto index_column_array = std::move(index_column_info.first);
+    auto index_column_schema = std::move(index_column_info.second);
 
     ArraySchema schema(*ctx, TILEDB_SPARSE);
     Domain domain(*ctx);
@@ -292,29 +293,29 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         auto child = arrow_schema->children[sch_idx];
         auto type = ArrowAdapter::to_tiledb_format(child->format);
 
-        auto idx_col_begin = index_column_names.begin();
-        auto idx_col_end = index_column_names.end();
-        auto idx_col_it = std::find(idx_col_begin, idx_col_end, child->name);
+        bool isattr = true;
 
-        if (idx_col_it != idx_col_end) {
-            auto idx_col_idx = std::distance(idx_col_begin, idx_col_it);
-            if (ArrowAdapter::_isvar(child->format)) {
-                type = TILEDB_STRING_ASCII;
-            }
+        for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+            auto col_name = index_column_schema->children[i]->name;
+            if (strcmp(child->name, col_name) == 0) {
+                if (ArrowAdapter::_isvar(child->format)) {
+                    type = TILEDB_STRING_ASCII;
+                }
 
-            auto dim = Dimension::create(
-                *ctx,
-                child->name,
-                type,
-                type == TILEDB_STRING_ASCII ?
-                    nullptr :
-                    domains->children[idx_col_idx]->buffers[1],
-                type == TILEDB_STRING_ASCII ?
-                    nullptr :
-                    extents->children[idx_col_idx]->buffers[1]);
-
-            dims.insert({dim.name(), dim});
-        } else {
+                auto domain = index_column_array->children[i]->buffers[1];
+                auto tile = (char*)domain + 2 * tiledb::impl::type_size(type);
+                auto dim = Dimension::create(
+                    *ctx,
+                    child->name,
+                    type,
+                    type == TILEDB_STRING_ASCII ? nullptr : domain,
+                    type == TILEDB_STRING_ASCII ? nullptr : tile);
+                dims.insert({dim.name(), dim});
+                isattr = false;
+                break;
+            } 
+        }
+        if (isattr) {
             Attribute attr(*ctx, child->name, type);
 
             if (child->flags & ARROW_FLAG_NULLABLE) {
@@ -343,8 +344,10 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         }
     }
 
-    for (auto column_name : index_column_names)
-        domain.add_dimension(dims.at(column_name));
+    for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+        auto col_name = index_column_schema->children[i]->name;
+        domain.add_dimension(dims.at(col_name));
+    }
     schema.set_domain(domain);
 
     schema.check();

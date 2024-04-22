@@ -42,12 +42,16 @@ using namespace tiledb;
 void SOMADataFrame::create(
     std::string_view uri,
     std::unique_ptr<ArrowSchema> schema,
-    ColumnIndexInfo index_columns,
+    ArrowTable index_columns,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<PlatformConfig> platform_config,
     std::optional<TimestampRange> timestamp) {
     auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
-        ctx->tiledb_ctx(), std::move(schema), index_columns, platform_config);
+        ctx->tiledb_ctx(),
+        std::move(schema),
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        platform_config);
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame", timestamp);
 }
 
