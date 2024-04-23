@@ -29,6 +29,8 @@ test_that("Factory re-creation", {
     expect_error(fxn(uri))
     obj$close()
   }
+
+  gc()
 })
 
 test_that("Resume-mode factories", {
@@ -71,6 +73,8 @@ test_that("Resume-mode factories", {
     expect_identical(obj$mode(), "WRITE", label = label)
     obj$close()
   }
+
+  gc()
 })
 
 test_that("Resume-mode data frames", {
@@ -182,6 +186,8 @@ test_that("Resume-mode data frames", {
       )
     }
   }
+
+  gc()
 })
 
 test_that("Resume-mode sparse arrays", {
@@ -284,6 +290,8 @@ test_that("Resume-mode sparse arrays", {
   if (!is.null(bbox)) {
     expect_identical(bbox, dim(knex))
   }
+
+  gc()
 })
 
 test_that("Resume-mode dense arrays", {
@@ -320,6 +328,8 @@ test_that("Resume-mode dense arrays", {
     sparse = FALSE,
     ingest_mode = "resume"
   ))
+
+  gc()
 })
 
 test_that("Resume-mode Seurat", {
@@ -368,6 +378,9 @@ test_that("Resume-mode Seurat", {
       expected.label = sprintf("pbmc_small[['%s']]", i)
     )
   }
+
+  exp$close()
+  gc()
 
   # Expect error when writing to existing array
   expect_error(write_soma(pbmc_small, uri = uri))
@@ -493,6 +506,9 @@ test_that("Resume-mode Seurat", {
       expected.label = sprintf("pbmc_small[['%s']]", i)
     )
   }
+
+  expc$close()
+  gc()
 })
 
 test_that("Resume-mode SingleCellExperiment", {
@@ -894,4 +910,7 @@ test_that("Resume-mode SingleCellExperiment", {
       expected.label = sprintf("rowData(sce)[['%s']]", i)
     )
   }
+
+  expc$close()
+  gc()
 })
