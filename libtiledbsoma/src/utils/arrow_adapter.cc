@@ -319,7 +319,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     }
                     case TILEDB_UINT8: {
                         auto dim = ArrowAdapter::_create_dim(
-                            *ctx, child->name, (int16_t*)buff);
+                            *ctx, child->name, (uint8_t*)buff);
                         dims.insert({child->name, dim});
                         break;
                     }
