@@ -417,6 +417,41 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         tbl <- layer$read(coords = coords)$tables()$concat()
       }
 
+      if (is.null(coords)) {
+        stop("THESE COORDS IS NULLS")
+      }
+
+      print("COLLECTION IS")
+      print(typeof(collection))
+      print(collection)
+
+      print("COORDS$X IS")
+      print(typeof(coords$X))
+      print(coords$X)
+
+      print("CHECK ONE")
+      if (is.null(self$obs_joinids())) {
+        print("self$obs_joinids() IS NULL")
+      } else {
+        print("self$obs_joinids()")
+        print(self$obs_joinids())
+      }
+      if (is.null(self$var_joinids())) {
+        print("self$var_joinids() IS NULL")
+      } else {
+        print("self$var_joinids()")
+        print(self$var_joinids())
+      }
+      if (is.null(coords$X)) {
+        print("COORDS$X IS NULL")
+      }
+      if (is.null(coords$X$soma_dim_0)) {
+        print("COORDS$X$SOMA_DIM_0 IS NULL")
+      }
+      if (is.null(coords$X$soma_dim_1)) {
+        print("COORDS$X$SOMA_DIM_1 IS NULL")
+      }
+      print("CHECK TWO")
 
       # Reindex the coordinates
       # Constructing a matrix with the joinids produces a matrix with
