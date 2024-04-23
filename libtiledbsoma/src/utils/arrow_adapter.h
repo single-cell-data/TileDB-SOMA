@@ -117,8 +117,10 @@ class ArrowAdapter {
         return dst;
     }
 
-    static std::optional<std::pair<const void*, const void*>> _get_dim_info(
-        std::string_view dim_name, ArrowTable index_columns);
+    template <typename T>
+    static Dimension _create_dim(Context ctx, std::string name, T* b) {
+        return Dimension::create<T>(ctx, name, {b[0], b[1]}, b[2]);
+    }
 
     static bool _isvar(const char* format);
 };

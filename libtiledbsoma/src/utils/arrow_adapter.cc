@@ -302,15 +302,80 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     type = TILEDB_STRING_ASCII;
                 }
 
-                auto domain = index_column_array->children[i]->buffers[1];
-                auto tile = (char*)domain + 2 * tiledb::impl::type_size(type);
-                auto dim = Dimension::create(
-                    *ctx,
-                    child->name,
-                    type,
-                    type == TILEDB_STRING_ASCII ? nullptr : domain,
-                    type == TILEDB_STRING_ASCII ? nullptr : tile);
-                dims.insert({dim.name(), dim});
+                const void* buff = index_column_array->children[i]->buffers[1];
+
+                switch (type) {
+                    case TILEDB_STRING_ASCII: {
+                        auto dim = Dimension::create(
+                            *ctx, child->name, type, nullptr, nullptr);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_INT8: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (int8_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_UINT8: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (int16_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_INT16: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (int16_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_UINT16: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (uint16_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_INT32: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (int32_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_UINT32: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (uint32_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_INT64: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (int64_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_UINT64: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (uint64_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_FLOAT32: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (float*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_FLOAT64: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (double*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    default:
+                        throw TileDBSOMAError(fmt::format(
+                            "ArrowAdapter: Unsupported TileDB dimension: {} ",
+                            tiledb::impl::type_to_str(type)));
+                }
                 isattr = false;
                 break;
             }
@@ -514,7 +579,8 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         column->validity_to_bitmap();
         array->buffers[0] = column->validity().data();
     } else {
-        schema->flags = 0;  // as ArrowSchemaInitFromType leads to NULLABLE set
+        schema->flags = 0;  // as ArrowSchemaInitFromType leads to NULLABLE
+                            // set
     }
 
     if (column->is_ordered()) {
