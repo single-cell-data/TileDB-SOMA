@@ -5,7 +5,15 @@
 \title{Write a \code{\link[SummarizedExperiment:SummarizedExperiment-class]{SummarizedExperiment}}
 object to a SOMA}
 \usage{
-\method{write_soma}{SummarizedExperiment}(x, uri, ms_name, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
+\method{write_soma}{SummarizedExperiment}(
+  x,
+  uri,
+  ms_name,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{x}{An object}
@@ -15,6 +23,13 @@ object to a SOMA}
 \item{ms_name}{Name for resulting measurement}
 
 \item{...}{Arguments passed to other methods}
+
+\item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
+\itemize{
+\item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+\item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
+exists, simply open it for writing
+}}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}}

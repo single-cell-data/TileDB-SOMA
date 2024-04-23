@@ -10,6 +10,7 @@ object to a SOMA}
   uri,
   ms_name = NULL,
   ...,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 )
@@ -23,6 +24,13 @@ object to a SOMA}
 \code{\link[SingleCellExperiment]{mainExpName}(x)}}
 
 \item{...}{Arguments passed to other methods}
+
+\item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
+\itemize{
+\item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+\item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
+exists, simply open it for writing
+}}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}}
