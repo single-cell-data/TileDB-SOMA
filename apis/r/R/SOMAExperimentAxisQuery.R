@@ -429,11 +429,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         ),
         obsm = list(
           i = self$indexer$by_obs(coords$soma_dim_0),
-          j = coords$soma_dim_1 # XXX UPDATE HERE FOR DENSE
+          j = layer$non_empty_domain()[[2]],
         ),
         varm = list(
           i = self$indexer$by_var(coords$soma_dim_0),
-          j = coords$soma_dim_1 # XXX UPDATE HERE FOR DENSE
+          j = layer$non_empty_domain()[[2]],
         ),
         obsp = list(
           i = self$indexer$by_obs(coords$soma_dim_0),
