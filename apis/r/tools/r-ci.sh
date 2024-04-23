@@ -368,16 +368,26 @@ DumpLogsByExtension() {
         exit 1
     fi
     extension=$1
+    echo "DumpLogsByExtension extension=<<$extension>>"
     shift
-    package=$(find . -maxdepth 1 -name "*.Rcheck" -type d)
-    if [[ ${#package[@]} -ne 1 ]]; then
-        echo "Could not find package Rcheck directory, skipping log dump."
+
+    # Note: this script may be run from the apis/r subdirectory or from the
+    # package base directory. This runs in CI from a clean image so in the
+    # (hypothetical) case of multiple log files, we err on the side of providing
+    # the operator with more inforation rather than less.
+    found="false"
+    for package in $(find . -name "*.Rcheck" -type d); do
+        echo ">>> Package: ${package} <<<"
+        for name in $(find "${package}" -type f -name "*${extension}"); do
+          found="true"
+          echo ">>> Filename: ${name} <<<"
+          cat ${name}
+        done
+    done
+    if [[ "$found" = "false" ]]; then
+        echo "Could not find any package Rcheck directories; skipping log dump."
         exit 0
     fi
-    for name in $(find "${package}" -type f -name "*${extension}"); do
-        echo ">>> Filename: ${name} <<<"
-        cat ${name}
-    done
 }
 
 DumpLogs() {

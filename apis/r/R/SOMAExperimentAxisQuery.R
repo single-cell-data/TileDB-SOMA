@@ -425,24 +425,24 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # reindex the coordinates.
       mat_coords <- switch(collection,
         X = list(
-          i = self$indexer$by_obs(tbl$soma_dim_0), # XXX UPDATE HERE FOR DENSE
-          j = self$indexer$by_var(tbl$soma_dim_1)  # XXX UPDATE HERE FOR DENSE
+          i = self$indexer$by_obs(coords$X$soma_dim_0),
+          j = self$indexer$by_var(coords$X$soma_dim_1)
         ),
         obsm = list(
-          i = self$indexer$by_obs(tbl$soma_dim_0), # XXX UPDATE HERE FOR DENSE
-          j = tbl$soma_dim_1
+          i = self$indexer$by_obs(coords$obsm$soma_dim_0),
+          j = coords$obsm$soma_dim_1 # XXX UPDATE HERE FOR DENSE
         ),
         varm = list(
-          i = self$indexer$by_var(tbl$soma_dim_0), # XXX UPDATE HERE FOR DENSE
-          j = tbl$soma_dim_1
+          i = self$indexer$by_var(coords$varm$soma_dim_0),
+          j = coords$varm$soma_dim_1 # XXX UPDATE HERE FOR DENSE
         ),
         obsp = list(
-          i = self$indexer$by_obs(tbl$soma_dim_0), # XXX UPDATE HERE FOR DENSE
-          j = self$indexer$by_obs(tbl$soma_dim_1)  # XXX UPDATE HERE FOR DENSE
+          i = self$indexer$by_obs(coords$obsp$soma_dim_0),
+          j = self$indexer$by_obs(coords$obsp$soma_dim_1)
         ),
         varp = list(
-          i = self$indexer$by_var(tbl$soma_dim_0), # XXX UPDATE HERE FOR DENSE
-          j = self$indexer$by_var(tbl$soma_dim_1)  # XXX UPDATE HERE FOR DENSE
+          i = self$indexer$by_var(coords$varp$soma_dim_0),
+          j = self$indexer$by_var(coords$varp$soma_dim_1)
         )
       )
 
