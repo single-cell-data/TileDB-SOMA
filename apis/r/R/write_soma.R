@@ -244,7 +244,10 @@ write_soma.data.frame <- function(
   }
   # Add to `soma_parent`
   if (is.character(key)) {
-    .register_soma_object(sdf, soma_parent, key, relative)
+    withCallingHandlers(
+      expr = .register_soma_object(sdf, soma_parent, key, relative),
+      existingKeyWarning = .maybe_muffle
+    )
   }
   # Return
   return(sdf)
@@ -366,7 +369,10 @@ write_soma.matrix <- function(
   array$write(x)
   # Add to `soma_parent`
   if (is.character(key)) {
-    .register_soma_object(array, soma_parent, key, relative)
+    withCallingHandlers(
+      expr = .register_soma_object(array, soma_parent, key, relative),
+      existingKeyWarning = .maybe_muffle
+    )
   }
   # Return
   return(array)
@@ -492,7 +498,10 @@ write_soma.TsparseMatrix <- function(
   }
   # Add to `soma_parent`
   if (is.character(key)) {
-    .register_soma_object(array, soma_parent, key, relative)
+    withCallingHandlers(
+      expr = .register_soma_object(array, soma_parent, key, relative),
+      existingKeyWarning = .maybe_muffle
+    )
   }
   # Return
   return(array)
@@ -589,24 +598,30 @@ write_soma.TsparseMatrix <- function(
     "'key' must be a single character value" = is_scalar_character(key) && nzchar(key),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
+  oldmode <- soma_parent$mode()
+  if (oldmode == 'CLOSED') {
+    soma_parent$reopen("READ")
+    oldmode <- soma_parent$mode()
+  }
+  on.exit(soma_parent$reopen(oldmode))
   if (key %in% soma_parent$names()) {
     existing <- soma_parent$get(key)
-    if (existing$uri == x$uri && inherits(existing, x$class())) {
-      return(invisible(NULL))
-    }
-    stop(
-      "Already found a ",
-      existing$class(),
-      " stored as ",
-      sQuote(key),
-      " in the parent collection",
-      call. = FALSE
-    )
+    warning(warningCondition(
+      message = paste("Already found a",
+        existing$class(),
+        "stored as",
+        sQuote(key),
+        "in the parent collection"
+      ),
+      class = 'existingKeyWarning'
+    ))
+    return(invisible(NULL))
   }
+  soma_parent$reopen('WRITE')
   soma_parent$set(
     x,
     name = key,
-    relative = ifelse(startsWith(x$uri, 'tiledb://'), yes = FALSE, no = relative)
+    relative = switch(uri_scheme(x$uri) %||% '', tiledb = FALSE, relative)
   )
   return(invisible(NULL))
 }

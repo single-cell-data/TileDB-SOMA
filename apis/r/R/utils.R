@@ -94,6 +94,18 @@ uns_hint <- function(type = c('1d', '2d')) {
   })
 }
 
+.maybe_muffle <- function(w, cond = getOption('verbose', default = FALSE)) {
+  if (isTRUE(x = cond)) {
+    warning(warningCondition(
+      message = conditionMessage(w),
+      class = setdiff(class(w), c('warning', 'simpleError', 'error', 'condition')),
+      call = conditionCall(w)
+    ))
+  } else {
+    tryInvokeRestart('muffleWarning')
+  }
+}
+
 #' Read the SOMA Join IDs from an Array
 #'
 #' @param x A \code{\link{SOMASparseNDarray}} or \code{\link{SOMADataFrame}}
