@@ -388,6 +388,21 @@ def test_experiment_query_none(soma_experiment):
         assert len(query.X("raw").tables().concat()) == 0
 
 
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_experiment_axis_query_with_none(soma_experiment):
+    """Test query by value filter"""
+    obs_label_values = ["3", "7", "38", "99"]
+
+    with soma.ExperimentAxisQuery(
+        experiment=soma_experiment,
+        measurement_name="RNA",
+        obs_query=soma.AxisQuery(value_filter=f"label in {obs_label_values}"),
+        var_query=None,
+    ) as query:
+        assert query.n_obs == len(obs_label_values)
+        assert query.obs().concat()["label"].to_pylist() == obs_label_values
+
+
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(1001, 99, ["A"])])
 def test_joinid_caching(soma_experiment):
     """
