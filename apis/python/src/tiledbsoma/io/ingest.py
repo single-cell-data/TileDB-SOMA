@@ -48,6 +48,7 @@ from .. import (
     DenseNDArray,
     Experiment,
     Measurement,
+    Scene,
     SparseNDArray,
     _factory,
     _util,
@@ -976,6 +977,18 @@ def _create_or_open_collection(
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
 ) -> Collection[_TDBO]:
+    ...
+
+
+@overload
+def _create_or_open_collection(
+    cls: Type[Scene],
+    uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    context: Optional["SOMATileDBContext"],
+    additional_metadata: "AdditionalMetadata" = None,
+) -> Scene:
     ...
 
 

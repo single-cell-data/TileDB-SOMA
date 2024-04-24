@@ -30,7 +30,7 @@ import pyarrow as pa
 import scanpy
 from PIL import Image
 
-from .. import Collection, DataFrame, DenseNDArray, Experiment, SparseNDArray
+from .. import Collection, DataFrame, DenseNDArray, Experiment, Scene, SparseNDArray
 from .._constants import SOMA_JOINID
 from .._tiledb_object import AnyTileDBObject
 from .._types import IngestMode
@@ -147,52 +147,69 @@ def from_visium(
     with Experiment.open(uri, mode="w", context=context) as experiment:
         spatial_uri = f"{uri}/spatial"
         with _create_or_open_collection(
-            Collection[Collection[AnyTileDBObject]], spatial_uri, **ingest_ctx
+            Collection[Union[DataFrame, Scene]], spatial_uri, **ingest_ctx
         ) as spatial:
             _maybe_set(
                 experiment, "spatial", spatial, use_relative_uri=use_relative_uri
             )
             scene_uri = f"{spatial_uri}/{scene_name}"
             with _create_or_open_collection(
-                Collection[AnyTileDBObject], scene_uri, **ingest_ctx
+                Collection[Collection[AnyTileDBObject]], scene_uri, **ingest_ctx
             ) as scene:
                 _maybe_set(
                     spatial, scene_name, scene, use_relative_uri=use_relative_uri
                 )
 
-                obs_locations_uri = f"{scene_uri}/obs_locations"
-
-                # Write spot data and add to the scene.
-                with _write_visium_spot_dataframe(
-                    obs_locations_uri,
-                    input_tissue_positions,
-                    scale_factors,
-                    obs_df,
-                    obs_id_name,
-                    **ingest_ctx,
-                ) as obs_locations:
+                scene_exp_uri = f"{scene_uri}/exp"
+                with _create_or_open_collection(
+                    Collection[AnyTileDBObject], scene_exp_uri, **ingest_ctx
+                ) as scene_exp:
                     _maybe_set(
-                        scene,
-                        "obs_locations",
-                        obs_locations,
+                        scene, "exp", scene_exp, use_relative_uri=use_relative_uri
+                    )
+
+                    obs_locations_uri = f"{scene_exp_uri}/obs_locations"
+
+                    # Write spot data and add to the scene.
+                    with _write_visium_spot_dataframe(
+                        obs_locations_uri,
+                        input_tissue_positions,
+                        scale_factors,
+                        obs_df,
+                        obs_id_name,
+                        **ingest_ctx,
+                    ) as obs_locations:
+                        _maybe_set(
+                            scene_exp,
+                            "obs_locations",
+                            obs_locations,
+                            use_relative_uri=use_relative_uri,
+                        )
+
+                    # Write image data and add to the scene.
+                    images_uri = f"{scene_exp_uri}/images"
+                    with _write_visium_images(
+                        images_uri,
+                        scale_factors,
+                        input_hires=input_hires,
+                        input_lowres=input_lowres,
+                        input_fullres=input_fullres,
                         use_relative_uri=use_relative_uri,
-                    )
+                        **ingest_ctx,
+                    ) as images:
+                        _maybe_set(
+                            scene_exp,
+                            "images",
+                            images,
+                            use_relative_uri=use_relative_uri,
+                        )
 
-                # Write image data and add to the scene.
-                images_uri = f"{scene_uri}/images"
-                with _write_visium_images(
-                    images_uri,
-                    scale_factors,
-                    input_hires=input_hires,
-                    input_lowres=input_lowres,
-                    input_fullres=input_fullres,
-                    use_relative_uri=use_relative_uri,
-                    **ingest_ctx,
-                ) as images:
-                    _maybe_set(
-                        scene, "images", images, use_relative_uri=use_relative_uri
-                    )
-    return uri
+                scene_ms_uri = f"{scene_uri}/ms"
+                with _create_or_open_collection(
+                    Collection[Collection[AnyTileDBObject]], scene_ms_uri, **ingest_ctx
+                ) as scene_ms:
+                    _maybe_set(scene, "ms", scene_ms, use_relative_uri=use_relative_uri)
+        return uri
 
 
 def _write_visium_spot_dataframe(
