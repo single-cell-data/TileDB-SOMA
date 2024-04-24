@@ -2,6 +2,8 @@
 
 S3method("[[",MappingBase)
 S3method("[[<-",MappingBase)
+S3method(.read_soma_joinids,SOMADataFrame)
+S3method(.read_soma_joinids,SOMASparseNDArray)
 S3method(as.list,CoordsStrider)
 S3method(as.list,MappingBase)
 S3method(iterators::nextElem,CoordsStrider)

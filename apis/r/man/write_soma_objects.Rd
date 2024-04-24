@@ -18,6 +18,7 @@
   df_index = NULL,
   index_column_names = "soma_joinid",
   ...,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -31,6 +32,7 @@
   type = NULL,
   transpose = FALSE,
   ...,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -42,6 +44,7 @@
   soma_parent,
   ...,
   key = NULL,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -55,6 +58,7 @@
   index_column_names = "soma_joinid",
   ...,
   key = NULL,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -69,6 +73,8 @@
   transpose = FALSE,
   ...,
   key = NULL,
+  ingest_mode = "write",
+  shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -83,6 +89,8 @@
   transpose = FALSE,
   ...,
   key = NULL,
+  ingest_mode = "write",
+  shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -96,6 +104,8 @@
   transpose = FALSE,
   ...,
   key = NULL,
+  ingest_mode = "write",
+  shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -120,6 +130,13 @@ resulting SOMA object}
 
 \item{...}{Arguments passed to other methods}
 
+\item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
+\itemize{
+\item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+\item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
+exists, simply open it for writing
+}}
+
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}}
 
@@ -140,6 +157,9 @@ determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}}
 \item{key}{Optionally register the resulting \code{SOMADataFrame} in
 \code{soma_parent} as \code{key}; pass \code{NULL} to prevent registration
 to handle manually}
+
+\item{shape}{A vector of two positive integers giving the on-disk shape of
+the array; defaults to \code{dim(x)}}
 }
 \value{
 The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or

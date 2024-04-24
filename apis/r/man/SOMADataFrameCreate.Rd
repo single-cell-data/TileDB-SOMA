@@ -8,6 +8,7 @@ SOMADataFrameCreate(
   uri,
   schema,
   index_column_names = c("soma_joinid"),
+  ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
@@ -16,9 +17,18 @@ SOMADataFrameCreate(
 \arguments{
 \item{uri}{URI for the TileDB object}
 
-\item{schema}{schema Arrow schema argument passed on to DataFrame$create()}
+\item{schema}{Arrow schema argument for the \link[SOMADataFrame]{SOMA dataframe}}
 
-\item{index_column_names}{Index column names passed on to DataFrame$create()}
+\item{index_column_names}{A vector of column names to use as user-defined
+index columns; all named columns must exist in the schema, and at least
+one index column name is required}
+
+\item{ingest_mode}{Ingestion mode when creating the TileDB object; choose from:
+\itemize{
+\item \dQuote{\code{write}}: create a new TileDB object and error if it already exists
+\item \dQuote{\code{resume}}: attempt to create a new TileDB object;
+if it already exists, simply open it for writing
+}}
 
 \item{platform_config}{Optional platform configuration}
 

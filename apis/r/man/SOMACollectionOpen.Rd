@@ -19,11 +19,11 @@ SOMACollectionOpen(
 
 \item{platform_config}{Optional platform configuration}
 
-\item{tiledbsoma_ctx}{optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp. In READ mode, defaults
-to the current time. If non-NULL, then all members accessed through the collection object
-inherit the timestamp.}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.
+In READ mode, defaults to the current time. If non-NULL, then all members
+accessed through the collection object inherit the timestamp.}
 }
 \description{
 Factory function to open a SOMACollection for reading, (lifecycle: experimental)
