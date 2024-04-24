@@ -42,6 +42,40 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::IntIndexer> >::type idx(idxSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector >::type kvec(kvecSEXP);
     rcpp_result_gen = Rcpp::wrap(reindex_lookup(idx, kvec));
+// createSchemaFromArrow
+void createSchemaFromArrow(const std::string& uri, SEXP naap, SEXP nasp, SEXP nadimap, SEXP nadimsp);
+RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type naap(naapSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type nasp(naspSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type nadimap(nadimapSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type nadimsp(nadimspSEXP);
+    createSchemaFromArrow(uri, naap, nasp, nadimap, nadimsp);
+    return R_NilValue;
+END_RCPP
+}
+// writeArrayFromArrow
+void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp);
+RcppExport SEXP _tiledbsoma_writeArrayFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type naap(naapSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type nasp(naspSEXP);
+    writeArrayFromArrow(uri, naap, nasp);
+    return R_NilValue;
+END_RCPP
+}
+// getArrowSchema
+SEXP getArrowSchema(const std::string& uri);
+RcppExport SEXP _tiledbsoma_getArrowSchema(SEXP uriSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    rcpp_result_gen = Rcpp::wrap(getArrowSchema(uri));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -277,9 +311,15 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+<<<<<<< HEAD
     {"_tiledbsoma_reindex_create", (DL_FUNC) &_tiledbsoma_reindex_create, 0},
     {"_tiledbsoma_reindex_map", (DL_FUNC) &_tiledbsoma_reindex_map, 2},
     {"_tiledbsoma_reindex_lookup", (DL_FUNC) &_tiledbsoma_reindex_lookup, 2},
+=======
+    {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 5},
+    {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 3},
+    {"_tiledbsoma_getArrowSchema", (DL_FUNC) &_tiledbsoma_getArrowSchema, 1},
+>>>>>>> 7470d0cf (WIP snapshot)
     {"_tiledbsoma_soma_array_reader", (DL_FUNC) &_tiledbsoma_soma_array_reader, 9},
     {"_tiledbsoma_set_log_level", (DL_FUNC) &_tiledbsoma_set_log_level, 1},
     {"_tiledbsoma_get_column_types", (DL_FUNC) &_tiledbsoma_get_column_types, 2},

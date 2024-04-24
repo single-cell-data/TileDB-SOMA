@@ -63,6 +63,14 @@ template <typename T> Rcpp::XPtr<T> make_xptr(SEXP p) {
     return Rcpp::XPtr<T>(p);    // the default XPtr ctor with deleter on and tag and prot nil
 }
 
+inline void* xptr_addr(SEXP ptr) {
+    if (TYPEOF(ptr) != EXTPTRSXP) {
+        Rcpp::stop("Expected external pointer, received '%s'\n", Rf_type2char(TYPEOF(ptr)));
+    }
+    return R_ExternalPtrAddr(ptr);
+}
+
+
 template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {
     if (R_ExternalPtrTag(ptr) == R_NilValue) {
         Rcpp::stop("External pointer without tag, expected tag %d\n", XPtrTagType<T>);
