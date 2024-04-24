@@ -11,6 +11,17 @@ reindex_map <- function(idx, nvec) {
 
 reindex_lookup <- function(idx, kvec) {
     .Call(`_tiledbsoma_reindex_lookup`, idx, kvec)
+
+createSchemaFromArrow <- function(uri, naap, nasp, nadimap, nadimsp) {
+    invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, naap, nasp, nadimap, nadimsp))
+}
+
+writeArrayFromArrow <- function(uri, naap, nasp) {
+    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp))
+}
+
+getArrowSchema <- function(uri) {
+    .Call(`_tiledbsoma_getArrowSchema`, uri)
 }
 
 #' @noRd
@@ -178,4 +189,3 @@ tiledb_embedded_version <- function() {
 tiledb_datatype_max_value <- function(datatype) {
     .Call(`_tiledbsoma_tiledb_datatype_max_value`, datatype)
 }
-
