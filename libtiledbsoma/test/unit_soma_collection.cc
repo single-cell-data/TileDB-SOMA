@@ -118,7 +118,8 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
         URIType::absolute,
         ctx,
         std::move(schema),
-        index_columns);
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)));
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     REQUIRE(soma_dataframe->uri() == sub_uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
@@ -175,7 +176,8 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
         URIType::absolute,
         ctx,
         std::move(schema),
-        index_columns);
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)));
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     REQUIRE(soma_experiment->uri() == sub_uri);
     REQUIRE(soma_experiment->ctx() == ctx);
@@ -205,7 +207,8 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
         URIType::absolute,
         ctx,
         std::move(schema),
-        index_columns);
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)));
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     REQUIRE(soma_measurement->uri() == sub_uri);
     REQUIRE(soma_measurement->ctx() == ctx);
@@ -279,7 +282,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     SOMAExperiment::create(
         uri,
         std::move(schema),
-        index_columns,
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
         std::nullopt,
         TimestampRange(0, 2));
@@ -342,7 +346,8 @@ TEST_CASE("SOMAMeasurement: metadata") {
     SOMAMeasurement::create(
         uri,
         std::move(schema),
-        index_columns,
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
         std::nullopt,
         TimestampRange(0, 2));

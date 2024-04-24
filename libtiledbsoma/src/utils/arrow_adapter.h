@@ -34,12 +34,6 @@ struct ArrowBuffer {
 using ArrowTable =
     std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>;
 
-using ColumnIndexInfo = std::tuple<
-    std::vector<std::string>,     // name of column
-    std::shared_ptr<ArrowArray>,  // domain
-    std::shared_ptr<ArrowArray>   // tile extent
-    >;
-
 class PlatformConfig {
    public:
     uint64_t dataframe_dim_zstd_level = 3;
@@ -89,7 +83,7 @@ class ArrowAdapter {
     static ArraySchema tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         std::unique_ptr<ArrowSchema> arrow_schema,
-        ColumnIndexInfo index_column_info,
+        ArrowTable index_column_info,
         std::optional<PlatformConfig> platform_config);
 
     /**
@@ -123,8 +117,10 @@ class ArrowAdapter {
         return dst;
     }
 
-    static std::optional<std::pair<const void*, const void*>> _get_dim_info(
-        std::string_view dim_name, ArrowTable index_columns);
+    template <typename T>
+    static Dimension _create_dim(Context ctx, std::string name, T* b) {
+        return Dimension::create<T>(ctx, name, {b[0], b[1]}, b[2]);
+    }
 
     static bool _isvar(const char* format);
 };

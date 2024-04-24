@@ -53,9 +53,7 @@ void load_soma_dataframe(py::module& m) {
             "create",
             [](std::string_view uri,
                py::object py_schema,
-               std::vector<std::string> index_columns_names,
-               py::object py_domains,
-               py::object py_extents,
+               py::object index_column_info,
                std::shared_ptr<SOMAContext> context,
                std::optional<PlatformConfig> platform_config,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -80,22 +78,22 @@ void load_soma_dataframe(py::module& m) {
                     }
                 }
 
-                ArrowArray domains;
-                uintptr_t domains_ptr = (uintptr_t)(&domains);
-                py_domains.attr("_export_to_c")(domains_ptr);
-
-                ArrowArray extents;
-                uintptr_t extents_ptr = (uintptr_t)(&extents);
-                py_extents.attr("_export_to_c")(extents_ptr);
+                ArrowSchema index_column_schema;
+                ArrowArray index_column_array;
+                uintptr_t
+                    index_column_schema_ptr = (uintptr_t)(&index_column_schema);
+                uintptr_t
+                    index_column_array_ptr = (uintptr_t)(&index_column_array);
+                index_column_info.attr("_export_to_c")(
+                    index_column_array_ptr, index_column_schema_ptr);
 
                 try {
                     SOMADataFrame::create(
                         uri,
                         std::make_unique<ArrowSchema>(schema),
-                        ColumnIndexInfo(
-                            index_columns_names,
-                            std::make_shared<ArrowArray>(domains),
-                            std::make_shared<ArrowArray>(extents)),
+                        ArrowTable(
+                            std::make_unique<ArrowArray>(index_column_array),
+                            std::make_unique<ArrowSchema>(index_column_schema)),
                         context,
                         platform_config,
                         timestamp);
@@ -108,9 +106,7 @@ void load_soma_dataframe(py::module& m) {
             "uri"_a,
             py::kw_only(),
             "schema"_a,
-            "index_column_names"_a,
-            "domains"_a,
-            "extents"_a,
+            "index_column_info"_a,
             "ctx"_a,
             "platform_config"_a,
             "timestamp"_a = py::none())
