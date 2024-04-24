@@ -139,27 +139,36 @@ write_soma.SingleCellExperiment <- function(
   )
   on.exit(expr = experiment$close(), add = TRUE, after = FALSE)
 
-  ms <- experiment$ms$get(ms_name)
+  ms <- SOMAMeasurementOpen(
+    file_path(experiment$uri, 'ms', ms_name),
+    mode = 'WRITE'
+  )
   on.exit(ms$close(), add = TRUE, after = FALSE)
 
   # Write reduced dimensions
   spdl::info("Adding reduced dimensions")
-  if (!'obsm' %in% ms$names()) {
-    ms$obsm <- SOMACollectionCreate(
-      uri = file.path(ms$uri, 'obsm'),
+  obsm <- if (!'obsm' %in% ms$names()) {
+    SOMACollectionCreate(
+      uri = file_path(ms$uri, 'obsm'),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else {
-    ms$obsm$reopen("WRITE")
+    SOMACollectionOpen(file_path(ms$uri, 'obsm'), mode = 'WRITE')
   }
+  withCallingHandlers(
+    .register_soma_object(obsm, soma_parent = ms, key = 'obsm'),
+    existingKeyWarning = .maybe_muffle
+  )
+  on.exit(obsm$close(), add = TRUE, after = FALSE)
+
   for (rd in SingleCellExperiment::reducedDimNames(x)) {
     spdl::info("Adding reduced dimension {}", rd)
     write_soma(
       x = SingleCellExperiment::reducedDim(x, rd),
       uri = rd,
-      soma_parent = ms$obsm,
+      soma_parent = obsm,
       sparse = TRUE,
       key = rd,
       ingest_mode = ingest_mode,
@@ -174,16 +183,22 @@ write_soma.SingleCellExperiment <- function(
   }
 
   # Write nearest-neighbor graphs
-  if (!'obsp' %in% ms$names()) {
-    ms$obsp <- SOMACollectionCreate(
-      uri = file.path(ms$uri, 'obsp'),
+  obsp <- if (!'obsp' %in% ms$names()) {
+    SOMACollectionCreate(
+      uri = file_path(ms$uri, 'obsp'),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else {
-    ms$obsp$reopen("WRITE")
+    SOMACollectionOpen(file_path(ms$uri, 'obsp'), mode = 'WRITE')
   }
+  withCallingHandlers(
+    .register_soma_object(obsp, soma_parent = ms, key = 'obsp'),
+    existingKeyWarning = .maybe_muffle
+  )
+  on.exit(obsp$close(), add = TRUE, after = FALSE)
+
   for (cp in SingleCellExperiment::colPairNames(x)) {
     spdl::info("Adding colPair {}", cp)
     write_soma(
@@ -204,16 +219,22 @@ write_soma.SingleCellExperiment <- function(
   }
 
   # Write coexpression networks
-  if (!'varp' %in% ms$names()) {
-    ms$varp <- SOMACollectionCreate(
-      uri = file.path(ms$uri, 'varp'),
+  varp <- if (!'varp' %in% ms$names()) {
+    SOMACollectionCreate(
+      uri = file_path(ms$uri, 'varp'),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else {
-    ms$varp$reopen("WRITE")
+    SOMACollectionOpen(file_path(ms$uri, 'varp'), mode = 'WRITE')
   }
+  withCallingHandlers(
+    .register_soma_object(varp, soma_parent = ms, key = 'varp'),
+    existingKeyWarning = .maybe_muffle
+  )
+  on.exit(varp$close(), add = TRUE, after = FALSE)
+
   for (rp in SingleCellExperiment::rowPairNames(x)) {
     spdl::info("Adding rowPair {}", rp)
     write_soma(
@@ -307,10 +328,11 @@ write_soma.SummarizedExperiment <- function(
   spdl::info("Adding colData")
   obs_df <- .df_index(SummarizedExperiment::colData(x), axis = 'obs')
   obs_df[[attr(obs_df, 'index')]] <- colnames(x)
-  experiment$obs <- write_soma(
+  write_soma(
     x = obs_df,
     uri = 'obs',
     soma_parent = experiment,
+    key = 'obs',
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
@@ -318,16 +340,17 @@ write_soma.SummarizedExperiment <- function(
 
   # Write assays
   spdl::info("Writing assays")
-  experiment$add_new_collection(
-    object = SOMACollectionCreate(
-      file_path(experiment$uri, 'ms'),
-      ingest_mode = ingest_mode,
-      platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
-    ),
-    key = 'ms'
+  expms <- SOMACollectionCreate(
+    file_path(experiment$uri, 'ms'),
+    ingest_mode = ingest_mode,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
   )
-  ms_uri <- .check_soma_uri(uri = ms_name, soma_parent = experiment$ms)
+  withCallingHandlers(
+    expr = .register_soma_object(expms, soma_parent = experiment, key = 'ms'),
+    existingKeyWarning = .maybe_muffle
+  )
+  ms_uri <- .check_soma_uri(uri = ms_name, soma_parent = expms)
   ms <- SOMAMeasurementCreate(
     uri = ms_uri,
     ingest_mode = ingest_mode,
@@ -336,24 +359,28 @@ write_soma.SummarizedExperiment <- function(
   )
   on.exit(ms$close(), add = TRUE, after = FALSE)
 
-  if (!'X' %in% ms$names()) {
-    ms$X <- SOMACollectionCreate(
-      uri = file.path(ms$uri, 'X'),
+  X <- if (!'X' %in% ms$names()) {
+    SOMACollectionCreate(
+      uri = file_path(ms$uri, 'X'),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else {
-    ms$X$reopen("WRITE")
+    SOMACollectionOpen(file_path(ms$uri, 'X'), mode = 'WRITE')
   }
-  on.exit(ms$X$close(), add = TRUE, after = FALSE)
+  withCallingHandlers(
+    .register_soma_object(X, soma_parent = ms, key = 'X'),
+    existingKeyWarning = .maybe_muffle
+  )
+  on.exit(X$close(), add = TRUE, after = FALSE)
 
   for (assay in SummarizedExperiment::assayNames(x)) {
     spdl::info("Adding {} assay", assay)
     write_soma(
       x = SummarizedExperiment::assay(x, assay),
       uri = assay,
-      soma_parent = ms$X,
+      soma_parent = X,
       sparse = TRUE,
       transpose = TRUE,
       key = assay,
@@ -370,16 +397,20 @@ write_soma.SummarizedExperiment <- function(
   if (!is.null(rownames(x))) {
     var_df[[attr(var_df, 'index')]] <- rownames(x)
   }
-  ms$var <- write_soma(
+  write_soma(
     x = var_df,
     uri = 'var',
     soma_parent = ms,
+    key = 'var',
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
 
-  experiment$ms$set(object = ms, name = ms_name)
+  withCallingHandlers(
+    expr = .register_soma_object(ms, soma_parent = expms, key = ms_name),
+    existingKeyWarning = .maybe_muffle
+  )
 
   return(experiment$uri)
 }
