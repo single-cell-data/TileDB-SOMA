@@ -131,8 +131,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 TileDBCreateOptions.from_platform_config(platform_config),
             )
             index_column_schema.append(pa_field)
-            index_column_data[pa_field.name] = [0, dim_capacity-1, dim_extent]
-        
+            index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
+
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
         )
