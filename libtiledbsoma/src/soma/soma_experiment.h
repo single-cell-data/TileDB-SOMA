@@ -109,6 +109,9 @@ class SOMAExperiment : public SOMACollection {
 
     // A collection of named measurements
     std::shared_ptr<SOMACollection> ms_;
+
+    // A collection of spatial scenes
+    std::shared_ptr<SOMACollection> spatial_;
 };
 }  // namespace tiledbsoma
 
