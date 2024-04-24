@@ -311,6 +311,24 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                         dims.insert({child->name, dim});
                         break;
                     }
+                    case TILEDB_TIME_SEC:
+                    case TILEDB_TIME_MS:
+                    case TILEDB_TIME_US:
+                    case TILEDB_TIME_NS:
+                    case TILEDB_DATETIME_SEC:
+                    case TILEDB_DATETIME_MS:
+                    case TILEDB_DATETIME_US:
+                    case TILEDB_DATETIME_NS: {
+                        auto datetime_buff = (uint64_t*)buff;
+                        auto dim = Dimension::create(
+                            *ctx,
+                            child->name,
+                            type,
+                            datetime_buff,
+                            datetime_buff + 2);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
                     case TILEDB_INT8: {
                         auto dim = ArrowAdapter::_create_dim(
                             *ctx, child->name, (int8_t*)buff);
