@@ -236,6 +236,11 @@ TileDBCreateOptions <- R6::R6Class(
     to_list = function(build_filters = TRUE) {
       stopifnot("'build_filters' must be TRUE or FALSE" = is_scalar_logical(build_filters))
       opts <- super$to_list()
+      for (key in grep('_filters$', names(.CREATE_DEFAULTS), value = TRUE)) {
+        if (is.null(opts[[key]])) {
+          opts[[key]] <- .CREATE_DEFAULTS[[key]]
+        }
+      }
       if (isTRUE(build_filters)) {
         for (key in grep('_filters$', names(x = opts), value = TRUE)) {
           opts[[key]] <- private$.build_filters(opts[[key]])
