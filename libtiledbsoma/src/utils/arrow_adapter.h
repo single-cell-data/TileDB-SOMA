@@ -114,7 +114,8 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx,
         std::unique_ptr<ArrowSchema> arrow_schema,
         ArrowTable index_column_info,
-        std::optional<PlatformConfig> platform_config);
+        tiledb_array_type_t array_type = TILEDB_SPARSE,
+        std::optional<PlatformConfig> platform_config = std::nullopt);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.
