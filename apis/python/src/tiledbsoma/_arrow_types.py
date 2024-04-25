@@ -50,6 +50,13 @@ _ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
     pa.date32(): TypeError("32-bit date - unsupported type (use TimestampType)"),
     pa.date64(): TypeError("64-bit date - unsupported type (use TimestampType)"),
 }
+"""Dict of types unsupported by to_pandas_dtype, which require overrides for
+use in TileDB Attributes (aka DataFrame non-indexe columns).
+
+If the value is an instance of Exception, it will be raised.
+
+IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
+"""
 
 _PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
     pa.bool_(): "b",
@@ -68,13 +75,6 @@ _PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
     pa.timestamp("us"): "tsu:",
     pa.timestamp("ns"): "tsn:",
 }
-"""Dict of types unsupported by to_pandas_dtype, which require overrides for
-use in TileDB Attributes (aka DataFrame non-indexe columns).
-
-If the value is an instance of Exception, it will be raised.
-
-IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
-"""
 
 _PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
     pa.bool_(): "b",
