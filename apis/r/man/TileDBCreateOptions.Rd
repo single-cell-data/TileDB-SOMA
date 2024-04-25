@@ -10,6 +10,54 @@ Provides strongly-typed access and default values for
 
 Intended for internal use only.
 }
+\examples{
+
+## ------------------------------------------------
+## Method `TileDBCreateOptions$dim_tile`
+## ------------------------------------------------
+
+cfg <- PlatformConfig$new()
+cfg$set(
+  platform = 'tiledb',
+  param = 'create',
+  key = 'dims',
+  value = list(soma_dim_0 = list(tile = 999))
+)
+(tdco <- TileDBCreateOptions$new(cfg))
+tdco$dim_tile("soma_dim_0")
+tdco$dim_tile("soma_dim_1")
+
+
+## ------------------------------------------------
+## Method `TileDBCreateOptions$dim_filters`
+## ------------------------------------------------
+
+filters <- list(
+  soma_dim_0 = list(tile = 100, filters = list("RLE")),
+  soma_dim_1 = list(tile = 200, filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9)))
+)
+cfg <- PlatformConfig$new()
+cfg$set(platform = 'tiledb', param = 'create', key = 'dims', value = filters)
+(tdco <- TileDBCreateOptions$new(cfg))
+tdco$dim_filters("soma_dim_0")
+tdco$dim_filters("non-existant")
+
+
+## ------------------------------------------------
+## Method `TileDBCreateOptions$attr_filters`
+## ------------------------------------------------
+
+filters <- list(
+  soma_data_a = list(filters = list("RLE")),
+  soma_data_b = list(filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9)))
+)
+cfg <- PlatformConfig$new()
+cfg$set(platform = 'tiledb', param = 'create', key = 'attrs', value = filters)
+(tdco <- TileDBCreateOptions$new(cfg))
+tdco$attr_filters("soma_data_b")
+tdco$attr_filters("non-existant")
+
+}
 \keyword{internal}
 \section{Super class}{
 \code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{TileDBCreateOptions}
@@ -30,10 +78,7 @@ Intended for internal use only.
 \item \href{#method-TileDBCreateOptions-attr_filters}{\code{TileDBCreateOptions$attr_filters()}}
 \item \href{#method-TileDBCreateOptions-write_X_chunked}{\code{TileDBCreateOptions$write_X_chunked()}}
 \item \href{#method-TileDBCreateOptions-goal_chunk_nnz}{\code{TileDBCreateOptions$goal_chunk_nnz()}}
-\item \href{#method-TileDBCreateOptions-.dim}{\code{TileDBCreateOptions$.dim()}}
-\item \href{#method-TileDBCreateOptions-.attr}{\code{TileDBCreateOptions$.attr()}}
-\item \href{#method-TileDBCreateOptions-.build_filters}{\code{TileDBCreateOptions$.build_filters()}}
-\item \href{#method-TileDBCreateOptions-.build_filter}{\code{TileDBCreateOptions$.build_filter()}}
+\item \href{#method-TileDBCreateOptions-to_list}{\code{TileDBCreateOptions$to_list()}}
 \item \href{#method-TileDBCreateOptions-clone}{\code{TileDBCreateOptions$clone()}}
 }
 }
@@ -48,7 +93,6 @@ Intended for internal use only.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="remove"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-remove'><code>tiledbsoma::MappingBase$remove()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="set"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-set'><code>tiledbsoma::MappingBase$set()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="setv"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-setv'><code>tiledbsoma::MappingBase$setv()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="to_list"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-to_list'><code>tiledbsoma::MappingBase$to_list()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="update"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-update'><code>tiledbsoma::MappingBase$update()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="values"><a href='../../tiledbsoma/html/MappingBase.html#method-MappingBase-values'><code>tiledbsoma::MappingBase$values()</code></a></span></li>
 </ul>
@@ -60,7 +104,7 @@ Intended for internal use only.
 \subsection{Method \code{new()}}{
 Create a \code{TileDBCreateOptions} object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$new(platform_config)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$new(platform_config = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -84,8 +128,8 @@ case will we use the default values provided.
 }
 
 \subsection{Returns}{
-a list keyed by \dQuote{\code{cell_order}} and
-\dQuote{\code{tile_order}}, where either value or both may be \code{NULL}.
+A two-length character vector with names of
+\dQuote{\code{cell_order}} and \dQuote{\code{tile_order}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -93,7 +137,7 @@ a list keyed by \dQuote{\code{cell_order}} and
 \if{latex}{\out{\hypertarget{method-TileDBCreateOptions-dim_tile}{}}}
 \subsection{Method \code{dim_tile()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$dim_tile(dim_name, default = .default_tile_extent())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$dim_tile(dim_name, default = 2048)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -108,6 +152,24 @@ a list keyed by \dQuote{\code{cell_order}} and
 \subsection{Returns}{
 int
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cfg <- PlatformConfig$new()
+cfg$set(
+  platform = 'tiledb',
+  param = 'create',
+  key = 'dims',
+  value = list(soma_dim_0 = list(tile = 999))
+)
+(tdco <- TileDBCreateOptions$new(cfg))
+tdco$dim_tile("soma_dim_0")
+tdco$dim_tile("soma_dim_1")
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBCreateOptions-capacity"></a>}}
@@ -162,7 +224,7 @@ int
 \if{latex}{\out{\hypertarget{method-TileDBCreateOptions-offsets_filters}{}}}
 \subsection{Method \code{offsets_filters()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$offsets_filters(default = .default_offsets_filters())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$offsets_filters(default = list())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -173,7 +235,8 @@ int
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-list of tiledb.Filter
+A list of
+\code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects
 }
 }
 \if{html}{\out{<hr>}}
@@ -181,7 +244,7 @@ list of tiledb.Filter
 \if{latex}{\out{\hypertarget{method-TileDBCreateOptions-validity_filters}{}}}
 \subsection{Method \code{validity_filters()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$validity_filters(default = .default_validity_filters())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$validity_filters(default = list())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -192,7 +255,8 @@ list of tiledb.Filter
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-list of tiledb.Filter
+A list of
+\code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects
 }
 }
 \if{html}{\out{<hr>}}
@@ -213,8 +277,26 @@ list of tiledb.Filter
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-list of tiledb.Filter
+A list of
+\code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{filters <- list(
+  soma_dim_0 = list(tile = 100, filters = list("RLE")),
+  soma_dim_1 = list(tile = 200, filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9)))
+)
+cfg <- PlatformConfig$new()
+cfg$set(platform = 'tiledb', param = 'create', key = 'dims', value = filters)
+(tdco <- TileDBCreateOptions$new(cfg))
+tdco$dim_filters("soma_dim_0")
+tdco$dim_filters("non-existant")
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBCreateOptions-attr_filters"></a>}}
@@ -234,8 +316,26 @@ list of tiledb.Filter
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-list of tiledb.Filter
+A list of
+\code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{filters <- list(
+  soma_data_a = list(filters = list("RLE")),
+  soma_data_b = list(filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9)))
+)
+cfg <- PlatformConfig$new()
+cfg$set(platform = 'tiledb', param = 'create', key = 'attrs', value = filters)
+(tdco <- TileDBCreateOptions$new(cfg))
+tdco$attr_filters("soma_data_b")
+tdco$attr_filters("non-existant")
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBCreateOptions-write_X_chunked"></a>}}
@@ -262,81 +362,24 @@ int
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBCreateOptions-.dim"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBCreateOptions-.dim}{}}}
-\subsection{Method \code{.dim()}}{
+\if{html}{\out{<a id="method-TileDBCreateOptions-to_list"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBCreateOptions-to_list}{}}}
+\subsection{Method \code{to_list()}}{
+...
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$.dim(dim_name)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$to_list(build_filters = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{dim_name}}{Name of dimensions}
+\item{\code{build_filters}}{Build filters into
+\code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Named list of character
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBCreateOptions-.attr"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBCreateOptions-.attr}{}}}
-\subsection{Method \code{.attr()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$.attr(attr_name)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{attr_name}}{Name of attribute}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Named list of character
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBCreateOptions-.build_filters"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBCreateOptions-.build_filters}{}}}
-\subsection{Method \code{.build_filters()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$.build_filters(items)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{items}}{A list of filters; see \code{$.build_filter()} for details
-about entries in \code{items}}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A list of tiledb filters.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBCreateOptions-.build_filter"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBCreateOptions-.build_filter}{}}}
-\subsection{Method \code{.build_filter()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$.build_filter(item)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{item}}{THe name of a filter or a list with the name and arguments
-for a filter (eg. \code{list(name = "ZSTD", COMPRESSION_LEVEL = -1)})}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A tiledb filter.
+The create options as a list
 }
 }
 \if{html}{\out{<hr>}}
