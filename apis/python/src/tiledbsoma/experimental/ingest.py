@@ -153,9 +153,7 @@ def from_visium(
                 experiment, "spatial", spatial, use_relative_uri=use_relative_uri
             )
             scene_uri = f"{spatial_uri}/{scene_name}"
-            with _create_or_open_collection(
-                Collection[Collection[AnyTileDBObject]], scene_uri, **ingest_ctx
-            ) as scene:
+            with _create_or_open_collection(Scene, scene_uri, **ingest_ctx) as scene:
                 _maybe_set(
                     spatial, scene_name, scene, use_relative_uri=use_relative_uri
                 )
