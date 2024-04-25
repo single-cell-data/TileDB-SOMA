@@ -259,8 +259,14 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         if (platform_config->offsets_filters.size() != 0) {
             FilterList offset_filter_list(*ctx);
             for (auto offset : platform_config->offsets_filters) {
-                offset_filter_list.add_filter(
-                    Filter(*ctx, convert_filter[offset]));
+                try {
+                    offset_filter_list.add_filter(
+                        Filter(*ctx, convert_filter.at(offset)));
+                } catch (std::out_of_range& e) {
+                    throw TileDBSOMAError(fmt::format(
+                        "Invalid offset filter {} passed to PlatformConfig",
+                        offset));
+                }
             }
             schema.set_offsets_filter_list(offset_filter_list);
         }
@@ -268,23 +274,45 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         if (platform_config->validity_filters.size() != 0) {
             FilterList validity_filter_list(*ctx);
             for (auto validity : platform_config->validity_filters) {
-                validity_filter_list.add_filter(
-                    Filter(*ctx, convert_filter[validity]));
+                try {
+                    validity_filter_list.add_filter(
+                        Filter(*ctx, convert_filter.at(validity)));
+                } catch (std::out_of_range& e) {
+                    throw TileDBSOMAError(fmt::format(
+                        "Invalid validity filter {} passed to PlatformConfig",
+                        validity));
+                }
             }
             schema.set_validity_filter_list(validity_filter_list);
         }
 
         schema.set_allows_dups(platform_config->allows_duplicates);
 
-        if (platform_config->tile_order)
-            schema.set_tile_order(
-                platform_config->tile_order == "row" ? TILEDB_ROW_MAJOR :
-                                                       TILEDB_COL_MAJOR);
+        if (platform_config->tile_order) {
+            if (platform_config->tile_order == "row") {
+                schema.set_tile_order(TILEDB_ROW_MAJOR);
+            } else if (platform_config->tile_order == "col") {
+                schema.set_tile_order(TILEDB_COL_MAJOR);
+            } else {
+                throw TileDBSOMAError(fmt::format(
+                    "Invalid tile order {} passed to PlatformConfig",
+                    *platform_config->tile_order));
+            }
+        }
 
-        if (platform_config->cell_order)
-            schema.set_cell_order(
-                platform_config->cell_order == "row" ? TILEDB_ROW_MAJOR :
-                                                       TILEDB_COL_MAJOR);
+        if (platform_config->cell_order) {
+            if (platform_config->cell_order == "row") {
+                schema.set_cell_order(TILEDB_ROW_MAJOR);
+            } else if (platform_config->cell_order == "col") {
+                schema.set_cell_order(TILEDB_COL_MAJOR);
+            } else if (platform_config->cell_order == "hilbert") {
+                schema.set_cell_order(TILEDB_HILBERT);
+            } else {
+                throw TileDBSOMAError(fmt::format(
+                    "Invalid cell order {} passed to PlatformConfig",
+                    *platform_config->cell_order));
+            }
+        }
     }
 
     std::map<std::string, Dimension> dims;
