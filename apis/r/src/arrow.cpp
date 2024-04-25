@@ -64,7 +64,8 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
 // [[Rcpp::export]]
 void createSchemaFromArrow(const std::string& uri,
                            SEXP naap, SEXP nasp,
-                           SEXP nadimap, SEXP nadimsp) {
+                           SEXP nadimap, SEXP nadimsp,
+                           Rcpp::Environment pltcfgenv) {
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
@@ -109,11 +110,20 @@ void createSchemaFromArrow(const std::string& uri,
     auto dimarr = std::make_unique<ArrowArray>();
     apdim.move(dimarr.get());
 
+    Rcpp::Function f_cap = pltcfgenv["capacity"];
+    SEXP s = f_cap();
+    Rcpp::print(s);
+    //Rcpp::Rcout << "Env: " <<  << std::endl;
+    tdbs::PlatformConfig pltcfg;
+    pltcfg.cell_order = "col";
+    pltcfg.tile_order = "col";
+    pltcfg.allows_duplicates = true;
+
     // create the ArraySchema
     auto as = tdbs::ArrowAdapter::tiledb_schema_from_arrow_schema(ctxsp, std::move(schema),
                                                                   std::pair(std::move(dimarr),
                                                                             std::move(dimsch)),
-                                                                  std::nullopt);
+                                                                  pltcfg);
     if (vfs.is_dir(uri)) vfs.remove_dir(uri);
     tiledb::Array::create(uri, as);
 }
