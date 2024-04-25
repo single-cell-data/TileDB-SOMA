@@ -130,7 +130,7 @@ SOMADataFrame <- R6::R6Class(
       }
 
       # create array
-      tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
+      #tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
       self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()
       self
