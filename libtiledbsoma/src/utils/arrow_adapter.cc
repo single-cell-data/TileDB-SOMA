@@ -290,28 +290,42 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         schema.set_allows_dups(platform_config->allows_duplicates);
 
         if (platform_config->tile_order) {
-            if (platform_config->tile_order == "row") {
+            auto tile_order = *platform_config->tile_order;
+            std::transform(
+                tile_order.begin(),
+                tile_order.end(),
+                tile_order.begin(),
+                [](unsigned char c) { return std::tolower(c); });
+
+            if (tile_order == "row-order" or tile_order == "row") {
                 schema.set_tile_order(TILEDB_ROW_MAJOR);
-            } else if (platform_config->tile_order == "col") {
+            } else if (tile_order == "col-order" or tile_order == "col") {
                 schema.set_tile_order(TILEDB_COL_MAJOR);
             } else {
                 throw TileDBSOMAError(fmt::format(
                     "Invalid tile order {} passed to PlatformConfig",
-                    *platform_config->tile_order));
+                    tile_order));
             }
         }
 
         if (platform_config->cell_order) {
-            if (platform_config->cell_order == "row") {
+            auto cell_order = *platform_config->cell_order;
+            std::transform(
+                cell_order.begin(),
+                cell_order.end(),
+                cell_order.begin(),
+                [](unsigned char c) { return std::tolower(c); });
+
+            if (cell_order == "row-major" or cell_order == "row") {
                 schema.set_cell_order(TILEDB_ROW_MAJOR);
-            } else if (platform_config->cell_order == "col") {
+            } else if (cell_order == "col-major" or cell_order == "col") {
                 schema.set_cell_order(TILEDB_COL_MAJOR);
-            } else if (platform_config->cell_order == "hilbert") {
+            } else if (cell_order == "hilbert") {
                 schema.set_cell_order(TILEDB_HILBERT);
             } else {
                 throw TileDBSOMAError(fmt::format(
                     "Invalid cell order {} passed to PlatformConfig",
-                    *platform_config->cell_order));
+                    cell_order));
             }
         }
     }

@@ -70,10 +70,12 @@ class PlatformConfig {
     /* Set whether the TileDB Array allows duplicate values */
     bool allows_duplicates = false;
 
-    /* Set the tile order as "row" or "col" */
+    /* Set the tile order as "row", "row-major", "col", or "col-major" */
     std::optional<std::string> tile_order = std::nullopt;
 
-    /* Set the cell order as "row", "col", or "hilbert" */
+    /* Set the cell order as "hilbert", "row", "row-major", "col", or
+     * "col-major"
+     */
     std::optional<std::string> cell_order = std::nullopt;
 
     /* Set whether the array should be consolidated and vacuumed after writing
