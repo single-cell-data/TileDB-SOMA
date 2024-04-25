@@ -8,6 +8,7 @@
 * Add support for blockwise iteration
 * Make `reopen()` a public method for all `TileDBObjects`
 * Add support for resume-mode in `write_soma()`
+* Push default-setting for `TileDBCreateOptions` to `$initialize()` instead of in the accessors
 
 # 1.7.0
 
