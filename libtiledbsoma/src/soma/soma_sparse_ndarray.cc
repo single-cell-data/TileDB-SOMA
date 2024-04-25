@@ -81,6 +81,7 @@ void SOMASparseNDArray::create(
         std::move(schema),
         ArrowTable(
             std::move(index_column_array), std::move(index_column_schema)),
+        TILEDB_SPARSE,
         platform_config);
 
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMASparseNDArray", timestamp);
