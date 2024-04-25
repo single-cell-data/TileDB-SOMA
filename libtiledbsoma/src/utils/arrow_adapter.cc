@@ -225,11 +225,12 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     std::unique_ptr<ArrowSchema> arrow_schema,
     ArrowTable index_column_info,
+    tiledb_array_type_t array_type,
     std::optional<PlatformConfig> platform_config) {
     auto index_column_array = std::move(index_column_info.first);
     auto index_column_schema = std::move(index_column_info.second);
 
-    ArraySchema schema(*ctx, TILEDB_SPARSE);
+    ArraySchema schema(*ctx, array_type);
     Domain domain(*ctx);
 
     if (platform_config) {
@@ -259,8 +260,14 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         if (platform_config->offsets_filters.size() != 0) {
             FilterList offset_filter_list(*ctx);
             for (auto offset : platform_config->offsets_filters) {
-                offset_filter_list.add_filter(
-                    Filter(*ctx, convert_filter[offset]));
+                try {
+                    offset_filter_list.add_filter(
+                        Filter(*ctx, convert_filter.at(offset)));
+                } catch (std::out_of_range& e) {
+                    throw TileDBSOMAError(fmt::format(
+                        "Invalid offset filter {} passed to PlatformConfig",
+                        offset));
+                }
             }
             schema.set_offsets_filter_list(offset_filter_list);
         }
@@ -268,23 +275,59 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         if (platform_config->validity_filters.size() != 0) {
             FilterList validity_filter_list(*ctx);
             for (auto validity : platform_config->validity_filters) {
-                validity_filter_list.add_filter(
-                    Filter(*ctx, convert_filter[validity]));
+                try {
+                    validity_filter_list.add_filter(
+                        Filter(*ctx, convert_filter.at(validity)));
+                } catch (std::out_of_range& e) {
+                    throw TileDBSOMAError(fmt::format(
+                        "Invalid validity filter {} passed to PlatformConfig",
+                        validity));
+                }
             }
             schema.set_validity_filter_list(validity_filter_list);
         }
 
         schema.set_allows_dups(platform_config->allows_duplicates);
 
-        if (platform_config->tile_order)
-            schema.set_tile_order(
-                platform_config->tile_order == "row" ? TILEDB_ROW_MAJOR :
-                                                       TILEDB_COL_MAJOR);
+        if (platform_config->tile_order) {
+            auto tile_order = *platform_config->tile_order;
+            std::transform(
+                tile_order.begin(),
+                tile_order.end(),
+                tile_order.begin(),
+                [](unsigned char c) { return std::tolower(c); });
 
-        if (platform_config->cell_order)
-            schema.set_cell_order(
-                platform_config->cell_order == "row" ? TILEDB_ROW_MAJOR :
-                                                       TILEDB_COL_MAJOR);
+            if (tile_order == "row-order" or tile_order == "row") {
+                schema.set_tile_order(TILEDB_ROW_MAJOR);
+            } else if (tile_order == "col-order" or tile_order == "col") {
+                schema.set_tile_order(TILEDB_COL_MAJOR);
+            } else {
+                throw TileDBSOMAError(fmt::format(
+                    "Invalid tile order {} passed to PlatformConfig",
+                    tile_order));
+            }
+        }
+
+        if (platform_config->cell_order) {
+            auto cell_order = *platform_config->cell_order;
+            std::transform(
+                cell_order.begin(),
+                cell_order.end(),
+                cell_order.begin(),
+                [](unsigned char c) { return std::tolower(c); });
+
+            if (cell_order == "row-major" or cell_order == "row") {
+                schema.set_cell_order(TILEDB_ROW_MAJOR);
+            } else if (cell_order == "col-major" or cell_order == "col") {
+                schema.set_cell_order(TILEDB_COL_MAJOR);
+            } else if (cell_order == "hilbert") {
+                schema.set_cell_order(TILEDB_HILBERT);
+            } else {
+                throw TileDBSOMAError(fmt::format(
+                    "Invalid cell order {} passed to PlatformConfig",
+                    cell_order));
+            }
+        }
     }
 
     std::map<std::string, Dimension> dims;
