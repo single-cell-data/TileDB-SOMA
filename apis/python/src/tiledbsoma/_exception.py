@@ -142,19 +142,19 @@ def is_duplicate_group_key_error(e: Union[SOMAError, tiledb.TileDBError]) -> boo
 
 
 def is_domain_setting_error(e: SOMAError) -> bool:
-    """Given a SOMAError, return whether it attempted to create the ArraySchema
-    but resulted in a
+    """Given a SOMAError, return whether it attempted to create
+    the ArraySchema but the passed in domain was invalid.
 
     Lifecycle: maturing
     """
     return "Cannot set domain" in str(e)
 
 
-def map_exception_for_create(e: SOMAError, uri: str) -> None:
+def map_exception_for_create(e: SOMAError, uri: str) -> Exception:
     if is_already_exists_error(e):
-        raise AlreadyExistsError(f"{uri!r} already exists")
+        return AlreadyExistsError(f"{uri!r} already exists")
     if is_not_createable_error(e):
-        raise NotCreateableError(f"{uri!r} cannot be created")
+        return NotCreateableError(f"{uri!r} cannot be created")
     if is_domain_setting_error(e):
-        raise ValueError(e)
-    raise
+        return ValueError(e)
+    return e

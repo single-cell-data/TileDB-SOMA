@@ -250,7 +250,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             index_column_data, schema=pa.schema(index_column_schema)
         )
 
-        plt_cfg = _util.set_clib_platform_config(platform_config)
+        plt_cfg = _util.build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
             clib.SOMADataFrame.create(
@@ -262,7 +262,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 timestamp=(0, timestamp_ms),
             )
         except SOMAError as e:
-            map_exception_for_create(e, uri)
+            raise map_exception_for_create(e, uri) from None
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         return cls(

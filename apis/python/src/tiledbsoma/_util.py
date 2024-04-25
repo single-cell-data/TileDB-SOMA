@@ -337,7 +337,7 @@ def cast_values_to_target_schema(
     2. Perform special casting for Boolean as it is represented in TileDB as
     int8 but bits in Arrow
     3. If there are new enumeration values in the values that are not yet
-    present in the schema, exten the enumeration to include these new values
+    present in the schema, extend the enumeration to include these new values
     """
     target_schema = []
     for i, input_field in enumerate(values.schema):
@@ -381,7 +381,7 @@ def cast_values_to_target_schema(
     return values.cast(pa.schema(target_schema, values.schema.metadata))
 
 
-def set_clib_platform_config(
+def build_clib_platform_config(
     platform_config: Optional[options.PlatformConfig],
 ) -> Optional[clib.PlatformConfig]:
     """
