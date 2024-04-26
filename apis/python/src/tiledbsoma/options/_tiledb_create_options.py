@@ -176,10 +176,10 @@ class TileDBCreateOptions:
             attrs: Tuple[attrs_.Attribute, ...] = cls.__attrs_attrs__  # type: ignore[type-arg]
             attr_names = frozenset(a.name for a in attrs)
             # Explicitly opt out of type-checking for these kwargs.
-            filered_create_entry: Dict[str, Any] = {
+            filtered_create_entry: Dict[str, Any] = {
                 key: value for (key, value) in create_entry.items() if key in attr_names
             }
-            return cls(**filered_create_entry)
+            return cls(**filtered_create_entry)
         return create_entry
 
     def cell_tile_orders(self) -> Tuple[Optional[str], Optional[str]]:
