@@ -12,8 +12,8 @@ reindex_map <- function(idx, nvec) {
 reindex_lookup <- function(idx, kvec) {
     .Call(`_tiledbsoma_reindex_lookup`, idx, kvec)
 
-createSchemaFromArrow <- function(uri, naap, nasp, nadimap, nadimsp, pltcfgenv) {
-    invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, naap, nasp, nadimap, nadimsp, pltcfgenv))
+createSchemaFromArrow <- function(uri, naap, nasp, nadimap, nadimsp, pclst) {
+    invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, naap, nasp, nadimap, nadimsp, pclst))
 }
 
 writeArrayFromArrow <- function(uri, naap, nasp) {

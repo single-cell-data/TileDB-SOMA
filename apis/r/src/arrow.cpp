@@ -65,7 +65,7 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
 void createSchemaFromArrow(const std::string& uri,
                            SEXP naap, SEXP nasp,
                            SEXP nadimap, SEXP nadimsp,
-                           Rcpp::Environment pltcfgenv) {
+                           Rcpp::List pclst) {
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
@@ -110,19 +110,32 @@ void createSchemaFromArrow(const std::string& uri,
     auto dimarr = std::make_unique<ArrowArray>();
     apdim.move(dimarr.get());
 
-    Rcpp::Function f_cap = pltcfgenv["capacity"];
-    SEXP s = f_cap();
-    Rcpp::print(s);
-    //Rcpp::Rcout << "Env: " <<  << std::endl;
     tdbs::PlatformConfig pltcfg;
-    pltcfg.cell_order = "col";
-    pltcfg.tile_order = "col";
-    pltcfg.allows_duplicates = true;
+    auto ce_or = Rcpp::as<std::string>(pclst["cell_order"]);
+    auto ti_or = Rcpp::as<std::string>(pclst["tile_order"]);
+    pltcfg.cell_order                     = ce_or == "COL_MAJOR" ? "col" : "row";
+    pltcfg.tile_order                     = ti_or == "COL_MAJOR" ? "col" : "row";
+    pltcfg.allows_duplicates              = Rcpp::as<bool>(pclst["allows_duplicates"]);
+    pltcfg.capacity                       = Rcpp::as<double>(pclst["capacity"]);
+    pltcfg.dataframe_dim_zstd_level       = Rcpp::as<int>(pclst["dataframe_dim_zstd_level"]);
+    pltcfg.sparse_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["sparse_nd_array_dim_zstd_level"]);
+    pltcfg.write_X_chunked                = Rcpp::as<bool>(pclst["write_X_chunked"]);
+    pltcfg.goal_chunk_nnz                 = Rcpp::as<double>(pclst["goal_chunk_nnz"]);
+
+ // $ offsets_filters               :List of 3
+ //  ..$ : chr "DOUBLE_DELTA"
+ //  ..$ : chr "BIT_WIDTH_REDUCTION"
+ //  ..$ : chr "ZSTD"
+ // $ write_X_chunked               : logi TRUE
+ // $ goal_chunk_nnz                : num 2e+08
+
+    tiledb_array_type_t array_type = TILEDB_SPARSE;
 
     // create the ArraySchema
     auto as = tdbs::ArrowAdapter::tiledb_schema_from_arrow_schema(ctxsp, std::move(schema),
                                                                   std::pair(std::move(dimarr),
                                                                             std::move(dimsch)),
+                                                                  array_type,
                                                                   pltcfg);
     if (vfs.is_dir(uri)) vfs.remove_dir(uri);
     tiledb::Array::create(uri, as);
