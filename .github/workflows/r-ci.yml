@@ -121,7 +121,7 @@ jobs:
         run: cd apis/r && tools/r-ci.sh run_tests
 
       - name: Coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' && github.event_name == 'workflow_dispatch' }}
         run: apis/r/tools/r-ci.sh coverage
 
       - name: View Logs
