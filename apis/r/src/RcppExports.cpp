@@ -43,8 +43,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::NumericVector >::type kvec(kvecSEXP);
     rcpp_result_gen = Rcpp::wrap(reindex_lookup(idx, kvec));
 // createSchemaFromArrow
-void createSchemaFromArrow(const std::string& uri, SEXP naap, SEXP nasp, SEXP nadimap, SEXP nadimsp, Rcpp::Environment pltcfgenv);
-RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP pltcfgenvSEXP) {
+void createSchemaFromArrow(const std::string& uri, SEXP naap, SEXP nasp, SEXP nadimap, SEXP nadimsp, Rcpp::List pclst);
+RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP pclstSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
@@ -52,8 +52,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type nasp(naspSEXP);
     Rcpp::traits::input_parameter< SEXP >::type nadimap(nadimapSEXP);
     Rcpp::traits::input_parameter< SEXP >::type nadimsp(nadimspSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Environment >::type pltcfgenv(pltcfgenvSEXP);
-    createSchemaFromArrow(uri, naap, nasp, nadimap, nadimsp, pltcfgenv);
+    Rcpp::traits::input_parameter< Rcpp::List >::type pclst(pclstSEXP);
+    createSchemaFromArrow(uri, naap, nasp, nadimap, nadimsp, pclst);
     return R_NilValue;
 END_RCPP
 }
