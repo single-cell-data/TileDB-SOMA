@@ -51,7 +51,7 @@ void SOMADataFrame::create(
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
-        TILEDB_SPARSE,
+        true,
         platform_config);
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame", timestamp);
 }
