@@ -225,7 +225,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     std::unique_ptr<ArrowSchema> arrow_schema,
     ArrowTable index_column_info,
-    bool issparse,
+    bool is_sparse,
     std::optional<PlatformConfig> platform_config) {
     auto index_column_array = std::move(index_column_info.first);
     auto index_column_schema = std::move(index_column_info.second);

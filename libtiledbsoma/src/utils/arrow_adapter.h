@@ -116,7 +116,7 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx,
         std::unique_ptr<ArrowSchema> arrow_schema,
         ArrowTable index_column_info,
-        bool issparse = true,
+        bool is_sparse = true,
         std::optional<PlatformConfig> platform_config = std::nullopt);
 
     /**
