@@ -230,7 +230,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     auto index_column_array = std::move(index_column_info.first);
     auto index_column_schema = std::move(index_column_info.second);
 
-    ArraySchema schema(*ctx, issparse ? TILEDB_SPARSE : TILEDB_DENSE);
+    ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
 
     if (platform_config) {
