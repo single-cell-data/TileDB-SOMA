@@ -18,6 +18,7 @@ IntIndexer <- R6::R6Class(
       )
       private$.context <- tiledbsoma_ctx %||% SOMATileDBContext$new()
       private$.reindexer <- CPP_INDEXER(private$.context$context())
+      CPP_MAP_LOCATIONS(private$.reindexer, data)
       return(invisible(NULL))
     },
     #' @description ...
