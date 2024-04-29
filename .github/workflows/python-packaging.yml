@@ -53,7 +53,7 @@ jobs:
             cibw_build: 'cp3*-manylinux_x86_64'
             platform: manylinux2014
             wheel_name: manylinux2014
-          - os: macos-11
+          - os: macos-14
             cibw_build: 'cp3*-macosx_x86_64'
             cibw_archs_macos: x86_64
             platform: macosx
@@ -104,7 +104,7 @@ jobs:
             arch: x86_64
             cc: gcc-11
             cxx: g++-11
-          - os: macos-11
+          - os: macos-14
             platform: macosx
             arch: x86_64
             cc: clang
