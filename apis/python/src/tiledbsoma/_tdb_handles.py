@@ -98,15 +98,12 @@ def open(
 
     if soma_type == "somadataframe":
         return DataFrameWrapper._from_soma_object(soma_object, context)
-    if open_mode == clib.OpenMode.read and soma_type == "somadensendarray":
+    if soma_type == "somadensendarray":
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
     if soma_type == "somasparsendarray":
         return SparseNDArrayWrapper._from_soma_object(soma_object, context)
 
-    if soma_type in (
-        "somadensendarray",
-        "array",
-    ):
+    if soma_type == "array":
         return ArrayWrapper.open(uri, mode, context, timestamp)
 
     if soma_type in (
@@ -589,7 +586,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
             # There were no changes (e.g., it's a read handle).  Do nothing.
             return
         # Only try to get the writer if there are changes to be made.
-        if isinstance(self.owner, (DataFrameWrapper, SparseNDArrayWrapper)):
+        if isinstance(self.owner, SOMAArrayWrapper):
             meta = self.owner.meta
             for key, mod in self._mods.items():
                 if mod in (_DictMod.ADDED, _DictMod.UPDATED):

@@ -282,6 +282,7 @@ class SOMAArray : public SOMAObject {
         const tcb::span<T> points,
         int partition_index,
         int partition_count) {
+        std::cout << "SOMAArray::set_dim_points1 " << dim << std::endl;
         // Validate partition inputs
         if (partition_index >= partition_count) {
             // TODO this use to be formatted with fmt::format which is part of
@@ -335,6 +336,7 @@ class SOMAArray : public SOMAObject {
         LOG_DEBUG(
             "[SOMAArray] set_dim_points: sizeof(T)=" +
             std::to_string(sizeof(T)));
+        std::cout << "SOMAArray::set_dim_points2 " << dim << std::endl;
         mq_->select_points(dim, points);
     }
 

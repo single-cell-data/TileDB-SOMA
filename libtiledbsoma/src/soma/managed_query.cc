@@ -273,6 +273,9 @@ void ManagedQuery::setup_read() {
 }
 
 void ManagedQuery::submit_write() {
+    if (array_->schema().array_type() == TILEDB_DENSE) {
+        query_->set_subarray(*subarray_);
+    }
     query_->submit();
     query_->finalize();
 }

@@ -272,11 +272,13 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
             platform_config
         )
+        
+        clib_sparse_array = self._handle._handle
 
         if isinstance(values, pa.SparseCOOTensor):
             # Write bulk data
             data, coords = values.to_numpy()
-            self._handle._handle.write_ndarray(
+            clib_sparse_array.write_coords(
                 [
                     np.array(
                         c,
@@ -307,7 +309,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # Write bulk data
             # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
-            self._handle._handle.write_ndarray(
+            clib_sparse_array.write_coords(
                 [
                     np.array(
                         c,
@@ -332,8 +334,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         if isinstance(values, pa.Table):
             # Write bulk data
-            clib_sparse_array = self._handle._handle
-
             values = _util.cast_values_to_target_schema(
                 clib_sparse_array, values, self.schema
             )

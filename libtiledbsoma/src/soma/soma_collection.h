@@ -184,6 +184,12 @@ class SOMACollection : public SOMAGroup {
      * @param uri of SOMADataFrame to add
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
+     * @param ctx SOMAContext
+     * @param format Arrow type to create the soma_data
+     * @param index_columns The index column names with associated domains
+     * and tile extents per dimension
+     * @param platform_config Optional config parameter dictionary
+     * @param timestamp Optional the timestamp range to write SOMA metadata info
      */
     std::shared_ptr<SOMADataFrame> add_new_dataframe(
         std::string_view key,
@@ -202,13 +208,22 @@ class SOMACollection : public SOMAGroup {
      * @param uri of SOMADenseNDArray to add
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
+     * @param ctx SOMAContext
+     * @param format Arrow type to create the soma_data
+     * @param index_columns The index column names with associated domains
+     * and tile extents per dimension
+     * @param platform_config Optional config parameter dictionary
+     * @param timestamp Optional the timestamp range to write SOMA metadata info
      */
     std::shared_ptr<SOMADenseNDArray> add_new_dense_ndarray(
         std::string_view key,
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        ArraySchema schema);
+        std::string_view format,
+        ArrowTable index_columns,
+        std::optional<PlatformConfig> platform_config = std::nullopt,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * Create and add a SOMASparseNDArray to the SOMACollection.
@@ -217,6 +232,12 @@ class SOMACollection : public SOMAGroup {
      * @param uri of SOMASparseNDArray to add
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
+     * @param ctx SOMAContext
+     * @param format Arrow type to create the soma_data
+     * @param index_columns The index column names with associated domains
+     * and tile extents per dimension
+     * @param platform_config Optional config parameter dictionary
+     * @param timestamp Optional the timestamp range to write SOMA metadata info
      */
     std::shared_ptr<SOMASparseNDArray> add_new_sparse_ndarray(
         std::string_view key,
