@@ -1,3 +1,7 @@
+# 1.10.2
+
+* Port resume-ingest mode from Python to R
+
 # 1.10.1
 
 * This release contains a single Python-only bug fix
