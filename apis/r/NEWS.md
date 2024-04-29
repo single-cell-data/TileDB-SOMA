@@ -11,6 +11,7 @@
 * Add support for reading `*m` and `*p` layers from `SOMAExperimentAxisQuery`
 * Add support for blockwise iteration
 * Make `reopen()` a public method for all `TileDBObjects`
+* Add support for resume-mode in `write_soma()`
 
 # 1.7.0
 
