@@ -1,7 +1,6 @@
 
 test_that("write_soma.data.frame mechanics", {
   skip_if(!extended_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   skip_if_not_installed('datasets')
 
   uri <- withr::local_tempdir("write-soma-data-frame")
@@ -28,7 +27,6 @@ test_that("write_soma.data.frame mechanics", {
 
 test_that("write_soma.data.frame enumerations", {
   skip_if(!extended_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   skip_if_not_installed('datasets')
 
   uri <- withr::local_tempdir("write-soma-data-frame-enumerations")
@@ -69,7 +67,6 @@ test_that("write_soma.data.frame enumerations", {
 
 test_that("write_soma.data.frame no enumerations", {
   skip_if(!extended_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   skip_if_not_installed('datasets')
 
   uri <- withr::local_tempdir("write-soma-data-frame-factorless")

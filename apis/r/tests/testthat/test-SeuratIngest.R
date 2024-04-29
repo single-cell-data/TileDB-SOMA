@@ -160,6 +160,7 @@ test_that("Write DimReduc mechanics", {
   ))
   on.exit(ms_pca2$close(), add = TRUE, after = FALSE)
   expect_no_condition(write_soma(pbmc_small_tsne, soma_parent = ms))
+  ms$reopen(ms$mode(), force = TRUE)
   expect_identical(sort(ms$names()), sort(c('X', 'var', 'obsm', 'varm')))
   expect_identical(sort(ms$obsm$names()), sort(paste0('X_', c('pca', 'tsne'))))
   expect_identical(ms$varm$names(), 'PCs')

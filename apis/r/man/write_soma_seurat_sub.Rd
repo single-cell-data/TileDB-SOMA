@@ -13,6 +13,7 @@
   uri = NULL,
   soma_parent,
   ...,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -25,6 +26,7 @@
   fidx = NULL,
   nfeatures = NULL,
   ...,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -35,6 +37,7 @@
   uri,
   soma_parent,
   ...,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -45,6 +48,7 @@
   uri = NULL,
   soma_parent,
   ...,
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -63,6 +67,13 @@ for the \code{DimReduc} and \code{Graph} methods, this \strong{must} be a
 was generated from}
 
 \item{...}{Arguments passed to other methods}
+
+\item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
+\itemize{
+\item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+\item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
+exists, simply open it for writing
+}}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}}

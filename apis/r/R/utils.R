@@ -94,6 +94,78 @@ uns_hint <- function(type = c('1d', '2d')) {
   })
 }
 
+.maybe_muffle <- function(w, cond = getOption('verbose', default = FALSE)) {
+  if (isTRUE(x = cond)) {
+    warning(warningCondition(
+      message = conditionMessage(w),
+      class = setdiff(class(w), c('warning', 'simpleError', 'error', 'condition')),
+      call = conditionCall(w)
+    ))
+  } else {
+    tryInvokeRestart('muffleWarning')
+  }
+}
+
+#' Read the SOMA Join IDs from an Array
+#'
+#' @param x A \code{\link{SOMASparseNDarray}} or \code{\link{SOMADataFrame}}
+#'
+#' @return An \code{\link[bit64]{integer64}} vector with the SOMA join IDs
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+.read_soma_joinids <- function(x, ...) {
+  stopifnot(inherits(x = x, what = 'TileDBArray'))
+  oldmode <- x$mode()
+  on.exit(x$reopen(oldmode), add = TRUE, after = FALSE)
+  op <- options(arrow.int64_downcast = FALSE)
+  on.exit(options(op), add = TRUE, after = FALSE)
+  ids <- UseMethod(generic = '.read_soma_joinids', object = x)
+  return(ids)
+}
+
+#' @rdname dot-read_soma_joinids
+#'
+#' @noRd
+#'
+#' @method .read_soma_joinids SOMADataFrame
+#' @export
+#'
+.read_soma_joinids.SOMADataFrame <- function(x, ...) {
+  x$reopen("READ")
+  return(x$read(column_names = "soma_joinid")$concat()$GetColumnByName("soma_joinid")$as_vector())
+}
+
+#' @param axis Which dimension to read (zero-based)
+#'
+#' @rdname dot-read_soma_joinids
+#'
+#' @noRd
+#'
+#' @method .read_soma_joinids SOMASparseNDArray
+#' @export
+#'
+.read_soma_joinids.SOMASparseNDArray <- function(x, axis = 0L, ...) {
+  stopifnot(
+    "'axis' must be a single positive integer" = is.integer(axis) &&
+      length(axis) == 1L
+  )
+  if (axis < 0L || axis >= length(x$dimnames())) {
+    stop("'axis' must be between 0 and ", length(x$dimnames()), call. = FALSE)
+  }
+  x$reopen("READ")
+  dimname <- x$dimnames()[axis + 1L]
+  rl <- sr_setup(
+    uri = x$uri,
+    config = as.character(tiledb::config(x$tiledbsoma_ctx$context())),
+    colnames = dimname,
+    timestamp_end = x$.__enclos_env__$private$tiledb_timestamp
+  )
+  return(TableReadIter$new(rl$sr)$concat()$GetColumnByName(dimname)$as_vector())
+}
+
 #' Pad Names of a Character Vector
 #'
 #' Fill in missing names of a vector using missing values of said vector
