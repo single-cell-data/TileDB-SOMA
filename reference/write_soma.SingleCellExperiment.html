@@ -12,7 +12,7 @@ object to a SOMA"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.10.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.10.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,6 +72,7 @@ object to a SOMA</p>
 <span>  <span class="va">uri</span>,</span>
 <span>  ms_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  ingest_mode <span class="op">=</span> <span class="st">"write"</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -94,6 +95,13 @@ object to a SOMA</p>
 
 <dt>...</dt>
 <dd><p>Arguments passed to other methods</p></dd>
+
+
+<dt>ingest_mode</dt>
+<dd><p>Ingestion mode when creating the SOMA; choose from:</p><ul><li><p>“<code>write</code>”: create a new SOMA and error if it already exists</p></li>
+<li><p>“<code>resume</code>”: attempt to create a new SOMA; if it already
+exists, simply open it for writing</p></li>
+</ul></dd>
 
 
 <dt>platform_config</dt>

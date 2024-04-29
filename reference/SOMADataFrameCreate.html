@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.10.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.10.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,7 @@
 <span>  <span class="va">uri</span>,</span>
 <span>  <span class="va">schema</span>,</span>
 <span>  index_column_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"soma_joinid"</span><span class="op">)</span>,</span>
+<span>  ingest_mode <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"write"</span>, <span class="st">"resume"</span><span class="op">)</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledbsoma_ctx <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tiledb_timestamp <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -80,11 +81,20 @@
 
 
 <dt>schema</dt>
-<dd><p>schema Arrow schema argument passed on to DataFrame$create()</p></dd>
+<dd><p>Arrow schema argument for the SOMA dataframe</p></dd>
 
 
 <dt>index_column_names</dt>
-<dd><p>Index column names passed on to DataFrame$create()</p></dd>
+<dd><p>A vector of column names to use as user-defined
+index columns; all named columns must exist in the schema, and at least
+one index column name is required</p></dd>
+
+
+<dt>ingest_mode</dt>
+<dd><p>Ingestion mode when creating the TileDB object; choose from:</p><ul><li><p>“<code>write</code>”: create a new TileDB object and error if it already exists</p></li>
+<li><p>“<code>resume</code>”: attempt to create a new TileDB object;
+if it already exists, simply open it for writing</p></li>
+</ul></dd>
 
 
 <dt>platform_config</dt>
