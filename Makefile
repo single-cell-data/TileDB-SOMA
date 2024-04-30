@@ -8,12 +8,15 @@ help:
 # install 
 # -------------------------------------------------------------------
 
-# set default variable values, if non-null
+# Set default variable values, if non-null
+# * build=Debug creates binary artifacts with symbols, e.g. for gdb
+# * cmake_verbose=true creates Makefiles that produce full compile lines when executed
 build ?= Release
+cmake_verbose ?= false
 
 .PHONY: install
 install: clean
-	@./scripts/bld --prefix=${prefix} --tiledb=${tiledb} --build=${build}
+	@./scripts/bld --prefix=${prefix} --tiledb=${tiledb} --build=${build} --cmake-verbose=${cmake_verbose}
 	@TILEDB_PATH=${tiledb} pip install -v -e apis/python
 
 .PHONY: r-build
