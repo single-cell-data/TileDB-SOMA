@@ -1,11 +1,11 @@
 /**
- * @file   tiledbsoma
+ * @file   soma_image2d.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,37 +27,41 @@
  *
  * @section DESCRIPTION
  *
- * This is the main import header for the C++ API
+ *   This file defines the SOMAImage2D class.
  */
 
-#ifndef __TILEDBSOMA__
-#define __TILEDBSOMA__
+#include "soma_image2d.h"
+#include "soma_collection.h"
 
-// Auto-generated file by CMake, used to define the TILEDBSOMA_EXPORT macro
-// that allows exporting symbols in a cross-platform fashion.
-#include "tiledbsoma_export.h"
+namespace tiledbsoma {
+using namespace tiledb;
 
-#include "utils/arrow_adapter.h"
-#include "utils/common.h"
-#include "utils/stats.h"
-#include "utils/version.h"
-#include "soma/enums.h"
-#include "soma/logger_public.h"
-#include "soma/soma_context.h"
-#include "soma/managed_query.h"
-#include "soma/array_buffers.h"
-#include "soma/column_buffer.h"
-#include "soma/soma_array.h"
-#include "soma/soma_collection.h"
-#include "soma/soma_dataframe.h"
-#include "soma/soma_group.h"
-#include "soma/soma_experiment.h"
-#include "soma/soma_measurement.h"
-#include "soma/soma_scene.h"
-#include "soma/soma_image2d.h"
-#include "soma/soma_object.h"
-#include "soma/soma_dataframe.h"
-#include "soma/soma_dense_ndarray.h"
-#include "soma/soma_sparse_ndarray.h"
+//===================================================================
+//= public static
+//===================================================================
 
-#endif
+void SOMAImage2D::create(
+    std::string_view uri,
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<TimestampRange> timestamp) {
+    try {
+        std::filesystem::path image_uri(uri);
+        SOMAGroup::create(ctx, image_uri.string(), "SOMAImage2D", timestamp);
+    } catch (TileDBError& e) {
+        throw TileDBSOMAError(e.what());
+    }
+}
+
+std::unique_ptr<SOMAImage2D> SOMAImage2D::open(
+    std::string_view uri,
+    OpenMode mode,
+    std::shared_ptr<SOMAContext> ctx,
+    std::optional<TimestampRange> timestamp) {
+    try {
+        return std::make_unique<SOMAImage2D>(mode, uri, ctx, timestamp);
+    } catch (TileDBError& e) {
+        throw TileDBSOMAError(e.what());
+    }
+}
+
+}  // namespace tiledbsoma

@@ -173,6 +173,7 @@ from ._general_utilities import (
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
 from ._scene import Scene
+from ._images import Image2D
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBWriteOptions
 from .pytiledbsoma import (
@@ -206,6 +207,7 @@ __all__ = [
     "Measurement",
     "NotCreateableError",
     "open",
+    "Image2D",
     "ResultOrder",
     "ScaleTransform",
     "show_package_versions",
