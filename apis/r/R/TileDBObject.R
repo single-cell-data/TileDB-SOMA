@@ -85,25 +85,38 @@ TileDBObject <- R6::R6Class(
     #' By default, reopens in the opposite mode of the current mode
     #' @param force Force a close/reopen cycle; by default, if \code{mode} is
     #' \code{self$mode()}, \code{reopen()} does nothing
+    #' @param timestamp Set timestamp for reopen; pass \dQuote{\code{restore}}
+    #' to restore the existing timestamp or \code{NULL} to reset to the
+    #' current time
+    #' @param ... ...
     #'
     #' @return Invisibly returns \code{self}
     #'
-    reopen = function(mode = NULL, force = FALSE) {
-      stopifnot("'force' must be TRUE or FALSE" = is_scalar_logical(force))
+    reopen = function(mode = NULL, force = FALSE, timestamp = NULL, ...) {
+      if (is.character(timestamp)) {
+        timestamp <- switch(
+          EXPR = timestamp,
+          restore = private$tiledb_timestamp,
+          as.POSIXct(timestamp, ...)
+        )
+      }
+      stopifnot(
+        "'force' must be TRUE or FALSE" = is_scalar_logical(force),
+        "'timestamp' must be a POSIXct" = is.null(timestamp) ||
+          inherits(timestamp, what = 'POSIXct')
+      )
       modes <- c(READ = 'WRITE', WRITE = 'READ')
       oldmode <- self$mode()
       mode <- mode %||% modes[oldmode]
       mode <- match.arg(mode, choices = modes)
       if (isTRUE(force) || mode != oldmode) {
         self$close()
-        if (mode == "WRITE") {
-          ts <- private$tiledb_timestamp
-          private$tiledb_timestamp <- NULL
-        }
+        private$tiledb_timestamp <- switch(
+          EXPR = mode,
+          WRITE = NULL,
+          READ = timestamp %||% Sys.time()
+        )
         self$open(mode, internal_use_only = 'allowed_use')
-        if (mode == "WRITE") {
-          private$tiledb_timestamp <- ts
-        }
       }
       return(invisible(self))
     },
