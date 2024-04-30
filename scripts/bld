@@ -11,12 +11,14 @@ arg() { echo "$1" | sed "s/^${2-[^=]*=}//" | sed "s/:/;/g"; }
 build="Release"
 prefix=""
 tiledb=""
+cmake_verbose="false"
 
 while test $# != 0; do
   case "$1" in
   --build=*) build=$(arg "$1");;
   --prefix=*) prefix=$(arg "$1");;
   --tiledb=*) tiledb=$(arg "$1");;
+  --cmake-verbose=*) cmake_verbose=$(arg "$1");;
   esac
   shift
 done
@@ -43,10 +45,10 @@ if [ "$(uname -m)" == "aarch64" ]; then
 fi
 
 # NOTE: set to true to debug the cmake build
-if false; then
-  # Debug note: this is _incredibly_ helpful in that it reveals the actual compile lines etc which
-  # make itself shows by default but which cmake-driven make hides by default. Use this for any
-  # non-trivial cmake debugging.
+if [ "$cmake_verbose" = "true" ]; then
+  # This is _incredibly_ helpful in that it reveals the actual compile lines etc which make itself
+  # shows by default but which cmake-driven make hides by default. Use this for any non-trivial
+  # cmake debugging.
   extra_opts+=" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
 
   # TILEDB_WERROR=OFF is necessary to build core with XCode 14; doesn't hurt for XCode 13.
