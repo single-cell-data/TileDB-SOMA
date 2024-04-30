@@ -173,11 +173,11 @@ TileDBGroup <- R6::R6Class(
       # may override construct_member.
       if (is.null(member$object)) {
         obj <- private$construct_member(member$uri, member$type)
-        obj$open(mode = self$mode(), internal_use_only = "allowed_use")
+        obj$reopen(mode = self$mode())
       } else {
         obj <- member$object
         if (!obj$is_open()) {
-          obj$open(mode = self$mode(), internal_use_only = "allowed_use")
+          obj$reopen(mode = self$mode())
         }
       }
 

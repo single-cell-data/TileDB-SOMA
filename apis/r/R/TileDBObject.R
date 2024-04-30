@@ -96,7 +96,14 @@ TileDBObject <- R6::R6Class(
       mode <- match.arg(mode, choices = modes)
       if (isTRUE(force) || mode != oldmode) {
         self$close()
+        if (mode == "WRITE") {
+          ts <- private$tiledb_timestamp
+          private$tiledb_timestamp <- NULL
+        }
         self$open(mode, internal_use_only = 'allowed_use')
+        if (mode == "WRITE") {
+          private$tiledb_timestamp <- ts
+        }
       }
       return(invisible(self))
     },

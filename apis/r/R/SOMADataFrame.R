@@ -202,7 +202,7 @@ SOMADataFrame <- R6::R6Class(
       arr[] <- df
       # tiledb-r always closes the array after a write operation so we need to
       # manually reopen it until close-on-write is optional
-      self$open("WRITE", internal_use_only = "allowed_use")
+      self$reopen("WRITE", force = TRUE)
       invisible(self)
     },
 
