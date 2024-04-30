@@ -7,7 +7,7 @@
 Implementation of SOMA DenseNDArray.
 """
 
-from typing import Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
@@ -21,7 +21,7 @@ from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
 from ._tdb_handles import DenseNDArrayWrapper
-from ._types import OpenTimestamp
+from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
 from .options._soma_tiledb_context import (
     SOMATileDBContext,
@@ -265,13 +265,13 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         handle = self._handle._handle
 
-        new_coords = []
+        new_coords: List[Union[int, Slice[int], None]] = []
         for c in coords:
             if isinstance(c, slice) and isinstance(c.stop, int):
                 new_coords.append(slice(c.start, c.stop - 1, c.step))
             else:
                 new_coords.append(c)
-                        
+
         self._set_reader_coords(handle, new_coords)
         handle.write(
             np.array(

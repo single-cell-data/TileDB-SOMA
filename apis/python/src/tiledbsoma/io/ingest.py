@@ -1757,7 +1757,7 @@ def _write_matrix_to_denseNDArray(
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
-    
+
     add_metadata(soma_ndarray, additional_metadata)
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
@@ -1784,7 +1784,7 @@ def _write_matrix_to_denseNDArray(
                 f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}"
             )
             return
-        
+
     if isinstance(matrix, sp.csc_matrix):
         matrix = sp.csr_matrix(matrix)
 
