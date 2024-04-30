@@ -69,7 +69,7 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
             assert np.array_equal(read_back, src_matrix)
         else:
             assert np.array_equal(read_back, src_matrix.toarray())
-
+    
 
 @pytest.mark.parametrize(
     "tdb_create_options",

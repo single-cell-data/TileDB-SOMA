@@ -272,7 +272,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
             platform_config
         )
-        
+
         clib_sparse_array = self._handle._handle
 
         if isinstance(values, pa.SparseCOOTensor):

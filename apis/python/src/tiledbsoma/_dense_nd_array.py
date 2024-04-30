@@ -262,21 +262,20 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             Experimental.
         """
         _util.check_type("values", values, (pa.Tensor,))
-        
+
         handle = self._handle._handle
-        
+
         new_coords = []
         for c in coords:
             if isinstance(c, slice) and isinstance(c.stop, int):
-                new_coords.append(slice(c.start, c.stop-1, c.step))
+                new_coords.append(slice(c.start, c.stop - 1, c.step))
             else:
                 new_coords.append(c)
-                
+                        
         self._set_reader_coords(handle, new_coords)
-        print(handle.result_order)
         handle.write(
             np.array(
-                values.to_numpy(),
+                values,
                 dtype=self.schema.field("soma_data").type.to_pandas_dtype(),
             ),
         )
