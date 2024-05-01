@@ -158,55 +158,47 @@ def from_visium(
                     spatial, scene_name, scene, use_relative_uri=use_relative_uri
                 )
 
-                scene_exp_uri = f"{scene_uri}/exp"
-                with _create_or_open_collection(
-                    Collection[AnyTileDBObject], scene_exp_uri, **ingest_ctx
-                ) as scene_exp:
+                # Write image data and add to the scene.
+                images_uri = f"{scene_uri}/images"
+                with _write_visium_images(
+                    images_uri,
+                    scale_factors,
+                    input_hires=input_hires,
+                    input_lowres=input_lowres,
+                    input_fullres=input_fullres,
+                    use_relative_uri=use_relative_uri,
+                    **ingest_ctx,
+                ) as images:
                     _maybe_set(
-                        scene, "exp", scene_exp, use_relative_uri=use_relative_uri
+                        scene, "images", images, use_relative_uri=use_relative_uri
                     )
 
-                    obs_locations_uri = f"{scene_exp_uri}/obs_locations"
+                obss_uri = f"{scene_uri}/obss"
+                with _create_or_open_collection(
+                    Collection[AnyTileDBObject], obss_uri, **ingest_ctx
+                ) as obss:
+                    _maybe_set(scene, "obss", obss, use_relative_uri=use_relative_uri)
+
+                    obs_loc_uri = f"{obss_uri}/obs_locations"
 
                     # Write spot data and add to the scene.
                     with _write_visium_spot_dataframe(
-                        obs_locations_uri,
+                        obs_loc_uri,
                         input_tissue_positions,
                         scale_factors,
                         obs_df,
                         obs_id_name,
                         **ingest_ctx,
-                    ) as obs_locations:
+                    ) as obs_loc:
                         _maybe_set(
-                            scene_exp,
-                            "obs_locations",
-                            obs_locations,
-                            use_relative_uri=use_relative_uri,
+                            obss, "loc", obs_loc, use_relative_uri=use_relative_uri
                         )
 
-                    # Write image data and add to the scene.
-                    images_uri = f"{scene_exp_uri}/images"
-                    with _write_visium_images(
-                        images_uri,
-                        scale_factors,
-                        input_hires=input_hires,
-                        input_lowres=input_lowres,
-                        input_fullres=input_fullres,
-                        use_relative_uri=use_relative_uri,
-                        **ingest_ctx,
-                    ) as images:
-                        _maybe_set(
-                            scene_exp,
-                            "images",
-                            images,
-                            use_relative_uri=use_relative_uri,
-                        )
-
-                scene_ms_uri = f"{scene_uri}/ms"
+                scene_ms_uri = f"{scene_uri}/vars"
                 with _create_or_open_collection(
                     Collection[Collection[AnyTileDBObject]], scene_ms_uri, **ingest_ctx
-                ) as scene_ms:
-                    _maybe_set(scene, "ms", scene_ms, use_relative_uri=use_relative_uri)
+                ) as vars:
+                    _maybe_set(scene, "vars", vars, use_relative_uri=use_relative_uri)
         return uri
 
 
