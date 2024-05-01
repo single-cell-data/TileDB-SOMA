@@ -1785,9 +1785,6 @@ def _write_matrix_to_denseNDArray(
             )
             return
 
-    if isinstance(matrix, sp.csc_matrix):
-        matrix = sp.csr_matrix(matrix)
-
     # Write all at once?
     if not tiledb_create_options.write_X_chunked:
         if not isinstance(matrix, np.ndarray):
