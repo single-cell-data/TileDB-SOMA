@@ -371,7 +371,6 @@ DumpLogsByExtension() {
         exit 1
     fi
     extension=$1
-    echo "DumpLogsByExtension extension=<<$extension>>"
     shift
 
     # Note: this script may be run from the apis/r subdirectory or from the

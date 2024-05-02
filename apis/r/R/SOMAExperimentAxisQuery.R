@@ -494,17 +494,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Use joinids if the dimension names are empty
       dim_names <- Map("%||%", dim_names, coords)
 
-      print("")
-      print("")
-      print("LEN I")
-      print(length(mat_coords$i))
-      print("LEN J")
-      print(length(mat_coords$j))
-      print("LEN X")
-      print(length(tbl$soma_data))
-      print("")
-      print("")
-
       Matrix::sparseMatrix(
         i = mat_coords$i$as_vector(),
         j = mat_coords$j$as_vector(),
