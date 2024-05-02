@@ -4,7 +4,14 @@
 \alias{write_soma.Seurat}
 \title{Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA}
 \usage{
-\method{write_soma}{Seurat}(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
+\method{write_soma}{Seurat}(
+  x,
+  uri,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+)
 }
 \arguments{
 \item{x}{A \code{\link[SeuratObject]{Seurat}} object}
@@ -12,6 +19,13 @@
 \item{uri}{URI for resulting SOMA object}
 
 \item{...}{Arguments passed to other methods}
+
+\item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
+\itemize{
+\item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+\item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
+exists, simply open it for writing
+}}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
 configuration}}

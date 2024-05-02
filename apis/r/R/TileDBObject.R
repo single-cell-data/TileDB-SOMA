@@ -83,15 +83,18 @@ TileDBObject <- R6::R6Class(
     #'  \item \dQuote{\code{WRITE}}
     #' }
     #' By default, reopens in the opposite mode of the current mode
+    #' @param force Force a close/reopen cycle; by default, if \code{mode} is
+    #' \code{self$mode()}, \code{reopen()} does nothing
     #'
     #' @return Invisibly returns \code{self}
     #'
-    reopen = function(mode = NULL) {
+    reopen = function(mode = NULL, force = FALSE) {
+      stopifnot("'force' must be TRUE or FALSE" = is_scalar_logical(force))
       modes <- c(READ = 'WRITE', WRITE = 'READ')
       oldmode <- self$mode()
       mode <- mode %||% modes[oldmode]
       mode <- match.arg(mode, choices = modes)
-      if (mode != oldmode) {
+      if (isTRUE(force) || mode != oldmode) {
         self$close()
         self$open(mode, internal_use_only = 'allowed_use')
       }

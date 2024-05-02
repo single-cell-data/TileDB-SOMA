@@ -111,10 +111,15 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
     std::unique_ptr<ArrowSchema> schema,
-    ColumnIndexInfo index_columns,
+    ArrowTable index_columns,
     std::optional<PlatformConfig> platform_config) {
     SOMAExperiment::create(
-        uri, std::move(schema), index_columns, ctx, platform_config);
+        uri,
+        std::move(schema),
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        platform_config);
     std::shared_ptr<SOMAExperiment> member = SOMAExperiment::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
@@ -128,8 +133,13 @@ std::shared_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
     std::unique_ptr<ArrowSchema> schema,
-    ColumnIndexInfo index_columns) {
-    SOMAMeasurement::create(uri, std::move(schema), index_columns, ctx);
+    ArrowTable index_columns) {
+    SOMAMeasurement::create(
+        uri,
+        std::move(schema),
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx);
     std::shared_ptr<SOMAMeasurement> member = SOMAMeasurement::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));
@@ -143,10 +153,15 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
     std::unique_ptr<ArrowSchema> schema,
-    ColumnIndexInfo index_columns,
+    ArrowTable index_columns,
     std::optional<PlatformConfig> platform_config) {
     SOMADataFrame::create(
-        uri, std::move(schema), index_columns, ctx, platform_config);
+        uri,
+        std::move(schema),
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        platform_config);
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));

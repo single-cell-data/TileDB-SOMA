@@ -224,11 +224,13 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
 ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     std::unique_ptr<ArrowSchema> arrow_schema,
-    ColumnIndexInfo index_column_info,
+    ArrowTable index_column_info,
+    bool is_sparse,
     std::optional<PlatformConfig> platform_config) {
-    auto [index_column_names, domains, extents] = index_column_info;
+    auto index_column_array = std::move(index_column_info.first);
+    auto index_column_schema = std::move(index_column_info.second);
 
-    ArraySchema schema(*ctx, TILEDB_SPARSE);
+    ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
 
     if (platform_config) {
@@ -258,8 +260,14 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         if (platform_config->offsets_filters.size() != 0) {
             FilterList offset_filter_list(*ctx);
             for (auto offset : platform_config->offsets_filters) {
-                offset_filter_list.add_filter(
-                    Filter(*ctx, convert_filter[offset]));
+                try {
+                    offset_filter_list.add_filter(
+                        Filter(*ctx, convert_filter.at(offset)));
+                } catch (std::out_of_range& e) {
+                    throw TileDBSOMAError(fmt::format(
+                        "Invalid offset filter {} passed to PlatformConfig",
+                        offset));
+                }
             }
             schema.set_offsets_filter_list(offset_filter_list);
         }
@@ -267,23 +275,59 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         if (platform_config->validity_filters.size() != 0) {
             FilterList validity_filter_list(*ctx);
             for (auto validity : platform_config->validity_filters) {
-                validity_filter_list.add_filter(
-                    Filter(*ctx, convert_filter[validity]));
+                try {
+                    validity_filter_list.add_filter(
+                        Filter(*ctx, convert_filter.at(validity)));
+                } catch (std::out_of_range& e) {
+                    throw TileDBSOMAError(fmt::format(
+                        "Invalid validity filter {} passed to PlatformConfig",
+                        validity));
+                }
             }
             schema.set_validity_filter_list(validity_filter_list);
         }
 
         schema.set_allows_dups(platform_config->allows_duplicates);
 
-        if (platform_config->tile_order)
-            schema.set_tile_order(
-                platform_config->tile_order == "row" ? TILEDB_ROW_MAJOR :
-                                                       TILEDB_COL_MAJOR);
+        if (platform_config->tile_order) {
+            auto tile_order = *platform_config->tile_order;
+            std::transform(
+                tile_order.begin(),
+                tile_order.end(),
+                tile_order.begin(),
+                [](unsigned char c) { return std::tolower(c); });
 
-        if (platform_config->cell_order)
-            schema.set_cell_order(
-                platform_config->cell_order == "row" ? TILEDB_ROW_MAJOR :
-                                                       TILEDB_COL_MAJOR);
+            if (tile_order == "row-order" or tile_order == "row") {
+                schema.set_tile_order(TILEDB_ROW_MAJOR);
+            } else if (tile_order == "col-order" or tile_order == "col") {
+                schema.set_tile_order(TILEDB_COL_MAJOR);
+            } else {
+                throw TileDBSOMAError(fmt::format(
+                    "Invalid tile order {} passed to PlatformConfig",
+                    tile_order));
+            }
+        }
+
+        if (platform_config->cell_order) {
+            auto cell_order = *platform_config->cell_order;
+            std::transform(
+                cell_order.begin(),
+                cell_order.end(),
+                cell_order.begin(),
+                [](unsigned char c) { return std::tolower(c); });
+
+            if (cell_order == "row-major" or cell_order == "row") {
+                schema.set_cell_order(TILEDB_ROW_MAJOR);
+            } else if (cell_order == "col-major" or cell_order == "col") {
+                schema.set_cell_order(TILEDB_COL_MAJOR);
+            } else if (cell_order == "hilbert") {
+                schema.set_cell_order(TILEDB_HILBERT);
+            } else {
+                throw TileDBSOMAError(fmt::format(
+                    "Invalid cell order {} passed to PlatformConfig",
+                    cell_order));
+            }
+        }
     }
 
     std::map<std::string, Dimension> dims;
@@ -292,29 +336,112 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         auto child = arrow_schema->children[sch_idx];
         auto type = ArrowAdapter::to_tiledb_format(child->format);
 
-        auto idx_col_begin = index_column_names.begin();
-        auto idx_col_end = index_column_names.end();
-        auto idx_col_it = std::find(idx_col_begin, idx_col_end, child->name);
+        bool isattr = true;
 
-        if (idx_col_it != idx_col_end) {
-            auto idx_col_idx = std::distance(idx_col_begin, idx_col_it);
-            if (ArrowAdapter::_isvar(child->format)) {
-                type = TILEDB_STRING_ASCII;
+        for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+            auto col_name = index_column_schema->children[i]->name;
+            if (strcmp(child->name, col_name) == 0) {
+                if (ArrowAdapter::_isvar(child->format)) {
+                    type = TILEDB_STRING_ASCII;
+                }
+
+                const void* buff = index_column_array->children[i]->buffers[1];
+
+                switch (type) {
+                    case TILEDB_STRING_ASCII: {
+                        auto dim = Dimension::create(
+                            *ctx, child->name, type, nullptr, nullptr);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_TIME_SEC:
+                    case TILEDB_TIME_MS:
+                    case TILEDB_TIME_US:
+                    case TILEDB_TIME_NS:
+                    case TILEDB_DATETIME_SEC:
+                    case TILEDB_DATETIME_MS:
+                    case TILEDB_DATETIME_US:
+                    case TILEDB_DATETIME_NS: {
+                        auto datetime_buff = (uint64_t*)buff;
+                        auto dim = Dimension::create(
+                            *ctx,
+                            child->name,
+                            type,
+                            datetime_buff,
+                            datetime_buff + 2);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_INT8: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (int8_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_UINT8: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (uint8_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_INT16: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (int16_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_UINT16: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (uint16_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_INT32: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (int32_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_UINT32: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (uint32_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_INT64: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (int64_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_UINT64: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (uint64_t*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_FLOAT32: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (float*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    case TILEDB_FLOAT64: {
+                        auto dim = ArrowAdapter::_create_dim(
+                            *ctx, child->name, (double*)buff);
+                        dims.insert({child->name, dim});
+                        break;
+                    }
+                    default:
+                        throw TileDBSOMAError(fmt::format(
+                            "ArrowAdapter: Unsupported TileDB dimension: {} ",
+                            tiledb::impl::type_to_str(type)));
+                }
+                isattr = false;
+                break;
             }
-
-            auto dim = Dimension::create(
-                *ctx,
-                child->name,
-                type,
-                type == TILEDB_STRING_ASCII ?
-                    nullptr :
-                    domains->children[idx_col_idx]->buffers[1],
-                type == TILEDB_STRING_ASCII ?
-                    nullptr :
-                    extents->children[idx_col_idx]->buffers[1]);
-
-            dims.insert({dim.name(), dim});
-        } else {
+        }
+        if (isattr) {
             Attribute attr(*ctx, child->name, type);
 
             if (child->flags & ARROW_FLAG_NULLABLE) {
@@ -343,8 +470,10 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         }
     }
 
-    for (auto column_name : index_column_names)
-        domain.add_dimension(dims.at(column_name));
+    for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+        auto col_name = index_column_schema->children[i]->name;
+        domain.add_dimension(dims.at(col_name));
+    }
     schema.set_domain(domain);
 
     schema.check();
@@ -511,7 +640,8 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         column->validity_to_bitmap();
         array->buffers[0] = column->validity().data();
     } else {
-        schema->flags = 0;  // as ArrowSchemaInitFromType leads to NULLABLE set
+        schema->flags = 0;  // as ArrowSchemaInitFromType leads to NULLABLE
+                            // set
     }
 
     if (column->is_ordered()) {

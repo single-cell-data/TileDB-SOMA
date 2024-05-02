@@ -6,6 +6,7 @@
 \usage{
 SOMAExperimentCreate(
   uri,
+  ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
@@ -13,6 +14,13 @@ SOMAExperimentCreate(
 }
 \arguments{
 \item{uri}{URI for the TileDB object}
+
+\item{ingest_mode}{Ingestion mode when creating the TileDB object; choose from:
+\itemize{
+\item \dQuote{\code{write}}: create a new TileDB object and error if it already exists
+\item \dQuote{\code{resume}}: attempt to create a new TileDB object;
+if it already exists, simply open it for writing
+}}
 
 \item{platform_config}{Optional platform configuration}
 

@@ -96,7 +96,7 @@ class NotCreateableError(SOMAError):
     pass
 
 
-def is_not_createable_error(e: tiledb.TileDBError) -> bool:
+def is_not_createable_error(e: Union[SOMAError, tiledb.TileDBError]) -> bool:
     """Given a TileDBError, return true if it indicates the object cannot be created
 
     Lifecycle: experimental
@@ -132,7 +132,7 @@ def is_not_createable_error(e: tiledb.TileDBError) -> bool:
     return False
 
 
-def is_duplicate_group_key_error(e: tiledb.TileDBError) -> bool:
+def is_duplicate_group_key_error(e: Union[SOMAError, tiledb.TileDBError]) -> bool:
     """Given a TileDBError, return try if it indicates a duplicate member
     add request in a tiledb.Group.
 

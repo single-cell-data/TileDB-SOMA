@@ -230,16 +230,17 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                     f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
                 )
 
-        domains = []
-        extents = []
+        index_column_schema = []
+        index_column_data = {}
+
         for index_column_name, slot_domain in zip(index_column_names, domain):
-            pa_type = schema.field(index_column_name).type
+            pa_field = schema.field(index_column_name)
             dtype = _arrow_types.tiledb_type_from_arrow_type(
-                pa_type, is_indexed_column=True
+                pa_field.type, is_indexed_column=True
             )
 
             slot_domain = _fill_out_slot_domain(
-                slot_domain, index_column_name, pa_type, dtype
+                slot_domain, index_column_name, pa_field.type, dtype
             )
 
             extent = _find_extent_for_domain(
@@ -249,11 +250,12 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 slot_domain,
             )
 
-            domains.append(pa.array(slot_domain, type=pa_type))
-            extents.append(pa.array([extent], type=pa_type))
+            index_column_schema.append(pa_field)
+            index_column_data[pa_field.name] = [*slot_domain, extent]
 
-        domains = pa.StructArray.from_arrays(domains, names=index_column_names)
-        extents = pa.StructArray.from_arrays(extents, names=index_column_names)
+        index_column_info = pa.RecordBatch.from_pydict(
+            index_column_data, schema=pa.schema(index_column_schema)
+        )
 
         plt_cfg = None
         if platform_config:
@@ -282,9 +284,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             clib.SOMADataFrame.create(
                 uri,
                 schema=schema,
-                index_column_names=index_column_names,
-                domains=domains,
-                extents=extents,
+                index_column_info=index_column_info,
                 ctx=context.native_context,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),

@@ -15,9 +15,13 @@ set -e
 # Or ratherm set it for a lot noisier output
 # set -x
 
-CRAN=${CRAN:-"https://cloud.r-project.org"}
+# Where do we run? OS can be 'Linux' or 'Darwin', ARCH can be 'x86_64' or 'arm64'
 OS=$(uname -s)
-RVER=${RVER:-"4.3.2"}
+ARCH=$(uname -m)
+
+# Default CRAN repo (use the CDN) and R verssion
+CRAN=${CRAN:-"https://cloud.r-project.org"}
+RVER=${RVER:-"4.3.3"}
 
 ## Optional drat repos, unset by default
 DRAT_REPOS=${DRAT_REPOS:-""}
@@ -213,11 +217,10 @@ BootstrapLinuxOptions() {
 }
 
 BootstrapMac() {
-    # Install from latest CRAN binary build for OS X
-    echo "Downloading ${RVER} for macOS"
-    wget ${CRAN}/bin/macosx/big-sur-x86_64/base/R-${RVER}-x86_64.pkg -O /tmp/R-latest.pkg
+    # Install from latest CRAN binary build for OS X (given ${ARCH} from 'uname -m')
+    wget ${CRAN}/bin/macosx/big-sur-${ARCH}/base/R-${RVER}-${ARCH}.pkg  -O /tmp/R-latest.pkg
 
-    echo "Installing macOS binary package for R"
+    echo "Installing macOS binary package for R on ${ARCH}"
     sudo installer -pkg "/tmp/R-latest.pkg" -target /
     rm "/tmp/R-latest.pkg"
 

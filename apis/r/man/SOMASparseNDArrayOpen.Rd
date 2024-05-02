@@ -21,7 +21,9 @@ SOMASparseNDArrayOpen(
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.
+In READ mode, defaults to the current time. If non-NULL, then all members
+accessed through the collection object inherit the timestamp.}
 }
 \description{
 Factory function to open a SOMASparseNDArray for reading, (lifecycle: experimental)

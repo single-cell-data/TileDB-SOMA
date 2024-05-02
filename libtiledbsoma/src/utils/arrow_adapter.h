@@ -34,26 +34,52 @@ struct ArrowBuffer {
 using ArrowTable =
     std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>;
 
-using ColumnIndexInfo = std::tuple<
-    std::vector<std::string>,     // name of column
-    std::shared_ptr<ArrowArray>,  // domain
-    std::shared_ptr<ArrowArray>   // tile extent
-    >;
-
 class PlatformConfig {
    public:
+    /* Set the ZstdFilter's level for DataFrame dims */
     uint64_t dataframe_dim_zstd_level = 3;
+
+    /* Set the ZstdFilter's level for SparseNDArray dims */
     uint64_t sparse_nd_array_dim_zstd_level = 3;
+
+    /* Set whether to write the X data chunked */
     bool write_X_chunked = true;
+
+    /* Set the goal chunk nnz */
     uint64_t goal_chunk_nnz = 100000000;
+
+    /* Server-side parameter to set the cap nbytes */
     uint64_t remote_cap_nbytes = 2400000000;
+
+    /* Set the tile capcity for sparse arrays */
     uint64_t capacity = 100000;
+
+    /* Set the offset filters. Available filters are
+     * "GzipFilter", "ZstdFilter", "LZ4Filter", "Bzip2Filter", RleFilter", "
+     * "DeltaFilter", "DoubleDeltaFilter", "BitWidthReductionFilter",
+     * "BitShuffleFilter", "ByteShuffleFilter", "PositiveDeltaFilter",
+     * "ChecksumMD5Filter", "ChecksumSHA256Filter", "DictionaryFilter",
+     * "FloatScaleFilter", "XORFilter", and "WebpFilter"
+     */
     std::vector<std::string> offsets_filters = {
         "DoubleDeltaFilter", "BitWidthReductionFilter", "ZstdFilter"};
-    std::vector<std::string> validity_filters;
+
+    /* Set the validity filters. See above for available filters */
+    std::vector<std::string> validity_filters = {};
+
+    /* Set whether the TileDB Array allows duplicate values */
     bool allows_duplicates = false;
+
+    /* Set the tile order as "row", "row-major", "col", or "col-major" */
     std::optional<std::string> tile_order = std::nullopt;
+
+    /* Set the cell order as "hilbert", "row", "row-major", "col", or
+     * "col-major"
+     */
     std::optional<std::string> cell_order = std::nullopt;
+
+    /* Set whether the array should be consolidated and vacuumed after writing
+     */
     bool consolidate_and_vacuum = false;
 };
 
@@ -89,8 +115,9 @@ class ArrowAdapter {
     static ArraySchema tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         std::unique_ptr<ArrowSchema> arrow_schema,
-        ColumnIndexInfo index_column_info,
-        std::optional<PlatformConfig> platform_config);
+        ArrowTable index_column_info,
+        bool is_sparse = true,
+        std::optional<PlatformConfig> platform_config = std::nullopt);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.
@@ -123,8 +150,10 @@ class ArrowAdapter {
         return dst;
     }
 
-    static std::optional<std::pair<const void*, const void*>> _get_dim_info(
-        std::string_view dim_name, ArrowTable index_columns);
+    template <typename T>
+    static Dimension _create_dim(Context ctx, std::string name, T* b) {
+        return Dimension::create<T>(ctx, name, {b[0], b[1]}, b[2]);
+    }
 
     static bool _isvar(const char* format);
 };
