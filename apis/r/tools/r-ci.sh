@@ -379,11 +379,11 @@ DumpLogsByExtension() {
     # the operator with more inforation rather than less.
     found="false"
     for package in $(find . -name "*.Rcheck" -type d); do
-        echo ">>> Package: ${package} <<<"
         for name in $(find "${package}" -type f -name "*${extension}"); do
-          found="true"
-          echo ">>> Filename: ${name} <<<"
-          cat ${name}
+            found="true"
+            echo "::group::Package ${package} filename ${name}" # GHA magic
+            cat ${name}
+            echo "::endgroup::"
         done
     done
     if [[ "$found" = "false" ]]; then
