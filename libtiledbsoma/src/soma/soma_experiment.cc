@@ -64,6 +64,8 @@ void SOMAExperiment::create(
             timestamp);
         SOMACollection::create(
             (experiment_uri / "ms").string(), ctx, timestamp);
+        SOMACollection::create(
+            (experiment_uri / "spatial").string(), ctx, timestamp);
 
         auto name = std::string(std::filesystem::path(uri).filename());
         auto group = SOMAGroup::open(
@@ -78,6 +80,11 @@ void SOMAExperiment::create(
             URIType::absolute,
             "ms",
             "SOMACollection");
+        group->set(
+            (experiment_uri / "spatial").string(),
+            URIType::absolute,
+            "spatial",
+            "SOMAColelction");
         group->close();
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
