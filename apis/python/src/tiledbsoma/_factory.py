@@ -29,6 +29,7 @@ from . import (
     _experiment,
     _measurement,
     _soma_object,
+    _scene,
     _sparse_nd_array,
     _tdb_handles,
 )
@@ -219,12 +220,13 @@ def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
             _experiment.Experiment,
             _measurement.Measurement,
             _sparse_nd_array.SparseNDArray,
+            _scene.Scene,
         )
     }
     try:
         return type_map[type_name.lower()]
     except KeyError as ke:
-        options = sorted(type_map)
+        _options = sorted(type_map)
         raise SOMAError(
-            f"{type_name!r} is not a recognized SOMA type; expected one of {options}"
+            f"{type_name!r} is not a recognized SOMA type; expected one of {_options}"
         ) from ke
