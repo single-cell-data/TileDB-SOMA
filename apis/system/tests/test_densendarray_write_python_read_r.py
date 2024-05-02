@@ -13,7 +13,7 @@ class TestDenseNDArrayWritePythonReadR(TestWritePythonReadR):
     """
 
     @pytest.fixture(scope="class")
-    def dense_nd_array(self):
+    def np_dense_nd_array(self):
         arr = soma.DenseNDArray.create(self.uri, type=pa.int32(), shape=(2, 3, 4))
         ndarray = np.random.default_rng().integers(0, 10, 24).reshape(2, 3, 4)
         data = pa.Tensor.from_numpy(ndarray)
@@ -24,30 +24,32 @@ class TestDenseNDArrayWritePythonReadR(TestWritePythonReadR):
         return f"""
         library("tiledbsoma")
         soma_ndarray <- SOMADenseNDArrayOpen("{self.uri}")
-        table = soma_ndarray$read_arrow_table()
-        df = as.data.frame(table)
+        table <- soma_ndarray$read_arrow_table()
+        df <- as.data.frame(table)
         """
 
-    def test_ndarray_shape_matches(self, dense_nd_array):
+    def test_ndarray_shape_matches(self, np_dense_nd_array):
         """
         The source ndarray is a 2x3x4 tensor, so the resulting soma_ndarray should have 3 dimensions.
         """
         self.r_assert("stopifnot(length(soma_ndarray$dimensions()) == 3)")
 
-    def test_ndarray_type_matches(self, dense_nd_array):
+    def test_ndarray_type_matches(self, np_dense_nd_array):
         """
         The DenseNDArray should have a type of int32.
         """
         self.r_assert('stopifnot(table$soma_data$type$ToString() == "int32")')
 
-    def test_ndarray_content_matches(self, dense_nd_array):
+    def test_ndarray_content_matches(self, np_dense_nd_array):
         """
-        The DenseNDArray content should match. To test this, we convert the DenseNDArray into an arrow.Table and
-        to a data.frame, and we use the coordinates to match the values.
+        The DenseNDArray content should match. Sparse reads materialize coordinates, e.g.
+        soma_dim_0, soma_dim_1, soma_dim_2, and soma_data. Dense reads do not: we get soma_data.
+        A quick way to check for matches is to flatten out both sides and compare indexwise.
         """
+        flattened_python_read = np_dense_nd_array.flatten().tolist()
         multi_assert = ""
-        for x, y, z in np.ndindex((2, 3, 4)):
-            val = dense_nd_array[x, y, z]
-            multi_assert += f"stopifnot(df[which(df$soma_dim_0 == {x} & df$soma_dim_1 == {y} & df$soma_dim_2 == {z}),]$soma_data == {val})"
+        for i in range(2 * 3 * 4):
+            val = flattened_python_read[i]
+            multi_assert += f"stopifnot(df$soma_data[[{i}+1]] == {val})"
             multi_assert += "\n"
         self.r_assert(multi_assert)
