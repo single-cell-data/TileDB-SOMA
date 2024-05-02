@@ -135,6 +135,8 @@ jobs:
           set -x
           ls -lR
           ls -lR wheels-*
+          echo matrix.platform: ${{ matrix.platform }}
+          echo matrix.arch: ${{ matrix.arch }}
           WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
