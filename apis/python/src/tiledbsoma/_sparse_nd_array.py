@@ -8,6 +8,7 @@ Implementation of SOMA SparseNDArray.
 """
 from __future__ import annotations
 
+import itertools
 from typing import (
     Dict,
     Optional,
@@ -348,7 +349,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         """
         retval = []
         with tiledb.open(self.uri, ctx=self.context.tiledb_ctx):
-            for i in range(20):
+            for i in itertools.count():
                 lower_key = f"soma_dim_{i}_domain_lower"
                 lower_val = self.metadata.get(lower_key)
                 upper_key = f"soma_dim_{i}_domain_upper"
@@ -359,7 +360,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         if not retval:
             raise SOMAError(
                 f"Array {self.uri} was not written with bounding box support. "
-                + "For an approximation, please use `non_empty_domain()` instead",
+                "For an approximation, please use `non_empty_domain()` instead"
             )
 
         # In the unlikely event that a previous data update succeeded but the
