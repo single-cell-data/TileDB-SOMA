@@ -17,33 +17,40 @@ IntIndexer <- R6::R6Class(
           inherits(tiledbsoma_ctx, 'SOMATileDBContext')
       )
       private$.context <- tiledbsoma_ctx %||% SOMATileDBContext$new()
+      # Setup the re-indexer
       private$.reindexer <- CPP_INDEXER(private$.context$context())
-      CPP_MAP_LOCATIONS(private$.reindexer, data)
+      # Setup the keys for the reindexer
+      CPP_MAP_LOCATIONS(private$.reindexer, bit64::as.integer64(data))
       return(invisible(NULL))
     },
-    #' @description ...
+    #' @description Get the underlying indices for the target data
     #'
     #' @param target Data to re-index
     #'
-    #' @return ...
+    #' @return A vector of 64-bit integers with \code{target} re-indexed
     #'
     get_indexer = function(target) {
       stopifnot(
-        "'target' must be a vector or arrow array of integers" = rlang::is_integerish(
-          target,
-          finite = TRUE
-        ) ||
+        "'target' must be a vector or arrow array of integers" = rlang::is_integerish(target, finite = TRUE) ||
           (inherits(target, 'integer64') && all(is.finite(data))) ||
           (R6::is.R6(target) && inherits(target, c('Array', 'ChunkedArray')))
       )
+      # If `target` is an Arrow array, do Arrow handling
       if (R6::is.R6(target) && inherits(target, c('Array', 'ChunkedArray'))) {
         return(CPP_GET_INDEXER_ARROW(private$.reindexer, target))
       }
-      return(CPP_GET_INDEXER_GENERAL(private$.reindexer, target))
+      # Do vector-based re-indexing
+      # Cast to integer64 for C++
+      return(bit64::as.integer64(CPP_GET_INDEXER_GENERAL(
+        private$.reindexer,
+        bit64::as.integer64(target)
+      )))
     }
   ),
   private = list(
+    # TileDB SOMA Context
     .context = NULL,
+    # C++ reindexer
     .reindexer = NULL
   )
 )
