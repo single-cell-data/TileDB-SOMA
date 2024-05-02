@@ -1311,6 +1311,7 @@ def test_foo_wip(tmp_path, all_at_once, nobs_a, nobs_b):
         print(obs.to_pandas())
         print()
 
+
 # Analysis:
 # * Independent of all_at_once parameter
 # * short & short: OK
