@@ -63,7 +63,7 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
 
 // [[Rcpp::export]]
 void createSchemaFromArrow(const std::string& uri,
-                           SEXP naap, SEXP nasp,
+                           SEXP nasp,
                            SEXP nadimap, SEXP nadimsp,
                            Rcpp::List pclst) {
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
@@ -74,12 +74,12 @@ void createSchemaFromArrow(const std::string& uri,
     // auto sp = nanoarrow_schema_from_xptr(nasp);
     //
     // or:
-    nanoarrow::UniqueArray ap{nanoarrow_array_from_xptr(naap)};
+    //nanoarrow::UniqueArray ap{nanoarrow_array_from_xptr(naap)};
     nanoarrow::UniqueSchema sp{nanoarrow_schema_from_xptr(nasp)};
-    _show_content(ap, sp);
+    //_show_content(ap, sp);
     nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
-    _show_content(apdim, spdim);
+    //_show_content(apdim, spdim);
 
     // compAArrowError ec;
     // std::vector<std::string> dimnam = {"d1", "d2"};

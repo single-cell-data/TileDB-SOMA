@@ -43,17 +43,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::NumericVector >::type kvec(kvecSEXP);
     rcpp_result_gen = Rcpp::wrap(reindex_lookup(idx, kvec));
 // createSchemaFromArrow
-void createSchemaFromArrow(const std::string& uri, SEXP naap, SEXP nasp, SEXP nadimap, SEXP nadimsp, Rcpp::List pclst);
-RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP pclstSEXP) {
+void createSchemaFromArrow(const std::string& uri, SEXP nasp, SEXP nadimap, SEXP nadimsp, Rcpp::List pclst);
+RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP pclstSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type naap(naapSEXP);
     Rcpp::traits::input_parameter< SEXP >::type nasp(naspSEXP);
     Rcpp::traits::input_parameter< SEXP >::type nadimap(nadimapSEXP);
     Rcpp::traits::input_parameter< SEXP >::type nadimsp(nadimspSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type pclst(pclstSEXP);
-    createSchemaFromArrow(uri, naap, nasp, nadimap, nadimsp, pclst);
+    createSchemaFromArrow(uri, nasp, nadimap, nadimsp, pclst);
     return R_NilValue;
 END_RCPP
 }
@@ -315,7 +314,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_reindex_create", (DL_FUNC) &_tiledbsoma_reindex_create, 0},
     {"_tiledbsoma_reindex_map", (DL_FUNC) &_tiledbsoma_reindex_map, 2},
     {"_tiledbsoma_reindex_lookup", (DL_FUNC) &_tiledbsoma_reindex_lookup, 2},
-    {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 6},
+    {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 5},
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 3},
     {"_tiledbsoma_getArrowSchema", (DL_FUNC) &_tiledbsoma_getArrowSchema, 1},
     {"_tiledbsoma_soma_array_reader", (DL_FUNC) &_tiledbsoma_soma_array_reader, 9},
