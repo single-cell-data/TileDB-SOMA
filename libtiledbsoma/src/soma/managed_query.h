@@ -150,7 +150,6 @@ class ManagedQuery {
     void select_points(const std::string& dim, const std::vector<T>& points) {
         subarray_range_set_ = true;
         subarray_range_empty_[dim] = true;
-        std::cout << "ManagedQuery::select_points " << dim << std::endl;
         for (auto& point : points) {
             std::cout << dim << ": " << point << std::endl;
             subarray_->add_range(dim, point, point);
