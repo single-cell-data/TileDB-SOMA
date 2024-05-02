@@ -90,6 +90,8 @@ def test_experiment_basic(tmp_path):
     measurement = ms.add_new_collection("RNA", soma.Measurement)
     assert soma.Measurement.exists(measurement.uri)
     assert not soma.Collection.exists(measurement.uri)
+    spatial = experiment.add_new_collection("spatial", soma.Collection)
+    assert soma.Collection.exists(spatial.uri)
 
     measurement["var"] = create_and_populate_var(urljoin(measurement.uri, "var"))
 
@@ -99,11 +101,13 @@ def test_experiment_basic(tmp_path):
     x.set("data", nda, use_relative_uri=False)
 
     # ----------------------------------------------------------------
-    assert len(experiment) == 2
+    assert len(experiment) == 3
     assert isinstance(experiment.obs, soma.DataFrame)
     assert isinstance(experiment.ms, soma.Collection)
+    assert isinstance(experiment.spatial, soma.Collection)
     assert "obs" in experiment
     assert "ms" in experiment
+    assert "spatial" in experiment
     assert "nonesuch" not in experiment
 
     assert experiment.obs == experiment["obs"]

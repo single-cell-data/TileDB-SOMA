@@ -60,12 +60,14 @@ void SOMAExperiment::create(
         platform_config,
         timestamp);
     SOMACollection::create(exp_uri + "/ms", ctx, timestamp);
+    SOMACollection::create(exp_uri + "/spatial", ctx, timestamp);
 
     auto name = std::string(std::filesystem::path(uri).filename());
     auto group = SOMAGroup::open(
         OpenMode::write, exp_uri, ctx, name, timestamp);
     group->set(exp_uri + "/obs", URIType::absolute, "obs");
     group->set(exp_uri + "/ms", URIType::absolute, "ms");
+    group->set(exp_uri + "/spatial", URIType::absolute, "spatial");
     group->close();
 }
 
