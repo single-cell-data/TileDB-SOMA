@@ -807,7 +807,7 @@ write_soma.SeuratCommand <- function(
     logs$reopen("WRITE")
     logs
   }
-  on.exit(logs$close(), add = TRUE)
+  on.exit(logs$close(), add = TRUE, after = FALSE)
 
   # Encode parameters
   spdl::info("Encoding parameters in the command log")
