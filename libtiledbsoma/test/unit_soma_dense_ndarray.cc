@@ -103,9 +103,9 @@ TEST_CASE("SOMADenseNDArray: basic") {
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
     while (auto batch = soma_dense->read_next()) {
         auto arrbuf = batch.value();
-        auto d0span = arrbuf->at("d0")->data<int64_t>();
+        // Dense coordinates are not materialized on read so we can't check
+        // a d0span of type int64_t
         auto a0span = arrbuf->at("a0")->data<int>();
-        REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
     soma_dense->close();

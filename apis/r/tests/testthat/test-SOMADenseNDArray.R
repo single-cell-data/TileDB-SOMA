@@ -21,7 +21,7 @@ test_that("SOMADenseNDArray creation", {
   ndarray <- SOMADenseNDArrayOpen(uri)
   tbl <- ndarray$read_arrow_table(result_order = "COL_MAJOR")
   expect_true(is_arrow_table(tbl))
-  expect_equal(tbl$ColumnNames(), c("soma_dim_0", "soma_dim_1", "soma_data"))
+  expect_equal(tbl$ColumnNames(), c("soma_data"))
 
   expect_identical(
     as.numeric(tbl$GetColumnByName("soma_data")),
