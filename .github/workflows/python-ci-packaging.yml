@@ -1,12 +1,12 @@
-# Confirm shared object copying when building the Python package
-# https://github.com/single-cell-data/TileDB-SOMA/pull/1937
+# This CI confirms the Python package continues to install properly in the many
+# different required contexts
 
-name: Python SO copying
+name: TileDB-SOMA Python CI (Packaging)
 
 on:
   push:
     paths:
-      - '.github/workflows/python-so-copying.yml'
+      - '.github/workflows/python-ci-packaging.yml'
       - 'apis/python/setup.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
@@ -17,7 +17,7 @@ on:
       - 'libtiledbsoma/CMakeLists.txt'
   pull_request:
     paths:
-      - '.github/workflows/python-so-copying.yml'
+      - '.github/workflows/python-ci-packaging.yml'
       - 'apis/python/setup.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
@@ -30,9 +30,11 @@ on:
 
 jobs:
 
+  # Confirm shared object copying when building the Python package
+  # https://github.com/single-cell-data/TileDB-SOMA/pull/1937
   docker:
     runs-on: ubuntu-latest
-    name: "docker TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
+    name: "SO copying (docker) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
       matrix:
@@ -140,7 +142,7 @@ jobs:
 
   macos:
     runs-on: macos-13
-    name: "macos TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
+    name: "SO copying (macos) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
       matrix:
@@ -236,7 +238,7 @@ jobs:
   # Tests that the --libtiledbsoma flag to setup.py continues working
   setuptools:
     runs-on: ${{ matrix.os }}
-    name: "${{ matrix.os }} setuptools"
+    name: "setuptools (${{ matrix.os }})"
     strategy:
       fail-fast: false
       matrix:
