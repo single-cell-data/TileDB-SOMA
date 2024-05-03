@@ -142,6 +142,9 @@ jobs:
           find . -name '*tile*.so*'
           ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
 
+  # Confirm shared object copying when building the Python package
+  # https://github.com/single-cell-data/TileDB-SOMA/pull/1937
+  # Same as job above, but running on macOS instead of in a Docker container
   macos:
     runs-on: macos-13
     name: "SO copying (macos) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
@@ -318,7 +321,24 @@ jobs:
         run: ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
 
   # Build a wheel from a source tarball (confirms all required files are
-  # distributed in the sdist)
+  # distributed in the sdist). This is in preparation for the official building of
+  # the PyPI wheels in python-packaging.yml.
+  # https://github.com/single-cell-data/TileDB-SOMA/pull/2506
+  #
+  #
+  #  Differences to python-packaging.yml:
+  #
+  #  * Uses transparent python commands instead of the opaque action
+  #    `pypa/cibuildwheel`, and therefore easier to debug
+  #  * Only builds two wheels total (python 3.11 on Ubuntu and macOS), so it is
+  #    much faster. It's not creating the wheels for distribution, but instead just
+  #    providing a quick check that all the required files are distributed in the
+  #    source tarball
+  #  * Runs whenever an installation-related file is modified instead of only
+  #    after a release
+  #
+  # In summary, the goal is to identify any potential problems with building
+  # the PyPI wheels when a PR is submitted, and not at release time.
   sdist:
     runs-on: ${{ matrix.os }}
     name: "Wheel from sdist (${{ matrix.os }})"
