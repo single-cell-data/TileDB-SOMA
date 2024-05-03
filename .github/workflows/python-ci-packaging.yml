@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/python-ci-packaging.yml'
       - 'apis/python/MANIFEST.in'
+      - 'apis/python/pyproject.toml'
       - 'apis/python/setup.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
@@ -20,6 +21,7 @@ on:
     paths:
       - '.github/workflows/python-ci-packaging.yml'
       - 'apis/python/MANIFEST.in'
+      - 'apis/python/pyproject.toml'
       - 'apis/python/setup.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
