@@ -250,8 +250,10 @@ void ManagedQuery::setup_read() {
     // If no columns were selected, select all columns.
     // Add dims and attrs in the same order as specified in the schema
     if (columns_.empty()) {
-        for (const auto& dim : array_->schema().domain().dimensions()) {
-            columns_.push_back(dim.name());
+        if (array_->schema().array_type() == TILEDB_SPARSE) {
+            for (const auto& dim : array_->schema().domain().dimensions()) {
+                columns_.push_back(dim.name());
+            }
         }
         int attribute_num = array_->schema().attribute_num();
         for (int i = 0; i < attribute_num; i++) {
