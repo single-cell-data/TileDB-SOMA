@@ -707,10 +707,13 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Load in the command logs
       uns <- try(self$experiment$get("uns"), silent = TRUE)
       if (inherits(uns, 'SOMACollection')) {
-        cmds <- tryCatch(
-          .load_seurat_command(uns, ms_names = private$.measurement_name),
-          packageCheckError = .err_to_warn,
-          missingCollectionError = .err_to_warn
+        cmds <- withCallingHandlers(
+          expr = tryCatch(
+            .load_seurat_command(uns, ms_names = private$.measurement_name),
+            packageCheckError = .err_to_warn,
+            missingCollectionError = .err_to_warn
+          ),
+          missingCollectionError = .maybe_muffle
         )
         for (i in names(cmds)) {
           object[[i]] <- cmds[[i]]
