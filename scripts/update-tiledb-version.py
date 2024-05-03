@@ -104,7 +104,9 @@ def main(args):
     update_version(filepath, new_version, new_hash, update_sha=False)
 
     # update CI version
-    filepath = f"{os.path.dirname(__file__)}/../.github/workflows/python-ci-packaging.yml"
+    filepath = (
+        f"{os.path.dirname(__file__)}/../.github/workflows/python-ci-packaging.yml"
+    )
     update_version(filepath, new_version, new_hash)
 
 
