@@ -7,6 +7,7 @@ on:
   push:
     paths:
       - '.github/workflows/python-ci-packaging.yml'
+      - 'apis/python/MANIFEST.in'
       - 'apis/python/setup.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
@@ -18,6 +19,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/python-ci-packaging.yml'
+      - 'apis/python/MANIFEST.in'
       - 'apis/python/setup.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
@@ -314,3 +316,39 @@ jobs:
         run: ./venv-soma/bin/python -m pip install --prefer-binary `grep -v '^\[' apis/python/src/tiledbsoma.egg-info/requires.txt`
       - name: Runtime test
         run: ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
+
+  # Build a wheel from a source tarball (confirms all required files are
+  # distributed in the sdist)
+  sdist:
+    runs-on: ${{ matrix.os }}
+    name: "Wheel from sdist (${{ matrix.os }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-22.04", "macos-12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # for setuptools-scm
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install --prefer-binary pybind11 wheel
+      - name: Build source tarball (sdist)
+        run: |
+          cd apis/python
+          python setup.py sdist
+      - name: Extract source tarball
+        run: |
+          tar --list -f apis/python/dist/tiledbsoma-*.tar.gz
+          tar -xzf apis/python/dist/tiledbsoma-*.tar.gz
+      - name: Build wheel
+        run: |
+          cd tiledbsoma-*/
+          python setup.py bdist_wheel
+      - name: Install wheel
+        run: |
+          python -m pip install --prefer-binary tiledbsoma-*/dist/tiledbsoma-*.whl
+          python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
