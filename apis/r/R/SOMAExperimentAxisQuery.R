@@ -411,12 +411,42 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
       # Retrieve coo arrow table with query result
       layer <- self$ms[[collection]]$get(layer_name)
+
       if (inherits(layer, "SOMADenseNDArray")) {
         tbl <- layer$read_arrow_table(coords = coords)
-      } else {
-        tbl <- layer$read(coords = coords)$tables()$concat()
+        # For dense arrays, coordinates are not materialized in storage.
+        # Here we re-supply them.
+        ldims <- layer$dimnames()
+        for (i in seq_along(ldims)) {
+          ldim <- ldims[i]
+          if (is.null(coords[[ldim]])) {
+            coords[[ldim]] <- seq_len(as.numeric(layer$non_empty_domain()[i] + 1L))
+          }
+        }
+        mat <- matrix(
+          tbl$soma_data$as_vector(),
+          nrow = length(coords$soma_dim_0),
+          ncol = length(coords$soma_dim_1),
+          byrow = TRUE
+        )
+        # Add dimnames
+        dim_names <- switch(
+          EXPR = collection,
+          X = list(obs_labels, var_labels),
+          obsm = list(obs_labels, coords$soma_dim_1), # or list(obs_labels, seq_len(ncol(mat)))
+          varm = list(var_labels, coords$soma_dim_1), # or list(var_lavels, seq_len(ncol(mat)))
+          obsp = list(obs_labels, obs_labels),
+          varp = list(var_labels, var_labels)
+        )
+        dim_names <- Map("%||%", dim_names, coords)
+        dimnames(mat) <- dim_names
+        return(mat)
       }
 
+      # For sparse arrays, coordinates are materialized in storage.
+      # They come back with the `tbl` as COO a.k.a. IJV triples.
+
+      tbl <- layer$read(coords = coords)$tables()$concat()
 
       # Reindex the coordinates
       # Constructing a matrix with the joinids produces a matrix with
