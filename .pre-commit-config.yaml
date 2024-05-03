@@ -15,7 +15,7 @@ repos:
     - id: mypy
       additional_dependencies:
         - "pandas-stubs==1.5.3.230214"
-        - "somacore @ git+https://github.com/single-cell-data/SOMA.git@7702f52359e"   # DO NOT MERGE TO MAIN
+        - "somacore @ git+https://github.com/single-cell-data/SOMA.git@81ce978173a29"   # DO NOT MERGE TO MAIN
         - "types-setuptools==67.4.0.3"
       args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
       pass_filenames: false

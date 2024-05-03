@@ -4,12 +4,12 @@
 
 """Implementation of a SOMA Scene."""
 
+from typing import MutableMapping, Union
 
-from typing import Union
-
-from somacore import scene
+from somacore import coordinates, scene
 
 from ._collection import Collection, CollectionBase
+from ._coordinates import CoordinateSystem, CoordinateTransform
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._sparse_nd_array import SparseNDArray
@@ -37,3 +37,24 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         "exp": ("SOMACollection",),
         "ms": ("SOMACollection",),
     }
+
+    @property
+    def local_coordinate_system(self) -> CoordinateSystem:
+        """Coordinate system for this scene."""
+        # TODO: Metadata loading should be moved to open/reopen methods.
+        coords = self.metadata.get("_soma_local_coordinates")
+        if coords is None:
+            return CoordinateSystem([])
+        coord_sys = CoordinateSystem.from_json(coords)
+        return coord_sys
+
+    @property
+    def transformations(self) -> MutableMapping[str, coordinates.CoordinateTransform]:
+        """Transformations saved for this scene."""
+        # TODO: Metadata loading should be moved to open/reopen methods.
+        prefix = "_soma_transform_"
+        return {
+            key[len(prefix) :]: CoordinateTransform.from_json(val)
+            for key, val in self.metadata.items()
+            if key.startswith(prefix)
+        }
