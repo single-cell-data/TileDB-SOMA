@@ -176,8 +176,18 @@ std::shared_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    ArraySchema schema) {
-    SOMADenseNDArray::create(uri, std::move(schema), ctx);
+    std::string_view format,
+    ArrowTable index_columns,
+    std::optional<PlatformConfig> platform_config,
+    std::optional<TimestampRange> timestamp) {
+    SOMADenseNDArray::create(
+        uri,
+        format,
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        platform_config,
+        timestamp);
     std::shared_ptr<SOMADenseNDArray> member = SOMADenseNDArray::open(
         uri, OpenMode::read, ctx);
     this->set(std::string(uri), uri_type, std::string(key));

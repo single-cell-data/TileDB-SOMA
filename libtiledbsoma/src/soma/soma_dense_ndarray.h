@@ -52,15 +52,20 @@ class SOMADenseNDArray : public SOMAArray {
     /**
      * @brief Create a SOMADenseNDArray object at the given URI.
      *
-     * @param uri URI to create the SOMADenseNDArray
-     * @param schema Arrow schema
+     * @param uri URI to create the SOMASparseNDArray
+     * @param format Arrow type to create the soma_data
+     * @param index_columns The index column names with associated domains
+     * and tile extents per dimension
      * @param ctx SOMAContext
+     * @param platform_config Optional config parameter dictionary
      * @param timestamp Optional the timestamp range to write SOMA metadata info
      */
     static void create(
         std::string_view uri,
-        ArraySchema schema,
+        std::string_view format,
+        ArrowTable index_columns,
         std::shared_ptr<SOMAContext> ctx,
+        std::optional<PlatformConfig> platform_config = std::nullopt,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**

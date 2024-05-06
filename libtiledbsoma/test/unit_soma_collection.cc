@@ -86,13 +86,20 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     std::string sub_uri = "mem://unit-test-add-dense-ndarray/sub";
 
     SOMACollection::create(base_uri, ctx);
+    auto index_columns = helper::create_column_index_info();
     auto schema = helper::create_schema(*ctx->tiledb_ctx(), false);
 
     std::map<std::string, std::string> expected_map{{"dense_ndarray", sub_uri}};
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
     auto soma_dense = soma_collection->add_new_dense_ndarray(
-        "dense_ndarray", sub_uri, URIType::absolute, ctx, schema);
+        "dense_ndarray",
+        sub_uri,
+        URIType::absolute,
+        ctx,
+        "l",
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)));
     REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
     REQUIRE(soma_dense->uri() == sub_uri);
     REQUIRE(soma_dense->ctx() == ctx);

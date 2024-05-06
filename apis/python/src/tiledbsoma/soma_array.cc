@@ -57,7 +57,7 @@ void write(SOMAArray& array, py::handle py_batch) {
     }
 }
 
-void write_ndarray(
+void write_coords(
     SOMAArray& array, std::vector<py::array> coords, py::array data) {
     for (uint64_t i = 0; i < coords.size(); ++i) {
         py::buffer_info coords_info = coords[i].request();
@@ -595,7 +595,7 @@ void load_soma_array(py::module& m) {
 
         .def("write", write)
 
-        .def("write_ndarray", write_ndarray)
+        .def("write_coords", write_coords)
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 

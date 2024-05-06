@@ -30,57 +30,21 @@
  * This file manages unit tests for the SOMADenseNDArray class
  */
 
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/matchers/catch_matchers_exception.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <catch2/matchers/catch_matchers_predicate.hpp>
-#include <catch2/matchers/catch_matchers_string.hpp>
-#include <catch2/matchers/catch_matchers_templated.hpp>
-#include <catch2/matchers/catch_matchers_vector.hpp>
-#include <numeric>
-#include <random>
-
-#include <tiledb/tiledb>
-#include <tiledbsoma/tiledbsoma>
-#include "utils/util.h"
-
-using namespace tiledb;
-using namespace tiledbsoma;
-using namespace Catch::Matchers;
-
-#ifndef TILEDBSOMA_SOURCE_ROOT
-#define TILEDBSOMA_SOURCE_ROOT "not_defined"
-#endif
-
-const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
-
-namespace {
-ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
-    // Create schema
-    ArraySchema schema(ctx, TILEDB_DENSE);
-
-    auto dim = Dimension::create<int64_t>(ctx, "d0", {0, 1000});
-
-    Domain domain(ctx);
-    domain.add_dimension(dim);
-    schema.set_domain(domain);
-
-    auto attr = Attribute::create<int>(ctx, "a0");
-    schema.add_attribute(attr);
-    schema.set_allows_dups(allow_duplicates);
-    schema.check();
-
-    return schema;
-}
-};  // namespace
+#include "common.h"
 
 TEST_CASE("SOMADenseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-dense-ndarray-basic";
 
-    SOMADenseNDArray::create(uri, create_schema(*ctx->tiledb_ctx()), ctx);
+    auto index_columns = helper::create_column_index_info();
+    SOMADenseNDArray::create(
+        uri,
+        "l",
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        std::nullopt,
+        TimestampRange(0, 2));
 
     auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_dense->uri() == uri);
@@ -88,8 +52,9 @@ TEST_CASE("SOMADenseNDArray: basic") {
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
     REQUIRE(soma_dense->is_sparse() == false);
     auto schema = soma_dense->tiledb_schema();
-    REQUIRE(schema->has_attribute("a0"));
-    REQUIRE(schema->domain().has_dimension("d0"));
+    REQUIRE(schema->has_attribute("soma_data"));
+    REQUIRE(schema->array_type() == TILEDB_DENSE);
+    REQUIRE(schema->domain().has_dimension("soma_dim_0"));
     REQUIRE(soma_dense->ndim() == 1);
     REQUIRE(soma_dense->shape() == std::vector<int64_t>{1001});
     soma_dense->close();
@@ -98,17 +63,15 @@ TEST_CASE("SOMADenseNDArray: basic") {
     std::vector<int> a0(10, 1);
 
     soma_dense->open(OpenMode::write);
-    soma_dense->set_column_data("a0", a0.size(), a0.data());
-    soma_dense->set_column_data("d0", d0.size(), d0.data());
+    soma_dense->set_column_data("soma_data", a0.size(), a0.data());
+    soma_dense->set_column_data("soma_dim_0", d0.size(), d0.data());
     soma_dense->write();
     soma_dense->close();
 
     soma_dense->open(OpenMode::read);
     while (auto batch = soma_dense->read_next()) {
         auto arrbuf = batch.value();
-        // Dense coordinates are not materialized on read so we can't check
-        // a d0span of type int64_t
-        auto a0span = arrbuf->at("a0")->data<int>();
+        auto a0span = arrbuf->at("soma_data")->data<int>();
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
     soma_dense->close();
@@ -118,8 +81,17 @@ TEST_CASE("SOMADenseNDArray: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-dense-ndarray";
-    SOMADenseNDArray::create(
-        uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
+
+    auto index_columns = helper::create_column_index_info();
+    SOMASparseNDArray::create(
+        uri,
+        "l",
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        std::nullopt,
+        TimestampRange(0, 2));
+
     auto soma_dense = SOMADenseNDArray::open(
         uri,
         OpenMode::write,

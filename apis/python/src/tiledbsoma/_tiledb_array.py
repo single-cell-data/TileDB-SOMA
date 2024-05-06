@@ -204,6 +204,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
     ) -> Union[
         _tdb_handles.ArrayWrapper,
         _tdb_handles.DataFrameWrapper,
+        _tdb_handles.DenseNDArrayWrapper,
         _tdb_handles.SparseNDArrayWrapper,
     ]:
         """Creates the TileDB Array for this type and returns an opened handle.

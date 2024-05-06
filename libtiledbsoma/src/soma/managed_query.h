@@ -151,6 +151,7 @@ class ManagedQuery {
         subarray_range_set_ = true;
         subarray_range_empty_[dim] = true;
         for (auto& point : points) {
+            std::cout << dim << ": " << point << std::endl;
             subarray_->add_range(dim, point, point);
             subarray_range_empty_[dim] = false;
         }

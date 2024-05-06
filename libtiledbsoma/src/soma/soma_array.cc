@@ -425,8 +425,9 @@ void SOMAArray::set_column_data(
     }
 
     // Create the array_buffer_ as necessary
-    if (array_buffer_ == nullptr)
+    if (array_buffer_ == nullptr) {
         array_buffer_ = std::make_shared<ArrayBuffers>();
+    }
 
     // Create a ColumnBuffer object instead of passing it in as an argument to
     // `set_column_data` because ColumnBuffer::create requires a TileDB Array
