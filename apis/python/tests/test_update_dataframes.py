@@ -124,8 +124,9 @@ def test_add(exp_path, new_obs, new_var):
 
     assert o2.field("is_g1").type == pa.bool_()
     assert o2.field("seq").type == pa.int32()
+    # tiledbsoma.io upgrades int8 and int16 to int32 for appendability
     assert o2.field("parity").type == pa.dictionary(
-        index_type=pa.int8(), value_type=pa.string(), ordered=False
+        index_type=pa.int32(), value_type=pa.string(), ordered=False
     )
     assert obs["parity"][0] == "even"
     assert obs["parity"][1] == "odd"

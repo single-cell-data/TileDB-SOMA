@@ -25,7 +25,6 @@ def _create_anndata(
     X_value_base: int,
     measurement_name: str,
     raw_var_ids: Optional[Sequence[str]] = None,
-    X_density: float = 0.3,
 ):
     n_obs = len(obs_ids)
     n_var = len(var_ids)
@@ -1217,3 +1216,84 @@ def test_append_with_nonunique_field_values(
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
         )
+
+
+@pytest.mark.parametrize("all_at_once", [False, True])
+@pytest.mark.parametrize("nobs_a", [50, 300])
+@pytest.mark.parametrize("nobs_b", [60, 400])
+def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
+    """Creates an obs column whose bit width might naively be inferred to be int8
+    by tiledbsoma.io, and another which could be inferred to int16.  Then
+    ensures the dataframes are appendable regardless of which one was written
+    first."""
+    obs_ids_a = [("a_%08d" % e) for e in range(nobs_a)]
+    obs_ids_b = [("b_%08d" % e) for e in range(nobs_b)]
+    var_ids = ["W", "X", "Y", "Z"]
+    obs_field_name = "cell_id"
+    var_field_name = "gene_id"
+    measurement_name = "meas"
+
+    adata = _create_anndata(
+        obs_ids=obs_ids_a,
+        var_ids=var_ids,
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+        X_value_base=0,
+        measurement_name=measurement_name,
+    )
+
+    bdata = _create_anndata(
+        obs_ids=obs_ids_b,
+        var_ids=var_ids,
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+        X_value_base=100,
+        measurement_name=measurement_name,
+    )
+
+    adata.obs["enum"] = pd.Categorical(obs_ids_a, categories=obs_ids_a)
+    bdata.obs["enum"] = pd.Categorical(obs_ids_b, categories=obs_ids_b)
+
+    soma_uri = tmp_path.as_posix()
+
+    if all_at_once:
+        rd = tiledbsoma.io.register_anndatas(
+            None,
+            [adata, bdata],
+            measurement_name=measurement_name,
+            obs_field_name=obs_field_name,
+            var_field_name=var_field_name,
+        )
+
+        tiledbsoma.io.from_anndata(
+            soma_uri, adata, measurement_name=measurement_name, registration_mapping=rd
+        )
+        tiledbsoma.io.from_anndata(
+            soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
+        )
+
+    else:
+        tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name=measurement_name)
+
+        rd = tiledbsoma.io.register_anndatas(
+            soma_uri,
+            [bdata],
+            measurement_name=measurement_name,
+            obs_field_name=obs_field_name,
+            var_field_name=var_field_name,
+        )
+
+        tiledbsoma.io.from_anndata(
+            soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
+        )
+
+    with tiledbsoma.Experiment.open(soma_uri) as exp:
+        obs = exp.obs.read().concat()
+
+        cell_ids = obs[obs_field_name].to_pylist()
+
+        readback_a = cell_ids[:nobs_a]
+        readback_b = cell_ids[nobs_a:]
+
+        assert readback_a == obs_ids_a
+        assert readback_b == obs_ids_b
