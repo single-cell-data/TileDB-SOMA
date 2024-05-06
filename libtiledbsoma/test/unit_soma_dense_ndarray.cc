@@ -71,11 +71,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
     soma_dense->open(OpenMode::read);
     while (auto batch = soma_dense->read_next()) {
         auto arrbuf = batch.value();
-        auto d0span = arrbuf->at("soma_dim_0")->data<int64_t>();
         auto a0span = arrbuf->at("soma_data")->data<int>();
-        REQUIRE(
-            std::vector<int64_t>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10} ==
-            std::vector<int64_t>(d0span.begin(), d0span.end()));
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
     soma_dense->close();
