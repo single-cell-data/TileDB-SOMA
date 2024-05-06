@@ -836,6 +836,8 @@ void load_soma_array(py::module& m) {
                 }
             })
 
+        .def("consolidate_and_vacuum", &SOMAArray::consolidate_and_vacuum)
+
         .def("set_metadata", set_metadata)
 
         .def("delete_metadata", &SOMAArray::delete_metadata)

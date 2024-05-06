@@ -513,6 +513,15 @@ void SOMAArray::write() {
     array_buffer_ = nullptr;
 }
 
+void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {
+    for (auto mode : modes) {
+        auto cfg = ctx_->tiledb_ctx()->config();
+        cfg["sm.consolidation.mode"] = mode;
+        Array::consolidate(Context(cfg), uri_);
+        Array::vacuum(Context(cfg), uri_);
+    }
+}
+
 uint64_t SOMAArray::nnz() {
     // Verify array is sparse
     if (mq_->schema()->array_type() != TILEDB_SPARSE) {

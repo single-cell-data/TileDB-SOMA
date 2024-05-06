@@ -263,7 +263,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         _util.check_type("values", values, (pa.Tensor,))
 
-        handle = self._handle._handle
+        clib_dense_array = self._handle._handle
 
         new_coords: List[Union[int, Slice[int], None]] = []
         for c in coords:
@@ -280,16 +280,16 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             if input.flags.f_contiguous
             else clib.ResultOrder.rowmajor
         )
-        handle.reset(result_order=order)
+        clib_dense_array.reset(result_order=order)
 
-        self._set_reader_coords(handle, new_coords)
-        handle.write(input)
+        self._set_reader_coords(clib_dense_array, new_coords)
+        clib_dense_array.write(input)
 
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
             platform_config
         )
         if tiledb_create_options.consolidate_and_vacuum:
-            self._consolidate_and_vacuum()
+            clib_dense_array.consolidate_and_vacuum()
         return self
 
     @classmethod

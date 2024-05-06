@@ -167,7 +167,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Experimental.
         """
         self._check_open_read()
-        return cast(int, self._soma_reader().nnz())
+        return cast(SparseNDArrayWrapper, self._handle).nnz
 
     def read(
         self,
@@ -298,7 +298,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             if tiledb_create_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
-                self._consolidate_and_vacuum()
+                clib_sparse_array.consolidate_and_vacuum()
             return self
 
         if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
@@ -329,7 +329,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             if tiledb_create_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
-                self._consolidate_and_vacuum()
+                clib_sparse_array.consolidate_and_vacuum()
             return self
 
         if isinstance(values, pa.Table):
@@ -354,7 +354,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             if tiledb_create_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
-                self._consolidate_and_vacuum()
+                clib_sparse_array.consolidate_and_vacuum()
             return self
 
         raise TypeError(

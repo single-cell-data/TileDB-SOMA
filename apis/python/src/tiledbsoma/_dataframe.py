@@ -20,8 +20,8 @@ from ._constants import SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
+from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
-from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -32,7 +32,7 @@ AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
 Domain = Sequence[AxisDomain]
 
 
-class DataFrame(TileDBArray, somacore.DataFrame):
+class DataFrame(SOMAArray, somacore.DataFrame):
     """:class:`DataFrame` is a multi-column table with a user-defined schema. The
     schema is expressed as an
     `Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_,
@@ -454,7 +454,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             platform_config
         )
         if tiledb_create_options.consolidate_and_vacuum:
-            self._consolidate_and_vacuum()
+            clib_dataframe.consolidate_and_vacuum()
         return self
 
     def _set_reader_coord(

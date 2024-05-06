@@ -448,6 +448,10 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         # ArrayWrapper. If enum is called in the read path, it is an error.
         raise NotImplementedError
 
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return tuple(self._handle.shape)
+
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
@@ -467,10 +471,6 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 
     _WRAPPED_TYPE = clib.SOMADenseNDArray
 
-    @property
-    def shape(self) -> Tuple[int, ...]:
-        return tuple(self._handle.shape)
-
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
@@ -478,12 +478,8 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     _WRAPPED_TYPE = clib.SOMASparseNDArray
 
     @property
-    def shape(self) -> Tuple[int, ...]:
-        return tuple(self._handle.shape)
-
-    @property
     def nnz(self) -> int:
-        return int(self._handle.nnz)
+        return int(self._handle.nnz())
 
 
 class _DictMod(enum.Enum):
