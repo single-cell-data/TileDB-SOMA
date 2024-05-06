@@ -268,10 +268,10 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         new_coords: List[Union[int, Slice[int], None]] = []
         for c in coords:
             if isinstance(c, slice) and isinstance(c.stop, int):
-                new_coords.append(slice(c.start, c.stop-1, c.step))
+                new_coords.append(slice(c.start, c.stop - 1, c.step))
             else:
                 new_coords.append(c)
-                
+
         dtype = self.schema.field("soma_data").type.to_pandas_dtype()
         input = np.array(values, dtype=dtype)
 
@@ -281,7 +281,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             else clib.ResultOrder.rowmajor
         )
         handle.reset(result_order=order)
-        
+
         self._set_reader_coords(handle, new_coords)
         handle.write(input)
 

@@ -76,24 +76,6 @@ _PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
     pa.timestamp("ns"): "tsn:",
 }
 
-_PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
-    pa.bool_(): "b",
-    pa.int8(): "c",
-    pa.int16(): "s",
-    pa.int32(): "i",
-    pa.int64(): "l",
-    pa.uint8(): "C",
-    pa.uint16(): "S",
-    pa.uint32(): "I",
-    pa.uint64(): "L",
-    pa.float32(): "f",
-    pa.float64(): "g",
-    pa.timestamp("s"): "tss:",
-    pa.timestamp("ms"): "tsm:",
-    pa.timestamp("us"): "tsu:",
-    pa.timestamp("ns"): "tsn:",
-}
-
 # Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 # Any type system differences from the base-case Attr should be added here.
 _ARROW_TO_TDB_DIM: Dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
