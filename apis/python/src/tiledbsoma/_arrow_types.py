@@ -236,4 +236,27 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
         md.update(dict.fromkeys(null_fields, "nullable"))
         arrow_table = arrow_table.replace_schema_metadata(md)
 
+    # For tiledbsoma.io (for which this method exists) _any_ dataset can be appended to
+    # later on. This means that on fresh ingest we must use a larger bit-width than
+    # the bare minimum necessary.
+    new_map = {}
+    for field in arrow_table.schema:
+        if pa.types.is_dictionary(field.type):
+            old_index_type = field.type.index_type
+            new_index_type = (
+                pa.int32()
+                if old_index_type in [pa.int8(), pa.int16()]
+                else old_index_type
+            )
+            new_map[field.name] = pa.dictionary(
+                new_index_type,
+                field.type.value_type,
+                field.type.ordered,
+            )
+        else:
+            new_map[field.name] = field.type
+    new_schema = pa.schema(new_map, metadata=arrow_table.schema.metadata)
+
+    arrow_table = pa.Table.from_pandas(df, schema=new_schema)
+
     return arrow_table
