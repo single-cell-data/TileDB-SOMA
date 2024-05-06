@@ -26,22 +26,25 @@ from somacore import options
 from somacore.options import PlatformConfig
 from typing_extensions import Self
 
-import tiledb
-
 from . import _util
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib
+from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
-from ._exception import SOMAError
+from ._exception import SOMAError, map_exception_for_create
 from ._read_iters import (
     BlockwiseScipyReadIter,
     BlockwiseTableReadIter,
     SparseCOOTensorReadIter,
     TableReadIter,
 )
-from ._tdb_handles import ArrayWrapper, SparseNDArrayWrapper
-from ._types import NTuple
+from ._tdb_handles import SparseNDArrayWrapper
+from ._types import NTuple, OpenTimestamp
+from .options._soma_tiledb_context import (
+    SOMATileDBContext,
+    _validate_soma_tiledb_context,
+)
 from .options._tiledb_create_options import TileDBCreateOptions
 
 _UNBATCHED = options.BatchSize()
@@ -97,12 +100,63 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     __slots__ = ()
 
-    _wrapper_type = ArrayWrapper
+    _wrapper_type = SparseNDArrayWrapper
     _reader_wrapper_type = SparseNDArrayWrapper
 
     # Inherited from somacore
     # * ndim accessor
     # * is_sparse: Final = True
+
+    @classmethod
+    def create(
+        cls,
+        uri: str,
+        *,
+        type: pa.DataType,
+        shape: Sequence[Union[int, None]],
+        platform_config: Optional[options.PlatformConfig] = None,
+        context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+    ) -> Self:
+        context = _validate_soma_tiledb_context(context)
+
+        index_column_schema = []
+        index_column_data = {}
+        for dim_idx, dim_shape in enumerate(shape):
+            dim_name = f"soma_dim_{dim_idx}"
+            pa_field = pa.field(dim_name, pa.int64())
+            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                dim_name,
+                dim_shape,
+                TileDBCreateOptions.from_platform_config(platform_config),
+            )
+            index_column_schema.append(pa_field)
+            index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
+
+        index_column_info = pa.RecordBatch.from_pydict(
+            index_column_data, schema=pa.schema(index_column_schema)
+        )
+
+        carrow_type = pyarrow_to_carrow_type(type)
+        plt_cfg = _util.build_clib_platform_config(platform_config)
+        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        try:
+            clib.SOMASparseNDArray.create(
+                uri,
+                format=carrow_type,
+                index_column_info=index_column_info,
+                ctx=context.native_context,
+                platform_config=plt_cfg,
+                timestamp=(0, timestamp_ms),
+            )
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
+
+        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+        return cls(
+            handle,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
 
     @property
     def nnz(self) -> int:
@@ -215,7 +269,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Experimental.
         """
 
-        arr = self._handle.writer
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
             platform_config
         )
@@ -223,7 +276,18 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         if isinstance(values, pa.SparseCOOTensor):
             # Write bulk data
             data, coords = values.to_numpy()
-            arr[tuple(c for c in coords.T)] = data
+            self._handle._handle.write_ndarray(
+                [
+                    np.array(
+                        c,
+                        dtype=self.schema.field(f"soma_dim_{i}").type.to_pandas_dtype(),
+                    )
+                    for i, c in enumerate(coords.T)
+                ],
+                np.array(
+                    data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
+                ),
+            )
 
             # Write bounding-box metadata. Note COO can be N-dimensional.
             maxes = [e - 1 for e in values.shape]
@@ -243,7 +307,18 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # Write bulk data
             # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
-            arr[sp.row, sp.col] = sp.data
+            self._handle._handle.write_ndarray(
+                [
+                    np.array(
+                        c,
+                        dtype=self.schema.field(f"soma_dim_{i}").type.to_pandas_dtype(),
+                    )
+                    for i, c in enumerate([sp.row, sp.col])
+                ],
+                np.array(
+                    sp.data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
+                ),
+            )
 
             # Write bounding-box metadata. Note CSR and CSC are necessarily 2-dimensional.
             nr, nc = values.shape
@@ -257,16 +332,17 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         if isinstance(values, pa.Table):
             # Write bulk data
-            data = values.column("soma_data").to_numpy()
-            coord_tbl = values.drop(["soma_data"])
-            coords = tuple(
-                coord_tbl.column(f"soma_dim_{n}").to_numpy()
-                for n in range(coord_tbl.num_columns)
+            clib_sparse_array = self._handle._handle
+
+            values = _util.cast_values_to_target_schema(
+                clib_sparse_array, values, self.schema
             )
-            arr[coords] = data
+            for batch in values.to_batches():
+                clib_sparse_array.write(batch)
 
             # Write bounding-box metadata
             maxes = []
+            coord_tbl = values.drop(["soma_data"])
             for i in range(coord_tbl.num_columns):
                 coords = values.column(f"soma_dim_{i}")
                 if coords:
@@ -349,15 +425,14 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         Compare this to ``shape`` which returns the available/writable capacity.
         """
         retval = []
-        with tiledb.open(self.uri, ctx=self.context.tiledb_ctx):
-            for i in itertools.count():
-                lower_key = f"soma_dim_{i}_domain_lower"
-                lower_val = self.metadata.get(lower_key)
-                upper_key = f"soma_dim_{i}_domain_upper"
-                upper_val = self.metadata.get(upper_key)
-                if lower_val is None or upper_val is None:
-                    break
-                retval.append((lower_val, upper_val))
+        for i in itertools.count():
+            lower_key = f"soma_dim_{i}_domain_lower"
+            lower_val = self.metadata.get(lower_key)
+            upper_key = f"soma_dim_{i}_domain_upper"
+            upper_val = self.metadata.get(upper_key)
+            if lower_val is None or upper_val is None:
+                break
+            retval.append((lower_val, upper_val))
         if not retval:
             raise SOMAError(
                 f"Array {self.uri} was not written with bounding box support. "

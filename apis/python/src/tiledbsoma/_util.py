@@ -10,6 +10,7 @@ import urllib.parse
 from itertools import zip_longest
 from typing import Any, Optional, Tuple, Type, TypeVar
 
+import numpy as np
 import pandas as pd
 import pyarrow as pa
 import somacore
@@ -18,6 +19,7 @@ from somacore import options
 
 from . import pytiledbsoma as clib
 from ._types import OpenTimestamp, Slice, is_slice_of
+from .options._tiledb_create_options import TileDBCreateOptions
 
 
 def get_start_stamp() -> float:
@@ -322,3 +324,86 @@ def verify_obs_var(ad0: AnnData, ad1: AnnData, nan_safe: bool = False) -> None:
     else:
         assert anndata_dataframe_unmodified(ad0.obs, ad1.obs)
         assert anndata_dataframe_unmodified(ad0.var, ad1.var)
+
+
+def cast_values_to_target_schema(
+    clib_array: clib.SOMAArray, values: pa.Table, schema: pa.Schema
+) -> pa.Table:
+    """
+    When writing data to a SOMAArray, the values that the user passes in may not
+    match the schema on disk.
+
+    1. Cast the values to the correct dtypes
+    2. Perform special casting for Boolean as it is represented in TileDB as
+    int8 but bits in Arrow
+    3. If there are new enumeration values in the values that are not yet
+    present in the schema, extend the enumeration to include these new values
+    """
+    target_schema = []
+    for i, input_field in enumerate(values.schema):
+        name = input_field.name
+        target_field = schema.field(name)
+
+        if pa.types.is_dictionary(target_field.type):
+            if not pa.types.is_dictionary(input_field.type):
+                raise ValueError(f"{name} requires dictionary entry")
+            col = values.column(name).combine_chunks()
+            if pa.types.is_boolean(target_field.type.value_type):
+                col = col.cast(
+                    pa.dictionary(
+                        target_field.type.index_type,
+                        pa.uint8(),
+                        target_field.type.ordered,
+                    )
+                )
+            new_enmr = clib_array.extend_enumeration(name, col)
+
+            if pa.types.is_binary(
+                target_field.type.value_type
+            ) or pa.types.is_large_binary(target_field.type.value_type):
+                new_enmr = np.array(new_enmr, "S")
+            elif pa.types.is_boolean(target_field.type.value_type):
+                new_enmr = np.array(new_enmr, bool)
+
+            df = pd.Categorical(
+                col.to_pandas(),
+                ordered=target_field.type.ordered,
+                categories=new_enmr,
+            )
+            values = values.set_column(
+                i, name, pa.DictionaryArray.from_pandas(df, type=target_field.type)
+            )
+
+        if pa.types.is_boolean(input_field.type):
+            target_schema.append(target_field.with_type(pa.uint8()))
+        else:
+            target_schema.append(target_field)
+    return values.cast(pa.schema(target_schema, values.schema.metadata))
+
+
+def build_clib_platform_config(
+    platform_config: Optional[options.PlatformConfig],
+) -> Optional[clib.PlatformConfig]:
+    """
+    Copy over Python PlatformConfig values to the C++ clib.PlatformConfig
+    """
+    if platform_config is None:
+        return None
+
+    ops = TileDBCreateOptions.from_platform_config(platform_config)
+    plt_cfg = clib.PlatformConfig()
+    plt_cfg.dataframe_dim_zstd_level = ops.dataframe_dim_zstd_level
+    plt_cfg.sparse_nd_array_dim_zstd_level = ops.sparse_nd_array_dim_zstd_level
+    plt_cfg.write_X_chunked = ops.write_X_chunked
+    plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
+    plt_cfg.capacity = ops.capacity
+    if ops.offsets_filters:
+        plt_cfg.offsets_filters = [info["_type"] for info in ops.offsets_filters]
+    if ops.validity_filters:
+        plt_cfg.validity_filters = [info["_type"] for info in ops.validity_filters]
+    plt_cfg.allows_duplicates = ops.allows_duplicates
+    plt_cfg.tile_order = ops.tile_order
+    plt_cfg.cell_order = ops.cell_order
+    plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
+
+    return plt_cfg

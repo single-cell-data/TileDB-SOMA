@@ -94,25 +94,25 @@ def open(
     if not soma_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
-    if soma_type == "SOMADataFrame":
+    soma_type = soma_type.lower()
+
+    if soma_type == "somadataframe":
         return DataFrameWrapper._from_soma_object(soma_object, context)
-    if open_mode == clib.OpenMode.read and soma_type == "SOMADenseNDArray":
+    if open_mode == clib.OpenMode.read and soma_type == "somadensendarray":
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
-    if open_mode == clib.OpenMode.read and soma_type == "SOMASparseNDArray":
+    if soma_type == "somasparsendarray":
         return SparseNDArrayWrapper._from_soma_object(soma_object, context)
 
     if soma_type in (
-        "SOMADataFrame",
-        "SOMADenseNDArray",
-        "SOMASparseNDArray",
+        "somadensendarray",
         "array",
     ):
         return ArrayWrapper.open(uri, mode, context, timestamp)
 
     if soma_type in (
-        "SOMACollection",
-        "SOMAExperiment",
-        "SOMAMeasurement",
+        "somacollection",
+        "somaexperiment",
+        "somameasurement",
         "group",
     ):
         return GroupWrapper.open(uri, mode, context, timestamp)
@@ -589,7 +589,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
             # There were no changes (e.g., it's a read handle).  Do nothing.
             return
         # Only try to get the writer if there are changes to be made.
-        if isinstance(self.owner, DataFrameWrapper):
+        if isinstance(self.owner, (DataFrameWrapper, SparseNDArrayWrapper)):
             meta = self.owner.meta
             for key, mod in self._mods.items():
                 if mod in (_DictMod.ADDED, _DictMod.UPDATED):

@@ -114,4 +114,45 @@ std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema() {
         std::move(arrow_schema),
         ArrowTable(std::move(col_info_array), std::move(col_info_schema)));
 }
+
+ArrowTable create_column_index_info() {
+    // Create ArrowSchema for IndexColumnInfo
+    auto col_info_schema = std::make_unique<ArrowSchema>();
+    col_info_schema->format = "+s";
+    col_info_schema->n_children = 1;
+    col_info_schema->dictionary = nullptr;
+    col_info_schema->release = &ArrowAdapter::release_schema;
+    col_info_schema->children = new ArrowSchema*[col_info_schema->n_children];
+    ArrowSchema* dim = col_info_schema->children[0] = new ArrowSchema;
+    dim->format = "l";
+    dim->name = "soma_dim_0";
+    dim->n_children = 0;
+    dim->dictionary = nullptr;
+    dim->release = &ArrowAdapter::release_schema;
+
+    // Create ArrowArray for IndexColumnInfo
+    auto col_info_array = std::make_unique<ArrowArray>();
+    col_info_array->length = 0;
+    col_info_array->null_count = 0;
+    col_info_array->offset = 0;
+    col_info_array->n_buffers = 0;
+    col_info_array->buffers = nullptr;
+    col_info_array->n_children = 2;
+    col_info_array->release = &ArrowAdapter::release_array;
+    col_info_array->children = new ArrowArray*[1];
+    auto d0_info = col_info_array->children[0] = new ArrowArray;
+    d0_info->length = 3;
+    d0_info->null_count = 0;
+    d0_info->offset = 0;
+    d0_info->n_buffers = 2;
+    d0_info->release = &ArrowAdapter::release_array;
+    d0_info->buffers = new const void*[2];
+    d0_info->buffers[0] = nullptr;
+    d0_info->buffers[1] = malloc(sizeof(int64_t) * 3);
+    d0_info->n_children = 0;
+    int64_t dom[] = {0, 1000, 1};
+    std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * 3);
+
+    return ArrowTable(std::move(col_info_array), std::move(col_info_schema));
+}
 }  // namespace helper

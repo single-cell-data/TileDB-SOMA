@@ -30,58 +30,21 @@
  * This file manages unit tests for the SOMASparseNDArray class
  */
 
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators_all.hpp>
-#include <catch2/matchers/catch_matchers_exception.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <catch2/matchers/catch_matchers_predicate.hpp>
-#include <catch2/matchers/catch_matchers_string.hpp>
-#include <catch2/matchers/catch_matchers_templated.hpp>
-#include <catch2/matchers/catch_matchers_vector.hpp>
-#include <numeric>
-#include <random>
-
-#include <tiledb/tiledb>
-#include <tiledbsoma/tiledbsoma>
-#include "utils/util.h"
-
-using namespace tiledb;
-using namespace tiledbsoma;
-using namespace Catch::Matchers;
-
-#ifndef TILEDBSOMA_SOURCE_ROOT
-#define TILEDBSOMA_SOURCE_ROOT "not_defined"
-#endif
-
-const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
-
-namespace {
-ArraySchema create_schema(Context& ctx, bool allow_duplicates = false) {
-    // Create schema
-    ArraySchema schema(ctx, TILEDB_SPARSE);
-
-    auto dim = Dimension::create<int64_t>(ctx, "d0", {0, 1000});
-
-    Domain domain(ctx);
-    domain.add_dimension(dim);
-    schema.set_domain(domain);
-
-    auto attr = Attribute::create<int>(ctx, "a0");
-    schema.add_attribute(attr);
-    schema.set_allows_dups(allow_duplicates);
-    schema.check();
-
-    return schema;
-}
-};  // namespace
+#include "common.h"
 
 TEST_CASE("SOMASparseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-sparse-ndarray-basic";
 
+    auto index_columns = helper::create_column_index_info();
     SOMASparseNDArray::create(
-        uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
+        uri,
+        "l",
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        std::nullopt,
+        TimestampRange(0, 2));
 
     auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_sparse->uri() == uri);
@@ -89,8 +52,8 @@ TEST_CASE("SOMASparseNDArray: basic") {
     REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
     REQUIRE(soma_sparse->is_sparse() == true);
     auto schema = soma_sparse->tiledb_schema();
-    REQUIRE(schema->has_attribute("a0"));
-    REQUIRE(schema->domain().has_dimension("d0"));
+    REQUIRE(schema->has_attribute("soma_data"));
+    REQUIRE(schema->domain().has_dimension("soma_dim_0"));
     REQUIRE(soma_sparse->ndim() == 1);
     REQUIRE(soma_sparse->nnz() == 0);
     soma_sparse->close();
@@ -101,16 +64,16 @@ TEST_CASE("SOMASparseNDArray: basic") {
     std::vector<int> a0(10, 1);
 
     soma_sparse->open(OpenMode::write);
-    soma_sparse->set_column_data("a0", a0.size(), a0.data());
-    soma_sparse->set_column_data("d0", d0.size(), d0.data());
+    soma_sparse->set_column_data("soma_data", a0.size(), a0.data());
+    soma_sparse->set_column_data("soma_dim_0", d0.size(), d0.data());
     soma_sparse->write();
     soma_sparse->close();
 
     soma_sparse->open(OpenMode::read);
     while (auto batch = soma_sparse->read_next()) {
         auto arrbuf = batch.value();
-        auto d0span = arrbuf->at("d0")->data<int64_t>();
-        auto a0span = arrbuf->at("a0")->data<int>();
+        auto d0span = arrbuf->at("soma_dim_0")->data<int64_t>();
+        auto a0span = arrbuf->at("soma_data")->data<int>();
         REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
         REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
     }
@@ -121,8 +84,17 @@ TEST_CASE("SOMASparseNDArray: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-sparse-ndarray";
+
+    auto index_columns = helper::create_column_index_info();
     SOMASparseNDArray::create(
-        uri, create_schema(*ctx->tiledb_ctx()), ctx, TimestampRange(0, 2));
+        uri,
+        "l",
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        std::nullopt,
+        TimestampRange(0, 2));
+
     auto soma_sparse = SOMASparseNDArray::open(
         uri,
         OpenMode::write,

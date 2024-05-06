@@ -57,6 +57,26 @@ void write(SOMAArray& array, py::handle py_batch) {
     }
 }
 
+void write_ndarray(
+    SOMAArray& array, std::vector<py::array> coords, py::array data) {
+    for (uint64_t i = 0; i < coords.size(); ++i) {
+        py::buffer_info coords_info = coords[i].request();
+        array.set_column_data(
+            "soma_dim_" + std::to_string(i),
+            coords[i].size(),
+            (const void*)coords_info.ptr);
+    }
+
+    py::buffer_info data_info = data.request();
+    array.set_column_data("soma_data", data.size(), (const void*)data_info.ptr);
+
+    try {
+        array.write();
+    } catch (const std::exception& e) {
+        TPY_ERROR_LOC(e.what());
+    }
+}
+
 py::dict meta(SOMAArray& array) {
     py::dict results;
 
@@ -574,6 +594,8 @@ void load_soma_array(py::module& m) {
             })
 
         .def("write", write)
+
+        .def("write_ndarray", write_ndarray)
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 
