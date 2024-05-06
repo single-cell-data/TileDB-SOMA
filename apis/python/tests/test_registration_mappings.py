@@ -1218,11 +1218,14 @@ def test_append_with_nonunique_field_values(
         )
 
 
-# TO DO: COMMENT WHY
 @pytest.mark.parametrize("all_at_once", [False, True])
 @pytest.mark.parametrize("nobs_a", [50, 300])
 @pytest.mark.parametrize("nobs_b", [60, 400])
-def test_foo_wip(tmp_path, all_at_once, nobs_a, nobs_b):
+def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
+    """Creates an obs column whose bit width might naively be inferred to be int8
+    by tiledbsoma.io, and another which could be inferred to int16.  Then
+    ensures the dataframes are appendable regardless of which one was written
+    first."""
     obs_ids_a = [("a_%08d" % e) for e in range(nobs_a)]
     obs_ids_b = [("b_%08d" % e) for e in range(nobs_b)]
     var_ids = ["W", "X", "Y", "Z"]
@@ -1251,9 +1254,6 @@ def test_foo_wip(tmp_path, all_at_once, nobs_a, nobs_b):
     adata.obs["enum"] = pd.Categorical(obs_ids_a, categories=obs_ids_a)
     bdata.obs["enum"] = pd.Categorical(obs_ids_b, categories=obs_ids_b)
 
-    print()
-    print(f"OK START {nobs_a} {nobs_b} {all_at_once}")
-
     soma_uri = tmp_path.as_posix()
 
     if all_at_once:
@@ -1268,18 +1268,12 @@ def test_foo_wip(tmp_path, all_at_once, nobs_a, nobs_b):
         tiledbsoma.io.from_anndata(
             soma_uri, adata, measurement_name=measurement_name, registration_mapping=rd
         )
-        print()
-        print("OK WRITE A")
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
         )
-        print()
-        print("OK WRITE B")
 
     else:
         tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name=measurement_name)
-        print()
-        print("OK WRITE A")
 
         rd = tiledbsoma.io.register_anndatas(
             soma_uri,
@@ -1292,29 +1286,14 @@ def test_foo_wip(tmp_path, all_at_once, nobs_a, nobs_b):
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
         )
-        print()
-        print("OK WRITE B")
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         obs = exp.obs.read().concat()
-        print()
-        print("OK READ OBS")
 
-        # XXX assert schema enum is categ
-        print()
-        print()
-        print("-- SOMA SCHEMA")
-        print(exp.obs.schema)
-        print("-- ARROW SCHEMA")
-        print(obs.schema)
-        print("-- PANDAS DATA")
-        print(obs.to_pandas())
-        print()
+        cell_ids = obs[obs_field_name].to_pylist()
 
+        readback_a = cell_ids[:nobs_a]
+        readback_b = cell_ids[nobs_a:]
 
-# Analysis:
-# * Independent of all_at_once parameter
-# * short & short: OK
-# * long  & long:  OK
-# * short & long:  readback fail with pyarrow.lib.ArrowIndexError: Index -128 out of bounds
-# * long  & short: write B fail with ValueError: Too many enumeration values (360) for index type int8
+        assert readback_a == obs_ids_a
+        assert readback_b == obs_ids_b
