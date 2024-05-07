@@ -1212,15 +1212,15 @@ def _write_dataframe_impl(
             dim_range = ((int(df.index.min()), int(df.index.max())),)
             if _chunk_is_contained_in(dim_range, storage_ned):
                 logging.log_io(
-                    f"Skipped {soma_df.uri}",
-                    _util.format_elapsed(s, f"SKIPPED {soma_df.uri}"),
+                    f"Skipped {df_uri}",
+                    _util.format_elapsed(s, f"SKIPPED {df_uri}"),
                 )
                 return soma_df
 
     if ingestion_params.write_schema_no_data:
         logging.log_io(
-            f"Wrote schema {soma_df.uri}",
-            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),
+            f"Wrote schema {df_uri}",
+            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {df_uri}"),
         )
         add_metadata(soma_df, additional_metadata)
         return soma_df
@@ -1238,8 +1238,8 @@ def _write_dataframe_impl(
     add_metadata(soma_df, additional_metadata)
 
     logging.log_io(
-        f"Wrote   {soma_df.uri}",
-        _util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
+        f"Wrote   {df_uri}",
+        _util.format_elapsed(s, f"FINISH WRITING {df_uri}"),
     )
     return soma_df
 
@@ -1304,21 +1304,21 @@ def _create_from_matrix(
         )
     except (AlreadyExistsError, NotCreateableError):
         if ingestion_params.error_if_already_exists:
-            raise SOMAError(f"{soma_ndarray.uri} already exists")
+            raise SOMAError(f"{uri} already exists")
         soma_ndarray = cls.open(
             uri, "w", platform_config=platform_config, context=context
         )
 
     if ingestion_params.write_schema_no_data:
         logging.log_io(
-            f"Wrote schema {soma_ndarray.uri}",
-            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_ndarray.uri}"),
+            f"Wrote schema {uri}",
+            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {uri}"),
         )
         return soma_ndarray
 
     logging.log_io(
-        f"Writing {soma_ndarray.uri}",
-        _util.format_elapsed(s, f"START  WRITING {soma_ndarray.uri}"),
+        f"Writing {uri}",
+        _util.format_elapsed(s, f"START  WRITING {uri}"),
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
@@ -1347,8 +1347,8 @@ def _create_from_matrix(
         raise TypeError(f"unknown array type {type(soma_ndarray)}")
 
     logging.log_io(
-        f"Wrote   {soma_ndarray.uri}",
-        _util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
+        f"Wrote   {uri}",
+        _util.format_elapsed(s, f"FINISH WRITING {uri}"),
     )
     return soma_ndarray
 
