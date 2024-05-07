@@ -4,11 +4,14 @@ import tiledbsoma
 import tiledbsoma.io
 
 
-def test_update_matrix_X(adata_extended):
+# Magical conftest.py fixture
+def test_update_matrix_X(conftest_adata_extended):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    tiledbsoma.io.from_anndata(output_path, adata_extended, measurement_name="RNA")
+    tiledbsoma.io.from_anndata(
+        output_path, conftest_adata_extended, measurement_name="RNA"
+    )
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         old = exp.ms["RNA"].X["data"].read().tables().concat()
@@ -20,7 +23,7 @@ def test_update_matrix_X(adata_extended):
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         tiledbsoma.io.update_matrix(
             exp.ms["RNA"].X["data"],
-            adata_extended.X + 1,
+            conftest_adata_extended.X + 1,
         )
 
     with tiledbsoma.Experiment.open(output_path) as exp:
@@ -35,11 +38,14 @@ def test_update_matrix_X(adata_extended):
     assert old["soma_data"] != new["soma_data"]
 
 
-def test_update_matrix_obsm(adata_extended):
+# Magical conftest.py fixture
+def test_update_matrix_obsm(conftest_adata_extended):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    tiledbsoma.io.from_anndata(output_path, adata_extended, measurement_name="RNA")
+    tiledbsoma.io.from_anndata(
+        output_path, conftest_adata_extended, measurement_name="RNA"
+    )
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         old = exp.ms["RNA"].obsm["X_pca"].read().tables().concat()
@@ -51,7 +57,7 @@ def test_update_matrix_obsm(adata_extended):
     with tiledbsoma.Experiment.open(output_path, "w") as exp:
         tiledbsoma.io.update_matrix(
             exp.ms["RNA"].obsm["X_pca"],
-            adata_extended.obsm["X_pca"] + 1,
+            conftest_adata_extended.obsm["X_pca"] + 1,
         )
 
     with tiledbsoma.Experiment.open(output_path) as exp:

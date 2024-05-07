@@ -174,18 +174,19 @@ def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
             assert list(pdf["foo"]) == pydict["foo"]
 
 
-def test_add_matrices(tmp_path, h5ad_path):
+# Magical conftest.py fixture
+def test_add_matrices(tmp_path, conftest_h5ad_path):
     """Test multiple add_matrix_to_collection calls can be issued on the same soma object.
 
     See https://github.com/single-cell-data/TileDB-SOMA/issues/1565."""
     # Create a soma object from an anndata object
     soma_uri = soma.io.from_h5ad(
-        tmp_path.as_posix(), input_path=h5ad_path, measurement_name="RNA"
+        tmp_path.as_posix(), input_path=conftest_h5ad_path, measurement_name="RNA"
     )
 
     # Synthesize some new data to be written into two matrices within the soma object (ensuring it's different from the
     # original data, so that writes must be performed)
-    h5ad = ad.read_h5ad(h5ad_path)
+    h5ad = ad.read_h5ad(conftest_h5ad_path)
     new_X_pca = h5ad.obsm["X_pca"] * 2
     new_PCs = h5ad.varm["PCs"] * 2
 

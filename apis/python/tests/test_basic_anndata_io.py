@@ -15,7 +15,7 @@ import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
 from tiledbsoma._tiledb_object import TileDBObject
-from tiledbsoma._util import verify_obs_var
+from tiledbsoma._util import verify_obs_and_var_same
 import tiledb
 
 from ._util import TESTDATA
@@ -85,17 +85,18 @@ def h5ad_file_X_none(request):
     "X_kind",
     [tiledbsoma.SparseNDArray, tiledbsoma.DenseNDArray],
 )
-def test_import_anndata(adata, ingest_modes, X_kind):
-    original = adata.copy()
-    adata = adata.copy()
+# Magical conftest_adata fixture
+def test_import_anndata(conftest_adata, ingest_modes, X_kind):
+    original = conftest_adata.copy()
+    conftest_adata = conftest_adata.copy()
 
     have_ingested = False
 
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    adata.layers["plus1"] = adata.X + 1
-    orig = adata.copy()
+    conftest_adata.layers["plus1"] = conftest_adata.X + 1
+    orig = conftest_adata.copy()
 
     metakey = _constants.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
     all2d = (slice(None), slice(None))  # keystroke-saver
@@ -111,7 +112,7 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         if ingest_mode != "schema_only":
             have_ingested = True
 
-        verify_obs_var(original, adata)
+        verify_obs_and_var_same(original, conftest_adata)
 
         exp = tiledbsoma.Experiment.open(uri)
 
@@ -239,21 +240,22 @@ def test_import_anndata(adata, ingest_modes, X_kind):
         "othername",
     ],
 )
-def test_named_X_layers(h5ad_path, X_layer_name):
+# Magical conftest.py fixture
+def test_named_X_layers(conftest_h5ad_path, X_layer_name):
     tempdir = tempfile.TemporaryDirectory()
     soma_path = tempdir.name
 
     if X_layer_name is None:
         tiledbsoma.io.from_h5ad(
             soma_path,
-            h5ad_path.as_posix(),
+            conftest_h5ad_path.as_posix(),
             "RNA",
             ingest_mode="write",
         )
     else:
         tiledbsoma.io.from_h5ad(
             soma_path,
-            h5ad_path.as_posix(),
+            conftest_h5ad_path.as_posix(),
             "RNA",
             ingest_mode="write",
             X_layer_name=X_layer_name,
@@ -281,6 +283,7 @@ def _get_fragment_count(array_uri):
         TESTDATA / "pbmc-small-x-csc.h5ad",
     ],
 )
+# Magical conftest_adata fixture
 def test_resume_mode(adata, resume_mode_h5ad_file):
     """
     Makes sure resume-mode ingest after successful ingest of the same input data does not write
@@ -338,14 +341,15 @@ def test_resume_mode(adata, resume_mode_h5ad_file):
                 )
 
 
+# Magical conftest.py fixture conftest_h5ad_file_extended
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
-def test_ingest_relative(h5ad_file_extended, use_relative_uri):
+def test_ingest_relative(conftest_h5ad_file_extended, use_relative_uri):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
     tiledbsoma.io.from_h5ad(
         output_path,
-        h5ad_file_extended.as_posix(),
+        conftest_h5ad_file_extended.as_posix(),
         measurement_name="RNA",
         use_relative_uri=use_relative_uri,
     )
@@ -371,7 +375,11 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
     with tiledb.Group(exp.ms["RNA"].X.uri) as G:
         assert G.is_relative("data") == expected_relative
 
-    for collection_name in ["obsm", "obsp", "varm"]:  # h5ad_file_extended has no varp
+    for collection_name in [
+        "obsm",
+        "obsp",
+        "varm",
+    ]:  # conftest_h5ad_file_extended has no varp
         with tiledb.Group(exp.ms["RNA"][collection_name].uri) as G:
             for member in G:
                 assert G.is_relative(member.name) == expected_relative
@@ -389,10 +397,15 @@ def test_ingest_relative(h5ad_file_extended, use_relative_uri):
 
 @pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])
 def test_ingest_uns(
-    tmp_path: pathlib.Path, h5ad_file_extended, adata_extended, ingest_uns_keys
+    # Magical pytest fixture: conftest_h5ad_file_extended
+    # Magical pytest fixture: conftest_adata_extended
+    tmp_path: pathlib.Path,
+    conftest_h5ad_file_extended,
+    conftest_adata_extended,
+    ingest_uns_keys,
 ):
     tmp_uri = tmp_path.as_uri()
-    adata_extended2 = anndata.read(h5ad_file_extended)
+    adata_extended2 = anndata.read(conftest_h5ad_file_extended)
     uri = tiledbsoma.io.from_anndata(
         tmp_uri,
         adata_extended2,
@@ -400,7 +413,7 @@ def test_ingest_uns(
         uns_keys=ingest_uns_keys,
     )
 
-    verify_obs_var(adata_extended, adata_extended2)
+    verify_obs_and_var_same(conftest_adata_extended, adata_extended2)
 
     with tiledbsoma.Experiment.open(uri) as exp:
         uns = exp.ms["hello"]["uns"]
@@ -463,53 +476,54 @@ def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
             assert contents["values_0"][0].as_py() == "#1f77b4"
 
 
-def test_add_matrix_to_collection(adata):
+# Magical conftest_adata fixture
+def test_add_matrix_to_collection(conftest_adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    original = adata.copy()
+    original = conftest_adata.copy()
 
-    uri = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    uri = tiledbsoma.io.from_anndata(output_path, conftest_adata, measurement_name="RNA")
 
-    verify_obs_var(original, adata)
+    verify_obs_and_var_same(original, conftest_adata)
 
     exp = tiledbsoma.Experiment.open(uri)
     with _factory.open(output_path) as exp_r:
         assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
         with pytest.raises(tiledbsoma.SOMAError):
-            tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)  # not open for read
+            tiledbsoma.io.add_X_layer(exp, "RNA", "data2", conftest_adata.X)  # not open for read
     with _factory.open(output_path, "w") as exp:
-        tiledbsoma.io.add_X_layer(exp, "RNA", "data2", adata.X)
+        tiledbsoma.io.add_X_layer(exp, "RNA", "data2", conftest_adata.X)
     with pytest.raises(tiledbsoma.SOMAError):
-        tiledbsoma.io.add_X_layer(exp, "RNA", "data3", adata.X)  # closed
+        tiledbsoma.io.add_X_layer(exp, "RNA", "data3", conftest_adata.X)  # closed
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].X.keys())) == ["data", "data2"]
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
-            tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", adata.X)
+            tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", conftest_adata.X)
 
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
-            list(adata.obsm.keys())
+            list(conftest_adata.obsm.keys())
         )
     with _factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_matrix_to_collection(
-            exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"]
+            exp, "RNA", "obsm", "X_pcb", conftest_adata.obsm["X_pca"]
         )
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
-            list(adata.obsm.keys()) + ["X_pcb"]
+            list(conftest_adata.obsm.keys()) + ["X_pcb"]
         )
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
             tiledbsoma.io.add_matrix_to_collection(
-                exp, "nonesuch", "obsm", "X_pcc", adata.obsm["X_pca"]
+                exp, "nonesuch", "obsm", "X_pcc", conftest_adata.obsm["X_pca"]
             )
 
         tiledbsoma.io.add_matrix_to_collection(
-            exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"]
+            exp, "RNA", "newthing", "X_pcd", conftest_adata.obsm["X_pca"]
         )
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
@@ -520,7 +534,9 @@ def test_add_matrix_to_collection(adata):
 # modules or methods -- those whose names start with an underscore.  For this single case we are
 # making an exception. For future code-imitation purposes, please be aware this is a pattern to be
 # avoided in the future, not imitated.
-def test_add_matrix_to_collection_1_2_7(adata):
+#
+# Magical conftest_adata fixture
+def test_add_matrix_to_collection_1_2_7(conftest_adata):
     def add_X_layer(
         exp: tiledbsoma.Experiment,
         measurement_name: str,
@@ -593,69 +609,70 @@ def test_add_matrix_to_collection_1_2_7(adata):
 
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
-    original = adata.copy()
+    original = conftest_adata.copy()
 
-    uri = tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    uri = tiledbsoma.io.from_anndata(output_path, conftest_adata, measurement_name="RNA")
 
-    verify_obs_var(original, adata)
+    verify_obs_and_var_same(original, conftest_adata)
 
     exp = tiledbsoma.Experiment.open(uri)
     with _factory.open(output_path) as exp_r:
         assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
         with pytest.raises(tiledbsoma.SOMAError):
-            add_X_layer(exp, "RNA", "data2", adata.X)  # not open for read
+            add_X_layer(exp, "RNA", "data2", conftest_adata.X)  # not open for read
     with _factory.open(output_path, "w") as exp:
-        add_X_layer(exp, "RNA", "data2", adata.X)
+        add_X_layer(exp, "RNA", "data2", conftest_adata.X)
     with pytest.raises(tiledbsoma.SOMAError):
-        add_X_layer(exp, "RNA", "data3", adata.X)  # closed
+        add_X_layer(exp, "RNA", "data3", conftest_adata.X)  # closed
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].X.keys())) == ["data", "data2"]
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
-            add_X_layer(exp, "nonesuch", "data3", adata.X)
+            add_X_layer(exp, "nonesuch", "data3", conftest_adata.X)
 
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
-            list(adata.obsm.keys())
+            list(conftest_adata.obsm.keys())
         )
 
     with _factory.open(output_path, "w") as exp:
-        add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", adata.obsm["X_pca"])
+        add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", conftest_adata.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
-            list(adata.obsm.keys()) + ["X_pcb"]
+            list(conftest_adata.obsm.keys()) + ["X_pcb"]
         )
 
     with _factory.open(output_path, "w") as exp:
         # It's nonsense biologically to add this to varp, but as a fake-test unit-test case, we can
         # use varp to test adding to a not-yet-existing collection.
-        add_matrix_to_collection(exp, "RNA", "varp", "X_pcb", adata.obsm["X_pca"])
+        add_matrix_to_collection(exp, "RNA", "varp", "X_pcb", conftest_adata.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].varp.keys())) == sorted(
-            list(adata.varp.keys()) + ["X_pcb"]
+            list(conftest_adata.varp.keys()) + ["X_pcb"]
         )
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
             add_matrix_to_collection(
-                exp, "nonesuch", "obsm", "X_pcc", adata.obsm["X_pca"]
+                exp, "nonesuch", "obsm", "X_pcc", conftest_adata.obsm["X_pca"]
             )
 
-        add_matrix_to_collection(exp, "RNA", "newthing", "X_pcd", adata.obsm["X_pca"])
+        add_matrix_to_collection(exp, "RNA", "newthing", "X_pcd", conftest_adata.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
 
-def test_export_anndata(adata):
+# Magical conftest_adata fixture
+def test_export_anndata(conftest_adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    original = adata.copy()
+    original = conftest_adata.copy()
 
-    tiledbsoma.io.from_anndata(output_path, adata, measurement_name="RNA")
+    tiledbsoma.io.from_anndata(output_path, conftest_adata, measurement_name="RNA")
 
-    verify_obs_var(original, adata)
+    verify_obs_and_var_same(original, conftest_adata)
 
     with _factory.open(output_path) as exp:
         with pytest.raises(ValueError):
@@ -675,21 +692,22 @@ def test_export_anndata(adata):
 
         readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
 
-    assert readback.obs.shape == adata.obs.shape
-    assert readback.var.shape == adata.var.shape
-    assert readback.X.shape == adata.X.shape
+    assert readback.obs.shape == conftest_adata.obs.shape
+    assert readback.var.shape == conftest_adata.var.shape
+    assert readback.X.shape == conftest_adata.X.shape
 
-    for key in adata.obsm.keys():
-        assert readback.obsm[key].shape == adata.obsm[key].shape
-    for key in adata.varm.keys():
-        assert readback.varm[key].shape == adata.varm[key].shape
-    for key in adata.obsp.keys():
-        assert readback.obsp[key].shape == adata.obsp[key].shape
-    for key in adata.varp.keys():
-        assert readback.varp[key].shape == adata.varp[key].shape
+    for key in conftest_adata.obsm.keys():
+        assert readback.obsm[key].shape == conftest_adata.obsm[key].shape
+    for key in conftest_adata.varm.keys():
+        assert readback.varm[key].shape == conftest_adata.varm[key].shape
+    for key in conftest_adata.obsp.keys():
+        assert readback.obsp[key].shape == conftest_adata.obsp[key].shape
+    for key in conftest_adata.varp.keys():
+        assert readback.varp[key].shape == conftest_adata.varp[key].shape
 
 
-def test_ingest_additional_metadata(adata):
+# Magical conftest_adata fixture
+def test_ingest_additional_metadata(conftest_adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
@@ -697,7 +715,7 @@ def test_ingest_additional_metadata(adata):
 
     tiledbsoma.io.from_anndata(
         output_path,
-        adata,
+        conftest_adata,
         measurement_name="RNA",
         additional_metadata=additional_metadata,
     )
@@ -722,31 +740,32 @@ def test_ingest_additional_metadata(adata):
         check(raw.X)
 
 
-def test_null_obs(adata, tmp_path: Path):
+# Magical conftest_adata fixture
+def test_null_obs(conftest_adata, tmp_path: Path):
     output_path = tmp_path.as_uri()
     seed = 42
     #   Create column of all null values
-    adata.obs["empty_categorical_all"] = pd.Categorical(
-        [np.NaN] * adata.n_obs, dtype=pd.CategoricalDtype(categories=[], ordered=False)
+    conftest_adata.obs["empty_categorical_all"] = pd.Categorical(
+        [np.NaN] * conftest_adata.n_obs, dtype=pd.CategoricalDtype(categories=[], ordered=False)
     )
-    adata.obs["empty_extension_all"] = pd.Series(
-        [np.nan] * adata.n_obs, dtype=pd.Int64Dtype()
+    conftest_adata.obs["empty_extension_all"] = pd.Series(
+        [np.nan] * conftest_adata.n_obs, dtype=pd.Int64Dtype()
     )
     #   Create column of partially-null values
     rng = np.random.RandomState(seed)
 
-    adata.obs["empty_categorical_partial"] = rng.choice(
-        (np.NaN, 1.0), adata.n_obs, True
+    conftest_adata.obs["empty_categorical_partial"] = rng.choice(
+        (np.NaN, 1.0), conftest_adata.n_obs, True
     )
-    adata.obs["empty_extension_partial"] = pd.Series(
-        [1] * adata.n_obs + [np.nan], dtype=pd.Int64Dtype()
+    conftest_adata.obs["empty_extension_partial"] = pd.Series(
+        [1] * conftest_adata.n_obs + [np.nan], dtype=pd.Int64Dtype()
     )
 
-    original = adata.copy()
+    original = conftest_adata.copy()
     uri = tiledbsoma.io.from_anndata(
-        output_path, adata, "RNA", ingest_mode="write", X_kind=tiledbsoma.SparseNDArray
+        output_path, conftest_adata, "RNA", ingest_mode="write", X_kind=tiledbsoma.SparseNDArray
     )
-    verify_obs_var(original, adata, nan_safe=True)
+    verify_obs_and_var_same(original, conftest_adata, nan_safe=True)
 
     exp = tiledbsoma.Experiment.open(uri)
     with tiledb.open(exp.obs.uri, "r") as obs:
@@ -758,8 +777,8 @@ def test_null_obs(adata, tmp_path: Path):
         #   For every column in the data frame
         #   ensure that `isnullable` reflects the null-ness
         #   of the Pandas data frame
-        for k in adata.obs:
-            assert obs.attr(k).isnullable == adata.obs[k].isnull().any()
+        for k in conftest_adata.obs:
+            assert obs.attr(k).isnullable == conftest_adata.obs[k].isnull().any()
 
 
 def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
@@ -776,7 +795,7 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
     output_path = tmp_path.as_posix()
     tiledbsoma.io.from_anndata(output_path, adata, "RNA")
 
-    verify_obs_var(original, adata)
+    verify_obs_and_var_same(original, adata)
 
     exp = tiledbsoma.Experiment.open(output_path)
 
@@ -922,7 +941,7 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         obs_id_name=obs_id_name,
         var_id_name=var_id_name,
     )
-    verify_obs_var(original, adata)
+    verify_obs_and_var_same(original, adata)
 
     with tiledbsoma.Experiment.open(uri) as exp:
         assert obs_id_name in exp.obs.keys()
@@ -1007,7 +1026,7 @@ def test_uns_io(tmp_path, outgest_uns_keys):
     soma_uri = tmp_path.as_posix()
 
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name="RNA")
-    verify_obs_var(original, adata)
+    verify_obs_and_var_same(original, adata)
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         bdata = tiledbsoma.io.to_anndata(
@@ -1058,7 +1077,7 @@ def test_string_nan_columns(tmp_path, adata, write_index):
     uri = tmp_path.as_posix()
     original = adata.copy()
     tiledbsoma.io.from_anndata(uri, adata, measurement_name="RNA")
-    verify_obs_var(original, adata, nan_safe=True)
+    verify_obs_and_var_same(original, adata, nan_safe=True)
 
     # Step 3
     with tiledbsoma.open(uri, "r") as exp:
@@ -1116,7 +1135,7 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
 
     original = adata.copy()
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name)
-    verify_obs_var(original, adata)
+    verify_obs_and_var_same(original, adata)
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         bdata = tiledbsoma.io.to_anndata(exp, measurement_name)
@@ -1263,7 +1282,8 @@ def test_outgest_X_layers(tmp_path):
 @pytest.mark.parametrize("nans", ["all", "none", "some"])         # how many `nan`s in new column?
 @pytest.mark.parametrize("new_obs_ids", ["all", "none", "half"])  # how many new obs IDs?
 # fmt: on
-def test_nan_append(adata, dtype, nans, new_obs_ids):
+# Magical conftest_adata fixture
+def test_nan_append(conftest_adata, dtype, nans, new_obs_ids):
     """Test append-ingesting an AnnData object, including a new `obs` column with various properties:
 
     - {all,some,none} of its values are `nan`
@@ -1275,14 +1295,14 @@ def test_nan_append(adata, dtype, nans, new_obs_ids):
     - https://github.com/single-cell-data/TileDB-SOMA/pull/2357
     - https://github.com/single-cell-data/TileDB-SOMA/pull/2364
     """
-    adata.obsm = None
-    adata.varm = None
-    adata.obsp = None
-    adata.varp = None
-    adata.uns = dict()
+    conftest_adata.obsm = None
+    conftest_adata.varm = None
+    conftest_adata.obsp = None
+    conftest_adata.varp = None
+    conftest_adata.uns = dict()
 
     # Add empty column to obs
-    obs = adata.obs
+    obs = conftest_adata.obs
     if nans == "all":
         obs["batch_id"] = np.nan
     else:
@@ -1296,7 +1316,7 @@ def test_nan_append(adata, dtype, nans, new_obs_ids):
     obs["batch_id"] = obs["batch_id"].astype(dtype)
 
     # Create a copy of the anndata object
-    adata2 = adata.copy()
+    adata2 = conftest_adata.copy()
     obs2 = adata2.obs
     if new_obs_ids == "all":
         obs2.index = obs2.index + "_2"
@@ -1307,7 +1327,7 @@ def test_nan_append(adata, dtype, nans, new_obs_ids):
     # Initial ingest
     SOMA_URI = tempfile.mkdtemp(prefix="soma-exp-")
     tiledbsoma.io.from_anndata(
-        experiment_uri=SOMA_URI, anndata=adata, measurement_name="RNA"
+        experiment_uri=SOMA_URI, anndata=conftest_adata, measurement_name="RNA"
     )
 
     # Register the second anndata object

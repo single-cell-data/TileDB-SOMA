@@ -316,7 +316,7 @@ def anndata_dataframe_unmodified_nan_safe(old: pd.DataFrame, new: pd.DataFrame) 
     return True
 
 
-def verify_obs_var(ad0: AnnData, ad1: AnnData, nan_safe: bool = False) -> None:
+def verify_obs_and_var_same(ad0: AnnData, ad1: AnnData, nan_safe: bool = False) -> None:
     """Verify that two ``AnnData``'s ``obs`` and ``var`` dataframes are equivalent."""
     if nan_safe:
         assert anndata_dataframe_unmodified_nan_safe(ad0.obs, ad1.obs)
@@ -378,7 +378,9 @@ def cast_values_to_target_schema(
             target_schema.append(target_field.with_type(pa.uint8()))
         else:
             target_schema.append(target_field)
-    return values.cast(pa.schema(target_schema, values.schema.metadata))
+    new_schema = pa.schema(target_schema, values.schema.metadata)
+
+    return values.cast(new_schema)
 
 
 def build_clib_platform_config(
