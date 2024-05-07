@@ -30,7 +30,18 @@ import pyarrow as pa
 import scanpy
 from PIL import Image
 
-from .. import Collection, DataFrame, DenseNDArray, Experiment, Scene, SparseNDArray
+from .. import (
+    Axis,
+    Collection,
+    CompositeTransform,
+    CoordinateSystem,
+    DataFrame,
+    DenseNDArray,
+    Experiment,
+    ScaleTransform,
+    Scene,
+    SparseNDArray,
+)
 from .._constants import SOMA_JOINID
 from .._tiledb_object import AnyTileDBObject
 from .._types import IngestMode
@@ -71,6 +82,7 @@ def from_visium(
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
     use_raw_counts: bool = True,
+    absolute_spot_size: float = 65,
 ) -> str:
     """Reads a 10x Visium dataset and writes it to an :class:`Experiment`.
 
@@ -137,6 +149,23 @@ def from_visium(
     # Get JSON scale factors.
     with open(input_scale_factors, mode="r", encoding="utf-8") as scale_factors_json:
         scale_factors = json.load(scale_factors_json)
+    pixels_per_spot_radius = 0.5 * scale_factors["spot_diameter_fullres"]
+
+    # Create axes and transformations
+    coordinate_system = CoordinateSystem(
+        (
+            Axis(axis_name="y", axis_type="space", axis_unit="micrometer"),
+            Axis(axis_name="x", axis_type="space", axis_unit="micrometer"),
+        )
+    )
+
+    fullres_to_coords_scale = 65 / scale_factors["spot_diameter_fullres"]
+    hires_to_fullres_scale = 1.0 / scale_factors["tissue_hires_scalef"]
+    lores_to_fullres_scale = 1.0 / scale_factors["tissue_lowres_scalef"]
+
+    spots_to_coords = CompositeTransform(
+        (ScaleTransform((fullres_to_coords_scale, fullres_to_coords_scale)),)
+    )
 
     # TODO: The `obs_df` should be in dataframe with only soma_joinid and obs_id. Not
     # currently bothering to check/enforce this.
@@ -157,6 +186,7 @@ def from_visium(
                 _maybe_set(
                     spatial, scene_name, scene, use_relative_uri=use_relative_uri
                 )
+                scene.metadata["soma_scene_coordinates"] = coordinate_system.to_json()
 
                 # Write image data and add to the scene.
                 images_uri = f"{scene_uri}/img"
@@ -169,7 +199,11 @@ def from_visium(
                     use_relative_uri=use_relative_uri,
                     **ingest_ctx,
                 ) as images:
+                    images.metadata["soma_scene_coords"] = spots_to_coords.to_json()
                     _maybe_set(scene, "img", images, use_relative_uri=use_relative_uri)
+                scene.metadata.update(
+                    {"soma_asset_transform_images": spots_to_coords.to_json()}
+                )
 
                 obsl_uri = f"{scene_uri}/obsl"
 
@@ -177,13 +211,14 @@ def from_visium(
                 with _write_visium_spot_dataframe(
                     obsl_uri,
                     input_tissue_positions,
-                    scale_factors,
+                    pixels_per_spot_radius,
                     obs_df,
                     obs_id_name,
                     **ingest_ctx,
-                ) as obs_loc:
-                    _maybe_set(
-                        scene, "obsl", obs_loc, use_relative_uri=use_relative_uri
+                ) as obsl:
+                    _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
+                    obsl.metadata.update(
+                        {"soma_asset_transform_loc": spots_to_coords.to_json()}
                     )
 
                 varl_uri = f"{scene_uri}/varl"
@@ -197,7 +232,7 @@ def from_visium(
 def _write_visium_spot_dataframe(
     df_uri: str,
     input_tissue_positions: pathlib.Path,
-    scale_factors: Dict[str, Any],
+    spot_radius: float,
     obs_df: pd.DataFrame,
     id_column_name: str,
     *,
@@ -207,8 +242,6 @@ def _write_visium_spot_dataframe(
     context: Optional["SOMATileDBContext"] = None,
 ) -> DataFrame:
     """TODO: Add _write_visium_spot_dataframe docs"""
-    # Create the
-    spot_radius = 0.5 * scale_factors["spot_diameter_fullres"]
     df = (
         pd.read_csv(input_tissue_positions)
         .rename(
@@ -220,7 +253,6 @@ def _write_visium_spot_dataframe(
         )
         .assign(_soma_geometry=np.double(spot_radius))
     )
-
     df = pd.merge(obs_df, df, how="inner", on=id_column_name)
     return _write_dataframe_impl(
         df,
@@ -296,14 +328,11 @@ def _write_multiscale_images(
         additional_metadata=additional_metadata,
         context=context,
     )
-    datasets_metadata = []
+    dataset_metadata = {}
     for image_name, (image_path, image_scales) in input_images.items():
-        datasets_metadata.append(
-            {
-                "path": image_name,
-                "coordinateTransforms": [{"type": "scale", "scale": image_scales}],
-            }
-        )
+        dataset_metadata[f"soma_asset_transform_{image_name}"] = CompositeTransform(
+            (ScaleTransform(image_scales),)
+        ).to_json()
         image_uri = f"{uri}/{image_name}"
 
         # TODO: Need to create new imaging type with dimensions 'c', 'y', 'x'
@@ -324,16 +353,5 @@ def _write_multiscale_images(
         _maybe_set(
             collection, image_name, image_array, use_relative_uri=use_relative_uri
         )
-    metadata_blob = json.dumps(
-        {
-            "multiscales": [
-                {
-                    "version": "0.1.0-dev",
-                    "name": "visium-example",
-                    "datasets": datasets_metadata,
-                }
-            ]
-        }
-    )
-    collection.metadata.update({"multiscales": metadata_blob})
+    collection.metadata.update(dataset_metadata)
     return collection
