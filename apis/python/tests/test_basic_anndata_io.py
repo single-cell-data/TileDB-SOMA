@@ -483,7 +483,9 @@ def test_add_matrix_to_collection(conftest_adata):
 
     original = conftest_adata.copy()
 
-    uri = tiledbsoma.io.from_anndata(output_path, conftest_adata, measurement_name="RNA")
+    uri = tiledbsoma.io.from_anndata(
+        output_path, conftest_adata, measurement_name="RNA"
+    )
 
     verify_obs_and_var_same(original, conftest_adata)
 
@@ -491,7 +493,9 @@ def test_add_matrix_to_collection(conftest_adata):
     with _factory.open(output_path) as exp_r:
         assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
         with pytest.raises(tiledbsoma.SOMAError):
-            tiledbsoma.io.add_X_layer(exp, "RNA", "data2", conftest_adata.X)  # not open for read
+            tiledbsoma.io.add_X_layer(
+                exp, "RNA", "data2", conftest_adata.X
+            )  # not open for read
     with _factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_X_layer(exp, "RNA", "data2", conftest_adata.X)
     with pytest.raises(tiledbsoma.SOMAError):
@@ -611,7 +615,9 @@ def test_add_matrix_to_collection_1_2_7(conftest_adata):
     output_path = tempdir.name
     original = conftest_adata.copy()
 
-    uri = tiledbsoma.io.from_anndata(output_path, conftest_adata, measurement_name="RNA")
+    uri = tiledbsoma.io.from_anndata(
+        output_path, conftest_adata, measurement_name="RNA"
+    )
 
     verify_obs_and_var_same(original, conftest_adata)
 
@@ -637,7 +643,9 @@ def test_add_matrix_to_collection_1_2_7(conftest_adata):
         )
 
     with _factory.open(output_path, "w") as exp:
-        add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", conftest_adata.obsm["X_pca"])
+        add_matrix_to_collection(
+            exp, "RNA", "obsm", "X_pcb", conftest_adata.obsm["X_pca"]
+        )
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
             list(conftest_adata.obsm.keys()) + ["X_pcb"]
@@ -646,7 +654,9 @@ def test_add_matrix_to_collection_1_2_7(conftest_adata):
     with _factory.open(output_path, "w") as exp:
         # It's nonsense biologically to add this to varp, but as a fake-test unit-test case, we can
         # use varp to test adding to a not-yet-existing collection.
-        add_matrix_to_collection(exp, "RNA", "varp", "X_pcb", conftest_adata.obsm["X_pca"])
+        add_matrix_to_collection(
+            exp, "RNA", "varp", "X_pcb", conftest_adata.obsm["X_pca"]
+        )
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"].varp.keys())) == sorted(
             list(conftest_adata.varp.keys()) + ["X_pcb"]
@@ -658,7 +668,9 @@ def test_add_matrix_to_collection_1_2_7(conftest_adata):
                 exp, "nonesuch", "obsm", "X_pcc", conftest_adata.obsm["X_pca"]
             )
 
-        add_matrix_to_collection(exp, "RNA", "newthing", "X_pcd", conftest_adata.obsm["X_pca"])
+        add_matrix_to_collection(
+            exp, "RNA", "newthing", "X_pcd", conftest_adata.obsm["X_pca"]
+        )
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
@@ -746,7 +758,8 @@ def test_null_obs(conftest_adata, tmp_path: Path):
     seed = 42
     #   Create column of all null values
     conftest_adata.obs["empty_categorical_all"] = pd.Categorical(
-        [np.NaN] * conftest_adata.n_obs, dtype=pd.CategoricalDtype(categories=[], ordered=False)
+        [np.NaN] * conftest_adata.n_obs,
+        dtype=pd.CategoricalDtype(categories=[], ordered=False),
     )
     conftest_adata.obs["empty_extension_all"] = pd.Series(
         [np.nan] * conftest_adata.n_obs, dtype=pd.Int64Dtype()
@@ -763,7 +776,11 @@ def test_null_obs(conftest_adata, tmp_path: Path):
 
     original = conftest_adata.copy()
     uri = tiledbsoma.io.from_anndata(
-        output_path, conftest_adata, "RNA", ingest_mode="write", X_kind=tiledbsoma.SparseNDArray
+        output_path,
+        conftest_adata,
+        "RNA",
+        ingest_mode="write",
+        X_kind=tiledbsoma.SparseNDArray,
     )
     verify_obs_and_var_same(original, conftest_adata, nan_safe=True)
 
@@ -1061,8 +1078,9 @@ def test_uns_io(tmp_path, outgest_uns_keys):
         assert set(b.keys()) == set(outgest_uns_keys)
 
 
+# Magical conftest_adata fixture
 @pytest.mark.parametrize("write_index", [0, 1])
-def test_string_nan_columns(tmp_path, adata, write_index):
+def test_string_nan_columns(tmp_path, conftest_adata, write_index):
     # Use case:
     #
     # 1. Anndata has column filled with np.nan
@@ -1071,13 +1089,13 @@ def test_string_nan_columns(tmp_path, adata, write_index):
     # 4. Fill all/part of empty column with string values
 
     # Step 1
-    adata.obs["new_col"] = pd.Series(data=np.nan, dtype=np.dtype(str))
+    conftest_adata.obs["new_col"] = pd.Series(data=np.nan, dtype=np.dtype(str))
 
     # Step 2
     uri = tmp_path.as_posix()
-    original = adata.copy()
-    tiledbsoma.io.from_anndata(uri, adata, measurement_name="RNA")
-    verify_obs_and_var_same(original, adata, nan_safe=True)
+    original = conftest_adata.copy()
+    tiledbsoma.io.from_anndata(uri, conftest_adata, measurement_name="RNA")
+    verify_obs_and_var_same(original, conftest_adata, nan_safe=True)
 
     # Step 3
     with tiledbsoma.open(uri, "r") as exp:
@@ -1158,7 +1176,10 @@ def test_obsm_data_type(conftest_adata):
     tempdir = tempfile.TemporaryDirectory()
     soma_path = tempdir.name
     bdata = anndata.AnnData(
-        X=adata.X, obs=adata.obs, var=adata.var, obsm={"testing": adata.obs}
+        X=conftest_adata.X,
+        obs=conftest_adata.obs,
+        var=conftest_adata.var,
+        obsm={"testing": conftest_adata.obs},
     )
 
     with pytest.raises(TypeError):
