@@ -138,6 +138,7 @@ arrow_type_range <- function(x) {
     bool = NULL,
     # string/utf8
     utf8 = NULL,
+    large_utf8 = NULL,
     stop("Unsupported data type:", x$name, call. = FALSE)
   )
 }
@@ -366,7 +367,11 @@ get_domain_and_extent <- function(tbl_schema, ind_col_names,
         if (ind_col$type$bit_width %||% 0L == 8L) {
             ind_ext <- 64L
         }
-        aa <- arrow::arrow_array(c(ind_dom, ind_ext), ind_col_type)
+        if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
+            aa <- arrow::arrow_array(c("", "", ""), ind_col_type)
+        } else {
+            aa <- arrow::arrow_array(c(ind_dom, ind_ext), ind_col_type)
+        }
         aa
     })
     names(rl) <- ind_col_names

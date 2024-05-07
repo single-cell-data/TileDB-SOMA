@@ -155,7 +155,7 @@ void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp) {
     nanoarrow::UniqueSchema sp{nanoarrow_schema_from_xptr(nasp)};
 
     auto somactx = std::make_shared<tdbs::SOMAContext>();
-    auto arrup = tdbs::SOMAArray::open(OpenMode::write, uri, somactx);
+    auto arrup = tdbs::SOMADataFrame::open(OpenMode::write, uri, somactx);
 
     auto schema = std::make_unique<ArrowSchema>();
     sp.move(schema.get());
@@ -164,6 +164,8 @@ void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp) {
 
     arrup.get()->set_array_data(std::move(schema), std::move(array));
     arrup.get()->write();
+    arrup.get()->close();
+
 }
 
 // [[Rcpp::export]]
