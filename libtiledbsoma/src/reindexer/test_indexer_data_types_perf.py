@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 
+# tiledbsoma._index_util no longer exists -- why isn't CI red?
 from tiledbsoma._index_util import tiledbsoma_build_index
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
