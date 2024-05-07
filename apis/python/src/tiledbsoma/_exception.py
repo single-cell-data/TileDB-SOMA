@@ -6,10 +6,6 @@
 """Exceptions.
 """
 
-from typing import Union
-
-import tiledb
-
 
 class SOMAError(Exception):
     """Base error type for SOMA-specific exceptions.
@@ -29,16 +25,16 @@ class DoesNotExistError(SOMAError):
     pass
 
 
-def is_does_not_exist_error(e: Union[RuntimeError, tiledb.TileDBError]) -> bool:
-    """Given a TileDBError, return true if it indicates the object does not exist
+def is_does_not_exist_error(e: RuntimeError) -> bool:
+    """Given a RuntimeError, return true if it indicates the object does not exist
 
     Lifecycle: maturing
 
     Example:
         try:
-            with tiledb.open(uri):
+            with tiledbsoma.open(uri):
                 ...
-        except tiledb.TileDBError as e:
+        except RuntimeError as e:
             if is_does_not_exist_error(e):
                 ...
             raise e
@@ -66,16 +62,16 @@ class AlreadyExistsError(SOMAError):
     pass
 
 
-def is_already_exists_error(e: Union[SOMAError, tiledb.TileDBError]) -> bool:
-    """Given a TileDBError, return true if it indicates the object already exists
+def is_already_exists_error(e: SOMAError) -> bool:
+    """Given a SOMAError, return true if it indicates the object already exists
 
     Lifecycle: experimental
 
     Example:
         try:
-            tiledb.Array.create(uri, schema, ctx=ctx)
+            clib.SOMASparseNDArray.create(...)
                 ...
-        except tiledb.TileDBError as e:
+        except SOMAError as e:
             if is_already_exists_error(e):
                 ...
             raise e
@@ -96,7 +92,7 @@ class NotCreateableError(SOMAError):
     pass
 
 
-def is_not_createable_error(e: Union[SOMAError, tiledb.TileDBError]) -> bool:
+def is_not_createable_error(e: SOMAError) -> bool:
     """Given a TileDBError, return true if it indicates the object cannot be created
 
     Lifecycle: experimental
@@ -132,7 +128,7 @@ def is_not_createable_error(e: Union[SOMAError, tiledb.TileDBError]) -> bool:
     return False
 
 
-def is_duplicate_group_key_error(e: Union[SOMAError, tiledb.TileDBError]) -> bool:
+def is_duplicate_group_key_error(e: SOMAError) -> bool:
     """Given a TileDBError, return try if it indicates a duplicate member
     add request in a tiledb.Group.
 

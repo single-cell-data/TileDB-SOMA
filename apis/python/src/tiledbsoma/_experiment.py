@@ -16,16 +16,16 @@ from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._indexer import IntIndexer
 from ._measurement import Measurement
+from ._soma_object import AnySOMAObject
 from ._tdb_handles import Wrapper
-from ._tiledb_object import AnyTileDBObject
 
 
 class Experiment(  # type: ignore[misc]  # __eq__ false positive
-    CollectionBase[AnyTileDBObject],
+    CollectionBase[AnySOMAObject],
     experiment.Experiment[  # type: ignore[type-var]
         DataFrame,
         Collection[Measurement],
-        AnyTileDBObject,
+        AnySOMAObject,
     ],
 ):
     """A collection subtype that combines observations and measurements

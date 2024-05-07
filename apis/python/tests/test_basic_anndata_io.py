@@ -14,7 +14,7 @@ import somacore
 import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
-from tiledbsoma._tiledb_object import TileDBObject
+from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma._util import verify_obs_and_var_eq
 import tiledb
 
@@ -717,7 +717,7 @@ def test_ingest_additional_metadata(conftest_pbmc_small):
         additional_metadata=additional_metadata,
     )
 
-    def check(tdbo: TileDBObject):
+    def check(tdbo: SOMAObject):
         for k, v in additional_metadata.items():
             assert tdbo.metadata[k] == v
 

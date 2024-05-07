@@ -14,12 +14,12 @@ from . import _tdb_handles
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
+from ._soma_object import AnySOMAObject
 from ._sparse_nd_array import SparseNDArray
-from ._tiledb_object import AnyTileDBObject
 
 
 class Measurement(  # type: ignore[misc]  # __eq__ false positive
-    CollectionBase[AnyTileDBObject],
+    CollectionBase[AnySOMAObject],
     measurement.Measurement[  # type: ignore[type-var]
         DataFrame,
         Collection[
@@ -27,7 +27,7 @@ class Measurement(  # type: ignore[misc]  # __eq__ false positive
         ],  # not just `NDArray` since that has no common `read`
         Collection[DenseNDArray],
         Collection[SparseNDArray],
-        AnyTileDBObject,
+        AnySOMAObject,
     ],
 ):
     """A set of observations defined by a dataframe, with measurements.
@@ -71,6 +71,8 @@ class Measurement(  # type: ignore[misc]  # __eq__ false positive
     """
 
     __slots__ = ()
+    _wrapper_type = _tdb_handles.MeasurementWrapper
+
     _wrapper_type = _tdb_handles.MeasurementWrapper
 
     _subclass_constrained_soma_types = {

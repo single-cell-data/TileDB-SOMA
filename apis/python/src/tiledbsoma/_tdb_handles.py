@@ -32,16 +32,12 @@ from numpy.typing import DTypeLike
 from somacore import options
 from typing_extensions import Literal, Self
 
-import tiledb
-
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
 RawHandle = Union[
-    tiledb.Array,
-    tiledb.Group,
     clib.SOMAArray,
     clib.SOMADataFrame,
     clib.SOMASparseNDArray,
@@ -67,8 +63,6 @@ def open(
 
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
-    # if there is not a valid SOMAObject at the given URI, this
-    # returns None
     soma_object = clib.SOMAObject.open(
         uri=uri,
         mode=open_mode,
@@ -133,8 +127,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             else:
                 handle._do_initial_reads(tdb)
 
-        # TODO macOS throws RuntimeError
-        except (RuntimeError, tiledb.TileDBError) as tdbe:
+        except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(f"{uri!r} does not exist") from tdbe
             raise
@@ -155,8 +148,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             else:
                 handle._do_initial_reads(soma_object)
 
-        # TODO macOS throws RuntimeError
-        except (RuntimeError, tiledb.TileDBError) as tdbe:
+        except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(f"{handle.uri!r} does not exist") from tdbe
             raise
@@ -239,71 +231,10 @@ AnyWrapper = Wrapper[RawHandle]
 """Non-instantiable type representing any Handle."""
 
 
-class ArrayWrapper(Wrapper[tiledb.Array]):
-    """Wrapper around a TileDB Array handle."""
-
-    clib_type = "SOMAArray"
-
-    @classmethod
-    def _opener(
-        cls,
-        uri: str,
-        mode: options.OpenMode,
-        context: SOMATileDBContext,
-        timestamp: int,
-    ) -> tiledb.Array:
-        return tiledb.open(
-            uri,
-            mode,
-            timestamp=timestamp,
-            ctx=context.tiledb_ctx,
-        )
-
-    @property
-    def schema(self) -> tiledb.ArraySchema:
-        return self._handle.schema
-
-    def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
-        try:
-            return self._handle.nonempty_domain() or ()
-        except tiledb.TileDBError as e:
-            raise SOMAError(e)
-
-    @property
-    def domain(self) -> Tuple[Tuple[object, object], ...]:
-        dom = self._handle.schema.domain
-        return tuple(dom.dim(i).domain for i in range(dom.ndim))
-
-    @property
-    def ndim(self) -> int:
-        return int(self._handle.schema.domain.ndim)
-
-    @property
-    def attr_names(self) -> Tuple[str, ...]:
-        schema = self._handle.schema
-        return tuple(schema.attr(i).name for i in range(schema.nattr))
-
-    @property
-    def dim_names(self) -> Tuple[str, ...]:
-        schema = self._handle.schema
-        return tuple(schema.domain.dim(i).name for i in range(schema.domain.ndim))
-
-    def enum(self, label: str) -> tiledb.Enumeration:
-        return self._handle.enum(label)
-
-
 @attrs.define(frozen=True)
 class GroupEntry:
     uri: str
     wrapper_type: Type[AnyWrapper]
-
-    @classmethod
-    def from_object(cls, obj: tiledb.Object) -> "GroupEntry":
-        if obj.type == tiledb.Array:
-            return GroupEntry(obj.uri, ArrayWrapper)
-        if obj.type == tiledb.Group:
-            return GroupEntry(obj.uri, GroupWrapper)
-        raise SOMAError(f"internal error: unknown object type {obj.type}")
 
     @classmethod
     def from_soma_group_entry(cls, obj: Tuple[str, str]) -> "GroupEntry":
@@ -314,9 +245,13 @@ class GroupEntry:
             return GroupEntry(uri, SOMAGroupWrapper)
         raise SOMAError(f"internal error: unknown object type {uri}")
 
+_GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
 
-class GroupWrapper(Wrapper[tiledb.Group]):
-    """Wrapper around a TileDB Group handle."""
+
+class SOMAGroupWrapper(Wrapper[_GrpType]):
+    """Base class for Pybind11 SOMAGroupWrapper handles."""
+
+    _GROUP_WRAPPED_TYPE: Type[_GrpType]
 
     clib_type = "SOMAGroup"
 
@@ -327,19 +262,26 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         mode: options.OpenMode,
         context: SOMATileDBContext,
         timestamp: int,
-    ) -> tiledb.Group:
-        # We want to do open-group-at-timestamp.
-        ctx = context.tiledb_ctx
-        cfgdict = context.tiledb_ctx.config().dict()
-        cfgdict["sm.group.timestamp_end"] = timestamp
-        return tiledb.Group(uri, mode, ctx=ctx, config=tiledb.Config(cfgdict))
+    ) -> clib.SOMAGroup:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        return cls._GROUP_WRAPPED_TYPE.open(
+            uri,
+            mode=open_mode,
+            context=context.native_context,
+            timestamp=(0, timestamp),
+        )
 
-    def _do_initial_reads(self, reader: tiledb.Group) -> None:
-        super()._do_initial_reads(reader)
+    def _do_initial_reads(self, group: clib.SOMAGroup) -> None:
+        super()._do_initial_reads(group)
+
         self.initial_contents = {
-            o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
+            name: GroupEntry.from_soma_group_entry(entry)
+            for name, entry in group.members().items()
         }
 
+    @property
+    def meta(self) -> "MetadataWrapper":
+        return self.metadata
 
 _GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
 
@@ -488,12 +430,6 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
     @property
     def dim_names(self) -> Tuple[str, ...]:
         return tuple(self._handle.dimension_names)
-
-    def enum(self, label: str) -> tiledb.Enumeration:
-        # The DataFrame handle may either be ArrayWrapper or DataFrameWrapper.
-        # enum is only used in the DataFrame write path and is implemented by
-        # ArrayWrapper. If enum is called in the read path, it is an error.
-        raise NotImplementedError
 
     @property
     def shape(self) -> Tuple[int, ...]:
