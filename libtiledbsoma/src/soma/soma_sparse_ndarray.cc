@@ -54,6 +54,7 @@ void SOMASparseNDArray::create(
     schema->format = strdup("+s");
     schema->n_children = index_column_size + 1;
     schema->dictionary = nullptr;
+    schema->flags = 0;
     schema->release = &ArrowAdapter::release_schema;
     schema->children = new ArrowSchema*[schema->n_children];
 
@@ -73,6 +74,7 @@ void SOMASparseNDArray::create(
     attr->format = strdup(std::string(format).c_str());
     attr->name = strdup("soma_data");
     attr->n_children = 0;
+    attr->flags = 0;
     attr->dictionary = nullptr;
     attr->release = &ArrowAdapter::release_schema;
 
