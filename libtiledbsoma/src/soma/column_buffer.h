@@ -156,6 +156,40 @@ class ColumnBuffer {
     }
 
     /**
+     * @brief Set the ColumnBuffer's data for string and binary (as opposed to
+     * large string or large binary)
+     *
+     * @param data pointer to the beginning of the data to write
+     * @param num_elems the number of elements in the column
+     */
+    void set_data(
+        uint64_t num_elems,
+        const void* data,
+        uint32_t* offsets,
+        uint8_t* validity = nullptr) {
+        num_cells_ = num_elems;
+
+        auto num_offsets = num_elems + 1;
+        std::vector<uint32_t> offset_holder;
+        offset_holder.resize(num_offsets);
+        offset_holder.assign((uint32_t*)offsets, (uint32_t*)offsets + num_offsets);
+        offsets_ = std::vector<uint64_t>(offset_holder.begin(), offset_holder.end());
+
+        data_size_ = offsets_[num_offsets - 1];
+        data_.resize(data_size_);
+        data_.assign((std::byte*)data, (std::byte*)data + data_size_);
+
+        if (is_nullable_) {
+            if (validity != nullptr) {
+                validity_.assign(validity, validity + num_elems);
+            } else {
+                validity_.resize(num_elems);
+                std::fill(validity_.begin(), validity_.end(), 1);
+            }
+        }
+    }
+
+    /**
      * @brief Size num_cells_ to match the read query results.
      *
      * @param query TileDB query
