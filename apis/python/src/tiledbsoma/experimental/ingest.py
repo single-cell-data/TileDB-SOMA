@@ -173,13 +173,13 @@ def from_visium(
                         scene, "images", images, use_relative_uri=use_relative_uri
                     )
 
-                obss_uri = f"{scene_uri}/obss"
+                obsl_uri = f"{scene_uri}/obsl"
                 with _create_or_open_collection(
-                    Collection[AnyTileDBObject], obss_uri, **ingest_ctx
-                ) as obss:
-                    _maybe_set(scene, "obss", obss, use_relative_uri=use_relative_uri)
+                    Collection[AnyTileDBObject], obsl_uri, **ingest_ctx
+                ) as obsl:
+                    _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
 
-                    obs_loc_uri = f"{obss_uri}/obs_locations"
+                    obs_loc_uri = f"{obsl_uri}/loc"
 
                     # Write spot data and add to the scene.
                     with _write_visium_spot_dataframe(
@@ -191,14 +191,14 @@ def from_visium(
                         **ingest_ctx,
                     ) as obs_loc:
                         _maybe_set(
-                            obss, "loc", obs_loc, use_relative_uri=use_relative_uri
+                            obsl, "loc", obs_loc, use_relative_uri=use_relative_uri
                         )
 
-                scene_ms_uri = f"{scene_uri}/vars"
+                varl_uri = f"{scene_uri}/varl"
                 with _create_or_open_collection(
-                    Collection[Collection[AnyTileDBObject]], scene_ms_uri, **ingest_ctx
-                ) as vars:
-                    _maybe_set(scene, "vars", vars, use_relative_uri=use_relative_uri)
+                    Collection[Collection[AnyTileDBObject]], varl_uri, **ingest_ctx
+                ) as varl:
+                    _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
         return uri
 
 
