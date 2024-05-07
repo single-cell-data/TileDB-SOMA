@@ -33,30 +33,36 @@
 #include "common.h"
 
 TEST_CASE("SOMACollection: basic") {
+    TimestampRange ts(0, 2);
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-collection-basic";
 
-    SOMACollection::create(uri, ctx);
-    auto soma_collection = SOMACollection::open(uri, OpenMode::read, ctx);
+    SOMACollection::create(uri, ctx, ts);
+    auto soma_collection = SOMACollection::open(uri, OpenMode::read, ctx, ts);
     REQUIRE(soma_collection->uri() == uri);
     REQUIRE(soma_collection->ctx() == ctx);
     REQUIRE(soma_collection->type() == "SOMACollection");
+    REQUIRE(soma_collection->timestamp() == ts);
     soma_collection->close();
 }
 
 TEST_CASE("SOMACollection: add SOMASparseNDArray") {
+    TimestampRange ts(0, 2);
     auto ctx = std::make_shared<SOMAContext>();
     std::string base_uri = "mem://unit-test-add-sparse-ndarray";
     std::string sub_uri = "mem://unit-test-add-sparse-ndarray/sub";
 
-    SOMACollection::create(base_uri, ctx);
+    SOMACollection::create(base_uri, ctx, ts);
     auto index_columns = helper::create_column_index_info();
     auto schema = helper::create_schema(*ctx->tiledb_ctx(), true);
 
     std::map<std::string, std::string> expected_map{
         {"sparse_ndarray", sub_uri}};
 
-    auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
+    auto soma_collection = SOMACollection::open(
+        base_uri, OpenMode::write, ctx, ts);
+    REQUIRE(soma_collection->timestamp() == ts);
+
     auto soma_sparse = soma_collection->add_new_sparse_ndarray(
         "sparse_ndarray",
         sub_uri,
@@ -72,6 +78,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     REQUIRE(soma_sparse->is_sparse() == true);
     REQUIRE(soma_sparse->ndim() == 1);
     REQUIRE(soma_sparse->nnz() == 0);
+    REQUIRE(soma_sparse->timestamp() == ts);
     soma_sparse->close();
     soma_collection->close();
 
@@ -81,17 +88,21 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
 }
 
 TEST_CASE("SOMACollection: add SOMADenseNDArray") {
+    TimestampRange ts(0, 2);
     auto ctx = std::make_shared<SOMAContext>();
     std::string base_uri = "mem://unit-test-add-dense-ndarray";
     std::string sub_uri = "mem://unit-test-add-dense-ndarray/sub";
 
-    SOMACollection::create(base_uri, ctx);
+    SOMACollection::create(base_uri, ctx, ts);
     auto index_columns = helper::create_column_index_info();
-    auto schema = helper::create_schema(*ctx->tiledb_ctx(), false);
+    auto schema = helper::create_schema(*ctx->tiledb_ctx(), true);
 
     std::map<std::string, std::string> expected_map{{"dense_ndarray", sub_uri}};
 
-    auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
+    auto soma_collection = SOMACollection::open(
+        base_uri, OpenMode::write, ctx, ts);
+    REQUIRE(soma_collection->timestamp() == ts);
+
     auto soma_dense = soma_collection->add_new_dense_ndarray(
         "dense_ndarray",
         sub_uri,
@@ -107,6 +118,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     REQUIRE(soma_dense->is_sparse() == false);
     REQUIRE(soma_dense->ndim() == 1);
     REQUIRE(soma_dense->shape() == std::vector<int64_t>{1001});
+    REQUIRE(soma_dense->timestamp() == ts);
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
@@ -115,16 +127,20 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
 }
 
 TEST_CASE("SOMACollection: add SOMADataFrame") {
+    TimestampRange ts(0, 2);
     auto ctx = std::make_shared<SOMAContext>();
     std::string base_uri = "mem://unit-test-add-dataframe";
     std::string sub_uri = "mem://unit-test-add-dataframe/sub";
 
-    SOMACollection::create(base_uri, ctx);
+    SOMACollection::create(base_uri, ctx, ts);
     auto [schema, index_columns] = helper::create_arrow_schema();
 
     std::map<std::string, std::string> expected_map{{"dataframe", sub_uri}};
 
-    auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
+    auto soma_collection = SOMACollection::open(
+        base_uri, OpenMode::write, ctx, ts);
+    REQUIRE(soma_collection->timestamp() == ts);
+
     auto soma_dataframe = soma_collection->add_new_dataframe(
         "dataframe",
         sub_uri,
@@ -140,6 +156,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     std::vector<std::string> expected_index_column_names = {"d0"};
     REQUIRE(
         soma_dataframe->index_column_names() == expected_index_column_names);
+    REQUIRE(soma_dataframe->timestamp() == ts);
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);

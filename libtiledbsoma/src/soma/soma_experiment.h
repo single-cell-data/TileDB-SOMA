@@ -95,9 +95,33 @@ class SOMAExperiment : public SOMACollection {
     }
 
     SOMAExperiment() = delete;
-    SOMAExperiment(const SOMAExperiment&) = default;
-    SOMAExperiment(SOMAExperiment&&) = default;
+    SOMAExperiment(const SOMAExperiment&) = delete;
+    SOMAExperiment(SOMAExperiment&&) = delete;
     ~SOMAExperiment() = default;
+
+    /**
+     * @brief Get the primary annotations on the observation axis
+     * @param column_names A list of column names to use as user-defined
+     index
+     * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns
+     must
+     * exist in the schema, and at least one index column name is required.
+     * @param result_order Read result order: automatic (default), rowmajor,
+     or
+     * colmajor
+     *
+     * @return std::shared_ptr<SOMADataFrame>
+     */
+    std::shared_ptr<SOMADataFrame> obs(
+        std::vector<std::string> column_names = {},
+        ResultOrder result_order = ResultOrder::automatic);
+
+    /**
+     * @brief Get the collection of named measurements
+     *
+     * @return std::shared_ptr<SOMACollection>
+     */
+    std::shared_ptr<SOMACollection> ms();
 
    private:
     //===================================================================
@@ -105,10 +129,10 @@ class SOMAExperiment : public SOMACollection {
     //===================================================================
 
     // Primary annotations on the observation axis
-    std::shared_ptr<SOMADataFrame> obs_;
+    std::shared_ptr<SOMADataFrame> obs_ = nullptr;
 
     // A collection of named measurements
-    std::shared_ptr<SOMACollection> ms_;
+    std::shared_ptr<SOMACollection> ms_ = nullptr;
 };
 }  // namespace tiledbsoma
 

@@ -194,9 +194,14 @@ class SOMAGroup : public SOMAObject {
     /**
      * Return a SOMAGroup member to URI mapping.
      *
-     * @return std::map<std::string, std::string>
+     * @return std::optional<TimestampRange>
      */
     std::map<std::string, std::string> member_to_uri_mapping() const;
+
+    /**
+     * Return optional timestamp pair SOMAArray was opened with.
+     */
+    std::optional<TimestampRange> timestamp();
 
     /**
      * Set metadata key-value items to an open array. The array must

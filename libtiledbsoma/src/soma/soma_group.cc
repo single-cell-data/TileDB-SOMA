@@ -90,7 +90,8 @@ SOMAGroup::SOMAGroup(
     std::optional<TimestampRange> timestamp)
     : ctx_(ctx)
     , uri_(util::rstrip_uri(uri))
-    , name_(name) {
+    , name_(name)
+    , timestamp_(timestamp) {
     group_ = std::make_shared<Group>(
         *ctx_->tiledb_ctx(),
         std::string(uri),
@@ -196,6 +197,10 @@ void SOMAGroup::del(const std::string& name) {
 
 std::map<std::string, std::string> SOMAGroup::member_to_uri_mapping() const {
     return member_to_uri_;
+}
+
+std::optional<TimestampRange> SOMAGroup::timestamp() {
+    return timestamp_;
 }
 
 void SOMAGroup::set_metadata(

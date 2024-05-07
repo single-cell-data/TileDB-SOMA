@@ -285,7 +285,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 input = np.ascontiguousarray(input)
             order = clib.ResultOrder.rowmajor
         clib_dense_array.reset(result_order=order)
-
         self._set_reader_coords(clib_dense_array, new_coords)
         clib_dense_array.write(input)
 

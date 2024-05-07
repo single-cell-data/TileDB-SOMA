@@ -128,7 +128,7 @@ class SOMACollection : public SOMAGroup {
      *
      * @param key of member
      */
-    std::shared_ptr<SOMAObject> get(const std::string& key);
+    std::unique_ptr<SOMAObject> get(const std::string& key);
 
     /**
      * Create and add a SOMACollection to the SOMACollection.
@@ -137,12 +137,14 @@ class SOMACollection : public SOMAGroup {
      * @param uri of SOMACollection to add
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
+     * @param timestamp Optional the timestamp range to open at
      */
     std::shared_ptr<SOMACollection> add_new_collection(
         std::string_view key,
         std::string_view uri,
         URIType uri_type,
-        std::shared_ptr<SOMAContext> ctx);
+        std::shared_ptr<SOMAContext> ctx,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * Create and add a SOMAExperiment to the SOMACollection.
@@ -151,6 +153,7 @@ class SOMACollection : public SOMAGroup {
      * @param uri of SOMAExperiment to add
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
+     * @param timestamp Optional the timestamp range to open at
      */
     std::shared_ptr<SOMAExperiment> add_new_experiment(
         std::string_view key,
@@ -159,7 +162,8 @@ class SOMACollection : public SOMAGroup {
         std::shared_ptr<SOMAContext> ctx,
         std::unique_ptr<ArrowSchema> schema,
         ArrowTable index_columns,
-        PlatformConfig platform_config = PlatformConfig());
+        PlatformConfig platform_config = PlatformConfig(),
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * Create and add a SOMAMeasurement to the SOMACollection.
@@ -168,6 +172,7 @@ class SOMACollection : public SOMAGroup {
      * @param uri of SOMAMeasurement to add
      * @param uri_type whether the given URI is automatic (default), absolute,
      * or relative
+     * @param timestamp Optional the timestamp range to open at
      */
     std::shared_ptr<SOMAMeasurement> add_new_measurement(
         std::string_view key,
@@ -175,7 +180,9 @@ class SOMACollection : public SOMAGroup {
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
         std::unique_ptr<ArrowSchema> schema,
-        ArrowTable index_columns);
+        ArrowTable indext_columns,
+        PlatformConfig platform_config = PlatformConfig(),
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * Create and add a SOMADataFrame to the SOMACollection.
@@ -189,7 +196,7 @@ class SOMACollection : public SOMAGroup {
      * @param index_columns The index column names with associated domains
      * and tile extents per dimension
      * @param platform_config Optional config parameter dictionary
-     * @param timestamp Optional the timestamp range to write SOMA metadata info
+     * @param timestamp Optional the timestamp range to open at
      */
     std::shared_ptr<SOMADataFrame> add_new_dataframe(
         std::string_view key,
@@ -199,6 +206,8 @@ class SOMACollection : public SOMAGroup {
         std::unique_ptr<ArrowSchema> schema,
         ArrowTable index_columns,
         PlatformConfig platform_config = PlatformConfig(),
+        std::vector<std::string> column_names = {},
+        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -213,7 +222,7 @@ class SOMACollection : public SOMAGroup {
      * @param index_columns The index column names with associated domains
      * and tile extents per dimension
      * @param platform_config Optional config parameter dictionary
-     * @param timestamp Optional the timestamp range to write SOMA metadata info
+     * @param timestamp Optional the timestamp range to open at
      */
     std::shared_ptr<SOMADenseNDArray> add_new_dense_ndarray(
         std::string_view key,
@@ -223,6 +232,8 @@ class SOMACollection : public SOMAGroup {
         std::string_view format,
         ArrowTable index_columns,
         PlatformConfig platform_config = PlatformConfig(),
+        std::vector<std::string> column_names = {},
+        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -237,7 +248,7 @@ class SOMACollection : public SOMAGroup {
      * @param index_columns The index column names with associated domains
      * and tile extents per dimension
      * @param platform_config Optional config parameter dictionary
-     * @param timestamp Optional the timestamp range to write SOMA metadata info
+     * @param timestamp Optional the timestamp range to open at
      */
     std::shared_ptr<SOMASparseNDArray> add_new_sparse_ndarray(
         std::string_view key,
@@ -247,6 +258,8 @@ class SOMACollection : public SOMAGroup {
         std::string_view format,
         ArrowTable index_columns,
         PlatformConfig platform_config = PlatformConfig(),
+        std::vector<std::string> column_names = {},
+        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
    protected:
