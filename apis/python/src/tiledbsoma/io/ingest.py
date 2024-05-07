@@ -1203,7 +1203,7 @@ def _write_dataframe_impl(
         )
     except (AlreadyExistsError, NotCreateableError):
         if ingestion_params.error_if_already_exists:
-            raise SOMAError(f"{soma_df.uri} already exists")
+            raise SOMAError(f"{df_uri} already exists")
 
         soma_df = DataFrame.open(df_uri, "w", context=context)
 
