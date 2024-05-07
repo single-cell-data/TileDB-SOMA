@@ -284,7 +284,7 @@ def _get_fragment_count(array_uri):
     ],
 )
 # Magical conftest_adata fixture
-def test_resume_mode(adata, resume_mode_h5ad_file):
+def test_resume_mode(conftest_adata, resume_mode_h5ad_file):
     """
     Makes sure resume-mode ingest after successful ingest of the same input data does not write
     anything new
@@ -1153,7 +1153,8 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
         assert adata.var.index.name == bdata.var.index.name
 
 
-def test_obsm_data_type(adata):
+# Magical conftest_adata fixture
+def test_obsm_data_type(conftest_adata):
     tempdir = tempfile.TemporaryDirectory()
     soma_path = tempdir.name
     bdata = anndata.AnnData(
