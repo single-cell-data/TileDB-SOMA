@@ -180,7 +180,7 @@ class SOMACollection : public SOMAGroup {
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
         std::unique_ptr<ArrowSchema> schema,
-        ArrowTable indext_columns,
+        ArrowTable index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 

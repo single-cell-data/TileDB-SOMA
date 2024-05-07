@@ -47,8 +47,30 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_collection(py::module& m) {
-    py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection");
-    py::class_<SOMAExperiment, SOMAGroup, SOMAObject>(m, "SOMAExperiment");
-    py::class_<SOMAMeasurement, SOMAGroup, SOMAObject>(m, "SOMAMeasurement");
+    py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection")
+        .def("get", &SOMACollection::get)
+        .def("add_new_collection", &SOMACollection::add_new_collection)
+        /* TODO ArrowTable needs to be passed in as py::object and converted */
+        // .def("add_new_experiment", &SOMACollection::add_new_experiment)
+        // .def("add_new_measurement", &SOMACollection::add_new_measurement)
+        // .def("add_new_dataframe", &SOMACollection::add_new_dataframe)
+        // .def("add_new_dense_ndarray", &SOMACollection::add_new_dense_ndarray)
+        // .def("add_new_sparse_ndarray",
+        // &SOMACollection::add_new_sparse_ndarray)
+        ;
+
+    py::class_<SOMAExperiment, SOMACollection, SOMAGroup, SOMAObject>(
+        m, "SOMAExperiment")
+        .def("obs", &SOMAExperiment::obs)
+        .def("ms", &SOMAExperiment::ms);
+
+    py::class_<SOMAMeasurement, SOMACollection, SOMAGroup, SOMAObject>(
+        m, "SOMAMeasurement")
+        .def("var", &SOMAMeasurement::var)
+        .def("X", &SOMAMeasurement::X)
+        .def("obsm", &SOMAMeasurement::obsm)
+        .def("obsp", &SOMAMeasurement::obsp)
+        .def("varm", &SOMAMeasurement::varm)
+        .def("varp", &SOMAMeasurement::varp);
 }
 }  // namespace libtiledbsomacpp
