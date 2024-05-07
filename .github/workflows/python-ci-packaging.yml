@@ -1,12 +1,14 @@
-# Confirm shared object copying when building the Python package
-# https://github.com/single-cell-data/TileDB-SOMA/pull/1937
+# This CI confirms the Python package continues to install properly in the many
+# different required contexts
 
-name: Python SO copying
+name: TileDB-SOMA Python CI (Packaging)
 
 on:
   push:
     paths:
-      - '.github/workflows/python-so-copying.yml'
+      - '.github/workflows/python-ci-packaging.yml'
+      - 'apis/python/MANIFEST.in'
+      - 'apis/python/pyproject.toml'
       - 'apis/python/setup.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
@@ -17,7 +19,9 @@ on:
       - 'libtiledbsoma/CMakeLists.txt'
   pull_request:
     paths:
-      - '.github/workflows/python-so-copying.yml'
+      - '.github/workflows/python-ci-packaging.yml'
+      - 'apis/python/MANIFEST.in'
+      - 'apis/python/pyproject.toml'
       - 'apis/python/setup.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
@@ -30,9 +34,11 @@ on:
 
 jobs:
 
+  # Confirm shared object copying when building the Python package
+  # https://github.com/single-cell-data/TileDB-SOMA/pull/1937
   docker:
     runs-on: ubuntu-latest
-    name: "docker TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
+    name: "SO copying (docker) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
       matrix:
@@ -138,9 +144,12 @@ jobs:
           find . -name '*tile*.so*'
           ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
 
+  # Confirm shared object copying when building the Python package
+  # https://github.com/single-cell-data/TileDB-SOMA/pull/1937
+  # Same as job above, but running on macOS instead of in a Docker container
   macos:
     runs-on: macos-13
-    name: "macos TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
+    name: "SO copying (macos) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
       matrix:
@@ -236,7 +245,7 @@ jobs:
   # Tests that the --libtiledbsoma flag to setup.py continues working
   setuptools:
     runs-on: ${{ matrix.os }}
-    name: "${{ matrix.os }} setuptools"
+    name: "setuptools (${{ matrix.os }})"
     strategy:
       fail-fast: false
       matrix:
@@ -312,3 +321,56 @@ jobs:
         run: ./venv-soma/bin/python -m pip install --prefer-binary `grep -v '^\[' apis/python/src/tiledbsoma.egg-info/requires.txt`
       - name: Runtime test
         run: ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
+
+  # Build a wheel from a source tarball (confirms all required files are
+  # distributed in the sdist). This is in preparation for the official building of
+  # the PyPI wheels in python-packaging.yml.
+  # https://github.com/single-cell-data/TileDB-SOMA/pull/2506
+  #
+  #
+  #  Differences to python-packaging.yml:
+  #
+  #  * Uses transparent python commands instead of the opaque action
+  #    `pypa/cibuildwheel`, and therefore easier to debug
+  #  * Only builds two wheels total (python 3.11 on Ubuntu and macOS), so it is
+  #    much faster. It's not creating the wheels for distribution, but instead just
+  #    providing a quick check that all the required files are distributed in the
+  #    source tarball
+  #  * Runs whenever an installation-related file is modified instead of only
+  #    after a release
+  #
+  # In summary, the goal is to identify any potential problems with building
+  # the PyPI wheels when a PR is submitted, and not at release time.
+  sdist:
+    runs-on: ${{ matrix.os }}
+    name: "Wheel from sdist (${{ matrix.os }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-22.04", "macos-12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # for setuptools-scm
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install --prefer-binary pybind11 wheel
+      - name: Build source tarball (sdist)
+        run: |
+          cd apis/python
+          python setup.py sdist
+      - name: Extract source tarball
+        run: |
+          tar --list -f apis/python/dist/tiledbsoma-*.tar.gz
+          tar -xzf apis/python/dist/tiledbsoma-*.tar.gz
+      - name: Build wheel
+        run: |
+          cd tiledbsoma-*/
+          python setup.py bdist_wheel
+      - name: Install wheel
+        run: |
+          python -m pip install --prefer-binary tiledbsoma-*/dist/tiledbsoma-*.whl
+          python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
