@@ -9,7 +9,7 @@ from typing import MutableMapping, Union
 from somacore import coordinates, scene
 
 from ._collection import Collection, CollectionBase
-from ._coordinates import CoordinateSystem, CoordinateTransform
+from ._coordinates import CompositeTransform, CoordinateSystem
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._sparse_nd_array import SparseNDArray
@@ -54,7 +54,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         # TODO: Metadata loading should be moved to open/reopen methods.
         prefix = "_soma_transform_"
         return {
-            key[len(prefix) :]: CoordinateTransform.from_json(val)
+            key[len(prefix) :]: CompositeTransform.from_json(val)
             for key, val in self.metadata.items()
             if key.startswith(prefix)
         }

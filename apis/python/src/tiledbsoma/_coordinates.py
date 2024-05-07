@@ -1,10 +1,11 @@
+import abc
 import json
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 import numpy.typing as npt
 from somacore import coordinates
-from typing_extension import Self
+from typing_extensions import Self
 
 
 class Axis(coordinates.Axis):  # type: ignore[misc]
@@ -52,6 +53,16 @@ class Axis(coordinates.Axis):  # type: ignore[misc]
         self._type: Optional[str] = axis_type
         self._unit: Optional[str] = axis_unit
 
+    def __eq__(self, other: Any) -> bool:
+        """Equality test for two axes."""
+        if not isinstance(other, Axis):
+            return False
+        return (
+            self.name == other.name
+            and self.type == other.type
+            and self.unit == other.unit
+        )
+
     @property
     def name(self) -> str:
         """TODO: Add docstring"""
@@ -96,22 +107,113 @@ class CoordinateSystem(coordinates.CoordinateSystem):  # type: ignore[misc]
         # TODO: Needs good, comprehensive error handling.
         self._axes = tuple(axes)
 
+    def __len__(self) -> int:
+        return len(self._axes)
+
+    def __getitem__(self, index: int) -> Axis:
+        return self._axes[index]
+
     @property
     def axes(self) -> Tuple[Axis, ...]:
         """TODO: Add docstring"""
         return self._axes
 
+    def to_json(self) -> str:
+        """TODO: Add docstring"""
+        return json.dumps(tuple(axis.to_dict() for axis in self._axes))
 
-class CoordinateTransform(coordinates.CoordinateTransform):  # type: ignore[misc]
+
+class CoordinateTransform(coordinates.CoordinateTransform, metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def to_json(self) -> str:
+        """TODO: Add docstring"""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def to_dict(self) -> Dict[str, Any]:
+        """TODO: Add docstring"""
+
+
+class IdentityTransform(CoordinateTransform):  # type: ignore[misc]
+    """TODO: Add docstring"""
+
+    def to_dict(self) -> Dict[str, Any]:
+        """TODO: Add docstring"""
+        return {"type": "identity"}
+
+    def to_numpy(self) -> npt.NDArray[np.float64]:
+        """TODO: Add docstring"""
+        raise NotImplementedError()
+
+    def to_json(self) -> str:
+        """TODO: Add docstring"""
+        return json.dumps(self.to_dict())
+
+
+class ScaleTransform(CoordinateTransform):  # type: ignore[misc]
+    """TODO: Add docstring"""
+
+    def __init__(self, scale: npt.ArrayLike):
+        self._scale: npt.NDArray[np.float64] = np.array(scale, dtype=np.float64)
+        self._nvalues = len(self._scale)
+
+    @property
+    def scale(self) -> npt.NDArray[np.float64]:
+        """TODO: Add docstring"""
+        return self._scale
+
+    @property
+    def shape(self) -> Tuple[int, int]:
+        """TODO: Add docstring"""
+        return (self._nvalues, self._nvalues)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """TODO: Add docstring"""
+        return {"type": "scale", "scale": self._scale.tolist()}
+
+    def to_json(self) -> str:
+        """TODO: Add docstring"""
+        return json.dumps(self.to_dict())
+
+    def to_numpy(self) -> npt.NDArray[np.float64]:
+        """TODO: Add docstring"""
+        raise NotImplementedError()
+
+
+class TranslateTransform(CoordinateTransform):  # type: ignore[misc]
+    """TODO: Add docstring"""
+
+    def __init__(self, translate: npt.ArrayLike):
+        self._translate: npt.NDArray[np.float64] = np.array(translate, dtype=np.float64)
+        self._nvalues = len(self._translate)
+
+    def shape(self) -> Tuple[int, int]:
+        """TODO: Add docstring"""
+        return (self._nvalues, self._nvalues)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """TODO: Add docstring"""
+        return {"type": "translate", "translate": self._translate.tolist()}
+
+    def to_json(self) -> str:
+        """TODO: Add docstring"""
+        return json.dumps(self.to_dict())
+
+    def to_numpy(self) -> npt.NDArray[np.float64]:
+        """TODO: Add docstring"""
+        raise NotImplementedError()
+
+
+class CompositeTransform(coordinates.CoordinateTransform):  # type: ignore[misc]
     """TODO: Add docstring"""
 
     @classmethod
     def from_json(cls, data: str) -> Self:
         """TODO: Add docstring"""
         raw = json.loads(data)
-        transforms: List[coordinates.CoordinateTransform] = []
+        transforms: List[CoordinateTransform] = []
         for transform in raw:
-            transform_type = raw["type"]
+            transform_type = transform["type"]
             if transform_type == "identity":
                 transforms.append(IdentityTransform())
             elif transform_type == "scale":
@@ -124,52 +226,19 @@ class CoordinateTransform(coordinates.CoordinateTransform):  # type: ignore[misc
                 raise ValueError()
         return cls(transforms)
 
-    def __init__(self, transforms: Sequence[coordinates.CoordinateTransform]):
+    def __init__(self, transforms: Sequence[CoordinateTransform]):
         self._transforms = tuple(transforms)
+
+    def __len__(self) -> int:
+        return len(self._transforms)
+
+    def __getitem__(self, key: int) -> CoordinateTransform:
+        return self._transforms[key]
 
     def to_json(self) -> str:
         """TODO: Add docstring"""
-        raise NotImplementedError()
-
-    def to_numpy(self) -> npt.NDArray[np.float64]:
-        """TODO: Add docstring"""
-        raise NotImplementedError()
-
-
-class IdentityTransform(coordinates.CoordinateTransform):  # type: ignore[misc]
-    """TODO: Add docstring"""
-
-    def to_numpy(self) -> npt.NDArray[np.float64]:
-        """TODO: Add docstring"""
-        raise NotImplementedError()
-
-
-class ScaleTransform(CoordinateTransform):  # type: ignore[misc]
-    """TODO: Add docstring"""
-
-    def __init__(self, scale: npt.ArrayLike):
-        self._scale: npt.NDArray[np.float64] = np.array(scale, dtype=np.float64)
-        self._nvalues = len(self._scale)
-
-    def shape(self) -> Tuple[int, int]:
-        """TODO: Add docstring"""
-        return (self._nvalues, self._nvalues)
-
-    def to_numpy(self) -> npt.NDArray[np.float64]:
-        """TODO: Add docstring"""
-        raise NotImplementedError()
-
-
-class TranslateTransform(coordinates.CoordinateTransform):  # type: ignore[misc]
-    """TODO: Add docstring"""
-
-    def __init__(self, translate: npt.ArrayLike):
-        self._translate: npt.NDArray[np.float64] = np.array(translate, dtype=np.float64)
-        self._nvalues = len(self._translate)
-
-    def shape(self) -> Tuple[int, int]:
-        """TODO: Add docstring"""
-        return (self._nvalues, self._nvalues)
+        tmp = [transform.to_dict() for transform in self._transforms]
+        return json.dumps(tmp)
 
     def to_numpy(self) -> npt.NDArray[np.float64]:
         """TODO: Add docstring"""
