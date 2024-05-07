@@ -57,7 +57,7 @@ def test_sparse_nd_array_create_ok(
     for d in range(len(shape)):
         assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
     assert a.schema.field("soma_data").type == element_type
-    assert a.schema.field("soma_data").nullable == False
+    assert not a.schema.field("soma_data").nullable
 
     # Ensure read mode uses clib object
     with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A:
