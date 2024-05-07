@@ -207,6 +207,166 @@ write_soma.Assay <- function(
   return(ms)
 }
 
+#' @method write_soma Assay5
+#' @export
+#'
+write_soma.Assay5 <- function(
+  x,
+  uri = NULL,
+  soma_parent,
+  ...,
+  ingest_mode = 'write',
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
+  check_package('SeuratObject', version = '5.0.1')
+  stopifnot(
+    "'uri' must be a single character value" = is.null(uri) ||
+      is_scalar_character(uri),
+    "'soma_parent' must be a SOMACollection" = inherits(
+      x = soma_parent,
+      what = 'SOMACollectionBase'
+    ),
+    "'relative' must be a single logical value" = is_scalar_logical(relative)
+  )
+
+  # Find `shape` if and only if we're called from `write_soma.Seurat()`
+  parents <- unique(sys.parents())
+  idx <- which(vapply_lgl(
+    parents,
+    FUN = function(i) identical(sys.function(i), write_soma.Seurat)
+  ))
+  shape <- if (length(idx) == 1L) {
+    get("shape", envir = sys.frame(parents[idx]))
+  } else {
+    NULL
+  }
+  shape <- rev(shape)
+
+  # Create a proper URI
+  uri <- uri %||% gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
+  uri <- .check_soma_uri(
+    uri = uri,
+    soma_parent = soma_parent,
+    relative = relative
+  )
+
+  # Create the measurement
+  ms <- SOMAMeasurementCreate(
+    uri = uri,
+    ingest_mode = ingest_mode,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  X <- if (!'X' %in% ms$names()) {
+    SOMACollectionCreate(
+      uri = file_path(ms$uri, 'X'),
+      ingest_mode = ingest_mode,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+  } else if (isTRUE(relative)) {
+    SOMACollectionOpen(uri = file_path(ms$uri, 'X'), mode = 'WRITE')
+  } else {
+    ms$X
+  }
+  withCallingHandlers(
+    .register_soma_object(X, soma_parent = ms, key = 'X', relative = relative),
+    existingKeyWarning = .maybe_muffle
+  )
+  on.exit(X$close(), add = TRUE, after = FALSE)
+
+  # Pull presence matrices from the v5 assay
+  cmat <- methods::slot(x, name = 'cells')
+  fmat <- methods::slot(x, name = 'features')
+
+  # Write `X` matrices
+  for (lyr in SeuratObject::Layers(x)) {
+    ldat <- SeuratObject::LayerData(x, layer = lyr)
+    if (!inherits(ldat, what = c("matrix", "Matrix"))) {
+      warning("not a matrix")
+      next
+    }
+    if (all(fmat[, lyr]) && all(cmat[, lyr])) {
+      spdl::info("Adding '{}' matrix as '{}'", lyr, lyr)
+      tryCatch(
+        expr = write_soma(
+          x = ldat,
+          uri = lyr,
+          soma_parent = X,
+          sparse = TRUE,
+          transpose = TRUE,
+          ingest_mode = ingest_mode,
+          shape = shape,
+          key = lyr,
+          platform_config = platform_config,
+          tiledbsoma_ctx = tiledbsoma_ctx
+        ),
+        error = function(err) {
+          if (lyr %in% SeuratObject::DefaultLayer(x)) {
+            stop(err)
+          }
+          err_to_warn(err)
+        }
+      )
+      next
+    }
+    ldat <- Matrix::t(as(ldat, "TsparseMatrix"))
+    idx <- which(cmat[, lyr])
+    jdx <- which(fmat[, lyr])
+    coo <- data.frame(
+      soma_dim_0 = bit64::as.integer64(idx[ldat@i + 1L] - 1L),
+      soma_dim_1 = bit64::as.integer64(jdx[ldat@j + 1L] - 1L),
+      soma_data = ldat@x
+    )
+    shape <- c(max(coo$soma_dim_0), max(coo$soma_dim_1)) + 1L
+    arr <- X$add_new_sparse_ndarray(
+      key = lyr,
+      type = arrow::infer_type(coo$soma_data),
+      shape = as.integer(shape)
+    )
+    arr$.__enclos_env__$private$.write_coo_dataframe(coo)
+  }
+
+  # Write feature-level meta data
+  var_df <- .df_index(
+    x = x[[]],
+    alt = 'features',
+    axis = 'var',
+    prefix = 'seurat'
+  )
+  var_df[[attr(x = var_df, which = 'index')]] <- rownames(x)
+  spdl::info("Adding feature-level meta data")
+  write_soma(
+    x = var_df,
+    uri = 'var',
+    soma_parent = ms,
+    key = 'var',
+    ingest_mode = ingest_mode,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+
+  # Return
+  if (class(x)[1L] != 'Assay5') {
+    warning(
+      paste(
+        strwrap(paste0(
+          "Extended assays (eg. ",
+          class(x)[1L],
+          ") are not fully supported; core Assay data has been written but ",
+          "additional slots have been skipped"
+        )),
+        collapse = '\n'
+      ),
+      call. = FALSE,
+      immediate. = TRUE
+    )
+  }
+  return(ms)
+}
+
 #' @param fidx An integer vector describing the location of features in
 #' \code{SeuratObject::Loadings(x)} with relation to \code{soma_parent}
 #' (eg. \code{match(rownames(Loadings(x)), rownames(assay))})
