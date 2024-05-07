@@ -64,8 +64,8 @@ from .._exception import (
     NotCreateableError,
     SOMAError,
 )
+from .._soma_array import SOMAArray
 from .._tdb_handles import RawHandle
-from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
 from .._types import (
     _INGEST_MODES,
@@ -1886,7 +1886,7 @@ def _write_matrix_to_denseNDArray(
     return
 
 
-def _read_nonempty_domain(arr: TileDBArray) -> Any:
+def _read_nonempty_domain(arr: SOMAArray) -> Any:
     try:
         return arr._handle.non_empty_domain()
     except (SOMAError, RuntimeError):
