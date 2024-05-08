@@ -210,11 +210,11 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     """
     Handle special cases where pa.Table.from_pandas is not sufficient.
     """
-    null_fields = set()
+    nullable_fields = set()
     # Not for name, col in df.items() since we need df[k] on the left-hand sides
-    for k in df:
-        if df[k].isnull().any():
-            null_fields.add(k)
+    for key in df:
+        if df[key].isnull().any():
+            nullable_fields.add(key)
 
         # Handle special cases for all null columns where the dtype is "object"
         # or "category" and must be explicitly casted to the correct pandas
@@ -224,11 +224,11 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
         #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))
         # the dtype comes in to us via `tiledbsoma.io.from_anndata` not
         # as `pd.StringDtype()` but rather as `object`.
-        if df[k].isnull().all():
-            if df[k].dtype.name == "object":
-                df[k] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
-            elif df[k].dtype.name == "category":
-                df[k] = pd.Series([None] * df.shape[0], dtype=pd.CategoricalDtype())
+        if df[key].isnull().all():
+            if df[key].dtype.name == "object":
+                df[key] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
+            elif df[key].dtype.name == "category":
+                df[key] = pd.Series([None] * df.shape[0], dtype=pd.CategoricalDtype())
 
     # For categoricals, it's possible to get
     #   TypeError: Object of type bool_ is not JSON serializable
@@ -249,9 +249,10 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
             )
 
     arrow_table = pa.Table.from_pandas(df)
-    if null_fields:
+
+    if nullable_fields:
         md = arrow_table.schema.metadata
-        md.update(dict.fromkeys(null_fields, "nullable"))
+        md.update(dict.fromkeys(nullable_fields, "nullable"))
         arrow_table = arrow_table.replace_schema_metadata(md)
 
     # For tiledbsoma.io (for which this method exists) _any_ dataset can be appended to
