@@ -61,6 +61,64 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
 //     ArrowArrayFinishBuildingDefault(ext.children[pos], nullptr);
 // }
 
+
+const char* _tiledb_filter_to_string(tiledb_filter_type_t filter) {
+  switch(filter) {
+    case TILEDB_FILTER_NONE:
+     return "NONE";
+    case TILEDB_FILTER_GZIP:
+      return "GZIP";
+    case TILEDB_FILTER_ZSTD:
+      return "ZSTD";
+    case TILEDB_FILTER_LZ4:
+      return "LZ4";
+    case TILEDB_FILTER_RLE:
+      return "RLE";
+    case TILEDB_FILTER_BZIP2:
+      return "BZIP2";
+    case TILEDB_FILTER_DOUBLE_DELTA:
+      return "DOUBLE_DELTA";
+    case TILEDB_FILTER_BIT_WIDTH_REDUCTION:
+      return "BIT_WIDTH_REDUCTION";
+    case TILEDB_FILTER_BITSHUFFLE:
+      return "BITSHUFFLE";
+    case TILEDB_FILTER_BYTESHUFFLE:
+      return "BYTESHUFFLE";
+    case TILEDB_FILTER_POSITIVE_DELTA:
+      return "POSITIVE_DELTA";
+    case TILEDB_FILTER_CHECKSUM_MD5:
+      return "CHECKSUM_MD5";
+    case TILEDB_FILTER_CHECKSUM_SHA256:
+      return "CHECKSUM_SHA256";
+#if TILEDB_VERSION >= TileDB_Version(2,9,0)
+    case TILEDB_FILTER_DICTIONARY:
+      return "DICTIONARY_ENCODING";
+#endif
+#if TILEDB_VERSION >= TileDB_Version(2,11,0)
+    case TILEDB_FILTER_SCALE_FLOAT:
+      return "SCALE_FLOAT";
+#endif
+#if TILEDB_VERSION >= TileDB_Version(2,12,0)
+  case TILEDB_FILTER_XOR:
+    return "FILTER_XOR";
+#endif
+  default: {
+      Rcpp::stop("unknown tiledb_filter_t (%d)", filter);
+    }
+  }
+}
+
+std::vector<std::string> _list2vector(Rcpp::List lst) {
+    std::vector<std::string> v;
+    for (auto i=0; i<lst.size(); i++) {
+        Rcpp::S4 s{lst[i]};
+        Rcpp::XPtr<tiledb::Filter> fxp = s.slot("ptr");
+        std::string str{ _tiledb_filter_to_string( fxp->filter_type() ) };
+        v.push_back(str);
+    }
+    return v;
+}
+
 // [[Rcpp::export]]
 void createSchemaFromArrow(const std::string& uri,
                            SEXP nasp,
@@ -111,23 +169,28 @@ void createSchemaFromArrow(const std::string& uri,
     apdim.move(dimarr.get());
 
     tdbs::PlatformConfig pltcfg;
-    auto ce_or = Rcpp::as<std::string>(pclst["cell_order"]);
-    auto ti_or = Rcpp::as<std::string>(pclst["tile_order"]);
-    pltcfg.cell_order                     = ce_or == "COL_MAJOR" ? "col" : "row";
-    pltcfg.tile_order                     = ti_or == "COL_MAJOR" ? "col" : "row";
+    std::map<std::string, std::string> _order_map = {
+        { "COL_MAJOR",    "col" },
+        { "ROW_MAJOR",    "row" },
+        { "HILBERT",      "hilbert" },
+        { "GLOBAL_ORDER", "global" },
+        { "UNORDERED",    "unordered" }
+    };
+    pltcfg.cell_order                     = _order_map.at(Rcpp::as<std::string>(pclst["cell_order"]));
+    pltcfg.tile_order                     = _order_map.at(Rcpp::as<std::string>(pclst["tile_order"]));
     pltcfg.allows_duplicates              = Rcpp::as<bool>(pclst["allows_duplicates"]);
     pltcfg.capacity                       = Rcpp::as<double>(pclst["capacity"]);
     pltcfg.dataframe_dim_zstd_level       = Rcpp::as<int>(pclst["dataframe_dim_zstd_level"]);
     pltcfg.sparse_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["sparse_nd_array_dim_zstd_level"]);
     pltcfg.write_X_chunked                = Rcpp::as<bool>(pclst["write_X_chunked"]);
     pltcfg.goal_chunk_nnz                 = Rcpp::as<double>(pclst["goal_chunk_nnz"]);
-
+    //Rcpp::print(pclst["offsets_filters"]);
+    pltcfg.offsets_filters                = _list2vector(pclst["offsets_filters"]);
+    pltcfg.validity_filters               = _list2vector(pclst["validity_filters"]);
  // $ offsets_filters               :List of 3
  //  ..$ : chr "DOUBLE_DELTA"
  //  ..$ : chr "BIT_WIDTH_REDUCTION"
  //  ..$ : chr "ZSTD"
- // $ write_X_chunked               : logi TRUE
- // $ goal_chunk_nnz                : num 2e+08
 
     tiledb_array_type_t array_type = TILEDB_SPARSE;
 
