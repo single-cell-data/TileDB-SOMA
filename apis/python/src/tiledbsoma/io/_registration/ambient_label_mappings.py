@@ -233,11 +233,13 @@ class ExperimentAmbientLabelMapping:
                     obs_map.update(dict(zip(obs_ids, soma_joinids)))
 
                 for measurement_name in exp.ms:
-                    exp.ms[measurement_name].var
+                    expvar = exp.ms[measurement_name].var
                     if "var" not in exp.ms[measurement_name]:
                         continue
+                    if var_field_name not in expvar.schema.names:
+                        continue
                     var_map = {}
-                    for batch in exp.ms[measurement_name].var.read(
+                    for batch in expvar.read(
                         column_names=["soma_joinid", var_field_name]
                     ):
                         var_ids = [e.as_py() for e in batch[1]]
@@ -245,9 +247,9 @@ class ExperimentAmbientLabelMapping:
                         var_map.update(dict(zip(var_ids, soma_joinids)))
                     var_maps[measurement_name] = var_map
 
-            tiledbsoma.logging.logger.info(
-                f"Registration: found nobs={len(obs_map)} nvar={len(var_map)} from experiment."
-            )
+                    tiledbsoma.logging.logger.info(
+                        f"Registration: found nobs={len(obs_map)} nvar={len(var_map)} from experiment."
+                    )
 
         return cls(
             obs_axis=AxisAmbientLabelMapping(data=obs_map, field_name=obs_field_name),
