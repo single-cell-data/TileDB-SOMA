@@ -465,6 +465,11 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def write(self, values: pa.RecordBatch) -> None:
         self._handle.write(values)
 
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        # Shape is not implemented for DataFrames
+        raise NotImplementedError
+
 
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
