@@ -339,13 +339,13 @@ def test_resume_mode(resume_mode_h5ad_file):
 
 
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
-def test_ingest_relative(pbmc_3k_h5ad_path, use_relative_uri):
+def test_ingest_relative(pbmc3k_h5ad_path, use_relative_uri):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
     tiledbsoma.io.from_h5ad(
         output_path,
-        pbmc_3k_h5ad_path.as_posix(),
+        pbmc3k_h5ad_path.as_posix(),
         measurement_name="RNA",
         use_relative_uri=use_relative_uri,
     )
@@ -394,12 +394,12 @@ def test_ingest_relative(pbmc_3k_h5ad_path, use_relative_uri):
 @pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])
 def test_ingest_uns(
     tmp_path: pathlib.Path,
-    pbmc_3k_h5ad_path,
-    pbmc_3k_adata,
+    pbmc3k_h5ad_path,
+    pbmc3k_adata,
     ingest_uns_keys,
 ):
     tmp_uri = tmp_path.as_uri()
-    adata_extended2 = anndata.read(pbmc_3k_h5ad_path)
+    adata_extended2 = anndata.read(pbmc3k_h5ad_path)
     uri = tiledbsoma.io.from_anndata(
         tmp_uri,
         adata_extended2,
@@ -407,7 +407,7 @@ def test_ingest_uns(
         uns_keys=ingest_uns_keys,
     )
 
-    verify_obs_and_var_eq(pbmc_3k_adata, adata_extended2)
+    verify_obs_and_var_eq(pbmc3k_adata, adata_extended2)
 
     with tiledbsoma.Experiment.open(uri) as exp:
         uns = exp.ms["hello"]["uns"]

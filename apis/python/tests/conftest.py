@@ -34,12 +34,12 @@ def pbmc0_exp(pbmc0_h5ad_path) -> Experiment:
 
 
 @pytest.fixture
-def pbmc_3k_h5ad_path(request) -> Path:
+def pbmc3k_h5ad_path(request) -> Path:
     """Path to a larger (2638x1838) h5ad, which also includes obsm, obsp, and varm arrays."""
     return TESTDATA / "pbmc3k_processed.h5ad"
 
 
 @pytest.fixture
-def pbmc_3k_adata(pbmc_3k_h5ad_path):
+def pbmc3k_adata(pbmc3k_h5ad_path):
     """Larger (2638x1838) AnnData, which also includes obsm, obsp, and varm arrays."""
-    return anndata.read_h5ad(pbmc_3k_h5ad_path)
+    return anndata.read_h5ad(pbmc3k_h5ad_path)
