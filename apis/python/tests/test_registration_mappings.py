@@ -77,8 +77,8 @@ def _create_anndata(
     return adata
 
 
-def create_h5ad(pbmc0_adata, path):
-    pbmc0_adata.write_h5ad(path)
+def create_h5ad(conftest_pbmc_small, path):
+    conftest_pbmc_small.write_h5ad(path)
     return path
 
 

@@ -10,7 +10,7 @@ import tiledb
 
 
 @pytest.mark.skip(reason="No longer return ArraySchema - see note in test")
-def test_platform_config(pbmc0_adata):
+def test_platform_config(conftest_pbmc_small):
     # TODO as we remove usage of TileDB-Py in favor of ArrowSchema, we
     # need a new method to get which filters have applied to the column
     # rather than grabbing it from the ArraySchema. One consideration
@@ -24,12 +24,12 @@ def test_platform_config(pbmc0_adata):
     # platform_config by calling pa.Schema.with_metadata(platform_config).
 
     # Set up anndata input path and tiledb-group output path
-    original = pbmc0_adata.copy()
+    original = conftest_pbmc_small.copy()
     with tempfile.TemporaryDirectory() as output_path:
         # Ingest
         tiledbsoma.io.from_anndata(
             output_path,
-            pbmc0_adata,
+            conftest_pbmc_small,
             "RNA",
             platform_config={
                 "tiledb": {
@@ -51,7 +51,7 @@ def test_platform_config(pbmc0_adata):
                 }
             },
         )
-        verify_obs_and_var_eq(original, pbmc0_adata)
+        verify_obs_and_var_eq(original, conftest_pbmc_small)
 
         with tiledbsoma.Experiment.open(output_path) as exp:
             x_data = exp.ms["RNA"].X["data"]

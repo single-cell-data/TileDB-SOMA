@@ -31,24 +31,26 @@ class TestCase:
 
 
 @pytest.fixture
-def test_case_with_readback(request, pbmc0_adata) -> TestCase:
+def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
     """
     Ingest an `AnnData`to a SOMA `Experiment`, yielding a `TestCase` with the old and new AnnData objects.
 
-    * The input AnnData is always `pbmc0_adata` (from conftest.py), not specifiable here as an argument
+    * The input AnnData is always `conftest_pbmc_small` (from conftest.py), not specifiable here as an argument
     * `request.param` (a.k.a. `use_readback` below) is a boolean, populated by pytest, that specifies whether:
-      * `False`: the returned `new_obs` and `new_var` come directly from the input `pbmc0_adata`, or
-      * `True`: `new_obs` and `new_var` are returned after round-tripping `pbmc0_adata` through SOMA and back to
+      * `False`: the returned `new_obs` and `new_var` come directly from the input `conftest_pbmc_small`, or
+      * `True`: `new_obs` and `new_var` are returned after round-tripping `conftest_pbmc_small` through SOMA and back to
         AnnData/Pandas.
     * Each `TestCase` member is also exposed directly as its own `fixture` below.
     """
     with tempfile.TemporaryDirectory() as experiment_path:
-        old_anndata = pbmc0_adata.copy()
-        tiledbsoma.io.from_anndata(experiment_path, pbmc0_adata, measurement_name="RNA")
+        old_anndata = conftest_pbmc_small.copy()
+        tiledbsoma.io.from_anndata(
+            experiment_path, conftest_pbmc_small, measurement_name="RNA"
+        )
 
         # Check that the anndata-to-soma ingestion didn't modify the old_anndata object (which is
         # passed by reference to the ingestor) while it was doing the ingest
-        verify_obs_and_var_eq(old_anndata, pbmc0_adata)
+        verify_obs_and_var_eq(old_anndata, conftest_pbmc_small)
 
         use_readback = request.param
 
@@ -59,13 +61,13 @@ def test_case_with_readback(request, pbmc0_adata) -> TestCase:
                 new_obs = exp.obs.read().concat().to_pandas()
                 new_var = exp.ms["RNA"].var.read().concat().to_pandas()
             else:
-                new_obs = pbmc0_adata.obs
-                new_var = pbmc0_adata.var
+                new_obs = conftest_pbmc_small.obs
+                new_var = conftest_pbmc_small.var
 
             yield TestCase(
                 experiment_path=experiment_path,
                 old_anndata=old_anndata,
-                new_anndata=pbmc0_adata,
+                new_anndata=conftest_pbmc_small,
                 new_obs=new_obs,
                 new_var=new_var,
                 obs_schema=obs_schema,
@@ -75,38 +77,38 @@ def test_case_with_readback(request, pbmc0_adata) -> TestCase:
 
 # Expose each field of the TestCase object as a pytest.fixture, to reduce boilerplate in test functions.
 @pytest.fixture
-def experiment_path(test_case_with_readback):
-    return test_case_with_readback.experiment_path
+def experiment_path(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.experiment_path
 
 
 @pytest.fixture
-def old_anndata(test_case_with_readback):
-    return test_case_with_readback.old_anndata
+def old_anndata(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.old_anndata
 
 
 @pytest.fixture
-def new_anndata(test_case_with_readback):
-    return test_case_with_readback.new_anndata
+def new_anndata(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.new_anndata
 
 
 @pytest.fixture
-def new_obs(test_case_with_readback):
-    return test_case_with_readback.new_obs
+def new_obs(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.new_obs
 
 
 @pytest.fixture
-def new_var(test_case_with_readback):
-    return test_case_with_readback.new_var
+def new_var(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.new_var
 
 
 @pytest.fixture
-def obs_schema(test_case_with_readback):
-    return test_case_with_readback.obs_schema
+def obs_schema(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.obs_schema
 
 
 @pytest.fixture
-def var_schema(test_case_with_readback):
-    return test_case_with_readback.var_schema
+def var_schema(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.var_schema
 
 
 def verify_schemas(experiment_path, obs_schema, var_schema):
@@ -139,10 +141,10 @@ def verify_updates(experiment_path, obs, var, exc: Optional[Type[ValueError]] = 
 
 
 # `pytest.mark.parametrize` wrapper for running a test twice:
-# 1. `readback=False`: `new_obs` and `new_var` come directly from the input `pbmc0_adata` object
+# 1. `readback=False`: `new_obs` and `new_var` come directly from the input `conftest_pbmc_small` object
 # 2. `readback=True`: `new_obs` and `new_var` are ingested to SOMA, then exported back to pandas DataFrames.
 with_and_without_soma_roundtrip = pytest.mark.parametrize(
-    "test_case_with_readback", [False, True], indirect=True
+    "multiple_fixtures_with_readback", [False, True], indirect=True
 )
 
 
