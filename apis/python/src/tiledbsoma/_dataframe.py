@@ -445,6 +445,13 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         clib_dataframe = self._handle._handle
 
+        print()
+        print()
+        print("DATAFRAME SELF.SCHEMA")
+        print(self.schema)
+        print()
+        print()
+
         values = _util.cast_values_to_target_schema(clib_dataframe, values, self.schema)
 
         for batch in values.to_batches():

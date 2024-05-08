@@ -263,16 +263,62 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     #   will later be appending, or updating, with null data.
     # * Note that Arrow has a per-field nullable flag in its schema metadata
     #   -- and so do TileDB array schemas.
+
+    print()
+    print()
+    print("DF_TO_ARROW: DF.DTYPES")
+    print(df.dtypes)
+    print()
+    print()
+
+    print()
+    print()
+    print("DF_TO_ARROW: DF")
+    print(df)
+    print()
+    print()
+
+    print()
+    print()
+    print("DF_TO_ARROW: NULLABLE_FIELDS 1")
+    print(nullable_fields)
+    print()
+    print()
+
     for key in df:
-        if df[key].dtype.name == "object":
+        if df[key].dtype.name in ["object", "string"]:
+            print("  DF_TO_ARROW: ", key, df[key].dtype.name, "NULLABLE IN DICT")
             nullable_fields.add(key)
+        else:
+            print("  DF_TO_ARROW: ", key, df[key].dtype.name, "NOT NULLABLE IN DICT")
+
+    print()
+    print()
+    print("DF_TO_ARROW: NULLABLE_FIELDS 2")
+    print(nullable_fields)
+    print()
+    print()
 
     arrow_table = pa.Table.from_pandas(df)
+
+    print()
+    print()
+    print("DF_TO_ARROW: ARROW_TABLE.SCHEMA 1")
+    print(arrow_table.schema)
+    print()
+    print()
 
     if nullable_fields:
         md = arrow_table.schema.metadata
         md.update(dict.fromkeys(nullable_fields, "nullable"))
         arrow_table = arrow_table.replace_schema_metadata(md)
+
+    print()
+    print()
+    print("DF_TO_ARROW: ARROW_TABLE.SCHEMA 2")
+    print(arrow_table.schema)
+    print()
+    print()
 
     # For tiledbsoma.io (for which this method exists) _any_ dataset can be appended to
     # later on. This means that on fresh ingest we must use a larger bit-width than
@@ -296,6 +342,13 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     new_schema = pa.schema(new_map, metadata=arrow_table.schema.metadata)
 
     arrow_table = pa.Table.from_pandas(df, schema=new_schema)
+
+    print()
+    print()
+    print("DF_TO_ARROW: ARROW_TABLE.SCHEMA 3")
+    print(arrow_table.schema)
+    print()
+    print()
 
     return arrow_table
 

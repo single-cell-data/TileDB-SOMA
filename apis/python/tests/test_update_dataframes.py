@@ -11,7 +11,11 @@ from pyarrow import Schema
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma._util import anndata_dataframe_unmodified, verify_obs_and_var_eq
+from tiledbsoma._util import (
+    anndata_dataframe_unmodified,
+    anndata_dataframe_unmodified_nan_safe,
+    verify_obs_and_var_eq,
+)
 
 from tests._util import maybe_raises
 
@@ -120,7 +124,13 @@ def verify_schemas(experiment_path, obs_schema, var_schema):
     assert var_schema == other_var_schema
 
 
-def verify_updates(experiment_path, obs, var, exc: Optional[Type[ValueError]] = None):
+def verify_updates(
+    experiment_path,
+    obs,
+    var,
+    exc: Optional[Type[ValueError]] = None,
+    nan_safe: bool = False,
+):
     """
     Calls `update_obs` and `update_var` on the experiment. Also verifies that the
     updater code didn't inadvertently modify the `obs` and `var` objects, which are
@@ -136,8 +146,24 @@ def verify_updates(experiment_path, obs, var, exc: Optional[Type[ValueError]] = 
         with maybe_raises(exc):
             tiledbsoma.io.update_var(exp, var, "RNA")
 
-    assert anndata_dataframe_unmodified(obs0, obs)
-    assert anndata_dataframe_unmodified(var0, var)
+    print()
+    print()
+    print("PYTEST VERIFY_UPDATES OBS0")
+    print(obs0.dtypes)
+    print(obs0)
+    print()
+    print("PYTEST VERIFY_UPDATES OBS")
+    print(obs.dtypes)
+    print(obs)
+    print()
+
+    checker = (
+        anndata_dataframe_unmodified_nan_safe
+        if nan_safe
+        else anndata_dataframe_unmodified
+    )
+    assert checker(obs0, obs)
+    assert checker(var0, var)
 
 
 # `pytest.mark.parametrize` wrapper for running a test twice:
@@ -252,3 +278,51 @@ def test_change_counts(
         verify_updates(experiment_path, new_obs2, new_var2, exc=ValueError)
         verify_obs_and_var_eq(old_anndata, new_anndata)
         verify_schemas(experiment_path, obs_schema, var_schema)
+
+
+@pytest.mark.parametrize("separate_ingest", [False, True])
+def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_ingest):
+    uri = tmp_path.as_uri()
+
+    # Two ways to test:
+    #
+    # One way:
+    # * Create a string column with non-nulls before from_anndata
+    # * Ingest, having that new column with non-nulls
+    # * Call update_obs to set the column to have nulls
+    #
+    # Other way:
+    # * Ingest, without any new column
+    # * Call update_obs once to add the new column with non-null values
+    # * Call update_obs again to add the new column with null values
+
+    if separate_ingest:
+        tiledbsoma.io.from_anndata(
+            uri,
+            conftest_pbmc3k_adata,
+            measurement_name="RNA",
+            uns_keys=[],
+        )
+
+        conftest_pbmc3k_adata.obs["batch_id"] = "testing"
+        verify_updates(uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var)
+
+    else:
+        conftest_pbmc3k_adata.obs["batch_id"] = "testing"
+
+        tiledbsoma.io.from_anndata(
+            uri,
+            conftest_pbmc3k_adata,
+            measurement_name="RNA",
+            uns_keys=[],
+        )
+
+    conftest_pbmc3k_adata.obs["batch_id"] = pd.NA
+    # nan_safe since pd.NA != pd.NA
+    verify_updates(
+        uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var, nan_safe=True
+    )
+
+    # TODO: see how to incorporate
+    ## verify_obs_and_var_eq(conftest_pbmc3k_adata, adata_extended2)
+    ## verify_updates(exp_path, new_obs, new_var)
