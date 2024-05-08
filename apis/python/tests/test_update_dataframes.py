@@ -1,6 +1,6 @@
 import tempfile
-from contextlib import nullcontext
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
+from typing import Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -11,12 +11,15 @@ from pyarrow import Schema
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma._util import anndata_dataframe_unmodified, verify_obs_and_var_same
+from tiledbsoma._util import anndata_dataframe_unmodified, verify_obs_and_var_eq
+
+from tests._util import maybe_raises
 
 
 @dataclass
 class TestCase:
-    """Holds pieces which would otherwise be multiple fixtures in pytest.mark.parametrize."""
+    """Group of related objects, used by test cases in this file, that share a creation code-path and are exposed as
+    `pytest.fixture`s below."""
 
     experiment_path: str
     old_anndata: AnnData
@@ -27,32 +30,25 @@ class TestCase:
     var_schema: Schema
 
 
-# Magical conftest.py fixture: conftest_adata
-# Also magical: request
 @pytest.fixture
-def multiple_fixtures_with_readback(request, conftest_adata) -> TestCase:
+def test_case_with_readback(request, pbmc0_adata) -> TestCase:
     """
-    Ingest an ``AnnData``to a SOMA ``Experiment``, yielding a ``TestCase`` with the old and new AnnData objects.
+    Ingest an `AnnData`to a SOMA `Experiment`, yielding a `TestCase` with the old and new AnnData objects.
 
-    * The input AnnData is from a hard-coded fixture in conftest.py, not specifiable here as an argument
-    * The `request` is nominally for tests to give a boolean for (False) whether they want the
-      `new_obs` and `new_var` to be the same as the input conftest_adata, or (True) whether they want
-      the `new_obs` and `new_var` to be gotten from writing the conftest_adata object via
-      tiledbsoma.io.from_anndata to a SOMA experiment and then read back via the SOMA API and
-      to_pandas() calls.
-    * The slots in `TestCase` will be available to tests which use this multi-fixture:
-      e.g. if the TestCase class has a `foo` slot then a unit-test function in this file can be
-      passed a `foo` argument
+    * The input AnnData is always `pbmc0_adata` (from conftest.py), not specifiable here as an argument
+    * `request.param` (a.k.a. `use_readback` below) is a boolean, populated by pytest, that specifies whether:
+      * `False`: the returned `new_obs` and `new_var` come directly from the input `pbmc0_adata`, or
+      * `True`: `new_obs` and `new_var` are returned after round-tripping `pbmc0_adata` through SOMA and back to
+        AnnData/Pandas.
+    * Each `TestCase` member is also exposed directly as its own `fixture` below.
     """
     with tempfile.TemporaryDirectory() as experiment_path:
-        old_anndata = conftest_adata.copy()
-        tiledbsoma.io.from_anndata(
-            experiment_path, conftest_adata, measurement_name="RNA"
-        )
+        old_anndata = pbmc0_adata.copy()
+        tiledbsoma.io.from_anndata(experiment_path, pbmc0_adata, measurement_name="RNA")
 
         # Check that the anndata-to-soma ingestion didn't modify the old_anndata object (which is
         # passed by reference to the ingestor) while it was doing the ingest
-        verify_obs_and_var_same(old_anndata, conftest_adata)
+        verify_obs_and_var_eq(old_anndata, pbmc0_adata)
 
         use_readback = request.param
 
@@ -63,13 +59,13 @@ def multiple_fixtures_with_readback(request, conftest_adata) -> TestCase:
                 new_obs = exp.obs.read().concat().to_pandas()
                 new_var = exp.ms["RNA"].var.read().concat().to_pandas()
             else:
-                new_obs = conftest_adata.obs
-                new_var = conftest_adata.var
+                new_obs = pbmc0_adata.obs
+                new_var = pbmc0_adata.var
 
             yield TestCase(
                 experiment_path=experiment_path,
                 old_anndata=old_anndata,
-                new_anndata=conftest_adata,
+                new_anndata=pbmc0_adata,
                 new_obs=new_obs,
                 new_var=new_var,
                 obs_schema=obs_schema,
@@ -77,27 +73,40 @@ def multiple_fixtures_with_readback(request, conftest_adata) -> TestCase:
             )
 
 
-for field in fields(TestCase):
+# Expose each field of the TestCase object as a pytest.fixture, to reduce boilerplate in test functions.
+@pytest.fixture
+def experiment_path(test_case_with_readback):
+    return test_case_with_readback.experiment_path
 
-    def create_member_fixture(name):
-        """Creates a ``pytest.fixture`` for a ``TestCase`` field."""
 
-        @pytest.fixture
-        def member_fixture(multiple_fixtures_with_readback):
-            """
-            Given a `TestCase` (multi-fixture) object, returns a getter callback to access one of that
-            object's attributes. So if the `TestCase` class has a slat called `foo`, this is what will
-            let tests in this file ask for `foo` as an argument passed to them.
-            """
-            return getattr(multiple_fixtures_with_readback, name)
+@pytest.fixture
+def old_anndata(test_case_with_readback):
+    return test_case_with_readback.old_anndata
 
-        return member_fixture
 
-    """
-    Create ``pytest.fixture``s for each ``TestCase`` field. So if the `TestCase` class has slots
-    `foo` and `bar` then tests in this file can ask for arguments named `foo` and/or `bar`.
-    """
-    globals()[field.name] = create_member_fixture(field.name)
+@pytest.fixture
+def new_anndata(test_case_with_readback):
+    return test_case_with_readback.new_anndata
+
+
+@pytest.fixture
+def new_obs(test_case_with_readback):
+    return test_case_with_readback.new_obs
+
+
+@pytest.fixture
+def new_var(test_case_with_readback):
+    return test_case_with_readback.new_var
+
+
+@pytest.fixture
+def obs_schema(test_case_with_readback):
+    return test_case_with_readback.obs_schema
+
+
+@pytest.fixture
+def var_schema(test_case_with_readback):
+    return test_case_with_readback.var_schema
 
 
 def verify_schemas(experiment_path, obs_schema, var_schema):
@@ -109,7 +118,7 @@ def verify_schemas(experiment_path, obs_schema, var_schema):
     assert var_schema == other_var_schema
 
 
-def verify_updates(experiment_path, obs, var, exc=False):
+def verify_updates(experiment_path, obs, var, exc: Optional[Type[ValueError]] = None):
     """
     Calls `update_obs` and `update_var` on the experiment. Also verifies that the
     updater code didn't inadvertently modify the `obs` and `var` objects, which are
@@ -119,37 +128,34 @@ def verify_updates(experiment_path, obs, var, exc=False):
     obs0 = obs.copy()
     var0 = var.copy()
 
-    # It'd be lovely if we could do `pytest.raises(None)`, and lovelier indeed to use
-    # `pytest.mark.parametrize` to make should-not-throw and should-throw cases with things like
-    # `exc=[None, ValueError]`. Alas, `pytest.raises()` doesn't accept `None`. So here we
-    # do a little roll-our-own keystroke-saver.
-    def ctx():
-        return pytest.raises(ValueError) if exc else nullcontext()
-
     with tiledbsoma.Experiment.open(experiment_path, "w") as exp:
-        with ctx():
+        with maybe_raises(exc):
             tiledbsoma.io.update_obs(exp, obs)
-        with ctx():
+        with maybe_raises(exc):
             tiledbsoma.io.update_var(exp, var, "RNA")
 
     assert anndata_dataframe_unmodified(obs0, obs)
     assert anndata_dataframe_unmodified(var0, var)
 
 
-@pytest.mark.parametrize(
-    "multiple_fixtures_with_readback", [False, True], indirect=True
+# `pytest.mark.parametrize` wrapper for running a test twice:
+# 1. `readback=False`: `new_obs` and `new_var` come directly from the input `pbmc0_adata` object
+# 2. `readback=True`: `new_obs` and `new_var` are ingested to SOMA, then exported back to pandas DataFrames.
+with_and_without_soma_roundtrip = pytest.mark.parametrize(
+    "test_case_with_readback", [False, True], indirect=True
 )
+
+
+@with_and_without_soma_roundtrip
 def test_no_change(
     experiment_path, old_anndata, new_anndata, new_obs, new_var, obs_schema, var_schema
 ):
     verify_updates(experiment_path, new_obs, new_var)
     verify_schemas(experiment_path, obs_schema, var_schema)
-    verify_obs_and_var_same(old_anndata, new_anndata)
+    verify_obs_and_var_eq(old_anndata, new_anndata)
 
 
-@pytest.mark.parametrize(
-    "multiple_fixtures_with_readback", [False, True], indirect=True
-)
+@with_and_without_soma_roundtrip
 def test_add(experiment_path, new_obs, new_var):
     # boolean
     new_obs["is_g1"] = new_obs["groups"] == "g1"
@@ -180,9 +186,7 @@ def test_add(experiment_path, new_obs, new_var):
     assert v2.field("vst.mean.sq").type == pa.float64()
 
 
-@pytest.mark.parametrize(
-    "multiple_fixtures_with_readback", [False, True], indirect=True
-)
+@with_and_without_soma_roundtrip
 def test_drop(experiment_path, new_obs, new_var):
     del new_obs["groups"]
     del new_var["vst.mean"]
@@ -199,19 +203,15 @@ def test_drop(experiment_path, new_obs, new_var):
         v2.field("vst.mean")
 
 
-@pytest.mark.parametrize(
-    "multiple_fixtures_with_readback", [False, True], indirect=True
-)
+@with_and_without_soma_roundtrip
 def test_change(experiment_path, new_obs, new_var, obs_schema, var_schema):
     new_obs["groups"] = np.arange(new_obs.shape[0], dtype=np.int16)
     new_var["vst.mean"] = np.arange(new_var.shape[0], dtype=np.int32)
-    verify_updates(experiment_path, new_obs, new_var, exc=True)
+    verify_updates(experiment_path, new_obs, new_var, exc=ValueError)
     verify_schemas(experiment_path, obs_schema, var_schema)
 
 
-@pytest.mark.parametrize(
-    "multiple_fixtures_with_readback", [False, True], indirect=True
-)
+@with_and_without_soma_roundtrip
 @pytest.mark.parametrize("shift_and_exc", [[0, None], [1, ValueError]])
 def test_change_counts(
     experiment_path,
@@ -247,6 +247,6 @@ def test_change_counts(
     if exc is None:
         verify_updates(experiment_path, new_obs2, new_var2)
     else:
-        verify_updates(experiment_path, new_obs2, new_var2, exc=True)
-        verify_obs_and_var_same(old_anndata, new_anndata)
+        verify_updates(experiment_path, new_obs2, new_var2, exc=ValueError)
+        verify_obs_and_var_eq(old_anndata, new_anndata)
         verify_schemas(experiment_path, obs_schema, var_schema)

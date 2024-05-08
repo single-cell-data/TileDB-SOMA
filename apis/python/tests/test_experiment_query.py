@@ -926,15 +926,14 @@ def test_experiment_query_uses_threadpool_from_context(soma_experiment):
         pool.submit.assert_called()
 
 
-# Magical conftest.py fixture
-def test_empty_categorical_query(conftest_pbmc_small):
-    q = conftest_pbmc_small.axis_query(
+def test_empty_categorical_query(pbmc0_exp):
+    q = pbmc0_exp.axis_query(
         measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "g1"')
     )
     obs = q.obs().concat()
     assert len(obs) == 44
 
-    q = conftest_pbmc_small.axis_query(
+    q = pbmc0_exp.axis_query(
         measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "foo"')
     )
     # Empty query on a categorical column raised ArrowInvalid before TileDB 2.21; see https://github.com/single-cell-data/TileDB-SOMA/pull/2299
