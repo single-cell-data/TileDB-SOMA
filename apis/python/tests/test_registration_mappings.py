@@ -13,7 +13,7 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io._registration as registration
-from tiledbsoma._util import verify_obs_var
+from tiledbsoma._util import verify_obs_and_var_eq
 
 
 def _create_anndata(
@@ -77,8 +77,8 @@ def _create_anndata(
     return adata
 
 
-def create_h5ad(adata, path):
-    adata.write_h5ad(path)
+def create_h5ad(conftest_pbmc_small, path):
+    conftest_pbmc_small.write_h5ad(path)
     return path
 
 
@@ -819,7 +819,7 @@ def test_append_items_with_experiment(obs_field_name, var_field_name):
             registration_mapping=rd,
         )
 
-    verify_obs_var(original, adata2)
+    verify_obs_and_var_eq(original, adata2)
 
     expect_obs_soma_joinids = list(range(6))
     expect_var_soma_joinids = list(range(5))
@@ -925,7 +925,7 @@ def test_append_with_disjoint_measurements(
         registration_mapping=rd,
     )
 
-    verify_obs_var(original, anndata2)
+    verify_obs_and_var_eq(original, anndata2)
 
     # exp/obs, use_same_cells=True:                       exp/obs, use_same_cells=False:
     #    soma_joinid obs_id cell_type  is_primary_data       soma_joinid obs_id cell_type  is_primary_data

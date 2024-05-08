@@ -1,6 +1,6 @@
 import tempfile
-from contextlib import nullcontext
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
+from typing import Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -11,99 +11,154 @@ from pyarrow import Schema
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma._util import anndata_dataframe_unmodified, verify_obs_var
+from tiledbsoma._util import anndata_dataframe_unmodified, verify_obs_and_var_eq
+
+from tests._util import maybe_raises
 
 
 @dataclass
 class TestCase:
-    exp_path: str
-    original: AnnData
-    new: AnnData
+    """Group of related objects, used by test cases in this file, that share a creation code-path and are exposed as
+    `pytest.fixture`s below."""
+
+    experiment_path: str
+    old_anndata: AnnData
+    new_anndata: AnnData
     new_obs: pd.DataFrame
     new_var: pd.DataFrame
-    o1: Schema
-    v1: Schema
+    obs_schema: Schema
+    var_schema: Schema
 
 
 @pytest.fixture
-def case(request, adata) -> TestCase:
-    """Ingest an ``AnnData``, yield a ``TestCase`` with the original and new AnnData objects."""
-    with tempfile.TemporaryDirectory() as exp_path:
-        original = adata.copy()
-        tiledbsoma.io.from_anndata(exp_path, adata, measurement_name="RNA")
-        verify_obs_var(original, adata)
-        readback = request.param
-        with tiledbsoma.Experiment.open(exp_path) as exp:
-            o1 = exp.obs.schema
-            v1 = exp.ms["RNA"].var.schema
-            if readback:
+def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
+    """
+    Ingest an `AnnData`to a SOMA `Experiment`, yielding a `TestCase` with the old and new AnnData objects.
+
+    * The input AnnData is always `conftest_pbmc_small` (from conftest.py), not specifiable here as an argument
+    * `request.param` (a.k.a. `use_readback` below) is a boolean, populated by pytest, that specifies whether:
+      * `False`: the returned `new_obs` and `new_var` come directly from the input `conftest_pbmc_small`, or
+      * `True`: `new_obs` and `new_var` are returned after round-tripping `conftest_pbmc_small` through SOMA and back to
+        AnnData/Pandas.
+    * Each `TestCase` member is also exposed directly as its own `fixture` below.
+    """
+    with tempfile.TemporaryDirectory() as experiment_path:
+        old_anndata = conftest_pbmc_small.copy()
+        tiledbsoma.io.from_anndata(
+            experiment_path, conftest_pbmc_small, measurement_name="RNA"
+        )
+
+        # Check that the anndata-to-soma ingestion didn't modify the old_anndata object (which is
+        # passed by reference to the ingestor) while it was doing the ingest
+        verify_obs_and_var_eq(old_anndata, conftest_pbmc_small)
+
+        use_readback = request.param
+
+        with tiledbsoma.Experiment.open(experiment_path) as exp:
+            obs_schema = exp.obs.schema
+            var_schema = exp.ms["RNA"].var.schema
+            if use_readback:
                 new_obs = exp.obs.read().concat().to_pandas()
                 new_var = exp.ms["RNA"].var.read().concat().to_pandas()
             else:
-                new_obs = adata.obs
-                new_var = adata.var
+                new_obs = conftest_pbmc_small.obs
+                new_var = conftest_pbmc_small.var
 
             yield TestCase(
-                exp_path=exp_path,
-                original=original,
-                new=adata,
+                experiment_path=experiment_path,
+                old_anndata=old_anndata,
+                new_anndata=conftest_pbmc_small,
                 new_obs=new_obs,
                 new_var=new_var,
-                o1=o1,
-                v1=v1,
+                obs_schema=obs_schema,
+                var_schema=var_schema,
             )
 
 
-def create_member_fixture(name):
-    """Create a ``pytest.fixture`` for a ``TestCase`` field."""
-
-    @pytest.fixture
-    def member_fixture(case):
-        return getattr(case, name)
-
-    return member_fixture
+# Expose each field of the TestCase object as a pytest.fixture, to reduce boilerplate in test functions.
+@pytest.fixture
+def experiment_path(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.experiment_path
 
 
-for field in fields(TestCase):
-    """Create ``pytest.fixture``s for each ``TestCase`` field."""
-    globals()[field.name] = create_member_fixture(field.name)
+@pytest.fixture
+def old_anndata(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.old_anndata
 
 
-def verify_schemas(exp_path, o1, v1):
+@pytest.fixture
+def new_anndata(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.new_anndata
+
+
+@pytest.fixture
+def new_obs(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.new_obs
+
+
+@pytest.fixture
+def new_var(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.new_var
+
+
+@pytest.fixture
+def obs_schema(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.obs_schema
+
+
+@pytest.fixture
+def var_schema(multiple_fixtures_with_readback):
+    return multiple_fixtures_with_readback.var_schema
+
+
+def verify_schemas(experiment_path, obs_schema, var_schema):
     """Read {obs,var} schemas, verify they match initial versions."""
-    with tiledbsoma.Experiment.open(exp_path) as exp:
-        o2 = exp.obs.schema
-        v2 = exp.ms["RNA"].var.schema
-    assert o1 == o2
-    assert v1 == v2
+    with tiledbsoma.Experiment.open(experiment_path) as exp:
+        other_obs_schema = exp.obs.schema
+        other_var_schema = exp.ms["RNA"].var.schema
+    assert obs_schema == other_obs_schema
+    assert var_schema == other_var_schema
 
 
-def verify_updates(exp_path, obs, var, exc=False):
+def verify_updates(experiment_path, obs, var, exc: Optional[Type[ValueError]] = None):
+    """
+    Calls `update_obs` and `update_var` on the experiment. Also verifies that the
+    updater code didn't inadvertently modify the `obs` and `var` objects, which are
+    passed into the updater by reference.
+    """
+
     obs0 = obs.copy()
     var0 = var.copy()
 
-    def ctx():
-        return pytest.raises(ValueError) if exc else nullcontext()
-
-    with tiledbsoma.Experiment.open(exp_path, "w") as exp:
-        with ctx():
+    with tiledbsoma.Experiment.open(experiment_path, "w") as exp:
+        with maybe_raises(exc):
             tiledbsoma.io.update_obs(exp, obs)
-        with ctx():
+        with maybe_raises(exc):
             tiledbsoma.io.update_var(exp, var, "RNA")
 
     assert anndata_dataframe_unmodified(obs0, obs)
     assert anndata_dataframe_unmodified(var0, var)
 
 
-@pytest.mark.parametrize("case", [False, True], indirect=True)
-def test_no_change(exp_path, original, new, new_obs, new_var, o1, v1):
-    verify_updates(exp_path, new_obs, new_var)
-    verify_schemas(exp_path, o1, v1)
-    verify_obs_var(original, new)
+# `pytest.mark.parametrize` wrapper for running a test twice:
+# 1. `readback=False`: `new_obs` and `new_var` come directly from the input `conftest_pbmc_small` object
+# 2. `readback=True`: `new_obs` and `new_var` are ingested to SOMA, then exported back to pandas DataFrames.
+with_and_without_soma_roundtrip = pytest.mark.parametrize(
+    "multiple_fixtures_with_readback", [False, True], indirect=True
+)
 
 
-@pytest.mark.parametrize("case", [False, True], indirect=True)
-def test_add(exp_path, new_obs, new_var):
+@with_and_without_soma_roundtrip
+def test_no_change(
+    experiment_path, old_anndata, new_anndata, new_obs, new_var, obs_schema, var_schema
+):
+    verify_updates(experiment_path, new_obs, new_var)
+    verify_schemas(experiment_path, obs_schema, var_schema)
+    verify_obs_and_var_eq(old_anndata, new_anndata)
+
+
+@with_and_without_soma_roundtrip
+def test_add(experiment_path, new_obs, new_var):
     # boolean
     new_obs["is_g1"] = new_obs["groups"] == "g1"
     # int
@@ -115,9 +170,9 @@ def test_add(exp_path, new_obs, new_var):
 
     new_var["vst.mean.sq"] = new_var["vst.mean"] ** 2
 
-    verify_updates(exp_path, new_obs, new_var)
+    verify_updates(experiment_path, new_obs, new_var)
 
-    with tiledbsoma.Experiment.open(exp_path) as exp:
+    with tiledbsoma.Experiment.open(experiment_path) as exp:
         o2 = exp.obs.schema
         v2 = exp.ms["RNA"].var.schema
         obs = exp.obs.read().concat().to_pandas()
@@ -133,14 +188,14 @@ def test_add(exp_path, new_obs, new_var):
     assert v2.field("vst.mean.sq").type == pa.float64()
 
 
-@pytest.mark.parametrize("case", [False, True], indirect=True)
-def test_drop(exp_path, new_obs, new_var):
+@with_and_without_soma_roundtrip
+def test_drop(experiment_path, new_obs, new_var):
     del new_obs["groups"]
     del new_var["vst.mean"]
 
-    verify_updates(exp_path, new_obs, new_var)
+    verify_updates(experiment_path, new_obs, new_var)
 
-    with tiledbsoma.Experiment.open(exp_path) as exp:
+    with tiledbsoma.Experiment.open(experiment_path) as exp:
         o2 = exp.obs.schema
         v2 = exp.ms["RNA"].var.schema
 
@@ -150,18 +205,25 @@ def test_drop(exp_path, new_obs, new_var):
         v2.field("vst.mean")
 
 
-@pytest.mark.parametrize("case", [False, True], indirect=True)
-def test_change(exp_path, new_obs, new_var, o1, v1):
+@with_and_without_soma_roundtrip
+def test_change(experiment_path, new_obs, new_var, obs_schema, var_schema):
     new_obs["groups"] = np.arange(new_obs.shape[0], dtype=np.int16)
     new_var["vst.mean"] = np.arange(new_var.shape[0], dtype=np.int32)
-    verify_updates(exp_path, new_obs, new_var, exc=True)
-    verify_schemas(exp_path, o1, v1)
+    verify_updates(experiment_path, new_obs, new_var, exc=ValueError)
+    verify_schemas(experiment_path, obs_schema, var_schema)
 
 
-@pytest.mark.parametrize("case", [False, True], indirect=True)
+@with_and_without_soma_roundtrip
 @pytest.mark.parametrize("shift_and_exc", [[0, None], [1, ValueError]])
 def test_change_counts(
-    exp_path, original, new, new_obs, new_var, shift_and_exc, o1, v1
+    experiment_path,
+    old_anndata,
+    new_anndata,
+    new_obs,
+    new_var,
+    obs_schema,
+    var_schema,
+    shift_and_exc,
 ):
     shift, exc = shift_and_exc
 
@@ -185,8 +247,8 @@ def test_change_counts(
     )
 
     if exc is None:
-        verify_updates(exp_path, new_obs2, new_var2)
+        verify_updates(experiment_path, new_obs2, new_var2)
     else:
-        verify_updates(exp_path, new_obs2, new_var2, exc=True)
-        verify_obs_var(original, new)
-        verify_schemas(exp_path, o1, v1)
+        verify_updates(experiment_path, new_obs2, new_var2, exc=ValueError)
+        verify_obs_and_var_eq(old_anndata, new_anndata)
+        verify_schemas(experiment_path, obs_schema, var_schema)
