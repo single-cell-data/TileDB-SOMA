@@ -5,13 +5,12 @@ import pytest
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_options as tco
-from tiledbsoma._util import verify_obs_and_var_same
+from tiledbsoma._util import verify_obs_and_var_eq
 import tiledb
 
 
 @pytest.mark.skip(reason="No longer return ArraySchema - see note in test")
-# Magical conftest.py fixture
-def test_platform_config(conftest_adata):
+def test_platform_config(pbmc0_adata):
     # TODO as we remove usage of TileDB-Py in favor of ArrowSchema, we
     # need a new method to get which filters have applied to the column
     # rather than grabbing it from the ArraySchema. One consideration
@@ -25,12 +24,12 @@ def test_platform_config(conftest_adata):
     # platform_config by calling pa.Schema.with_metadata(platform_config).
 
     # Set up anndata input path and tiledb-group output path
-    original = conftest_adata.copy()
+    original = pbmc0_adata.copy()
     with tempfile.TemporaryDirectory() as output_path:
         # Ingest
         tiledbsoma.io.from_anndata(
             output_path,
-            conftest_adata,
+            pbmc0_adata,
             "RNA",
             platform_config={
                 "tiledb": {
@@ -52,7 +51,7 @@ def test_platform_config(conftest_adata):
                 }
             },
         )
-        verify_obs_and_var_same(original, conftest_adata)
+        verify_obs_and_var_eq(original, pbmc0_adata)
 
         with tiledbsoma.Experiment.open(output_path) as exp:
             x_data = exp.ms["RNA"].X["data"]

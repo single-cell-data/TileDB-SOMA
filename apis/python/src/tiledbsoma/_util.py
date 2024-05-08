@@ -316,7 +316,7 @@ def anndata_dataframe_unmodified_nan_safe(old: pd.DataFrame, new: pd.DataFrame) 
     return True
 
 
-def verify_obs_and_var_same(ad0: AnnData, ad1: AnnData, nan_safe: bool = False) -> None:
+def verify_obs_and_var_eq(ad0: AnnData, ad1: AnnData, nan_safe: bool = False) -> None:
     """Verify that two ``AnnData``'s ``obs`` and ``var`` dataframes are equivalent."""
     if nan_safe:
         assert anndata_dataframe_unmodified_nan_safe(ad0.obs, ad1.obs)

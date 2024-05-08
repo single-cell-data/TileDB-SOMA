@@ -4,20 +4,19 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io._registration.signatures as signatures
-from tiledbsoma._util import verify_obs_and_var_same
+from tiledbsoma._util import verify_obs_and_var_eq
 
 
-# Magical conftest.py fixtures
-def test_signature_serdes(conftest_h5ad_path, conftest_adata):
-    sig = signatures.Signature.from_h5ad(conftest_h5ad_path.as_posix())
+def test_signature_serdes(pbmc0_h5ad_path, pbmc0_adata):
+    sig = signatures.Signature.from_h5ad(pbmc0_h5ad_path.as_posix())
     text1 = sig.to_json()
     assert "obs_schema" in text1
     assert "var_schema" in text1
     assert sig == signatures.Signature.from_json(text1)
 
-    original = conftest_adata.copy()
-    sig = signatures.Signature.from_anndata(conftest_adata)
-    verify_obs_and_var_same(original, conftest_adata)
+    original = pbmc0_adata.copy()
+    sig = signatures.Signature.from_anndata(pbmc0_adata)
+    verify_obs_and_var_eq(original, pbmc0_adata)
 
     text2 = sig.to_json()
     assert sig == signatures.Signature.from_json(text2)
@@ -27,8 +26,8 @@ def test_signature_serdes(conftest_h5ad_path, conftest_adata):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    uri = tiledbsoma.io.from_anndata(output_path, conftest_adata, "RNA")
-    verify_obs_and_var_same(original, conftest_adata)
+    uri = tiledbsoma.io.from_anndata(output_path, pbmc0_adata, "RNA")
+    verify_obs_and_var_eq(original, pbmc0_adata)
 
     sig = signatures.Signature.from_soma_experiment(uri)
     text3 = sig.to_json()
@@ -38,18 +37,18 @@ def test_signature_serdes(conftest_h5ad_path, conftest_adata):
 
 
 # Magical conftest.py fixture
-def test_compatible(conftest_adata):
+def test_compatible(pbmc0_adata):
     # Check that zero inputs result in zero incompatibility
     signatures.Signature.check_compatible({})
 
-    original = conftest_adata.copy()
-    sig1 = signatures.Signature.from_anndata(conftest_adata)
-    verify_obs_and_var_same(original, conftest_adata)
+    original = pbmc0_adata.copy()
+    sig1 = signatures.Signature.from_anndata(pbmc0_adata)
+    verify_obs_and_var_eq(original, pbmc0_adata)
 
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
-    uri = tiledbsoma.io.from_anndata(output_path, conftest_adata, "RNA")
-    verify_obs_and_var_same(original, conftest_adata)
+    uri = tiledbsoma.io.from_anndata(output_path, pbmc0_adata, "RNA")
+    verify_obs_and_var_eq(original, pbmc0_adata)
     sig2 = signatures.Signature.from_soma_experiment(uri)
 
     # Check that single inputs result in zero incompatibility
@@ -68,12 +67,12 @@ def test_compatible(conftest_adata):
     )  # no throw
 
     # Check incompatibility of modified AnnData
-    adata3 = conftest_adata
+    adata3 = pbmc0_adata
     del adata3.obs["groups"]
 
     original = adata3.copy()
     sig3 = signatures.Signature.from_anndata(adata3)
-    verify_obs_and_var_same(original, adata3)
+    verify_obs_and_var_eq(original, adata3)
 
     with pytest.raises(ValueError):
         signatures.Signature.check_compatible({"orig": sig1, "anndata3": sig3})
