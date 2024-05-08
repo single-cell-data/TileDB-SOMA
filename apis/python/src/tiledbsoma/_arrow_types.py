@@ -164,6 +164,23 @@ def arrow_type_from_tiledb_dtype(
         return pa.from_numpy_dtype(tiledb_dtype)
 
 
+def is_string_dtypelike(dtype: npt.DTypeLike) -> bool:
+    # Much of this (including the null-check) is to make the type-checker happy,
+    # as npt.DTypeLike is a complex union including 'str' and None.
+    if dtype is None:
+        return False
+    if dtype == "str":
+        return True
+    if isinstance(dtype, np.dtype):
+        return is_string_dtype(dtype)
+    return False
+
+
+# def is_string_dtype(dtype: np.dtype[Any]) -> bool:
+def is_string_dtype(dtype: Any) -> bool:
+    return dtype.name in ["object", "string", "str32", "str64"]
+
+
 def tiledb_schema_to_arrow(
     tdb_schema: tiledb.ArraySchema, uri: str, ctx: tiledb.ctx.Ctx
 ) -> pa.Schema:
@@ -286,7 +303,7 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     print()
 
     for key in df:
-        if df[key].dtype.name in ["object", "string"]:
+        if is_string_dtype(df[key].dtype):
             print("  DF_TO_ARROW: ", key, df[key].dtype.name, "NULLABLE IN DICT")
             nullable_fields.add(key)
         else:

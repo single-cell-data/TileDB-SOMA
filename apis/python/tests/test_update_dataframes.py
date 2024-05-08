@@ -284,6 +284,13 @@ def test_change_counts(
 def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_ingest):
     uri = tmp_path.as_uri()
 
+    print()
+    print()
+    print("================================================================")
+    print("TEST ENTER: SEPARATE_INGEST =", separate_ingest)
+    print()
+    print()
+
     # Two ways to test:
     #
     # One way:
@@ -297,12 +304,26 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
     # * Call update_obs again to add the new column with null values
 
     if separate_ingest:
+        print()
+        print()
+        print("----------------------------------------------------------------")
+        print("TEST : INITIAL FROM_ANNDATA WITHOUT NEW COLUMN AT ALL")
+        print()
+        print()
+
         tiledbsoma.io.from_anndata(
             uri,
             conftest_pbmc3k_adata,
             measurement_name="RNA",
             uns_keys=[],
         )
+
+        print()
+        print()
+        print("----------------------------------------------------------------")
+        print("TEST : UPDATE_OBS WITH NON-NULL VALUES")
+        print()
+        print()
 
         conftest_pbmc3k_adata.obs["batch_id"] = "testing"
         verify_updates(uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var)
@@ -310,12 +331,26 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
     else:
         conftest_pbmc3k_adata.obs["batch_id"] = "testing"
 
+        print()
+        print()
+        print("----------------------------------------------------------------")
+        print("TEST : INITIAL FROM_ANNDATA WITH NEW COLUMN WITH NON-NULL VALUES")
+        print()
+        print()
+
         tiledbsoma.io.from_anndata(
             uri,
             conftest_pbmc3k_adata,
             measurement_name="RNA",
             uns_keys=[],
         )
+
+    print()
+    print()
+    print("----------------------------------------------------------------")
+    print("TEST : UPDATE_OBS WITH NULL VALUES")
+    print()
+    print()
 
     conftest_pbmc3k_adata.obs["batch_id"] = pd.NA
     # nan_safe since pd.NA != pd.NA

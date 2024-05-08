@@ -447,7 +447,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         print()
         print()
-        print("DATAFRAME SELF.SCHEMA")
+        print("DATAFRAME SELF.SCHEMA", self.uri)
         print(self.schema)
         print()
         print()

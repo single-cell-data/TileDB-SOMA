@@ -54,7 +54,7 @@ from .. import (
     eta,
     logging,
 )
-from .._arrow_types import df_to_arrow, tiledb_type_from_arrow_type
+from .._arrow_types import df_to_arrow, is_string_dtypelike, tiledb_type_from_arrow_type
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -1474,9 +1474,9 @@ def _update_dataframe(
     """
     See ``update_obs`` and ``update_var``. This is common helper code shared by both.
     """
-    new_data = (
-        new_data.copy()
-    )  # Further operations are in-place for parsimony of memory usage
+    # Further operations are in-place for parsimony of memory usage:
+    new_data = new_data.copy()
+
     sdf.verify_open_for_writing()
     old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)
     new_sig = signatures._string_dict_from_pandas_dataframe(
@@ -1542,12 +1542,20 @@ def _update_dataframe(
             )
 
         filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
+
+        # Must match what DataFrame.create does:
+        # * DataFrame.create sets nullability for obs/var columns on initial ingest
+        # * Here, we set nullabilkity for obs/var columns on update_obs
+        # * Users should get the same behavior either way
+        nullable = is_string_dtypelike(dtype)
+
         se.add_attribute(
             tiledb.Attr(
                 name=add_key,
                 dtype=dtype,
                 filters=filters,
                 enum_label=enum_label,
+                nullable=nullable,
             )
         )
 
