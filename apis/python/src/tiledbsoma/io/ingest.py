@@ -1543,10 +1543,17 @@ def _update_dataframe(
 
         filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
 
-        # Must match what DataFrame.create does:
+        # An update can create (or drop) columns, or mutate existing ones.  A
+        # brand-new column might have nulls in it -- or it might not.  And a
+        # subsequent mutator-update might set null values to non-null -- or vice
+        # versa. Therefore we must be careful to set nullability for all types
+        # we want to be nullable: principal use-case being pd.NA / NaN in
+        # string columns which map to TileDB nullity.
+        #
+        # Note: this must match what DataFrame.create does:
         # * DataFrame.create sets nullability for obs/var columns on initial ingest
-        # * Here, we set nullabilkity for obs/var columns on update_obs
-        # * Users should get the same behavior either way
+        # * Here, we set nullabiliity for obs/var columns on update_obs
+        # Users should get the same behavior either way.
         nullable = is_string_dtypelike(dtype)
 
         se.add_attribute(
