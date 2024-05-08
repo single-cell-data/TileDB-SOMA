@@ -599,8 +599,6 @@ void load_soma_array(py::module& m) {
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 
-        .def_property_readonly("shape", &SOMAArray::shape)
-
         .def_property_readonly("uri", &SOMAArray::uri)
 
         .def_property_readonly("column_names", &SOMAArray::column_names)

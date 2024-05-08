@@ -35,7 +35,7 @@
 
 #include <filesystem>
 
-#include "soma_array.h"
+#include "soma_base_ndarray.h"
 
 namespace tiledbsoma {
 
@@ -43,7 +43,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMASparseNDArray : public SOMAArray {
+class SOMASparseNDArray : public SOMABaseNDArray {
    public:
     //===================================================================
     //= public static
@@ -120,7 +120,7 @@ class SOMASparseNDArray : public SOMAArray {
         std::vector<std::string> column_names,
         ResultOrder result_order,
         std::optional<TimestampRange> timestamp)
-        : SOMAArray(
+        : SOMABaseNDArray(
               mode,
               uri,
               ctx,
@@ -131,8 +131,8 @@ class SOMASparseNDArray : public SOMAArray {
               timestamp) {
     }
 
-    SOMASparseNDArray(const SOMAArray& other)
-        : SOMAArray(other) {
+    SOMASparseNDArray(const SOMABaseNDArray& other)
+        : SOMABaseNDArray(other) {
     }
 
     SOMASparseNDArray() = delete;
@@ -140,7 +140,7 @@ class SOMASparseNDArray : public SOMAArray {
     SOMASparseNDArray(SOMASparseNDArray&&) = delete;
     ~SOMASparseNDArray() = default;
 
-    using SOMAArray::open;
+    using SOMABaseNDArray::open;
 
     /**
      * Return whether the SOMASparseNDArray is sparse.
