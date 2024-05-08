@@ -194,13 +194,13 @@ Furthermore, \code{values} must contain the same number of rows as the current
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-shape}{}}}
 \subsection{Method \code{shape()}}{
 Retrieve the shape; as \code{SOMADataFrames} are shapeless,
-simply returns \code{NA}
+simply raises an error
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$shape()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\code{NA} classed as an \code{\link[bit64]{integer64}}
+None, instead a \code{\link{.NotYetImplemented}()} error is raised
 }
 }
 \if{html}{\out{<hr>}}

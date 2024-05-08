@@ -398,11 +398,14 @@ SOMADataFrame <- R6::R6Class(
     },
 
     #' @description Retrieve the shape; as \code{SOMADataFrames} are shapeless,
-    #' simply returns \code{NA}
+    #' simply raises an error
     #'
-    #' @return \code{NA} classed as an \code{\link[bit64]{integer64}}
+    #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
     #'
-    shape = function() bit64::as.integer64(NA_integer_)
+    shape = function() stop(errorCondition(
+      "'SOMADataFrame$shape()' is not implemented yet",
+      class = 'notYetImplementedError'
+    ))
 
   ),
 
