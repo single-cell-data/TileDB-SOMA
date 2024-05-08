@@ -12,6 +12,9 @@ test_that("Basic mechanics", {
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
 
+  expect_true(rlang::is_na(sdf$shape()))
+  expect_s3_class(sdf$shape(), "integer64")
+
   # check for missing columns
   expect_error(
     sdf$write(arrow::arrow_table(foo = 1L:10L)),

@@ -395,7 +395,14 @@ SOMADataFrame <- R6::R6Class(
       self$reopen(mode = "WRITE")
       spdl::info("[SOMADataFrame update]: Writing new data")
       self$write(values)
-    }
+    },
+
+    #' @description Retrieve the shape; as \code{SOMADataFrames} are shapeless,
+    #' simply returns \code{NA}
+    #'
+    #' @return \code{NA} classed as an \code{\link[bit64]{integer64}}
+    #'
+    shape = function() bit64::as.integer64(NA_integer_)
 
   ),
 
