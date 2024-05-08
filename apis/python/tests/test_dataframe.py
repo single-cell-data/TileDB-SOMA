@@ -87,7 +87,9 @@ def test_dataframe(tmp_path, arrow_schema):
     with soma.DataFrame.open(uri) as sdf:
         assert sdf.count == 5
         assert len(sdf) == 5
-        assert sdf.shape is None
+
+        with pytest.raises(AttributeError):
+            assert sdf.shape is None
 
         # Read all
         table = sdf.read().concat()
