@@ -164,6 +164,22 @@ def arrow_type_from_tiledb_dtype(
         return pa.from_numpy_dtype(tiledb_dtype)
 
 
+def is_string_dtypelike(dtype: npt.DTypeLike) -> bool:
+    # Much of this (including the null-check) is to make the type-checker happy,
+    # as npt.DTypeLike is a complex union including 'str' and None.
+    if dtype is None:
+        return False
+    if dtype == "str":
+        return True
+    if isinstance(dtype, np.dtype):
+        return is_string_dtype(dtype)
+    return False
+
+
+def is_string_dtype(dtype: Any) -> bool:
+    return dtype.name in ["object", "string", "str32", "str64"]
+
+
 def tiledb_schema_to_arrow(
     tdb_schema: tiledb.ArraySchema, uri: str, ctx: tiledb.ctx.Ctx
 ) -> pa.Schema:
@@ -247,6 +263,25 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
             df[key] = pd.Categorical(
                 values=column, categories=categories, ordered=ordered
             )
+
+    # Always make string columns nullable. Context:
+    # * df_to_arrow is _solely_ for use of tiledbsoma.io
+    #   o Anyone calling the SOMA API directly has user-provided Arrow schema which
+    #     must be respected
+    #   o Anyone calling tiledbsoma.io -- including from_h5ad/from_anndata, and
+    #     update_obs/update_var -- does not provide an Arrow schema explicitly.
+    #     We compute an Arrow schema for them here.
+    # * Even when the _initial_ data is all non-null down a particular string
+    #   column, there are two ways a _subsequent_ write can provide nulls:
+    #   append-mode ingest, or, update_obs/update_var wherein the new data has
+    #   nulls even when the data used at schema-create time was non-null.
+    # * We have no way of knowing at initial ingest time whether or not users
+    #   will later be appending, or updating, with null data.
+    # * Note that Arrow has a per-field nullable flag in its schema metadata
+    #   -- and so do TileDB array schemas.
+    for key in df:
+        if is_string_dtype(df[key].dtype):
+            nullable_fields.add(key)
 
     arrow_table = pa.Table.from_pandas(df)
 
