@@ -379,28 +379,7 @@ def cast_values_to_target_schema(
         else:
             target_schema.append(target_field)
 
-    print()
-    print()
-    print("CAST_VALUES_TO_TARGET_SCHEMA: TARGET_SCHEMA")
-    print(target_schema)
-    print()
-    print()
-
     new_schema = pa.schema(target_schema, values.schema.metadata)
-
-    print()
-    print()
-    print("CAST_VALUES_TO_TARGET_SCHEMA: VALUES")
-    print(values)
-    print()
-    print()
-
-    print()
-    print()
-    print("CAST_VALUES_TO_TARGET_SCHEMA: NEW_SCHEMA")
-    print(new_schema)
-    print()
-    print()
 
     return values.cast(new_schema)
 
