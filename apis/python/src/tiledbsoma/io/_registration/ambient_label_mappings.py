@@ -233,9 +233,10 @@ class ExperimentAmbientLabelMapping:
                     obs_map.update(dict(zip(obs_ids, soma_joinids)))
 
                 for measurement_name in exp.ms:
-                    expvar = exp.ms[measurement_name].var
-                    if "var" not in exp.ms[measurement_name]:
+                    meas = exp.ms[measurement_name]
+                    if "var" not in meas:
                         continue
+                    expvar = meas.var
                     if var_field_name not in expvar.schema.names:
                         continue
                     var_map = {}
