@@ -570,6 +570,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         var_index = var_index,
         var_column_names = var_column_names
       )
+      op <- options(Seurat.object.assay.calcn = FALSE)
+      on.exit(options(op), add = TRUE, after = FALSE)
       object <- SeuratObject::CreateSeuratObject(
         counts = assay,
         assay = private$.measurement_name
