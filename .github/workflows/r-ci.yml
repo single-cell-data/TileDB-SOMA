@@ -63,7 +63,7 @@ jobs:
           rversion <- paste(strsplit(as.character(getRversion()), split = '\\.')[[1L]][1:2], collapse = '.')
           codename <-  system('. /etc/os-release; echo ${VERSION_CODENAME}', intern = TRUE)
           repo <- sprintf("https://tiledb-inc.r-universe.dev/bin/linux/%s/%s/", codename, rversion)
-          opt <- sprintf('options(repos = c("%s", getOption("repos")))', repo)
+          (opt <- sprintf('options(repos = c("%s", getOption("repos")))', repo))
           cat(opt, "\n", file = "~/.Rprofile", append = TRUE)
         shell: Rscript {0}
 
@@ -140,7 +140,7 @@ jobs:
       #  run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
       - name: Dependencies
-        run: cd apis/r && tools/r-ci.sh install_all
+        run: R_REMOTES_UPGRADE=never cd apis/r && tools/r-ci.sh install_all
 
       # - name: Install dataset packages from source (macOS)
       #   if: ${{ matrix.os == 'macOS-latest' }}
