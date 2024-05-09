@@ -223,10 +223,6 @@ TEST_CASE("SOMAArray: nnz") {
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
 
-        std::vector<int64_t> shape = soma_array->shape();
-        REQUIRE(shape.size() == 1);
-        REQUIRE(shape[0] == std::numeric_limits<int64_t>::max());
-
         // Check that data from SOMAArray::read_next matches expected data
         while (auto batch = soma_array->read_next()) {
             auto arrbuf = batch.value();

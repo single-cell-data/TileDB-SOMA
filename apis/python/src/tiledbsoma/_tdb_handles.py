@@ -447,7 +447,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         # enum is only used in the DataFrame write path and is implemented by
         # ArrayWrapper. If enum is called in the read path, it is an error.
         raise NotImplementedError
-
+    
     @property
     def shape(self) -> Tuple[int, ...]:
         return tuple(self._handle.shape)
@@ -464,6 +464,10 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
 
     def write(self, values: pa.RecordBatch) -> None:
         self._handle.write(values)
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        raise NotImplementedError
 
 
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
