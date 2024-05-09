@@ -351,15 +351,14 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                         TILEDB_COMPRESSION_LEVEL,
                         platform_config.dataframe_dim_zstd_level);
                 } else if (
-                    soma_type == "SOMASparseNDArray" ||
-                    soma_type == "SOMADenseNDArray") {
-                    // sparse_nd_array_dim_zstd_level being used for
-                    // both Sparse and Dense NDArrays is intentional
-                    // and caried over from code previously in
-                    // Python API
+                    soma_type == "SOMASparseNDArray") {
                     dim_zstd_filter.set_option(
                         TILEDB_COMPRESSION_LEVEL,
                         platform_config.sparse_nd_array_dim_zstd_level);
+                } else if (soma_type == "SOMADenseNDArray") {
+                    dim_zstd_filter.set_option(
+                        TILEDB_COMPRESSION_LEVEL,
+                        platform_config.dense_nd_array_dim_zstd_level);
                 }
                 dim_filterlist.add_filter(dim_zstd_filter);
 

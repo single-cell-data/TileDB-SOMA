@@ -113,6 +113,9 @@ class TileDBCreateOptions:
     sparse_nd_array_dim_zstd_level: int = attrs_.field(
         validator=vld.instance_of(int), default=3
     )
+    dense_nd_array_dim_zstd_level: int = attrs_.field(
+        validator=vld.instance_of(int), default=3
+    )
     write_X_chunked: bool = attrs_.field(validator=vld.instance_of(bool), default=True)
     goal_chunk_nnz: int = attrs_.field(
         validator=vld.instance_of(int), default=100_000_000

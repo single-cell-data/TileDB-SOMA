@@ -42,6 +42,9 @@ class PlatformConfig {
     /* Set the ZstdFilter's level for SparseNDArray dims */
     int32_t sparse_nd_array_dim_zstd_level = 3;
 
+    /* Set the ZstdFilter's level for DenseNDArray dims */
+    int32_t dense_nd_array_dim_zstd_level = 3;
+
     /* Set whether to write the X data chunked */
     bool write_X_chunked = true;
 
