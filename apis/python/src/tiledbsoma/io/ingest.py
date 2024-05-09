@@ -261,22 +261,27 @@ def from_h5ad(
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to create this array, provided in the form
-        ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}`` nested keys.
+          ``{\"tiledb\": {\"create\": {\"sparse_nd_array_dim_zstd_level\": 7}}}``.
 
-        obs_id_name and var_id_name: Which AnnData ``obs`` and ``var`` columns, respectively, to use
-        for append mode: values of this column will be used to decide which obs/var rows in appended
-        inputs are distinct from the ones already stored, for the assignment of ``soma_joinid``.  If
-        this column exists in the input data, as a named index or a non-index column name, it will
-        be used. If this column doesn't exist in the input data, and if the index is nameless or
-        named ``index``, that index will be given this name when written to the SOMA experiment's
-        ``obs`` / ``var``. NOTE: it is not necessary for this column to be the index-column
-        name in the input AnnData objects ``obs``/``var``.
+        obs_id_name/var_id_name: Which AnnData ``obs`` and ``var`` columns, respectively, to use
+          for append mode.
+
+          Values of this column will be used to decide which obs/var rows in appended
+          inputs are distinct from the ones already stored, for the assignment of ``soma_joinid``.  If
+          this column exists in the input data, as a named index or a non-index column name, it will
+          be used. If this column doesn't exist in the input data, and if the index is nameless or
+          named ``index``, that index will be given this name when written to the SOMA experiment's
+          ``obs`` / ``var``.
+
+          NOTE: it is not necessary for this column to be the index-column
+          name in the input AnnData objects ``obs``/``var``.
 
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
 
         raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
 
         ingest_mode: The ingestion type to perform:
+
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
               that was previously written. Useful for continuing after a partial
@@ -286,11 +291,13 @@ def from_h5ad(
               multiple H5AD files to a single SOMA.
 
         X_kind: Which type of matrix is used to store dense X data from the
-            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+          H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
 
         registration_mapping: Does not need to be supplied when ingesting a single
           H5AD/AnnData object into a single :class:`Experiment`. When multiple inputs
           are to be ingested into a single experiment, there are two steps. First:
+
+          .. code-block:: python
 
               import tiledbsoma.io
               rd = tiledbsoma.io.register_h5ads(
@@ -304,6 +311,8 @@ def from_h5ad(
 
           Once that's been done, the data ingests per se may be done in any order,
           or in parallel, via for each ``h5ad_file_name``:
+
+          .. code-block:: python
 
               tiledbsoma.io.from_h5ad(
                   experiment_uri,
@@ -320,6 +329,8 @@ def from_h5ad(
         additional_metadata: Optional metadata to add to the ``Experiment`` and all descendents.
           This is a coarse-grained mechanism for setting key-value pairs on all SOMA objects in an
           ``Experiment`` hierarchy. Metadata for particular objects is more commonly set like:
+
+          .. code-block:: python
 
               with soma.open(uri, 'w') as exp:
                   exp.metadata.update({"aaa": "BBB"})
