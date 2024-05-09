@@ -378,6 +378,7 @@ def cast_values_to_target_schema(
             target_schema.append(target_field.with_type(pa.uint8()))
         else:
             target_schema.append(target_field)
+
     new_schema = pa.schema(target_schema, values.schema.metadata)
 
     return values.cast(new_schema)

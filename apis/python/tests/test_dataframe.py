@@ -88,6 +88,9 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sdf.count == 5
         assert len(sdf) == 5
 
+        with pytest.raises(AttributeError):
+            assert sdf.shape is None
+
         # Read all
         table = sdf.read().concat()
         assert table.num_rows == 5
