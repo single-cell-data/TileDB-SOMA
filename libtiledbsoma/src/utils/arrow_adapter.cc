@@ -350,7 +350,13 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     dim_zstd_filter.set_option(
                         TILEDB_COMPRESSION_LEVEL,
                         platform_config.dataframe_dim_zstd_level);
-                } else if (soma_type == "SOMASparseNDArray") {
+                } else if (
+                    soma_type == "SOMASparseNDArray" ||
+                    soma_type == "SOMADenseNDArray") {
+                    // sparse_nd_array_dim_zstd_level being used for
+                    // both Sparse and Dense NDArrays is intentional
+                    // and caried over from code previously in
+                    // Python API
                     dim_zstd_filter.set_option(
                         TILEDB_COMPRESSION_LEVEL,
                         platform_config.sparse_nd_array_dim_zstd_level);
@@ -466,6 +472,11 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         }
         if (isattr) {
             Attribute attr(*ctx, child->name, type);
+
+            FilterList attr_filterlist(*ctx);
+            Filter attr_zstd_filter(*ctx, TILEDB_FILTER_ZSTD);
+            attr_filterlist.add_filter(attr_zstd_filter);
+            attr.set_filter_list(attr_filterlist);
 
             if (child->flags & ARROW_FLAG_NULLABLE) {
                 attr.set_nullable(true);

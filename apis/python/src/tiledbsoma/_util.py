@@ -398,11 +398,6 @@ def build_clib_platform_config(
     ops = TileDBCreateOptions.from_platform_config(platform_config)
     plt_cfg.dataframe_dim_zstd_level = ops.dataframe_dim_zstd_level
     plt_cfg.sparse_nd_array_dim_zstd_level = ops.sparse_nd_array_dim_zstd_level
-    print(
-        "python",
-        plt_cfg.dataframe_dim_zstd_level,
-        plt_cfg.sparse_nd_array_dim_zstd_level,
-    )
     plt_cfg.write_X_chunked = ops.write_X_chunked
     plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
     plt_cfg.capacity = ops.capacity

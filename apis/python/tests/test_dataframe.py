@@ -115,7 +115,8 @@ def test_dataframe(tmp_path, arrow_schema):
     with tiledb.open(uri) as A:
         assert A.schema.sparse
         assert not A.schema.allows_duplicates
-        print(A.schema)
+        assert A.dim("foo").filters == [tiledb.ZstdFilter(level=3)]
+        assert A.attr("bar").filters == [tiledb.ZstdFilter()]
 
     with soma.DataFrame.open(uri) as sdf:
         assert sdf.count == 5
