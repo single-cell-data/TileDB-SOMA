@@ -68,47 +68,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Install tiledb-r
-        run: |
-          options(bspm.version.check = TRUE)
-          # Find tiledb-r constraints
-          deps <- read.dcf('apis/r/DESCRIPTION', fields = 'Imports')[1, ]
-          deps <- trimws(strsplit(gsub(pattern = ',', replacement = '\n', x = deps), split = '\n')[[1L]])
-          deps <- Filter(nzchar, deps)
-          deps <- Filter(function(x) grepl('^tiledb', x), deps)
-          deps <- gsub(pattern = '[[:space:]]', replacement = '', x = deps)
-          deps <- gsub(pattern = '.*\\(|\\)', replacement = '', x = deps)
-          const <- data.frame(comp = gsub(pattern = '[[:digit:]\\.]*', replacement = '', x = deps))
-          const$vers <- gsub(pattern = paste(const$comp, collapse = '|'), replacement = '', x = deps)
-          const
-          # Find correct version of tiledb-r
-          db <- utils::available.packages(filters = c("R_version", "OS_type", "subarch"))
-          idx <- which(rownames(db) == 'tiledb')
-          valid <- vapply(
-            idx,
-            FUN = function(i) {
-              v <- db[i, 'Version']
-              res <- vector(mode = 'logical', length = nrow(const))
-              for (i in seq_along(res)) {
-                res[i] <- do.call(const$comp[i], args = list(v, const$vers[i]))
-              }
-              return(all(res))
-            },
-            FUN.VALUE = logical(1L)
-          )
-          if (!any(valid)) {
-            stop("No valid versions of tiledb-r found")
-          }
-          db <- db[-idx[!valid], , drop = FALSE]
-          # Install upstream deps
-          ups <- tools::package_dependencies("tiledb", db = db, recursive = TRUE)$tiledb
-          utils::install.packages(intersect(ups, rownames(db)))
-          # Install correct version of tiledb-r
-          ctb <- contrib.url(getOption("repos"))
-          names(ctb) <- getOption("repos")
-          dbr <- db[idx[valid], 'Repository']
-          repos <- names(ctb[ctb %in% dbr])
-          utils::install.packages("tiledb", repos = repos)
-        shell: Rscript {0}
+        run: cd apis/r && Rscript tools/install-tiledb-r.R
 
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
