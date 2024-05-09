@@ -37,10 +37,10 @@ using ArrowTable =
 class PlatformConfig {
    public:
     /* Set the ZstdFilter's level for DataFrame dims */
-    uint64_t dataframe_dim_zstd_level = 3;
+    int32_t dataframe_dim_zstd_level = 3;
 
     /* Set the ZstdFilter's level for SparseNDArray dims */
-    uint64_t sparse_nd_array_dim_zstd_level = 3;
+    int32_t sparse_nd_array_dim_zstd_level = 3;
 
     /* Set whether to write the X data chunked */
     bool write_X_chunked = true;
@@ -116,8 +116,9 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx,
         std::unique_ptr<ArrowSchema> arrow_schema,
         ArrowTable index_column_info,
+        std::string soma_type,
         bool is_sparse = true,
-        std::optional<PlatformConfig> platform_config = std::nullopt);
+        PlatformConfig platform_config = PlatformConfig());
 
     /**
      * @brief Get Arrow format string from TileDB datatype.

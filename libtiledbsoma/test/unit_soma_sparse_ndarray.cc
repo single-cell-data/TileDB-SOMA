@@ -43,7 +43,7 @@ TEST_CASE("SOMASparseNDArray: basic") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        std::nullopt,
+        PlatformConfig(),
         TimestampRange(0, 2));
 
     auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
@@ -93,7 +93,7 @@ TEST_CASE("SOMASparseNDArray: metadata") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        std::nullopt,
+        PlatformConfig(),
         TimestampRange(0, 2));
 
     auto soma_sparse = SOMASparseNDArray::open(

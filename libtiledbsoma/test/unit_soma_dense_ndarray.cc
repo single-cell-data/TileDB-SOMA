@@ -43,7 +43,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        std::nullopt,
+        PlatformConfig(),
         TimestampRange(0, 2));
 
     auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
@@ -89,7 +89,7 @@ TEST_CASE("SOMADenseNDArray: metadata") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        std::nullopt,
+        PlatformConfig(),
         TimestampRange(0, 2));
 
     auto soma_dense = SOMADenseNDArray::open(

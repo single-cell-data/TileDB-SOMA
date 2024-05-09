@@ -159,7 +159,7 @@ class SOMACollection : public SOMAGroup {
         std::shared_ptr<SOMAContext> ctx,
         std::unique_ptr<ArrowSchema> schema,
         ArrowTable index_columns,
-        std::optional<PlatformConfig> platform_config = std::nullopt);
+        PlatformConfig platform_config = PlatformConfig());
 
     /**
      * Create and add a SOMAMeasurement to the SOMACollection.
@@ -198,7 +198,7 @@ class SOMACollection : public SOMAGroup {
         std::shared_ptr<SOMAContext> ctx,
         std::unique_ptr<ArrowSchema> schema,
         ArrowTable index_columns,
-        std::optional<PlatformConfig> platform_config = std::nullopt,
+        PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -222,7 +222,7 @@ class SOMACollection : public SOMAGroup {
         std::shared_ptr<SOMAContext> ctx,
         std::string_view format,
         ArrowTable index_columns,
-        std::optional<PlatformConfig> platform_config = std::nullopt,
+        PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -246,7 +246,7 @@ class SOMACollection : public SOMAGroup {
         std::shared_ptr<SOMAContext> ctx,
         std::string_view format,
         ArrowTable index_columns,
-        std::optional<PlatformConfig> platform_config = std::nullopt,
+        PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
    protected:

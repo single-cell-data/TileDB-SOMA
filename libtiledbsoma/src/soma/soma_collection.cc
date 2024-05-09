@@ -112,7 +112,7 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     std::shared_ptr<SOMAContext> ctx,
     std::unique_ptr<ArrowSchema> schema,
     ArrowTable index_columns,
-    std::optional<PlatformConfig> platform_config) {
+    PlatformConfig platform_config) {
     SOMAExperiment::create(
         uri,
         std::move(schema),
@@ -154,7 +154,7 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     std::shared_ptr<SOMAContext> ctx,
     std::unique_ptr<ArrowSchema> schema,
     ArrowTable index_columns,
-    std::optional<PlatformConfig> platform_config,
+    PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     SOMADataFrame::create(
         uri,
@@ -178,7 +178,7 @@ std::shared_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view format,
     ArrowTable index_columns,
-    std::optional<PlatformConfig> platform_config,
+    PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     SOMADenseNDArray::create(
         uri,
@@ -202,7 +202,7 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view format,
     ArrowTable index_columns,
-    std::optional<PlatformConfig> platform_config,
+    PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     SOMASparseNDArray::create(
         uri,

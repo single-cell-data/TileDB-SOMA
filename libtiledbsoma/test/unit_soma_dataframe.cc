@@ -91,7 +91,7 @@ TEST_CASE("SOMADataFrame: metadata") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        std::nullopt,
+        PlatformConfig(),
         TimestampRange(0, 2));
 
     auto soma_dataframe = SOMADataFrame::open(
