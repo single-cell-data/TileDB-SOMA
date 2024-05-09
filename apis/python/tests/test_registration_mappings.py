@@ -1297,3 +1297,81 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
 
         assert readback_a == obs_ids_a
         assert readback_b == obs_ids_b
+
+
+def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
+    uri = tmp_path.as_posix()
+
+    # Data for "RNA" measurement of SOMA experiment
+    adata_rna = conftest_pbmc3k_adata.copy()
+    adata_rna.obs.index.name = "cell_id"
+    adata_rna.var.index.name = "first_adata_var_index"
+
+    # Non-appendable
+    del adata_rna.obsm
+    del adata_rna.varm
+    del adata_rna.obsp
+    del adata_rna.varp
+
+    # Simulate for "protein" measurement of SOMA experiment:
+    # * Different var values
+    # * Different number of var rows
+    # * Different var field name for registration
+
+    adata_protein = adata_rna.copy()
+    adata_protein.var = pd.DataFrame(
+        {"assay_type": ["protein"] * adata_protein.n_vars},
+        index=[f"p{i}" for i in range(adata_protein.n_vars)],
+    )
+    adata_protein = adata_protein[:, :500]
+
+    adata_protein.obs["batch_id"] = np.nan
+    adata_protein.obs["batch_id"] = adata_protein.obs["batch_id"].astype("string")
+    assert adata_protein.obs["batch_id"].dtype == pd.StringDtype()
+
+    adata_protein.var.index.name = "second_adata_var_index"
+
+    tiledbsoma.io.from_anndata(
+        experiment_uri=uri,
+        anndata=adata_rna,
+        measurement_name="RNA",
+        uns_keys=[],
+    )
+
+    with tiledbsoma.Experiment.open(uri) as exp:
+        assert "RNA" in exp.ms
+        assert "protein" not in exp.ms
+
+    with tiledbsoma.open(uri, "w") as exp:
+        exp.ms.add_new_collection(
+            "protein",
+            kind=tiledbsoma.Measurement,
+            uri="protein",  # relative path for local-disk operations
+        )
+
+    # Register the second anndata object in the protein measurement
+    rd = tiledbsoma.io.register_anndatas(
+        experiment_uri=uri,
+        adatas=[adata_protein],
+        measurement_name="protein",
+        obs_field_name=adata_protein.obs.index.name,
+        var_field_name=adata_protein.var.index.name,
+    )
+
+    # Ingest the second anndata object into the protein measurement
+    tiledbsoma.io.from_anndata(
+        experiment_uri=uri,
+        anndata=adata_protein,
+        measurement_name="protein",
+        registration_mapping=rd,
+        uns_keys=[],
+    )
+
+    with tiledbsoma.Experiment.open(uri) as exp:
+        assert "RNA" in exp.ms
+        assert "protein" in exp.ms
+
+        assert exp.obs.count == len(adata_rna.obs)
+        assert exp.obs.count == len(adata_protein.obs)
+        assert exp.ms["RNA"].var.count == len(adata_rna.var)
+        assert exp.ms["protein"].var.count == len(adata_protein.var)
