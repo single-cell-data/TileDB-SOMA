@@ -16,6 +16,7 @@ env:
   COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   _R_CHECK_TESTS_NLINES_: 0
   CATCHSEGV: "TRUE"
+  R_REMOTES_UPGRADE: "never"
 
 jobs:
   ci:
@@ -52,6 +53,23 @@ jobs:
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
 
+      - name: Set additional repositories (macOS)
+        if: ${{ matrix.os != 'ubuntu-latest' }}
+        run: echo 'options(repos = c("https://tiledb-inc.r-universe.dev", getOption("repos")))' | tee -a ~/.Rprofile
+
+      - name: Set additional repositories (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          rversion <- paste(strsplit(as.character(getRversion()), split = '\\.')[[1L]][1:2], collapse = '.')
+          codename <-  system('. /etc/os-release; echo ${VERSION_CODENAME}', intern = TRUE)
+          repo <- "https://tiledb-inc.r-universe.dev"
+          (opt <- sprintf('options(repos = c("%s/bin/linux/%s/%s", "%s", getOption("repos")))', repo, codename, rversion, repo))
+          cat(opt, "\n", file = "~/.Rprofile", append = TRUE)
+        shell: Rscript {0}
+
+      - name: Install tiledb-r
+        run: cd apis/r && Rscript tools/install-tiledb-r.R
+
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
 
@@ -82,7 +100,7 @@ jobs:
       #  run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
       - name: Dependencies
-        run: cd apis/r && tools/r-ci.sh install_all
+        run: cd apis/r && Rscript -e "remotes::install_deps(dependencies = TRUE, upgrade = FALSE)"
 
       # - name: Install dataset packages from source (macOS)
       #   if: ${{ matrix.os == 'macOS-latest' }}
