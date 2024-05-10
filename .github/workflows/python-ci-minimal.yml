@@ -12,8 +12,14 @@ on:
     branches:
       - main
       - 'release-*'
-    paths-ignore:
-      - 'apis/r/**'
+    paths:
+      - '**'
+      - '!**.md'
+      - '!apis/r/**'
+      - '!docs/**'
+      - '!.github/**'
+      - '.github/workflows/python-ci-minimal.yml'
+      - '.github/workflows/python-ci-single.yml'
   workflow_dispatch:
 
 jobs:
