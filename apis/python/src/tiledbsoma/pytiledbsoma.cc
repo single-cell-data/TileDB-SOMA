@@ -102,6 +102,9 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite(
             "sparse_nd_array_dim_zstd_level",
             &PlatformConfig::sparse_nd_array_dim_zstd_level)
+        .def_readwrite(
+            "dense_nd_array_dim_zstd_level",
+            &PlatformConfig::sparse_nd_array_dim_zstd_level)
         .def_readwrite("write_X_chunked", &PlatformConfig::write_X_chunked)
         .def_readwrite("goal_chunk_nnz", &PlatformConfig::goal_chunk_nnz)
         .def_readwrite("remote_cap_nbytes", &PlatformConfig::remote_cap_nbytes)

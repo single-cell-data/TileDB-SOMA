@@ -350,8 +350,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     dim_zstd_filter.set_option(
                         TILEDB_COMPRESSION_LEVEL,
                         platform_config.dataframe_dim_zstd_level);
-                } else if (
-                    soma_type == "SOMASparseNDArray") {
+                } else if (soma_type == "SOMASparseNDArray") {
                     dim_zstd_filter.set_option(
                         TILEDB_COMPRESSION_LEVEL,
                         platform_config.sparse_nd_array_dim_zstd_level);
