@@ -2,9 +2,13 @@ name: TileDB-SOMA R CI
 
 on:
   pull_request:
-    paths-ignore:
-      - "apis/python/**"
-      - ".pre-commit-config.yaml"
+    paths:
+      - '**'
+      - '!**.md'
+      - '!apis/python/**'
+      - '!docs/**'
+      - '!.github/**'
+      - '.github/workflows/r-ci.yml'
   push:
     branches:
       - main
