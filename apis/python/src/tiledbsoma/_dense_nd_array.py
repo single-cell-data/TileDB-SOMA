@@ -265,6 +265,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         clib_dense_array = self._handle._handle
 
+        # Compute the coordinates for the dense array.
         new_coords: List[Union[int, Slice[int], None]] = []
         for c in coords:
             if isinstance(c, slice) and isinstance(c.stop, int):
@@ -272,14 +273,17 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             else:
                 new_coords.append(c)
 
+        # Convert data to a numpy array.
         dtype = self.schema.field("soma_data").type.to_pandas_dtype()
         input = np.array(values, dtype=dtype)
 
-        order = (
-            clib.ResultOrder.colmajor
-            if input.flags.f_contiguous
-            else clib.ResultOrder.rowmajor
-        )
+        # Set the result order. If neither row nor col major, set to be row major.
+        if input.flags.f_contiguous:
+            order = clib.ResultOrder.colmajor
+        else:
+            if not input.flags.contiguous:
+                input = np.ascontiguousarray(input)
+            order = clib.ResultOrder.rowmajor
         clib_dense_array.reset(result_order=order)
 
         self._set_reader_coords(clib_dense_array, new_coords)
