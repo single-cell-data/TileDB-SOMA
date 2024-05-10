@@ -506,7 +506,8 @@ class _SparseNDArrayReadBase(somacore.SparseRead):
 
 
 class SparseNDArrayRead(_SparseNDArrayReadBase):
-    """Intermediate type to choose result format when reading a sparse array.
+    """:class:`SparseNDArrayRead` is an intermediate type which supports multiple eventual result formats
+     when reading a sparse array.
 
     Results returned by `coos` and `tables` iterate over COO coordinates in the user-specified result order,
     but with breaks between iterator steps at arbitrary coordinates (i.e., any given result may split a row or

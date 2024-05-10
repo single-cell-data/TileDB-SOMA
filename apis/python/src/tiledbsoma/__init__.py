@@ -165,7 +165,7 @@ from ._general_utilities import (
 )
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
-from ._sparse_nd_array import SparseNDArray
+from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
 from .options import SOMATileDBContext, TileDBCreateOptions
 from .pytiledbsoma import (
     tiledbsoma_stats_disable,
@@ -205,6 +205,7 @@ __all__ = [
     "SOMAError",
     "SOMATileDBContext",
     "SparseNDArray",
+    "SparseNDArrayRead",
     "TileDBCreateOptions",
     "tiledbsoma_build_index",
     "tiledbsoma_stats_disable",
