@@ -42,4 +42,13 @@ ctb <- contrib.url(getOption("repos"))
 names(ctb) <- getOption("repos")
 dbr <- db[idx[valid], 'Repository']
 (repos <- names(ctb[ctb %in% dbr]))
+
+# BSPM doesn't respect `repos`
+# Check to see if any repo w/ valid tiledb-r is CRAN
+# If not, turn of BSPM
+cran <- getOption("repos")['CRAN']
+cran[is.na(cran)] <- ""
+if (requireNamespace("bspm", quietly = TRUE) && !any(dbr %in% cran)) {
+  bspm::disable()
+}
 utils::install.packages("tiledb", repos = repos)
