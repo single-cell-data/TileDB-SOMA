@@ -9,10 +9,12 @@
 // https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
 
 #include "nanoarrow/nanoarrow.hpp"
+#include "nlohmann/json.hpp"
 
 namespace tiledbsoma {
 
 using namespace tiledb;
+using json = nlohmann::json;
 
 class ColumnBuffer;
 
@@ -62,11 +64,11 @@ class PlatformConfig {
      * CHECKSUM_MD5, CHECKSUM_SHA256, DICTIONARY_ENCODING, SCALE_FLOAT, XOR,
      * WEBP, NOOP
      */
-    std::vector<std::string> offsets_filters = {
-        "DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"};
+    std::string
+        offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";
 
-    /* Set the validity filters. See above for available filters */
-    std::vector<std::string> validity_filters = {};
+    /* Set the validity filters. */
+    std::string validity_filters = "";
 
     /* Set whether the TileDB Array allows duplicate values */
     bool allows_duplicates = false;
@@ -78,6 +80,12 @@ class PlatformConfig {
      * "col-major"
      */
     std::optional<std::string> cell_order = std::nullopt;
+
+    /* Set the filters for attributes. */
+    std::string attrs = "";
+
+    /* Set the filters for dimensions. */
+    std::string dims = "";
 
     /* Set whether the array should be consolidated and vacuumed after writing
      */

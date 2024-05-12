@@ -4,6 +4,7 @@
 # Licensed under the MIT License.
 
 import datetime
+import json
 import pathlib
 import time
 import urllib.parse
@@ -424,10 +425,12 @@ def build_clib_platform_config(
     plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
     plt_cfg.capacity = ops.capacity
     if ops.offsets_filters is not None:
-        plt_cfg.offsets_filters = [
-            pyfilter_to_cppfilter[cast(str, info["_type"])]
-            for info in ops.offsets_filters
-        ]
+        plt_cfg.offsets_filters = json.dumps(
+            [
+                pyfilter_to_cppfilter[cast(str, info["_type"])]
+                for info in ops.offsets_filters
+            ]
+        )
     if ops.validity_filters is not None:
         plt_cfg.validity_filters = [
             pyfilter_to_cppfilter[cast(str, info["_type"])]
@@ -436,6 +439,10 @@ def build_clib_platform_config(
     plt_cfg.allows_duplicates = ops.allows_duplicates
     plt_cfg.tile_order = ops.tile_order
     plt_cfg.cell_order = ops.cell_order
+    # if ops.dims is not None:
+    #     plt_cfg.dims = [pyfilter_to_cppfilter[info["_type"]] for info in ops.dims]
+    # if ops.attrs is not None:
+    #     plt_cfg.attrs = [pyfilter_to_cppfilter[info["_type"]] for info in ops.attrs]
     plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
 
     return plt_cfg

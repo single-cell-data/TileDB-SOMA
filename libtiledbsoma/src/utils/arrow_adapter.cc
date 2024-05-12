@@ -233,7 +233,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
-    
+
     std::map<std::string, tiledb_filter_type_t> convert_filter = {
         {"GZIP", TILEDB_FILTER_GZIP},
         {"ZSTD", TILEDB_FILTER_ZSTD},
@@ -257,9 +257,10 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     schema.set_capacity(platform_config.capacity);
 
-    if (platform_config.offsets_filters.size() != 0) {
+    if (!platform_config.offsets_filters.empty()) {
         FilterList offset_filter_list(*ctx);
-        for (auto offset : platform_config.offsets_filters) {
+        json offsets_filters = json::parse(platform_config.offsets_filters);
+        for (auto offset : offsets_filters) {
             try {
                 offset_filter_list.add_filter(
                     Filter(*ctx, convert_filter.at(offset)));
@@ -272,19 +273,20 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         schema.set_offsets_filter_list(offset_filter_list);
     }
 
-    if (platform_config.validity_filters.size() != 0) {
-        FilterList validity_filter_list(*ctx);
-        for (auto validity : platform_config.validity_filters) {
+    if (!platform_config.validity_filters.empty()) {
+        FilterList offset_filter_list(*ctx);
+        json validity_filters = json::parse(platform_config.validity_filters);
+        for (auto offset : validity_filters) {
             try {
-                validity_filter_list.add_filter(
-                    Filter(*ctx, convert_filter.at(validity)));
+                offset_filter_list.add_filter(
+                    Filter(*ctx, convert_filter.at(offset)));
             } catch (std::out_of_range& e) {
                 throw TileDBSOMAError(fmt::format(
-                    "Invalid validity filter {} passed to PlatformConfig",
-                    validity));
+                    "Invalid offset filter {} passed to PlatformConfig",
+                    offset));
             }
         }
-        schema.set_validity_filter_list(validity_filter_list);
+        schema.set_validity_filter_list(offset_filter_list);
     }
 
     schema.set_allows_dups(platform_config.allows_duplicates);

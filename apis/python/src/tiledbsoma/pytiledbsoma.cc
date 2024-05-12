@@ -111,6 +111,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite("capacity", &PlatformConfig::capacity)
         .def_readwrite("offsets_filters", &PlatformConfig::offsets_filters)
         .def_readwrite("validity_filters", &PlatformConfig::validity_filters)
+        .def_readwrite("attrs", &PlatformConfig::attrs)
+        .def_readwrite("dims", &PlatformConfig::dims)
         .def_readwrite("allows_duplicates", &PlatformConfig::allows_duplicates)
         .def_readwrite("tile_order", &PlatformConfig::tile_order)
         .def_readwrite("cell_order", &PlatformConfig::cell_order)
