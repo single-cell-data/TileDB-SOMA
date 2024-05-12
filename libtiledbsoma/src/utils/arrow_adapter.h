@@ -61,44 +61,60 @@ class PlatformConfig {
 
     /**
      * Available filters with associated options are
-     * {
-     *      [
-     *          {name="GZIP", compression_level=(int32_t)},
-     *          {name="ZSTD", compression_level=(int32_t)},
-     *          {name="LZ4", compression_level=(int32_t)},
-     *          {name="BZIP2", compression_level=(int32_t)},
-     *          {name="RLE", compression_level=(int32_t)},
-     *          {name="DELTA",
-     *           compression_level=(int32_t),
-     *           compression_reinterpret_datatype=(uint8_t)
-     *          },
-     *          {name="DOUBLE_DELTA",
-     *           compression_level=(int32_t),
-     *           compression_reinterpret_datatype=(uint8_t)
-     *          },
-     *          {name="BIT_WIDTH_REDUCTION",
-     *           bit_width_max_window=(uint32_t)
-     *          },
-     *          "BITSHUFFLE",
-     *          "BYTESHUFFLE",
-     *          {name="POSITIVE_DELTA", positive_delta_max_windows=(uint32_t)},
-     *          "CHECKSUM_MD5",
-     *          "CHECKSUM_SHA256",
-     *          {name="DICTIONARY_ENCODING", compression_level=(int32_t)},
-     *          {name="SCALE_FLOAT",
-     *           scale_float_factor=(double),
-     *           scale_float_offset=(double),
-     *           scale_float_bytewidth=(uint64_t),
-     *          },
-     *          "XOR",
-     *          {name="WEBP",
-     *           webp_input_format=(uint8_t),
-     *           webp_quality=(float),
-     *           webp_lossless=(uint8_t),
-     *          },
-     *          "NOOP"
-     *      ]
-     * }
+     * [
+     *     {
+     *         name="GZIP", compression_level=(int32_t)
+     *     },
+     *     {
+     *         name="ZSTD", compression_level=(int32_t)
+     *     },
+     *     {
+     *         name="LZ4", compression_level=(int32_t)
+     *     },
+     *     {
+     *         name="BZIP2", compression_level=(int32_t)
+     *     },
+     *     {
+     *         name="RLE", compression_level=(int32_t)
+     *     },
+     *     {
+     *         name="DELTA",
+     *         compression_level=(int32_t),
+     *         compression_reinterpret_datatype=(uint8_t)
+     *     },
+     *     {
+     *         name="DOUBLE_DELTA",
+     *         compression_level=(int32_t),
+     *         compression_reinterpret_datatype=(uint8_t)
+     *     },
+     *     {
+     *         name="BIT_WIDTH_REDUCTION",
+     *         bit_width_max_window=(uint32_t)
+     *     },
+     *     {
+     *         name="POSITIVE_DELTA", positive_delta_max_window=(uint32_t)},
+     *     },
+     *     {
+     *         name="DICTIONARY_ENCODING", compression_level=(int32_t)},
+     *     {
+     *         name="SCALE_FLOAT",
+     *         scale_float_factor=(double),
+     *         scale_float_offset=(double),
+     *         scale_float_bytewidth=(uint64_t),
+     *     },
+     *     {
+     *         name="WEBP",
+     *         webp_input_format=(uint8_t),
+     *         webp_quality=(float),
+     *         webp_lossless=(uint8_t),
+     *     },
+     *     "CHECKSUM_MD5",
+     *     "CHECKSUM_SHA256",
+     *     "XOR",
+     *     "BITSHUFFLE",
+     *     "BYTESHUFFLE",
+     *     "NOOP"
+     * ]
      *
      */
     std::string

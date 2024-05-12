@@ -432,10 +432,12 @@ def build_clib_platform_config(
             ]
         )
     if ops.validity_filters is not None:
-        plt_cfg.validity_filters = [
-            pyfilter_to_cppfilter[cast(str, info["_type"])]
-            for info in ops.validity_filters
-        ]
+        plt_cfg.validity_filters = json.dumps(
+            [
+                pyfilter_to_cppfilter[cast(str, info["_type"])]
+                for info in ops.validity_filters
+            ]
+        )
     plt_cfg.allows_duplicates = ops.allows_duplicates
     plt_cfg.tile_order = ops.tile_order
     plt_cfg.cell_order = ops.cell_order
