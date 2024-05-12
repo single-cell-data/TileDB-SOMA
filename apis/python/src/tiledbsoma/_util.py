@@ -8,7 +8,7 @@ import pathlib
 import time
 import urllib.parse
 from itertools import zip_longest
-from typing import Any, Optional, Tuple, Type, TypeVar
+from typing import Any, Optional, Tuple, Type, TypeVar, cast
 
 import numpy as np
 import pandas as pd
@@ -395,6 +395,27 @@ def build_clib_platform_config(
     if platform_config is None:
         return plt_cfg
 
+    pyfilter_to_cppfilter = {
+        "GzipFilter": "GZIP",
+        "ZstdFilter": "ZSTD",
+        "LZ4Filter": "LZ4",
+        "Bzip2Filter": "BZIP2",
+        "RleFilter": "RLE",
+        "DeltaFilter": "DELTA",
+        "DoubleDeltaFilter": "DOUBLE_DELTA",
+        "BitWidthReductionFilter": "BIT_WIDTH_REDUCTION",
+        "BitShuffleFilter": "BITSHUFFLE",
+        "ByteShuffleFilter": "BYTESHUFFLE",
+        "PositiveDeltaFilter": "POSITIVE_DELTA",
+        "ChecksumMD5Filter": "CHECKSUM_MD5",
+        "ChecksumSHA256Filter": "CHECKSUM_SHA256",
+        "DictionaryFilter": "DICTIONARY_ENCODING",
+        "FloatScaleFilter": "SCALE_FLOAT",
+        "XORFilter": "XOR",
+        "WebpFilter": "WEBP",
+        "NoOpFilter": "NOOP",
+    }
+
     ops = TileDBCreateOptions.from_platform_config(platform_config)
     plt_cfg.dataframe_dim_zstd_level = ops.dataframe_dim_zstd_level
     plt_cfg.sparse_nd_array_dim_zstd_level = ops.sparse_nd_array_dim_zstd_level
@@ -402,10 +423,16 @@ def build_clib_platform_config(
     plt_cfg.write_X_chunked = ops.write_X_chunked
     plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
     plt_cfg.capacity = ops.capacity
-    if ops.offsets_filters:
-        plt_cfg.offsets_filters = [info["_type"] for info in ops.offsets_filters]
-    if ops.validity_filters:
-        plt_cfg.validity_filters = [info["_type"] for info in ops.validity_filters]
+    if ops.offsets_filters is not None:
+        plt_cfg.offsets_filters = [
+            pyfilter_to_cppfilter[cast(str, info["_type"])]
+            for info in ops.offsets_filters
+        ]
+    if ops.validity_filters is not None:
+        plt_cfg.validity_filters = [
+            pyfilter_to_cppfilter[cast(str, info["_type"])]
+            for info in ops.validity_filters
+        ]
     plt_cfg.allows_duplicates = ops.allows_duplicates
     plt_cfg.tile_order = ops.tile_order
     plt_cfg.cell_order = ops.cell_order

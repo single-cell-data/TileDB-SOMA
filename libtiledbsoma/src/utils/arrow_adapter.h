@@ -57,15 +57,8 @@ class PlatformConfig {
     /* Set the tile capcity for sparse arrays */
     uint64_t capacity = 100000;
 
-    /* Set the offset filters. Available filters are
-     * "GzipFilter", "ZstdFilter", "LZ4Filter", "Bzip2Filter", RleFilter", "
-     * "DeltaFilter", "DoubleDeltaFilter", "BitWidthReductionFilter",
-     * "BitShuffleFilter", "ByteShuffleFilter", "PositiveDeltaFilter",
-     * "ChecksumMD5Filter", "ChecksumSHA256Filter", "DictionaryFilter",
-     * "FloatScaleFilter", "XORFilter", and "WebpFilter"
-     */
     std::vector<std::string> offsets_filters = {
-        "DoubleDeltaFilter", "BitWidthReductionFilter", "ZstdFilter"};
+        "DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"};
 
     /* Set the validity filters. See above for available filters */
     std::vector<std::string> validity_filters = {};

@@ -234,25 +234,30 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
 
+    /* Available filters are GZIP, ZSTD, LZ4, BZIP2, RLE, DELTA, DOUBLE_DELTA,
+     * BIT_WIDTH_REDUCTION, BITSHUFFLE, BYTESHUFFLE, POSITIVE_DELTA,
+     * CHECKSUM_MD5, CHECKSUM_SHA256, DICTIONARY_ENCODING, SCALE_FLOAT, XOR,
+     * WEBP, NOOP
+     */
     std::map<std::string, tiledb_filter_type_t> convert_filter = {
-        {"GzipFilter", TILEDB_FILTER_GZIP},
-        {"ZstdFilter", TILEDB_FILTER_ZSTD},
-        {"LZ4Filter", TILEDB_FILTER_LZ4},
-        {"Bzip2Filter", TILEDB_FILTER_BZIP2},
-        {"RleFilter", TILEDB_FILTER_RLE},
-        {"DeltaFilter", TILEDB_FILTER_DELTA},
-        {"DoubleDeltaFilter", TILEDB_FILTER_DOUBLE_DELTA},
-        {"BitWidthReductionFilter", TILEDB_FILTER_BIT_WIDTH_REDUCTION},
-        {"BitShuffleFilter", TILEDB_FILTER_BITSHUFFLE},
-        {"ByteShuffleFilter", TILEDB_FILTER_BYTESHUFFLE},
-        {"PositiveDeltaFilter", TILEDB_FILTER_POSITIVE_DELTA},
-        {"ChecksumMD5Filter", TILEDB_FILTER_CHECKSUM_MD5},
-        {"ChecksumSHA256Filter", TILEDB_FILTER_CHECKSUM_SHA256},
-        {"DictionaryFilter", TILEDB_FILTER_DICTIONARY},
-        {"FloatScaleFilter", TILEDB_FILTER_SCALE_FLOAT},
-        {"XORFilter", TILEDB_FILTER_XOR},
-        {"WebpFilter", TILEDB_FILTER_WEBP},
-        {"NoOpFilter", TILEDB_FILTER_NONE},
+        {"GZIP", TILEDB_FILTER_GZIP},
+        {"ZSTD", TILEDB_FILTER_ZSTD},
+        {"LZ4", TILEDB_FILTER_LZ4},
+        {"BZIP2", TILEDB_FILTER_BZIP2},
+        {"RLE", TILEDB_FILTER_RLE},
+        {"DELTA", TILEDB_FILTER_DELTA},
+        {"DOUBLE_DELTA", TILEDB_FILTER_DOUBLE_DELTA},
+        {"BIT_WIDTH_REDUCTION", TILEDB_FILTER_BIT_WIDTH_REDUCTION},
+        {"BITSHUFFLE", TILEDB_FILTER_BITSHUFFLE},
+        {"BYTESHUFFLE", TILEDB_FILTER_BYTESHUFFLE},
+        {"POSITIVE_DELTA", TILEDB_FILTER_POSITIVE_DELTA},
+        {"CHECKSUM_MD5", TILEDB_FILTER_CHECKSUM_MD5},
+        {"CHECKSUM_SHA256", TILEDB_FILTER_CHECKSUM_SHA256},
+        {"DICTIONARY_ENCODING", TILEDB_FILTER_DICTIONARY},
+        {"SCALE_FLOAT", TILEDB_FILTER_SCALE_FLOAT},
+        {"XOR", TILEDB_FILTER_XOR},
+        {"WEBP", TILEDB_FILTER_WEBP},
+        {"NOOP", TILEDB_FILTER_NONE},
     };
 
     schema.set_capacity(platform_config.capacity);
