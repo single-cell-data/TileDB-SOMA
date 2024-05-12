@@ -59,10 +59,47 @@ class PlatformConfig {
     /* Set the tile capcity for sparse arrays */
     uint64_t capacity = 100000;
 
-    /* Available filters are GZIP, ZSTD, LZ4, BZIP2, RLE, DELTA, DOUBLE_DELTA,
-     * BIT_WIDTH_REDUCTION, BITSHUFFLE, BYTESHUFFLE, POSITIVE_DELTA,
-     * CHECKSUM_MD5, CHECKSUM_SHA256, DICTIONARY_ENCODING, SCALE_FLOAT, XOR,
-     * WEBP, NOOP
+    /**
+     * Available filters with associated options are
+     * {
+     *      [
+     *          {name="GZIP", compression_level=(int32_t)},
+     *          {name="ZSTD", compression_level=(int32_t)},
+     *          {name="LZ4", compression_level=(int32_t)},
+     *          {name="BZIP2", compression_level=(int32_t)},
+     *          {name="RLE", compression_level=(int32_t)},
+     *          {name="DELTA",
+     *           compression_level=(int32_t),
+     *           compression_reinterpret_datatype=(uint8_t)
+     *          },
+     *          {name="DOUBLE_DELTA",
+     *           compression_level=(int32_t),
+     *           compression_reinterpret_datatype=(uint8_t)
+     *          },
+     *          {name="BIT_WIDTH_REDUCTION",
+     *           bit_width_max_window=(uint32_t)
+     *          },
+     *          "BITSHUFFLE",
+     *          "BYTESHUFFLE",
+     *          {name="POSITIVE_DELTA", positive_delta_max_windows=(uint32_t)},
+     *          "CHECKSUM_MD5",
+     *          "CHECKSUM_SHA256",
+     *          {name="DICTIONARY_ENCODING", compression_level=(int32_t)},
+     *          {name="SCALE_FLOAT",
+     *           scale_float_factor=(double),
+     *           scale_float_offset=(double),
+     *           scale_float_bytewidth=(uint64_t),
+     *          },
+     *          "XOR",
+     *          {name="WEBP",
+     *           webp_input_format=(uint8_t),
+     *           webp_quality=(float),
+     *           webp_lossless=(uint8_t),
+     *          },
+     *          "NOOP"
+     *      ]
+     * }
+     *
      */
     std::string
         offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";

@@ -301,7 +301,9 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
         if (tile_order == "row-order" or tile_order == "row") {
             schema.set_tile_order(TILEDB_ROW_MAJOR);
-        } else if (tile_order == "col-order" or tile_order == "col") {
+        } else if (
+            tile_order == "col-order" or cell_order == "column-major" or
+            tile_order == "col") {
             schema.set_tile_order(TILEDB_COL_MAJOR);
         } else {
             throw TileDBSOMAError(fmt::format(
