@@ -57,6 +57,11 @@ class PlatformConfig {
     /* Set the tile capcity for sparse arrays */
     uint64_t capacity = 100000;
 
+    /* Available filters are GZIP, ZSTD, LZ4, BZIP2, RLE, DELTA, DOUBLE_DELTA,
+     * BIT_WIDTH_REDUCTION, BITSHUFFLE, BYTESHUFFLE, POSITIVE_DELTA,
+     * CHECKSUM_MD5, CHECKSUM_SHA256, DICTIONARY_ENCODING, SCALE_FLOAT, XOR,
+     * WEBP, NOOP
+     */
     std::vector<std::string> offsets_filters = {
         "DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"};
 

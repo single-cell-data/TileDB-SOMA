@@ -233,12 +233,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
-
-    /* Available filters are GZIP, ZSTD, LZ4, BZIP2, RLE, DELTA, DOUBLE_DELTA,
-     * BIT_WIDTH_REDUCTION, BITSHUFFLE, BYTESHUFFLE, POSITIVE_DELTA,
-     * CHECKSUM_MD5, CHECKSUM_SHA256, DICTIONARY_ENCODING, SCALE_FLOAT, XOR,
-     * WEBP, NOOP
-     */
+    
     std::map<std::string, tiledb_filter_type_t> convert_filter = {
         {"GZIP", TILEDB_FILTER_GZIP},
         {"ZSTD", TILEDB_FILTER_ZSTD},

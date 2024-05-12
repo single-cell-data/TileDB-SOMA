@@ -247,6 +247,11 @@ install(FILES
   DESTINATION "include/tiledbsoma/nanoarrow"
 )
 
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nlohmann/json.hpp
+  DESTINATION "include/tiledbsoma/soma/nlohmann"
+)
+
 
 # ###########################################################
 # API symbol exports
