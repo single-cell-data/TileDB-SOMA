@@ -73,7 +73,6 @@ jobs:
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
 
-
       # Uncomment these next two stanzas as needed whenever we've just released a new tiledb-r for
       # which source is available but CRAN releases (and hence update r2u binaries) are not yet:
       #
