@@ -1,4 +1,4 @@
-# Develop
+# tiledbsoma 1.11.0
 
 ## Changes
 
@@ -12,6 +12,67 @@
 * Muffle warnings for missing command logs when outgesting SOMA to `Seurat`
 * Have `SOMADataFrame$shape()` throw a not-yet-implemented error
 * Disable running `SeuratObject::.CalcN()` when outgesting from SOMA to `Seurat`
+
+# 1.10.2
+
+* Port resume-ingest mode from Python to R
+
+# 1.10.1
+
+* This release contains a single Python-only bug fix
+
+# 1.10.0
+
+## Changes
+
+* Add support for ingestion of `SeuratCommand` logs
+* Add support for outgestion of `SeuratCommand` logs
+* Add support for reading `*m` and `*p` layers from `SOMAExperimentAxisQuery`
+* Add support for blockwise iteration
+* Make `reopen()` a public method for all `TileDBObjects`
+* Add support for resume-mode in `write_soma()`
+
+# 1.9.5
+
+* This release contains a single Python-only bug fix
+
+# 1.9.4
+
+* This release contains an in-progress blockwise iterator, work on which will be completed in a subsequent release.
+* Reverted nanoarrow use to vendored versions and refactored the use throughout R and adjusted the build steps accordingly.
+
+# 1.9.3
+
+* This release contains a single Python-only performance improvement
+
+# 1.9.2
+
+* This release contains a single Python-only modification for an API backward-compatibility update
+
+# 1.9.1
+
+* This release contains a single Python-only modification for its build process
+
+# 1.9.0
+
+## Changes
+
+* Add support for ingestion of `SeuratCommand` logs
+* Add support for outgestion of `SeuratCommand` logs
+* Add support for reading `*m` and `*p` layers from `SOMAExperimentAxisQuery`
+
+# 1.8.1
+
+## Changes
+
+* This is a release with Python changes only
+
+# 1.8.0
+
+## Changes
+
+* Add support for ingestion of `SeuratCommand` logs
+* Add support for outgestion of `SeuratCommand` logs
 
 # 1.7.0
 
