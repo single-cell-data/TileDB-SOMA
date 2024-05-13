@@ -396,7 +396,30 @@ def build_clib_platform_config(
     if platform_config is None:
         return plt_cfg
 
-    pyfilter_to_cppfilter = {
+    ops = TileDBCreateOptions.from_platform_config(platform_config)
+
+    plt_cfg.dataframe_dim_zstd_level = ops.dataframe_dim_zstd_level
+    plt_cfg.sparse_nd_array_dim_zstd_level = ops.sparse_nd_array_dim_zstd_level
+    plt_cfg.dense_nd_array_dim_zstd_level = ops.dense_nd_array_dim_zstd_level
+    plt_cfg.write_X_chunked = ops.write_X_chunked
+    plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
+    plt_cfg.capacity = ops.capacity
+    plt_cfg.offsets_filters = _build_filter_list(ops.offsets_filters)
+    plt_cfg.validity_filters = _build_filter_list(ops.validity_filters)
+    plt_cfg.allows_duplicates = ops.allows_duplicates
+    plt_cfg.tile_order = ops.tile_order
+    plt_cfg.cell_order = ops.cell_order
+    if ops.dims is not None:
+        plt_cfg.dims = json.dumps(platform_config["tiledb"]["create"]["dims"])
+    if ops.attrs is not None:
+        plt_cfg.attrs = json.dumps(platform_config["tiledb"]["create"]["attrs"])
+    plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
+
+    return plt_cfg
+
+
+def _build_filter_list(filters):
+    _convert_filter = {
         "GzipFilter": "GZIP",
         "ZstdFilter": "ZSTD",
         "LZ4Filter": "LZ4",
@@ -417,34 +440,49 @@ def build_clib_platform_config(
         "NoOpFilter": "NOOP",
     }
 
-    ops = TileDBCreateOptions.from_platform_config(platform_config)
-    plt_cfg.dataframe_dim_zstd_level = ops.dataframe_dim_zstd_level
-    plt_cfg.sparse_nd_array_dim_zstd_level = ops.sparse_nd_array_dim_zstd_level
-    plt_cfg.dense_nd_array_dim_zstd_level = ops.dense_nd_array_dim_zstd_level
-    plt_cfg.write_X_chunked = ops.write_X_chunked
-    plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
-    plt_cfg.capacity = ops.capacity
-    if ops.offsets_filters is not None:
-        plt_cfg.offsets_filters = json.dumps(
-            [
-                pyfilter_to_cppfilter[cast(str, info["_type"])]
-                for info in ops.offsets_filters
-            ]
-        )
-    if ops.validity_filters is not None:
-        plt_cfg.validity_filters = json.dumps(
-            [
-                pyfilter_to_cppfilter[cast(str, info["_type"])]
-                for info in ops.validity_filters
-            ]
-        )
-    plt_cfg.allows_duplicates = ops.allows_duplicates
-    plt_cfg.tile_order = ops.tile_order
-    plt_cfg.cell_order = ops.cell_order
-    # if ops.dims is not None:
-    #     plt_cfg.dims = [pyfilter_to_cppfilter[info["_type"]] for info in ops.dims]
-    # if ops.attrs is not None:
-    #     plt_cfg.attrs = [pyfilter_to_cppfilter[info["_type"]] for info in ops.attrs]
-    plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
+    _convert_option = {
+        "GZIP": {"level": "COMPRESSION_LEVEL"},
+        "ZSTD": {"level": "COMPRESSION_LEVEL"},
+        "LZ4": {"level": "COMPRESSION_LEVEL"},
+        "BZIP2": {"level": "COMPRESSION_LEVEL"},
+        "RLE": {"level": "COMPRESSION_LEVEL"},
+        "DELTA": {
+            "level": "COMPRESSION_LEVEL",
+            "reinterp_dtype": "COMPRESSION_REINTERPRET_DATATYPE",
+        },
+        "DOUBLE_DELTA": {
+            "level": "COMPRESSION_LEVEL",
+            "reinterp_dtype": "COMPRESSION_REINTERPRET_DATATYPE",
+        },
+        "DICTIONARY_ENCODING": {"level": "COMPRESSION_LEVEL"},
+        "BIT_WIDTH_REDUCTION": {"window": "BIT_WIDTH_MAX_WINDOW"},
+        "POSITIVE_DELTA": {"window": "POSITIVE_DELTA_MAX_WINDOW"},
+        "SCALE_FLOAT": {
+            "factor": "SCALE_FLOAT_FACTOR",
+            "offset": "SCALE_FLOAT_OFFSET",
+            "bytewidth": "SCALE_FLOAT_BYTEWIDTH",
+        },
+        "WEBP": {
+            "input_format": "WEBP_INPUT_FORMAT",
+            "quality": "WEBP_QUALITY",
+            "lossless": "WEBP_LOSSLESS",
+        },
+    }
 
-    return plt_cfg
+    if filters is None:
+        return ""
+
+    filter_list = []
+    for info in filters:
+        if len(info) == 1:
+            filter = _convert_filter[cast(str, info["_type"])]
+        else:
+            filter = dict()
+            for option_name, option_value in info.items():
+                filter_name = _convert_filter[cast(str, info["_type"])]
+                if option_name == "_type":
+                    filter["name"] = filter_name
+                else:
+                    filter[_convert_option[filter_name][option_name]] = option_value
+        filter_list.append(filter)
+    return json.dumps(filter_list)

@@ -219,6 +219,15 @@ class ArrowAdapter {
     }
 
     static bool _isvar(const char* format);
+
+    static FilterList _create_filter_list(
+        std::string filters, std::shared_ptr<Context> ctx);
+
+    static void _append_to_filter_list(
+        FilterList filter_list, json filter, std::shared_ptr<Context> ctx);
+
+    static void _set_filter_option(
+        Filter filter, std::string option_name, json value);
 };
 };  // namespace tiledbsoma
 

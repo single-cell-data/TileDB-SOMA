@@ -1,4 +1,5 @@
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -9,7 +10,6 @@ from tiledbsoma._util import verify_obs_and_var_eq
 import tiledb
 
 
-@pytest.mark.skip(reason="No longer return ArraySchema - see note in test")
 def test_platform_config(conftest_pbmc_small):
     # TODO as we remove usage of TileDB-Py in favor of ArrowSchema, we
     # need a new method to get which filters have applied to the column
@@ -35,7 +35,11 @@ def test_platform_config(conftest_pbmc_small):
                 "tiledb": {
                     "create": {
                         "capacity": 8888,
-                        "offsets_filters": ["RleFilter", "NoOpFilter"],
+                        "offsets_filters": [
+                            "RleFilter",
+                            {"_type": "GzipFilter", "level": 7},
+                            "NoOpFilter",
+                        ],
                         "dims": {
                             "soma_dim_0": {"tile": 6},
                             # Empty filters for soma_dim_1 overrides the default
@@ -53,14 +57,17 @@ def test_platform_config(conftest_pbmc_small):
         )
         verify_obs_and_var_eq(original, conftest_pbmc_small)
 
-        with tiledbsoma.Experiment.open(output_path) as exp:
-            x_data = exp.ms["RNA"].X["data"]
-            x_arr = x_data._handle.reader
+        x_arr_uri = str(Path(output_path) / "ms" / "RNA" / "X" / "data")
+        with tiledb.open(x_arr_uri) as x_arr:
             x_sch = x_arr.schema
             assert x_sch.capacity == 8888
             assert x_sch.cell_order == "row-major"
             assert x_sch.tile_order == "col-major"
-            assert x_sch.offsets_filters == [tiledb.RleFilter(), tiledb.NoOpFilter()]
+            assert x_sch.offsets_filters == [
+                tiledb.RleFilter(),
+                tiledb.GzipFilter(level=7),
+                tiledb.NoOpFilter(),
+            ]
             assert x_arr.attr("soma_data").filters == [tiledb.NoOpFilter()]
             assert x_arr.dim("soma_dim_0").tile == 6
             assert x_arr.dim("soma_dim_0").filters == [tiledb.ZstdFilter(level=2)]
