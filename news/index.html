@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.10.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.11.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,27 @@
       <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.11.0" id="tiledbsoma-1110">tiledbsoma 1.11.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1110"></a></h2>
+<div class="section level3">
+<h3 id="changes-1-11-0">Changes<a class="anchor" aria-label="anchor" href="#changes-1-11-0"></a></h3>
+<ul><li>Add support for ingestion of <code>SeuratCommand</code> logs</li>
+<li>Add support for outgestion of <code>SeuratCommand</code> logs</li>
+<li>Add support for reading <code>*m</code> and <code>*p</code> layers from <code>SOMAExperimentAxisQuery</code>
+</li>
+<li>Add support for blockwise iteration</li>
+<li>Make <code>reopen()</code> a public method for all <code>TileDBObjects</code>
+</li>
+<li>Add support for resume-mode in <code><a href="../reference/write_soma.html">write_soma()</a></code>
+</li>
+<li>Push default-setting for <code>TileDBCreateOptions</code> to <code>$initialize()</code> instead of in the accessors</li>
+<li>Muffle warnings for missing command logs when outgesting SOMA to <code>Seurat</code>
+</li>
+<li>Have <code>SOMADataFrame$shape()</code> throw a not-yet-implemented error</li>
+<li>Disable running <code><a href="https://mojaveazure.github.io/seurat-object/reference/dot-CalcN.html" class="external-link">SeuratObject::.CalcN()</a></code> when outgesting from SOMA to <code>Seurat</code>
+</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.6.0" id="tiledbsoma-160">tiledbsoma 1.6.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-160"></a></h2>
 <div class="section level3">

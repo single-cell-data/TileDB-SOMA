@@ -16,7 +16,7 @@ Intended for internal use only."><!-- mathjax --><script src="https://cdnjs.clou
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.10.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.11.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,10 +94,7 @@ Intended for internal use only."><!-- mathjax --><script src="https://cdnjs.clou
 <li><p><a href="#method-TileDBCreateOptions-attr_filters"><code>TileDBCreateOptions$attr_filters()</code></a></p></li>
 <li><p><a href="#method-TileDBCreateOptions-write_X_chunked"><code>TileDBCreateOptions$write_X_chunked()</code></a></p></li>
 <li><p><a href="#method-TileDBCreateOptions-goal_chunk_nnz"><code>TileDBCreateOptions$goal_chunk_nnz()</code></a></p></li>
-<li><p><a href="#method-TileDBCreateOptions-.dim"><code>TileDBCreateOptions$.dim()</code></a></p></li>
-<li><p><a href="#method-TileDBCreateOptions-.attr"><code>TileDBCreateOptions$.attr()</code></a></p></li>
-<li><p><a href="#method-TileDBCreateOptions-.build_filters"><code>TileDBCreateOptions$.build_filters()</code></a></p></li>
-<li><p><a href="#method-TileDBCreateOptions-.build_filter"><code>TileDBCreateOptions$.build_filter()</code></a></p></li>
+<li><p><a href="#method-TileDBCreateOptions-to_list"><code>TileDBCreateOptions$to_list()</code></a></p></li>
 <li><p><a href="#method-TileDBCreateOptions-clone"><code>TileDBCreateOptions$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="get"><a href="MappingBase.html#method-get"><code>tiledbsoma::MappingBase$get()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="items"><a href="MappingBase.html#method-items"><code>tiledbsoma::MappingBase$items()</code></a></span></li>
@@ -107,14 +104,13 @@ Intended for internal use only."><!-- mathjax --><script src="https://cdnjs.clou
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="remove"><a href="MappingBase.html#method-remove"><code>tiledbsoma::MappingBase$remove()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="set"><a href="MappingBase.html#method-set"><code>tiledbsoma::MappingBase$set()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="setv"><a href="MappingBase.html#method-setv"><code>tiledbsoma::MappingBase$setv()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="to_list"><a href="MappingBase.html#method-to_list"><code>tiledbsoma::MappingBase$to_list()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="update"><a href="MappingBase.html#method-update"><code>tiledbsoma::MappingBase$update()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="MappingBase" data-id="values"><a href="MappingBase.html#method-values"><code>tiledbsoma::MappingBase$values()</code></a></span></li>
 </ul></details></p><hr><a id="method-TileDBCreateOptions-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
 <p>Create a <code>TileDBCreateOptions</code> object</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/TileDBCreateOptions.html">TileDBCreateOptions</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">platform_config</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/TileDBCreateOptions.html">TileDBCreateOptions</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>platform_config <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -138,8 +134,8 @@ case will we use the default values provided.</p><div class="section">
 
 <div class="section">
 <h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
-<p>a list keyed by “<code>cell_order</code>” and
-“<code>tile_order</code>”, where either value or both may be <code>NULL</code>.</p>
+<p>A two-length character vector with names of
+“<code>cell_order</code>” and “<code>tile_order</code>”</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBCreateOptions-dim_tile"></a><div class="section">
@@ -147,7 +143,7 @@ case will we use the default values provided.</p><div class="section">
 
 <div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">dim_tile</span><span class="op">(</span><span class="va">dim_name</span>, default <span class="op">=</span> <span class="fu">.default_tile_extent</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">dim_tile</span><span class="op">(</span><span class="va">dim_name</span>, default <span class="op">=</span> <span class="fl">2048</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -166,6 +162,21 @@ case will we use the default values provided.</p><div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
 <p>int</p>
 </div>
+<div class="section">
+<h4 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h4>
+<p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/PlatformConfig.html">PlatformConfig</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">cfg</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span></span>
+<span>  platform <span class="op">=</span> <span class="st">'tiledb'</span>,</span>
+<span>  param <span class="op">=</span> <span class="st">'create'</span>,</span>
+<span>  key <span class="op">=</span> <span class="st">'dims'</span>,</span>
+<span>  value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>soma_dim_0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>tile <span class="op">=</span> <span class="fl">999</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="op">(</span><span class="va">tdco</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/TileDBCreateOptions.html">TileDBCreateOptions</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tdco</span><span class="op">$</span><span class="fu">dim_tile</span><span class="op">(</span><span class="st">"soma_dim_0"</span><span class="op">)</span></span>
+<span><span class="va">tdco</span><span class="op">$</span><span class="fu">dim_tile</span><span class="op">(</span><span class="st">"soma_dim_1"</span><span class="op">)</span></span>
+<span></span></code></pre></div><p></p></div>
+</div>
+
 
 </div><p></p><hr><a id="method-TileDBCreateOptions-capacity"></a><div class="section">
 <h3 id="method-capacity-">Method <code>capacity()</code><a class="anchor" aria-label="anchor" href="#method-capacity-"></a></h3>
@@ -224,7 +235,7 @@ case will we use the default values provided.</p><div class="section">
 
 <div class="section">
 <h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">offsets_filters</span><span class="op">(</span>default <span class="op">=</span> <span class="fu">.default_offsets_filters</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">offsets_filters</span><span class="op">(</span>default <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -237,7 +248,8 @@ case will we use the default values provided.</p><div class="section">
 </div>
 <div class="section">
 <h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
-<p>list of tiledb.Filter</p>
+<p>A list of
+<code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_filter-class.html" class="external-link">tiledb_filter</a></code> objects</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBCreateOptions-validity_filters"></a><div class="section">
@@ -245,7 +257,7 @@ case will we use the default values provided.</p><div class="section">
 
 <div class="section">
 <h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">validity_filters</span><span class="op">(</span>default <span class="op">=</span> <span class="fu">.default_validity_filters</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">validity_filters</span><span class="op">(</span>default <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -258,7 +270,8 @@ case will we use the default values provided.</p><div class="section">
 </div>
 <div class="section">
 <h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
-<p>list of tiledb.Filter</p>
+<p>A list of
+<code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_filter-class.html" class="external-link">tiledb_filter</a></code> objects</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBCreateOptions-dim_filters"></a><div class="section">
@@ -283,8 +296,23 @@ case will we use the default values provided.</p><div class="section">
 </div>
 <div class="section">
 <h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
-<p>list of tiledb.Filter</p>
+<p>A list of
+<code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_filter-class.html" class="external-link">tiledb_filter</a></code> objects</p>
 </div>
+<div class="section">
+<h4 id="examples-1">Examples<a class="anchor" aria-label="anchor" href="#examples-1"></a></h4>
+<p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="va">filters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  soma_dim_0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>tile <span class="op">=</span> <span class="fl">100</span>, filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"RLE"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  soma_dim_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>tile <span class="op">=</span> <span class="fl">200</span>, filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"RLE"</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"ZSTD"</span>, COMPRESSION_LEVEL <span class="op">=</span> <span class="fl">9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/PlatformConfig.html">PlatformConfig</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">cfg</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>platform <span class="op">=</span> <span class="st">'tiledb'</span>, param <span class="op">=</span> <span class="st">'create'</span>, key <span class="op">=</span> <span class="st">'dims'</span>, value <span class="op">=</span> <span class="va">filters</span><span class="op">)</span></span>
+<span><span class="op">(</span><span class="va">tdco</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/TileDBCreateOptions.html">TileDBCreateOptions</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tdco</span><span class="op">$</span><span class="fu">dim_filters</span><span class="op">(</span><span class="st">"soma_dim_0"</span><span class="op">)</span></span>
+<span><span class="va">tdco</span><span class="op">$</span><span class="fu">dim_filters</span><span class="op">(</span><span class="st">"non-existant"</span><span class="op">)</span></span>
+<span></span></code></pre></div><p></p></div>
+</div>
+
 
 </div><p></p><hr><a id="method-TileDBCreateOptions-attr_filters"></a><div class="section">
 <h3 id="method-attr-filters-">Method <code>attr_filters()</code><a class="anchor" aria-label="anchor" href="#method-attr-filters-"></a></h3>
@@ -308,8 +336,23 @@ case will we use the default values provided.</p><div class="section">
 </div>
 <div class="section">
 <h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
-<p>list of tiledb.Filter</p>
+<p>A list of
+<code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_filter-class.html" class="external-link">tiledb_filter</a></code> objects</p>
 </div>
+<div class="section">
+<h4 id="examples-2">Examples<a class="anchor" aria-label="anchor" href="#examples-2"></a></h4>
+<p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="va">filters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  soma_data_a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"RLE"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  soma_data_b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"RLE"</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"ZSTD"</span>, COMPRESSION_LEVEL <span class="op">=</span> <span class="fl">9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/PlatformConfig.html">PlatformConfig</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">cfg</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>platform <span class="op">=</span> <span class="st">'tiledb'</span>, param <span class="op">=</span> <span class="st">'create'</span>, key <span class="op">=</span> <span class="st">'attrs'</span>, value <span class="op">=</span> <span class="va">filters</span><span class="op">)</span></span>
+<span><span class="op">(</span><span class="va">tdco</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/TileDBCreateOptions.html">TileDBCreateOptions</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">tdco</span><span class="op">$</span><span class="fu">attr_filters</span><span class="op">(</span><span class="st">"soma_data_b"</span><span class="op">)</span></span>
+<span><span class="va">tdco</span><span class="op">$</span><span class="fu">attr_filters</span><span class="op">(</span><span class="st">"non-existant"</span><span class="op">)</span></span>
+<span></span></code></pre></div><p></p></div>
+</div>
+
 
 </div><p></p><hr><a id="method-TileDBCreateOptions-write_X_chunked"></a><div class="section">
 <h3 id="method-write-x-chunked-">Method <code>write_X_chunked()</code><a class="anchor" aria-label="anchor" href="#method-write-x-chunked-"></a></h3>
@@ -337,101 +380,36 @@ case will we use the default values provided.</p><div class="section">
 <p>int</p>
 </div>
 
-</div><p></p><hr><a id="method-TileDBCreateOptions-.dim"></a><div class="section">
-<h3 id="method-dim-">Method <code>.dim()</code><a class="anchor" aria-label="anchor" href="#method-dim-"></a></h3>
-
-<div class="section">
+</div><p></p><hr><a id="method-TileDBCreateOptions-to_list"></a><div class="section">
+<h3 id="method-to-list-">Method <code>to_list()</code><a class="anchor" aria-label="anchor" href="#method-to-list-"></a></h3>
+<p>...</p><div class="section">
 <h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">.dim</span><span class="op">(</span><span class="va">dim_name</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">to_list</span><span class="op">(</span>build_filters <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>dim_name</code></dt>
-<dd><p>Name of dimensions</p></dd>
+<p></p><div class="arguments"><dl><dt><code>build_filters</code></dt>
+<dd><p>Build filters into
+<code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_filter-class.html" class="external-link">tiledb_filter</a></code> objects</p></dd>
 
 
 </dl><p></p></div>
 </div>
 <div class="section">
 <h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
-<p>Named list of character</p>
-</div>
-
-</div><p></p><hr><a id="method-TileDBCreateOptions-.attr"></a><div class="section">
-<h3 id="method-attr-">Method <code>.attr()</code><a class="anchor" aria-label="anchor" href="#method-attr-"></a></h3>
-
-<div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">.attr</span><span class="op">(</span><span class="va">attr_name</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>attr_name</code></dt>
-<dd><p>Name of attribute</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
-<p>Named list of character</p>
-</div>
-
-</div><p></p><hr><a id="method-TileDBCreateOptions-.build_filters"></a><div class="section">
-<h3 id="method-build-filters-">Method <code>.build_filters()</code><a class="anchor" aria-label="anchor" href="#method-build-filters-"></a></h3>
-
-<div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">.build_filters</span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>items</code></dt>
-<dd><p>A list of filters; see <code>$.build_filter()</code> for details
-about entries in <code>items</code></p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
-<p>A list of tiledb filters.</p>
-</div>
-
-</div><p></p><hr><a id="method-TileDBCreateOptions-.build_filter"></a><div class="section">
-<h3 id="method-build-filter-">Method <code>.build_filter()</code><a class="anchor" aria-label="anchor" href="#method-build-filter-"></a></h3>
-
-<div class="section">
-<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">.build_filter</span><span class="op">(</span><span class="va">item</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>item</code></dt>
-<dd><p>THe name of a filter or a list with the name and arguments
-for a filter (eg. <code>list(name = "ZSTD", COMPRESSION_LEVEL = -1)</code>)</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
-<p>A tiledb filter.</p>
+<p>The create options as a list</p>
 </div>
 
 </div><p></p><hr><a id="method-TileDBCreateOptions-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
@@ -443,6 +421,102 @@ for a filter (eg. <code>list(name = "ZSTD", COMPRESSION_LEVEL = -1)</code>)</p><
 
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
+<span class="r-in"><span><span class="co">## Method `TileDBCreateOptions$dim_tile`</span></span></span>
+<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="va"><a href="PlatformConfig.html">PlatformConfig</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  platform <span class="op">=</span> <span class="st">'tiledb'</span>,</span></span>
+<span class="r-in"><span>  param <span class="op">=</span> <span class="st">'create'</span>,</span></span>
+<span class="r-in"><span>  key <span class="op">=</span> <span class="st">'dims'</span>,</span></span>
+<span class="r-in"><span>  value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>soma_dim_0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>tile <span class="op">=</span> <span class="fl">999</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">tdco</span> <span class="op">&lt;-</span> <span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;TileDBCreateOptions&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   dims: list(soma_dim_0 = list(tile = 999))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   tile_order: ROW_MAJOR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cell_order: ROW_MAJOR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   capacity: 1e+05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   allows_duplicates: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   dataframe_dim_zstd_level: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sparse_nd_array_dim_zstd_level: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   offsets_filters: list("DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   write_X_chunked: TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   goal_chunk_nnz: 2e+08</span>
+<span class="r-in"><span><span class="va">tdco</span><span class="op">$</span><span class="fu">dim_tile</span><span class="op">(</span><span class="st">"soma_dim_0"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 999</span>
+<span class="r-in"><span><span class="va">tdco</span><span class="op">$</span><span class="fu">dim_tile</span><span class="op">(</span><span class="st">"soma_dim_1"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2048</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
+<span class="r-in"><span><span class="co">## Method `TileDBCreateOptions$dim_filters`</span></span></span>
+<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">filters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  soma_dim_0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>tile <span class="op">=</span> <span class="fl">100</span>, filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"RLE"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  soma_dim_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>tile <span class="op">=</span> <span class="fl">200</span>, filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"RLE"</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"ZSTD"</span>, COMPRESSION_LEVEL <span class="op">=</span> <span class="fl">9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="va"><a href="PlatformConfig.html">PlatformConfig</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>platform <span class="op">=</span> <span class="st">'tiledb'</span>, param <span class="op">=</span> <span class="st">'create'</span>, key <span class="op">=</span> <span class="st">'dims'</span>, value <span class="op">=</span> <span class="va">filters</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">tdco</span> <span class="op">&lt;-</span> <span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;TileDBCreateOptions&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   dims: list(soma_dim_0 = list(tile = 100, filters = list("RLE")), soma_dim_1 = list(tile = 200, filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   tile_order: ROW_MAJOR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cell_order: ROW_MAJOR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   capacity: 1e+05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   allows_duplicates: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   dataframe_dim_zstd_level: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sparse_nd_array_dim_zstd_level: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   offsets_filters: list("DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   write_X_chunked: TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   goal_chunk_nnz: 2e+08</span>
+<span class="r-in"><span><span class="va">tdco</span><span class="op">$</span><span class="fu">dim_filters</span><span class="op">(</span><span class="st">"soma_dim_0"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> tiledb_filter_set_option(tiledb_filter("RLE"),"COMPRESSION_LEVEL",-1) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="va">tdco</span><span class="op">$</span><span class="fu">dim_filters</span><span class="op">(</span><span class="st">"non-existant"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> list()</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
+<span class="r-in"><span><span class="co">## Method `TileDBCreateOptions$attr_filters`</span></span></span>
+<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">filters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  soma_data_a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"RLE"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  soma_data_b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"RLE"</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"ZSTD"</span>, COMPRESSION_LEVEL <span class="op">=</span> <span class="fl">9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="va"><a href="PlatformConfig.html">PlatformConfig</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>platform <span class="op">=</span> <span class="st">'tiledb'</span>, param <span class="op">=</span> <span class="st">'create'</span>, key <span class="op">=</span> <span class="st">'attrs'</span>, value <span class="op">=</span> <span class="va">filters</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">tdco</span> <span class="op">&lt;-</span> <span class="va">TileDBCreateOptions</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;TileDBCreateOptions&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   attrs: list(soma_data_a = list(filters = list("RLE")), soma_data_b = list(filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))))</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   tile_order: ROW_MAJOR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   cell_order: ROW_MAJOR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   capacity: 1e+05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   allows_duplicates: FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   dataframe_dim_zstd_level: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sparse_nd_array_dim_zstd_level: 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   offsets_filters: list("DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   write_X_chunked: TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   goal_chunk_nnz: 2e+08</span>
+<span class="r-in"><span><span class="va">tdco</span><span class="op">$</span><span class="fu">attr_filters</span><span class="op">(</span><span class="st">"soma_data_b"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> tiledb_filter_set_option(tiledb_filter("RLE"),"COMPRESSION_LEVEL",-1) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> tiledb_filter_set_option(tiledb_filter("ZSTD"),"COMPRESSION_LEVEL",9) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="va">tdco</span><span class="op">$</span><span class="fu">attr_filters</span><span class="op">(</span><span class="st">"non-existant"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> list()</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 
