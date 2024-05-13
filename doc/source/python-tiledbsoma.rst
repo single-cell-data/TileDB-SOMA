@@ -18,9 +18,10 @@ Classes
 
     tiledbsoma.DataFrame
     tiledbsoma.SparseNDArray
+    tiledbsoma.SparseNDArrayRead
     tiledbsoma.DenseNDArray
 
-      tiledbsoma.ResultOrder
+    tiledbsoma.ResultOrder
 
     tiledbsoma.AxisColumnNames
     tiledbsoma.AxisQuery

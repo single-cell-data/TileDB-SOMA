@@ -2,9 +2,13 @@ name: TileDB-SOMA R CI
 
 on:
   pull_request:
-    paths-ignore:
-      - "apis/python/**"
-      - ".pre-commit-config.yaml"
+    paths:
+      - '**'
+      - '!**.md'
+      - '!apis/python/**'
+      - '!docs/**'
+      - '!.github/**'
+      - '.github/workflows/r-ci.yml'
   push:
     branches:
       - main
@@ -72,7 +76,6 @@ jobs:
 
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
-
 
       # Uncomment these next two stanzas as needed whenever we've just released a new tiledb-r for
       # which source is available but CRAN releases (and hence update r2u binaries) are not yet:
