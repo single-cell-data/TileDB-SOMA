@@ -32,8 +32,21 @@ jobs:
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
 
+      - name: Set additional repositories (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          rversion <- paste(strsplit(as.character(getRversion()), split = '\\.')[[1L]][1:2], collapse = '.')
+          codename <-  system('. /etc/os-release; echo ${VERSION_CODENAME}', intern = TRUE)
+          repo <- "https://tiledb-inc.r-universe.dev"
+          (opt <- sprintf('options(repos = c("%s/bin/linux/%s/%s", "%s", getOption("repos")))', repo, codename, rversion, repo))
+          cat(opt, "\n", file = "~/.Rprofile", append = TRUE)
+        shell: Rscript {0}
+
+      - name: Install tiledb-r
+        run: cd apis/r && Rscript tools/install-tiledb-r.R
+
       - name: Dependencies
-        run: cd apis/r && tools/r-ci.sh install_all
+        run: cd apis/r && Rscript -e "remotes::install_deps(dependencies = TRUE, upgrade = FALSE)"
 
       - name: CMake
         uses: lukka/get-cmake@latest
