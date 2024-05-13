@@ -35,6 +35,7 @@ Imports:
     stats,
     bit64,
     tiledb (>= 0.26.0),
+    tiledb (<= 0.26.99),
     arrow,
     utils,
     fs,
