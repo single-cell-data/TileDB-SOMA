@@ -1,3 +1,9 @@
+# tiledbsoma 1.11.1
+
+## Changes
+
+* No R changes; only an update for Python
+
 # tiledbsoma 1.11.0
 
 ## Changes
