@@ -71,60 +71,136 @@ __all__ = "getVersion"
 
 import os
 import re
-import subprocess
+import shlex
 import sys
 from datetime import date
 from os.path import basename
-from subprocess import CalledProcessError, check_output
+from subprocess import DEVNULL, CalledProcessError, check_output
+from typing import List, Optional
 
 RELEASE_VERSION_FILE = os.path.join(os.path.dirname(__file__), "RELEASE-VERSION")
 
 # http://www.python.org/dev/peps/pep-0386/
 _PEP386_SHORT_VERSION_RE = r"\d+(?:\.\d+)+(?:(?:[abc]|rc)\d+(?:\.\d+)*)?"
 _PEP386_VERSION_RE = r"^%s(?:\.post\d+)?(?:\.dev\d+)?$" % _PEP386_SHORT_VERSION_RE
-_GIT_DESCRIPTION_RE = r"^(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % (
-    _PEP386_SHORT_VERSION_RE
+_GIT_DESCRIPTION_RE = (
+    r"^(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % _PEP386_SHORT_VERSION_RE
 )
 
 
 def err(*args, **kwargs):
+    """Print to stderr."""
     print(*args, file=sys.stderr, **kwargs)
 
 
-def readGitVersion():
-    # NOTE: this will fail if on a fork with unsynchronized tags.
-    #       use `git fetch --tags upstream`
-    #       and `git push --tags <your fork>`
+def lines(*cmd, drop_trailing_newline: bool = True, **kwargs) -> List[str]:
+    """Run a command and return its output as a list of lines.
+
+    Strip trailing newlines, and drop the last line if it's empty, by default."""
+    lns = [ln.rstrip("\n") for ln in check_output(cmd, **kwargs).decode().splitlines()]
+    if lns and drop_trailing_newline and not lns[-1]:
+        lns.pop()
+    return lns
+
+
+def line(*cmd, **kwargs) -> Optional[str]:
+    """Run a command, verify exactly one line of stdout, return it."""
+    lns = lines(*cmd, **kwargs)
+    if len(lns) != 1:
+        raise RuntimeError(f"Expected 1 line, found {len(lns)}: {shlex.join(cmd)}")
+    return lns[0]
+
+
+def get_latest_tag() -> Optional[str]:
+    """Return the most recent local Git tag of the form `[0-9].*.*` (or `None` if none exist)."""
+    tags = lines("git", "tag", "--list", "--sort=v:refname", "[0-9].*.*")
+    return tags[-1] if tags else None
+
+
+def get_latest_remote_tag(remote: str) -> str:
+    """Return the most recent Git tag of the form `[0-9].*.*`, from a remote Git repository."""
+    tags = lines("git", "ls-remote", "--tags", "--sort=v:refname", remote, "[0-9].*.*")
+    if not tags:
+        raise RuntimeError(f"No tags found in remote {remote}")
+    return tags[-1].split(" ")[-1].split("/")[-1]
+
+
+def get_sha_base10() -> int:
+    """Return the current Git SHA, abbreviated and then converted to base 10.
+
+    This is unfortunately necessary because PEP440 prohibits hexadecimal characters"""
+    sha = line("git", "log", "-1", "--format=%h")
+    return int(sha, 16)
+
+
+def get_git_version() -> Optional[str]:
+    """Construct a PEP440-compatible version string that encodes various Git state.
+
+    - If `git describe` returns a plain release tag, use that.
+    - Otherwise, it will return something like `1.10.2-5-gbabb931f2`, which we'd convert to
+      `1.10.2.post5.dev50125681138` (abbreviated Git SHA gets converted to base 10, for
+      PEP440-compliance).
+    - However, if the `git describe` version starts with `1.5.0`, we do something else. 1.5.0 was
+      the last release tag before we moved to release branches, so it ends up being returned for
+      everything on the `main` branch. Instead:
+        - Find the latest release tag in the local repo (or tracked remote, if there are no local
+          tags).
+        - Build a version string from it, e.g. `1.11.1.post0.dev61976836339` (again using the
+          abbreviated Git SHA, converted to base 10 for PEP440 compliance).
+    """
     try:
-        proc = subprocess.Popen(
-            ("git", "describe", "--long", "--tags", "--match", "[0-9]*.*"),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+        git_version = line(
+            "git", "describe", "--long", "--tags", "--match", "[0-9]*.*", stderr=DEVNULL
         )
-        data, stderr = proc.communicate()
-        if proc.returncode:
-            return None
-        ver = data.decode().splitlines()[0].strip()
     except CalledProcessError:
-        return None
+        git_version = None
 
-    if not ver:
-        return None
-    m = re.search(_GIT_DESCRIPTION_RE, ver)
-    if not m:
-        err(
-            "version: git description (%s) is invalid, " "ignoring\n" % ver,
-        )
-        return None
+    m = re.search(_GIT_DESCRIPTION_RE, git_version) if git_version else None
+    ver = m.group("ver") if m else None
 
-    commits = int(m.group("commits"))
-    if not commits:
-        return m.group("ver")
+    # `1.5.0` (Nov '23) is typically the most recent tag that's an ancestor of `main`; subsequent
+    # release tags all exist on release branches (by design).
+    #
+    # If `git describe` above returned `1.5.0` as the nearest tagged ancestor, synthesize a
+    # more meaningful version number below:
+    #
+    # 1. Find the latest release tag in the local repo (or tracked remote, if there are no local
+    #    tags, e.g. in case of a shallow clone).
+    # 2. Return a PEP440-compatible version of the form `A.B.C.post0.devN`, where:
+    #   - `A.B.C` is the most recent release tag in the repo, and
+    #   - `N` is the current short Git SHA, converted to base 10.
+    if not ver or ver.startswith("1.5.0"):
+        latest_tag = get_latest_tag()
+        if latest_tag:
+            err(f"Git traversal returned {ver}, using latest local tag {latest_tag}")
+        else:
+            try:
+                tracked_branch = line(
+                    "git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"
+                )
+                tracked_remote = tracked_branch.split("/")[0]
+                err(
+                    f"Parsed tracked remote {tracked_remote} from branch {tracked_branch}"
+                )
+            except CalledProcessError:
+                tracked_remote = line("git", "remote")
+                err(f"Checking tags at default/only remote {tracked_remote}")
+            latest_tag = get_latest_remote_tag(tracked_remote)
+            err(
+                f"Git traversal returned {ver}, using latest tag {latest_tag} from tracked remote {tracked_remote}"
+            )
+
+        return f"{latest_tag}.post0.dev{get_sha_base10()}"
     else:
-        return "%s.post%d.dev%d" % (m.group("ver"), commits, int(m.group("sha"), 16))
+        commits = int(m.group("commits"))
+        if commits:
+            sha_base10 = int(m.group("sha"), 16)
+            return f"{ver}.post{commits}.dev{sha_base10}"
+        else:
+            return ver
 
 
-def readReleaseVersion():
+def read_release_version():
     try:
         with open(RELEASE_VERSION_FILE) as fd:
             ver = fd.readline().strip()
@@ -138,26 +214,30 @@ def readReleaseVersion():
         return None
 
 
-def generateCalVersion():
+def generate_cal_version():
     today = date.today().strftime("%Y.%m.%d")
-    sha = check_output(["git", "log", "-1", "--format=%h"]).decode().rstrip("\n")
-    sha_dec = int(sha, 16)
-    return f"{today}.dev{sha_dec}"
+    return f"{today}.dev{get_sha_base10()}"
 
 
-def writeReleaseVersion(version):
+def write_release_version(version):
     with open(RELEASE_VERSION_FILE, "w") as fd:
         print(version, file=fd)
 
 
-def getVersion():
-    release_version = readReleaseVersion()
-    version = readGitVersion() or release_version
+def get_version():
+    release_version = read_release_version()
+    version = get_git_version()
     if not version:
-        version = generateCalVersion()
+        version = release_version
+    if not version:
+        version = generate_cal_version()
         err(
             f"No {basename(RELEASE_VERSION_FILE)} or Git version found, using calver {version}"
         )
     if version != release_version:
-        writeReleaseVersion(version)
+        write_release_version(version)
     return version
+
+
+if __name__ == "__main__":
+    print(get_version())
