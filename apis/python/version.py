@@ -25,7 +25,7 @@ Note the problem doesn't necessarily become apparent until testing the sdist.
 Calculates the current version number.
 
 If possible, uses output of “git describe” modified to conform to the
-visioning scheme that setuptools uses (see PEP 386).  Releases must be
+versioning scheme that setuptools uses (see PEP 386).  Releases must be
 labelled with annotated tags (signed tags are annotated) of the following
 format:
 
@@ -78,7 +78,7 @@ RELEASE_VERSION_FILE = os.path.join(os.path.dirname(__file__), "RELEASE-VERSION"
 
 # http://www.python.org/dev/peps/pep-0386/
 _PEP386_SHORT_VERSION_RE = r"\d+(?:\.\d+)+(?:(?:[abc]|rc)\d+(?:\.\d+)*)?"
-_PEP386_VERSION_RE = r"^%s(?:\.post\d+)?(?:\.dev\d+)?$" % (_PEP386_SHORT_VERSION_RE)
+_PEP386_VERSION_RE = r"^%s(?:\.post\d+)?(?:\.dev\d+)?$" % _PEP386_SHORT_VERSION_RE
 _GIT_DESCRIPTION_RE = r"^(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % (
     _PEP386_SHORT_VERSION_RE
 )
@@ -130,7 +130,7 @@ def readReleaseVersion():
                 "will use it anyway\n" % ver
             )
         return ver
-    except Exception:
+    except FileNotFoundError:
         return None
 
 
