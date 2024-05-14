@@ -59,7 +59,7 @@ if TYPE_CHECKING:
 
     from .._types import Path
     from ..io._registration import ExperimentAmbientLabelMapping
-    from ..io.ingeset import AdditionalMetadata
+    from ..io.ingest import AdditionalMetadata
     from ..options import SOMATileDBContext
 
 
