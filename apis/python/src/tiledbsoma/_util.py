@@ -505,7 +505,7 @@ def _build_filter_list(
                     filter["name"] = filter_name
                 else:
                     filter[_convert_option[filter_name][option_name]] = cast(
-                        Union[float | int], option_value
+                        Union[float, int], option_value
                     )
         filter_list.append(filter)
     return json.dumps(filter_list) if return_json else filter_list
