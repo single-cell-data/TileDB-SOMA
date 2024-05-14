@@ -26,7 +26,7 @@ from .options._tiledb_create_options import (
     _DictFilterSpec,
 )
 
-_JSONFilter = Union[str, Dict[str, Union[str, Union[int | float]]]]
+_JSONFilter = Union[str, Dict[str, Union[str, Union[int, float]]]]
 _JSONFilterList = Union[str, List[_JSONFilter]]
 
 
