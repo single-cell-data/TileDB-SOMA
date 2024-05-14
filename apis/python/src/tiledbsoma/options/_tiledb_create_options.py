@@ -48,7 +48,7 @@ _FilterSpec = Union[str, _DictFilterSpec]
 class _DictColumnSpec(TypedDict, total=False):
     """Type specification for the dictionary used to configure a column."""
 
-    filters: Mapping[str, _FilterSpec]
+    filters: Union[Sequence[str], Mapping[str, Union[_FilterSpec]]]
     tile: int
 
 
@@ -82,11 +82,13 @@ class _ColumnConfig:
     tile: Optional[int] = attrs_.field(validator=vld.optional(vld.instance_of(int)))
 
     @classmethod
-    def from_dict(cls, input) -> Self:
+    def from_dict(cls, input: _DictColumnSpec) -> Self:
         return cls(filters=input.get("filters"), tile=input.get("tile"))
 
 
-def _normalize_columns(input) -> Mapping[str, _ColumnConfig]:
+def _normalize_columns(
+    input: Mapping[str, _DictColumnSpec]
+) -> Mapping[str, _ColumnConfig]:
     if not isinstance(input, Mapping):
         raise TypeError("column configuration must be a dictionary")
     return {
