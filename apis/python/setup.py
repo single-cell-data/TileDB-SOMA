@@ -329,7 +329,7 @@ setuptools.setup(
         "pyarrow>=9.0.0; platform_system!='Darwin'",
         "scanpy>=1.9.2",
         "scipy",
-        "somacore @ git+https://github.com/single-cell-data/SOMA.git@dark/query-part1",  # DO NOT MERGE TO MAIN
+        "somacore @ git+https://github.com/single-cell-data/SOMA.git@dark/query-part-1",  # DO NOT MERGE TO MAIN
         "tiledb~=0.29.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
