@@ -63,50 +63,50 @@ class PlatformConfig {
      * Available filters with associated options are
      * [
      *     {
-     *         name="GZIP", compression_level=(int32_t)
+     *         name="GZIP", COMPRESSION_LEVEL=(int32_t)
      *     },
      *     {
-     *         name="ZSTD", compression_level=(int32_t)
+     *         name="ZSTD", COMPRESSION_LEVEL=(int32_t)
      *     },
      *     {
-     *         name="LZ4", compression_level=(int32_t)
+     *         name="LZ4", COMPRESSION_LEVEL=(int32_t)
      *     },
      *     {
-     *         name="BZIP2", compression_level=(int32_t)
+     *         name="BZIP2", COMPRESSION_LEVEL=(int32_t)
      *     },
      *     {
-     *         name="RLE", compression_level=(int32_t)
+     *         name="RLE", COMPRESSION_LEVEL=(int32_t)
      *     },
      *     {
      *         name="DELTA",
-     *         compression_level=(int32_t),
-     *         compression_reinterpret_datatype=(uint8_t)
+     *         COMPRESSION_LEVEL=(int32_t),
+     *         COMPRESSION_REINTERPRET_DATATYPE=(uint8_t)
      *     },
      *     {
      *         name="DOUBLE_DELTA",
-     *         compression_level=(int32_t),
-     *         compression_reinterpret_datatype=(uint8_t)
+     *         COMPRESSION_LEVEL=(int32_t),
+     *         COMPRESSION_REINTERPRET_DATATYPE=(uint8_t)
      *     },
      *     {
      *         name="BIT_WIDTH_REDUCTION",
-     *         bit_width_max_window=(uint32_t)
+     *         BIT_WIDTH_MAX_WINDOW=(uint32_t)
      *     },
      *     {
-     *         name="POSITIVE_DELTA", positive_delta_max_window=(uint32_t)},
+     *         name="POSITIVE_DELTA", POSITIVE_DELTA_MAX_WINDOW=(uint32_t)},
      *     },
      *     {
-     *         name="DICTIONARY_ENCODING", compression_level=(int32_t)},
+     *         name="DICTIONARY_ENCODING", COMPRESSION_LEVEL=(int32_t)},
      *     {
      *         name="SCALE_FLOAT",
-     *         scale_float_factor=(double),
-     *         scale_float_offset=(double),
-     *         scale_float_bytewidth=(uint64_t),
+     *         SCALE_FLOAT_FACTOR=(double),
+     *         SCALE_FLOAT_OFFSET=(double),
+     *         SCALE_FLOAT_BYTEWIDTH=(uint64_t),
      *     },
      *     {
      *         name="WEBP",
-     *         webp_input_format=(uint8_t),
-     *         webp_quality=(float),
-     *         webp_lossless=(uint8_t),
+     *         WEBP_INPUT_FORMAT=(uint8_t),
+     *         WEBP_QUALITY=(float),
+     *         WEBP_LOSSLESS=(uint8_t),
      *     },
      *     "CHECKSUM_MD5",
      *     "CHECKSUM_SHA256",
@@ -134,10 +134,27 @@ class PlatformConfig {
      */
     std::optional<std::string> cell_order = std::nullopt;
 
-    /* Set the filters for attributes. */
+    /* Set the filters for attributes.
+     *
+     * Example:
+     * {
+     *     "attr_name": {
+     *          "filters": ["XOR", {"name": name="GZIP", COMPRESSION_LEVEL=3]
+     *     }
+     * }
+     *
+     */
     std::string attrs = "";
 
-    /* Set the filters for dimensions. */
+    /* Set the filters and tiles for dimensions.
+     *
+     * Example:
+     * {
+     *     "dim_name": {"filters": ["NoOpFilter"], "tile": 8}
+     * }
+     *
+     */
+
     std::string dims = "";
 
     /* Set whether the array should be consolidated and vacuumed after writing
@@ -213,8 +230,14 @@ class ArrowAdapter {
         return dst;
     }
 
+    static Dimension _create_dim(
+        tiledb_datatype_t type,
+        std::string name,
+        const void* buff,
+        std::shared_ptr<Context> ctx);
+
     template <typename T>
-    static Dimension _create_dim(Context ctx, std::string name, T* b) {
+    static Dimension _create_dim_aux(Context ctx, std::string name, T* b) {
         return Dimension::create<T>(ctx, name, {b[0], b[1]}, b[2]);
     }
 
@@ -223,11 +246,32 @@ class ArrowAdapter {
     static FilterList _create_filter_list(
         std::string filters, std::shared_ptr<Context> ctx);
 
+    static FilterList _create_filter_list(
+        json filters, std::shared_ptr<Context> ctx);
+
+    static FilterList _create_attr_filter_list(
+        std::string name,
+        PlatformConfig platform_config,
+        std::shared_ptr<Context> ctx);
+
+    static FilterList _create_dim_filter_list(
+        std::string name,
+        PlatformConfig platform_config,
+        std::string soma_type,
+        std::shared_ptr<Context> ctx);
+
+    static Filter _get_zstd_default(
+        PlatformConfig platform_config,
+        std::string soma_type,
+        std::shared_ptr<Context> ctx);
+
     static void _append_to_filter_list(
         FilterList filter_list, json filter, std::shared_ptr<Context> ctx);
 
     static void _set_filter_option(
         Filter filter, std::string option_name, json value);
+
+    static tiledb_layout_t _get_order(std::string order);
 };
 };  // namespace tiledbsoma
 

@@ -74,39 +74,19 @@ def _normalize_filters_optional(
     return None if inputs is None else _normalize_filters(inputs)
 
 
-# @attrs_.define(frozen=True, slots=True)
-# class _ColumnConfig:
-#     filters: Optional[Tuple[_DictFilterSpec, ...]] = attrs_.field(
-#         converter=_normalize_filters_optional
-#     )
-#     tile: Optional[int] = attrs_.field(validator=vld.optional(vld.instance_of(int)))
-
-#     @classmethod
-#     def from_dict(cls, input: _DictColumnSpec) -> Self:
-#         return cls(filters=input.get("filters"), tile=input.get("tile"))
-
-
 @attrs_.define(frozen=True, slots=True)
 class _ColumnConfig:
-    filters = attrs_.field(converter=_normalize_filters_optional)
-    tile = attrs_.field(validator=vld.optional(vld.instance_of(int)))
+    filters: Optional[Tuple[_DictFilterSpec, ...]] = attrs_.field(
+        converter=_normalize_filters_optional
+    )
+    tile: Optional[int] = attrs_.field(validator=vld.optional(vld.instance_of(int)))
 
     @classmethod
     def from_dict(cls, input) -> Self:
         return cls(filters=input.get("filters"), tile=input.get("tile"))
 
 
-# def _normalize_columns(
-#     input: Mapping[str, _DictColumnSpec]
-# ) -> Mapping[str, _ColumnConfig]:
-#     if not isinstance(input, Mapping):
-#         raise TypeError("column configuration must be a dictionary")
-#     return {
-#         col_name: _ColumnConfig.from_dict(value) for (col_name, value) in input.items()
-#     }
-
-
-def _normalize_columns(input):
+def _normalize_columns(input) -> Mapping[str, _ColumnConfig]:
     if not isinstance(input, Mapping):
         raise TypeError("column configuration must be a dictionary")
     return {

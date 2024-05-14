@@ -9,7 +9,7 @@ import pathlib
 import time
 import urllib.parse
 from itertools import zip_longest
-from typing import Any, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Type, TypeVar, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -20,7 +20,14 @@ from somacore import options
 
 from . import pytiledbsoma as clib
 from ._types import OpenTimestamp, Slice, is_slice_of
-from .options._tiledb_create_options import TileDBCreateOptions
+from .options._tiledb_create_options import (
+    TileDBCreateOptions,
+    _ColumnConfig,
+    _DictFilterSpec,
+)
+
+_JSONFilter = Union[str, Dict[str, Union[str, Union[int | float]]]]
+_JSONFilterList = Union[str, List[_JSONFilter]]
 
 
 def get_start_stamp() -> float:
@@ -397,7 +404,6 @@ def build_clib_platform_config(
         return plt_cfg
 
     ops = TileDBCreateOptions.from_platform_config(platform_config)
-
     plt_cfg.dataframe_dim_zstd_level = ops.dataframe_dim_zstd_level
     plt_cfg.sparse_nd_array_dim_zstd_level = ops.sparse_nd_array_dim_zstd_level
     plt_cfg.dense_nd_array_dim_zstd_level = ops.dense_nd_array_dim_zstd_level
@@ -409,16 +415,29 @@ def build_clib_platform_config(
     plt_cfg.allows_duplicates = ops.allows_duplicates
     plt_cfg.tile_order = ops.tile_order
     plt_cfg.cell_order = ops.cell_order
-    if ops.dims is not None:
-        plt_cfg.dims = json.dumps(platform_config["tiledb"]["create"]["dims"])
-    if ops.attrs is not None:
-        plt_cfg.attrs = json.dumps(platform_config["tiledb"]["create"]["attrs"])
+    plt_cfg.dims = _build_column_config(ops.dims)
+    plt_cfg.attrs = _build_column_config(ops.attrs)
     plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
-
     return plt_cfg
 
 
-def _build_filter_list(filters):
+def _build_column_config(col: Optional[Mapping[str, _ColumnConfig]]) -> str:
+    column_config: Dict[str, Dict[str, Union[_JSONFilterList, int]]] = dict()
+
+    if col is None:
+        return ""
+
+    for k in col:
+        if col[k].filters is not None:
+            column_config[k] = {"filters": _build_filter_list(col[k].filters, False)}
+        if col[k].tile is not None:
+            column_config[k] = {"tile": cast(int, col[k].tile)}
+    return json.dumps(column_config)
+
+
+def _build_filter_list(
+    filters: Optional[Tuple[_DictFilterSpec, ...]], return_json: bool = True
+) -> _JSONFilterList:
     _convert_filter = {
         "GzipFilter": "GZIP",
         "ZstdFilter": "ZSTD",
@@ -472,7 +491,9 @@ def _build_filter_list(filters):
     if filters is None:
         return ""
 
-    filter_list = []
+    filter: _JSONFilter
+    filter_list: List[_JSONFilter] = []
+
     for info in filters:
         if len(info) == 1:
             filter = _convert_filter[cast(str, info["_type"])]
@@ -483,6 +504,8 @@ def _build_filter_list(filters):
                 if option_name == "_type":
                     filter["name"] = filter_name
                 else:
-                    filter[_convert_option[filter_name][option_name]] = option_value
+                    filter[_convert_option[filter_name][option_name]] = cast(
+                        Union[float | int], option_value
+                    )
         filter_list.append(filter)
-    return json.dumps(filter_list)
+    return json.dumps(filter_list) if return_json else filter_list
