@@ -2,7 +2,7 @@
 
 Build the docs with:
 ```bash
-./local-build.sh
+./build.sh
 ```
 
 The first time you run this, it will:

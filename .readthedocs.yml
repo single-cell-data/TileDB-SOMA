@@ -1,45 +1,13 @@
-# ================================================================
-# The main branch is not published to readthedocs at present.
-# We only publish from main-old for now (2022-09-26).
-# ================================================================
-
-# Note: builds at
-# https://readthedocs.com/projects/tiledb-inc-tiledb-soma/builds/
-# (permissioned)
-
-# Don't build any extra formats
-formats: []
-
-# Use RTD config version 2
-# https://docs.readthedocs.io/en/stable/config-file/v2.html
+# Build TileDB-SOMA readthedocs site: https://tiledbsoma.readthedocs.io
+# Build history can be found at https://readthedocs.org/projects/tiledbsoma/builds
 version: 2
-
 sphinx:
   configuration: doc/source/conf.py
-
-# python:
-#   version: 3.8
-#   install:
-#     # this order is important: we need to get cmake
-#     - requirements: doc/requirements_doc.txt
-#     - method: setuptools
-#       path: .
-
 build:
-  os: "ubuntu-22.04"
+  os: ubuntu-22.04
   tools:
-    python: "3.10"
+    python: "3.11"
   commands:
-    # Sandbox alert: `pip install -e .` will _not_ let python find the tiledbsoma package
-    # within sphinx build
-    - python -m pip install --upgrade pip
-
-    - python -m pip install -r doc/requirements_doc.txt
-
-    - python -m pip install -v apis/python
-
-    - python scripts/show-versions.py
-
-    - sphinx-build --version
-
-    - sphinx-build -T -E -b html -d _readthedocs/doctrees -D language=en doc/source _readthedocs/html
+    - git fetch --unshallow || true
+    - pip install --upgrade pip
+    - doc/build.sh -r -V  # install deps, don't make a venv
