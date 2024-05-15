@@ -73,6 +73,9 @@ import os
 import re
 import subprocess
 import sys
+from datetime import date
+from os.path import basename
+from subprocess import CalledProcessError, check_output
 
 RELEASE_VERSION_FILE = os.path.join(os.path.dirname(__file__), "RELEASE-VERSION")
 
@@ -82,6 +85,10 @@ _PEP386_VERSION_RE = r"^%s(?:\.post\d+)?(?:\.dev\d+)?$" % _PEP386_SHORT_VERSION_
 _GIT_DESCRIPTION_RE = r"^(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % (
     _PEP386_SHORT_VERSION_RE
 )
+
+
+def err(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 
 def readGitVersion():
@@ -98,15 +105,15 @@ def readGitVersion():
         if proc.returncode:
             return None
         ver = data.decode().splitlines()[0].strip()
-    except Exception:
+    except CalledProcessError:
         return None
 
     if not ver:
         return None
     m = re.search(_GIT_DESCRIPTION_RE, ver)
     if not m:
-        sys.stderr.write(
-            "version: git description (%s) is invalid, " "ignoring\n" % ver
+        err(
+            "version: git description (%s) is invalid, " "ignoring\n" % ver,
         )
         return None
 
@@ -119,15 +126,12 @@ def readGitVersion():
 
 def readReleaseVersion():
     try:
-        fd = open(RELEASE_VERSION_FILE)
-        try:
+        with open(RELEASE_VERSION_FILE) as fd:
             ver = fd.readline().strip()
-        finally:
-            fd.close()
         if not re.search(_PEP386_VERSION_RE, ver):
-            sys.stderr.write(
+            err(
                 "version: release version (%s) is invalid, "
-                "will use it anyway\n" % ver
+                "will use it anyway\n" % ver,
             )
         return ver
     except FileNotFoundError:
@@ -135,9 +139,8 @@ def readReleaseVersion():
 
 
 def writeReleaseVersion(version):
-    fd = open(RELEASE_VERSION_FILE, "w")
-    fd.write("%s\n" % version)
-    fd.close()
+    with open(RELEASE_VERSION_FILE, "w") as fd:
+        print(version, file=fd)
 
 
 def getVersion():
