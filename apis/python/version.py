@@ -138,6 +138,13 @@ def readReleaseVersion():
         return None
 
 
+def generateCalVersion():
+    today = date.today().strftime("%Y.%m.%d")
+    sha = check_output(["git", "log", "-1", "--format=%h"]).decode().rstrip("\n")
+    sha_dec = int(sha, 16)
+    return f"{today}.dev{sha_dec}"
+
+
 def writeReleaseVersion(version):
     with open(RELEASE_VERSION_FILE, "w") as fd:
         print(version, file=fd)
@@ -147,7 +154,10 @@ def getVersion():
     release_version = readReleaseVersion()
     version = readGitVersion() or release_version
     if not version:
-        raise ValueError("Cannot find the version number")
+        version = generateCalVersion()
+        err(
+            f"No {basename(RELEASE_VERSION_FILE)} or Git version found, using calver {version}"
+        )
     if version != release_version:
         writeReleaseVersion(version)
     return version
