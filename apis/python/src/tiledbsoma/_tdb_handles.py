@@ -61,17 +61,6 @@ def open(
     """Determine whether the URI is an array or group, and open it."""
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
 
-    # raise("WAMI")
-
-    # Traceback (most recent call last):
-    #   File "/home/ubuntu/Desktop/awol-perf/./aw3.py", line 20, in <module>
-    #     exp = tiledbsoma.Experiment.open(SOMA_URI)
-    #   File "/home/ubuntu/git/single-cell-data/TileDB-SOMA/apis/python/src/tiledbsoma/_tiledb_object.py", line 96, in open
-    #     handle = _tdb_handles.open(uri, mode, context, tiledb_timestamp)
-    #   File "/home/ubuntu/git/single-cell-data/TileDB-SOMA/apis/python/src/tiledbsoma/_tdb_handles.py", line 63, in open
-    #     raise("WAMI")
-    # TypeError: exceptions must derive from BaseException
-
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
     # if there is not a valid SOMAObject at the given URI, this
