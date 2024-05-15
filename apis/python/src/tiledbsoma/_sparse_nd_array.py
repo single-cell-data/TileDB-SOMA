@@ -289,6 +289,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 np.array(
                     data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
                 ),
+                tiledb_create_options.sort_coords,
             )
 
             # Write bounding-box metadata. Note COO can be N-dimensional.
@@ -320,6 +321,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 np.array(
                     sp.data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
                 ),
+                tiledb_create_options.sort_coords,
             )
 
             # Write bounding-box metadata. Note CSR and CSC are necessarily 2-dimensional.
@@ -338,7 +340,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 clib_sparse_array, values, self.schema
             )
             for batch in values.to_batches():
-                clib_sparse_array.write(batch)
+                clib_sparse_array.write(batch, tiledb_create_options.sort_coords)
 
             # Write bounding-box metadata
             maxes = []

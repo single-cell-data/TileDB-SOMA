@@ -443,16 +443,17 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(
+            platform_config
+        )
+
         clib_dataframe = self._handle._handle
 
         values = _util.cast_values_to_target_schema(clib_dataframe, values, self.schema)
 
         for batch in values.to_batches():
-            clib_dataframe.write(batch)
+            clib_dataframe.write(batch, tiledb_create_options.sort_coords)
 
-        tiledb_create_options = TileDBCreateOptions.from_platform_config(
-            platform_config
-        )
         if tiledb_create_options.consolidate_and_vacuum:
             clib_dataframe.consolidate_and_vacuum()
         return self

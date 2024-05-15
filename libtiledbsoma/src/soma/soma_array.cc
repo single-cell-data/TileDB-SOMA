@@ -503,11 +503,11 @@ void SOMAArray::set_array_data(
     }
 };
 
-void SOMAArray::write() {
+void SOMAArray::write(bool sort_coords) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
-    mq_->submit_write();
+    mq_->submit_write(sort_coords);
 
     mq_->reset();
     array_buffer_ = nullptr;

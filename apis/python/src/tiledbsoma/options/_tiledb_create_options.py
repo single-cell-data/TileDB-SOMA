@@ -154,6 +154,7 @@ class TileDBCreateOptions:
     consolidate_and_vacuum: bool = attrs_.field(
         validator=vld.instance_of(bool), default=False
     )
+    sort_coords: bool = attrs_.field(validator=vld.instance_of(bool), default=True)
 
     @classmethod
     def from_platform_config(

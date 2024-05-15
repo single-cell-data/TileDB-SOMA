@@ -272,9 +272,12 @@ void ManagedQuery::setup_read() {
     }
 }
 
-void ManagedQuery::submit_write() {
+void ManagedQuery::submit_write(bool sort_coords) {
     if (array_->schema().array_type() == TILEDB_DENSE) {
         query_->set_subarray(*subarray_);
+    } else {
+        query_->set_layout(
+            sort_coords ? TILEDB_UNORDERED : TILEDB_GLOBAL_ORDER);
     }
     query_->submit();
     query_->finalize();
