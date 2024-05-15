@@ -36,15 +36,23 @@ TEST_CASE("SOMADataFrame: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-dataframe-basic";
 
+    PlatformConfig platform_config;
+    platform_config.dataframe_dim_zstd_level = 6;
+    platform_config.validity_filters = R"(["NOOP", {"name": "GZIP", "COMPRESSION_LEVEL": 3}])";
+    platform_config.attrs = R"({"a0": {"filters": [{"name": "RLE", "COMPRESSION_LEVEL": 3}]}})";
+
     auto [schema, index_columns] = helper::create_arrow_schema();
     SOMADataFrame::create(
         uri,
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
-        ctx);
+        ctx,
+        platform_config);
 
     auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
+    auto tiledb_schema = soma_dataframe->tiledb_schema();
+
     REQUIRE(soma_dataframe->uri() == uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
     REQUIRE(soma_dataframe->type() == "SOMADataFrame");

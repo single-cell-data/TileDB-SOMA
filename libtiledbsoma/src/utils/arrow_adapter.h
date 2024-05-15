@@ -63,50 +63,51 @@ class PlatformConfig {
      * Available filters with associated options are
      * [
      *     {
-     *         name="GZIP", COMPRESSION_LEVEL=(int32_t)
+     *         "name": "GZIP", "COMPRESSION_LEVEL": (int32_t)
      *     },
      *     {
-     *         name="ZSTD", COMPRESSION_LEVEL=(int32_t)
+     *         "name": "ZSTD", "COMPRESSION_LEVEL": (int32_t)
      *     },
      *     {
-     *         name="LZ4", COMPRESSION_LEVEL=(int32_t)
+     *         "name": "LZ4", "COMPRESSION_LEVEL": (int32_t)
      *     },
      *     {
-     *         name="BZIP2", COMPRESSION_LEVEL=(int32_t)
+     *         "name": "BZIP2", "COMPRESSION_LEVEL": (int32_t)
      *     },
      *     {
-     *         name="RLE", COMPRESSION_LEVEL=(int32_t)
+     *         "name": "RLE", "COMPRESSION_LEVEL": (int32_t)
      *     },
      *     {
-     *         name="DELTA",
-     *         COMPRESSION_LEVEL=(int32_t),
-     *         COMPRESSION_REINTERPRET_DATATYPE=(uint8_t)
+     *         "name": "DELTA",
+     *         "COMPRESSION_LEVEL": (int32_t),
+     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
      *     },
      *     {
-     *         name="DOUBLE_DELTA",
-     *         COMPRESSION_LEVEL=(int32_t),
-     *         COMPRESSION_REINTERPRET_DATATYPE=(uint8_t)
+     *         "name": "DOUBLE_DELTA",
+     *         "COMPRESSION_LEVEL": (int32_t),
+     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
      *     },
      *     {
-     *         name="BIT_WIDTH_REDUCTION",
-     *         BIT_WIDTH_MAX_WINDOW=(uint32_t)
+     *         "name": "BIT_WIDTH_REDUCTION",
+     *         "BIT_WIDTH_MAX_WINDOW": (uint32_t)
      *     },
      *     {
-     *         name="POSITIVE_DELTA", POSITIVE_DELTA_MAX_WINDOW=(uint32_t)},
+     *         "name": "POSITIVE_DELTA", "POSITIVE_DELTA_MAX_WINDOW": (uint32_t),
      *     },
      *     {
-     *         name="DICTIONARY_ENCODING", COMPRESSION_LEVEL=(int32_t)},
-     *     {
-     *         name="SCALE_FLOAT",
-     *         SCALE_FLOAT_FACTOR=(double),
-     *         SCALE_FLOAT_OFFSET=(double),
-     *         SCALE_FLOAT_BYTEWIDTH=(uint64_t),
+     *         "name": "DICTIONARY_ENCODING", "COMPRESSION_LEVEL": (int32_t)
      *     },
      *     {
-     *         name="WEBP",
-     *         WEBP_INPUT_FORMAT=(uint8_t),
-     *         WEBP_QUALITY=(float),
-     *         WEBP_LOSSLESS=(uint8_t),
+     *         "name": "SCALE_FLOAT",
+     *         "SCALE_FLOAT_FACTOR": (double),
+     *         "SCALE_FLOAT_OFFSET": (double),
+     *         "SCALE_FLOAT_BYTEWIDTH": (uint64_t),
+     *     },
+     *     {
+     *         "name": "WEBP",
+     *         "WEBP_INPUT_FORMAT": (uint8_t),
+     *         "WEBP_QUALITY": (float),
+     *         "WEBP_LOSSLESS": (uint8_t),
      *     },
      *     "CHECKSUM_MD5",
      *     "CHECKSUM_SHA256",
@@ -139,7 +140,7 @@ class PlatformConfig {
      * Example:
      * {
      *     "attr_name": {
-     *          "filters": ["XOR", {"name": name="GZIP", COMPRESSION_LEVEL=3]
+     *          "filters": ["XOR", {"name": "GZIP", "COMPRESSION_LEVEL": 3}]
      *     }
      * }
      *
