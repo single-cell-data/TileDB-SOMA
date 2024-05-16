@@ -8,6 +8,5 @@ build:
   tools:
     python: "3.11"
   commands:
-    - git fetch --unshallow || true
     - pip install --upgrade pip
     - doc/build.sh -r -V  # install deps, don't make a venv
