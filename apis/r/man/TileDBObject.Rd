@@ -106,7 +106,7 @@ otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object
 \subsection{Method \code{reopen()}}{
 Close and reopen the TileDB object in a new mode
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$reopen(mode = NULL, force = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$reopen(mode = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -118,9 +118,6 @@ Close and reopen the TileDB object in a new mode
 \item \dQuote{\code{WRITE}}
 }
 By default, reopens in the opposite mode of the current mode}
-
-\item{\code{force}}{Force a close/reopen cycle; by default, if \code{mode} is
-\code{self$mode()}, \code{reopen()} does nothing}
 }
 \if{html}{\out{</div>}}
 }
