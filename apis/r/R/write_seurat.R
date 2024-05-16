@@ -526,7 +526,7 @@ write_soma.Seurat <- function(
     stop(
       "Requested an array of shape (",
       paste(shape, collapse = ', '),
-      "), but was given a matrix with a larger shape (",
+      "), but was given a Seurat object with a larger shape (",
       paste(dim(x), collapse = ', '),
       ")",
       call. = FALSE
