@@ -12,7 +12,7 @@
 * Muffle warnings for missing command logs when outgesting SOMA to `Seurat`
 * Have `SOMADataFrame$shape()` throw a not-yet-implemented error
 * Disable running `SeuratObject::.CalcN()` when outgesting from SOMA to `Seurat`
-* Cache timestamp in when reopening an array in `WRITE` mode to enable modifications of said array
+* Clear timestamp when using `$reopen()` to reopen at the current time
 
 # 1.7.0
 
