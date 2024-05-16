@@ -55,7 +55,7 @@ void load_soma_sparse_ndarray(py::module& m) {
                std::string format,
                py::object index_column_info,
                std::shared_ptr<SOMAContext> context,
-               std::optional<PlatformConfig> platform_config,
+               PlatformConfig platform_config,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
                 ArrowSchema index_column_schema;
                 ArrowArray index_column_array;

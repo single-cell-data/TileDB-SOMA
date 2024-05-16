@@ -65,7 +65,7 @@ class SOMASparseNDArray : public SOMAArray {
         std::string_view format,
         ArrowTable index_columns,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<PlatformConfig> platform_config = std::nullopt,
+        PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**

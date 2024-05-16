@@ -9,10 +9,12 @@
 // https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
 
 #include "nanoarrow/nanoarrow.hpp"
+#include "nlohmann/json.hpp"
 
 namespace tiledbsoma {
 
 using namespace tiledb;
+using json = nlohmann::json;
 
 class ColumnBuffer;
 
@@ -37,10 +39,13 @@ using ArrowTable =
 class PlatformConfig {
    public:
     /* Set the ZstdFilter's level for DataFrame dims */
-    uint64_t dataframe_dim_zstd_level = 3;
+    int32_t dataframe_dim_zstd_level = 3;
 
     /* Set the ZstdFilter's level for SparseNDArray dims */
-    uint64_t sparse_nd_array_dim_zstd_level = 3;
+    int32_t sparse_nd_array_dim_zstd_level = 3;
+
+    /* Set the ZstdFilter's level for DenseNDArray dims */
+    int32_t dense_nd_array_dim_zstd_level = 3;
 
     /* Set whether to write the X data chunked */
     bool write_X_chunked = true;
@@ -54,18 +59,71 @@ class PlatformConfig {
     /* Set the tile capcity for sparse arrays */
     uint64_t capacity = 100000;
 
-    /* Set the offset filters. Available filters are
-     * "GzipFilter", "ZstdFilter", "LZ4Filter", "Bzip2Filter", RleFilter", "
-     * "DeltaFilter", "DoubleDeltaFilter", "BitWidthReductionFilter",
-     * "BitShuffleFilter", "ByteShuffleFilter", "PositiveDeltaFilter",
-     * "ChecksumMD5Filter", "ChecksumSHA256Filter", "DictionaryFilter",
-     * "FloatScaleFilter", "XORFilter", and "WebpFilter"
+    /**
+     * Available filters with associated options are
+     * [
+     *     {
+     *         "name": "GZIP", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "ZSTD", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "LZ4", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "BZIP2", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "RLE", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "DELTA",
+     *         "COMPRESSION_LEVEL": (int32_t),
+     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
+     *     },
+     *     {
+     *         "name": "DOUBLE_DELTA",
+     *         "COMPRESSION_LEVEL": (int32_t),
+     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
+     *     },
+     *     {
+     *         "name": "BIT_WIDTH_REDUCTION",
+     *         "BIT_WIDTH_MAX_WINDOW": (uint32_t)
+     *     },
+     *     {
+     *         "name": "POSITIVE_DELTA", "POSITIVE_DELTA_MAX_WINDOW":
+     * (uint32_t),
+     *     },
+     *     {
+     *         "name": "DICTIONARY_ENCODING", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "SCALE_FLOAT",
+     *         "SCALE_FLOAT_FACTOR": (double),
+     *         "SCALE_FLOAT_OFFSET": (double),
+     *         "SCALE_FLOAT_BYTEWIDTH": (uint64_t),
+     *     },
+     *     {
+     *         "name": "WEBP",
+     *         "WEBP_INPUT_FORMAT": (uint8_t),
+     *         "WEBP_QUALITY": (float),
+     *         "WEBP_LOSSLESS": (uint8_t),
+     *     },
+     *     "CHECKSUM_MD5",
+     *     "CHECKSUM_SHA256",
+     *     "XOR",
+     *     "BITSHUFFLE",
+     *     "BYTESHUFFLE",
+     *     "NOOP"
+     * ]
+     *
      */
-    std::vector<std::string> offsets_filters = {
-        "DoubleDeltaFilter", "BitWidthReductionFilter", "ZstdFilter"};
+    std::string
+        offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";
 
-    /* Set the validity filters. See above for available filters */
-    std::vector<std::string> validity_filters = {};
+    /* Set the validity filters. */
+    std::string validity_filters = "";
 
     /* Set whether the TileDB Array allows duplicate values */
     bool allows_duplicates = false;
@@ -77,6 +135,29 @@ class PlatformConfig {
      * "col-major"
      */
     std::optional<std::string> cell_order = std::nullopt;
+
+    /* Set the filters for attributes.
+     *
+     * Example:
+     * {
+     *     "attr_name": {
+     *          "filters": ["XOR", {"name": "GZIP", "COMPRESSION_LEVEL": 3}]
+     *     }
+     * }
+     *
+     */
+    std::string attrs = "";
+
+    /* Set the filters and tiles for dimensions.
+     *
+     * Example:
+     * {
+     *     "dim_name": {"filters": ["NoOpFilter"], "tile": 8}
+     * }
+     *
+     */
+
+    std::string dims = "";
 
     /* Set whether the array should be consolidated and vacuumed after writing
      */
@@ -116,8 +197,9 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx,
         std::unique_ptr<ArrowSchema> arrow_schema,
         ArrowTable index_column_info,
+        std::string soma_type,
         bool is_sparse = true,
-        std::optional<PlatformConfig> platform_config = std::nullopt);
+        PlatformConfig platform_config = PlatformConfig());
 
     /**
      * @brief Get Arrow format string from TileDB datatype.
@@ -150,12 +232,48 @@ class ArrowAdapter {
         return dst;
     }
 
+    static Dimension _create_dim(
+        tiledb_datatype_t type,
+        std::string name,
+        const void* buff,
+        std::shared_ptr<Context> ctx);
+
     template <typename T>
-    static Dimension _create_dim(Context ctx, std::string name, T* b) {
+    static Dimension _create_dim_aux(Context ctx, std::string name, T* b) {
         return Dimension::create<T>(ctx, name, {b[0], b[1]}, b[2]);
     }
 
     static bool _isvar(const char* format);
+
+    static FilterList _create_filter_list(
+        std::string filters, std::shared_ptr<Context> ctx);
+
+    static FilterList _create_filter_list(
+        json filters, std::shared_ptr<Context> ctx);
+
+    static FilterList _create_attr_filter_list(
+        std::string name,
+        PlatformConfig platform_config,
+        std::shared_ptr<Context> ctx);
+
+    static FilterList _create_dim_filter_list(
+        std::string name,
+        PlatformConfig platform_config,
+        std::string soma_type,
+        std::shared_ptr<Context> ctx);
+
+    static Filter _get_zstd_default(
+        PlatformConfig platform_config,
+        std::string soma_type,
+        std::shared_ptr<Context> ctx);
+
+    static void _append_to_filter_list(
+        FilterList filter_list, json filter, std::shared_ptr<Context> ctx);
+
+    static void _set_filter_option(
+        Filter filter, std::string option_name, json value);
+
+    static tiledb_layout_t _get_order(std::string order);
 };
 };  // namespace tiledbsoma
 

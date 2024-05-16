@@ -48,7 +48,7 @@ _FilterSpec = Union[str, _DictFilterSpec]
 class _DictColumnSpec(TypedDict, total=False):
     """Type specification for the dictionary used to configure a column."""
 
-    filters: Mapping[str, _FilterSpec]
+    filters: Union[Sequence[str], Mapping[str, Union[_FilterSpec]]]
     tile: int
 
 
@@ -111,6 +111,9 @@ class TileDBCreateOptions:
         validator=vld.instance_of(int), default=3
     )
     sparse_nd_array_dim_zstd_level: int = attrs_.field(
+        validator=vld.instance_of(int), default=3
+    )
+    dense_nd_array_dim_zstd_level: int = attrs_.field(
         validator=vld.instance_of(int), default=3
     )
     write_X_chunked: bool = attrs_.field(validator=vld.instance_of(bool), default=True)

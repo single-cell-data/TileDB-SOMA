@@ -55,7 +55,7 @@ void load_soma_dataframe(py::module& m) {
                py::object py_schema,
                py::object index_column_info,
                std::shared_ptr<SOMAContext> context,
-               std::optional<PlatformConfig> platform_config,
+               PlatformConfig platform_config,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
                 ArrowSchema schema;
                 uintptr_t schema_ptr = (uintptr_t)(&schema);
