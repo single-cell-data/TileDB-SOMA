@@ -102,12 +102,17 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite(
             "sparse_nd_array_dim_zstd_level",
             &PlatformConfig::sparse_nd_array_dim_zstd_level)
+        .def_readwrite(
+            "dense_nd_array_dim_zstd_level",
+            &PlatformConfig::sparse_nd_array_dim_zstd_level)
         .def_readwrite("write_X_chunked", &PlatformConfig::write_X_chunked)
         .def_readwrite("goal_chunk_nnz", &PlatformConfig::goal_chunk_nnz)
         .def_readwrite("remote_cap_nbytes", &PlatformConfig::remote_cap_nbytes)
         .def_readwrite("capacity", &PlatformConfig::capacity)
         .def_readwrite("offsets_filters", &PlatformConfig::offsets_filters)
         .def_readwrite("validity_filters", &PlatformConfig::validity_filters)
+        .def_readwrite("attrs", &PlatformConfig::attrs)
+        .def_readwrite("dims", &PlatformConfig::dims)
         .def_readwrite("allows_duplicates", &PlatformConfig::allows_duplicates)
         .def_readwrite("tile_order", &PlatformConfig::tile_order)
         .def_readwrite("cell_order", &PlatformConfig::cell_order)

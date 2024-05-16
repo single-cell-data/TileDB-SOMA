@@ -44,7 +44,7 @@ void SOMASparseNDArray::create(
     std::string_view format,
     ArrowTable index_columns,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<PlatformConfig> platform_config,
+    PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     auto index_column_array = std::move(index_columns.first);
     auto index_column_schema = std::move(index_columns.second);
@@ -83,7 +83,8 @@ void SOMASparseNDArray::create(
         std::move(schema),
         ArrowTable(
             std::move(index_column_array), std::move(index_column_schema)),
-        TILEDB_SPARSE,
+        "SOMASparseNDArray",
+        true,
         platform_config);
 
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMASparseNDArray", timestamp);

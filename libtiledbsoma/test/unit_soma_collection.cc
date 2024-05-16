@@ -298,7 +298,7 @@ TEST_CASE("SOMAExperiment: metadata") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        std::nullopt,
+        PlatformConfig(),
         TimestampRange(0, 2));
     auto soma_experiment = SOMAExperiment::open(
         uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
@@ -362,7 +362,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        std::nullopt,
+        PlatformConfig(),
         TimestampRange(0, 2));
 
     auto soma_measurement = SOMAMeasurement::open(
