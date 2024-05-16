@@ -77,6 +77,34 @@ TEST_CASE("SOMADenseNDArray: basic") {
     soma_dense->close();
 }
 
+TEST_CASE("SOMADenseNDArray: platform_config") {
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://unit-test-dataframe-platform-config";
+
+    PlatformConfig platform_config;
+    platform_config.dense_nd_array_dim_zstd_level = 6;
+
+    auto index_columns = helper::create_column_index_info();
+    SOMADenseNDArray::create(
+        uri,
+        "l",
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        platform_config);
+
+    auto soma_dataframe = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+    auto dim_filter = soma_dataframe->tiledb_schema()
+                          ->domain()
+                          .dimension("soma_dim_0")
+                          .filter_list()
+                          .filter(0);
+    REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
+    REQUIRE(dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);
+
+    soma_dataframe->close();
+}
+
 TEST_CASE("SOMADenseNDArray: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 

@@ -92,7 +92,8 @@ class PlatformConfig {
      *         "BIT_WIDTH_MAX_WINDOW": (uint32_t)
      *     },
      *     {
-     *         "name": "POSITIVE_DELTA", "POSITIVE_DELTA_MAX_WINDOW": (uint32_t),
+     *         "name": "POSITIVE_DELTA", "POSITIVE_DELTA_MAX_WINDOW":
+     * (uint32_t),
      *     },
      *     {
      *         "name": "DICTIONARY_ENCODING", "COMPRESSION_LEVEL": (int32_t)
