@@ -19,7 +19,7 @@ jobs:
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v3
     - name: Build libTileDB-SOMA
-      run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld
+      run: TILEDBSOMA_COVERAGE="--coverage" ./scripts/bld --allow-tiledb-depr=false
     - name: Run libTileDB-SOMA unittests
       run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failur
     - name: Upload coverage to Codecov
