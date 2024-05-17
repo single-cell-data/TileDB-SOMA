@@ -9,6 +9,7 @@ Implementation of SOMA SparseNDArray.
 from __future__ import annotations
 
 import itertools
+import warnings
 from typing import (
     Dict,
     Optional,
@@ -45,7 +46,7 @@ from .options._soma_tiledb_context import (
     SOMATileDBContext,
     _validate_soma_tiledb_context,
 )
-from .options._tiledb_create_options import TileDBCreateOptions
+from .options._tiledb_create_options import TileDBCreateOptions, TileDBWriteOptions
 
 _UNBATCHED = options.BatchSize()
 
@@ -269,9 +270,17 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Experimental.
         """
 
-        tiledb_create_options = TileDBCreateOptions.from_platform_config(
-            platform_config
-        )
+        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        sort_coords = None
+        if isinstance(platform_config, TileDBCreateOptions):
+            warnings.warn(
+                "The write parameter now takes in TileDBWriteOptions instead of TileDBCreateOptions",
+                DeprecationWarning,
+            )
+            write_options = TileDBCreateOptions.from_platform_config(platform_config)
+        else:
+            write_options = TileDBWriteOptions.from_platform_config(platform_config)
+            sort_coords = write_options.sort_coords
 
         clib_sparse_array = self._handle._handle
 
@@ -289,7 +298,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 np.array(
                     data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
                 ),
-                tiledb_create_options.sort_coords,
+                sort_coords or True,
             )
 
             # Write bounding-box metadata. Note COO can be N-dimensional.
@@ -297,7 +306,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             bounding_box = self._compute_bounding_box_metadata(maxes)
             self._set_bounding_box_metadata(bounding_box)
 
-            if tiledb_create_options.consolidate_and_vacuum:
+            if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
                 clib_sparse_array.consolidate_and_vacuum()
             return self
@@ -321,7 +330,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 np.array(
                     sp.data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
                 ),
-                tiledb_create_options.sort_coords,
+                sort_coords or True,
             )
 
             # Write bounding-box metadata. Note CSR and CSC are necessarily 2-dimensional.
@@ -329,7 +338,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             bounding_box = self._compute_bounding_box_metadata([nr - 1, nc - 1])
             self._set_bounding_box_metadata(bounding_box)
 
-            if tiledb_create_options.consolidate_and_vacuum:
+            if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
                 clib_sparse_array.consolidate_and_vacuum()
             return self
@@ -340,7 +349,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 clib_sparse_array, values, self.schema
             )
             for batch in values.to_batches():
-                clib_sparse_array.write(batch, tiledb_create_options.sort_coords)
+                clib_sparse_array.write(batch, sort_coords or False)
 
             # Write bounding-box metadata
             maxes = []
@@ -354,7 +363,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             bounding_box = self._compute_bounding_box_metadata(maxes)
             self._set_bounding_box_metadata(bounding_box)
 
-            if tiledb_create_options.consolidate_and_vacuum:
+            if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
                 clib_sparse_array.consolidate_and_vacuum()
             return self

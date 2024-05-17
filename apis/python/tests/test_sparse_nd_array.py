@@ -1789,7 +1789,7 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
 
 
 def test_global_writes(tmp_path):
-    global_write_setting = soma.TileDBCreateOptions(**{"sort_coords": False})
+    write_options = soma.TileDBWriteOptions(**{"sort_coords": False})
 
     soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.uint8(), shape=(3,))
 
@@ -1805,7 +1805,7 @@ def test_global_writes(tmp_path):
                         "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
                     }
                 ),
-                platform_config=global_write_setting,
+                platform_config=write_options,
             )
 
     data = pa.Table.from_pydict(
@@ -1818,8 +1818,17 @@ def test_global_writes(tmp_path):
     with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
         A.write(
             data,
-            platform_config=global_write_setting,
+            platform_config=write_options,
         )
 
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
         assert A.read().tables().concat() == data
+
+    with pytest.warns(DeprecationWarning) as warning:
+        with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
+            A.write(
+                data,
+                platform_config=soma.TileDBCreateOptions(),
+            )
+        assert "The write parameter now takes in TileDBWriteOptions instead "
+        "of TileDBCreateOptions" == warning[0].message
