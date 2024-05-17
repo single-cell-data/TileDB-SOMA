@@ -69,7 +69,7 @@ void load_soma_dataframe(py::module& m) {
                         auto val = metadata.attr("get")(
                             py::str(child->name).attr("encode")("utf-8"));
 
-                        if (val != py::none() &&
+                        if (!val.is(py::none()) &&
                             val.cast<std::string>() == "nullable") {
                             child->flags &= ARROW_FLAG_NULLABLE;
                         } else {
