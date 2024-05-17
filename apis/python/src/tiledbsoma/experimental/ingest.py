@@ -11,8 +11,8 @@ Do NOT merge into main.
 """
 
 import json
-import pathlib
 import os
+import pathlib
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -26,11 +26,11 @@ from typing import (
 )
 
 import anndata as ad
-from anndata import AnnData
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scanpy
+from anndata import AnnData
 from PIL import Image
 
 from .. import (
@@ -109,7 +109,7 @@ def from_cxg_spatial_h5ad(
     spatial_dict = adata.uns["spatial"]
     if not spatial_dict["is_single"]:
         raise NotImplementedError(
-            f"Only spatial datasets with uns['spatial']['is_single'] == True are supported"
+            "Only spatial datasets with uns['spatial']['is_single'] == True are supported"
         )
 
     # create a directory to store some intermediate files
