@@ -27,6 +27,7 @@ from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_options import TileDBCreateOptions, TileDBWriteOptions
+from ._general_utilities import get_implementation_version
 
 _UNBATCHED = options.BatchSize()
 AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
@@ -452,8 +453,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
+            version = get_implementation_version().split(".")
+            assert (int(version[0]), int(version[1])) < (1, 13)
             warnings.warn(
-                "The write parameter now takes in TileDBWriteOptions instead of TileDBCreateOptions",
+                "The write parameter now takes in TileDBWriteOptions "
+                "instead of TileDBCreateOptions. This warning will be removed "
+                "and error out when passing TileDBCreateOptions in 1.13.",
                 DeprecationWarning,
             )
             write_options = TileDBCreateOptions.from_platform_config(platform_config)
