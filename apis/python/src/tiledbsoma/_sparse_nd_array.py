@@ -34,6 +34,7 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
+from ._general_utilities import get_implementation_version
 from ._read_iters import (
     BlockwiseScipyReadIter,
     BlockwiseTableReadIter,
@@ -47,7 +48,6 @@ from .options._soma_tiledb_context import (
     _validate_soma_tiledb_context,
 )
 from .options._tiledb_create_options import TileDBCreateOptions, TileDBWriteOptions
-from ._general_utilities import get_implementation_version
 
 _UNBATCHED = options.BatchSize()
 

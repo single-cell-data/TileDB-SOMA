@@ -19,6 +19,7 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
+from ._general_utilities import get_implementation_version
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
@@ -27,7 +28,6 @@ from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_options import TileDBCreateOptions, TileDBWriteOptions
-from ._general_utilities import get_implementation_version
 
 _UNBATCHED = options.BatchSize()
 AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
