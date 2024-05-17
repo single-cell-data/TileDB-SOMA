@@ -12,6 +12,7 @@ Do NOT merge into main.
 
 import json
 import pathlib
+import os
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -24,6 +25,8 @@ from typing import (
     Union,
 )
 
+import anndata as ad
+from anndata import AnnData
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -63,6 +66,108 @@ if TYPE_CHECKING:
     from ..options import SOMATileDBContext
 
 
+def from_cxg_spatial_h5ad(
+    input_h5ad_path: pathlib.Path,
+    experiment_uri: str,
+    measurement_name: str,
+    scene_name: str,
+    *,
+    context: Optional["SOMATileDBContext"] = None,
+    platform_config: Optional["PlatformConfig"] = None,
+    obs_id_name: str = "obs_id",
+    var_id_name: str = "var_id",
+    X_layer_name: str = "data",
+    raw_X_layer_name: str = "data",
+    ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
+    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    registration_mapping: Optional["ExperimentAmbientLabelMapping"] = None,
+    uns_keys: Optional[Sequence[str]] = None,
+    additional_metadata: "AdditionalMetadata" = None,
+):
+    """
+    This function reads cellxgene schema compliant H5AD file and writes
+    to the SOMA data format rooted at the given `Experiment` URI.
+
+    NOTE:
+    1. This function is for testing/prototyping purposes only
+    2. This function expects an h5ad that has spatial data therefore must be
+    compliant with the following cellxgene schema 5.1.0:
+    https://github.com/chanzuckerberg/single-cell-curation/blob/main/schema/5.1.0/schema.md
+
+    Lifecycle:
+        Experimental
+    """
+
+    if ingest_mode != "write":
+        raise NotImplementedError(
+            f'the only ingest_mode currently supported is "write"; got "{ingest_mode}"'
+        )
+
+    adata = ad.read_h5ad(input_h5ad_path)
+
+    spatial_dict = adata.uns["spatial"]
+    if not spatial_dict["is_single"]:
+        raise NotImplementedError(
+            f"Only spatial datasets with uns['spatial']['is_single'] == True are supported"
+        )
+
+    # create a directory to store some intermediate files
+    filename, _ = os.path.splitext(os.path.basename(input_h5ad_path))
+    spatial_assets_dir = f"{filename}/spatial"
+    os.makedirs(spatial_assets_dir, exist_ok=True)
+
+    # get scale_factors dictionary
+    library_id = (spatial_dict.keys() - {"is_single"}).pop()
+    scale_factors = spatial_dict[library_id]["scalefactors"]
+
+    # store tissue_postions.csv
+    tissue_pos_df = pd.DataFrame(adata.obsm["spatial"])
+    tissue_pos_df.index = adata.obs.index
+    tissue_positions_file_path = f"{spatial_assets_dir}/tissue_positions.csv"
+    tissue_pos_df.to_csv(
+        tissue_positions_file_path,
+        index_label="barcode",
+        header=["pxl_col_in_fullres", "pxl_row_in_fullres"],
+    )
+
+    # store spatial images
+    images_source_dict = spatial_dict[library_id]["images"]
+    image_paths = {"fullres": None, "hires": None, "lowres": None}
+
+    for key, img_array in images_source_dict.items():
+        if img_array.dtype == np.float32:
+            img_array = (img_array * 255).astype(np.uint8)
+        img = Image.fromarray(img_array)
+        img_file_path = f"{spatial_assets_dir}/{key}.png"
+        img.save(img_file_path)
+        image_paths[key] = img_file_path
+
+    return _write_visium_data_to_experiment_uri(
+        experiment_uri=experiment_uri,
+        measurement_name=measurement_name,
+        scene_name=scene_name,
+        adata=adata,
+        obs_id_name=obs_id_name,
+        var_id_name=var_id_name,
+        X_layer_name=X_layer_name,
+        raw_X_layer_name=raw_X_layer_name,
+        X_kind=X_kind,
+        uns_keys=uns_keys,
+        additional_metadata=additional_metadata,
+        registration_mapping=registration_mapping,
+        ingest_mode=ingest_mode,
+        use_relative_uri=use_relative_uri,
+        context=context,
+        platform_config=platform_config,
+        scale_factors=scale_factors,
+        input_hires=image_paths["hires"],
+        input_lowres=image_paths["lowres"],
+        input_fullres=image_paths["fullres"],
+        input_tissue_positions=tissue_positions_file_path,
+    )
+
+
 def from_visium(
     experiment_uri: str,
     input_path: "Path",
@@ -82,7 +187,6 @@ def from_visium(
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
     use_raw_counts: bool = True,
-    absolute_spot_size: float = 65,
 ) -> str:
     """Reads a 10x Visium dataset and writes it to an :class:`Experiment`.
 
@@ -113,18 +217,71 @@ def from_visium(
 
     # TODO: Generalize - this is hard-coded for Space Ranger version 2
     input_tissue_positions = input_path / "spatial/tissue_positions.csv"
+
+    # Get JSON scale factors.
     input_scale_factors = input_path / "spatial/scalefactors_json.json"
+    with open(input_scale_factors, mode="r", encoding="utf-8") as scale_factors_json:
+        scale_factors = json.load(scale_factors_json)
 
     # TODO: Generalize - hard-coded for Space Ranger version 2
     input_hires = input_path / "spatial/tissue_hires_image.png"
     input_lowres = input_path / "spatial/tissue_lowres_image.png"
     input_fullres = None
 
-    # Create the
-    anndata = scanpy.read_10x_h5(input_gene_expression)
+    adata = scanpy.read_10x_h5(input_gene_expression)
+
+    return _write_visium_data_to_experiment_uri(
+        experiment_uri=experiment_uri,
+        measurement_name=measurement_name,
+        scene_name=scene_name,
+        adata=adata,
+        obs_id_name=obs_id_name,
+        var_id_name=var_id_name,
+        X_layer_name=X_layer_name,
+        raw_X_layer_name=raw_X_layer_name,
+        X_kind=X_kind,
+        uns_keys=uns_keys,
+        additional_metadata=additional_metadata,
+        registration_mapping=registration_mapping,
+        ingest_mode=ingest_mode,
+        use_relative_uri=use_relative_uri,
+        context=context,
+        platform_config=platform_config,
+        scale_factors=scale_factors,
+        input_hires=input_hires,
+        input_lowres=input_lowres,
+        input_fullres=input_fullres,
+        input_tissue_positions=input_tissue_positions,
+    )
+
+
+def _write_visium_data_to_experiment_uri(
+    experiment_uri: str,
+    measurement_name: str,
+    scene_name: str,
+    *,
+    adata: AnnData,
+    obs_id_name: str = "obs_id",
+    var_id_name: str = "var_id",
+    X_layer_name: str = "data",
+    raw_X_layer_name: str = "data",
+    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    uns_keys: Optional[Sequence[str]] = None,
+    additional_metadata: "AdditionalMetadata" = None,
+    registration_mapping: Optional["ExperimentAmbientLabelMapping"] = None,
+    ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
+    context: Optional["SOMATileDBContext"] = None,
+    platform_config: Optional["PlatformConfig"] = None,
+    scale_factors: Dict[str, Any],
+    input_hires: Optional[pathlib.Path],
+    input_lowres: Optional[pathlib.Path],
+    input_fullres: Optional[pathlib.Path],
+    input_tissue_positions: pathlib.Path,
+) -> str:
     uri = from_anndata(
         experiment_uri,
-        anndata,
+        adata,
         measurement_name,
         context=context,
         platform_config=platform_config,
@@ -146,10 +303,8 @@ def from_visium(
         "additional_metadata": additional_metadata,
     }
 
-    # Get JSON scale factors.
-    with open(input_scale_factors, mode="r", encoding="utf-8") as scale_factors_json:
-        scale_factors = json.load(scale_factors_json)
     pixels_per_spot_radius = 0.5 * scale_factors["spot_diameter_fullres"]
+    fullres_to_coords_scale = 65 / scale_factors["spot_diameter_fullres"]
 
     # Create axes and transformations
     coordinate_system = CoordinateSystem(
@@ -158,10 +313,6 @@ def from_visium(
             Axis(axis_name="x", axis_type="space", axis_unit="micrometer"),
         )
     )
-
-    fullres_to_coords_scale = 65 / scale_factors["spot_diameter_fullres"]
-    hires_to_fullres_scale = 1.0 / scale_factors["tissue_hires_scalef"]
-    lores_to_fullres_scale = 1.0 / scale_factors["tissue_lowres_scalef"]
 
     spots_to_coords = CompositeTransform(
         (ScaleTransform((fullres_to_coords_scale, fullres_to_coords_scale)),)
