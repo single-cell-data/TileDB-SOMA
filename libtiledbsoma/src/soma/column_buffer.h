@@ -172,8 +172,10 @@ class ColumnBuffer {
         auto num_offsets = num_elems + 1;
         std::vector<uint32_t> offset_holder;
         offset_holder.resize(num_offsets);
-        offset_holder.assign((uint32_t*)offsets, (uint32_t*)offsets + num_offsets);
-        offsets_ = std::vector<uint64_t>(offset_holder.begin(), offset_holder.end());
+        offset_holder.assign(
+            (uint32_t*)offsets, (uint32_t*)offsets + num_offsets);
+        offsets_ = std::vector<uint64_t>(
+            offset_holder.begin(), offset_holder.end());
 
         data_size_ = offsets_[num_offsets - 1];
         data_.resize(data_size_);
