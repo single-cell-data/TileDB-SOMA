@@ -279,8 +279,7 @@ void ManagedQuery::submit_write(bool sort_coords) {
         query_->set_layout(
             sort_coords ? TILEDB_UNORDERED : TILEDB_GLOBAL_ORDER);
     }
-    query_->submit();
-    query_->finalize();
+    query_->submit_and_finalize();
 }
 
 void ManagedQuery::submit_read() {
