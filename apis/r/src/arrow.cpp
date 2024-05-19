@@ -169,36 +169,26 @@ void createSchemaFromArrow(const std::string& uri,
     apdim.move(dimarr.get());
 
     tdbs::PlatformConfig pltcfg;
-    std::map<std::string, std::string> _order_map = {
-        { "COL_MAJOR",    "col" },
-        { "ROW_MAJOR",    "row" },
-        { "HILBERT",      "hilbert" },
-        { "GLOBAL_ORDER", "global" },
-        { "UNORDERED",    "unordered" }
-    };
-    pltcfg.cell_order                     = _order_map.at(Rcpp::as<std::string>(pclst["cell_order"]));
-    pltcfg.tile_order                     = _order_map.at(Rcpp::as<std::string>(pclst["tile_order"]));
-    pltcfg.allows_duplicates              = Rcpp::as<bool>(pclst["allows_duplicates"]);
-    pltcfg.capacity                       = Rcpp::as<double>(pclst["capacity"]);
     pltcfg.dataframe_dim_zstd_level       = Rcpp::as<int>(pclst["dataframe_dim_zstd_level"]);
     pltcfg.sparse_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["sparse_nd_array_dim_zstd_level"]);
+    pltcfg.dense_nd_array_dim_zstd_level  = Rcpp::as<int>(pclst["dense_nd_array_dim_zstd_level"]);
     pltcfg.write_X_chunked                = Rcpp::as<bool>(pclst["write_X_chunked"]);
     pltcfg.goal_chunk_nnz                 = Rcpp::as<double>(pclst["goal_chunk_nnz"]);
-    //Rcpp::print(pclst["offsets_filters"]);
-    pltcfg.offsets_filters                = _list2vector(pclst["offsets_filters"]);
-    pltcfg.validity_filters               = _list2vector(pclst["validity_filters"]);
- // $ offsets_filters               :List of 3
- //  ..$ : chr "DOUBLE_DELTA"
- //  ..$ : chr "BIT_WIDTH_REDUCTION"
- //  ..$ : chr "ZSTD"
-
-    tiledb_array_type_t array_type = TILEDB_SPARSE;
+    pltcfg.capacity                       = Rcpp::as<double>(pclst["capacity"]);
+    pltcfg.offsets_filters                = Rcpp::as<std::string>(pclst["offsets_filters"]);
+    pltcfg.validity_filters               = Rcpp::as<std::string>(pclst["validity_filters"]);
+    pltcfg.allows_duplicates              = Rcpp::as<bool>(pclst["allows_duplicates"]);
+    pltcfg.cell_order                     = Rcpp::as<std::string>(pclst["cell_order"]);
+    pltcfg.tile_order                     = Rcpp::as<std::string>(pclst["tile_order"]);
+    pltcfg.attrs                          = Rcpp::as<std::string>(pclst["attrs"]);
+    pltcfg.dims                           = Rcpp::as<std::string>(pclst["dims"]);
 
     // create the ArraySchema
     auto as = tdbs::ArrowAdapter::tiledb_schema_from_arrow_schema(ctxsp, std::move(schema),
                                                                   std::pair(std::move(dimarr),
                                                                             std::move(dimsch)),
-                                                                  array_type,
+                                                                  "SOMADataFrame",
+                                                                  true, // sparse
                                                                   pltcfg);
     if (vfs.is_dir(uri)) vfs.remove_dir(uri);
     tiledb::Array::create(uri, as);

@@ -29,7 +29,7 @@ SOMADataFrame <- R6::R6Class(
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
       }
-
+      spdl::debug("[SOMADataFrame::create] entered")
       schema <- private$validate_schema(schema, index_column_names)
 
       attr_column_names <- setdiff(schema$names, index_column_names)
@@ -133,18 +133,25 @@ if (FALSE) {
       # create array
       tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
 }
-      dom_ext_tbl <- get_domain_and_extent(schema, index_column_names,
-                                           TileDBCreateOptions$new(platform_config))
+
+      ## we (currently pass domain and extent values in an arrow table (i.e. data.frame alike)
+      ## where each dimension is one column (of the same type as in the schema) followed by three
+      ## values for the domain pair and the extent
+      dom_ext_tbl <- get_domain_and_extent(schema, index_column_names, tiledb_create_options)
+
+      ## we transfer to the arrow table via a pair of array and schema pointers
       dnaap <- nanoarrow::nanoarrow_allocate_array()
       dnasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(dom_ext_tbl)$export_to_c(dnaap, dnasp)
 
+      ## we need a schema pointer to transfer the schema information
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       schema$export_to_c(nasp)
+      #print(nasp)
 
-      createSchemaFromArrow(uri = self$uri,
-                            nasp, dnaap, dnasp,
-                            tiledb_create_options$to_list())
+      #spdl::debug("[SOMADataFrame::create] about to call createSchemaFromArrow")
+      #print(str(tiledb_create_options$to_list(FALSE)))
+      createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp, tiledb_create_options$to_list(FALSE))
 
       self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()

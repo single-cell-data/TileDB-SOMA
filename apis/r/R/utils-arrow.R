@@ -362,7 +362,7 @@ get_domain_and_extent <- function(tbl_schema, ind_col_names,
         ind_col_type_name <- ind_col$type$name
         ind_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,1) ## FIXME
         ind_ext <- tdco$dim_tile(ind_col_name)
-        if (ind_col_type_name %in% c("string", "utf8")) ind_ext <- NA
+        if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
         # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
         if (ind_col$type$bit_width %||% 0L == 8L) {
             ind_ext <- 64L
@@ -376,11 +376,5 @@ get_domain_and_extent <- function(tbl_schema, ind_col_names,
     })
     names(rl) <- ind_col_names
     dom_ext_tbl <- do.call(arrow::arrow_table, rl)
-    #tbbl <- tibble::as_tibble(as.data.frame(rl))
-    #ind_col_idx <- match(ind_col_names, tbl_schema$names)
-    #dom_ext_tbl <- arrow::Table$create(tbbl, schema = tbl_schema[ind_col_idx])
-    #dom_ext_tbl
-    #dom_ext_tbl <- do.call(arrow::arrow_table, rl)
-    #print(dom_ext_tbl)
-    #dom_ext_tbl
+    dom_ext_tbl
 }
