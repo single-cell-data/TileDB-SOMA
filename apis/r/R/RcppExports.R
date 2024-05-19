@@ -20,10 +20,6 @@ writeArrayFromArrow <- function(uri, naap, nasp) {
     invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp))
 }
 
-getArrowSchema <- function(uri) {
-    .Call(`_tiledbsoma_getArrowSchema`, uri)
-}
-
 #' @noRd
 soma_array_reader_impl <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", config = NULL) {
     .Call(`_tiledbsoma_soma_array_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config)
