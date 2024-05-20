@@ -81,7 +81,6 @@ void createSchemaFromArrow(const std::string& uri,
                                                                   "SOMADataFrame",
                                                                   true, // sparse
                                                                   pltcfg);
-    if (vfs.is_dir(uri)) vfs.remove_dir(uri);
     tiledb::Array::create(uri, as);
 }
 
