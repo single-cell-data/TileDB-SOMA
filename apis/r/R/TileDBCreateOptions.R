@@ -32,8 +32,7 @@
   dataframe_dim_zstd_level = 3,
   sparse_nd_array_dim_zstd_level = 3,
   dense_nd_array_dim_zstd_level = 3,
-  offsets_filters = list("DOUBLE_DELTA", "BIT_WIDTH_REDUCTION",
-                         list("name"="ZSTD", "COMPRESSION_LEVEL"=-1)),
+  offsets_filters = list("DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"),
   validity_filters = list(),
   # Used for chunked data ingestion
   write_X_chunked = TRUE,
