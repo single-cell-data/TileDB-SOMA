@@ -1786,3 +1786,49 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
         pool.submit.assert_called()
 
     pool.shutdown()
+
+
+def test_global_writes(tmp_path):
+    write_options = soma.TileDBWriteOptions(**{"sort_coords": False})
+
+    soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.uint8(), shape=(3,))
+
+    with pytest.raises(
+        soma.SOMAError,
+        match=r"Write failed; Coordinates (.*) succeed (.*) in the global order",
+    ):
+        with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
+            A.write(
+                pa.Table.from_pydict(
+                    {
+                        "soma_dim_0": pa.array([2, 1, 0], type=pa.int64()),
+                        "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
+                    }
+                ),
+                platform_config=write_options,
+            )
+
+    data = pa.Table.from_pydict(
+        {
+            "soma_dim_0": pa.array([0, 1, 2], type=pa.int64()),
+            "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
+        }
+    )
+
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
+        A.write(
+            data,
+            platform_config=write_options,
+        )
+
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
+        assert A.read().tables().concat() == data
+
+    with pytest.warns(DeprecationWarning) as warning:
+        with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
+            A.write(
+                data,
+                platform_config=soma.TileDBCreateOptions(),
+            )
+        assert "The write parameter now takes in TileDBWriteOptions instead "
+        "of TileDBCreateOptions" == warning[0].message
