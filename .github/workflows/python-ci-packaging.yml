@@ -10,6 +10,7 @@ on:
       - 'apis/python/MANIFEST.in'
       - 'apis/python/pyproject.toml'
       - 'apis/python/setup.py'
+      - 'apis/python/version.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
       - 'libtiledbsoma/cmake/inputs/tiledbsoma.pc.in'
@@ -23,6 +24,7 @@ on:
       - 'apis/python/MANIFEST.in'
       - 'apis/python/pyproject.toml'
       - 'apis/python/setup.py'
+      - 'apis/python/version.py'
       - 'apis/python/src/tiledbsoma/__init__.py'
       - 'libtiledbsoma/cmake/inputs/Config.cmake.in'
       - 'libtiledbsoma/cmake/inputs/tiledbsoma.pc.in'
@@ -351,6 +353,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          path: TileDB-SOMA
           fetch-depth: 0 # for setuptools-scm
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -360,12 +363,12 @@ jobs:
         run: python -m pip install --prefer-binary pybind11 wheel
       - name: Build source tarball (sdist)
         run: |
-          cd apis/python
+          cd TileDB-SOMA/apis/python
           python setup.py sdist
       - name: Extract source tarball
         run: |
-          tar --list -f apis/python/dist/tiledbsoma-*.tar.gz
-          tar -xzf apis/python/dist/tiledbsoma-*.tar.gz
+          tar --list -f TileDB-SOMA/apis/python/dist/tiledbsoma-*.tar.gz
+          tar -xzf TileDB-SOMA/apis/python/dist/tiledbsoma-*.tar.gz
       - name: Build wheel
         run: |
           cd tiledbsoma-*/
