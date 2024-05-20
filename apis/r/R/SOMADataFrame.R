@@ -52,11 +52,10 @@ SOMADataFrame <- R6::R6Class(
       ## we need a schema pointer to transfer the schema information
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       schema$export_to_c(nasp)
-      #print(nasp)
 
-      #spdl::debug("[SOMADataFrame::create] about to call createSchemaFromArrow")
-      #print(str(tiledb_create_options$to_list(FALSE)))
-      createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp, tiledb_create_options$to_list(FALSE))
+      ctxptr <- super$tiledbsoma_ctx$context()
+      createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp,
+                            tiledb_create_options$to_list(FALSE), ctxptr@ptr)
 
       self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()
