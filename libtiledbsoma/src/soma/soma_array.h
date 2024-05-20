@@ -457,7 +457,7 @@ class SOMAArray : public SOMAObject {
      *   array.write();
      *   array.close();
      */
-    void write();
+    void write(bool sort_coords = true);
 
     /**
      * @brief Consolidates and vacuums fragment metadata and commit files.
