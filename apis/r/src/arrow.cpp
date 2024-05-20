@@ -48,7 +48,6 @@ void createSchemaFromArrow(const std::string& uri,
     //_show_content(apdim, spdim);
 
     auto ctx = tiledb::Context();
-    auto vfs = tiledb::VFS(ctx);
 
     auto ctxsp = std::make_shared<tiledb::Context>(ctx);
     auto schema = std::make_unique<ArrowSchema>();
