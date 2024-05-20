@@ -52,8 +52,8 @@ class SOMAContext {
         : ctx_(std::make_shared<Context>(Config({})))
         , thread_pool_mutex_(){};
 
-    SOMAContext(std::map<std::string, std::string> platform_config)
-        : ctx_(std::make_shared<Context>(Config(platform_config)))
+    SOMAContext(std::map<std::string, std::string> tiledb_config)
+        : ctx_(std::make_shared<Context>(Config(tiledb_config)))
         , thread_pool_mutex_(){};
 
     bool operator==(const SOMAContext& other) const {
