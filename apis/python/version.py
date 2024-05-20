@@ -93,11 +93,16 @@ def err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-def lines(*cmd, drop_trailing_newline: bool = True, **kwargs) -> List[str]:
+def lines(
+    *cmd, drop_trailing_newline: bool = True, stderr=DEVNULL, **kwargs
+) -> List[str]:
     """Run a command and return its output as a list of lines.
 
     Strip trailing newlines, and drop the last line if it's empty, by default."""
-    lns = [ln.rstrip("\n") for ln in check_output(cmd, **kwargs).decode().splitlines()]
+    lns = [
+        ln.rstrip("\n")
+        for ln in check_output(cmd, stderr=stderr, **kwargs).decode().splitlines()
+    ]
     if lns and drop_trailing_newline and not lns[-1]:
         lns.pop()
     return lns
@@ -186,9 +191,7 @@ def get_git_version() -> Optional[str]:
           abbreviated Git SHA, converted to base 10 for PEP440 compliance).
     """
     try:
-        git_version = line(
-            "git", "describe", "--long", "--tags", "--match", "[0-9]*.*", stderr=DEVNULL
-        )
+        git_version = line("git", "describe", "--long", "--tags", "--match", "[0-9]*.*")
     except CalledProcessError:
         git_version = None
 
