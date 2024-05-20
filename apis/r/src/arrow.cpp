@@ -29,9 +29,9 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
 
 // [[Rcpp::export]]
 void createSchemaFromArrow(const std::string& uri,
-                           SEXP nasp,
-                           SEXP nadimap, SEXP nadimsp,
-                           Rcpp::List pclst) {
+                           SEXP nasp, SEXP nadimap, SEXP nadimsp,
+                           Rcpp::List pclst,
+                           Rcpp::Nullable<Rcpp::XPtr<tiledb::Context>> ctxptr = R_NilValue) {
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
@@ -47,9 +47,15 @@ void createSchemaFromArrow(const std::string& uri,
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
     //_show_content(apdim, spdim);
 
-    auto ctx = tiledb::Context();
+    std::shared_ptr<tiledb::Context> ctxsp;
+    if (ctxptr.isNotNull()) {
+        Rcpp::XPtr<tiledb::Context> ctxxp(ctxptr);
+        ctxsp = std::make_shared<tiledb::Context>(*ctxxp.get());
+    } else {
+        auto ctx = tiledb::Context();
+        ctxsp = std::make_shared<tiledb::Context>(ctx);
+    }
 
-    auto ctxsp = std::make_shared<tiledb::Context>(ctx);
     auto schema = std::make_unique<ArrowSchema>();
     sp.move(schema.get());
 
@@ -83,8 +89,11 @@ void createSchemaFromArrow(const std::string& uri,
     tiledb::Array::create(uri, as);
 }
 
+
 // [[Rcpp::export]]
-void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp) {
+void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp,
+                         Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
@@ -96,7 +105,21 @@ void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp) {
     nanoarrow::UniqueArray ap{nanoarrow_array_from_xptr(naap)};
     nanoarrow::UniqueSchema sp{nanoarrow_schema_from_xptr(nasp)};
 
-    auto somactx = std::make_shared<tdbs::SOMAContext>();
+    std::shared_ptr<tdbs::SOMAContext> somactx;
+    if (config.isNotNull()) {
+        std::map<std::string, std::string> smap;
+        auto config_vec = config.as();
+        auto config_names = Rcpp::as<Rcpp::CharacterVector>(config_vec.names());
+        for (auto &name : config_names) {
+            std::string param = Rcpp::as<std::string>(name);
+            std::string value = Rcpp::as<std::string>(config_vec[param]);
+            smap[param] = value;
+        }
+        somactx = std::make_shared<tdbs::SOMAContext>(smap);
+    } else {
+        somactx = std::make_shared<tdbs::SOMAContext>();
+    }
+
     auto arrup = tdbs::SOMADataFrame::open(OpenMode::write, uri, somactx);
 
     auto schema = std::make_unique<ArrowSchema>();

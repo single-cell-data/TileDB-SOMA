@@ -382,8 +382,7 @@ TileDBCreateOptions <- R6::R6Class(
         stopifnot("'item' must be a named list" = is.list(item) && !is.null(names(item)),
                   "'name' must be one of the names in 'item'" = 'name' %in% names(item) )
         json <- "{ "
-        json <- paste0(json, sprintf(r"( "name": "%s")",
-                                     if (item[[1]] == "NONE") "NOOP" else item[[1]]))
+        json <- paste0(json, sprintf(r"( "name": "%s")", item[[1]]))
         if (length(item) > 1) {
             for (j in seq(2, length(item))) {
                 key <- names(item)[[j]]

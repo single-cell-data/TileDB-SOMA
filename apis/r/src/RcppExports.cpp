@@ -43,8 +43,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::NumericVector >::type kvec(kvecSEXP);
     rcpp_result_gen = Rcpp::wrap(reindex_lookup(idx, kvec));
 // createSchemaFromArrow
-void createSchemaFromArrow(const std::string& uri, SEXP nasp, SEXP nadimap, SEXP nadimsp, Rcpp::List pclst);
-RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP pclstSEXP) {
+void createSchemaFromArrow(const std::string& uri, SEXP nasp, SEXP nadimap, SEXP nadimsp, Rcpp::List pclst, Rcpp::Nullable<Rcpp::XPtr<tiledb::Context>> ctxptr);
+RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP pclstSEXP, SEXP ctxptrSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
@@ -52,19 +52,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type nadimap(nadimapSEXP);
     Rcpp::traits::input_parameter< SEXP >::type nadimsp(nadimspSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type pclst(pclstSEXP);
-    createSchemaFromArrow(uri, nasp, nadimap, nadimsp, pclst);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::XPtr<tiledb::Context>> >::type ctxptr(ctxptrSEXP);
+    createSchemaFromArrow(uri, nasp, nadimap, nadimsp, pclst, ctxptr);
     return R_NilValue;
 END_RCPP
 }
 // writeArrayFromArrow
-void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp);
-RcppExport SEXP _tiledbsoma_writeArrayFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP) {
+void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp, Rcpp::Nullable<Rcpp::CharacterVector> config);
+RcppExport SEXP _tiledbsoma_writeArrayFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP configSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< SEXP >::type naap(naapSEXP);
     Rcpp::traits::input_parameter< SEXP >::type nasp(naspSEXP);
-    writeArrayFromArrow(uri, naap, nasp);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
+    writeArrayFromArrow(uri, naap, nasp, config);
     return R_NilValue;
 END_RCPP
 }
@@ -305,6 +307,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_reindex_lookup", (DL_FUNC) &_tiledbsoma_reindex_lookup, 2},
     {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 5},
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 3},
+    {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 6},
+    {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 4},
     {"_tiledbsoma_soma_array_reader", (DL_FUNC) &_tiledbsoma_soma_array_reader, 9},
     {"_tiledbsoma_set_log_level", (DL_FUNC) &_tiledbsoma_set_log_level, 1},
     {"_tiledbsoma_get_column_types", (DL_FUNC) &_tiledbsoma_get_column_types, 2},
