@@ -429,6 +429,7 @@ TEST_CASE("SOMAArray: Test buffer size") {
     std::map<std::string, std::string> cfg;
     cfg["soma.init_buffer_bytes"] = "8";
     auto ctx = std::make_shared<SOMAContext>(cfg);
+    REQUIRE(ctx->tiledb_config()["soma.init_buffer_bytes"] == "8");
 
     std::string base_uri = "mem://unit-test-array";
     auto [uri, expected_nnz] = create_array(base_uri, ctx);
