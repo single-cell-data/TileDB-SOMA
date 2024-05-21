@@ -159,7 +159,7 @@ def from_visium(
                 )
 
                 # Write image data and add to the scene.
-                images_uri = f"{scene_uri}/images"
+                images_uri = f"{scene_uri}/img"
                 with _write_visium_images(
                     images_uri,
                     scale_factors,
@@ -169,30 +169,22 @@ def from_visium(
                     use_relative_uri=use_relative_uri,
                     **ingest_ctx,
                 ) as images:
-                    _maybe_set(
-                        scene, "images", images, use_relative_uri=use_relative_uri
-                    )
+                    _maybe_set(scene, "img", images, use_relative_uri=use_relative_uri)
 
                 obsl_uri = f"{scene_uri}/obsl"
-                with _create_or_open_collection(
-                    Collection[AnyTileDBObject], obsl_uri, **ingest_ctx
-                ) as obsl:
-                    _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
 
-                    obs_loc_uri = f"{obsl_uri}/loc"
-
-                    # Write spot data and add to the scene.
-                    with _write_visium_spot_dataframe(
-                        obs_loc_uri,
-                        input_tissue_positions,
-                        scale_factors,
-                        obs_df,
-                        obs_id_name,
-                        **ingest_ctx,
-                    ) as obs_loc:
-                        _maybe_set(
-                            obsl, "loc", obs_loc, use_relative_uri=use_relative_uri
-                        )
+                # Write spot data and add to the scene.
+                with _write_visium_spot_dataframe(
+                    obsl_uri,
+                    input_tissue_positions,
+                    scale_factors,
+                    obs_df,
+                    obs_id_name,
+                    **ingest_ctx,
+                ) as obs_loc:
+                    _maybe_set(
+                        scene, "obsl", obs_loc, use_relative_uri=use_relative_uri
+                    )
 
                 varl_uri = f"{scene_uri}/varl"
                 with _create_or_open_collection(
