@@ -435,6 +435,24 @@ class SOMAArray : public SOMAObject {
         uint8_t* validity = nullptr);
 
     /**
+     * @brief Set the write buffers for string or binary with 32-bit offsets
+     * (as opposed to large string or large binary with 64-bit offsets).
+     *
+     * @param name Name of the column
+     * @param num_elems Number of elements to write
+     * @param data Pointer to the beginning of the data buffer
+     * @param offsets Pointer to the beginning of the offsets buffer
+     * @param validity Optional pointer to the beginning of the validities
+     * buffer
+     */
+    void set_column_data(
+        std::string_view name,
+        uint64_t num_elems,
+        const void* data,
+        uint32_t* offsets,
+        uint8_t* validity = nullptr);
+
+    /**
      * @brief Set the write buffers for an Arrow Table or Batch as represented
      * by an ArrowSchema and ArrowArray.
      *
@@ -758,6 +776,9 @@ class SOMAArray : public SOMAObject {
 
         return enmr;
     }
+
+    // Helper function for set_column_data
+    std::shared_ptr<ColumnBuffer> _setup_column_data(std::string_view name);
 
     // Fills the metadata cache upon opening the array.
     void fill_metadata_cache();
