@@ -53,7 +53,7 @@ jobs:
             cibw_build: 'cp3*-manylinux_x86_64'
             platform: manylinux2014
             wheel_name: manylinux2014
-          - os: macos-12
+          - os: macos-14
             cibw_build: 'cp3*-macosx_x86_64'
             cibw_archs_macos: x86_64
             platform: macosx
@@ -104,7 +104,7 @@ jobs:
             arch: x86_64
             cc: gcc-11
             cxx: g++-11
-          - os: macos-12
+          - os: macos-14
             platform: macosx
             arch: x86_64
             cc: clang
@@ -135,6 +135,8 @@ jobs:
           set -x
           ls -lR
           ls -lR wheels-*
+          echo matrix.platform: ${{ matrix.platform }}
+          echo matrix.arch: ${{ matrix.arch }}
           WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
