@@ -338,8 +338,8 @@ void ArrowAdapter::_append_to_filter_list(
             filter_list.add_filter(filter);
         }
     } catch (std::out_of_range& e) {
-        throw TileDBSOMAError(
-            fmt::format("Invalid filter {} passed to PlatformConfig", value));
+        throw TileDBSOMAError(fmt::format(
+            "Invalid filter {} passed to PlatformConfig", std::string(value)));
     }
 }
 
