@@ -59,7 +59,7 @@ class SOMAExperiment : public SOMACollection {
         std::unique_ptr<ArrowSchema> schema,
         ArrowTable index_columns,
         std::shared_ptr<SOMAContext> ctx,
-        std::optional<PlatformConfig> platform_config = std::nullopt,
+        PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**

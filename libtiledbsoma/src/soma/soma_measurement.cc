@@ -46,7 +46,7 @@ void SOMAMeasurement::create(
     std::unique_ptr<ArrowSchema> schema,
     ArrowTable index_columns,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<PlatformConfig> platform_config,
+    PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     std::string exp_uri(uri);
 

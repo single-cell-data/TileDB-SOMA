@@ -43,7 +43,7 @@ TEST_CASE("SOMASparseNDArray: basic") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        std::nullopt,
+        PlatformConfig(),
         TimestampRange(0, 2));
 
     auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
@@ -81,6 +81,34 @@ TEST_CASE("SOMASparseNDArray: basic") {
     soma_sparse->close();
 }
 
+TEST_CASE("SOMASparseNDArray: platform_config") {
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://unit-test-dataframe-platform-config";
+
+    PlatformConfig platform_config;
+    platform_config.sparse_nd_array_dim_zstd_level = 6;
+
+    auto index_columns = helper::create_column_index_info();
+    SOMASparseNDArray::create(
+        uri,
+        "l",
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx,
+        platform_config);
+
+    auto soma_dataframe = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
+    auto dim_filter = soma_dataframe->tiledb_schema()
+                          ->domain()
+                          .dimension("soma_dim_0")
+                          .filter_list()
+                          .filter(0);
+    REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
+    REQUIRE(dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);
+
+    soma_dataframe->close();
+}
+
 TEST_CASE("SOMASparseNDArray: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
@@ -93,7 +121,7 @@ TEST_CASE("SOMASparseNDArray: metadata") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
-        std::nullopt,
+        PlatformConfig(),
         TimestampRange(0, 2));
 
     auto soma_sparse = SOMASparseNDArray::open(

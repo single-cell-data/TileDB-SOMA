@@ -43,7 +43,7 @@ void SOMADenseNDArray::create(
     std::string_view format,
     ArrowTable index_columns,
     std::shared_ptr<SOMAContext> ctx,
-    std::optional<PlatformConfig> platform_config,
+    PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     auto index_column_array = std::move(index_columns.first);
     auto index_column_schema = std::move(index_columns.second);
@@ -82,7 +82,8 @@ void SOMADenseNDArray::create(
         std::move(schema),
         ArrowTable(
             std::move(index_column_array), std::move(index_column_schema)),
-        TILEDB_DENSE,
+        "SOMADenseNDArray",
+        false,
         platform_config);
 
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMADenseNDArray", timestamp);
