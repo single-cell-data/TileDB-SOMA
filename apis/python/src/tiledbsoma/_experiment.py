@@ -73,6 +73,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),
         "spatial": ("SOMACollection",),
+        "obs_spatial": ("SOMADataFrame",),
     }
 
     @classmethod

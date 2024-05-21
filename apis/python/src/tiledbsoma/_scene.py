@@ -19,9 +19,10 @@ from ._tiledb_object import AnyTileDBObject
 class Scene(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnyTileDBObject],
     scene.Scene[  # type: ignore[type-var]
+        DataFrame,
         Collection[
-            Union[DataFrame, DenseNDArray, SparseNDArray]
-        ],  # not just DataFrame and NDArray since NDArray does not have a common `read`
+            Union[DenseNDArray, SparseNDArray]
+        ],  # not just NDArray since NDArray does not have a common `read`
         AnyTileDBObject,
     ],
 ):
@@ -34,6 +35,8 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
     __slots__ = ()
 
     _subclass_constrained_soma_types = {
-        "exp": ("SOMACollection",),
-        "ms": ("SOMACollection",),
+        "osbl": ("SOMADataFrame",),
+        "varl": ("SOMACollection",),
+        "obssm": ("SOMACollection",),
+        "varsm": ("SOMACollection",),
     }
