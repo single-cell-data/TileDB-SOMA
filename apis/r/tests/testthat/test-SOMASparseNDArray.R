@@ -190,7 +190,7 @@ test_that("platform_config is respected", {
   cfg$set('tiledb', 'create', 'sparse_nd_array_dim_zstd_level', 9)
   cfg$set('tiledb', 'create', 'capacity', 8000)
   cfg$set('tiledb', 'create', 'tile_order', 'COL_MAJOR')
-  cfg$set('tiledb', 'create', 'cell_order', 'UNORDERED')
+  cfg$set('tiledb', 'create', 'cell_order', 'ROW_MAJOR')
   cfg$set('tiledb', 'create', 'offsets_filters', list("RLE"))
   cfg$set('tiledb', 'create', 'validity_filters', list("RLE", "NONE"))
   cfg$set('tiledb', 'create', 'dims', list(
@@ -230,7 +230,7 @@ test_that("platform_config is respected", {
 
   expect_equal(tiledb::capacity(tsch), 8000)
   expect_equal(tiledb::tile_order(tsch), "COL_MAJOR")
-  expect_equal(tiledb::cell_order(tsch), "UNORDERED")
+  expect_equal(tiledb::cell_order(tsch), "ROW_MAJOR")
 
   offsets_filters <- tiledb::filter_list(tsch)$offsets
   expect_equal(tiledb::nfilters(offsets_filters), 1)

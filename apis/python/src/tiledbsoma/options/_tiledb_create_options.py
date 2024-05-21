@@ -48,7 +48,7 @@ _FilterSpec = Union[str, _DictFilterSpec]
 class _DictColumnSpec(TypedDict, total=False):
     """Type specification for the dictionary used to configure a column."""
 
-    filters: Mapping[str, _FilterSpec]
+    filters: Union[Sequence[str], Mapping[str, Union[_FilterSpec]]]
     tile: int
 
 
@@ -98,7 +98,7 @@ def _normalize_columns(
 
 @attrs_.define(frozen=True, kw_only=True, slots=True)
 class TileDBCreateOptions:
-    """Tuning options used when creating new TileDB arrays for SOMA data.
+    """Tuning options used when creating new SOMA arrays.
 
     The attribute names of this object are identical to the keys expected in the
     cross-platform ``platform_config`` dict under the ``tiledb.create`` subkey,
@@ -111,6 +111,9 @@ class TileDBCreateOptions:
         validator=vld.instance_of(int), default=3
     )
     sparse_nd_array_dim_zstd_level: int = attrs_.field(
+        validator=vld.instance_of(int), default=3
+    )
+    dense_nd_array_dim_zstd_level: int = attrs_.field(
         validator=vld.instance_of(int), default=3
     )
     write_X_chunked: bool = attrs_.field(validator=vld.instance_of(bool), default=True)
@@ -218,6 +221,40 @@ class TileDBCreateOptions:
     ) -> Tuple[tiledb.Filter, ...]:
         """Constructs the real TileDB Filters to use for the named attribute."""
         return _filters_from(self.attrs, name, default)
+
+
+@attrs_.define(frozen=True, kw_only=True, slots=True)
+class TileDBWriteOptions:
+    """Tuning options used when writing to SOMA arrays."""
+
+    sort_coords: bool = attrs_.field(validator=vld.instance_of(bool), default=True)
+    consolidate_and_vacuum: Optional[bool] = attrs_.field(
+        validator=vld.instance_of(bool), default=False
+    )
+
+    @classmethod
+    def from_platform_config(
+        cls,
+        platform_config: Union[
+            options.PlatformConfig, "TileDBWriteOptions", None
+        ] = None,
+    ) -> Self:
+        """Creates the object from a value passed in ``platform_config``.
+
+        The value passed in should be the exact value passed into a public API
+        method as the ``platform_config`` parameter. This function will extract
+        the ``tiledb.write`` entry from a dict as needed.
+        """
+        create_entry = _dig_platform_config(platform_config, cls, ("tiledb", "write"))
+        if isinstance(create_entry, dict):
+            attrs: Tuple[attrs_.Attribute, ...] = cls.__attrs_attrs__  # type: ignore[type-arg]
+            attr_names = frozenset(a.name for a in attrs)
+            # Explicitly opt out of type-checking for these kwargs.
+            filered_create_entry: Dict[str, Any] = {
+                key: value for (key, value) in create_entry.items() if key in attr_names
+            }
+            return cls(**filered_create_entry)
+        return create_entry
 
 
 _T = TypeVar("_T")

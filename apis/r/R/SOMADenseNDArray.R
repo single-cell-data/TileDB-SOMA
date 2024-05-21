@@ -44,15 +44,18 @@ SOMADenseNDArray <- R6::R6Class(
 
       result_order <- map_query_layout(match_query_layout(result_order))
 
-      if (!is.null(coords)) {
-        coords <- private$.convert_coords(coords)
+      if (is.null(coords)) {
+        # These are 0-up: add 1 for R use
+        ned <- self$non_empty_domain()
+        coords <- lapply(X=as.integer(ned), FUN=function(x){0:x})
       }
+      coords <- private$.convert_coords(coords)
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       rl <- soma_array_reader(uri = uri,
-                              dim_points = coords,        # NULL dealt with by soma_array_reader()
+                              dim_points = coords,
                               result_order = result_order,
-                              loglevel = log_level,       # idem
+                              loglevel = log_level,       # NULL dealt with by soma_array_reader()
                               config = cfg)
 
       soma_array_to_arrow_table(rl)
@@ -74,15 +77,24 @@ SOMADenseNDArray <- R6::R6Class(
 
       dims <- self$dimensions()
       attr <- self$attributes()
+
       stopifnot("Array must have two dimensions" = length(dims) == 2,
-                "Array must contain columns 'soma_dim_0' and 'soma_dim_1'" =
-                    all.equal(c("soma_dim_0", "soma_dim_1"), names(dims)),
                 "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
+
+      if (is.null(coords)) {
+        ned <- self$non_empty_domain()
+        # These are 0-up: add 1 for R use
+        nrow <- as.numeric(ned[[1]]) + 1
+        ncol <- as.numeric(ned[[2]]) + 1
+      } else {
+        nrow <- length(unique(as.numeric(coords[[1]])))
+        ncol <- length(unique(as.numeric(coords[[2]])))
+      }
 
       tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
       m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
-                  nrow = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0")))),
-                  ncol = length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1")))),
+                  nrow = nrow,
+                  ncol = ncol,
                   byrow = result_order == "ROW_MAJOR")
 
     },

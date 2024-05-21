@@ -18,3 +18,12 @@ Thanks for your interest in TileDB-SOMA. The notes below give some pointers for 
 - Make changes locally, then rebuild as appropriate for the level of changes (e.g.: `make` for `libtilebsc` or `python setup.py develop` for `apis/python`).
 - Make sure to run `make check`, or `pytest` to verify changes against tests (add new tests where applicable).
 - Please submit [pull requests](https://help.github.com/en/desktop/contributing-to-projects/creating-a-pull-request) against the default [`main` branch of TileDB-SOMA](https://github.com/TileDB-Inc/TileDB-SOMA/tree/master).
+- If you edit the Python files, please run the pre-commit hooks
+
+  ```sh
+  python -m venv ./pre-commit
+  source ./pre-commit/bin/activate
+  python -m pip -v install pre-commit
+  pre-commit run -a -v
+  deactivate
+  ```

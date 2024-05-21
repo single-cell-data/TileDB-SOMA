@@ -62,7 +62,12 @@ def tiledb_object_uri(tmp_path, object_type, metadata_typename, encoding_version
             _constants.SOMA_ENCODING_VERSION,
             soma.DenseNDArray,
         ),
-        ("array", "SOMASparseNDArray", "1", soma.SparseNDArray),
+        (
+            "array",
+            "SOMASparseNDArray",
+            _constants.SOMA_ENCODING_VERSION,
+            soma.SparseNDArray,
+        ),
         (
             "array",
             "SOMASparseNdArray",

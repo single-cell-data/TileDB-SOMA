@@ -1,19 +1,27 @@
 # Basic on-laptop setup
 
-```
-pip install .
-```
-
-This is very important -- _for developers_, the nominal use-mode is `python setup.py develop` as documented in our [../apis/python/README.md](../apis/python/README.md). But this local build _will not find_ `tiledbsoma-py` from this local install. You must install `pip install apis/python so it can find Python source for document autogen, _and_ you must re-run `pip install apis/python after each and every source-file edit, even if you're just doing an edit-build-preview iteration loop in a sandbox checkout.
-
-```
-#!/bin/bash
-set -euo pipefail
-sphinx-build -E -T -b html -d foo/doctrees -D language=en doc/source doc/html
+Build the docs with:
+```bash
+./build.sh
 ```
 
+The first time you run this, it will:
+1. Create and activate a virtualenv (`venv/`)
+2. Install [`requirements_doc.txt`](requirements_doc.txt)
+3. Install `..apis/python` (editable)
+4. Build the docs (output to `doc/html/`)
+
+Subsequent runs will only perform the 4th step (unless `-r`/`--reinstall` is passed).
+
+Once the docs are built, you can:
+
+```bash
+open source/_build/html/index.html
 ```
-#!/bin/bash
-set -euo pipefail
-open doc/html/python-api.html
+or e.g.:
+```bash
+http-server source/_build/html &
+open http://localhost:8080/
 ```
+
+and inspect them.

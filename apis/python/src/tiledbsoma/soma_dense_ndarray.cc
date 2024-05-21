@@ -46,8 +46,60 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
+void write(SOMAArray& array, py::array data) {
+    py::buffer_info data_info = data.request();
+    array.set_column_data("soma_data", data.size(), (const void*)data_info.ptr);
+
+    try {
+        array.write();
+    } catch (const std::exception& e) {
+        TPY_ERROR_LOC(e.what());
+    }
+}
+
 void load_soma_dense_ndarray(py::module& m) {
     py::class_<SOMADenseNDArray, SOMAArray, SOMAObject>(m, "SOMADenseNDArray")
+
+        .def_static(
+            "create",
+            [](std::string_view uri,
+               std::string format,
+               py::object index_column_info,
+               std::shared_ptr<SOMAContext> context,
+               PlatformConfig platform_config,
+               std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+                ArrowSchema index_column_schema;
+                ArrowArray index_column_array;
+                uintptr_t
+                    index_column_schema_ptr = (uintptr_t)(&index_column_schema);
+                uintptr_t
+                    index_column_array_ptr = (uintptr_t)(&index_column_array);
+                index_column_info.attr("_export_to_c")(
+                    index_column_array_ptr, index_column_schema_ptr);
+
+                try {
+                    SOMADenseNDArray::create(
+                        uri,
+                        format,
+                        ArrowTable(
+                            std::make_unique<ArrowArray>(index_column_array),
+                            std::make_unique<ArrowSchema>(index_column_schema)),
+                        context,
+                        platform_config,
+                        timestamp);
+                } catch (const std::out_of_range& e) {
+                    throw py::type_error(e.what());
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
+            "uri"_a,
+            py::kw_only(),
+            "format"_a,
+            "index_column_info"_a,
+            "ctx"_a,
+            "platform_config"_a,
+            "timestamp"_a = py::none())
 
         .def_static(
             "open",
@@ -67,6 +119,8 @@ void load_soma_dense_ndarray(py::module& m) {
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 
-        .def_static("exists", &SOMADenseNDArray::exists);
+        .def_static("exists", &SOMADenseNDArray::exists)
+
+        .def("write", write);
 }
 }  // namespace libtiledbsomacpp

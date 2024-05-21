@@ -1,5 +1,5 @@
 The tiledbsoma.logging module
-=====================
+=============================
 
 .. currentmodule:: tiledbsoma.logging
 
@@ -7,7 +7,7 @@ The tiledbsoma.logging module
 
 
 Functions
--------
+---------
 
 .. autosummary::
     :toctree: _autosummary/

@@ -526,7 +526,7 @@ write_soma.Seurat <- function(
     stop(
       "Requested an array of shape (",
       paste(shape, collapse = ', '),
-      "), but was given a matrix with a larger shape (",
+      "), but was given a Seurat object with a larger shape (",
       paste(dim(x), collapse = ', '),
       ")",
       call. = FALSE
@@ -807,7 +807,7 @@ write_soma.SeuratCommand <- function(
     logs$reopen("WRITE")
     logs
   }
-  on.exit(logs$close(), add = TRUE)
+  on.exit(logs$close(), add = TRUE, after = FALSE)
 
   # Encode parameters
   spdl::info("Encoding parameters in the command log")

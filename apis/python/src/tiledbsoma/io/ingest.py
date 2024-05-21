@@ -54,7 +54,7 @@ from .. import (
     eta,
     logging,
 )
-from .._arrow_types import df_to_arrow, tiledb_type_from_arrow_type
+from .._arrow_types import df_to_arrow, is_string_dtypelike, tiledb_type_from_arrow_type
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -64,8 +64,8 @@ from .._exception import (
     NotCreateableError,
     SOMAError,
 )
+from .._soma_array import SOMAArray
 from .._tdb_handles import RawHandle
-from .._tiledb_array import TileDBArray
 from .._tiledb_object import AnyTileDBObject, TileDBObject
 from .._types import (
     _INGEST_MODES,
@@ -261,22 +261,27 @@ def from_h5ad(
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to create this array, provided in the form
-        ``{"tiledb": {"create": {"sparse_nd_array_dim_zstd_level": 7}}}`` nested keys.
+          ``{\"tiledb\": {\"create\": {\"sparse_nd_array_dim_zstd_level\": 7}}}``.
 
-        obs_id_name and var_id_name: Which AnnData ``obs`` and ``var`` columns, respectively, to use
-        for append mode: values of this column will be used to decide which obs/var rows in appended
-        inputs are distinct from the ones already stored, for the assignment of ``soma_joinid``.  If
-        this column exists in the input data, as a named index or a non-index column name, it will
-        be used. If this column doesn't exist in the input data, and if the index is nameless or
-        named ``index``, that index will be given this name when written to the SOMA experiment's
-        ``obs`` / ``var``. NOTE: it is not necessary for this column to be the index-column
-        name in the input AnnData objects ``obs``/``var``.
+        obs_id_name/var_id_name: Which AnnData ``obs`` and ``var`` columns, respectively, to use
+          for append mode.
+
+          Values of this column will be used to decide which obs/var rows in appended
+          inputs are distinct from the ones already stored, for the assignment of ``soma_joinid``.  If
+          this column exists in the input data, as a named index or a non-index column name, it will
+          be used. If this column doesn't exist in the input data, and if the index is nameless or
+          named ``index``, that index will be given this name when written to the SOMA experiment's
+          ``obs`` / ``var``.
+
+          NOTE: it is not necessary for this column to be the index-column
+          name in the input AnnData objects ``obs``/``var``.
 
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
 
         raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
 
         ingest_mode: The ingestion type to perform:
+
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
               that was previously written. Useful for continuing after a partial
@@ -286,11 +291,13 @@ def from_h5ad(
               multiple H5AD files to a single SOMA.
 
         X_kind: Which type of matrix is used to store dense X data from the
-            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+          H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
 
         registration_mapping: Does not need to be supplied when ingesting a single
           H5AD/AnnData object into a single :class:`Experiment`. When multiple inputs
           are to be ingested into a single experiment, there are two steps. First:
+
+          .. code-block:: python
 
               import tiledbsoma.io
               rd = tiledbsoma.io.register_h5ads(
@@ -304,6 +311,8 @@ def from_h5ad(
 
           Once that's been done, the data ingests per se may be done in any order,
           or in parallel, via for each ``h5ad_file_name``:
+
+          .. code-block:: python
 
               tiledbsoma.io.from_h5ad(
                   experiment_uri,
@@ -320,6 +329,8 @@ def from_h5ad(
         additional_metadata: Optional metadata to add to the ``Experiment`` and all descendents.
           This is a coarse-grained mechanism for setting key-value pairs on all SOMA objects in an
           ``Experiment`` hierarchy. Metadata for particular objects is more commonly set like:
+
+          .. code-block:: python
 
               with soma.open(uri, 'w') as exp:
                   exp.metadata.update({"aaa": "BBB"})
@@ -1203,7 +1214,7 @@ def _write_dataframe_impl(
         )
     except (AlreadyExistsError, NotCreateableError):
         if ingestion_params.error_if_already_exists:
-            raise SOMAError(f"{soma_df.uri} already exists")
+            raise SOMAError(f"{df_uri} already exists")
 
         soma_df = DataFrame.open(df_uri, "w", context=context)
 
@@ -1212,15 +1223,15 @@ def _write_dataframe_impl(
             dim_range = ((int(df.index.min()), int(df.index.max())),)
             if _chunk_is_contained_in(dim_range, storage_ned):
                 logging.log_io(
-                    f"Skipped {soma_df.uri}",
-                    _util.format_elapsed(s, f"SKIPPED {soma_df.uri}"),
+                    f"Skipped {df_uri}",
+                    _util.format_elapsed(s, f"SKIPPED {df_uri}"),
                 )
                 return soma_df
 
     if ingestion_params.write_schema_no_data:
         logging.log_io(
-            f"Wrote schema {soma_df.uri}",
-            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_df.uri}"),
+            f"Wrote schema {df_uri}",
+            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {df_uri}"),
         )
         add_metadata(soma_df, additional_metadata)
         return soma_df
@@ -1238,8 +1249,8 @@ def _write_dataframe_impl(
     add_metadata(soma_df, additional_metadata)
 
     logging.log_io(
-        f"Wrote   {soma_df.uri}",
-        _util.format_elapsed(s, f"FINISH WRITING {soma_df.uri}"),
+        f"Wrote   {df_uri}",
+        _util.format_elapsed(s, f"FINISH WRITING {df_uri}"),
     )
     return soma_df
 
@@ -1304,21 +1315,21 @@ def _create_from_matrix(
         )
     except (AlreadyExistsError, NotCreateableError):
         if ingestion_params.error_if_already_exists:
-            raise SOMAError(f"{soma_ndarray.uri} already exists")
+            raise SOMAError(f"{uri} already exists")
         soma_ndarray = cls.open(
             uri, "w", platform_config=platform_config, context=context
         )
 
     if ingestion_params.write_schema_no_data:
         logging.log_io(
-            f"Wrote schema {soma_ndarray.uri}",
-            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {soma_ndarray.uri}"),
+            f"Wrote schema {uri}",
+            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {uri}"),
         )
         return soma_ndarray
 
     logging.log_io(
-        f"Writing {soma_ndarray.uri}",
-        _util.format_elapsed(s, f"START  WRITING {soma_ndarray.uri}"),
+        f"Writing {uri}",
+        _util.format_elapsed(s, f"START  WRITING {uri}"),
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
@@ -1347,8 +1358,8 @@ def _create_from_matrix(
         raise TypeError(f"unknown array type {type(soma_ndarray)}")
 
     logging.log_io(
-        f"Wrote   {soma_ndarray.uri}",
-        _util.format_elapsed(s, f"FINISH WRITING {soma_ndarray.uri}"),
+        f"Wrote   {uri}",
+        _util.format_elapsed(s, f"FINISH WRITING {uri}"),
     )
     return soma_ndarray
 
@@ -1474,9 +1485,9 @@ def _update_dataframe(
     """
     See ``update_obs`` and ``update_var``. This is common helper code shared by both.
     """
-    new_data = (
-        new_data.copy()
-    )  # Further operations are in-place for parsimony of memory usage
+    # Further operations are in-place for parsimony of memory usage:
+    new_data = new_data.copy()
+
     sdf.verify_open_for_writing()
     old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)
     new_sig = signatures._string_dict_from_pandas_dataframe(
@@ -1542,12 +1553,27 @@ def _update_dataframe(
             )
 
         filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
+
+        # An update can create (or drop) columns, or mutate existing ones.  A
+        # brand-new column might have nulls in it -- or it might not.  And a
+        # subsequent mutator-update might set null values to non-null -- or vice
+        # versa. Therefore we must be careful to set nullability for all types
+        # we want to be nullable: principal use-case being pd.NA / NaN in
+        # string columns which map to TileDB nullity.
+        #
+        # Note: this must match what DataFrame.create does:
+        # * DataFrame.create sets nullability for obs/var columns on initial ingest
+        # * Here, we set nullabiliity for obs/var columns on update_obs
+        # Users should get the same behavior either way.
+        nullable = is_string_dtypelike(dtype)
+
         se.add_attribute(
             tiledb.Attr(
                 name=add_key,
                 dtype=dtype,
                 filters=filters,
                 enum_label=enum_label,
+                nullable=nullable,
             )
         )
 
@@ -1886,7 +1912,7 @@ def _write_matrix_to_denseNDArray(
     return
 
 
-def _read_nonempty_domain(arr: TileDBArray) -> Any:
+def _read_nonempty_domain(arr: SOMAArray) -> Any:
     try:
         return arr._handle.non_empty_domain()
     except (SOMAError, RuntimeError):

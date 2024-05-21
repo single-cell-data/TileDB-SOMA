@@ -43,11 +43,17 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         if (!array_type.has_value())
             throw TileDBSOMAError("SOMAArray has no type info");
 
-        if (array_type == "SOMADataFrame") {
+        std::transform(
+            array_type->begin(),
+            array_type->end(),
+            array_type->begin(),
+            [](unsigned char c) { return std::tolower(c); });
+
+        if (array_type == "somadataframe") {
             return std::make_unique<SOMADataFrame>(*array_);
-        } else if (array_type == "SOMASparseNDArray") {
+        } else if (array_type == "somasparsendarray") {
             return std::make_unique<SOMASparseNDArray>(*array_);
-        } else if (array_type == "SOMADenseNDArray") {
+        } else if (array_type == "somadensendarray") {
             return std::make_unique<SOMADenseNDArray>(*array_);
         } else {
             throw TileDBSOMAError("Saw invalid SOMAArray type");
@@ -59,11 +65,17 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         if (!group_type.has_value())
             throw TileDBSOMAError("SOMAGroup has no type info");
 
-        if (group_type == "SOMACollection") {
+        std::transform(
+            group_type->begin(),
+            group_type->end(),
+            group_type->begin(),
+            [](unsigned char c) { return std::tolower(c); });
+
+        if (group_type == "somacollection") {
             return std::make_unique<SOMACollection>(*group_);
-        } else if (group_type == "SOMAExperiment") {
+        } else if (group_type == "somaexperiment") {
             return std::make_unique<SOMAExperiment>(*group_);
-        } else if (group_type == "SOMAMeasurement") {
+        } else if (group_type == "somameasurement") {
             return std::make_unique<SOMAMeasurement>(*group_);
         } else {
             throw TileDBSOMAError("Saw invalid SOMAGroup type");

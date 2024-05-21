@@ -1,5 +1,5 @@
 The tiledbsoma.io module
-=====================
+========================
 
 .. currentmodule:: tiledbsoma.io
 
@@ -7,7 +7,7 @@ The tiledbsoma.io module
 
 
 Functions
--------
+---------
 
 .. autosummary::
     :toctree: _autosummary/

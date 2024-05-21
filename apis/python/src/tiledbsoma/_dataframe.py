@@ -6,10 +6,10 @@
 """
 Implementation of a SOMA DataFrame
 """
+import warnings
 from typing import Any, List, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import somacore
 from somacore import options
@@ -18,28 +18,23 @@ from typing_extensions import Self
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
-from ._exception import (
-    AlreadyExistsError,
-    NotCreateableError,
-    SOMAError,
-    is_already_exists_error,
-    is_not_createable_error,
-)
+from ._exception import SOMAError, map_exception_for_create
+from ._general_utilities import get_implementation_version
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
+from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
-from ._tiledb_array import TileDBArray
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
-from .options._tiledb_create_options import TileDBCreateOptions
+from .options._tiledb_create_options import TileDBCreateOptions, TileDBWriteOptions
 
 _UNBATCHED = options.BatchSize()
 AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
 Domain = Sequence[AxisDomain]
 
 
-class DataFrame(TileDBArray, somacore.DataFrame):
+class DataFrame(SOMAArray, somacore.DataFrame):
     """:class:`DataFrame` is a multi-column table with a user-defined schema. The
     schema is expressed as an
     `Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_,
@@ -257,28 +252,7 @@ class DataFrame(TileDBArray, somacore.DataFrame):
             index_column_data, schema=pa.schema(index_column_schema)
         )
 
-        plt_cfg = None
-        if platform_config:
-            ops = TileDBCreateOptions.from_platform_config(platform_config)
-            plt_cfg = clib.PlatformConfig()
-            plt_cfg.dataframe_dim_zstd_level = ops.dataframe_dim_zstd_level
-            plt_cfg.sparse_nd_array_dim_zstd_level = ops.sparse_nd_array_dim_zstd_level
-            plt_cfg.write_X_chunked = ops.write_X_chunked
-            plt_cfg.goal_chunk_nnz = ops.goal_chunk_nnz
-            plt_cfg.capacity = ops.capacity
-            if ops.offsets_filters:
-                plt_cfg.offsets_filters = [
-                    info["_type"] for info in ops.offsets_filters
-                ]
-            if ops.validity_filters:
-                plt_cfg.validity_filters = [
-                    info["_type"] for info in ops.validity_filters
-                ]
-            plt_cfg.allows_duplicates = ops.allows_duplicates
-            plt_cfg.tile_order = ops.tile_order
-            plt_cfg.cell_order = ops.cell_order
-            plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
-
+        plt_cfg = _util.build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
             clib.SOMADataFrame.create(
@@ -289,18 +263,14 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
             )
-
-            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-            return cls(
-                handle,
-                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-            )
         except SOMAError as e:
-            if is_already_exists_error(e):
-                raise AlreadyExistsError(f"{uri!r} already exists")
-            if is_not_createable_error(e):
-                raise NotCreateableError(f"{uri!r} cannot be created")
-            raise
+            raise map_exception_for_create(e, uri) from None
+
+        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+        return cls(
+            handle,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
 
     def keys(self) -> Tuple[str, ...]:
         """Returns the names of the columns when read back as a dataframe.
@@ -461,6 +431,11 @@ class DataFrame(TileDBArray, somacore.DataFrame):
                 of non-categorical type in the schema and a categorical column is presented for data
                 on write, the data are written as an array of category values, and the category-type
                 information is not saved.
+            platform_config:
+                Pass in parameters for tuning writes. Example:
+                platform_config = tiledbsoma.TileDBWriteOptions(
+                    **{"sort_coords": False, "consolidate_and_vacuum": True}
+                )
 
         Raises:
             TypeError:
@@ -475,55 +450,32 @@ class DataFrame(TileDBArray, somacore.DataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
-        target_schema = []
-        for i, input_field in enumerate(values.schema):
-            name = input_field.name
-            target_field = self.schema.field(name)
+        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        sort_coords = None
+        if isinstance(platform_config, TileDBCreateOptions):
+            version = get_implementation_version().split(".")
+            assert (int(version[0]), int(version[1])) < (1, 13)
+            warnings.warn(
+                "The write parameter now takes in TileDBWriteOptions "
+                "instead of TileDBCreateOptions. This warning will be removed "
+                "and error out when passing TileDBCreateOptions in 1.13.",
+                DeprecationWarning,
+            )
+            write_options = TileDBCreateOptions.from_platform_config(platform_config)
+        else:
+            write_options = TileDBWriteOptions.from_platform_config(platform_config)
+            sort_coords = write_options.sort_coords
 
-            if pa.types.is_dictionary(target_field.type):
-                if not pa.types.is_dictionary(input_field.type):
-                    raise ValueError(f"{name} requires dictionary entry")
-                col = values.column(name).combine_chunks()
-                if pa.types.is_boolean(target_field.type.value_type):
-                    col = col.cast(
-                        pa.dictionary(
-                            target_field.type.index_type,
-                            pa.uint8(),
-                            target_field.type.ordered,
-                        )
-                    )
-                new_enmr = self._handle._handle.extend_enumeration(name, col)
+        clib_dataframe = self._handle._handle
 
-                if pa.types.is_binary(
-                    target_field.type.value_type
-                ) or pa.types.is_large_binary(target_field.type.value_type):
-                    new_enmr = np.array(new_enmr, "S")
-                elif pa.types.is_boolean(target_field.type.value_type):
-                    new_enmr = np.array(new_enmr, bool)
-
-                df = pd.Categorical(
-                    col.to_pandas(),
-                    ordered=target_field.type.ordered,
-                    categories=new_enmr,
-                )
-                values = values.set_column(
-                    i, name, pa.DictionaryArray.from_pandas(df, type=target_field.type)
-                )
-
-            if pa.types.is_boolean(input_field.type):
-                target_schema.append(target_field.with_type(pa.uint8()))
-            else:
-                target_schema.append(target_field)
-        values = values.cast(pa.schema(target_schema, values.schema.metadata))
+        values = _util.cast_values_to_target_schema(clib_dataframe, values, self.schema)
 
         for batch in values.to_batches():
-            self._handle._handle.write(batch)
+            clib_dataframe.write(batch, sort_coords or False)
 
-        tiledb_create_options = TileDBCreateOptions.from_platform_config(
-            platform_config
-        )
-        if tiledb_create_options.consolidate_and_vacuum:
-            self._consolidate_and_vacuum()
+        if write_options.consolidate_and_vacuum:
+            clib_dataframe.consolidate_and_vacuum()
+
         return self
 
     def _set_reader_coord(

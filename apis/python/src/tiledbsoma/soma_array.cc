@@ -39,7 +39,7 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void write(SOMAArray& array, py::handle py_batch) {
+void write(SOMAArray& array, py::handle py_batch, bool sort_coords = true) {
     ArrowSchema arrow_schema;
     ArrowArray arrow_array;
     uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
@@ -51,7 +51,30 @@ void write(SOMAArray& array, py::handle py_batch) {
         std::make_unique<ArrowArray>(arrow_array));
 
     try {
-        array.write();
+        array.write(sort_coords);
+    } catch (const std::exception& e) {
+        TPY_ERROR_LOC(e.what());
+    }
+}
+
+void write_coords(
+    SOMAArray& array,
+    std::vector<py::array> coords,
+    py::array data,
+    bool sort_coords = true) {
+    for (uint64_t i = 0; i < coords.size(); ++i) {
+        py::buffer_info coords_info = coords[i].request();
+        array.set_column_data(
+            "soma_dim_" + std::to_string(i),
+            coords[i].size(),
+            (const void*)coords_info.ptr);
+    }
+
+    py::buffer_info data_info = data.request();
+    array.set_column_data("soma_data", data.size(), (const void*)data_info.ptr);
+
+    try {
+        array.write(sort_coords);
     } catch (const std::exception& e) {
         TPY_ERROR_LOC(e.what());
     }
@@ -575,6 +598,8 @@ void load_soma_array(py::module& m) {
 
         .def("write", write)
 
+        .def("write_coords", write_coords)
+
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 
         .def_property_readonly("shape", &SOMAArray::shape)
@@ -813,6 +838,8 @@ void load_soma_array(py::module& m) {
                     return py::array();
                 }
             })
+
+        .def("consolidate_and_vacuum", &SOMAArray::consolidate_and_vacuum)
 
         .def("set_metadata", set_metadata)
 

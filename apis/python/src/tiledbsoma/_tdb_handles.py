@@ -61,17 +61,6 @@ def open(
     """Determine whether the URI is an array or group, and open it."""
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
 
-    # raise("WAMI")
-
-    # Traceback (most recent call last):
-    #   File "/home/ubuntu/Desktop/awol-perf/./aw3.py", line 20, in <module>
-    #     exp = tiledbsoma.Experiment.open(SOMA_URI)
-    #   File "/home/ubuntu/git/single-cell-data/TileDB-SOMA/apis/python/src/tiledbsoma/_tiledb_object.py", line 96, in open
-    #     handle = _tdb_handles.open(uri, mode, context, tiledb_timestamp)
-    #   File "/home/ubuntu/git/single-cell-data/TileDB-SOMA/apis/python/src/tiledbsoma/_tdb_handles.py", line 63, in open
-    #     raise("WAMI")
-    # TypeError: exceptions must derive from BaseException
-
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
     # if there is not a valid SOMAObject at the given URI, this
@@ -94,25 +83,22 @@ def open(
     if not soma_type:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
-    if soma_type == "SOMADataFrame":
+    soma_type = soma_type.lower()
+
+    if soma_type == "somadataframe":
         return DataFrameWrapper._from_soma_object(soma_object, context)
-    if open_mode == clib.OpenMode.read and soma_type == "SOMADenseNDArray":
+    if soma_type == "somadensendarray":
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
-    if open_mode == clib.OpenMode.read and soma_type == "SOMASparseNDArray":
+    if soma_type == "somasparsendarray":
         return SparseNDArrayWrapper._from_soma_object(soma_object, context)
 
-    if soma_type in (
-        "SOMADataFrame",
-        "SOMADenseNDArray",
-        "SOMASparseNDArray",
-        "array",
-    ):
+    if soma_type == "array":
         return ArrayWrapper.open(uri, mode, context, timestamp)
 
     if soma_type in (
-        "SOMACollection",
-        "SOMAExperiment",
-        "SOMAMeasurement",
+        "somacollection",
+        "somaexperiment",
+        "somameasurement",
         "group",
     ):
         return GroupWrapper.open(uri, mode, context, timestamp)
@@ -451,6 +437,10 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         # ArrayWrapper. If enum is called in the read path, it is an error.
         raise NotImplementedError
 
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return tuple(self._handle.shape)
+
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
@@ -464,15 +454,16 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def write(self, values: pa.RecordBatch) -> None:
         self._handle.write(values)
 
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        # Shape is not implemented for DataFrames
+        raise NotImplementedError
+
 
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
 
     _WRAPPED_TYPE = clib.SOMADenseNDArray
-
-    @property
-    def shape(self) -> Tuple[int, ...]:
-        return tuple(self._handle.shape)
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
@@ -481,12 +472,8 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     _WRAPPED_TYPE = clib.SOMASparseNDArray
 
     @property
-    def shape(self) -> Tuple[int, ...]:
-        return tuple(self._handle.shape)
-
-    @property
     def nnz(self) -> int:
-        return int(self._handle.nnz)
+        return int(self._handle.nnz())
 
 
 class _DictMod(enum.Enum):
@@ -589,7 +576,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
             # There were no changes (e.g., it's a read handle).  Do nothing.
             return
         # Only try to get the writer if there are changes to be made.
-        if isinstance(self.owner, DataFrameWrapper):
+        if isinstance(self.owner, SOMAArrayWrapper):
             meta = self.owner.meta
             for key, mod in self._mods.items():
                 if mod in (_DictMod.ADDED, _DictMod.UPDATED):

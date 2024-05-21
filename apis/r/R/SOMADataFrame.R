@@ -202,7 +202,7 @@ SOMADataFrame <- R6::R6Class(
       arr[] <- df
       # tiledb-r always closes the array after a write operation so we need to
       # manually reopen it until close-on-write is optional
-      self$open("WRITE", internal_use_only = "allowed_use")
+      self$reopen("WRITE")
       invisible(self)
     },
 
@@ -395,7 +395,17 @@ SOMADataFrame <- R6::R6Class(
       self$reopen(mode = "WRITE")
       spdl::info("[SOMADataFrame update]: Writing new data")
       self$write(values)
-    }
+    },
+
+    #' @description Retrieve the shape; as \code{SOMADataFrames} are shapeless,
+    #' simply raises an error
+    #'
+    #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
+    #'
+    shape = function() stop(errorCondition(
+      "'SOMADataFrame$shape()' is not implemented yet",
+      class = 'notYetImplementedError'
+    ))
 
   ),
 

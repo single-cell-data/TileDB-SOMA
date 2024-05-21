@@ -61,22 +61,31 @@ void load_soma_object(py::module& m) {
                     auto soma_obj = SOMAObject::open(
                         uri, mode, context, timestamp, clib_type);
                     auto soma_obj_type = soma_obj->type();
-                    if (soma_obj_type == "SOMADataFrame")
+
+                    if (soma_obj_type.has_value()) {
+                        std::transform(
+                            soma_obj_type->begin(),
+                            soma_obj_type->end(),
+                            soma_obj_type->begin(),
+                            [](unsigned char c) { return std::tolower(c); });
+                    }
+
+                    if (soma_obj_type == "somadataframe")
                         return py::cast(
                             dynamic_cast<SOMADataFrame&>(*soma_obj));
-                    else if (soma_obj_type == "SOMASparseNDArray")
+                    else if (soma_obj_type == "somasparsendarray")
                         return py::cast(
                             dynamic_cast<SOMASparseNDArray&>(*soma_obj));
-                    else if (soma_obj_type == "SOMADenseNDArray")
+                    else if (soma_obj_type == "somadensendarray")
                         return py::cast(
                             dynamic_cast<SOMADenseNDArray&>(*soma_obj));
-                    else if (soma_obj_type == "SOMACollection")
+                    else if (soma_obj_type == "somacollection")
                         return py::cast(
                             dynamic_cast<SOMACollection&>(*soma_obj));
-                    else if (soma_obj_type == "SOMAExperiment")
+                    else if (soma_obj_type == "somaexperiment")
                         return py::cast(
                             dynamic_cast<SOMAExperiment&>(*soma_obj));
-                    else if (soma_obj_type == "SOMAMeasurement")
+                    else if (soma_obj_type == "somameasurement")
                         return py::cast(
                             dynamic_cast<SOMAMeasurement&>(*soma_obj));
                     return py::none();

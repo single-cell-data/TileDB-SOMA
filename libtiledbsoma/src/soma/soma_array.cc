@@ -425,8 +425,9 @@ void SOMAArray::set_column_data(
     }
 
     // Create the array_buffer_ as necessary
-    if (array_buffer_ == nullptr)
+    if (array_buffer_ == nullptr) {
         array_buffer_ = std::make_shared<ArrayBuffers>();
+    }
 
     // Create a ColumnBuffer object instead of passing it in as an argument to
     // `set_column_data` because ColumnBuffer::create requires a TileDB Array
@@ -502,14 +503,23 @@ void SOMAArray::set_array_data(
     }
 };
 
-void SOMAArray::write() {
+void SOMAArray::write(bool sort_coords) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
-    mq_->submit_write();
+    mq_->submit_write(sort_coords);
 
     mq_->reset();
     array_buffer_ = nullptr;
+}
+
+void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {
+    for (auto mode : modes) {
+        auto cfg = ctx_->tiledb_ctx()->config();
+        cfg["sm.consolidation.mode"] = mode;
+        Array::consolidate(Context(cfg), uri_);
+        Array::vacuum(Context(cfg), uri_);
+    }
 }
 
 uint64_t SOMAArray::nnz() {

@@ -7,8 +7,9 @@
 Implementation of SOMA DenseNDArray.
 """
 
-from typing import Optional, Tuple
+from typing import List, Optional, Sequence, Tuple, Union
 
+import numpy as np
 import pyarrow as pa
 import somacore
 from somacore import options
@@ -16,10 +17,16 @@ from typing_extensions import Self
 
 from . import _util
 from . import pytiledbsoma as clib
+from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
-from ._exception import SOMAError
-from ._tdb_handles import ArrayWrapper, DenseNDArrayWrapper
+from ._exception import SOMAError, map_exception_for_create
+from ._tdb_handles import DenseNDArrayWrapper
+from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
+from .options._soma_tiledb_context import (
+    SOMATileDBContext,
+    _validate_soma_tiledb_context,
+)
 from .options._tiledb_create_options import TileDBCreateOptions
 
 
@@ -73,8 +80,59 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
     __slots__ = ()
 
-    _wrapper_type = ArrayWrapper
+    _wrapper_type = DenseNDArrayWrapper
     _reader_wrapper_type = DenseNDArrayWrapper
+
+    @classmethod
+    def create(
+        cls,
+        uri: str,
+        *,
+        type: pa.DataType,
+        shape: Sequence[Union[int, None]],
+        platform_config: Optional[options.PlatformConfig] = None,
+        context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+    ) -> Self:
+        context = _validate_soma_tiledb_context(context)
+
+        index_column_schema = []
+        index_column_data = {}
+        for dim_idx, dim_shape in enumerate(shape):
+            dim_name = f"soma_dim_{dim_idx}"
+            pa_field = pa.field(dim_name, pa.int64())
+            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                dim_name,
+                dim_shape,
+                TileDBCreateOptions.from_platform_config(platform_config),
+            )
+            index_column_schema.append(pa_field)
+            index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
+
+        index_column_info = pa.RecordBatch.from_pydict(
+            index_column_data, schema=pa.schema(index_column_schema)
+        )
+
+        carrow_type = pyarrow_to_carrow_type(type)
+        plt_cfg = _util.build_clib_platform_config(platform_config)
+        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        try:
+            clib.SOMADenseNDArray.create(
+                uri,
+                format=carrow_type,
+                index_column_info=index_column_info,
+                ctx=context.native_context,
+                platform_config=plt_cfg,
+                timestamp=(0, timestamp_ms),
+            )
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
+
+        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+        return cls(
+            handle,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
 
     def read(
         self,
@@ -205,12 +263,37 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         _util.check_type("values", values, (pa.Tensor,))
 
-        self._handle.writer[coords] = values.to_numpy()
+        clib_dense_array = self._handle._handle
+
+        # Compute the coordinates for the dense array.
+        new_coords: List[Union[int, Slice[int], None]] = []
+        for c in coords:
+            if isinstance(c, slice) and isinstance(c.stop, int):
+                new_coords.append(slice(c.start, c.stop - 1, c.step))
+            else:
+                new_coords.append(c)
+
+        # Convert data to a numpy array.
+        dtype = self.schema.field("soma_data").type.to_pandas_dtype()
+        input = np.array(values, dtype=dtype)
+
+        # Set the result order. If neither row nor col major, set to be row major.
+        if input.flags.f_contiguous:
+            order = clib.ResultOrder.colmajor
+        else:
+            if not input.flags.contiguous:
+                input = np.ascontiguousarray(input)
+            order = clib.ResultOrder.rowmajor
+        clib_dense_array.reset(result_order=order)
+
+        self._set_reader_coords(clib_dense_array, new_coords)
+        clib_dense_array.write(input)
+
         tiledb_create_options = TileDBCreateOptions.from_platform_config(
             platform_config
         )
         if tiledb_create_options.consolidate_and_vacuum:
-            self._consolidate_and_vacuum()
+            clib_dense_array.consolidate_and_vacuum()
         return self
 
     @classmethod

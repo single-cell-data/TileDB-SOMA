@@ -138,8 +138,23 @@ def is_duplicate_group_key_error(e: Union[SOMAError, tiledb.TileDBError]) -> boo
 
     Lifecycle: maturing
     """
-    stre = str(e)
-    if "member already exists in group" in stre:
-        return True
+    return "member already exists in group" in str(e)
 
-    return False
+
+def is_domain_setting_error(e: SOMAError) -> bool:
+    """Given a SOMAError, return whether it attempted to create
+    the ArraySchema but the passed in domain was invalid.
+
+    Lifecycle: maturing
+    """
+    return "Cannot set domain" in str(e)
+
+
+def map_exception_for_create(e: SOMAError, uri: str) -> Exception:
+    if is_already_exists_error(e):
+        return AlreadyExistsError(f"{uri!r} already exists")
+    if is_not_createable_error(e):
+        return NotCreateableError(f"{uri!r} cannot be created")
+    if is_domain_setting_error(e):
+        return ValueError(e)
+    return e

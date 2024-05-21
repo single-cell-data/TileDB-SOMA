@@ -58,6 +58,24 @@ If the value is an instance of Exception, it will be raised.
 IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
 """
 
+_PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
+    pa.bool_(): "b",
+    pa.int8(): "c",
+    pa.int16(): "s",
+    pa.int32(): "i",
+    pa.int64(): "l",
+    pa.uint8(): "C",
+    pa.uint16(): "S",
+    pa.uint32(): "I",
+    pa.uint64(): "L",
+    pa.float32(): "f",
+    pa.float64(): "g",
+    pa.timestamp("s"): "tss:",
+    pa.timestamp("ms"): "tsm:",
+    pa.timestamp("us"): "tsu:",
+    pa.timestamp("ns"): "tsn:",
+}
+
 # Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 # Any type system differences from the base-case Attr should be added here.
 _ARROW_TO_TDB_DIM: Dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
@@ -146,6 +164,22 @@ def arrow_type_from_tiledb_dtype(
         return pa.from_numpy_dtype(tiledb_dtype)
 
 
+def is_string_dtypelike(dtype: npt.DTypeLike) -> bool:
+    # Much of this (including the null-check) is to make the type-checker happy,
+    # as npt.DTypeLike is a complex union including 'str' and None.
+    if dtype is None:
+        return False
+    if dtype == "str":
+        return True
+    if isinstance(dtype, np.dtype):
+        return is_string_dtype(dtype)
+    return False
+
+
+def is_string_dtype(dtype: Any) -> bool:
+    return dtype.name in ["object", "string", "str32", "str64"]
+
+
 def tiledb_schema_to_arrow(
     tdb_schema: tiledb.ArraySchema, uri: str, ctx: tiledb.ctx.Ctx
 ) -> pa.Schema:
@@ -192,11 +226,11 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     """
     Handle special cases where pa.Table.from_pandas is not sufficient.
     """
-    null_fields = set()
+    nullable_fields = set()
     # Not for name, col in df.items() since we need df[k] on the left-hand sides
-    for k in df:
-        if df[k].isnull().any():
-            null_fields.add(k)
+    for key in df:
+        if df[key].isnull().any():
+            nullable_fields.add(key)
 
         # Handle special cases for all null columns where the dtype is "object"
         # or "category" and must be explicitly casted to the correct pandas
@@ -206,11 +240,11 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
         #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))
         # the dtype comes in to us via `tiledbsoma.io.from_anndata` not
         # as `pd.StringDtype()` but rather as `object`.
-        if df[k].isnull().all():
-            if df[k].dtype.name == "object":
-                df[k] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
-            elif df[k].dtype.name == "category":
-                df[k] = pd.Series([None] * df.shape[0], dtype=pd.CategoricalDtype())
+        if df[key].isnull().all():
+            if df[key].dtype.name == "object":
+                df[key] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
+            elif df[key].dtype.name == "category":
+                df[key] = pd.Series([None] * df.shape[0], dtype=pd.CategoricalDtype())
 
     # For categoricals, it's possible to get
     #   TypeError: Object of type bool_ is not JSON serializable
@@ -230,10 +264,60 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
                 values=column, categories=categories, ordered=ordered
             )
 
+    # Always make string columns nullable. Context:
+    # * df_to_arrow is _solely_ for use of tiledbsoma.io
+    #   o Anyone calling the SOMA API directly has user-provided Arrow schema which
+    #     must be respected
+    #   o Anyone calling tiledbsoma.io -- including from_h5ad/from_anndata, and
+    #     update_obs/update_var -- does not provide an Arrow schema explicitly.
+    #     We compute an Arrow schema for them here.
+    # * Even when the _initial_ data is all non-null down a particular string
+    #   column, there are two ways a _subsequent_ write can provide nulls:
+    #   append-mode ingest, or, update_obs/update_var wherein the new data has
+    #   nulls even when the data used at schema-create time was non-null.
+    # * We have no way of knowing at initial ingest time whether or not users
+    #   will later be appending, or updating, with null data.
+    # * Note that Arrow has a per-field nullable flag in its schema metadata
+    #   -- and so do TileDB array schemas.
+    for key in df:
+        if is_string_dtype(df[key].dtype):
+            nullable_fields.add(key)
+
     arrow_table = pa.Table.from_pandas(df)
-    if null_fields:
+
+    if nullable_fields:
         md = arrow_table.schema.metadata
-        md.update(dict.fromkeys(null_fields, "nullable"))
+        md.update(dict.fromkeys(nullable_fields, "nullable"))
         arrow_table = arrow_table.replace_schema_metadata(md)
 
+    # For tiledbsoma.io (for which this method exists) _any_ dataset can be appended to
+    # later on. This means that on fresh ingest we must use a larger bit-width than
+    # the bare minimum necessary.
+    new_map = {}
+    for field in arrow_table.schema:
+        if pa.types.is_dictionary(field.type):
+            old_index_type = field.type.index_type
+            new_index_type = (
+                pa.int32()
+                if old_index_type in [pa.int8(), pa.int16()]
+                else old_index_type
+            )
+            new_map[field.name] = pa.dictionary(
+                new_index_type,
+                field.type.value_type,
+                field.type.ordered,
+            )
+        else:
+            new_map[field.name] = field.type
+    new_schema = pa.schema(new_map, metadata=arrow_table.schema.metadata)
+
+    arrow_table = pa.Table.from_pandas(df, schema=new_schema)
+
     return arrow_table
+
+
+def pyarrow_to_carrow_type(pa_type: pa.DataType) -> str:
+    try:
+        return _PYARROW_TO_CARROW[pa_type]
+    except KeyError:
+        raise TypeError(f"Invalid pyarrow type {pa_type}") from None

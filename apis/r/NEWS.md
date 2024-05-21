@@ -9,6 +9,10 @@
 * Make `reopen()` a public method for all `TileDBObjects`
 * Add support for resume-mode in `write_soma()`
 * Push default-setting for `TileDBCreateOptions` to `$initialize()` instead of in the accessors
+* Muffle warnings for missing command logs when outgesting SOMA to `Seurat`
+* Have `SOMADataFrame$shape()` throw a not-yet-implemented error
+* Disable running `SeuratObject::.CalcN()` when outgesting from SOMA to `Seurat`
+* Clear timestamp when using `$reopen()` to reopen at the current time
 
 # 1.7.0
 

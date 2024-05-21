@@ -50,6 +50,47 @@ void load_soma_sparse_ndarray(py::module& m) {
     py::class_<SOMASparseNDArray, SOMAArray, SOMAObject>(m, "SOMASparseNDArray")
 
         .def_static(
+            "create",
+            [](std::string_view uri,
+               std::string format,
+               py::object index_column_info,
+               std::shared_ptr<SOMAContext> context,
+               PlatformConfig platform_config,
+               std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
+                ArrowSchema index_column_schema;
+                ArrowArray index_column_array;
+                uintptr_t
+                    index_column_schema_ptr = (uintptr_t)(&index_column_schema);
+                uintptr_t
+                    index_column_array_ptr = (uintptr_t)(&index_column_array);
+                index_column_info.attr("_export_to_c")(
+                    index_column_array_ptr, index_column_schema_ptr);
+
+                try {
+                    SOMASparseNDArray::create(
+                        uri,
+                        format,
+                        ArrowTable(
+                            std::make_unique<ArrowArray>(index_column_array),
+                            std::make_unique<ArrowSchema>(index_column_schema)),
+                        context,
+                        platform_config,
+                        timestamp);
+                } catch (const std::out_of_range& e) {
+                    throw py::type_error(e.what());
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
+            "uri"_a,
+            py::kw_only(),
+            "format"_a,
+            "index_column_info"_a,
+            "ctx"_a,
+            "platform_config"_a,
+            "timestamp"_a = py::none())
+
+        .def_static(
             "open",
             py::overload_cast<
                 std::string_view,

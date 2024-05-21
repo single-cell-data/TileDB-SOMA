@@ -70,8 +70,12 @@ uns_hint <- function(type = c('1d', '2d')) {
   ))
 }
 
-.err_to_warn <- function(err, immediate. = TRUE) {
-  warning(conditionMessage(err), call. = FALSE, immediate. = immediate.)
+.err_to_warn <- function(err) {
+  warning(warningCondition(
+    message = conditionMessage(err),
+    class = setdiff(class(err), c('warning', 'simpleError', 'error', 'condition')),
+    call = conditionCall(err)
+  ))
 }
 
 .decode_from_char <- function(x) {

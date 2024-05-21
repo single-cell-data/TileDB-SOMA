@@ -3,28 +3,23 @@
 #
 # Licensed under the MIT License.
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple
 
 import pyarrow as pa
 from somacore import options
 from typing_extensions import Self
 
-import tiledb
-
 from . import _tdb_handles, _util
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib  # noqa: E402
-from ._arrow_types import tiledb_schema_to_arrow
 from ._tiledb_object import TileDBObject
 from ._types import OpenTimestamp, is_nonstringy_sequence
 from .options._soma_tiledb_context import SOMATileDBContext
 
 
-class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
-    """Wraps arrays from TileDB-Py by retaining a URI, options, etc.
-    Also serves as an abstraction layer to hide TileDB-specific details
-    from the API, unless requested.
+class SOMAArray(TileDBObject[_tdb_handles.SOMAArrayWrapper[Any]]):
+    """Base class for all SOMAArrays: DataFrame and NDarray.
 
     Lifecycle:
         Experimental.
@@ -61,14 +56,7 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         Lifecycle:
             Experimental.
         """
-        if isinstance(
-            self._tiledb_array_schema(),
-            tiledb.ArraySchema,
-        ):
-            return tiledb_schema_to_arrow(
-                self._tiledb_array_schema(), self.uri, self._ctx
-            )
-        return self._tiledb_array_schema()
+        return self._handle.schema
 
     def non_empty_domain(self) -> Tuple[Tuple[Any, Any], ...]:
         """
@@ -80,10 +68,6 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
         range.
         """
         return self._handle.non_empty_domain()
-
-    def _tiledb_array_schema(self) -> Union[pa.Schema, tiledb.ArraySchema]:
-        """Returns the TileDB array schema, for internal use."""
-        return self._handle.schema
 
     def _tiledb_array_keys(self) -> Tuple[str, ...]:
         """Return all dim and attr names."""
@@ -101,46 +85,6 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
 
     def _tiledb_domain(self) -> Tuple[Tuple[Any, Any], ...]:
         return self._handle.domain
-
-    def _soma_reader(
-        self,
-        *,
-        schema: Optional[tiledb.ArraySchema] = None,
-        column_names: Optional[Sequence[str]] = None,
-        query_condition: Optional[tiledb.QueryCondition] = None,
-        result_order: Optional[options.ResultOrderStr] = None,
-    ) -> clib.SOMAArray:
-        """Constructs a C++ SOMAArray using appropriate context/config/etc."""
-        # Leave empty arguments out of kwargs to allow C++ constructor defaults to apply, as
-        # they're not all wrapped in std::optional<>.
-        kwargs: Dict[str, object] = {}
-        # if schema:
-        #     kwargs["schema"] = schema
-        if column_names:
-            kwargs["column_names"] = column_names
-        if result_order:
-            result_order_map = {
-                "auto": clib.ResultOrder.automatic,
-                "row-major": clib.ResultOrder.rowmajor,
-                "column-major": clib.ResultOrder.colmajor,
-            }
-            result_order_enum = result_order_map[
-                options.ResultOrder(result_order).value
-            ]
-            kwargs["result_order"] = result_order_enum
-
-        soma_array = clib.SOMAArray(
-            self.uri,
-            name=f"{self} reader",
-            platform_config=self._ctx.config().dict(),
-            timestamp=(0, self.tiledb_timestamp_ms),
-            **kwargs,
-        )
-
-        if query_condition:
-            soma_array.set_condition(query_condition, self._tiledb_array_schema())
-
-        return soma_array
 
     def _set_reader_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
         """Parses the given coords and sets them on the SOMA Reader."""
@@ -193,61 +137,3 @@ class TileDBArray(TileDBObject[_tdb_handles.ArrayWrapper]):
             # If `None`, coord was `slice(None)` and there is no constraint.
             return True
         return False
-
-    @classmethod
-    def _create_internal(
-        cls,
-        uri: str,
-        schema: tiledb.ArraySchema,
-        context: SOMATileDBContext,
-        tiledb_timestamp: Optional[OpenTimestamp],
-    ) -> Union[_tdb_handles.ArrayWrapper, _tdb_handles.DataFrameWrapper]:
-        """Creates the TileDB Array for this type and returns an opened handle.
-
-        This does the work of creating a TileDB Array with the provided schema
-        at the given URI, sets the necessary metadata, and returns a handle to
-        the newly-created array, open for writing.
-        """
-        tiledb.Array.create(uri, schema, ctx=context.tiledb_ctx)
-        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-        cls._set_create_metadata(handle)
-        return handle
-
-    def _consolidate_and_vacuum(
-        self, modes: List[str] = ["fragment_meta", "commits"]
-    ) -> None:
-        """
-        This post-ingestion helper consolidates and vacuums fragment metadata and commit files --
-        this is quick to do, and positively impacts query performance.  It does _not_ consolidate
-        bulk array data, which is more time-consuming and should be done at the user's opt-in
-        discretion.
-        """
-
-        for mode in modes:
-            self._consolidate(modes=[mode])
-            self._vacuum(modes=[mode])
-
-    def _consolidate(self, modes: List[str] = ["fragment_meta", "commits"]) -> None:
-        """
-        This post-ingestion helper consolidates by default fragment metadata and commit files --
-        this is quick to do, and positively impacts query performance.
-        """
-
-        for mode in modes:
-            cfg = self._ctx.config()
-            cfg["sm.consolidation.mode"] = mode
-            ctx = tiledb.Ctx(cfg)
-
-            tiledb.consolidate(self.uri, ctx=ctx)
-
-    def _vacuum(self, modes: List[str] = ["fragment_meta", "commits"]) -> None:
-        """
-        This post-ingestion helper vacuums by default fragment metadata and commit files. Vacuuming is not multi-process safe and requires coordination that nothing is currently reading the files that will be vacuumed.
-        """
-
-        for mode in modes:
-            cfg = self._ctx.config()
-            cfg["sm.vacuum.mode"] = mode
-            ctx = tiledb.Ctx(cfg)
-
-            tiledb.vacuum(self.uri, ctx=ctx)

@@ -45,6 +45,7 @@ def test_dense_nd_array_create_ok(
     for d in range(len(shape)):
         assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
     assert a.schema.field("soma_data").type == element_type
+    assert not a.schema.field("soma_data").nullable
 
     # Validate TileDB array schema
     with tiledb.open(tmp_path.as_posix()) as A:
@@ -54,9 +55,9 @@ def test_dense_nd_array_create_ok(
     with soma.DenseNDArray.open(tmp_path.as_posix(), "r") as A:
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADenseNDArray)
 
-    # Ensure write mode uses Python object
+    # Ensure write mode uses clib object
     with soma.DenseNDArray.open(tmp_path.as_posix(), "w") as A:
-        assert isinstance(A._handle._handle, tiledb.Array)
+        assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADenseNDArray)
 
 
 @pytest.mark.parametrize("shape", [(10,)])

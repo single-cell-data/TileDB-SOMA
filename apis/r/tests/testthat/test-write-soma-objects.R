@@ -13,7 +13,7 @@ test_that("write_soma.data.frame mechanics", {
   expect_identical(sdf$uri, file.path(collection$uri, 'co2'))
   expect_identical(sdf$dimnames(), 'soma_joinid')
   expect_identical(sdf$attrnames(), c(names(co2), 'obs_id'))
-  expect_true(rlang::is_na(sdf$shape()))
+  expect_error(sdf$shape(), class = 'notYetImplementedError')
   schema <- sdf$schema()
   expect_s3_class(schema, 'Schema')
   expect_equal(schema$num_fields - 2L, ncol(co2))

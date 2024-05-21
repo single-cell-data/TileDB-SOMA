@@ -457,7 +457,16 @@ class SOMAArray : public SOMAObject {
      *   array.write();
      *   array.close();
      */
-    void write();
+    void write(bool sort_coords = true);
+
+    /**
+     * @brief Consolidates and vacuums fragment metadata and commit files.
+     *
+     * @param modes List of modes to apply. By default, apply to fragment_meta
+     * and commits
+     */
+    void consolidate_and_vacuum(
+        std::vector<std::string> modes = {"fragment_meta", "commits"});
 
     /**
      * @brief Check if the query is complete.

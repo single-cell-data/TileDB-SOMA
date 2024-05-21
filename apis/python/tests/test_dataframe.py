@@ -88,6 +88,9 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sdf.count == 5
         assert len(sdf) == 5
 
+        with pytest.raises(AttributeError):
+            assert sdf.shape is None
+
         # Read all
         table = sdf.read().concat()
         assert table.num_rows == 5
@@ -112,6 +115,8 @@ def test_dataframe(tmp_path, arrow_schema):
     with tiledb.open(uri) as A:
         assert A.schema.sparse
         assert not A.schema.allows_duplicates
+        assert A.dim("foo").filters == [tiledb.ZstdFilter(level=3)]
+        assert A.attr("bar").filters == [tiledb.ZstdFilter()]
 
     with soma.DataFrame.open(uri) as sdf:
         assert sdf.count == 5

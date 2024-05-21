@@ -244,6 +244,8 @@ write_soma.data.frame <- function(
   }
   # Add to `soma_parent`
   if (is.character(key)) {
+    mode <- sdf$mode()
+    on.exit(sdf$reopen(mode), add = TRUE, after = FALSE)
     withCallingHandlers(
       expr = .register_soma_object(sdf, soma_parent, key, relative),
       existingKeyWarning = .maybe_muffle
@@ -369,6 +371,8 @@ write_soma.matrix <- function(
   array$write(x)
   # Add to `soma_parent`
   if (is.character(key)) {
+    mode <- array$mode()
+    on.exit(array$reopen(mode), add = TRUE, after = FALSE)
     withCallingHandlers(
       expr = .register_soma_object(array, soma_parent, key, relative),
       existingKeyWarning = .maybe_muffle
@@ -498,6 +502,8 @@ write_soma.TsparseMatrix <- function(
   }
   # Add to `soma_parent`
   if (is.character(key)) {
+    mode <- array$mode()
+    on.exit(array$reopen(mode), add = TRUE, after = FALSE)
     withCallingHandlers(
       expr = .register_soma_object(array, soma_parent, key, relative),
       existingKeyWarning = .maybe_muffle
@@ -598,12 +604,18 @@ write_soma.TsparseMatrix <- function(
     "'key' must be a single character value" = is_scalar_character(key) && nzchar(key),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
+  xmode <- x$mode()
+  if (xmode == 'CLOSED') {
+    x$reopen('READ')
+    xmode <- x$mode()
+  }
+  on.exit(x$reopen(mode = xmode), add = TRUE, after = FALSE)
   oldmode <- soma_parent$mode()
   if (oldmode == 'CLOSED') {
     soma_parent$reopen("READ")
     oldmode <- soma_parent$mode()
   }
-  on.exit(soma_parent$reopen(oldmode))
+  on.exit(soma_parent$reopen(oldmode), add = TRUE, after = FALSE)
   if (key %in% soma_parent$names()) {
     existing <- soma_parent$get(key)
     warning(warningCondition(

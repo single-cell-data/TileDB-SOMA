@@ -323,7 +323,7 @@ class ManagedQuery {
      * @brief Submit the write query.
      *
      */
-    void submit_write();
+    void submit_write(bool sort_coords = true);
 
     /**
      * @brief Get the schema of the array.
