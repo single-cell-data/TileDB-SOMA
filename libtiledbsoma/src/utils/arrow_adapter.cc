@@ -722,8 +722,8 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         schema->flags |= ARROW_FLAG_NULLABLE;  // it is also set by default
 
         // Count nulls
-        for (auto v : column->validity()) {
-            array->null_count += v == 0;
+        for (size_t i = 0; i < column->size(); ++i) {
+            array->null_count += column->validity()[i] == 0;
         }
 
         // Convert validity bytemap to a bitmap in place
