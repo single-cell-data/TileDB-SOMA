@@ -31,6 +31,7 @@ Param(
     [string]$Configuration = 'Release',
     [string]$Prefix = '',
     [string]$TileDBLocation = '',
+    [string]$TileDBRemoveDeprecations = '',
     [Alias('J')]
     [int]
     $BuildProcesses = $env:NUMBER_OF_PROCESSORS
@@ -50,6 +51,10 @@ if ($Prefix -ne '') {
 
 if ($TileDBLocation -ne '') {
     $ExtraOpts += " -DTileDB_DIR=$TileDBLocation -DFORCE_BUILD_TILEDB=OFF"
+}
+
+if ($RemoveTileDBDeprecated -ne '') {
+    $ExtraOpts += " -DTILEDB_REMOVE_DEPRECATIONS=$TileDBRemoveDeprecations"
 }
 
 Write-Host "Building $Configuration build"
