@@ -18,6 +18,7 @@
 * Muffle warnings for missing command logs when outgesting SOMA to `Seurat`
 * Have `SOMADataFrame$shape()` throw a not-yet-implemented error
 * Disable running `SeuratObject::.CalcN()` when outgesting from SOMA to `Seurat`
+* Clear timestamp when using `$reopen()` to reopen at the current time
 
 # 1.10.2
 

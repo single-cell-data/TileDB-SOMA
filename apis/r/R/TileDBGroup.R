@@ -171,14 +171,17 @@ TileDBGroup <- R6::R6Class(
       # we return it. But if not (e.g. first access on read from storage)
       # then we invoke the appropriate constructor. Note: child classes
       # may override construct_member.
-      if (is.null(member$object)) {
+      obj <- if (is.null(member$object)) {
         obj <- private$construct_member(member$uri, member$type)
-        obj$open(mode = self$mode(), internal_use_only = "allowed_use")
       } else {
-        obj <- member$object
-        if (!obj$is_open()) {
-          obj$open(mode = self$mode(), internal_use_only = "allowed_use")
-        }
+        member$object
+      }
+      if (!obj$is_open()) {
+        switch(
+          EXPR = (mode <- self$mode()),
+          READ = obj$open(mode, internal_use_only = "allowed_use"),
+          WRITE = obj$reopen(mode)
+        )
       }
 
       private$add_cached_member(name, obj)

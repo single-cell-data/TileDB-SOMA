@@ -4,7 +4,7 @@ test_that("Write Assay mechanics", {
 
   uri <- withr::local_tempdir("write-assay")
   collection <- SOMACollectionCreate(uri)
-  on.exit(collection$close(), add = TRUE)
+  on.exit(collection$close(), add = TRUE, after = FALSE)
 
   rna <- get_data('pbmc_small', package = 'SeuratObject')[['RNA']]
   expect_no_condition(ms <- write_soma(rna, soma_parent = collection))
@@ -26,6 +26,10 @@ test_that("Write Assay mechanics", {
       info = layers[i]
     )
   }
+
+  ms$close()
+  gc()
+
   # Test no feature-level meta data
   rna2 <- rna
   for (i in names(rna2[[]])) {
@@ -39,6 +43,9 @@ test_that("Write Assay mechanics", {
   expect_identical(ms2$names(), c('X', 'var'))
   expect_s3_class(ms2$var, 'SOMADataFrame')
   expect_identical(ms2$var$attrnames(), 'var_id')
+
+  ms2$close()
+  gc()
 
   # Test no counts
   rna3 <- SeuratObject::SetAssayData(rna, 'counts', new('matrix'))
@@ -59,6 +66,9 @@ test_that("Write Assay mechanics", {
     )
   }
 
+  ms3$close()
+  gc()
+
   # Test no scale.data
   rna4 <- SeuratObject::SetAssayData(rna, 'scale.data', new('matrix'))
   expect_no_condition(ms4 <- write_soma(rna4, uri = 'rna-no-scale', soma_parent = collection))
@@ -78,6 +88,9 @@ test_that("Write Assay mechanics", {
     )
   }
 
+  ms4$close()
+  gc()
+
   # Test no counts or scale.data
   rna5 <- SeuratObject::SetAssayData(rna3, 'scale.data', new('matrix'))
   expect_no_condition(ms5 <- write_soma(rna5, uri = 'rna-no-counts-scale', soma_parent = collection))
@@ -91,6 +104,9 @@ test_that("Write Assay mechanics", {
   expect_identical(ms5$X$names(), 'data')
   expect_equal(ms5$X$get('data')$shape(), rev(dim(rna5)))
 
+  ms5$close()
+  gc()
+
   # Verify data slot isn't ingested when it's identical to counts
   rna6 <- SeuratObject::CreateAssayObject(
     counts = SeuratObject::GetAssayData(rna, "counts")
@@ -99,9 +115,16 @@ test_that("Write Assay mechanics", {
     SeuratObject::GetAssayData(rna6, "counts"),
     SeuratObject::GetAssayData(rna6, "data")
   )
-  expect_no_condition(ms6 <- write_soma(rna6, uri = "rna-identical-counts-data", soma_parent = collection))
+  expect_no_condition(ms6 <- write_soma(
+    rna6,
+    uri = "rna-identical-counts-data",
+    soma_parent = collection
+  ))
   on.exit(ms6$close(), add = TRUE, after = FALSE)
   expect_equal(ms6$X$names(), "counts")
+
+  ms6$close()
+  gc()
 
   # Test assertions
   expect_error(write_soma(rna, uri = TRUE, soma_parent = collection))
@@ -110,6 +133,8 @@ test_that("Write Assay mechanics", {
     rna,
     soma_parent = SOMADataFrameCreate(uri = file.path(uri, 'data-frame'))
   ))
+
+  gc()
 })
 
 test_that("Write DimReduc mechanics", {
@@ -118,7 +143,7 @@ test_that("Write DimReduc mechanics", {
 
   uri <- withr::local_tempdir("write-reduction")
   collection <- SOMACollectionCreate(uri)
-  on.exit(collection$close(), add = TRUE)
+  on.exit(collection$close(), add = TRUE, after = FALSE)
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   pbmc_small_rna <- pbmc_small[['RNA']]
   pbmc_small_pca <- pbmc_small[['pca']]
@@ -160,7 +185,7 @@ test_that("Write DimReduc mechanics", {
   ))
   on.exit(ms_pca2$close(), add = TRUE, after = FALSE)
   expect_no_condition(write_soma(pbmc_small_tsne, soma_parent = ms))
-  ms$reopen(ms$mode(), force = TRUE)
+  ms$reopen(ms$mode())
   expect_identical(sort(ms$names()), sort(c('X', 'var', 'obsm', 'varm')))
   expect_identical(sort(ms$obsm$names()), sort(paste0('X_', c('pca', 'tsne'))))
   expect_identical(ms$varm$names(), 'PCs')
@@ -171,6 +196,8 @@ test_that("Write DimReduc mechanics", {
   expect_true(ms_tsne$is_open())
   expect_warning(ms_pca3 <- write_soma(pbmc_small_pca, soma_parent = ms_tsne))
   expect_error(ms_tsne$varm)
+
+  gc()
 })
 
 test_that("Write Graph mechanics", {
@@ -179,7 +206,7 @@ test_that("Write Graph mechanics", {
 
   uri <- withr::local_tempdir("write-graph")
   collection <- SOMACollectionCreate(uri)
-  on.exit(collection$close(), add = TRUE)
+  on.exit(collection$close(), add = TRUE, after = FALSE)
 
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   pbmc_small_rna <- pbmc_small[['RNA']]
@@ -195,6 +222,8 @@ test_that("Write Graph mechanics", {
 
   # Test assertions
   expect_error(write_soma(graph, collection = soma_parent))
+
+  gc()
 })
 
 test_that("Write SeuratCommand mechanics", {
@@ -216,7 +245,6 @@ test_that("Write SeuratCommand mechanics", {
 
     expect_s3_class(cmddf <- cmdgrp$get(cmd), 'SOMADataFrame')
     expect_invisible(cmddf$reopen("READ"))
-    on.exit(cmddf$close(), add = TRUE, after = FALSE)
 
     # Test qualities of the SOMADataFrame
     expect_identical(cmddf$attrnames(), 'values')
@@ -268,7 +296,14 @@ test_that("Write SeuratCommand mechanics", {
         expect_equivalent(params[[param]], cmdlist[[param]])
       }
     }
+
+    cmddf$close()
+    cmdgrp$close()
+    gc()
   }
+
+  uns$close()
+  gc()
 })
 
 test_that("Write Seurat mechanics", {
@@ -285,7 +320,7 @@ test_that("Write Seurat mechanics", {
     basename(uri)
   ))
   expect_no_condition(experiment <- SOMAExperimentOpen(uri))
-  on.exit(experiment$close())
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
 
   expect_s3_class(experiment, 'SOMAExperiment')
   expect_equal(experiment$mode(), "READ")
@@ -297,6 +332,7 @@ test_that("Write Seurat mechanics", {
   expect_no_error(experiment$ms)
   expect_identical(experiment$ms$names(), 'RNA')
   expect_s3_class(ms <- experiment$ms$get('RNA'), 'SOMAMeasurement')
+  on.exit(ms$close(), add = TRUE, after = FALSE)
 
   expect_identical(sort(ms$X$names()), sort(c('counts', 'data', 'scale_data')))
   expect_identical(sort(ms$obsm$names()), sort(c('X_pca', 'X_tsne')))
@@ -308,8 +344,13 @@ test_that("Write Seurat mechanics", {
     names(pbmc_small[[]])
   )
 
+  ms$close()
+  experiment$close()
+
   # Test assertions
   expect_error(write_soma(pbmc_small, TRUE))
   expect_error(write_soma(pbmc_small, 1))
   expect_error(write_soma(pbmc_small, ''))
+
+  gc()
 })
