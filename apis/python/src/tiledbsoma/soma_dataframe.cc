@@ -61,17 +61,16 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t schema_ptr = (uintptr_t)(&schema);
                 py_schema.attr("_export_to_c")(schema_ptr);
 
-                for (int64_t sch_idx = 0; sch_idx < schema.n_children;
-                     ++sch_idx) {
-                    auto child = schema.children[sch_idx];
-                    auto metadata = py_schema.attr("metadata");
-                    if (py::hasattr(metadata, "get")) {
+                auto metadata = py_schema.attr("metadata");
+                if (py::hasattr(metadata, "get")) {
+                    for (int64_t i = 0; i < schema.n_children; ++i) {
+                        auto child = schema.children[i];
                         auto val = metadata.attr("get")(
                             py::str(child->name).attr("encode")("utf-8"));
 
                         if (val != py::none() &&
                             val.cast<std::string>() == "nullable") {
-                            child->flags &= ARROW_FLAG_NULLABLE;
+                            child->flags |= ARROW_FLAG_NULLABLE;
                         } else {
                             child->flags &= ~ARROW_FLAG_NULLABLE;
                         }

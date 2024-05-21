@@ -1432,3 +1432,21 @@ def test_enum_schema_report(tmp_path):
         f = sdf.schema.field("byte_cat")
         assert f.type.index_type == pa.int8()
         assert f.type.value_type == pa.binary()
+
+
+def test_nullable(tmp_path):
+    uri = tmp_path.as_posix()
+
+    asch = pa.schema([pa.field("foo", pa.int32())], metadata={"foo": "nullable"})
+
+    pydict = {}
+    pydict["soma_joinid"] = [0, 1, 2, 3, 4]
+    pydict["foo"] = [10, 20, 30, None, 50]
+    data = pa.Table.from_pydict(pydict)
+
+    with soma.DataFrame.create(uri, schema=asch) as sdf:
+        sdf.write(data)
+
+    with soma.DataFrame.open(uri, "r") as sdf:
+        df = sdf.read().concat().to_pandas()
+        assert df.compare(data.to_pandas()).empty
