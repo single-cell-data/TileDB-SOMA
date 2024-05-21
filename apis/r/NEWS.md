@@ -1,3 +1,9 @@
+# tiledbsoma 1.11.2
+
+## Changes
+
+* New `reopen` method available from R
+
 # tiledbsoma 1.11.1
 
 ## Changes
