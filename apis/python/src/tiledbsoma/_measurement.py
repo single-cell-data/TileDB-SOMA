@@ -80,4 +80,5 @@ class Measurement(  # type: ignore[misc]  # __eq__ false positive
         "obsp": ("SOMACollection",),
         "varm": ("SOMACollection",),
         "varp": ("SOMACollection",),
+        "var_spatial": ("SOMADataFrame",),
     }
