@@ -66,8 +66,7 @@ void load_soma_dataframe(py::module& m) {
                     for (int64_t i = 0; i < schema.n_children; ++i) {
                         auto child = schema.children[i];
                         auto val = metadata.attr("get")(
-                            py::str(child->name)
-                                .attr("encode")("utf-8"));
+                            py::str(child->name).attr("encode")("utf-8"));
 
                         if (val != py::none() &&
                             val.cast<std::string>() == "nullable") {

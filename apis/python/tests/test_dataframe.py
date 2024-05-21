@@ -1433,6 +1433,7 @@ def test_enum_schema_report(tmp_path):
         assert f.type.index_type == pa.int8()
         assert f.type.value_type == pa.binary()
 
+
 def test_nullable(tmp_path):
     uri = tmp_path.as_posix()
 
