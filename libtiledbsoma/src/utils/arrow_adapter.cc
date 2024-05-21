@@ -325,6 +325,7 @@ void ArrowAdapter::_append_to_filter_list(
         {"XOR", TILEDB_FILTER_XOR},
         {"WEBP", TILEDB_FILTER_WEBP},
         {"NOOP", TILEDB_FILTER_NONE},
+        {"NONE", TILEDB_FILTER_NONE},
     };
 
     try {
