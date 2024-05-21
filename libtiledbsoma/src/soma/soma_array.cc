@@ -420,6 +420,24 @@ void SOMAArray::set_column_data(
     const void* data,
     uint64_t* offsets,
     uint8_t* validity) {
+    auto column = SOMAArray::_setup_column_data(name);
+    column->set_data(num_elems, data, offsets, validity);
+    mq_->set_column_data(column);
+};
+
+void SOMAArray::set_column_data(
+    std::string_view name,
+    uint64_t num_elems,
+    const void* data,
+    uint32_t* offsets,
+    uint8_t* validity) {
+    auto column = SOMAArray::_setup_column_data(name);
+    column->set_data(num_elems, data, offsets, validity);
+    mq_->set_column_data(column);
+};
+
+std::shared_ptr<ColumnBuffer> SOMAArray::_setup_column_data(
+    std::string_view name) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
@@ -433,14 +451,13 @@ void SOMAArray::set_column_data(
     // `set_column_data` because ColumnBuffer::create requires a TileDB Array
     // argument which should remain a private member of SOMAArray
     auto column = ColumnBuffer::create(arr_, name);
-    column->set_data(num_elems, data, offsets, validity);
 
     // Keep the ColumnBuffer alive by attaching it to the ArrayBuffers class
     // member. Otherwise, the data held by the ColumnBuffer will be garbage
     // collected before it is submitted to the write query
     array_buffer_->emplace(std::string(name), column);
 
-    mq_->set_column_data(column);
+    return column;
 };
 
 void SOMAArray::set_array_data(
@@ -451,49 +468,58 @@ void SOMAArray::set_array_data(
     }
 
     // Create the array_buffer_ as necessary
-    if (array_buffer_ == nullptr)
+    if (array_buffer_ == nullptr) {
         array_buffer_ = std::make_shared<ArrayBuffers>();
+    }
 
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
         auto arrow_sch_ = arrow_schema->children[i];
         auto arrow_arr_ = arrow_array->children[i];
 
-        const void* data;
-        uint64_t* offsets = nullptr;
-
-        uint8_t* validities = nullptr;
-        if (arrow_arr_->null_count != 0) {
-            validities = (uint8_t*)arrow_arr_->buffers[0];
-        }
-
-        if (arrow_arr_->n_buffers == 3) {
-            offsets = (uint64_t*)arrow_arr_->buffers[1];
-            data = arrow_arr_->buffers[2];
-        } else {
-            data = arrow_arr_->buffers[1];
-        }
-
-        auto table_offset = arrow_arr_->offset;
-        auto data_size = tiledb::impl::type_size(
-            ArrowAdapter::to_tiledb_format(arrow_sch_->format));
-
-        if (offsets) {
-            offsets += table_offset;
-        }
-        if (validities) {
-            validities += table_offset;
-        }
-
         // Create a ColumnBuffer object instead of passing it in as an argument
         // to `set_column_data` because ColumnBuffer::create requires a TileDB
         // Array argument which should remain a private member of SOMAArray
         auto column = ColumnBuffer::create(arr_, arrow_sch_->name);
-        column->set_data(
-            arrow_arr_->length,
-            (char*)data + table_offset * data_size,
-            offsets,
-            validities);
 
+        const void* data;
+        uint8_t* validities = nullptr;
+        auto table_offset = arrow_arr_->offset;
+        auto data_size = tiledb::impl::type_size(
+            ArrowAdapter::to_tiledb_format(arrow_sch_->format));
+
+        if (arrow_arr_->null_count != 0) {
+            validities = (uint8_t*)arrow_arr_->buffers[0] + table_offset;
+        }
+
+        if (arrow_arr_->n_buffers == 3) {
+            data = arrow_arr_->buffers[2];
+            if ((strcmp(arrow_sch_->format, "u") == 0) ||
+                (strcmp(arrow_sch_->format, "z") == 0)) {
+                uint32_t* offsets = (uint32_t*)arrow_arr_->buffers[1] +
+                                    table_offset;
+                column->set_data(
+                    arrow_arr_->length,
+                    (char*)data + table_offset * data_size,
+                    offsets,
+                    validities);
+            } else {
+                uint64_t* offsets = (uint64_t*)arrow_arr_->buffers[1] +
+                                    table_offset;
+                column->set_data(
+                    arrow_arr_->length,
+                    (char*)data + table_offset * data_size,
+                    offsets,
+                    validities);
+            }
+
+        } else {
+            data = arrow_arr_->buffers[1];
+            column->set_data(
+                arrow_arr_->length,
+                (char*)data + table_offset * data_size,
+                static_cast<uint64_t*>(nullptr),
+                validities);
+        }
         // Keep the ColumnBuffer alive by attaching it to the ArrayBuffers class
         // member. Otherwise, the data held by the ColumnBuffer will be garbage
         // collected before it is submitted to the write query
