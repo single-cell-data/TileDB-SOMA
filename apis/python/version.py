@@ -96,9 +96,10 @@ def err(*args, **kwargs):
 def lines(
     *cmd, drop_trailing_newline: bool = True, stderr=DEVNULL, **kwargs
 ) -> List[str]:
-    """Run a command and return its output as a list of lines.
+    """Run a command and return its stdout as a list of lines.
 
-    Strip trailing newlines, and drop the last line if it's empty, by default."""
+    Strip echo line's trailing newline, and drop the last line if it's empty, by default.
+    """
     lns = [
         ln.rstrip("\n")
         for ln in check_output(cmd, stderr=stderr, **kwargs).decode().splitlines()
@@ -109,7 +110,7 @@ def lines(
 
 
 def line(*cmd, **kwargs) -> str:
-    """Run a command, verify exactly one line of stdout, return it."""
+    """Run a command, verify it produces exactly one line of stdout, return it."""
     lns = lines(*cmd, **kwargs)
     if len(lns) != 1:
         raise RuntimeError(f"Expected 1 line, found {len(lns)}: {shlex.join(cmd)}")
@@ -216,15 +217,15 @@ def get_git_version() -> Optional[str]:
         else:
             # Didn't find a suitable local tag, look for a tracked/default "remote", and find its
             # latest release tag
-            tracked_remote = get_default_remote()
-            if tracked_remote:
+            remote = get_default_remote()
+            if remote:
                 try:
-                    latest_tag = get_latest_remote_tag(tracked_remote)
+                    latest_tag = get_latest_remote_tag(remote)
                     err(
-                        f"Git traversal returned {ver}, using latest tag {latest_tag} from tracked remote {tracked_remote}"
+                        f"Git traversal returned {ver}, using latest tag {latest_tag} from remote {remote}"
                     )
                 except CalledProcessError:
-                    err(f"Failed to find tags in remote {tracked_remote}")
+                    err(f"Failed to find tags in remote {remote}")
                     return None
             else:
                 err("Failed to find a suitable remote for tag traversal")

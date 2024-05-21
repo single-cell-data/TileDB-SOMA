@@ -76,7 +76,7 @@ if [ -n "${tiledb}"  ]; then
   #   if [[ -v LD_LIBRARY_PATH ]]; then
   #     ...
   #   fi
-  # -- however, this is supproted by bash not sh. And this script can
+  # -- however, this is supported by bash not sh. And this script can
   # be invoked by python via its shell-out which seems to use sh.
   # It's simplest to just pause set -u.
 
