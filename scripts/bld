@@ -12,6 +12,7 @@ build="Release"
 prefix=""
 tiledb=""
 cmake_verbose="false"
+no_tiledb_deprecated="false"
 
 while test $# != 0; do
   case "$1" in
@@ -19,6 +20,7 @@ while test $# != 0; do
   --prefix=*) prefix=$(arg "$1");;
   --tiledb=*) tiledb=$(arg "$1");;
   --cmake-verbose=*) cmake_verbose=$(arg "$1");;
+  --no-tiledb-deprecated=*) no_tiledb_deprecated=$(arg "$1");;
   esac
   shift
 done
@@ -53,7 +55,7 @@ if [ "$cmake_verbose" = "true" ]; then
 
   # TILEDB_WERROR=OFF is necessary to build core with XCode 14; doesn't hurt for XCode 13.
   extra_opts+=" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DTILEDB_WERROR=OFF -DTILEDBSOMA_ENABLE_WERROR=OFF"
-  
+
   # Debug cmake find commands
   extra_opts+=" --debug-find"
 
@@ -61,8 +63,12 @@ if [ "$cmake_verbose" = "true" ]; then
   nproc=1
 fi
 
+if [ "$no_tiledb_deprecated" = "true" ]; then
+    extra_opts+=" -DTILEDB_REMOVE_DEPRECATIONS=ON"
+fi
+
 # set installation path
-if [ -n "${prefix}"  ]; then 
+if [ -n "${prefix}"  ]; then
   extra_opts+=" -DCMAKE_INSTALL_PREFIX=${prefix} -DOVERRIDE_INSTALL_PREFIX=OFF"
 fi
 

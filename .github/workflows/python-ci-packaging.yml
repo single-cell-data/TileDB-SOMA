@@ -91,6 +91,7 @@ jobs:
             -D CMAKE_INSTALL_PREFIX:PATH=$(pwd)/external/ \
             -D OVERRIDE_INSTALL_PREFIX=OFF \
             -D DOWNLOAD_TILEDB_PREBUILT=OFF \
+            -D TILEDB_REMOVE_DEPRECATIONS=ON \
             -D FORCE_BUILD_TILEDB=OFF
           cmake --build build-libtiledbsoma -j $(nproc)
           cmake --build build-libtiledbsoma --target install-libtiledbsoma
@@ -186,6 +187,7 @@ jobs:
             -D CMAKE_INSTALL_PREFIX:PATH=$(pwd)/external/ \
             -D OVERRIDE_INSTALL_PREFIX=OFF \
             -D DOWNLOAD_TILEDB_PREBUILT=OFF \
+            -D TILEDB_REMOVE_DEPRECATIONS=ON \
             -D FORCE_BUILD_TILEDB=OFF
           cmake --build build-libtiledbsoma -j $(nproc)
           cmake --build build-libtiledbsoma --target install-libtiledbsoma
@@ -277,6 +279,7 @@ jobs:
             -D CMAKE_INSTALL_PREFIX:PATH=$(pwd)/external/ \
             -D OVERRIDE_INSTALL_PREFIX=OFF \
             -D DOWNLOAD_TILEDB_PREBUILT=OFF \
+            -D TILEDB_REMOVE_DEPRECATIONS=ON \
             -D FORCE_BUILD_TILEDB=OFF
           cmake --build build-libtiledbsoma -j 2
           cmake --build build-libtiledbsoma --target install-libtiledbsoma

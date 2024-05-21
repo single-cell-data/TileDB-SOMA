@@ -32,8 +32,6 @@
 
 #include "common.h"
 
-#define TPY_ERROR_LOC(m) throw tiledbsoma::TileDBSOMAError(m);
-
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 2
 #if !defined(NDEBUG)
 #endif

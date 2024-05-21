@@ -26,6 +26,7 @@ import wheel.bdist_wheel
 
 try:
     from pybind11.setup_helpers import Pybind11Extension
+
 except ImportError:
     # Explanation:
     # https://pybind11.readthedocs.io/en/stable/compiling.html#classic-setup-requires
@@ -43,6 +44,7 @@ import version  # noqa E402
 
 tiledb_dir: Optional[pathlib.Path] = None
 tiledbsoma_dir: Optional[pathlib.Path] = None
+no_tiledb_dep: bool = False
 
 args = sys.argv[:]
 for arg in args:
@@ -53,6 +55,10 @@ for arg in args:
     if (start, eq) == ("--libtiledbsoma", "="):
         tiledbsoma_dir = pathlib.Path(last)
         sys.argv.remove(arg)
+    if (start, eq) == ("--no-tiledb-deprecated", "="):
+        no_tiledb_dep = True
+        sys.argv.remove(arg)
+
 
 tiledb_dir = os.environ.get("TILEDB_PATH", tiledb_dir)
 tiledb_given = tiledb_dir is not None
@@ -167,10 +173,15 @@ def find_or_build_package_data(setuptools_cmd):
             bld_command = ["pwsh.exe", "./bld.ps1"]
             if tiledb_dir is not None:
                 bld_command.append(f"TileDBLocation={tiledb_dir}")
+            if no_tiledb_dep:
+                bld_command.append("RemoveTileDBDeprecated=ON")
+
         else:
             bld_command = ["./bld"]
             if tiledb_dir is not None:
                 bld_command.append(f"--tiledb={tiledb_dir}")
+            if no_tiledb_dep:
+                bld_command.append("--no-tiledb-deprecated=true")
 
         subprocess.run(bld_command, cwd=scripts_dir, check=True)
 

@@ -80,7 +80,7 @@ jobs:
       #  run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
       - name: Build and install libtiledbsoma
-        run: sudo scripts/bld --prefix=/usr/local && sudo ldconfig
+        run: sudo scripts/bld --prefix=/usr/local --no-tiledb-deprecated=true && sudo ldconfig
 
       - name: Install R-tiledbsoma
         run: |
@@ -100,7 +100,7 @@ jobs:
           cache-dependency-path: ./apis/python/setup.py
 
       - name: Install tiledbsoma
-        run: python -m pip -v install -e apis/python[dev]
+        run: python -m pip -v install -e apis/python[dev] -C "--build-option=--no-tiledb-deprecated"
 
       - name: Show Python package versions
         run: |
