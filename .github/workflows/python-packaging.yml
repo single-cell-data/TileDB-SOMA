@@ -53,19 +53,16 @@ jobs:
             cibw_build: 'cp3*-manylinux_x86_64'
             platform: manylinux2014
             wheel_name: manylinux2014
-            wheel_os_string: "."
           - os: macos-14
             cibw_build: 'cp3*-macosx_x86_64'
             cibw_archs_macos: x86_64
-            platform: macosx
+            platform: macosx_14
             wheel_name: macos-x86_64
-            wheel_os_string: "macosx_14_0"
           - os: macos-12
             cibw_build: 'cp3*-macosx_arm64'
             cibw_archs_macos: arm64
-            platform: macosx
+            platform: macosx_12
             wheel_name: macos-arm64
-            wheel_os_string: "macosx_12_0"
     steps:
       - name: Download sdist artifact
         uses: actions/download-artifact@v3
@@ -165,6 +162,10 @@ jobs:
           python-version: 3.11
       - name: Download artifacts
         uses: actions/download-artifact@v3
+    # Notes to type up:
+    # tiledbsoma-VERSIONHERE-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+    # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_x86_64.whl
+    # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_arm64.whl
       - name: Install wheel
         run: |
           set -x
@@ -175,13 +176,11 @@ jobs:
           echo
           echo matrix.platform: ${{ matrix.platform }}
           echo matrix.arch: ${{ matrix.arch }}
-          echo wheel_os_string: ${{ matrix.wheel_os_string }}
           # This bit is crucial since it's used to match up to a component of the wheel-file name
           pip install setuptools
           python -c 'from distutils import util; print(util.get_platform())'
           echo
-          echo find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl' THEN grep ${{ matrix.wheel_os_string }}
-          WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl' | grep ${{ matrix.wheel_os_string }} )
+          WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
           pip install wheel
