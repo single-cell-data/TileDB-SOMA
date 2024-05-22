@@ -783,6 +783,11 @@ class SOMAArray : public SOMAObject {
     // Fills the metadata cache upon opening the array.
     void fill_metadata_cache();
 
+    // Helper function for set_array_data
+    ArrowTable _cast_table(
+        std::unique_ptr<ArrowSchema> arrow_schema,
+        std::unique_ptr<ArrowArray> arrow_array);
+
     // SOMAArray URI
     std::string uri_;
 

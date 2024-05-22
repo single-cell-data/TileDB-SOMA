@@ -472,9 +472,12 @@ void SOMAArray::set_array_data(
         array_buffer_ = std::make_shared<ArrayBuffers>();
     }
 
-    for (auto i = 0; i < arrow_schema->n_children; ++i) {
-        auto arrow_sch_ = arrow_schema->children[i];
-        auto arrow_arr_ = arrow_array->children[i];
+    auto [casted_array, casted_schema] = SOMAArray::_cast_table(
+        std::move(arrow_schema), std::move(arrow_array));
+
+    for (auto i = 0; i < casted_schema->n_children; ++i) {
+        auto arrow_sch_ = casted_schema->children[i];
+        auto arrow_arr_ = casted_array->children[i];
 
         // Create a ColumnBuffer object instead of passing it in as an argument
         // to `set_column_data` because ColumnBuffer::create requires a TileDB
@@ -528,6 +531,97 @@ void SOMAArray::set_array_data(
         mq_->set_column_data(column);
     }
 };
+
+ArrowTable SOMAArray::_cast_table(
+    std::unique_ptr<ArrowSchema> arrow_schema,
+    std::unique_ptr<ArrowArray> arrow_array) {
+    for (auto i = 0; i < arrow_schema->n_children; ++i) {
+        auto arrow_sch_ = arrow_schema->children[i];
+        auto arrow_arr_ = arrow_array->children[i];
+        std::string name(arrow_sch_->name);
+
+        //     if (tiledb_schema()->has_attribute(name)) {
+        //         auto attr = tiledb_schema()->attribute(name);
+        //         auto enmr_name = AttributeExperimental::get_enumeration_name(
+        //             Context(), attr);
+        //         if (enmr_name.has_value()) {
+        //             auto dict_arr_ = arrow_arr_->dictionary;
+        //             auto dict_sch_ = arrow_sch_->dictionary;
+
+        //             if (dict_arr_ == nullptr) {
+        //                 throw TileDBSOMAError(fmt::format(
+        //                     "[SOMAArray] {} requires dictionary entry",
+        //                     name));
+        //             }
+
+        //             const void* enmr_data;
+        //             uint64_t* enmr_offsets = nullptr;
+        //             if (dict_arr_->n_buffers == 3) {
+        //                 enmr_offsets = (uint64_t*)dict_arr_->buffers[1];
+        //                 enmr_data = dict_arr_->buffers[2];
+        //             } else {
+        //                 enmr_data = dict_arr_->buffers[1];
+        //             }
+
+        //             if (strcmp(dict_sch_->format, "b") == 0) {
+        //                 std::vector<bool> original(
+        //                     (bool*)enmr_data, (bool*)enmr_data +
+        //                     dict_arr_->length);
+        //                 std::vector<uint8_t> casted;
+        //                 for (auto bit : original) {
+        //                     casted.push_back(bit);
+        //                 }
+        //                 dict_sch_->format = "C";
+        //                 enmr_data = casted.data();
+        //             }
+
+        //             extend_enumeration(
+        //                 name, dict_arr_->length, enmr_data, enmr_offsets);
+
+        //             auto column = ColumnBuffer::create(arr_, name);
+        //             auto arrow_table_ = ArrowAdapter::to_arrow(column);
+        //             arrow_arr_ = arrow_table_.first.get();
+        //             arrow_sch_ = arrow_table_.second.get();
+        //         }
+        //     }
+
+        if (strcmp(arrow_sch_->format, "b") == 0) {
+            const void* data;
+            if (arrow_arr_->n_buffers == 3) {
+                data = arrow_arr_->buffers[2];
+            } else {
+                data = arrow_arr_->buffers[1];
+            }
+
+            auto sz = arrow_arr_->length;
+
+            std::vector<uint8_t> casted;
+            for (int64_t i = 0; i * 8 < sz; ++i) {
+                uint8_t byte = ((uint8_t*)data)[i];
+                for (int64_t j = 0; j < 8; ++j) {
+                    casted.push_back((uint8_t)((byte >> j) & 0x01));
+                }
+            }
+
+            arrow_sch_->format = "C";
+            if (arrow_arr_->n_buffers == 3) {
+                arrow_arr_->buffers[2] = malloc(sizeof(uint8_t) * sz);
+                std::memcpy(
+                    (void*)arrow_arr_->buffers[2],
+                    casted.data(),
+                    sizeof(uint8_t) * sz);
+            } else {
+                arrow_arr_->buffers[1] = malloc(sizeof(uint8_t) * sz);
+                std::memcpy(
+                    (void*)arrow_arr_->buffers[1],
+                    casted.data(),
+                    sizeof(uint8_t) * sz);
+            }
+        }
+    }
+
+    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+}
 
 void SOMAArray::write(bool sort_coords) {
     if (mq_->query_type() != TILEDB_WRITE) {

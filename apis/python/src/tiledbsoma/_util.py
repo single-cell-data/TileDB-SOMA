@@ -384,10 +384,10 @@ def cast_values_to_target_schema(
                 i, name, pa.DictionaryArray.from_pandas(df, type=target_field.type)
             )
 
-        if pa.types.is_boolean(input_field.type):
-            target_schema.append(target_field.with_type(pa.uint8()))
-        else:
-            target_schema.append(target_field)
+        # if pa.types.is_boolean(input_field.type):
+        #     target_schema.append(target_field.with_type(pa.uint8()))
+        # else:
+        target_schema.append(target_field)
 
     new_schema = pa.schema(target_schema, values.schema.metadata)
 
