@@ -70,6 +70,14 @@ jobs:
           name: sdist
       - name: rename sdist
         run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
+      - name: Show platform
+        run: |
+          echo
+          echo matrix.platform: ${{ matrix.platform }}
+          echo matrix.arch: ${{ matrix.arch }}
+          # This bit is crucial since it's used to match up to a component of the wheel-file name
+          python -c 'from distutils import util; print(util.get_platform())'
+          echo
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.3
         with:
@@ -133,10 +141,16 @@ jobs:
       - name: Install wheel
         run: |
           set -x
+          echo
           ls -lR
+          echo
           ls -lR wheels-*
+          echo
           echo matrix.platform: ${{ matrix.platform }}
           echo matrix.arch: ${{ matrix.arch }}
+          # This bit is crucial since it's used to match up to a component of the wheel-file name
+          python -c 'from distutils import util; print(util.get_platform())'
+          echo
           WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
