@@ -751,7 +751,12 @@ class SOMAArray : public SOMAObject {
 
     template <typename T>
     Enumeration _extend_value_helper(
-        T* data, uint64_t num_elems, Enumeration enmr, uint64_t max_capacity) {
+        T* data,
+        uint64_t num_elems,
+        Enumeration enmr,
+        uint64_t max_capacity,
+        ArrowArray* index_value_array,
+        tiledb_datatype_t type) {
         std::vector<T> enums_in_write((T*)data, (T*)data + num_elems);
         auto enums_existing = enmr.as_vector<T>();
         std::vector<T> extend_values;
@@ -770,12 +775,100 @@ class SOMAArray : public SOMAObject {
                     "Cannot extend enumeration; reached maximum capacity");
             }
             ArraySchemaEvolution se(*ctx_->tiledb_ctx());
-            se.extend_enumeration(enmr.extend(extend_values));
+            auto extended_enmr = enmr.extend(extend_values);
+            se.extend_enumeration(extended_enmr);
             se.array_evolve(uri_);
-            return enmr.extend(extend_values);
+            SOMAArray::_remap_indexes(
+                extended_enmr, enums_in_write, index_value_array, type);
+            return extended_enmr;
         }
 
         return enmr;
+    }
+
+    template <typename T>
+    void _remap_indexes(
+        Enumeration extended_enmr,
+        std::vector<T> enums_in_write,
+        ArrowArray* index_value_array,
+        tiledb_datatype_t type) {
+        switch (type) {
+            case TILEDB_INT8:
+                SOMAArray::_remap_indexes_aux<T, int8_t>(
+                    extended_enmr, enums_in_write, index_value_array);
+                break;
+            case TILEDB_UINT8:
+                SOMAArray::_remap_indexes_aux<T, uint8_t>(
+                    extended_enmr, enums_in_write, index_value_array);
+                break;
+            case TILEDB_INT16:
+                SOMAArray::_remap_indexes_aux<T, int16_t>(
+                    extended_enmr, enums_in_write, index_value_array);
+                break;
+            case TILEDB_UINT16:
+                SOMAArray::_remap_indexes_aux<T, uint16_t>(
+                    extended_enmr, enums_in_write, index_value_array);
+                break;
+            case TILEDB_INT32:
+                SOMAArray::_remap_indexes_aux<T, int32_t>(
+                    extended_enmr, enums_in_write, index_value_array);
+                break;
+            case TILEDB_UINT32:
+                SOMAArray::_remap_indexes_aux<T, uint32_t>(
+                    extended_enmr, enums_in_write, index_value_array);
+                break;
+            case TILEDB_INT64:
+                SOMAArray::_remap_indexes_aux<T, int64_t>(
+                    extended_enmr, enums_in_write, index_value_array);
+                break;
+            case TILEDB_UINT64:
+                SOMAArray::_remap_indexes_aux<T, uint64_t>(
+                    extended_enmr, enums_in_write, index_value_array);
+                break;
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid enumeration index type when trying to extend"
+                    "enumeration");
+        }
+    }
+
+    template <typename T1, typename T2>
+    void _remap_indexes_aux(
+        Enumeration extended_enmr,
+        std::vector<T1> enums_in_write,
+        ArrowArray* index_value_array) {
+        T2* idxbuf;
+        if (index_value_array->n_buffers == 3) {
+            idxbuf = (T2*)index_value_array->buffers[2];
+        } else {
+            idxbuf = (T2*)index_value_array->buffers[1];
+        }
+
+        auto enmr_vec = extended_enmr.as_vector<T1>();
+        auto beg = enmr_vec.begin();
+        auto end = enmr_vec.end();
+        std::vector<T2> old_indexes(idxbuf, idxbuf + index_value_array->length);
+        std::vector<T2> new_indexes;
+        for (auto i : old_indexes) {
+            auto it = std::find(beg, end, enums_in_write[i]);
+            new_indexes.push_back(it - beg);
+        }
+
+        if (index_value_array->n_buffers == 3) {
+            index_value_array->buffers[2] = malloc(
+                sizeof(T2) * new_indexes.size());
+            std::memcpy(
+                (void*)index_value_array->buffers[2],
+                new_indexes.data(),
+                sizeof(T2) * new_indexes.size());
+        } else {
+            index_value_array->buffers[1] = malloc(
+                sizeof(T2) * new_indexes.size());
+            std::memcpy(
+                (void*)index_value_array->buffers[1],
+                new_indexes.data(),
+                sizeof(T2) * new_indexes.size());
+        }
     }
 
     // Helper function for set_column_data
