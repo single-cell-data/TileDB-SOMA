@@ -76,6 +76,7 @@ jobs:
           echo matrix.platform: ${{ matrix.platform }}
           echo matrix.arch: ${{ matrix.arch }}
           # This bit is crucial since it's used to match up to a component of the wheel-file name
+          pip install setuptools
           python -c 'from distutils import util; print(util.get_platform())'
           echo
       - name: Build wheels
@@ -149,6 +150,7 @@ jobs:
           echo matrix.platform: ${{ matrix.platform }}
           echo matrix.arch: ${{ matrix.arch }}
           # This bit is crucial since it's used to match up to a component of the wheel-file name
+          pip install setuptools
           python -c 'from distutils import util; print(util.get_platform())'
           echo
           WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
