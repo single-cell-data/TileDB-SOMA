@@ -93,7 +93,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       arrow::concat_arrays(private$.joinids$var())
     },
 
-    #' @description Retrieves an `X` layer as a link{SOMASparseNDArrayRead}
+    #' @description Retrieves an `X` layer as a \link{SOMASparseNDArrayRead}
     #' @param layer_name The name of the layer to retrieve.
     X = function(layer_name) {
       stopifnot(
