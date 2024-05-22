@@ -66,9 +66,9 @@ matrixZeroBasedView <- R6::R6Class(
       private$one_based_matrix
     },
 
-    #' @description Perform arithmetic sum between this link{matrixZeroBasedView}
-    #' and another link{matrixZeroBasedView}.
-    #' @param x the link{matrixZeroBasedView} to sum.
+    #' @description Perform arithmetic sum between this \link{matrixZeroBasedView}
+    #' and another \link{matrixZeroBasedView}.
+    #' @param x the \link{matrixZeroBasedView} to sum.
     #' @return The result of the sum as a \link{matrixZeroBasedView}.
     sum = function(x) {
       if (!inherits(x, "matrixZeroBasedView")) {
