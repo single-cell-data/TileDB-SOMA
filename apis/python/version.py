@@ -95,42 +95,48 @@ def err(*args, **kwargs):
 
 def lines(
     *cmd, drop_trailing_newline: bool = True, stderr=DEVNULL, **kwargs
-) -> List[str]:
-    """Run a command and return its stdout as a list of lines.
+) -> Optional[List[str]]:
+    """Run a command, return its stdout as a list of lines.
 
-    Strip echo line's trailing newline, and drop the last line if it's empty, by default.
+    Strip each line's trailing newline, and drop the last line if it's empty, by default.
+
+    If `CalledProcessError` is raised, return `None`.
     """
-    lns = [
-        ln.rstrip("\n")
-        for ln in check_output(cmd, stderr=stderr, **kwargs).decode().splitlines()
-    ]
+    try:
+        lns = [
+            ln.rstrip("\n")
+            for ln in check_output(cmd, stderr=stderr, **kwargs).decode().splitlines()
+        ]
+    except CalledProcessError:
+        return None
     if lns and drop_trailing_newline and not lns[-1]:
         lns.pop()
     return lns
 
 
-def line(*cmd, **kwargs) -> str:
-    """Run a command, verify it produces exactly one line of stdout, return it."""
+def line(*cmd, **kwargs) -> Optional[str]:
+    """Verify a command produces exactly one line of stdout, and return it, otherwise `None`."""
     lns = lines(*cmd, **kwargs)
+    if lns is None:
+        return None
     if len(lns) != 1:
-        raise RuntimeError(f"Expected 1 line, found {len(lns)}: {shlex.join(cmd)}")
+        err(f"Expected 1 line, found {len(lns)}: {shlex.join(cmd)}")
+        return None
     return lns[0]
 
 
 def get_latest_tag() -> Optional[str]:
     """Return the most recent local Git tag of the form `[0-9].*.*` (or `None` if none exist)."""
-    try:
-        tags = lines("git", "tag", "--list", "--sort=v:refname", "[0-9].*.*")
-        return tags[-1] if tags else None
-    except CalledProcessError:
-        return None
+    tags = lines("git", "tag", "--list", "--sort=v:refname", "[0-9].*.*")
+    return tags[-1] if tags else None
 
 
-def get_latest_remote_tag(remote: str) -> str:
+def get_latest_remote_tag(remote: str) -> Optional[str]:
     """Return the most recent Git tag of the form `[0-9].*.*`, from a remote Git repository."""
     tags = lines("git", "ls-remote", "--tags", "--sort=v:refname", remote, "[0-9].*.*")
     if not tags:
-        raise RuntimeError(f"No tags found in remote {remote}")
+        err(f"No tags found in remote {remote}")
+        return None
     return tags[-1].split(" ")[-1].split("/")[-1]
 
 
@@ -142,17 +148,6 @@ def get_sha_base10() -> int:
     return int(sha, 16)
 
 
-def get_only_remote() -> Optional[str]:
-    """Find the only remote Git repository, if one exists."""
-    try:
-        remotes = lines("git", "remote")
-        if len(remotes) == 1:
-            return remotes[0]
-    except CalledProcessError:
-        pass
-    return None
-
-
 def get_default_remote() -> Optional[str]:
     """Find a Git remote to parse a most recent release tag from.
 
@@ -160,15 +155,15 @@ def get_default_remote() -> Optional[str]:
     - Otherwise, if there's only one remote, use that
     - Otherwise, return `None`
     """
-    try:
-        tracked_branch = line(
-            "git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"
-        )
+    tracked_branch = line(
+        "git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"
+    )
+    if tracked_branch:
         tracked_remote = tracked_branch.split("/")[0]
         err(f"Parsed tracked remote {tracked_remote} from branch {tracked_branch}")
         return tracked_remote
-    except CalledProcessError:
-        remote = get_only_remote()
+    else:
+        remote = line("git", "remote")
         if remote:
             err(f"Checking tags at default/only remote {remote}")
             return remote
@@ -191,11 +186,7 @@ def get_git_version() -> Optional[str]:
         - Build a version string from it, e.g. `1.11.1.post0.dev61976836339` (again using the
           abbreviated Git SHA, converted to base 10 for PEP440 compliance).
     """
-    try:
-        git_version = line("git", "describe", "--long", "--tags", "--match", "[0-9]*.*")
-    except CalledProcessError:
-        git_version = None
-
+    git_version = line("git", "describe", "--long", "--tags", "--match", "[0-9]*.*")
     m = re.search(_GIT_DESCRIPTION_RE, git_version) if git_version else None
     ver = m.group("ver") if m else None
 
@@ -219,22 +210,21 @@ def get_git_version() -> Optional[str]:
             # latest release tag
             remote = get_default_remote()
             if remote:
-                try:
-                    latest_tag = get_latest_remote_tag(remote)
-                    err(
-                        f"Git traversal returned {ver}, using latest tag {latest_tag} from remote {remote}"
-                    )
-                except CalledProcessError:
+                latest_tag = get_latest_remote_tag(remote)
+                if not latest_tag:
                     err(f"Failed to find tags in remote {remote}")
                     return None
+                err(
+                    f"Git traversal returned {ver}, using latest tag {latest_tag} from tracked remote {remote}"
+                )
             else:
                 err("Failed to find a suitable remote for tag traversal")
                 return None
 
-        try:
-            sha_base10 = get_sha_base10()
+        sha_base10 = get_sha_base10()
+        if sha_base10:
             return f"{latest_tag}.post0.dev{sha_base10}"
-        except CalledProcessError:
+        else:
             err("Failed to find current SHA")
             return None
     else:
