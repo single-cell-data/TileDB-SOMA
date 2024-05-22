@@ -116,8 +116,8 @@ One-based matrix
 \if{html}{\out{<a id="method-matrixZeroBasedView-sum"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-sum}{}}}
 \subsection{Method \code{sum()}}{
-Perform arithmetic sum between this link{matrixZeroBasedView}
-and another link{matrixZeroBasedView}.
+Perform arithmetic sum between this \link{matrixZeroBasedView}
+and another \link{matrixZeroBasedView}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$sum(x)}\if{html}{\out{</div>}}
 }
@@ -125,7 +125,7 @@ and another link{matrixZeroBasedView}.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{x}}{the link{matrixZeroBasedView} to sum.}
+\item{\code{x}}{the \link{matrixZeroBasedView} to sum.}
 }
 \if{html}{\out{</div>}}
 }
