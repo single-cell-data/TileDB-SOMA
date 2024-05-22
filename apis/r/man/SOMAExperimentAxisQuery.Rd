@@ -158,7 +158,7 @@ Retrieve \code{soma_joinids} as an \code{\link[arrow:array-class]{arrow::Array}}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-X"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-X}{}}}
 \subsection{Method \code{X()}}{
-Retrieves an \code{X} layer as a link{SOMASparseNDArrayRead}
+Retrieves an \code{X} layer as a \link{SOMASparseNDArrayRead}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$X(layer_name)}\if{html}{\out{</div>}}
 }
