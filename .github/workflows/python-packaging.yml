@@ -101,7 +101,9 @@ jobs:
           echo
           pwd
           echo
-          cd dist
+          ls -l
+          echo
+          cd wheelhouse
           # TO DO: COMMENT ME IF THIS WORKS
           for wheel_file_name in *.whl; do
             if expr "$wheel_file_name" : ".*macosx_11_0.*"; then
