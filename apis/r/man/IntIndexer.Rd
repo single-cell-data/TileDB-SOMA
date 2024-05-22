@@ -20,15 +20,13 @@ A re-indexer for unique integer indices
 \subsection{Method \code{new()}}{
 Create a new re-indexer
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{IntIndexer$new(data, tiledbsoma_ctx = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{IntIndexer$new(data)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{data}}{Integer keys used to build the index (hash) table}
-
-\item{\code{tiledbsoma_ctx}}{Optional \code{\link{SOMATileDBContext}}}
 }
 \if{html}{\out{</div>}}
 }
