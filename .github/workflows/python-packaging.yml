@@ -94,6 +94,8 @@ jobs:
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
           CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
+          # DEBUG ONLY DO NOT COMMIT
+          CMAKE_OSX_DEPLOYMENT_TARGET: "10.9"
       - name: Upload wheels-${{ matrix.wheel_name }} to GitHub Actions storage
         uses: actions/upload-artifact@v3
         with:
