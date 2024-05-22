@@ -195,7 +195,7 @@ jobs:
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
           pip install wheel
-          pip install $WHL
+          pip install -vv $WHL
           echo "WHL=$WHL" >> $GITHUB_ENV
       - name: Smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
