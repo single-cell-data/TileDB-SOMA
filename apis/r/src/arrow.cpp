@@ -4,6 +4,7 @@
 #include <RcppInt64>                            // for fromInteger64
 
 #include <tiledbsoma/tiledbsoma>
+#include <tiledbsoma/reindexer/reindexer.h>
 
 #include "rutilities.h"         // local declarations
 #include "xptr-utils.h"         // xptr taggging utilities
@@ -30,6 +31,7 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
 // [[Rcpp::export]]
 void createSchemaFromArrow(const std::string& uri,
                            SEXP nasp, SEXP nadimap, SEXP nadimsp,
+                           bool sparse, std::string datatype,
                            Rcpp::List pclst,
                            Rcpp::Nullable<Rcpp::XPtr<tiledb::Context>> ctxptr = R_NilValue) {
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
@@ -83,9 +85,11 @@ void createSchemaFromArrow(const std::string& uri,
     auto as = tdbs::ArrowAdapter::tiledb_schema_from_arrow_schema(ctxsp, std::move(schema),
                                                                   std::pair(std::move(dimarr),
                                                                             std::move(dimsch)),
-                                                                  "SOMADataFrame",
-                                                                  true, // sparse
+                                                                  datatype, sparse,
                                                                   pltcfg);
+    // We can inspect the (TileDB) ArraySchema via a simple helper:  as.dump();
+
+    // Create the schema at the given URI
     tiledb::Array::create(uri, as);
 }
 
