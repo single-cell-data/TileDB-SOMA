@@ -69,16 +69,16 @@ __email__ = "mina86@mina86.com"
 __all__ = "getVersion"
 
 
-import os
 import re
 import shlex
 import sys
 from datetime import date
-from os.path import basename
+from os.path import basename, dirname, join, relpath
 from subprocess import DEVNULL, CalledProcessError, check_output
 from typing import List, Optional
 
-RELEASE_VERSION_FILE = os.path.join(os.path.dirname(__file__), "RELEASE-VERSION")
+GIT_RELPATH = "apis/python/version.py"
+RELEASE_VERSION_FILE = join(dirname(__file__), "RELEASE-VERSION")
 
 # http://www.python.org/dev/peps/pep-0386/
 _PEP386_SHORT_VERSION_RE = r"\d+(?:\.\d+)+(?:(?:[abc]|rc)\d+(?:\.\d+)*)?"
@@ -186,6 +186,15 @@ def get_git_version() -> Optional[str]:
         - Build a version string from it, e.g. `1.11.1.post0.dev61976836339` (again using the
           abbreviated Git SHA, converted to base 10 for PEP440 compliance).
     """
+    git_root = line("git", "rev-parse", "--show-toplevel")
+    if git_root is None:
+        return None
+
+    path = relpath(__file__, git_root)
+    if path != GIT_RELPATH:
+        err(f"Not in the expected path relative to Git root: {path} != {GIT_RELPATH}")
+        return None
+
     git_version = line("git", "describe", "--long", "--tags", "--match", "[0-9]*.*")
     m = re.search(_GIT_DESCRIPTION_RE, git_version) if git_version else None
     ver = m.group("ver") if m else None
