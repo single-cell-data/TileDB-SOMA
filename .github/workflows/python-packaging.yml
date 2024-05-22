@@ -70,15 +70,17 @@ jobs:
           name: sdist
       - name: rename sdist
         run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
-      - name: Show platform
+      # This is crucial for ongoing debug (do not remove it) as this shows the
+      # OS version as used by `pip install` to find wheel names. Importantly,
+      # macos 12 and macos14 self-report as `macosx-10.9-universal2` via
+      # `distutil.util.get_platform()`.
+      - name: Show self-reported platform
         run: |
-          echo
           echo matrix.platform: ${{ matrix.platform }}
           echo matrix.arch: ${{ matrix.arch }}
           # This bit is crucial since it's used to match up to a component of the wheel-file name
           pip install setuptools
-          python -c 'from distutils import util; print(util.get_platform())'
-          echo
+          python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.3
         with:
@@ -94,17 +96,29 @@ jobs:
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
           CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
-          # DEBUG ONLY DO NOT COMMIT
-          CMAKE_OSX_DEPLOYMENT_TARGET: "10.9"
-      - name: Temp wildcarding step
+      # See https://github.com/single-cell-data/TileDB-SOMA/pull/2620
+      #
+      # * MacOS 12 and 14 self-report as  `macosx-10.9-universal2` via
+      #   `distutil.util.get_platform()`.
+      # * Due to https://github.com/single-cell-data/TileDB-SOMA/pull/2124 we build
+      #   with `-mmacosx-version-min=11.0` which overrides any attempt at
+      #   setting `CMAKE_OSX_DEPLOYMENT_TARGET` in our env here.
+      # * This means a MacOS 12/14 system can self-report as 10.9, see
+      #   a wheel at 11.0, and refuse the install, claiming that no suitable
+      #   OS-version support can be found in the wheel.
+      # Therefore we rename the wheel's reported supported MacOS version to
+      # match the self-reported OS version of today's clients.
+      #
+      # Example file names we assume here:
+      # tiledbsoma-VERSIONHERE-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+      # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_x86_64.whl
+      # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_arm64.whl
+      - name: MacOS portability step
         run: |
-          echo
           pwd
-          echo
           ls -l
-          echo
           cd wheelhouse
-          # TO DO: COMMENT ME IF THIS WORKS
+          ls -l
           for wheel_file_name in *.whl; do
             if expr "$wheel_file_name" : ".*macosx_11_0.*"; then
               new_name=$(echo $wheel_file_name | sed "s/macosx_11_0/macosx_10_9/")
@@ -159,24 +173,18 @@ jobs:
           python-version: 3.11
       - name: Download artifacts
         uses: actions/download-artifact@v3
-    # Notes to type up:
-    # tiledbsoma-VERSIONHERE-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-    # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_x86_64.whl
-    # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_arm64.whl
-      - name: Install wheel
+      - name: Show self-reported platform
         run: |
-          set -x
-          echo
-          ls -lR
-          echo
-          ls -lR wheels-*
-          echo
           echo matrix.platform: ${{ matrix.platform }}
           echo matrix.arch: ${{ matrix.arch }}
           # This bit is crucial since it's used to match up to a component of the wheel-file name
           pip install setuptools
-          python -c 'from distutils import util; print(util.get_platform())'
-          echo
+          python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
+      - name: Install wheel
+        run: |
+          set -x
+          ls -lR
+          ls -lR wheels-*
           WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
@@ -241,8 +249,8 @@ jobs:
           packages_dir: dist
           verbose: true
 
-  # File a bug report if anything fails.
-  # Don't file tickets for manual runs -- only for scheduled ones.
+  # File a bug report if anything fails, but don't file tickets for manual runs
+  # -- only for scheduled ones.
   create_issue_on_fail:
     runs-on: ubuntu-latest
     needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
