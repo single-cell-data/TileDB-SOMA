@@ -11,7 +11,6 @@ import urllib.parse
 from itertools import zip_longest
 from typing import Any, Dict, List, Mapping, Optional, Tuple, Type, TypeVar, Union, cast
 
-import numpy as np
 import pandas as pd
 import pyarrow as pa
 import somacore
@@ -334,24 +333,19 @@ def verify_obs_and_var_eq(ad0: AnnData, ad1: AnnData, nan_safe: bool = False) ->
         assert anndata_dataframe_unmodified(ad0.var, ad1.var)
 
 
-def cast_values_to_target_schema(
-    clib_array: clib.SOMAArray, values: pa.Table, schema: pa.Schema
-) -> pa.Table:
+def cast_values_to_target_schema(values: pa.Table, schema: pa.Schema) -> pa.Table:
     """
     When writing data to a SOMAArray, the values that the user passes in may not
-    match the schema on disk.
-
-    1. Cast the values to the correct dtypes
-    2. Perform special casting for Boolean as it is represented in TileDB as
-    int8 but bits in Arrow
-    3. If there are new enumeration values in the values that are not yet
-    present in the schema, extend the enumeration to include these new values
+    match the schema on disk. Cast the values to the correct dtypes.
     """
+    # Ensure fields are in the correct order
     target_schema = []
-    for i, input_field in enumerate(values.schema):
+    for input_field in values.schema:
         name = input_field.name
         target_field = schema.field(name)
 
+        # This check is also done in C++ but we still want to keep the
+        # ValueError exception
         if pa.types.is_dictionary(target_field.type):
             if not pa.types.is_dictionary(input_field.type):
                 raise ValueError(f"{name} requires dictionary entry")
@@ -389,9 +383,7 @@ def cast_values_to_target_schema(
         # else:
         target_schema.append(target_field)
 
-    new_schema = pa.schema(target_schema, values.schema.metadata)
-
-    return values.cast(new_schema)
+    return values.cast(pa.schema(target_schema, values.schema.metadata))
 
 
 def build_clib_platform_config(

@@ -296,7 +296,8 @@ Enumeration SOMAArray::extend_enumeration(
     std::string_view name,
     uint64_t num_elems,
     const void* data,
-    uint64_t* offsets) {
+    uint64_t* offsets,
+    ArrowArray* index_value_array) {
     auto enmr = ArrayExperimental::get_enumeration(
         *ctx_->tiledb_ctx(), *arr_, std::string(name));
 
@@ -369,11 +370,49 @@ Enumeration SOMAArray::extend_enumeration(
                         "Cannot extend enumeration; reached maximum capacity");
                 }
                 ArraySchemaEvolution se(*ctx_->tiledb_ctx());
-                se.extend_enumeration(enmr.extend(extend_values));
+                auto extended_enmr = enmr.extend(extend_values);
+                se.extend_enumeration(extended_enmr);
                 se.array_evolve(uri_);
-                return enmr.extend(extend_values);
-            }
 
+                if (tiledb_schema()->attribute(std::string(name)).type() ==
+                    TILEDB_INT8) {
+                    int8_t* idxbuf;
+                    if (index_value_array->n_buffers == 3) {
+                        idxbuf = (int8_t*)index_value_array->buffers[2];
+                    } else {
+                        idxbuf = (int8_t*)index_value_array->buffers[1];
+                    }
+
+                    auto enmr_vec = extended_enmr.as_vector<std::string>();
+                    auto beg = enmr_vec.begin();
+                    auto end = enmr_vec.end();
+                    std::vector<int8_t> old_indexes(
+                        idxbuf, idxbuf + index_value_array->length);
+                    std::vector<int8_t> new_indexes;
+                    for (auto i : old_indexes) {
+                        auto it = std::find(beg, end, enums_in_write[i]);
+                        new_indexes.push_back(it - beg);
+                    }
+
+                    if (index_value_array->n_buffers == 3) {
+                        index_value_array->buffers[2] = malloc(
+                            sizeof(int8_t) * new_indexes.size());
+                        std::memcpy(
+                            (void*)index_value_array->buffers[2],
+                            new_indexes.data(),
+                            sizeof(int8_t) * new_indexes.size());
+                    } else {
+                        index_value_array->buffers[1] = malloc(
+                            sizeof(int8_t) * new_indexes.size());
+                        std::memcpy(
+                            (void*)index_value_array->buffers[1],
+                            new_indexes.data(),
+                            sizeof(int8_t) * new_indexes.size());
+                    }
+                }
+
+                return extended_enmr;
+            }
             return enmr;
         }
         case TILEDB_BOOL:
@@ -540,50 +579,48 @@ ArrowTable SOMAArray::_cast_table(
         auto arrow_arr_ = arrow_array->children[i];
         std::string name(arrow_sch_->name);
 
-        //     if (tiledb_schema()->has_attribute(name)) {
-        //         auto attr = tiledb_schema()->attribute(name);
-        //         auto enmr_name = AttributeExperimental::get_enumeration_name(
-        //             Context(), attr);
-        //         if (enmr_name.has_value()) {
-        //             auto dict_arr_ = arrow_arr_->dictionary;
-        //             auto dict_sch_ = arrow_sch_->dictionary;
+        if (tiledb_schema()->has_attribute(name)) {
+            auto attr = tiledb_schema()->attribute(name);
+            auto enmr_name = AttributeExperimental::get_enumeration_name(
+                Context(), attr);
+            if (enmr_name.has_value()) {
+                auto dict_arr_ = arrow_arr_->dictionary;
+                // auto dict_sch_ = arrow_sch_->dictionary;
 
-        //             if (dict_arr_ == nullptr) {
-        //                 throw TileDBSOMAError(fmt::format(
-        //                     "[SOMAArray] {} requires dictionary entry",
-        //                     name));
-        //             }
+                if (dict_arr_ == nullptr) {
+                    throw TileDBSOMAError(fmt::format(
+                        "[SOMAArray] {} requires dictionary entry", name));
+                }
 
-        //             const void* enmr_data;
-        //             uint64_t* enmr_offsets = nullptr;
-        //             if (dict_arr_->n_buffers == 3) {
-        //                 enmr_offsets = (uint64_t*)dict_arr_->buffers[1];
-        //                 enmr_data = dict_arr_->buffers[2];
-        //             } else {
-        //                 enmr_data = dict_arr_->buffers[1];
-        //             }
+                const void* enmr_data;
+                uint64_t* enmr_offsets = nullptr;
+                if (dict_arr_->n_buffers == 3) {
+                    enmr_offsets = (uint64_t*)dict_arr_->buffers[1];
+                    enmr_data = dict_arr_->buffers[2];
+                } else {
+                    enmr_data = dict_arr_->buffers[1];
+                }
 
-        //             if (strcmp(dict_sch_->format, "b") == 0) {
-        //                 std::vector<bool> original(
-        //                     (bool*)enmr_data, (bool*)enmr_data +
-        //                     dict_arr_->length);
-        //                 std::vector<uint8_t> casted;
-        //                 for (auto bit : original) {
-        //                     casted.push_back(bit);
-        //                 }
-        //                 dict_sch_->format = "C";
-        //                 enmr_data = casted.data();
-        //             }
+                // if (strcmp(dict_sch_->format, "b") == 0) {
+                //     std::vector<bool> original(
+                //         (bool*)enmr_data, (bool*)enmr_data +
+                //         dict_arr_->length);
+                //     std::vector<uint8_t> casted;
+                //     for (auto bit : original) {
+                //         casted.push_back(bit);
+                //     }
+                //     dict_sch_->format = "C";
+                //     enmr_data = casted.data();
+                // }
 
-        //             extend_enumeration(
-        //                 name, dict_arr_->length, enmr_data, enmr_offsets);
-
-        //             auto column = ColumnBuffer::create(arr_, name);
-        //             auto arrow_table_ = ArrowAdapter::to_arrow(column);
-        //             arrow_arr_ = arrow_table_.first.get();
-        //             arrow_sch_ = arrow_table_.second.get();
-        //         }
-        //     }
+                auto extended_enmr = extend_enumeration(
+                    name,
+                    dict_arr_->length,
+                    enmr_data,
+                    enmr_offsets,
+                    arrow_arr_);
+            }
+        }
 
         if (strcmp(arrow_sch_->format, "b") == 0) {
             const void* data;

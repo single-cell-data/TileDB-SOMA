@@ -415,7 +415,8 @@ class SOMAArray : public SOMAObject {
         std::string_view name,
         uint64_t num_elems,
         const void* data,
-        uint64_t* offsets);
+        uint64_t* offsets,
+        ArrowArray* index_value_array);
 
     /**
      * @brief Set the write buffers for a single column.
