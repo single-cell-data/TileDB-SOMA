@@ -107,7 +107,7 @@ jobs:
           # TO DO: COMMENT ME IF THIS WORKS
           for wheel_file_name in *.whl; do
             if expr "$wheel_file_name" : ".*macosx_11_0.*"; then
-              new_name=$(echo $wheel_file_name | sed "s/macos_11_0/macos_10_9/")
+              new_name=$(echo $wheel_file_name | sed "s/macosx_11_0/macosx_10_9/")
               echo Renaming $wheel_file_name to $new_name
               mv $wheel_file_name $new_name
             fi
