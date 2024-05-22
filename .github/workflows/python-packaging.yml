@@ -211,6 +211,21 @@ jobs:
           set -x
           mkdir dist
           cp sdist/tiledbsoma-*.tar.gz wheels-*/*.whl dist
+          echo
+          cd dist
+          # TO DO: COMMENT ME IF THIS WORKS
+          for wheel_file_name in *.whl; do
+            if expr "$wheel_file_name" : ".*macosx_11_0.*"; then
+              src="macosx_11_0"
+              for dst in "macosx_12_0" "macosx_13_0" "macosx_14_0"; do
+                new_name=$(echo $wheel_file_name | sed "s/$src/$dst/")
+                echo Copying $wheel_file_name to $new_name
+                cp $wheel_file_name $new_name
+              done
+            fi
+          done
+          cd ..
+          echo
           ls -l dist
       - name: Publish packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
