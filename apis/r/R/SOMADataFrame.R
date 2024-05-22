@@ -42,7 +42,7 @@ SOMADataFrame <- R6::R6Class(
       ## we (currently pass domain and extent values in an arrow table (i.e. data.frame alike)
       ## where each dimension is one column (of the same type as in the schema) followed by three
       ## values for the domain pair and the extent
-      dom_ext_tbl <- get_domain_and_extent(schema, index_column_names, tiledb_create_options)
+      dom_ext_tbl <- get_domain_and_extent_dataframe(schema, index_column_names, tiledb_create_options)
 
       ## we transfer to the arrow table via a pair of array and schema pointers
       dnaap <- nanoarrow::nanoarrow_allocate_array()
@@ -54,7 +54,7 @@ SOMADataFrame <- R6::R6Class(
       schema$export_to_c(nasp)
 
       ctxptr <- super$tiledbsoma_ctx$context()
-      createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp,
+      createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp, TRUE, "SOMADataFrame",
                             tiledb_create_options$to_list(FALSE), ctxptr@ptr)
 
       self$open("WRITE", internal_use_only = "allowed_use")
@@ -89,6 +89,11 @@ SOMADataFrame <- R6::R6Class(
         "All schema fields must be present in 'values'" =
           all(schema_names %in% col_names)
       )
+
+      ## we transfer to the arrow table via a pair of array and schema pointers
+      naap <- nanoarrow::nanoarrow_allocate_array()
+      nasp <- nanoarrow::nanoarrow_allocate_schema()
+      arrow::as_record_batch(values)$export_to_c(naap, nasp)
 
       df <- as.data.frame(values)[schema_names]
       arr <- self$object
@@ -125,10 +130,15 @@ SOMADataFrame <- R6::R6Class(
           arr <- tiledb::tiledb_array_close(arr)
           arr <- tiledb::tiledb_array_open(arr, "WRITE")
       }
+if (FALSE) {
       arr[] <- df
       # tiledb-r always closes the array after a write operation so we need to
       # manually reopen it until close-on-write is optional
       self$reopen("WRITE")
+}
+
+      writeArrayFromArrow(self$uri, naap, nasp)
+
       invisible(self)
     },
 

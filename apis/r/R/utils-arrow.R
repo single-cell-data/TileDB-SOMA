@@ -345,11 +345,11 @@ extract_levels <- function(arrtbl, exclude_cols=c("soma_joinid")) {
 }
 
 
-#' Domain and extent table creation helper returning a Table with a column per dimension
-#' for the given (incoming) arrow schema of a Table
+#' Domain and extent table creation helper for data.frame writes returning a Table with
+#' a column per dimension for the given (incoming) arrow schema of a Table
 #' @noRd
-get_domain_and_extent <- function(tbl_schema, ind_col_names,
-                                  tdco = TileDBCreateOptions$new(PlatformConfig$new())) {
+get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
+                                            tdco = TileDBCreateOptions$new(PlatformConfig$new())) {
     stopifnot("First argument must be an arrow schema" = inherits(tbl_schema, "Schema"),
               "Second argument must be character" = is.character(ind_col_names),
               "Second argument cannot be empty vector" = length(ind_col_names) > 0,
@@ -375,6 +375,25 @@ get_domain_and_extent <- function(tbl_schema, ind_col_names,
         aa
     })
     names(rl) <- ind_col_names
+    dom_ext_tbl <- do.call(arrow::arrow_table, rl)
+    dom_ext_tbl
+}
+
+#' Domain and extent table creation helper for array writes returning a Table with
+#' a column per dimension for the given (incoming) arrow schema of a Table
+#' @noRd
+get_domain_and_extent_array <- function(shape) {
+    stopifnot("First argument must be vector of positive values" = is.vector(shape) && all(shape > 0))
+    indvec <- seq_len(length(shape)) - 1   # sequence 0, ..., length()-1
+    rl <- sapply(indvec, \(ind) {
+        ind_col <- sprintf("soma_dim_%d", ind)
+        ind_col_type <- arrow::int64()
+        ind_dom <- c(0L, shape[ind+1] - 1L)
+        ind_ext <- shape[ind+1]
+        aa <- arrow::arrow_array(c(ind_dom, ind_ext), ind_col_type)
+        aa
+    })
+    names(rl) <- sprintf("soma_dim_%d", indvec)
     dom_ext_tbl <- do.call(arrow::arrow_table, rl)
     dom_ext_tbl
 }
