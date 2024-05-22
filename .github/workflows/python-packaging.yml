@@ -56,12 +56,12 @@ jobs:
           - os: macos-14
             cibw_build: 'cp3*-macosx_x86_64'
             cibw_archs_macos: x86_64
-            platform: macosx_14
+            platform: macosx
             wheel_name: macos-x86_64
           - os: macos-12
             cibw_build: 'cp3*-macosx_arm64'
             cibw_archs_macos: arm64
-            platform: macosx_12
+            platform: macosx
             wheel_name: macos-arm64
     steps:
       - name: Download sdist artifact
@@ -107,12 +107,9 @@ jobs:
           # TO DO: COMMENT ME IF THIS WORKS
           for wheel_file_name in *.whl; do
             if expr "$wheel_file_name" : ".*macosx_11_0.*"; then
-              src="macosx_11_0"
-              for dst in "macosx_12_0" "macosx_13_0" "macosx_14_0"; do
-                new_name=$(echo $wheel_file_name | sed "s/$src/$dst/")
-                echo Copying $wheel_file_name to $new_name
-                cp $wheel_file_name $new_name
-              done
+              new_name=$(echo $wheel_file_name | sed "s/macos_11_0/macos_10_9/")
+              echo Renaming $wheel_file_name to $new_name
+              mv $wheel_file_name $new_name
             fi
           done
           cd ..
