@@ -215,17 +215,18 @@ jobs:
           packages_dir: dist
           verbose: true
 
-  # File a bug report if anything fails
-  create_issue_on_fail:
-    runs-on: ubuntu-latest
-    needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
-    if: failure() || cancelled()
-    steps:
-      - name: Checkout TileDB-SOMA `main`
-        uses: actions/checkout@v2
-      - name: Create Issue if Build Fails
-        uses: JasonEtco/create-an-issue@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          filename: .github/workflows/daily-test-build-issue-template.md
+# TEMP DO NOT COMMIT -- DEBUG ONLY
+#  # File a bug report if anything fails
+#  create_issue_on_fail:
+#    runs-on: ubuntu-latest
+#    needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
+#    if: failure() || cancelled()
+#    steps:
+#      - name: Checkout TileDB-SOMA `main`
+#        uses: actions/checkout@v2
+#      - name: Create Issue if Build Fails
+#        uses: JasonEtco/create-an-issue@v2
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          filename: .github/workflows/daily-test-build-issue-template.md
