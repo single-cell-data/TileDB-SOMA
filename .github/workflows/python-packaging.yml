@@ -53,16 +53,19 @@ jobs:
             cibw_build: 'cp3*-manylinux_x86_64'
             platform: manylinux2014
             wheel_name: manylinux2014
+            wheel_os_string: "."
           - os: macos-14
             cibw_build: 'cp3*-macosx_x86_64'
             cibw_archs_macos: x86_64
             platform: macosx
             wheel_name: macos-x86_64
+            wheel_os_string: "macosx_14_0"
           - os: macos-12
             cibw_build: 'cp3*-macosx_arm64'
             cibw_archs_macos: arm64
             platform: macosx
             wheel_name: macos-arm64
+            wheel_os_string: "macosx_12_0"
     steps:
       - name: Download sdist artifact
         uses: actions/download-artifact@v3
@@ -176,7 +179,7 @@ jobs:
           pip install setuptools
           python -c 'from distutils import util; print(util.get_platform())'
           echo
-          WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+          WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl' | grep ${{ matrix.wheel_os_string }} )
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
           pip install wheel
