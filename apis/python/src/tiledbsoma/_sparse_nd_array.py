@@ -350,9 +350,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         if isinstance(values, pa.Table):
             # Write bulk data
-            values = _util.cast_values_to_target_schema(
-                clib_sparse_array, values, self.schema
-            )
+            # values = _util.cast_values_to_target_schema(
+            #     clib_sparse_array, values, self.schema
+            # )
             for batch in values.to_batches():
                 clib_sparse_array.write(batch, sort_coords or False)
 

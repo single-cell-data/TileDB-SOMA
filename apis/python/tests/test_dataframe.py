@@ -1460,3 +1460,11 @@ def test_nullable(tmp_path):
     with soma.DataFrame.open(uri, "r") as sdf:
         df = sdf.read().concat().to_pandas()
         assert df.compare(data.to_pandas()).empty
+
+
+def test_ordered_dictionary():
+    uri = "/home/vivian/tiledb-bugs/soma-dataframe-ordered"
+
+    with soma.DataFrame.open(uri, "r") as df:
+        print(df.schema)
+        print(df.read().concat())
