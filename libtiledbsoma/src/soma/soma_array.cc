@@ -302,7 +302,8 @@ Enumeration SOMAArray::extend_enumeration(
         *ctx_->tiledb_ctx(), *arr_, std::string(name));
 
     uint64_t max_capacity;
-    switch (tiledb_schema()->attribute(std::string(name)).type()) {
+    auto attr_type = tiledb_schema()->attribute(std::string(name)).type();
+    switch (type) {
         case TILEDB_INT8:
             max_capacity = std::numeric_limits<int8_t>::max();
             break;
@@ -374,42 +375,11 @@ Enumeration SOMAArray::extend_enumeration(
                 se.extend_enumeration(extended_enmr);
                 se.array_evolve(uri_);
 
-                if (tiledb_schema()->attribute(std::string(name)).type() ==
-                    TILEDB_INT8) {
-                    int8_t* idxbuf;
-                    if (index_value_array->n_buffers == 3) {
-                        idxbuf = (int8_t*)index_value_array->buffers[2];
-                    } else {
-                        idxbuf = (int8_t*)index_value_array->buffers[1];
-                    }
-
-                    auto enmr_vec = extended_enmr.as_vector<std::string>();
-                    auto beg = enmr_vec.begin();
-                    auto end = enmr_vec.end();
-                    std::vector<int8_t> old_indexes(
-                        idxbuf, idxbuf + index_value_array->length);
-                    std::vector<int8_t> new_indexes;
-                    for (auto i : old_indexes) {
-                        auto it = std::find(beg, end, enums_in_write[i]);
-                        new_indexes.push_back(it - beg);
-                    }
-
-                    if (index_value_array->n_buffers == 3) {
-                        index_value_array->buffers[2] = malloc(
-                            sizeof(int8_t) * new_indexes.size());
-                        std::memcpy(
-                            (void*)index_value_array->buffers[2],
-                            new_indexes.data(),
-                            sizeof(int8_t) * new_indexes.size());
-                    } else {
-                        index_value_array->buffers[1] = malloc(
-                            sizeof(int8_t) * new_indexes.size());
-                        std::memcpy(
-                            (void*)index_value_array->buffers[1],
-                            new_indexes.data(),
-                            sizeof(int8_t) * new_indexes.size());
-                    }
-                }
+                SOMAArray::_remap_indexes(
+                    extended_enmr,
+                    enums_in_write,
+                    index_value_array,
+                    attr_type);
 
                 return extended_enmr;
             }
@@ -418,34 +388,84 @@ Enumeration SOMAArray::extend_enumeration(
         case TILEDB_BOOL:
         case TILEDB_INT8:
             return SOMAArray::_extend_value_helper(
-                (int8_t*)data, num_elems, enmr, max_capacity);
+                (int8_t*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         case TILEDB_UINT8:
             return SOMAArray::_extend_value_helper(
-                (uint8_t*)data, num_elems, enmr, max_capacity);
+                (uint8_t*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         case TILEDB_INT16:
             return SOMAArray::_extend_value_helper(
-                (int16_t*)data, num_elems, enmr, max_capacity);
+                (int16_t*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         case TILEDB_UINT16:
             return SOMAArray::_extend_value_helper(
-                (uint16_t*)data, num_elems, enmr, max_capacity);
+                (uint16_t*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         case TILEDB_INT32:
             return SOMAArray::_extend_value_helper(
-                (int32_t*)data, num_elems, enmr, max_capacity);
+                (int32_t*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         case TILEDB_UINT32:
             return SOMAArray::_extend_value_helper(
-                (uint32_t*)data, num_elems, enmr, max_capacity);
+                (uint32_t*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         case TILEDB_INT64:
             return SOMAArray::_extend_value_helper(
-                (int64_t*)data, num_elems, enmr, max_capacity);
+                (int64_t*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         case TILEDB_UINT64:
             return SOMAArray::_extend_value_helper(
-                (uint64_t*)data, num_elems, enmr, max_capacity);
+                (uint64_t*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         case TILEDB_FLOAT32:
             return SOMAArray::_extend_value_helper(
-                (float*)data, num_elems, enmr, max_capacity);
+                (float*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         case TILEDB_FLOAT64:
             return SOMAArray::_extend_value_helper(
-                (double*)data, num_elems, enmr, max_capacity);
+                (double*)data,
+                num_elems,
+                enmr,
+                max_capacity,
+                index_value_array,
+                attr_type);
         default:
             throw TileDBSOMAError(fmt::format(
                 "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
