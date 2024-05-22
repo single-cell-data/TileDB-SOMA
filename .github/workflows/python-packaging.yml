@@ -175,10 +175,12 @@ jobs:
           echo
           echo matrix.platform: ${{ matrix.platform }}
           echo matrix.arch: ${{ matrix.arch }}
+          echo wheel_os_string: ${{ matrix.wheel_os_string }}
           # This bit is crucial since it's used to match up to a component of the wheel-file name
           pip install setuptools
           python -c 'from distutils import util; print(util.get_platform())'
           echo
+          echo find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl' THEN grep ${{ matrix.wheel_os_string }}
           WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl' | grep ${{ matrix.wheel_os_string }} )
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
