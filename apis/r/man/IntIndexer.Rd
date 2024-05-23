@@ -37,13 +37,16 @@ Create a new re-indexer
 \subsection{Method \code{get_indexer()}}{
 Get the underlying indices for the target data
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{IntIndexer$get_indexer(target)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{IntIndexer$get_indexer(target, nomatch = -1L)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{target}}{Data to re-index}
+
+\item{\code{nomatch}}{The value to be returned when no match is found; will be
+coerced to a 64-bit integer}
 }
 \if{html}{\out{</div>}}
 }
