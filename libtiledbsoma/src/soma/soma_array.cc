@@ -293,172 +293,72 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
 }
 
 Enumeration SOMAArray::extend_enumeration(
-    std::string_view name,
-    uint64_t num_elems,
-    const void* data,
-    uint64_t* offsets,
-    ArrowArray* index_value_array) {
+    std::string column_name, ArrowArray* value_array, ArrowArray* index_array) {
     auto enmr = ArrayExperimental::get_enumeration(
-        *ctx_->tiledb_ctx(), *arr_, std::string(name));
-
+        *ctx_->tiledb_ctx(), *arr_, column_name);
     auto value_type = enmr.type();
-    auto index_type = tiledb_schema()->attribute(std::string(name)).type();
-    uint64_t max_capacity = SOMAArray::_get_max_capacity(index_type);
 
-    return SOMAArray::_extend_and_evolve_schema(
-        value_type,
-        index_type,
-        enmr,
-        num_elems,
-        data,
-        offsets,
-        max_capacity,
-        index_value_array);
-}
-
-uint64_t SOMAArray::_get_max_capacity(tiledb_datatype_t index_type) {
-    switch (index_type) {
-        case TILEDB_INT8:
-            return std::numeric_limits<int8_t>::max();
-        case TILEDB_UINT8:
-            return std::numeric_limits<uint8_t>::max();
-        case TILEDB_INT16:
-            return std::numeric_limits<int16_t>::max();
-        case TILEDB_UINT16:
-            return std::numeric_limits<uint16_t>::max();
-        case TILEDB_INT32:
-            return std::numeric_limits<int32_t>::max();
-        case TILEDB_UINT32:
-            return std::numeric_limits<uint32_t>::max();
-        case TILEDB_INT64:
-            return std::numeric_limits<int64_t>::max();
-        case TILEDB_UINT64:
-            return std::numeric_limits<uint64_t>::max();
-        default:
-            throw TileDBSOMAError(
-                "Saw invalid enumeration index type when trying to extend "
-                "enumeration");
-    }
-}
-
-Enumeration SOMAArray::_extend_and_evolve_schema(
-    tiledb_datatype_t value_type,
-    tiledb_datatype_t index_type,
-    Enumeration enmr,
-    uint64_t num_elems,
-    const void* data,
-    uint64_t* offsets,
-    uint64_t max_capacity,
-    ArrowArray* index_value_array) {
     switch (value_type) {
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
-        case TILEDB_CHAR: {
-            return SOMAArray::_extend_and_evolve_schema_str_aux(
-                (char*)data,
-                offsets,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
-        }
+        case TILEDB_CHAR:
+            return SOMAArray::_extend_and_evolve_schema_str(
+                column_name, value_array, index_array);
         case TILEDB_BOOL:
         case TILEDB_INT8:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (int8_t*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<uint8_t>(
+                column_name, value_array, index_array);
         case TILEDB_UINT8:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (uint8_t*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<uint8_t>(
+                column_name, value_array, index_array);
         case TILEDB_INT16:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (int16_t*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<int16_t>(
+                column_name, value_array, index_array);
         case TILEDB_UINT16:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (uint16_t*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<uint16_t>(
+                column_name, value_array, index_array);
         case TILEDB_INT32:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (int32_t*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<int32_t>(
+                column_name, value_array, index_array);
         case TILEDB_UINT32:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (uint32_t*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<uint32_t>(
+                column_name, value_array, index_array);
         case TILEDB_INT64:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (int64_t*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<int64_t>(
+                column_name, value_array, index_array);
         case TILEDB_UINT64:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (uint64_t*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<uint64_t>(
+                column_name, value_array, index_array);
         case TILEDB_FLOAT32:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (float*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<float>(
+                column_name, value_array, index_array);
         case TILEDB_FLOAT64:
-            return SOMAArray::_extend_and_evolve_schema_aux(
-                (double*)data,
-                num_elems,
-                enmr,
-                max_capacity,
-                index_value_array,
-                index_type);
+            return SOMAArray::_extend_and_evolve_schema<double>(
+                column_name, value_array, index_array);
         default:
             throw TileDBSOMAError(fmt::format(
                 "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
-                tiledb::impl::type_to_str(enmr.type())));
+                tiledb::impl::type_to_str(value_type)));
     }
 }
 
-Enumeration SOMAArray::_extend_and_evolve_schema_str_aux(
-    char* data,
-    uint64_t* offsets,
-    uint64_t num_elems,
-    Enumeration enmr,
-    uint64_t max_capacity,
-    ArrowArray* index_value_array,
-    tiledb_datatype_t index_type) {
+Enumeration SOMAArray::_extend_and_evolve_schema_str(
+    std::string column_name, ArrowArray* value_array, ArrowArray* index_array) {
+    auto index_type = tiledb_schema()->attribute(column_name).type();
+    auto enmr = ArrayExperimental::get_enumeration(
+        *ctx_->tiledb_ctx(), *arr_, column_name);
+    uint64_t max_capacity = SOMAArray::_get_max_capacity(index_type);
+
+    const void* data;
+    uint64_t* offsets = nullptr;
+    uint64_t num_elems = value_array->length;
+    if (value_array->n_buffers == 3) {
+        offsets = (uint64_t*)value_array->buffers[1];
+        data = value_array->buffers[2];
+    } else {
+        data = value_array->buffers[1];
+    }
+
     std::vector<uint64_t> offsets_v(
         (uint32_t*)offsets, (uint32_t*)offsets + num_elems + 1);
     std::string data_v(
@@ -495,11 +395,36 @@ Enumeration SOMAArray::_extend_and_evolve_schema_str_aux(
         se.array_evolve(uri_);
 
         SOMAArray::_remap_indexes(
-            extended_enmr, enums_in_write, index_value_array, index_type);
+            extended_enmr, enums_in_write, index_array, index_type);
 
         return extended_enmr;
     }
     return enmr;
+}
+
+uint64_t SOMAArray::_get_max_capacity(tiledb_datatype_t index_type) {
+    switch (index_type) {
+        case TILEDB_INT8:
+            return std::numeric_limits<int8_t>::max();
+        case TILEDB_UINT8:
+            return std::numeric_limits<uint8_t>::max();
+        case TILEDB_INT16:
+            return std::numeric_limits<int16_t>::max();
+        case TILEDB_UINT16:
+            return std::numeric_limits<uint16_t>::max();
+        case TILEDB_INT32:
+            return std::numeric_limits<int32_t>::max();
+        case TILEDB_UINT32:
+            return std::numeric_limits<uint32_t>::max();
+        case TILEDB_INT64:
+            return std::numeric_limits<int64_t>::max();
+        case TILEDB_UINT64:
+            return std::numeric_limits<uint64_t>::max();
+        default:
+            throw TileDBSOMAError(
+                "Saw invalid enumeration index type when trying to extend "
+                "enumeration");
+    }
 }
 
 void SOMAArray::set_column_data(
@@ -640,21 +565,8 @@ ArrowTable SOMAArray::_cast_table(
                         "[SOMAArray] {} requires dictionary entry", name));
                 }
 
-                const void* enmr_data;
-                uint64_t* enmr_offsets = nullptr;
-                if (dict_arr_->n_buffers == 3) {
-                    enmr_offsets = (uint64_t*)dict_arr_->buffers[1];
-                    enmr_data = dict_arr_->buffers[2];
-                } else {
-                    enmr_data = dict_arr_->buffers[1];
-                }
-
                 auto extended_enmr = extend_enumeration(
-                    name,
-                    dict_arr_->length,
-                    enmr_data,
-                    enmr_offsets,
-                    arrow_arr_);
+                    std::string(name), dict_arr_, arrow_arr_);
             }
         }
 
