@@ -83,7 +83,7 @@ test_that("IndIndexer nomatch", {
   expect_equal(vals, rep_len(-1L, length.out = length(lookups)))
 
   expect_s3_class(
-    vals <- indexer$get_indexer(lookups, nomatch = NA_integer_),
+    vals <- indexer$get_indexer(lookups, nomatch_na = TRUE),
     "integer64"
   )
   expect_true(all(is.na(vals)))
@@ -95,13 +95,14 @@ test_that("IndIndexer nomatch", {
   expect_equal(sum(vals == -1L), 3L)
 
   expect_s3_class(
-    vals <- indexer$get_indexer(lookups, nomatch = NA_integer_),
+    vals <- indexer$get_indexer(lookups, nomatch_na = TRUE),
     "integer64"
   )
   expect_equal(sum(is.na(vals)), 3L)
 
   # Test assertions
-  expect_error(indexer$get_indexer(lookups, nomatch = TRUE))
-  expect_error(indexer$get_indexer(lookups, nomatch = 1.1))
-  expect_error(indexer$get_indexer(lookups, nomatch = list(1L)))
+  expect_error(indexer$get_indexer(lookups, nomatch_na = NA))
+  expect_error(indexer$get_indexer(lookups, nomatch_na = c(TRUE, TRUE)))
+  expect_error(indexer$get_indexer(lookups, nomatch_na = 1.1))
+  expect_error(indexer$get_indexer(lookups, nomatch_na = list(1L)))
 })

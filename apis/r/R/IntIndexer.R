@@ -22,12 +22,11 @@ IntIndexer <- R6::R6Class(
     #' @description Get the underlying indices for the target data
     #'
     #' @param target Data to re-index
-    #' @param nomatch The value to be returned when no match is found; will be
-    #' coerced to a 64-bit integer
+    #' @param nomatch_na Set non-matches to \code{NA} instead of \code{-1}
     #'
     #' @return A vector of 64-bit integers with \code{target} re-indexed
     #'
-    get_indexer = function(target, nomatch = -1L) {
+    get_indexer = function(target, nomatch_na = FALSE) {
       # If `target` is an Arrow array, do Arrow handling
       if (R6::is.R6(target) && inherits(target, c('Array', 'ChunkedArray'))) {
         op <- options(arrow.int64_downcast = FALSE)
@@ -40,11 +39,13 @@ IntIndexer <- R6::R6Class(
       stopifnot(
         "'target' must be a vector or arrow array of integers" = rlang::is_integerish(target, finite = TRUE) ||
           (inherits(target, 'integer64') && all(is.finite(target))),
-        "'nomatch' must be a single integer value" = rlang::is_integerish(x = nomatch, n = 1L)
+        "'nomatch_na' must be TRUE or FALSE" = isTRUE(nomatch_na) || isFALSE(nomatch_na)
       )
       # Do vector-based re-indexing
       val <- reindex_lookup(private$.reindexer, bit64::as.integer64(target))
-      val[val == -1] <- bit64::as.integer64(nomatch)
+      if (nomatch_na) {
+        val[val == -1] <- bit64::NA_integer64_
+      }
       return(val)
     }
   ),
