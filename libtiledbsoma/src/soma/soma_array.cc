@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022-2023 TileDB, Inc.
+ * @copyright Copyright (c) 2022-2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -303,7 +303,7 @@ Enumeration SOMAArray::extend_enumeration(
 
     uint64_t max_capacity;
     auto attr_type = tiledb_schema()->attribute(std::string(name)).type();
-    switch (type) {
+    switch (attr_type) {
         case TILEDB_INT8:
             max_capacity = std::numeric_limits<int8_t>::max();
             break;
