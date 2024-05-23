@@ -153,16 +153,20 @@ jobs:
             arch: x86_64
             cc: gcc-11
             cxx: g++-11
-          - os: macos-12
-            platform: macosx
-            arch: x86_64
-            cc: clang
-            cxx: clang++
-          - os: macos-14
-            platform: macosx
-            arch: arm64
-            cc: clang
-            cxx: clang++
+          # Follow-up flagged in https://github.com/single-cell-data/TileDB-SOMA/issues/2634
+          # TL;DR direct pip-install of the wheel file fails bafflingly (see #2634 for details)
+          # but works in non-GHA environments including laptops and MacOS EC2 instances.
+          #
+          #- os: macos-12
+          #  platform: macosx
+          #  arch: x86_64
+          #  cc: clang
+          #  cxx: clang++
+          #- os: macos-14
+          #  platform: macosx
+          #  arch: arm64
+          #  cc: clang
+          #  cxx: clang++
     steps:
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
