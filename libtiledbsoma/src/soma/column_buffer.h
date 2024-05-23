@@ -157,6 +157,11 @@ class ColumnBuffer {
                 validity_.resize(num_elems);
                 std::fill(validity_.begin(), validity_.end(), 1);
             }
+
+            for (auto v : validity_) {
+                std::cout << (int)v;
+            }
+            std::cout << std::endl;
         }
     }
 
