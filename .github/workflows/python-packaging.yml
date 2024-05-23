@@ -53,12 +53,12 @@ jobs:
             cibw_build: 'cp3*-manylinux_x86_64'
             platform: manylinux2014
             wheel_name: manylinux2014
-          - os: macos-14
+          - os: macos-12
             cibw_build: 'cp3*-macosx_x86_64'
             cibw_archs_macos: x86_64
             platform: macosx
             wheel_name: macos-x86_64
-          - os: macos-12
+          - os: macos-14
             cibw_build: 'cp3*-macosx_arm64'
             cibw_archs_macos: arm64
             platform: macosx
@@ -99,7 +99,7 @@ jobs:
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
       # See https://github.com/single-cell-data/TileDB-SOMA/pull/2620
       #
-      # * MacOS 12 and 14 self-report as  `macosx-10.9-universal2` via
+      # * MacOS 12 and 14 self-report as `macosx-10.9-universal2` via
       #   `distutil.util.get_platform()`.
       # * Due to https://github.com/single-cell-data/TileDB-SOMA/pull/2124 we build
       #   with `-mmacosx-version-min=11.0` which overrides any attempt at
@@ -152,21 +152,12 @@ jobs:
             arch: x86_64
             cc: gcc-11
             cxx: g++-11
-          #- os: macos-14
-          #  platform: macosx
-          #  arch: x86_64
-          #  cc: clang
-          #  cxx: clang++
-          # TODO: As of 2023-05-18 all we can do in GitHub Actions for MacOS arm64 is cross-compile the wheels
-          # for arm64, while actually running on x86 hardware. This means we can build the wheels but we cannot
-          # smoke-test them. This is pending MacOS arm64 runners for GitHub Actions which is tracked here:
-          #   https://github.com/github/roadmap/issues/528
-          # Any smoke-testing for arm64 wheels needs to be done manually by:
-          # * Download the whatever.zip file from GitHub Actions -> our instance -> Artifacts
-          # * unzip whatever.zip
-          # * pip install tiledbsoma-i.j.k-cp310-cp310-macosx_11_0_arm64.whl
-          #
           - os: macos-12
+            platform: macosx
+            arch: x86_64
+            cc: clang
+            cxx: clang++
+          - os: macos-14
             platform: macosx
             arch: arm64
             cc: clang
@@ -180,6 +171,7 @@ jobs:
         uses: actions/download-artifact@v3
       - name: Show self-reported platform
         run: |
+          sw_vers || /usr/bin/true
           echo "python --version"; python --version
           echo matrix.platform: ${{ matrix.platform }}
           echo matrix.arch: ${{ matrix.arch }}
