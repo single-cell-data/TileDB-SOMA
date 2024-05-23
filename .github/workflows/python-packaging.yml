@@ -53,12 +53,12 @@ jobs:
             cibw_build: 'cp3*-manylinux_x86_64'
             platform: manylinux2014
             wheel_name: manylinux2014
-          - os: macos-14
+          - os: macos-12
             cibw_build: 'cp3*-macosx_x86_64'
             cibw_archs_macos: x86_64
             platform: macosx
             wheel_name: macos-x86_64
-          - os: macos-12
+          - os: macos-14
             cibw_build: 'cp3*-macosx_arm64'
             cibw_archs_macos: arm64
             platform: macosx
@@ -70,6 +70,19 @@ jobs:
           name: sdist
       - name: rename sdist
         run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
+      # This is crucial for ongoing debug (do not remove it) as this shows the
+      # OS version as used by `pip install` to find wheel names. Importantly,
+      # macos 12 and macos14 self-report as `macosx-10.9-universal2` via
+      # `distutil.util.get_platform()`.
+      - name: Show self-reported platform
+        run: |
+          echo "python --version"; python --version
+          echo matrix.platform: ${{ matrix.platform }}
+          echo matrix.arch: ${{ matrix.arch }}
+          # This bit is crucial since it's used to match up to a component of the wheel-file name
+          python -m pip install setuptools
+          python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
+          python -c 'import platform; print("platform.platform()", platform.platform())'
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.3
         with:
@@ -85,6 +98,42 @@ jobs:
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
           CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
+      # See https://github.com/single-cell-data/TileDB-SOMA/pull/2620
+      #
+      # * MacOS 12 and 14 self-report as `macosx-10.9-universal2` via
+      #   `distutil.util.get_platform()`.
+      # * Due to https://github.com/single-cell-data/TileDB-SOMA/pull/2124 we build
+      #   with `-mmacosx-version-min=11.0` which overrides any attempt at
+      #   setting `CMAKE_OSX_DEPLOYMENT_TARGET` in our env here.
+      # * This means a MacOS 12/14 system can self-report as 10.9, see
+      #   a wheel at 11.0, and refuse the install, claiming that no suitable
+      #   OS-version support can be found in the wheel.
+      # Therefore we rename the wheel's reported supported MacOS version to
+      # match the self-reported OS version of today's clients.
+      #
+      # Example file names we assume here:
+      # tiledbsoma-VERSIONHERE-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+      # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_x86_64.whl
+      # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_arm64.whl
+      - name: MacOS portability step
+        run: |
+          pwd
+          ls -l
+          cd wheelhouse
+          ls -l
+          for wheel_file_name in *.whl; do
+            if expr "$wheel_file_name" : ".*macosx_11_0.*"; then
+              new_name=$(echo $wheel_file_name | sed "s/macosx_11_0/macosx_10_9/")
+              if [ "$wheel_file_name" = "$new_name" ]; then
+                echo "Failed to rename $wheel_file_name"
+                exit 1
+              fi
+              echo Renaming $wheel_file_name to $new_name
+              mv $wheel_file_name $new_name
+            fi
+          done
+          cd ..
+          echo
       - name: Upload wheels-${{ matrix.wheel_name }} to GitHub Actions storage
         uses: actions/upload-artifact@v3
         with:
@@ -104,21 +153,16 @@ jobs:
             arch: x86_64
             cc: gcc-11
             cxx: g++-11
-          - os: macos-14
-            platform: macosx
-            arch: x86_64
-            cc: clang
-            cxx: clang++
-          # TODO: As of 2023-05-18 all we can do in GitHub Actions for MacOS arm64 is cross-compile the wheels
-          # for arm64, while actually running on x86 hardware. This means we can build the wheels but we cannot
-          # smoke-test them. This is pending MacOS arm64 runners for GitHub Actions which is tracked here:
-          #   https://github.com/github/roadmap/issues/528
-          # Any smoke-testing for arm64 wheels needs to be done manually by:
-          # * Download the whatever.zip file from GitHub Actions -> our instance -> Artifacts
-          # * unzip whatever.zip
-          # * pip install tiledbsoma-i.j.k-cp310-cp310-macosx_11_0_arm64.whl
+          # Follow-up flagged in https://github.com/single-cell-data/TileDB-SOMA/issues/2634
+          # TL;DR direct pip-install of the wheel file fails bafflingly (see #2634 for details)
+          # but works in non-GHA environments including laptops and MacOS EC2 instances.
           #
           #- os: macos-12
+          #  platform: macosx
+          #  arch: x86_64
+          #  cc: clang
+          #  cxx: clang++
+          #- os: macos-14
           #  platform: macosx
           #  arch: arm64
           #  cc: clang
@@ -130,18 +174,26 @@ jobs:
           python-version: 3.11
       - name: Download artifacts
         uses: actions/download-artifact@v3
+      - name: Show self-reported platform
+        run: |
+          sw_vers || /usr/bin/true
+          echo "python --version"; python --version
+          echo matrix.platform: ${{ matrix.platform }}
+          echo matrix.arch: ${{ matrix.arch }}
+          # This bit is crucial since it's used to match up to a component of the wheel-file name
+          python -m pip install setuptools
+          python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
+          python -c 'import platform; print("platform.platform()", platform.platform())'
       - name: Install wheel
         run: |
           set -x
           ls -lR
           ls -lR wheels-*
-          echo matrix.platform: ${{ matrix.platform }}
-          echo matrix.arch: ${{ matrix.arch }}
           WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
-          pip install wheel
-          pip install $WHL
+          python -m pip install wheel
+          python -m pip install -vv $WHL
           echo "WHL=$WHL" >> $GITHUB_ENV
       - name: Smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
@@ -201,11 +253,12 @@ jobs:
           packages_dir: dist
           verbose: true
 
-  # File a bug report if anything fails
+  # File a bug report if anything fails, but don't file tickets for manual runs
+  # -- only for scheduled ones.
   create_issue_on_fail:
     runs-on: ubuntu-latest
     needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
-    if: failure() || cancelled()
+    if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch'
     steps:
       - name: Checkout TileDB-SOMA `main`
         uses: actions/checkout@v2
