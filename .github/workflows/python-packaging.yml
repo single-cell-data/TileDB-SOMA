@@ -82,6 +82,7 @@ jobs:
           # This bit is crucial since it's used to match up to a component of the wheel-file name
           python -m pip install setuptools
           python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
+          python -c 'import platform; print("platform.platform()", platform.platform())'
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.3
         with:
@@ -178,6 +179,7 @@ jobs:
           # This bit is crucial since it's used to match up to a component of the wheel-file name
           python -m pip install setuptools
           python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
+          python -c 'import platform; print("platform.platform()", platform.platform())'
       - name: Install wheel
         run: |
           set -x
