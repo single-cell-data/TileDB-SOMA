@@ -25,6 +25,7 @@ tiledbsoma.tar.gz
 src/libtiledbsoma/build
 src/libtiledbsoma/test
 src/libtiledbsoma/docs
+src/libtiledbsoma/.editorconfig
 
 # vscode
 ^\.vscode$

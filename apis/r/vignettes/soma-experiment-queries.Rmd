@@ -24,7 +24,7 @@ library(tiledbsoma)
 
 ## Example data
 
-Load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object.
+Load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://satijalab.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object.
 
 ```{r}
 experiment <- load_dataset("soma-exp-pbmc-small")
@@ -103,7 +103,7 @@ iterator$read_next()
 iterator$read_complete()
 ```
 
-We can also access the expression via `X()`. 
+We can also access the expression via `X()`.
 
 Similarly to `obs()` and `var()`, `X()` is intended for iteration, but in this case we have access to two different iterators, and thus `X()` returns a reader that gives you access to an iterator for `arrow::Table` and one for `Matrix::sparse_matrix`.
 
@@ -168,7 +168,7 @@ As well as the X matrix in two different formats:
 ```{r}
 query$X("counts")$tables()$concat()
 ```
- 
+
 `Matrix::sparse_matrix` in `dgTMatrix` format.
 
 ```{r}

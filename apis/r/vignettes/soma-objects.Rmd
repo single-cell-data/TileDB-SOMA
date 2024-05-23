@@ -22,7 +22,7 @@ library(tiledbsoma)
 
 ## Example data
 
-Extract the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html) provided by `SeuratObject`. This will return a file path for the extracted dataset.
+Extract the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://satijalab.github.io/seurat-object/reference/pbmc_small.html) provided by `SeuratObject`. This will return a file path for the extracted dataset.
 
 ```{r}
 uri <- extract_dataset("soma-exp-pbmc-small")

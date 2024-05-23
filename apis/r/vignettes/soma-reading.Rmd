@@ -19,7 +19,7 @@ library(tiledbsoma)
 
 ## Example data
 
-Load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://mojaveazure.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object. This is a small dataset that easily fits into memory, but we'll focus on operations that can easily scale to larger datasets as well.
+Load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://satijalab.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object. This is a small dataset that easily fits into memory, but we'll focus on operations that can easily scale to larger datasets as well.
 
 ```{r}
 experiment <- load_dataset("soma-exp-pbmc-small")
