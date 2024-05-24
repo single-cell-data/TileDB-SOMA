@@ -117,11 +117,13 @@ jobs:
             arch: x86_64
             cc: gcc-11
             cxx: g++-11
+            wheel_name: manylinux2014
           - os: macos-12
             platform: macosx
             arch: x86_64
             cc: clang
             cxx: clang++
+            wheel_name: macos-x86_64
           # TODO: As of 2023-05-18 all we can do in GitHub Actions for MacOS arm64 is cross-compile the wheels
           # for arm64, while actually running on x86 hardware. This means we can build the wheels but we cannot
           # smoke-test them. This is pending MacOS arm64 runners for GitHub Actions which is tracked here:
@@ -131,11 +133,12 @@ jobs:
           # * unzip whatever.zip
           # * pip install tiledbsoma-i.j.k-cp310-cp310-macosx_11_0_arm64.whl
           #
-          #- os: macos-12
-          #  platform: macosx
-          #  arch: arm64
-          #  cc: clang
-          #  cxx: clang++
+          # - os: macos-12
+          #   platform: macosx
+          #   arch: arm64
+          #   cc: clang
+          #   cxx: clang++
+          #   wheel_name: macos-arm64
     steps:
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
@@ -143,6 +146,8 @@ jobs:
           python-version: 3.11
       - name: Download artifacts
         uses: actions/download-artifact@v3
+        with:
+          name: wheels-${{ matrix.wheel_name }}
       - name: Show self-reported platform
         run: |
           sw_vers || /usr/bin/true
@@ -157,8 +162,8 @@ jobs:
         run: |
           set -x
           ls -lR
-          ls -lR wheels-*
           WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+          echo "WHL=$WHL"
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
           pip install wheel
