@@ -42,7 +42,7 @@ jobs:
   # for important transitional context.
   wheels:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
-    name: Build wheel ${{ matrix.python-version }}-${{ matrix.wheel-name }}
+    name: Build ${{ matrix.python-version }}-${{ matrix.wheel-name }} wheel
     needs: sdist
     runs-on: ${{ matrix.os }}
     strategy:
@@ -92,7 +92,7 @@ jobs:
 
   # This step locally tries out the built wheels, without publishing to PyPI
   smoke-test:
-    name: "Smoke test wheel ${{ matrix.python.v }}-${{ matrix.wheel-name }}"
+    name: "Smoke test ${{ matrix.python.v }}-${{ matrix.wheel-name }} wheel"
     needs: wheels
     runs-on: ${{ matrix.os }}
     strategy:
