@@ -104,7 +104,11 @@ jobs:
     runs-on: ${{ matrix.os.runs-on }}
     strategy:
       matrix:
-        python-version: ['311']
+        python:
+          - v: '310'
+            vv: '3.10'
+          - v: '311'
+            vv: '3.11'
         os:
           - runs-on: ubuntu-20.04
             arch: x86_64
@@ -132,20 +136,20 @@ jobs:
           #   wheel-name: macos-arm64
       fail-fast: false
     steps:
-      - name: Set up Python 3.11
+      - name: Set up Python ${{ matrix.python.v }}
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: ${{ matrix.python.v }}
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wheel-${{ matrix.os.wheel-name }}-${{ matrix.python-version }}
+          name: wheel-${{ matrix.os.wheel-name }}-${{ matrix.python.v }}
           run-id: ${{ inputs.run_id }}
       - name: Install wheel
         run: |
           set -x
           ls -lR
-          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python-version }}-cp${{ matrix.python-version }}-*_${{ matrix.os.arch }}.whl')
+          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python.v }}-cp${{ matrix.python.v }}-*_${{ matrix.os.arch }}.whl')
           echo "WHL=$WHL"
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
@@ -158,7 +162,7 @@ jobs:
       - name: Smoke test in docker
         if: ${{ matrix.os.runs-on == 'ubuntu-20.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:3.11 bash -ec "
+          docker run -v $(pwd):/mnt python:${{ matrix.python.vv }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
