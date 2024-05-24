@@ -887,27 +887,47 @@ def test_write_categorical_dim_extend(tmp_path):
             ("string", pa.dictionary(pa.int8(), pa.large_string())),
         ]
     )
+
+    df1 = pd.DataFrame(
+        data={
+            "soma_joinid": [0, 1, 2, 3],
+            "string": pd.Categorical(["a", "b", "a", "b"], categories=["b", "a"]),
+        }
+    )
+
+    df2 = pd.DataFrame(
+        data={
+            "soma_joinid": [4, 5],
+            "string": pd.Categorical(["c", "b"], categories=["b", "c"]),
+        }
+    )
+
     with soma.DataFrame.create(
         tmp_path.as_posix(),
         schema=schema,
         index_column_names=["soma_joinid"],
     ) as sdf:
-        df = pd.DataFrame(
-            data={
-                "soma_joinid": [0, 1, 2, 3],
-                "string": pd.Categorical(["a", "b", "a", "b"], categories=["b", "a"]),
-            }
+        table = pa.Table.from_pandas(df1)
+        dtype = pa.dictionary(pa.int32(), pa.string())
+        different_index_type = table.set_column(
+            0,
+            pa.field("string", dtype),
+            pa.array(["a", "b", "a", "b"], dtype),
         )
-        sdf.write(pa.Table.from_pandas(df))
+        sdf.write(different_index_type)
 
     with soma.DataFrame.open(tmp_path.as_posix(), "w") as sdf:
-        df = pd.DataFrame(
-            data={
-                "soma_joinid": [4, 5],
-                "string": pd.Categorical(["c", "b"], categories=["b", "c"]),
-            }
-        )
-        sdf.write(pa.Table.from_pandas(df))
+        sdf.write(pa.Table.from_pandas(df2))
+
+    # https://stackoverflow.com/questions/45639350/retaining-categorical-dtype-upon-dataframe-concatenation
+    uc = union_categoricals([df1.string, df2.string])
+    df1.string = pd.Categorical(df1.string, categories=uc.categories)
+    df2.string = pd.Categorical(df2.string, categories=uc.categories)
+    expected_df = pd.concat((df1, df2), ignore_index=True)
+
+    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+        data = sdf.read().concat()
+        assert expected_df.compare(data.to_pandas()).empty
 
 
 def test_result_order(tmp_path):
