@@ -55,18 +55,20 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-20.04, macos-12]
+        python_version: ['310', '311']
         include:
           - os: ubuntu-20.04
-            cibw_build: 'cp31*-manylinux_x86_64'
+            build_suffix: manylinux_x86_64
             platform: manylinux2014
             wheel_name: manylinux2014
           - os: macos-12
-            cibw_build: 'cp31*-macosx_x86_64'
+            build_suffix: macosx_x86_64
             cibw_archs_macos: x86_64
             platform: macosx
             wheel_name: macos-x86_64
           - os: macos-12
-            cibw_build: 'cp31*-macosx_arm64'
+            build_suffix: macosx_arm64
             cibw_archs_macos: arm64
             platform: macosx
             wheel_name: macos-arm64
@@ -94,6 +96,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.11.3
         with:
           package-dir: tiledbsoma.tar.gz
+          only: cp${{ matrix.python_version }}-${{ matrix.build_suffix }}
         env:
           CIBW_BUILD: ${{ matrix.cibw_build }}
           CIBW_BUILD_VERBOSITY: 1
@@ -108,7 +111,7 @@ jobs:
       - name: Upload wheels-${{ matrix.wheel_name }} to GitHub Actions storage
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.wheel_name }}
+          name: wheel-${{ matrix.wheel_name }}-${{ matrix.python_version }}
           path: ./wheelhouse/*.whl
 
   # This step locally tries out the built wheels, without publishing to PyPI
@@ -118,6 +121,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-20.04, macos-12]
+        python_version: ['310', '311']
         include:
           - os: ubuntu-20.04
             platform: manylinux2014
@@ -155,7 +160,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wheels-${{ matrix.wheel_name }}
+          name: wheel-${{ matrix.wheel_name }}-${{ matrix.python_version }}
           run-id: ${{ inputs.run_id }}
       - name: Show self-reported platform
         run: |
@@ -171,7 +176,7 @@ jobs:
         run: |
           set -x
           ls -lR
-          WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python_version }}-cp${{ matrix.python_version }}-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
           echo "WHL=$WHL"
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
