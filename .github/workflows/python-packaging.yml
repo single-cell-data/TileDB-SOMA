@@ -57,16 +57,16 @@ jobs:
       matrix:
         include:
           - os: ubuntu-20.04
-            cibw_build: 'cp3*-manylinux_x86_64'
+            cibw_build: 'cp31*-manylinux_x86_64'
             platform: manylinux2014
             wheel_name: manylinux2014
           - os: macos-12
-            cibw_build: 'cp3*-macosx_x86_64'
+            cibw_build: 'cp31*-macosx_x86_64'
             cibw_archs_macos: x86_64
             platform: macosx
             wheel_name: macos-x86_64
           - os: macos-12
-            cibw_build: 'cp3*-macosx_arm64'
+            cibw_build: 'cp31*-macosx_arm64'
             cibw_archs_macos: arm64
             platform: macosx
             wheel_name: macos-arm64
