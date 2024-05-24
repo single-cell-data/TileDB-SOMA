@@ -49,26 +49,25 @@ jobs:
   # for important transitional context.
   wheels:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
-    name: Build wheel ${{ matrix.wheel_name }}
+    name: Build wheel ${{ matrix.python-version }}-${{ matrix.os.wheel-name }}
     needs: sdist
     if: inputs.run-id == ''
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.runs-on }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-12]
-        python_version: ['310', '311']
-        include:
-          - os: ubuntu-20.04
-            build_suffix: manylinux_x86_64
-            wheel_name: manylinux2014
-          - os: macos-12
-            build_suffix: macosx_x86_64
+        python-version: ['310', '311']
+        os:
+          - runs-on: ubuntu-20.04
+            build-suffix: manylinux_x86_64
+            wheel-name: manylinux2014
+          - runs-on: macos-12
+            build-suffix: macosx_x86_64
             cibw_archs_macos: x86_64
-            wheel_name: macos-x86_64
-          - os: macos-12
-            build_suffix: macosx_arm64
+            wheel-name: macos-x86_64
+          - runs-on: macos-12
+            build-suffix: macosx_arm64
             cibw_archs_macos: arm64
-            wheel_name: macos-arm64
+            wheel-name: macos-arm64
     steps:
       - name: Download sdist artifact
         uses: actions/download-artifact@v4
@@ -80,44 +79,43 @@ jobs:
         uses: pypa/cibuildwheel@v2.11.3
         with:
           package-dir: tiledbsoma.tar.gz
-          only: cp${{ matrix.python_version }}-${{ matrix.build_suffix }}
+          only: cp${{ matrix.python-version }}-${{ matrix.os.build-suffix }}
         env:
-          CIBW_BUILD: ${{ matrix.cibw_build }}
+          CIBW_BUILD: ${{ matrix.os.cibw_build }}
           CIBW_BUILD_VERBOSITY: 1
           CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
           # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
           #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
           #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
           #   built for the wrong python version.
-          CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
+          CIBW_ARCHS_MACOS: ${{ matrix.os.cibw_archs_macos }}
           CIBW_TEST_SKIP: "*_arm64"
-          CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
-      - name: Upload wheels-${{ matrix.wheel_name }} to GitHub Actions storage
+          CMAKE_OSX_ARCHITECTURES: ${{ matrix.os.cibw_archs_macos }}
+      - name: Upload wheels-${{ matrix.os.wheel-name }} to GitHub Actions storage
         uses: actions/upload-artifact@v4
         with:
-          name: wheel-${{ matrix.wheel_name }}-${{ matrix.python_version }}
+          name: wheel-${{ matrix.os.wheel-name }}-${{ matrix.python-version }}
           path: ./wheelhouse/*.whl
 
   # This step locally tries out the built wheels, without publishing to PyPI
   smoke-test:
-    name: "Smoke test wheels ${{ matrix.wheel_name }}"
+    name: "Smoke test wheel ${{ matrix.python-version }}-${{ matrix.os.wheel-name }}"
     needs: wheels
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.runs-on }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-12]
-        python_version: ['310', '311']
-        include:
-          - os: ubuntu-20.04
+        python-version: ['311']
+        os:
+          - runs-on: ubuntu-20.04
             arch: x86_64
             cc: gcc-11
             cxx: g++-11
-            wheel_name: manylinux2014
-          - os: macos-12
+            wheel-name: manylinux2014
+          - runs-on: macos-12
             arch: x86_64
             cc: clang
             cxx: clang++
-            wheel_name: macos-x86_64
+            wheel-name: macos-x86_64
           # TODO: As of 2023-05-18 all we can do in GitHub Actions for MacOS arm64 is cross-compile the wheels
           # for arm64, while actually running on x86 hardware. This means we can build the wheels but we cannot
           # smoke-test them. This is pending MacOS arm64 runners for GitHub Actions which is tracked here:
@@ -127,11 +125,11 @@ jobs:
           # * unzip whatever.zip
           # * pip install tiledbsoma-i.j.k-cp310-cp310-macosx_11_0_arm64.whl
           #
-          # - os: macos-12
+          # - runs-on: macos-12
           #   arch: arm64
           #   cc: clang
           #   cxx: clang++
-          #   wheel_name: macos-arm64
+          #   wheel-name: macos-arm64
       fail-fast: false
     steps:
       - name: Set up Python 3.11
@@ -141,24 +139,24 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wheel-${{ matrix.wheel_name }}-${{ matrix.python_version }}
+          name: wheel-${{ matrix.os.wheel-name }}-${{ matrix.python-version }}
           run-id: ${{ inputs.run_id }}
       - name: Install wheel
         run: |
           set -x
           ls -lR
-          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python_version }}-cp${{ matrix.python_version }}-*_${{ matrix.arch }}.whl')
+          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python-version }}-cp${{ matrix.python-version }}-*_${{ matrix.os.arch }}.whl')
           echo "WHL=$WHL"
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
           pip install wheel
           pip install $WHL
           echo "WHL=$WHL" >> $GITHUB_ENV
-      - name: Smoke test ${{ matrix.os }}
+      - name: Smoke test ${{ matrix.os.runs-on }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         # TODO: more thorough local smoke test
       - name: Smoke test in docker
-        if: ${{ matrix.os == 'ubuntu-20.04' }}
+        if: ${{ matrix.os.runs-on == 'ubuntu-20.04' }}
         run: |
           docker run -v $(pwd):/mnt python:3.11 bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
