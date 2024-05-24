@@ -11,8 +11,6 @@ on:
     inputs:
       ref:
         description: 'Branch or tag to build'
-      run-id:
-        description: 'Workflow run ID to download wheel artifacts from'
   # Trigger publication to PyPi via new release event.
   release:
     types: [published]
@@ -26,7 +24,6 @@ on:
 jobs:
   sdist:
     name: Build source distribution
-    if: inputs.run-id == ''
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout TileDB-SOMA
@@ -51,7 +48,6 @@ jobs:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
     name: Build wheel ${{ matrix.python-version }}-${{ matrix.wheel-name }}
     needs: sdist
-    if: inputs.run-id == ''
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -149,7 +145,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: wheel-${{ matrix.wheel-name }}-${{ matrix.python.v }}
-          run-id: ${{ inputs.run_id }}
       - name: Install wheel
         run: |
           set -x
@@ -182,8 +177,6 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
-        with:
-          run-id: ${{ inputs.run_id }}
       - name: Create dist
         run: |
           set -x
@@ -208,8 +201,6 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
-        with:
-          run-id: ${{ inputs.run_id }}
       - name: Create dist
         run: |
           set -x
