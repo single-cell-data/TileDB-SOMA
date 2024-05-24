@@ -28,6 +28,14 @@ $ python -m pip install --upgrade tiledbsoma
 
 In case of `illegal instruction` errors when running on older architectures --- e.g. Opteron, non-AVX2 --- the issue is that the pre-compiled binaries available at Conda or PyPI aren't targeted for all processor variants over time. You can install from source, as shown below.
 
+To see if this is the issue, on Linux:
+
+```
+grep avx2 /proc/cpuinfo
+```
+
+If this comes up empty for your system, you'll definitely need to build from source to run TileDB-SOMA on that system.
+
 ## From source
 
 * This requires [`tiledb`](https://github.com/TileDB-Inc/TileDB-Py) (see [./setup.cfg](setup.cfg) for version), in addition to other dependencies in [setup.cfg](./setup.cfg).
