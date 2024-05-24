@@ -11,6 +11,7 @@
 // We get these via nanoarrow and must cannot include carrow.h again
 #define ARROW_SCHEMA_AND_ARRAY_DEFINED 1
 #include <tiledbsoma/tiledbsoma>
+#include <tiledbsoma/reindexer/reindexer.h>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
 #include <tiledb/tiledb_experimental>
 #endif

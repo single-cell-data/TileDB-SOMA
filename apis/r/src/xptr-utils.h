@@ -26,6 +26,8 @@ const tiledb_xptr_object tiledb_xptr_query_buf_t                 { 190 };
 // the definitions above are internal to tiledb-r but we need a new value here if we want tag the external pointer
 const tiledb_xptr_object tiledb_soma_reader_t                    { 500 };
 
+const tiledb_xptr_object tiledb_soma_rindexer_t                  { 600 };
+
 // templated checkers for external pointer tags
 template <typename T> const int32_t XPtrTagType                            = tiledb_xptr_default; // clang++ wants a value
 template <> inline const int32_t XPtrTagType<tiledb::Array>                = tiledb_xptr_object_array;
@@ -49,7 +51,9 @@ template <> inline const int32_t XPtrTagType<tiledb::VFS>                  = til
 // template <> inline const int32_t XPtrTagType<vlv_buf_t>                    = tiledb_xptr_vlv_buf_t;
 // template <> inline const int32_t XPtrTagType<query_buf_t>                  = tiledb_xptr_query_buf_t;
 
-template <> inline const int32_t XPtrTagType<tdbs::SOMAArray>             = tiledb_soma_reader_t;
+template <> inline const int32_t XPtrTagType<tdbs::SOMAArray>              = tiledb_soma_reader_t;
+
+template <> inline const int32_t XPtrTagType<tdbs::IntIndexer>  	       = tiledb_soma_rindexer_t;
 
 template <typename T> Rcpp::XPtr<T> make_xptr(T* p, bool finalize=true) {
     return Rcpp::XPtr<T>(p, finalize, Rcpp::wrap(XPtrTagType<T>), R_NilValue);

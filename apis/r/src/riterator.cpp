@@ -13,6 +13,7 @@
 #include <tiledb/tiledb_experimental>
 #endif
 #include <tiledbsoma/tiledbsoma>
+#include <tiledbsoma/reindexer/reindexer.h>
 
 #include "rutilities.h"         // local declarations
 #include "xptr-utils.h"         // xptr taggging utilitie
