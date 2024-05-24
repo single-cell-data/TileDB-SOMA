@@ -8,7 +8,6 @@ on:
   # Specify the branch or other ref as required, allowing testing
   # of PRs/branches.
   workflow_dispatch:
-
   # Trigger publication to PyPi via new release event.
   release:
     types: [published]
@@ -25,14 +24,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout TileDB-SOMA
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # ensure we get all tags to inform package version determination
       - name: Build sdist
         run: python setup.py sdist
         working-directory: ./apis/python
       - name: Upload sdist artifact to GitHub Actions storage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sdist
           path: apis/python/dist/
@@ -43,32 +42,31 @@ jobs:
   # for important transitional context.
   wheels:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
-    name: Build wheels on ${{ matrix.os }}
+    name: Build ${{ matrix.python-version }}-${{ matrix.wheel-name }} wheel
     needs: sdist
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        python-version: [ '38', '39', '310', '311' ]
+        cibw_build: [ manylinux_x86_64, macosx_x86_64, macosx_arm64 ]
         include:
-          - os: ubuntu-20.04
-            cibw_build: 'cp3*-manylinux_x86_64'
-            platform: manylinux2014
-            wheel_name: manylinux2014
-          - os: macos-12
-            cibw_build: 'cp3*-macosx_x86_64'
+          - cibw_build: manylinux_x86_64
+            os: ubuntu-20.04
+            wheel-name: manylinux2014
+          - cibw_build: macosx_x86_64
+            os: macos-12
             cibw_archs_macos: x86_64
-            platform: macosx
-            wheel_name: macos-x86_64
-          - os: macos-14
-            cibw_build: 'cp3*-macosx_arm64'
+            wheel-name: macos-x86_64
+          - cibw_build: macosx_arm64
+            os: macos-14  # Note: macos-14 is arm64 only
             cibw_archs_macos: arm64
-            platform: macosx
-            wheel_name: macos-arm64
+            wheel-name: macos-arm64
     steps:
       - name: Download sdist artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: sdist
-      - name: rename sdist
+      - name: Rename sdist
         run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
       # This is crucial for ongoing debug (do not remove it) as this shows the
       # OS version as used by `pip install` to find wheel names. Importantly,
@@ -84,9 +82,10 @@ jobs:
           python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
           python -c 'import platform; print("platform.platform()", platform.platform())'
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.3
+        uses: pypa/cibuildwheel@v2.18.1
         with:
           package-dir: tiledbsoma.tar.gz
+          only: cp${{ matrix.python-version }}-${{ matrix.cibw_build }}
         env:
           CIBW_BUILD: ${{ matrix.cibw_build }}
           CIBW_BUILD_VERBOSITY: 1
@@ -98,110 +97,73 @@ jobs:
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
           CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
-      # See https://github.com/single-cell-data/TileDB-SOMA/pull/2620
-      #
-      # * MacOS 12 and 14 self-report as `macosx-10.9-universal2` via
-      #   `distutil.util.get_platform()`.
-      # * Due to https://github.com/single-cell-data/TileDB-SOMA/pull/2124 we build
-      #   with `-mmacosx-version-min=11.0` which overrides any attempt at
-      #   setting `CMAKE_OSX_DEPLOYMENT_TARGET` in our env here.
-      # * This means a MacOS 12/14 system can self-report as 10.9, see
-      #   a wheel at 11.0, and refuse the install, claiming that no suitable
-      #   OS-version support can be found in the wheel.
-      # Therefore we rename the wheel's reported supported MacOS version to
-      # match the self-reported OS version of today's clients.
-      #
-      # Example file names we assume here:
-      # tiledbsoma-VERSIONHERE-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_x86_64.whl
-      # tiledbsoma-VERSIONHERE-cp311-cp311-macosx_14_0_arm64.whl
-      - name: MacOS portability step
-        run: |
-          pwd
-          ls -l
-          cd wheelhouse
-          ls -l
-          for wheel_file_name in *.whl; do
-            if expr "$wheel_file_name" : ".*macosx_11_0.*"; then
-              new_name=$(echo $wheel_file_name | sed "s/macosx_11_0/macosx_10_9/")
-              if [ "$wheel_file_name" = "$new_name" ]; then
-                echo "Failed to rename $wheel_file_name"
-                exit 1
-              fi
-              echo Renaming $wheel_file_name to $new_name
-              mv $wheel_file_name $new_name
-            fi
-          done
-          cd ..
-          echo
-      - name: Upload wheels-${{ matrix.wheel_name }} to GitHub Actions storage
-        uses: actions/upload-artifact@v3
+          MACOSX_DEPLOYMENT_TARGET: "11.0"
+      - name: Upload wheel-${{ matrix.wheel-name }}-${{ matrix.python-version }} to GitHub Actions storage
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.wheel_name }}
+          name: wheel-${{ matrix.wheel-name }}-${{ matrix.python-version }}
           path: ./wheelhouse/*.whl
 
   # This step locally tries out the built wheels, without publishing to PyPI
   smoke-test:
-    name: Smoke test wheels
+    name: "Smoke test ${{ matrix.python.undotted-version }}-${{ matrix.wheel-name }} wheel"
     needs: wheels
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        python:
+          - undotted-version: '310'
+            dotted-version: '3.10'
+          - undotted-version: '311'
+            dotted-version: '3.11'
+        wheel-name:
+          - manylinux2014
+          - macos-x86_64
+          - macos-arm64
         include:
-          - os: ubuntu-20.04
-            platform: manylinux2014
+          - wheel-name: manylinux2014
+            os: ubuntu-20.04
             arch: x86_64
             cc: gcc-11
             cxx: g++-11
-          # Follow-up flagged in https://github.com/single-cell-data/TileDB-SOMA/issues/2634
-          # TL;DR direct pip-install of the wheel file fails bafflingly (see #2634 for details)
-          # but works in non-GHA environments including laptops and MacOS EC2 instances.
-          #
-          #- os: macos-12
-          #  platform: macosx
-          #  arch: x86_64
-          #  cc: clang
-          #  cxx: clang++
-          #- os: macos-14
-          #  platform: macosx
-          #  arch: arm64
-          #  cc: clang
-          #  cxx: clang++
+          - wheel-name: macos-x86_64
+            os: macos-12
+            arch: x86_64
+            cc: clang
+            cxx: clang++
+          - wheel-name: macos-arm64
+            os: macos-14
+            arch: arm64
+            cc: clang
+            cxx: clang++
+      fail-fast: false
     steps:
-      - name: Set up Python 3.11
+      - name: Set up Python ${{ matrix.python.dotted-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: ${{ matrix.python.dotted-version }}
       - name: Download artifacts
-        uses: actions/download-artifact@v3
-      - name: Show self-reported platform
-        run: |
-          sw_vers || /usr/bin/true
-          echo "python --version"; python --version
-          echo matrix.platform: ${{ matrix.platform }}
-          echo matrix.arch: ${{ matrix.arch }}
-          # This bit is crucial since it's used to match up to a component of the wheel-file name
-          python -m pip install setuptools
-          python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
-          python -c 'import platform; print("platform.platform()", platform.platform())'
+        uses: actions/download-artifact@v4
+        with:
+          name: wheel-${{ matrix.wheel-name }}-${{ matrix.python.undotted-version }}
       - name: Install wheel
         run: |
           set -x
           ls -lR
-          ls -lR wheels-*
-          WHL=$(find . -name 'tiledbsoma-*-cp311-cp311-*${{ matrix.platform }}*_${{ matrix.arch }}.whl')
+          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python.undotted-version }}-cp${{ matrix.python.undotted-version }}-*_${{ matrix.arch }}.whl')
+          echo "WHL=$WHL"
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
-          python -m pip install wheel
-          python -m pip install -vv $WHL
+          pip install wheel
+          pip install $WHL
           echo "WHL=$WHL" >> $GITHUB_ENV
       - name: Smoke test ${{ matrix.os }}
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         # TODO: more thorough local smoke test
       - name: Smoke test in docker
-        if: ${{ matrix.platform == 'manylinux2014' }}
+        if: ${{ matrix.os == 'ubuntu-20.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:3.11 bash -ec "
+          docker run -v $(pwd):/mnt python:${{ matrix.python.dotted-version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
@@ -215,12 +177,12 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: Create dist
         run: |
           set -x
           mkdir dist
-          cp sdist/tiledbsoma-*.tar.gz wheels-*/*.whl dist
+          cp sdist/tiledbsoma-*.tar.gz wheel-*/*.whl dist
           ls -l dist
       - name: Publish packages to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -239,12 +201,12 @@ jobs:
     if: github.event_name == 'release'
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: Create dist
         run: |
           set -x
           mkdir dist
-          cp sdist/tiledbsoma-*.tar.gz wheels-*/*.whl dist
+          cp sdist/tiledbsoma-*.tar.gz wheel-*/*.whl dist
           ls -l dist
       - name: Publish packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
