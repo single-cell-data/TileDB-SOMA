@@ -48,18 +48,17 @@ jobs:
     strategy:
       matrix:
         python-version: [ '38', '39', '310', '311' ]
-        build: [ manylinux_x86_64, macosx_x86_64, macosx_arm64 ]
+        cibw_build: [ manylinux_x86_64, macosx_x86_64, macosx_arm64 ]
         include:
-          - build: manylinux_x86_64
+          - cibw_build: manylinux_x86_64
             os: ubuntu-20.04
             wheel-name: manylinux2014
-          - build: macosx_x86_64
+          - cibw_build: macosx_x86_64
             os: macos-12
             cibw_archs_macos: x86_64
             wheel-name: macos-x86_64
-          - build: macosx_arm64
-            os: macos-14
-            # ^ Note that macos-14 is arm64 only
+          - cibw_build: macosx_arm64
+            os: macos-14  # Note: macos-14 is arm64 only
             cibw_archs_macos: arm64
             wheel-name: macos-arm64
     steps:
@@ -69,11 +68,24 @@ jobs:
           name: sdist
       - name: Rename sdist
         run: cp tiledbsoma-*.tar.gz tiledbsoma.tar.gz && ls -lh
+      # This is crucial for ongoing debug (do not remove it) as this shows the
+      # OS version as used by `pip install` to find wheel names. Importantly,
+      # macos 12 and macos14 self-report as `macosx-10.9-universal2` via
+      # `distutil.util.get_platform()`.
+      - name: Show self-reported platform
+        run: |
+          echo "python --version"; python --version
+          echo matrix.platform: ${{ matrix.platform }}
+          echo matrix.arch: ${{ matrix.arch }}
+          # This bit is crucial since it's used to match up to a component of the wheel-file name
+          python -m pip install setuptools
+          python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
+          python -c 'import platform; print("platform.platform()", platform.platform())'
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.18.1
         with:
           package-dir: tiledbsoma.tar.gz
-          only: cp${{ matrix.python-version }}-${{ matrix.build }}
+          only: cp${{ matrix.python-version }}-${{ matrix.cibw_build }}
         env:
           CIBW_BUILD: ${{ matrix.cibw_build }}
           CIBW_BUILD_VERBOSITY: 1
@@ -94,16 +106,16 @@ jobs:
 
   # This step locally tries out the built wheels, without publishing to PyPI
   smoke-test:
-    name: "Smoke test ${{ matrix.python.v }}-${{ matrix.wheel-name }} wheel"
+    name: "Smoke test ${{ matrix.python.undotted-version }}-${{ matrix.wheel-name }} wheel"
     needs: wheels
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python:
-          - v: '310'
-            vv: '3.10'
-          - v: '311'
-            vv: '3.11'
+          - undotted-version: '310'
+            dotted-version: '3.10'
+          - undotted-version: '311'
+            dotted-version: '3.11'
         wheel-name:
           - manylinux2014
           - macos-x86_64
@@ -126,19 +138,19 @@ jobs:
             cxx: clang++
       fail-fast: false
     steps:
-      - name: Set up Python ${{ matrix.python.vv }}
+      - name: Set up Python ${{ matrix.python.dotted-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python.vv }}
+          python-version: ${{ matrix.python.dotted-version }}
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wheel-${{ matrix.wheel-name }}-${{ matrix.python.v }}
+          name: wheel-${{ matrix.wheel-name }}-${{ matrix.python.undotted-version }}
       - name: Install wheel
         run: |
           set -x
           ls -lR
-          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python.v }}-cp${{ matrix.python.v }}-*_${{ matrix.arch }}.whl')
+          WHL=$(find . -name 'tiledbsoma-*-cp${{ matrix.python.undotted-version }}-cp${{ matrix.python.undotted-version }}-*_${{ matrix.arch }}.whl')
           echo "WHL=$WHL"
           if [ -z "$WHL" ]; then echo "No wheel found"; exit 1; fi
           unzip -l $WHL
@@ -151,7 +163,7 @@ jobs:
       - name: Smoke test in docker
         if: ${{ matrix.os == 'ubuntu-20.04' }}
         run: |
-          docker run -v $(pwd):/mnt python:${{ matrix.python.vv }} bash -ec "
+          docker run -v $(pwd):/mnt python:${{ matrix.python.dotted-version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
             pip3 install /mnt/$WHL
             python3 -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
@@ -204,7 +216,7 @@ jobs:
           verbose: true
 
   # File a bug report if anything fails, but don't file tickets for manual runs
-  # -- only for scheduled ones.  create_issue_on_fail:
+  # -- only for scheduled ones.
   create_issue_on_fail:
     runs-on: ubuntu-latest
     needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
