@@ -106,7 +106,7 @@ jobs:
         wheel-name:
           - manylinux2014
           - macos-x86_64
-          # - macos-arm64
+          - macos-arm64
         include:
           - wheel-name: manylinux2014
             os: ubuntu-20.04
