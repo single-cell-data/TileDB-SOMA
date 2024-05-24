@@ -11,6 +11,8 @@ on:
     inputs:
       ref:
         description: 'Branch or tag to build'
+      run-id:
+        description: 'Workflow run ID to download wheel artifacts from'
   # Trigger publication to PyPi via new release event.
   release:
     types: [published]
@@ -24,6 +26,7 @@ on:
 jobs:
   sdist:
     name: Build source distribution
+    if: inputs.run-id == ''
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout TileDB-SOMA
@@ -35,7 +38,7 @@ jobs:
         run: python setup.py sdist
         working-directory: ./apis/python
       - name: Upload sdist artifact to GitHub Actions storage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sdist
           path: apis/python/dist/
@@ -48,6 +51,7 @@ jobs:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
     name: Build wheel ${{ matrix.wheel_name }}
     needs: sdist
+    if: inputs.run-id == ''
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -68,7 +72,7 @@ jobs:
             wheel_name: macos-arm64
     steps:
       - name: Download sdist artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: sdist
       - name: rename sdist
@@ -102,7 +106,7 @@ jobs:
           CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
       - name: Upload wheels-${{ matrix.wheel_name }} to GitHub Actions storage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.wheel_name }}
           path: ./wheelhouse/*.whl
@@ -149,9 +153,10 @@ jobs:
         with:
           python-version: 3.11
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: wheels-${{ matrix.wheel_name }}
+          run-id: ${{ inputs.run_id }}
       - name: Show self-reported platform
         run: |
           sw_vers || /usr/bin/true
@@ -193,7 +198,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.run_id }}
       - name: Create dist
         run: |
           set -x
@@ -217,7 +224,9 @@ jobs:
     if: github.event_name == 'release'
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.run_id }}
       - name: Create dist
         run: |
           set -x
