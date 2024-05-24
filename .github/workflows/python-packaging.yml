@@ -142,6 +142,7 @@ jobs:
           #   cc: clang
           #   cxx: clang++
           #   wheel_name: macos-arm64
+      fail-fast: false
     steps:
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
