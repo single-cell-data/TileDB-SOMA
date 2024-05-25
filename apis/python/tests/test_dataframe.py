@@ -877,7 +877,8 @@ def test_write_categorical_dims(tmp_path):
         assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
-def test_write_categorical_dim_extend(tmp_path):
+@pytest.mark.parametrize("index_type", [pa.int8(), pa.int16(), pa.int32(), pa.int64()])
+def test_write_categorical_dim_extend(tmp_path, index_type):
     """
     Introduce new categorical values in each subsequent write.
     """
@@ -908,13 +909,13 @@ def test_write_categorical_dim_extend(tmp_path):
         index_column_names=["soma_joinid"],
     ) as sdf:
         table = pa.Table.from_pandas(df1)
-        dtype = pa.dictionary(pa.int32(), pa.string())
-        different_index_type = table.set_column(
-            0,
+        dtype = pa.dictionary(index_type, pa.string())
+        set_index_type = table.set_column(
+            1,
             pa.field("string", dtype),
             pa.array(["a", "b", "a", "b"], dtype),
         )
-        sdf.write(different_index_type)
+        sdf.write(set_index_type)
 
     with soma.DataFrame.open(tmp_path.as_posix(), "w") as sdf:
         sdf.write(pa.Table.from_pandas(df2))

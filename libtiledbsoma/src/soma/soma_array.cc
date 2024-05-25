@@ -293,9 +293,11 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
 }
 
 Enumeration SOMAArray::extend_enumeration(
-    std::string column_name, ArrowArray* value_array, ArrowArray* index_array) {
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array) {
     auto enmr = ArrayExperimental::get_enumeration(
-        *ctx_->tiledb_ctx(), *arr_, column_name);
+        *ctx_->tiledb_ctx(), *arr_, index_schema->name);
     auto value_type = enmr.type();
 
     switch (value_type) {
@@ -303,38 +305,38 @@ Enumeration SOMAArray::extend_enumeration(
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return SOMAArray::_extend_and_evolve_schema_str(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_BOOL:
         case TILEDB_INT8:
             return SOMAArray::_extend_and_evolve_schema<uint8_t>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_UINT8:
             return SOMAArray::_extend_and_evolve_schema<uint8_t>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_INT16:
             return SOMAArray::_extend_and_evolve_schema<int16_t>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_UINT16:
             return SOMAArray::_extend_and_evolve_schema<uint16_t>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_INT32:
             return SOMAArray::_extend_and_evolve_schema<int32_t>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_UINT32:
             return SOMAArray::_extend_and_evolve_schema<uint32_t>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_INT64:
             return SOMAArray::_extend_and_evolve_schema<int64_t>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_UINT64:
             return SOMAArray::_extend_and_evolve_schema<uint64_t>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_FLOAT32:
             return SOMAArray::_extend_and_evolve_schema<float>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         case TILEDB_FLOAT64:
             return SOMAArray::_extend_and_evolve_schema<double>(
-                column_name, value_array, index_array);
+                value_array, index_schema, index_array);
         default:
             throw TileDBSOMAError(fmt::format(
                 "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
@@ -343,11 +345,14 @@ Enumeration SOMAArray::extend_enumeration(
 }
 
 Enumeration SOMAArray::_extend_and_evolve_schema_str(
-    std::string column_name, ArrowArray* value_array, ArrowArray* index_array) {
-    auto index_type = tiledb_schema()->attribute(column_name).type();
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array) {
+    std::string column_name = index_schema->name;
+    auto disk_index_type = tiledb_schema()->attribute(column_name).type();
     auto enmr = ArrayExperimental::get_enumeration(
         *ctx_->tiledb_ctx(), *arr_, column_name);
-    uint64_t max_capacity = SOMAArray::_get_max_capacity(index_type);
+    uint64_t max_capacity = SOMAArray::_get_max_capacity(disk_index_type);
 
     const void* data;
     uint64_t* offsets = nullptr;
@@ -395,7 +400,14 @@ Enumeration SOMAArray::_extend_and_evolve_schema_str(
         se.array_evolve(uri_);
 
         SOMAArray::_remap_indexes(
-            extended_enmr, enums_in_write, index_array, index_type);
+            column_name,
+            extended_enmr,
+            enums_in_write,
+            index_schema,
+            index_array);
+
+        index_schema->format = ArrowAdapter::to_arrow_format(disk_index_type)
+                                   .data();
 
         return extended_enmr;
     }
@@ -566,7 +578,7 @@ ArrowTable SOMAArray::_cast_table(
                 }
 
                 auto extended_enmr = extend_enumeration(
-                    std::string(name), dict_arr_, arrow_arr_);
+                    dict_arr_, arrow_sch_, arrow_arr_);
             }
         }
 
