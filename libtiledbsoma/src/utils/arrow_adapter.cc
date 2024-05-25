@@ -413,25 +413,25 @@ Dimension ArrowAdapter::_create_dim(
             return Dimension::create(
                 *ctx, name, type, (uint64_t*)buff, (uint64_t*)buff + 2);
         case TILEDB_INT8:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (int8_t*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (int8_t*)buff);
         case TILEDB_UINT8:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (uint8_t*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (uint8_t*)buff);
         case TILEDB_INT16:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (int16_t*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (int16_t*)buff);
         case TILEDB_UINT16:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (uint16_t*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (uint16_t*)buff);
         case TILEDB_INT32:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (int32_t*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (int32_t*)buff);
         case TILEDB_UINT32:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (uint32_t*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (uint32_t*)buff);
         case TILEDB_INT64:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (int64_t*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (int64_t*)buff);
         case TILEDB_UINT64:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (uint64_t*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (uint64_t*)buff);
         case TILEDB_FLOAT32:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (float*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (float*)buff);
         case TILEDB_FLOAT64:
-            return ArrowAdapter::_create_dim_aux(*ctx, name, (double*)buff);
+            return ArrowAdapter::_create_dim_aux(ctx, name, (double*)buff);
         default:
             throw TileDBSOMAError(fmt::format(
                 "ArrowAdapter: Unsupported TileDB dimension: {} ",
