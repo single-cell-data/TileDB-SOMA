@@ -349,7 +349,9 @@ def cast_values_to_target_schema(values: pa.Table, schema: pa.Schema) -> pa.Tabl
         if pa.types.is_dictionary(target_field.type):
             if not pa.types.is_dictionary(input_field.type):
                 raise ValueError(f"{name} requires dictionary entry")
-        target_schema.append(target_field)
+            target_schema.append(input_field)
+        else:
+            target_schema.append(target_field)
 
     return values.cast(pa.schema(target_schema, values.schema.metadata))
 
