@@ -1,3 +1,9 @@
+# tiledbsoma 1.11.3
+
+## Changes
+
+* Fixes an intermittent segfault observed in Python
+
 # tiledbsoma 1.11.2
 
 ## Changes
