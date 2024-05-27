@@ -92,9 +92,6 @@ def open(
     if soma_type == "somasparsendarray":
         return SparseNDArrayWrapper._from_soma_object(soma_object, context)
 
-    if soma_type == "array":
-        return ArrayWrapper.open(uri, mode, context, timestamp)
-
     if soma_type in (
         "somacollection",
         "somaexperiment",
@@ -341,6 +338,39 @@ class GroupWrapper(Wrapper[tiledb.Group]):
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
 
+_GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
+
+class SOMAGroupWrapper(Wrapper[_GrpType]):
+    """Base class for Pybind11 SOMAGroupWrapper handles."""
+
+    _WRAPPED_TYPE: Type[_GrpType]
+
+    @classmethod
+    def _opener(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: int,
+    ) -> clib.SOMAGroup:
+        # We want to do open-group-at-timestamp.
+        # ctx = context.tiledb_ctx
+        # cfgdict = context.tiledb_ctx.config().dict()
+        # cfgdict["sm.group.timestamp_end"] = timestamp
+        
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        return cls._WRAPPED_TYPE.open(
+            uri,
+            open_mode,
+            context=context.native_context,
+            timestamp=(0, timestamp),
+        )
+
+    def _do_initial_reads(self, reader: clib.SOMAGroup) -> None:
+        super()._do_initial_reads(reader)
+        self.initial_contents = {
+            o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
+        }
 
 _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
 
