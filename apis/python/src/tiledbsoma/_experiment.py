@@ -11,6 +11,7 @@ from typing import Any, Optional
 from somacore import experiment, query
 from typing_extensions import Self
 
+from . import _tdb_handles
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._indexer import IntIndexer
@@ -64,6 +65,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
     """
 
     __slots__ = ()
+    _wrapper_type = _tdb_handles.ExperimentWrapper
 
     _subclass_constrained_soma_types = {
         "obs": ("SOMADataFrame",),

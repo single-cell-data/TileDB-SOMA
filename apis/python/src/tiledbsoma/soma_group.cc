@@ -76,7 +76,11 @@ void load_soma_group(py::module& m) {
         .def_property_readonly("uri", &SOMAGroup::uri)
         .def("context", &SOMAGroup::ctx)
         .def("has", &SOMAGroup::has)
-        .def("add", &SOMAGroup::set)
+        .def("add", &SOMAGroup::set,
+            "uri"_a,
+            "uri_type"_a,
+            "name"_a,
+            "soma_type"_a)
         .def("count", &SOMAGroup::count)
         .def("remove", &SOMAGroup::del)
         .def("members", &SOMAGroup::members)
@@ -93,8 +97,8 @@ void load_soma_group(py::module& m) {
                 return meta(group.get_metadata());
             })
         .def(
-            "set_metadata", 
-            [](SOMAGroup& group, const std::string& key, py::array value){
+            "set_metadata",
+            [](SOMAGroup& group, const std::string& key, py::array value) {
                 set_metadata(group, key, value);
             })
         .def("delete_metadata", &SOMAGroup::delete_metadata)

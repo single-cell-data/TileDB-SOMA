@@ -31,19 +31,15 @@ import somacore.collection
 from somacore import options
 from typing_extensions import Self
 
-import tiledb
-
 from . import _funcs, _tdb_handles
+from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import (
-    AlreadyExistsError,
-    NotCreateableError,
     SOMAError,
-    is_already_exists_error,
     is_does_not_exist_error,
-    is_not_createable_error,
+    map_exception_for_create,
 )
 from ._funcs import typeguard_ignore
 from ._sparse_nd_array import SparseNDArray
@@ -74,7 +70,7 @@ class _CachedElement:
 
 
 class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
-    TileDBObject[_tdb_handles.GroupWrapper],
+    TileDBObject[_tdb_handles.SOMAGroupWrapper[Any]],
     somacore.collection.BaseCollection[CollectionElementType],
 ):
     """Contains a key-value mapping where the keys are string names and the values
@@ -83,8 +79,6 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     """
 
     __slots__ = ("_contents", "_mutated_keys")
-    _wrapper_type = _tdb_handles.GroupWrapper
-    _reader_wrapper_type = _tdb_handles.GroupWrapper
 
     # TODO: Implement additional creation of members on collection subclasses.
     @classmethod
@@ -131,19 +125,21 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         """
         context = _validate_soma_tiledb_context(context)
         try:
-            tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
-            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-            cls._set_create_metadata(handle)
+            wrapper = cast(_tdb_handles.SOMAGroupWrapper[Any], cls._wrapper_type)
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            clib.SOMAGroup.create(
+                uri=uri,
+                soma_type=wrapper._GROUP_WRAPPED_TYPE.__name__,
+                ctx=context.native_context,
+                timestamp=(0, timestamp_ms),
+            )
+            handle = wrapper.open(uri, "w", context, tiledb_timestamp)
             return cls(
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
-        except tiledb.TileDBError as tdbe:
-            if is_already_exists_error(tdbe):
-                raise AlreadyExistsError(f"{uri!r} already exists")
-            if is_not_createable_error(tdbe):
-                raise NotCreateableError(f"{uri!r} cannot be created")
-            raise
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
 
     @classmethod
     def open(
@@ -178,7 +174,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     def __init__(
         self,
-        handle: _tdb_handles.GroupWrapper,
+        handle: _tdb_handles.SOMAGroupWrapper[Any],
         **kwargs: Any,
     ):
         super().__init__(handle, **kwargs)
@@ -474,8 +470,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             mode = self.mode
             context = self.context
             timestamp = self.tiledb_timestamp_ms
-
             clib_type = entry.entry.wrapper_type.clib_type
+
             wrapper = _tdb_handles.open(uri, mode, context, timestamp, clib_type)
             entry.soma = _factory.reify_handle(wrapper)
 
@@ -614,7 +610,14 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             # TileDB groups currently do not support replacing elements.
             # If we use a hack to flush writes, corruption is possible.
             raise SOMAError(f"replacing key {key!r} is unsupported")
-        self._handle.writer.add(name=key, uri=uri, relative=relative)
+        clib_collection = self._handle._handle
+        relative_type = clib.URIType.relative if relative else clib.URIType.absolute
+        clib_collection.add(
+            uri=uri,
+            uri_type=relative_type,
+            name=key,
+            soma_type=clib_collection.type,
+        )
         self._contents[key] = _CachedElement(
             entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
             soma=soma_object,
@@ -626,7 +629,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             raise SOMAError(f"cannot delete previously-mutated key {key!r}")
         try:
             self._handle.writer.remove(key)
-        except tiledb.TileDBError as tdbe:
+        except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(f"{key!r} does not exist in {self}") from tdbe
             raise
@@ -719,6 +722,8 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     """
 
     __slots__ = ()
+
+    _wrapper_type = _tdb_handles.CollectionWrapper
 
 
 @typeguard_ignore

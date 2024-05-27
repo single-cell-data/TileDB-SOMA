@@ -103,7 +103,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     __slots__ = ()
 
     _wrapper_type = SparseNDArrayWrapper
-    _reader_wrapper_type = SparseNDArrayWrapper
 
     # Inherited from somacore
     # * ndim accessor
