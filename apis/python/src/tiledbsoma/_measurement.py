@@ -72,8 +72,8 @@ class Measurement(  # type: ignore[misc]  # __eq__ false positive
 
     __slots__ = ()
     _wrapper_type = _tdb_handles.GroupWrapper
-    _reader_wrapper_type = _tdb_handles.GroupWrapper
-    
+    _reader_wrapper_type = _tdb_handles.MeasurementWrapper
+
     _subclass_constrained_soma_types = {
         "var": ("SOMADataFrame",),
         "X": ("SOMACollection",),

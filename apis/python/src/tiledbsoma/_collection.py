@@ -469,17 +469,13 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         if entry.soma is None:
             from . import _factory  # Delayed binding to resolve circular import.
 
-            if isinstance(entry.entry, str):
-                uri = entry.entry
-            else:
-                uri = entry.entry.uri
+            uri = entry.entry.uri
             mode = self.mode
             context = self.context
             timestamp = self.tiledb_timestamp_ms
+            clib_type = entry.entry.wrapper_type.clib_type
 
-            # clib_type = entry.entry.wrapper_type.clib_type
-            # wrapper = _tdb_handles.open(uri, mode, context, timestamp, clib_type)
-            wrapper = _tdb_handles.open(uri, mode, context, timestamp)
+            wrapper = _tdb_handles.open(uri, mode, context, timestamp, clib_type)
             entry.soma = _factory.reify_handle(wrapper)
 
             # Since we just opened this object, we own it and should close it.
@@ -724,7 +720,7 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     __slots__ = ()
 
     _wrapper_type = _tdb_handles.GroupWrapper
-    _reader_wrapper_type = _tdb_handles.SOMACollection
+    _reader_wrapper_type = _tdb_handles.CollectionWrapper
 
 
 @typeguard_ignore

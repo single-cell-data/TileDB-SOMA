@@ -66,8 +66,8 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
 
     __slots__ = ()
     _wrapper_type = _tdb_handles.GroupWrapper
-    _reader_wrapper_type = _tdb_handles.GroupWrapper
-    
+    _reader_wrapper_type = _tdb_handles.ExperimentWrapper
+
     _subclass_constrained_soma_types = {
         "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),

@@ -133,7 +133,18 @@ void SOMAGroup::fill_caches() {
 
     for (uint64_t i = 0; i < cache_group_->member_count(); ++i) {
         auto mem = cache_group_->member(i);
-        member_to_uri_[mem.name().value()] = mem.uri();
+        std::string soma_type;
+        switch (mem.type()) {
+            case Object::Type::Array:
+                soma_type = "SOMAArray";
+                break;
+            case Object::Type::Group:
+                soma_type = "SOMAGroup";
+                break;
+            default:
+                throw TileDBSOMAError("Saw invalid TileDB type");
+        }
+        members_[mem.name().value()] = SOMAGroupEntry(mem.uri(), soma_type);
     }
 }
 
@@ -184,7 +195,7 @@ void SOMAGroup::set(
         relative = uri.find("://") != std::string::npos;
     }
     group_->add_member(uri, relative, name);
-    member_to_uri_[name] = uri;
+    members_[name] = SOMAGroupEntry(uri, std::nullopt);
 }
 
 uint64_t SOMAGroup::count() const {
@@ -195,8 +206,8 @@ void SOMAGroup::del(const std::string& name) {
     group_->remove_member(name);
 }
 
-std::map<std::string, std::string> SOMAGroup::member_to_uri_mapping() const {
-    return member_to_uri_;
+std::map<std::string, SOMAGroupEntry> SOMAGroup::members() const {
+    return members_;
 }
 
 std::optional<TimestampRange> SOMAGroup::timestamp() {

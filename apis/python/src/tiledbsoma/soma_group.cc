@@ -53,8 +53,14 @@ void load_soma_group(py::module& m) {
         .def("context", &SOMAGroup::ctx)
         .def("has", &SOMAGroup::has)
         .def("count", &SOMAGroup::count)
-        .def("member_to_uri_mapping", &SOMAGroup::member_to_uri_mapping)
-        .def("timestamp", &SOMAGroup::timestamp)
+        .def("members", &SOMAGroup::members)
+        .def_property_readonly(
+            "timestamp",
+            [](SOMAGroup& group) -> py::object {
+                if (!group.timestamp().has_value())
+                    return py::none();
+                return py::cast(group.timestamp()->second);
+            })
         .def_property_readonly(
             "meta",
             [](SOMAGroup& group) -> py::dict {

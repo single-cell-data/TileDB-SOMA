@@ -46,7 +46,7 @@ RawHandle = Union[
     clib.SOMADataFrame,
     clib.SOMASparseNDArray,
     clib.SOMADenseNDArray,
-    clib.SOMACollection
+    clib.SOMACollection,
 ]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
@@ -92,9 +92,13 @@ def open(
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
     if soma_type == "somasparsendarray":
         return SparseNDArrayWrapper._from_soma_object(soma_object, context)
-    
+
     if soma_type == "somacollection" and mode == "r":
-        return SOMACollection._from_soma_object(soma_object, context)
+        return CollectionWrapper._from_soma_object(soma_object, context)
+    if soma_type == "somaexperiment" and mode == "r":
+        return ExperimentWrapper._from_soma_object(soma_object, context)
+    if soma_type == "somameasurement" and mode == "r":
+        return MeasurementWrapper._from_soma_object(soma_object, context)
 
     if soma_type in (
         "somacollection",
@@ -316,6 +320,15 @@ class GroupEntry:
             return GroupEntry(obj.uri, GroupWrapper)
         raise SOMAError(f"internal error: unknown object type {obj.type}")
 
+    @classmethod
+    def from_soma_group_entry(cls, obj: Tuple[str, str]) -> "GroupEntry":
+        uri, type = obj[0], obj[1]
+        if type == "SOMAArray":
+            return GroupEntry(uri, SOMAArrayWrapper)
+        if type == "SOMAGroup":
+            return GroupEntry(uri, SOMAGroupWrapper)
+        raise SOMAError(f"internal error: unknown object type {uri}")
+
 
 class GroupWrapper(Wrapper[tiledb.Group]):
     """Wrapper around a TileDB Group handle."""
@@ -342,12 +355,16 @@ class GroupWrapper(Wrapper[tiledb.Group]):
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
 
+
 _GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
+
 
 class SOMAGroupWrapper(Wrapper[_GrpType]):
     """Base class for Pybind11 SOMAGroupWrapper handles."""
 
     _WRAPPED_TYPE: Type[_GrpType]
+
+    clib_type = "SOMAGroup"
 
     @classmethod
     def _opener(
@@ -357,11 +374,6 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
         context: SOMATileDBContext,
         timestamp: int,
     ) -> clib.SOMAGroup:
-        # We want to do open-group-at-timestamp.
-        # ctx = context.tiledb_ctx
-        # cfgdict = context.tiledb_ctx.config().dict()
-        # cfgdict["sm.group.timestamp_end"] = timestamp
-        
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
         return cls._WRAPPED_TYPE.open(
             uri,
@@ -370,22 +382,30 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
             timestamp=(0, timestamp),
         )
 
-    def _do_initial_reads(self, reader: clib.SOMAGroup) -> None:
-        super()._do_initial_reads(reader)
+    def _do_initial_reads(self, group: clib.SOMAGroup) -> None:
+        super()._do_initial_reads(group)
+        
         self.initial_contents = {
-            o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
+            name: GroupEntry.from_soma_group_entry(entry)
+            for name, entry in group.members().items()
         }
 
-class SOMACollection(SOMAGroupWrapper[clib.SOMACollection]):
-    """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
+
+class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
+    """Wrapper around a Pybind11 CollectionWrapper handle."""
 
     _WRAPPED_TYPE = clib.SOMACollection
 
-    # TODO temporary, replace in SOMAGroup
-    def _do_initial_reads(self, reader: clib.SOMAGroup) -> None:
-        super()._do_initial_reads(reader)
-        self.initial_contents = reader.member_to_uri_mapping()
-        
+class ExperimentWrapper(SOMAGroupWrapper[clib.SOMAExperiment]):
+    """Wrapper around a Pybind11 ExperimentWrapper handle."""
+
+    _WRAPPED_TYPE = clib.SOMAExperiment
+    
+class MeasurementWrapper(SOMAGroupWrapper[clib.SOMAMeasurement]):
+    """Wrapper around a Pybind11 MeasurementWrapper handle."""
+
+    _WRAPPED_TYPE = clib.SOMAMeasurement
+
 _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
 
 
@@ -393,6 +413,8 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
     """Base class for Pybind11 SOMAArrayWrapper handles."""
 
     _WRAPPED_TYPE: Type[_ArrType]
+
+    clib_type = "SOMAArray"
 
     @classmethod
     def _opener(
