@@ -82,25 +82,6 @@ void write_coords(
     }
 }
 
-py::dict meta(SOMAArray& array) {
-    py::dict results;
-
-    for (auto [key, val] : array.get_metadata()) {
-        auto [tdb_type, value_num, value] = val;
-
-        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII) {
-            auto py_buf = py::array(py::dtype("|S1"), value_num, value);
-            auto res = py_buf.attr("tobytes")().attr("decode")("UTF-8");
-            results[py::str(key)] = res;
-        } else {
-            py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
-            auto res = py::array(value_type, value_num, value).attr("item")(0);
-            results[py::str(key)] = res;
-        }
-    }
-    return results;
-}
-
 void set_metadata(SOMAArray& sr, const std::string& key, py::array value) {
     tiledb_datatype_t value_type = np_to_tdb_dtype(value.dtype());
 
@@ -198,20 +179,20 @@ void load_soma_array(py::module& m) {
             "platform_config"_a = py::dict(),
             "timestamp"_a = py::none())
 
-        .def("__enter__", [](SOMAArray& reader) { return reader; })
+        .def("__enter__", [](SOMAArray& array) { return array; })
         .def(
             "__exit__",
-            [](SOMAArray& reader,
+            [](SOMAArray& array,
                py::object exc_type,
                py::object exc_value,
-               py::object traceback) { reader.close(); })
+               py::object traceback) { array.close(); })
 
         .def(
             "set_condition",
-            [](SOMAArray& reader,
+            [](SOMAArray& array,
                py::object py_query_condition,
                py::object py_schema) {
-                auto column_names = reader.column_names();
+                auto column_names = array.column_names();
                 // Handle query condition based on
                 // TileDB-Py::PyQuery::set_attr_cond()
                 QueryCondition* qc = nullptr;
@@ -238,14 +219,14 @@ void load_soma_array(py::module& m) {
                              .ptr()
                              .get();
                 }
-                reader.reset(column_names);
+                array.reset(column_names);
 
                 // Release python GIL after we're done accessing python
                 // objects
                 py::gil_scoped_release release;
                 // Set query condition if present
                 if (qc) {
-                    reader.set_condition(*qc);
+                    array.set_condition(*qc);
                 }
             },
             "py_query_condition"_a,
@@ -253,7 +234,7 @@ void load_soma_array(py::module& m) {
 
         .def(
             "reset",
-            [](SOMAArray& reader,
+            [](SOMAArray& array,
                std::optional<std::vector<std::string>> column_names_in,
                std::string_view batch_size,
                ResultOrder result_order) {
@@ -264,7 +245,7 @@ void load_soma_array(py::module& m) {
                 }
 
                 // Reset state of the existing SOMAArray object
-                reader.reset(column_names, batch_size, result_order);
+                array.reset(column_names, batch_size, result_order);
             },
             py::kw_only(),
             "column_names"_a = py::none(),
@@ -279,20 +260,20 @@ void load_soma_array(py::module& m) {
         .def("close", &SOMAArray::close)
         .def_property_readonly(
             "closed",
-            [](SOMAArray& reader) -> bool { return not reader.is_open(); })
+            [](SOMAArray& array) -> bool { return not array.is_open(); })
         .def_property_readonly(
             "mode",
-            [](SOMAArray& reader) {
-                return reader.mode() == OpenMode::read ? "r" : "w";
+            [](SOMAArray& array) {
+                return array.mode() == OpenMode::read ? "r" : "w";
             })
         .def_property_readonly(
             "schema",
-            [](SOMAArray& reader) -> py::object {
+            [](SOMAArray& array) -> py::object {
                 auto pa = py::module::import("pyarrow");
                 auto pa_schema_import = pa.attr("Schema").attr(
                     "_import_from_c");
                 return pa_schema_import(
-                    py::capsule(reader.arrow_schema().get()));
+                    py::capsule(array.arrow_schema().get()));
             })
         .def("context", &SOMAArray::ctx)
 
@@ -301,7 +282,7 @@ void load_soma_array(py::module& m) {
         // long if-else-if function.
         .def(
             "set_dim_points_arrow",
-            [](SOMAArray& reader,
+            [](SOMAArray& array,
                const std::string& dim,
                py::object py_arrow_array,
                int partition_index,
@@ -315,7 +296,7 @@ void load_soma_array(py::module& m) {
                     array_chunks.append(py_arrow_array);
                 }
 
-                for (const pybind11::handle array : array_chunks) {
+                for (const pybind11::handle array_handle : array_chunks) {
                     ArrowSchema arrow_schema;
                     ArrowArray arrow_array;
                     uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
@@ -326,45 +307,45 @@ void load_soma_array(py::module& m) {
                     // If ever a NumPy array gets in here, there will be an
                     // exception like "AttributeError: 'numpy.ndarray' object
                     // has no attribute '_export_to_c'".
-                    array.attr("_export_to_c")(
+                    array_handle.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
 
-                    auto coords = array.attr("tolist")();
+                    auto coords = array_handle.attr("tolist")();
 
                     if (!strcmp(arrow_schema.format, "l")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<int64_t>>());
                     } else if (!strcmp(arrow_schema.format, "i")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<int32_t>>());
                     } else if (!strcmp(arrow_schema.format, "s")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<int16_t>>());
                     } else if (!strcmp(arrow_schema.format, "c")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<int8_t>>());
                     } else if (!strcmp(arrow_schema.format, "L")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<uint64_t>>());
                     } else if (!strcmp(arrow_schema.format, "I")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<uint32_t>>());
                     } else if (!strcmp(arrow_schema.format, "S")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<uint16_t>>());
                     } else if (!strcmp(arrow_schema.format, "C")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<uint8_t>>());
                     } else if (!strcmp(arrow_schema.format, "f")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<float>>());
                     } else if (!strcmp(arrow_schema.format, "g")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<double>>());
                     } else if (
                         !strcmp(arrow_schema.format, "u") ||
                         !strcmp(arrow_schema.format, "z")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<std::string>>());
                     } else if (
                         !strcmp(arrow_schema.format, "tss:") ||
@@ -373,14 +354,14 @@ void load_soma_array(py::module& m) {
                         !strcmp(arrow_schema.format, "tsn:")) {
                         // convert the Arrow Array to int64
                         auto pa = py::module::import("pyarrow");
-                        coords = array.attr("cast")(pa.attr("int64")())
+                        coords = array_handle.attr("cast")(pa.attr("int64")())
                                      .attr("tolist")();
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<int64_t>>());
                     } else if (
                         !strcmp(arrow_schema.format, "U") ||
                         !strcmp(arrow_schema.format, "Z")) {
-                        reader.set_dim_points(
+                        array.set_dim_points(
                             dim, coords.cast<std::vector<std::string>>());
                     } else {
                         TPY_ERROR_LOC(
@@ -579,12 +560,12 @@ void load_soma_array(py::module& m) {
 
         .def(
             "read_next",
-            [](SOMAArray& reader) -> std::optional<py::object> {
+            [](SOMAArray& array) -> std::optional<py::object> {
                 // Release python GIL before reading data
                 py::gil_scoped_release release;
 
                 // Try to read more data
-                auto buffers = reader.read_next();
+                auto buffers = array.read_next();
 
                 // If more data was read, convert it to an arrow table and
                 // return
@@ -620,19 +601,18 @@ void load_soma_array(py::module& m) {
 
         .def_property_readonly(
             "timestamp",
-            [](SOMAArray& reader) -> py::object {
-                if (!reader.timestamp().has_value())
+            [](SOMAArray& array) -> py::object {
+                if (!array.timestamp().has_value())
                     return py::none();
-                return py::cast(reader.timestamp()->second);
+                return py::cast(array.timestamp()->second);
             })
 
         .def(
             "non_empty_domain",
-            [](SOMAArray& reader, std::string name, py::dtype dtype) {
+            [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
-                        return py::cast(
-                            reader.non_empty_domain<uint64_t>(name));
+                        return py::cast(array.non_empty_domain<uint64_t>(name));
                     case TILEDB_DATETIME_YEAR:
                     case TILEDB_DATETIME_MONTH:
                     case TILEDB_DATETIME_WEEK:
@@ -647,28 +627,26 @@ void load_soma_array(py::module& m) {
                     case TILEDB_DATETIME_FS:
                     case TILEDB_DATETIME_AS:
                     case TILEDB_INT64:
-                        return py::cast(reader.non_empty_domain<int64_t>(name));
+                        return py::cast(array.non_empty_domain<int64_t>(name));
                     case TILEDB_UINT32:
-                        return py::cast(
-                            reader.non_empty_domain<uint32_t>(name));
+                        return py::cast(array.non_empty_domain<uint32_t>(name));
                     case TILEDB_INT32:
-                        return py::cast(reader.non_empty_domain<int32_t>(name));
+                        return py::cast(array.non_empty_domain<int32_t>(name));
                     case TILEDB_UINT16:
-                        return py::cast(
-                            reader.non_empty_domain<uint16_t>(name));
+                        return py::cast(array.non_empty_domain<uint16_t>(name));
                     case TILEDB_INT16:
-                        return py::cast(reader.non_empty_domain<int16_t>(name));
+                        return py::cast(array.non_empty_domain<int16_t>(name));
                     case TILEDB_UINT8:
-                        return py::cast(reader.non_empty_domain<uint8_t>(name));
+                        return py::cast(array.non_empty_domain<uint8_t>(name));
                     case TILEDB_INT8:
-                        return py::cast(reader.non_empty_domain<int8_t>(name));
+                        return py::cast(array.non_empty_domain<int8_t>(name));
                     case TILEDB_FLOAT64:
-                        return py::cast(reader.non_empty_domain<double>(name));
+                        return py::cast(array.non_empty_domain<double>(name));
                     case TILEDB_FLOAT32:
-                        return py::cast(reader.non_empty_domain<float>(name));
+                        return py::cast(array.non_empty_domain<float>(name));
                     case TILEDB_STRING_UTF8:
                     case TILEDB_STRING_ASCII:
-                        return py::cast(reader.non_empty_domain_var(name));
+                        return py::cast(array.non_empty_domain_var(name));
                     default:
                         throw TileDBSOMAError(
                             "Unsupported dtype for nonempty domain.");
@@ -677,10 +655,10 @@ void load_soma_array(py::module& m) {
 
         .def(
             "domain",
-            [](SOMAArray& reader, std::string name, py::dtype dtype) {
+            [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
-                        return py::cast(reader.domain<uint64_t>(name));
+                        return py::cast(array.domain<uint64_t>(name));
                     case TILEDB_DATETIME_YEAR:
                     case TILEDB_DATETIME_MONTH:
                     case TILEDB_DATETIME_WEEK:
@@ -695,23 +673,23 @@ void load_soma_array(py::module& m) {
                     case TILEDB_DATETIME_FS:
                     case TILEDB_DATETIME_AS:
                     case TILEDB_INT64:
-                        return py::cast(reader.domain<int64_t>(name));
+                        return py::cast(array.domain<int64_t>(name));
                     case TILEDB_UINT32:
-                        return py::cast(reader.domain<uint32_t>(name));
+                        return py::cast(array.domain<uint32_t>(name));
                     case TILEDB_INT32:
-                        return py::cast(reader.domain<int32_t>(name));
+                        return py::cast(array.domain<int32_t>(name));
                     case TILEDB_UINT16:
-                        return py::cast(reader.domain<uint16_t>(name));
+                        return py::cast(array.domain<uint16_t>(name));
                     case TILEDB_INT16:
-                        return py::cast(reader.domain<int16_t>(name));
+                        return py::cast(array.domain<int16_t>(name));
                     case TILEDB_UINT8:
-                        return py::cast(reader.domain<uint8_t>(name));
+                        return py::cast(array.domain<uint8_t>(name));
                     case TILEDB_INT8:
-                        return py::cast(reader.domain<int8_t>(name));
+                        return py::cast(array.domain<int8_t>(name));
                     case TILEDB_FLOAT64:
-                        return py::cast(reader.domain<double>(name));
+                        return py::cast(array.domain<double>(name));
                     case TILEDB_FLOAT32:
-                        return py::cast(reader.domain<float>(name));
+                        return py::cast(array.domain<float>(name));
                     case TILEDB_STRING_UTF8:
                     case TILEDB_STRING_ASCII: {
                         std::pair<std::string, std::string> str_domain;
@@ -727,6 +705,12 @@ void load_soma_array(py::module& m) {
 
         .def("consolidate_and_vacuum", &SOMAArray::consolidate_and_vacuum)
 
+        .def_property_readonly(
+            "meta",
+            [](SOMAArray& array) -> py::dict {
+                return meta(array.get_metadata());
+            })
+
         .def("set_metadata", set_metadata)
 
         .def("delete_metadata", &SOMAArray::delete_metadata)
@@ -734,8 +718,6 @@ void load_soma_array(py::module& m) {
         .def(
             "get_metadata",
             py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
-
-        .def_property_readonly("meta", meta)
 
         .def("has_metadata", &SOMAArray::has_metadata)
 

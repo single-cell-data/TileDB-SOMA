@@ -46,6 +46,7 @@ RawHandle = Union[
     clib.SOMADataFrame,
     clib.SOMASparseNDArray,
     clib.SOMADenseNDArray,
+    clib.SOMACollection
 ]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
@@ -91,6 +92,9 @@ def open(
         return DenseNDArrayWrapper._from_soma_object(soma_object, context)
     if soma_type == "somasparsendarray":
         return SparseNDArrayWrapper._from_soma_object(soma_object, context)
+    
+    if soma_type == "somacollection" and mode == "r":
+        return SOMACollection._from_soma_object(soma_object, context)
 
     if soma_type in (
         "somacollection",
@@ -372,6 +376,16 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
             o.name: GroupEntry.from_object(o) for o in reader if o.name is not None
         }
 
+class SOMACollection(SOMAGroupWrapper[clib.SOMACollection]):
+    """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
+
+    _WRAPPED_TYPE = clib.SOMACollection
+
+    # TODO temporary, replace in SOMAGroup
+    def _do_initial_reads(self, reader: clib.SOMAGroup) -> None:
+        super()._do_initial_reads(reader)
+        self.initial_contents = reader.member_to_uri_mapping()
+        
 _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
 
 

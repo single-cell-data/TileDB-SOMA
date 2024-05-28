@@ -137,6 +137,16 @@ class SOMAGroup : public SOMAObject {
     }
 
     /**
+     * Get whether the SOMAGroup was open in read or write mode.
+     *
+     * @return OpenMode
+     */
+    OpenMode mode() const {
+        return group_->query_type() == TILEDB_READ ? OpenMode::read :
+                                                     OpenMode::write;
+    }
+
+    /**
      * Get the SOMAGroup URI.
      */
     const std::string uri() const;

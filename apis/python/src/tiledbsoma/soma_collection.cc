@@ -48,6 +48,12 @@ using namespace tiledbsoma;
 
 void load_soma_collection(py::module& m) {
     py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection")
+        .def(
+            "__iter__",
+            [](SOMACollection& collection) {
+                return py::make_iterator(collection.begin(), collection.end());
+            },
+            py::keep_alive<0, 1>())
         .def("get", &SOMACollection::get)
         .def("add_new_collection", &SOMACollection::add_new_collection)
         /* TODO ArrowTable needs to be passed in as py::object and converted */

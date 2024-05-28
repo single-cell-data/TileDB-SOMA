@@ -70,26 +70,10 @@ void SOMACollection::close() {
 }
 
 std::unique_ptr<SOMAObject> SOMACollection::get(const std::string& key) {
-    auto obj = SOMAGroup::get(key);
-    std::optional<std::string> soma_object_type = this->type();
-
-    if (!soma_object_type)
-        throw TileDBSOMAError("Saw invalid SOMA object.");
-
-    if (soma_object_type->compare("SOMACollection") == 0)
-        return SOMACollection::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMAExperiment") == 0)
-        return SOMAExperiment::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMAMeasurement") == 0)
-        return SOMAMeasurement::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMADataFrame") == 0)
-        return SOMADataFrame::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMASparseNDArray") == 0)
-        return SOMASparseNDArray::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMADenseNDArray") == 0)
-        return SOMADenseNDArray::open(obj.uri(), OpenMode::read, this->ctx());
-
-    throw TileDBSOMAError("Saw invalid SOMA object.");
+    auto tiledb_obj = SOMAGroup::get(key);
+    auto soma_obj = SOMAObject::open(
+        tiledb_obj.uri(), OpenMode::read, this->ctx(), this->timestamp());
+    return soma_obj;
 }
 
 std::shared_ptr<SOMACollection> SOMACollection::add_new_collection(

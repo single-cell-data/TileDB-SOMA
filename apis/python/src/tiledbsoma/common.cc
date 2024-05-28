@@ -189,4 +189,23 @@ std::optional<py::object> to_table(
     return std::nullopt;
 }
 
+py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
+    py::dict results;
+
+    for (auto [key, val] : metadata_mapping) {
+        auto [tdb_type, value_num, value] = val;
+
+        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII) {
+            auto py_buf = py::array(py::dtype("|S1"), value_num, value);
+            auto res = py_buf.attr("tobytes")().attr("decode")("UTF-8");
+            results[py::str(key)] = res;
+        } else {
+            py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+            auto res = py::array(value_type, value_num, value).attr("item")(0);
+            results[py::str(key)] = res;
+        }
+    }
+    return results;
+}
+
 }  // namespace tiledbsoma

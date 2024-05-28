@@ -40,16 +40,26 @@ using namespace tiledbsoma;
 
 void load_soma_group(py::module& m) {
     py::class_<SOMAGroup, SOMAObject>(m, "SOMAGroup")
+        .def_property_readonly(
+            "mode",
+            [](SOMAGroup& group) {
+                return group.mode() == OpenMode::read ? "r" : "w";
+            })
         .def("close", &SOMAGroup::close)
         .def_property_readonly(
             "closed",
             [](SOMAGroup& group) -> bool { return not group.is_open(); })
-        .def("uri", &SOMAGroup::uri)
+        .def_property_readonly("uri", &SOMAGroup::uri)
         .def("context", &SOMAGroup::ctx)
         .def("has", &SOMAGroup::has)
         .def("count", &SOMAGroup::count)
         .def("member_to_uri_mapping", &SOMAGroup::member_to_uri_mapping)
         .def("timestamp", &SOMAGroup::timestamp)
+        .def_property_readonly(
+            "meta",
+            [](SOMAGroup& group) -> py::dict {
+                return meta(group.get_metadata());
+            })
         .def("set_metadata", &SOMAGroup::set_metadata)
         .def("delete_metadata", &SOMAGroup::delete_metadata)
         .def("has_metadata", &SOMAGroup::has_metadata)

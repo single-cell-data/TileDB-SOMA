@@ -116,6 +116,15 @@ class SOMACollection : public SOMAGroup {
     SOMACollection(SOMACollection&&) = default;
     ~SOMACollection() = default;
 
+    using iterator =
+        typename std::map<std::string, std::shared_ptr<SOMAObject>>::iterator;
+    iterator begin() {
+        return children_.begin();
+    }
+    iterator end() {
+        return children_.end();
+    }
+
     using SOMAGroup::open;
 
     /**

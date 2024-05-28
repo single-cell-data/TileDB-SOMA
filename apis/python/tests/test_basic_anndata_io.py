@@ -136,10 +136,6 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
         assert exp.ms.metadata.get(metakey) == "SOMACollection"
         assert exp.ms["RNA"].metadata.get(metakey) == "SOMAMeasurement"
 
-        # Check ms
-        assert exp.ms.metadata.get(metakey) == "SOMACollection"
-        assert exp.ms["RNA"].metadata.get(metakey) == "SOMAMeasurement"
-
         # Check var
         var = exp.ms["RNA"].var.read().concat().to_pandas()
         assert sorted(var.columns.to_list()) == sorted(
