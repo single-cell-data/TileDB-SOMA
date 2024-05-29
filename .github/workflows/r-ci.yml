@@ -59,7 +59,7 @@ jobs:
 
       - name: Set additional repositories (macOS)
         if: ${{ matrix.os != 'ubuntu-latest' }}
-        run: echo 'options(repos = c("https://tiledb-inc.r-universe.dev", getOption("repos")), timeout = 300L)' | tee -a ~/.Rprofile
+        run: echo 'options(repos = c("https://tiledb-inc.r-universe.dev", getOption("repos")))' | tee -a ~/.Rprofile
 
       - name: Set additional repositories (Linux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -67,7 +67,7 @@ jobs:
           rversion <- paste(strsplit(as.character(getRversion()), split = '\\.')[[1L]][1:2], collapse = '.')
           codename <-  system('. /etc/os-release; echo ${VERSION_CODENAME}', intern = TRUE)
           repo <- "https://tiledb-inc.r-universe.dev"
-          (opt <- sprintf('options(repos = c("%s/bin/linux/%s/%s", "%s", getOption("repos")), timeout = 300L)', repo, codename, rversion, repo))
+          (opt <- sprintf('options(repos = c("%s/bin/linux/%s/%s", "%s", getOption("repos")))', repo, codename, rversion, repo))
           cat(opt, "\n", file = "~/.Rprofile", append = TRUE)
         shell: Rscript {0}
 
