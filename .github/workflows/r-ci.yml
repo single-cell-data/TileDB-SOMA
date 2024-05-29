@@ -142,7 +142,7 @@ jobs:
         run: |
           cd apis/r
           Rscript -e "install.packages('devtools')" \
-            -e "devtools::load_all()" \
+            -e "devtools::install()" \
             -e "testthat::test_local('tests/testthat')"
 
       - name: Coverage
