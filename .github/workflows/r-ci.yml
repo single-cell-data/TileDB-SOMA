@@ -139,7 +139,11 @@ jobs:
 
       - name: Test
         if: ${{ matrix.covr == 'no' }}
-        run: cd apis/r && Rscript -e "devtools::load_all(); testthat::test_local('tests/testthat', reporter = testthat::check_reporter())"
+        run: |
+          cd apis/r
+          Rscript -e "install.packages('devtools')" \
+            -e "devtools::load_all()" \
+            -e "testthat::test_local('tests/testthat')"
 
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' && github.event_name == 'workflow_dispatch' }}
