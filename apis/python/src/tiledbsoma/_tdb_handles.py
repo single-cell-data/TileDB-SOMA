@@ -46,6 +46,7 @@ RawHandle = Union[
     clib.SOMADataFrame,
     clib.SOMASparseNDArray,
     clib.SOMADenseNDArray,
+    clib.SOMAGroup,
     clib.SOMACollection,
 ]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
@@ -93,7 +94,7 @@ def open(
     if soma_type == "somasparsendarray":
         return SparseNDArrayWrapper._from_soma_object(soma_object, context)
 
-    if soma_type == "somacollection" and mode == "r":
+    if soma_type == "somacollection":
         return CollectionWrapper._from_soma_object(soma_object, context)
     if soma_type == "somaexperiment" and mode == "r":
         return ExperimentWrapper._from_soma_object(soma_object, context)
@@ -384,7 +385,7 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
 
     def _do_initial_reads(self, group: clib.SOMAGroup) -> None:
         super()._do_initial_reads(group)
-        
+
         self.initial_contents = {
             name: GroupEntry.from_soma_group_entry(entry)
             for name, entry in group.members().items()
@@ -396,15 +397,18 @@ class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
 
     _WRAPPED_TYPE = clib.SOMACollection
 
+
 class ExperimentWrapper(SOMAGroupWrapper[clib.SOMAExperiment]):
     """Wrapper around a Pybind11 ExperimentWrapper handle."""
 
     _WRAPPED_TYPE = clib.SOMAExperiment
-    
+
+
 class MeasurementWrapper(SOMAGroupWrapper[clib.SOMAMeasurement]):
     """Wrapper around a Pybind11 MeasurementWrapper handle."""
 
     _WRAPPED_TYPE = clib.SOMAMeasurement
+
 
 _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
 

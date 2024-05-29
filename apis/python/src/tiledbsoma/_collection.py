@@ -35,6 +35,7 @@ from typing_extensions import Self
 import tiledb
 
 from . import _funcs, _tdb_handles
+from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
@@ -719,8 +720,36 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
 
     __slots__ = ()
 
-    _wrapper_type = _tdb_handles.GroupWrapper
+    _wrapper_type = _tdb_handles.CollectionWrapper
     _reader_wrapper_type = _tdb_handles.CollectionWrapper
+
+    @classmethod
+    def create(
+        cls,
+        uri: str,
+        *,
+        platform_config: Optional[options.PlatformConfig] = None,
+        context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+    ) -> Self:
+        context = _validate_soma_tiledb_context(context)
+        try:
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            clib.SOMACollection.create(
+                uri=uri, ctx=context.native_context, timestamp=(0, timestamp_ms)
+            )
+            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+            cls._set_create_metadata(handle)
+            return cls(
+                handle,
+                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            )
+        except tiledb.TileDBError as tdbe:
+            if is_already_exists_error(tdbe):
+                raise AlreadyExistsError(f"{uri!r} already exists")
+            if is_not_createable_error(tdbe):
+                raise NotCreateableError(f"{uri!r} cannot be created")
+            raise
 
 
 @typeguard_ignore

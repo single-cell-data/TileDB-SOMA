@@ -40,6 +40,13 @@ using namespace tiledbsoma;
 
 void load_soma_group(py::module& m) {
     py::class_<SOMAGroup, SOMAObject>(m, "SOMAGroup")
+        .def("__enter__", [](SOMAGroup& group) { return group; })
+        .def(
+            "__exit__",
+            [](SOMAGroup& group,
+               py::object exc_type,
+               py::object exc_value,
+               py::object traceback) { group.close(); })
         .def_property_readonly(
             "mode",
             [](SOMAGroup& group) {
@@ -52,7 +59,9 @@ void load_soma_group(py::module& m) {
         .def_property_readonly("uri", &SOMAGroup::uri)
         .def("context", &SOMAGroup::ctx)
         .def("has", &SOMAGroup::has)
+        .def("set", &SOMAGroup::set)
         .def("count", &SOMAGroup::count)
+        .def("del", &SOMAGroup::del)
         .def("members", &SOMAGroup::members)
         .def_property_readonly(
             "timestamp",

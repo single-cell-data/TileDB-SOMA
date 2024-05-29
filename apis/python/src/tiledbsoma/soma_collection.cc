@@ -48,6 +48,13 @@ using namespace tiledbsoma;
 
 void load_soma_collection(py::module& m) {
     py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection")
+        .def_static(
+            "create",
+            &SOMACollection::create,
+            "uri"_a,
+            py::kw_only(),
+            "ctx"_a,
+            "timestamp"_a = py::none())
         .def(
             "__iter__",
             [](SOMACollection& collection) {
