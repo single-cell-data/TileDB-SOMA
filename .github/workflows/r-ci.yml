@@ -143,7 +143,7 @@ jobs:
           cd apis/r
           Rscript -e "install.packages('devtools')" \
             -e "devtools::install()" \
-            -e "testthat::test_local('tests/testthat')"
+            -e "testthat::test_local('tests/testthat', load_package = 'installed')"
 
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' && github.event_name == 'workflow_dispatch' }}
