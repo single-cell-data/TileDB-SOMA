@@ -1454,7 +1454,6 @@ def test_nullable(tmp_path):
     )
     data = pa.Table.from_pydict(pydict)
 
-
     with soma.DataFrame.create(uri, schema=asch) as sdf:
         sdf.write(data)
 
