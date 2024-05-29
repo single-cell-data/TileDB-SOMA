@@ -8,6 +8,7 @@
 #include <nanoarrow/nanoarrow.h>            // for C interface to Arrow
 #include <RcppInt64>                        // for fromInteger64
 #include <tiledbsoma/tiledbsoma>
+#include <tiledbsoma/reindexer/reindexer.h>
 
 #include "rutilities.h"         // local declarations
 #include "xptr-utils.h"         // xptr taggging utilitie

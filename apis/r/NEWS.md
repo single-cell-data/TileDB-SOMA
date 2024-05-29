@@ -31,6 +31,7 @@
 * Have `SOMADataFrame$shape()` throw a not-yet-implemented error
 * Disable running `SeuratObject::.CalcN()` when outgesting from SOMA to `Seurat`
 * Clear timestamp when using `$reopen()` to reopen at the current time
+* Add support for the re-indexer
 
 # 1.10.2
 
