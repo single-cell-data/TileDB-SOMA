@@ -4,6 +4,7 @@ test_that("Write SingleCellExperiment mechanics", {
   suppressMessages(skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c')))
 
   sce <- get_data('pbmc3k.final', package = 'pbmc3k.sce')
+  skip_if("`pbmc3k.sce` is funky" = is.null(sce))
   SingleCellExperiment::mainExpName(sce) <- 'RNA'
 
   uri <- withr::local_tempdir('single-cell-experiment')
@@ -70,6 +71,7 @@ test_that("SingleCellExperiment mainExpName mechanics", {
   skip_if_not_installed('pbmc3k.sce')
 
   sce <- get_data('pbmc3k.final', package = 'pbmc3k.sce')
+  skip_if("`pbmc3k.sce` is funky" = is.null(sce))
   SingleCellExperiment::mainExpName(sce) <- NULL
   expect_null(SingleCellExperiment::mainExpName(sce))
 
