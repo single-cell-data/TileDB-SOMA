@@ -1437,11 +1437,21 @@ def test_enum_schema_report(tmp_path):
 def test_nullable(tmp_path):
     uri = tmp_path.as_posix()
 
-    asch = pa.schema([pa.field("foo", pa.int32())], metadata={"foo": "nullable"})
+    asch = pa.schema(
+        [
+            pa.field("int", pa.int32()),
+            pa.field("bool", pa.bool_()),
+            pa.field("ord", pa.dictionary(pa.int64(), pa.string())),
+        ]
+    )
 
     pydict = {}
-    pydict["soma_joinid"] = [0, 1, 2, 3, 4]
-    pydict["foo"] = [10, 20, 30, None, 50]
+    pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    pydict["int"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["bool"] = [True, True, True, False, True, False, None, False, None, None]
+    pydict["ord"] = pd.Categorical(
+        ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
+    )
     data = pa.Table.from_pydict(pydict)
 
     with soma.DataFrame.create(uri, schema=asch) as sdf:
