@@ -412,6 +412,7 @@ class SOMAArray : public SOMAObject {
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
     Enumeration extend_enumeration(
+        ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array);
@@ -808,6 +809,7 @@ class SOMAArray : public SOMAObject {
     }
 
     Enumeration _extend_and_evolve_schema_str(
+        ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array);
