@@ -363,7 +363,7 @@ _GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
 class SOMAGroupWrapper(Wrapper[_GrpType]):
     """Base class for Pybind11 SOMAGroupWrapper handles."""
 
-    _WRAPPED_TYPE: Type[_GrpType]
+    _GROUP_WRAPPED_TYPE: Type[_GrpType]
 
     clib_type = "SOMAGroup"
 
@@ -376,12 +376,14 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
         timestamp: int,
     ) -> clib.SOMAGroup:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        return cls._WRAPPED_TYPE.open(
+        obj = cls._GROUP_WRAPPED_TYPE.open(
             uri,
             open_mode,
             context=context.native_context,
             timestamp=(0, timestamp),
         )
+        
+        return obj
 
     def _do_initial_reads(self, group: clib.SOMAGroup) -> None:
         super()._do_initial_reads(group)
@@ -395,19 +397,19 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
     """Wrapper around a Pybind11 CollectionWrapper handle."""
 
-    _WRAPPED_TYPE = clib.SOMACollection
+    _GROUP_WRAPPED_TYPE = clib.SOMACollection
 
 
 class ExperimentWrapper(SOMAGroupWrapper[clib.SOMAExperiment]):
     """Wrapper around a Pybind11 ExperimentWrapper handle."""
 
-    _WRAPPED_TYPE = clib.SOMAExperiment
+    _GROUP_WRAPPED_TYPE = clib.SOMAExperiment
 
 
 class MeasurementWrapper(SOMAGroupWrapper[clib.SOMAMeasurement]):
     """Wrapper around a Pybind11 MeasurementWrapper handle."""
 
-    _WRAPPED_TYPE = clib.SOMAMeasurement
+    _GROUP_WRAPPED_TYPE = clib.SOMAMeasurement
 
 
 _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
@@ -416,7 +418,7 @@ _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
 class SOMAArrayWrapper(Wrapper[_ArrType]):
     """Base class for Pybind11 SOMAArrayWrapper handles."""
 
-    _WRAPPED_TYPE: Type[_ArrType]
+    _ARRAY_WRAPPED_TYPE: Type[_ArrType]
 
     clib_type = "SOMAArray"
 
@@ -429,7 +431,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         timestamp: int,
     ) -> clib.SOMAArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        return cls._WRAPPED_TYPE.open(
+        return cls._ARRAY_WRAPPED_TYPE.open(
             uri,
             open_mode,
             context=context.native_context,
@@ -515,7 +517,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
 
-    _WRAPPED_TYPE = clib.SOMADataFrame
+    _ARRAY_WRAPPED_TYPE = clib.SOMADataFrame
 
     @property
     def count(self) -> int:
@@ -533,13 +535,13 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
 
-    _WRAPPED_TYPE = clib.SOMADenseNDArray
+    _ARRAY_WRAPPED_TYPE = clib.SOMADenseNDArray
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
 
-    _WRAPPED_TYPE = clib.SOMASparseNDArray
+    _ARRAY_WRAPPED_TYPE = clib.SOMASparseNDArray
 
     @property
     def nnz(self) -> int:

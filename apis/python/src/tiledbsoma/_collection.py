@@ -46,6 +46,7 @@ from ._exception import (
     is_already_exists_error,
     is_does_not_exist_error,
     is_not_createable_error,
+    map_exception_for_create
 )
 from ._funcs import typeguard_ignore
 from ._sparse_nd_array import SparseNDArray
@@ -614,7 +615,15 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             # TileDB groups currently do not support replacing elements.
             # If we use a hack to flush writes, corruption is possible.
             raise SOMAError(f"replacing key {key!r} is unsupported")
-        self._handle.writer.add(name=key, uri=uri, relative=relative)
+        if isinstance(self._handle, _tdb_handles.CollectionWrapper):
+            self._handle._handle.add(
+                uri,
+                clib.URIType.relative if relative else clib.URIType.absolute,
+                key,
+                self._handle._handle.type,
+            )
+        else:
+            self._handle.writer.add(name=key, uri=uri, relative=relative)
         self._contents[key] = _CachedElement(
             entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
             soma=soma_object,
@@ -744,12 +753,8 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
-        except tiledb.TileDBError as tdbe:
-            if is_already_exists_error(tdbe):
-                raise AlreadyExistsError(f"{uri!r} already exists")
-            if is_not_createable_error(tdbe):
-                raise NotCreateableError(f"{uri!r} cannot be created")
-            raise
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
 
 
 @typeguard_ignore

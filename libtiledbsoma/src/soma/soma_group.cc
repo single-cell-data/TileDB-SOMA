@@ -189,13 +189,16 @@ bool SOMAGroup::has(const std::string& name) {
 }
 
 void SOMAGroup::set(
-    const std::string& uri, URIType uri_type, const std::string& name) {
+    const std::string& uri,
+    URIType uri_type,
+    const std::string& name,
+    const std::string& soma_type) {
     bool relative = uri_type == URIType::relative;
     if (uri_type == URIType::automatic) {
         relative = uri.find("://") != std::string::npos;
     }
     group_->add_member(uri, relative, name);
-    members_[name] = SOMAGroupEntry(uri, std::nullopt);
+    members_[name] = SOMAGroupEntry(uri, soma_type);
 }
 
 uint64_t SOMAGroup::count() const {

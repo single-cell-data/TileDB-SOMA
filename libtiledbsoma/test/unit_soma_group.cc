@@ -157,8 +157,8 @@ TEST_CASE("SOMAGroup: basic") {
 
     auto soma_group = SOMAGroup::open(
         OpenMode::write, uri_main_group, ctx, "metadata", TimestampRange(0, 1));
-    soma_group->set(uri_sub_group, URIType::absolute, "subgroup");
-    soma_group->set(uri_sub_array, URIType::absolute, "subarray");
+    soma_group->set(uri_sub_group, URIType::absolute, "subgroup", "SOMAGroup");
+    soma_group->set(uri_sub_array, URIType::absolute, "subarray", "SOMAArray");
     soma_group->close();
 
     std::map<std::string, SOMAGroupEntry> expected_map{

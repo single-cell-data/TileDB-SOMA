@@ -59,7 +59,7 @@ void load_soma_group(py::module& m) {
         .def_property_readonly("uri", &SOMAGroup::uri)
         .def("context", &SOMAGroup::ctx)
         .def("has", &SOMAGroup::has)
-        .def("set", &SOMAGroup::set)
+        .def("add", &SOMAGroup::set)
         .def("count", &SOMAGroup::count)
         .def("del", &SOMAGroup::del)
         .def("members", &SOMAGroup::members)

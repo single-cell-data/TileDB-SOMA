@@ -46,7 +46,7 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 // Pair storing uri and soma type
-using SOMAGroupEntry = std::pair<std::string, std::optional<std::string>>;
+using SOMAGroupEntry = std::pair<std::string, std::string>;
 
 class SOMAGroup : public SOMAObject {
    public:
@@ -190,7 +190,11 @@ class SOMAGroup : public SOMAObject {
      * or relative
      * @param name of member
      */
-    void set(const std::string& uri, URIType uri_type, const std::string& name);
+    void set(
+        const std::string& uri,
+        URIType uri_type,
+        const std::string& name,
+        const std::string& soma_type);
 
     /**
      * Get the number of members in the SOMAGroup.
