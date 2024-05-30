@@ -84,6 +84,7 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
     tsch <- tiledb::schema(turi)
     expect_true(inherits(tsch, "tiledb_array_schema"))
 
+    ## we no longer use this one though
     sch <- tiledbsoma:::arrow_schema_from_tiledb_schema(tsch)
     expect_true(inherits(sch, "Schema"))
 
@@ -95,7 +96,8 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
     expect_equal(length(lvls), ncol(et))  # et, not ett or tsch or sch as no soma_joinid
     expect_equal(names(lvls), colnames(et))
 
-    sdf <- SOMADataFrameCreate(uri, sch)
+    #sdf <- SOMADataFrameCreate(uri, sch)
+    sdf <- SOMADataFrameCreate(uri, att$schema)
     expect_true(inherits(sdf, "SOMADataFrame"))
 
     sdf$write(att)
