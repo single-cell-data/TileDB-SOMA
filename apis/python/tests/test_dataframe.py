@@ -1201,7 +1201,7 @@ def test_multiple_writes_with_enums(tmp_path):
             (
                 "obs",
                 pa.dictionary(
-                    index_type=pa.int8(), value_type=pa.large_string(), ordered=False
+                    index_type=pa.int8(), value_type=pa.string(), ordered=False
                 ),
             ),
         ]
@@ -1463,7 +1463,8 @@ def test_nullable(tmp_path):
             pa.field("int", pa.int32()),
             pa.field("bool", pa.bool_()),
             pa.field("ord", pa.dictionary(pa.int64(), pa.string())),
-        ]
+        ],
+        metadata={"int": "nullable", "bool": "nullable", "ord": "nullable"},
     )
 
     pydict = {}

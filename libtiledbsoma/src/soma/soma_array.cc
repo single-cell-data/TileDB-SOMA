@@ -293,6 +293,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
 }
 
 Enumeration SOMAArray::extend_enumeration(
+    ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array) {
@@ -305,7 +306,7 @@ Enumeration SOMAArray::extend_enumeration(
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return SOMAArray::_extend_and_evolve_schema_str(
-                value_array, index_schema, index_array);
+                value_schema, value_array, index_schema, index_array);
         case TILEDB_BOOL:
         case TILEDB_INT8:
             return SOMAArray::_extend_and_evolve_schema<uint8_t>(
@@ -345,6 +346,7 @@ Enumeration SOMAArray::extend_enumeration(
 }
 
 Enumeration SOMAArray::_extend_and_evolve_schema_str(
+    ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array) {
@@ -353,23 +355,26 @@ Enumeration SOMAArray::_extend_and_evolve_schema_str(
     auto enmr = ArrayExperimental::get_enumeration(
         *ctx_->tiledb_ctx(), *arr_, column_name);
     uint64_t max_capacity = SOMAArray::_get_max_capacity(disk_index_type);
-
-    const void* data;
-    uint64_t* offsets = nullptr;
     uint64_t num_elems = value_array->length;
-    if (value_array->n_buffers == 3) {
-        offsets = (uint64_t*)value_array->buffers[1];
-        data = value_array->buffers[2];
+
+    std::vector<uint64_t> offsets_v;
+    if ((strcmp(value_schema->format, "U") == 0) ||
+        (strcmp(value_schema->format, "Z") == 0)) {
+        uint64_t* offsets = (uint64_t*)value_array->buffers[1];
+        offsets_v.resize(num_elems + 1);
+        offsets_v.assign(offsets, offsets + num_elems + 1);
     } else {
-        data = value_array->buffers[1];
+        uint32_t* offsets = (uint32_t*)value_array->buffers[1];
+        std::vector<uint32_t> offset_holder(offsets, offsets + num_elems + 1);
+        for (auto offset : offset_holder) {
+            offsets_v.push_back((uint64_t)offset);
+        }
     }
 
-    std::vector<uint64_t> offsets_v(
-        (uint32_t*)offsets, (uint32_t*)offsets + num_elems + 1);
-    std::string data_v(
-        (char*)data, (char*)data + offsets_v[offsets_v.size() - 1]);
-    std::vector<std::string> enums_in_write;
+    char* data = (char*)value_array->buffers[2];
+    std::string data_v(data, data + offsets_v[offsets_v.size() - 1]);
 
+    std::vector<std::string> enums_in_write;
     for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
          ++offset_idx) {
         auto beg = offsets_v[offset_idx];
@@ -570,6 +575,7 @@ ArrowTable SOMAArray::_cast_table(
             auto enmr_name = AttributeExperimental::get_enumeration_name(
                 Context(), attr);
             if (enmr_name.has_value()) {
+                auto dict_sch_ = arrow_sch_->dictionary;
                 auto dict_arr_ = arrow_arr_->dictionary;
 
                 if (dict_arr_ == nullptr) {
@@ -578,7 +584,7 @@ ArrowTable SOMAArray::_cast_table(
                 }
 
                 auto extended_enmr = extend_enumeration(
-                    dict_arr_, arrow_sch_, arrow_arr_);
+                    dict_sch_, dict_arr_, arrow_sch_, arrow_arr_);
             }
         }
 

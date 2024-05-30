@@ -75,6 +75,10 @@ void load_soma_dataframe(py::module& m) {
                             child->flags &= ~ARROW_FLAG_NULLABLE;
                         }
                     }
+                } else {
+                    for (int64_t i = 0; i < schema.n_children; ++i) {
+                        schema.children[i]->flags &= ~ARROW_FLAG_NULLABLE;
+                    }
                 }
 
                 ArrowSchema index_column_schema;
