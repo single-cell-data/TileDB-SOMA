@@ -147,7 +147,12 @@ class ColumnBuffer {
 
         if (is_nullable_) {
             if (validity != nullptr) {
-                validity_.assign(validity, validity + num_elems);
+                for (uint64_t i = 0; i * 8 < num_elems; ++i) {
+                    uint8_t byte = ((uint8_t*)validity)[i];
+                    for (int64_t j = 0; j < 8 && i * 8 + j < num_elems; ++j) {
+                        validity_.push_back((uint8_t)((byte >> j) & 0x01));
+                    }
+                }
             } else {
                 validity_.resize(num_elems);
                 std::fill(validity_.begin(), validity_.end(), 1);
@@ -182,10 +187,15 @@ class ColumnBuffer {
         data_.assign((std::byte*)data, (std::byte*)data + data_size_);
 
         if (is_nullable_) {
+            validity_.resize(num_elems);
             if (validity != nullptr) {
-                validity_.assign(validity, validity + num_elems);
+                for (uint64_t i = 0; i * 8 < num_elems; ++i) {
+                    uint8_t byte = ((uint8_t*)validity)[i];
+                    for (int64_t j = 0; j < 8; ++j) {
+                        validity_.push_back((uint8_t)((byte >> j) & 0x01));
+                    }
+                }
             } else {
-                validity_.resize(num_elems);
                 std::fill(validity_.begin(), validity_.end(), 1);
             }
         }
