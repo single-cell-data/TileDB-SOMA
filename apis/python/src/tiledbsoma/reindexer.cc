@@ -107,6 +107,9 @@ py::array_t<int64_t> get_indexer_py_arrow(
         ArrowArray arrow_array;
         extract_py_array_schema(array, arrow_array, arrow_schema);
         total_size += arrow_array.length;
+
+        arrow_schema.release(&arrow_schema);
+        arrow_array.release(&arrow_array);
     }
 
     // Allocate the output
@@ -124,6 +127,9 @@ py::array_t<int64_t> get_indexer_py_arrow(
         indexer.lookup(
             input_ptr, results_ptr + write_offset, arrow_array.length);
         write_offset += arrow_array.length;
+
+        arrow_schema.release(&arrow_schema);
+        arrow_array.release(&arrow_array);
     }
     return results;
 }

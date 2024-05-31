@@ -55,6 +55,8 @@ void write(SOMAArray& array, py::handle py_batch, bool sort_coords = true) {
     } catch (const std::exception& e) {
         TPY_ERROR_LOC(e.what());
     }
+    arrow_schema.release(&arrow_schema);
+    arrow_array.release(&arrow_array);
 }
 
 void write_coords(
