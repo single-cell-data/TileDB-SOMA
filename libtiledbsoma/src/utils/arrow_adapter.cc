@@ -568,18 +568,23 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
             }
 
+            LOG_DEBUG(fmt::format("[ArrowAdapter] adding attribute {}", child->name));
             schema.add_attribute(attr);
         }
     }
 
     for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+        LOG_DEBUG(fmt::format("[ArrowAdapter] child {}", i));
         auto col_name = index_column_schema->children[i]->name;
         domain.add_dimension(dims.at(col_name));
     }
+    LOG_DEBUG(fmt::format("[ArrowAdapter] set_domain"));
     schema.set_domain(domain);
 
+    LOG_DEBUG(fmt::format("[ArrowAdapter] check"));
     schema.check();
 
+    LOG_DEBUG(fmt::format("[ArrowAdapter] returning"));
     return schema;
 }
 

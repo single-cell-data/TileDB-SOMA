@@ -95,6 +95,7 @@ void createSchemaFromArrow(const std::string& uri,
                                                                   datatype, sparse,
                                                                   pltcfg);
     // We can inspect the (TileDB) ArraySchema via a simple helper:  as.dump();
+    spdl::info("[createSchemaFromArrow] About to create {}", uri);
 
     // Create the schema at the given URI
     tiledb::Array::create(uri, as);
