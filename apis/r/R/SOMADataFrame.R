@@ -98,6 +98,7 @@ SOMADataFrame <- R6::R6Class(
       df <- as.data.frame(values)[schema_names]
       arr <- self$object
 
+if (FALSE) {
       has_enums <- tiledb::tiledb_array_has_enumeration(arr)
       if (any(has_enums)) {       # if enumerations exists in array
           attrs <- tiledb::attrs(tiledb::schema(arr))
@@ -130,6 +131,7 @@ SOMADataFrame <- R6::R6Class(
           arr <- tiledb::tiledb_array_close(arr)
           arr <- tiledb::tiledb_array_open(arr, "WRITE")
       }
+}
 if (FALSE) {
       arr[] <- df
       # tiledb-r always closes the array after a write operation so we need to

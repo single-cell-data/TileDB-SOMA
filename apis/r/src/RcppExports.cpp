@@ -12,30 +12,30 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // createSchemaFromArrow
-void createSchemaFromArrow(const std::string& uri, SEXP nasp, SEXP nadimap, SEXP nadimsp, bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::Nullable<Rcpp::XPtr<tiledb::Context>> ctxptr);
+void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp, bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::Nullable<Rcpp::XPtr<ctx_wrap_t>> ctxptr);
 RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP sparseSEXP, SEXP datatypeSEXP, SEXP pclstSEXP, SEXP ctxptrSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type nasp(naspSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type nadimap(nadimapSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type nadimsp(nadimspSEXP);
+    Rcpp::traits::input_parameter< naxpSchema >::type nasp(naspSEXP);
+    Rcpp::traits::input_parameter< naxpArray >::type nadimap(nadimapSEXP);
+    Rcpp::traits::input_parameter< naxpSchema >::type nadimsp(nadimspSEXP);
     Rcpp::traits::input_parameter< bool >::type sparse(sparseSEXP);
     Rcpp::traits::input_parameter< std::string >::type datatype(datatypeSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type pclst(pclstSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::XPtr<tiledb::Context>> >::type ctxptr(ctxptrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::XPtr<ctx_wrap_t>> >::type ctxptr(ctxptrSEXP);
     createSchemaFromArrow(uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxptr);
     return R_NilValue;
 END_RCPP
 }
 // writeArrayFromArrow
-void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp, Rcpp::Nullable<Rcpp::CharacterVector> config);
+void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp, Rcpp::Nullable<Rcpp::CharacterVector> config);
 RcppExport SEXP _tiledbsoma_writeArrayFromArrow(SEXP uriSEXP, SEXP naapSEXP, SEXP naspSEXP, SEXP configSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type naap(naapSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type nasp(naspSEXP);
+    Rcpp::traits::input_parameter< naxpArray >::type naap(naapSEXP);
+    Rcpp::traits::input_parameter< naxpSchema >::type nasp(naspSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
     writeArrayFromArrow(uri, naap, nasp, config);
     return R_NilValue;
