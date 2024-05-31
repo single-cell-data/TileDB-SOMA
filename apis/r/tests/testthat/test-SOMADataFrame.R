@@ -248,6 +248,8 @@ test_that("creation with ordered factors", {
   expect_s3_class(ord <- sdf$object[]$ord, c("ordered", "factor"), exact = TRUE)
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
+  rm(df, tbl)
+  gc()
 })
 
 test_that("explicit casting of ordered factors to regular factors", {
@@ -271,6 +273,8 @@ test_that("explicit casting of ordered factors to regular factors", {
   expect_true(is.ordered(ord))
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
+  rm(df, tbl)
+  gc()
 })
 
 test_that("SOMADataFrame read", {
