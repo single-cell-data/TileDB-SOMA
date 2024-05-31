@@ -101,6 +101,7 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
+                schema.release(&schema);
             },
             "uri"_a,
             py::kw_only(),
