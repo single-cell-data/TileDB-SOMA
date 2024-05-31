@@ -5,7 +5,7 @@
 
 #include <spdl.h>
 #include <tiledb/tiledb>
-
+#include "tiledbsoma_types.h"
 namespace tdbs = tiledbsoma;
 
 // create a single 'comparable' number out of version, minor and patch
@@ -55,13 +55,6 @@ inline ResultOrder get_tdb_result_order(std::string result_order){
 	};
 	return result_order_map[result_order];
 }
-
-struct ContextWrapper {
-    //ContextWrapper(std::shared_ptr<tiledb::Context> ctx_ptr_) : ctxptr(std::move(ctx_ptr_)) {}
-    ContextWrapper(std::shared_ptr<tiledb::Context> ctx_ptr_) : ctxptr(ctx_ptr_) {}
-    std::shared_ptr<tiledb::Context> ctxptr;
-};
-typedef struct ContextWrapper ctx_wrap_t;
 
 inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
     if (ec != NANOARROW_OK) Rcpp::stop(msg);

@@ -1,13 +1,13 @@
 #include <Rcpp/Lighter>                         // for R interface to C++
-#include <nanoarrow/r.h>                        // for C/C++ interface to Arrow (via header export from the R package)
+#include <nanoarrow/r.h>                        // for C/C++ interface to Arrow (via header exported from the R package)
 #include <nanoarrow/nanoarrow.hpp>              // for C/C++ interface to Arrow (vendored)
 #include <RcppInt64>                            // for fromInteger64
 
 #include <tiledbsoma/tiledbsoma>
 #include <tiledbsoma/reindexer/reindexer.h>
 
-#include "rutilities.h"         // local declarations
-#include "xptr-utils.h"         // xptr taggging utilities
+#include "rutilities.h"         				// local declarations
+#include "xptr-utils.h"         				// xptr taggging utilities
 
 namespace tdbs = tiledbsoma;
 
@@ -28,12 +28,15 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
     }
 }
 
+//  ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
+//  Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);
+
 // [[Rcpp::export]]
 void createSchemaFromArrow(const std::string& uri,
-                           SEXP nasp, SEXP nadimap, SEXP nadimsp,
+                           naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp,
                            bool sparse, std::string datatype,
                            Rcpp::List pclst,
-                           Rcpp::Nullable<Rcpp::XPtr<tiledb::Context>> ctxptr = R_NilValue) {
+                           Rcpp::Nullable<Rcpp::XPtr<ctx_wrap_t>> ctxptr = R_NilValue) {
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
@@ -48,15 +51,6 @@ void createSchemaFromArrow(const std::string& uri,
     nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
     //_show_content(apdim, spdim);
-
-    std::shared_ptr<tiledb::Context> ctxsp;
-    if (ctxptr.isNotNull()) {
-        Rcpp::XPtr<tiledb::Context> ctxxp(ctxptr);
-        ctxsp = std::make_shared<tiledb::Context>(*ctxxp.get());
-    } else {
-        auto ctx = tiledb::Context();
-        ctxsp = std::make_shared<tiledb::Context>(ctx);
-    }
 
     auto schema = std::make_unique<ArrowSchema>();
     sp.move(schema.get());
@@ -81,6 +75,19 @@ void createSchemaFromArrow(const std::string& uri,
     pltcfg.attrs                          = Rcpp::as<std::string>(pclst["attrs"]);
     pltcfg.dims                           = Rcpp::as<std::string>(pclst["dims"]);
 
+    std::shared_ptr<tiledb::Context> ctxsp;
+    if (ctxptr.isNotNull()) {   				// if optional context wrapper pointer was present
+        Rcpp::XPtr<ctx_wrap_t> ctxxp(ctxptr); 	// Rcpp::Nullable<> needs instantiation
+        ctxsp = (*ctxxp.get()).ctxptr; 			// access shared pointer to contexct from struct
+    } else {
+        //std::map<std::string, std::string> pltfrmcfgmap = pltcfg.to_list();
+        tiledb::Config cfg; //pltcfg); 			// create plain config
+        										// create shared pointer to context given config
+        ctxsp = std::make_shared<tiledb::Context>(cfg);
+        //ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxsp); 	// create wrapper struct
+        //ctxptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);   // and create and assign extptr
+    }
+
     // create the ArraySchema
     auto as = tdbs::ArrowAdapter::tiledb_schema_from_arrow_schema(ctxsp, std::move(schema),
                                                                   std::pair(std::move(dimarr),
@@ -95,7 +102,7 @@ void createSchemaFromArrow(const std::string& uri,
 
 
 // [[Rcpp::export]]
-void writeArrayFromArrow(const std::string& uri, SEXP naap, SEXP nasp,
+void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp,
                          Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
 
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
