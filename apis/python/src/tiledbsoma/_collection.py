@@ -46,7 +46,7 @@ from ._exception import (
     is_already_exists_error,
     is_does_not_exist_error,
     is_not_createable_error,
-    map_exception_for_create
+    map_exception_for_create,
 )
 from ._funcs import typeguard_ignore
 from ._sparse_nd_array import SparseNDArray
@@ -748,7 +748,6 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
                 uri=uri, ctx=context.native_context, timestamp=(0, timestamp_ms)
             )
             handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-            cls._set_create_metadata(handle)
             return cls(
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",

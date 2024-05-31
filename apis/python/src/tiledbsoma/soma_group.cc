@@ -38,6 +38,21 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
+void set_metadata(SOMAGroup& sr, const std::string& key, py::array value) {
+    tiledb_datatype_t value_type = np_to_tdb_dtype(value.dtype());
+
+    if (is_tdb_str(value_type) && value.size() > 1)
+        throw py::type_error("array/list of strings not supported");
+
+    py::buffer_info value_buffer = value.request();
+    if (value_buffer.ndim != 1)
+        throw py::type_error("Only 1D Numpy arrays can be stored as metadata");
+
+    auto value_num = is_tdb_str(value_type) ? value.nbytes() : value.size();
+    sr.set_metadata(
+        key, value_type, value_num, value_num > 0 ? value.data() : nullptr);
+}
+
 void load_soma_group(py::module& m) {
     py::class_<SOMAGroup, SOMAObject>(m, "SOMAGroup")
         .def("__enter__", [](SOMAGroup& group) { return group; })
@@ -75,7 +90,7 @@ void load_soma_group(py::module& m) {
             [](SOMAGroup& group) -> py::dict {
                 return meta(group.get_metadata());
             })
-        .def("set_metadata", &SOMAGroup::set_metadata)
+        .def("set_metadata", set_metadata)
         .def("delete_metadata", &SOMAGroup::delete_metadata)
         .def("has_metadata", &SOMAGroup::has_metadata)
         .def("metadata_num", &SOMAGroup::metadata_num);

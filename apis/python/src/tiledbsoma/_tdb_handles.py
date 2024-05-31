@@ -376,14 +376,12 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
         timestamp: int,
     ) -> clib.SOMAGroup:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        obj = cls._GROUP_WRAPPED_TYPE.open(
+        return cls._GROUP_WRAPPED_TYPE.open(
             uri,
-            open_mode,
+            mode=open_mode,
             context=context.native_context,
             timestamp=(0, timestamp),
         )
-        
-        return obj
 
     def _do_initial_reads(self, group: clib.SOMAGroup) -> None:
         super()._do_initial_reads(group)
@@ -393,11 +391,14 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
             for name, entry in group.members().items()
         }
 
-
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
     """Wrapper around a Pybind11 CollectionWrapper handle."""
 
     _GROUP_WRAPPED_TYPE = clib.SOMACollection
+    
+    @property
+    def meta(self) -> "MetadataWrapper":
+        return self.metadata
 
 
 class ExperimentWrapper(SOMAGroupWrapper[clib.SOMAExperiment]):
@@ -433,7 +434,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
         return cls._ARRAY_WRAPPED_TYPE.open(
             uri,
-            open_mode,
+            mode=open_mode,
             context=context.native_context,
             column_names=[],
             result_order=clib.ResultOrder.automatic,
@@ -648,7 +649,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
             # There were no changes (e.g., it's a read handle).  Do nothing.
             return
         # Only try to get the writer if there are changes to be made.
-        if isinstance(self.owner, SOMAArrayWrapper):
+        if isinstance(self.owner, (SOMAArrayWrapper, CollectionWrapper)):
             meta = self.owner.meta
             for key, mod in self._mods.items():
                 if mod in (_DictMod.ADDED, _DictMod.UPDATED):
