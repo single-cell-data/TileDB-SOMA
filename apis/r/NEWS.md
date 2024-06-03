@@ -1,9 +1,3 @@
-# tiledbsoma 1.11.4
-
-## Changes
-
-* Fixes a couple bugs observed in Python
-
 # tiledbsoma 1.11.3
 
 ## Changes
