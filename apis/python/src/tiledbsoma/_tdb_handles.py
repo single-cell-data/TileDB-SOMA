@@ -396,12 +396,6 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
     def dim_names(self) -> Tuple[str, ...]:
         return tuple(self._handle.dimension_names)
 
-    def enum(self, label: str):
-        # The DataFrame handle may either be ArrayWrapper or DataFrameWrapper.
-        # enum is only used in the DataFrame write path and is implemented by
-        # ArrayWrapper. If enum is called in the read path, it is an error.
-        raise NotImplementedError
-
     @property
     def shape(self) -> Tuple[int, ...]:
         return tuple(self._handle.shape)

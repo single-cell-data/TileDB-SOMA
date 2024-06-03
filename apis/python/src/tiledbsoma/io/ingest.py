@@ -65,8 +65,8 @@ from .._exception import (
     SOMAError,
 )
 from .._soma_array import SOMAArray
-from .._tdb_handles import RawHandle
 from .._soma_object import AnySOMAObject, SOMAObject
+from .._tdb_handles import RawHandle
 from .._types import (
     _INGEST_MODES,
     INGEST_MODES,
@@ -106,9 +106,7 @@ _TDBO = TypeVar("_TDBO", bound=SOMAObject[RawHandle])
 AdditionalMetadata = Optional[Dict[str, Metadatum]]
 
 
-def add_metadata(
-    obj: SOMAObject[Any], additional_metadata: AdditionalMetadata
-) -> None:
+def add_metadata(obj: SOMAObject[Any], additional_metadata: AdditionalMetadata) -> None:
     if additional_metadata:
         obj.verify_open_for_writing()
         obj.metadata.update(additional_metadata)

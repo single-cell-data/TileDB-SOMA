@@ -28,9 +28,9 @@ from . import (
     _dense_nd_array,
     _experiment,
     _measurement,
+    _soma_object,
     _sparse_nd_array,
     _tdb_handles,
-    _soma_object,
 )
 from ._constants import (
     SOMA_ENCODING_VERSION,

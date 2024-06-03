@@ -6,22 +6,16 @@
 """Implementation of a SOMA Measurement.
 """
 
-from typing import Optional, Union
+from typing import Union
 
-from somacore import measurement, options
-from typing_extensions import Self
+from somacore import measurement
 
 from . import _tdb_handles
-from . import pytiledbsoma as clib
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
-from ._exception import SOMAError, map_exception_for_create
-from ._sparse_nd_array import SparseNDArray
 from ._soma_object import AnySOMAObject
-from ._types import OpenTimestamp
-from .options import SOMATileDBContext
-from .options._soma_tiledb_context import _validate_soma_tiledb_context
+from ._sparse_nd_array import SparseNDArray
 
 
 class Measurement(  # type: ignore[misc]  # __eq__ false positive
@@ -77,33 +71,8 @@ class Measurement(  # type: ignore[misc]  # __eq__ false positive
     """
 
     __slots__ = ()
-    _wrapper_type = _tdb_handles.MeasurementWrapper
 
-    @classmethod
-    def create(
-        cls,
-        uri: str,
-        *,
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-    ) -> Self:
-        context = _validate_soma_tiledb_context(context)
-        try:
-            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
-            clib.SOMAGroup.create(
-                uri=uri,
-                soma_type="SOMAMeasurement",
-                ctx=context.native_context,
-                timestamp=(0, timestamp_ms),
-            )
-            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-            return cls(
-                handle,
-                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-            )
-        except SOMAError as e:
-            raise map_exception_for_create(e, uri) from None
+    _wrapper_type = _tdb_handles.MeasurementWrapper
 
     _subclass_constrained_soma_types = {
         "var": ("SOMADataFrame",),
