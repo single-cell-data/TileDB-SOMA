@@ -57,7 +57,11 @@ target_include_directories(unit_soma
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-target_compile_definitions(unit_soma PRIVATE CATCH_CONFIG_MAIN)
+target_compile_definitions(unit_soma
+  PRIVATE
+  CATCH_CONFIG_MAIN
+)
+target_compile_options(unit_soma PRIVATE ${TILEDBSOMA_COMPILE_OPTIONS})
 
 if (NOT MSVC)
   # Allow deprecated function for writing to an array with a timestamp

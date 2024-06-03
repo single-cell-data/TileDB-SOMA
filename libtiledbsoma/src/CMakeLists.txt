@@ -72,20 +72,21 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
-
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/nanoarrow/nanoarrow.c
 )
 
 message(STATUS "Building TileDB without deprecation warnings")
-target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE
+target_compile_definitions(TILEDB_SOMA_OBJECTS
+  PRIVATE
   -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
   -DTILEDB_DEPRECATED=
 )
 
-target_compile_options(
-  TILEDB_SOMA_OBJECTS PRIVATE
+target_compile_options(TILEDB_SOMA_OBJECTS
+  PRIVATE
+  ${TILEDBSOMA_COMPILE_OPTIONS}
 )
 
 set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
