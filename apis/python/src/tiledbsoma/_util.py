@@ -364,6 +364,8 @@ def cast_values_to_target_schema(
                         target_field.type.ordered,
                     )
                 )
+            else:
+                col = col.cast(target_field.type)
             new_enmr = clib_array.extend_enumeration(name, col)
 
             if pa.types.is_binary(
