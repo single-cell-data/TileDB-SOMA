@@ -350,9 +350,9 @@ def test_cascading_close(tmp_path: pathlib.Path):
     un_corvid.close()
     assert un_corvid.closed
 
-    all_elements: List[_tiledb_object.AnyTileDBObject] = []
+    all_elements: List[_tiledb_object.AnySOMAObject] = []
 
-    def crawl(obj: _tiledb_object.AnyTileDBObject):
+    def crawl(obj: _tiledb_object.AnySOMAObject):
         all_elements.append(obj)
         if isinstance(obj, _collection.CollectionBase):
             for val in obj.values():

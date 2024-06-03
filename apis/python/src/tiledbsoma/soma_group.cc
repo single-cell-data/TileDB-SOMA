@@ -55,6 +55,14 @@ void set_metadata(SOMAGroup& sr, const std::string& key, py::array value) {
 
 void load_soma_group(py::module& m) {
     py::class_<SOMAGroup, SOMAObject>(m, "SOMAGroup")
+        .def_static(
+            "create",
+            &SOMAGroup::create,
+            py::kw_only(),
+            "ctx"_a,
+            "uri"_a,
+            "soma_type"_a,
+            "timestamp"_a = py::none())
         .def("__enter__", [](SOMAGroup& group) { return group; })
         .def(
             "__exit__",

@@ -46,7 +46,11 @@ std::unique_ptr<SOMAGroup> SOMAGroup::create(
     std::string_view uri,
     std::string soma_type,
     std::optional<TimestampRange> timestamp) {
-    Group::create(*ctx->tiledb_ctx(), std::string(uri));
+    try {
+        Group::create(*ctx->tiledb_ctx(), std::string(uri));
+    } catch (TileDBError& e) {
+        throw TileDBSOMAError(e.what());
+    }
 
     auto group = std::make_shared<Group>(
         *ctx->tiledb_ctx(),

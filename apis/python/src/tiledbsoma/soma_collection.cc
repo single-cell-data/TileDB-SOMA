@@ -49,13 +49,6 @@ using namespace tiledbsoma;
 void load_soma_collection(py::module& m) {
     py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection")
         .def_static(
-            "create",
-            &SOMACollection::create,
-            "uri"_a,
-            py::kw_only(),
-            "ctx"_a,
-            "timestamp"_a = py::none())
-        .def_static(
             "open",
             py::overload_cast<
                 std::string_view,
@@ -74,29 +67,12 @@ void load_soma_collection(py::module& m) {
                 return py::make_iterator(collection.begin(), collection.end());
             },
             py::keep_alive<0, 1>())
-        .def("get", &SOMACollection::get)
-        .def("add_new_collection", &SOMACollection::add_new_collection)
-        /* TODO ArrowTable needs to be passed in as py::object and converted */
-        // .def("add_new_experiment", &SOMACollection::add_new_experiment)
-        // .def("add_new_measurement", &SOMACollection::add_new_measurement)
-        // .def("add_new_dataframe", &SOMACollection::add_new_dataframe)
-        // .def("add_new_dense_ndarray", &SOMACollection::add_new_dense_ndarray)
-        // .def("add_new_sparse_ndarray",
-        // &SOMACollection::add_new_sparse_ndarray)
-        ;
+        .def("get", &SOMACollection::get);
 
     py::class_<SOMAExperiment, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAExperiment")
-        .def("obs", &SOMAExperiment::obs)
-        .def("ms", &SOMAExperiment::ms);
+        m, "SOMAExperiment");
 
     py::class_<SOMAMeasurement, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAMeasurement")
-        .def("var", &SOMAMeasurement::var)
-        .def("X", &SOMAMeasurement::X)
-        .def("obsm", &SOMAMeasurement::obsm)
-        .def("obsp", &SOMAMeasurement::obsp)
-        .def("varm", &SOMAMeasurement::varm)
-        .def("varp", &SOMAMeasurement::varp);
+        m, "SOMAMeasurement");
 }
 }  // namespace libtiledbsomacpp

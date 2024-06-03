@@ -30,7 +30,7 @@ from . import (
     _measurement,
     _sparse_nd_array,
     _tdb_handles,
-    _tiledb_object,
+    _soma_object,
 )
 from ._constants import (
     SOMA_ENCODING_VERSION,
@@ -39,12 +39,12 @@ from ._constants import (
 )
 from ._exception import SOMAError
 from ._funcs import typeguard_ignore
-from ._tiledb_object import AnyTileDBObject, TileDBObject
+from ._soma_object import AnySOMAObject, SOMAObject
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
-_Obj = TypeVar("_Obj", bound="_tiledb_object.AnyTileDBObject")
+_Obj = TypeVar("_Obj", bound="_soma_object.AnySOMAObject")
 _Wrapper = TypeVar("_Wrapper", bound=_tdb_handles.AnyWrapper)
 
 
@@ -56,7 +56,7 @@ def open(
     soma_type: Optional[str] = None,
     context: Optional[SOMATileDBContext] = None,
     tiledb_timestamp: Optional[OpenTimestamp] = None,
-) -> AnyTileDBObject:
+) -> AnySOMAObject:
     ...
 
 
@@ -77,10 +77,10 @@ def open(
     uri: str,
     mode: options.OpenMode = "r",
     *,
-    soma_type: Union[Type[TileDBObject], str, None] = None,  # type: ignore[type-arg]
+    soma_type: Union[Type[SOMAObject], str, None] = None,  # type: ignore[type-arg]
     context: Optional[SOMATileDBContext] = None,
     tiledb_timestamp: Optional[OpenTimestamp] = None,
-) -> AnyTileDBObject:
+) -> AnySOMAObject:
     """Opens a TileDB SOMA object.
 
     Args:
@@ -122,7 +122,7 @@ def open(
         Experimental.
     """
     context = _validate_soma_tiledb_context(context)
-    obj: TileDBObject[_Wrapper] = _open_internal(  # type: ignore[valid-type]
+    obj: SOMAObject[_Wrapper] = _open_internal(  # type: ignore[valid-type]
         _tdb_handles.open, uri, mode, context, tiledb_timestamp
     )
     try:
@@ -151,7 +151,7 @@ def _open_internal(
     mode: options.OpenMode,
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp],
-) -> TileDBObject[_Wrapper]:
+) -> SOMAObject[_Wrapper]:
     """Lower-level open function for internal use only."""
     handle = opener(uri, mode, context, timestamp)
     try:
@@ -162,17 +162,17 @@ def _open_internal(
 
 
 @typeguard_ignore
-def reify_handle(hdl: _Wrapper) -> TileDBObject[_Wrapper]:
+def reify_handle(hdl: _Wrapper) -> SOMAObject[_Wrapper]:
     """Picks out the appropriate SOMA class for a handle and wraps it."""
     typename = _read_soma_type(hdl)
     cls = _type_name_to_cls(typename)  # type: ignore[no-untyped-call]
-    if type(hdl) not in (cls._wrapper_type, cls._reader_wrapper_type):
+    if not isinstance(hdl, cls._wrapper_type):
         raise SOMAError(
             f"cannot open {hdl.uri!r}: a {type(hdl._handle)}"
             f" cannot be converted to a {typename}"
         )
     return cast(
-        _tiledb_object.TileDBObject[_Wrapper],
+        _soma_object.SOMAObject[_Wrapper],
         cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
     )
 
@@ -209,8 +209,8 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
 
 
 @no_type_check
-def _type_name_to_cls(type_name: str) -> Type[AnyTileDBObject]:
-    type_map: Dict[str, Type[AnyTileDBObject]] = {
+def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
+    type_map: Dict[str, Type[AnySOMAObject]] = {
         t.soma_type.lower(): t
         for t in (
             _collection.Collection,

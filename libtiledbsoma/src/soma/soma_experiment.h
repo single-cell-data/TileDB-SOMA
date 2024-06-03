@@ -95,8 +95,8 @@ class SOMAExperiment : public SOMACollection {
     }
 
     SOMAExperiment() = delete;
-    SOMAExperiment(const SOMAExperiment&) = delete;
-    SOMAExperiment(SOMAExperiment&&) = delete;
+    SOMAExperiment(const SOMAExperiment&) = default;
+    SOMAExperiment(SOMAExperiment&&) = default;
     ~SOMAExperiment() = default;
 
     /**

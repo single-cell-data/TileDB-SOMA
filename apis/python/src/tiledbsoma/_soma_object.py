@@ -11,8 +11,6 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
-import tiledb
-
 from . import _constants, _tdb_handles
 from ._exception import SOMAError
 from ._types import OpenTimestamp
@@ -30,7 +28,7 @@ Covariant because ``_handle`` is read-only.
 """
 
 
-class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
+class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     """Base class for all TileDB SOMA objects.
 
     Accepts a SOMATileDBContext, to enable session state to be shared
@@ -47,13 +45,6 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Type[_tdb_handles.SparseNDArrayWrapper],
     ]
     """Class variable of the Wrapper class used to open this object type."""
-
-    _reader_wrapper_type: Union[
-        Type[_WrapperType_co],
-        Type[_tdb_handles.DataFrameWrapper],
-        Type[_tdb_handles.DenseNDArrayWrapper],
-        Type[_tdb_handles.SparseNDArrayWrapper],
-    ]
 
     __slots__ = ("_close_stack", "_handle")
 
@@ -102,7 +93,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         handle = _tdb_handles.open(
             uri, mode, context, tiledb_timestamp, clib_type=clib_type
         )
-        if not isinstance(handle, cls._reader_wrapper_type):
+        if not isinstance(handle, cls._wrapper_type):
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
             handle,  # type: ignore[arg-type]
@@ -150,10 +141,6 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     @property
     def context(self) -> SOMATileDBContext:
         return self._handle.context
-
-    @property
-    def _ctx(self) -> tiledb.Ctx:
-        return self.context.tiledb_ctx
 
     @property
     def metadata(self) -> MutableMapping[str, Any]:
@@ -295,7 +282,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 if not isinstance(md_type, str):
                     return False
                 return md_type.lower() == cls.soma_type.lower()
-        except (RuntimeError, SOMAError, tiledb.cc.TileDBError):
+        except (RuntimeError, SOMAError):
             return False
 
     @classmethod
@@ -319,4 +306,4 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             raise ValueError(f"{self} is open for writing, not reading")
 
 
-AnyTileDBObject = TileDBObject[_tdb_handles.AnyWrapper]
+AnySOMAObject = SOMAObject[_tdb_handles.AnyWrapper]

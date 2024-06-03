@@ -21,7 +21,6 @@ from typing import (
     Tuple,
     Type,
     TypeVar,
-    Union,
     cast,
     overload,
 )
@@ -32,25 +31,19 @@ import somacore.collection
 from somacore import options
 from typing_extensions import Self
 
-import tiledb
-
 from . import _funcs, _tdb_handles
 from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import (
-    AlreadyExistsError,
-    NotCreateableError,
     SOMAError,
-    is_already_exists_error,
     is_does_not_exist_error,
-    is_not_createable_error,
     map_exception_for_create,
 )
 from ._funcs import typeguard_ignore
 from ._sparse_nd_array import SparseNDArray
-from ._tiledb_object import AnyTileDBObject, TileDBObject
+from ._soma_object import AnySOMAObject, SOMAObject
 from ._types import OpenTimestamp
 from ._util import (
     is_relative_uri,
@@ -60,10 +53,10 @@ from ._util import (
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
-# A collection can hold any sub-type of TileDBObject
-CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
-_TDBO = TypeVar("_TDBO", bound=TileDBObject)  # type: ignore[type-arg]
-_Coll = TypeVar("_Coll", bound="CollectionBase[AnyTileDBObject]")
+# A collection can hold any sub-type of SOMAObject
+CollectionElementType = TypeVar("CollectionElementType", bound=AnySOMAObject)
+_TDBO = TypeVar("_TDBO", bound=SOMAObject)  # type: ignore[type-arg]
+_Coll = TypeVar("_Coll", bound="CollectionBase[AnySOMAObject]")
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
@@ -72,12 +65,12 @@ class _CachedElement:
     """Item we have loaded in the cache of a collection."""
 
     entry: _tdb_handles.GroupEntry
-    soma: Optional[AnyTileDBObject] = None
+    soma: Optional[AnySOMAObject] = None
     """The reified object, if it has been opened."""
 
 
 class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
-    TileDBObject[_tdb_handles.GroupWrapper],
+    SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]],
     somacore.collection.BaseCollection[CollectionElementType],
 ):
     """Contains a key-value mapping where the keys are string names and the values
@@ -88,63 +81,63 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     __slots__ = ("_contents", "_mutated_keys")
 
     # TODO: Implement additional creation of members on collection subclasses.
-    @classmethod
-    def create(
-        cls,
-        uri: str,
-        *,
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-    ) -> Self:
-        """Creates and opens a new SOMA collection in storage.
+    # @classmethod
+    # def create(
+    #     cls,
+    #     uri: str,
+    #     *,
+    #     platform_config: Optional[options.PlatformConfig] = None,
+    #     context: Optional[SOMATileDBContext] = None,
+    #     tiledb_timestamp: Optional[OpenTimestamp] = None,
+    # ) -> Self:
+    #     """Creates and opens a new SOMA collection in storage.
 
-        This creates a new SOMA collection of the current type in storage and
-        returns it opened for writing.
+    #     This creates a new SOMA collection of the current type in storage and
+    #     returns it opened for writing.
 
-        Args:
-            uri:
-                The location to create this SOMA collection at.
-            platform_config:
-                Platform-specific options used to create this collection.
-                This may be provided as settings in a dictionary, with options
-                located in the ``{'tiledb': {'create': ...}}`` key,
-                or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
-                (Currently unused for collections.)
-            context:
-                If provided, the :class:`SOMATileDBContext` to use when creating and
-                opening this collection.
-            tiledb_timestamp:
-                If specified, overrides the default timestamp
-                used to open this object. If unset, uses the timestamp provided by
-                the context.
+    #     Args:
+    #         uri:
+    #             The location to create this SOMA collection at.
+    #         platform_config:
+    #             Platform-specific options used to create this collection.
+    #             This may be provided as settings in a dictionary, with options
+    #             located in the ``{'tiledb': {'create': ...}}`` key,
+    #             or as a :class:`~tiledbsoma.TileDBCreateOptions` object.
+    #             (Currently unused for collections.)
+    #         context:
+    #             If provided, the :class:`SOMATileDBContext` to use when creating and
+    #             opening this collection.
+    #         tiledb_timestamp:
+    #             If specified, overrides the default timestamp
+    #             used to open this object. If unset, uses the timestamp provided by
+    #             the context.
 
-        Raises:
-            tiledbsoma.AlreadyExistsError:
-                If the underlying object already exists at the given URI.
-            tiledbsoma.NotCreateableError:
-                If the URI is malformed for a particular storage backend.
-            TileDBError:
-                If unable to create the underlying object.
+    #     Raises:
+    #         tiledbsoma.AlreadyExistsError:
+    #             If the underlying object already exists at the given URI.
+    #         tiledbsoma.NotCreateableError:
+    #             If the URI is malformed for a particular storage backend.
+    #         TileDBError:
+    #             If unable to create the underlying object.
 
-        Lifecycle:
-            Experimental.
-        """
-        context = _validate_soma_tiledb_context(context)
-        try:
-            tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
-            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-            cls._set_create_metadata(handle)
-            return cls(
-                handle,
-                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-            )
-        except tiledb.TileDBError as tdbe:
-            if is_already_exists_error(tdbe):
-                raise AlreadyExistsError(f"{uri!r} already exists")
-            if is_not_createable_error(tdbe):
-                raise NotCreateableError(f"{uri!r} cannot be created")
-            raise
+    #     Lifecycle:
+    #         Experimental.
+    #     """
+    #     context = _validate_soma_tiledb_context(context)
+    #     try:
+    #         tiledb.group_create(uri=uri, ctx=context.tiledb_ctx)
+    #         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+    #         cls._set_create_metadata(handle)
+    #         return cls(
+    #             handle,
+    #             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+    #         )
+    #     except tiledb.TileDBError as tdbe:
+    #         if is_already_exists_error(tdbe):
+    #             raise AlreadyExistsError(f"{uri!r} already exists")
+    #         if is_not_createable_error(tdbe):
+    #             raise NotCreateableError(f"{uri!r} cannot be created")
+    #         raise
 
     @classmethod
     def open(
@@ -179,7 +172,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     def __init__(
         self,
-        handle: Union[_tdb_handles.GroupWrapper, _tdb_handles.SOMAGroupWrapper],
+        handle: _tdb_handles.SOMAGroupWrapper,
         **kwargs: Any,
     ):
         super().__init__(handle, **kwargs)
@@ -209,7 +202,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: Optional[str] = ...,
         platform_config: Optional[options.PlatformConfig] = ...,
-    ) -> "Collection[AnyTileDBObject]":
+    ) -> "Collection[AnySOMAObject]":
         ...
 
     @overload
@@ -602,7 +595,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             key:
                 The key to set.
             uri:
-                The resolved URI to pass to :meth:`tiledb.Group.add`.
+                The resolved URI to pass to :meth:`clib.SOMAGroup.add`.
             relative:
                 The ``relative`` parameter to pass to ``add``.
             value:
@@ -615,15 +608,12 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             # TileDB groups currently do not support replacing elements.
             # If we use a hack to flush writes, corruption is possible.
             raise SOMAError(f"replacing key {key!r} is unsupported")
-        if isinstance(self._handle, _tdb_handles.CollectionWrapper):
-            self._handle._handle.add(
-                uri,
-                clib.URIType.relative if relative else clib.URIType.absolute,
-                key,
-                self._handle._handle.type,
-            )
-        else:
-            self._handle.writer.add(name=key, uri=uri, relative=relative)
+        self._handle._handle.add(
+            uri,
+            clib.URIType.relative if relative else clib.URIType.absolute,
+            key,
+            self._handle._handle.type,
+        )
         self._contents[key] = _CachedElement(
             entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),
             soma=soma_object,
@@ -635,7 +625,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             raise SOMAError(f"cannot delete previously-mutated key {key!r}")
         try:
             self._handle.writer.remove(key)
-        except tiledb.TileDBError as tdbe:
+        except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(f"{key!r} does not exist in {self}") from tdbe
             raise
@@ -669,7 +659,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     @classmethod
     def _check_allows_child(cls, key: str, child_cls: type) -> None:
         real_child = _real_class(child_cls)
-        if not issubclass(real_child, TileDBObject):
+        if not issubclass(real_child, SOMAObject):
             raise TypeError(
                 f"only TileDB objects can be added as children of {cls}, not {child_cls}"
             )
@@ -730,7 +720,6 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     __slots__ = ()
 
     _wrapper_type = _tdb_handles.CollectionWrapper
-    _reader_wrapper_type = _tdb_handles.CollectionWrapper
 
     @classmethod
     def create(
@@ -744,8 +733,11 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
         context = _validate_soma_tiledb_context(context)
         try:
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
-            clib.SOMACollection.create(
-                uri=uri, ctx=context.native_context, timestamp=(0, timestamp_ms)
+            clib.SOMAGroup.create(
+                uri=uri,
+                soma_type="SOMACollection",
+                ctx=context.native_context,
+                timestamp=(0, timestamp_ms),
             )
             handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
             return cls(
@@ -801,8 +793,8 @@ def _sanitize_for_path(key: str) -> str:
 @attrs.define(frozen=True, kw_only=True)
 class _ChildURI:
     add_uri: str
-    """The URI of the child for passing to :meth:``tiledb.Group.add``."""
+    """The URI of the child for passing to :meth:``clib.SOMAGroup.add``."""
     full_uri: str
     """The full URI of the child, used to create a new element."""
     relative: bool
-    """The ``relative`` value to pass to :meth:``tiledb.Group.add``."""
+    """The ``relative`` value to pass to :meth:``clib.SOMAGroup.add``."""

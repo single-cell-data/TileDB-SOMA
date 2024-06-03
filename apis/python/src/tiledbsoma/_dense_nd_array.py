@@ -81,7 +81,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     __slots__ = ()
 
     _wrapper_type = DenseNDArrayWrapper
-    _reader_wrapper_type = DenseNDArrayWrapper
 
     @classmethod
     def create(

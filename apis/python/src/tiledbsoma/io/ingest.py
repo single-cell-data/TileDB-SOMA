@@ -66,7 +66,7 @@ from .._exception import (
 )
 from .._soma_array import SOMAArray
 from .._tdb_handles import RawHandle
-from .._tiledb_object import AnyTileDBObject, TileDBObject
+from .._soma_object import AnySOMAObject, SOMAObject
 from .._types import (
     _INGEST_MODES,
     INGEST_MODES,
@@ -100,14 +100,14 @@ from ._registration import (
 from ._util import read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
-_TDBO = TypeVar("_TDBO", bound=TileDBObject[RawHandle])
+_TDBO = TypeVar("_TDBO", bound=SOMAObject[RawHandle])
 
 
 AdditionalMetadata = Optional[Dict[str, Metadatum]]
 
 
 def add_metadata(
-    obj: TileDBObject[Any], additional_metadata: AdditionalMetadata
+    obj: SOMAObject[Any], additional_metadata: AdditionalMetadata
 ) -> None:
     if additional_metadata:
         obj.verify_open_for_writing()
@@ -942,7 +942,7 @@ def append_X(
 def _maybe_set(
     coll: AnyTileDBCollection,
     key: str,
-    value: AnyTileDBObject,
+    value: AnySOMAObject,
     *,
     use_relative_uri: Optional[bool],
 ) -> None:
