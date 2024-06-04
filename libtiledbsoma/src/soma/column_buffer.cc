@@ -30,8 +30,8 @@
  * This file defines the a ColumBuffer class.
  */
 
-#include <cstdlib>
 #include "column_buffer.h"
+#include <cstdlib>
 #include "../utils/logger.h"
 
 namespace tiledbsoma {
@@ -225,7 +225,6 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     bool is_nullable,
     std::optional<Enumeration> enumeration,
     bool is_ordered) {
-
     // Set number of bytes for the data buffer. Override with a value from
     // the config if present.
     // Respect requested CI low-memory environment if requested.
