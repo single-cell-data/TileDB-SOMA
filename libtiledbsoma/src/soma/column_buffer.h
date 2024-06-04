@@ -52,7 +52,17 @@ using namespace tiledb;
  *
  */
 class ColumnBuffer {
-    inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 24;  // 16 MiB
+    // For remote stores, too-small buffer sizes can negatively impact performance
+    // due to increased numbers of round-trip times. While users can adjust
+    // soma.init_buffer_bytes, the out-of-the-box default must offer good UX
+    // on reasonable hardware (e.g. 8GB/16GB laptops).
+    //
+    // For CI, we use smaller buffer sizes via a well-known environment variable.
+    inline static const size_t CI_DEFAULT_ALLOC_BYTES = 1 << 24;  // 16 MiB
+    inline static const size_t NON_CI_DEFAULT_ALLOC_BYTES = 1 << 30;  // 1 GiB
+
+    inline static const std::string
+        ENV_CI_MEMORY_USAGE = "CI_MEMORY_USAGE";
     inline static const std::string
         CONFIG_KEY_INIT_BYTES = "soma.init_buffer_bytes";
 

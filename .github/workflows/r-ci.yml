@@ -21,6 +21,7 @@ env:
   _R_CHECK_TESTS_NLINES_: 0
   CATCHSEGV: "TRUE"
   R_REMOTES_UPGRADE: "never"
+  CI_MEMORY_USAGE: true
 
 jobs:
   ci:

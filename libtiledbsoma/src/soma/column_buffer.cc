@@ -30,6 +30,7 @@
  * This file defines the a ColumBuffer class.
  */
 
+#include <cstdlib>
 #include "column_buffer.h"
 #include "../utils/logger.h"
 
@@ -224,9 +225,15 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     bool is_nullable,
     std::optional<Enumeration> enumeration,
     bool is_ordered) {
+
     // Set number of bytes for the data buffer. Override with a value from
     // the config if present.
-    auto num_bytes = DEFAULT_ALLOC_BYTES;
+    // Respect requested CI low-memory environment if requested.
+    auto num_bytes = NON_CI_DEFAULT_ALLOC_BYTES;
+    if (std::getenv(ENV_CI_MEMORY_USAGE.c_str()) != nullptr) {
+        num_bytes = CI_DEFAULT_ALLOC_BYTES;
+    }
+
     if (config.contains(CONFIG_KEY_INIT_BYTES)) {
         auto value_str = config.get(CONFIG_KEY_INIT_BYTES);
         try {

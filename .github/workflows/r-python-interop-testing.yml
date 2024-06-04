@@ -112,3 +112,5 @@ jobs:
 
       - name: Interop Tests
         run: python -m pytest apis/system/tests/
+        env:
+          CI_MEMORY_USAGE: true
