@@ -31,7 +31,6 @@
  */
 
 #include "column_buffer.h"
-#include <cstdlib>
 #include "../utils/logger.h"
 
 namespace tiledbsoma {
@@ -227,12 +226,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     bool is_ordered) {
     // Set number of bytes for the data buffer. Override with a value from
     // the config if present.
-    // Respect requested CI low-memory environment if requested.
-    auto num_bytes = NON_CI_DEFAULT_ALLOC_BYTES;
-    if (std::getenv(ENV_CI_MEMORY_USAGE.c_str()) != nullptr) {
-        num_bytes = CI_DEFAULT_ALLOC_BYTES;
-    }
-
+    auto num_bytes = DEFAULT_ALLOC_BYTES;
     if (config.contains(CONFIG_KEY_INIT_BYTES)) {
         auto value_str = config.get(CONFIG_KEY_INIT_BYTES);
         try {

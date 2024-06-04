@@ -123,7 +123,7 @@ jobs:
     - name: Run libtiledbsoma unit tests
       run: ctest --output-on-failure --test-dir build/libtiledbsoma -C Release --verbose
       env:
-        CI_MEMORY_USAGE: true
+        TILEDB_SOMA_INIT_BUFFER_BYTES: 16777216 # accommodate tiny runners
 
     - name: Run pytests for Python
       shell: bash
