@@ -21,6 +21,7 @@ env:
   _R_CHECK_TESTS_NLINES_: 0
   CATCHSEGV: "TRUE"
   R_REMOTES_UPGRADE: "never"
+  TILEDB_SOMA_INIT_BUFFER_BYTES: 16777216 # accommodate tiny runners
 
 jobs:
   ci:

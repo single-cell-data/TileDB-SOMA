@@ -52,7 +52,12 @@ using namespace tiledb;
  *
  */
 class ColumnBuffer {
-    inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 24;  // 16 MiB
+    // This "medium size" -- 1 GiB -- is a good balance between improved remote
+    // I/O performance (bigger = better) and friendliness for smaller hardware
+    // (e.g.  tiny CI runners). This value is good for general in-between
+    // hardware including modern laptops and a broad range of EC2 instances. CI
+    // can ask for smaller; power-server users can ask for larger.
+    inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 30;
     inline static const std::string
         CONFIG_KEY_INIT_BYTES = "soma.init_buffer_bytes";
 
