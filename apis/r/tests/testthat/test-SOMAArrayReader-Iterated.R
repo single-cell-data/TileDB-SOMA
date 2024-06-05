@@ -129,13 +129,13 @@ test_that("Iterated Interface from SOMA Classes", {
 
             expect_false(iterator$read_complete())
             dat_slice <- iterator$read_next()
-            expect_true(inherits(dat_slice, "Table"))
-            expect_equal(dat_slice$num_columns, 3)
+            expect_true(inherits(dat_slice, "Table")) ### XXXXX WAS FAILING
+            expect_equal(dat_slice$num_columns, 3) ### XXXXX WAS FAILING
 
             if (i < 2) {
-                expect_equal(dat_slice$num_rows, 2097152)
+                expect_equal(dat_slice$num_rows, 2097152) ### XXXXX WAS FAILING
             } else {
-                expect_equal(dat_slice$num_rows, 141580)
+                expect_equal(dat_slice$num_rows, 141580) ### XXXXX WAS FAILING
             }
         }
 
@@ -159,16 +159,18 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     untar(tarfile = tgzfile, exdir = tdir)
     uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "raw", "X", "data")
 
-    sdf <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
-    expect_true(inherits(sdf, "SOMAArrayBase"))
-    sdf$open("READ", internal_use_only = "allowed_use")
+    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes='16777216'))
 
-    iterator <- sdf$read()$sparse_matrix(zero_based = T)
+    snda <- SOMASparseNDArrayOpen(uri, tiledbsoma_ctx = ctx)
+
+    expect_true(inherits(snda, "SOMAArrayBase"))
+
+    iterator <- snda$read()$sparse_matrix(zero_based = T)
 
     nnzTotal <- 0
     rowsTotal <- 0
     for (i in 1:2) {
-        expect_false(iterator$read_complete())
+        expect_false(iterator$read_complete()) ##### XXXXX WAS FAILING
         dat <- iterator$read_next()$get_one_based_matrix()
         ## -- nnz <- Matrix::nnzero(dat)
         ##    use length() which is identical for this data set but does not suffer from an issue sometimes seen in CI
@@ -176,18 +178,18 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
         expect_gt(nnz, 0)
         nnzTotal <- nnzTotal + nnz
         # the shard dims always match the shape of the whole sparse matrix
-        expect_equal(dim(dat), as.integer(sdf$shape()))
+        expect_equal(dim(dat), as.integer(snda$shape()))
     }
 
     expect_true(iterator$read_complete())
     expect_warning(iterator$read_next()) # returns NULL with warning
     expect_warning(iterator$read_next()) # returns NULL with warning
-    ## -- expect_equal(nnzTotal, Matrix::nnzero(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
+    ## -- expect_equal(nnzTotal, Matrix::nnzero(snda$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
     ##    use length() which is identical for this data set but does not suffer from an issue sometimes seen in CI
-    expect_equal(nnzTotal, length(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()@x))
+    expect_equal(nnzTotal, length(snda$read()$sparse_matrix(T)$concat()$get_one_based_matrix()@x))
     expect_equal(nnzTotal, 2238732)
 
-    rm(sdf)
+    rm(snda)
     gc()
 })
 
@@ -237,3 +239,11 @@ test_that("Dimension Point and Ranges Bounds", {
     gc()
 
 })
+
+# testthat::test_file("tests/testthat/test-SOMAArrayReader-Iterated.R")
+# ── Failure ('test-SOMAArrayReader-Iterated.R:130:13'): Iterated Interface from SOMA Classes ──
+# ── Failure ('test-SOMAArrayReader-Iterated.R:132:13'): Iterated Interface from SOMA Classes ──
+# ── Failure ('test-SOMAArrayReader-Iterated.R:133:13'): Iterated Interface from SOMA Classes ──
+# ── Failure ('test-SOMAArrayReader-Iterated.R:136:17'): Iterated Interface from SOMA Classes ──
+# ── Failure ('test-SOMAArrayReader-Iterated.R:138:17'): Iterated Interface from SOMA Classes ──
+# ── Failure ('test-SOMAArrayReader-Iterated.R:171:9'): Iterated Interface from SOMA Sparse Matrix ──
