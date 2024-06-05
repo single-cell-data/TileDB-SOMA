@@ -245,11 +245,3 @@ test_that("Dimension Point and Ranges Bounds", {
     gc()
 
 })
-
-# testthat::test_file("tests/testthat/test-SOMAArrayReader-Iterated.R")
-# ── Failure ('test-SOMAArrayReader-Iterated.R:130:13'): Iterated Interface from SOMA Classes ──
-# ── Failure ('test-SOMAArrayReader-Iterated.R:132:13'): Iterated Interface from SOMA Classes ──
-# ── Failure ('test-SOMAArrayReader-Iterated.R:133:13'): Iterated Interface from SOMA Classes ──
-# ── Failure ('test-SOMAArrayReader-Iterated.R:136:17'): Iterated Interface from SOMA Classes ──
-# ── Failure ('test-SOMAArrayReader-Iterated.R:138:17'): Iterated Interface from SOMA Classes ──
-# ── Failure ('test-SOMAArrayReader-Iterated.R:171:9'): Iterated Interface from SOMA Sparse Matrix ──
