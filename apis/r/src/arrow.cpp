@@ -94,11 +94,15 @@ void createSchemaFromArrow(const std::string& uri,
                                                                             std::move(dimsch)),
                                                                   datatype, sparse,
                                                                   pltcfg);
-    // We can inspect the (TileDB) ArraySchema via a simple helper:  as.dump();
-    spdl::info("[createSchemaFromArrow] About to create {}", uri);
 
-    // Create the schema at the given URI
-    tiledb::Array::create(uri, as);
+    // We can inspect the (TileDB) ArraySchema via a simple helper:  as.dump();
+    tiledb::VFS vfs(*ctxsp);
+    //spdl::warn("[createSchemaFromArrow] About to create {}, dir exists ? {}", uri, vfs.is_dir(uri));
+
+    if (!vfs.is_dir(uri)) {
+        // Create the schema at the given URI
+        tiledb::Array::create(uri, as);
+    }
 }
 
 
