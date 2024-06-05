@@ -94,10 +94,14 @@ test_that("Iterated Interface from SOMA Classes", {
     ## parameterize test
     test_cases <- c("data.frame", "sparse")
 
+    # The read_complete et al. in this test case are designed to be verified
+    # against 16MB buffer size, and the particular provided input dataset.
+    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes='16777216'))
+
     for (tc in test_cases) {
         sdf <- switch(tc,
-                      data.frame = SOMADataFrame$new(uri, internal_use_only = "allowed_use"),
-                      sparse = SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"))
+                      data.frame = SOMADataFrameOpen(uri, tiledbsoma_ctx = ctx),
+                      sparse = SOMASparseNDArrayOpen(uri, tiledbsoma_ctx = ctx))
         expect_true(inherits(sdf, "SOMAArrayBase"))
         sdf$open("READ", internal_use_only = "allowed_use")
 
@@ -159,8 +163,9 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     untar(tarfile = tgzfile, exdir = tdir)
     uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "raw", "X", "data")
 
+    # The read_complete et al. in this test case are designed to be verified
+    # against 16MB buffer size, and the particular provided input dataset.
     ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes='16777216'))
-
     snda <- SOMASparseNDArrayOpen(uri, tiledbsoma_ctx = ctx)
 
     expect_true(inherits(snda, "SOMAArrayBase"))
