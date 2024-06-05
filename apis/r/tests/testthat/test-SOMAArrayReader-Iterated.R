@@ -103,7 +103,6 @@ test_that("Iterated Interface from SOMA Classes", {
                       data.frame = SOMADataFrameOpen(uri, tiledbsoma_ctx = ctx),
                       sparse = SOMASparseNDArrayOpen(uri, tiledbsoma_ctx = ctx))
         expect_true(inherits(sdf, "SOMAArrayBase"))
-        sdf$open("READ", internal_use_only = "allowed_use")
 
         iterator <- switch(tc,
                            data.frame = sdf$read(),
@@ -133,19 +132,21 @@ test_that("Iterated Interface from SOMA Classes", {
 
             expect_false(iterator$read_complete())
             dat_slice <- iterator$read_next()
-            expect_true(inherits(dat_slice, "Table")) ### XXXXX WAS FAILING
-            expect_equal(dat_slice$num_columns, 3) ### XXXXX WAS FAILING
+            expect_true(inherits(dat_slice, "Table"))
+            expect_equal(dat_slice$num_columns, 3)
 
             if (i < 2) {
-                expect_equal(dat_slice$num_rows, 2097152) ### XXXXX WAS FAILING
+                expect_equal(dat_slice$num_rows, 2097152)
             } else {
-                expect_equal(dat_slice$num_rows, 141580) ### XXXXX WAS FAILING
+                expect_equal(dat_slice$num_rows, 141580)
             }
         }
 
         expect_true(iterator$read_complete())
         expect_warning(iterator$read_next()) # returns NULL with warning
         expect_warning(iterator$read_next()) # returns NULL with warning
+
+        sdf$close()
 
         rm(iterator, sdf)
         gc()
@@ -175,7 +176,7 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     nnzTotal <- 0
     rowsTotal <- 0
     for (i in 1:2) {
-        expect_false(iterator$read_complete()) ##### XXXXX WAS FAILING
+        expect_false(iterator$read_complete())
         dat <- iterator$read_next()$get_one_based_matrix()
         ## -- nnz <- Matrix::nnzero(dat)
         ##    use length() which is identical for this data set but does not suffer from an issue sometimes seen in CI
