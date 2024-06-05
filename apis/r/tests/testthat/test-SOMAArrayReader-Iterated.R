@@ -94,12 +94,15 @@ test_that("Iterated Interface from SOMA Classes", {
     ## parameterize test
     test_cases <- c("data.frame", "sparse")
 
+    # The read_complete et al. in this test case are designed to be verified
+    # against 16MB buffer size, and the particular provided input dataset.
+    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes=as.character(16777216)))
+
     for (tc in test_cases) {
         sdf <- switch(tc,
-                      data.frame = SOMADataFrame$new(uri, internal_use_only = "allowed_use"),
-                      sparse = SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"))
+                      data.frame = SOMADataFrameOpen(uri, tiledbsoma_ctx = ctx),
+                      sparse = SOMASparseNDArrayOpen(uri, tiledbsoma_ctx = ctx))
         expect_true(inherits(sdf, "SOMAArrayBase"))
-        sdf$open("READ", internal_use_only = "allowed_use")
 
         iterator <- switch(tc,
                            data.frame = sdf$read(),
@@ -143,6 +146,8 @@ test_that("Iterated Interface from SOMA Classes", {
         expect_warning(iterator$read_next()) # returns NULL with warning
         expect_warning(iterator$read_next()) # returns NULL with warning
 
+        sdf$close()
+
         rm(iterator, sdf)
         gc()
     }
@@ -159,11 +164,14 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
     untar(tarfile = tgzfile, exdir = tdir)
     uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "raw", "X", "data")
 
-    sdf <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
-    expect_true(inherits(sdf, "SOMAArrayBase"))
-    sdf$open("READ", internal_use_only = "allowed_use")
+    # The read_complete et al. in this test case are designed to be verified
+    # against 16MB buffer size, and the particular provided input dataset.
+    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes=as.character(16777216)))
+    snda <- SOMASparseNDArrayOpen(uri, tiledbsoma_ctx = ctx)
 
-    iterator <- sdf$read()$sparse_matrix(zero_based = T)
+    expect_true(inherits(snda, "SOMAArrayBase"))
+
+    iterator <- snda$read()$sparse_matrix(zero_based = T)
 
     nnzTotal <- 0
     rowsTotal <- 0
@@ -176,18 +184,18 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
         expect_gt(nnz, 0)
         nnzTotal <- nnzTotal + nnz
         # the shard dims always match the shape of the whole sparse matrix
-        expect_equal(dim(dat), as.integer(sdf$shape()))
+        expect_equal(dim(dat), as.integer(snda$shape()))
     }
 
     expect_true(iterator$read_complete())
     expect_warning(iterator$read_next()) # returns NULL with warning
     expect_warning(iterator$read_next()) # returns NULL with warning
-    ## -- expect_equal(nnzTotal, Matrix::nnzero(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
+    ## -- expect_equal(nnzTotal, Matrix::nnzero(snda$read()$sparse_matrix(T)$concat()$get_one_based_matrix()))
     ##    use length() which is identical for this data set but does not suffer from an issue sometimes seen in CI
-    expect_equal(nnzTotal, length(sdf$read()$sparse_matrix(T)$concat()$get_one_based_matrix()@x))
+    expect_equal(nnzTotal, length(snda$read()$sparse_matrix(T)$concat()$get_one_based_matrix()@x))
     expect_equal(nnzTotal, 2238732)
 
-    rm(sdf)
+    rm(snda)
     gc()
 })
 
