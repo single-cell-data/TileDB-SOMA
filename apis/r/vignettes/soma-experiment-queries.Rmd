@@ -41,6 +41,16 @@ We can see that our current experiment contains only a single measurement: `"RNA
 experiment$ms
 ```
 
+To use larger (or smaller) buffer sizes:
+
+```{r}
+ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes=as.character(2 * 1024**3)))
+experiment <- SOMAExperimentOpen(experiment$uri, tiledbsoma_ctx = ctx)
+```
+
+Alternatively, you can have in your environment `export TILEDB_SOMA_INIT_BUFFER_BYTES=2147483648` before loading the data.
+
+
 Now we can construct our query object.
 
 ```{r}
