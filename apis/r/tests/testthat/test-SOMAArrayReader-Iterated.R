@@ -96,7 +96,7 @@ test_that("Iterated Interface from SOMA Classes", {
 
     # The read_complete et al. in this test case are designed to be verified
     # against 16MB buffer size, and the particular provided input dataset.
-    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes='16777216'))
+    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes=as.character(16777216)))
 
     for (tc in test_cases) {
         sdf <- switch(tc,
@@ -166,7 +166,7 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
 
     # The read_complete et al. in this test case are designed to be verified
     # against 16MB buffer size, and the particular provided input dataset.
-    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes='16777216'))
+    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes=as.character(16777216)))
     snda <- SOMASparseNDArrayOpen(uri, tiledbsoma_ctx = ctx)
 
     expect_true(inherits(snda, "SOMAArrayBase"))
