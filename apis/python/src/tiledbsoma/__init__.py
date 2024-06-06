@@ -97,7 +97,6 @@ import ctypes
 import os
 import sys
 
-
 # Load native libraries. On wheel builds, we may have a shared library
 # already linked. In this case, we can import directly
 try:
