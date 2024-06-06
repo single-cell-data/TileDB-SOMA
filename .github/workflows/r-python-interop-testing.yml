@@ -113,4 +113,4 @@ jobs:
       - name: Interop Tests
         run: python -m pytest apis/system/tests/
         env:
-          TILEDB_SOMA_INIT_BUFFER_BYTES: 16777216 # accommodate tiny runners
+          TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
