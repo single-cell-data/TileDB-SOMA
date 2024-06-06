@@ -24,7 +24,8 @@ def test_lazy_init():
         mock_ctx.assert_not_called()
         assert context._tiledb_ctx is None
         # Invoke the @property twice to ensure we only build one Ctx.
-        assert context.tiledb_ctx is context.tiledb_ctx
+        with pytest.deprecated_call():
+            assert context.tiledb_ctx is context.tiledb_ctx
         mock_ctx.assert_called_once()
 
 
@@ -57,7 +58,8 @@ def test_shared_ctx():
     """Verifies that one global context is shared by default."""
     ctx = stc.SOMATileDBContext()
     ctx_2 = stc.SOMATileDBContext()
-    assert ctx.tiledb_ctx is ctx_2.tiledb_ctx
+    with pytest.deprecated_call():
+        assert ctx.tiledb_ctx is ctx_2.tiledb_ctx
 
 
 def test_unshared_ctx():
@@ -65,8 +67,9 @@ def test_unshared_ctx():
     ctx = stc.SOMATileDBContext()
     ctx_2 = stc.SOMATileDBContext(tiledb_config={})
     ctx_3 = stc.SOMATileDBContext(tiledb_config={})
-    assert ctx.tiledb_ctx is not ctx_2.tiledb_ctx
-    assert ctx_2.tiledb_ctx is not ctx_3.tiledb_ctx
+    with pytest.deprecated_call():
+        assert ctx.tiledb_ctx is not ctx_2.tiledb_ctx
+        assert ctx_2.tiledb_ctx is not ctx_3.tiledb_ctx
 
 
 def test_replace_timestamp():
@@ -85,10 +88,13 @@ def test_replace_timestamp():
 
 
 def test_replace_context():
-    orig_ctx = stc.SOMATileDBContext()
+    with pytest.deprecated_call():
+        orig_ctx = stc.SOMATileDBContext(tiledb_ctx=tiledb.Ctx())
     new_tdb_ctx = tiledb.Ctx({"vfs.s3.region": "hy-central-1"})
-    new_ctx = orig_ctx.replace(tiledb_ctx=new_tdb_ctx)
-    assert new_ctx.tiledb_ctx is new_tdb_ctx
+    with pytest.deprecated_call():
+        new_ctx = orig_ctx.replace(tiledb_ctx=new_tdb_ctx)
+    with pytest.deprecated_call():
+        assert new_ctx.tiledb_ctx is new_tdb_ctx
 
 
 def test_replace_config_after_construction():
@@ -96,7 +102,7 @@ def test_replace_config_after_construction():
 
     # verify defaults expected by subsequent tests
     assert context.timestamp_ms is None
-    assert context.tiledb_ctx.config()["vfs.s3.region"] == "us-east-1"
+    assert context.native_context.config()["vfs.s3.region"] == "us-east-1"
 
     now = int(time.time() * 1000)
     open_ts = context._open_timestamp_ms(None)
@@ -114,6 +120,7 @@ def test_replace_config_after_construction():
         new_soma_ctx = context.replace(tiledb_config={"vfs.s3.region": "us-west-2"})
         assert new_soma_ctx.tiledb_config["vfs.s3.region"] == "us-west-2"
         mock_ctx.assert_not_called()
-        new_tdb_ctx = new_soma_ctx.tiledb_ctx
+        with pytest.deprecated_call():
+            new_tdb_ctx = new_soma_ctx.tiledb_ctx
         mock_ctx.assert_called_once()
         assert new_tdb_ctx.config()["vfs.s3.region"] == "us-west-2"
