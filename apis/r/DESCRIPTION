@@ -36,7 +36,7 @@ Imports:
     bit64,
     tiledb (>= 0.27.0),
     tiledb (<= 0.27.99),
-    arrow (>= 15.0.1),
+    arrow (>= 14.0.0),
     utils,
     fs,
     glue,
