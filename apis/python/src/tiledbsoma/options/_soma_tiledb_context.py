@@ -27,7 +27,7 @@ def _tiledb_ctx_deprecation() -> None:
     warnings.warn(
         "tiledb_ctx is now deprecated for removal in 1.14. "
         "Use tiledb_config instead by passing "
-        "SOMATileDBContext(tiledb_config=ctx.config()).",
+        "SOMATileDBContext(tiledb_config=ctx.config().dict()).",
         DeprecationWarning,
     )
 
