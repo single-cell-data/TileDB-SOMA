@@ -17,9 +17,19 @@ from typing_extensions import Self
 import tiledb
 
 from .. import pytiledbsoma as clib
-from .._general_utilities import get_implementation_version
+from .._general_utilities import get_release_version
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
+
+
+def _tiledb_ctx_deprecation() -> None:
+    assert get_release_version() < (1, 14)
+    warnings.warn(
+        "tiledb_ctx is now deprecated for removal in 1.14. "
+        "Use tiledb_config instead by passing "
+        "SOMATileDBContext(tiledb_config=ctx.config()).",
+        DeprecationWarning,
+    )
 
 
 def _default_config(
@@ -121,14 +131,7 @@ class SOMATileDBContext(ContextBase):
                 default settings.
         """
         if tiledb_ctx is not None:
-            version = get_implementation_version().split(".")
-            assert (int(version[0]), int(version[1])) < (1, 14)
-            warnings.warn(
-                "The tiledb_ctx parameter will be deprecated in 1.14. "
-                "Use tiledb_config instead by passing "
-                "SOMATileDBContext(tiledb_config=ctx.config()).",
-                DeprecationWarning,
-            )
+            _tiledb_ctx_deprecation()
 
         if tiledb_ctx is not None and tiledb_config is not None:
             raise ValueError(
@@ -187,13 +190,7 @@ class SOMATileDBContext(ContextBase):
     @property
     def tiledb_ctx(self) -> tiledb.Ctx:
         """The TileDB-Py Context for this SOMA context."""
-        version = get_implementation_version().split(".")
-        assert (int(version[0]), int(version[1])) < (1, 14)
-        warnings.warn(
-            "The tiledb_ctx attribute will be deprecated in 1.14. "
-            "Use tiledb_config to view configuration settings.",
-            DeprecationWarning,
-        )
+        _tiledb_ctx_deprecation()
 
         with self._lock:
             if self._tiledb_ctx is None:
@@ -272,14 +269,7 @@ class SOMATileDBContext(ContextBase):
         """
         with self._lock:
             if tiledb_ctx is not None:
-                version = get_implementation_version().split(".")
-                assert (int(version[0]), int(version[1])) < (1, 14)
-                warnings.warn(
-                    "The tiledb_ctx parameter will be deprecated in 1.14. "
-                    "Use tiledb_config instead by passing "
-                    "SOMATileDBContext(tiledb_config=ctx.config()).",
-                    DeprecationWarning,
-                )
+                _tiledb_ctx_deprecation()
 
             if tiledb_config is not None:
                 if tiledb_ctx:

@@ -9,6 +9,7 @@ import os
 import platform
 import sys
 from re import fullmatch
+from typing import Tuple
 
 import tiledb
 
@@ -50,6 +51,11 @@ def get_implementation_version() -> str:
             return importlib.metadata.version("tiledbsoma")
         except importlib.metadata.PackageNotFoundError:
             return "unknown"
+
+
+def get_release_version() -> Tuple[int, int]:
+    version = get_implementation_version().split(".")
+    return (int(version[0]), int(version[1]))
 
 
 def get_storage_engine() -> str:
