@@ -349,39 +349,9 @@ def cast_values_to_target_schema(values: pa.Table, schema: pa.Schema) -> pa.Tabl
         if pa.types.is_dictionary(target_field.type):
             if not pa.types.is_dictionary(input_field.type):
                 raise ValueError(f"{name} requires dictionary entry")
-            col = values.column(name).combine_chunks()
-            if pa.types.is_boolean(target_field.type.value_type):
-                col = col.cast(
-                    pa.dictionary(
-                        target_field.type.index_type,
-                        pa.uint8(),
-                        target_field.type.ordered,
-                    )
-                )
-            else:
-                col = col.cast(target_field.type)
-            new_enmr = clib_array.extend_enumeration(name, col)
-
-            if pa.types.is_binary(
-                target_field.type.value_type
-            ) or pa.types.is_large_binary(target_field.type.value_type):
-                new_enmr = np.array(new_enmr, "S")
-            elif pa.types.is_boolean(target_field.type.value_type):
-                new_enmr = np.array(new_enmr, bool)
-
-            df = pd.Categorical(
-                col.to_pandas(),
-                ordered=target_field.type.ordered,
-                categories=new_enmr,
-            )
-            values = values.set_column(
-                i, name, pa.DictionaryArray.from_pandas(df, type=target_field.type)
-            )
-
-        # if pa.types.is_boolean(input_field.type):
-        #     target_schema.append(target_field.with_type(pa.uint8()))
-        # else:
-        target_schema.append(target_field)
+            target_schema.append(input_field)
+        else:
+            target_schema.append(target_field)
 
     return values.cast(pa.schema(target_schema, values.schema.metadata))
 
