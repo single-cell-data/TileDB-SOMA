@@ -1,7 +1,6 @@
 
 test_that("write_soma.data.frame mechanics", {
   skip_if(!extended_tests())
-  skip_if_not_installed('datasets')
 
   uri <- tempfile(pattern="write-soma-data-frame")
   collection <- SOMACollectionCreate(uri)
@@ -28,7 +27,6 @@ test_that("write_soma.data.frame mechanics", {
 
 test_that("write_soma.data.frame enumerations", {
   skip_if(!extended_tests())
-  skip_if_not_installed('datasets')
 
   uri <- tempfile(pattern="write-soma-data-frame-enumerations")
   collection <- SOMACollectionCreate(uri)
@@ -68,7 +66,6 @@ test_that("write_soma.data.frame enumerations", {
 
 test_that("write_soma.data.frame no enumerations", {
   skip_if(!extended_tests())
-  skip_if_not_installed('datasets')
 
   uri <- tempfile(pattern="write-soma-data-frame-factorless")
   collection <- SOMACollectionCreate(uri)
@@ -115,7 +112,6 @@ test_that("write_soma.data.frame no enumerations", {
 
 test_that("write_soma.data.frame registration", {
   skip_if(!extended_tests())
-  skip_if_not_installed("datasets")
 
   uri <- tempfile(pattern="write-soma-data-frame-registration")
   collection <- SOMACollectionCreate(uri)
@@ -156,7 +152,6 @@ test_that("write_soma.data.frame registration", {
 
 test_that("write_soma dense matrix mechanics", {
   skip_if(!extended_tests())
-  skip_if_not_installed('datasets')
 
   uri <- tempfile(pattern="write-soma-dense-matrix")
   collection <- SOMACollectionCreate(uri)
@@ -213,7 +208,6 @@ test_that("write_soma dense matrix mechanics", {
 
 test_that("write_soma dense matrix registration", {
   skip_if(!extended_tests())
-  skip_if_not_installed("datasets")
 
   uri <- tempfile(pattern="write-soma-dense-matrix-registration")
   collection <- SOMACollectionCreate(uri)
@@ -280,7 +274,6 @@ test_that("write_soma sparse matrix mechanics", {
   expect_identical(tmat$attrnames(), 'soma_data')
   expect_equal(tmat$shape(), rev(dim(knex)))
   # Try a dense matrix
-  skip_if_not_installed('datasets')
   state77 <- get(x = 'state.x77', envir = getNamespace('datasets'))
   expect_no_condition(cmat <- write_soma(state77, 'state77s', soma = collection))
   expect_s3_class(cmat, 'SOMASparseNDArray')
@@ -296,7 +289,6 @@ test_that("write_soma sparse matrix mechanics", {
 
 test_that("write_soma sparse matrix registration", {
   skip_if(!extended_tests())
-  skip_if_not_installed("datasets")
 
   uri <- tempfile(pattern="write-sparse-dense-matrix-registration")
   collection <- SOMACollectionCreate(uri)
@@ -335,7 +327,6 @@ test_that("write_soma sparse matrix registration", {
 
 test_that("write_soma.character mechanics", {
   skip_if(!extended_tests())
-  skip_if_not_installed("datasets")
 
   uri <- tempfile(pattern="write-soma-character")
   collection <- SOMACollectionCreate(uri)
@@ -363,7 +354,6 @@ test_that("write_soma.character mechanics", {
 
 test_that("write_soma.character scalar", {
   skip_if(!extended_tests())
-  skip_if_not_installed("datasets")
 
   uri <- tempfile(pattern="write-soma-character-scalar")
   collection <- SOMACollectionCreate(uri)
