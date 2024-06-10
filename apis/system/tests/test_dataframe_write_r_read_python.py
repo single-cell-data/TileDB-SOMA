@@ -11,21 +11,21 @@ class TestDataframeWriteRReadPython(TestReadPythonWriteR):
     @pytest.fixture(scope="class")
     def R_dataframe(self):
         base_script = f"""
-        library("tiledbsoma")
-        library("arrow")
+        library(tiledbsoma)
+        library(arrow)
 
         df_schema <- schema(
-        field("foo", int32()),
-        field("bar", float64()),
-        field("baz", string()),
-        field("quux", bool())
+            field("foo", int32()),
+            field("bar", float64()),
+            field("baz", string()),
+            field("quux", bool())
         )
 
-        sdf <- SOMADataFrameCreate("{self.uri}", df_schema, c("foo"))
+        sdf <- SOMADataFrameCreate("{self.uri}", df_schema, "foo")
 
         df <- data.frame(
             soma_joinid = bit64::as.integer64(c(1,2,3,4,5)),
-            foo = c(10, 20, 30, 40, 50),
+            foo = as.integer(c(10, 20, 30, 40, 50)),
             bar = c(4.1, 5.2, 6.3, 7.4, 8.5),
             baz = c("apple", "ball", "cat", "dog", "egg"),
             quux = c(TRUE, FALSE, FALSE, TRUE, FALSE)
