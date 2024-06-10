@@ -22,7 +22,7 @@ from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
 
-def _tiledb_ctx_deprecation() -> None:
+def _warn_ctx_deprecation() -> None:
     assert get_release_version() < (1, 14)
     warnings.warn(
         "tiledb_ctx is now deprecated for removal in 1.14. "
@@ -131,7 +131,7 @@ class SOMATileDBContext(ContextBase):
                 default settings.
         """
         if tiledb_ctx is not None:
-            _tiledb_ctx_deprecation()
+            _warn_ctx_deprecation()
 
         if tiledb_ctx is not None and tiledb_config is not None:
             raise ValueError(
@@ -190,7 +190,7 @@ class SOMATileDBContext(ContextBase):
     @property
     def tiledb_ctx(self) -> tiledb.Ctx:
         """The TileDB-Py Context for this SOMA context."""
-        _tiledb_ctx_deprecation()
+        _warn_ctx_deprecation()
 
         with self._lock:
             if self._tiledb_ctx is None:
@@ -269,7 +269,7 @@ class SOMATileDBContext(ContextBase):
         """
         with self._lock:
             if tiledb_ctx is not None:
-                _tiledb_ctx_deprecation()
+                _warn_ctx_deprecation()
 
             if tiledb_config is not None:
                 if tiledb_ctx:
