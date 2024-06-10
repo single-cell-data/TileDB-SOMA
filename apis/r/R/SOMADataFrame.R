@@ -98,47 +98,6 @@ SOMADataFrame <- R6::R6Class(
       df <- as.data.frame(values)[schema_names]
       arr <- self$object
 
-if (FALSE) {
-      has_enums <- tiledb::tiledb_array_has_enumeration(arr)
-      if (any(has_enums)) {       # if enumerations exists in array
-          attrs <- tiledb::attrs(tiledb::schema(arr))
-          ase <- tiledb::tiledb_array_schema_evolution()
-          call_ase <- FALSE
-          if (!tiledb::tiledb_array_is_open(arr)) arr <- tiledb::tiledb_array_open(arr, "READ")
-          for (attr_name in names(attrs)) {
-              if (has_enums[attr_name]) {
-                  old_enum <- tiledb::tiledb_attribute_get_enumeration(attrs[[attr_name]], arr)
-                  new_enum <- levels(values[[attr_name]]$as_vector())
-                  added_enum <- setdiff(new_enum, old_enum)
-                  if (length(added_enum) > 0) {
-                      datatype <- tiledb::datatype(attrs[[attr_name]])
-                      ## use with tiledb-r 0.24.0
-                      ##    maxval <- tiledb:::tiledb_datatype_max_value(datatype) + 1 # R is one-based
-                      ## til then local copy
-                      maxval <- tiledb_datatype_max_value(datatype) + 1 # R is one-based
-                      if (length(old_enum) + length(added_enum) > maxval) {
-                          stop(sprintf("For column '%s' cannot add %d factor levels to existing %d for type '%s' with maximum value %d",
-                                       attr_name, length(added_enum), length(old_enum), datatype, maxval), call. = FALSE)
-                      }
-                      call_ase <- TRUE
-                      ase <- tiledb::tiledb_array_schema_evolution_extend_enumeration(ase, arr, attr_name, added_enum)
-                      df[, attr_name] <- factor(df[, attr_name], levels = unique(c(old_enum,new_enum)), ordered=is.ordered(df[, attr_name]))
-                      spdl::debug("[tiledbsoma$write] writing '{}' '{}' {}", paste(unique(c(old_enum,new_enum)),collapse=","), paste(added_enum,collapse=","), is.ordered(df[, attr_name]))
-                  }
-              }
-          }
-          if (call_ase) tiledb::tiledb_array_schema_evolution_array_evolve(ase, self$uri)
-          arr <- tiledb::tiledb_array_close(arr)
-          arr <- tiledb::tiledb_array_open(arr, "WRITE")
-      }
-}
-if (FALSE) {
-      arr[] <- df
-      # tiledb-r always closes the array after a write operation so we need to
-      # manually reopen it until close-on-write is optional
-      self$reopen("WRITE")
-}
-
       writeArrayFromArrow(self$uri, naap, nasp)
 
       invisible(self)
