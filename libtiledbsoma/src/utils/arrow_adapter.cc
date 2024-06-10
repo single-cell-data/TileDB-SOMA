@@ -563,12 +563,15 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 ArraySchemaExperimental::add_enumeration(*ctx, schema, enmr);
                 AttributeExperimental::set_enumeration_name(
                     *ctx, attr, child->name);
-                LOG_DEBUG(fmt::format("[ArrowAdapter] dictionary for {} as {} {}",
-                                      child->name, enmr_type, enmr_format));
-
+                LOG_DEBUG(fmt::format(
+                    "[ArrowAdapter] dictionary for {} as {} {}",
+                    child->name,
+                    enmr_type,
+                    enmr_format));
             }
 
-            LOG_DEBUG(fmt::format("[ArrowAdapter] adding attribute {}", child->name));
+            LOG_DEBUG(
+                fmt::format("[ArrowAdapter] adding attribute {}", child->name));
             schema.add_attribute(attr);
         }
     }
