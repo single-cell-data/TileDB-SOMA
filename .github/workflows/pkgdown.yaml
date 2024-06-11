@@ -34,6 +34,23 @@ jobs:
           use-public-rspm: true
           working-directory: "apis/r"
 
+      - name: Set additional repositories (macOS)
+        if: ${{ matrix.os != 'ubuntu-latest' }}
+        run: echo 'options(repos = c("https://tiledb-inc.r-universe.dev", getOption("repos")), timeout = 300L)' | tee -a ~/.Rprofile
+
+      - name: Set additional repositories (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          rversion <- paste(strsplit(as.character(getRversion()), split = '\\.')[[1L]][1:2], collapse = '.')
+          codename <-  system('. /etc/os-release; echo ${VERSION_CODENAME}', intern = TRUE)
+          repo <- "https://tiledb-inc.r-universe.dev"
+          (opt <- sprintf('options(repos = c("%s/bin/linux/%s/%s", "%s", getOption("repos")), timeout = 300L)', repo, codename, rversion, repo))
+          cat(opt, "\n", file = "~/.Rprofile", append = TRUE)
+        shell: Rscript {0}
+
+      - name: Install tiledb-r
+        run: cd apis/r && Rscript tools/install-tiledb-r.R
+
       # Run this daily to surface errors as tracked at
       # https://github.com/single-cell-data/TileDB-SOMA/issues/2052
       - name: Install dependencies
