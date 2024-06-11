@@ -22,7 +22,6 @@ jobs:
         run: apt update -qq && apt upgrade --yes && apt install --yes --no-install-recommends valgrind cmake git
 
       - name: Set additional repositories (Linux)
-        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           rversion <- paste(strsplit(as.character(getRversion()), split = '\\.')[[1L]][1:2], collapse = '.')
           codename <-  system('. /etc/os-release; echo ${VERSION_CODENAME}', intern = TRUE)
@@ -36,9 +35,6 @@ jobs:
           print(repo)
           cat(opt, "\n", file = "~/.Rprofile", append = TRUE)
         shell: Rscript {0}
-
-      - name: Debug
-        run: cat ~/.Rprofile
 
       - name: Install tiledb-r
         run: cd apis/r && Rscript tools/install-tiledb-r.R
