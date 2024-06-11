@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.11.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.11.99.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,7 +100,7 @@
 <code class="sourceCode R"><span><span class="va">experiment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">load_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small"</span><span class="op">)</span></span>
 <span><span class="va">experiment</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmpUwzEiO/soma-exp-pbmc-small </span></span>
+<span><span class="co">#&gt;   uri: /tmp/Rtmpe3izzJ/soma-exp-pbmc-small </span></span>
 <span><span class="co">#&gt;   arrays: obs </span></span>
 <span><span class="co">#&gt;   groups: ms</span></span></code></pre></div>
 </div>
@@ -112,10 +112,15 @@
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/RtmpUwzEiO/soma-exp-pbmc-small/ms </span></span>
+<span><span class="co">#&gt;   uri: file:///tmp/Rtmpe3izzJ/soma-exp-pbmc-small/ms </span></span>
 <span><span class="co">#&gt;   groups: RNA</span></span></code></pre></div>
-<p>Now we can construct our query object.</p>
+<p>To use larger (or smaller) buffer sizes:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ctx</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMATileDBContext.html">SOMATileDBContext</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>soma.init_buffer_bytes<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="fl">1024</span><span class="op">**</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">experiment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/SOMAExperimentOpen.html">SOMAExperimentOpen</a></span><span class="op">(</span><span class="va">experiment</span><span class="op">$</span><span class="va">uri</span>, tiledbsoma_ctx <span class="op">=</span> <span class="va">ctx</span><span class="op">)</span></span></code></pre></div>
+<p>Alternatively, you can have in your environment <code>export TILEDB_SOMA_INIT_BUFFER_BYTES=2147483648</code> before loading the data.</p>
+<p>Now we can construct our query object.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMAExperimentAxisQuery.html">SOMAExperimentAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  experiment <span class="op">=</span> <span class="va">experiment</span>,</span>
 <span>  measurement_name <span class="op">=</span> <span class="st">"RNA"</span></span>
@@ -123,16 +128,16 @@
 <p>Once it’s created, we can use the <code>query</code> object to inspect, select, and extract filtered data from the experiment.</p>
 <p>For example, we can use <code>n_obs</code> and <code>n_vars</code> to determine the number of observations and variables that passed our filtering criteria. Since we didn’t specify any filtering criteria, these numbers will match the full size of the experiment.</p>
 <p>Number of observations:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="va">n_obs</span></span>
 <span><span class="co">#&gt; [1] 80</span></span></code></pre></div>
 <p>Number of variables:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="va">n_vars</span></span>
 <span><span class="co">#&gt; [1] 230</span></span></code></pre></div>
 <p>We can also extract any data component from the experiment. Here we’ll read in the <code>obs</code> data frame from the query using <code>obs()</code> which returns an iterator of <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code>. The iterator is useful when the data is too large to load in memory allowing to stream the data in chunks. This applies to <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var()</a></code> as well.</p>
 <p>To load the data in memory you can concatenate all chunks of the iterator as shown below.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">obs</span> <span class="op">&lt;-</span> <span class="va">iterator</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">obs</span></span>
@@ -148,7 +153,7 @@
 <span><span class="co">#&gt; $RNA_snn_res.1 &lt;large_string&gt;</span></span>
 <span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span></code></pre></div>
 <p>As a reminder <code>arrow:Table</code> can be easily cast into a <code>tibble</code></p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obs</span><span class="op">$</span><span class="fu">to_data_frame</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 80 × 9</span></span></span>
 <span><span class="co">#&gt;    soma_joinid orig.ident  nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents</span></span>
@@ -166,7 +171,7 @@
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 70 more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: groups &lt;chr&gt;, RNA_snn_res.1 &lt;chr&gt;, obs_id &lt;chr&gt;</span></span></span></code></pre></div>
 <p>Alternatively, you can use the iterator, which retrieves data in chunks that are smaller than the <code>soma.init_buffer_bytes</code> context field. You can use the iterator’s method <code>$read_next()</code> to load a chunk in memory.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_next</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Table</span></span>
@@ -183,11 +188,11 @@
 <p>In this example the full <code>obs</code> table is relatively small and fits all in one chunk.</p>
 <p>For a bigger <code>SOMADataFrame</code> you can check if the iteration has finished by checking the logical <code>$read_complete()</code>.</p>
 <p>Here we demonstrate by creating a new iterator.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">experiment</span><span class="op">$</span><span class="va">obs</span><span class="op">$</span><span class="fu">read</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_complete</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_next</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 80 rows x 9 columns</span></span>
@@ -200,13 +205,13 @@
 <span><span class="co">#&gt; $groups &lt;large_string&gt;</span></span>
 <span><span class="co">#&gt; $RNA_snn_res.1 &lt;large_string&gt;</span></span>
 <span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span></code></pre></div>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_complete</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>We can also access the expression via <code>X()</code>.</p>
 <p>Similarly to <code>obs()</code> and <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">var()</a></code>, <code>X()</code> is intended for iteration, but in this case we have access to two different iterators, and thus <code>X()</code> returns a reader that gives you access to an iterator for <code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code> and one for <code>Matrix::sparse_matrix</code>.</p>
 <p>Let’s take a look at the Arrow Table iterator:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">reader</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span>layer_name <span class="op">=</span> <span class="st">"counts"</span><span class="op">)</span></span>
 <span><span class="va">table_irerator</span> <span class="op">&lt;-</span> <span class="va">reader</span><span class="op">$</span><span class="fu">tables</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">table_irerator</span><span class="op">$</span><span class="fu">read_next</span><span class="op">(</span><span class="op">)</span></span>
@@ -217,7 +222,7 @@
 <span><span class="co">#&gt; $soma_data &lt;double not null&gt;</span></span></code></pre></div>
 <p>As in the <code>obs</code> example the data is small enough to fit in one chunk. For bigger data you can user <code>iterator$read_complete()</code> to check the status of iteration and <code>iterator$concat()</code> to concatenate the rest of the chunks.</p>
 <p>The iterator for <code>Matrix::sparse_matrix</code> works in the same way. Keep in mind that the matrix format is <code>dgTMatrix</code> as it is the most memory-efficient and the only format type that can be easily iterated. And most importantly, the resulting object is a “view” of the full matrix with the original shape and indexes but only with data corresponding to the query coordinates or filters (see section below).</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">reader</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span>layer_name <span class="op">=</span> <span class="st">"counts"</span><span class="op">)</span></span>
 <span><span class="va">iterator</span> <span class="op">&lt;-</span> <span class="va">reader</span><span class="op">$</span><span class="fu">sparse_matrix</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_next</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
@@ -236,24 +241,24 @@
 </h2>
 <p>Adding filters requires creating a <code>SOMAAxisQuery</code> object that allows you to define coordinates, value filters, or both for an axis.</p>
 <p>Here we’ll create a query for <code>obs</code> that slices the first 40 rows, and then filters that subset based on the <code>nCount_RNA</code> column.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obs_query</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMAAxisQuery.html">SOMAAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  coords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>soma_joinid <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">39</span><span class="op">)</span>,</span>
 <span>  value_filter <span class="op">=</span> <span class="st">"nCount_RNA &gt; 100"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>To apply this filter we’ll pass it to a new <code>SOMAExperimentAxisQuery</code> object.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMAExperimentAxisQuery.html">SOMAExperimentAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  experiment <span class="op">=</span> <span class="va">experiment</span>,</span>
 <span>  measurement_name <span class="op">=</span> <span class="st">"RNA"</span>,</span>
 <span>  obs_query <span class="op">=</span> <span class="va">obs_query</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Let’s see how many observations this query identified.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="va">n_obs</span></span>
 <span><span class="co">#&gt; [1] 26</span></span></code></pre></div>
 <p>As before, we can load the <code>obs</code> data frame into memory but now it only includes the filtered observations.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">obs</span> <span class="op">&lt;-</span> <span class="va">query</span><span class="op">$</span><span class="fu">obs</span><span class="op">(</span>column_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"obs_id"</span>, <span class="st">"nCount_RNA"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">obs</span><span class="op">$</span><span class="fu">to_data_frame</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 26 × 2</span></span></span>
@@ -272,7 +277,7 @@
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 16 more rows</span></span></span></code></pre></div>
 <p>As well as the X matrix in two different formats:</p>
 <p><code><a href="https://arrow.apache.org/docs/r/reference/Table-class.html" class="external-link">arrow::Table</a></code></p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span><span class="st">"counts"</span><span class="op">)</span><span class="op">$</span><span class="fu">tables</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 1485 rows x 3 columns</span></span>
@@ -280,7 +285,7 @@
 <span><span class="co">#&gt; $soma_dim_1 &lt;int64 not null&gt;</span></span>
 <span><span class="co">#&gt; $soma_data &lt;double not null&gt;</span></span></code></pre></div>
 <p><code>Matrix::sparse_matrix</code> in <code>dgTMatrix</code> format.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">query</span><span class="op">$</span><span class="fu">X</span><span class="op">(</span><span class="st">"counts"</span><span class="op">)</span><span class="op">$</span><span class="fu">sparse_matrix</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Formal class 'dgTMatrix' [package "Matrix"] with 6 slots</span></span>
 <span><span class="co">#&gt;   ..@ i       : int [1:1485] 3 3 3 3 3 3 3 3 3 3 ...</span></span>
@@ -298,7 +303,7 @@
 </h2>
 <p>Any component of the queried <code>SOMAExperiment</code> can be exported to a [sparse matrix][Matrix::sparseMatrix-class] using the <code>to_sparse_matrix()</code> method.</p>
 <p>For example, let’s create a sparse matrix of the filtered expression data. We’ll create a new query that returns a smaller subset of the data to make the output easier to read.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMAExperimentAxisQuery.html">SOMAExperimentAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  experiment <span class="op">=</span> <span class="va">experiment</span>,</span>
 <span>  measurement_name <span class="op">=</span> <span class="st">"RNA"</span>,</span>
@@ -306,7 +311,7 @@
 <span>  var_query <span class="op">=</span> <span class="va"><a href="../reference/SOMAAxisQuery.html">SOMAAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>coords <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Then we indicate that we want to access the <code>"counts"</code> layer of the <code>"X"</code> collection.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">to_sparse_matrix</span><span class="op">(</span></span>
 <span>  collection <span class="op">=</span> <span class="st">"X"</span>,</span>
 <span>  layer <span class="op">=</span> <span class="st">"counts"</span></span>
@@ -325,7 +330,7 @@
 <span><span class="co">#&gt; 8 . . . . . . . .  2 .</span></span>
 <span><span class="co">#&gt; 9 . 1 . . . . . . 21 .</span></span></code></pre></div>
 <p>By default, the dimensions are named using <code>soma_joinid</code> values which are unique to each observation and variable. However, dimension names can come from any column in the <code>obs</code> and <code>var</code> arrays that uniquely identifies each record. For an expression matrix it makes sense to name the dimensions using cell barcodes and gene names, which are stored in the <code>obs_id</code> and <code>var_id</code> columns, respectively.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">to_sparse_matrix</span><span class="op">(</span></span>
 <span>  collection <span class="op">=</span> <span class="st">"X"</span>,</span>
 <span>  layer <span class="op">=</span> <span class="st">"counts"</span>,</span>
@@ -346,7 +351,7 @@
 <span><span class="co">#&gt; GATATAACACGCAT . . . . . . . .  2 .</span></span>
 <span><span class="co">#&gt; AATGTTGACAGTCA . 1 . . . . . . 21 .</span></span></code></pre></div>
 <p>We can use this method for any of the <code>SOMAExperiment</code>’s collections. Let’s access the t-SNE coordinates stored in the <code>obsm</code> collection’s <code>X_tsne</code> layer, populating the row names with cell barcodes.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span><span class="op">$</span><span class="fu">to_sparse_matrix</span><span class="op">(</span></span>
 <span>  collection <span class="op">=</span> <span class="st">"obsm"</span>,</span>
 <span>  layer <span class="op">=</span> <span class="st">"X_tsne"</span>,</span>
@@ -369,7 +374,7 @@
 <h2 id="export-to-seurat">Export to Seurat<a class="anchor" aria-label="anchor" href="#export-to-seurat"></a>
 </h2>
 <p>The <code>query</code> object also contains methods for loading in results as a Seurat object (or any of Seurat’s component classes). As with the <code>to_sparse_matrix()</code> method, we can specify the <code>obs_index</code> and <code>var_index</code> to use for naming the dimensions of the resulting object.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">query</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMAExperimentAxisQuery.html">SOMAExperimentAxisQuery</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  experiment <span class="op">=</span> <span class="va">experiment</span>,</span>
 <span>  measurement_name <span class="op">=</span> <span class="st">"RNA"</span></span>
