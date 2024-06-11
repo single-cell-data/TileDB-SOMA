@@ -8,7 +8,7 @@ from somacore import coordinates
 from typing_extensions import Self
 
 
-class Axis(coordinates.Axis):  # type: ignore[misc]
+class Axis(coordinates.Axis):
     """A description of an axis of a coordinate system
 
     TODO: Note if this class remains more or less as is the base class in somacore
@@ -92,7 +92,7 @@ class Axis(coordinates.Axis):  # type: ignore[misc]
         return json.dumps(self.to_dict())
 
 
-class CoordinateSystem(coordinates.CoordinateSystem):  # type: ignore[misc]
+class CoordinateSystem(coordinates.CoordinateSystem):
     """A coordinate system for spatial data."""
 
     @classmethod
@@ -134,7 +134,7 @@ class CoordinateTransform(coordinates.CoordinateTransform, metaclass=abc.ABCMeta
         """TODO: Add docstring"""
 
 
-class IdentityTransform(CoordinateTransform):  # type: ignore[misc]
+class IdentityTransform(CoordinateTransform):
     """TODO: Add docstring"""
 
     def to_dict(self) -> Dict[str, Any]:
@@ -150,7 +150,7 @@ class IdentityTransform(CoordinateTransform):  # type: ignore[misc]
         return json.dumps(self.to_dict())
 
 
-class ScaleTransform(CoordinateTransform):  # type: ignore[misc]
+class ScaleTransform(CoordinateTransform):
     """TODO: Add docstring"""
 
     def __init__(self, scale: npt.ArrayLike):
@@ -180,7 +180,7 @@ class ScaleTransform(CoordinateTransform):  # type: ignore[misc]
         raise NotImplementedError()
 
 
-class TranslateTransform(CoordinateTransform):  # type: ignore[misc]
+class TranslateTransform(CoordinateTransform):
     """TODO: Add docstring"""
 
     def __init__(self, translate: npt.ArrayLike):
@@ -204,7 +204,7 @@ class TranslateTransform(CoordinateTransform):  # type: ignore[misc]
         raise NotImplementedError()
 
 
-class CompositeTransform(coordinates.CoordinateTransform):  # type: ignore[misc]
+class CompositeTransform(coordinates.CoordinateTransform):
     """TODO: Add docstring"""
 
     @classmethod
