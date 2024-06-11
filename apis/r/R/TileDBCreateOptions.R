@@ -237,7 +237,7 @@ TileDBCreateOptions <- R6::R6Class(
     #' \code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects. If set to
     #' \code{FALSE}, JSON strings are created instead of filter objects.
     #'
-    #' @return The created options as a list
+    #' @return The 'create options' as a list
     #'
     to_list = function(build_filters = TRUE) {
       stopifnot("'build_filters' must be TRUE or FALSE" = is_scalar_logical(build_filters))
