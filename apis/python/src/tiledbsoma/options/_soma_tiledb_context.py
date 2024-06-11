@@ -17,13 +17,13 @@ from typing_extensions import Self
 import tiledb
 
 from .. import pytiledbsoma as clib
-from .._general_utilities import get_release_version
+from .._general_utilities import assert_version_before
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
 
 def _warn_ctx_deprecation() -> None:
-    assert get_release_version() < (1, 14)
+    assert_version_before(1, 14)
     warnings.warn(
         "tiledb_ctx is now deprecated for removal in 1.14. "
         "Use tiledb_config instead by passing "
