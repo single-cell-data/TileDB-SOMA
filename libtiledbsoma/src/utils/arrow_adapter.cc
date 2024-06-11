@@ -185,7 +185,11 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
             ArrowAdapter::to_arrow_format(attr.type()).data());
         child->name = strdup(attr.name().c_str());
         child->metadata = nullptr;
-        child->flags = attr.nullable() ? ARROW_FLAG_NULLABLE : 0;
+        if (attr.nullable()) {
+            child->flags |= ARROW_FLAG_NULLABLE;
+        } else {
+            child->flags &= ~ARROW_FLAG_NULLABLE;
+        }
         child->n_children = 0;
         child->children = nullptr;
         child->dictionary = nullptr;
@@ -207,7 +211,11 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
             }
             dict->name = strdup(enmr.name().c_str());
             dict->metadata = nullptr;
-            dict->flags = 0;
+            if (enmr.ordered()) {
+                child->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
+            } else {
+                child->flags &= ~ARROW_FLAG_DICTIONARY_ORDERED;
+            }
             dict->n_children = 0;
             dict->children = nullptr;
             dict->dictionary = nullptr;
@@ -555,20 +563,31 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 ArraySchemaExperimental::add_enumeration(*ctx, schema, enmr);
                 AttributeExperimental::set_enumeration_name(
                     *ctx, attr, child->name);
+                LOG_DEBUG(fmt::format(
+                    "[ArrowAdapter] dictionary for {} as {} {}",
+                    child->name,
+                    enmr_type,
+                    enmr_format));
             }
 
+            LOG_DEBUG(
+                fmt::format("[ArrowAdapter] adding attribute {}", child->name));
             schema.add_attribute(attr);
         }
     }
 
     for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+        LOG_DEBUG(fmt::format("[ArrowAdapter] child {}", i));
         auto col_name = index_column_schema->children[i]->name;
         domain.add_dimension(dims.at(col_name));
     }
+    LOG_DEBUG(fmt::format("[ArrowAdapter] set_domain"));
     schema.set_domain(domain);
 
+    LOG_DEBUG(fmt::format("[ArrowAdapter] check"));
     schema.check();
 
+    LOG_DEBUG(fmt::format("[ArrowAdapter] returning"));
     return schema;
 }
 
@@ -731,8 +750,8 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         column->validity_to_bitmap();
         array->buffers[0] = column->validity().data();
     } else {
-        schema->flags = 0;  // as ArrowSchemaInitFromType leads to NULLABLE
-                            // set
+        schema->flags &= ~ARROW_FLAG_NULLABLE;  // as ArrowSchemaInitFromType
+                                                // leads to NULLABLE set
     }
 
     if (column->is_ordered()) {

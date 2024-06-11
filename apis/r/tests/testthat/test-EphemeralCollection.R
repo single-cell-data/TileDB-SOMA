@@ -1,4 +1,4 @@
-test_that("Ephemeral Colelction mechanics", {
+test_that("Ephemeral Collection mechanics", {
   skip_if(!extended_tests())
   # Create a new collection
   uri <- withr::local_tempdir('ephemeral-collection')

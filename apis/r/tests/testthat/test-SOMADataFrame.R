@@ -7,6 +7,7 @@ test_that("Basic mechanics", {
     SOMADataFrameCreate(uri, asch, index_column_names = "qux"),
     "The following indexed field does not exist: qux"
   )
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
 
   sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
   expect_true(sdf$exists())
@@ -124,6 +125,7 @@ test_that("Basic mechanics with default index_column_names", {
     sdf$create(asch, index_column_names = "qux", internal_use_only = "allowed_use"),
     "The following indexed field does not exist: qux"
   )
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
 
   sdf$create(asch, internal_use_only = "allowed_use")
   expect_true(sdf$exists())
@@ -188,7 +190,7 @@ test_that("creation with all supported dimension data types", {
   )
 
   for (dtype in tbl0$ColumnNames()) {
-    uri <- withr::local_tempdir(paste0("soma-dataframe-", dtype))
+    uri <- tempfile(pattern=paste0("soma-dataframe-", dtype))
     expect_silent(
       sdf <- SOMADataFrameCreate(uri, tbl0$schema, index_column_names = dtype)
     )
@@ -207,6 +209,7 @@ test_that("int64 values are stored correctly", {
     arrow::field("foo", arrow::int32(), nullable = FALSE),
     arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
   )
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
 
   sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
   tbl0 <- arrow::arrow_table(foo = 1L:10L, soma_joinid = 1L:10L, schema = asch)
@@ -241,6 +244,7 @@ test_that("creation with ordered factors", {
   )
   tbl <- arrow::as_arrow_table(df)
   expect_true(tbl$schema$GetFieldByName("ord")$type$ordered)
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   expect_no_condition(sdf <- SOMADataFrameCreate(uri = uri, schema = tbl$schema))
   expect_no_condition(sdf$write(values = tbl))
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
@@ -248,6 +252,8 @@ test_that("creation with ordered factors", {
   expect_s3_class(ord <- sdf$object[]$ord, c("ordered", "factor"), exact = TRUE)
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
+  rm(df, tbl)
+  gc()
 })
 
 test_that("explicit casting of ordered factors to regular factors", {
@@ -261,6 +267,7 @@ test_that("explicit casting of ordered factors to regular factors", {
     bool = rep_len(c(TRUE, FALSE), length.out = n),
     ord = ordered(rep_len(c("g1", "g2", "g3"), length.out = n))
   )
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   tbl <- arrow::as_arrow_table(df)
   expect_true(tbl$schema$GetFieldByName("ord")$type$ordered)
   expect_no_condition(sdf <- SOMADataFrameCreate(uri = uri, schema = tbl$schema,))
@@ -271,6 +278,8 @@ test_that("explicit casting of ordered factors to regular factors", {
   expect_true(is.ordered(ord))
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
+  rm(df, tbl)
+  gc()
 })
 
 test_that("SOMADataFrame read", {
@@ -329,6 +338,7 @@ test_that("soma_joinid is added on creation", {
   asch <- create_arrow_schema()
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
 
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
 
   expect_true("soma_joinid" %in% sdf$attrnames())
@@ -397,6 +407,7 @@ test_that("platform_config is respected", {
   ))
 
   # Create the SOMADataFrame
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   sdf <- SOMADataFrameCreate(uri=uri, schema=asch, index_column_names=c("soma_joinid"), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
@@ -404,7 +415,7 @@ test_that("platform_config is respected", {
   tsch <- tiledb::schema(arr)
 
   expect_equal(tiledb::capacity(tsch), 8000)
-  expect_equal(tiledb::tile_order(tsch), "COL_MAJOR")
+  expect_equal(tiledb::tile_order(tsch), "ROW_MAJOR")
   expect_equal(tiledb::cell_order(tsch), "ROW_MAJOR")
 
   offsets_filters <- tiledb::filter_list(tsch)$offsets
@@ -466,6 +477,48 @@ test_that("platform_config defaults", {
   cfg <- PlatformConfig$new()
 
   # Create the SOMADataFrame
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
+  sdf <- SOMADataFrameCreate(
+    uri = uri,
+    schema = asch,
+    index_column_names = c("soma_joinid"),
+    platform_config = cfg
+  )
+
+  # Read back and check the array schema against the tiledb create options
+  arr <- tiledb::tiledb_array(uri)
+  tsch <- tiledb::schema(arr)
+
+  # Here we're snooping on the default dim filter that's used when no other is specified.
+  dom <- tiledb::domain(tsch)
+  expect_equal(tiledb::tiledb_ndim(dom), 1)
+  dim <- tiledb::dimensions(dom)[[1]]
+  expect_equal(tiledb::name(dim), "soma_joinid")
+  dim_filters <- tiledb::filter_list(dim)
+  expect_equal(tiledb::nfilters(dim_filters), 1)
+  d1 <- dim_filters[0] # C++ indexing here
+  expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
+  expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
+  sdf$close()
+})
+
+test_that("platform_config defaults", {
+  skip_if(!extended_tests())
+  uri <- withr::local_tempdir("soma-dataframe")
+
+  # Set Arrow schema
+  asch <- arrow::schema(
+    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+    arrow::field("i32", arrow::int32(), nullable = FALSE),
+    arrow::field("f64", arrow::float64(), nullable = FALSE),
+    arrow::field("utf8", arrow::large_utf8(), nullable = FALSE)
+  )
+
+  # Set tiledb create options
+  cfg <- PlatformConfig$new()
+
+  # Create the SOMADataFrame
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   sdf <- SOMADataFrameCreate(
     uri = uri,
     schema = asch,
@@ -523,6 +576,7 @@ test_that("SOMADataFrame timestamped ops", {
   sch <- arrow::schema(arrow::field("soma_joinid", arrow::int64(), nullable=FALSE),
                        arrow::field("valint", arrow::int32(), nullable=FALSE),
                        arrow::field("valdbl", arrow::float64(), nullable=FALSE))
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   sdf <- SOMADataFrameCreate(uri=uri, schema=sch)
   rb1 <- arrow::record_batch(soma_joinid = bit64::as.integer64(1L:3L),
                              valint = 1L:3L,
@@ -561,6 +615,7 @@ test_that("SOMADataFrame timestamped ops", {
 test_that("SOMADataFrame can be updated", {
   skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-update")
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
 
   # Retrieve the table from disk
@@ -685,6 +740,7 @@ test_that("SOMADataFrame can be updated", {
 test_that("SOMADataFrame can be updated from a data frame", {
   skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe-update")
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
 
   # Retrieve the table from disk
@@ -728,6 +784,7 @@ test_that("missing levels in enums", {
   expect_true(any(is.na(df$enum)))
 
   # Create SOMADataFrame w/ missing enum levels
+  if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   tbl <- arrow::as_arrow_table(df)
   sdf <- SOMADataFrameCreate(uri, tbl$schema)
   on.exit(sdf$close())
@@ -782,7 +839,6 @@ test_that("missing levels in enums", {
   expect_identical(tbl1$miss$as_vector(), tbl0$miss$as_vector())
   sdf$close()
 })
-
 
 test_that("factor levels can grow without overlap", {
     skip_if(!extended_tests())

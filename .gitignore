@@ -69,6 +69,7 @@ apis/r/src/Makevars
 apis/r/src/cmake_log.txt
 apis/r/.editorconfig
 !apis/r/man/roxygen/*
+apis/r/**/local/*
 
 # Coverage/codecov
 .coverage

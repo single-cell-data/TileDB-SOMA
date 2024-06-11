@@ -24,113 +24,39 @@ SOMADataFrame <- R6::R6Class(
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
     create = function(schema, index_column_names = c("soma_joinid"),
-                        platform_config = NULL, internal_use_only = NULL) {
+                      platform_config = NULL, internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
       }
-
       schema <- private$validate_schema(schema, index_column_names)
 
       attr_column_names <- setdiff(schema$names, index_column_names)
       stopifnot("At least one non-index column must be defined in the schema" =
-                    length(attr_column_names) > 0)
+                length(attr_column_names) > 0)
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
 
-      # array dimensions
-      tdb_dims <- stats::setNames(
-        object = vector(mode = "list", length = length(index_column_names)),
-        nm = index_column_names
-      )
+      ## we (currently pass domain and extent values in an arrow table (i.e. data.frame alike)
+      ## where each dimension is one column (of the same type as in the schema) followed by three
+      ## values for the domain pair and the extent
+      dom_ext_tbl <- get_domain_and_extent_dataframe(schema, index_column_names, tiledb_create_options)
 
-      for (field_name in index_column_names) {
-        field <- schema$GetFieldByName(field_name)
+      ## we transfer to the arrow table via a pair of array and schema pointers
+      dnaap <- nanoarrow::nanoarrow_allocate_array()
+      dnasp <- nanoarrow::nanoarrow_allocate_schema()
+      arrow::as_record_batch(dom_ext_tbl)$export_to_c(dnaap, dnasp)
 
-        tile_extent <- tiledb_create_options$dim_tile(field_name)
+      ## we need a schema pointer to transfer the schema information
+      nasp <- nanoarrow::nanoarrow_allocate_schema()
+      schema$export_to_c(nasp)
 
-        tile_extent <- switch(field$type$ToString(),
-          "int8" = as.integer(tile_extent),
-          "int16" = as.integer(tile_extent),
-          "int32" = as.integer(tile_extent),
-          "int64" = bit64::as.integer64(tile_extent),
-          "double" = as.double(tile_extent),
-          "string" = NULL,
-          tile_extent
-        )
+      ctxptr <- super$tiledbsoma_ctx$context()
+      createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp, TRUE, "SOMADataFrame",
+                            tiledb_create_options$to_list(FALSE), ctxptr@ptr)
 
-        # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
-        if (field$type$bit_width %||% 0L == 8L) {
-          tile_extent <- 64L
-        }
-
-        tdb_opts <- tiledb_create_options$dim_filters(field_name,
-          ## Default if there is nothing specified in tiledb-create options in the platform config:
-          list(list(name="ZSTD", COMPRESSION_LEVEL=tiledb_create_options$dataframe_dim_zstd_level()))
-        )
-        tdb_dims[[field_name]] <- tiledb::tiledb_dim(
-          name = field_name,
-          # Numeric index types must be positive values for indexing
-          domain = arrow_type_unsigned_range(field$type), tile = tile_extent,
-          type = tiledb_type_from_arrow_type(field$type, is_dim=TRUE),
-          filter_list = tiledb::tiledb_filter_list(tdb_opts)
-        )
-      }
-
-      # array attributes
-      tdb_attrs <- stats::setNames(
-        object = vector(mode = "list", length = length(attr_column_names)),
-        nm = attr_column_names
-      )
-
-      for (field_name in attr_column_names) {
-        field <- schema$GetFieldByName(field_name)
-        field_type <- tiledb_type_from_arrow_type(field$type, is_dim=FALSE)
-
-        ## # Check if the field is ordered and mark it as such
-        ## if (!is.null(x = levels[[field_name]]) && isTRUE(field$type$ordered)) {
-        ##   attr(levels[[field_name]], 'ordered') <- attr(levels[[field_name]], 'ordered', exact = TRUE) %||% TRUE
-        ## }
-
-        tdb_attrs[[field_name]] <- tiledb::tiledb_attr(
-          name = field_name,
-          type = field_type,
-          nullable = field$nullable,
-          ncells = if (field_type == "ASCII" || field_type == "UTF8" ) NA_integer_ else 1L,
-          filter_list = tiledb::tiledb_filter_list(tiledb_create_options$attr_filters(field_name))
-        )
-      }
-
-      # array schema
-      cell_tile_orders <- tiledb_create_options$cell_tile_orders()
-      tdb_schema <- tiledb::tiledb_array_schema(
-        domain = tiledb::tiledb_domain(tdb_dims),
-        attrs = tdb_attrs,
-        sparse = TRUE,
-        cell_order = cell_tile_orders["cell_order"],
-        tile_order = cell_tile_orders["tile_order"],
-        capacity = tiledb_create_options$capacity(),
-        allows_dups = tiledb_create_options$allows_duplicates(),
-        offsets_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$offsets_filters()),
-        validity_filter_list = tiledb::tiledb_filter_list(tiledb_create_options$validity_filters())
-        ## enumerations = if (any(!sapply(levels, is.null))) levels else NULL
-        )
-
-      for (field_name in attr_column_names) {
-          fieldtype <- schema$GetFieldByName(field_name)$type
-          if (is(fieldtype, "DictionaryType")) {
-              tiledb::tiledb_array_schema_set_enumeration_empty(schema = tdb_schema,
-                                                                attr = tdb_attrs[[field_name]],
-                                                                enum_name = field_name,
-                                                                type_str = "UTF8",
-                                                                ordered = fieldtype$ordered)
-          }
-      }
-
-      # create array
-      tiledb::tiledb_array_create(uri = self$uri, schema = tdb_schema)
       self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()
       self
@@ -164,45 +90,16 @@ SOMADataFrame <- R6::R6Class(
           all(schema_names %in% col_names)
       )
 
+      ## we transfer to the arrow table via a pair of array and schema pointers
+      naap <- nanoarrow::nanoarrow_allocate_array()
+      nasp <- nanoarrow::nanoarrow_allocate_schema()
+      arrow::as_record_batch(values)$export_to_c(naap, nasp)
+
       df <- as.data.frame(values)[schema_names]
       arr <- self$object
 
-      has_enums <- tiledb::tiledb_array_has_enumeration(arr)
-      if (any(has_enums)) {       # if enumerations exists in array
-          attrs <- tiledb::attrs(tiledb::schema(arr))
-          ase <- tiledb::tiledb_array_schema_evolution()
-          call_ase <- FALSE
-          if (!tiledb::tiledb_array_is_open(arr)) arr <- tiledb::tiledb_array_open(arr, "READ")
-          for (attr_name in names(attrs)) {
-              if (has_enums[attr_name]) {
-                  old_enum <- tiledb::tiledb_attribute_get_enumeration(attrs[[attr_name]], arr)
-                  new_enum <- levels(values[[attr_name]]$as_vector())
-                  added_enum <- setdiff(new_enum, old_enum)
-                  if (length(added_enum) > 0) {
-                      datatype <- tiledb::datatype(attrs[[attr_name]])
-                      ## use with tiledb-r 0.24.0
-                      ##    maxval <- tiledb:::tiledb_datatype_max_value(datatype) + 1 # R is one-based
-                      ## til then local copy
-                      maxval <- tiledb_datatype_max_value(datatype) + 1 # R is one-based
-                      if (length(old_enum) + length(added_enum) > maxval) {
-                          stop(sprintf("For column '%s' cannot add %d factor levels to existing %d for type '%s' with maximum value %d",
-                                       attr_name, length(added_enum), length(old_enum), datatype, maxval), call. = FALSE)
-                      }
-                      call_ase <- TRUE
-                      ase <- tiledb::tiledb_array_schema_evolution_extend_enumeration(ase, arr, attr_name, added_enum)
-                      df[, attr_name] <- factor(df[, attr_name], levels = unique(c(old_enum,new_enum)), ordered=is.ordered(df[, attr_name]))
-                      spdl::debug("[tiledbsoma$write] writing '{}' '{}' {}", paste(unique(c(old_enum,new_enum)),collapse=","), paste(added_enum,collapse=","), is.ordered(df[, attr_name]))
-                  }
-              }
-          }
-          if (call_ase) tiledb::tiledb_array_schema_evolution_array_evolve(ase, self$uri)
-          arr <- tiledb::tiledb_array_close(arr)
-          arr <- tiledb::tiledb_array_open(arr, "WRITE")
-      }
-      arr[] <- df
-      # tiledb-r always closes the array after a write operation so we need to
-      # manually reopen it until close-on-write is optional
-      self$reopen("WRITE")
+      writeArrayFromArrow(self$uri, naap, nasp)
+
       invisible(self)
     },
 

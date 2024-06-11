@@ -1,7 +1,7 @@
 test_that("`reopen()` works on arrays", {
   shape <- c(500L, 100L)
   for (cls in c("SOMADataFrame", "SOMASparseNDArray", "SOMADenseNDArray")) {
-    uri <- withr::local_tempdir(paste("soma", cls, "reopen", sep = "-"))
+    uri <- tempfile(pattern=paste("soma", cls, "reopen", sep = "-"))
     arr <- switch(
       EXPR = cls,
       SOMADataFrame = SOMADataFrameCreate(

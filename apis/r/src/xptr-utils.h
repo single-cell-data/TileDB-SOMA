@@ -24,6 +24,9 @@ const tiledb_xptr_object tiledb_xptr_vlv_buf_t                   { 180 };
 const tiledb_xptr_object tiledb_xptr_query_buf_t                 { 190 };
 
 // the definitions above are internal to tiledb-r but we need a new value here if we want tag the external pointer
+const tiledb_xptr_object tiledb_arrow_array_t                    { 300 };
+const tiledb_xptr_object tiledb_arrow_schema_t                   { 310 };
+
 const tiledb_xptr_object tiledb_soma_reader_t                    { 500 };
 
 const tiledb_xptr_object tiledb_soma_rindexer_t                  { 600 };
@@ -61,6 +64,13 @@ template <typename T> Rcpp::XPtr<T> make_xptr(T* p, bool finalize=true) {
 
 template <typename T> Rcpp::XPtr<T> make_xptr(SEXP p) {
     return Rcpp::XPtr<T>(p);    // the default XPtr ctor with deleter on and tag and prot nil
+}
+
+inline void* xptr_addr(SEXP ptr) {
+    if (TYPEOF(ptr) != EXTPTRSXP) {
+        Rcpp::stop("Expected external pointer, received '%s'\n", Rf_type2char(TYPEOF(ptr)));
+    }
+    return R_ExternalPtrAddr(ptr);
 }
 
 template<typename T> void check_xptr_tag(Rcpp::XPtr<T> ptr) {

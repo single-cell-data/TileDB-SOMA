@@ -31,7 +31,8 @@
   # Filter-related schema parameters
   dataframe_dim_zstd_level = 3,
   sparse_nd_array_dim_zstd_level = 3,
-  offsets_filters = list('DOUBLE_DELTA', 'BIT_WIDTH_REDUCTION', 'ZSTD'),
+  dense_nd_array_dim_zstd_level = 3,
+  offsets_filters = list("DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"),
   validity_filters = list(),
   # Used for chunked data ingestion
   write_X_chunked = TRUE,
@@ -138,6 +139,10 @@ TileDBCreateOptions <- R6::R6Class(
     #'
     sparse_nd_array_dim_zstd_level = function() self$get('sparse_nd_array_dim_zstd_level'),
 
+    #' @return int
+    #'
+    dense_nd_array_dim_zstd_level = function() self$get('dense_nd_array_dim_zstd_level'),
+
     #' @param default Default offset filters to use if not currently set
     #'
     #' @return A list of
@@ -229,9 +234,10 @@ TileDBCreateOptions <- R6::R6Class(
     #' @description ...
     #'
     #' @param build_filters Build filters into
-    #' \code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects
+    #' \code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects. If set to
+    #' \code{FALSE}, JSON strings are created instead of filter objects.
     #'
-    #' @return The create options as a list
+    #' @return The 'create options' as a list
     #'
     to_list = function(build_filters = TRUE) {
       stopifnot("'build_filters' must be TRUE or FALSE" = is_scalar_logical(build_filters))
@@ -254,6 +260,28 @@ TileDBCreateOptions <- R6::R6Class(
             }
           }
         }
+      } else {    ## ie   if (isFALSE(build_filters)) {   as build_filters is bool
+          for (key in grep('_filters$', names(opts), value = TRUE)) {
+              #spdl::trace("[tdco::to_list] _filters key is {}", key)
+              opts[[key]] <- private$.build_filters_json(opts[[key]])
+          }
+          for (key in c("dims", "attrs")) {
+              json <- "{"
+              for (i in seq_along(names(opts[[key]]))) {
+                  nm <- names(opts[[key]])[[i]]
+                  elem <- opts[[key]][[i]]
+                  if (i > 1) json <- paste0(json, ",")
+                  json <- paste(json, sprintf(r"("%s": { "filters":)", nm))
+                  if ('filters' %in% names(elem)) {
+                      jsonflt <- private$.build_filters_json(elem[['filters']])
+                      json <- paste0(json, if (jsonflt == "") "[ ]" else jsonflt)
+                  }
+                  json <- paste(json, " }")
+              }
+              json <- paste(json, "}")
+              #spdl::trace("[tdco::to_list] dim/attrs key {} -> {}", key, json)
+              opts[[key]] <- json
+          }
       }
       return(opts)
     }
@@ -327,6 +355,43 @@ TileDBCreateOptions <- R6::R6Class(
         tiledb::tiledb_filter_set_option(filter, option = key, value = item[[key]])
       }
       return(filter)
+    },
+
+    .build_filters_json = function(lst) {
+      if (length(lst) > 1L) {
+          res <- paste0("[", paste(lapply(lst, private$.build_filter_json), collapse=", "), "]")
+      } else if (length(lst) == 1L) {
+          res <- private$.build_filter_json(lst[[1L]])
+      } else {
+          res <- ""
+      }
+      #spdl::trace("[.build_filters_json] res: {}", res)
+      res
+    },
+
+    ## The `item` argument can either be a string, like "RLE" or a named list with
+    ## filter name and remaining arguments as `list(name="ZSTD", COMPRESSION_LEVEL=-1)`.
+    ##
+    ## @param item The name of a filter or a list with the name and arguments
+    ## for a filter (eg. \code{list(name = "ZSTD", COMPRESSION_LEVEL = -1)})
+    ##
+    ## @return A JSON string describing the tiledb filter setting
+    ##
+    .build_filter_json = function(item) {
+        if (is.character(item) && length(item) == 1) item <- list(name = item)
+        stopifnot("'item' must be a named list" = is.list(item) && !is.null(names(item)),
+                  "'name' must be one of the names in 'item'" = 'name' %in% names(item) )
+        json <- "{ "
+        json <- paste0(json, sprintf(r"( "name": "%s")", item[[1]]))
+        if (length(item) > 1) {
+            for (j in seq(2, length(item))) {
+                key <- names(item)[[j]]
+                json <- paste0(json, sprintf(r"(, "%s": %s)", key, format(item[[key]])))
+            }
+        }
+        json <- paste0(json, " }")
+        #spdl::trace("[.build_filter_json] filter to json: {}", json)
+        json
     }
   )
 )

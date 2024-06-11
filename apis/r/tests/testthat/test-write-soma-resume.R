@@ -19,6 +19,7 @@ test_that("Factory re-creation", {
     fname <- as.character(factories[[i]])
     fxn <- eval(factories[[i]])
     uri <- withr::local_tempdir(fname)
+    if (dir.exists(uri)) unlink(uri, recursive=TRUE)
     expect_no_condition(obj <- switch(
       EXPR = fname,
       SOMADataFrameCreate = fxn(uri, schema = schema),
@@ -43,6 +44,7 @@ test_that("Resume-mode factories", {
     fxn <- eval(factories[[i]])
     label <- paste0(fname, "-resume")
     uri <- withr::local_tempdir(label)
+    if (dir.exists(uri)) unlink(uri, recursive=TRUE)
     # Do an initial create
     expect_no_condition(obj <- switch(
       EXPR = fname,

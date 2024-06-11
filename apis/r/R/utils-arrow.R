@@ -138,6 +138,7 @@ arrow_type_range <- function(x) {
     bool = NULL,
     # string/utf8
     utf8 = NULL,
+    large_utf8 = NULL,
     stop("Unsupported data type:", x$name, call. = FALSE)
   )
 }
@@ -341,4 +342,58 @@ extract_levels <- function(arrtbl, exclude_cols=c("soma_joinid")) {
         }
     }
     reslst
+}
+
+
+#' Domain and extent table creation helper for data.frame writes returning a Table with
+#' a column per dimension for the given (incoming) arrow schema of a Table
+#' @noRd
+get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
+                                            tdco = TileDBCreateOptions$new(PlatformConfig$new())) {
+    stopifnot("First argument must be an arrow schema" = inherits(tbl_schema, "Schema"),
+              "Second argument must be character" = is.character(ind_col_names),
+              "Second argument cannot be empty vector" = length(ind_col_names) > 0,
+              "Second argument index names must be columns in first argument" =
+                  all(is.finite(match(ind_col_names, names(tbl_schema)))),
+              "Third argument must be options wrapper" = inherits(tdco, "TileDBCreateOptions"))
+    rl <- sapply(ind_col_names, \(ind_col_name) {
+        ind_col <- tbl_schema$GetFieldByName(ind_col_name)
+        ind_col_type <- ind_col$type
+        ind_col_type_name <- ind_col$type$name
+        ind_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,1) ## FIXME
+        ind_ext <- tdco$dim_tile(ind_col_name)
+        if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
+        # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
+        if (ind_col$type$bit_width %||% 0L == 8L) {
+            ind_ext <- 64L
+        }
+        if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
+            aa <- arrow::arrow_array(c("", "", ""), ind_col_type)
+        } else {
+            aa <- arrow::arrow_array(c(ind_dom, ind_ext), ind_col_type)
+        }
+        aa
+    })
+    names(rl) <- ind_col_names
+    dom_ext_tbl <- do.call(arrow::arrow_table, rl)
+    dom_ext_tbl
+}
+
+#' Domain and extent table creation helper for array writes returning a Table with
+#' a column per dimension for the given (incoming) arrow schema of a Table
+#' @noRd
+get_domain_and_extent_array <- function(shape) {
+    stopifnot("First argument must be vector of positive values" = is.vector(shape) && all(shape > 0))
+    indvec <- seq_len(length(shape)) - 1   # sequence 0, ..., length()-1
+    rl <- sapply(indvec, \(ind) {
+        ind_col <- sprintf("soma_dim_%d", ind)
+        ind_col_type <- arrow::int64()
+        ind_dom <- c(0L, shape[ind+1] - 1L)
+        ind_ext <- shape[ind+1]
+        aa <- arrow::arrow_array(c(ind_dom, ind_ext), ind_col_type)
+        aa
+    })
+    names(rl) <- sprintf("soma_dim_%d", indvec)
+    dom_ext_tbl <- do.call(arrow::arrow_table, rl)
+    dom_ext_tbl
 }
