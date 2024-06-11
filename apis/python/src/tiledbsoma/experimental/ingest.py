@@ -12,7 +12,7 @@ Do NOT merge into main.
 
 import json
 import os
-import pathlib
+from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -60,14 +60,13 @@ from ..io.ingest import (
 if TYPE_CHECKING:
     from somacore.options import PlatformConfig
 
-    from .._types import Path
     from ..io._registration import ExperimentAmbientLabelMapping
     from ..io.ingest import AdditionalMetadata
     from ..options import SOMATileDBContext
 
 
 def from_cxg_spatial_h5ad(
-    input_h5ad_path: pathlib.Path,
+    input_h5ad_path: Path,
     experiment_uri: str,
     measurement_name: str,
     scene_name: str,
@@ -84,7 +83,7 @@ def from_cxg_spatial_h5ad(
     registration_mapping: Optional["ExperimentAmbientLabelMapping"] = None,
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
-):
+) -> str:
     """
     This function reads cellxgene schema compliant H5AD file and writes
     to the SOMA data format rooted at the given `Experiment` URI.
@@ -133,7 +132,11 @@ def from_cxg_spatial_h5ad(
 
     # store spatial images
     images_source_dict = spatial_dict[library_id]["images"]
-    image_paths = {"fullres": None, "hires": None, "lowres": None}
+    image_paths: dict[str, Optional[str]] = {
+        "fullres": None,
+        "hires": None,
+        "lowres": None,
+    }
 
     for key, img_array in images_source_dict.items():
         if img_array.dtype == np.float32:
@@ -164,7 +167,7 @@ def from_cxg_spatial_h5ad(
         input_hires=image_paths["hires"],
         input_lowres=image_paths["lowres"],
         input_fullres=image_paths["fullres"],
-        input_tissue_positions=tissue_positions_file_path,
+        input_tissue_positions=Path(tissue_positions_file_path),
     )
 
 
@@ -207,7 +210,7 @@ def from_visium(
         )
 
     # Get input file locations.
-    input_path = pathlib.Path(input_path)
+    input_path = Path(input_path)
 
     input_gene_expression = (
         input_path / "raw_feature_bc_matrix.h5"
@@ -274,10 +277,10 @@ def _write_visium_data_to_experiment_uri(
     context: Optional["SOMATileDBContext"] = None,
     platform_config: Optional["PlatformConfig"] = None,
     scale_factors: Dict[str, Any],
-    input_hires: Optional[pathlib.Path],
-    input_lowres: Optional[pathlib.Path],
-    input_fullres: Optional[pathlib.Path],
-    input_tissue_positions: pathlib.Path,
+    input_hires: Union[None, str, Path],
+    input_lowres: Union[None, str, Path],
+    input_fullres: Union[None, str, Path],
+    input_tissue_positions: Path,
 ) -> str:
     uri = from_anndata(
         experiment_uri,
@@ -382,7 +385,7 @@ def _write_visium_data_to_experiment_uri(
 
 def _write_visium_spot_dataframe(
     df_uri: str,
-    input_tissue_positions: pathlib.Path,
+    input_tissue_positions: Path,
     spot_radius: float,
     obs_df: pd.DataFrame,
     id_column_name: str,
@@ -421,24 +424,24 @@ def _write_visium_images(
     uri: str,
     scale_factors: Dict[str, Any],
     *,
-    input_hires: Optional[pathlib.Path],
-    input_lowres: Optional[pathlib.Path],
-    input_fullres: Optional[pathlib.Path],
+    input_hires: Union[None, str, Path],
+    input_lowres: Union[None, str, Path],
+    input_fullres: Union[None, str, Path],
     ingestion_params: IngestionParams,
     additional_metadata: "AdditionalMetadata" = None,
     platform_config: Optional["PlatformConfig"] = None,
     context: Optional["SOMATileDBContext"] = None,
     use_relative_uri: Optional[bool] = None,
 ) -> Collection[DenseNDArray]:
-    input_images: Dict[str, Tuple[pathlib.Path, List[float]]] = {}
+    input_images: Dict[str, Tuple[Path, List[float]]] = {}
     if input_fullres is not None:
-        input_images["fullres"] = (input_fullres, [1.0, 1.0, 1.0])
+        input_images["fullres"] = (Path(input_fullres), [1.0, 1.0, 1.0])
     if input_hires is not None:
         scale = 1.0 / scale_factors["tissue_hires_scalef"]
-        input_images["hires"] = (input_hires, [1.0, scale, scale])
+        input_images["hires"] = (Path(input_hires), [1.0, scale, scale])
     if input_lowres is not None:
         scale = 1.0 / scale_factors["tissue_lowres_scalef"]
-        input_images["lowres"] = (input_lowres, [1.0, scale, scale])
+        input_images["lowres"] = (Path(input_lowres), [1.0, scale, scale])
     axes_metadata = [
         {"name": "c", "type": "channel"},
         {"name": "y", "type": "space", "unit": "micrometer"},
@@ -458,7 +461,7 @@ def _write_visium_images(
 
 def _write_multiscale_images(
     uri: str,
-    input_images: Dict[str, Tuple[pathlib.Path, List[float]]],
+    input_images: Dict[str, Tuple[Path, List[float]]],
     *,
     axes_metadata: List[Dict[str, str]],
     ingestion_params: IngestionParams,
