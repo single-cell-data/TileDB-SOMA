@@ -35,10 +35,9 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
     __slots__ = ()
 
     _subclass_constrained_soma_types = {
-        "osbl": ("SOMADataFrame",),
+        "img": ("SOMACollection",),
+        "osbl": ("SOMACollection",),
         "varl": ("SOMACollection",),
-        "obssm": ("SOMACollection",),
-        "varsm": ("SOMACollection",),
     }
 
     @property
