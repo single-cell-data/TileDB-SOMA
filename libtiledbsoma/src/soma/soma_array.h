@@ -562,6 +562,17 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
+     * @brief Get members of the schema (capacity, allows_duplicates,
+     * tile_order, cell_order, offsets_filters, validity_filters, attr filters,
+     * and dim filters) in the form of a PlatformConfig
+     *
+     * @return PlatformConfig
+     */
+    PlatformConfig config_options() const {
+        return ArrowAdapter::platform_config_from_tiledb_schema(*mq_->schema());
+    }
+
+    /**
      * @brief Get the capacity of each dimension.
      *
      * @return A vector with length equal to the number of dimensions; each

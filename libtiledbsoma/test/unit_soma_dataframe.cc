@@ -135,6 +135,8 @@ TEST_CASE("SOMADataFrame: platform_config") {
 
         PlatformConfig platform_config;
         platform_config.dataframe_dim_zstd_level = 6;
+        platform_config.tile_order = "row-major";
+        platform_config.cell_order = "hilbert";
         platform_config.offsets_filters = R"([)" + filter.first + R"(])";
         platform_config.validity_filters = R"([)" + filter.first + R"(])";
         if (filter.second != TILEDB_FILTER_WEBP) {
@@ -153,15 +155,27 @@ TEST_CASE("SOMADataFrame: platform_config") {
             platform_config);
 
         auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
+        auto config_options = soma_dataframe->config_options();
+        REQUIRE(config_options.capacity == 100000);
+        REQUIRE(config_options.allows_duplicates == false);
+        REQUIRE(config_options.tile_order == "row-major");
+        REQUIRE(config_options.cell_order == "hilbert");
+        REQUIRE(
+            json::parse(config_options.offsets_filters)[0]["name"] ==
+            Filter::to_str(filter.second));
+        REQUIRE(
+            json::parse(config_options.validity_filters)[0]["name"] ==
+            Filter::to_str(filter.second));
+        if (filter.second != TILEDB_FILTER_WEBP) {
+            REQUIRE(
+                json::parse(config_options.attrs)["a0"][0]["name"] ==
+                Filter::to_str(filter.second));
+        }
+        REQUIRE(
+            json::parse(config_options.dims)["d0"][0]["name"] ==
+            Filter::to_str(TILEDB_FILTER_ZSTD));
+
         auto sch = soma_dataframe->tiledb_schema();
-        REQUIRE(
-            sch->offsets_filter_list().filter(0).filter_type() ==
-            filter.second);
-
-        REQUIRE(
-            sch->validity_filter_list().filter(0).filter_type() ==
-            filter.second);
-
         auto dim_filter = sch->domain().dimension("d0").filter_list().filter(0);
         REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
         REQUIRE(dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);

@@ -189,6 +189,14 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
 
     /**
+     * @brief Get members of the TileDB Schema in the form of a PlatformConfig
+     *
+     * @return PlatformConfig
+     */
+    static PlatformConfig platform_config_from_tiledb_schema(
+        ArraySchema tiledb_schema);
+
+    /**
      * @brief Create a TileDB ArraySchema from ArrowSchema
      *
      * @return tiledb::ArraySchema
@@ -275,6 +283,12 @@ class ArrowAdapter {
         Filter filter, std::string option_name, json value);
 
     static tiledb_layout_t _get_order(std::string order);
+
+    static json _get_attrs_filter_list_json(ArraySchema tiledb_schema);
+
+    static json _get_dims_filter_list_json(ArraySchema tiledb_schema);
+
+    static json _get_filter_list_json(FilterList filter_list);
 };
 };  // namespace tiledbsoma
 
