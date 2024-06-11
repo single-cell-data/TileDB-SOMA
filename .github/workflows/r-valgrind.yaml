@@ -28,8 +28,17 @@ jobs:
           codename <-  system('. /etc/os-release; echo ${VERSION_CODENAME}', intern = TRUE)
           repo <- "https://tiledb-inc.r-universe.dev"
           (opt <- sprintf('options(repos = c("%s/bin/linux/%s/%s", "%s", getOption("repos")), timeout = 300L)', repo, codename, rversion, repo))
+          print("RVERSION")
+          print(rversion)
+          print("CODENAME")
+          print(codename)
+          print("REPO")
+          print(repo)
           cat(opt, "\n", file = "~/.Rprofile", append = TRUE)
         shell: Rscript {0}
+
+      - name: Debug
+        run: cat ~/.Rprofile
 
       - name: Install tiledb-r
         run: cd apis/r && Rscript tools/install-tiledb-r.R
