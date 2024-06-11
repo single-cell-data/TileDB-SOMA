@@ -107,8 +107,8 @@ test_that("Resume-mode data frames", {
     )
   }
 
-  # Expect no error when writing to existing array as it will be skipped
-  expect_silent(write_soma(co2, uri = uri, soma_parent = collection))
+  # Expect error when writing to existing array
+  expect_error(write_soma(co2, uri = uri, soma_parent = collection))
 
   # Expect seamless pass when resuming writing to exisitng array
   expect_s3_class(

@@ -99,7 +99,9 @@ void createSchemaFromArrow(const std::string& uri,
     tiledb::VFS vfs(*ctxsp);
     //spdl::warn("[createSchemaFromArrow] About to create {}, dir exists ? {}", uri, vfs.is_dir(uri));
 
-    if (!vfs.is_dir(uri)) {
+    if (vfs.is_dir(uri)) {
+        Rcpp::stop(tfm::format("Error: Array '%s' already exists", uri));
+    } else {
         // Create the schema at the given URI
         tiledb::Array::create(uri, as);
     }
