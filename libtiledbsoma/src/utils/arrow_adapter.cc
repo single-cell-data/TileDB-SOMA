@@ -565,9 +565,9 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     *ctx, attr, child->name);
                 LOG_DEBUG(fmt::format(
                     "[ArrowAdapter] dictionary for {} as {} {}",
-                    child->name,
-                    enmr_type,
-                    enmr_format));
+                    std::string(child->name),
+                    tiledb::impl::type_to_str(enmr_type),
+                    std::string(enmr_format)));
             }
 
             LOG_DEBUG(
