@@ -1,3 +1,4 @@
+import warnings
 from typing import (
     Any,
     Dict,
@@ -19,6 +20,8 @@ from somacore import options
 from typing_extensions import Self
 
 import tiledb
+
+from .._general_utilities import assert_version_before
 
 # Most defaults are configured directly as default attribute values
 # within TileDBCreateOptions.
@@ -194,10 +197,25 @@ class TileDBCreateOptions:
 
     def offsets_filters_tiledb(self) -> Tuple[tiledb.Filter, ...]:
         """Constructs the real TileDB Filters to use for offsets."""
+        assert_version_before(1, 14)
+        warnings.warn(
+            "`offsets_filters_tiledb` is now deprecated for removal in 1.14 "
+            "as we no longer support returning tiledb.Filter. "
+            "Use `offsets_filters` instead.",
+            DeprecationWarning,
+        )
+
         return tuple(_build_filter(f) for f in self.offsets_filters)
 
     def validity_filters_tiledb(self) -> Optional[Tuple[tiledb.Filter, ...]]:
         """Constructs the real TileDB Filters to use for the validity map."""
+        assert_version_before(1, 14)
+        warnings.warn(
+            "`validity_filters_tiledb` is now deprecated for removal in 1.14 "
+            "as we no longer support returning tiledb.Filter. "
+            "Use `validity_filters` instead.",
+            DeprecationWarning,
+        )
         if self.validity_filters is None:
             return None
         return tuple(_build_filter(f) for f in self.validity_filters)
@@ -206,6 +224,13 @@ class TileDBCreateOptions:
         self, dim: str, default: Sequence[_FilterSpec] = ()
     ) -> Tuple[tiledb.Filter, ...]:
         """Constructs the real TileDB Filters to use for the named dimension."""
+        assert_version_before(1, 14)
+        warnings.warn(
+            "`dim_filters_tiledb` is now deprecated for removal in 1.14 "
+            "as we no longer support returning tiledb.Filter. "
+            "Use `dims` instead.",
+            DeprecationWarning,
+        )
         return _filters_from(self.dims, dim, default)
 
     def dim_tile(self, dim_name: str, default: int = DEFAULT_TILE_EXTENT) -> int:
@@ -220,6 +245,13 @@ class TileDBCreateOptions:
         self, name: str, default: Sequence[_FilterSpec] = ()
     ) -> Tuple[tiledb.Filter, ...]:
         """Constructs the real TileDB Filters to use for the named attribute."""
+        assert_version_before(1, 14)
+        warnings.warn(
+            "`attr_filters_tiledb` is now deprecated for removal in 1.14 "
+            "as we no longer support returning tiledb.Filter. "
+            "Use `attrs` instead.",
+            DeprecationWarning,
+        )
         return _filters_from(self.attrs, name, default)
 
 
