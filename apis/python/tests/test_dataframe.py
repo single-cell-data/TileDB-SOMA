@@ -1189,7 +1189,10 @@ def test_extend_enumerations(tmp_path):
         for c in readback_df:
             assert readback_df[c].dtype == written_df[c].dtype
             if readback_df[c].dtype == "category":
-                assert readback_df[c].cat.categories.dtype == written_df[c].cat.categories.dtype
+                assert (
+                    readback_df[c].cat.categories.dtype
+                    == written_df[c].cat.categories.dtype
+                )
             assert (readback_df[c] == written_df[c]).all()
 
 
