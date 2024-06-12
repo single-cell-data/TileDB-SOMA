@@ -49,6 +49,8 @@ using namespace tiledbsoma;
 
 void load_soma_context(py::module& m) {
     py::class_<SOMAContext, std::shared_ptr<SOMAContext>>(m, "SOMAContext")
-        .def(py::init<std::map<std::string, std::string>>());
+        .def(py::init<>())
+        .def(py::init<std::map<std::string, std::string>>())
+        .def("config", &SOMAContext::tiledb_config);
 };
 }  // namespace libtiledbsomacpp
