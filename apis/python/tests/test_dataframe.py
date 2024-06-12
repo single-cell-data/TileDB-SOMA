@@ -1105,7 +1105,7 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
 
 
 def test_extend_enumerations(tmp_path):
-    pandas_df = pd.DataFrame(
+    written_df = pd.DataFrame(
         {
             "soma_joinid": pd.Series([0, 1, 2, 3, 4, 5], dtype=np.int64),
             "str": pd.Series(["A", "B", "A", "B", "B", "B"], dtype="category"),
@@ -1178,18 +1178,22 @@ def test_extend_enumerations(tmp_path):
         },
     )
 
-    schema = pa.Schema.from_pandas(pandas_df, preserve_index=False)
+    schema = pa.Schema.from_pandas(written_df, preserve_index=False)
 
     with soma.DataFrame.create(str(tmp_path), schema=schema) as soma_dataframe:
-        tbl = pa.Table.from_pandas(pandas_df, preserve_index=False)
+        tbl = pa.Table.from_pandas(written_df, preserve_index=False)
         soma_dataframe.write(tbl)
 
     with soma.open(str(tmp_path)) as soma_dataframe:
-        df = soma_dataframe.read().concat().to_pandas()
-        for c in df:
-            assert df[c].dtype == pandas_df[c].dtype
-            if df[c].dtype == "category":
-                assert df[c].cat.categories.dtype == pandas_df[c].cat.categories.dtype
+        readback_df = soma_dataframe.read().concat().to_pandas()
+        for c in readback_df:
+            assert readback_df[c].dtype == written_df[c].dtype
+            if readback_df[c].dtype == "category":
+                assert (
+                    readback_df[c].cat.categories.dtype
+                    == written_df[c].cat.categories.dtype
+                )
+            assert (readback_df[c] == written_df[c]).all()
 
 
 def test_multiple_writes_with_enums(tmp_path):
