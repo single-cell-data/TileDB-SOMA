@@ -360,20 +360,25 @@ def _write_visium_data_to_experiment_uri(
                 )
 
                 obsl_uri = f"{scene_uri}/obsl"
-
-                # Write spot data and add to the scene.
-                with _write_visium_spot_dataframe(
-                    obsl_uri,
-                    input_tissue_positions,
-                    pixels_per_spot_radius,
-                    obs_df,
-                    obs_id_name,
-                    **ingest_ctx,
+                with _create_or_open_collection(
+                    Collection[AnyTileDBObject], obsl_uri, **ingest_ctx
                 ) as obsl:
                     _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
-                    obsl.metadata.update(
-                        {"soma_asset_transform_loc": spots_to_coords.to_json()}
-                    )
+
+                    loc_uri = f"{obsl_uri}/loc"
+                    # Write spot data and add to the scene.
+                    with _write_visium_spot_dataframe(
+                        loc_uri,
+                        input_tissue_positions,
+                        pixels_per_spot_radius,
+                        obs_df,
+                        obs_id_name,
+                        **ingest_ctx,
+                    ) as loc:
+                        _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
+                        loc.metadata.update(
+                            {"soma_asset_transform_loc": spots_to_coords.to_json()}
+                        )
 
                 varl_uri = f"{scene_uri}/varl"
                 with _create_or_open_collection(
