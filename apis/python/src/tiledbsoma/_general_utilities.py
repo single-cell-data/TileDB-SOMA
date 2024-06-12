@@ -8,6 +8,7 @@
 import os
 import platform
 import sys
+import warnings
 from re import fullmatch
 
 import tiledb
@@ -50,6 +51,19 @@ def get_implementation_version() -> str:
             return importlib.metadata.version("tiledbsoma")
         except importlib.metadata.PackageNotFoundError:
             return "unknown"
+
+
+def assert_version_before(major: int, minor: int) -> None:
+    version_string = get_implementation_version()
+    if version_string == "unknown":
+        warnings.warn(
+            "`assert_version_before` could not retrieve the current "
+            "implementation version"
+        )
+        return
+
+    version = version_string.split(".")
+    assert (int(version[0]), int(version[1])) < (major, minor)
 
 
 def get_storage_engine() -> str:

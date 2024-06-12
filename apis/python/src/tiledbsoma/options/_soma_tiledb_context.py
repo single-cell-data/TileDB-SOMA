@@ -7,6 +7,7 @@ import datetime
 import functools
 import threading
 import time
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, Literal, Mapping, Optional, Union
 
@@ -16,8 +17,19 @@ from typing_extensions import Self
 import tiledb
 
 from .. import pytiledbsoma as clib
+from .._general_utilities import assert_version_before
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
+
+
+def _warn_ctx_deprecation() -> None:
+    assert_version_before(1, 14)
+    warnings.warn(
+        "tiledb_ctx is now deprecated for removal in 1.14. "
+        "Use tiledb_config instead by passing "
+        "SOMATileDBContext(tiledb_config=ctx.config().dict()).",
+        DeprecationWarning,
+    )
 
 
 def _default_config(
@@ -118,6 +130,9 @@ class SOMATileDBContext(ContextBase):
                 provided, a new ThreadPoolExecutor will be created with
                 default settings.
         """
+        if tiledb_ctx is not None:
+            _warn_ctx_deprecation()
+
         if tiledb_ctx is not None and tiledb_config is not None:
             raise ValueError(
                 "only one of tiledb_ctx or tiledb_config"
@@ -175,6 +190,8 @@ class SOMATileDBContext(ContextBase):
     @property
     def tiledb_ctx(self) -> tiledb.Ctx:
         """The TileDB-Py Context for this SOMA context."""
+        _warn_ctx_deprecation()
+
         with self._lock:
             if self._tiledb_ctx is None:
                 if self._initial_config is None:
@@ -204,7 +221,7 @@ class SOMATileDBContext(ContextBase):
 
         Returns a new dict with the contents. Caller must hold ``_lock``.
         """
-        if self._tiledb_ctx is None:
+        if self._native_context is None:
             # Our TileDB Context has not yet been built.
             # We return what will be passed into `tiledb.Ctx()`.
             return (
@@ -213,7 +230,7 @@ class SOMATileDBContext(ContextBase):
                 else _default_config({})
             )
         # We *do* have a TileDB Context. Return its actual config.
-        return dict(self._tiledb_ctx.config())
+        return dict(self._native_context.config())
 
     def replace(
         self,
@@ -251,6 +268,9 @@ class SOMATileDBContext(ContextBase):
             ...     tiledb_config={"vfs.s3.region": None})
         """
         with self._lock:
+            if tiledb_ctx is not None:
+                _warn_ctx_deprecation()
+
             if tiledb_config is not None:
                 if tiledb_ctx:
                     raise ValueError(
