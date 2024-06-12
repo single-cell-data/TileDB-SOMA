@@ -583,6 +583,40 @@ ArrowTable SOMAArray::_cast_table(
                         "[SOMAArray] {} requires dictionary entry", name));
                 }
 
+                if (strcmp(dict_sch_->format, "b") == 0) {
+                    const void* data;
+                    if (dict_arr_->n_buffers == 3) {
+                        data = dict_arr_->buffers[2];
+                    } else {
+                        data = dict_arr_->buffers[1];
+                    }
+
+                    auto sz = dict_arr_->length;
+
+                    std::vector<uint8_t> casted;
+                    for (int64_t i = 0; i * 8 < sz; ++i) {
+                        uint8_t byte = ((uint8_t*)data)[i];
+                        for (int64_t j = 0; j < 8; ++j) {
+                            casted.push_back((uint8_t)((byte >> j) & 0x01));
+                        }
+                    }
+
+                    dict_sch_->format = "C";
+                    if (dict_arr_->n_buffers == 3) {
+                        dict_arr_->buffers[2] = malloc(sizeof(uint8_t) * sz);
+                        std::memcpy(
+                            (void*)dict_arr_->buffers[2],
+                            casted.data(),
+                            sizeof(uint8_t) * sz);
+                    } else {
+                        dict_arr_->buffers[1] = malloc(sizeof(uint8_t) * sz);
+                        std::memcpy(
+                            (void*)dict_arr_->buffers[1],
+                            casted.data(),
+                            sizeof(uint8_t) * sz);
+                    }
+                }
+
                 auto extended_enmr = extend_enumeration(
                     dict_sch_, dict_arr_, arrow_sch_, arrow_arr_);
             }
