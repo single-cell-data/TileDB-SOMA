@@ -19,7 +19,7 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
-from ._general_utilities import get_implementation_version
+from ._general_utilities import assert_version_before
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
@@ -453,8 +453,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
-            version = get_implementation_version().split(".")
-            assert (int(version[0]), int(version[1])) < (1, 13)
+            assert_version_before(1, 13)
             warnings.warn(
                 "The write parameter now takes in TileDBWriteOptions "
                 "instead of TileDBCreateOptions. This warning will be removed "
