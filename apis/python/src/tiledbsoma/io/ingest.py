@@ -54,7 +54,7 @@ from .. import (
     eta,
     logging,
 )
-from .._arrow_types import df_to_arrow, is_string_dtypelike, tiledb_type_from_arrow_type
+from .._arrow_types import df_to_arrow, tiledb_type_from_arrow_type
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -1557,15 +1557,20 @@ def _update_dataframe(
         # An update can create (or drop) columns, or mutate existing ones.  A
         # brand-new column might have nulls in it -- or it might not.  And a
         # subsequent mutator-update might set null values to non-null -- or vice
-        # versa. Therefore we must be careful to set nullability for all types
-        # we want to be nullable: principal use-case being pd.NA / NaN in
-        # string columns which map to TileDB nullity.
+        # versa. Therefore we must be careful to set nullability for all types.
         #
         # Note: this must match what DataFrame.create does:
         # * DataFrame.create sets nullability for obs/var columns on initial ingest
         # * Here, we set nullabiliity for obs/var columns on update_obs
         # Users should get the same behavior either way.
-        nullable = is_string_dtypelike(dtype)
+        #
+        # Note: this is specific to tiledbsoma.io.
+        # * In the SOMA API -- e.g. soma.DataFrame.create -- users bring their
+        #   own Arrow schema (including nullabilities) and we must do what they
+        #   say.
+        # * In the tiledbsoma.io API, users bring their AnnData objects, and
+        #   we compute Arrow schemas on their behalf, and we must accommodate
+        #   reasonable/predictable needs.
 
         se.add_attribute(
             tiledb.Attr(
@@ -1573,7 +1578,7 @@ def _update_dataframe(
                 dtype=dtype,
                 filters=filters,
                 enum_label=enum_label,
-                nullable=nullable,
+                nullable=True,
             )
         )
 

@@ -276,14 +276,14 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
     # Two ways to test:
     #
     # One way:
-    # * Create a string column with non-nulls before from_anndata
-    # * Ingest, having that new column with non-nulls
-    # * Call update_obs to set the column to have nulls
+    # * Create columns with non-nulls before from_anndata
+    # * Ingest, having those new column with non-nulls
+    # * Call update_obs to set the columns to have nulls
     #
     # Other way:
-    # * Ingest, without any new column
-    # * Call update_obs once to add the new column with non-null values
-    # * Call update_obs again to add the new column with null values
+    # * Ingest, without any new columns
+    # * Call update_obs once to add the new columns with non-null values
+    # * Call update_obs again to add the new columns with null values
 
     if separate_ingest:
         tiledbsoma.io.from_anndata(
@@ -294,10 +294,12 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
         )
 
         conftest_pbmc3k_adata.obs["batch_id"] = "testing"
+        conftest_pbmc3k_adata.obs["myfloat"] = 12.34
         verify_updates(uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var)
 
     else:
         conftest_pbmc3k_adata.obs["batch_id"] = "testing"
+        conftest_pbmc3k_adata.obs["myfloat"] = 12.34
 
         tiledbsoma.io.from_anndata(
             uri,
@@ -307,6 +309,7 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
         )
 
     conftest_pbmc3k_adata.obs["batch_id"] = pd.NA
+    conftest_pbmc3k_adata.obs["myfloat"] = np.nan
     # We need nan_safe since pd.NA != pd.NA
     verify_updates(
         uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var, nan_safe=True

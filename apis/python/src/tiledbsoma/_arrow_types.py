@@ -229,8 +229,33 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     nullable_fields = set()
     # Not for name, col in df.items() since we need df[k] on the left-hand sides
     for key in df:
-        if df[key].isnull().any():
-            nullable_fields.add(key)
+        # Make attributes nullable. Context:
+        # * df_to_arrow is _solely_ for use of tiledbsoma.io
+        #   o Anyone calling the SOMA API directly has user-provided Arrow
+        #     schema which must be respected
+        #   o Anyone calling tiledbsoma.io -- including from_h5ad/from_anndata,
+        #     and update_obs/update_var -- does not provide an Arrow schema
+        #     explicitly.  We compute an Arrow schema for them here.
+        # * Even when the _initial_ data is all non-null down a particular
+        #   string column, there are two ways a _subsequent_ write can provide
+        #   nulls: append-mode ingest, or, update_obs/update_var wherein the new
+        #   data has nulls even when the data used at schema-create time was
+        #   non-null.
+        # * We have no way of knowing at initial ingest time whether or not
+        #   users will later be appending, or updating, with null data.
+        # * Note that Arrow has a per-field nullable flag in its schema metadata
+        #   -- and so do TileDB array schemas.
+        #
+        # Note in particular this is for the use of tiledbsoma.io:
+        #
+        # * In the tiledbsoma API (e.g. DataFrame.create) the user passes an
+        #   Arrow schema and we respect it as-is. They specify nullability, or
+        #   not, as they wish.
+        # * In tiledbsoma.io, the user-provided inputs are AnnData objects.
+        #   We compute the Arrow schema _for_ them. And we must accommodate
+        #   reasonable/predictable needs.
+
+        nullable_fields.add(key)
 
         # Handle special cases for all null columns where the dtype is "object"
         # or "category" and must be explicitly casted to the correct pandas
@@ -264,31 +289,11 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
                 values=column, categories=categories, ordered=ordered
             )
 
-    # Always make string columns nullable. Context:
-    # * df_to_arrow is _solely_ for use of tiledbsoma.io
-    #   o Anyone calling the SOMA API directly has user-provided Arrow schema which
-    #     must be respected
-    #   o Anyone calling tiledbsoma.io -- including from_h5ad/from_anndata, and
-    #     update_obs/update_var -- does not provide an Arrow schema explicitly.
-    #     We compute an Arrow schema for them here.
-    # * Even when the _initial_ data is all non-null down a particular string
-    #   column, there are two ways a _subsequent_ write can provide nulls:
-    #   append-mode ingest, or, update_obs/update_var wherein the new data has
-    #   nulls even when the data used at schema-create time was non-null.
-    # * We have no way of knowing at initial ingest time whether or not users
-    #   will later be appending, or updating, with null data.
-    # * Note that Arrow has a per-field nullable flag in its schema metadata
-    #   -- and so do TileDB array schemas.
-    for key in df:
-        if is_string_dtype(df[key].dtype):
-            nullable_fields.add(key)
-
     arrow_table = pa.Table.from_pandas(df)
 
-    if nullable_fields:
-        md = arrow_table.schema.metadata
-        md.update(dict.fromkeys(nullable_fields, "nullable"))
-        arrow_table = arrow_table.replace_schema_metadata(md)
+    md = arrow_table.schema.metadata
+    md.update(dict.fromkeys(nullable_fields, "nullable"))
+    arrow_table = arrow_table.replace_schema_metadata(md)
 
     # For tiledbsoma.io (for which this method exists) _any_ dataset can be appended to
     # later on. This means that on fresh ingest we must use a larger bit-width than
