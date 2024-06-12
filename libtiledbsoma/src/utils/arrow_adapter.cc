@@ -454,11 +454,14 @@ tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
         });
 
     std::map<std::string, tiledb_layout_t> convert_order = {
+        {"row_major", TILEDB_ROW_MAJOR},
         {"row-major", TILEDB_ROW_MAJOR},
         {"row", TILEDB_ROW_MAJOR},
+        {"col_major", TILEDB_COL_MAJOR},
         {"col-major", TILEDB_COL_MAJOR},
         {"column-major", TILEDB_COL_MAJOR},
         {"col", TILEDB_COL_MAJOR},
+        {"global_order", TILEDB_GLOBAL_ORDER},
         {"hilbert", TILEDB_HILBERT},
         {"unordered", TILEDB_UNORDERED},
     };
