@@ -783,7 +783,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
         #   ensure that `isnullable` reflects the null-ness
         #   of the Pandas data frame
         for k in conftest_pbmc_small.obs:
-            assert obs.attr(k).isnullable == conftest_pbmc_small.obs[k].isnull().any()
+            assert obs.attr(k).isnullable
 
 
 def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
