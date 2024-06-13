@@ -29,6 +29,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+import pyarrow.compute as pacomp
 import scanpy
 from anndata import AnnData
 from PIL import Image
@@ -44,8 +45,15 @@ from .. import (
     ScaleTransform,
     Scene,
     SparseNDArray,
+    _util,
+    logging,
 )
 from .._constants import SOMA_JOINID
+from .._exception import (
+    AlreadyExistsError,
+    NotCreateableError,
+    SOMAError,
+)
 from .._tiledb_object import AnyTileDBObject
 from .._types import IngestMode
 from ..io import from_anndata
@@ -54,8 +62,11 @@ from ..io.ingest import (
     IngestionParams,
     _create_or_open_collection,
     _maybe_set,
+    _write_arrow_table,
     _write_dataframe_impl,
+    add_metadata,
 )
+from ..options._tiledb_create_options import TileDBCreateOptions
 
 if TYPE_CHECKING:
     from somacore.options import PlatformConfig
@@ -83,6 +94,8 @@ def from_cxg_spatial_h5ad(
     registration_mapping: Optional["ExperimentAmbientLabelMapping"] = None,
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
+    write_obs_scene: bool = True,
+    write_var_scene: bool = True,
 ) -> str:
     """
     This function reads cellxgene schema compliant H5AD file and writes
@@ -168,6 +181,8 @@ def from_cxg_spatial_h5ad(
         input_lowres=image_paths["lowres"],
         input_fullres=image_paths["fullres"],
         input_tissue_positions=Path(tissue_positions_file_path),
+        write_obs_scene=write_obs_scene,
+        write_var_scene=write_var_scene,
     )
 
 
@@ -190,6 +205,8 @@ def from_visium(
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
     use_raw_counts: bool = True,
+    write_obs_scene: bool = False,
+    write_var_scene: bool = False,
 ) -> str:
     """Reads a 10x Visium dataset and writes it to an :class:`Experiment`.
 
@@ -255,6 +272,8 @@ def from_visium(
         input_lowres=input_lowres,
         input_fullres=input_fullres,
         input_tissue_positions=input_tissue_positions,
+        write_obs_scene=write_obs_scene,
+        write_var_scene=write_var_scene,
     )
 
 
@@ -281,6 +300,8 @@ def _write_visium_data_to_experiment_uri(
     input_lowres: Union[None, str, Path],
     input_fullres: Union[None, str, Path],
     input_tissue_positions: Path,
+    write_obs_scene: bool = False,
+    write_var_scene: bool = False,
 ) -> str:
     uri = from_anndata(
         experiment_uri,
@@ -323,18 +344,22 @@ def _write_visium_data_to_experiment_uri(
 
     # TODO: The `obs_df` should be in dataframe with only soma_joinid and obs_id. Not
     # currently bothering to check/enforce this.
-    with Experiment.open(uri, mode="r", context=context) as experiment:
-        obs_df = experiment.obs.read().concat().to_pandas()
+    with Experiment.open(uri, mode="r", context=context) as exp:
+        obs_df = exp.obs.read().concat().to_pandas()
+        if write_obs_scene or write_var_scene:
+            x_layer = exp.ms[measurement_name].X[X_layer_name].read().tables().concat()
+            if write_obs_scene:
+                obs_id = pacomp.unique(x_layer["soma_dim_0"])
+            if write_var_scene:
+                var_id = pacomp.unique(x_layer["soma_dim_1"])
 
     # Add spatial information to the experiment.
-    with Experiment.open(uri, mode="w", context=context) as experiment:
+    with Experiment.open(uri, mode="w", context=context) as exp:
         spatial_uri = f"{uri}/spatial"
         with _create_or_open_collection(
             Collection[Union[DataFrame, Scene]], spatial_uri, **ingest_ctx
         ) as spatial:
-            _maybe_set(
-                experiment, "spatial", spatial, use_relative_uri=use_relative_uri
-            )
+            _maybe_set(exp, "spatial", spatial, use_relative_uri=use_relative_uri)
             scene_uri = f"{spatial_uri}/{scene_name}"
             with _create_or_open_collection(Scene, scene_uri, **ingest_ctx) as scene:
                 _maybe_set(
@@ -385,7 +410,82 @@ def _write_visium_data_to_experiment_uri(
                     Collection[Collection[AnyTileDBObject]], varl_uri, **ingest_ctx
                 ) as varl:
                     _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
-        return uri
+
+        # Create the obs presence matrix.
+        if write_obs_scene:
+            obs_scene_uri = f"{uri}/obs_scene"
+            obs_scene = _write_scene_presence_dataframe(
+                obs_id, scene_name, obs_scene_uri, **ingest_ctx
+            )
+            _maybe_set(exp, "obs_scene", obs_scene, use_relative_uri=use_relative_uri)
+        if write_var_scene:
+            var_scene_uri = f"{uri}/ms/{measurement_name}/var_scene"
+            var_scene = _write_scene_presence_dataframe(
+                var_id, scene_name, var_scene_uri, **ingest_ctx
+            )
+            meas = exp.ms[measurement_name]
+            _maybe_set(meas, "var_scene", var_scene, use_relative_uri=use_relative_uri)
+    return uri
+
+
+def _write_scene_presence_dataframe(
+    joinids: pa.array,
+    scene_id: str,
+    df_uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    additional_metadata: "AdditionalMetadata" = None,
+    platform_config: Optional["PlatformConfig"] = None,
+    context: Optional["SOMATileDBContext"] = None,
+) -> DataFrame:
+    s = _util.get_start_stamp()
+    arrow_table = None  # TODO: fixme
+
+    try:
+        soma_df = DataFrame.create(
+            df_uri,
+            schema=pa.schema(
+                [
+                    ("soma_joinid", pa.int64()),
+                    ("scene_id", pa.string()),
+                    ("data", pa.bool_()),
+                ]
+            ),
+            index_column_names=("soma_joinid", "scene_id"),
+            platform_config=platform_config,
+            context=context,
+        )
+    except (AlreadyExistsError, NotCreateableError):
+        if ingestion_params.error_if_already_exists:
+            raise SOMAError(f"{df_uri} already exists")
+        soma_df = DataFrame.open(df_uri, "w", context=context)
+
+    if ingestion_params.write_schema_no_data:
+        logging.log_io(
+            f"Wrote schema {df_uri}",
+            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {df_uri}"),
+        )
+        add_metadata(soma_df, additional_metadata)
+        return soma_df
+
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+
+    if joinids:
+        nvalues = len(joinids)
+        arrow_table = pa.Table.from_pydict(
+            {
+                "soma_joinid": joinids,
+                "scene_id": nvalues * [scene_id],
+                "data": nvalues * [True],
+            }
+        )
+        _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
+
+    logging.log_io(
+        f"Wrote   {df_uri}",
+        _util.format_elapsed(s, f"FINISH WRITING {df_uri}"),
+    )
+    return soma_df
 
 
 def _write_visium_spot_dataframe(
