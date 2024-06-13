@@ -5,8 +5,8 @@ createSchemaFromArrow <- function(uri, nasp, nadimap, nadimsp, sparse, datatype,
     invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxptr))
 }
 
-writeArrayFromArrow <- function(uri, naap, nasp, config = NULL) {
-    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, config))
+writeArrayFromArrow <- function(uri, naap, nasp, arraytype = "", config = NULL) {
+    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, arraytype, config))
 }
 
 reindex_create <- function() {

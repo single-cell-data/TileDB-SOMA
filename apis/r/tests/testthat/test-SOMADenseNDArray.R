@@ -1,6 +1,6 @@
 test_that("SOMADenseNDArray creation", {
   skip_if(!extended_tests())
-  uri <- withr::local_tempdir("dense-ndarray")
+  uri <- tempfile(pattern="dense-ndarray")
 
   ndarray <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(10, 5))
 
@@ -83,7 +83,7 @@ test_that("SOMADenseNDArray creation", {
 
 test_that("platform_config is respected", {
   skip_if(!extended_tests())
-  uri <- withr::local_tempdir("soma-dense-nd-array")
+  uri <- tempfile(pattern="soma-dense-nd-array")
 
   # Set tiledb create options
   cfg <- PlatformConfig$new()
@@ -184,7 +184,7 @@ test_that("platform_config is respected", {
 
 test_that("platform_config defaults", {
   skip_if(!extended_tests())
-  uri <- withr::local_tempdir("soma-dense-nd-array")
+  uri <- tempfile(pattern="soma-dense-nd-array")
 
   # Set tiledb create options
   cfg <- PlatformConfig$new()
@@ -221,7 +221,7 @@ test_that("platform_config defaults", {
 
 test_that("SOMADenseNDArray timestamped ops", {
   skip_if(!extended_tests())
-  uri <- withr::local_tempdir("soma-dense-nd-array-timestamps")
+  uri <- tempfile(pattern="soma-dense-nd-array-timestamps")
 
   t10 <- Sys.time()
   dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2))
@@ -236,6 +236,7 @@ test_that("SOMADenseNDArray timestamped ops", {
 
   t20 <- Sys.time()
   dnda <- SOMADenseNDArrayOpen(uri=uri, mode="WRITE")
+  dnda$set_data_type(arrow::int16())
   M2 <- matrix(rep(1, 4), 2, 2)
   dnda$write(M2)
   dnda$close()

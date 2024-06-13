@@ -93,8 +93,7 @@ SOMADenseNDArray <- R6::R6Class(
 
       tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
       m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
-                  nrow = nrow,
-                  ncol = ncol,
+                  nrow = nrow, ncol = ncol,
                   byrow = result_order == "ROW_MAJOR")
 
     },
@@ -111,6 +110,7 @@ SOMADenseNDArray <- R6::R6Class(
     write = function(values, coords = NULL) {
       private$check_open_for_write()
 
+      spdl::debug("[SOMADenseNDArray::write] entered")
       stopifnot(
         "'values' must be a matrix" = is.matrix(values)
       )
@@ -128,11 +128,21 @@ SOMADenseNDArray <- R6::R6Class(
 
       arr <- self$object
       tiledb::query_layout(arr) <- "COL_MAJOR"
-      arr[] <- values
+      spdl::debug("[SOMADenseNDArray::write] about to call write")
+      arrsch <- arrow::schema(arrow::field("soma_data", private$.type))
+      tbl <- arrow::arrow_table(soma_data = values, schema = arrsch)
+
+      spdl::debug("[SOMADenseNDArray::write] array created")
+      naap <- nanoarrow::nanoarrow_allocate_array()
+      nasp <- nanoarrow::nanoarrow_allocate_schema()
+      arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
+      #arr[] <- values
+      writeArrayFromArrow(self$uri, naap, nasp, "SOMADenseNDArray")
+      spdl::debug("[SOMADenseNDArray::write] written")
 
       # tiledb-r always closes the array after a write operation so we need to
       # manually reopen it until close-on-write is optional
-      self$open("WRITE", internal_use_only = "allowed_use")
+      #self$open("WRITE", internal_use_only = "allowed_use")
       invisible(self)
     }
   ),
