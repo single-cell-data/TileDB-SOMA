@@ -135,7 +135,7 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
         ctx,
         platform_config,
         timestamp);
-    
+
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
@@ -201,7 +201,7 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
         ctx,
         platform_config,
         timestamp);
-    
+
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
@@ -269,7 +269,7 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
         ctx,
         platform_config,
         timestamp);
-    
+
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
