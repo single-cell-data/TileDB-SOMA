@@ -48,24 +48,25 @@ void SOMAExperiment::create(
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
-    std::string exp_uri(uri);
+    std::filesystem::path experiment_uri(uri);
 
-    SOMAGroup::create(ctx, exp_uri, "SOMAExperiment", timestamp);
+    SOMAGroup::create(
+        ctx, experiment_uri.string(), "SOMAExperiment", timestamp);
     SOMADataFrame::create(
-        exp_uri + "/obs",
+        (experiment_uri / "obs").string(),
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
         platform_config,
         timestamp);
-    SOMACollection::create(exp_uri + "/ms", ctx, timestamp);
+    SOMACollection::create((experiment_uri / "ms").string(), ctx, timestamp);
 
     auto name = std::string(std::filesystem::path(uri).filename());
     auto group = SOMAGroup::open(
-        OpenMode::write, exp_uri, ctx, name, timestamp);
-    group->set(exp_uri + "/obs", URIType::absolute, "obs");
-    group->set(exp_uri + "/ms", URIType::absolute, "ms");
+        OpenMode::write, experiment_uri.string(), ctx, name, timestamp);
+    group->set((experiment_uri / "obs").string(), URIType::absolute, "obs");
+    group->set((experiment_uri / "ms").string(), URIType::absolute, "ms");
     group->close();
 }
 
@@ -76,4 +77,30 @@ std::unique_ptr<SOMAExperiment> SOMAExperiment::open(
     std::optional<TimestampRange> timestamp) {
     return std::make_unique<SOMAExperiment>(mode, uri, ctx, timestamp);
 }
+
+std::shared_ptr<SOMADataFrame> SOMAExperiment::obs(
+    std::vector<std::string> column_names, ResultOrder result_order) {
+    if (obs_ == nullptr) {
+        obs_ = SOMADataFrame::open(
+            (std::filesystem::path(uri()) / "obs").string(),
+            OpenMode::read,
+            ctx(),
+            column_names,
+            result_order,
+            timestamp());
+    }
+    return obs_;
+}
+
+std::shared_ptr<SOMACollection> SOMAExperiment::ms() {
+    if (ms_ == nullptr) {
+        ms_ = SOMACollection::open(
+            (std::filesystem::path(uri()) / "ms").string(),
+            OpenMode::read,
+            ctx(),
+            timestamp());
+    }
+    return ms_;
+}
+
 }  // namespace tiledbsoma

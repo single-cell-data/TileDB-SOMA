@@ -95,9 +95,66 @@ class SOMAMeasurement : public SOMACollection {
     }
 
     SOMAMeasurement() = delete;
-    SOMAMeasurement(const SOMAMeasurement&) = default;
-    SOMAMeasurement(SOMAMeasurement&&) = default;
+    SOMAMeasurement(const SOMAMeasurement&) = delete;
+    SOMAMeasurement(SOMAMeasurement&&) = delete;
     ~SOMAMeasurement() = default;
+
+    /**
+     * @brief Get the primary annotations on the variable axis
+     * @param column_names A list of column names to use as user-defined
+     index
+     * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns
+     must
+     * exist in the schema, and at least one index column name is required.
+     * @param result_order Read result order: automatic (default), rowmajor,
+     or
+     * colmajor
+     *
+     * @return std::shared_ptr<SOMADataFrame>
+     */
+    std::shared_ptr<SOMADataFrame> var(
+        std::vector<std::string> column_names = {},
+        ResultOrder result_order = ResultOrder::automatic);
+
+    /**
+     * @brief Get collection of matrices, each containing measured
+     * feature values
+     *
+     * @return std::shared_ptr<SOMACollection>
+     */
+    std::shared_ptr<SOMACollection> X();
+
+    /**
+     * @brief Get collection of dense matrices containing annotations of
+     * each obs row
+     *
+     * @return std::shared_ptr<SOMACollection>
+     */
+    std::shared_ptr<SOMACollection> obsm();
+
+    /**
+     * @brief Get the collection of sparse matrices containing pairwise
+     * annotations of each obs row
+     *
+     * @return std::shared_ptr<SOMACollection>
+     */
+    std::shared_ptr<SOMACollection> obsp();
+
+    /**
+     * @brief Get the collection of dense matrices containing annotations of
+     * each var row
+     *
+     * @return std::shared_ptr<SOMACollection>
+     */
+    std::shared_ptr<SOMACollection> varm();
+
+    /**
+     * @brief Get the collection of sparse matrices containing pairwise
+     * annotations of each var row
+     *
+     * @return std::shared_ptr<SOMACollection>
+     */
+    std::shared_ptr<SOMACollection> varp();
 
    private:
     //===================================================================
@@ -105,24 +162,24 @@ class SOMAMeasurement : public SOMACollection {
     //===================================================================
 
     // Primary annotations on the variable axis
-    std::shared_ptr<SOMADataFrame> var_;
+    std::shared_ptr<SOMADataFrame> var_ = nullptr;
 
-    // A collection of matrices, each containing measured feature values
-    std::shared_ptr<SOMACollection> X_;
+    // A collection of matrices, each containing measured feature vaues
+    std::shared_ptr<SOMACollection> X_ = nullptr;
 
     // A collection of dense matrices containing annotations of each obs row
-    std::shared_ptr<SOMACollection> obsm_;
+    std::shared_ptr<SOMACollection> obsm_ = nullptr;
 
     // A collection of sparse matrices containing pairwise annotations of each
     // obs row
-    std::shared_ptr<SOMACollection> obsp_;
+    std::shared_ptr<SOMACollection> obsp_ = nullptr;
 
     // A collection of dense matrices containing annotations of each var row
-    std::shared_ptr<SOMACollection> varm_;
+    std::shared_ptr<SOMACollection> varm_ = nullptr;
 
     // A collection of sparse matrices containing pairwise annotations of each
     // var row
-    std::shared_ptr<SOMACollection> varp_;
+    std::shared_ptr<SOMACollection> varp_ = nullptr;
 };
 }  // namespace tiledbsoma
 
