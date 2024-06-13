@@ -57,7 +57,16 @@ void load_soma_group(py::module& m) {
     py::class_<SOMAGroup, SOMAObject>(m, "SOMAGroup")
         .def_static(
             "create",
-            &SOMAGroup::create,
+            [](std::shared_ptr<SOMAContext> ctx,
+               std::string_view uri,
+               std::string soma_type,
+               std::optional<TimestampRange> timestamp) {
+                try {
+                    SOMAGroup::create(ctx, uri, soma_type, timestamp);
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
             py::kw_only(),
             "ctx"_a,
             "uri"_a,
