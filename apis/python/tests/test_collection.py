@@ -11,7 +11,7 @@ from typeguard import suppress_type_checks
 from typing_extensions import Literal
 
 import tiledbsoma as soma
-from tiledbsoma import _collection, _factory, _tiledb_object
+from tiledbsoma import _collection, _factory, _soma_object
 from tiledbsoma._exception import DoesNotExistError
 from tiledbsoma.options import SOMATileDBContext
 
@@ -350,9 +350,9 @@ def test_cascading_close(tmp_path: pathlib.Path):
     un_corvid.close()
     assert un_corvid.closed
 
-    all_elements: List[_tiledb_object.AnySOMAObject] = []
+    all_elements: List[_soma_object.AnySOMAObject] = []
 
-    def crawl(obj: _tiledb_object.AnySOMAObject):
+    def crawl(obj: _soma_object.AnySOMAObject):
         all_elements.append(obj)
         if isinstance(obj, _collection.CollectionBase):
             for val in obj.values():

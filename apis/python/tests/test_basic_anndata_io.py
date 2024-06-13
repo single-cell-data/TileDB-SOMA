@@ -14,7 +14,7 @@ import somacore
 import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
-from tiledbsoma._tiledb_object import SOMAObject
+from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma._util import verify_obs_and_var_eq
 import tiledb
 
