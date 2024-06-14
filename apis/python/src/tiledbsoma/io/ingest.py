@@ -355,7 +355,7 @@ def from_h5ad(
 
     logging.log_io(None, f"START  READING {input_path}")
 
-    with read_h5ad(input_path, mode="r", ctx=context.tiledb_ctx) as anndata:
+    with read_h5ad(input_path, mode="r", ctx=context) as anndata:
         logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
 
         uri = from_anndata(

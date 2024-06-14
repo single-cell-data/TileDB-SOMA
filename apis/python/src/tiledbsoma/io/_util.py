@@ -15,19 +15,21 @@ from unittest import mock
 import anndata as ad
 from anndata._core import file_backing
 
-import tiledb
-
+from .. import pytiledbsoma as clib
 from .._types import Path
+from ..options import SOMATileDBContext
 
 
 @contextmanager
 def read_h5ad(
-    input_path: Path, *, mode: str = "r", ctx: Optional[tiledb.Ctx] = None
+    input_path: Path, *, mode: str = "r", ctx: Optional[SOMATileDBContext] = None
 ) -> Iterator[ad.AnnData]:
     """
     This lets us ingest H5AD with "r" (backed mode) from S3 URIs.
     """
-    input_handle = tiledb.VFS(ctx=ctx).open(input_path)
+    ctx = ctx or SOMATileDBContext()
+    vfs = clib.VFS(ctx.native_context)
+    input_handle = clib.VFSFilebuf(vfs).open(str(input_path))
     try:
         with _hack_patch_anndata():
             anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)
