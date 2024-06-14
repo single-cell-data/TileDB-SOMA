@@ -47,8 +47,19 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_collection(py::module& m) {
-    py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection");
-    py::class_<SOMAExperiment, SOMAGroup, SOMAObject>(m, "SOMAExperiment");
-    py::class_<SOMAMeasurement, SOMAGroup, SOMAObject>(m, "SOMAMeasurement");
+    py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection")
+        .def(
+            "__iter__",
+            [](SOMACollection& collection) {
+                return py::make_iterator(collection.begin(), collection.end());
+            },
+            py::keep_alive<0, 1>())
+        .def("get", &SOMACollection::get);
+
+    py::class_<SOMAExperiment, SOMACollection, SOMAGroup, SOMAObject>(
+        m, "SOMAExperiment");
+
+    py::class_<SOMAMeasurement, SOMACollection, SOMAGroup, SOMAObject>(
+        m, "SOMAMeasurement");
 }
 }  // namespace libtiledbsomacpp

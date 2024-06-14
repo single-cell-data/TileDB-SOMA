@@ -189,4 +189,38 @@ std::optional<py::object> to_table(
     return std::nullopt;
 }
 
+py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
+    py::dict results;
+
+    for (auto [key, val] : metadata_mapping) {
+        auto [tdb_type, value_num, value] = val;
+
+        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII) {
+            auto py_buf = py::array(py::dtype("|S1"), value_num, value);
+            auto res = py_buf.attr("tobytes")().attr("decode")("UTF-8");
+            results[py::str(key)] = res;
+        } else {
+            py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+            auto res = py::array(value_type, value_num, value).attr("item")(0);
+            results[py::str(key)] = res;
+        }
+    }
+    return results;
+}
+
+void set_metadata(SOMAObject& soma_object, const std::string& key, py::array value) {
+    tiledb_datatype_t value_type = np_to_tdb_dtype(value.dtype());
+
+    if (is_tdb_str(value_type) && value.size() > 1)
+        throw py::type_error("array/list of strings not supported");
+
+    py::buffer_info value_buffer = value.request();
+    if (value_buffer.ndim != 1)
+        throw py::type_error("Only 1D Numpy arrays can be stored as metadata");
+
+    auto value_num = is_tdb_str(value_type) ? value.nbytes() : value.size();
+    soma_object.set_metadata(
+        key, value_type, value_num, value_num > 0 ? value.data() : nullptr);
+}
+
 }  // namespace tiledbsoma
