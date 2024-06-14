@@ -245,43 +245,6 @@ class GroupEntry:
             return GroupEntry(uri, SOMAGroupWrapper)
         raise SOMAError(f"internal error: unknown object type {uri}")
 
-_GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
-
-
-class SOMAGroupWrapper(Wrapper[_GrpType]):
-    """Base class for Pybind11 SOMAGroupWrapper handles."""
-
-    _GROUP_WRAPPED_TYPE: Type[_GrpType]
-
-    clib_type = "SOMAGroup"
-
-    @classmethod
-    def _opener(
-        cls,
-        uri: str,
-        mode: options.OpenMode,
-        context: SOMATileDBContext,
-        timestamp: int,
-    ) -> clib.SOMAGroup:
-        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        return cls._GROUP_WRAPPED_TYPE.open(
-            uri,
-            mode=open_mode,
-            context=context.native_context,
-            timestamp=(0, timestamp),
-        )
-
-    def _do_initial_reads(self, group: clib.SOMAGroup) -> None:
-        super()._do_initial_reads(group)
-
-        self.initial_contents = {
-            name: GroupEntry.from_soma_group_entry(entry)
-            for name, entry in group.members().items()
-        }
-
-    @property
-    def meta(self) -> "MetadataWrapper":
-        return self.metadata
 
 _GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
 
