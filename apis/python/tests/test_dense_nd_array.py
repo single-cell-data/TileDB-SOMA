@@ -275,7 +275,7 @@ def test_dense_nd_array_slicing(tmp_path, io):
     cfg = {}
     if "cfg" in io:
         cfg = io["cfg"]
-    context = SOMATileDBContext(tiledb_ctx=tiledb.Ctx(cfg))
+    context = SOMATileDBContext(tiledb_config=cfg)
 
     nr = 4
     nc = 6
