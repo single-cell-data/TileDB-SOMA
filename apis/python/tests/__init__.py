@@ -1,3 +1,10 @@
+# This ABSOLUTELY MUST be imported before pyarrow to avoid abort-traps on MacOS
+# with any pyarrow >= 13.  And the pre-commit hook, isort, et al. MUST NOT be
+# allowed to reorder this.  See also
+# https://github.com/single-cell-data/TileDB-SOMA/issues/1926
+# https://github.com/single-cell-data/TileDB-SOMA/issues/1849
+import tiledb  # noqa E402
+
 import pyarrow as pa
 from typeguard import install_import_hook
 
