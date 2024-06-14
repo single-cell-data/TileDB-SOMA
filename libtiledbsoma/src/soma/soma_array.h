@@ -484,6 +484,8 @@ class SOMAArray : public SOMAObject {
      */
     void write(bool sort_coords = true);
 
+    void update_columns(std::unique_ptr<ArrowSchema> arrow_schema);
+
     /**
      * @brief Consolidates and vacuums fragment metadata and commit files.
      *

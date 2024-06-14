@@ -210,6 +210,8 @@ class ArrowAdapter {
     static std::string_view to_arrow_format(
         tiledb_datatype_t tiledb_dtype, bool use_large = true);
 
+    static bool is_var_arrow_format(const char* format);
+
     /**
      * @brief Get TileDB datatype from Arrow format string.
      *
@@ -243,8 +245,6 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx, std::string name, T* b) {
         return Dimension::create<T>(*ctx, name, {b[0], b[1]}, b[2]);
     }
-
-    static bool _isvar(const char* format);
 
     static FilterList _create_filter_list(
         std::string filters, std::shared_ptr<Context> ctx);

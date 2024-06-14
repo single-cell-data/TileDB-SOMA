@@ -1012,6 +1012,133 @@ void SOMAArray::write(bool sort_coords) {
     array_buffer_ = nullptr;
 }
 
+void SOMAArray::update_columns(std::unique_ptr<ArrowSchema> arrow_schema) {
+    std::vector<std::string> old_cols;
+    for (auto attr : tiledb_schema()->attributes()) {
+        old_cols.push_back(attr.first);
+    }
+    for (auto dim : tiledb_schema()->domain().dimensions()) {
+        old_cols.push_back(dim.name());
+    }
+
+    std::vector<std::string> new_cols;
+    for (auto i = 0; i < arrow_schema->n_children; ++i) {
+        new_cols.push_back(arrow_schema->children[i]->name);
+    }
+
+    std::sort(new_cols.begin(), new_cols.end());
+    std::sort(old_cols.begin(), old_cols.end());
+
+    std::vector<std::string>::iterator it;
+
+    std::vector<std::string> common_cols(old_cols.size() + new_cols.size());
+    it = std::set_intersection(
+        old_cols.begin(),
+        old_cols.end(),
+        new_cols.begin(),
+        new_cols.end(),
+        common_cols.begin());
+    common_cols.resize(it - common_cols.begin());
+    if (!common_cols.empty()) {
+        for (auto name : common_cols) {
+            for (auto i = 0; i < arrow_schema->n_children; ++i) {
+                auto arrow_sch_ = arrow_schema->children[i];
+                if (name != arrow_sch_->name) {
+                    continue;
+                }
+                auto new_type = ArrowAdapter::to_tiledb_format(
+                    arrow_sch_->format);
+                if (!tiledb_schema()->has_attribute(arrow_sch_->name)) {
+                    continue;
+                }
+                auto attr = tiledb_schema()->attribute(arrow_sch_->name);
+                auto old_type = attr.type();
+                auto enmr_name = AttributeExperimental::get_enumeration_name(
+                    *ctx_->tiledb_ctx(), attr);
+
+                if (!enmr_name.has_value() && (new_type != old_type)) {
+                    throw std::invalid_argument(fmt::format(
+                        "Unsupported type update for {}: {} != {}",
+                        arrow_sch_->name,
+                        tiledb::impl::type_to_str(new_type),
+                        tiledb::impl::type_to_str(old_type)));
+                }
+                break;
+            }
+        }
+    }
+
+    std::vector<std::string> drop_cols(old_cols.size());
+    it = std::set_difference(
+        old_cols.begin(),
+        old_cols.end(),
+        new_cols.begin(),
+        new_cols.end(),
+        drop_cols.begin());
+    drop_cols.resize(it - drop_cols.begin());
+
+    if (!drop_cols.empty()) {
+        ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+        for (it = drop_cols.begin(); it != drop_cols.end(); ++it) {
+            if (tiledb_schema()->has_attribute(*it)) {
+                se.drop_attribute(*it);
+            }
+        }
+        se.array_evolve(uri_);
+    }
+
+    std::vector<std::string> add_cols(new_cols.size());
+    it = std::set_difference(
+        new_cols.begin(),
+        new_cols.end(),
+        old_cols.begin(),
+        old_cols.end(),
+        add_cols.begin());
+    add_cols.resize(it - add_cols.begin());
+
+    if (!add_cols.empty()) {
+        ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+        for (it = add_cols.begin(); it != add_cols.end(); ++it) {
+            for (auto i = 0; i < arrow_schema->n_children; ++i) {
+                auto arrow_sch_ = arrow_schema->children[i];
+                if (*it != arrow_sch_->name) {
+                    continue;
+                }
+                if (arrow_sch_->dictionary != nullptr) {
+                    auto enmr_format = arrow_sch_->dictionary->format;
+                    auto enmr_type = ArrowAdapter::to_tiledb_format(
+                        enmr_format);
+                    auto enmr = Enumeration::create_empty(
+                        *ctx_->tiledb_ctx(),
+                        arrow_sch_->name,
+                        enmr_type,
+                        ArrowAdapter::is_var_arrow_format(enmr_format) ?
+                            TILEDB_VAR_NUM :
+                            1,
+                        arrow_sch_->flags & ARROW_FLAG_DICTIONARY_ORDERED);
+                    se.add_enumeration(enmr);
+                }
+                auto type = ArrowAdapter::to_tiledb_format(arrow_sch_->format);
+                Attribute attr(*ctx_->tiledb_ctx(), *it, type);
+                if (arrow_sch_->dictionary != nullptr) {
+                    AttributeExperimental::set_enumeration_name(
+                        *ctx_->tiledb_ctx(), attr, arrow_sch_->name);
+                }
+                se.add_attribute(attr);
+                break;
+            }
+        }
+        se.array_evolve(uri_);
+    }
+
+    // Use the updated array in ManagedQuery
+    if (!drop_cols.empty() || !add_cols.empty()) {
+        arr_->close();
+        arr_->open(TILEDB_WRITE);
+        mq_ = std::make_unique<ManagedQuery>(arr_, ctx_->tiledb_ctx(), name_);
+    }
+}
+
 void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {
     for (auto mode : modes) {
         auto cfg = ctx_->tiledb_ctx()->config();

@@ -40,8 +40,6 @@ from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 from typing_extensions import get_args
 
-import tiledb
-
 from .. import (
     Collection,
     DataFrame,
@@ -54,7 +52,7 @@ from .. import (
     eta,
     logging,
 )
-from .._arrow_types import df_to_arrow, tiledb_type_from_arrow_type
+from .._arrow_types import df_to_arrow
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -1509,6 +1507,21 @@ def _update_dataframe(
         new_data, default_index_name
     )
 
+    old_keys = set(old_sig.keys())
+    new_keys = set(new_sig.keys())
+    common_keys = old_keys.intersection(new_keys)
+
+    msgs = []
+    for key in common_keys:
+        old_type = old_sig[key]
+        new_type = new_sig[key]
+
+        if old_type != new_type:
+            msgs.append(f"{key} type {old_type} != {new_type}")
+    if msgs:
+        msg = ", ".join(msgs)
+        raise ValueError(f"unsupported type updates: {msg}")
+
     with DataFrame.open(
         sdf.uri, mode="r", context=context, platform_config=platform_config
     ) as sdf_r:
@@ -1524,80 +1537,14 @@ def _update_dataframe(
                 f"{caller_name}: old and new data must have the same row count; got {len(old_jids)} != {len(new_jids)}",
             )
 
-    old_keys = set(old_sig.keys())
-    new_keys = set(new_sig.keys())
-    drop_keys = old_keys.difference(new_keys)
-    add_keys = new_keys.difference(old_keys)
-    common_keys = old_keys.intersection(new_keys)
-
-    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
-
-    msgs = []
-    for key in common_keys:
-        old_type = old_sig[key]
-        new_type = new_sig[key]
-
-        if old_type != new_type:
-            msgs.append(f"{key} type {old_type} != {new_type}")
-    if msgs:
-        msg = ", ".join(msgs)
-        raise ValueError(f"unsupported type updates: {msg}")
-
-    se = tiledb.ArraySchemaEvolution(sdf.context.tiledb_ctx)
-    for drop_key in drop_keys:
-        se.drop_attribute(drop_key)
-
-    arrow_table = df_to_arrow(new_data)
-    arrow_schema = arrow_table.schema.remove_metadata()
-
-    for add_key in add_keys:
-        # Don't directly use the new dataframe's dtypes. Go through the
-        # to-Arrow-schema logic, and back, as this recapitulates the original
-        # schema-creation logic.
-        atype = arrow_schema.field(add_key).type
-        dtype = tiledb_type_from_arrow_type(atype)
-
-        enum_label: Optional[str] = None
-        if pa.types.is_dictionary(arrow_table.schema.field(add_key).type):
-            enum_label = add_key
-            dt = cast(pd.CategoricalDtype, new_data[add_key].dtype)
-            se.add_enumeration(
-                tiledb.Enumeration(
-                    name=add_key, ordered=atype.ordered, values=list(dt.categories)
-                )
-            )
-
-        filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
-
-        # An update can create (or drop) columns, or mutate existing ones.  A
-        # brand-new column might have nulls in it -- or it might not.  And a
-        # subsequent mutator-update might set null values to non-null -- or vice
-        # versa. Therefore we must be careful to set nullability for all types.
-        #
-        # Note: this must match what DataFrame.create does:
-        # * DataFrame.create sets nullability for obs/var columns on initial ingest
-        # * Here, we set nullabiliity for obs/var columns on update_obs
-        # Users should get the same behavior either way.
-        #
-        # Note: this is specific to tiledbsoma.io.
-        # * In the SOMA API -- e.g. soma.DataFrame.create -- users bring their
-        #   own Arrow schema (including nullabilities) and we must do what they
-        #   say.
-        # * In the tiledbsoma.io API, users bring their AnnData objects, and
-        #   we compute Arrow schemas on their behalf, and we must accommodate
-        #   reasonable/predictable needs.
-
-        se.add_attribute(
-            tiledb.Attr(
-                name=add_key,
-                dtype=dtype,
-                filters=filters,
-                enum_label=enum_label,
-                nullable=True,
-            )
-        )
-
-    se.array_evolve(uri=sdf.uri)
+        new_data.reset_index(inplace=True)
+        if default_index_name is not None:
+            if default_index_name in new_data:
+                if "index" in new_data:
+                    new_data.drop(columns=["index"], inplace=True)
+            else:
+                new_data.rename(columns={"index": default_index_name}, inplace=True)
+        sdf_r._handle._handle.update(df_to_arrow(new_data).schema)
 
     _write_dataframe(
         df_uri=sdf.uri,
