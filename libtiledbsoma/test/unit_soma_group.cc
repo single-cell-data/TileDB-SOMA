@@ -157,24 +157,25 @@ TEST_CASE("SOMAGroup: basic") {
 
     auto soma_group = SOMAGroup::open(
         OpenMode::write, uri_main_group, ctx, "metadata", TimestampRange(0, 1));
-    soma_group->set(uri_sub_group, URIType::absolute, "subgroup");
-    soma_group->set(uri_sub_array, URIType::absolute, "subarray");
+    soma_group->set(uri_sub_group, URIType::absolute, "subgroup", "SOMAGroup");
+    soma_group->set(uri_sub_array, URIType::absolute, "subarray", "SOMAArray");
     soma_group->close();
 
-    std::map<std::string, std::string> expected_map{
-        {"subgroup", uri_sub_group}, {"subarray", uri_sub_array}};
+    std::map<std::string, SOMAGroupEntry> expected_map{
+        {"subgroup", SOMAGroupEntry(uri_sub_group, "SOMAGroup")},
+        {"subarray", SOMAGroupEntry(uri_sub_array, "SOMAArray")}};
 
     soma_group->open(OpenMode::read, TimestampRange(0, 2));
     REQUIRE(soma_group->ctx() == ctx);
     REQUIRE(soma_group->uri() == uri_main_group);
     REQUIRE(soma_group->count() == 2);
-    REQUIRE(expected_map == soma_group->member_to_uri_mapping());
+    REQUIRE(expected_map == soma_group->members());
     REQUIRE(soma_group->get("subgroup").type() == Object::Type::Group);
     REQUIRE(soma_group->get("subarray").type() == Object::Type::Array);
     soma_group->close();
 
     soma_group->open(OpenMode::write, TimestampRange(0, 3));
-    REQUIRE(expected_map == soma_group->member_to_uri_mapping());
+    REQUIRE(expected_map == soma_group->members());
     soma_group->del("subgroup");
     soma_group->close();
 

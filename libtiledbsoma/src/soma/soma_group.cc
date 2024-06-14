@@ -46,7 +46,11 @@ std::unique_ptr<SOMAGroup> SOMAGroup::create(
     std::string_view uri,
     std::string soma_type,
     std::optional<TimestampRange> timestamp) {
-    Group::create(*ctx->tiledb_ctx(), std::string(uri));
+    try {
+        Group::create(*ctx->tiledb_ctx(), std::string(uri));
+    } catch (TileDBError& e) {
+        throw TileDBSOMAError(e.what());
+    }
 
     auto group = std::make_shared<Group>(
         *ctx->tiledb_ctx(),
@@ -133,7 +137,18 @@ void SOMAGroup::fill_caches() {
 
     for (uint64_t i = 0; i < cache_group_->member_count(); ++i) {
         auto mem = cache_group_->member(i);
-        member_to_uri_[mem.name().value()] = mem.uri();
+        std::string soma_type;
+        switch (mem.type()) {
+            case Object::Type::Array:
+                soma_type = "SOMAArray";
+                break;
+            case Object::Type::Group:
+                soma_type = "SOMAGroup";
+                break;
+            default:
+                throw TileDBSOMAError("Saw invalid TileDB type");
+        }
+        members_[mem.name().value()] = SOMAGroupEntry(mem.uri(), soma_type);
     }
 }
 
@@ -178,13 +193,16 @@ bool SOMAGroup::has(const std::string& name) {
 }
 
 void SOMAGroup::set(
-    const std::string& uri, URIType uri_type, const std::string& name) {
+    const std::string& uri,
+    URIType uri_type,
+    const std::string& name,
+    const std::string& soma_type) {
     bool relative = uri_type == URIType::relative;
     if (uri_type == URIType::automatic) {
         relative = uri.find("://") != std::string::npos;
     }
     group_->add_member(uri, relative, name);
-    member_to_uri_[name] = uri;
+    members_[name] = SOMAGroupEntry(uri, soma_type);
 }
 
 uint64_t SOMAGroup::count() const {
@@ -195,8 +213,8 @@ void SOMAGroup::del(const std::string& name) {
     group_->remove_member(name);
 }
 
-std::map<std::string, std::string> SOMAGroup::member_to_uri_mapping() const {
-    return member_to_uri_;
+std::map<std::string, SOMAGroupEntry> SOMAGroup::members() const {
+    return members_;
 }
 
 std::optional<TimestampRange> SOMAGroup::timestamp() {

@@ -56,8 +56,8 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     auto index_columns = helper::create_column_index_info();
     auto schema = helper::create_schema(*ctx->tiledb_ctx(), true);
 
-    std::map<std::string, std::string> expected_map{
-        {"sparse_ndarray", sub_uri}};
+    std::map<std::string, SOMAGroupEntry> expected_map{
+        {"sparse_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
     auto soma_collection = SOMACollection::open(
         base_uri, OpenMode::write, ctx, ts);
@@ -71,7 +71,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
         "l",
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     REQUIRE(soma_sparse->uri() == sub_uri);
     REQUIRE(soma_sparse->ctx() == ctx);
     REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
@@ -83,7 +83,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     soma_collection->close();
 }
 
@@ -97,7 +97,8 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     auto index_columns = helper::create_column_index_info();
     auto schema = helper::create_schema(*ctx->tiledb_ctx(), true);
 
-    std::map<std::string, std::string> expected_map{{"dense_ndarray", sub_uri}};
+    std::map<std::string, SOMAGroupEntry> expected_map{
+        {"dense_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
     auto soma_collection = SOMACollection::open(
         base_uri, OpenMode::write, ctx, ts);
@@ -111,7 +112,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
         "l",
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     REQUIRE(soma_dense->uri() == sub_uri);
     REQUIRE(soma_dense->ctx() == ctx);
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
@@ -122,7 +123,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     soma_collection->close();
 }
 
@@ -135,7 +136,8 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     SOMACollection::create(base_uri, ctx, ts);
     auto [schema, index_columns] = helper::create_arrow_schema();
 
-    std::map<std::string, std::string> expected_map{{"dataframe", sub_uri}};
+    std::map<std::string, SOMAGroupEntry> expected_map{
+        {"dataframe", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
     auto soma_collection = SOMACollection::open(
         base_uri, OpenMode::write, ctx, ts);
@@ -149,7 +151,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     REQUIRE(soma_dataframe->uri() == sub_uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
     REQUIRE(soma_dataframe->type() == "SOMADataFrame");
@@ -160,7 +162,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     REQUIRE(soma_dataframe->count() == 0);
     soma_collection->close();
 }
@@ -173,19 +175,20 @@ TEST_CASE("SOMACollection: add SOMACollection") {
     SOMACollection::create(base_uri, ctx);
     auto schema = helper::create_schema(*ctx->tiledb_ctx(), false);
 
-    std::map<std::string, std::string> expected_map{{"subcollection", sub_uri}};
+    std::map<std::string, SOMAGroupEntry> expected_map{
+        {"subcollection", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
     auto soma_subcollection = soma_collection->add_new_collection(
         "subcollection", sub_uri, URIType::absolute, ctx);
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     REQUIRE(soma_subcollection->uri() == sub_uri);
     REQUIRE(soma_subcollection->ctx() == ctx);
     REQUIRE(soma_subcollection->type() == "SOMACollection");
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     soma_collection->close();
 }
 
@@ -197,7 +200,8 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
     SOMACollection::create(base_uri, ctx);
     auto [schema, index_columns] = helper::create_arrow_schema();
 
-    std::map<std::string, std::string> expected_map{{"experiment", sub_uri}};
+    std::map<std::string, SOMAGroupEntry> expected_map{
+        {"experiment", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
     auto soma_experiment = soma_collection->add_new_experiment(
@@ -208,7 +212,7 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     REQUIRE(soma_experiment->uri() == sub_uri);
     REQUIRE(soma_experiment->ctx() == ctx);
     REQUIRE(soma_experiment->type() == "SOMAExperiment");
@@ -216,7 +220,7 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     soma_collection->close();
 }
 
@@ -228,7 +232,8 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
     SOMACollection::create(base_uri, ctx);
     auto [schema, index_columns] = helper::create_arrow_schema();
 
-    std::map<std::string, std::string> expected_map{{"measurement", sub_uri}};
+    std::map<std::string, SOMAGroupEntry> expected_map{
+        {"measurement", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
     auto soma_measurement = soma_collection->add_new_measurement(
@@ -239,7 +244,7 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     REQUIRE(soma_measurement->uri() == sub_uri);
     REQUIRE(soma_measurement->ctx() == ctx);
     REQUIRE(soma_measurement->type() == "SOMAMeasurement");
@@ -247,7 +252,7 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-    REQUIRE(soma_collection->member_to_uri_mapping() == expected_map);
+    REQUIRE(soma_collection->members() == expected_map);
     soma_collection->close();
 }
 

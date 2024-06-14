@@ -236,6 +236,11 @@ class SOMAArray : public SOMAObject {
         return arr_->is_open();
     }
 
+    /**
+     * Get whether the SOMAArray was open in read or write mode.
+     *
+     * @return OpenMode
+     */
     OpenMode mode() const {
         return mq_->query_type() == TILEDB_READ ? OpenMode::read :
                                                   OpenMode::write;
