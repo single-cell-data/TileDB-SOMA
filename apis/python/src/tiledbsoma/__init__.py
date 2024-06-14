@@ -89,6 +89,13 @@ Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
 :class:`ValueError`.
 """
 
+# This ABSOLUTELY MUST be imported before pyarrow to avoid abort-traps on MacOS
+# with any pyarrow >= 13.  And the pre-commit hook, isort, et al. MUST NOT be
+# allowed to reorder this.  See also
+# https://github.com/single-cell-data/TileDB-SOMA/issues/1926
+# https://github.com/single-cell-data/TileDB-SOMA/issues/1849
+import tiledb  # noqa E402
+
 # ^^ the rest is autogen whether viewed from Python on-line help, Sphinx/readthedocs, etc.  It's
 # crucial that we include a separator (e.g. "Classes and functions") to make an entry in the
 # readthedocs table of contents.
@@ -137,11 +144,6 @@ except ImportError:
 
 from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
 from somacore.options import ResultOrder
-
-# TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
-# https://github.com/single-cell-data/TileDB-SOMA/issues/1926
-# ruff: noqa
-import pyarrow_hotfix
 
 from ._collection import Collection
 from ._constants import SOMA_JOINID
