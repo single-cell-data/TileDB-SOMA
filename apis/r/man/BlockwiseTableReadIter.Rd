@@ -31,13 +31,13 @@ as Arrow \code{\link[Arrow]{Table}s}
 \if{html}{\out{<a id="method-BlockwiseTableReadIter-concat"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseTableReadIter-concat}{}}}
 \subsection{Method \code{concat()}}{
-...
+Concatenate the remainder of the blockwise iterator
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BlockwiseTableReadIter$concat()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-...
+An Arrow Table with the remainder of the iterator
 }
 }
 \if{html}{\out{<hr>}}
