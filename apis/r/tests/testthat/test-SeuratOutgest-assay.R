@@ -2,7 +2,7 @@ test_that("Load assay from ExperimentQuery mechanics", {
   skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
-  uri <- withr::local_tempdir("assay-experiment-query-whole")
+  uri <- tempfile(pattern="assay-experiment-query-whole")
   n_obs <- 20L
   n_var <- 10L
   experiment <- create_and_populate_experiment(
@@ -122,7 +122,7 @@ test_that("Load assay with SeuratObject v5 returns v3 assays", {
   skip_if_not_installed('SeuratObject', '4.9.9.9094')
 
   withr::local_options(Seurat.object.assay.version = 'v5')
-  uri <- withr::local_tempdir("assay-experiment-query-v5-v3")
+  uri <- tempfile(pattern="assay-experiment-query-v5-v3")
   n_obs <- 20L
   n_var <- 10L
   experiment <- create_and_populate_experiment(
@@ -161,7 +161,7 @@ test_that("Load assay from sliced ExperimentQuery", {
   skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
-  uri <- withr::local_tempdir("assay-experiment-query-sliced")
+  uri <- tempfile(pattern="assay-experiment-query-sliced")
   n_obs <- 1001L
   n_var <- 99L
   obs_slice <- bit64::as.integer64(seq(3, 72))
@@ -205,7 +205,7 @@ test_that("Load assay from sliced ExperimentQuery", {
 test_that("Load assay from indexed ExperimentQuery", {
   skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
-  uri <- withr::local_tempdir("soma-experiment-query-value-filters")
+  uri <- tempfile(pattern="soma-experiment-query-value-filters")
   n_obs <- 1001L
   n_var <- 99L
   obs_label_values <- c("1003", "1007", "1038", "1099")

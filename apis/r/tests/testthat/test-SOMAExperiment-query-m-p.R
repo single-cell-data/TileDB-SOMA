@@ -1,6 +1,6 @@
 test_that("Load *m and *p layers from SOMAExperimentAxisQuery mechanics", {
   skip_if(!extended_tests())
-  uri <- withr::local_tempdir("m-p-experiment-query-mechanics")
+  uri <- tempfile(pattern="m-p-experiment-query-mechanics")
 
   n_obs <- 20L
   n_var <- 10L
@@ -81,7 +81,7 @@ test_that("Load *m and *p layers from SOMAExperimentAxisQuery mechanics", {
 
 test_that("SOMAExperimentAxisQuery without *m and *p layers mechanics", {
   skip_if(!extended_tests())
-  uri <- withr::local_tempdir("m-p-missing-experiment-query-mechanics")
+  uri <- tempfile(pattern="m-p-missing-experiment-query-mechanics")
 
   n_obs <- 1001L
   n_var <- 99L
@@ -106,7 +106,7 @@ test_that("SOMAExperimentAxisQuery without *m and *p layers mechanics", {
 
 test_that("Load *m and *p layers from sliced SOMAExperimentAxisQuery", {
   skip_if(!extended_tests())
-  uri <- withr::local_tempdir("m-p-experiment-query-sliced")
+  uri <- tempfile(pattern="m-p-experiment-query-sliced")
 
   n_obs <- 1001L
   n_var <- 99L
@@ -205,7 +205,7 @@ test_that("Load *m and *p layers from sliced SOMAExperimentAxisQuery", {
 
 test_that("Load *m and *p layers from indexed SOMAExperimentAxisQuery", {
   skip_if(!extended_tests())
-  uri <- withr::local_tempdir("m-p-experiment-query-indexed")
+  uri <- tempfile(pattern="m-p-experiment-query-indexed")
 
   n_obs <- 1001L
   n_var <- 99L

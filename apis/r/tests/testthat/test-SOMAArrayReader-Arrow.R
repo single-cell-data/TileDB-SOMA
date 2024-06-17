@@ -48,7 +48,7 @@ test_that("Arrow Interface from SOMAArrayReader", {
 
 test_that("SOMAArrayReader result order", {
     skip_if(!extended_tests())
-    uri <- withr::local_tempdir("soma-dense-ndarray")
+    uri <- tempfile(pattern="soma-dense-ndarray")
     ndarray <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(4, 4))
 
     M <- matrix(1:16, 4, 4)

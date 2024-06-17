@@ -4,7 +4,7 @@ test_that("Load SeuratComand mechanics", {
   skip_if_not_installed('jsonlite')
 
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
-  uri <- write_soma(pbmc_small, uri = withr::local_tempdir('load-seurat-command'))
+  uri <- write_soma(pbmc_small, uri = tempfile(pattern='load-seurat-command'))
 
   expect_no_condition(exp <- SOMAExperimentOpen(uri))
   on.exit(exp$close(), add = TRUE)
@@ -84,7 +84,7 @@ test_that("Loading SeuratCommands works from experiment queries", {
 
 
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
-  uri <- write_soma(pbmc_small, uri = withr::local_tempdir('seurat-command-query'))
+  uri <- write_soma(pbmc_small, uri = tempfile(pattern='seurat-command-query'))
 
   expect_no_condition(exp <- SOMAExperimentOpen(uri))
   on.exit(exp$close(), add = TRUE)
@@ -112,7 +112,7 @@ test_that("Load SeuratCommand with missing commands", {
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
   slot(pbmc_small, "commands") <- list()
   expect_true(validObject(pbmc_small))
-  uri <- write_soma(pbmc_small, uri = withr::local_tempdir('missing-commands'))
+  uri <- write_soma(pbmc_small, uri = tempfile(pattern='missing-commands'))
 
   expect_no_condition(exp <- SOMAExperimentOpen(uri))
   on.exit(exp$close(), add = TRUE)

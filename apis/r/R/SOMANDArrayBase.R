@@ -29,7 +29,7 @@ SOMANDArrayBase <- R6::R6Class(
                    "factory method as e.g. 'SOMASparseNDArrayCreate()'."), call. = FALSE)
       }
 
-      private$.is_sparse <- FALSE 			# dense array case
+      ## .is_sparse field is being set by dense and sparse private initialisers, respectively
       private$.type <- type                 # Arrow schema type of data
 
       #spdl::warn("[SOMANDArrayBase::create] type cached as {}", private$.type)

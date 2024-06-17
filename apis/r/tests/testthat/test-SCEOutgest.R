@@ -1,7 +1,8 @@
 test_that("Load SCE object from ExperimentQuery mechanics", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
-  uri <- withr::local_tempdir("sce-experiment-query-whole")
+  uri <- tempfile(pattern="sce-experiment-query-whole")
+
   n_obs <- 20L
   n_var <- 10L
   n_pcs <- 50L
@@ -19,6 +20,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     mode = 'READ'
   )
   on.exit(experiment$close())
+
   # Create the query
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
@@ -197,7 +199,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
 test_that("Load SCE object from sliced ExperimentQuery", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
-  uri <- withr::local_tempdir("sce-experiment-query-sliced")
+  uri <- tempfile(pattern="sce-experiment-query-sliced")
   n_obs <- 1001L
   n_var <- 99L
   n_pcs <- 50L
@@ -275,7 +277,7 @@ test_that("Load SCE object from sliced ExperimentQuery", {
 test_that("Load SCE object from indexed ExperimentQuery", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
-  uri <- withr::local_tempdir("sce-experiment-query-value-filters")
+  uri <- tempfile(pattern="sce-experiment-query-value-filters")
   n_obs <- 1001L
   n_var <- 99L
   n_pcs <- 50L

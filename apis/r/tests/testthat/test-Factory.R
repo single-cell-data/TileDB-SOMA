@@ -41,7 +41,6 @@ test_that("DataFrame Factory with specified index_column_names", {
 })
 
 test_that("SparseNDArray Factory", {
-    skip_if(TRUE)
     skip_if(!extended_tests())
     uri <- tempfile()
 

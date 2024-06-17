@@ -2,7 +2,7 @@ test_that("Write Assay mechanics", {
   skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
-  uri <- withr::local_tempdir("write-assay")
+  uri <- tempfile(pattern="write-assay")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
@@ -141,7 +141,7 @@ test_that("Write DimReduc mechanics", {
   skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
-  uri <- withr::local_tempdir("write-reduction")
+  uri <- tempfile(pattern="write-reduction")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE, after = FALSE)
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
@@ -204,7 +204,7 @@ test_that("Write Graph mechanics", {
   skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
-  uri <- withr::local_tempdir("write-graph")
+  uri <- tempfile(pattern="write-graph")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
@@ -231,7 +231,7 @@ test_that("Write SeuratCommand mechanics", {
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
   skip_if_not_installed('jsonlite')
 
-  uri <- withr::local_tempdir('write-command-log')
+  uri <- tempfile(pattern='write-command-log')
   uns <- SOMACollectionCreate(uri)
   on.exit(uns$close(), add = TRUE, after = FALSE)
 
@@ -311,7 +311,7 @@ test_that("Write Seurat mechanics", {
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
-  uri <- withr::local_tempdir(SeuratObject::Project(pbmc_small))
+  uri <- tempfile(pattern=SeuratObject::Project(pbmc_small))
 
   expect_no_condition(uri <- write_soma(pbmc_small, uri))
   expect_type(uri, 'character')
