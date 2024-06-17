@@ -330,6 +330,7 @@ setuptools.setup(
         "anndata != 0.10.0; python_version>='3.8'",
         "attrs>=22.2",
         "numba>=0.58.0",
+        "numpy<2.0",
         "pandas",
         # TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
         # https://github.com/single-cell-data/TileDB-SOMA/issues/1926
