@@ -17,11 +17,16 @@ Class that allows for blockwise read iteration of SOMA reads
 
 \item{\code{axis}}{The axis to iterate over in a blockwise fashion}
 
+\item{\code{axes_to_reindex}}{The axes to re-index}
+
 \item{\code{coords}}{A list of \code{\link{CoordsStrider}} objects}
 
 \item{\code{coords_axis}}{The \code{\link{CoordsStrider}} for \code{axis}}
 
 \item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed}
+
+\item{\code{reindexable}}{Shorthand to see if this iterator is poised to be
+re-indexed or not}
 }
 \if{html}{\out{</div>}}
 }
@@ -53,7 +58,7 @@ Create
   coords,
   axis,
   ...,
-  reindex_disable_on_axis = NULL
+  reindex_disable_on_axis = NA
 )}\if{html}{\out{</div>}}
 }
 
@@ -72,7 +77,14 @@ named after \code{array$dimnames()}}
 \item{\code{...}}{Ignored}
 
 \item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed;
-currently not yet implemented}
+the following values may be used as shorthands for common settings:
+\itemize{
+\item \dQuote{\code{TRUE}}: disable re-indexing on all axes
+\item \dQuote{\code{NA}}: re-index only on \code{axis}, disable
+re-indexing on all others
+\item \dQuote{\code{FALSE}}: re-index on \emph{all} axes, do \strong{not}
+disable re-indexing
+}}
 }
 \if{html}{\out{</div>}}
 }

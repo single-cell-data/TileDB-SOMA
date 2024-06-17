@@ -59,7 +59,14 @@ values; must be named after \code{array$dimnames()}}
 \item{\code{size}}{The size of each blockwise chunk to generate}
 
 \item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed;
-currently not yet implemented}
+the following values may be used as shorthands for common settings:
+\itemize{
+\item \dQuote{\code{TRUE}}: disable re-indexing on all axes
+\item \dQuote{\code{NA}}: re-index only on \code{axis}, disable
+re-indexing on all others
+\item \dQuote{\code{FALSE}}: re-index on \emph{all} axes, do \strong{not}
+disable re-indexing
+}}
 }
 \if{html}{\out{</div>}}
 }
@@ -94,7 +101,14 @@ Read as a sparse matrix
 \itemize{
 \item \dQuote{\code{T}}: returns a
 \code{\link[Matrix:TsparseMatrix-class]{TsparseMatrix}}
-}}
+\item \dQuote{\code{R}}: returns an
+\code{\link[Matrix:RsparseMatrix-class]{RsparseMatrix}}
+\item \dQuote{\code{C}}: returns a
+\code{\link[Matrix:CsparseMatrix-class]{CsparseMatrix}}
+}
+\strong{Note}: passing \code{repr} of \dQuote{\code{R}} or \dQuote{\code{C}}
+are only available if re-indexing is enabled on axes \code{0} or \code{1},
+respectively}
 }
 \if{html}{\out{</div>}}
 }
