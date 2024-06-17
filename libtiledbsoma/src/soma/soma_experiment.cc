@@ -65,8 +65,16 @@ void SOMAExperiment::create(
     auto name = std::string(std::filesystem::path(uri).filename());
     auto group = SOMAGroup::open(
         OpenMode::write, experiment_uri.string(), ctx, name, timestamp);
-    group->set((experiment_uri / "obs").string(), URIType::absolute, "obs");
-    group->set((experiment_uri / "ms").string(), URIType::absolute, "ms");
+    group->set(
+        (experiment_uri / "obs").string(),
+        URIType::absolute,
+        "obs",
+        "SOMADataFrame");
+    group->set(
+        (experiment_uri / "ms").string(),
+        URIType::absolute,
+        "ms",
+        "SOMACollection");
     group->close();
 }
 

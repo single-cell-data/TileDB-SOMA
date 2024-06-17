@@ -45,7 +45,11 @@ void SOMACollection::create(
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
-    SOMAGroup::create(ctx, uri, "SOMACollection", timestamp);
+    try {
+        SOMAGroup::create(ctx, uri, "SOMACollection", timestamp);
+    } catch (TileDBError& e) {
+        throw TileDBSOMAError(e.what());
+    }
 }
 
 std::unique_ptr<SOMACollection> SOMACollection::open(
@@ -70,26 +74,10 @@ void SOMACollection::close() {
 }
 
 std::unique_ptr<SOMAObject> SOMACollection::get(const std::string& key) {
-    auto obj = SOMAGroup::get(key);
-    std::optional<std::string> soma_object_type = this->type();
-
-    if (!soma_object_type)
-        throw TileDBSOMAError("Saw invalid SOMA object.");
-
-    if (soma_object_type->compare("SOMACollection") == 0)
-        return SOMACollection::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMAExperiment") == 0)
-        return SOMAExperiment::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMAMeasurement") == 0)
-        return SOMAMeasurement::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMADataFrame") == 0)
-        return SOMADataFrame::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMASparseNDArray") == 0)
-        return SOMASparseNDArray::open(obj.uri(), OpenMode::read, this->ctx());
-    else if (soma_object_type->compare("SOMADenseNDArray") == 0)
-        return SOMADenseNDArray::open(obj.uri(), OpenMode::read, this->ctx());
-
-    throw TileDBSOMAError("Saw invalid SOMA object.");
+    auto tiledb_obj = SOMAGroup::get(key);
+    auto soma_obj = SOMAObject::open(
+        tiledb_obj.uri(), OpenMode::read, this->ctx(), this->timestamp());
+    return soma_obj;
 }
 
 std::shared_ptr<SOMACollection> SOMACollection::add_new_collection(
@@ -109,7 +97,7 @@ std::shared_ptr<SOMACollection> SOMACollection::add_new_collection(
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMACollection> member = SOMACollection::open(
         uri, OpenMode::read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key));
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
     children_[std::string(key)] = member;
     return member;
 }
@@ -141,7 +129,7 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMAExperiment> member = SOMAExperiment::open(
         uri, OpenMode::read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key));
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
     children_[std::string(key)] = member;
     return member;
 }
@@ -173,7 +161,7 @@ std::shared_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMAMeasurement> member = SOMAMeasurement::open(
         uri, OpenMode::read, ctx, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key));
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
     children_[std::string(key)] = member;
     return member;
 }
@@ -207,7 +195,7 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::open(
         uri, OpenMode::read, ctx, column_names, result_order, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key));
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
     children_[std::string(key)] = member;
     return member;
 }
@@ -241,7 +229,7 @@ std::shared_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADenseNDArray> member = SOMADenseNDArray::open(
         uri, OpenMode::read, ctx, column_names, result_order, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key));
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
     children_[std::string(key)] = member;
     return member;
 }
@@ -275,7 +263,7 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMASparseNDArray> member = SOMASparseNDArray::open(
         uri, OpenMode::read, ctx, column_names, result_order, timestamp);
-    this->set(std::string(uri), uri_type, std::string(key));
+    this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
     children_[std::string(key)] = member;
     return member;
 }

@@ -79,6 +79,13 @@ class SOMAObject {
     virtual std::shared_ptr<SOMAContext> ctx() = 0;
 
     /**
+     * Get whether the SOMAObject was open in read or write mode.
+     *
+     * @return OpenMode
+     */
+    virtual OpenMode mode() const = 0;
+
+    /**
      * @brief Close the SOMAObject.
      */
     virtual void close() = 0;

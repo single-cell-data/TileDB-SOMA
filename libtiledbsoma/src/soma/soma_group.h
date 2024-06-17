@@ -45,6 +45,9 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
+// Pair storing uri and soma type
+using SOMAGroupEntry = std::pair<std::string, std::string>;
+
 class SOMAGroup : public SOMAObject {
    public:
     //===================================================================
@@ -137,6 +140,16 @@ class SOMAGroup : public SOMAObject {
     }
 
     /**
+     * Get whether the SOMAGroup was open in read or write mode.
+     *
+     * @return OpenMode
+     */
+    OpenMode mode() const {
+        return group_->query_type() == TILEDB_READ ? OpenMode::read :
+                                                     OpenMode::write;
+    }
+
+    /**
      * Get the SOMAGroup URI.
      */
     const std::string uri() const;
@@ -177,7 +190,11 @@ class SOMAGroup : public SOMAObject {
      * or relative
      * @param name of member
      */
-    void set(const std::string& uri, URIType uri_type, const std::string& name);
+    void set(
+        const std::string& uri,
+        URIType uri_type,
+        const std::string& name,
+        const std::string& soma_type);
 
     /**
      * Get the number of members in the SOMAGroup.
@@ -192,11 +209,11 @@ class SOMAGroup : public SOMAObject {
     void del(const std::string& name);
 
     /**
-     * Return a SOMAGroup member to URI mapping.
+     * Return a mapping of all members in the group with its uri and type.
      *
      * @return std::optional<TimestampRange>
      */
-    std::map<std::string, std::string> member_to_uri_mapping() const;
+    std::map<std::string, SOMAGroupEntry> members_map() const;
 
     /**
      * Return optional timestamp pair SOMAArray was opened with.
@@ -327,7 +344,7 @@ class SOMAGroup : public SOMAObject {
     std::optional<TimestampRange> timestamp_;
 
     // Member-to-URI cache
-    std::map<std::string, std::string> member_to_uri_;
+    std::map<std::string, SOMAGroupEntry> members_map_;
 };
 
 }  // namespace tiledbsoma

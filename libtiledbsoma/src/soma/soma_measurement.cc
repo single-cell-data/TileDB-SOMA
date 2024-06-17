@@ -68,12 +68,36 @@ void SOMAMeasurement::create(
 
     auto name = std::string(std::filesystem::path(uri).filename());
     auto group = SOMAGroup::open(OpenMode::write, uri, ctx, name, timestamp);
-    group->set((measurement_uri / "var").string(), URIType::absolute, "var");
-    group->set((measurement_uri / "X").string(), URIType::absolute, "X");
-    group->set((measurement_uri / "obsm").string(), URIType::absolute, "obsm");
-    group->set((measurement_uri / "obsp").string(), URIType::absolute, "obsp");
-    group->set((measurement_uri / "varm").string(), URIType::absolute, "varm");
-    group->set((measurement_uri / "varp").string(), URIType::absolute, "varp");
+    group->set(
+        (measurement_uri / "var").string(),
+        URIType::absolute,
+        "var",
+        "SOMADataFrame");
+    group->set(
+        (measurement_uri / "X").string(),
+        URIType::absolute,
+        "X",
+        "SOMACollection");
+    group->set(
+        (measurement_uri / "obsm").string(),
+        URIType::absolute,
+        "obsm",
+        "SOMACollection");
+    group->set(
+        (measurement_uri / "obsp").string(),
+        URIType::absolute,
+        "obsp",
+        "SOMACollection");
+    group->set(
+        (measurement_uri / "varm").string(),
+        URIType::absolute,
+        "varm",
+        "SOMACollection");
+    group->set(
+        (measurement_uri / "varp").string(),
+        URIType::absolute,
+        "varp",
+        "SOMACollection");
     group->close();
 }
 
