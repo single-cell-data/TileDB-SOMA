@@ -169,13 +169,13 @@ TEST_CASE("SOMAGroup: basic") {
     REQUIRE(soma_group->ctx() == ctx);
     REQUIRE(soma_group->uri() == uri_main_group);
     REQUIRE(soma_group->count() == 2);
-    REQUIRE(expected_map == soma_group->members());
+    REQUIRE(expected_map == soma_group->members_map());
     REQUIRE(soma_group->get("subgroup").type() == Object::Type::Group);
     REQUIRE(soma_group->get("subarray").type() == Object::Type::Array);
     soma_group->close();
 
     soma_group->open(OpenMode::write, TimestampRange(0, 3));
-    REQUIRE(expected_map == soma_group->members());
+    REQUIRE(expected_map == soma_group->members_map());
     soma_group->del("subgroup");
     soma_group->close();
 

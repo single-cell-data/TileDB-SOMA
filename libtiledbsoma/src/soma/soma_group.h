@@ -213,7 +213,7 @@ class SOMAGroup : public SOMAObject {
      *
      * @return std::optional<TimestampRange>
      */
-    std::map<std::string, SOMAGroupEntry> members() const;
+    std::map<std::string, SOMAGroupEntry> members_map() const;
 
     /**
      * Return optional timestamp pair SOMAArray was opened with.
@@ -344,7 +344,7 @@ class SOMAGroup : public SOMAObject {
     std::optional<TimestampRange> timestamp_;
 
     // Member-to-URI cache
-    std::map<std::string, SOMAGroupEntry> members_;
+    std::map<std::string, SOMAGroupEntry> members_map_;
 };
 
 }  // namespace tiledbsoma
