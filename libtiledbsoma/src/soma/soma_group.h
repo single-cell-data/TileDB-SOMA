@@ -344,11 +344,7 @@ class SOMAGroup : public SOMAObject {
     std::optional<TimestampRange> timestamp_;
 
     // Member-to-URI cache
-<<<<<<< HEAD
     std::map<std::string, SOMAGroupEntry> members_map_;
-=======
-    std::map<std::string, SOMAGroupEntry> members_;
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
 };
 
 }  // namespace tiledbsoma

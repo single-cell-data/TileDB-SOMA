@@ -112,11 +112,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
         "l",
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     REQUIRE(soma_dense->uri() == sub_uri);
     REQUIRE(soma_dense->ctx() == ctx);
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
@@ -127,11 +123,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     soma_collection->close();
 }
 
@@ -159,11 +151,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     REQUIRE(soma_dataframe->uri() == sub_uri);
     REQUIRE(soma_dataframe->ctx() == ctx);
     REQUIRE(soma_dataframe->type() == "SOMADataFrame");
@@ -174,11 +162,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     REQUIRE(soma_dataframe->count() == 0);
     soma_collection->close();
 }
@@ -197,22 +181,14 @@ TEST_CASE("SOMACollection: add SOMACollection") {
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
     auto soma_subcollection = soma_collection->add_new_collection(
         "subcollection", sub_uri, URIType::absolute, ctx);
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     REQUIRE(soma_subcollection->uri() == sub_uri);
     REQUIRE(soma_subcollection->ctx() == ctx);
     REQUIRE(soma_subcollection->type() == "SOMACollection");
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     soma_collection->close();
 }
 
@@ -236,11 +212,7 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     REQUIRE(soma_experiment->uri() == sub_uri);
     REQUIRE(soma_experiment->ctx() == ctx);
     REQUIRE(soma_experiment->type() == "SOMAExperiment");
@@ -248,11 +220,7 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     soma_collection->close();
 }
 
@@ -276,11 +244,7 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     REQUIRE(soma_measurement->uri() == sub_uri);
     REQUIRE(soma_measurement->ctx() == ctx);
     REQUIRE(soma_measurement->type() == "SOMAMeasurement");
@@ -288,11 +252,7 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
     soma_collection->close();
 
     soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-<<<<<<< HEAD
     REQUIRE(soma_collection->members_map() == expected_map);
-=======
-    REQUIRE(soma_collection->members() == expected_map);
->>>>>>> 46adfa3e ([c++] More `SOMAGroup` refinements)
     soma_collection->close();
 }
 

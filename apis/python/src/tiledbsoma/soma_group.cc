@@ -79,7 +79,7 @@ void load_soma_group(py::module& m) {
         .def("add", &SOMAGroup::set)
         .def("count", &SOMAGroup::count)
         .def("remove", &SOMAGroup::del)
-        .def("members", &SOMAGroup::members)
+        .def("members_map", &SOMAGroup::members_map)
         .def_property_readonly(
             "timestamp",
             [](SOMAGroup& group) -> py::object {
