@@ -208,7 +208,8 @@ py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
     return results;
 }
 
-void set_metadata(SOMAObject& soma_object, const std::string& key, py::array value) {
+void set_metadata(
+    SOMAObject& soma_object, const std::string& key, py::array value) {
     tiledb_datatype_t value_type = np_to_tdb_dtype(value.dtype());
 
     if (is_tdb_str(value_type) && value.size() > 1)

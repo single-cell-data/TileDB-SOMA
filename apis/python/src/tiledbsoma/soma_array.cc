@@ -564,8 +564,7 @@ void load_soma_array(py::module& m) {
             [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
-                        return py::cast(
-                            array.non_empty_domain<uint64_t>(name));
+                        return py::cast(array.non_empty_domain<uint64_t>(name));
                     case TILEDB_DATETIME_YEAR:
                     case TILEDB_DATETIME_MONTH:
                     case TILEDB_DATETIME_WEEK:
@@ -582,13 +581,11 @@ void load_soma_array(py::module& m) {
                     case TILEDB_INT64:
                         return py::cast(array.non_empty_domain<int64_t>(name));
                     case TILEDB_UINT32:
-                        return py::cast(
-                            array.non_empty_domain<uint32_t>(name));
+                        return py::cast(array.non_empty_domain<uint32_t>(name));
                     case TILEDB_INT32:
                         return py::cast(array.non_empty_domain<int32_t>(name));
                     case TILEDB_UINT16:
-                        return py::cast(
-                            array.non_empty_domain<uint16_t>(name));
+                        return py::cast(array.non_empty_domain<uint16_t>(name));
                     case TILEDB_INT16:
                         return py::cast(array.non_empty_domain<int16_t>(name));
                     case TILEDB_UINT8:
@@ -661,8 +658,8 @@ void load_soma_array(py::module& m) {
         .def("consolidate_and_vacuum", &SOMAArray::consolidate_and_vacuum)
 
         .def(
-            "set_metadata", 
-            [](SOMAArray& array, const std::string& key, py::array value){
+            "set_metadata",
+            [](SOMAArray& array, const std::string& key, py::array value) {
                 set_metadata(array, key, value);
             })
         .def("delete_metadata", &SOMAArray::delete_metadata)

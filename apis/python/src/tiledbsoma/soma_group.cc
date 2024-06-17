@@ -93,8 +93,8 @@ void load_soma_group(py::module& m) {
                 return meta(group.get_metadata());
             })
         .def(
-            "set_metadata", 
-            [](SOMAGroup& group, const std::string& key, py::array value){
+            "set_metadata",
+            [](SOMAGroup& group, const std::string& key, py::array value) {
                 set_metadata(group, key, value);
             })
         .def("delete_metadata", &SOMAGroup::delete_metadata)
