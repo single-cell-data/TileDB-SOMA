@@ -12,7 +12,7 @@ as sparse matrices"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/aj
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.11.99.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.12.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,7 +99,7 @@ as sparse matrices</p>
 <span>  <span class="va">axis</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  repr <span class="op">=</span> <span class="st">"T"</span>,</span>
-<span>  reindex_disable_on_axis <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  reindex_disable_on_axis <span class="op">=</span> <span class="cn">NA</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -129,12 +129,23 @@ named after <code>array$dimnames()</code></p></dd>
 <dt><code>repr</code></dt>
 <dd><p>Representation of the sparse matrix to return; choose from:</p><ul><li><p>“<code>T</code>”: returns a
 <code><a href="https://rdrr.io/pkg/Matrix/man/TsparseMatrix-class.html" class="external-link">TsparseMatrix</a></code></p></li>
-</ul></dd>
+<li><p>“<code>R</code>”: returns an
+<code><a href="https://rdrr.io/pkg/Matrix/man/RsparseMatrix-class.html" class="external-link">RsparseMatrix</a></code></p></li>
+<li><p>“<code>C</code>”: returns a
+<code><a href="https://rdrr.io/pkg/Matrix/man/CsparseMatrix-class.html" class="external-link">CsparseMatrix</a></code></p></li>
+</ul><p><strong>Note</strong>: passing <code>repr</code> of “<code>R</code>” or “<code>C</code>”
+are only available if re-indexing is enabled on axes <code>0</code> or <code>1</code>,
+respectively</p></dd>
 
 
 <dt><code>reindex_disable_on_axis</code></dt>
 <dd><p>Additional axes that will not be re-indexed;
-currently not yet implemented</p></dd>
+the following values may be used as shorthands for common settings:</p><ul><li><p>“<code>TRUE</code>”: disable re-indexing on all axes</p></li>
+<li><p>“<code>NA</code>”: re-index only on <code>axis</code>, disable
+re-indexing on all others</p></li>
+<li><p>“<code>FALSE</code>”: re-index on <em>all</em> axes, do <strong>not</strong>
+disable re-indexing</p></li>
+</ul></dd>
 
 
 </dl><p></p></div>
@@ -142,14 +153,15 @@ currently not yet implemented</p></dd>
 
 </div><p></p><hr><a id="method-BlockwiseSparseReadIter-concat"></a><div class="section">
 <h3 id="method-concat-">Method <code>concat()</code><a class="anchor" aria-label="anchor" href="#method-concat-"></a></h3>
-<p>...</p><div class="section">
+<p>Concatenate the remainder of the blockwise iterator</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">BlockwiseSparseReadIter</span><span class="op">$</span><span class="fu">concat</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
-<p>...</p>
+<p>A sparse matrix (determined by <code>self$repr</code>) with
+the remainder of the iterator</p>
 </div>
 
 </div><p></p><hr><a id="method-BlockwiseSparseReadIter-clone"></a><div class="section">

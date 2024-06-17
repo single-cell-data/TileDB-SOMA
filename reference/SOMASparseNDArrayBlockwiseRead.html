@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.11.99.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.12.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,7 +127,12 @@ values; must be named after <code>array$dimnames()</code></p></dd>
 
 <dt><code>reindex_disable_on_axis</code></dt>
 <dd><p>Additional axes that will not be re-indexed;
-currently not yet implemented</p></dd>
+the following values may be used as shorthands for common settings:</p><ul><li><p>“<code>TRUE</code>”: disable re-indexing on all axes</p></li>
+<li><p>“<code>NA</code>”: re-index only on <code>axis</code>, disable
+re-indexing on all others</p></li>
+<li><p>“<code>FALSE</code>”: re-index on <em>all</em> axes, do <strong>not</strong>
+disable re-indexing</p></li>
+</ul></dd>
 
 
 </dl><p></p></div>
@@ -158,7 +163,13 @@ currently not yet implemented</p></dd>
 <p></p><div class="arguments"><dl><dt><code>repr</code></dt>
 <dd><p>Representation of the sparse matrix to return; choose from:</p><ul><li><p>“<code>T</code>”: returns a
 <code><a href="https://rdrr.io/pkg/Matrix/man/TsparseMatrix-class.html" class="external-link">TsparseMatrix</a></code></p></li>
-</ul></dd>
+<li><p>“<code>R</code>”: returns an
+<code><a href="https://rdrr.io/pkg/Matrix/man/RsparseMatrix-class.html" class="external-link">RsparseMatrix</a></code></p></li>
+<li><p>“<code>C</code>”: returns a
+<code><a href="https://rdrr.io/pkg/Matrix/man/CsparseMatrix-class.html" class="external-link">CsparseMatrix</a></code></p></li>
+</ul><p><strong>Note</strong>: passing <code>repr</code> of “<code>R</code>” or “<code>C</code>”
+are only available if re-indexing is enabled on axes <code>0</code> or <code>1</code>,
+respectively</p></dd>
 
 
 </dl><p></p></div>
