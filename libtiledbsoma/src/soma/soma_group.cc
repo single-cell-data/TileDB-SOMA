@@ -213,7 +213,7 @@ void SOMAGroup::del(const std::string& name) {
     group_->remove_member(name);
 }
 
-std::map<std::string, SOMAGroupEntry> SOMAGroup::members() const {
+std::map<std::string, SOMAGroupEntry> SOMAGroup::members_map() const {
     return members_map_;
 }
 
