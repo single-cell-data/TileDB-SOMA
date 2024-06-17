@@ -3,6 +3,7 @@
 ## Changes
 
 * Updates to TileDB Core 2.24 and TileDB-R 0.28
+* Connect re-indexer to blockwise iterator to return re-indexed tables and matrices
 
 # tiledbsoma 1.11.4
 
