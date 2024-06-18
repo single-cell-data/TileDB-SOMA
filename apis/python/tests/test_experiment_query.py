@@ -1,3 +1,4 @@
+import re
 from concurrent import futures
 from contextlib import nullcontext
 from typing import Tuple
@@ -15,7 +16,6 @@ import tiledbsoma as soma
 from tiledbsoma import SOMATileDBContext, _factory
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
-import tiledb
 
 from tests._util import raises_no_typeguard
 
@@ -937,11 +937,11 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
         measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "foo"')
     )
     # Empty query on a categorical column raised ArrowInvalid before TileDB 2.21; see https://github.com/single-cell-data/TileDB-SOMA/pull/2299
-    ctx = (
-        nullcontext()
-        if tiledb.libtiledb.version() >= (2, 21)
-        else pytest.raises(ArrowInvalid)
-    )
+    m = re.fullmatch(r"libtiledb=(\d+\.\d+\.\d+)", soma.pytiledbsoma.version())
+    version = m.group(1).split(".")
+    major, minor = int(version[0]), int(version[1])
+
+    ctx = nullcontext() if (major, minor) >= (2, 21) else pytest.raises(ArrowInvalid)
     with ctx:
         obs = q.obs().concat()
         assert len(obs) == 0

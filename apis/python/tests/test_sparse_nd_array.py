@@ -16,7 +16,13 @@ import scipy.sparse as sparse
 import tiledbsoma as soma
 from tiledbsoma import _factory
 from tiledbsoma.options import SOMATileDBContext
-import tiledb
+
+try:
+    import tiledb
+
+    hastiledb = True
+except ModuleNotFoundError:
+    hastiledb = False
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 from ._util import raises_no_typeguard
@@ -267,9 +273,10 @@ def test_sparse_nd_array_read_write_sparse_tensor(
         assert t.shape == shape
 
     # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.sparse
-        assert not A.schema.allows_duplicates
+    if hastiledb:
+        with tiledb.open(tmp_path.as_posix()) as A:
+            assert A.schema.sparse
+            assert not A.schema.allows_duplicates
 
 
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
@@ -292,9 +299,10 @@ def test_sparse_nd_array_read_write_table(
     assert tables_are_same_value(data, t)
 
     # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.sparse
-        assert not A.schema.allows_duplicates
+    if hastiledb:
+        with tiledb.open(tmp_path.as_posix()) as A:
+            assert A.schema.sparse
+            assert not A.schema.allows_duplicates
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
@@ -321,9 +329,10 @@ def test_sparse_nd_array_read_as_pandas(
     )
 
     # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.sparse
-        assert not A.schema.allows_duplicates
+    if hastiledb:
+        with tiledb.open(tmp_path.as_posix()) as A:
+            assert A.schema.sparse
+            assert not A.schema.allows_duplicates
 
 
 @pytest.mark.parametrize("shape_is_nones", [True, False])
@@ -576,10 +585,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "dims": {
                 "soma_dim_0": [2, 4],
             },
-            "throws": (
-                RuntimeError,
-                tiledb.cc.TileDBError,
-            ),
+            "throws": (RuntimeError),
         },
         {
             "name": "coords=[0,0]",
@@ -1041,9 +1047,10 @@ def test_tile_extents(tmp_path):
         },
     ).close()
 
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.domain.dim(0).tile == 100
-        assert A.schema.domain.dim(1).tile == 2048
+    if hastiledb:
+        with tiledb.open(tmp_path.as_posix()) as A:
+            assert A.schema.domain.dim(0).tile == 100
+            assert A.schema.domain.dim(1).tile == 2048
 
 
 @pytest.mark.parametrize(
@@ -1052,26 +1059,33 @@ def test_tile_extents(tmp_path):
         (
             {"allows_duplicates": True},
             {
-                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "validity_filters": tiledb.FilterList([tiledb.RleFilter()])
+                if hastiledb
+                else None,
                 "allows_duplicates": True,
             },
         ),
         (
             {"allows_duplicates": False},
             {
-                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "validity_filters": tiledb.FilterList([tiledb.RleFilter()])
+                if hastiledb
+                else None,
                 "allows_duplicates": False,
             },
         ),
         (
             {"validity_filters": ["NoOpFilter"], "allows_duplicates": False},
             {
-                "validity_filters": tiledb.FilterList([tiledb.NoOpFilter()]),
+                "validity_filters": tiledb.FilterList([tiledb.NoOpFilter()])
+                if hastiledb
+                else None,
                 "allows_duplicates": False,
             },
         ),
     ),
 )
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_create_platform_config_overrides(
     tmp_path, create_options, expected_schema_fields
 ):

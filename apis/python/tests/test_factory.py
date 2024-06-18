@@ -6,9 +6,15 @@ import pytest
 
 import tiledbsoma as soma
 from tiledbsoma import _constants
-import tiledb
 
 UNKNOWN_ENCODING_VERSION = "3141596"
+
+try:
+    import tiledb
+
+    hastiledb = True
+except ModuleNotFoundError:
+    hastiledb = False
 
 
 @pytest.fixture
@@ -76,6 +82,7 @@ def tiledb_object_uri(tmp_path, object_type, metadata_typename, encoding_version
         ),
     ],
 )
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_open(tiledb_object_uri, expected_soma_type: Type):
     """Happy path tests"""
     # TODO: Fix Windows test failures without the following.
@@ -122,6 +129,7 @@ def test_open(tiledb_object_uri, expected_soma_type: Type):
         ),
     ],
 )
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_open_wrong_type(tiledb_object_uri, wrong_type):
     with pytest.raises((soma.SOMAError, TypeError)):
         soma.open(tiledb_object_uri, soma_type=wrong_type)
@@ -138,6 +146,7 @@ def test_open_wrong_type(tiledb_object_uri, wrong_type):
         ("array", "SOMASparseNDArray", UNKNOWN_ENCODING_VERSION),
     ],
 )
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_factory_unsupported_version(tiledb_object_uri):
     """All of these should raise, as they are encoding formats from the future"""
     # TODO: Fix Windows test failures without the following.
@@ -169,6 +178,7 @@ def test_factory_unsupported_version(tiledb_object_uri):
         ),  # DataFrame can't be a group
     ],
 )
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_factory_unsupported_types(tiledb_object_uri):
     """Illegal or non-existant metadata"""
     with pytest.raises(soma.SOMAError):

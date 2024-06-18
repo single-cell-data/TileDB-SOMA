@@ -1,5 +1,5 @@
 /**
- * @file   soma_collection.cc
+ * @file   vfs.cc
  *
  * @section LICENSE
  *
@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the SOMACollection bindings.
+ * This file defines the VFS bindings.
  */
 
 #include "common.h"
@@ -38,33 +38,22 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_collection(py::module& m) {
-    py::class_<SOMACollection, SOMAGroup, SOMAObject>(m, "SOMACollection")
-        .def_static(
-            "open",
-            py::overload_cast<
-                std::string_view,
-                OpenMode,
-                std::shared_ptr<SOMAContext>,
-                std::optional<std::pair<uint64_t, uint64_t>>>(
-                &SOMACollection::open),
-            "uri"_a,
-            py::kw_only(),
-            "mode"_a,
-            "context"_a,
-            "timestamp"_a = py::none())
+using VFSFilebuf = tiledb::impl::VFSFilebuf;
+
+void load_vfs(py::module& m) {
+    py::class_<tiledb::VFS>(m, "VFS").def(
+        py::init([](std::shared_ptr<SOMAContext> context) {
+            return tiledb::VFS(*context->tiledb_ctx());
+        }),
+        "ctx"_a);
+
+    py::class_<VFSFilebuf>(m, "VFSFilebuf")
+        .def(py::init<const VFS&>())
         .def(
-            "__iter__",
-            [](SOMACollection& collection) {
-                return py::make_iterator(collection.begin(), collection.end());
-            },
-            py::keep_alive<0, 1>())
-        .def("get", &SOMACollection::get);
-
-    py::class_<SOMAExperiment, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAExperiment");
-
-    py::class_<SOMAMeasurement, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAMeasurement");
+            "open",
+            [](VFSFilebuf& buf, const std::string& uri) {
+                return buf.open(uri, std::ios::in);
+            })
+        .def("close", &VFSFilebuf::close, "should_throw"_a = true);
 }
 }  // namespace libtiledbsomacpp
