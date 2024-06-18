@@ -11,8 +11,6 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
-import tiledb
-
 from . import _constants, _tdb_handles
 from ._exception import SOMAError
 from ._types import OpenTimestamp
@@ -30,7 +28,7 @@ Covariant because ``_handle`` is read-only.
 """
 
 
-class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
+class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     """Base class for all TileDB SOMA objects.
 
     Accepts a SOMATileDBContext, to enable session state to be shared
@@ -146,10 +144,6 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     @property
     def context(self) -> SOMATileDBContext:
         return self._handle.context
-
-    @property
-    def _ctx(self) -> tiledb.Ctx:
-        return self.context.tiledb_ctx
 
     @property
     def metadata(self) -> MutableMapping[str, Any]:
@@ -291,7 +285,7 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 if not isinstance(md_type, str):
                     return False
                 return md_type.lower() == cls.soma_type.lower()
-        except (RuntimeError, SOMAError, tiledb.cc.TileDBError):
+        except (RuntimeError, SOMAError):
             return False
 
     @classmethod
@@ -315,4 +309,4 @@ class TileDBObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             raise ValueError(f"{self} is open for writing, not reading")
 
 
-AnyTileDBObject = TileDBObject[_tdb_handles.AnyWrapper]
+AnySOMAObject = SOMAObject[_tdb_handles.AnyWrapper]

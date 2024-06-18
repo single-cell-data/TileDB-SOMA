@@ -13,12 +13,12 @@ from . import _tdb_handles, _util
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib  # noqa: E402
-from ._tiledb_object import TileDBObject
+from ._soma_object import SOMAObject
 from ._types import OpenTimestamp, is_nonstringy_sequence
 from .options._soma_tiledb_context import SOMATileDBContext
 
 
-class SOMAArray(TileDBObject[_tdb_handles.SOMAArrayWrapper[Any]]):
+class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
     """Base class for all SOMAArrays: DataFrame and NDarray.
 
     Lifecycle:

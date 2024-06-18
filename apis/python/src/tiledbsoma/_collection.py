@@ -42,8 +42,8 @@ from ._exception import (
     map_exception_for_create,
 )
 from ._funcs import typeguard_ignore
+from ._soma_object import AnySOMAObject, SOMAObject
 from ._sparse_nd_array import SparseNDArray
-from ._tiledb_object import AnyTileDBObject, TileDBObject
 from ._types import OpenTimestamp
 from ._util import (
     is_relative_uri,
@@ -53,10 +53,10 @@ from ._util import (
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
-# A collection can hold any sub-type of TileDBObject
-CollectionElementType = TypeVar("CollectionElementType", bound=AnyTileDBObject)
-_TDBO = TypeVar("_TDBO", bound=TileDBObject)  # type: ignore[type-arg]
-_Coll = TypeVar("_Coll", bound="CollectionBase[AnyTileDBObject]")
+# A collection can hold any sub-type of SOMAObject
+CollectionElementType = TypeVar("CollectionElementType", bound=AnySOMAObject)
+_TDBO = TypeVar("_TDBO", bound=SOMAObject)  # type: ignore[type-arg]
+_Coll = TypeVar("_Coll", bound="CollectionBase[AnySOMAObject]")
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
@@ -65,12 +65,12 @@ class _CachedElement:
     """Item we have loaded in the cache of a collection."""
 
     entry: _tdb_handles.GroupEntry
-    soma: Optional[AnyTileDBObject] = None
+    soma: Optional[AnySOMAObject] = None
     """The reified object, if it has been opened."""
 
 
 class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
-    TileDBObject[_tdb_handles.SOMAGroupWrapper[Any]],
+    SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]],
     somacore.collection.BaseCollection[CollectionElementType],
 ):
     """Contains a key-value mapping where the keys are string names and the values
@@ -204,7 +204,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: Optional[str] = ...,
         platform_config: Optional[options.PlatformConfig] = ...,
-    ) -> "Collection[AnyTileDBObject]":
+    ) -> "Collection[AnySOMAObject]":
         ...
 
     @overload
@@ -597,7 +597,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             key:
                 The key to set.
             uri:
-                The resolved URI to pass to :meth:`tiledb.Group.add`.
+                The resolved URI to pass to :meth:`clib.SOMAGroup.add`.
             relative:
                 The ``relative`` parameter to pass to ``add``.
             value:
@@ -663,7 +663,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     @classmethod
     def _check_allows_child(cls, key: str, child_cls: type) -> None:
         real_child = _real_class(child_cls)
-        if not issubclass(real_child, TileDBObject):
+        if not issubclass(real_child, SOMAObject):
             raise TypeError(
                 f"only TileDB objects can be added as children of {cls}, not {child_cls}"
             )
@@ -771,8 +771,8 @@ def _sanitize_for_path(key: str) -> str:
 @attrs.define(frozen=True, kw_only=True)
 class _ChildURI:
     add_uri: str
-    """The URI of the child for passing to :meth:``tiledb.Group.add``."""
+    """The URI of the child for passing to :meth:``clib.SOMAGroup.add``."""
     full_uri: str
     """The full URI of the child, used to create a new element."""
     relative: bool
-    """The ``relative`` value to pass to :meth:``tiledb.Group.add``."""
+    """The ``relative`` value to pass to :meth:``clib.SOMAGroup.add``."""
