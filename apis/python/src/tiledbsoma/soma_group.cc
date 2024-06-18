@@ -76,10 +76,14 @@ void load_soma_group(py::module& m) {
         .def_property_readonly("uri", &SOMAGroup::uri)
         .def("context", &SOMAGroup::ctx)
         .def("has", &SOMAGroup::has)
-        .def("add", &SOMAGroup::set)
+        .def("add", &SOMAGroup::set,
+            "uri"_a,
+            "uri_type"_a,
+            "name"_a,
+            "soma_type"_a)
         .def("count", &SOMAGroup::count)
         .def("remove", &SOMAGroup::del)
-        .def("members_map", &SOMAGroup::members_map)
+        .def("members", &SOMAGroup::members_map)
         .def_property_readonly(
             "timestamp",
             [](SOMAGroup& group) -> py::object {

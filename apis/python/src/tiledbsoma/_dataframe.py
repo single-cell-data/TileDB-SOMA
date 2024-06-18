@@ -126,7 +126,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     """
 
     _wrapper_type = DataFrameWrapper
-    _reader_wrapper_type = DataFrameWrapper
 
     @classmethod
     def create(

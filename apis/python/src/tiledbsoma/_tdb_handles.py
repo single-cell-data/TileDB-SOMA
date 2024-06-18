@@ -46,6 +46,10 @@ RawHandle = Union[
     clib.SOMADataFrame,
     clib.SOMASparseNDArray,
     clib.SOMADenseNDArray,
+    clib.SOMAGroup,
+    clib.SOMACollection,
+    clib.SOMAMeasurement,
+    clib.SOMAExperiment,
 ]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
@@ -73,38 +77,24 @@ def open(
         clib_type=clib_type,
     )
 
-    # Avoid creating a TileDB-Py Ctx unless necessary
-    soma_type = (
-        soma_object.type
-        if soma_object is not None
-        else tiledb.object_type(uri, ctx=context.tiledb_ctx)
-    )
-
-    if not soma_type:
+    if not soma_object:
         raise DoesNotExistError(f"{uri!r} does not exist")
 
-    soma_type = soma_type.lower()
+    _type_to_class = {
+        "somadataframe": DataFrameWrapper,
+        "somadensendarray": DenseNDArrayWrapper,
+        "somasparsendarray": SparseNDArrayWrapper,
+        "somacollection": CollectionWrapper,
+        "somaexperiment": ExperimentWrapper,
+        "somameasurement": MeasurementWrapper,
+    }
 
-    if soma_type == "somadataframe":
-        return DataFrameWrapper._from_soma_object(soma_object, context)
-    if soma_type == "somadensendarray":
-        return DenseNDArrayWrapper._from_soma_object(soma_object, context)
-    if soma_type == "somasparsendarray":
-        return SparseNDArrayWrapper._from_soma_object(soma_object, context)
-
-    if soma_type == "array":
-        return ArrayWrapper.open(uri, mode, context, timestamp)
-
-    if soma_type in (
-        "somacollection",
-        "somaexperiment",
-        "somameasurement",
-        "group",
-    ):
-        return GroupWrapper.open(uri, mode, context, timestamp)
-
-    # Invalid object
-    raise SOMAError(f"{uri!r} has unknown storage type {soma_type!r}")
+    try:
+        return _type_to_class[soma_object.type.lower()]._from_soma_object(
+            soma_object, context
+        )
+    except KeyError:
+        raise SOMAError(f"{uri!r} has unknown storage type {soma_object.type!r}")
 
 
 @attrs.define(eq=False, hash=False, slots=False)
@@ -315,6 +305,15 @@ class GroupEntry:
             return GroupEntry(obj.uri, GroupWrapper)
         raise SOMAError(f"internal error: unknown object type {obj.type}")
 
+    @classmethod
+    def from_soma_group_entry(cls, obj: Tuple[str, str]) -> "GroupEntry":
+        uri, type = obj[0], obj[1]
+        if type == "SOMAArray":
+            return GroupEntry(uri, SOMAArrayWrapper)
+        if type == "SOMAGroup":
+            return GroupEntry(uri, SOMAGroupWrapper)
+        raise SOMAError(f"internal error: unknown object type {uri}")
+
 
 class GroupWrapper(Wrapper[tiledb.Group]):
     """Wrapper around a TileDB Group handle."""
@@ -342,13 +341,72 @@ class GroupWrapper(Wrapper[tiledb.Group]):
         }
 
 
+_GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
+
+
+class SOMAGroupWrapper(Wrapper[_GrpType]):
+    """Base class for Pybind11 SOMAGroupWrapper handles."""
+
+    _GROUP_WRAPPED_TYPE: Type[_GrpType]
+
+    clib_type = "SOMAGroup"
+
+    @classmethod
+    def _opener(
+        cls,
+        uri: str,
+        mode: options.OpenMode,
+        context: SOMATileDBContext,
+        timestamp: int,
+    ) -> clib.SOMAGroup:
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        return cls._GROUP_WRAPPED_TYPE.open(
+            uri,
+            mode=open_mode,
+            context=context.native_context,
+            timestamp=(0, timestamp),
+        )
+
+    def _do_initial_reads(self, group: clib.SOMAGroup) -> None:
+        super()._do_initial_reads(group)
+
+        self.initial_contents = {
+            name: GroupEntry.from_soma_group_entry(entry)
+            for name, entry in group.members().items()
+        }
+
+    @property
+    def meta(self) -> "MetadataWrapper":
+        return self.metadata
+
+
+class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
+    """Wrapper around a Pybind11 CollectionWrapper handle."""
+
+    _GROUP_WRAPPED_TYPE = clib.SOMACollection
+
+
+class ExperimentWrapper(SOMAGroupWrapper[clib.SOMAExperiment]):
+    """Wrapper around a Pybind11 ExperimentWrapper handle."""
+
+    _GROUP_WRAPPED_TYPE = clib.SOMAExperiment
+
+
+class MeasurementWrapper(SOMAGroupWrapper[clib.SOMAMeasurement]):
+    """Wrapper around a Pybind11 MeasurementWrapper handle."""
+
+    _GROUP_WRAPPED_TYPE = clib.SOMAMeasurement
+
+
 _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
 
 
 class SOMAArrayWrapper(Wrapper[_ArrType]):
     """Base class for Pybind11 SOMAArrayWrapper handles."""
 
-    _WRAPPED_TYPE: Type[_ArrType]
+    _ARRAY_WRAPPED_TYPE: Type[_ArrType]
+
+    clib_type = "SOMAArray"
 
     @classmethod
     def _opener(
@@ -359,9 +417,9 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         timestamp: int,
     ) -> clib.SOMAArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        return cls._WRAPPED_TYPE.open(
+        return cls._ARRAY_WRAPPED_TYPE.open(
             uri,
-            open_mode,
+            mode=open_mode,
             context=context.native_context,
             column_names=[],
             result_order=clib.ResultOrder.automatic,
@@ -445,7 +503,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
 
-    _WRAPPED_TYPE = clib.SOMADataFrame
+    _ARRAY_WRAPPED_TYPE = clib.SOMADataFrame
 
     @property
     def count(self) -> int:
@@ -463,13 +521,13 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
 
-    _WRAPPED_TYPE = clib.SOMADenseNDArray
+    _ARRAY_WRAPPED_TYPE = clib.SOMADenseNDArray
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
 
-    _WRAPPED_TYPE = clib.SOMASparseNDArray
+    _ARRAY_WRAPPED_TYPE = clib.SOMASparseNDArray
 
     @property
     def nnz(self) -> int:
@@ -576,25 +634,17 @@ class MetadataWrapper(MutableMapping[str, Any]):
             # There were no changes (e.g., it's a read handle).  Do nothing.
             return
         # Only try to get the writer if there are changes to be made.
-        if isinstance(self.owner, SOMAArrayWrapper):
-            meta = self.owner.meta
-            for key, mod in self._mods.items():
-                if mod in (_DictMod.ADDED, _DictMod.UPDATED):
-                    set_metadata = self.owner._handle.set_metadata
-                    val = self.cache[key]
-                    if isinstance(val, str):
-                        set_metadata(key, np.array([val], "S"))
-                    else:
-                        set_metadata(key, np.array([val]))
-                if mod is _DictMod.DELETED:
-                    self.owner._handle.delete_metadata(key)
-        else:
-            meta = self.owner.writer.meta
-            for key, mod in self._mods.items():
-                if mod in (_DictMod.ADDED, _DictMod.UPDATED):
-                    meta[key] = self.cache[key]
-                if mod is _DictMod.DELETED:
-                    del meta[key]
+        for key, mod in self._mods.items():
+            if mod in (_DictMod.ADDED, _DictMod.UPDATED):
+                set_metadata = self.owner._handle.set_metadata
+                val = self.cache[key]
+                if isinstance(val, str):
+                    set_metadata(key, np.array([val], "S"))
+                else:
+                    set_metadata(key, np.array([val]))
+            if mod is _DictMod.DELETED:
+                self.owner._handle.delete_metadata(key)
+
         # Temporary hack: When we flush writes, note that the cache
         # is back in sync with disk.
         self._mods.clear()

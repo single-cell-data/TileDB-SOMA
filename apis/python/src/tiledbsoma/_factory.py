@@ -166,7 +166,7 @@ def reify_handle(hdl: _Wrapper) -> TileDBObject[_Wrapper]:
     """Picks out the appropriate SOMA class for a handle and wraps it."""
     typename = _read_soma_type(hdl)
     cls = _type_name_to_cls(typename)  # type: ignore[no-untyped-call]
-    if type(hdl) not in (cls._wrapper_type, cls._reader_wrapper_type):
+    if type(hdl) != cls._wrapper_type:
         raise SOMAError(
             f"cannot open {hdl.uri!r}: a {type(hdl._handle)}"
             f" cannot be converted to a {typename}"
