@@ -126,11 +126,11 @@ jobs:
       # - name: Update Packages
       #   run: Rscript -e 'update.packages(ask=FALSE)'
 
-      # - name: Build Package
-      #   run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
+      - name: Build Package
+        run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
 
-      # - name: Install Package
-      #   run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
+      - name: Install Package
+        run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
 
       # - name: Diagnostics
       #   run: Rscript -e 'print(Sys.info())'
@@ -138,14 +138,18 @@ jobs:
       # - name: Downgrade TileDB-R if needed
       #   run: cd apis/r && Rscript tools/controlled_downgrade.R
 
+      #- name: Test
+      #  if: ${{ matrix.covr == 'no' }}
+      #  run: |
+      #    cd apis/r
+      #    Rscript -e "install.packages('devtools')" \
+      #      -e "devtools::install(upgrade = FALSE)" \
+      #      -e "testthat::test_local('tests/testthat', load_package = 'installed')"
+
       - name: Test
         if: ${{ matrix.covr == 'no' }}
-        run: |
-          cd apis/r
-          Rscript -e "install.packages('devtools')" \
-            -e "devtools::install(upgrade = FALSE)" \
-            -e "testthat::test_local('tests/testthat', load_package = 'installed')"
-
+        run: cd apis/r/tests && Rscript testthat.R
+      
       - name: Coverage
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' && github.event_name == 'workflow_dispatch' }}
         run: apis/r/tools/r-ci.sh coverage
