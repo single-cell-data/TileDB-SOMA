@@ -58,6 +58,11 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .value("rowmajor", ResultOrder::rowmajor)
         .value("colmajor", ResultOrder::colmajor);
 
+    py::enum_<URIType>(m, "URIType")
+        .value("automatic", URIType::automatic)
+        .value("absolute", URIType::absolute)
+        .value("relative", URIType::relative);
+
     m.doc() = "SOMA acceleration library";
 
     m.def("version", []() { return tiledbsoma::version::as_string(); });
