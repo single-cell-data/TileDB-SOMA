@@ -82,25 +82,6 @@ void write_coords(
     }
 }
 
-py::dict meta(SOMAArray& array) {
-    py::dict results;
-
-    for (auto [key, val] : array.get_metadata()) {
-        auto [tdb_type, value_num, value] = val;
-
-        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII) {
-            auto py_buf = py::array(py::dtype("|S1"), value_num, value);
-            auto res = py_buf.attr("tobytes")().attr("decode")("UTF-8");
-            results[py::str(key)] = res;
-        } else {
-            py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
-            auto res = py::array(value_type, value_num, value).attr("item")(0);
-            results[py::str(key)] = res;
-        }
-    }
-    return results;
-}
-
 void load_soma_array(py::module& m) {
     py::class_<SOMAArray>(m, "SOMAArray", "SOMAObject")
         .def(
@@ -254,7 +235,7 @@ void load_soma_array(py::module& m) {
                     array_chunks.append(py_arrow_array);
                 }
 
-                for (const pybind11::handle handle : array_chunks) {
+                for (const pybind11::handle array_handle : array_chunks) {
                     ArrowSchema arrow_schema;
                     ArrowArray arrow_array;
                     uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
@@ -265,10 +246,10 @@ void load_soma_array(py::module& m) {
                     // If ever a NumPy array gets in here, there will be an
                     // exception like "AttributeError: 'numpy.ndarray' object
                     // has no attribute '_export_to_c'".
-                    handle.attr("_export_to_c")(
+                    array_handle.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
 
-                    auto coords = handle.attr("tolist")();
+                    auto coords = array_handle.attr("tolist")();
 
                     if (!strcmp(arrow_schema.format, "l")) {
                         array.set_dim_points(
@@ -312,7 +293,7 @@ void load_soma_array(py::module& m) {
                         !strcmp(arrow_schema.format, "tsn:")) {
                         // convert the Arrow Array to int64
                         auto pa = py::module::import("pyarrow");
-                        coords = handle.attr("cast")(pa.attr("int64")())
+                        coords = array_handle.attr("cast")(pa.attr("int64")())
                                      .attr("tolist")();
                         array.set_dim_points(
                             dim, coords.cast<std::vector<int64_t>>());
@@ -657,18 +638,19 @@ void load_soma_array(py::module& m) {
 
         .def("consolidate_and_vacuum", &SOMAArray::consolidate_and_vacuum)
 
-        .def(
-            "set_metadata",
-            [](SOMAArray& array, const std::string& key, py::array value) {
-                set_metadata(array, key, value);
+        .def_property_readonly(
+            "meta",
+            [](SOMAArray& array) -> py::dict {
+                return meta(array.get_metadata());
             })
+
+        .def("set_metadata", set_metadata)
+
         .def("delete_metadata", &SOMAArray::delete_metadata)
 
         .def(
             "get_metadata",
             py::overload_cast<const std::string&>(&SOMAArray::get_metadata))
-
-        .def_property_readonly("meta", meta)
 
         .def("has_metadata", &SOMAArray::has_metadata)
 
