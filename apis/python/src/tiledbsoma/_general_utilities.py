@@ -5,13 +5,10 @@
 
 """General utility functions.
 """
-import os
 import platform
 import sys
 import warnings
 from re import fullmatch
-
-import tiledb
 
 from .pytiledbsoma import version as libtiledbsoma_core_version_str
 
@@ -74,14 +71,6 @@ def get_storage_engine() -> str:
     return "tiledb"
 
 
-def get_tiledb_py_core_version() -> str:
-    """Returns the version of libtiledb ("core") used by the `tiledb` Python library.
-
-    Lifecycle: maturing
-    """
-    return ".".join(str(ijk) for ijk in list(tiledb.libtiledb.version()))
-
-
 def get_libtiledbsoma_core_version() -> str:
     """Returns the version of libtiledb ("core") used by libtiledbsoma.
 
@@ -101,35 +90,6 @@ TILEDB_CORE_MISMATCHED_VERSIONS_ERROR_LEVEL_VAR = (
 )
 
 
-def verify_core_versions() -> None:
-    """Verify that the versions of libtiledb used by the `tiledb` Python library and
-    libtiledbsoma are the same.
-
-    See discussion on https://github.com/single-cell-data/TileDB-SOMA/issues/1837; this
-    will be unnecessary when libtiledbsoma is the only "path to core" (cf.
-    https://github.com/single-cell-data/TileDB-SOMA/issues/1632).
-
-    Lifecycle: maturing
-    """
-    tiledb_py_core_version = get_tiledb_py_core_version()
-    libtiledbsoma_core_version = get_libtiledbsoma_core_version()
-    if tiledb_py_core_version != libtiledbsoma_core_version:
-        msg = "libtiledb versions used by tiledb and libtiledbsoma differ: %s != %s" % (
-            tiledb_py_core_version,
-            libtiledbsoma_core_version,
-        )
-        if os.environ.get(TILEDB_CORE_MISMATCHED_VERSIONS_ERROR_LEVEL_VAR) == "err":
-            print(msg, file=sys.stderr)
-            print(
-                f"Continuing, since ${TILEDB_CORE_MISMATCHED_VERSIONS_ERROR_LEVEL_VAR} is set, but it is highly recommended you fix the core version mismatch, as undefined behavior and segfaults can result.",
-                file=sys.stderr,
-            )
-        else:
-            raise AssertionError(
-                f"libtiledb versions used by tiledb and libtiledbsoma differ: {tiledb_py_core_version} != {libtiledbsoma_core_version}"
-            )
-
-
 def show_package_versions() -> None:
     """Nominal use is for bug reports, so issue filers and issue fixers can be on
     the same page.
@@ -139,10 +99,7 @@ def show_package_versions() -> None:
     u = platform.uname()
     # fmt: off
     print("tiledbsoma.__version__             ", get_implementation_version())
-    print("TileDB-Py version                  ", ".".join(str(v) for v in tiledb.version()))
-    print("TileDB core version (tiledb)       ", get_tiledb_py_core_version())
     print("TileDB core version (libtiledbsoma)", get_libtiledbsoma_core_version())
     print("python version                     ", ".".join(str(v) for v in sys.version_info))
     print("OS version                         ", u.system, u.release)
     # fmt: on
-    verify_core_versions()
