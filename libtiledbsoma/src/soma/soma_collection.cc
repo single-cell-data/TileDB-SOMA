@@ -57,7 +57,11 @@ std::unique_ptr<SOMACollection> SOMACollection::open(
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMACollection>(mode, uri, ctx, timestamp);
+    try {
+        return std::make_unique<SOMACollection>(mode, uri, ctx, timestamp);
+    } catch (TileDBError& e) {
+        throw TileDBSOMAError(e.what());
+    }
 }
 
 //===================================================================

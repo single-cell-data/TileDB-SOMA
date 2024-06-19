@@ -48,29 +48,29 @@ std::unique_ptr<SOMAGroup> SOMAGroup::create(
     std::optional<TimestampRange> timestamp) {
     try {
         Group::create(*ctx->tiledb_ctx(), std::string(uri));
+
+        auto group = std::make_shared<Group>(
+            *ctx->tiledb_ctx(),
+            std::string(uri),
+            TILEDB_WRITE,
+            _set_timestamp(ctx, timestamp));
+
+        group->put_metadata(
+            SOMA_OBJECT_TYPE_KEY,
+            TILEDB_STRING_UTF8,
+            static_cast<uint32_t>(soma_type.length()),
+            soma_type.c_str());
+
+        group->put_metadata(
+            ENCODING_VERSION_KEY,
+            TILEDB_STRING_UTF8,
+            static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
+            ENCODING_VERSION_VAL.c_str());
+
+        return std::make_unique<SOMAGroup>(ctx, group, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
-
-    auto group = std::make_shared<Group>(
-        *ctx->tiledb_ctx(),
-        std::string(uri),
-        TILEDB_WRITE,
-        _set_timestamp(ctx, timestamp));
-
-    group->put_metadata(
-        SOMA_OBJECT_TYPE_KEY,
-        TILEDB_STRING_UTF8,
-        static_cast<uint32_t>(soma_type.length()),
-        soma_type.c_str());
-
-    group->put_metadata(
-        ENCODING_VERSION_KEY,
-        TILEDB_STRING_UTF8,
-        static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
-        ENCODING_VERSION_VAL.c_str());
-
-    return std::make_unique<SOMAGroup>(ctx, group, timestamp);
 }
 
 std::unique_ptr<SOMAGroup> SOMAGroup::open(
@@ -79,7 +79,11 @@ std::unique_ptr<SOMAGroup> SOMAGroup::open(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view name,
     std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMAGroup>(mode, uri, ctx, name, timestamp);
+    try {
+        return std::make_unique<SOMAGroup>(mode, uri, ctx, name, timestamp);
+    } catch (TileDBError& e) {
+        throw TileDBSOMAError(e.what());
+    }
 }
 
 //===================================================================

@@ -48,57 +48,68 @@ void SOMAMeasurement::create(
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
-    std::filesystem::path measurement_uri(uri);
+    try {
+        std::filesystem::path measurement_uri(uri);
 
-    SOMAGroup::create(
-        ctx, measurement_uri.string(), "SOMAMeasurement", timestamp);
-    SOMADataFrame::create(
-        (measurement_uri / "var").string(),
-        std::move(schema),
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
-        ctx,
-        platform_config,
-        timestamp);
-    SOMACollection::create((measurement_uri / "X").string(), ctx, timestamp);
-    SOMACollection::create((measurement_uri / "obsm").string(), ctx, timestamp);
-    SOMACollection::create((measurement_uri / "obsp").string(), ctx, timestamp);
-    SOMACollection::create((measurement_uri / "varm").string(), ctx, timestamp);
-    SOMACollection::create((measurement_uri / "varp").string(), ctx, timestamp);
+        SOMAGroup::create(
+            ctx, measurement_uri.string(), "SOMAMeasurement", timestamp);
+        SOMADataFrame::create(
+            (measurement_uri / "var").string(),
+            std::move(schema),
+            ArrowTable(
+                std::move(index_columns.first),
+                std::move(index_columns.second)),
+            ctx,
+            platform_config,
+            timestamp);
+        SOMACollection::create(
+            (measurement_uri / "X").string(), ctx, timestamp);
+        SOMACollection::create(
+            (measurement_uri / "obsm").string(), ctx, timestamp);
+        SOMACollection::create(
+            (measurement_uri / "obsp").string(), ctx, timestamp);
+        SOMACollection::create(
+            (measurement_uri / "varm").string(), ctx, timestamp);
+        SOMACollection::create(
+            (measurement_uri / "varp").string(), ctx, timestamp);
 
-    auto name = std::string(std::filesystem::path(uri).filename());
-    auto group = SOMAGroup::open(OpenMode::write, uri, ctx, name, timestamp);
-    group->set(
-        (measurement_uri / "var").string(),
-        URIType::absolute,
-        "var",
-        "SOMADataFrame");
-    group->set(
-        (measurement_uri / "X").string(),
-        URIType::absolute,
-        "X",
-        "SOMACollection");
-    group->set(
-        (measurement_uri / "obsm").string(),
-        URIType::absolute,
-        "obsm",
-        "SOMACollection");
-    group->set(
-        (measurement_uri / "obsp").string(),
-        URIType::absolute,
-        "obsp",
-        "SOMACollection");
-    group->set(
-        (measurement_uri / "varm").string(),
-        URIType::absolute,
-        "varm",
-        "SOMACollection");
-    group->set(
-        (measurement_uri / "varp").string(),
-        URIType::absolute,
-        "varp",
-        "SOMACollection");
-    group->close();
+        auto name = std::string(std::filesystem::path(uri).filename());
+        auto group = SOMAGroup::open(
+            OpenMode::write, uri, ctx, name, timestamp);
+        group->set(
+            (measurement_uri / "var").string(),
+            URIType::absolute,
+            "var",
+            "SOMADataFrame");
+        group->set(
+            (measurement_uri / "X").string(),
+            URIType::absolute,
+            "X",
+            "SOMACollection");
+        group->set(
+            (measurement_uri / "obsm").string(),
+            URIType::absolute,
+            "obsm",
+            "SOMACollection");
+        group->set(
+            (measurement_uri / "obsp").string(),
+            URIType::absolute,
+            "obsp",
+            "SOMACollection");
+        group->set(
+            (measurement_uri / "varm").string(),
+            URIType::absolute,
+            "varm",
+            "SOMACollection");
+        group->set(
+            (measurement_uri / "varp").string(),
+            URIType::absolute,
+            "varp",
+            "SOMACollection");
+        group->close();
+    } catch (TileDBError& e) {
+        throw TileDBSOMAError(e.what());
+    }
 }
 
 std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
@@ -106,7 +117,11 @@ std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMAMeasurement>(mode, uri, ctx, timestamp);
+    try {
+        return std::make_unique<SOMAMeasurement>(mode, uri, ctx, timestamp);
+    } catch (TileDBError& e) {
+        throw TileDBSOMAError(e.what());
+    }
 }
 
 std::shared_ptr<SOMADataFrame> SOMAMeasurement::var(
