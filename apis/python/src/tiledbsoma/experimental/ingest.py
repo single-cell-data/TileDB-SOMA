@@ -506,13 +506,14 @@ def _write_visium_spot_dataframe(
         .rename(
             columns={
                 "barcode": id_column_name,
-                "pxl_col_in_fullres": "y",
-                "pxl_row_in_fullres": "x",
+                "pxl_row_in_fullres": "y",
+                "pxl_col_in_fullres": "x",
             }
         )
         .assign(_soma_geometry=np.double(spot_radius))
     )
     df = pd.merge(obs_df, df, how="inner", on=id_column_name)
+    df.drop(id_column_name, axis=1, inplace=True)
     return _write_dataframe_impl(
         df,
         df_uri,
