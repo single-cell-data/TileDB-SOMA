@@ -85,7 +85,9 @@ test_that("SOMACollection timestamped ops", {
 
   # write 1 into bottom-right of A @ t2
   collection <- SOMACollectionOpen(uri, mode = "WRITE")
-  collection$get("A")$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
+  m <- collection$get("A")
+  m$set_data_type(arrow::int8())
+  m$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
   collection$close()
 
   # open A via collection with no timestamp => A should reflect the final state
