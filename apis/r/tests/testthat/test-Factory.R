@@ -70,7 +70,7 @@ test_that("SparseNDArray Factory", {
     expect_equal(s3$mode(), "CLOSED")
 })
 
-test_that("SparseNDArray Factory", {
+test_that("DenseNDArray Factory", {
     skip_if(!extended_tests())
     uri <- tempfile()
 

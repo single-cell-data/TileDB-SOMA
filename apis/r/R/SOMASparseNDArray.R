@@ -227,6 +227,13 @@ SOMASparseNDArray <- R6::R6Class(
       if (!is.null(private$tiledb_timestamp)) {
           arr@timestamp <- private$tiledb_timestamp
       }
+      ## spdl::debug("[SOMASparseNDArray] '.write_coo_dataframe' layout '{}' is_sparse '{}' ",
+      ##             tiledb::query_layout(arr), private$.is_sparse)
+      ## if (!private$.is_sparse && tiledb::query_layout(arr) == "UNORDERED") {
+      ##     tiledb::query_layout(arr) <- "GLOBAL_ORDER"
+      ##     cat("*********", tiledb::query_layout(arr), "*****\n")
+      ##     print(arr)
+      ## }
       arr[] <- values
     },
 

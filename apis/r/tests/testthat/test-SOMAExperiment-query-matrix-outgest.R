@@ -218,7 +218,7 @@ test_that("matrix outgest assertions", {
 
 test_that("matrix outgest with implicitly-stored axes", {
   skip_if(!extended_tests())
-  uri <- withr::local_tempdir("matrix-implicit")
+  uri <- tempfile(pattern="matrix-implicit")
   set.seed(seed = 42L)
   n_obs <- 15L
   n_var <- 10L

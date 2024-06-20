@@ -415,7 +415,7 @@ test_that("platform_config is respected", {
   tsch <- tiledb::schema(arr)
 
   expect_equal(tiledb::capacity(tsch), 8000)
-  expect_equal(tiledb::tile_order(tsch), "ROW_MAJOR")
+  expect_equal(tiledb::tile_order(tsch), "COL_MAJOR")
   expect_equal(tiledb::cell_order(tsch), "ROW_MAJOR")
 
   offsets_filters <- tiledb::filter_list(tsch)$offsets

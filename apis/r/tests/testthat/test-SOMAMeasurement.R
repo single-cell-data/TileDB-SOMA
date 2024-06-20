@@ -1,5 +1,5 @@
 test_that("Basic mechanics", {
-  uri <- withr::local_tempdir("soma-ms")
+  uri <- tempfile(pattern="soma-ms")
 
   measurement <- SOMAMeasurementCreate(uri)
 

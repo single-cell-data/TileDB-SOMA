@@ -87,7 +87,6 @@ void createSchemaFromArrow(const std::string& uri,
         //ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxsp); 	// create wrapper struct
         //ctxptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);   // and create and assign extptr
     }
-
     // create the ArraySchema
     auto as = tdbs::ArrowAdapter::tiledb_schema_from_arrow_schema(ctxsp, std::move(schema),
                                                                   std::pair(std::move(dimarr),
@@ -110,6 +109,7 @@ void createSchemaFromArrow(const std::string& uri,
 
 // [[Rcpp::export]]
 void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp,
+                         const std::string arraytype = "",
                          Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
 
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
@@ -123,6 +123,14 @@ void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp
     nanoarrow::UniqueArray ap{nanoarrow_array_from_xptr(naap)};
     nanoarrow::UniqueSchema sp{nanoarrow_schema_from_xptr(nasp)};
 
+    // now move nanoarrow unique arrays (created from objects handed from R) into
+    // proper unique pointers to arrow schema and array
+    auto schema = std::make_unique<ArrowSchema>();
+    sp.move(schema.get());
+    auto array = std::make_unique<ArrowArray>();
+    ap.move(array.get());
+
+    // if we hae a coonfig, use it
     std::shared_ptr<tdbs::SOMAContext> somactx;
     if (config.isNotNull()) {
         std::map<std::string, std::string> smap;
@@ -138,14 +146,16 @@ void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp
         somactx = std::make_shared<tdbs::SOMAContext>();
     }
 
-    auto arrup = tdbs::SOMADataFrame::open(OpenMode::write, uri, somactx);
-
-    auto schema = std::make_unique<ArrowSchema>();
-    sp.move(schema.get());
-    auto array = std::make_unique<ArrowArray>();
-    ap.move(array.get());
+    std::shared_ptr<tdbs::SOMAArray> arrup;
+    if (arraytype == "SOMADataFrame") {
+        arrup = tdbs::SOMADataFrame::open(OpenMode::write, uri, somactx);
+    } else if (arraytype == "SOMADenseNDArray") {
+        arrup = tdbs::SOMADenseNDArray::open(OpenMode::write, uri, somactx,
+                                             "unnamed", {}, "auto", ResultOrder::colmajor);
+    }
 
     arrup.get()->set_array_data(std::move(schema), std::move(array));
     arrup.get()->write();
     arrup.get()->close();
+
 }

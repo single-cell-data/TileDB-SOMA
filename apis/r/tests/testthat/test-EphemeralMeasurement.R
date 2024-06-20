@@ -1,6 +1,6 @@
 test_that("Ephemeral Measurement mechanics", {
   # Create the measurement
-  uri <- withr::local_tempdir("ephemeral-ms")
+  uri <- tempfile(pattern="ephemeral-ms")
   expect_warning(EphemeralMeasurement$new(uri))
   expect_no_condition(measurement <- EphemeralMeasurement$new())
   expect_true(grepl('^ephemeral-collection:0x[[:digit:]a-f]{6,32}$', measurement$uri))

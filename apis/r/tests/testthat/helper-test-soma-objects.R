@@ -47,6 +47,9 @@ create_and_populate_var <- function(uri, nrows = 10L, seed = 1, mode = NULL) {
     )
   )
 
+  dname <- dirname(uri)
+  if (!dir.exists(dname)) dir.create(dname)
+
   sdf <- SOMADataFrameCreate(uri, tbl$schema, index_column_names = "soma_joinid")
   sdf$write(tbl)
 

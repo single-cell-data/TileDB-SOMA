@@ -36,6 +36,11 @@ TileDBArray <- R6::R6Class(
         private$.tiledb_array <- tiledb::tiledb_array_open_at(self$object, type = mode,
                                                               timestamp = private$tiledb_timestamp)
       }
+
+      ## TODO -- cannot do here while needed for array case does not work for data frame case
+      #tdbtype <- tiledb::datatype(tiledb::attrs(tiledb::schema(private$.tiledb_array))[[1]])
+      #private$.type <- arrow_type_from_tiledb_type(tdbtype)
+
       private$update_metadata_cache()
       self
     },

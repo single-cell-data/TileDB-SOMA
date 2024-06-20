@@ -98,7 +98,7 @@ SOMADataFrame <- R6::R6Class(
       df <- as.data.frame(values)[schema_names]
       arr <- self$object
 
-      writeArrayFromArrow(self$uri, naap, nasp)
+      writeArrayFromArrow(self$uri, naap, nasp, "SOMADataFrame")
 
       invisible(self)
     },

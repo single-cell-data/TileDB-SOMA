@@ -16,7 +16,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     message = so_msg(so_version)
   )
 
-  uri <- withr::local_tempdir("seurat-experiment-query-whole")
+  uri <- tempfile(pattern="seurat-experiment-query-whole")
   n_obs <- 20L
   n_var <- 10L
   n_pcs <- 50L
@@ -204,7 +204,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
     message = so_msg(so_version)
   )
 
-  uri <- withr::local_tempdir("seurat-experiment-query-sliced")
+  uri <- tempfile(pattern="seurat-experiment-query-sliced")
   n_obs <- 1001L
   n_var <- 99L
   n_pcs <- 50L
@@ -274,7 +274,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     message = so_msg(so_version)
   )
 
-  uri <- withr::local_tempdir("seurat-experiment-query-value-filters")
+  uri <- tempfile(pattern="seurat-experiment-query-value-filters")
   n_obs <- 1001L
   n_var <- 99L
   n_pcs <- 50L

@@ -1,7 +1,6 @@
-
 test_that("SOMACollection basics", {
   skip_if(!extended_tests())
-  uri <- file.path(withr::local_tempdir(), "new-collection")
+  uri <- tempfile(pattern="new-collection")
 
   # Create an empty collection
   collection <- SOMACollectionCreate(uri)
@@ -70,7 +69,7 @@ test_that("SOMACollection basics", {
 test_that("SOMACollection timestamped ops", {
   skip_if(!extended_tests())
   # Create a collection @ t0
-  uri <- file.path(withr::local_tempdir(), "timestamped-collection")
+  uri <- tempfile(pattern="timestamped-collection")
   collection <- SOMACollectionCreate(uri)
   expect_equal(collection$uri, uri)
   collection$close()
@@ -106,12 +105,13 @@ test_that("SOMACollection timestamped ops", {
   collection <- SOMACollectionOpen(uri, tiledb_timestamp = t0)
   expect_false("A" %in% collection$names())
   expect_error(collection$get("A"))
-    collection$close()
+  collection$close()
+
 })
 
 test_that("Platform config and context are respected by add_ methods", {
   skip_if(!extended_tests())
-  uri <- file.path(withr::local_tempdir(), "new-collection")
+  uri <- tempfile(pattern="new-collection")
 
   # Set params in the config and context
   cfg <- PlatformConfig$new()
