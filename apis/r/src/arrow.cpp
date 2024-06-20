@@ -152,10 +152,13 @@ void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp
     } else if (arraytype == "SOMADenseNDArray") {
         arrup = tdbs::SOMADenseNDArray::open(OpenMode::write, uri, somactx,
                                              "unnamed", {}, "auto", ResultOrder::colmajor);
+    } else if (arraytype == "SOMASparseNDArray") {
+        arrup = tdbs::SOMASparseNDArray::open(OpenMode::write, uri, somactx);
+    } else {  // not reached
+        Rcpp::stop(tfm::format("Unexpected array type '%s'", arraytype));
     }
 
     arrup.get()->set_array_data(std::move(schema), std::move(array));
     arrup.get()->write();
     arrup.get()->close();
-
 }

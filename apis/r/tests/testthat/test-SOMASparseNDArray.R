@@ -333,6 +333,7 @@ test_that("SOMASparseNDArray timestamped ops", {
   # t=20: write 1 into bottom-right entry
   t20 <- Sys.time()
   snda <- SOMASparseNDArrayOpen(uri=uri, mode="WRITE")
+  snda$set_data_type(arrow::int16())
   snda$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
   snda$close()
 
