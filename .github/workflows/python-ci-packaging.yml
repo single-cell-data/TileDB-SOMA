@@ -76,7 +76,7 @@ jobs:
         run: |
           mkdir -p external
           # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.23.0/tiledb-linux-x86_64-2.23.0-152093b.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.23.1/tiledb-linux-x86_64-2.23.1-af87e3c.tar.gz
           tar -C external -xzf tiledb-linux-x86_64-*.tar.gz
           ls external/lib/
           echo "LD_LIBRARY_PATH=$(pwd)/external/lib" >> $GITHUB_ENV
@@ -172,7 +172,7 @@ jobs:
         run: |
           mkdir -p external
           # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.23.0/tiledb-macos-x86_64-2.23.0-152093b.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.23.1/tiledb-macos-x86_64-2.23.1-af87e3c.tar.gz
           tar -C external -xzf tiledb-macos-x86_64-*.tar.gz
           ls external/lib/
           echo "DYLD_LIBRARY_PATH=$(pwd)/external/lib" >> $GITHUB_ENV
@@ -264,10 +264,10 @@ jobs:
           if [ `uname -s` == "Darwin" ];
           then
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.23.0/tiledb-macos-x86_64-2.23.0-152093b.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.23.1/tiledb-macos-x86_64-2.23.1-af87e3c.tar.gz
           else
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.23.0/tiledb-linux-x86_64-2.23.0-152093b.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.23.1/tiledb-linux-x86_64-2.23.1-af87e3c.tar.gz
           fi
           tar -C external -xzf tiledb-*.tar.gz
           ls external/lib/
