@@ -1,3 +1,9 @@
+# tiledbsoma 1.12.1
+
+## Changes
+
+* Updates to TileDB Core 2.24.1
+
 # tiledbsoma 1.12.0
 
 ## Changes
