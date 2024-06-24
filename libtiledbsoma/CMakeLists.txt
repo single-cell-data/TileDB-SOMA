@@ -220,12 +220,9 @@ else()
     $<$<STREQUAL:${CMAKE_BUILD_TYPE},>: -DDEBUG -g3 -gdwarf-3 --coverage>
   )
 
-  # Use -Wno-literal-suffix on Linux with C++ sources.
+  # Use -Wno-literal-suffix on Linux for C++ libtiledbsoma target.
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    list(APPEND
-      TILEDBSOMA_COMPILE_OPTIONS
-      $<$<COMPILE_LANGUAGE:CXX>:-Wno-literal-suffix>
-    )
+    list(APPEND TILEDBSOMA_COMPILE_OPTIONS -Wno-literal-suffix)
   endif()
 endif()
 
