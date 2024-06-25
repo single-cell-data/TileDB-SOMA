@@ -97,7 +97,6 @@ import ctypes
 import os
 import sys
 
-
 # Load native libraries. On wheel builds, we may have a shared library
 # already linked. In this case, we can import directly
 try:
@@ -137,11 +136,6 @@ except ImportError:
 
 from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
 from somacore.options import ResultOrder
-
-# TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
-# https://github.com/single-cell-data/TileDB-SOMA/issues/1926
-# ruff: noqa
-import pyarrow_hotfix
 
 from ._collection import Collection
 from ._constants import SOMA_JOINID
