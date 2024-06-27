@@ -49,7 +49,11 @@ target_compile_definitions(unit_soma
   PRIVATE
   CATCH_CONFIG_MAIN
 )
-target_compile_options(unit_soma PRIVATE ${TILEDBSOMA_COMPILE_OPTIONS})
+target_compile_options(unit_soma
+  PRIVATE
+    ${TILEDBSOMA_COMPILE_OPTIONS}
+    ${TILEDBSOMA_WERROR_OPTION}
+)
 
 if (NOT MSVC)
   # Allow deprecated function for writing to an array with a timestamp

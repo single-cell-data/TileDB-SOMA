@@ -169,7 +169,9 @@ if(MSVC)
 
   # Warnings as errors:
   if(TILEDBSOMA_ENABLE_WERROR)
-    list(APPEND TILEDBSOMA_COMPILE_OPTIONS /WX)
+    set(TILEDBSOMA_WERROR_OPTION /WX)
+  else()
+    set(TILEDBSOMA_WERROR_OPTION "")
   endif()
 
   # Disable GDI (which we don't need, and causes some macro
@@ -198,7 +200,9 @@ else()
   set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra)
 
   if(TILEDBSOMA_ENABLE_WERROR)
-    list(APPEND TILEDBSOMA_COMPILE_OPTIONS -Werror)
+    set(TILEDBSOMA_WERROR_OPTION -Werror)
+  else()
+    set(TILEDBSOMA_WERROR_OPTION "")
   endif()
 
   # Build-specific flags: Must use generator expressions to support multi-configuration
