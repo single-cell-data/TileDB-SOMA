@@ -73,7 +73,6 @@ if(TILEDBSOMA_BUILD_STATIC)
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
   )
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma_static)
-
   if(WIN32)
     # On Windows we must name the static library something else to avoid
     # name clash with the DLL's "import library" .lib file.
@@ -87,28 +86,23 @@ if(TILEDBSOMA_BUILD_STATIC)
       OUTPUT_NAME "tiledbsoma"
     )
   endif()
+  if(SANITIZER)
+    target_link_libraries(tiledbsoma_static
+      INTERFACE
+      -fsanitize=${SANITIZER}
+    )
+  endif()
 else()
   add_library(tiledbsoma SHARED
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
   )
-
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma)
-
   target_link_libraries(tiledbsoma
     PUBLIC
     TileDB::tiledb_shared
     spdlog::spdlog
   )
-endif()
-
-# Sanitizer linker flags
-if(SANITIZER)
-  if(TILEDBSOMA_BUILD_STATIC)
-    target_link_libraries(tiledbsoma_static
-      INTERFACE
-      -fsanitize=${SANITIZER}
-    )
-  else()
+  if(SANITIZER)
     target_link_libraries(tiledbsoma
       INTERFACE
       -fsanitize=${SANITIZER}
