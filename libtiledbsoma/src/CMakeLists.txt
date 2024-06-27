@@ -1,8 +1,5 @@
 message(STATUS "Starting TileDB-SOMA build.")
 
-set(TILEDBSOMA_INSTALL_TARGETS "")
-
-
 # ###########################################################
 # Common object library
 # ###########################################################
@@ -68,6 +65,7 @@ target_include_directories(TILEDB_SOMA_OBJECTS
 # ###########################################################
 # tiledbsoma library target
 # ###########################################################
+set(TILEDBSOMA_INSTALL_TARGETS "")
 if(TILEDBSOMA_BUILD_STATIC)
   add_library(tiledbsoma_static STATIC
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
