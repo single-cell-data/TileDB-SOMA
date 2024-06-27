@@ -6,18 +6,6 @@
 get_filename_component(TILEDBSOMA_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../" ABSOLUTE)
 add_compile_definitions(TILEDBSOMA_SOURCE_ROOT="${TILEDBSOMA_SOURCE_ROOT}")
 
-# ###########################################################
-# Adding coverage flags
-# ###########################################################
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
-set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
-
-############################################################
-# Dependencies
-############################################################
-
-find_package(TileDB_EP REQUIRED)
-find_package(Spdlog_EP REQUIRED)
 
 ############################################################
 # SOMA unit test

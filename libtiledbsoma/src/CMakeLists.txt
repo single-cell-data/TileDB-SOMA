@@ -3,20 +3,6 @@ message(STATUS "Starting TileDB-SOMA build.")
 set(TILEDBSOMA_INSTALL_TARGETS "")
 
 # ###########################################################
-# Adding coverage flags
-# ###########################################################
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
-set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
-
-# ###########################################################
-# Find required dependencies
-# See ../cmake/Modules/*.cmake for provenance/version info
-# ###########################################################
-find_package(TileDB_EP REQUIRED)
-find_package(Spdlog_EP REQUIRED)
-
-# ###########################################################
 # Get source commit hash
 # ###########################################################
 find_package(Git REQUIRED)

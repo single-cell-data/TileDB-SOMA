@@ -253,6 +253,16 @@ add_custom_target(
 # ###########################################################
 # Regular build
 # ###########################################################
+
+# Adding coverage flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
+set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
+
+# Find required dependencies
+# See ../cmake/Modules/*.cmake for provenance/version info
+find_package(TileDB_EP REQUIRED)
+find_package(Spdlog_EP REQUIRED)
+
 add_subdirectory(src)
 
 if(TILEDBSOMA_ENABLE_TESTING)
