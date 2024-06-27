@@ -2,35 +2,6 @@ message(STATUS "Starting TileDB-SOMA build.")
 
 set(TILEDBSOMA_INSTALL_TARGETS "")
 
-# ###########################################################
-# Get source commit hash
-# ###########################################################
-find_package(Git REQUIRED)
-
-execute_process(
-  COMMAND "${GIT_EXECUTABLE}" describe --exact-match --tags HEAD
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  RESULT_VARIABLE res
-  OUTPUT_VARIABLE BUILD_COMMIT_HASH
-  ERROR_QUIET
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-# If we didn't find a tag name let's grab the SHA
-if(res)
-  execute_process(
-    COMMAND "${GIT_EXECUTABLE}" describe --dirty=-modified --always
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    RESULT_VARIABLE res
-    OUTPUT_VARIABLE BUILD_COMMIT_HASH
-    ERROR_QUIET
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
-
-set_property(GLOBAL APPEND
-  PROPERTY CMAKE_CONFIGURE_DEPENDS
-  "${CMAKE_SOURCE_DIR}/.git/index")
-
-message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
 
 # ###########################################################
 # Common object library
@@ -66,7 +37,6 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
 message(STATUS "Building TileDB without deprecation warnings")
 target_compile_definitions(TILEDB_SOMA_OBJECTS
   PRIVATE
-  -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
   -DTILEDB_DEPRECATED=
 )
 
