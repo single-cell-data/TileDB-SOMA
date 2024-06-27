@@ -34,10 +34,9 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/nanoarrow/nanoarrow.c
 )
 
-message(STATUS "Building TileDB without deprecation warnings")
 target_compile_definitions(TILEDB_SOMA_OBJECTS
   PRIVATE
-  -DTILEDB_DEPRECATED=
+  -DTILEDB_NO_API_DEPRECATION_WARNINGS
 )
 
 target_compile_options(TILEDB_SOMA_OBJECTS
