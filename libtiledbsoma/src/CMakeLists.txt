@@ -43,6 +43,7 @@ target_compile_options(TILEDB_SOMA_OBJECTS
   PRIVATE
   ${TILEDBSOMA_COMPILE_OPTIONS}
   ${TILEDBSOMA_WERROR_OPTION}
+  ${TILEDBSOMA_SANITIZER_OPTIONS}
 )
 
 set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -63,30 +64,6 @@ target_include_directories(TILEDB_SOMA_OBJECTS
   $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
   ${pybind11_INCLUDE_DIRS}
 )
-
-# ###########################################################
-# Compile options/definitions
-# ###########################################################
-if(SANITIZER)
-  string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
-
-  if(NOT CMAKE_BUILD_TYPE_LOWER MATCHES "debug")
-    message(FATAL_ERROR "Sanitizers only enabled for Debug build")
-  endif()
-
-  string(TOLOWER ${SANITIZER} SANITIZER)
-
-  if(NOT SANITIZER MATCHES "^(address|memory|leak|thread|undefined)$")
-    message(FATAL_ERROR "Unknown clang sanitizer: ${SANITIZER})")
-  else()
-    message(STATUS "The TileDB-SOMA library is compiled with sanitizer ${SANITIZER} enabled")
-  endif()
-
-  target_compile_options(TILEDB_SOMA_OBJECTS
-    PRIVATE
-    -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZER}
-  )
-endif()
 
 # ###########################################################
 # tiledbsoma library target

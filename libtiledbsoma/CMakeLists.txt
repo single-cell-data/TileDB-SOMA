@@ -230,6 +230,33 @@ else()
   endif()
 endif()
 
+# ###########################################################
+# Compile options/definitions
+# ###########################################################
+if(SANITIZER)
+  string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
+
+  if(NOT CMAKE_BUILD_TYPE_LOWER MATCHES "debug")
+    message(FATAL_ERROR "Sanitizers only enabled for Debug build")
+  endif()
+
+  string(TOLOWER ${SANITIZER} SANITIZER)
+
+  if(NOT SANITIZER MATCHES "^(address|memory|leak|thread|undefined)$")
+    message(FATAL_ERROR "Unknown clang sanitizer: ${SANITIZER})")
+  else()
+    message(STATUS "The TileDB-SOMA library is compiled with sanitizer ${SANITIZER} enabled")
+  endif()
+
+  set(TILEDBSOMA_SANITIZER_OPTIONS
+    -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZER}
+  )
+else()
+ set(TILEDBSOMA_SANITIZER_OPTIONS "")
+endif()
+
+
+
 # Definitions for all targets
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
