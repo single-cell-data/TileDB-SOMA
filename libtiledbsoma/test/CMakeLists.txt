@@ -6,18 +6,6 @@
 get_filename_component(TILEDBSOMA_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../" ABSOLUTE)
 add_compile_definitions(TILEDBSOMA_SOURCE_ROOT="${TILEDBSOMA_SOURCE_ROOT}")
 
-# ###########################################################
-# Adding coverage flags
-# ###########################################################
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
-set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
-
-############################################################
-# Dependencies
-############################################################
-
-find_package(TileDB_EP REQUIRED)
-find_package(Spdlog_EP REQUIRED)
 
 ############################################################
 # SOMA unit test
@@ -57,7 +45,15 @@ target_include_directories(unit_soma
     $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-target_compile_definitions(unit_soma PRIVATE CATCH_CONFIG_MAIN)
+target_compile_definitions(unit_soma
+  PRIVATE
+  CATCH_CONFIG_MAIN
+)
+target_compile_options(unit_soma
+  PRIVATE
+    ${TILEDBSOMA_COMPILE_OPTIONS}
+    ${TILEDBSOMA_WERROR_OPTION}
+)
 
 if (NOT MSVC)
   # Allow deprecated function for writing to an array with a timestamp

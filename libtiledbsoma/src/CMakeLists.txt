@@ -1,51 +1,5 @@
 message(STATUS "Starting TileDB-SOMA build.")
 
-set(TILEDBSOMA_INSTALL_TARGETS "")
-
-# ###########################################################
-# Adding coverage flags
-# ###########################################################
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
-set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
-
-# ###########################################################
-# Find required dependencies
-# See ../cmake/Modules/*.cmake for provenance/version info
-# ###########################################################
-find_package(TileDB_EP REQUIRED)
-find_package(Spdlog_EP REQUIRED)
-
-# ###########################################################
-# Get source commit hash
-# ###########################################################
-find_package(Git REQUIRED)
-
-execute_process(
-  COMMAND "${GIT_EXECUTABLE}" describe --exact-match --tags HEAD
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  RESULT_VARIABLE res
-  OUTPUT_VARIABLE BUILD_COMMIT_HASH
-  ERROR_QUIET
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-# If we didn't find a tag name let's grab the SHA
-if(res)
-  execute_process(
-    COMMAND "${GIT_EXECUTABLE}" describe --dirty=-modified --always
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    RESULT_VARIABLE res
-    OUTPUT_VARIABLE BUILD_COMMIT_HASH
-    ERROR_QUIET
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
-
-set_property(GLOBAL APPEND
-  PROPERTY CMAKE_CONFIGURE_DEPENDS
-  "${CMAKE_SOURCE_DIR}/.git/index")
-
-message(STATUS "Building with commit hash ${BUILD_COMMIT_HASH}")
-
 # ###########################################################
 # Common object library
 # ###########################################################
@@ -72,20 +26,21 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
-
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/nanoarrow/nanoarrow.c
 )
 
-message(STATUS "Building TileDB without deprecation warnings")
-target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE
-  -DBUILD_COMMIT_HASH="${BUILD_COMMIT_HASH}"
-  -DTILEDB_DEPRECATED=
+target_compile_definitions(TILEDB_SOMA_OBJECTS
+  PRIVATE
+  -DTILEDB_NO_API_DEPRECATION_WARNINGS
 )
 
-target_compile_options(
-  TILEDB_SOMA_OBJECTS PRIVATE
+target_compile_options(TILEDB_SOMA_OBJECTS
+  PRIVATE
+  ${TILEDBSOMA_COMPILE_OPTIONS}
+  ${TILEDBSOMA_WERROR_OPTION}
+  ${TILEDBSOMA_SANITIZER_OPTIONS}
 )
 
 set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -108,38 +63,14 @@ target_include_directories(TILEDB_SOMA_OBJECTS
 )
 
 # ###########################################################
-# Compile options/definitions
-# ###########################################################
-if(SANITIZER)
-  string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
-
-  if(NOT CMAKE_BUILD_TYPE_LOWER MATCHES "debug")
-    message(FATAL_ERROR "Sanitizers only enabled for Debug build")
-  endif()
-
-  string(TOLOWER ${SANITIZER} SANITIZER)
-
-  if(NOT SANITIZER MATCHES "^(address|memory|leak|thread|undefined)$")
-    message(FATAL_ERROR "Unknown clang sanitizer: ${SANITIZER})")
-  else()
-    message(STATUS "The TileDB-SOMA library is compiled with sanitizer ${SANITIZER} enabled")
-  endif()
-
-  target_compile_options(TILEDB_SOMA_OBJECTS
-    PRIVATE
-    -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZER}
-  )
-endif()
-
-# ###########################################################
 # tiledbsoma library target
 # ###########################################################
+set(TILEDBSOMA_INSTALL_TARGETS "")
 if(TILEDBSOMA_BUILD_STATIC)
   add_library(tiledbsoma_static STATIC
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
   )
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma_static)
-
   if(WIN32)
     # On Windows we must name the static library something else to avoid
     # name clash with the DLL's "import library" .lib file.
@@ -153,28 +84,23 @@ if(TILEDBSOMA_BUILD_STATIC)
       OUTPUT_NAME "tiledbsoma"
     )
   endif()
+  if(SANITIZER)
+    target_link_libraries(tiledbsoma_static
+      INTERFACE
+      -fsanitize=${SANITIZER}
+    )
+  endif()
 else()
   add_library(tiledbsoma SHARED
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
   )
-
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma)
-
   target_link_libraries(tiledbsoma
     PUBLIC
     TileDB::tiledb_shared
     spdlog::spdlog
   )
-endif()
-
-# Sanitizer linker flags
-if(SANITIZER)
-  if(TILEDBSOMA_BUILD_STATIC)
-    target_link_libraries(tiledbsoma_static
-      INTERFACE
-      -fsanitize=${SANITIZER}
-    )
-  else()
+  if(SANITIZER)
     target_link_libraries(tiledbsoma
       INTERFACE
       -fsanitize=${SANITIZER}
