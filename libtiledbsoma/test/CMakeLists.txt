@@ -15,6 +15,7 @@ find_package(Catch_EP REQUIRED)
 
 add_executable(unit_soma
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
+    $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
     common.cc
     common.h
     unit_column_buffer.cc
