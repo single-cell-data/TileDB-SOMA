@@ -165,69 +165,135 @@ if(MSVC)
   # C4702: unreachable code
   # C4800: warning implicit cast int to bool
   # C4996: deprecation warning about e.g. sscanf.
-  add_compile_options(/W4 /wd4101 /wd4146 /wd4244 /wd4251 /wd4456 /wd4457 /wd4702 /wd4800 /wd4996)
+  set(TILEDBSOMA_COMPILE_OPTIONS /W4 /wd4101 /wd4146 /wd4244 /wd4251 /wd4456 /wd4457 /wd4702 /wd4800 /wd4996)
 
   # Warnings as errors:
   if(TILEDBSOMA_ENABLE_WERROR)
-    add_compile_options(/WX)
+    set(TILEDBSOMA_WERROR_OPTION /WX)
+  else()
+    set(TILEDBSOMA_WERROR_OPTION "")
   endif()
 
   # Disable GDI (which we don't need, and causes some macro
   # re-definition issues if wingdi.h is included)
-  add_compile_options(/DNOGDI)
+  list(APPEND TILEDBSOMA_COMPILE_OPTIONS /DNOGDI)
 
   # Add /MPn flag from CMake invocation (if defined).
-  add_compile_options(${MSVC_MP_FLAG})
+  list(APPEND TILEDBSOMA_COMPILE_OPTIONS ${MSVC_MP_FLAG})
 
-  # Build-specific flags
-  add_compile_options(
-    "$<$<CONFIG:Debug>:/DDEBUG /Od /Zi /bigobj>"
-    "$<$<CONFIG:Release>:/DNDEBUG /Ox>"
-    "$<$<CONFIG:RelWithDebInfo>:/DNDEBUG /Ox /Zi>"
+  # Build-specific flags: Must use generator expressions to support multi-configuration
+  # build generators that set the config type at build time.
+  list(APPEND
+    TILEDBSOMA_COMPILE_OPTIONS
+    $<$<CONFIG:Debug>:/DDEBUG /Od /Zi /bigobj>
+  )
+  list(APPEND
+    TILEDBSOMA_COMPILE_OPTIONS
+    $<$<CONFIG:Release>:/DNDEBUG /Ox>
+  )
+  list(APPEND
+    TILEDBSOMA_COMPILE_OPTIONS
+    $<$<CONFIG:RelWithDebInfo>:/DNDEBUG /Ox /Zi>
   )
 else()
-  add_compile_options(-Wall -Wextra)
+
+  set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra)
 
   if(TILEDBSOMA_ENABLE_WERROR)
-    add_compile_options(-Werror)
+    set(TILEDBSOMA_WERROR_OPTION -Werror)
+  else()
+    set(TILEDBSOMA_WERROR_OPTION "")
   endif()
 
-  # Build-specific flags
-  if(CMAKE_BUILD_TYPE MATCHES "Debug")
-    add_compile_options(-DDEBUG -O0 -g3 -ggdb3 -gdwarf-3)
-  elseif(CMAKE_BUILD_TYPE MATCHES "Release")
-    add_compile_options(-DNDEBUG -O3)
-  elseif(CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
-    add_compile_options(-DNDEBUG -O3 -g3 -ggdb3 -gdwarf-3)
-  elseif(CMAKE_BUILD_TYPE MATCHES "Coverage")
-    add_compile_options(-DDEBUG -g3 -gdwarf-3 --coverage)
-    add_link_options(--coverage)
-  endif()
+  # Build-specific flags: Must use generator expressions to support multi-configuration
+  # build generators that set the config type at build time.
+  list(APPEND
+    TILEDBSOMA_COMPILE_OPTIONS
+    $<$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>: -DDEBUG -O0 -g3 -ggdb3 -gdwarf-3>
+  )
+  list(APPEND
+    TILEDBSOMA_COMPILE_OPTIONS
+    $<$<STREQUAL:${CMAKE_BUILD_TYPE},Release>: -DNDEBUG -O3>
+  )
+  list(APPEND
+    TILEDBSOMA_COMPILE_OPTIONS
+    $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>: -DNDEBUG -O3 -g3 -ggdb3 -gdwarf-3>
+  )
+  list(APPEND
+    TILEDBSOMA_COMPILE_OPTIONS
+    $<$<STREQUAL:${CMAKE_BUILD_TYPE},>: -DDEBUG -g3 -gdwarf-3 --coverage>
+  )
 
-  # Use -Wno-literal-suffix on Linux with C++ sources.
+  # Use -Wno-literal-suffix on Linux for C++ libtiledbsoma target.
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-literal-suffix>)
+    list(APPEND TILEDBSOMA_COMPILE_OPTIONS -Wno-literal-suffix)
   endif()
 endif()
+
+# ###########################################################
+# Compile options/definitions
+# ###########################################################
+if(SANITIZER)
+  string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
+
+  if(NOT CMAKE_BUILD_TYPE_LOWER MATCHES "debug")
+    message(FATAL_ERROR "Sanitizers only enabled for Debug build")
+  endif()
+
+  string(TOLOWER ${SANITIZER} SANITIZER)
+
+  if(NOT SANITIZER MATCHES "^(address|memory|leak|thread|undefined)$")
+    message(FATAL_ERROR "Unknown clang sanitizer: ${SANITIZER})")
+  else()
+    message(STATUS "The TileDB-SOMA library is compiled with sanitizer ${SANITIZER} enabled")
+  endif()
+
+  set(TILEDBSOMA_SANITIZER_OPTIONS
+    -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZER}
+  )
+else()
+ set(TILEDBSOMA_SANITIZER_OPTIONS "")
+endif()
+
+
 
 # Definitions for all targets
 add_definitions(-D_FILE_OFFSET_BITS=64)
 
 # Disable incorrect availability check on conda build
 # https://conda-forge.org/docs/maintainer/knowledge_base.html#newer-c-features-with-old-sdk
-add_compile_options(-D_LIBCPP_DISABLE_AVAILABILITY)
+add_definitions(-D_LIBCPP_DISABLE_AVAILABILITY)
 
 # AVX2 flag
 include(CheckAVX2Support)
 CheckAVX2Support()
 
 if(COMPILER_SUPPORTS_AVX2)
-  add_compile_options(${COMPILER_AVX2_FLAG})
+  list(APPEND TILEDBSOMA_COMPILE_OPTIONS ${COMPILER_AVX2_FLAG})
 endif()
+
+
+## Leaving this helper. Debugging generator expressions in CMake can be difficult.
+## To view compile options uncomment the below and run the target.
+## (Hint: This target is inside build/libtiledbsoma)
+add_custom_target(
+    debugflag COMMAND ${CMAKE_COMMAND} -E echo "compile options: ${TILEDBSOMA_COMPILE_OPTIONS}"
+)
+
 
 # ###########################################################
 # Regular build
 # ###########################################################
+
+# Adding coverage flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
+set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} $ENV{TILEDBSOMA_COVERAGE}")
+
+# Find required dependencies
+# See ../cmake/Modules/*.cmake for provenance/version info
+find_package(TileDB_EP REQUIRED)
+find_package(Spdlog_EP REQUIRED)
+
 add_subdirectory(src)
 
 if(TILEDBSOMA_ENABLE_TESTING)
