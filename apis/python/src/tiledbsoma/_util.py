@@ -342,16 +342,20 @@ def cast_values_to_target_schema(values: pa.Table, schema: pa.Schema) -> pa.Tabl
     target_schema = []
     for input_field in values.schema:
         name = input_field.name
-        target_field = schema.field(name)
 
-        # This check is also done in C++ but we still want to keep the
-        # ValueError exception
-        if pa.types.is_dictionary(target_field.type):
-            if not pa.types.is_dictionary(input_field.type):
-                raise ValueError(f"{name} requires dictionary entry")
-            target_schema.append(input_field)
+        if name in schema.names:
+            target_field = schema.field(name)
+
+            # This check is also done in C++ but we still want to keep the
+            # ValueError exception
+            if pa.types.is_dictionary(target_field.type):
+                if not pa.types.is_dictionary(input_field.type):
+                    raise ValueError(f"{name} requires dictionary entry")
+                target_schema.append(input_field)
+            else:
+                target_schema.append(target_field.with_nullable(input_field.nullable))
         else:
-            target_schema.append(target_field)
+            target_schema.append(input_field)
 
     return values.cast(pa.schema(target_schema, values.schema.metadata))
 
