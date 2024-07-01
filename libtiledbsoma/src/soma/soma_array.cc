@@ -607,6 +607,42 @@ ArrowTable SOMAArray::_cast_table(
     return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
 }
 
+void SOMAArray::_cast_bit_to_uint8(
+    ArrowSchema* arrow_schema,
+    ArrowArray* arrow_array){
+    const void* data;
+    if (arrow_array->n_buffers == 3) {
+        data = arrow_array->buffers[2];
+    } else {
+        data = arrow_array->buffers[1];
+    }
+
+    auto sz = arrow_array->length;
+
+    std::vector<uint8_t> casted;
+    for (int64_t i = 0; i * 8 < sz; ++i) {
+        uint8_t byte = ((uint8_t*)data)[i];
+        for (int64_t j = 0; j < 8; ++j) {
+            casted.push_back((uint8_t)((byte >> j) & 0x01));
+        }
+    }
+
+    arrow_schema->format = "C";
+    if (arrow_array->n_buffers == 3) {
+        arrow_array->buffers[2] = malloc(sizeof(uint8_t) * sz);
+        std::memcpy(
+            (void*)arrow_array->buffers[2],
+            casted.data(),
+            sizeof(uint8_t) * sz);
+    } else {
+        arrow_array->buffers[1] = malloc(sizeof(uint8_t) * sz);
+        std::memcpy(
+            (void*)arrow_array->buffers[1],
+            casted.data(),
+            sizeof(uint8_t) * sz);
+    }
+}
+
 void SOMAArray::write(bool sort_coords) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");

@@ -950,7 +950,7 @@ class SOMAArray : public SOMAObject {
         }
     }
 
-    // Help function to cast Boolean of bits (Arrow) to uint8 (TileDB)
+    // Helper function to cast Boolean of bits (Arrow) to uint8 (TileDB)
     void _cast_bit_to_uint8(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
 
     // Helper function for set_column_data
