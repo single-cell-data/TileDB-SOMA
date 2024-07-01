@@ -608,8 +608,7 @@ ArrowTable SOMAArray::_cast_table(
 }
 
 void SOMAArray::_cast_bit_to_uint8(
-    ArrowSchema* arrow_schema,
-    ArrowArray* arrow_array){
+    ArrowSchema* arrow_schema, ArrowArray* arrow_array) {
     const void* data;
     if (arrow_array->n_buffers == 3) {
         data = arrow_array->buffers[2];
