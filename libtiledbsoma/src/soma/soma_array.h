@@ -950,6 +950,9 @@ class SOMAArray : public SOMAObject {
         }
     }
 
+    // Help function to cast Boolean of bits (Arrow) to uint8 (TileDB)
+    void _cast_bit_to_uint8(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
+
     // Helper function for set_column_data
     std::shared_ptr<ColumnBuffer> _setup_column_data(std::string_view name);
 

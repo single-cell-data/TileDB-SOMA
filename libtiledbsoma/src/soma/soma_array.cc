@@ -565,15 +565,20 @@ void SOMAArray::set_array_data(
 ArrowTable SOMAArray::_cast_table(
     std::unique_ptr<ArrowSchema> arrow_schema,
     std::unique_ptr<ArrowArray> arrow_array) {
+    // Go through all columns in the ArrowTable and cast the values to what is
+    // in the ArraySchema on disk
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
         auto arrow_sch_ = arrow_schema->children[i];
         auto arrow_arr_ = arrow_array->children[i];
         std::string name(arrow_sch_->name);
 
+        // if the attribute is enumerated, ensure that the index values also
+        // match is in the ArraySchema on disk
         if (tiledb_schema()->has_attribute(name)) {
             auto attr = tiledb_schema()->attribute(name);
             auto enmr_name = AttributeExperimental::get_enumeration_name(
                 Context(), attr);
+
             if (enmr_name.has_value()) {
                 auto dict_sch_ = arrow_sch_->dictionary;
                 auto dict_arr_ = arrow_arr_->dictionary;
@@ -583,38 +588,9 @@ ArrowTable SOMAArray::_cast_table(
                         "[SOMAArray] {} requires dictionary entry", name));
                 }
 
+                // Cast enumeration values from bit to uint8
                 if (strcmp(dict_sch_->format, "b") == 0) {
-                    const void* data;
-                    if (dict_arr_->n_buffers == 3) {
-                        data = dict_arr_->buffers[2];
-                    } else {
-                        data = dict_arr_->buffers[1];
-                    }
-
-                    auto sz = dict_arr_->length;
-
-                    std::vector<uint8_t> casted;
-                    for (int64_t i = 0; i * 8 < sz; ++i) {
-                        uint8_t byte = ((uint8_t*)data)[i];
-                        for (int64_t j = 0; j < 8; ++j) {
-                            casted.push_back((uint8_t)((byte >> j) & 0x01));
-                        }
-                    }
-
-                    dict_sch_->format = "C";
-                    if (dict_arr_->n_buffers == 3) {
-                        dict_arr_->buffers[2] = malloc(sizeof(uint8_t) * sz);
-                        std::memcpy(
-                            (void*)dict_arr_->buffers[2],
-                            casted.data(),
-                            sizeof(uint8_t) * sz);
-                    } else {
-                        dict_arr_->buffers[1] = malloc(sizeof(uint8_t) * sz);
-                        std::memcpy(
-                            (void*)dict_arr_->buffers[1],
-                            casted.data(),
-                            sizeof(uint8_t) * sz);
-                    }
+                    _cast_bit_to_uint8(dict_sch_, dict_arr_);
                 }
 
                 auto extended_enmr = extend_enumeration(
@@ -622,38 +598,9 @@ ArrowTable SOMAArray::_cast_table(
             }
         }
 
+        // Cast column values from bit to uint8
         if (strcmp(arrow_sch_->format, "b") == 0) {
-            const void* data;
-            if (arrow_arr_->n_buffers == 3) {
-                data = arrow_arr_->buffers[2];
-            } else {
-                data = arrow_arr_->buffers[1];
-            }
-
-            auto sz = arrow_arr_->length;
-
-            std::vector<uint8_t> casted;
-            for (int64_t i = 0; i * 8 < sz; ++i) {
-                uint8_t byte = ((uint8_t*)data)[i];
-                for (int64_t j = 0; j < 8; ++j) {
-                    casted.push_back((uint8_t)((byte >> j) & 0x01));
-                }
-            }
-
-            arrow_sch_->format = "C";
-            if (arrow_arr_->n_buffers == 3) {
-                arrow_arr_->buffers[2] = malloc(sizeof(uint8_t) * sz);
-                std::memcpy(
-                    (void*)arrow_arr_->buffers[2],
-                    casted.data(),
-                    sizeof(uint8_t) * sz);
-            } else {
-                arrow_arr_->buffers[1] = malloc(sizeof(uint8_t) * sz);
-                std::memcpy(
-                    (void*)arrow_arr_->buffers[1],
-                    casted.data(),
-                    sizeof(uint8_t) * sz);
-            }
+            _cast_bit_to_uint8(arrow_sch_, arrow_arr_);
         }
     }
 
