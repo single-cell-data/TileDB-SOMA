@@ -489,3 +489,95 @@ TEST_CASE("SOMAArray: ResultOrder") {
         soma_array->reset({}, "auto", static_cast<ResultOrder>(3)),
         std::invalid_argument);
 }
+
+TEST_CASE("SOMAArray: Write and read back Boolean") {
+    std::string uri = "mem://unit-test-array";
+
+    auto ctx = std::make_shared<SOMAContext>();
+
+    ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
+    auto dim = Dimension::create<int64_t>(*ctx->tiledb_ctx(), "d0", {0, 7});
+    Domain domain(*ctx->tiledb_ctx());
+    domain.add_dimension(dim);
+    schema.set_domain(domain);
+    auto attr = Attribute::create<bool>(*ctx->tiledb_ctx(), "a0");
+    schema.add_attribute(attr);
+    schema.set_allows_dups(true);
+
+    SOMAArray::create(ctx, uri, std::move(schema), "NONE");
+    auto soma_array = SOMAArray::open(OpenMode::write, uri, ctx);
+
+    auto arrow_schema = std::make_unique<ArrowSchema>();
+    arrow_schema->format = "+s";
+    arrow_schema->n_children = 2;
+    arrow_schema->dictionary = nullptr;
+    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
+    ArrowSchema* arrow_dim = arrow_schema->children[0] = new ArrowSchema;
+    arrow_dim->format = "l";
+    arrow_dim->name = "d0";
+    arrow_dim->n_children = 0;
+    arrow_dim->dictionary = nullptr;
+    arrow_dim->release = &ArrowAdapter::release_schema;
+    ArrowSchema* arrow_att = arrow_schema->children[1] = new ArrowSchema;
+    arrow_att->format = "b";
+    arrow_att->name = "a0";
+    arrow_att->n_children = 0;
+    arrow_att->dictionary = nullptr;
+    arrow_att->release = &ArrowAdapter::release_schema;
+
+    auto arrow_array = std::make_unique<ArrowArray>();
+    arrow_array->length = 0;
+    arrow_array->null_count = 0;
+    arrow_array->offset = 0;
+    arrow_array->n_buffers = 0;
+    arrow_array->buffers = nullptr;
+    arrow_array->n_children = 2;
+    arrow_array->release = &ArrowAdapter::release_array;
+    arrow_array->children = new ArrowArray*[arrow_schema->n_children];
+
+    auto d0_expected = arrow_array->children[0] = new ArrowArray;
+    d0_expected->length = 8;
+    d0_expected->null_count = 0;
+    d0_expected->offset = 0;
+    d0_expected->n_buffers = 2;
+    d0_expected->release = &ArrowAdapter::release_array;
+    d0_expected->buffers = new const void*[2];
+    d0_expected->buffers[0] = nullptr;
+    d0_expected->buffers[1] = malloc(sizeof(int64_t) * 8);
+    d0_expected->n_children = 0;
+    int64_t d0_data[] = {0, 1, 2, 3, 4, 5, 6, 7};
+    std::memcpy((void*)d0_expected->buffers[1], &d0_data, sizeof(int64_t) * 8);
+
+    auto a0_expected = arrow_array->children[1] = new ArrowArray;
+    a0_expected->length = 8;
+    a0_expected->null_count = 0;
+    a0_expected->offset = 0;
+    a0_expected->n_buffers = 2;
+    a0_expected->release = &ArrowAdapter::release_array;
+    a0_expected->buffers = new const void*[2];
+    a0_expected->buffers[0] = nullptr;
+    a0_expected->buffers[1] = malloc(sizeof(uint8_t));
+    a0_expected->n_children = 0;
+    uint8_t a0_data = 0b10101010;
+    std::memcpy((void*)a0_expected->buffers[1], &a0_data, sizeof(uint8_t));
+
+    soma_array->set_array_data(std::move(arrow_schema), std::move(arrow_array));
+    soma_array->write();
+    soma_array->close();
+
+    soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
+    auto arrbuf = soma_array->read_next().value();
+
+    auto d0_span = arrbuf->at("d0")->data<int64_t>();
+    REQUIRE(
+        std::vector<int64_t>(d0_span.begin(), d0_span.end()) ==
+        std::vector<int64_t>(d0_data, d0_data + 8));
+
+    auto a0_span = arrbuf->at("a0")->data<bool>();
+    REQUIRE(
+        std::vector<bool>(a0_span.begin(), a0_span.end()) ==
+        std::vector<bool>(
+            {false, true, false, true, false, true, false, true}));
+    soma_array->close();
+}
