@@ -136,6 +136,9 @@ void load_soma_dataframe(py::module& m) {
         .def_static("exists", &SOMADataFrame::exists)
         .def_property_readonly(
             "index_column_names", &SOMADataFrame::index_column_names)
-        .def_property_readonly("count", &SOMADataFrame::count);
+        .def_property_readonly(
+            "count",
+            &SOMADataFrame::count,
+            py::call_guard<py::gil_scoped_release>());
 }
 }  // namespace libtiledbsomacpp
