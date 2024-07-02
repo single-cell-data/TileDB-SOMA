@@ -29,6 +29,13 @@ def test_lazy_init():
         mock_ctx.assert_called_once()
 
 
+def test_tiledb_ctx_init():
+    config = {"hither": "yon"}
+    with pytest.deprecated_call():
+        context = stc.SOMATileDBContext(tiledb_ctx=tiledb.Ctx(config))
+    assert "hither" in context.tiledb_config
+
+
 def test_lazy_replace_config():
     """Verifies we don't construct a Ctx even if we call ``.replace``."""
     with mock.patch.object(tiledb, "Ctx", wraps=tiledb.Ctx) as mock_ctx:
