@@ -819,6 +819,85 @@ class SOMAArray : public SOMAObject {
         ArrowSchema* index_schema,
         ArrowArray* index_array);
 
+    template <typename UserType>
+    void _cast_column(ArrowSchema* column_schema, ArrowArray* column_array) {
+        tiledb_datatype_t disk_type;
+        std::string name(column_schema->name);
+        if (tiledb_schema()->has_attribute(name)) {
+            disk_type = tiledb_schema()->attribute(name).type();
+        } else {
+            disk_type = tiledb_schema()->domain().dimension(name).type();
+        }
+
+        switch (disk_type) {
+            case TILEDB_INT8:
+                return SOMAArray::_cast_column_aux<UserType, int8_t>(
+                    column_array);
+            case TILEDB_UINT8:
+                return SOMAArray::_cast_column_aux<UserType, uint8_t>(
+                    column_array);
+            case TILEDB_INT16:
+                return SOMAArray::_cast_column_aux<UserType, int16_t>(
+                    column_array);
+            case TILEDB_UINT16:
+                return SOMAArray::_cast_column_aux<UserType, uint16_t>(
+                    column_array);
+            case TILEDB_INT32:
+                return SOMAArray::_cast_column_aux<UserType, int32_t>(
+                    column_array);
+            case TILEDB_UINT32:
+                return SOMAArray::_cast_column_aux<UserType, uint32_t>(
+                    column_array);
+            case TILEDB_INT64:
+                return SOMAArray::_cast_column_aux<UserType, int64_t>(
+                    column_array);
+            case TILEDB_UINT64:
+                return SOMAArray::_cast_column_aux<UserType, uint64_t>(
+                    column_array);
+            case TILEDB_FLOAT32:
+                return SOMAArray::_cast_column_aux<UserType, float>(
+                    column_array);
+            case TILEDB_FLOAT64:
+                return SOMAArray::_cast_column_aux<UserType, double>(
+                    column_array);
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid enumeration index type when trying to extend"
+                    "enumeration");
+        }
+    }
+
+    template <typename UserType, typename DiskType>
+    void _cast_column_aux(ArrowArray* column_array) {
+        UserType* buf;
+        if (column_array->n_buffers == 3) {
+            buf = (UserType*)column_array->buffers[2];
+        } else {
+            buf = (UserType*)column_array->buffers[1];
+        }
+        std::vector<UserType> original_values(buf, buf + column_array->length);
+        std::vector<DiskType> casted_values;
+        for (auto val : original_values) {
+            casted_values.push_back(val);
+        }
+
+        if (column_array->n_buffers == 3) {
+            column_array->buffers[2] = malloc(
+                sizeof(DiskType) * casted_values.size());
+            std::memcpy(
+                (void*)column_array->buffers[2],
+                casted_values.data(),
+                sizeof(DiskType) * casted_values.size());
+        } else {
+            column_array->buffers[1] = malloc(
+                sizeof(DiskType) * casted_values.size());
+            std::memcpy(
+                (void*)column_array->buffers[1],
+                casted_values.data(),
+                sizeof(DiskType) * casted_values.size());
+        }
+    }
+
     template <typename ValueType>
     void _remap_indexes(
         std::string column_name,

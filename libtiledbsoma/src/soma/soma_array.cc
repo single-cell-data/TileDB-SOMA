@@ -576,15 +576,16 @@ ArrowTable SOMAArray::_cast_table(
         // match is in the ArraySchema on disk
         if (tiledb_schema()->has_attribute(name)) {
             auto attr = tiledb_schema()->attribute(name);
+
             auto enmr_name = AttributeExperimental::get_enumeration_name(
-                Context(), attr);
+                *ctx_->tiledb_ctx(), attr);
 
             if (enmr_name.has_value()) {
                 auto dict_sch_ = arrow_sch_->dictionary;
                 auto dict_arr_ = arrow_arr_->dictionary;
 
                 if (dict_arr_ == nullptr) {
-                    throw TileDBSOMAError(fmt::format(
+                    throw std::invalid_argument(fmt::format(
                         "[SOMAArray] {} requires dictionary entry", name));
                 }
 
@@ -595,6 +596,51 @@ ArrowTable SOMAArray::_cast_table(
 
                 auto extended_enmr = extend_enumeration(
                     dict_sch_, dict_arr_, arrow_sch_, arrow_arr_);
+            }else{
+                        tiledb_datatype_t user_type = ArrowAdapter::to_tiledb_format(
+            arrow_sch_->format);
+        switch (user_type) {
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_CHAR:
+            case TILEDB_BOOL:
+                break;
+            case TILEDB_INT8:
+                SOMAArray::_cast_column<int8_t>(arrow_sch_, arrow_arr_);
+                break;
+            case TILEDB_UINT8:
+                SOMAArray::_cast_column<uint8_t>(arrow_sch_, arrow_arr_);
+                break;
+            case TILEDB_INT16:
+                SOMAArray::_cast_column<int16_t>(arrow_sch_, arrow_arr_);
+                break;
+            case TILEDB_UINT16:
+                SOMAArray::_cast_column<uint16_t>(arrow_sch_, arrow_arr_);
+                break;
+            case TILEDB_INT32:
+                SOMAArray::_cast_column<int32_t>(arrow_sch_, arrow_arr_);
+                break;
+            case TILEDB_UINT32:
+                SOMAArray::_cast_column<uint32_t>(arrow_sch_, arrow_arr_);
+                break;
+            case TILEDB_INT64:
+                SOMAArray::_cast_column<int64_t>(arrow_sch_, arrow_arr_);
+                break;
+            case TILEDB_UINT64:
+                SOMAArray::_cast_column<uint64_t>(arrow_sch_, arrow_arr_);
+                break;
+            case TILEDB_FLOAT32:
+                SOMAArray::_cast_column<float>(arrow_sch_, arrow_arr_);
+                break;
+            case TILEDB_FLOAT64:
+                SOMAArray::_cast_column<double>(arrow_sch_, arrow_arr_);
+                break;
+            default:
+                throw TileDBSOMAError(fmt::format(
+                    "Saw invalid TileDB type when attempting to cast table: "
+                    "{} ",
+                    tiledb::impl::type_to_str(user_type)));
+        }
             }
         }
 
