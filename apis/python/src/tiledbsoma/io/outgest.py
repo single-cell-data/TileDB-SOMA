@@ -110,7 +110,6 @@ def _extract_X_key(
 
     # Acquire handle to TileDB-SOMA data
     soma_X_data_handle = measurement.X[X_layer_name]
-    logging.log_io(None, f"FOO {X_layer_name} {soma_X_data_handle.uri}")
 
     # Read data from SOMA into memory
     if isinstance(soma_X_data_handle, DenseNDArray):
