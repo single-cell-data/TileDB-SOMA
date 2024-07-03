@@ -36,6 +36,7 @@ def main():
     parser.add_argument(
         "-d", "--debug", help="increase output verbosity", action="store_true"
     )
+    parser.add_argument("-s", "--stats", help="show TileDB stats", action="store_true")
     parser.add_argument(
         "-o",
         help="Specify output directory to contain the somas: default ./anndata-readback-tiledbsoma",
@@ -91,12 +92,6 @@ def main():
         parser.print_help(file=sys.stderr)
         sys.exit(1)
 
-    vfs = tiledb.VFS()
-    if not vfs.is_dir(input_path):
-        # Print this neatly and exit neatly, to avoid a multi-line stack trace otherwise.
-        logging.error(f"Input path not found: {input_path}")
-        sys.exit(1)
-
     # This is for local-disk use only -- for S3-backed tiledb://... URIs we should
     # use tiledb.vfs to remove any priors, and/or make use of a tiledb `overwrite` flag.
     if tiledbsoma._util.is_local_path(outdir):
@@ -107,6 +102,12 @@ def main():
         tiledbsoma.logging.debug()
     elif not args.quiet:
         tiledbsoma.logging.info()
+
+    if args.stats:
+        tiledb.stats_enable()
+        tiledb.stats_reset()
+        tiledbsoma.tiledbsoma_stats_enable()
+        tiledbsoma.tiledbsoma_stats_reset()
 
     soma = tiledbsoma.Experiment.open(input_path)
     tiledbsoma.io.to_h5ad(
@@ -119,6 +120,10 @@ def main():
     )
 
     logger.info(f"Wrote {output_path}")
+
+    if args.stats:
+        tiledb.stats_dump()
+        tiledbsoma.tiledbsoma_stats_dump()
 
 
 if __name__ == "__main__":
