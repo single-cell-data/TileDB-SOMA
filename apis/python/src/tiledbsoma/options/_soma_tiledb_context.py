@@ -221,16 +221,22 @@ class SOMATileDBContext(ContextBase):
 
         Returns a new dict with the contents. Caller must hold ``_lock``.
         """
-        if self._native_context is None:
-            # Our TileDB Context has not yet been built.
-            # We return what will be passed into `tiledb.Ctx()`.
-            return (
-                dict(self._initial_config)
-                if self._initial_config is not None
-                else _default_config({})
-            )
-        # We *do* have a TileDB Context. Return its actual config.
-        return dict(self._native_context.config())
+        # We have a clib.SOMAContext. Return its actual config.
+        if self._native_context is not None:
+            return dict(self._native_context.config())
+
+        # We have TileDB Context. Return its actual config.
+        # TODO This block will be deleted once tiledb_ctx is removed in 1.14
+        if self._tiledb_ctx is not None:
+            return dict(self._tiledb_ctx.config())
+
+        # Our context has not yet been built.
+        # We return what will be passed into the context.
+        return (
+            dict(self._initial_config)
+            if self._initial_config is not None
+            else _default_config({})
+        )
 
     def replace(
         self,
