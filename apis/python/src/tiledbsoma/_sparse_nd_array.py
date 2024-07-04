@@ -47,7 +47,7 @@ from .options._soma_tiledb_context import (
     SOMATileDBContext,
     _validate_soma_tiledb_context,
 )
-from .options._tiledb_create_options import TileDBCreateOptions, TileDBWriteOptions
+from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 
 _UNBATCHED = options.BatchSize()
 

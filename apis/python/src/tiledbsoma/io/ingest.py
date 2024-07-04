@@ -78,7 +78,7 @@ from .._types import (
 )
 from ..options import SOMATileDBContext
 from ..options._soma_tiledb_context import _validate_soma_tiledb_context
-from ..options._tiledb_create_options import TileDBCreateOptions
+from ..options._tiledb_create_write_options import TileDBCreateOptions
 from . import conversions
 from ._common import (
     _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
@@ -1105,10 +1105,10 @@ def _extract_new_values_for_append(
 def _write_arrow_table(
     arrow_table: pa.Table,
     handle: Union[DataFrame, SparseNDArray],
-    tiledb_create_options: TileDBCreateOptions,
+    tiledb_create_write_options: TileDBCreateOptions,
 ) -> None:
     """Handles num-bytes capacity for remote object stores."""
-    cap = tiledb_create_options.remote_cap_nbytes
+    cap = tiledb_create_write_options.remote_cap_nbytes
     if arrow_table.nbytes > cap:
         n = len(arrow_table)
         if n < 2:
@@ -1116,8 +1116,8 @@ def _write_arrow_table(
                 "single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}"
             )
         m = n // 2
-        _write_arrow_table(arrow_table[:m], handle, tiledb_create_options)
-        _write_arrow_table(arrow_table[m:], handle, tiledb_create_options)
+        _write_arrow_table(arrow_table[:m], handle, tiledb_create_write_options)
+        _write_arrow_table(arrow_table[m:], handle, tiledb_create_write_options)
     else:
         logging.log_io(
             None,
@@ -1234,10 +1234,10 @@ def _write_dataframe_impl(
         add_metadata(soma_df, additional_metadata)
         return soma_df
 
-    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+    tiledb_create_write_options = TileDBCreateOptions.from_platform_config(platform_config)
 
     if arrow_table:
-        _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
+        _write_arrow_table(arrow_table, soma_df, tiledb_create_write_options)
 
     # Save the original index name for outgest. We use JSON for elegant indication of index name
     # being None (in Python anyway).
@@ -1334,7 +1334,7 @@ def _create_from_matrix(
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,
@@ -1344,7 +1344,7 @@ def _create_from_matrix(
         _write_matrix_to_sparseNDArray(
             soma_ndarray,
             matrix,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,
@@ -1513,7 +1513,7 @@ def _update_dataframe(
     add_keys = new_keys.difference(old_keys)
     common_keys = old_keys.intersection(new_keys)
 
-    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+    tiledb_create_write_options = TileDBCreateOptions.from_platform_config(platform_config)
 
     msgs = []
     for key in common_keys:
@@ -1550,7 +1550,7 @@ def _update_dataframe(
                 )
             )
 
-        filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
+        filters = tiledb_create_write_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
 
         # An update can create (or drop) columns, or mutate existing ones.  A
         # brand-new column might have nulls in it -- or it might not.  And a
@@ -1656,7 +1656,7 @@ def update_matrix(
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             new_data,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,
@@ -1666,7 +1666,7 @@ def update_matrix(
         _write_matrix_to_sparseNDArray(
             soma_ndarray,
             new_data,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,
@@ -1781,7 +1781,7 @@ def add_matrix_to_collection(
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Union[Matrix, h5py.Dataset],
-    tiledb_create_options: TileDBCreateOptions,
+    tiledb_create_write_options: TileDBCreateOptions,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
@@ -1815,7 +1815,7 @@ def _write_matrix_to_denseNDArray(
             return
 
     # Write all at once?
-    if not tiledb_create_options.write_X_chunked:
+    if not tiledb_create_write_options.write_X_chunked:
         if not isinstance(matrix, np.ndarray):
             matrix = matrix.toarray()
         soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(matrix))
@@ -1838,7 +1838,7 @@ def _write_matrix_to_denseNDArray(
     #   it controls how much is read into client RAM from the backing store on each chunk.
     # * The remote_cap_nbytes is an older parameter.
     # * Compute chunk sizes for both and take the minimum.
-    chunk_size_using_nnz = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
+    chunk_size_using_nnz = int(math.ceil(tiledb_create_write_options.goal_chunk_nnz / ncol))
 
     try:
         # not scipy csr/csc
@@ -1849,7 +1849,7 @@ def _write_matrix_to_denseNDArray(
 
     total_nbytes = matrix.size * itemsize
     nbytes_num_chunks = math.ceil(
-        total_nbytes / tiledb_create_options.remote_cap_nbytes
+        total_nbytes / tiledb_create_write_options.remote_cap_nbytes
     )
     nbytes_num_chunks = min(1, nbytes_num_chunks)
     chunk_size_using_nbytes = math.floor(nrow / nbytes_num_chunks)
@@ -2174,7 +2174,7 @@ def _find_sparse_chunk_size_backed(
 def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
     matrix: Matrix,
-    tiledb_create_options: TileDBCreateOptions,
+    tiledb_create_write_options: TileDBCreateOptions,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata,
     axis_0_mapping: AxisIDMapping,
@@ -2234,7 +2234,7 @@ def _write_matrix_to_sparseNDArray(
     add_metadata(soma_ndarray, additional_metadata)
 
     # Write all at once?
-    if not tiledb_create_options.write_X_chunked:
+    if not tiledb_create_write_options.write_X_chunked:
         soma_ndarray.write(
             _coo_to_table(sp.coo_matrix(matrix), axis_0_mapping, axis_1_mapping)
         )
@@ -2253,7 +2253,7 @@ def _write_matrix_to_sparseNDArray(
     dim_max_size = matrix.shape[stride_axis]
 
     eta_tracker = eta.Tracker()
-    goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz
+    goal_chunk_nnz = tiledb_create_write_options.goal_chunk_nnz
     mean_nnz = _find_mean_nnz(matrix, stride_axis)
 
     coords = [slice(None), slice(None)]
@@ -2321,11 +2321,11 @@ def _write_matrix_to_sparseNDArray(
         # send them off, with simplified logic.
         num_tries = 0
         max_tries = 20
-        while chunk_coo.nnz > tiledb_create_options.goal_chunk_nnz:
+        while chunk_coo.nnz > tiledb_create_write_options.goal_chunk_nnz:
             num_tries += 1
             # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
             # logging.logger.trace(
-            #    f"Adapt: {num_tries}/{max_tries} {chunk_coo.nnz}/{tiledb_create_options.goal_chunk_nnz}"
+            #    f"Adapt: {num_tries}/{max_tries} {chunk_coo.nnz}/{tiledb_create_write_options.goal_chunk_nnz}"
             # )
             if num_tries > max_tries:
                 raise SOMAError(
@@ -2333,7 +2333,7 @@ def _write_matrix_to_sparseNDArray(
                     "This may be reduced in TileDBCreateOptions."
                 )
 
-            ratio = chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz
+            ratio = chunk_coo.nnz / tiledb_create_write_options.goal_chunk_nnz
             chunk_size = int(math.floor(0.9 * (i2 - i) / ratio))
             if chunk_size < 1:
                 raise SOMAError(
@@ -2363,7 +2363,7 @@ def _write_matrix_to_sparseNDArray(
                         dim_max_size,
                         chunk_percent,
                         chunk_coo.nnz,
-                        tiledb_create_options.goal_chunk_nnz,
+                        tiledb_create_write_options.goal_chunk_nnz,
                     ),
                 )
                 i = i2
@@ -2379,14 +2379,14 @@ def _write_matrix_to_sparseNDArray(
                 dim_max_size,
                 chunk_percent,
                 chunk_coo.nnz,
-                tiledb_create_options.goal_chunk_nnz,
+                tiledb_create_write_options.goal_chunk_nnz,
             ),
         )
 
         arrow_table = _coo_to_table(
             chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i
         )
-        _write_arrow_table(arrow_table, soma_ndarray, tiledb_create_options)
+        _write_arrow_table(arrow_table, soma_ndarray, tiledb_create_write_options)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -2808,7 +2808,7 @@ def _ingest_uns_ndarray(
         _write_matrix_to_denseNDArray(
             soma_arr,
             value,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,
