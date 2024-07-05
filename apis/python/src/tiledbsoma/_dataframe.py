@@ -27,7 +27,10 @@ from ._tdb_handles import DataFrameWrapper
 from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
-from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
+from .options._tiledb_create_write_options import (
+    TileDBCreateOptions,
+    TileDBWriteOptions,
+)
 
 _UNBATCHED = options.BatchSize()
 AxisDomain = Union[None, Tuple[Any, Any], List[Any]]

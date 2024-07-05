@@ -1234,7 +1234,9 @@ def _write_dataframe_impl(
         add_metadata(soma_df, additional_metadata)
         return soma_df
 
-    tiledb_create_write_options = TileDBCreateOptions.from_platform_config(platform_config)
+    tiledb_create_write_options = TileDBCreateOptions.from_platform_config(
+        platform_config
+    )
 
     if arrow_table:
         _write_arrow_table(arrow_table, soma_df, tiledb_create_write_options)
@@ -1513,7 +1515,9 @@ def _update_dataframe(
     add_keys = new_keys.difference(old_keys)
     common_keys = old_keys.intersection(new_keys)
 
-    tiledb_create_write_options = TileDBCreateOptions.from_platform_config(platform_config)
+    tiledb_create_write_options = TileDBCreateOptions.from_platform_config(
+        platform_config
+    )
 
     msgs = []
     for key in common_keys:
@@ -1550,7 +1554,9 @@ def _update_dataframe(
                 )
             )
 
-        filters = tiledb_create_write_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
+        filters = tiledb_create_write_options.attr_filters_tiledb(
+            add_key, ["ZstdFilter"]
+        )
 
         # An update can create (or drop) columns, or mutate existing ones.  A
         # brand-new column might have nulls in it -- or it might not.  And a
@@ -1838,7 +1844,9 @@ def _write_matrix_to_denseNDArray(
     #   it controls how much is read into client RAM from the backing store on each chunk.
     # * The remote_cap_nbytes is an older parameter.
     # * Compute chunk sizes for both and take the minimum.
-    chunk_size_using_nnz = int(math.ceil(tiledb_create_write_options.goal_chunk_nnz / ncol))
+    chunk_size_using_nnz = int(
+        math.ceil(tiledb_create_write_options.goal_chunk_nnz / ncol)
+    )
 
     try:
         # not scipy csr/csc
