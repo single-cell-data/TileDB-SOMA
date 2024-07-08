@@ -6,8 +6,8 @@
     rpkg_lib_version <- tiledb::tiledb_version(compact=TRUE)
     soma_lib_version <- libtiledbsoma_version(compact=TRUE)
     # Check major and minor but not micro: sc-50464
-    rpkg_lib_version <- strsplit(as.character(rpkg_lib_version), "\\.")[[1]][1:2]
-    soma_lib_version <- strsplit(soma_lib_version, "\\.")[[1]][1:2]
+    rpkg_lib_version <- paste(strsplit(as.character(rpkg_lib_version), "\\.")[[1]][1:2], collapse = ".")
+    soma_lib_version <- paste(strsplit(soma_lib_version, "\\.")[[1]][1:2], collapse = ".")
     if (rpkg_lib_version != soma_lib_version) {
         msg <- sprintf("TileDB Core version %s used by TileDB-R package, but TileDB-SOMA uses %s",
                        sQuote(rpkg_lib_version), sQuote(soma_lib_version))
