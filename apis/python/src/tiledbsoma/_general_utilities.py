@@ -113,7 +113,8 @@ def verify_core_versions() -> None:
     """
     tiledb_py_core_version = get_tiledb_py_core_version()
     libtiledbsoma_core_version = get_libtiledbsoma_core_version()
-    if tiledb_py_core_version != libtiledbsoma_core_version:
+    # Check major and minor but not micro: sc-50464
+    if tiledb_py_core_version[:2] != libtiledbsoma_core_version[:2]:
         msg = "libtiledb versions used by tiledb and libtiledbsoma differ: %s != %s" % (
             tiledb_py_core_version,
             libtiledbsoma_core_version,
