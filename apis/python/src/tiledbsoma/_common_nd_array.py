@@ -17,7 +17,7 @@ from ._types import OpenTimestamp
 from .options._soma_tiledb_context import (
     SOMATileDBContext,
 )
-from .options._tiledb_create_options import TileDBCreateOptions
+from .options._tiledb_create_write_options import TileDBCreateOptions
 
 
 class NDArray(SOMAArray, somacore.NDArray):
