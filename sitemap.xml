@@ -1,222 +1,76 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>/404.html</loc>
-  </url>
-  <url>
-    <loc>/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>/articles/UsingPlatformConfig.html</loc>
-  </url>
-  <url>
-    <loc>/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>/articles/soma-experiment-queries.html</loc>
-  </url>
-  <url>
-    <loc>/articles/soma-objects.html</loc>
-  </url>
-  <url>
-    <loc>/articles/soma-reading.html</loc>
-  </url>
-  <url>
-    <loc>/authors.html</loc>
-  </url>
-  <url>
-    <loc>/index.html</loc>
-  </url>
-  <url>
-    <loc>/news/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/BlockwiseReadIterBase.html</loc>
-  </url>
-  <url>
-    <loc>/reference/BlockwiseSparseReadIter.html</loc>
-  </url>
-  <url>
-    <loc>/reference/BlockwiseTableReadIter.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ConfigList.html</loc>
-  </url>
-  <url>
-    <loc>/reference/CoordsStrider.html</loc>
-  </url>
-  <url>
-    <loc>/reference/EphemeralCollection.html</loc>
-  </url>
-  <url>
-    <loc>/reference/EphemeralCollectionBase.html</loc>
-  </url>
-  <url>
-    <loc>/reference/EphemeralExperiment.html</loc>
-  </url>
-  <url>
-    <loc>/reference/EphemeralMeasurement.html</loc>
-  </url>
-  <url>
-    <loc>/reference/IntIndexer.html</loc>
-  </url>
-  <url>
-    <loc>/reference/MappingBase.html</loc>
-  </url>
-  <url>
-    <loc>/reference/PlatformConfig.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ReadIter.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAArrayBase.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAAxisIndexer.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAAxisQuery.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAAxisQueryResult.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMACollection.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMACollectionBase.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMACollectionCreate.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMACollectionOpen.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAContextBase.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMADataFrame.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMADataFrameCreate.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMADataFrameOpen.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMADenseNDArray.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMADenseNDArrayCreate.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMADenseNDArrayOpen.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAExperiment.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAExperimentAxisQuery.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAExperimentCreate.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAExperimentOpen.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAMeasurement.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAMeasurementCreate.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAMeasurementOpen.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMANDArrayBase.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMAOpen.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMASparseNDArray.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMASparseNDArrayBlockwiseRead.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMASparseNDArrayCreate.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMASparseNDArrayOpen.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMASparseNDArrayRead.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMASparseNDArrayReadBase.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SOMATileDBContext.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ScalarMap.html</loc>
-  </url>
-  <url>
-    <loc>/reference/SparseReadIter.html</loc>
-  </url>
-  <url>
-    <loc>/reference/TableReadIter.html</loc>
-  </url>
-  <url>
-    <loc>/reference/TileDBArray.html</loc>
-  </url>
-  <url>
-    <loc>/reference/TileDBCreateOptions.html</loc>
-  </url>
-  <url>
-    <loc>/reference/TileDBGroup.html</loc>
-  </url>
-  <url>
-    <loc>/reference/TileDBObject.html</loc>
-  </url>
-  <url>
-    <loc>/reference/example-datasets.html</loc>
-  </url>
-  <url>
-    <loc>/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/matrixZeroBasedView.html</loc>
-  </url>
-  <url>
-    <loc>/reference/set_log_level.html</loc>
-  </url>
-  <url>
-    <loc>/reference/show_package_versions.html</loc>
-  </url>
-  <url>
-    <loc>/reference/tiledbsoma_stats.html</loc>
-  </url>
-  <url>
-    <loc>/reference/write_soma.Seurat.html</loc>
-  </url>
-  <url>
-    <loc>/reference/write_soma.SingleCellExperiment.html</loc>
-  </url>
-  <url>
-    <loc>/reference/write_soma.SummarizedExperiment.html</loc>
-  </url>
-  <url>
-    <loc>/reference/write_soma.html</loc>
-  </url>
-  <url>
-    <loc>/reference/write_soma_objects.html</loc>
-  </url>
-  <url>
-    <loc>/reference/write_soma_seurat_sub.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/LICENSE-text.html</loc></url>
+<url><loc>/articles/UsingPlatformConfig.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/articles/soma-experiment-queries.html</loc></url>
+<url><loc>/articles/soma-objects.html</loc></url>
+<url><loc>/articles/soma-reading.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/news/index.html</loc></url>
+<url><loc>/reference/BlockwiseReadIterBase.html</loc></url>
+<url><loc>/reference/BlockwiseSparseReadIter.html</loc></url>
+<url><loc>/reference/BlockwiseTableReadIter.html</loc></url>
+<url><loc>/reference/ConfigList.html</loc></url>
+<url><loc>/reference/CoordsStrider.html</loc></url>
+<url><loc>/reference/EphemeralCollection.html</loc></url>
+<url><loc>/reference/EphemeralCollectionBase.html</loc></url>
+<url><loc>/reference/EphemeralExperiment.html</loc></url>
+<url><loc>/reference/EphemeralMeasurement.html</loc></url>
+<url><loc>/reference/IntIndexer.html</loc></url>
+<url><loc>/reference/MappingBase.html</loc></url>
+<url><loc>/reference/PlatformConfig.html</loc></url>
+<url><loc>/reference/ReadIter.html</loc></url>
+<url><loc>/reference/SOMAArrayBase.html</loc></url>
+<url><loc>/reference/SOMAAxisIndexer.html</loc></url>
+<url><loc>/reference/SOMAAxisQuery.html</loc></url>
+<url><loc>/reference/SOMAAxisQueryResult.html</loc></url>
+<url><loc>/reference/SOMACollection.html</loc></url>
+<url><loc>/reference/SOMACollectionBase.html</loc></url>
+<url><loc>/reference/SOMACollectionCreate.html</loc></url>
+<url><loc>/reference/SOMACollectionOpen.html</loc></url>
+<url><loc>/reference/SOMAContextBase.html</loc></url>
+<url><loc>/reference/SOMADataFrame.html</loc></url>
+<url><loc>/reference/SOMADataFrameCreate.html</loc></url>
+<url><loc>/reference/SOMADataFrameOpen.html</loc></url>
+<url><loc>/reference/SOMADenseNDArray.html</loc></url>
+<url><loc>/reference/SOMADenseNDArrayCreate.html</loc></url>
+<url><loc>/reference/SOMADenseNDArrayOpen.html</loc></url>
+<url><loc>/reference/SOMAExperiment.html</loc></url>
+<url><loc>/reference/SOMAExperimentAxisQuery.html</loc></url>
+<url><loc>/reference/SOMAExperimentCreate.html</loc></url>
+<url><loc>/reference/SOMAExperimentOpen.html</loc></url>
+<url><loc>/reference/SOMAMeasurement.html</loc></url>
+<url><loc>/reference/SOMAMeasurementCreate.html</loc></url>
+<url><loc>/reference/SOMAMeasurementOpen.html</loc></url>
+<url><loc>/reference/SOMANDArrayBase.html</loc></url>
+<url><loc>/reference/SOMAOpen.html</loc></url>
+<url><loc>/reference/SOMASparseNDArray.html</loc></url>
+<url><loc>/reference/SOMASparseNDArrayBlockwiseRead.html</loc></url>
+<url><loc>/reference/SOMASparseNDArrayCreate.html</loc></url>
+<url><loc>/reference/SOMASparseNDArrayOpen.html</loc></url>
+<url><loc>/reference/SOMASparseNDArrayRead.html</loc></url>
+<url><loc>/reference/SOMASparseNDArrayReadBase.html</loc></url>
+<url><loc>/reference/SOMATileDBContext.html</loc></url>
+<url><loc>/reference/ScalarMap.html</loc></url>
+<url><loc>/reference/SparseReadIter.html</loc></url>
+<url><loc>/reference/TableReadIter.html</loc></url>
+<url><loc>/reference/TileDBArray.html</loc></url>
+<url><loc>/reference/TileDBCreateOptions.html</loc></url>
+<url><loc>/reference/TileDBGroup.html</loc></url>
+<url><loc>/reference/TileDBObject.html</loc></url>
+<url><loc>/reference/example-datasets.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/matrixZeroBasedView.html</loc></url>
+<url><loc>/reference/set_log_level.html</loc></url>
+<url><loc>/reference/show_package_versions.html</loc></url>
+<url><loc>/reference/tiledbsoma_stats.html</loc></url>
+<url><loc>/reference/write_soma.Seurat.html</loc></url>
+<url><loc>/reference/write_soma.SingleCellExperiment.html</loc></url>
+<url><loc>/reference/write_soma.SummarizedExperiment.html</loc></url>
+<url><loc>/reference/write_soma.html</loc></url>
+<url><loc>/reference/write_soma_objects.html</loc></url>
+<url><loc>/reference/write_soma_seurat_sub.html</loc></url>
 </urlset>
+
