@@ -1,3 +1,9 @@
+# tiledbsoma 1.12.3
+
+## Changes
+
+* Updates the TileDB Core dependency to 2.24.2
+
 # tiledbsoma 1.12.2
 
 ## Changes
