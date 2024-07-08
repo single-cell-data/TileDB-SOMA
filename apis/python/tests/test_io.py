@@ -7,7 +7,7 @@ from scipy import sparse as sp
 import tiledbsoma as soma
 import tiledbsoma.io as somaio
 from tiledbsoma import _factory
-from tiledbsoma.options._tiledb_create_options import TileDBCreateOptions
+from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions
 
 
 @pytest.fixture
