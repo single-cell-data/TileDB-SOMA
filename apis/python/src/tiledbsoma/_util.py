@@ -19,7 +19,7 @@ from somacore import options
 
 from . import pytiledbsoma as clib
 from ._types import OpenTimestamp, Slice, is_slice_of
-from .options._tiledb_create_options import (
+from .options._tiledb_create_write_options import (
     TileDBCreateOptions,
     _ColumnConfig,
     _DictFilterSpec,
