@@ -667,7 +667,8 @@ ArrowTable SOMAArray::_cast_table(
             }
             case TILEDB_BOOL: {
                 new_arrow_arr_->buffers[0] = orig_arrow_arr_->buffers[0];
-                auto sz = orig_arrow_arr_->length + (orig_arrow_arr_->length % 8 == 0 ? 0 : 1);
+                auto sz = orig_arrow_arr_->length +
+                          (orig_arrow_arr_->length % 8 == 0 ? 0 : 1);
 
                 if (orig_arrow_arr_->n_buffers == 3) {
                     new_arrow_arr_->buffers[2] = malloc(sz);
@@ -688,39 +689,27 @@ ArrowTable SOMAArray::_cast_table(
             }
             case TILEDB_INT8:
                 SOMAArray::_cast_column<int8_t>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             case TILEDB_UINT8:
                 SOMAArray::_cast_column<uint8_t>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             case TILEDB_INT16:
                 SOMAArray::_cast_column<int16_t>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             case TILEDB_UINT16:
                 SOMAArray::_cast_column<uint16_t>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             case TILEDB_INT32:
                 SOMAArray::_cast_column<int32_t>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             case TILEDB_UINT32:
                 SOMAArray::_cast_column<uint32_t>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             case TILEDB_INT64:
             case TILEDB_DATETIME_YEAR:
@@ -746,27 +735,19 @@ ArrowTable SOMAArray::_cast_table(
             case TILEDB_TIME_FS:
             case TILEDB_TIME_AS:
                 SOMAArray::_cast_column<int64_t>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             case TILEDB_UINT64:
                 SOMAArray::_cast_column<uint64_t>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             case TILEDB_FLOAT32:
                 SOMAArray::_cast_column<float>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             case TILEDB_FLOAT64:
                 SOMAArray::_cast_column<double>(
-                    orig_arrow_sch_,
-                    orig_arrow_arr_,
-                    new_arrow_arr_);
+                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
                 break;
             default:
                 throw TileDBSOMAError(fmt::format(
