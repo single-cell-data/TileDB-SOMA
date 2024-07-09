@@ -833,8 +833,6 @@ class SOMAArray : public SOMAObject {
             disk_type = tiledb_schema()->domain().dimension(name).type();
         }
 
-        std::cout << " " << tiledb::impl::type_to_str(disk_type) << std::endl;
-
         switch (disk_type) {
             case TILEDB_STRING_ASCII:
             case TILEDB_STRING_UTF8:
@@ -951,6 +949,8 @@ class SOMAArray : public SOMAObject {
         for (auto val : original_values) {
             casted_values.push_back(val);
         }
+
+        new_column_array->buffers[0] = orig_column_array->buffers[0];
 
         if (orig_column_array->n_buffers == 3) {
             new_column_array->buffers[2] = malloc(
