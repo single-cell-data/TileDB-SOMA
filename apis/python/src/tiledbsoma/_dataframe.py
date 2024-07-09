@@ -466,7 +466,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         clib_dataframe = self._handle._handle
 
-        values = _util.cast_values_to_target_schema(values, self.schema)
+        # values = _util.cast_values_to_target_schema(values, self.schema)
 
         for batch in values.to_batches():
             clib_dataframe.write(batch, sort_coords or False)

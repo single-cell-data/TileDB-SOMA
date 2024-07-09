@@ -350,11 +350,6 @@ Enumeration SOMAArray::_extend_and_evolve_schema_str(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array) {
-    std::string column_name = index_schema->name;
-    auto disk_index_type = tiledb_schema()->attribute(column_name).type();
-    auto enmr = ArrayExperimental::get_enumeration(
-        *ctx_->tiledb_ctx(), *arr_, column_name);
-    uint64_t max_capacity = SOMAArray::_get_max_capacity(disk_index_type);
     uint64_t num_elems = value_array->length;
 
     std::vector<uint64_t> offsets_v;
@@ -382,6 +377,9 @@ Enumeration SOMAArray::_extend_and_evolve_schema_str(
         enums_in_write.push_back(data_v.substr(beg, sz));
     }
 
+    std::string column_name = index_schema->name;
+    auto enmr = ArrayExperimental::get_enumeration(
+        *ctx_->tiledb_ctx(), *arr_, column_name);
     std::vector<std::string> extend_values;
     auto enums_existing = enmr.as_vector<std::string>();
     for (auto enum_val : enums_in_write) {
@@ -394,6 +392,8 @@ Enumeration SOMAArray::_extend_and_evolve_schema_str(
     if (extend_values.size() != 0) {
         // Check that we extend the enumeration values without
         // overflowing
+        auto disk_index_type = tiledb_schema()->attribute(column_name).type();
+        uint64_t max_capacity = SOMAArray::_get_max_capacity(disk_index_type);
         auto free_capacity = max_capacity - enums_existing.size();
         if (free_capacity < extend_values.size()) {
             throw TileDBSOMAError(
@@ -505,6 +505,8 @@ void SOMAArray::set_array_data(
     auto [casted_array, casted_schema] = SOMAArray::_cast_table(
         std::move(arrow_schema), std::move(arrow_array));
 
+    std::cout << "SOMAArray::set_array_data" << std::endl;
+
     for (auto i = 0; i < casted_schema->n_children; ++i) {
         auto arrow_sch_ = casted_schema->children[i];
         auto arrow_arr_ = casted_array->children[i];
@@ -565,12 +567,216 @@ void SOMAArray::set_array_data(
 ArrowTable SOMAArray::_cast_table(
     std::unique_ptr<ArrowSchema> arrow_schema,
     std::unique_ptr<ArrowArray> arrow_array) {
+    auto casted_arrow_schema = std::make_unique<ArrowSchema>();
+    casted_arrow_schema->format = strdup("+s");
+    casted_arrow_schema->n_children = arrow_schema->n_children;
+    casted_arrow_schema->dictionary = nullptr;
+    casted_arrow_schema->release = &ArrowAdapter::release_schema;
+    casted_arrow_schema->children = (ArrowSchema**)malloc(
+        arrow_schema->n_children * sizeof(ArrowSchema*));
+
+    auto casted_arrow_array = std::make_unique<ArrowArray>();
+    casted_arrow_array->length = 0;
+    casted_arrow_array->null_count = 0;
+    casted_arrow_array->offset = 0;
+    casted_arrow_array->n_buffers = 0;
+    casted_arrow_array->buffers = nullptr;
+    casted_arrow_array->n_children = arrow_array->n_children;
+    casted_arrow_array->release = &ArrowAdapter::release_array;
+    casted_arrow_array->children = (ArrowArray**)malloc(
+        arrow_array->n_children * sizeof(ArrowArray*));
+
     // Go through all columns in the ArrowTable and cast the values to what is
     // in the ArraySchema on disk
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
-        auto arrow_sch_ = arrow_schema->children[i];
-        auto arrow_arr_ = arrow_array->children[i];
-        std::string name(arrow_sch_->name);
+        auto orig_arrow_sch_ = arrow_schema->children[i];
+        auto orig_arrow_arr_ = arrow_array->children[i];
+        auto new_arrow_sch_ = casted_arrow_schema
+                                  ->children[i] = new ArrowSchema;
+        auto new_arrow_arr_ = casted_arrow_array->children[i] = new ArrowArray;
+
+        tiledb_datatype_t user_type = ArrowAdapter::to_tiledb_format(
+            orig_arrow_sch_->format);
+        std::string name(orig_arrow_sch_->name);
+
+        std::cout << name << ": " << tiledb::impl::type_to_str(user_type);
+
+        tiledb_datatype_t disk_type;
+        if (tiledb_schema()->has_attribute(name)) {
+            disk_type = tiledb_schema()->attribute(name).type();
+        } else {
+            disk_type = tiledb_schema()->domain().dimension(name).type();
+        }
+
+        new_arrow_sch_->format = strdup(
+            ArrowAdapter::to_arrow_format(disk_type).data());
+        new_arrow_sch_->name = strdup(orig_arrow_sch_->name);
+        new_arrow_sch_->n_children = orig_arrow_sch_->n_children;
+        new_arrow_sch_->release = &ArrowAdapter::release_schema;
+        new_arrow_sch_->children = (ArrowSchema**)malloc(
+            orig_arrow_sch_->n_children * sizeof(ArrowSchema*));
+        new_arrow_arr_->length = orig_arrow_arr_->length;
+        new_arrow_arr_->null_count = orig_arrow_arr_->null_count;
+        new_arrow_arr_->offset = 0;
+        new_arrow_arr_->n_buffers = orig_arrow_arr_->n_buffers;
+        new_arrow_arr_->buffers = new const void*[orig_arrow_arr_->n_buffers];
+        new_arrow_arr_->n_children = orig_arrow_arr_->n_children;
+        new_arrow_arr_->release = &ArrowAdapter::release_array;
+        new_arrow_arr_->children = (ArrowArray**)malloc(
+            orig_arrow_arr_->n_children * sizeof(ArrowArray*));
+
+        switch (user_type) {
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_CHAR: {
+                std::vector<uint64_t> offsets_v;
+                if ((strcmp(orig_arrow_sch_->format, "U") == 0) ||
+                    (strcmp(orig_arrow_sch_->format, "Z") == 0)) {
+                    uint64_t* offsets = (uint64_t*)orig_arrow_arr_->buffers[1];
+                    offsets_v.resize(orig_arrow_arr_->length + 1);
+                    offsets_v.assign(
+                        offsets, offsets + orig_arrow_arr_->length + 1);
+                } else {
+                    uint32_t* offsets = (uint32_t*)orig_arrow_arr_->buffers[1];
+                    std::vector<uint32_t> offset_holder(
+                        offsets, offsets + orig_arrow_arr_->length + 1);
+                    for (auto offset : offset_holder) {
+                        offsets_v.push_back((uint64_t)offset);
+                    }
+                }
+
+                new_arrow_arr_->buffers[1] = malloc(
+                    sizeof(uint64_t) * offsets_v.size());
+                std::memcpy(
+                    (void*)new_arrow_arr_->buffers[1],
+                    offsets_v.data(),
+                    sizeof(uint64_t) * offsets_v.size());
+
+                new_arrow_arr_->buffers[2] = malloc(
+                    sizeof(char) * offsets_v.back());
+                std::memcpy(
+                    (void*)new_arrow_arr_->buffers[2],
+                    orig_arrow_arr_->buffers[2],
+                    sizeof(char) * offsets_v.back());
+
+                break;
+            }
+            case TILEDB_BOOL: {
+                if (orig_arrow_arr_->n_buffers == 3) {
+                    new_arrow_arr_->buffers[2] = malloc(
+                        orig_arrow_arr_->length);
+                    std::memcpy(
+                        (void*)new_arrow_arr_->buffers[2],
+                        orig_arrow_arr_->buffers[2],
+                        orig_arrow_arr_->length);
+                } else {
+                    new_arrow_arr_->buffers[1] = malloc(
+                        orig_arrow_arr_->length);
+                    std::memcpy(
+                        (void*)new_arrow_arr_->buffers[1],
+                        orig_arrow_arr_->buffers[1],
+                        orig_arrow_arr_->length);
+                }
+                break;
+            }
+            case TILEDB_INT8:
+                SOMAArray::_cast_column<int8_t>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            case TILEDB_UINT8:
+                SOMAArray::_cast_column<uint8_t>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            case TILEDB_INT16:
+                SOMAArray::_cast_column<int16_t>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            case TILEDB_UINT16:
+                SOMAArray::_cast_column<uint16_t>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            case TILEDB_INT32:
+                SOMAArray::_cast_column<int32_t>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            case TILEDB_UINT32:
+                SOMAArray::_cast_column<uint32_t>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            case TILEDB_INT64:
+            case TILEDB_DATETIME_YEAR:
+            case TILEDB_DATETIME_MONTH:
+            case TILEDB_DATETIME_WEEK:
+            case TILEDB_DATETIME_DAY:
+            case TILEDB_DATETIME_HR:
+            case TILEDB_DATETIME_MIN:
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_DATETIME_PS:
+            case TILEDB_DATETIME_FS:
+            case TILEDB_DATETIME_AS:
+            case TILEDB_TIME_HR:
+            case TILEDB_TIME_MIN:
+            case TILEDB_TIME_SEC:
+            case TILEDB_TIME_MS:
+            case TILEDB_TIME_US:
+            case TILEDB_TIME_NS:
+            case TILEDB_TIME_PS:
+            case TILEDB_TIME_FS:
+            case TILEDB_TIME_AS:
+                SOMAArray::_cast_column<int64_t>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            case TILEDB_UINT64:
+                SOMAArray::_cast_column<uint64_t>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            case TILEDB_FLOAT32:
+                SOMAArray::_cast_column<float>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            case TILEDB_FLOAT64:
+                SOMAArray::_cast_column<double>(
+                    orig_arrow_sch_,
+                    orig_arrow_arr_,
+                    // new_arrow_sch_,
+                    new_arrow_arr_);
+                break;
+            default:
+                throw TileDBSOMAError(fmt::format(
+                    "Saw invalid TileDB user type when attempting to "
+                    "cast table: {}",
+                    tiledb::impl::type_to_str(user_type)));
+        }
 
         // if the attribute is enumerated, ensure that the index values also
         // match is in the ArraySchema on disk
@@ -581,8 +787,8 @@ ArrowTable SOMAArray::_cast_table(
                 *ctx_->tiledb_ctx(), attr);
 
             if (enmr_name.has_value()) {
-                auto dict_sch_ = arrow_sch_->dictionary;
-                auto dict_arr_ = arrow_arr_->dictionary;
+                auto dict_sch_ = orig_arrow_sch_->dictionary;
+                auto dict_arr_ = orig_arrow_arr_->dictionary;
 
                 if (dict_arr_ == nullptr) {
                     throw std::invalid_argument(fmt::format(
@@ -595,62 +801,18 @@ ArrowTable SOMAArray::_cast_table(
                 }
 
                 auto extended_enmr = extend_enumeration(
-                    dict_sch_, dict_arr_, arrow_sch_, arrow_arr_);
-            }else{
-                        tiledb_datatype_t user_type = ArrowAdapter::to_tiledb_format(
-            arrow_sch_->format);
-        switch (user_type) {
-            case TILEDB_STRING_ASCII:
-            case TILEDB_STRING_UTF8:
-            case TILEDB_CHAR:
-            case TILEDB_BOOL:
-                break;
-            case TILEDB_INT8:
-                SOMAArray::_cast_column<int8_t>(arrow_sch_, arrow_arr_);
-                break;
-            case TILEDB_UINT8:
-                SOMAArray::_cast_column<uint8_t>(arrow_sch_, arrow_arr_);
-                break;
-            case TILEDB_INT16:
-                SOMAArray::_cast_column<int16_t>(arrow_sch_, arrow_arr_);
-                break;
-            case TILEDB_UINT16:
-                SOMAArray::_cast_column<uint16_t>(arrow_sch_, arrow_arr_);
-                break;
-            case TILEDB_INT32:
-                SOMAArray::_cast_column<int32_t>(arrow_sch_, arrow_arr_);
-                break;
-            case TILEDB_UINT32:
-                SOMAArray::_cast_column<uint32_t>(arrow_sch_, arrow_arr_);
-                break;
-            case TILEDB_INT64:
-                SOMAArray::_cast_column<int64_t>(arrow_sch_, arrow_arr_);
-                break;
-            case TILEDB_UINT64:
-                SOMAArray::_cast_column<uint64_t>(arrow_sch_, arrow_arr_);
-                break;
-            case TILEDB_FLOAT32:
-                SOMAArray::_cast_column<float>(arrow_sch_, arrow_arr_);
-                break;
-            case TILEDB_FLOAT64:
-                SOMAArray::_cast_column<double>(arrow_sch_, arrow_arr_);
-                break;
-            default:
-                throw TileDBSOMAError(fmt::format(
-                    "Saw invalid TileDB type when attempting to cast table: "
-                    "{} ",
-                    tiledb::impl::type_to_str(user_type)));
-        }
+                    dict_sch_, dict_arr_, orig_arrow_sch_, orig_arrow_arr_);
             }
         }
 
         // Cast column values from bit to uint8
-        if (strcmp(arrow_sch_->format, "b") == 0) {
-            _cast_bit_to_uint8(arrow_sch_, arrow_arr_);
+        if (strcmp(new_arrow_sch_->format, "b") == 0) {
+            _cast_bit_to_uint8(orig_arrow_sch_, orig_arrow_arr_);
         }
     }
 
-    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+    return ArrowTable(
+        std::move(casted_arrow_array), std::move(casted_arrow_schema));
 }
 
 void SOMAArray::_cast_bit_to_uint8(

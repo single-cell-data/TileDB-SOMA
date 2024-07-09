@@ -820,79 +820,150 @@ class SOMAArray : public SOMAObject {
         ArrowArray* index_array);
 
     template <typename UserType>
-    void _cast_column(ArrowSchema* column_schema, ArrowArray* column_array) {
+    void _cast_column(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        // ArrowSchema* new_column_schema,
+        ArrowArray* new_column_array) {
         tiledb_datatype_t disk_type;
-        std::string name(column_schema->name);
+        std::string name(orig_column_schema->name);
         if (tiledb_schema()->has_attribute(name)) {
             disk_type = tiledb_schema()->attribute(name).type();
         } else {
             disk_type = tiledb_schema()->domain().dimension(name).type();
         }
 
+        std::cout << " " << tiledb::impl::type_to_str(disk_type) << std::endl;
+
         switch (disk_type) {
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_CHAR:
+                break;
+            case TILEDB_BOOL:
             case TILEDB_INT8:
                 return SOMAArray::_cast_column_aux<UserType, int8_t>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             case TILEDB_UINT8:
                 return SOMAArray::_cast_column_aux<UserType, uint8_t>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             case TILEDB_INT16:
                 return SOMAArray::_cast_column_aux<UserType, int16_t>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             case TILEDB_UINT16:
                 return SOMAArray::_cast_column_aux<UserType, uint16_t>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             case TILEDB_INT32:
                 return SOMAArray::_cast_column_aux<UserType, int32_t>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             case TILEDB_UINT32:
                 return SOMAArray::_cast_column_aux<UserType, uint32_t>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             case TILEDB_INT64:
+            case TILEDB_DATETIME_YEAR:
+            case TILEDB_DATETIME_MONTH:
+            case TILEDB_DATETIME_WEEK:
+            case TILEDB_DATETIME_DAY:
+            case TILEDB_DATETIME_HR:
+            case TILEDB_DATETIME_MIN:
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_DATETIME_PS:
+            case TILEDB_DATETIME_FS:
+            case TILEDB_DATETIME_AS:
+            case TILEDB_TIME_HR:
+            case TILEDB_TIME_MIN:
+            case TILEDB_TIME_SEC:
+            case TILEDB_TIME_MS:
+            case TILEDB_TIME_US:
+            case TILEDB_TIME_NS:
+            case TILEDB_TIME_PS:
+            case TILEDB_TIME_FS:
+            case TILEDB_TIME_AS:
                 return SOMAArray::_cast_column_aux<UserType, int64_t>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             case TILEDB_UINT64:
                 return SOMAArray::_cast_column_aux<UserType, uint64_t>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             case TILEDB_FLOAT32:
                 return SOMAArray::_cast_column_aux<UserType, float>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             case TILEDB_FLOAT64:
                 return SOMAArray::_cast_column_aux<UserType, double>(
-                    column_array);
+                    // orig_column_schema,
+                    orig_column_array,
+                    // new_column_schema,
+                    new_column_array);
             default:
                 throw TileDBSOMAError(
-                    "Saw invalid enumeration index type when trying to extend"
-                    "enumeration");
+                    "Saw invalid TileDB disk type when attempting to cast "
+                    "table: " +
+                    tiledb::impl::type_to_str(disk_type));
         }
     }
 
     template <typename UserType, typename DiskType>
-    void _cast_column_aux(ArrowArray* column_array) {
+    void _cast_column_aux(
+        // ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        // ArrowSchema* new_column_schema,
+        ArrowArray* new_column_array) {
         UserType* buf;
-        if (column_array->n_buffers == 3) {
-            buf = (UserType*)column_array->buffers[2];
+        if (orig_column_array->n_buffers == 3) {
+            buf = (UserType*)orig_column_array->buffers[2] +
+                  orig_column_array->offset;
         } else {
-            buf = (UserType*)column_array->buffers[1];
+            buf = (UserType*)orig_column_array->buffers[1] +
+                  orig_column_array->offset;
         }
-        std::vector<UserType> original_values(buf, buf + column_array->length);
+        std::vector<UserType> original_values(
+            buf, buf + orig_column_array->length);
         std::vector<DiskType> casted_values;
         for (auto val : original_values) {
             casted_values.push_back(val);
         }
 
-        if (column_array->n_buffers == 3) {
-            column_array->buffers[2] = malloc(
+        if (orig_column_array->n_buffers == 3) {
+            new_column_array->buffers[2] = malloc(
                 sizeof(DiskType) * casted_values.size());
             std::memcpy(
-                (void*)column_array->buffers[2],
+                (void*)new_column_array->buffers[2],
                 casted_values.data(),
                 sizeof(DiskType) * casted_values.size());
         } else {
-            column_array->buffers[1] = malloc(
+            new_column_array->buffers[1] = malloc(
                 sizeof(DiskType) * casted_values.size());
             std::memcpy(
-                (void*)column_array->buffers[1],
+                (void*)new_column_array->buffers[1],
                 casted_values.data(),
                 sizeof(DiskType) * casted_values.size());
         }

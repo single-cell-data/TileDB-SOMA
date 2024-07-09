@@ -1123,6 +1123,7 @@ def _write_arrow_table(
             None,
             f"Write Arrow table num_rows={len(arrow_table)} num_bytes={arrow_table.nbytes} cap={cap}",
         )
+        print(arrow_table)
         handle.write(arrow_table)
 
 
