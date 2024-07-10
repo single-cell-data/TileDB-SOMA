@@ -819,11 +819,16 @@ class SOMAArray : public SOMAObject {
         ArrowSchema* index_schema,
         ArrowArray* index_array);
 
-    template <typename UserType>
     void _cast_column(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
-        // ArrowSchema* new_column_schema,
+        ArrowSchema* new_column_schema,
+        ArrowArray* new_column_array);
+
+    template <typename UserType>
+    void _cast_column_aux(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
         ArrowArray* new_column_array) {
         tiledb_datatype_t disk_type;
         std::string name(orig_column_schema->name);
@@ -840,41 +845,23 @@ class SOMAArray : public SOMAObject {
                 break;
             case TILEDB_BOOL:
             case TILEDB_INT8:
-                return SOMAArray::_cast_column_aux<UserType, int8_t>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, int8_t>(
+                    orig_column_array, new_column_array);
             case TILEDB_UINT8:
-                return SOMAArray::_cast_column_aux<UserType, uint8_t>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, uint8_t>(
+                    orig_column_array, new_column_array);
             case TILEDB_INT16:
-                return SOMAArray::_cast_column_aux<UserType, int16_t>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, int16_t>(
+                    orig_column_array, new_column_array);
             case TILEDB_UINT16:
-                return SOMAArray::_cast_column_aux<UserType, uint16_t>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, uint16_t>(
+                    orig_column_array, new_column_array);
             case TILEDB_INT32:
-                return SOMAArray::_cast_column_aux<UserType, int32_t>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, int32_t>(
+                    orig_column_array, new_column_array);
             case TILEDB_UINT32:
-                return SOMAArray::_cast_column_aux<UserType, uint32_t>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, uint32_t>(
+                    orig_column_array, new_column_array);
             case TILEDB_INT64:
             case TILEDB_DATETIME_YEAR:
             case TILEDB_DATETIME_MONTH:
@@ -898,29 +885,17 @@ class SOMAArray : public SOMAObject {
             case TILEDB_TIME_PS:
             case TILEDB_TIME_FS:
             case TILEDB_TIME_AS:
-                return SOMAArray::_cast_column_aux<UserType, int64_t>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, int64_t>(
+                    orig_column_array, new_column_array);
             case TILEDB_UINT64:
-                return SOMAArray::_cast_column_aux<UserType, uint64_t>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, uint64_t>(
+                    orig_column_array, new_column_array);
             case TILEDB_FLOAT32:
-                return SOMAArray::_cast_column_aux<UserType, float>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, float>(
+                    orig_column_array, new_column_array);
             case TILEDB_FLOAT64:
-                return SOMAArray::_cast_column_aux<UserType, double>(
-                    // orig_column_schema,
-                    orig_column_array,
-                    // new_column_schema,
-                    new_column_array);
+                return SOMAArray::_copy_column<UserType, double>(
+                    orig_column_array, new_column_array);
             default:
                 throw TileDBSOMAError(
                     "Saw invalid TileDB disk type when attempting to cast "
@@ -930,11 +905,8 @@ class SOMAArray : public SOMAObject {
     }
 
     template <typename UserType, typename DiskType>
-    void _cast_column_aux(
-        // ArrowSchema* orig_column_schema,
-        ArrowArray* orig_column_array,
-        // ArrowSchema* new_column_schema,
-        ArrowArray* new_column_array) {
+    void _copy_column(
+        ArrowArray* orig_column_array, ArrowArray* new_column_array) {
         UserType* buf;
         if (orig_column_array->n_buffers == 3) {
             buf = (UserType*)orig_column_array->buffers[2] +

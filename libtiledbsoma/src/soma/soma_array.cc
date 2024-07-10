@@ -568,6 +568,8 @@ void SOMAArray::set_array_data(
 ArrowTable SOMAArray::_cast_table(
     std::unique_ptr<ArrowSchema> arrow_schema,
     std::unique_ptr<ArrowArray> arrow_array) {
+    // Create the new ArrowSchema and ArrowArray for the ArrowTable that we 
+    // will deep copy to
     auto casted_arrow_schema = std::make_unique<ArrowSchema>();
     casted_arrow_schema->format = strdup("+s");
     casted_arrow_schema->n_children = arrow_schema->n_children;
@@ -596,193 +598,205 @@ ArrowTable SOMAArray::_cast_table(
                                   ->children[i] = new ArrowSchema;
         auto new_arrow_arr_ = casted_arrow_array->children[i] = new ArrowArray;
 
-        tiledb_datatype_t user_type = ArrowAdapter::to_tiledb_format(
-            orig_arrow_sch_->format);
-        std::string name(orig_arrow_sch_->name);
-
-        tiledb_datatype_t disk_type;
-        if (tiledb_schema()->has_attribute(name)) {
-            disk_type = tiledb_schema()->attribute(name).type();
-        } else {
-            disk_type = tiledb_schema()->domain().dimension(name).type();
-        }
-
-        new_arrow_sch_->format = strdup(
-            ArrowAdapter::to_arrow_format(disk_type).data());
-        new_arrow_sch_->name = strdup(orig_arrow_sch_->name);
-        new_arrow_sch_->n_children = orig_arrow_sch_->n_children;
-        new_arrow_sch_->release = &ArrowAdapter::release_schema;
-        new_arrow_sch_->children = (ArrowSchema**)malloc(
-            orig_arrow_sch_->n_children * sizeof(ArrowSchema*));
-        new_arrow_sch_->dictionary = orig_arrow_sch_->dictionary;
-
-        new_arrow_arr_->length = orig_arrow_arr_->length;
-        new_arrow_arr_->null_count = orig_arrow_arr_->null_count;
-        new_arrow_arr_->offset = 0;
-        new_arrow_arr_->n_buffers = orig_arrow_arr_->n_buffers;
-        new_arrow_arr_->buffers = new const void*[orig_arrow_arr_->n_buffers];
-        new_arrow_arr_->n_children = orig_arrow_arr_->n_children;
-        new_arrow_arr_->release = &ArrowAdapter::release_array;
-        new_arrow_arr_->children = (ArrowArray**)malloc(
-            orig_arrow_arr_->n_children * sizeof(ArrowArray*));
-        new_arrow_arr_->dictionary = orig_arrow_arr_->dictionary;
-
-        switch (user_type) {
-            case TILEDB_STRING_ASCII:
-            case TILEDB_STRING_UTF8:
-            case TILEDB_CHAR: {
-                std::vector<uint64_t> offsets_v;
-                if ((strcmp(orig_arrow_sch_->format, "U") == 0) ||
-                    (strcmp(orig_arrow_sch_->format, "Z") == 0)) {
-                    uint64_t* offsets = (uint64_t*)orig_arrow_arr_->buffers[1];
-                    offsets_v.resize(orig_arrow_arr_->length + 1);
-                    offsets_v.assign(
-                        offsets, offsets + orig_arrow_arr_->length + 1);
-                } else {
-                    uint32_t* offsets = (uint32_t*)orig_arrow_arr_->buffers[1];
-                    std::vector<uint32_t> offset_holder(
-                        offsets, offsets + orig_arrow_arr_->length + 1);
-                    for (auto offset : offset_holder) {
-                        offsets_v.push_back((uint64_t)offset);
-                    }
-                }
-
-                new_arrow_arr_->buffers[0] = orig_arrow_arr_->buffers[0];
-
-                new_arrow_arr_->buffers[1] = malloc(
-                    sizeof(uint64_t) * offsets_v.size());
-                std::memcpy(
-                    (void*)new_arrow_arr_->buffers[1],
-                    offsets_v.data(),
-                    sizeof(uint64_t) * offsets_v.size());
-
-                new_arrow_arr_->buffers[2] = malloc(
-                    sizeof(char) * offsets_v.back());
-                std::memcpy(
-                    (void*)new_arrow_arr_->buffers[2],
-                    orig_arrow_arr_->buffers[2],
-                    sizeof(char) * offsets_v.back());
-
-                break;
-            }
-            case TILEDB_BOOL: {
-                new_arrow_arr_->buffers[0] = orig_arrow_arr_->buffers[0];
-                auto sz = orig_arrow_arr_->length +
-                          (orig_arrow_arr_->length % 8 == 0 ? 0 : 1);
-
-                if (orig_arrow_arr_->n_buffers == 3) {
-                    new_arrow_arr_->buffers[2] = malloc(sz);
-                    std::memcpy(
-                        (void*)new_arrow_arr_->buffers[2],
-                        orig_arrow_arr_->buffers[2],
-                        sz);
-                } else {
-                    new_arrow_arr_->buffers[1] = malloc(sz);
-                    std::memcpy(
-                        (void*)new_arrow_arr_->buffers[1],
-                        orig_arrow_arr_->buffers[1],
-                        sz);
-                }
-
-                _cast_bit_to_uint8(new_arrow_sch_, new_arrow_arr_);
-                break;
-            }
-            case TILEDB_INT8:
-                SOMAArray::_cast_column<int8_t>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            case TILEDB_UINT8:
-                SOMAArray::_cast_column<uint8_t>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            case TILEDB_INT16:
-                SOMAArray::_cast_column<int16_t>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            case TILEDB_UINT16:
-                SOMAArray::_cast_column<uint16_t>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            case TILEDB_INT32:
-                SOMAArray::_cast_column<int32_t>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            case TILEDB_UINT32:
-                SOMAArray::_cast_column<uint32_t>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            case TILEDB_INT64:
-            case TILEDB_DATETIME_YEAR:
-            case TILEDB_DATETIME_MONTH:
-            case TILEDB_DATETIME_WEEK:
-            case TILEDB_DATETIME_DAY:
-            case TILEDB_DATETIME_HR:
-            case TILEDB_DATETIME_MIN:
-            case TILEDB_DATETIME_SEC:
-            case TILEDB_DATETIME_MS:
-            case TILEDB_DATETIME_US:
-            case TILEDB_DATETIME_NS:
-            case TILEDB_DATETIME_PS:
-            case TILEDB_DATETIME_FS:
-            case TILEDB_DATETIME_AS:
-            case TILEDB_TIME_HR:
-            case TILEDB_TIME_MIN:
-            case TILEDB_TIME_SEC:
-            case TILEDB_TIME_MS:
-            case TILEDB_TIME_US:
-            case TILEDB_TIME_NS:
-            case TILEDB_TIME_PS:
-            case TILEDB_TIME_FS:
-            case TILEDB_TIME_AS:
-                SOMAArray::_cast_column<int64_t>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            case TILEDB_UINT64:
-                SOMAArray::_cast_column<uint64_t>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            case TILEDB_FLOAT32:
-                SOMAArray::_cast_column<float>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            case TILEDB_FLOAT64:
-                SOMAArray::_cast_column<double>(
-                    orig_arrow_sch_, orig_arrow_arr_, new_arrow_arr_);
-                break;
-            default:
-                throw TileDBSOMAError(fmt::format(
-                    "Saw invalid TileDB user type when attempting to "
-                    "cast table: {}",
-                    tiledb::impl::type_to_str(user_type)));
-        }
-
-        // if the attribute is enumerated, ensure that the index values also
-        // match is in the ArraySchema on disk
-        if (tiledb_schema()->has_attribute(name)) {
-            auto attr = tiledb_schema()->attribute(name);
-
-            auto enmr_name = AttributeExperimental::get_enumeration_name(
-                *ctx_->tiledb_ctx(), attr);
-
-            if (enmr_name.has_value()) {
-                auto value_sch_ = new_arrow_sch_->dictionary;
-                auto value_arr_ = new_arrow_arr_->dictionary;
-                auto index_sch_ = new_arrow_sch_;
-                auto index_arr_ = new_arrow_arr_;
-
-                if (value_arr_ == nullptr || value_sch_ == nullptr) {
-                    throw std::invalid_argument(fmt::format(
-                        "[SOMAArray] {} requires dictionary entry", name));
-                }
-
-                auto extended_enmr = extend_enumeration(
-                    value_sch_, value_arr_, index_sch_, index_arr_);
-            }
-        }
+        SOMAArray::_cast_column(
+            orig_arrow_sch_, orig_arrow_arr_, new_arrow_sch_, new_arrow_arr_);
     }
 
     return ArrowTable(
         std::move(casted_arrow_array), std::move(casted_arrow_schema));
+}
+
+void SOMAArray::_cast_column(
+    ArrowSchema* orig_column_schema,
+    ArrowArray* orig_column_array,
+    ArrowSchema* new_column_schema,
+    ArrowArray* new_column_array) {
+    std::string name(orig_column_schema->name);
+
+    tiledb_datatype_t disk_type;
+    if (tiledb_schema()->has_attribute(name)) {
+        disk_type = tiledb_schema()->attribute(name).type();
+    } else {
+        disk_type = tiledb_schema()->domain().dimension(name).type();
+    }
+
+    // Create the new ArrowSchema and ArrowArray for the column
+    new_column_schema->format = strdup(
+        ArrowAdapter::to_arrow_format(disk_type).data());
+    new_column_schema->name = strdup(orig_column_schema->name);
+    new_column_schema->n_children = orig_column_schema->n_children;
+    new_column_schema->release = &ArrowAdapter::release_schema;
+    new_column_schema->children = (ArrowSchema**)malloc(
+        orig_column_schema->n_children * sizeof(ArrowSchema*));
+    new_column_schema->dictionary = orig_column_schema->dictionary;
+
+    new_column_array->length = orig_column_array->length;
+    new_column_array->null_count = orig_column_array->null_count;
+    new_column_array->offset = 0;
+    new_column_array->n_buffers = orig_column_array->n_buffers;
+    new_column_array->buffers = new const void*[orig_column_array->n_buffers];
+    new_column_array->n_children = orig_column_array->n_children;
+    new_column_array->release = &ArrowAdapter::release_array;
+    new_column_array->children = (ArrowArray**)malloc(
+        orig_column_array->n_children * sizeof(ArrowArray*));
+    new_column_array->dictionary = orig_column_array->dictionary;
+
+    tiledb_datatype_t user_type = ArrowAdapter::to_tiledb_format(
+        orig_column_schema->format);
+
+    // Cast values and deep copy to the newly created column
+    switch (user_type) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR: {
+            std::vector<uint64_t> offsets_v;
+            if ((strcmp(orig_column_schema->format, "U") == 0) ||
+                (strcmp(orig_column_schema->format, "Z") == 0)) {
+                uint64_t* offsets = (uint64_t*)orig_column_array->buffers[1];
+                offsets_v.resize(orig_column_array->length + 1);
+                offsets_v.assign(
+                    offsets, offsets + orig_column_array->length + 1);
+            } else {
+                uint32_t* offsets = (uint32_t*)orig_column_array->buffers[1];
+                std::vector<uint32_t> offset_holder(
+                    offsets, offsets + orig_column_array->length + 1);
+                for (auto offset : offset_holder) {
+                    offsets_v.push_back((uint64_t)offset);
+                }
+            }
+
+            new_column_array->buffers[0] = orig_column_array->buffers[0];
+
+            new_column_array->buffers[1] = malloc(
+                sizeof(uint64_t) * offsets_v.size());
+            std::memcpy(
+                (void*)new_column_array->buffers[1],
+                offsets_v.data(),
+                sizeof(uint64_t) * offsets_v.size());
+
+            new_column_array->buffers[2] = malloc(
+                sizeof(char) * offsets_v.back());
+            std::memcpy(
+                (void*)new_column_array->buffers[2],
+                orig_column_array->buffers[2],
+                sizeof(char) * offsets_v.back());
+
+            break;
+        }
+        case TILEDB_BOOL: {
+            new_column_array->buffers[0] = orig_column_array->buffers[0];
+            auto sz = orig_column_array->length +
+                      (orig_column_array->length % 8 == 0 ? 0 : 1);
+
+            if (orig_column_array->n_buffers == 3) {
+                new_column_array->buffers[2] = malloc(sz);
+                std::memcpy(
+                    (void*)new_column_array->buffers[2],
+                    orig_column_array->buffers[2],
+                    sz);
+            } else {
+                new_column_array->buffers[1] = malloc(sz);
+                std::memcpy(
+                    (void*)new_column_array->buffers[1],
+                    orig_column_array->buffers[1],
+                    sz);
+            }
+
+            _cast_bit_to_uint8(new_column_schema, new_column_array);
+            break;
+        }
+        case TILEDB_INT8:
+            SOMAArray::_cast_column_aux<int8_t>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        case TILEDB_UINT8:
+            SOMAArray::_cast_column_aux<uint8_t>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        case TILEDB_INT16:
+            SOMAArray::_cast_column_aux<int16_t>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        case TILEDB_UINT16:
+            SOMAArray::_cast_column_aux<uint16_t>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        case TILEDB_INT32:
+            SOMAArray::_cast_column_aux<int32_t>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        case TILEDB_UINT32:
+            SOMAArray::_cast_column_aux<uint32_t>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        case TILEDB_INT64:
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
+            SOMAArray::_cast_column_aux<int64_t>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        case TILEDB_UINT64:
+            SOMAArray::_cast_column_aux<uint64_t>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        case TILEDB_FLOAT32:
+            SOMAArray::_cast_column_aux<float>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        case TILEDB_FLOAT64:
+            SOMAArray::_cast_column_aux<double>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "Saw invalid TileDB user type when attempting to "
+                "cast table: {}",
+                tiledb::impl::type_to_str(user_type)));
+    }
+
+    // if the attribute is enumerated, ensure that the index values also
+    // match is in the ArraySchema on disk
+    if (tiledb_schema()->has_attribute(name)) {
+        auto attr = tiledb_schema()->attribute(name);
+
+        auto enmr_name = AttributeExperimental::get_enumeration_name(
+            *ctx_->tiledb_ctx(), attr);
+
+        if (enmr_name.has_value()) {
+            auto value_schema = new_column_schema->dictionary;
+            auto value_array = new_column_array->dictionary;
+            auto index_schema = new_column_schema;
+            auto index_array = new_column_array;
+
+            if (value_array == nullptr || value_schema == nullptr) {
+                throw std::invalid_argument(fmt::format(
+                    "[SOMAArray] {} requires dictionary entry", name));
+            }
+
+            auto extended_enmr = extend_enumeration(
+                value_schema, value_array, index_schema, index_array);
+        }
+    }
 }
 
 void SOMAArray::_cast_bit_to_uint8(
