@@ -29,6 +29,7 @@ def _warn_ctx_deprecation() -> None:
         "Use tiledb_config instead by passing "
         "SOMATileDBContext(tiledb_config=ctx.config().dict()).",
         DeprecationWarning,
+        stacklevel=3,
     )
 
 
