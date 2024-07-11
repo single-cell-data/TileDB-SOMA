@@ -55,9 +55,6 @@ ManagedQuery::ManagedQuery(
 }
 
 void ManagedQuery::close() {
-    if (query_future_.valid()) {
-        query_future_.get();
-    }
     array_->close();
 }
 
@@ -292,8 +289,13 @@ void ManagedQuery::submit_read() {
     query_submitted_ = true;
     query_future_ = std::async(std::launch::async, [&]() {
         LOG_DEBUG("[ManagedQuery] submit thread start");
-        query_->submit();
+        try {
+            query_->submit();
+        } catch (const std::exception& e) {
+            return StatusAndException(false, e.what());
+        }
         LOG_DEBUG("[ManagedQuery] submit thread done");
+        return StatusAndException(true, "success");
     });
 }
 
@@ -305,6 +307,17 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     if (query_future_.valid()) {
         LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
         query_future_.wait();
+        LOG_DEBUG(
+            fmt::format("[ManagedQuery] [{}] Done waiting for query", name_));
+
+        auto retval = query_future_.get();
+        if (!retval.succeeded()) {
+            throw TileDBSOMAError(fmt::format(
+                "[ManagedQuery] [{}] Query FAILED: {}",
+                name_,
+                retval.message()));
+        }
+
     } else {
         throw TileDBSOMAError(
             fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
