@@ -36,7 +36,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
 
     _subclass_constrained_soma_types = {
         "img": ("SOMACollection",),
-        "osbl": ("SOMACollection",),
+        "obsl": ("SOMACollection",),
         "varl": ("SOMACollection",),
     }
 
