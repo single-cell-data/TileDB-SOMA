@@ -1705,9 +1705,10 @@ def add_X_layer(
     add_matrix_to_collection(
         exp,
         measurement_name,
-        "X",
-        X_layer_name,
-        X_layer_data,
+        collection_name="X",
+        matrix_name=X_layer_name,
+        matrix_data=X_layer_data,
+        ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
     )
 
