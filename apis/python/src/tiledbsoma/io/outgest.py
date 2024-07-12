@@ -324,14 +324,15 @@ def to_anndata(
     uns: UnsMapping = {}
     if "uns" in measurement:
         s = _util.get_start_stamp()
-        logging.log_io(None, f'Start  writing uns for {measurement["uns"].uri}')
+        uns_coll = cast(Collection[Any], measurement["uns"])
+        logging.log_io(None, f"Start  writing uns for {uns_coll.uri}")
         uns = _extract_uns(
-            cast(Collection[Any], measurement["uns"]),
+            uns_coll,
             uns_keys=uns_keys,
         )
         logging.log_io(
             None,
-            _util.format_elapsed(s, f'Finish writing uns for {measurement["uns"].uri}'),
+            _util.format_elapsed(s, f"Finish writing uns for {uns_coll.uri}"),
         )
 
     anndata = ad.AnnData(
