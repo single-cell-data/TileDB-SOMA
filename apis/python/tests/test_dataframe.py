@@ -775,106 +775,106 @@ def test_read_indexing(tmp_path, io):
             assert table["A"].to_list() == io["A"]
 
 
-# def test_write_categorical_types(tmp_path):
-#     """
-#     Verify that write path accepts categoricals
-#     """
-#     schema = pa.schema(
-#         [
-#             ("soma_joinid", pa.int64()),
-#             (
-#                 "string-ordered",
-#                 pa.dictionary(pa.int8(), pa.large_string(), ordered=True),
-#             ),
-#             ("string-unordered", pa.dictionary(pa.int8(), pa.large_string())),
-#             ("string-compat", pa.large_string()),
-#             ("int-ordered", pa.dictionary(pa.int8(), pa.int64(), ordered=True)),
-#             ("int-unordered", pa.dictionary(pa.int8(), pa.int64())),
-#             ("int-compat", pa.int64()),
-#             ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_(), ordered=True)),
-#             ("bool-unordered", pa.dictionary(pa.int8(), pa.bool_())),
-#             ("bool-compat", pa.bool_()),
-#         ]
-#     )
-#     with soma.DataFrame.create(
-#         tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
-#     ) as sdf:
-#         df = pd.DataFrame(
-#             data={
-#                 "soma_joinid": [0, 1, 2, 3],
-#                 "string-ordered": pd.Categorical(
-#                     ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
-#                 ),
-#                 "string-unordered": pd.Categorical(
-#                     ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
-#                 ),
-#                 "string-compat": pd.Categorical(
-#                     ["a", "b", "a", "b"], ordered=False, categories=["a", "b"]
-#                 ),
-#                 "int-ordered": pd.Categorical(
-#                     [777777777, 888888888, 777777777, 888888888],
-#                     ordered=True,
-#                     categories=[888888888, 777777777],
-#                 ),
-#                 "int-unordered": pd.Categorical(
-#                     [777777777, 888888888, 777777777, 888888888],
-#                     ordered=False,
-#                     categories=[888888888, 777777777],
-#                 ),
-#                 "int-compat": pd.Categorical(
-#                     [777777777, 888888888, 777777777, 888888888],
-#                     ordered=False,
-#                     categories=[777777777, 888888888],
-#                 ),
-#                 "bool-ordered": pd.Categorical(
-#                     [True, False, True, False],
-#                     ordered=True,
-#                     categories=[True, False],
-#                 ),
-#                 "bool-unordered": pd.Categorical(
-#                     [True, False, True, False],
-#                     ordered=False,
-#                     categories=[True, False],
-#                 ),
-#                 "bool-compat": pd.Categorical(
-#                     [True, False, True, False],
-#                     ordered=False,
-#                     categories=[True, False],
-#                 ),
-#             }
-#         )
-#         sdf.write(pa.Table.from_pandas(df))
-
-#     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
-#         assert (df == sdf.read().concat().to_pandas()).all().all()
-
-
-def test_write_categorical_dims(tmp_path):
+def test_write_categorical_types(tmp_path):
     """
-    Categories are not supported as dims. Here we test our handling of what we
-    do when we are given them as input.
+    Verify that write path accepts categoricals
     """
     schema = pa.schema(
         [
             ("soma_joinid", pa.int64()),
-            ("string", pa.dictionary(pa.int8(), pa.large_string())),
+            # (
+            #     "string-ordered",
+            #     pa.dictionary(pa.int8(), pa.large_string(), ordered=True),
+            # ),
+            # ("string-unordered", pa.dictionary(pa.int8(), pa.large_string())),
+            ("string-compat", pa.large_string()),
+            # ("int-ordered", pa.dictionary(pa.int8(), pa.int64(), ordered=True)),
+            # ("int-unordered", pa.dictionary(pa.int8(), pa.int64())),
+            # ("int-compat", pa.int64()),
+            # ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_(), ordered=True)),
+            # ("bool-unordered", pa.dictionary(pa.int8(), pa.bool_())),
+            # ("bool-compat", pa.bool_()),
         ]
     )
     with soma.DataFrame.create(
-        tmp_path.as_posix(),
-        schema=schema,
-        index_column_names=["soma_joinid"],
+        tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
     ) as sdf:
         df = pd.DataFrame(
             data={
-                "soma_joinid": pd.Categorical([0, 1, 2, 3], categories=[0, 1, 2, 3]),
-                "string": pd.Categorical(["a", "b", "a", "b"], categories=["b", "a"]),
+                "soma_joinid": [0, 1, 2, 3],
+                # "string-ordered": pd.Categorical(
+                #     ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
+                # ),
+                # "string-unordered": pd.Categorical(
+                #     ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
+                # ),
+                "string-compat": pd.Categorical(
+                    ["a", "b", "a", "b"], ordered=False, categories=["a", "b"]
+                ),
+                # "int-ordered": pd.Categorical(
+                #     [777777777, 888888888, 777777777, 888888888],
+                #     ordered=True,
+                #     categories=[888888888, 777777777],
+                # ),
+                # "int-unordered": pd.Categorical(
+                #     [777777777, 888888888, 777777777, 888888888],
+                #     ordered=False,
+                #     categories=[888888888, 777777777],
+                # ),
+                # "int-compat": pd.Categorical(
+                #     [777777777, 888888888, 777777777, 888888888],
+                #     ordered=False,
+                #     categories=[777777777, 888888888],
+                # ),
+                # "bool-ordered": pd.Categorical(
+                #     [True, False, True, False],
+                #     ordered=True,
+                #     categories=[True, False],
+                # ),
+                # "bool-unordered": pd.Categorical(
+                #     [True, False, True, False],
+                #     ordered=False,
+                #     categories=[True, False],
+                # ),
+                # "bool-compat": pd.Categorical(
+                #     [True, False, True, False],
+                #     ordered=False,
+                #     categories=[True, False],
+                # ),
             }
         )
         sdf.write(pa.Table.from_pandas(df))
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         assert (df == sdf.read().concat().to_pandas()).all().all()
+
+
+# def test_write_categorical_dims(tmp_path):
+#     """
+#     Categories are not supported as dims. Here we test our handling of what we
+#     do when we are given them as input.
+#     """
+#     schema = pa.schema(
+#         [
+#             ("soma_joinid", pa.int64()),
+#             ("string", pa.dictionary(pa.int8(), pa.large_string())),
+#         ]
+#     )
+#     with soma.DataFrame.create(
+#         tmp_path.as_posix(),
+#         schema=schema,
+#         index_column_names=["soma_joinid"],
+#     ) as sdf:
+#         df = pd.DataFrame(
+#             data={
+#                 "soma_joinid": pd.Categorical([0, 1, 2, 3], categories=[0, 1, 2, 3]),
+#                 "string": pd.Categorical(["a", "b", "a", "b"], categories=["b", "a"]),
+#             }
+#         )
+#         sdf.write(pa.Table.from_pandas(df))
+
+#     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+#         assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
 @pytest.mark.parametrize("index_type", [pa.int8(), pa.int16(), pa.int32(), pa.int64()])

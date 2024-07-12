@@ -825,6 +825,12 @@ class SOMAArray : public SOMAObject {
         ArrowSchema* new_column_schema,
         ArrowArray* new_column_array);
 
+    void _create_column(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        ArrowSchema* new_column_schema,
+        ArrowArray* new_column_array);
+
     void _cast_column(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
