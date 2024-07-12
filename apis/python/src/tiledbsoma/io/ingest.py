@@ -92,6 +92,7 @@ from ._common import (
     _UNS_OUTGEST_HINT_KEY,
     Matrix,
     SparseMatrix,
+    UnsMapping,
 )
 from ._registration import (
     AxisIDMapping,
@@ -2481,7 +2482,7 @@ def _chunk_is_contained_in_axis(
 
 def _maybe_ingest_uns(
     m: Measurement,
-    uns: Mapping[str, object],
+    uns: UnsMapping,
     *,
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
