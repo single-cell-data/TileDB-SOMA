@@ -598,7 +598,7 @@ ArrowTable SOMAArray::_cast_table(
                                   ->children[i] = new ArrowSchema;
         auto new_arrow_arr_ = casted_arrow_array->children[i] = new ArrowArray;
 
-        SOMAArray::_cast_column(
+        SOMAArray::_create_and_cast_column(
             orig_arrow_sch_, orig_arrow_arr_, new_arrow_sch_, new_arrow_arr_);
     }
 
@@ -606,7 +606,7 @@ ArrowTable SOMAArray::_cast_table(
         std::move(casted_arrow_array), std::move(casted_arrow_schema));
 }
 
-void SOMAArray::_cast_column(
+void SOMAArray::_create_and_cast_column(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
@@ -641,6 +641,42 @@ void SOMAArray::_cast_column(
         orig_column_array->n_children * sizeof(ArrowArray*));
     new_column_array->dictionary = orig_column_array->dictionary;
 
+    SOMAArray::_cast_column(
+        orig_column_schema,
+        orig_column_array,
+        new_column_schema,
+        new_column_array);
+
+    // if the attribute is enumerated, ensure that the index values also
+    // match is in the ArraySchema on disk
+    if (tiledb_schema()->has_attribute(name)) {
+        auto attr = tiledb_schema()->attribute(name);
+
+        auto enmr_name = AttributeExperimental::get_enumeration_name(
+            *ctx_->tiledb_ctx(), attr);
+
+        if (enmr_name.has_value()) {
+            auto value_schema = new_column_schema->dictionary;
+            auto value_array = new_column_array->dictionary;
+            auto index_schema = new_column_schema;
+            auto index_array = new_column_array;
+
+            if (value_array == nullptr || value_schema == nullptr) {
+                throw std::invalid_argument(fmt::format(
+                    "[SOMAArray] {} requires dictionary entry", name));
+            }
+
+            auto extended_enmr = extend_enumeration(
+                value_schema, value_array, index_schema, index_array);
+        }
+    }
+}
+
+void SOMAArray::_cast_column(
+    ArrowSchema* orig_column_schema,
+    ArrowArray* orig_column_array,
+    ArrowSchema* new_column_schema,
+    ArrowArray* new_column_array){
     tiledb_datatype_t user_type = ArrowAdapter::to_tiledb_format(
         orig_column_schema->format);
 
@@ -772,30 +808,6 @@ void SOMAArray::_cast_column(
                 "Saw invalid TileDB user type when attempting to "
                 "cast table: {}",
                 tiledb::impl::type_to_str(user_type)));
-    }
-
-    // if the attribute is enumerated, ensure that the index values also
-    // match is in the ArraySchema on disk
-    if (tiledb_schema()->has_attribute(name)) {
-        auto attr = tiledb_schema()->attribute(name);
-
-        auto enmr_name = AttributeExperimental::get_enumeration_name(
-            *ctx_->tiledb_ctx(), attr);
-
-        if (enmr_name.has_value()) {
-            auto value_schema = new_column_schema->dictionary;
-            auto value_array = new_column_array->dictionary;
-            auto index_schema = new_column_schema;
-            auto index_array = new_column_array;
-
-            if (value_array == nullptr || value_schema == nullptr) {
-                throw std::invalid_argument(fmt::format(
-                    "[SOMAArray] {} requires dictionary entry", name));
-            }
-
-            auto extended_enmr = extend_enumeration(
-                value_schema, value_array, index_schema, index_array);
-        }
     }
 }
 
