@@ -641,6 +641,9 @@ void SOMAArray::_create_and_cast_column(
         auto index_schema = orig_column_schema;
         auto index_array = orig_column_array;
 
+        new_column_array->n_buffers = 3;
+        new_column_array->buffers = new const void*[3];
+
         uint64_t num_elems = value_array->length;
 
         std::vector<uint64_t> offsets_v;
@@ -657,6 +660,11 @@ void SOMAArray::_create_and_cast_column(
                 offsets_v.push_back((uint64_t)offset);
             }
         }
+
+        for (auto offset : offsets_v) {
+            std::cout << offset << " ";
+        }
+        std::cout << std::endl;
 
         char* data = (char*)value_array->buffers[2];
         std::string data_v(data, data + offsets_v[offsets_v.size() - 1]);
@@ -675,12 +683,40 @@ void SOMAArray::_create_and_cast_column(
         int8_t* idxbuf = (int8_t*)index_array->buffers[1];
         std::vector<int8_t> indexes(idxbuf, idxbuf + index_array->length);
 
-        std::vector<std::string> index_to_value;
+        uint64_t offset_sum = 0;
+        std::vector<uint64_t> value_offsets = {0};
+        std::string index_to_value;
         for (auto i : indexes) {
-            index_to_value.push_back(values[i]);
-            std::cout << values[i] << " ";
+            auto value = values[i];
+            offset_sum += value.size();
+            value_offsets.push_back(offset_sum);
+            index_to_value.insert(
+                index_to_value.end(), value.begin(), value.end());
+            std::cout << index_to_value << " ";
         }
         std::cout << std::endl;
+
+        for (auto offset : value_offsets) {
+            std::cout << offset << " ";
+        }
+        std::cout << std::endl;
+
+        new_column_array->buffers[0] = orig_column_array->buffers[0];
+
+        new_column_array->buffers[1] = malloc(
+            sizeof(uint64_t) * value_offsets.size());
+        std::memcpy(
+            (void*)new_column_array->buffers[1],
+            value_offsets.data(),
+            sizeof(uint64_t) * value_offsets.size());
+
+        // new_column_array->buffers[2] = malloc(index_to_value.size());
+        new_column_array->buffers[2] = strdup(index_to_value.c_str());
+        // std::memcpy(
+        //     (void*)new_column_array->buffers[2],
+        //     index_to_value.data(),
+        //     index_to_value.size());
+
     } else {
         SOMAArray::_cast_column(
             orig_column_schema,
