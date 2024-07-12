@@ -16,8 +16,8 @@ from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._indexer import IntIndexer
 from ._measurement import Measurement
-from ._soma_object import AnySOMAObject
 from ._scene import Scene
+from ._soma_object import AnySOMAObject
 from ._tdb_handles import Wrapper
 
 

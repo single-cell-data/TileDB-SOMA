@@ -12,8 +12,8 @@ from ._collection import Collection, CollectionBase
 from ._coordinates import CompositeTransform, CoordinateSystem
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
-from ._sparse_nd_array import SparseNDArray
 from ._soma_object import AnySOMAObject
+from ._sparse_nd_array import SparseNDArray
 
 
 class Scene(  # type: ignore[misc]  # __eq__ false positive
