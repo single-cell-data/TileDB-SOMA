@@ -782,11 +782,11 @@ def test_write_categorical_types(tmp_path):
     schema = pa.schema(
         [
             ("soma_joinid", pa.int64()),
-            # (
-            #     "string-ordered",
-            #     pa.dictionary(pa.int8(), pa.large_string(), ordered=True),
-            # ),
-            # ("string-unordered", pa.dictionary(pa.int8(), pa.large_string())),
+            (
+                "string-ordered",
+                pa.dictionary(pa.int8(), pa.large_string(), ordered=True),
+            ),
+            ("string-unordered", pa.dictionary(pa.int8(), pa.large_string())),
             ("string-compat", pa.large_string()),
             # ("int-ordered", pa.dictionary(pa.int8(), pa.int64(), ordered=True)),
             # ("int-unordered", pa.dictionary(pa.int8(), pa.int64())),
@@ -802,12 +802,12 @@ def test_write_categorical_types(tmp_path):
         df = pd.DataFrame(
             data={
                 "soma_joinid": [0, 1, 2, 3],
-                # "string-ordered": pd.Categorical(
-                #     ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
-                # ),
-                # "string-unordered": pd.Categorical(
-                #     ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
-                # ),
+                "string-ordered": pd.Categorical(
+                    ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
+                ),
+                "string-unordered": pd.Categorical(
+                    ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
+                ),
                 "string-compat": pd.Categorical(
                     ["a", "b", "a", "b"], ordered=False, categories=["a", "b"]
                 ),
@@ -847,7 +847,7 @@ def test_write_categorical_types(tmp_path):
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         print(sdf.read().concat())
-    #     assert (df == sdf.read().concat().to_pandas()).all().all()
+        assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
 # def test_write_categorical_dims(tmp_path):

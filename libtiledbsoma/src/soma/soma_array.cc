@@ -529,25 +529,13 @@ void SOMAArray::set_array_data(
 
         if (arrow_arr_->n_buffers == 3) {
             data = arrow_arr_->buffers[2];
-            if ((strcmp(arrow_sch_->format, "u") == 0) ||
-                (strcmp(arrow_sch_->format, "z") == 0)) {
-                uint32_t* offsets = (uint32_t*)arrow_arr_->buffers[1] +
-                                    table_offset;
-                column->set_data(
-                    arrow_arr_->length,
-                    (char*)data + table_offset * data_size,
-                    offsets,
-                    validities);
-            } else {
-                uint64_t* offsets = (uint64_t*)arrow_arr_->buffers[1] +
-                                    table_offset;
-                column->set_data(
-                    arrow_arr_->length,
-                    (char*)data + table_offset * data_size,
-                    offsets,
-                    validities);
-            }
-
+            uint64_t* offsets = (uint64_t*)arrow_arr_->buffers[1] +
+                                table_offset;
+            column->set_data(
+                arrow_arr_->length,
+                (char*)data + table_offset * data_size,
+                offsets,
+                validities);
         } else {
             data = arrow_arr_->buffers[1];
             column->set_data(
@@ -564,6 +552,122 @@ void SOMAArray::set_array_data(
         mq_->set_column_data(column);
     }
 };
+
+template <>
+void SOMAArray::_cast_dictionary_values<std::string>(
+    ArrowSchema* orig_column_schema,
+    ArrowArray* orig_column_array,
+    ArrowArray* new_column_array) {
+    auto value_schema = orig_column_schema->dictionary;
+    auto value_array = orig_column_array->dictionary;
+
+    new_column_array->n_buffers = 3;
+    new_column_array->buffers = new const void*[3];
+
+    uint64_t num_elems = value_array->length;
+
+    std::vector<uint64_t> offsets_v;
+    if ((strcmp(value_schema->format, "U") == 0) ||
+        (strcmp(value_schema->format, "Z") == 0)) {
+        uint64_t* offsets = (uint64_t*)value_array->buffers[1];
+        offsets_v.resize(num_elems + 1);
+        offsets_v.assign(offsets, offsets + num_elems + 1);
+    } else {
+        uint32_t* offsets = (uint32_t*)value_array->buffers[1];
+        std::vector<uint32_t> offset_holder(offsets, offsets + num_elems + 1);
+        for (auto offset : offset_holder) {
+            offsets_v.push_back((uint64_t)offset);
+        }
+    }
+
+    char* data = (char*)value_array->buffers[2];
+    std::string data_v(data, data + offsets_v[offsets_v.size() - 1]);
+
+    std::vector<std::string> values;
+    for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
+         ++offset_idx) {
+        auto beg = offsets_v[offset_idx];
+        auto sz = offsets_v[offset_idx + 1] - beg;
+        values.push_back(data_v.substr(beg, sz));
+    }
+
+    auto indexes = SOMAArray::_get_index_vector(
+        orig_column_schema, orig_column_array);
+
+    uint64_t offset_sum = 0;
+    std::vector<uint64_t> value_offsets = {0};
+    std::string index_to_value;
+    for (auto i : indexes) {
+        auto value = values[i];
+        offset_sum += value.size();
+        value_offsets.push_back(offset_sum);
+        index_to_value.insert(index_to_value.end(), value.begin(), value.end());
+    }
+    new_column_array->buffers[0] = orig_column_array->buffers[0];
+
+    new_column_array->buffers[1] = malloc(
+        sizeof(uint64_t) * value_offsets.size());
+    std::memcpy(
+        (void*)new_column_array->buffers[1],
+        value_offsets.data(),
+        sizeof(uint64_t) * value_offsets.size());
+
+    new_column_array->buffers[2] = strdup(index_to_value.c_str());
+}
+
+void SOMAArray::_promote_indexes_to_values(
+    ArrowSchema* orig_column_schema,
+    ArrowArray* orig_column_array,
+    ArrowArray* new_column_array) {
+    auto value_type = ArrowAdapter::to_tiledb_format(
+        orig_column_schema->dictionary->format);
+    switch (value_type) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            SOMAArray::_cast_dictionary_values<std::string>(
+                orig_column_schema, orig_column_array, new_column_array);
+            break;
+        // case TILEDB_BOOL:
+        // case TILEDB_INT8:
+        // case TILEDB_UINT8:
+        // case TILEDB_INT16:
+        // case TILEDB_UINT16:
+        // case TILEDB_INT32:
+        // case TILEDB_UINT32:
+        // case TILEDB_INT64:
+        // case TILEDB_DATETIME_YEAR:
+        // case TILEDB_DATETIME_MONTH:
+        // case TILEDB_DATETIME_WEEK:
+        // case TILEDB_DATETIME_DAY:
+        // case TILEDB_DATETIME_HR:
+        // case TILEDB_DATETIME_MIN:
+        // case TILEDB_DATETIME_SEC:
+        // case TILEDB_DATETIME_MS:
+        // case TILEDB_DATETIME_US:
+        // case TILEDB_DATETIME_NS:
+        // case TILEDB_DATETIME_PS:
+        // case TILEDB_DATETIME_FS:
+        // case TILEDB_DATETIME_AS:
+        // case TILEDB_TIME_HR:
+        // case TILEDB_TIME_MIN:
+        // case TILEDB_TIME_SEC:
+        // case TILEDB_TIME_MS:
+        // case TILEDB_TIME_US:
+        // case TILEDB_TIME_NS:
+        // case TILEDB_TIME_PS:
+        // case TILEDB_TIME_FS:
+        // case TILEDB_TIME_AS:
+        // case TILEDB_UINT64:
+        // case TILEDB_FLOAT32:
+        // case TILEDB_FLOAT64:
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "Saw invalid TileDB value type when attempting to "
+                "promote indexes to values: {}",
+                tiledb::impl::type_to_str(value_type)));
+    }
+}
 
 ArrowTable SOMAArray::_cast_table(
     std::unique_ptr<ArrowSchema> arrow_schema,
@@ -613,13 +717,6 @@ void SOMAArray::_create_and_cast_column(
     ArrowArray* new_column_array) {
     std::string column_name(orig_column_schema->name);
 
-    // if ((orig_column_array->dictionary == nullptr) ^
-    // (orig_column_schema->dictionary == nullptr)) {
-    //     throw std::invalid_argument(fmt::format(
-    //         "[SOMAArray] dictionaries require an array and schema. one was "
-    //         "provided but not the other for {}", column_name));
-    // }
-
     std::optional<std::string> enmr_name = std::nullopt;
     if (tiledb_schema()->has_attribute(column_name)) {
         auto attr = tiledb_schema()->attribute(column_name);
@@ -636,87 +733,8 @@ void SOMAArray::_create_and_cast_column(
     // if the attribute is not enumerated, but the provided column is, then we
     // need to map the indexes to the correct value
     if (!enmr_name.has_value() && orig_column_schema->dictionary != nullptr) {
-        auto value_schema = orig_column_schema->dictionary;
-        auto value_array = orig_column_array->dictionary;
-        auto index_schema = orig_column_schema;
-        auto index_array = orig_column_array;
-
-        new_column_array->n_buffers = 3;
-        new_column_array->buffers = new const void*[3];
-
-        uint64_t num_elems = value_array->length;
-
-        std::vector<uint64_t> offsets_v;
-        if ((strcmp(value_schema->format, "U") == 0) ||
-            (strcmp(value_schema->format, "Z") == 0)) {
-            uint64_t* offsets = (uint64_t*)value_array->buffers[1];
-            offsets_v.resize(num_elems + 1);
-            offsets_v.assign(offsets, offsets + num_elems + 1);
-        } else {
-            uint32_t* offsets = (uint32_t*)value_array->buffers[1];
-            std::vector<uint32_t> offset_holder(
-                offsets, offsets + num_elems + 1);
-            for (auto offset : offset_holder) {
-                offsets_v.push_back((uint64_t)offset);
-            }
-        }
-
-        for (auto offset : offsets_v) {
-            std::cout << offset << " ";
-        }
-        std::cout << std::endl;
-
-        char* data = (char*)value_array->buffers[2];
-        std::string data_v(data, data + offsets_v[offsets_v.size() - 1]);
-
-        std::vector<std::string> values;
-        for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
-             ++offset_idx) {
-            auto beg = offsets_v[offset_idx];
-            auto sz = offsets_v[offset_idx + 1] - beg;
-            std::cout << data_v.substr(beg, sz) << " ";
-            values.push_back(data_v.substr(beg, sz));
-        }
-        std::cout << std::endl;
-
-        std::cout << index_schema->format << std::endl;
-        int8_t* idxbuf = (int8_t*)index_array->buffers[1];
-        std::vector<int8_t> indexes(idxbuf, idxbuf + index_array->length);
-
-        uint64_t offset_sum = 0;
-        std::vector<uint64_t> value_offsets = {0};
-        std::string index_to_value;
-        for (auto i : indexes) {
-            auto value = values[i];
-            offset_sum += value.size();
-            value_offsets.push_back(offset_sum);
-            index_to_value.insert(
-                index_to_value.end(), value.begin(), value.end());
-            std::cout << index_to_value << " ";
-        }
-        std::cout << std::endl;
-
-        for (auto offset : value_offsets) {
-            std::cout << offset << " ";
-        }
-        std::cout << std::endl;
-
-        new_column_array->buffers[0] = orig_column_array->buffers[0];
-
-        new_column_array->buffers[1] = malloc(
-            sizeof(uint64_t) * value_offsets.size());
-        std::memcpy(
-            (void*)new_column_array->buffers[1],
-            value_offsets.data(),
-            sizeof(uint64_t) * value_offsets.size());
-
-        // new_column_array->buffers[2] = malloc(index_to_value.size());
-        new_column_array->buffers[2] = strdup(index_to_value.c_str());
-        // std::memcpy(
-        //     (void*)new_column_array->buffers[2],
-        //     index_to_value.data(),
-        //     index_to_value.size());
-
+        SOMAArray::_promote_indexes_to_values(
+            orig_column_schema, orig_column_array, new_column_array);
     } else {
         SOMAArray::_cast_column(
             orig_column_schema,

@@ -1084,6 +1084,65 @@ class SOMAArray : public SOMAObject {
         }
     }
 
+    void _promote_indexes_to_values(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        ArrowArray* new_column_array);
+
+    template <typename T>
+    void _cast_dictionary_values(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        ArrowArray* new_column_array) {
+        ;
+    }
+
+    std::vector<int64_t> _get_index_vector(
+        ArrowSchema* orig_column_schema, ArrowArray* orig_column_array) {
+        auto index_type = ArrowAdapter::to_tiledb_format(
+            orig_column_schema->format);
+        auto len = orig_column_array->length;
+
+        switch (index_type) {
+            case TILEDB_INT8: {
+                int8_t* idxbuf = (int8_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_UINT8: {
+                uint8_t* idxbuf = (uint8_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_INT16: {
+                int16_t* idxbuf = (int16_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_UINT16: {
+                uint16_t* idxbuf = (uint16_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_INT32: {
+                int32_t* idxbuf = (int32_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_UINT32: {
+                uint32_t* idxbuf = (uint32_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_INT64: {
+                int64_t* idxbuf = (int64_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_UINT64: {
+                uint64_t* idxbuf = (uint64_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid index type when trying to promote indexes to "
+                    "values");
+        }
+    }
+
     // Helper function to cast Boolean of bits (Arrow) to uint8 (TileDB)
     void _cast_bit_to_uint8(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
 
@@ -1125,9 +1184,10 @@ class SOMAArray : public SOMAObject {
     // Array associated with mq_
     std::shared_ptr<Array> arr_;
 
-    // Array associated with metadata_. Metadata values need to be accessible in
-    // write mode as well. We need to keep this read-mode array alive in order
-    // for the metadata value pointers in the cache to be accessible
+    // Array associated with metadata_. Metadata values need to be
+    // accessible in write mode as well. We need to keep this read-mode
+    // array alive in order for the metadata value pointers in the cache to
+    // be accessible
     std::shared_ptr<Array> meta_cache_arr_;
 
     // True if this is the first call to read_next()
@@ -1139,7 +1199,8 @@ class SOMAArray : public SOMAObject {
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t nnz_slow();
 
-    // ArrayBuffers to hold ColumnBuffers alive when submitting to write query
+    // ArrayBuffers to hold ColumnBuffers alive when submitting to write
+    // query
     std::shared_ptr<ArrayBuffers> array_buffer_ = nullptr;
 };
 
