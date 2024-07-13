@@ -1094,7 +1094,41 @@ class SOMAArray : public SOMAObject {
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowArray* new_column_array) {
-        ;
+        auto value_array = orig_column_array->dictionary;
+
+        T* valbuf;
+        if (value_array->n_buffers == 3) {
+            valbuf = (T*)value_array->buffers[2];
+        } else {
+            valbuf = (T*)value_array->buffers[1];
+        }
+        std::vector<T> values(valbuf, valbuf + value_array->length);
+
+        std::vector<int64_t> indexes = SOMAArray::_get_index_vector(
+            orig_column_schema, orig_column_array);
+
+        std::vector<T> index_to_value;
+        for (auto i : indexes) {
+            index_to_value.push_back(values[i]);
+        }
+
+        new_column_array->buffers[0] = orig_column_array->buffers[0];
+
+        if (value_array->n_buffers == 3) {
+            new_column_array->buffers[2] = malloc(
+                sizeof(T) * index_to_value.size());
+            std::memcpy(
+                (void*)new_column_array->buffers[2],
+                index_to_value.data(),
+                sizeof(T) * index_to_value.size());
+        } else {
+            new_column_array->buffers[1] = malloc(
+                sizeof(T) * index_to_value.size());
+            std::memcpy(
+                (void*)new_column_array->buffers[1],
+                index_to_value.data(),
+                sizeof(T) * index_to_value.size());
+        }
     }
 
     std::vector<int64_t> _get_index_vector(

@@ -788,12 +788,12 @@ def test_write_categorical_types(tmp_path):
             ),
             ("string-unordered", pa.dictionary(pa.int8(), pa.large_string())),
             ("string-compat", pa.large_string()),
-            # ("int-ordered", pa.dictionary(pa.int8(), pa.int64(), ordered=True)),
-            # ("int-unordered", pa.dictionary(pa.int8(), pa.int64())),
-            # ("int-compat", pa.int64()),
-            # ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_(), ordered=True)),
-            # ("bool-unordered", pa.dictionary(pa.int8(), pa.bool_())),
-            # ("bool-compat", pa.bool_()),
+            ("int-ordered", pa.dictionary(pa.int8(), pa.int64(), ordered=True)),
+            ("int-unordered", pa.dictionary(pa.int8(), pa.int64())),
+            ("int-compat", pa.int64()),
+            ("bool-ordered", pa.dictionary(pa.int8(), pa.bool_(), ordered=True)),
+            ("bool-unordered", pa.dictionary(pa.int8(), pa.bool_())),
+            ("bool-compat", pa.bool_()),
         ]
     )
     with soma.DataFrame.create(
@@ -811,42 +811,41 @@ def test_write_categorical_types(tmp_path):
                 "string-compat": pd.Categorical(
                     ["a", "b", "a", "b"], ordered=False, categories=["a", "b"]
                 ),
-                # "int-ordered": pd.Categorical(
-                #     [777777777, 888888888, 777777777, 888888888],
-                #     ordered=True,
-                #     categories=[888888888, 777777777],
-                # ),
-                # "int-unordered": pd.Categorical(
-                #     [777777777, 888888888, 777777777, 888888888],
-                #     ordered=False,
-                #     categories=[888888888, 777777777],
-                # ),
-                # "int-compat": pd.Categorical(
-                #     [777777777, 888888888, 777777777, 888888888],
-                #     ordered=False,
-                #     categories=[777777777, 888888888],
-                # ),
-                # "bool-ordered": pd.Categorical(
-                #     [True, False, True, False],
-                #     ordered=True,
-                #     categories=[True, False],
-                # ),
-                # "bool-unordered": pd.Categorical(
-                #     [True, False, True, False],
-                #     ordered=False,
-                #     categories=[True, False],
-                # ),
-                # "bool-compat": pd.Categorical(
-                #     [True, False, True, False],
-                #     ordered=False,
-                #     categories=[True, False],
-                # ),
+                "int-ordered": pd.Categorical(
+                    [777777777, 888888888, 777777777, 888888888],
+                    ordered=True,
+                    categories=[888888888, 777777777],
+                ),
+                "int-unordered": pd.Categorical(
+                    [777777777, 888888888, 777777777, 888888888],
+                    ordered=False,
+                    categories=[888888888, 777777777],
+                ),
+                "int-compat": pd.Categorical(
+                    [777777777, 888888888, 777777777, 888888888],
+                    ordered=False,
+                    categories=[777777777, 888888888],
+                ),
+                "bool-ordered": pd.Categorical(
+                    [True, False, True, False],
+                    ordered=True,
+                    categories=[True, False],
+                ),
+                "bool-unordered": pd.Categorical(
+                    [True, False, True, False],
+                    ordered=False,
+                    categories=[True, False],
+                ),
+                "bool-compat": pd.Categorical(
+                    [True, False, True, False],
+                    ordered=False,
+                    categories=[True, False],
+                ),
             }
         )
         sdf.write(pa.Table.from_pandas(df))
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
-        print(sdf.read().concat())
         assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
