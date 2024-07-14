@@ -71,15 +71,17 @@ jobs:
       # Do not remove these comments until such time as we have eliminated our dependency on
       # the TileDB-R package.
 
-      # Temp PR #2785 for 2.25.0-rc0
-      - name: Install r-universe build of tiledb-r (macOS)
-        if: ${{ matrix.os == 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+      #- name: Install r-universe build of tiledb-r (macOS)
+      #  if: ${{ matrix.os == 'macOS-latest' }}
+      #  run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
+
+      #- name: Install r-universe build of tiledb-r (linux)
+      #  if: ${{ matrix.os != 'macOS-latest' }}
+      #  run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
       # Temp PR #2785 for 2.25.0-rc0
-      - name: Install r-universe build of tiledb-r (linux)
-        if: ${{ matrix.os != 'macOS-latest' }}
-        run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
+      - name: Install dev build of tiledb-r
+        run: cd apis/r && Rscript -e 'remotes::install_github("TileDB-Inc/TileDB-R@31a2d33632ece0802fe6f141c134cb1d97bfd4d4")'
 
       - name: Build and install libtiledbsoma
         run: sudo scripts/bld --prefix=/usr/local --no-tiledb-deprecated=true && sudo ldconfig
