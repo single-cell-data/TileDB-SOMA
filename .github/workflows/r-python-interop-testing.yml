@@ -81,7 +81,7 @@ jobs:
 
       # Temp PR #2785 for 2.25.0-rc0
       - name: Install dev build of tiledb-r
-        run: cd apis/r && Rscript -e 'remotes::install_github("TileDB-Inc/TileDB-R@31a2d33632ece0802fe6f141c134cb1d97bfd4d4")'
+        run: cd apis/r && Rscript -e 'remotes::install_github("TileDB-Inc/TileDB-R", "31a2d33632ece0802fe6f141c134cb1d97bfd4d4")'
 
       - name: Build and install libtiledbsoma
         run: sudo scripts/bld --prefix=/usr/local --no-tiledb-deprecated=true && sudo ldconfig
