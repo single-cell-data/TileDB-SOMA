@@ -531,6 +531,11 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         )
         return self
 
+    def members(self) -> Dict[str, Tuple[str, str]]:
+        """Get a mapping of {member_name: (uri, soma_object_type)}"""
+        handle = cast(_tdb_handles.SOMAGroupWrapper[Any], self._handle)
+        return handle.members()
+
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """Default collection __setattr__"""
         self.set(key, value, use_relative_uri=None)
