@@ -80,6 +80,7 @@ class SOMATileDBContext(ContextBase):
     def __init__(
         self,
         tiledb_ctx: Optional[tiledb.Ctx] = None,
+        native_ctx: Optional[clib.SOMAContext] = None,
         tiledb_config: Optional[Dict[str, Union[str, float]]] = None,
         timestamp: Optional[OpenTimestamp] = None,
         threadpool: Optional[ThreadPoolExecutor] = None,
@@ -157,7 +158,7 @@ class SOMATileDBContext(ContextBase):
 
         self.threadpool = threadpool or ThreadPoolExecutor()
         """User specified threadpool. If None, we'll instantiate one ourselves."""
-        self._native_context: Optional[clib.SOMAContext] = None
+        self._native_context: Optional[clib.SOMAContext] = native_ctx
         """Lazily construct clib.SOMAContext."""
 
     @property

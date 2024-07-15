@@ -205,3 +205,25 @@ def test_experiment_ms_type_constraint(tmp_path):
             schema=pa.schema([("A", pa.int32())]),
             index_column_names=["A"],
         )
+
+
+def test_experiment_reopen(tmp_path):
+    # Ensure that reopen uses the correct mode
+    soma.Experiment.create(tmp_path.as_uri())
+
+    with soma.Experiment.open(tmp_path.as_posix(), "r") as exp1:
+        with exp1.reopen() as exp2:
+            with exp2.reopen() as exp3:
+                assert exp1.mode == "r"
+                assert exp2.mode == "w"
+                assert exp3.mode == "r"
+
+    with soma.Experiment.open(tmp_path.as_posix(), "r") as exp1:
+        with exp1.reopen("r") as exp2:
+            assert exp1.mode == "r"
+            assert exp2.mode == "r"
+
+    with soma.Experiment.open(tmp_path.as_posix(), "w") as exp1:
+        with exp1.reopen("w") as exp2:
+            assert exp1.mode == "w"
+            assert exp2.mode == "w"

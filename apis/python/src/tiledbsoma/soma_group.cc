@@ -69,6 +69,7 @@ void load_soma_group(py::module& m) {
             [](SOMAGroup& group) {
                 return group.mode() == OpenMode::read ? "r" : "w";
             })
+        .def("reopen", &SOMAGroup::reopen)
         .def("close", &SOMAGroup::close)
         .def_property_readonly(
             "closed",

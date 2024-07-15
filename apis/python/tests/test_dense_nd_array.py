@@ -61,6 +61,28 @@ def test_dense_nd_array_create_ok(
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADenseNDArray)
 
 
+def test_dense_nd_array_reopen(tmp_path):
+    soma.DenseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=(1,))
+
+    # Ensure that reopen uses the correct mode
+    with soma.DenseNDArray.open(tmp_path.as_posix(), "r") as A1:
+        with A1.reopen() as A2:
+            with A2.reopen() as A3:
+                assert A1.mode == "r"
+                assert A2.mode == "w"
+                assert A3.mode == "r"
+
+    with soma.DenseNDArray.open(tmp_path.as_posix(), "r") as A1:
+        with A1.reopen("r") as A2:
+            assert A1.mode == "r"
+            assert A2.mode == "r"
+
+    with soma.DenseNDArray.open(tmp_path.as_posix(), "w") as A1:
+        with A1.reopen("w") as A2:
+            assert A1.mode == "w"
+            assert A2.mode == "w"
+
+
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
 def test_dense_nd_array_create_fail(

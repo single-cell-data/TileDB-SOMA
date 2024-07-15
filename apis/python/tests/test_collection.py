@@ -523,3 +523,25 @@ def test_context_timestamp(tmp_path: pathlib.Path):
         sub_1 = coll["sub_1"]
         assert sub_1.tiledb_timestamp_ms == 234
         assert sub_1["sub_sub"].tiledb_timestamp_ms == 234
+
+
+def test_collection_reopen(tmp_path):
+    # Ensure that reopen uses the correct mode
+    soma.Collection.create(tmp_path.as_uri())
+
+    with soma.Collection.open(tmp_path.as_posix(), "r") as col1:
+        with col1.reopen() as col2:
+            with col2.reopen() as col3:
+                assert col1.mode == "r"
+                assert col2.mode == "w"
+                assert col3.mode == "r"
+
+    with soma.Collection.open(tmp_path.as_posix(), "r") as col1:
+        with col1.reopen("r") as col2:
+            assert col1.mode == "r"
+            assert col2.mode == "r"
+
+    with soma.Collection.open(tmp_path.as_posix(), "w") as col1:
+        with col1.reopen("w") as col2:
+            assert col1.mode == "w"
+            assert col2.mode == "w"
