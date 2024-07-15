@@ -94,9 +94,9 @@ class SOMASparseNDArray : public SOMAArray {
     /**
      * @brief Check if the SOMASparseNDArray exists at the URI.
      *
-     * @param uri URI to create the SOMASparseNDArray
+     * @param ctx SOMAContext
      */
-    static bool exists(std::string_view uri);
+    static bool exists(std::string_view uri, std::shared_ptr<SOMAContext> ctx);
 
     //===================================================================
     //= public non-static

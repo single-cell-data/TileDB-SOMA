@@ -101,10 +101,10 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 
-bool SOMASparseNDArray::exists(std::string_view uri) {
+bool SOMASparseNDArray::exists(
+    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
     try {
-        auto obj = SOMAObject::open(
-            uri, OpenMode::read, std::make_shared<SOMAContext>());
+        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
         return "SOMASparseNDArray" == obj->type();
     } catch (TileDBSOMAError& e) {
         return false;

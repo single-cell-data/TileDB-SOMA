@@ -68,10 +68,10 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 
-bool SOMADataFrame::exists(std::string_view uri) {
+bool SOMADataFrame::exists(
+    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
     try {
-        auto obj = SOMAObject::open(
-            uri, OpenMode::read, std::make_shared<SOMAContext>());
+        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
         return "SOMADataFrame" == obj->type();
     } catch (TileDBSOMAError& e) {
         return false;
