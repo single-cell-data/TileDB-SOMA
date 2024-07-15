@@ -87,23 +87,30 @@ void createSchemaFromArrow(const std::string& uri,
         //ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxsp); 	// create wrapper struct
         //ctxptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);   // and create and assign extptr
     }
+
+    bool exists = false;
+    if (datatype == "SOMADataFrame") {
+        exists = tdbs::SOMADataFrame::exists(uri);
+    } else if (datatype == "SOMASparseNDArray") {
+        exists = tdbs::SOMASparseNDArray::exists(uri);
+    } else if (datatype == "SOMADenseNDArray") {
+        exists = tdbs::SOMADenseNDArray::exists(uri);
+    } else {
+        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
+    }
+
+    if (exists) {
+        Rcpp::stop(tfm::format("Error: Array '%s' already exists", uri));
+    }
+
     // create the ArraySchema
     auto as = tdbs::ArrowAdapter::tiledb_schema_from_arrow_schema(ctxsp, std::move(schema),
                                                                   std::pair(std::move(dimarr),
                                                                             std::move(dimsch)),
                                                                   datatype, sparse,
                                                                   pltcfg);
-
-    // We can inspect the (TileDB) ArraySchema via a simple helper:  as.dump();
-    tiledb::VFS vfs(*ctxsp);
-    //spdl::warn("[createSchemaFromArrow] About to create {}, dir exists ? {}", uri, vfs.is_dir(uri));
-
-    if (vfs.is_dir(uri)) {
-        Rcpp::stop(tfm::format("Error: Array '%s' already exists", uri));
-    } else {
-        // Create the schema at the given URI
-        tiledb::Array::create(uri, as);
-    }
+    // Create the schema at the given URI
+    tiledb::Array::create(uri, as);
 }
 
 
