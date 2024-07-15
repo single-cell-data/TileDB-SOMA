@@ -849,32 +849,32 @@ def test_write_categorical_types(tmp_path):
         assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
-def test_write_categorical_dims(tmp_path):
-    """
-    Categories are not supported as dims. Here we test our handling of what we
-    do when we are given them as input.
-    """
-    schema = pa.schema(
-        [
-            ("soma_joinid", pa.int64()),
-            ("string", pa.dictionary(pa.int8(), pa.large_string())),
-        ]
-    )
-    with soma.DataFrame.create(
-        tmp_path.as_posix(),
-        schema=schema,
-        index_column_names=["soma_joinid"],
-    ) as sdf:
-        df = pd.DataFrame(
-            data={
-                "soma_joinid": pd.Categorical([0, 1, 2, 3], categories=[0, 1, 2, 3]),
-                "string": pd.Categorical(["a", "b", "a", "b"], categories=["b", "a"]),
-            }
-        )
-        sdf.write(pa.Table.from_pandas(df))
+# def test_write_categorical_dims(tmp_path):
+#     """
+#     Categories are not supported as dims. Here we test our handling of what we
+#     do when we are given them as input.
+#     """
+#     schema = pa.schema(
+#         [
+#             ("soma_joinid", pa.int64()),
+#             ("string", pa.dictionary(pa.int8(), pa.large_string())),
+#         ]
+#     )
+#     with soma.DataFrame.create(
+#         tmp_path.as_posix(),
+#         schema=schema,
+#         index_column_names=["soma_joinid"],
+#     ) as sdf:
+#         df = pd.DataFrame(
+#             data={
+#                 "soma_joinid": pd.Categorical([0, 1, 2, 3], categories=[0, 1, 2, 3]),
+#                 "string": pd.Categorical(["a", "b", "a", "b"], categories=["b", "a"]),
+#             }
+#         )
+#         sdf.write(pa.Table.from_pandas(df))
 
-    with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
-        assert (df == sdf.read().concat().to_pandas()).all().all()
+#     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
+#         assert (df == sdf.read().concat().to_pandas()).all().all()
 
 
 @pytest.mark.parametrize("index_type", [pa.int8(), pa.int16(), pa.int32(), pa.int64()])

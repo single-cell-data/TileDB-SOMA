@@ -819,6 +819,140 @@ class SOMAArray : public SOMAObject {
         ArrowSchema* index_schema,
         ArrowArray* index_array);
 
+    void _create_and_cast_column(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        ArrowSchema* new_column_schema,
+        ArrowArray* new_column_array);
+
+    void _create_column(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        ArrowSchema* new_column_schema,
+        ArrowArray* new_column_array);
+
+    void _cast_column(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        ArrowSchema* new_column_schema,
+        ArrowArray* new_column_array);
+
+    template <typename UserType>
+    void _cast_column_aux(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        ArrowArray* new_column_array) {
+        tiledb_datatype_t disk_type;
+        std::string name(orig_column_schema->name);
+        if (tiledb_schema()->has_attribute(name)) {
+            disk_type = tiledb_schema()->attribute(name).type();
+        } else {
+            disk_type = tiledb_schema()->domain().dimension(name).type();
+        }
+
+        switch (disk_type) {
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_CHAR:
+                break;
+            case TILEDB_BOOL:
+            case TILEDB_INT8:
+                return SOMAArray::_copy_column<UserType, int8_t>(
+                    orig_column_array, new_column_array);
+            case TILEDB_UINT8:
+                return SOMAArray::_copy_column<UserType, uint8_t>(
+                    orig_column_array, new_column_array);
+            case TILEDB_INT16:
+                return SOMAArray::_copy_column<UserType, int16_t>(
+                    orig_column_array, new_column_array);
+            case TILEDB_UINT16:
+                return SOMAArray::_copy_column<UserType, uint16_t>(
+                    orig_column_array, new_column_array);
+            case TILEDB_INT32:
+                return SOMAArray::_copy_column<UserType, int32_t>(
+                    orig_column_array, new_column_array);
+            case TILEDB_UINT32:
+                return SOMAArray::_copy_column<UserType, uint32_t>(
+                    orig_column_array, new_column_array);
+            case TILEDB_INT64:
+            case TILEDB_DATETIME_YEAR:
+            case TILEDB_DATETIME_MONTH:
+            case TILEDB_DATETIME_WEEK:
+            case TILEDB_DATETIME_DAY:
+            case TILEDB_DATETIME_HR:
+            case TILEDB_DATETIME_MIN:
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_DATETIME_PS:
+            case TILEDB_DATETIME_FS:
+            case TILEDB_DATETIME_AS:
+            case TILEDB_TIME_HR:
+            case TILEDB_TIME_MIN:
+            case TILEDB_TIME_SEC:
+            case TILEDB_TIME_MS:
+            case TILEDB_TIME_US:
+            case TILEDB_TIME_NS:
+            case TILEDB_TIME_PS:
+            case TILEDB_TIME_FS:
+            case TILEDB_TIME_AS:
+                return SOMAArray::_copy_column<UserType, int64_t>(
+                    orig_column_array, new_column_array);
+            case TILEDB_UINT64:
+                return SOMAArray::_copy_column<UserType, uint64_t>(
+                    orig_column_array, new_column_array);
+            case TILEDB_FLOAT32:
+                return SOMAArray::_copy_column<UserType, float>(
+                    orig_column_array, new_column_array);
+            case TILEDB_FLOAT64:
+                return SOMAArray::_copy_column<UserType, double>(
+                    orig_column_array, new_column_array);
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid TileDB disk type when attempting to cast "
+                    "table: " +
+                    tiledb::impl::type_to_str(disk_type));
+        }
+    }
+
+    template <typename UserType, typename DiskType>
+    void _copy_column(
+        ArrowArray* orig_column_array, ArrowArray* new_column_array) {
+        UserType* buf;
+        if (orig_column_array->n_buffers == 3) {
+            buf = (UserType*)orig_column_array->buffers[2] +
+                  orig_column_array->offset;
+        } else {
+            buf = (UserType*)orig_column_array->buffers[1] +
+                  orig_column_array->offset;
+        }
+        std::vector<UserType> original_values(
+            buf, buf + orig_column_array->length);
+        std::vector<DiskType> casted_values;
+        for (auto val : original_values) {
+            casted_values.push_back(val);
+        }
+
+        new_column_array->buffers[0] = orig_column_array->buffers[0];
+
+        if (orig_column_array->n_buffers == 3) {
+            new_column_array->buffers[2] = malloc(
+                sizeof(DiskType) * casted_values.size());
+            std::memcpy(
+                (void*)new_column_array->buffers[2],
+                casted_values.data(),
+                sizeof(DiskType) * casted_values.size());
+        } else {
+            new_column_array->buffers[1] = malloc(
+                sizeof(DiskType) * casted_values.size());
+            std::memcpy(
+                (void*)new_column_array->buffers[1],
+                casted_values.data(),
+                sizeof(DiskType) * casted_values.size());
+        }
+    }
+
     template <typename ValueType>
     void _remap_indexes(
         std::string column_name,
@@ -950,6 +1084,102 @@ class SOMAArray : public SOMAObject {
         }
     }
 
+    void _promote_indexes_to_values(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        ArrowArray* new_column_array);
+
+    template <typename T>
+    void _cast_dictionary_values(
+        ArrowSchema* orig_column_schema,
+        ArrowArray* orig_column_array,
+        ArrowArray* new_column_array) {
+        auto value_array = orig_column_array->dictionary;
+
+        T* valbuf;
+        if (value_array->n_buffers == 3) {
+            valbuf = (T*)value_array->buffers[2];
+        } else {
+            valbuf = (T*)value_array->buffers[1];
+        }
+        std::vector<T> values(valbuf, valbuf + value_array->length);
+
+        std::vector<int64_t> indexes = SOMAArray::_get_index_vector(
+            orig_column_schema, orig_column_array);
+
+        std::vector<T> index_to_value;
+        for (auto i : indexes) {
+            index_to_value.push_back(values[i]);
+        }
+
+        new_column_array->buffers[0] = orig_column_array->buffers[0];
+
+        if (value_array->n_buffers == 3) {
+            new_column_array->buffers[2] = malloc(
+                sizeof(T) * index_to_value.size());
+            std::memcpy(
+                (void*)new_column_array->buffers[2],
+                index_to_value.data(),
+                sizeof(T) * index_to_value.size());
+        } else {
+            new_column_array->buffers[1] = malloc(
+                sizeof(T) * index_to_value.size());
+            std::memcpy(
+                (void*)new_column_array->buffers[1],
+                index_to_value.data(),
+                sizeof(T) * index_to_value.size());
+        }
+    }
+
+    std::vector<int64_t> _get_index_vector(
+        ArrowSchema* orig_column_schema, ArrowArray* orig_column_array) {
+        auto index_type = ArrowAdapter::to_tiledb_format(
+            orig_column_schema->format);
+        auto len = orig_column_array->length;
+
+        switch (index_type) {
+            case TILEDB_INT8: {
+                int8_t* idxbuf = (int8_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_UINT8: {
+                uint8_t* idxbuf = (uint8_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_INT16: {
+                int16_t* idxbuf = (int16_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_UINT16: {
+                uint16_t* idxbuf = (uint16_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_INT32: {
+                int32_t* idxbuf = (int32_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_UINT32: {
+                uint32_t* idxbuf = (uint32_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_INT64: {
+                int64_t* idxbuf = (int64_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            case TILEDB_UINT64: {
+                uint64_t* idxbuf = (uint64_t*)orig_column_array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + len);
+            }
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid index type when trying to promote indexes to "
+                    "values");
+        }
+    }
+
+    // Helper function to cast Boolean of bits (Arrow) to uint8 (TileDB)
+    void _cast_bit_to_uint8(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
+
     // Helper function for set_column_data
     std::shared_ptr<ColumnBuffer> _setup_column_data(std::string_view name);
 
@@ -988,9 +1218,10 @@ class SOMAArray : public SOMAObject {
     // Array associated with mq_
     std::shared_ptr<Array> arr_;
 
-    // Array associated with metadata_. Metadata values need to be accessible in
-    // write mode as well. We need to keep this read-mode array alive in order
-    // for the metadata value pointers in the cache to be accessible
+    // Array associated with metadata_. Metadata values need to be
+    // accessible in write mode as well. We need to keep this read-mode
+    // array alive in order for the metadata value pointers in the cache to
+    // be accessible
     std::shared_ptr<Array> meta_cache_arr_;
 
     // True if this is the first call to read_next()
@@ -1002,7 +1233,8 @@ class SOMAArray : public SOMAObject {
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t nnz_slow();
 
-    // ArrayBuffers to hold ColumnBuffers alive when submitting to write query
+    // ArrayBuffers to hold ColumnBuffers alive when submitting to write
+    // query
     std::shared_ptr<ArrayBuffers> array_buffer_ = nullptr;
 };
 
