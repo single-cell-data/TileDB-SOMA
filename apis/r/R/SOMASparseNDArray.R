@@ -177,9 +177,6 @@ SOMASparseNDArray <- R6::R6Class(
       self$set_metadata(bbox_flat)
       private$.write_coo_dataframe(coo)
 
-      # tiledb-r always closes the array after a write operation so we need to
-      # manually reopen it until close-on-write is optional
-      self$open("WRITE", internal_use_only = "allowed_use")
       invisible(self)
     },
 
@@ -227,14 +224,26 @@ SOMASparseNDArray <- R6::R6Class(
       if (!is.null(private$tiledb_timestamp)) {
           arr@timestamp <- private$tiledb_timestamp
       }
-      ## spdl::debug("[SOMASparseNDArray] '.write_coo_dataframe' layout '{}' is_sparse '{}' ",
-      ##             tiledb::query_layout(arr), private$.is_sparse)
-      ## if (!private$.is_sparse && tiledb::query_layout(arr) == "UNORDERED") {
-      ##     tiledb::query_layout(arr) <- "GLOBAL_ORDER"
-      ##     cat("*********", tiledb::query_layout(arr), "*****\n")
-      ##     print(arr)
-      ## }
-      arr[] <- values
+      nms <- colnames(values)
+
+      ## the 'soma_data' data type may not have been cached, and if so we need to fetch it
+      if (is.null(private$.type)) {
+          ## TODO: replace with a libtiledbsoma accessor as discussed
+          tpstr <- tiledb::datatype(tiledb::attrs(tiledb::schema(self$uri))[["soma_data"]])
+          arstr <- arrow_type_from_tiledb_type(tpstr)
+          private$.type <- arstr
+      }
+
+      arrsch <- arrow::schema(arrow::field(nms[1], arrow::int64()),
+                              arrow::field(nms[2], arrow::int64()),
+                              arrow::field(nms[3], private$.type))
+
+      tbl <- arrow::arrow_table(values, schema = arrsch)
+      spdl::debug("[SOMASparseNDArray::write] array created, writing to {}", self$uri)
+      naap <- nanoarrow::nanoarrow_allocate_array()
+      nasp <- nanoarrow::nanoarrow_allocate_schema()
+      arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
+      writeArrayFromArrow(self$uri, naap, nasp, "SOMASparseNDArray")
     },
 
     # Internal marking of one or zero based matrices for iterated reads
