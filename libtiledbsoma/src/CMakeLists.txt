@@ -32,6 +32,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_scene.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.cc
@@ -131,6 +132,7 @@ endif()
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_dense_ndarray.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_experiment.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_measurement.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_scene.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_object.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_sparse_ndarray.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/logger_public.h
@@ -151,6 +153,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_scene.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h
   DESTINATION "include/tiledbsoma/soma"
 )

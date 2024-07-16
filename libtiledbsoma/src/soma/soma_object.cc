@@ -8,6 +8,7 @@
 #include "soma_dense_ndarray.h"
 #include "soma_experiment.h"
 #include "soma_measurement.h"
+#include "soma_scene.h"
 #include "soma_sparse_ndarray.h"
 
 namespace tiledbsoma {
@@ -77,6 +78,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             return std::make_unique<SOMAExperiment>(*group_);
         } else if (group_type == "somameasurement") {
             return std::make_unique<SOMAMeasurement>(*group_);
+        } else if (group_type == "somascene") {
+            return std::make_unique<SOMAScene>(*group_);
         } else {
             throw TileDBSOMAError("Saw invalid SOMAGroup type");
         }

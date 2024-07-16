@@ -34,7 +34,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
     """
 
     __slots__ = ()
-    _wrapper_type = _tdb_handles.CollectionWrapper
+    _wrapper_type = _tdb_handles.SceneWrapper
 
     _subclass_constrained_soma_types = {
         "img": ("SOMACollection",),
