@@ -1,4 +1,4 @@
-# Copyright (c) 2024 TileDB, Inc,
+# Copyright (c) 2024 TileDB, Inc
 #
 # Licensed under the MIT License.
 
@@ -54,7 +54,7 @@ from .._exception import (
     NotCreateableError,
     SOMAError,
 )
-from .._tiledb_object import AnyTileDBObject
+from .._soma_object import AnySOMAObject
 from .._types import IngestMode
 from ..io import from_anndata
 from ..io.ingest import (
@@ -66,7 +66,7 @@ from ..io.ingest import (
     _write_dataframe_impl,
     add_metadata,
 )
-from ..options._tiledb_create_options import TileDBCreateOptions
+from ..options._tiledb_create_write_options import TileDBCreateOptions
 
 if TYPE_CHECKING:
     from somacore.options import PlatformConfig
@@ -386,7 +386,7 @@ def _write_visium_data_to_experiment_uri(
 
                 obsl_uri = f"{scene_uri}/obsl"
                 with _create_or_open_collection(
-                    Collection[AnyTileDBObject], obsl_uri, **ingest_ctx
+                    Collection[AnySOMAObject], obsl_uri, **ingest_ctx
                 ) as obsl:
                     _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
 
@@ -407,7 +407,7 @@ def _write_visium_data_to_experiment_uri(
 
                 varl_uri = f"{scene_uri}/varl"
                 with _create_or_open_collection(
-                    Collection[Collection[AnyTileDBObject]], varl_uri, **ingest_ctx
+                    Collection[Collection[AnySOMAObject]], varl_uri, **ingest_ctx
                 ) as varl:
                     _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
 

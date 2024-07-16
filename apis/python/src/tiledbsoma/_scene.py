@@ -8,6 +8,7 @@ from typing import MutableMapping, Union
 
 from somacore import coordinates, scene
 
+from . import _tdb_handles
 from ._collection import Collection, CollectionBase
 from ._coordinates import CompositeTransform, CoordinateSystem
 from ._dataframe import DataFrame
@@ -33,6 +34,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
     """
 
     __slots__ = ()
+    _wrapper_type = _tdb_handles.CollectionWrapper
 
     _subclass_constrained_soma_types = {
         "img": ("SOMACollection",),
