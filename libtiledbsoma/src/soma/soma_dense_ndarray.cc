@@ -100,10 +100,10 @@ std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 
-bool SOMADenseNDArray::exists(std::string_view uri) {
+bool SOMADenseNDArray::exists(
+    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
     try {
-        auto obj = SOMAObject::open(
-            uri, OpenMode::read, std::make_shared<SOMAContext>());
+        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
         return "SOMADenseNDArray" == obj->type();
     } catch (TileDBSOMAError& e) {
         return false;

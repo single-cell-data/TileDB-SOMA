@@ -36,6 +36,8 @@ TEST_CASE("SOMADataFrame: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-dataframe-basic";
 
+    REQUIRE(!SOMADataFrame::exists(uri, ctx));
+
     auto [schema, index_columns] = helper::create_arrow_schema();
     SOMADataFrame::create(
         uri,
@@ -43,6 +45,10 @@ TEST_CASE("SOMADataFrame: basic") {
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx);
+
+    REQUIRE(SOMADataFrame::exists(uri, ctx));
+    REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
+    REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
     auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_dataframe->uri() == uri);

@@ -36,6 +36,8 @@ TEST_CASE("SOMASparseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-sparse-ndarray-basic";
 
+    REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
+
     auto index_columns = helper::create_column_index_info();
     SOMASparseNDArray::create(
         uri,
@@ -45,6 +47,10 @@ TEST_CASE("SOMASparseNDArray: basic") {
         ctx,
         PlatformConfig(),
         TimestampRange(0, 2));
+
+    REQUIRE(SOMASparseNDArray::exists(uri, ctx));
+    REQUIRE(!SOMADataFrame::exists(uri, ctx));
+    REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
     auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_sparse->uri() == uri);

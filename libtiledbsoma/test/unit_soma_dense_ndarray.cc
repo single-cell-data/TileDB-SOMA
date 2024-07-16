@@ -36,6 +36,8 @@ TEST_CASE("SOMADenseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-dense-ndarray-basic";
 
+    REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
+
     auto index_columns = helper::create_column_index_info();
     SOMADenseNDArray::create(
         uri,
@@ -45,6 +47,10 @@ TEST_CASE("SOMADenseNDArray: basic") {
         ctx,
         PlatformConfig(),
         TimestampRange(0, 2));
+
+    REQUIRE(SOMADenseNDArray::exists(uri, ctx));
+    REQUIRE(!SOMADataFrame::exists(uri, ctx));
+    REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
 
     auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_dense->uri() == uri);
