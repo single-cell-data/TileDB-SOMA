@@ -131,8 +131,7 @@ void load_soma_dataframe(py::module& m) {
             py::kw_only(),
             "column_names"_a = py::none(),
             "result_order"_a = ResultOrder::automatic,
-            "timestamp"_a = py::none(),
-            py::call_guard<py::gil_scoped_release>())
+            "timestamp"_a = py::none())
 
         .def_static(
             "exists",
