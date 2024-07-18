@@ -28,6 +28,28 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
     }
 }
 
+std::shared_ptr<tdbs::SOMAContext>
+_contextFromConfig(Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+
+    // if we hae a config, use it
+    std::shared_ptr<tdbs::SOMAContext> somactx;
+    if (config.isNotNull()) {
+        std::map<std::string, std::string> smap;
+        auto config_vec = config.as();
+        auto config_names = Rcpp::as<Rcpp::CharacterVector>(config_vec.names());
+        for (auto &name : config_names) {
+            std::string param = Rcpp::as<std::string>(name);
+            std::string value = Rcpp::as<std::string>(config_vec[param]);
+            smap[param] = value;
+        }
+        somactx = std::make_shared<tdbs::SOMAContext>(smap);
+    } else {
+        somactx = std::make_shared<tdbs::SOMAContext>();
+    }
+    return somactx;
+}
+
+
 //  ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
 //  Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);
 
@@ -37,6 +59,7 @@ void createSchemaFromArrow(const std::string& uri,
                            bool sparse, std::string datatype,
                            Rcpp::List pclst,
                            Rcpp::Nullable<Rcpp::XPtr<ctx_wrap_t>> ctxptr = R_NilValue) {
+
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
