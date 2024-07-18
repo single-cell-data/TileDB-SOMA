@@ -110,9 +110,6 @@ void load_soma_sparse_ndarray(py::module& m) {
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 
-        .def_static(
-            "exists",
-            &SOMASparseNDArray::exists,
-            py::call_guard<py::gil_scoped_release>());
+        .def_static("exists", &SOMASparseNDArray::exists);
 }
 }  // namespace libtiledbsomacpp

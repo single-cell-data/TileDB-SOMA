@@ -122,10 +122,7 @@ void load_soma_dense_ndarray(py::module& m) {
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 
-        .def_static(
-            "exists",
-            &SOMADenseNDArray::exists,
-            py::call_guard<py::gil_scoped_release>())
+        .def_static("exists", &SOMADenseNDArray::exists)
 
         .def("write", write);
 }
