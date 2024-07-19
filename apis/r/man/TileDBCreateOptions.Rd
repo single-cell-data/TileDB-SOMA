@@ -72,6 +72,7 @@ tdco$attr_filters("non-existant")
 \item \href{#method-TileDBCreateOptions-allows_duplicates}{\code{TileDBCreateOptions$allows_duplicates()}}
 \item \href{#method-TileDBCreateOptions-dataframe_dim_zstd_level}{\code{TileDBCreateOptions$dataframe_dim_zstd_level()}}
 \item \href{#method-TileDBCreateOptions-sparse_nd_array_dim_zstd_level}{\code{TileDBCreateOptions$sparse_nd_array_dim_zstd_level()}}
+\item \href{#method-TileDBCreateOptions-dense_nd_array_dim_zstd_level}{\code{TileDBCreateOptions$dense_nd_array_dim_zstd_level()}}
 \item \href{#method-TileDBCreateOptions-offsets_filters}{\code{TileDBCreateOptions$offsets_filters()}}
 \item \href{#method-TileDBCreateOptions-validity_filters}{\code{TileDBCreateOptions$validity_filters()}}
 \item \href{#method-TileDBCreateOptions-dim_filters}{\code{TileDBCreateOptions$dim_filters()}}
@@ -213,6 +214,18 @@ int
 \subsection{Method \code{sparse_nd_array_dim_zstd_level()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$sparse_nd_array_dim_zstd_level()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+int
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBCreateOptions-dense_nd_array_dim_zstd_level"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBCreateOptions-dense_nd_array_dim_zstd_level}{}}}
+\subsection{Method \code{dense_nd_array_dim_zstd_level()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$dense_nd_array_dim_zstd_level()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
@@ -374,12 +387,13 @@ int
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{build_filters}}{Build filters into
-\code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects}
+\code{\link[tiledb:tiledb_filter-class]{tiledb_filter}} objects. If set to
+\code{FALSE}, JSON strings are created instead of filter objects.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The create options as a list
+The 'create options' as a list
 }
 }
 \if{html}{\out{<hr>}}

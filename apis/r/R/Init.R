@@ -1,8 +1,13 @@
+.pkgenv <- new.env(parent = emptyenv())
+
 ## .onLoad is called whether code from the package is used and the packages is 'loaded'. An
 ## example is calling `tiledbsoma::show_package_versions()`. So this is most elementary check,
 ## .onAttach is also called when the package is 'attached' via 'library(tiledbsoma)'
 ## During package build and byte-code compilation and load check, both are called.
 .onLoad <- function(libname, pkgname) {
+    ## create a slot for somactx in per-package enviroment, do no fill it yet to allow 'lazy load'
+    .pkgenv[["somactx"]] <- NULL
+
     rpkg_lib_version <- tiledb::tiledb_version(compact=TRUE)
     soma_lib_version <- libtiledbsoma_version(compact=TRUE)
     # Check major and minor but not micro: sc-50464
@@ -25,4 +30,35 @@
                               ".\nSee https://github.com/single-cell-data for more information ",
                               "about the SOMA project.")
     }
+}
+
+#' Create and cache a SOMA Context Object
+#'
+#' @param config A named character vector with \sQuote{key} and \sQuote{value} pairs defining the
+#' configuration setting
+#' @return An external pointer object containing a shared pointer instance of \code{SOMAContext}
+#' @export
+soma_context <- function(config) {
+
+    ## if a new config is given always create a new object
+    if (!missing(config)) {
+        somactx <- createSOMAContext(config)
+        .pkgenv[["somactx"]] <- somactx
+    }
+
+    ## access config
+    somactx <- .pkgenv[["somactx"]]
+
+    ## if no values was cached, create a new one with either empty or given config
+    if (is.null(somactx)) {
+        if (missing(config)) {
+            somactx <- createSOMAContext()
+        } else {
+            somactx <- createSOMAContext(config)
+        }
+        .pkgenv[["somactx"]] <- somactx
+    }
+
+    return(somactx)
+
 }

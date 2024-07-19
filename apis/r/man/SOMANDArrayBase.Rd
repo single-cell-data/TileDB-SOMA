@@ -15,6 +15,7 @@ Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-SOMANDArrayBase-create}{\code{SOMANDArrayBase$create()}}
+\item \href{#method-SOMANDArrayBase-set_data_type}{\code{SOMANDArrayBase$set_data_type()}}
 \item \href{#method-SOMANDArrayBase-clone}{\code{SOMANDArrayBase$clone()}}
 }
 }
@@ -81,6 +82,15 @@ directly.}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMANDArrayBase-set_data_type"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMANDArrayBase-set_data_type}{}}}
+\subsection{Method \code{set_data_type()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$set_data_type(type)}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMANDArrayBase-clone"></a>}}

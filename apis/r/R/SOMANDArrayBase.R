@@ -59,7 +59,7 @@ SOMANDArrayBase <- R6::R6Class(
       createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp,
                             private$.is_sparse,
                             if (private$.is_sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
-                            tiledb_create_options$to_list(FALSE), ctxptr@ptr)
+                            tiledb_create_options$to_list(FALSE), soma_context())
 
       self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()

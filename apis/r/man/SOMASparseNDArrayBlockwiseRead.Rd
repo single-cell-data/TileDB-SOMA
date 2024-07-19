@@ -38,7 +38,7 @@ Create
   axis,
   ...,
   size,
-  reindex_disable_on_axis = NULL
+  reindex_disable_on_axis = NA
 )}\if{html}{\out{</div>}}
 }
 
