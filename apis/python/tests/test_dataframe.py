@@ -151,8 +151,8 @@ def test_dataframe_reopen(tmp_path, arrow_schema):
     soma.DataFrame.create(tmp_path.as_posix(), schema=arrow_schema())
 
     with soma.DataFrame.open(tmp_path.as_posix(), "r") as sdf1:
-        with sdf1.reopen() as sdf2:
-            with sdf2.reopen() as sdf3:
+        with sdf1.reopen("w") as sdf2:
+            with sdf2.reopen("r") as sdf3:
                 assert sdf1.mode == "r"
                 assert sdf2.mode == "w"
                 assert sdf3.mode == "r"

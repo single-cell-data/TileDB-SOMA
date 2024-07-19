@@ -141,9 +141,9 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._handle = handle
         self._close_stack.enter_context(self._handle)
 
-    def reopen(self, mode: Optional[options.OpenMode] = None) -> Self:
+    def reopen(self, mode: options.OpenMode) -> Self:
         """
-        Use the passed-in mode if provided; otherwise, if the mode was originally opened in read mode, flip to opening in write mode, and vice-versa
+        Return a new copy of the SOMAObject with the given mode.
 
         Lifecycle:
             Experimental.

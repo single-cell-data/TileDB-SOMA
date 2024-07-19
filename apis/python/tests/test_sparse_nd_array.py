@@ -83,8 +83,8 @@ def test_sparse_nd_array_reopen(tmp_path):
     soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=(1,))
 
     with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A1:
-        with A1.reopen() as A2:
-            with A2.reopen() as A3:
+        with A1.reopen("w") as A2:
+            with A2.reopen("r") as A3:
                 assert A1.mode == "r"
                 assert A2.mode == "w"
                 assert A3.mode == "r"

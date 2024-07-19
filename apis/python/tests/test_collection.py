@@ -530,8 +530,8 @@ def test_collection_reopen(tmp_path):
     soma.Collection.create(tmp_path.as_uri())
 
     with soma.Collection.open(tmp_path.as_posix(), "r") as col1:
-        with col1.reopen() as col2:
-            with col2.reopen() as col3:
+        with col1.reopen("w") as col2:
+            with col2.reopen("r") as col3:
                 assert col1.mode == "r"
                 assert col2.mode == "w"
                 assert col3.mode == "r"

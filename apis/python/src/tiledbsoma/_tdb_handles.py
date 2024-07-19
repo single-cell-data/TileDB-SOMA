@@ -166,10 +166,9 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
 
-    def reopen(self, mode: Optional[options.OpenMode] = None) -> clib.SOMAObject:
-        new_mode = mode or ("w" if self._handle.mode == "r" else "r")
+    def reopen(self, mode: options.OpenMode) -> clib.SOMAObject:
         return self._handle.reopen(
-            clib.OpenMode.read if new_mode == "r" else clib.OpenMode.write
+            clib.OpenMode.read if mode == "r" else clib.OpenMode.write
         )
 
     # Covariant types should normally not be in parameters, but this is for

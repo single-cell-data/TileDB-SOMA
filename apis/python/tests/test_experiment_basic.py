@@ -212,8 +212,8 @@ def test_experiment_reopen(tmp_path):
     soma.Experiment.create(tmp_path.as_uri())
 
     with soma.Experiment.open(tmp_path.as_posix(), "r") as exp1:
-        with exp1.reopen() as exp2:
-            with exp2.reopen() as exp3:
+        with exp1.reopen("w") as exp2:
+            with exp2.reopen("r") as exp3:
                 assert exp1.mode == "r"
                 assert exp2.mode == "w"
                 assert exp3.mode == "r"
