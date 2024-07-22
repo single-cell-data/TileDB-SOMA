@@ -1,6 +1,7 @@
 import json
 import pathlib
 import tempfile
+from copy import deepcopy
 from pathlib import Path
 from typing import Optional
 
@@ -86,8 +87,8 @@ def h5ad_file_X_none(request):
     [tiledbsoma.SparseNDArray, tiledbsoma.DenseNDArray],
 )
 def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
-    original = conftest_pbmc_small.copy()
-    conftest_pbmc_small = conftest_pbmc_small.copy()
+    original = deepcopy(conftest_pbmc_small)
+    conftest_pbmc_small = deepcopy(conftest_pbmc_small)
 
     have_ingested = False
 
@@ -95,7 +96,7 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
     output_path = tempdir.name
 
     conftest_pbmc_small.layers["plus1"] = conftest_pbmc_small.X + 1
-    orig = conftest_pbmc_small.copy()
+    orig = deepcopy(conftest_pbmc_small)
 
     metakey = _constants.SOMA_OBJECT_TYPE_METADATA_KEY  # keystroke-saver
     all2d = (slice(None), slice(None))  # keystroke-saver
@@ -470,7 +471,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    original = conftest_pbmc_small.copy()
+    original = deepcopy(conftest_pbmc_small)
 
     uri = tiledbsoma.io.from_anndata(
         output_path, conftest_pbmc_small, measurement_name="RNA"
@@ -600,7 +601,7 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small):
 
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
-    original = conftest_pbmc_small.copy()
+    original = deepcopy(conftest_pbmc_small)
 
     uri = tiledbsoma.io.from_anndata(
         output_path, conftest_pbmc_small, measurement_name="RNA"
@@ -666,7 +667,7 @@ def test_export_anndata(conftest_pbmc_small):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
 
-    original = conftest_pbmc_small.copy()
+    original = deepcopy(conftest_pbmc_small)
 
     tiledbsoma.io.from_anndata(output_path, conftest_pbmc_small, measurement_name="RNA")
 
@@ -758,7 +759,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
         [1] * conftest_pbmc_small.n_obs + [np.nan], dtype=pd.Int64Dtype()
     )
 
-    original = conftest_pbmc_small.copy()
+    original = deepcopy(conftest_pbmc_small)
     uri = tiledbsoma.io.from_anndata(
         output_path,
         conftest_pbmc_small,
@@ -784,7 +785,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
 
 def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
     adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
-    original = adata.copy()
+    original = deepcopy(adata)
     assert 1 == 1
 
     # This data file is prepared such that obsm["X_pca"] has shape (2638, 50)
@@ -930,7 +931,7 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
                 X[i, j] = 100 + 10 * i + j
 
     adata = anndata.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
-    original = adata.copy()
+    original = deepcopy(adata)
 
     uri = tmp_path.as_posix()
 
@@ -1022,7 +1023,7 @@ def test_uns_io(tmp_path, outgest_uns_keys):
         uns=uns,
         dtype=X.dtype,
     )
-    original = adata.copy()
+    original = deepcopy(adata)
 
     soma_uri = tmp_path.as_posix()
 
@@ -1076,7 +1077,7 @@ def test_string_nan_columns(tmp_path, conftest_pbmc_small, write_index):
 
     # Step 2
     uri = tmp_path.as_posix()
-    original = conftest_pbmc_small.copy()
+    original = deepcopy(conftest_pbmc_small)
     tiledbsoma.io.from_anndata(uri, conftest_pbmc_small, measurement_name="RNA")
     verify_obs_and_var_eq(original, conftest_pbmc_small, nan_safe=True)
 
@@ -1134,7 +1135,7 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
 
     soma_uri = tmp_path.as_posix()
 
-    original = adata.copy()
+    original = deepcopy(adata)
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name)
     verify_obs_and_var_eq(original, adata)
 
@@ -1319,7 +1320,7 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
     obs["batch_id"] = obs["batch_id"].astype(dtype)
 
     # Create a copy of the anndata object
-    adata2 = conftest_pbmc_small.copy()
+    adata2 = deepcopy(conftest_pbmc_small)
     obs2 = adata2.obs
     if new_obs_ids == "all":
         obs2.index = obs2.index + "_2"
