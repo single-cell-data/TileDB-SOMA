@@ -10,7 +10,7 @@
 class SOMAError(Exception):
     """Base error type for SOMA-specific exceptions.
 
-    Lifecycle: Maturing
+    Lifecycle: Maturing.
     """
 
     pass
