@@ -66,7 +66,7 @@ def assert_version_before(major: int, minor: int) -> None:
 def get_storage_engine() -> str:
     """Returns underlying storage engine name, e.g., "tiledb".
 
-    Lifecycle: Maturing
+    Lifecycle: Maturing.
     """
     return "tiledb"
 
