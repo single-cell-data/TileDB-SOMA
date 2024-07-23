@@ -24,7 +24,7 @@ def get_SOMA_version() -> str:
 def get_implementation() -> str:
     """Returns the implementation name, e.g., "python-tiledb".
 
-    Lifecycle: Maturing
+    Lifecycle: Maturing.
     """
     return "python-tiledb"
 
