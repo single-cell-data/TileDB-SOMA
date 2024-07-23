@@ -19,7 +19,7 @@ class SOMAError(Exception):
 class DoesNotExistError(SOMAError):
     """Raised when attempting to open a non-existent or inaccessible SOMA object.
 
-    Lifecycle: Maturing
+    Lifecycle: Maturing.
     """
 
     pass
