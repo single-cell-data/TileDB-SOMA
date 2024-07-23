@@ -37,5 +37,5 @@ if it already exists, simply open it for writing
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
 }
 \description{
-Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)
+Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)
 }

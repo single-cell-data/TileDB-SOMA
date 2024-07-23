@@ -19,7 +19,7 @@ domain [0, maxInt64), and a single attribute.
 \subsection{Duplicate writes}{
 
 As duplicate index values are not allowed, index values already present in
-the object are overwritten and new index values are added. (lifecycle: experimental)
+the object are overwritten and new index values are added. (lifecycle: maturing)
 }
 }
 \section{Super classes}{
@@ -104,7 +104,7 @@ read. List elements can be named when specifying a subset of dimensions.}
 \if{html}{\out{<a id="method-SOMASparseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix-like data to the array. (lifecycle: experimental)
+Write matrix-like data to the array. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$write(values, bbox = NULL)}\if{html}{\out{</div>}}
 }
@@ -126,7 +126,7 @@ dimension of \code{values}. Generally should be \code{NULL}.}
 \if{html}{\out{<a id="method-SOMASparseNDArray-nnz"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-nnz}{}}}
 \subsection{Method \code{nnz()}}{
-Retrieve number of non-zero elements (lifecycle: experimental)
+Retrieve number of non-zero elements (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$nnz()}\if{html}{\out{</div>}}
 }

@@ -5,7 +5,7 @@
 \title{TileDB Object Base Class}
 \description{
 Base class to implement shared functionality across the TileDBArray and
-TileDBGroup classes. (lifecycle: experimental)
+TileDBGroup classes. (lifecycle: maturing)
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -35,7 +35,7 @@ TileDBGroup classes. (lifecycle: experimental)
 \if{html}{\out{<a id="method-TileDBObject-new"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-new}{}}}
 \subsection{Method \code{new()}}{
-Create a new TileDB object. (lifecycle: experimental)
+Create a new TileDB object. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$new(
   uri,
@@ -139,7 +139,7 @@ Print-friendly representation of the object.
 \if{html}{\out{<a id="method-TileDBObject-exists"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-exists}{}}}
 \subsection{Method \code{exists()}}{
-Check if the object exists. (lifecycle: experimental)
+Check if the object exists. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$exists()}\if{html}{\out{</div>}}
 }

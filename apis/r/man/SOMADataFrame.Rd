@@ -7,7 +7,7 @@
 \code{SOMADataFrame} is a multi-column table that must contain a column
 called \code{soma_joinid} of type \code{int64}, which contains a unique value for each
 row and is intended to act as a join key for other objects, such as
-\code{\link{SOMASparseNDArray}}.  (lifecycle: experimental)
+\code{\link{SOMASparseNDArray}}.  (lifecycle: maturing)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADataFrame}
@@ -57,7 +57,7 @@ row and is intended to act as a join key for other objects, such as
 \if{html}{\out{<a id="method-SOMADataFrame-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-create}{}}}
 \subsection{Method \code{create()}}{
-Create (lifecycle: experimental)
+Create (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(
   schema,
@@ -89,7 +89,7 @@ as \code{create()} is considered internal and should not be called directly.}
 \if{html}{\out{<a id="method-SOMADataFrame-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-write}{}}}
 \subsection{Method \code{write()}}{
-Write (lifecycle: experimental)
+Write (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$write(values)}\if{html}{\out{</div>}}
 }
@@ -108,7 +108,7 @@ schema for \code{values} must match the schema for the \code{SOMADataFrame}.}
 \if{html}{\out{<a id="method-SOMADataFrame-read"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-read}{}}}
 \subsection{Method \code{read()}}{
-Read (lifecycle: experimental)
+Read (lifecycle: maturing)
 Read a user-defined subset of data, addressed by the dataframe indexing
 column, and optionally filtered.
 \subsection{Usage}{
@@ -152,7 +152,7 @@ arrow::\link[arrow]{Table} or \link{TableReadIter}
 \if{html}{\out{<a id="method-SOMADataFrame-update"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-update}{}}}
 \subsection{Method \code{update()}}{
-Update (lifecycle: experimental)
+Update (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$update(values, row_index_name = NULL)}\if{html}{\out{</div>}}
 }

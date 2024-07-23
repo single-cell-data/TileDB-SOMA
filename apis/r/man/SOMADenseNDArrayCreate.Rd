@@ -27,5 +27,5 @@ SOMADenseNDArrayCreate(
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
 }
 \description{
-Factory function to create a SOMADenseNDArray for writing, (lifecycle: experimental)
+Factory function to create a SOMADenseNDArray for writing, (lifecycle: maturing)
 }
