@@ -57,6 +57,7 @@ TEST_CASE("SOMASparseNDArray: basic") {
     REQUIRE(soma_sparse->ctx() == ctx);
     REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
     REQUIRE(soma_sparse->is_sparse() == true);
+    REQUIRE(soma_sparse->soma_data_type() == "l");
     auto schema = soma_sparse->tiledb_schema();
     REQUIRE(schema->has_attribute("soma_data"));
     REQUIRE(schema->array_type() == TILEDB_SPARSE);

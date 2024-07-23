@@ -57,6 +57,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
     REQUIRE(soma_dense->ctx() == ctx);
     REQUIRE(soma_dense->type() == "SOMADenseNDArray");
     REQUIRE(soma_dense->is_sparse() == false);
+    REQUIRE(soma_dense->soma_data_type() == "l");
     auto schema = soma_dense->tiledb_schema();
     REQUIRE(schema->has_attribute("soma_data"));
     REQUIRE(schema->array_type() == TILEDB_DENSE);
