@@ -156,7 +156,8 @@ def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
     pydict["foo"] = [(e + 1) * 10 for e in range(num_rows)]
     pydict["bar"] = [(e + 1) / 25 for e in range(num_rows)]
 
-    opt = soma.TileDBCreateOptions(remote_cap_nbytes=cap_nbytes)
+    tcopt = soma.TileDBCreateOptions(remote_cap_nbytes=cap_nbytes)
+    twopt = soma.TileDBWriteOptions()
     uri = tmp_path.as_posix()
     expect_error = cap_nbytes == 1 and num_rows > 0  # Not enough room for even one row
 
@@ -164,9 +165,9 @@ def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
         table = pa.Table.from_pydict(pydict)
         if expect_error:
             with pytest.raises(soma.SOMAError):
-                somaio.ingest._write_arrow_table(table, sdf, opt)
+                somaio.ingest._write_arrow_table(table, sdf, tcopt, twopt)
         else:
-            somaio.ingest._write_arrow_table(table, sdf, opt)
+            somaio.ingest._write_arrow_table(table, sdf, tcopt, twopt)
 
     if not expect_error:
         with soma.DataFrame.open(uri) as sdf:
