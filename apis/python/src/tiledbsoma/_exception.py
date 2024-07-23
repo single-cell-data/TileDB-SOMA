@@ -65,7 +65,7 @@ class AlreadyExistsError(SOMAError):
 def is_already_exists_error(e: SOMAError) -> bool:
     """Given a SOMAError, return true if it indicates the object already exists
 
-    Lifecycle: Maturing
+    Lifecycle: Maturing.
 
     Example:
         try:
