@@ -383,10 +383,13 @@ def _build_column_config(col: Optional[Mapping[str, _ColumnConfig]]) -> str:
         return ""
 
     for k in col:
+        dikt: Dict[str, Union[_JSONFilterList, int]] = {}
         if col[k].filters is not None:
-            column_config[k] = {"filters": _build_filter_list(col[k].filters, False)}
+            dikt["filters"] = _build_filter_list(col[k].filters, False)
         if col[k].tile is not None:
-            column_config[k] = {"tile": cast(int, col[k].tile)}
+            dikt["tile"] = cast(int, col[k].tile)
+        if len(dikt) != 0:
+            column_config[k] = dikt
     return json.dumps(column_config)
 
 
