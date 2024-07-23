@@ -74,7 +74,7 @@ def get_storage_engine() -> str:
 def get_libtiledbsoma_core_version() -> str:
     """Returns the version of libtiledb ("core") used by libtiledbsoma.
 
-    Lifecycle: Maturing
+    Lifecycle: Maturing.
     """
     v = libtiledbsoma_core_version_str()
     m = fullmatch(r"libtiledb=(\d+\.\d+\.\d+)", v)
