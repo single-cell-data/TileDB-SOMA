@@ -18,7 +18,7 @@
 #' the array type (e.g., Arrow.float32 defaults to 0.0).
 #'
 #' The `write` method is currently limited to writing from 2-d matrices.
-#' (lifecycle: experimental)
+#' (lifecycle: maturing)
 #' @export
 SOMADenseNDArray <- R6::R6Class(
   classname = "SOMADenseNDArray",
@@ -26,7 +26,7 @@ SOMADenseNDArray <- R6::R6Class(
 
   public = list(
 
-    #' @description Read as an 'arrow::Table' (lifecycle: experimental)
+    #' @description Read as an 'arrow::Table' (lifecycle: maturing)
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
@@ -61,7 +61,7 @@ SOMADenseNDArray <- R6::R6Class(
       soma_array_to_arrow_table(rl)
     },
 
-    #' @description Read as a dense matrix (lifecycle: experimental)
+    #' @description Read as a dense matrix (lifecycle: maturing)
     #' @param coords Optional `list` of integer vectors, one for each dimension, with a
     #' length equal to the number of values to read. If `NULL`, all values are
     #' read. List elements can be named when specifying a subset of dimensions.
@@ -98,7 +98,7 @@ SOMADenseNDArray <- R6::R6Class(
 
     },
 
-    #' @description Write matrix data to the array. (lifecycle: experimental)
+    #' @description Write matrix data to the array. (lifecycle: maturing)
     #'
     #' More general write methods for higher-dimensional array could be added.
     #'

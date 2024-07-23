@@ -190,7 +190,7 @@ The length of the collection
 \if{html}{\out{<a id="method-EphemeralCollectionBase-names"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-names}{}}}
 \subsection{Method \code{names()}}{
-Retrieve the names of members. (lifecycle: experimental)
+Retrieve the names of members. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$names()}\if{html}{\out{</div>}}
 }

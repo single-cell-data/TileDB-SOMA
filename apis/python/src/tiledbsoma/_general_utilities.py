@@ -16,7 +16,7 @@ from .pytiledbsoma import version as libtiledbsoma_core_version_str
 def get_SOMA_version() -> str:
     """Returns semver-compatible version of the supported SOMA API.
 
-    Lifecycle: maturing
+    Lifecycle: Maturing
     """
     return "0.2.0-dev"
 
@@ -24,7 +24,7 @@ def get_SOMA_version() -> str:
 def get_implementation() -> str:
     """Returns the implementation name, e.g., "python-tiledb".
 
-    Lifecycle: maturing
+    Lifecycle: Maturing.
     """
     return "python-tiledb"
 
@@ -32,7 +32,7 @@ def get_implementation() -> str:
 def get_implementation_version() -> str:
     """Returns the package implementation version as a semver.
 
-    Lifecycle: maturing
+    Lifecycle: Maturing.
     """
     if sys.version_info < (3, 8, 0):
         from pkg_resources import DistributionNotFound, get_distribution
@@ -66,7 +66,7 @@ def assert_version_before(major: int, minor: int) -> None:
 def get_storage_engine() -> str:
     """Returns underlying storage engine name, e.g., "tiledb".
 
-    Lifecycle: maturing
+    Lifecycle: Maturing.
     """
     return "tiledb"
 
@@ -74,7 +74,7 @@ def get_storage_engine() -> str:
 def get_libtiledbsoma_core_version() -> str:
     """Returns the version of libtiledb ("core") used by libtiledbsoma.
 
-    Lifecycle: maturing
+    Lifecycle: Maturing.
     """
     v = libtiledbsoma_core_version_str()
     m = fullmatch(r"libtiledb=(\d+\.\d+\.\d+)", v)
@@ -94,7 +94,7 @@ def show_package_versions() -> None:
     """Nominal use is for bug reports, so issue filers and issue fixers can be on
     the same page.
 
-    Lifecycle: maturing
+    Lifecycle: Maturing.
     """
     u = platform.uname()
     # fmt: off

@@ -7,7 +7,7 @@
 Contains a key-value mapping where the keys are string names and
 the values are any SOMA-defined foundational or composed type, including
 \code{\link{SOMACollection}}, \code{\link{SOMADataFrame}}, \code{\link{SOMADenseNDArray}},
-\code{\link{SOMASparseNDArray}}, or \code{\link{SOMAExperiment}}.  (lifecycle: experimental)
+\code{\link{SOMASparseNDArray}}, or \code{\link{SOMAExperiment}}.  (lifecycle: maturing)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMACollection}

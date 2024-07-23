@@ -80,7 +80,7 @@ class NDArray(SOMAArray, somacore.NDArray):
                 If unable to create the underlying object.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         raise NotImplementedError("must be implemented by child class.")
 
@@ -91,7 +91,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         Rather, it is the bounds outside of which no data may be written.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return cast(Tuple[int, ...], tuple(self._handle.shape))
 
@@ -99,7 +99,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         """Unsupported operation for this object type.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         raise NotImplementedError("reshape operation not implemented.")
 

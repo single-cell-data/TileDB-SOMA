@@ -10,7 +10,7 @@ NULL
 #' single [`SOMAMeasurement`] in a [`SOMAExperiment`], by `obs`/`var` (axis)
 #' coordinates and/or value filter. The primary use for this class is slicing
 #' [`SOMAExperiment`] `X` layers by `obs` or `var` value and/or coordinates.
-#' (lifecycle: experimental)
+#' (lifecycle: maturing)
 #'
 #' ## X Layer Support
 #'

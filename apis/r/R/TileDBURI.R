@@ -24,17 +24,17 @@ TileDBURI <- R6::R6Class(
       }
     },
 
-    #' @description Does the URI point to a remote object? (lifecycle: experimental)
+    #' @description Does the URI point to a remote object? (lifecycle: maturing)
     is_remote_uri = function() {
       private$.pieces$scheme %||% "" %in% c("tiledb", "s3")
     },
 
-    #' @description Is the URI prefix tiledb://? (lifecycle: experimental)
+    #' @description Is the URI prefix tiledb://? (lifecycle: maturing)
     is_tiledb_cloud_uri = function() {
       private$.pieces$scheme %||% "" == "tiledb"
     },
 
-    #' @description Is this a TileDB Cloud creation URI? (lifecycle: experimental)
+    #' @description Is this a TileDB Cloud creation URI? (lifecycle: maturing)
     #' Example: "tiledb://namespace/s3://bucket"
     is_tiledb_cloud_creation_uri = function() {
       self$is_tiledb_cloud_uri() && startsWith(private$.pieces$path, "s3://")

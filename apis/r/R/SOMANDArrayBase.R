@@ -2,7 +2,7 @@
 #'
 #' @description
 #' Adds NDArray-specific functionality to the [`SOMAArrayBase`] class.
-#' (lifecycle: experimental)
+#' (lifecycle: maturing)
 #'
 #' @keywords internal
 #' @export

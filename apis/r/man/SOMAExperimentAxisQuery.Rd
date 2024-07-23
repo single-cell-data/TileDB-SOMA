@@ -10,7 +10,7 @@ Perform an axis-based query against a \code{\link{SOMAExperiment}}.
 single \code{\link{SOMAMeasurement}} in a \code{\link{SOMAExperiment}}, by \code{obs}/\code{var} (axis)
 coordinates and/or value filter. The primary use for this class is slicing
 \code{\link{SOMAExperiment}} \code{X} layers by \code{obs} or \code{var} value and/or coordinates.
-(lifecycle: experimental)
+(lifecycle: maturing)
 \subsection{X Layer Support}{
 
 Slicing on \code{\link{SOMASparseNDArray}} \code{X} matrices is supported;

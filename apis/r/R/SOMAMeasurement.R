@@ -3,7 +3,7 @@
 #' @description A `SOMAMeasurement` is a sub-element of a [`SOMAExperiment`],
 #' and is otherwise a specialized [`SOMACollection`] with pre-defined fields:
 #' `X`, `var`, `obsm`/`varm`, and `obsp`/`varp` (see _Active Bindings_ below for
-#' details). (lifecycle: experimental)
+#' details). (lifecycle: maturing)
 #'
 #' @templateVar class SOMAMeasurement
 #' @template section-add-object-to-collection

@@ -5,7 +5,7 @@
 \title{SOMA NDArray Base Class}
 \description{
 Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
-(lifecycle: experimental)
+(lifecycle: maturing)
 }
 \keyword{internal}
 \section{Super classes}{

@@ -5,7 +5,7 @@
 \title{TileDB Array Base Class}
 \description{
 Base class for representing an individual TileDB array.
-(lifecycle: experimental)
+(lifecycle: maturing)
 }
 \keyword{internal}
 \section{Super class}{
@@ -96,7 +96,7 @@ The object, invisibly
 \if{html}{\out{<a id="method-TileDBArray-print"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-print}{}}}
 \subsection{Method \code{print()}}{
-Print summary of the array. (lifecycle: experimental)
+Print summary of the array. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$print()}\if{html}{\out{</div>}}
 }
@@ -106,7 +106,7 @@ Print summary of the array. (lifecycle: experimental)
 \if{html}{\out{<a id="method-TileDBArray-tiledb_array"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-tiledb_array}{}}}
 \subsection{Method \code{tiledb_array()}}{
-Return a \code{\link{TileDBArray}} object (lifecycle: experimental)
+Return a \code{\link{TileDBArray}} object (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$tiledb_array(...)}\if{html}{\out{</div>}}
 }
@@ -126,7 +126,7 @@ A \code{\link[tiledb:tiledb_array]{tiledb::tiledb_array}} object.
 \if{html}{\out{<a id="method-TileDBArray-get_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-get_metadata}{}}}
 \subsection{Method \code{get_metadata()}}{
-Retrieve metadata from the TileDB array. (lifecycle: experimental)
+Retrieve metadata from the TileDB array. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$get_metadata(key = NULL)}\if{html}{\out{</div>}}
 }
@@ -146,7 +146,7 @@ A list of metadata values.
 \if{html}{\out{<a id="method-TileDBArray-set_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-set_metadata}{}}}
 \subsection{Method \code{set_metadata()}}{
-Add list of metadata to the specified TileDB array. (lifecycle: experimental)
+Add list of metadata to the specified TileDB array. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$set_metadata(metadata)}\if{html}{\out{</div>}}
 }
@@ -166,7 +166,7 @@ NULL
 \if{html}{\out{<a id="method-TileDBArray-schema"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-schema}{}}}
 \subsection{Method \code{schema()}}{
-Retrieve the array schema as an Arrow schema (lifecycle: experimental)
+Retrieve the array schema as an Arrow schema (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$schema()}\if{html}{\out{</div>}}
 }
@@ -179,7 +179,7 @@ A \code{\link[arrow:schema]{arrow::schema}} object
 \if{html}{\out{<a id="method-TileDBArray-tiledb_schema"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-tiledb_schema}{}}}
 \subsection{Method \code{tiledb_schema()}}{
-Retrieve the array schema as TileDB schema (lifecycle: experimental)
+Retrieve the array schema as TileDB schema (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$tiledb_schema()}\if{html}{\out{</div>}}
 }
@@ -192,7 +192,7 @@ A \code{\link[tiledb:tiledb_array_schema]{tiledb::tiledb_array_schema}} object
 \if{html}{\out{<a id="method-TileDBArray-dimensions"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-dimensions}{}}}
 \subsection{Method \code{dimensions()}}{
-Retrieve the array dimensions (lifecycle: experimental)
+Retrieve the array dimensions (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$dimensions()}\if{html}{\out{</div>}}
 }
@@ -208,7 +208,7 @@ A named list of \code{\link[tiledb:tiledb_dim]{tiledb::tiledb_dim}} objects
 Retrieve the shape, i.e. the capacity of each dimension.
 This will not necessarily match the bounds of occupied cells within the
 array.  Rather, it is the bounds outside of which no data may be written.
-(lifecycle: experimental)
+(lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$shape()}\if{html}{\out{</div>}}
 }
@@ -269,7 +269,7 @@ each dimension.
 \if{html}{\out{<a id="method-TileDBArray-ndim"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-ndim}{}}}
 \subsection{Method \code{ndim()}}{
-Retrieve number of dimensions (lifecycle: experimental)
+Retrieve number of dimensions (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$ndim()}\if{html}{\out{</div>}}
 }
@@ -282,7 +282,7 @@ A scalar with the number of dimensions
 \if{html}{\out{<a id="method-TileDBArray-attributes"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-attributes}{}}}
 \subsection{Method \code{attributes()}}{
-Retrieve the array attributes (lifecycle: experimental)
+Retrieve the array attributes (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$attributes()}\if{html}{\out{</div>}}
 }
@@ -295,7 +295,7 @@ A list of \code{\link[tiledb:tiledb_attr]{tiledb::tiledb_attr}} objects
 \if{html}{\out{<a id="method-TileDBArray-dimnames"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-dimnames}{}}}
 \subsection{Method \code{dimnames()}}{
-Retrieve dimension names (lifecycle: experimental)
+Retrieve dimension names (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$dimnames()}\if{html}{\out{</div>}}
 }
@@ -308,7 +308,7 @@ A character vector with the array's dimension names
 \if{html}{\out{<a id="method-TileDBArray-attrnames"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-attrnames}{}}}
 \subsection{Method \code{attrnames()}}{
-Retrieve attribute names (lifecycle: experimental)
+Retrieve attribute names (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$attrnames()}\if{html}{\out{</div>}}
 }
@@ -322,7 +322,7 @@ A character vector with the array's attribute names
 \if{latex}{\out{\hypertarget{method-TileDBArray-colnames}{}}}
 \subsection{Method \code{colnames()}}{
 Retrieve the names of all columns, including dimensions and
-attributes (lifecycle: experimental)
+attributes (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$colnames()}\if{html}{\out{</div>}}
 }
@@ -335,7 +335,7 @@ A character vector with the array's column names
 \if{html}{\out{<a id="method-TileDBArray-index_column_names"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-index_column_names}{}}}
 \subsection{Method \code{index_column_names()}}{
-Retrieve names of index (dimension) columns (lifecycle: experimental)
+Retrieve names of index (dimension) columns (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$index_column_names()}\if{html}{\out{</div>}}
 }
@@ -348,7 +348,7 @@ A character vector with the array index (dimension) names
 \if{html}{\out{<a id="method-TileDBArray-fragment_count"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-fragment_count}{}}}
 \subsection{Method \code{fragment_count()}}{
-Get number of fragments in the array (lifecycle: experimental)
+Get number of fragments in the array (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$fragment_count()}\if{html}{\out{</div>}}
 }

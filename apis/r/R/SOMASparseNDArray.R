@@ -16,7 +16,7 @@
 #' ## Duplicate writes
 #'
 #' As duplicate index values are not allowed, index values already present in
-#' the object are overwritten and new index values are added. (lifecycle: experimental)
+#' the object are overwritten and new index values are added. (lifecycle: maturing)
 #'
 #' @export
 SOMASparseNDArray <- R6::R6Class(
@@ -57,7 +57,7 @@ SOMASparseNDArray <- R6::R6Class(
       SOMASparseNDArrayRead$new(rl$sr, self, coords)
     },
 
-    #' @description Write matrix-like data to the array. (lifecycle: experimental)
+    #' @description Write matrix-like data to the array. (lifecycle: maturing)
     #'
     #' @param values Any `matrix`-like object coercible to a
     #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
@@ -180,7 +180,7 @@ SOMASparseNDArray <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Retrieve number of non-zero elements (lifecycle: experimental)
+    #' @description Retrieve number of non-zero elements (lifecycle: maturing)
     #' @return A scalar with the number of non-zero elements
     nnz = function() {
       nnz(self$uri, config=as.character(tiledb::config(self$tiledbsoma_ctx$context())))
@@ -213,7 +213,7 @@ SOMASparseNDArray <- R6::R6Class(
     },
 
     # @description Ingest COO-formatted dataframe into the TileDB array.
-    # (lifecycle: experimental)
+    # (lifecycle: maturing)
     # @param values A [`data.frame`].
     .write_coo_dataframe = function(values) {
       private$check_open_for_write()
