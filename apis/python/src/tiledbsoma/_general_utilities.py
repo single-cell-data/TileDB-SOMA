@@ -32,7 +32,7 @@ def get_implementation() -> str:
 def get_implementation_version() -> str:
     """Returns the package implementation version as a semver.
 
-    Lifecycle: Maturing
+    Lifecycle: Maturing.
     """
     if sys.version_info < (3, 8, 0):
         from pkg_resources import DistributionNotFound, get_distribution
