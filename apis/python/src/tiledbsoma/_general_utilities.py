@@ -94,7 +94,7 @@ def show_package_versions() -> None:
     """Nominal use is for bug reports, so issue filers and issue fixers can be on
     the same page.
 
-    Lifecycle: Maturing
+    Lifecycle: Maturing.
     """
     u = platform.uname()
     # fmt: off
