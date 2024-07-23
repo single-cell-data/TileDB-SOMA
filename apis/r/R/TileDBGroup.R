@@ -1,7 +1,7 @@
 #' TileDB Group Base Class
 #'
 #' @description
-#' Base class for interacting with TileDB groups (lifecycle: experimental)
+#' Base class for interacting with TileDB groups (lifecycle: maturing)
 #' @importFrom spdl info debug
 #' @keywords internal
 #' @export
@@ -11,7 +11,7 @@ TileDBGroup <- R6::R6Class(
 
   public = list(
 
-    #' @description Print summary of the group. (lifecycle: experimental)
+    #' @description Print summary of the group. (lifecycle: maturing)
     print = function() {
       super$print()
       if (self$exists()) {
@@ -23,7 +23,7 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
-    #' @description Creates the data structure on disk/S3/cloud. (lifecycle: experimental)
+    #' @description Creates the data structure on disk/S3/cloud. (lifecycle: maturing)
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
     create = function(internal_use_only = NULL) {
@@ -106,7 +106,7 @@ TileDBGroup <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Add new member to the group. (lifecycle: experimental)
+    #' @description Add new member to the group. (lifecycle: maturing)
     #' @param object A `TileDBArray` or `TileDBGroup` object to add.
     #' @param name Name to use for the member. By default the base name of
     #' the object's URI is used.
@@ -148,7 +148,7 @@ TileDBGroup <- R6::R6Class(
    },
 
     #' @description Retrieve a group member by name. If the member isn't already
-    #' open, it is opened in the same mode as the parent. (lifecycle: experimental)
+    #' open, it is opened in the same mode as the parent. (lifecycle: maturing)
     #' @param name The name of the member.
     #' @param mode Mode to open in
     #' @returns A `TileDBArray` or `TileDBGroup`.
@@ -188,7 +188,7 @@ TileDBGroup <- R6::R6Class(
       obj
     },
 
-    #' @description Remove member. (lifecycle: experimental)
+    #' @description Remove member. (lifecycle: maturing)
     #' @param name Name of the member to remove.
     #' @export
     remove = function(name) {
@@ -206,7 +206,7 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
-    #' @description Length in the number of members. (lifecycle: experimental)
+    #' @description Length in the number of members. (lifecycle: maturing)
     #' @return Scalar `integer`
     length = function() {
       private$check_open_for_read_or_write()
@@ -214,7 +214,7 @@ TileDBGroup <- R6::R6Class(
       length(private$.member_cache)
     },
 
-    #' @description Retrieve the names of members. (lifecycle: experimental)
+    #' @description Retrieve the names of members. (lifecycle: maturing)
     #' @return A `character` vector of member names.
     names = function() {
       private$check_open_for_read_or_write()
@@ -222,14 +222,14 @@ TileDBGroup <- R6::R6Class(
       names(private$.member_cache) %||% character(length = 0L)
     },
 
-    #' @description Retrieve a `list` of members. (lifecycle: experimental)
+    #' @description Retrieve a `list` of members. (lifecycle: maturing)
     to_list = function() {
       private$check_open_for_read_or_write()
       private$fill_member_cache_if_null()
       private$.member_cache
     },
 
-    #' @description Retrieve a `data.frame` of members. (lifecycle: experimental)
+    #' @description Retrieve a `data.frame` of members. (lifecycle: maturing)
     to_data_frame = function() {
       private$check_open_for_read_or_write()
       count <- self$length()
@@ -247,7 +247,7 @@ TileDBGroup <- R6::R6Class(
       df
     },
 
-    #' @description Retrieve metadata. (lifecycle: experimental)
+    #' @description Retrieve metadata. (lifecycle: maturing)
     #' @param key The name of the metadata attribute to retrieve.
     #'   is not NULL.
     #' @return A list of metadata values.
@@ -264,7 +264,7 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
-    #' @description Add list of metadata. (lifecycle: experimental)
+    #' @description Add list of metadata. (lifecycle: maturing)
     #' @param metadata Named list of metadata to add.
     #' @return NULL
     set_metadata = function(metadata) {
@@ -360,7 +360,7 @@ TileDBGroup <- R6::R6Class(
     # ----------------------------------------------------------------
     # Member caching
 
-    # @description Retrieve all group members. (lifecycle: experimental)
+    # @description Retrieve all group members. (lifecycle: maturing)
     # @return A list indexed by group member names where each element is a
     # list with names: name, uri, and type.
     get_all_members_uncached_read = function(group_handle) {

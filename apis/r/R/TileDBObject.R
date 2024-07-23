@@ -2,12 +2,12 @@
 #'
 #' @description
 #' Base class to implement shared functionality across the TileDBArray and
-#' TileDBGroup classes. (lifecycle: experimental)
+#' TileDBGroup classes. (lifecycle: maturing)
 #' @export
 TileDBObject <- R6::R6Class(
   classname = "TileDBObject",
   public = list(
-    #' @description Create a new TileDB object. (lifecycle: experimental)
+    #' @description Create a new TileDB object. (lifecycle: maturing)
     #' @param uri URI for the TileDB object
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional SOMATileDBContext
@@ -103,7 +103,7 @@ TileDBObject <- R6::R6Class(
       cat("  uri:", self$uri, "\n")
     },
 
-    #' @description Check if the object exists. (lifecycle: experimental)
+    #' @description Check if the object exists. (lifecycle: maturing)
     #' @return `TRUE`` if the object exists, `FALSE` otherwise.
     exists = function() {
       if (self$class() == "TileDBObject") {

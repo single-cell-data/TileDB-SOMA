@@ -1,7 +1,7 @@
 #' SOMA Axis Query
 #' @description Construct a single-axis query object with a combination of
 #' coordinates and/or value filters for use with [`SOMAExperimentAxisQuery`].
-#' (lifecycle: experimental)
+#' (lifecycle: maturing)
 #'
 #' Per dimension, the `SOMAAxisQuery` can have value of:
 #'

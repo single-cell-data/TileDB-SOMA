@@ -121,7 +121,7 @@ SOMASparseNDArrayRead <- R6::R6Class(
   cloneable = FALSE,
   public = list(
 
-    #' @description Read as a sparse matrix (lifecycle: experimental). Returns
+    #' @description Read as a sparse matrix (lifecycle: maturing). Returns
     #' an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or
     #' \link{matrixZeroBasedView} of it.
     #'
@@ -151,7 +151,7 @@ SOMASparseNDArrayRead <- R6::R6Class(
       SparseReadIter$new(self$sr, shape, zero_based = zero_based)
     },
 
-    #' @description Read as a arrow::\link[arrow]{Table} (lifecycle: experimental).
+    #' @description Read as a arrow::\link[arrow]{Table} (lifecycle: maturing).
     #' Returns an iterator of arrow::\link[arrow]{Table}.
     #'
     #' @return \link{TableReadIter}

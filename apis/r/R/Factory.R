@@ -1,7 +1,7 @@
 
 #' Create SOMA DataFrame
 #'
-#' Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)
+#' Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)
 #'
 #' @param uri URI for the TileDB object
 #' @param schema Arrow schema argument for the \link[SOMADataFrame]{SOMA dataframe}
@@ -57,7 +57,7 @@ SOMADataFrameCreate <- function(
 
 #' Open SOMA DataFrame
 #'
-#' Factory function to open a SOMADataFrame for reading, (lifecycle: experimental)
+#' Factory function to open a SOMADataFrame for reading, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameCreate
 #' @param mode One of `"READ"` or `"WRITE"`
@@ -88,7 +88,7 @@ SOMADataFrameOpen <- function(
 
 #' Create SOMA Sparse Nd Array
 #'
-#' Factory function to create a SOMASparseNDArray for writing, (lifecycle: experimental)
+#' Factory function to create a SOMASparseNDArray for writing, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameCreate
 #' @param type An [Arrow type][arrow::data-type] defining the type of each element in the array.
@@ -133,7 +133,7 @@ SOMASparseNDArrayCreate <- function(
 
 #' Open SOMA Sparse Nd Array
 #'
-#' Factory function to open a SOMASparseNDArray for reading, (lifecycle: experimental)
+#' Factory function to open a SOMASparseNDArray for reading, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameOpen
 #'
@@ -159,7 +159,7 @@ SOMASparseNDArrayOpen <- function(
 
 #' Create SOMA Dense Nd Array
 #'
-#' Factory function to create a SOMADenseNDArray for writing, (lifecycle: experimental)
+#' Factory function to create a SOMADenseNDArray for writing, (lifecycle: maturing)
 #'
 #' @inheritParams SOMASparseNDArrayCreate
 #'
@@ -191,7 +191,7 @@ SOMADenseNDArrayCreate <- function(
 
 #' Open SOMA Dense Nd Array
 #'
-#' Factory function to open a SOMADenseNDArray for reading, (lifecycle: experimental)
+#' Factory function to open a SOMADenseNDArray for reading, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameOpen
 #'
@@ -217,7 +217,7 @@ SOMADenseNDArrayOpen <- function(
 
 #' Create SOMA Collection
 #'
-#' Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)
+#' Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameCreate
 #'
@@ -253,7 +253,7 @@ SOMACollectionCreate <- function(
 
 #' Open SOMA Collection
 #'
-#' Factory function to open a SOMACollection for reading, (lifecycle: experimental)
+#' Factory function to open a SOMACollection for reading, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameOpen
 #'
@@ -279,7 +279,7 @@ SOMACollectionOpen <- function(
 
 #' Create SOMA Measurement
 #'
-#' Factory function to create a SOMAMeasurement for writing, (lifecycle: experimental)
+#' Factory function to create a SOMAMeasurement for writing, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameCreate
 #'
@@ -315,7 +315,7 @@ SOMAMeasurementCreate <- function(
 
 #' Open SOMA Measurement
 #'
-#' Factory function to open a SOMAMeasurement for reading, (lifecycle: experimental)
+#' Factory function to open a SOMAMeasurement for reading, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameOpen
 #'
@@ -341,7 +341,7 @@ SOMAMeasurementOpen <- function(
 
 #' Create SOMA Experiment
 #'
-#' Factory function to create a SOMADataFrame for writing, (lifecycle: experimental)
+#' Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameCreate
 #'
@@ -377,7 +377,7 @@ SOMAExperimentCreate <- function(
 
 #' Open SOMA Experiment
 #'
-#' Factory function to open a SOMAExperiment for reading, (lifecycle: experimental)
+#' Factory function to open a SOMAExperiment for reading, (lifecycle: maturing)
 #'
 #' @inheritParams SOMADataFrameOpen
 #'
