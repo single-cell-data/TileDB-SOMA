@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 from typing import Dict, List
 
@@ -95,21 +96,36 @@ def test_dataframe(tmp_path, arrow_schema):
         table = sdf.read().concat()
         assert table.num_rows == 5
         assert table.num_columns == 5
-        assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
-        assert [e.as_py() for e in list(table["foo"])] == pydict["foo"]
-        assert [e.as_py() for e in list(table["bar"])] == pydict["bar"]
-        assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
-        assert [e.as_py() for e in list(table["quux"])] == pydict["quux"]
+        assert [e.as_py() for e in table["soma_joinid"]] == pydict["soma_joinid"]
+        assert [e.as_py() for e in table["foo"]] == pydict["foo"]
+        assert [e.as_py() for e in table["bar"]] == pydict["bar"]
+        assert [e.as_py() for e in table["baz"]] == pydict["baz"]
+        assert [e.as_py() for e in table["quux"]] == pydict["quux"]
 
         # Read ids
         table = sdf.read(coords=[[30, 10]]).concat()
         assert table.num_rows == 2
         assert table.num_columns == 5
-        assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
-        assert sorted([e.as_py() for e in list(table["foo"])]) == [10, 30]
-        assert sorted([e.as_py() for e in list(table["bar"])]) == [4.1, 6.3]
-        assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
-        assert [e.as_py() for e in list(table["quux"])] == [True, False]
+        assert sorted([e.as_py() for e in table["soma_joinid"]]) == [0, 2]
+        assert sorted([e.as_py() for e in table["foo"]]) == [10, 30]
+        assert sorted([e.as_py() for e in table["bar"]]) == [4.1, 6.3]
+        assert sorted([e.as_py() for e in table["baz"]]) == ["apple", "cat"]
+        assert [e.as_py() for e in table["quux"]] == [True, False]
+
+    # Open and read with bindings
+    with contextlib.closing(
+        soma.pytiledbsoma.SOMADataFrame.open(
+            uri, soma.pytiledbsoma.OpenMode.read, soma.pytiledbsoma.SOMAContext()
+        )
+    ) as sdf:
+        table = sdf.read_next()
+        assert table.num_rows == 5
+        assert table.num_columns == 5
+        assert [e.as_py() for e in table["soma_joinid"]] == pydict["soma_joinid"]
+        assert [e.as_py() for e in table["foo"]] == pydict["foo"]
+        assert [e.as_py() for e in table["bar"]] == pydict["bar"]
+        assert [e.as_py() for e in table["baz"]] == pydict["baz"]
+        assert [e.as_py() for e in table["quux"]] == pydict["quux"]
 
     # Validate TileDB array schema
     with tiledb.open(uri) as A:

@@ -1,3 +1,4 @@
+import contextlib
 import pathlib
 from typing import Tuple
 
@@ -89,6 +90,17 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
 
         t = b.read((slice(None),) * ndim, result_order="column-major")
         assert t.equals(pa.Tensor.from_numpy(data.transpose()))
+
+    # Open and read with bindings
+    with contextlib.closing(
+        soma.pytiledbsoma.SOMADenseNDArray.open(
+            tmp_path.as_posix(),
+            soma.pytiledbsoma.OpenMode.read,
+            soma.pytiledbsoma.SOMAContext(),
+        )
+    ) as a:
+        table = a.read_next()["soma_data"]
+        assert np.array_equal(data, table.combine_chunks().to_numpy().reshape(shape))
 
     # Validate TileDB array schema
     with tiledb.open(tmp_path.as_posix()) as A:

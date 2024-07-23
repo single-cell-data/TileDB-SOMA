@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import itertools
 import operator
 import pathlib
@@ -58,6 +59,16 @@ def test_sparse_nd_array_create_ok(
         assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
     assert a.schema.field("soma_data").type == element_type
     assert not a.schema.field("soma_data").nullable
+
+    # Check with open binding
+    with contextlib.closing(
+        soma.pytiledbsoma.SOMASparseNDArray.open(
+            tmp_path.as_posix(),
+            soma.pytiledbsoma.OpenMode.read,
+            soma.pytiledbsoma.SOMAContext(),
+        )
+    ) as b:
+        assert a.schema == b.schema
 
     # Ensure read mode uses clib object
     with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A:
