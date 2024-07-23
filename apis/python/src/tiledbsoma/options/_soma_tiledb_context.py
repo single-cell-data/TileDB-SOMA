@@ -74,7 +74,7 @@ class SOMATileDBContext(ContextBase):
     a new ``SOMATileDBContext`` with new values.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     def __init__(
@@ -265,7 +265,7 @@ class SOMATileDBContext(ContextBase):
                 A threadpool to replace the current threadpool with.
 
         Lifecycle:
-            Experimental.
+            Maturing.
 
         Examples:
             >>> context.replace(timestamp=1_512_658_800_000)  # UNIX millis

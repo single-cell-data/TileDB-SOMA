@@ -35,7 +35,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     across SOMA objects.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     _wrapper_type: Union[
@@ -89,7 +89,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 If the user-provided ``mode`` is invalid.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
@@ -167,7 +167,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             file://tmp/an_object_uri
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._handle.uri
 
@@ -180,7 +180,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             >>> soma_object.close()
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self._close_stack.close()
 
@@ -198,7 +198,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             True
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._handle.closed
 
@@ -214,7 +214,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             r
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._handle.mode
 
@@ -275,7 +275,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             False
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         check_type("uri", uri, (str,))
         context = _validate_soma_tiledb_context(context)

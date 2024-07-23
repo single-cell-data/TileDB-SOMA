@@ -119,7 +119,7 @@ def open(
             If the user-provided ``mode`` is invalid.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     context = _validate_soma_tiledb_context(context)
     obj: SOMAObject[_Wrapper] = _open_internal(  # type: ignore[valid-type]

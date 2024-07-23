@@ -75,7 +75,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     and elements are named ``soma_data``.
 
     Lifecycle:
-        Experimental.
+        Maturing.
 
     Examples:
         >>> import tiledbsoma
@@ -168,7 +168,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         The number of stored values in the array, including explicitly stored zeros.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self._check_open_read()
         return cast(SparseNDArrayWrapper, self._handle).nnz
@@ -198,7 +198,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 If the object is not open for reading.
 
         Lifecycle:
-            Experimental.
+            Maturing.
 
         Notes:
             Acceptable ways to index:
@@ -270,7 +270,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 If the object is not open for writing.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
 
         write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
@@ -513,7 +513,7 @@ class _SparseNDArrayReadBase(somacore.SparseRead):
     ):
         """
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self.sr = sr
         self.shape = tuple(sr.shape)
@@ -535,7 +535,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         somacore.data.SparseRead
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     def coos(self, shape: Optional[NTuple] = None) -> SparseCOOTensorReadIter:
@@ -548,7 +548,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
                 Optionally, a tuple that overrides the default capacity.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         if shape is not None and (len(shape) != len(self.shape)):
             raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
@@ -561,7 +561,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self.array._set_reader_coords(self.sr, self.coords)
         return TableReadIter(self.sr)
@@ -632,7 +632,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
             To iterate over COO matrices, on either axis, specify `scipy(compress=False)`.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return SparseNDArrayBlockwiseRead(
             self.sr,
@@ -674,7 +674,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             where the second element is a tuple containing the soma_joinid values for the queried array dimensions.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return BlockwiseTableReadIter(
             self.array,
@@ -719,7 +719,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             where the first element is a tuple containing the soma_joinid values for the queried array dimensions.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return BlockwiseScipyReadIter(
             self.array,

@@ -10,7 +10,7 @@
 class SOMAError(Exception):
     """Base error type for SOMA-specific exceptions.
 
-    Lifecycle: maturing
+    Lifecycle: Maturing
     """
 
     pass
@@ -19,7 +19,7 @@ class SOMAError(Exception):
 class DoesNotExistError(SOMAError):
     """Raised when attempting to open a non-existent or inaccessible SOMA object.
 
-    Lifecycle: maturing
+    Lifecycle: Maturing
     """
 
     pass
@@ -28,7 +28,7 @@ class DoesNotExistError(SOMAError):
 def is_does_not_exist_error(e: RuntimeError) -> bool:
     """Given a RuntimeError, return true if it indicates the object does not exist
 
-    Lifecycle: maturing
+    Lifecycle: Maturing
 
     Example:
         try:
@@ -56,7 +56,7 @@ def is_does_not_exist_error(e: RuntimeError) -> bool:
 class AlreadyExistsError(SOMAError):
     """Raised when attempting to create an already existing SOMA object.
 
-    Lifecycle: experimental
+    Lifecycle: Maturing
     """
 
     pass
@@ -65,7 +65,7 @@ class AlreadyExistsError(SOMAError):
 def is_already_exists_error(e: SOMAError) -> bool:
     """Given a SOMAError, return true if it indicates the object already exists
 
-    Lifecycle: experimental
+    Lifecycle: Maturing
 
     Example:
         try:
@@ -86,7 +86,7 @@ def is_already_exists_error(e: SOMAError) -> bool:
 class NotCreateableError(SOMAError):
     """Raised when attempting to create an already existing SOMA object.
 
-    Lifecycle: experimental
+    Lifecycle: Maturing
     """
 
     pass
@@ -95,7 +95,7 @@ class NotCreateableError(SOMAError):
 def is_not_createable_error(e: SOMAError) -> bool:
     """Given a TileDBError, return true if it indicates the object cannot be created
 
-    Lifecycle: experimental
+    Lifecycle: Maturing
 
     Example:
         try:
@@ -132,7 +132,7 @@ def is_duplicate_group_key_error(e: SOMAError) -> bool:
     """Given a TileDBError, return try if it indicates a duplicate member
     add request in a tiledb.Group.
 
-    Lifecycle: maturing
+    Lifecycle: Maturing
     """
     return "member already exists in group" in str(e)
 
@@ -141,7 +141,7 @@ def is_domain_setting_error(e: SOMAError) -> bool:
     """Given a SOMAError, return whether it attempted to create
     the ArraySchema but the passed in domain was invalid.
 
-    Lifecycle: maturing
+    Lifecycle: Maturing
     """
     return "Cannot set domain" in str(e)
 

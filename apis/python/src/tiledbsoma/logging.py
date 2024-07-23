@@ -15,7 +15,7 @@ def warning() -> None:
     progress indicators for data ingestion.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     _set_level(logging.WARNING)
 
@@ -26,7 +26,7 @@ def info() -> None:
     progress indicators for data ingestion.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     _set_level(logging.INFO)
 
@@ -37,7 +37,7 @@ def debug() -> None:
     more detailed progress indicators for data ingestion.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     _set_level(logging.DEBUG)
 
@@ -62,7 +62,7 @@ def log_io(info_message: Optional[str], debug_message: str) -> None:
     or a different, longer message at/beyond DEBUG level.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     if logger.level == logging.INFO:
         if info_message is not None:

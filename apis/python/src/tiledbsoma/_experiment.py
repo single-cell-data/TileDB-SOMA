@@ -61,7 +61,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         ...     query_var = q.var().concat().to_pandas()
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     __slots__ = ()
@@ -87,7 +87,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         var_query: Optional[query.AxisQuery] = None,
     ) -> query.ExperimentAxisQuery[Self]:  # type: ignore
         """Creates an axis query over this experiment.
-        Lifecycle: maturing
+        Lifecycle: Maturing.
         """
         # mypy doesn't quite understand descriptors so it issues a spurious
         # error here.

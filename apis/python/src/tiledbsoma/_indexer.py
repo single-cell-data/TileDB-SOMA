@@ -48,7 +48,7 @@ class IntIndexer:
     """A re-indexer for unique integer indices.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     def __init__(
@@ -63,7 +63,7 @@ class IntIndexer:
                ``SOMATileDBContext`` object containing concurrecy level.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self._context = context
         self._reindexer = clib.IntIndexer(

@@ -67,7 +67,7 @@ class Measurement(  # type: ignore[misc]  # __eq__ false positive
             Indexed with ``[varid_1, varid_2]``
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     __slots__ = ()

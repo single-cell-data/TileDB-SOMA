@@ -67,7 +67,7 @@ def to_h5ad(
     Arguments are as in ``to_anndata``.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
@@ -179,7 +179,7 @@ def to_anndata(
     to not ingest any ``uns`` keys.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     s = _util.get_start_stamp()

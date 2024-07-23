@@ -338,7 +338,7 @@ def from_h5ad(
         The URI of the newly created experiment.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -413,7 +413,7 @@ def from_anndata(
     is already loaded into memory.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -763,7 +763,7 @@ def append_obs(
             )
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     exp.verify_open_for_writing()
 
@@ -821,7 +821,7 @@ def append_var(
             )
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
@@ -897,7 +897,7 @@ def append_X(
             )
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
@@ -1267,7 +1267,7 @@ def create_from_matrix(
     Create and populate the ``soma_matrix`` from the contents of ``matrix``.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     return _create_from_matrix(
         cls,
@@ -1401,7 +1401,7 @@ def update_obs(
         None
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     _update_dataframe(
         exp.obs,
@@ -1455,7 +1455,7 @@ def update_var(
         None
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     if measurement_name not in exp.ms:
         raise ValueError(
@@ -1636,7 +1636,7 @@ def update_matrix(
         None
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     # More developer-level information on why we do not -- and cannot -- check
@@ -1705,7 +1705,7 @@ def add_X_layer(
     Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     exp.verify_open_for_writing()
     add_matrix_to_collection(
@@ -1736,7 +1736,7 @@ def add_matrix_to_collection(
     Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     ingestion_params = IngestionParams(ingest_mode, None)

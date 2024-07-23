@@ -121,7 +121,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 If unable to create the underlying object.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         context = _validate_soma_tiledb_context(context)
         try:
@@ -264,7 +264,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             file:///tmp/parent/exp
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         child_cls = kind or Collection
         return self._add_new_element(
@@ -310,7 +310,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             1            1     2     4
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._add_new_element(
             key,
@@ -375,7 +375,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 [0, 0, 0, 1]], dtype=int32)
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._add_new_ndarray(DenseNDArray, key, **kwargs)
 
@@ -409,7 +409,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                     with 100 stored elements in COOrdinate format>
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._add_new_ndarray(SparseNDArray, key, **kwargs)
 
@@ -504,7 +504,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 If an existing key is set (replacement is unsupported).
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         uri_to_add = value.uri
         # The SOMA API supports use_relative_uri in [True, False, None].
@@ -689,7 +689,7 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     element by absolute URI or relative URI.
 
     Lifecycle:
-        Experimental.
+        Maturing.
 
     Examples:
         >>> import tiledbsoma
