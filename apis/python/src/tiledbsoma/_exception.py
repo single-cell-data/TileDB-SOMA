@@ -56,7 +56,7 @@ def is_does_not_exist_error(e: RuntimeError) -> bool:
 class AlreadyExistsError(SOMAError):
     """Raised when attempting to create an already existing SOMA object.
 
-    Lifecycle: Maturing
+    Lifecycle: Maturing.
     """
 
     pass
