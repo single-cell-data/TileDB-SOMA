@@ -60,8 +60,7 @@ void load_soma_collection(py::module& m) {
             py::kw_only(),
             "mode"_a,
             "context"_a,
-            "timestamp"_a = py::none(),
-            py::call_guard<py::gil_scoped_release>())
+            "timestamp"_a = py::none())
         .def(
             "__iter__",
             [](SOMACollection& collection) {

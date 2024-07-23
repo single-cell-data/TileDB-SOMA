@@ -133,10 +133,7 @@ void load_soma_dataframe(py::module& m) {
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 
-        .def_static(
-            "exists",
-            &SOMADataFrame::exists,
-            py::call_guard<py::gil_scoped_release>())
+        .def_static("exists", &SOMADataFrame::exists)
         .def_property_readonly(
             "index_column_names", &SOMADataFrame::index_column_names)
         .def_property_readonly(
