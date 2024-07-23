@@ -129,7 +129,7 @@ void load_soma_dataframe(py::module& m) {
             "mode"_a,
             "context"_a,
             py::kw_only(),
-            "column_names"_a = py::none(),
+            "column_names"_a = py::list(),
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 

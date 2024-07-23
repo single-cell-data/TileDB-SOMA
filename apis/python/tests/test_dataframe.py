@@ -111,6 +111,20 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
         assert [e.as_py() for e in list(table["quux"])] == [True, False]
 
+    # Open and read with bindings
+    sdf = soma.pytiledbsoma.SOMADataFrame.open(
+        uri, soma.pytiledbsoma.OpenMode.read, soma.pytiledbsoma.SOMAContext()
+    )
+    table = sdf.read_next()
+    assert table.num_rows == 5
+    assert table.num_columns == 5
+    assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
+    assert [e.as_py() for e in list(table["foo"])] == pydict["foo"]
+    assert [e.as_py() for e in list(table["bar"])] == pydict["bar"]
+    assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
+    assert [e.as_py() for e in list(table["quux"])] == pydict["quux"]
+    sdf.close()
+
     # Validate TileDB array schema
     with tiledb.open(uri) as A:
         assert A.schema.sparse

@@ -59,6 +59,15 @@ def test_sparse_nd_array_create_ok(
     assert a.schema.field("soma_data").type == element_type
     assert not a.schema.field("soma_data").nullable
 
+    # Check with open binding
+    b = soma.pytiledbsoma.SOMASparseNDArray.open(
+        tmp_path.as_posix(),
+        soma.pytiledbsoma.OpenMode.read,
+        soma.pytiledbsoma.SOMAContext(),
+    )
+    assert a.schema == b.schema
+    b.close()
+
     # Ensure read mode uses clib object
     with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A:
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMASparseNDArray)
