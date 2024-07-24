@@ -153,7 +153,7 @@ from ._exception import (
     NotCreateableError,
     SOMAError,
 )
-from ._experiment import Experiment, ExperimentAxisQuery
+from ._experiment import Experiment
 from ._factory import open
 from ._general_utilities import (
     get_implementation,

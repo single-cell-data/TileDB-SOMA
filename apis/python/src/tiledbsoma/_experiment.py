@@ -6,10 +6,8 @@
 """Implementation of a SOMA Experiment.
 """
 import functools
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
-import anndata
-import pandas as pd
 from somacore import experiment, query
 from typing_extensions import Self
 
@@ -20,39 +18,6 @@ from ._indexer import IntIndexer
 from ._measurement import Measurement
 from ._soma_object import AnySOMAObject
 from ._tdb_handles import Wrapper
-
-
-class ExperimentAxisQuery(query.ExperimentAxisQuery[Self]):  # type: ignore
-    def to_anndata(
-        self,
-        X_name: str,
-        *,
-        column_names: Optional[query.AxisColumnNames] = None,
-        X_layers: Sequence[str] = (),
-        obsm_layers: Sequence[str] = (),
-        obsp_layers: Sequence[str] = (),
-        varm_layers: Sequence[str] = (),
-        varp_layers: Sequence[str] = (),
-    ) -> anndata.AnnData:
-        ad = super().to_anndata(
-            X_name,
-            column_names=column_names,
-            X_layers=X_layers,
-            obsm_layers=obsm_layers,
-            obsp_layers=obsp_layers,
-            varm_layers=varm_layers,
-            varp_layers=varp_layers,
-        )
-
-        # Drop unused categories on axis dataframes
-        for name in ad.obs:
-            if pd.api.types.is_categorical_dtype(ad.obs[name]):
-                ad.obs[name] = ad.obs[name].cat.remove_unused_categories()
-        for name in ad.var:
-            if pd.api.types.is_categorical_dtype(ad.var[name]):
-                ad.var[name] = ad.var[name].cat.remove_unused_categories()
-
-        return ad
 
 
 class Experiment(  # type: ignore[misc]  # __eq__ false positive
@@ -120,11 +85,13 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         *,
         obs_query: Optional[query.AxisQuery] = None,
         var_query: Optional[query.AxisQuery] = None,
-    ) -> ExperimentAxisQuery:
+    ) -> query.ExperimentAxisQuery[Self]:  # type: ignore
         """Creates an axis query over this experiment.
         Lifecycle: Maturing.
         """
-        return ExperimentAxisQuery(
+        # mypy doesn't quite understand descriptors so it issues a spurious
+        # error here.
+        return query.ExperimentAxisQuery(  # type: ignore
             self,
             measurement_name,
             obs_query=obs_query or query.AxisQuery(),
