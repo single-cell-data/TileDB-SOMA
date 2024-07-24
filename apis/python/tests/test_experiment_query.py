@@ -938,7 +938,9 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
     assert "g1" in cat
     assert "g2" in cat
 
-    adata = q.to_anndata(column_names={"obs": ["groups"]}, X_name="data", drop_levels=True)
+    adata = q.to_anndata(
+        column_names={"obs": ["groups"]}, X_name="data", drop_levels=True
+    )
     cat = adata.obs["groups"].cat.categories
     assert "g1" in cat
     # Unused categories should not appear
