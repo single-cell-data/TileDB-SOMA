@@ -342,7 +342,7 @@ setuptools.setup(
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
-        "somacore==1.0.11",
+        "somacore==1.0.13",
         "tiledb~=0.30.1",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
