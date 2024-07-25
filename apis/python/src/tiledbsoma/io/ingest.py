@@ -1495,10 +1495,26 @@ def _update_dataframe(
             e.as_py()
             for e in sdf_r.read(column_names=["soma_joinid"]).concat()["soma_joinid"]
         )
-        new_jids = list(range(len(new_data)))
-        if old_jids != new_jids:
+        num_old_data = len(old_jids)
+        num_new_data = len(new_data)
+        if num_old_data != num_new_data:
             raise ValueError(
-                f"{caller_name}: old and new data must have the same row count; got {len(old_jids)} != {len(new_jids)}",
+                f"{caller_name}: old and new data must have the same row count; got {num_old_data} != {num_new_data}",
+            )
+        new_jids = list(range(num_new_data))
+        if old_jids != new_jids:
+            max_jid_diffs_to_display = 10
+            jid_diffs = [
+                (old_jid, new_jid)
+                for old_jid, new_jid in zip(old_jids, new_jids)
+                if old_jid != new_jid
+            ]
+            jid_diff_strs = [
+                f"{old_jid} != {new_jid}"
+                for old_jid, new_jid in jid_diffs[:max_jid_diffs_to_display]
+            ] + (["…"] if len(jid_diffs) > max_jid_diffs_to_display else [])
+            raise ValueError(
+                f"{caller_name}: old data soma_joinid must be [0,{num_old_data}), found {len(jid_diffs)} diffs: {', '.join(jid_diff_strs)}"
             )
 
     old_keys = set(old_sig.keys())
