@@ -1024,8 +1024,15 @@ class SOMAArray : public SOMAObject {
             idxbuf, idxbuf + index_array->length);
         std::vector<IndexType> shifted_indexes;
         for (auto i : original_indexes) {
-            auto it = std::find(beg, end, enums_in_write[i]);
-            shifted_indexes.push_back(it - beg);
+            // For nullable columns, when the value is NULL, the associated
+            // index may be a negative integer, so do not index into 
+            // enums_in_write or it will segfault
+            if (0 > i) {
+                shifted_indexes.push_back(i);
+            } else {
+                auto it = std::find(beg, end, enums_in_write[i]);
+                shifted_indexes.push_back(it - beg);
+            }
         }
 
         auto attr = tiledb_schema()->attribute(column_name);
