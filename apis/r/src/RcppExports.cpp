@@ -11,9 +11,20 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// createSOMAContext
+Rcpp::XPtr<somactx_wrap_t> createSOMAContext(Rcpp::Nullable<Rcpp::CharacterVector> config);
+RcppExport SEXP _tiledbsoma_createSOMAContext(SEXP configSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
+    rcpp_result_gen = Rcpp::wrap(createSOMAContext(config));
+    return rcpp_result_gen;
+END_RCPP
+}
 // createSchemaFromArrow
-void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp, bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::Nullable<Rcpp::XPtr<ctx_wrap_t>> ctxptr);
-RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP sparseSEXP, SEXP datatypeSEXP, SEXP pclstSEXP, SEXP ctxptrSEXP) {
+void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp, bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_createSchemaFromArrow(SEXP uriSEXP, SEXP naspSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP sparseSEXP, SEXP datatypeSEXP, SEXP pclstSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
@@ -23,8 +34,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type sparse(sparseSEXP);
     Rcpp::traits::input_parameter< std::string >::type datatype(datatypeSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type pclst(pclstSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::XPtr<ctx_wrap_t>> >::type ctxptr(ctxptrSEXP);
-    createSchemaFromArrow(uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxptr);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    createSchemaFromArrow(uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp);
     return R_NilValue;
 END_RCPP
 }
@@ -308,6 +319,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_tiledbsoma_createSOMAContext", (DL_FUNC) &_tiledbsoma_createSOMAContext, 1},
     {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 8},
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 5},
     {"_tiledbsoma_reindex_create", (DL_FUNC) &_tiledbsoma_reindex_create, 0},

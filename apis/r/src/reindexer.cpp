@@ -9,6 +9,7 @@
 
 namespace tdbs = tiledbsoma;
 
+#include "rutilities.h"         // local declarations
 #include "xptr-utils.h"         // xptr taggging utilitie
 
 

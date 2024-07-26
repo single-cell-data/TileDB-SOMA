@@ -55,7 +55,7 @@ SOMADataFrame <- R6::R6Class(
 
       ctxptr <- super$tiledbsoma_ctx$context()
       createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp, TRUE, "SOMADataFrame",
-                            tiledb_create_options$to_list(FALSE), ctxptr@ptr)
+                            tiledb_create_options$to_list(FALSE), soma_context())
 
       self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()

@@ -55,7 +55,7 @@ LinkingTo:
     nanoarrow
 Additional_repositories: https://ghrr.github.io/drat
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Suggests:
     rmarkdown,
     knitr,

@@ -73,7 +73,7 @@ Read in a blockwise fashion
   axis,
   ...,
   size = NULL,
-  reindex_disable_on_axis = NULL
+  reindex_disable_on_axis = NA
 )}\if{html}{\out{</div>}}
 }
 

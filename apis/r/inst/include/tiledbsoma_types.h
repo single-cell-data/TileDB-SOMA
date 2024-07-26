@@ -36,6 +36,14 @@ struct ContextWrapper {
 };
 typedef struct ContextWrapper ctx_wrap_t;
 
+struct SOMAContextWrapper {
+    SOMAContextWrapper(std::shared_ptr<tdbs::SOMAContext> ctx_ptr_) : ctxptr(ctx_ptr_) {}
+
+    std::shared_ptr<tdbs::SOMAContext> ctxptr;
+};
+typedef struct SOMAContextWrapper somactx_wrap_t;
+
+
 
 // make the function signature nicer as using an uppercase SEXP 'screams'
 // we can not tag these as we do in xptrUtils.h they pass through to the
