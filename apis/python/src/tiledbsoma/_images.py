@@ -1,5 +1,4 @@
 # Copyright (c) 2024 TileDB, Inc,
-
 #
 # Licensed under the MIT License.
 """Implementation of a SOMA image collections."""
@@ -91,8 +90,16 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
             """Number of pixels in the width of the image."""
             return self.shape[self._x_index]
 
+    def __init__(
+        self,
+        handle: _tdb_handles.SOMAGroupWrapper[Any],
+        **kwargs: Any,
+    ):
+        super().__init__(handle, **kwargs)
+        self._levels: List[Image2D.LevelProperties] = []
+
     def _reset_levels(self) -> None:
-        self._levels: List[Image2D.LevelProperties] = [
+        self._levels = [
             Image2D.LevelProperties.from_json(key[len(self._level_prefix) :], val)
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
@@ -101,18 +108,23 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
         # TODO: Fix to sort by name if multiple values have the same width.
 
     @_funcs.forwards_kwargs_to(
-        DenseNDArray.create, exclude=("context", "tiledb_timestamp")
+        DenseNDArray.create, exclude=("context", "shape", "tiledb_timestamp")
     )
     def add_new_level(
         self,
         key: str,
         *,
-        uri: Optional[str],
         axes: Union[str, Iterable[str]],
         shape: Iterable[int],
+        uri: Optional[str] = None,
         **kwargs: Any,
     ) -> DenseNDArray:
-        """TODO: Add document string for add_new_level"""
+        """Adds a new DenseNDArray to store the imagery for a new level
+
+
+        TODO: explain how the parameters are used here. The remaining parameters
+        are passed to the :meth:`DenseNDArray.create` method unchanged.
+        """
         # Check if key already exists in either the collection or level metadata.
         if key in self:
             raise KeyError(f"{key!r} already exists in {type(self)}")
@@ -144,6 +156,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
                 create_uri,
                 context=self.context,
                 tiledb_timestamp=self.tiledb_timestamp_ms,
+                shape=props.shape,
                 **kwargs,
             ),
             uri,
