@@ -416,12 +416,6 @@ class SOMAArray : public SOMAObject {
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
-    Enumeration extend_enumeration(
-        ArrowSchema* value_schema,
-        ArrowArray* value_array,
-        ArrowSchema* index_schema,
-        ArrowArray* index_array);
-
     /**
      * @brief Set the write buffers for a single column.
      *
@@ -755,11 +749,19 @@ class SOMAArray : public SOMAObject {
 
     uint64_t _get_max_capacity(tiledb_datatype_t index_type);
 
+    Enumeration _extend_enumeration(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array,
+        ArraySchemaEvolution se);
+
     template <typename ValueType>
     Enumeration _extend_and_evolve_schema(
         ArrowArray* value_array,
         ArrowSchema* index_schema,
-        ArrowArray* index_array) {
+        ArrowArray* index_array,
+        ArraySchemaEvolution se) {
         std::string column_name = index_schema->name;
         auto disk_index_type = tiledb_schema()->attribute(column_name).type();
         auto enmr = ArrayExperimental::get_enumeration(
@@ -792,10 +794,8 @@ class SOMAArray : public SOMAObject {
                 throw TileDBSOMAError(
                     "Cannot extend enumeration; reached maximum capacity");
             }
-            ArraySchemaEvolution se(*ctx_->tiledb_ctx());
             auto extended_enmr = enmr.extend(extend_values);
             se.extend_enumeration(extended_enmr);
-            se.array_evolve(uri_);
             SOMAArray::_remap_indexes(
                 column_name,
                 extended_enmr,
@@ -817,13 +817,15 @@ class SOMAArray : public SOMAObject {
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
-        ArrowArray* index_array);
+        ArrowArray* index_array,
+        ArraySchemaEvolution se);
 
     void _create_and_cast_column(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowSchema* new_column_schema,
-        ArrowArray* new_column_array);
+        ArrowArray* new_column_array,
+        ArraySchemaEvolution se);
 
     void _create_column(
         ArrowSchema* orig_column_schema,
