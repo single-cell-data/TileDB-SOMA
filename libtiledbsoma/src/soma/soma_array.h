@@ -1025,7 +1025,7 @@ class SOMAArray : public SOMAObject {
         std::vector<IndexType> shifted_indexes;
         for (auto i : original_indexes) {
             // For nullable columns, when the value is NULL, the associated
-            // index may be a negative integer, so do not index into 
+            // index may be a negative integer, so do not index into
             // enums_in_write or it will segfault
             if (0 > i) {
                 shifted_indexes.push_back(i);
