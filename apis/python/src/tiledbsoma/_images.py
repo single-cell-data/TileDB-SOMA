@@ -46,6 +46,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
         def __init__(
             self, axes: Union[str, Iterable[str]], name: str, shape: Iterable[int]
         ):
+            self.name = name
             self.axes = tuple(axes)
             self.shape = tuple(shape)
             if len(self.axes) != len(self.shape):
@@ -97,6 +98,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
     ):
         super().__init__(handle, **kwargs)
         self._levels: List[Image2D.LevelProperties] = []
+        self._reset_levels()
 
     def _reset_levels(self) -> None:
         self._levels = [
@@ -128,7 +130,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
         # Check if key already exists in either the collection or level metadata.
         if key in self:
             raise KeyError(f"{key!r} already exists in {type(self)}")
-        meta_key = f"soma_scale_{key}"
+        meta_key = f"{self._level_prefix}{key}"
         if meta_key in self.metadata:
             raise KeyError(f"{key!r} already exists in {type(self)} scales")
 
@@ -181,7 +183,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
         clib_type: Optional[str] = None,
     ) -> Self:
         """Opens this specific type of SOMA object."""
-        obj = super().open(
+        return super().open(
             uri,
             mode,
             tiledb_timestamp=tiledb_timestamp,
@@ -189,8 +191,6 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
             platform_config=platform_config,
             clib_type=clib_type,
         )
-        obj._reset_levels()
-        return obj
 
     def read_level(
         self,
