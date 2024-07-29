@@ -165,7 +165,7 @@ void SOMAGroup::open(
 }
 
 std::unique_ptr<SOMAGroup> SOMAGroup::reopen(OpenMode mode) {
-    return std::make_unique<SOMAGroup>(mode, uri_, ctx_, name_, timestamp_);
+    return std::make_unique<SOMAGroup>(mode, uri_, ctx_, name_);
 }
 
 void SOMAGroup::close() {

@@ -530,6 +530,9 @@ def test_collection_reopen(tmp_path):
     soma.Collection.create(tmp_path.as_uri())
 
     with soma.Collection.open(tmp_path.as_posix(), "r") as col1:
+        with raises_no_typeguard(ValueError):
+            col1.reopen("invalid")
+
         with col1.reopen("w") as col2:
             with col2.reopen("r") as col3:
                 assert col1.mode == "r"
@@ -545,3 +548,7 @@ def test_collection_reopen(tmp_path):
         with col1.reopen("w") as col2:
             assert col1.mode == "w"
             assert col2.mode == "w"
+
+    with soma.Collection.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as col1:
+        with col1.reopen("r") as col2:
+            assert col1.tiledb_timestamp < col2.tiledb_timestamp

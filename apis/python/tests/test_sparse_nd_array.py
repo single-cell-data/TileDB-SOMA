@@ -83,6 +83,9 @@ def test_sparse_nd_array_reopen(tmp_path):
     soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=(1,))
 
     with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A1:
+        with raises_no_typeguard(ValueError):
+            A1.reopen("invalid")
+
         with A1.reopen("w") as A2:
             with A2.reopen("r") as A3:
                 assert A1.mode == "r"
@@ -98,6 +101,10 @@ def test_sparse_nd_array_reopen(tmp_path):
         with A1.reopen("w") as A2:
             assert A1.mode == "w"
             assert A2.mode == "w"
+
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as A1:
+        with A1.reopen("r") as A2:
+            assert A1.tiledb_timestamp < A2.tiledb_timestamp
 
 
 @pytest.mark.parametrize("shape", [(10,)])

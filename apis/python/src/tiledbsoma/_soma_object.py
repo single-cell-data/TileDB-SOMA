@@ -143,7 +143,18 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     def reopen(self, mode: options.OpenMode) -> Self:
         """
-        Return a new copy of the SOMAObject with the given mode.
+        Return a new copy of the SOMAObject with the given mode at the current
+        Unix timestamp.
+
+        Args:
+            mode:
+                The mode to open the object in.
+                - ``r``: Open for reading only (cannot write).
+                - ``w``: Open for writing only (cannot read).
+
+        Raises:
+            ValueError:
+                If the user-provided ``mode`` is invalid.
 
         Lifecycle:
             Experimental.

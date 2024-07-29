@@ -139,7 +139,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     ) -> Self:
         uri = soma_object.uri
         mode = soma_object.mode
-        timestamp = soma_object.timestamp
+        timestamp = context._open_timestamp_ms(soma_object.timestamp)
         try:
             handle = cls(uri, mode, context, timestamp, soma_object)
             if handle.mode == "w":
@@ -167,6 +167,11 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def reopen(self, mode: options.OpenMode) -> clib.SOMAObject:
+        if mode not in ("r", "w"):
+            raise ValueError(
+                f"Invalid mode '{mode}' passed. " "Valid modes are 'r' and 'w'."
+            )
+
         return self._handle.reopen(
             clib.OpenMode.read if mode == "r" else clib.OpenMode.write
         )
@@ -327,6 +332,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         timestamp: int,
     ) -> clib.SOMAArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+
         return cls._ARRAY_WRAPPED_TYPE.open(
             uri,
             mode=open_mode,

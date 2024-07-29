@@ -7,6 +7,8 @@ import pytest
 import tiledbsoma as soma
 from tiledbsoma import _factory
 
+from tests._util import raises_no_typeguard
+
 
 # ----------------------------------------------------------------
 def create_and_populate_obs(uri: str) -> soma.DataFrame:
@@ -212,6 +214,9 @@ def test_experiment_reopen(tmp_path):
     soma.Experiment.create(tmp_path.as_uri())
 
     with soma.Experiment.open(tmp_path.as_posix(), "r") as exp1:
+        with raises_no_typeguard(ValueError):
+            exp1.reopen("invalid")
+
         with exp1.reopen("w") as exp2:
             with exp2.reopen("r") as exp3:
                 assert exp1.mode == "r"
@@ -227,3 +232,7 @@ def test_experiment_reopen(tmp_path):
         with exp1.reopen("w") as exp2:
             assert exp1.mode == "w"
             assert exp2.mode == "w"
+
+    with soma.Experiment.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as exp1:
+        with exp1.reopen("r") as exp2:
+            assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
