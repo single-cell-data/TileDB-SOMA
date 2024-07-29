@@ -66,7 +66,9 @@ SOMANDArrayBase <- R6::R6Class(
       self
     },
 
-    ## needed eg after open() to set (Arrow) tyoe
+    ## needed eg after open() to set (Arrow) type
+    #' @description Sets a cache value for the datatype (lifecycle: experimental)
+    #' @param type A character value describing the TileDB data type
     set_data_type = function(type) {
       spdl::debug("[SOMANDArrayBase::set_data_type] caching type {}", type$ToString())
       private$.type <- type
