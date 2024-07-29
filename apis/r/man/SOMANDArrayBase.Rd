@@ -87,10 +87,18 @@ directly.}
 \if{html}{\out{<a id="method-SOMANDArrayBase-set_data_type"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-set_data_type}{}}}
 \subsection{Method \code{set_data_type()}}{
+Sets a cache value for the datatype (lifecycle: experimental)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$set_data_type(type)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{A character value describing the TileDB data type}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMANDArrayBase-clone"></a>}}
