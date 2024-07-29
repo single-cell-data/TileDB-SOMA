@@ -13,6 +13,66 @@ writeArrayFromArrow <- function(uri, naap, nasp, arraytype = "", config = NULL) 
     invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, arraytype, config))
 }
 
+#' Get nnumber of metadata items
+#' @param uri The array URI
+#' @param ctxxp An external pointer to the SOMAContext wrapper
+#' @export
+get_metadata_num <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_get_metadata_num`, uri, ctxxp)
+}
+
+#' Read all metadata (as named character vector)
+#'
+#' This function assumes that all metadata is in fact stored as strings. It will error
+#' if a different datatype is encountered.
+#' @param uri The array URI
+#' @param ctxxp An external pointer to the SOMAContext wrapper
+#' @export
+get_all_metadata <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_get_all_metadata`, uri, ctxxp)
+}
+
+#' Read metadata (as a string)
+#'
+#' @param uri The array URI
+#' @param key The array metadata key
+#' @param ctxxp An external pointer to the SOMAContext wrapper
+#' @export
+get_metadata <- function(uri, key, ctxxp) {
+    .Call(`_tiledbsoma_get_metadata`, uri, key, ctxxp)
+}
+
+#' Check for metadata given key
+#'
+#' @param uri The array URI
+#' @param key The array metadata key
+#' @param ctxxp An external pointer to the SOMAContext wrapper
+#' @export
+has_metadata <- function(uri, key, ctxxp) {
+    .Call(`_tiledbsoma_has_metadata`, uri, key, ctxxp)
+}
+
+#' Delete metadata for given key
+#'
+#' @param uri The array URI
+#' @param key The array metadata key
+#' @param ctxxp An external pointer to the SOMAContext wrapper
+#' @export
+delete_metadata <- function(uri, key, ctxxp) {
+    invisible(.Call(`_tiledbsoma_delete_metadata`, uri, key, ctxxp))
+}
+
+#' Set metadata (as a string)
+#'
+#' @param uri The array URI
+#' @param key The array metadata key
+#' @param value The metadata value
+#' @param ctxxp An external pointer to the SOMAContext wrapper
+#' @export
+set_metadata <- function(uri, key, value, ctxxp) {
+    invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, value, ctxxp))
+}
+
 reindex_create <- function() {
     .Call(`_tiledbsoma_reindex_create`)
 }
