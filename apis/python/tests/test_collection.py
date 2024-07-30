@@ -1,6 +1,7 @@
 import os
 import pathlib
 import textwrap
+import time
 from typing import List, TypeVar, Union
 
 import numpy as np
@@ -527,13 +528,16 @@ def test_context_timestamp(tmp_path: pathlib.Path):
 
 def test_collection_reopen(tmp_path):
     # Ensure that reopen uses the correct mode
-    soma.Collection.create(tmp_path.as_uri())
+    soma.Collection.create(tmp_path.as_uri(), tiledb_timestamp=1)
 
-    with soma.Collection.open(tmp_path.as_posix(), "r") as col1:
+    with soma.Collection.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as col1:
         with raises_no_typeguard(ValueError):
             col1.reopen("invalid")
 
         with col1.reopen("w") as col2:
+            # TODO when reopen support setting tiledb_timestamp, replace sleep
+            # with timestamp
+            time.sleep(0.001)
             with col2.reopen("r") as col3:
                 assert col1.mode == "r"
                 assert col2.mode == "w"
@@ -541,13 +545,13 @@ def test_collection_reopen(tmp_path):
                 assert col1.tiledb_timestamp < col2.tiledb_timestamp
                 assert col2.tiledb_timestamp < col3.tiledb_timestamp
 
-    with soma.Collection.open(tmp_path.as_posix(), "r") as col1:
+    with soma.Collection.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as col1:
         with col1.reopen("r") as col2:
             assert col1.mode == "r"
             assert col2.mode == "r"
             assert col1.tiledb_timestamp < col2.tiledb_timestamp
 
-    with soma.Collection.open(tmp_path.as_posix(), "w") as col1:
+    with soma.Collection.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as col1:
         with col1.reopen("w") as col2:
             assert col1.mode == "w"
             assert col2.mode == "w"

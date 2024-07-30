@@ -1,3 +1,4 @@
+import time
 from urllib.parse import urljoin
 
 import numpy as np
@@ -211,13 +212,16 @@ def test_experiment_ms_type_constraint(tmp_path):
 
 def test_experiment_reopen(tmp_path):
     # Ensure that reopen uses the correct mode
-    soma.Experiment.create(tmp_path.as_uri())
+    soma.Experiment.create(tmp_path.as_uri(), tiledb_timestamp=1)
 
-    with soma.Experiment.open(tmp_path.as_posix(), "r") as exp1:
+    with soma.Experiment.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as exp1:
         with raises_no_typeguard(ValueError):
             exp1.reopen("invalid")
 
         with exp1.reopen("w") as exp2:
+            # TODO when reopen support setting tiledb_timestamp, replace sleep
+            # with timestamp
+            time.sleep(0.001)
             with exp2.reopen("r") as exp3:
                 assert exp1.mode == "r"
                 assert exp2.mode == "w"
@@ -225,13 +229,13 @@ def test_experiment_reopen(tmp_path):
                 assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
                 assert exp2.tiledb_timestamp < exp3.tiledb_timestamp
 
-    with soma.Experiment.open(tmp_path.as_posix(), "r") as exp1:
+    with soma.Experiment.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as exp1:
         with exp1.reopen("r") as exp2:
             assert exp1.mode == "r"
             assert exp2.mode == "r"
             assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
 
-    with soma.Experiment.open(tmp_path.as_posix(), "w") as exp1:
+    with soma.Experiment.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as exp1:
         with exp1.reopen("w") as exp2:
             assert exp1.mode == "w"
             assert exp2.mode == "w"
