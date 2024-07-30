@@ -222,16 +222,20 @@ def test_experiment_reopen(tmp_path):
                 assert exp1.mode == "r"
                 assert exp2.mode == "w"
                 assert exp3.mode == "r"
+                assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
+                assert exp2.tiledb_timestamp < exp3.tiledb_timestamp
 
     with soma.Experiment.open(tmp_path.as_posix(), "r") as exp1:
         with exp1.reopen("r") as exp2:
             assert exp1.mode == "r"
             assert exp2.mode == "r"
+            assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
 
     with soma.Experiment.open(tmp_path.as_posix(), "w") as exp1:
         with exp1.reopen("w") as exp2:
             assert exp1.mode == "w"
             assert exp2.mode == "w"
+            assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
 
     with soma.Experiment.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as exp1:
         with exp1.reopen("r") as exp2:

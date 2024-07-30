@@ -538,16 +538,20 @@ def test_collection_reopen(tmp_path):
                 assert col1.mode == "r"
                 assert col2.mode == "w"
                 assert col3.mode == "r"
+                assert col1.tiledb_timestamp < col2.tiledb_timestamp
+                assert col2.tiledb_timestamp < col3.tiledb_timestamp
 
     with soma.Collection.open(tmp_path.as_posix(), "r") as col1:
         with col1.reopen("r") as col2:
             assert col1.mode == "r"
             assert col2.mode == "r"
+            assert col1.tiledb_timestamp < col2.tiledb_timestamp
 
     with soma.Collection.open(tmp_path.as_posix(), "w") as col1:
         with col1.reopen("w") as col2:
             assert col1.mode == "w"
             assert col2.mode == "w"
+            assert col1.tiledb_timestamp < col2.tiledb_timestamp
 
     with soma.Collection.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as col1:
         with col1.reopen("r") as col2:
