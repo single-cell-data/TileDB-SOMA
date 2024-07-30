@@ -35,13 +35,11 @@ from PIL import Image
 from .. import (
     Axis,
     Collection,
-    CompositeTransform,
     CoordinateSystem,
     DataFrame,
     DenseNDArray,
     Experiment,
     Image2D,
-    ScaleTransform,
     Scene,
     SparseNDArray,
     _util,
@@ -329,8 +327,6 @@ def _write_visium_data_to_experiment_uri(
     }
 
     pixels_per_spot_radius = 0.5 * scale_factors["spot_diameter_fullres"]
-    # TODO: Fix. 65 is a hard-coded value for a specific example in the Visium docs.
-    fullres_to_coords_scale = 65 / scale_factors["spot_diameter_fullres"]
 
     # Create axes and transformations
     coordinate_system = CoordinateSystem(
@@ -338,10 +334,6 @@ def _write_visium_data_to_experiment_uri(
             Axis(axis_name="y", axis_type="space", axis_unit="micrometer"),
             Axis(axis_name="x", axis_type="space", axis_unit="micrometer"),
         )
-    )
-
-    spots_to_coords = CompositeTransform(
-        (ScaleTransform((fullres_to_coords_scale, fullres_to_coords_scale)),)
     )
 
     # TODO: The `obs_df` should be in dataframe with only soma_joinid and obs_id. Not
@@ -401,9 +393,6 @@ def _write_visium_data_to_experiment_uri(
                                 use_relative_uri=use_relative_uri,
                                 **ingest_ctx,
                             )
-                scene.metadata.update(
-                    {"soma_asset_transform_images": spots_to_coords.to_json()}
-                )
 
                 obsl_uri = f"{scene_uri}/obsl"
                 with _create_or_open_collection(
@@ -422,9 +411,6 @@ def _write_visium_data_to_experiment_uri(
                         **ingest_ctx,
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
-                        loc.metadata.update(
-                            {"soma_asset_transform_loc": spots_to_coords.to_json()}
-                        )
 
                 varl_uri = f"{scene_uri}/varl"
                 with _create_or_open_collection(
@@ -562,38 +548,32 @@ def _write_visium_images(
     context: Optional["SOMATileDBContext"] = None,
     use_relative_uri: Optional[bool] = None,
 ) -> None:
-    # Add the fullres array even if there is no data to implicitly store downsample
-    # factors.
-    if input_fullres is None:
-        fullres_data = None
-        # Get image shape from either hires or lowres
-        if input_hires is not None:
-            with Image.open(input_hires) as im:
-                width, height = im.size
-            scale = scale_factors["tissue_hires_scalef"]
-        else:
-            with Image.open(input_lowres) as im:
-                width, height = im.size
-            scale = scale_factors["tissue_lowres_scalef"]
-        height = int(np.round(scale * height))
-        width = int(np.round(scale * width))
-        fullres_shape = (height, width, 3)
-    else:
+    # Write metadata with fullres dimensions for computing relative scale.
+    # TODO: Replace this with coordinate space and Image2D metadata.
+    if input_fullres is not None:
         with Image.open(input_fullres) as im:
-            fullres_data = pa.Tensor.from_numpy(np.transpose(np.array(im), (2, 0, 1)))
-            fullres_shape = fullres_data.shape
-    fullres_array = image_pyramid.add_new_level(
-        "fullres", axes="CYX", type=pa.uint8(), shape=fullres_shape
-    )
-    if fullres_data is not None:
-        fullres_array.write(
-            (slice(None), slice(None), slice(None)),
-            fullres_data,
-            platform_config=platform_config,
-        )
+            width, height = im.size
+        image_pyramid.metadata["fullres_width"] = width
+        image_pyramid.metadata["fullres_height"] = height
+    elif input_hires is not None:
+        with Image.open(input_hires) as im:
+            width, height = im.size
+        scale = scale_factors["tissue_hires_scalef"]
+        image_pyramid.metadata["fullres_width"] = int(np.round(width / scale))
+        image_pyramid.metadata["fullres_height"] = int(np.round(height / scale))
+    elif input_lowres is not None:
+        with Image.open(input_lowres) as im:
+            width, height = im.size
+        scale = scale_factors["tissue_lowres_scalef"]
+        image_pyramid.metadata["fullres_width"] = int(np.round(width / scale))
+        image_pyramid.metadata["fullres_height"] = int(np.round(height / scale))
 
-    # Add the hires and lowres images.
-    for name, image_path in (("hires", input_hires), ("lowres", input_lowres)):
+    # Add the different levels of zoom to the image pyramid.
+    for name, image_path in (
+        ("fullres", input_fullres),
+        ("hires", input_hires),
+        ("lowres", input_lowres),
+    ):
         if image_path is None:
             continue
         with Image.open(image_path) as im:
