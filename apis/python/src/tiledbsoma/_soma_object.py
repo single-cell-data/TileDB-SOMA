@@ -141,6 +141,32 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._handle = handle
         self._close_stack.enter_context(self._handle)
 
+    def reopen(self, mode: options.OpenMode) -> Self:
+        """
+        Return a new copy of the SOMAObject with the given mode at the current
+        Unix timestamp.
+
+        Args:
+            mode:
+                The mode to open the object in.
+                - ``r``: Open for reading only (cannot write).
+                - ``w``: Open for writing only (cannot read).
+
+        Raises:
+            ValueError:
+                If the user-provided ``mode`` is invalid.
+
+        Lifecycle:
+            Experimental.
+        """
+        handle = self._wrapper_type._from_soma_object(
+            self._handle.reopen(mode), self.context
+        )
+        return self.__class__(
+            handle,  # type: ignore[arg-type]
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
+
     @property
     def context(self) -> SOMATileDBContext:
         return self._handle.context

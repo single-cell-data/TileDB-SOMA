@@ -219,6 +219,11 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     fill_metadata_cache();
 }
 
+std::unique_ptr<SOMAArray> SOMAArray::reopen(OpenMode mode) {
+    return std::make_unique<SOMAArray>(
+        mode, uri_, ctx_, name_, column_names(), batch_size_, result_order_);
+}
+
 void SOMAArray::close() {
     if (arr_->query_type() == TILEDB_WRITE)
         meta_cache_arr_->close();

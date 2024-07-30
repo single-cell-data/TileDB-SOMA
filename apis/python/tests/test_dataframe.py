@@ -147,6 +147,39 @@ def test_dataframe(tmp_path, arrow_schema):
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADataFrame)
 
 
+def test_dataframe_reopen(tmp_path, arrow_schema):
+    soma.DataFrame.create(
+        tmp_path.as_posix(), schema=arrow_schema(), tiledb_timestamp=1
+    )
+
+    with soma.DataFrame.open(tmp_path.as_posix(), "r") as sdf1:
+        with raises_no_typeguard(ValueError):
+            sdf1.reopen("invalid")
+        with sdf1.reopen("w") as sdf2:
+            with sdf2.reopen("r") as sdf3:
+                assert sdf1.mode == "r"
+                assert sdf2.mode == "w"
+                assert sdf3.mode == "r"
+                assert sdf1.tiledb_timestamp < sdf2.tiledb_timestamp
+                assert sdf2.tiledb_timestamp < sdf3.tiledb_timestamp
+
+    with soma.DataFrame.open(tmp_path.as_posix(), "r") as sdf1:
+        with sdf1.reopen("r") as sdf2:
+            assert sdf1.mode == "r"
+            assert sdf2.mode == "r"
+            assert sdf1.tiledb_timestamp < sdf2.tiledb_timestamp
+
+    with soma.DataFrame.open(tmp_path.as_posix(), "w") as sdf1:
+        with sdf1.reopen("w") as sdf2:
+            assert sdf1.mode == "w"
+            assert sdf2.mode == "w"
+            assert sdf1.tiledb_timestamp < sdf2.tiledb_timestamp
+
+    with soma.DataFrame.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as sdf1:
+        with sdf1.reopen("r") as sdf2:
+            assert sdf1.tiledb_timestamp < sdf2.tiledb_timestamp
+
+
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     sdf = soma.DataFrame.create(
         tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("bar",)
