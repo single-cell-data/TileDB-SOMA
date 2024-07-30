@@ -1,6 +1,5 @@
 import contextlib
 import datetime
-import time
 from typing import Dict, List
 
 import numpy as np
@@ -157,32 +156,33 @@ def test_dataframe_reopen(tmp_path, arrow_schema):
         with raises_no_typeguard(ValueError):
             sdf1.reopen("invalid")
 
-        with sdf1.reopen("w") as sdf2:
-            # TODO when reopen support setting tiledb_timestamp, replace sleep
-            # with timestamp
-            time.sleep(0.001)
-            with sdf2.reopen("r") as sdf3:
+        with sdf1.reopen("w", tiledb_timestamp=2) as sdf2:
+            with sdf2.reopen("r", tiledb_timestamp=3) as sdf3:
                 assert sdf1.mode == "r"
                 assert sdf2.mode == "w"
                 assert sdf3.mode == "r"
-                assert sdf1.tiledb_timestamp < sdf2.tiledb_timestamp
-                assert sdf2.tiledb_timestamp < sdf3.tiledb_timestamp
+                assert sdf1.tiledb_timestamp.timestamp() == 0.001
+                assert sdf2.tiledb_timestamp.timestamp() == 0.002
+                assert sdf3.tiledb_timestamp.timestamp() == 0.003
 
     with soma.DataFrame.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as sdf1:
-        with sdf1.reopen("r") as sdf2:
+        with sdf1.reopen("r", tiledb_timestamp=2) as sdf2:
             assert sdf1.mode == "r"
             assert sdf2.mode == "r"
-            assert sdf1.tiledb_timestamp < sdf2.tiledb_timestamp
+            assert sdf1.tiledb_timestamp.timestamp() == 0.001
+            assert sdf2.tiledb_timestamp.timestamp() == 0.002
 
     with soma.DataFrame.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as sdf1:
-        with sdf1.reopen("w") as sdf2:
+        with sdf1.reopen("w", tiledb_timestamp=2) as sdf2:
             assert sdf1.mode == "w"
             assert sdf2.mode == "w"
-            assert sdf1.tiledb_timestamp < sdf2.tiledb_timestamp
+            assert sdf1.tiledb_timestamp.timestamp() == 0.001
+            assert sdf2.tiledb_timestamp.timestamp() == 0.002
 
     with soma.DataFrame.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as sdf1:
-        with sdf1.reopen("r") as sdf2:
-            assert sdf1.tiledb_timestamp < sdf2.tiledb_timestamp
+        with sdf1.reopen("r", tiledb_timestamp=2) as sdf2:
+            assert sdf1.tiledb_timestamp.timestamp() == 0.001
+            assert sdf2.tiledb_timestamp.timestamp() == 0.002
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):

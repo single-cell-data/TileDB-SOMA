@@ -1,7 +1,6 @@
 import os
 import pathlib
 import textwrap
-import time
 from typing import List, TypeVar, Union
 
 import numpy as np
@@ -534,29 +533,30 @@ def test_collection_reopen(tmp_path):
         with raises_no_typeguard(ValueError):
             col1.reopen("invalid")
 
-        with col1.reopen("w") as col2:
-            # TODO when reopen support setting tiledb_timestamp, replace sleep
-            # with timestamp
-            time.sleep(0.001)
-            with col2.reopen("r") as col3:
+        with col1.reopen("w", tiledb_timestamp=2) as col2:
+            with col2.reopen("r", tiledb_timestamp=3) as col3:
                 assert col1.mode == "r"
                 assert col2.mode == "w"
                 assert col3.mode == "r"
-                assert col1.tiledb_timestamp < col2.tiledb_timestamp
-                assert col2.tiledb_timestamp < col3.tiledb_timestamp
+                assert col1.tiledb_timestamp.timestamp() == 0.001
+                assert col2.tiledb_timestamp.timestamp() == 0.002
+                assert col3.tiledb_timestamp.timestamp() == 0.003
 
     with soma.Collection.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as col1:
-        with col1.reopen("r") as col2:
+        with col1.reopen("r", tiledb_timestamp=2) as col2:
             assert col1.mode == "r"
             assert col2.mode == "r"
-            assert col1.tiledb_timestamp < col2.tiledb_timestamp
+            assert col1.tiledb_timestamp.timestamp() == 0.001
+            assert col2.tiledb_timestamp.timestamp() == 0.002
 
     with soma.Collection.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as col1:
-        with col1.reopen("w") as col2:
+        with col1.reopen("w", tiledb_timestamp=2) as col2:
             assert col1.mode == "w"
             assert col2.mode == "w"
-            assert col1.tiledb_timestamp < col2.tiledb_timestamp
+            assert col1.tiledb_timestamp.timestamp() == 0.001
+            assert col2.tiledb_timestamp.timestamp() == 0.002
 
     with soma.Collection.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as col1:
-        with col1.reopen("r") as col2:
-            assert col1.tiledb_timestamp < col2.tiledb_timestamp
+        with col1.reopen("r", tiledb_timestamp=2) as col2:
+            assert col1.tiledb_timestamp.timestamp() == 0.001
+            assert col2.tiledb_timestamp.timestamp() == 0.002

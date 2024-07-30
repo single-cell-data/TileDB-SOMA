@@ -1,6 +1,5 @@
 import contextlib
 import pathlib
-import time
 from typing import Tuple
 
 import numpy as np
@@ -72,32 +71,33 @@ def test_dense_nd_array_reopen(tmp_path):
         with raises_no_typeguard(ValueError):
             A1.reopen("invalid")
 
-        with A1.reopen("w") as A2:
-            # TODO when reopen support setting tiledb_timestamp, replace sleep
-            # with timestamp
-            time.sleep(0.001)
-            with A2.reopen("r") as A3:
+        with A1.reopen("w", tiledb_timestamp=2) as A2:
+            with A2.reopen("r", tiledb_timestamp=3) as A3:
                 assert A1.mode == "r"
                 assert A2.mode == "w"
                 assert A3.mode == "r"
-                assert A1.tiledb_timestamp < A2.tiledb_timestamp
-                assert A2.tiledb_timestamp < A3.tiledb_timestamp
+                assert A1.tiledb_timestamp.timestamp() == 0.001
+                assert A2.tiledb_timestamp.timestamp() == 0.002
+                assert A3.tiledb_timestamp.timestamp() == 0.003
 
     with soma.DenseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as A1:
-        with A1.reopen("r") as A2:
+        with A1.reopen("r", tiledb_timestamp=2) as A2:
             assert A1.mode == "r"
             assert A2.mode == "r"
-            assert A1.tiledb_timestamp < A2.tiledb_timestamp
+            assert A1.tiledb_timestamp.timestamp() == 0.001
+            assert A2.tiledb_timestamp.timestamp() == 0.002
 
     with soma.DenseNDArray.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as A1:
-        with A1.reopen("w") as A2:
+        with A1.reopen("w", tiledb_timestamp=2) as A2:
             assert A1.mode == "w"
             assert A2.mode == "w"
-            assert A1.tiledb_timestamp < A2.tiledb_timestamp
+            assert A1.tiledb_timestamp.timestamp() == 0.001
+            assert A2.tiledb_timestamp.timestamp() == 0.002
 
     with soma.DenseNDArray.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as A1:
-        with A1.reopen("r") as A2:
-            assert A1.tiledb_timestamp < A2.tiledb_timestamp
+        with A1.reopen("r", tiledb_timestamp=2) as A2:
+            assert A1.tiledb_timestamp.timestamp() == 0.001
+            assert A2.tiledb_timestamp.timestamp() == 0.002
 
 
 @pytest.mark.parametrize("shape", [(10,)])

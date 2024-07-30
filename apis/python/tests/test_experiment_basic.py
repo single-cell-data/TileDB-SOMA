@@ -1,4 +1,3 @@
-import time
 from urllib.parse import urljoin
 
 import numpy as np
@@ -218,29 +217,30 @@ def test_experiment_reopen(tmp_path):
         with raises_no_typeguard(ValueError):
             exp1.reopen("invalid")
 
-        with exp1.reopen("w") as exp2:
-            # TODO when reopen support setting tiledb_timestamp, replace sleep
-            # with timestamp
-            time.sleep(0.001)
-            with exp2.reopen("r") as exp3:
+        with exp1.reopen("w", tiledb_timestamp=2) as exp2:
+            with exp2.reopen("r", tiledb_timestamp=3) as exp3:
                 assert exp1.mode == "r"
                 assert exp2.mode == "w"
                 assert exp3.mode == "r"
-                assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
-                assert exp2.tiledb_timestamp < exp3.tiledb_timestamp
+                assert exp1.tiledb_timestamp.timestamp() == 0.001
+                assert exp2.tiledb_timestamp.timestamp() == 0.002
+                assert exp3.tiledb_timestamp.timestamp() == 0.003
 
     with soma.Experiment.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as exp1:
-        with exp1.reopen("r") as exp2:
+        with exp1.reopen("r", tiledb_timestamp=2) as exp2:
             assert exp1.mode == "r"
             assert exp2.mode == "r"
-            assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
+            assert exp1.tiledb_timestamp.timestamp() == 0.001
+            assert exp2.tiledb_timestamp.timestamp() == 0.002
 
     with soma.Experiment.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as exp1:
-        with exp1.reopen("w") as exp2:
+        with exp1.reopen("w", tiledb_timestamp=2) as exp2:
             assert exp1.mode == "w"
             assert exp2.mode == "w"
-            assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
+            assert exp1.tiledb_timestamp.timestamp() == 0.001
+            assert exp2.tiledb_timestamp.timestamp() == 0.002
 
     with soma.Experiment.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as exp1:
-        with exp1.reopen("r") as exp2:
-            assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
+        with exp1.reopen("r", tiledb_timestamp=2) as exp2:
+            assert exp1.tiledb_timestamp.timestamp() == 0.001
+            assert exp2.tiledb_timestamp.timestamp() == 0.002
