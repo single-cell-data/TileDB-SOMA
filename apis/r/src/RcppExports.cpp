@@ -67,7 +67,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_all_metadata
-Rcpp::CharacterVector get_all_metadata(std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+Rcpp::List get_all_metadata(std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_get_all_metadata(SEXP uriSEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

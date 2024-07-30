@@ -21,7 +21,7 @@ get_metadata_num <- function(uri, is_array, ctxxp) {
     .Call(`_tiledbsoma_get_metadata_num`, uri, is_array, ctxxp)
 }
 
-#' Read all metadata (as named character vector)
+#' Read all metadata (as named list)
 #'
 #' This function assumes that all metadata is in fact stored as strings. It will error
 #' if a different datatype is encountered.

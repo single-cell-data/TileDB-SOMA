@@ -35,16 +35,15 @@ int32_t get_metadata_num(std::string& uri, bool is_array, Rcpp::XPtr<somactx_wra
     return nb;
 }
 
-//' Read all metadata (as named character vector)
+//' Read all metadata (as named list)
 //'
-//' This function assumes that all metadata is in fact stored as strings. It will error
-//' if a different datatype is encountered.
+//' This function currently supports metadata as either a string or an 'int64' (or 'int32').
+//' It will error if a different datatype is encountered.
 //' @param uri The array URI
 //' @param ctxxp An external pointer to the SOMAContext wrapper
 //' @export
 // [[Rcpp::export]]
-Rcpp::CharacterVector get_all_metadata(std::string& uri, bool is_array,
-                                       Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+Rcpp::List get_all_metadata(std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
 
@@ -52,24 +51,32 @@ Rcpp::CharacterVector get_all_metadata(std::string& uri, bool is_array,
     auto soup = getObjectUniquePointer(is_array, OpenMode::read, uri, sctx);
     auto mvmap = soup->get_metadata();
 
-    std::vector<std::string> sv, nv;
+    std::vector<std::string> namvec;
+    Rcpp::List lst;
     for (auto it = mvmap.begin(); it != mvmap.end(); it++) {
         std::string key = it->first;
-        nv.push_back(key);
+        namvec.push_back(key);
         tdbs::MetadataValue val = it->second;
         auto dtype = std::get<0>(val);
-        auto txt = tiledb::impl::type_to_str(dtype);
-        if (txt != "STRING_UTF8" && txt != "STRING_ASCII") {
-            Rcpp::stop("Currently unsupported type '%s'", txt.c_str());
-        }
         auto len = std::get<1>(val);
         const void* ptr = std::get<2>(val);
-        auto str = std::string((char*) ptr, len);
-        sv.push_back(str);
+        if (dtype == TILEDB_STRING_UTF8 || dtype == TILEDB_STRING_ASCII) {
+            auto str = std::string((char*) ptr, len);
+            lst.push_back(str);
+        } else if (dtype == TILEDB_INT64) {
+            std::vector<int64_t> v(len);
+            std::memcpy(&(v[0]), ptr, len*sizeof(int64_t));
+            lst.push_back(Rcpp::toInteger64(v));
+        } else if (dtype == TILEDB_INT32) {
+            Rcpp::IntegerVector v(len);
+            std::memcpy(v.begin(), ptr, len*sizeof(int32_t));
+        } else {
+            auto txt = tiledb::impl::type_to_str(dtype);
+            Rcpp::stop("Currently unsupported type '%s'", txt.c_str());
+        }
     }
-    Rcpp::CharacterVector v = Rcpp::CharacterVector(sv.begin(), sv.end());
-    v.attr("names") = Rcpp::CharacterVector(nv.begin(), nv.end());
-    return v;
+    lst.attr("names") = Rcpp::CharacterVector(namvec.begin(), namvec.end());
+    return lst;
 }
 
 //' Read metadata (as a string)
