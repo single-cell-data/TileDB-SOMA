@@ -11,16 +11,27 @@
 
 namespace tdbs = tiledbsoma;
 
+std::unique_ptr<tdbs::SOMAObject> getObjectUniquePointer(bool is_array, OpenMode mode,
+                                                         std::string& uri,
+                                                         std::shared_ptr<tdbs::SOMAContext> ctx) {
+    if (is_array) {
+        return tdbs::SOMAArray::open(OpenMode::read, uri, ctx);
+    } else {
+        return tdbs::SOMAGroup::open(OpenMode::read, uri, ctx);
+    }
+}
+
 //' Get nnumber of metadata items
 //' @param uri The array URI
 //' @param ctxxp An external pointer to the SOMAContext wrapper
 //' @export
 // [[Rcpp::export]]
-int32_t get_metadata_num(std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+int32_t get_metadata_num(std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    auto arrup = tdbs::SOMAArray::open(OpenMode::read, uri, sctx);
-    int32_t nb = arrup->metadata_num();
+    // SOMA Object unique pointer (aka soup)
+    auto soup = getObjectUniquePointer(is_array, OpenMode::read, uri, sctx);
+    int32_t nb = soup->metadata_num();
     return nb;
 }
 
@@ -32,12 +43,15 @@ int32_t get_metadata_num(std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 //' @param ctxxp An external pointer to the SOMAContext wrapper
 //' @export
 // [[Rcpp::export]]
-Rcpp::CharacterVector get_all_metadata(std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+Rcpp::CharacterVector get_all_metadata(std::string& uri, bool is_array,
+                                       Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    auto arrup = tdbs::SOMAArray::open(OpenMode::read, uri, sctx);
 
-    auto mvmap = arrup->get_metadata();
+    // SOMA Object unique pointer (aka soup)
+    auto soup = getObjectUniquePointer(is_array, OpenMode::read, uri, sctx);
+    auto mvmap = soup->get_metadata();
+
     std::vector<std::string> sv, nv;
     for (auto it = mvmap.begin(); it != mvmap.end(); it++) {
         std::string key = it->first;
@@ -65,14 +79,14 @@ Rcpp::CharacterVector get_all_metadata(std::string& uri, Rcpp::XPtr<somactx_wrap
 //' @param ctxxp An external pointer to the SOMAContext wrapper
 //' @export
 // [[Rcpp::export]]
-std::string get_metadata(std::string& uri,
-                         std::string& key,
+std::string get_metadata(std::string& uri, std::string& key, bool is_array,
                          Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    auto arrup = tdbs::SOMAArray::open(OpenMode::read, uri, sctx);
 
-    auto mv = arrup->get_metadata(key);
+    // SOMA Object unique pointer (aka soup)
+    auto soup = getObjectUniquePointer(is_array, OpenMode::read, uri, sctx);
+    auto mv = soup->get_metadata(key);
     if (!mv.has_value()) {
         Rcpp::stop("No value for '%s'", key.c_str());
     }
@@ -96,13 +110,13 @@ std::string get_metadata(std::string& uri,
 //' @param ctxxp An external pointer to the SOMAContext wrapper
 //' @export
 // [[Rcpp::export]]
-bool has_metadata(std::string& uri, std::string& key,
+bool has_metadata(std::string& uri, std::string& key, bool is_array,
                   Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    auto arrup = tdbs::SOMAArray::open(OpenMode::read, uri, sctx);
-
-    return arrup->has_metadata(key);
+    // SOMA Object unique pointer (aka soup)
+    auto soup = getObjectUniquePointer(is_array, OpenMode::read, uri, sctx);
+    return soup->has_metadata(key);
 }
 
 
@@ -113,14 +127,14 @@ bool has_metadata(std::string& uri, std::string& key,
 //' @param ctxxp An external pointer to the SOMAContext wrapper
 //' @export
 // [[Rcpp::export]]
-void delete_metadata(std::string& uri, std::string& key,
-                  Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+void delete_metadata(std::string& uri, std::string& key, bool is_array,
+                     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    auto arrup = tdbs::SOMAArray::open(OpenMode::write, uri, sctx);
-
-    arrup->delete_metadata(key);
-    arrup->close();
+    // SOMA Object unique pointer (aka soup)
+    auto soup = getObjectUniquePointer(is_array, OpenMode::write, uri, sctx);
+    soup->delete_metadata(key);
+    soup->close();
 }
 
 
@@ -132,13 +146,14 @@ void delete_metadata(std::string& uri, std::string& key,
 //' @param ctxxp An external pointer to the SOMAContext wrapper
 //' @export
 // [[Rcpp::export]]
-void set_metadata(std::string& uri, std::string& key, std::string& value,
+void set_metadata(std::string& uri, std::string& key, std::string& value, bool is_array,
                   Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
-    auto arrup = tdbs::SOMAArray::open(OpenMode::write, uri, sctx);
+    // SOMA Object unique pointer (aka soup)
+    auto soup = getObjectUniquePointer(is_array, OpenMode::write, uri, sctx);
 
     const tiledb_datatype_t value_type = TILEDB_STRING_UTF8;
-    arrup->set_metadata(key, value_type, value.length(), (void*) value.c_str());
-    arrup->close();
+    soup->set_metadata(key, value_type, value.length(), (void*) value.c_str());
+    soup->close();
 }

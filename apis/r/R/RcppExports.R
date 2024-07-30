@@ -17,8 +17,8 @@ writeArrayFromArrow <- function(uri, naap, nasp, arraytype = "", config = NULL) 
 #' @param uri The array URI
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
-get_metadata_num <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_get_metadata_num`, uri, ctxxp)
+get_metadata_num <- function(uri, is_array, ctxxp) {
+    .Call(`_tiledbsoma_get_metadata_num`, uri, is_array, ctxxp)
 }
 
 #' Read all metadata (as named character vector)
@@ -28,8 +28,8 @@ get_metadata_num <- function(uri, ctxxp) {
 #' @param uri The array URI
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
-get_all_metadata <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_get_all_metadata`, uri, ctxxp)
+get_all_metadata <- function(uri, is_array, ctxxp) {
+    .Call(`_tiledbsoma_get_all_metadata`, uri, is_array, ctxxp)
 }
 
 #' Read metadata (as a string)
@@ -38,8 +38,8 @@ get_all_metadata <- function(uri, ctxxp) {
 #' @param key The array metadata key
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
-get_metadata <- function(uri, key, ctxxp) {
-    .Call(`_tiledbsoma_get_metadata`, uri, key, ctxxp)
+get_metadata <- function(uri, key, is_array, ctxxp) {
+    .Call(`_tiledbsoma_get_metadata`, uri, key, is_array, ctxxp)
 }
 
 #' Check for metadata given key
@@ -48,8 +48,8 @@ get_metadata <- function(uri, key, ctxxp) {
 #' @param key The array metadata key
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
-has_metadata <- function(uri, key, ctxxp) {
-    .Call(`_tiledbsoma_has_metadata`, uri, key, ctxxp)
+has_metadata <- function(uri, key, is_array, ctxxp) {
+    .Call(`_tiledbsoma_has_metadata`, uri, key, is_array, ctxxp)
 }
 
 #' Delete metadata for given key
@@ -58,8 +58,8 @@ has_metadata <- function(uri, key, ctxxp) {
 #' @param key The array metadata key
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
-delete_metadata <- function(uri, key, ctxxp) {
-    invisible(.Call(`_tiledbsoma_delete_metadata`, uri, key, ctxxp))
+delete_metadata <- function(uri, key, is_array, ctxxp) {
+    invisible(.Call(`_tiledbsoma_delete_metadata`, uri, key, is_array, ctxxp))
 }
 
 #' Set metadata (as a string)
@@ -69,8 +69,8 @@ delete_metadata <- function(uri, key, ctxxp) {
 #' @param value The metadata value
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
-set_metadata <- function(uri, key, value, ctxxp) {
-    invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, value, ctxxp))
+set_metadata <- function(uri, key, value, is_array, ctxxp) {
+    invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, value, is_array, ctxxp))
 }
 
 reindex_create <- function() {

@@ -54,77 +54,83 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_metadata_num
-int32_t get_metadata_num(std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_get_metadata_num(SEXP uriSEXP, SEXP ctxxpSEXP) {
+int32_t get_metadata_num(std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_get_metadata_num(SEXP uriSEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< bool >::type is_array(is_arraySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_metadata_num(uri, ctxxp));
+    rcpp_result_gen = Rcpp::wrap(get_metadata_num(uri, is_array, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
 // get_all_metadata
-Rcpp::CharacterVector get_all_metadata(std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_get_all_metadata(SEXP uriSEXP, SEXP ctxxpSEXP) {
+Rcpp::CharacterVector get_all_metadata(std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_get_all_metadata(SEXP uriSEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< bool >::type is_array(is_arraySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_all_metadata(uri, ctxxp));
+    rcpp_result_gen = Rcpp::wrap(get_all_metadata(uri, is_array, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
 // get_metadata
-std::string get_metadata(std::string& uri, std::string& key, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_get_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP ctxxpSEXP) {
+std::string get_metadata(std::string& uri, std::string& key, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_get_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< std::string& >::type key(keySEXP);
+    Rcpp::traits::input_parameter< bool >::type is_array(is_arraySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_metadata(uri, key, ctxxp));
+    rcpp_result_gen = Rcpp::wrap(get_metadata(uri, key, is_array, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
 // has_metadata
-bool has_metadata(std::string& uri, std::string& key, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_has_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP ctxxpSEXP) {
+bool has_metadata(std::string& uri, std::string& key, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_has_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< std::string& >::type key(keySEXP);
+    Rcpp::traits::input_parameter< bool >::type is_array(is_arraySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(has_metadata(uri, key, ctxxp));
+    rcpp_result_gen = Rcpp::wrap(has_metadata(uri, key, is_array, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
 // delete_metadata
-void delete_metadata(std::string& uri, std::string& key, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_delete_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP ctxxpSEXP) {
+void delete_metadata(std::string& uri, std::string& key, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_delete_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< std::string& >::type key(keySEXP);
+    Rcpp::traits::input_parameter< bool >::type is_array(is_arraySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    delete_metadata(uri, key, ctxxp);
+    delete_metadata(uri, key, is_array, ctxxp);
     return R_NilValue;
 END_RCPP
 }
 // set_metadata
-void set_metadata(std::string& uri, std::string& key, std::string& value, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_set_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP valueSEXP, SEXP ctxxpSEXP) {
+void set_metadata(std::string& uri, std::string& key, std::string& value, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_set_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP valueSEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< std::string& >::type key(keySEXP);
     Rcpp::traits::input_parameter< std::string& >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< bool >::type is_array(is_arraySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    set_metadata(uri, key, value, ctxxp);
+    set_metadata(uri, key, value, is_array, ctxxp);
     return R_NilValue;
 END_RCPP
 }
@@ -421,12 +427,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_createSOMAContext", (DL_FUNC) &_tiledbsoma_createSOMAContext, 1},
     {"_tiledbsoma_createSchemaFromArrow", (DL_FUNC) &_tiledbsoma_createSchemaFromArrow, 8},
     {"_tiledbsoma_writeArrayFromArrow", (DL_FUNC) &_tiledbsoma_writeArrayFromArrow, 5},
-    {"_tiledbsoma_get_metadata_num", (DL_FUNC) &_tiledbsoma_get_metadata_num, 2},
-    {"_tiledbsoma_get_all_metadata", (DL_FUNC) &_tiledbsoma_get_all_metadata, 2},
-    {"_tiledbsoma_get_metadata", (DL_FUNC) &_tiledbsoma_get_metadata, 3},
-    {"_tiledbsoma_has_metadata", (DL_FUNC) &_tiledbsoma_has_metadata, 3},
-    {"_tiledbsoma_delete_metadata", (DL_FUNC) &_tiledbsoma_delete_metadata, 3},
-    {"_tiledbsoma_set_metadata", (DL_FUNC) &_tiledbsoma_set_metadata, 4},
+    {"_tiledbsoma_get_metadata_num", (DL_FUNC) &_tiledbsoma_get_metadata_num, 3},
+    {"_tiledbsoma_get_all_metadata", (DL_FUNC) &_tiledbsoma_get_all_metadata, 3},
+    {"_tiledbsoma_get_metadata", (DL_FUNC) &_tiledbsoma_get_metadata, 4},
+    {"_tiledbsoma_has_metadata", (DL_FUNC) &_tiledbsoma_has_metadata, 4},
+    {"_tiledbsoma_delete_metadata", (DL_FUNC) &_tiledbsoma_delete_metadata, 4},
+    {"_tiledbsoma_set_metadata", (DL_FUNC) &_tiledbsoma_set_metadata, 5},
     {"_tiledbsoma_reindex_create", (DL_FUNC) &_tiledbsoma_reindex_create, 0},
     {"_tiledbsoma_reindex_map", (DL_FUNC) &_tiledbsoma_reindex_map, 2},
     {"_tiledbsoma_reindex_lookup", (DL_FUNC) &_tiledbsoma_reindex_lookup, 2},
