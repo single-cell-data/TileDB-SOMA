@@ -5,7 +5,7 @@
 
 import json
 from dataclasses import dataclass
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import pyarrow as pa
 import somacore
@@ -44,7 +44,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
         shape: Tuple[int, ...]
 
         def __init__(
-            self, axes: Union[str, Iterable[str]], name: str, shape: Iterable[int]
+            self, axes: Union[str, Sequence[str]], name: str, shape: Sequence[int]
         ):
             self.name = name
             self.axes = tuple(axes)
@@ -106,8 +106,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
         ]
-        self._levels.sort(key=lambda level: level.width, reverse=True)
-        # TODO: Fix to sort by name if multiple values have the same width.
+        self._levels.sort(key=lambda level: (-level.width, -level.height, level.name))
 
     @_funcs.forwards_kwargs_to(
         DenseNDArray.create, exclude=("context", "shape", "tiledb_timestamp")
@@ -116,8 +115,8 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
         self,
         key: str,
         *,
-        axes: Union[str, Iterable[str]],
-        shape: Iterable[int],
+        axes: Union[str, Sequence[str]],
+        shape: Sequence[int],
         uri: Optional[str] = None,
         **kwargs: Any,
     ) -> DenseNDArray:
@@ -142,8 +141,11 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
         # Add the level properties to level list.
         # Note: The names are guaranteed to be different from the earlier checks.
         for index, val in enumerate(self._levels):
-            if props.width > val.width or (
-                props.width == val.width and props.name < val.name
+            # Note: Name is unique, so guaranteed to be strict ordering.
+            if (-props.width, -props.height, props.name) < (
+                -val.width,
+                -val.height,
+                val.name,
             ):
                 self._levels.insert(index, props)
                 break
