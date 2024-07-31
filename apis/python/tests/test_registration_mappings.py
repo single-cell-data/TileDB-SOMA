@@ -1,6 +1,7 @@
 """
 Test join-id registrations for ingesting multiple AnnData objects into a single SOMA Experiment.
 """
+
 import math
 import tempfile
 from contextlib import nullcontext

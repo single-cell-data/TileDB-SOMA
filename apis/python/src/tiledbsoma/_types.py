@@ -3,6 +3,8 @@
 #
 # Licensed under the MIT License.
 
+from __future__ import annotations
+
 import datetime
 import pathlib
 from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union, get_args
@@ -18,7 +20,7 @@ if TYPE_CHECKING:
     NPInteger = np.integer[npt.NBitBase]
     NPFloating = np.floating[npt.NBitBase]
     NPNDArray = npt.NDArray[np.number[npt.NBitBase]]
-    PDSeries = pd.Series[Any]
+    PDSeries = pd.Series[Any]  # type: ignore[misc] # a pd.Series of "any" type will raise mypy error
 else:
     NPInteger = np.integer
     NPFloating = np.floating
@@ -30,7 +32,10 @@ Path = Union[str, pathlib.Path]
 
 Ids = Union[List[str], List[bytes], List[int]]
 
-Labels = Union[Sequence[str], pd.Index]
+if TYPE_CHECKING:
+    Labels = Union[Sequence[str], pd.Index[Any]]
+else:
+    Labels = Union[Sequence[str], pd.Index]
 
 NTuple = Tuple[int, ...]
 

@@ -6,6 +6,8 @@
 """Conversion utility methods.
 """
 
+from __future__ import annotations
+
 from typing import TypeVar, cast
 
 import numpy as np
@@ -48,9 +50,7 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     if isinstance(x, (np.ndarray, sp.spmatrix)) or not isinstance(
         x.dtype, pd.CategoricalDtype
     ):
-        # mypy issues a spurious error here, but only when
-        # _to_tiledb_supported_dtype is decorated with @typeguard_ignore???
-        target_dtype = _to_tiledb_supported_dtype(x.dtype)  # type: ignore[arg-type]
+        target_dtype = _to_tiledb_supported_dtype(x.dtype)
         return x if target_dtype == x.dtype else x.astype(target_dtype)
 
     # categories = x.cat.categories

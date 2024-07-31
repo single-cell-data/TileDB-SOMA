@@ -51,12 +51,10 @@ def test_forwards_kwargs(dst_sig: str, outer_sig: str, want: str):
 
 
 def test_forwards_kwargs_exclude():
-    def dst(one, two, three):
-        ...
+    def dst(one, two, three): ...
 
     @_funcs.forwards_kwargs_to(dst, exclude=("one", "three"))
-    def wrapped(one, four, five, **kwargs) -> None:
-        ...
+    def wrapped(one, four, five, **kwargs) -> None: ...
 
     got_sig = inspect.signature(wrapped)
     assert str(got_sig) == "(one, four, five, *, two) -> None"

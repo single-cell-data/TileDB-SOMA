@@ -56,8 +56,7 @@ def open(
     soma_type: Optional[str] = None,
     context: Optional[SOMATileDBContext] = None,
     tiledb_timestamp: Optional[OpenTimestamp] = None,
-) -> AnySOMAObject:
-    ...
+) -> AnySOMAObject: ...
 
 
 @overload
@@ -68,8 +67,7 @@ def open(
     soma_type: Type[_Obj],
     context: Optional[SOMATileDBContext] = None,
     tiledb_timestamp: Optional[OpenTimestamp] = None,
-) -> _Obj:
-    ...
+) -> _Obj: ...
 
 
 @typeguard_ignore
