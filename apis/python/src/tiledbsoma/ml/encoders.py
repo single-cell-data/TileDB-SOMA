@@ -29,6 +29,9 @@ class Encoder(abc.ABC):
     - ``columns``: List of columns in ``obs`` that the encoder will be applied to.
 
     See the implementation of :class:`LabelEncoder` for an example.
+
+    Lifecycle:
+        experimental
     """
 
     @abc.abstractmethod
@@ -60,7 +63,11 @@ class Encoder(abc.ABC):
 
 
 class LabelEncoder(Encoder):
-    """Default encoder based on :class:`sklearn.preprocessing.LabelEncoder`."""
+    """Default encoder based on :class:`sklearn.preprocessing.LabelEncoder`.
+
+    Lifecycle:
+        experimental
+    """
 
     def __init__(self, col: str) -> None:
         self._encoder = SklearnLabelEncoder()
@@ -95,7 +102,11 @@ class LabelEncoder(Encoder):
 
 
 class BatchEncoder(Encoder):
-    """An encoder that concatenates and encodes several ``obs`` columns."""
+    """An encoder that concatenates and encodes several ``obs`` columns.
+
+    Lifecycle:
+        experimental
+    """
 
     def __init__(self, cols: List[str], name: str = "batch"):
         self.cols = cols
