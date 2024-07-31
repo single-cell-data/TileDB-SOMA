@@ -24,7 +24,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
     images.Image2D[DenseNDArray, AnySOMAObject],
 ):
-    """TODO: Add documentaiton for Image2D
+    """TODO: Add documentation for Image2D
 
     Lifecycle:
         Experimental.
