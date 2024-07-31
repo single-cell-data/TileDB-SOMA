@@ -286,9 +286,11 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
         if demote:
             assert tbl.schema == pa.schema(
                 [
-                    pa.field(schema.field(f).name, pa.string())
-                    if schema.field(f).type == pa.large_string()
-                    else schema.field(f)
+                    (
+                        pa.field(schema.field(f).name, pa.string())
+                        if schema.field(f).type == pa.large_string()
+                        else schema.field(f)
+                    )
                     for f in (col_names if col_names is not None else schema.names)
                 ]
             )

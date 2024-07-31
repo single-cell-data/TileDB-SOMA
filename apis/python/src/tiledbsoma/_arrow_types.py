@@ -156,7 +156,7 @@ def arrow_type_from_tiledb_dtype(
             return pa.large_string()
         else:
             return pa.large_binary()
-    elif tiledb_dtype == "ascii" or tiledb_dtype == str:
+    elif tiledb_dtype == "ascii" or tiledb_dtype == np.dtype(str):
         return pa.large_string()
     else:
         return pa.from_numpy_dtype(tiledb_dtype)

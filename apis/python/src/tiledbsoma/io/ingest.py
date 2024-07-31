@@ -963,8 +963,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
-) -> Experiment:
-    ...
+) -> Experiment: ...
 
 
 @overload
@@ -975,8 +974,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
-) -> Measurement:
-    ...
+) -> Measurement: ...
 
 
 @overload
@@ -987,8 +985,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
-) -> Collection[_TDBO]:
-    ...
+) -> Collection[_TDBO]: ...
 
 
 @no_type_check
@@ -1020,8 +1017,7 @@ def _create_or_open_coll(
     *,
     ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
-) -> Experiment:
-    ...
+) -> Experiment: ...
 
 
 @overload
@@ -1031,8 +1027,7 @@ def _create_or_open_coll(
     *,
     ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
-) -> Measurement:
-    ...
+) -> Measurement: ...
 
 
 @overload
@@ -1042,8 +1037,7 @@ def _create_or_open_coll(
     *,
     ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
-) -> Collection[_TDBO]:
-    ...
+) -> Collection[_TDBO]: ...
 
 
 def _create_or_open_coll(
@@ -2667,11 +2661,11 @@ def _ingest_uns_string_array(
     """
 
     if len(value.shape) == 1:
-        helper = _ingest_uns_1d_string_array
+        helper = _ingest_uns_1d_string_array  # type:ignore[unreachable]
     elif len(value.shape) == 2:
         helper = _ingest_uns_2d_string_array
     else:
-        msg = (
+        msg = (  # type:ignore[unreachable]
             f"Skipped {coll.uri}[{key!r}]"
             f" (uns object): string array is neither one-dimensional nor two-dimensional"
         )
