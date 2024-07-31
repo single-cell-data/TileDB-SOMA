@@ -1,9 +1,9 @@
+import datetime
 from urllib.parse import urljoin
 
 import numpy as np
 import pyarrow as pa
 import pytest
-import datetime
 
 import tiledbsoma as soma
 from tiledbsoma import _factory

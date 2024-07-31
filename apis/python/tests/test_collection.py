@@ -1,3 +1,4 @@
+import datetime
 import os
 import pathlib
 import textwrap
@@ -9,7 +10,6 @@ import pyarrow as pa
 import pytest
 from typeguard import suppress_type_checks
 from typing_extensions import Literal
-import datetime
 
 import tiledbsoma as soma
 from tiledbsoma import _collection, _factory, _soma_object

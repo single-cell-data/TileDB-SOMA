@@ -104,8 +104,8 @@ def test_sparse_nd_array_reopen(tmp_path):
         with A1.reopen("r", tiledb_timestamp=ts2) as A2:
             assert A1.mode == "r"
             assert A2.mode == "r"
-            assert A1.tiledb_timestamp== ts1
-            assert A2.tiledb_timestamp== ts2
+            assert A1.tiledb_timestamp == ts1
+            assert A2.tiledb_timestamp == ts2
 
     with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A1:
         with A1.reopen("w", tiledb_timestamp=None) as A2:
