@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 import numpy as np
 import pyarrow as pa
 import pytest
+import datetime
 
 import tiledbsoma as soma
 from tiledbsoma import _factory
@@ -226,21 +227,22 @@ def test_experiment_reopen(tmp_path):
                 assert exp2.tiledb_timestamp.timestamp() == 0.002
                 assert exp3.tiledb_timestamp.timestamp() == 0.003
 
-    with soma.Experiment.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as exp1:
-        with exp1.reopen("r", tiledb_timestamp=2) as exp2:
+    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    with soma.Experiment.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as exp1:
+        with exp1.reopen("r", tiledb_timestamp=ts2) as exp2:
             assert exp1.mode == "r"
             assert exp2.mode == "r"
-            assert exp1.tiledb_timestamp.timestamp() == 0.001
-            assert exp2.tiledb_timestamp.timestamp() == 0.002
+            assert exp1.tiledb_timestamp == ts1
+            assert exp2.tiledb_timestamp == ts2
 
-    with soma.Experiment.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as exp1:
-        with exp1.reopen("w", tiledb_timestamp=2) as exp2:
-            assert exp1.mode == "w"
-            assert exp2.mode == "w"
-            assert exp1.tiledb_timestamp.timestamp() == 0.001
-            assert exp2.tiledb_timestamp.timestamp() == 0.002
-
-    with soma.Experiment.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as exp1:
-        with exp1.reopen("r", tiledb_timestamp=2) as exp2:
-            assert exp1.tiledb_timestamp.timestamp() == 0.001
-            assert exp2.tiledb_timestamp.timestamp() == 0.002
+    with soma.Experiment.open(tmp_path.as_posix(), "w") as exp1:
+        with exp1.reopen("w", tiledb_timestamp=None) as exp2:
+            with exp2.reopen("w") as exp3:
+                assert exp1.mode == "w"
+                assert exp2.mode == "w"
+                assert exp3.mode == "w"
+                now = datetime.datetime.now(datetime.timezone.utc)
+                assert exp1.tiledb_timestamp <= now
+                assert exp2.tiledb_timestamp <= now
+                assert exp2.tiledb_timestamp <= now

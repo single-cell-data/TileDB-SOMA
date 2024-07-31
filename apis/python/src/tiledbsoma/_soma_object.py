@@ -165,9 +165,8 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Experimental.
         """
-        timestamp = self.context._open_timestamp_ms(tiledb_timestamp)
         handle = self._wrapper_type._from_soma_object(
-            self._handle.reopen(mode, timestamp), self.context
+            self._handle.reopen(mode, tiledb_timestamp), self.context
         )
         return self.__class__(
             handle,  # type: ignore[arg-type]

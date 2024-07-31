@@ -165,24 +165,25 @@ def test_dataframe_reopen(tmp_path, arrow_schema):
                 assert sdf2.tiledb_timestamp.timestamp() == 0.002
                 assert sdf3.tiledb_timestamp.timestamp() == 0.003
 
-    with soma.DataFrame.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as sdf1:
-        with sdf1.reopen("r", tiledb_timestamp=2) as sdf2:
+    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    with soma.DataFrame.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as sdf1:
+        with sdf1.reopen("r", tiledb_timestamp=ts2) as sdf2:
             assert sdf1.mode == "r"
             assert sdf2.mode == "r"
-            assert sdf1.tiledb_timestamp.timestamp() == 0.001
-            assert sdf2.tiledb_timestamp.timestamp() == 0.002
+            assert sdf1.tiledb_timestamp == ts1
+            assert sdf2.tiledb_timestamp == ts2
 
-    with soma.DataFrame.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as sdf1:
-        with sdf1.reopen("w", tiledb_timestamp=2) as sdf2:
-            assert sdf1.mode == "w"
-            assert sdf2.mode == "w"
-            assert sdf1.tiledb_timestamp.timestamp() == 0.001
-            assert sdf2.tiledb_timestamp.timestamp() == 0.002
-
-    with soma.DataFrame.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as sdf1:
-        with sdf1.reopen("r", tiledb_timestamp=2) as sdf2:
-            assert sdf1.tiledb_timestamp.timestamp() == 0.001
-            assert sdf2.tiledb_timestamp.timestamp() == 0.002
+    with soma.DataFrame.open(tmp_path.as_posix(), "w") as sdf1:
+        with sdf1.reopen("w", tiledb_timestamp=None) as sdf2:
+            with sdf1.reopen("w") as sdf3:
+                assert sdf1.mode == "w"
+                assert sdf2.mode == "w"
+                assert sdf3.mode == "w"
+                now = datetime.datetime.now(datetime.timezone.utc)
+                assert sdf1.tiledb_timestamp <= now
+                assert sdf2.tiledb_timestamp <= now
+                assert sdf3.tiledb_timestamp <= now
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
