@@ -161,9 +161,9 @@ def test_dataframe_reopen(tmp_path, arrow_schema):
                 assert sdf1.mode == "r"
                 assert sdf2.mode == "w"
                 assert sdf3.mode == "r"
-                assert sdf1.tiledb_timestamp.timestamp() == 0.001
-                assert sdf2.tiledb_timestamp.timestamp() == 0.002
-                assert sdf3.tiledb_timestamp.timestamp() == 0.003
+                assert sdf1.tiledb_timestamp_ms == 1
+                assert sdf2.tiledb_timestamp_ms == 2
+                assert sdf3.tiledb_timestamp_ms == 3
 
     ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
     ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)

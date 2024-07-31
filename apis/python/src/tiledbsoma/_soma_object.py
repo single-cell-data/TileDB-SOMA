@@ -73,8 +73,9 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 - ``w``: Open for writing only (cannot read).
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
-                measured in milliseconds since the Unix epoch.
-                When unset (the default), the current time is used.
+                either an int representing milliseconds since the Unix epoch
+                or a datetime.dateime object.
+                When not provided (the default), the current time is used.
 
         Returns:
             The opened SOMA object.
@@ -155,7 +156,8 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 - ``w``: Open for writing only (cannot read).
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
-                measured in milliseconds since the Unix epoch.
+                either an int representing milliseconds since the Unix epoch
+                or a datetime.dateime object.
                 When unset (the default), the current time is used.
 
         Raises:

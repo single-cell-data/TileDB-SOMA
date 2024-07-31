@@ -77,9 +77,9 @@ def test_dense_nd_array_reopen(tmp_path):
                 assert A1.mode == "r"
                 assert A2.mode == "w"
                 assert A3.mode == "r"
-                assert A1.tiledb_timestamp.timestamp() == 0.001
-                assert A2.tiledb_timestamp.timestamp() == 0.002
-                assert A3.tiledb_timestamp.timestamp() == 0.003
+                assert A1.tiledb_timestamp_ms == 1
+                assert A2.tiledb_timestamp_ms == 2
+                assert A3.tiledb_timestamp_ms == 3
 
     ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
     ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)

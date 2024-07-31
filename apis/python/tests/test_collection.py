@@ -539,9 +539,9 @@ def test_collection_reopen(tmp_path):
                 assert col1.mode == "r"
                 assert col2.mode == "w"
                 assert col3.mode == "r"
-                assert col1.tiledb_timestamp.timestamp() == 0.001
-                assert col2.tiledb_timestamp.timestamp() == 0.002
-                assert col3.tiledb_timestamp.timestamp() == 0.003
+                assert col1.tiledb_timestamp_ms == 1
+                assert col2.tiledb_timestamp_ms == 2
+                assert col3.tiledb_timestamp_ms == 3
 
     ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
     ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
