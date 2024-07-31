@@ -85,13 +85,15 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         *,
         obs_query: Optional[query.AxisQuery] = None,
         var_query: Optional[query.AxisQuery] = None,
-    ) -> query.ExperimentAxisQuery[Self]:  # type: ignore
+    ) -> query.ExperimentAxisQuery[Self]:  # type: ignore[type-var]
         """Creates an axis query over this experiment.
         Lifecycle: Maturing.
         """
         # mypy doesn't quite understand descriptors so it issues a spurious
-        # error here.
-        return query.ExperimentAxisQuery(  # type: ignore
+        # error here. 
+        # (Actually, more likely the error is due to somacore.Experiment not being
+        # subclass of somacore.query.query._Experimentish)
+        return query.ExperimentAxisQuery(  # type: ignore[type-var]
             self,
             measurement_name,
             obs_query=obs_query or query.AxisQuery(),

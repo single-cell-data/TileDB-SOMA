@@ -703,9 +703,9 @@ class ExperimentDataPipe(pipes.IterDataPipe[Dataset[ObsAndXDatum]]):  # type: ig
             dist_partition=dist.get_rank() if dist.is_initialized() else 0,
             num_dist_partitions=dist.get_world_size() if dist.is_initialized() else 1,
         )
-        obs_joinids_chunked_partition: List[
-            npt.NDArray[np.int64]
-        ] = self._subset_ids_to_partition(obs_joinids_chunked, partition, partitions)
+        obs_joinids_chunked_partition: List[npt.NDArray[np.int64]] = (
+            self._subset_ids_to_partition(obs_joinids_chunked, partition, partitions)
+        )
 
         with self.experiment_locator.open_experiment() as exp:
             X = exp.ms[self.measurement_name].X[self.layer_name]
@@ -759,7 +759,9 @@ class ExperimentDataPipe(pipes.IterDataPipe[Dataset[ObsAndXDatum]]):  # type: ig
     def __getitem__(self, index: int) -> ObsAndXDatum:
         raise NotImplementedError("IterDataPipe can only be iterated")
 
-    def _build_obs_encoders(self, query: soma.ExperimentAxisQuery) -> List[Encoder]:
+    def _build_obs_encoders(
+        self, query: soma.ExperimentAxisQuery[soma.Experiment]  # type: ignore[type-var]
+    ) -> List[Encoder]:
         pytorch_logger.debug("Initializing encoders")
 
         encoders = []
@@ -840,7 +842,6 @@ def _collate_noop(x: Any) -> Any:
     return x
 
 
-# TODO: Move into somacore.ExperimentAxisQuery
 def experiment_dataloader(
     datapipe: pipes.IterDataPipe,
     num_workers: int = 0,
