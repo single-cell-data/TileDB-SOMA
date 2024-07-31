@@ -219,9 +219,17 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     fill_metadata_cache();
 }
 
-std::unique_ptr<SOMAArray> SOMAArray::reopen(OpenMode mode) {
+std::unique_ptr<SOMAArray> SOMAArray::reopen(
+    OpenMode mode, std::optional<TimestampRange> timestamp) {
     return std::make_unique<SOMAArray>(
-        mode, uri_, ctx_, name_, column_names(), batch_size_, result_order_);
+        mode,
+        uri_,
+        ctx_,
+        name_,
+        column_names(),
+        batch_size_,
+        result_order_,
+        timestamp);
 }
 
 void SOMAArray::close() {

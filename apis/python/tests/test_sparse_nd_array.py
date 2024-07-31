@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import datetime
 import itertools
 import operator
 import pathlib
@@ -84,33 +85,38 @@ def test_sparse_nd_array_reopen(tmp_path):
         tmp_path.as_posix(), type=pa.float64(), shape=(1,), tiledb_timestamp=1
     )
 
-    with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A1:
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as A1:
         with raises_no_typeguard(ValueError):
             A1.reopen("invalid")
 
-        with A1.reopen("w") as A2:
-            with A2.reopen("r") as A3:
+        with A1.reopen("w", tiledb_timestamp=2) as A2:
+            with A2.reopen("r", tiledb_timestamp=3) as A3:
                 assert A1.mode == "r"
                 assert A2.mode == "w"
                 assert A3.mode == "r"
-                assert A1.tiledb_timestamp < A2.tiledb_timestamp
-                assert A2.tiledb_timestamp < A3.tiledb_timestamp
+                assert A1.tiledb_timestamp_ms == 1
+                assert A2.tiledb_timestamp_ms == 2
+                assert A3.tiledb_timestamp_ms == 3
 
-    with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A1:
-        with A1.reopen("r") as A2:
+    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as A1:
+        with A1.reopen("r", tiledb_timestamp=ts2) as A2:
             assert A1.mode == "r"
             assert A2.mode == "r"
-            assert A1.tiledb_timestamp < A2.tiledb_timestamp
+            assert A1.tiledb_timestamp == ts1
+            assert A2.tiledb_timestamp == ts2
 
     with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A1:
-        with A1.reopen("w") as A2:
-            assert A1.mode == "w"
-            assert A2.mode == "w"
-            assert A1.tiledb_timestamp < A2.tiledb_timestamp
-
-    with soma.SparseNDArray.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as A1:
-        with A1.reopen("r") as A2:
-            assert A1.tiledb_timestamp < A2.tiledb_timestamp
+        with A1.reopen("w", tiledb_timestamp=None) as A2:
+            with A2.reopen("w") as A3:
+                assert A1.mode == "w"
+                assert A2.mode == "w"
+                assert A3.mode == "w"
+                now = datetime.datetime.now(datetime.timezone.utc)
+                assert A1.tiledb_timestamp <= now
+                assert A2.tiledb_timestamp <= now
+                assert A3.tiledb_timestamp <= now
 
 
 @pytest.mark.parametrize("shape", [(10,)])

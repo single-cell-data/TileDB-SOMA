@@ -130,8 +130,10 @@ class SOMAGroup : public SOMAObject {
      *
      * @param mode if the OpenMode is not given, If the SOMAObject was opened in
      * READ mode, reopen it in WRITE mode and vice versa
+     * @param timestamp Timestamp
      */
-    std::unique_ptr<SOMAGroup> reopen(OpenMode mode);
+    std::unique_ptr<SOMAGroup> reopen(
+        OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * Close the SOMAGroup object.

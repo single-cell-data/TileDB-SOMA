@@ -1,3 +1,4 @@
+import datetime
 import os
 import pathlib
 import textwrap
@@ -527,32 +528,37 @@ def test_context_timestamp(tmp_path: pathlib.Path):
 
 def test_collection_reopen(tmp_path):
     # Ensure that reopen uses the correct mode
-    soma.Collection.create(tmp_path.as_uri())
+    soma.Collection.create(tmp_path.as_uri(), tiledb_timestamp=1)
 
-    with soma.Collection.open(tmp_path.as_posix(), "r") as col1:
+    with soma.Collection.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as col1:
         with raises_no_typeguard(ValueError):
             col1.reopen("invalid")
 
-        with col1.reopen("w") as col2:
-            with col2.reopen("r") as col3:
+        with col1.reopen("w", tiledb_timestamp=2) as col2:
+            with col2.reopen("r", tiledb_timestamp=3) as col3:
                 assert col1.mode == "r"
                 assert col2.mode == "w"
                 assert col3.mode == "r"
-                assert col1.tiledb_timestamp < col2.tiledb_timestamp
-                assert col2.tiledb_timestamp < col3.tiledb_timestamp
+                assert col1.tiledb_timestamp_ms == 1
+                assert col2.tiledb_timestamp_ms == 2
+                assert col3.tiledb_timestamp_ms == 3
 
-    with soma.Collection.open(tmp_path.as_posix(), "r") as col1:
-        with col1.reopen("r") as col2:
+    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    with soma.Collection.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as col1:
+        with col1.reopen("r", tiledb_timestamp=ts2) as col2:
             assert col1.mode == "r"
             assert col2.mode == "r"
-            assert col1.tiledb_timestamp < col2.tiledb_timestamp
+            assert col1.tiledb_timestamp == ts1
+            assert col2.tiledb_timestamp == ts2
 
     with soma.Collection.open(tmp_path.as_posix(), "w") as col1:
-        with col1.reopen("w") as col2:
-            assert col1.mode == "w"
-            assert col2.mode == "w"
-            assert col1.tiledb_timestamp < col2.tiledb_timestamp
-
-    with soma.Collection.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as col1:
-        with col1.reopen("r") as col2:
-            assert col1.tiledb_timestamp < col2.tiledb_timestamp
+        with col1.reopen("w", tiledb_timestamp=None) as col2:
+            with col2.reopen("w") as col3:
+                assert col1.mode == "w"
+                assert col2.mode == "w"
+                assert col3.mode == "w"
+                now = datetime.datetime.now(datetime.timezone.utc)
+                assert col1.tiledb_timestamp <= now
+                assert col2.tiledb_timestamp <= now
+                assert col2.tiledb_timestamp <= now
