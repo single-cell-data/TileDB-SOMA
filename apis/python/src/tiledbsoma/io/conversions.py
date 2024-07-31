@@ -50,7 +50,7 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     ):
         # mypy issues a spurious error here, but only when
         # _to_tiledb_supported_dtype is decorated with @typeguard_ignore???
-        target_dtype = _to_tiledb_supported_dtype(x.dtype)  # type: ignore[arg-type]
+        target_dtype = _to_tiledb_supported_dtype(x.dtype)
         return x if target_dtype == x.dtype else x.astype(target_dtype)
 
     # categories = x.cat.categories

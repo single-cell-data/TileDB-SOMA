@@ -192,7 +192,7 @@ def tensors_are_same_value(a: AnySparseTensor, b: AnySparseTensor) -> bool:
     Return true if the tenors contain the same values, allowing for
     differences in coordinate ordering
     """
-    if type(a) != type(b):
+    if type(a) is not type(b):
         return False
     if a.shape != b.shape:
         return False

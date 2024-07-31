@@ -963,8 +963,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
-) -> Experiment:
-    ...
+) -> Experiment: ...
 
 
 @overload
@@ -975,8 +974,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
-) -> Measurement:
-    ...
+) -> Measurement: ...
 
 
 @overload
@@ -987,8 +985,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
-) -> Collection[_TDBO]:
-    ...
+) -> Collection[_TDBO]: ...
 
 
 @no_type_check
@@ -1020,8 +1017,7 @@ def _create_or_open_coll(
     *,
     ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
-) -> Experiment:
-    ...
+) -> Experiment: ...
 
 
 @overload
@@ -1031,8 +1027,7 @@ def _create_or_open_coll(
     *,
     ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
-) -> Measurement:
-    ...
+) -> Measurement: ...
 
 
 @overload
@@ -1042,8 +1037,7 @@ def _create_or_open_coll(
     *,
     ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
-) -> Collection[_TDBO]:
-    ...
+) -> Collection[_TDBO]: ...
 
 
 def _create_or_open_coll(

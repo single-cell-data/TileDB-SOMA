@@ -204,8 +204,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: Optional[str] = ...,
         platform_config: Optional[options.PlatformConfig] = ...,
-    ) -> "Collection[AnySOMAObject]":
-        ...
+    ) -> "Collection[AnySOMAObject]": ...
 
     @overload
     def add_new_collection(
@@ -215,8 +214,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: Optional[str] = ...,
         platform_config: Optional[options.PlatformConfig] = ...,
-    ) -> _Coll:
-        ...
+    ) -> _Coll: ...
 
     def add_new_collection(
         self,
@@ -572,7 +570,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     def _contents_lines(self, last_indent: str) -> Iterable[str]:
         indent = last_indent + "    "
         if self.closed:
-            return ()
+            return
         for key, entry in self._contents.items():
             obj = entry.soma
             if obj is None:

@@ -3,6 +3,8 @@
 #
 # Licensed under the MIT License.
 
+from __future__ import annotations
+
 import datetime
 import functools
 import threading
@@ -295,6 +297,7 @@ class SOMATileDBContext(ContextBase):
                 # Keep the existing threadpool if not overridden.
                 threadpool = self.threadpool
 
+        assert isinstance(timestamp, datetime.datetime | int | None)
         return type(self)(
             tiledb_config=tiledb_config,
             tiledb_ctx=tiledb_ctx,
