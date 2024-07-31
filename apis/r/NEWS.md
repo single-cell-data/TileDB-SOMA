@@ -1,3 +1,9 @@
+# Unreleased
+
+## Changes
+
+* Change `$reopen(mode = )` default to not flip modes; require explicit `mode` parameter to be passed
+
 # tiledbsoma 1.11.4
 
 ## Changes
