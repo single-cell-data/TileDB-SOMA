@@ -348,6 +348,13 @@ setuptools.setup(
     ],
     extras_require={
         "dev": open("requirements_dev.txt").read(),
+        "ml": [
+            "torch",
+            "torchdata~=0.7",
+            "scikit-learn~=1.0",
+            "scikit-misc>=0.2,<0.4",  # scikit-misc 0.3 dropped Python 3.8 support, and 0.4 doesn't have MacOS/ARM wheels
+            "psutil~=5.0",
+        ],
     },
     python_requires=">=3.8",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},

@@ -18,8 +18,8 @@ module = "tiledbsoma._query_condition"
 ignore_errors = true
 
 [tool.ruff]
-ignore = ["E501"]
-extend-select = ["I001"]
+lint.ignore = ["E501"]
+lint.extend-select = ["I001"]
 fix = true
 exclude = ["*.cc"]
 
@@ -31,3 +31,8 @@ no-lines-before = ["tiledb"]
 [tool.ruff.lint.isort.sections]
 "tiledbsoma" = ["tiledbsoma"]
 "tiledb" = ["tiledb"]
+
+[tool.pytest.ini_options]
+markers = [
+    "ml: tests that use ML features and have PyTorch dependencies",
+]
