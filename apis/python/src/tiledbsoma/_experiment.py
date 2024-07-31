@@ -90,7 +90,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle: Maturing.
         """
         # mypy doesn't quite understand descriptors so it issues a spurious
-        # error here. 
+        # error here.
         # (Actually, more likely the error is due to somacore.Experiment not being
         # subclass of somacore.query.query._Experimentish)
         return query.ExperimentAxisQuery(  # type: ignore[type-var]
