@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     NPInteger = np.integer[npt.NBitBase]
     NPFloating = np.floating[npt.NBitBase]
     NPNDArray = npt.NDArray[np.number[npt.NBitBase]]
-    PDSeries = pd.Series[Any]  # type: ignore[misc]
+    PDSeries = pd.Series[Any]  # type: ignore[misc] # a pd.Series of "any" type will raise mypy error
 else:
     NPInteger = np.integer
     NPFloating = np.floating
