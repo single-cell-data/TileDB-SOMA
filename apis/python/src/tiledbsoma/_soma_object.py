@@ -73,8 +73,9 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 - ``w``: Open for writing only (cannot read).
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
-                measured in milliseconds since the Unix epoch.
-                When unset (the default), the current time is used.
+                either an int representing milliseconds since the Unix epoch
+                or a datetime.dateime object.
+                When not provided (the default), the current time is used.
 
         Returns:
             The opened SOMA object.
@@ -141,7 +142,9 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._handle = handle
         self._close_stack.enter_context(self._handle)
 
-    def reopen(self, mode: options.OpenMode) -> Self:
+    def reopen(
+        self, mode: options.OpenMode, tiledb_timestamp: Optional[OpenTimestamp] = None
+    ) -> Self:
         """
         Return a new copy of the SOMAObject with the given mode at the current
         Unix timestamp.
@@ -151,6 +154,11 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 The mode to open the object in.
                 - ``r``: Open for reading only (cannot write).
                 - ``w``: Open for writing only (cannot read).
+            tiledb_timestamp:
+                The TileDB timestamp to open this object at,
+                either an int representing milliseconds since the Unix epoch
+                or a datetime.dateime object.
+                When not provided (the default), the current time is used.
 
         Raises:
             ValueError:
@@ -160,7 +168,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             Experimental.
         """
         handle = self._wrapper_type._from_soma_object(
-            self._handle.reopen(mode), self.context
+            self._handle.reopen(mode, tiledb_timestamp), self.context
         )
         return self.__class__(
             handle,  # type: ignore[arg-type]

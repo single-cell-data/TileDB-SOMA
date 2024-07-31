@@ -36,21 +36,21 @@ test_that("`reopen()` works on arrays", {
     lab <- sprintf("%s$reopen()", cls)
     is_open <- sprintf("%s$reopen() returns an object object", cls)
 
-    # Test implicit WRITE -> READ
-    expect_invisible(arr$reopen(), label = lab)
+    # Test reopen("READ")
+    expect_invisible(arr$reopen("READ"), label = lab)
     expect_identical(
       arr$mode(),
       "READ",
-      info = sprintf("%s$reopen() when mode is 'WRITE' reopens as 'READ'", cls)
+      info = sprintf("%s$reopen('READ') reopens as 'READ'", cls)
     )
     expect_true(arr$is_open(), info = is_open)
 
-    # Test implicit READ -> WRITE
-    expect_invisible(arr$reopen(), label = lab)
+    # Test reopen("WRITE")
+    expect_invisible(arr$reopen("WRITE"), label = lab)
     expect_identical(
       arr$mode(),
       "WRITE",
-      info = sprintf("%s$reopen() when mode is 'READ' reopens as 'WRITE'", cls)
+      info = sprintf("%s$reopen('WRITE') reopens as 'WRITE'", cls)
     )
     expect_true(arr$is_open(), info = is_open)
 
@@ -87,9 +87,21 @@ test_that("`reopen()` works on arrays", {
     }
 
     arr$close()
-    expect_error(arr$reopen())
 
     # Test assertions
+    expect_error(arr$reopen())
+    for (mode in c("READ", "WRITE")) {
+      arr$reopen(mode)
+      expect_error(
+        arr$reopen(),
+        label = sprintf(
+          "'%s$reopen()' with no arguments fails when array mode is %s",
+          cls,
+          mode
+        )
+      )
+    }
+    expect_error(arr$reopen("CLOSED"))
     expect_error(arr$reopen("tomato"))
     expect_error(arr$reopen(TRUE))
     expect_error(arr$reopen(1L))
@@ -106,13 +118,13 @@ test_that("`reopen()` works on collections", {
   expect_identical(col$mode(), "WRITE")
   expect_true(col$is_open())
 
-  # Test implicit WRITE -> READ
-  expect_invisible(col$reopen())
+  # Test reopen("READ")
+  expect_invisible(col$reopen("READ"))
   expect_identical(col$mode(), "READ")
   expect_true(col$is_open())
 
-  # Test implicit READ -> WRITE
-  expect_invisible(col$reopen())
+  # Test reopen("WRITE")
+  expect_invisible(col$reopen("WRITE"))
   expect_identical(col$mode(), "WRITE")
   expect_true(col$is_open())
 
@@ -175,8 +187,8 @@ test_that("`reopen()` works on nested collections", {
     )
   }
 
-  # Test implicit WRITE -> READ
-  expect_invisible(col$reopen())
+  # Test reopen("READ")
+  expect_invisible(col$reopen("READ"))
   expect_identical(col$mode(), "READ")
   expect_true(col$is_open())
 
@@ -192,8 +204,8 @@ test_that("`reopen()` works on nested collections", {
     )
   }
 
-  # Test implicit READ -> WRITE
-  expect_invisible(col$reopen())
+  # Test reopen("WRITE")
+  expect_invisible(col$reopen("WRITE"))
   expect_identical(col$mode(), "WRITE")
   expect_true(col$is_open())
 
@@ -285,8 +297,8 @@ test_that("`reopen()` works on SOMAMeasurements", {
     name = "RNA"
   )
 
-  # Test implicit WRITE -> READ
-  expect_invisible(ms$reopen())
+  # Test reopen("READ")
+  expect_invisible(ms$reopen("READ"))
   expect_identical(ms$mode(), "READ")
   expect_true(ms$is_open())
 
@@ -296,8 +308,8 @@ test_that("`reopen()` works on SOMAMeasurements", {
   expect_identical(ms$X$mode(), "READ")
   expect_true(ms$X$is_open())
 
-  # Test implicit READ -> WRITE
-  expect_invisible(ms$reopen())
+  # Test reopen("WRITE")
+  expect_invisible(ms$reopen("WRITE"))
   expect_identical(ms$mode(), "WRITE")
   expect_true(ms$is_open())
 
@@ -360,8 +372,8 @@ test_that("`reopen()` works on SOMAExperiments", {
   expect_identical(exp$mode(), "WRITE")
   expect_true(exp$is_open())
 
-  # Test implicit WRITE -> READ
-  expect_invisible(exp$reopen())
+  # Test reopen("READ")
+  expect_invisible(exp$reopen("READ"))
   expect_identical(exp$mode(), "READ")
   expect_true(exp$is_open())
 
@@ -371,8 +383,8 @@ test_that("`reopen()` works on SOMAExperiments", {
   expect_identical(exp$ms$mode(), "READ")
   expect_true(exp$ms$is_open())
 
-  # Test implicit READ -> WRITE
-  expect_invisible(exp$reopen())
+  # Test reopen("WRITE")
+  expect_invisible(exp$reopen("WRITE"))
   expect_identical(exp$mode(), "WRITE")
   expect_true(exp$is_open())
 
