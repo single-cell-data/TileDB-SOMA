@@ -297,7 +297,7 @@ class SOMATileDBContext(ContextBase):
                 # Keep the existing threadpool if not overridden.
                 threadpool = self.threadpool
 
-        assert isinstance(timestamp, datetime.datetime | int | None)
+        assert timestamp is None or isinstance(timestamp, (datetime.datetime, int))
         return type(self)(
             tiledb_config=tiledb_config,
             tiledb_ctx=tiledb_ctx,
