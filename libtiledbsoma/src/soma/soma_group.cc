@@ -164,8 +164,9 @@ void SOMAGroup::open(
     fill_caches();
 }
 
-std::unique_ptr<SOMAGroup> SOMAGroup::reopen(OpenMode mode) {
-    return std::make_unique<SOMAGroup>(mode, uri_, ctx_, name_);
+std::unique_ptr<SOMAGroup> SOMAGroup::reopen(
+    OpenMode mode, std::optional<TimestampRange> timestamp) {
+    return std::make_unique<SOMAGroup>(mode, uri_, ctx_, name_, timestamp);
 }
 
 void SOMAGroup::close() {

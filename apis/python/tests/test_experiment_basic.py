@@ -1,3 +1,4 @@
+import datetime
 from urllib.parse import urljoin
 
 import numpy as np
@@ -211,32 +212,37 @@ def test_experiment_ms_type_constraint(tmp_path):
 
 def test_experiment_reopen(tmp_path):
     # Ensure that reopen uses the correct mode
-    soma.Experiment.create(tmp_path.as_uri())
+    soma.Experiment.create(tmp_path.as_uri(), tiledb_timestamp=1)
 
-    with soma.Experiment.open(tmp_path.as_posix(), "r") as exp1:
+    with soma.Experiment.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as exp1:
         with raises_no_typeguard(ValueError):
             exp1.reopen("invalid")
 
-        with exp1.reopen("w") as exp2:
-            with exp2.reopen("r") as exp3:
+        with exp1.reopen("w", tiledb_timestamp=2) as exp2:
+            with exp2.reopen("r", tiledb_timestamp=3) as exp3:
                 assert exp1.mode == "r"
                 assert exp2.mode == "w"
                 assert exp3.mode == "r"
-                assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
-                assert exp2.tiledb_timestamp < exp3.tiledb_timestamp
+                assert exp1.tiledb_timestamp_ms == 1
+                assert exp2.tiledb_timestamp_ms == 2
+                assert exp3.tiledb_timestamp_ms == 3
 
-    with soma.Experiment.open(tmp_path.as_posix(), "r") as exp1:
-        with exp1.reopen("r") as exp2:
+    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    with soma.Experiment.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as exp1:
+        with exp1.reopen("r", tiledb_timestamp=ts2) as exp2:
             assert exp1.mode == "r"
             assert exp2.mode == "r"
-            assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
+            assert exp1.tiledb_timestamp == ts1
+            assert exp2.tiledb_timestamp == ts2
 
     with soma.Experiment.open(tmp_path.as_posix(), "w") as exp1:
-        with exp1.reopen("w") as exp2:
-            assert exp1.mode == "w"
-            assert exp2.mode == "w"
-            assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
-
-    with soma.Experiment.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as exp1:
-        with exp1.reopen("r") as exp2:
-            assert exp1.tiledb_timestamp < exp2.tiledb_timestamp
+        with exp1.reopen("w", tiledb_timestamp=None) as exp2:
+            with exp2.reopen("w") as exp3:
+                assert exp1.mode == "w"
+                assert exp2.mode == "w"
+                assert exp3.mode == "w"
+                now = datetime.datetime.now(datetime.timezone.utc)
+                assert exp1.tiledb_timestamp <= now
+                assert exp2.tiledb_timestamp <= now
+                assert exp2.tiledb_timestamp <= now
