@@ -82,15 +82,11 @@ TileDBObject <- R6::R6Class(
     #'  \item \dQuote{\code{READ}}
     #'  \item \dQuote{\code{WRITE}}
     #' }
-    #' By default, reopens in the opposite mode of the current mode
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self} opened in \code{mode}
     #'
-    reopen = function(mode = NULL) {
-      modes <- c(READ = 'WRITE', WRITE = 'READ')
-      oldmode <- self$mode()
-      mode <- mode %||% modes[oldmode]
-      mode <- match.arg(mode, choices = modes)
+    reopen = function(mode) {
+      mode <- match.arg(mode, choices = c('READ', 'WRITE'))
       self$close()
       private$tiledb_timestamp <- NULL
       self$open(mode, internal_use_only = 'allowed_use')
