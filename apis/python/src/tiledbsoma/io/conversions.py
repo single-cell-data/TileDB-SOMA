@@ -6,6 +6,8 @@
 """Conversion utility methods.
 """
 
+from __future__ import annotations
+
 from typing import TypeVar, cast
 
 import numpy as np

@@ -12,6 +12,7 @@ show_error_codes = true
 ignore_missing_imports = true
 warn_unreachable = true
 strict = true
+python_version = 3.8
 
 [[tool.mypy.overrides]]
 module = "tiledbsoma._query_condition"
@@ -22,6 +23,7 @@ lint.ignore = ["E501"]
 lint.extend-select = ["I001"]
 fix = true
 exclude = ["*.cc"]
+target-version = "py38"
 
 [tool.ruff.lint.isort]
 # HACK: tiledb needs to come after tiledbsoma: https://github.com/single-cell-data/TileDB-SOMA/issues/2293
