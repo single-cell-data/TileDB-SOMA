@@ -160,6 +160,10 @@ def test_non_batched(soma_experiment: Experiment, use_eager_fetch: bool) -> None
         shuffle=False,
         use_eager_fetch=use_eager_fetch,
     )
+    assert type(exp_data_pipe.shape) is tuple
+    assert len(exp_data_pipe.shape) == 2
+    assert exp_data_pipe.shape == (6, 3)
+
     row_iter = iter(exp_data_pipe)
 
     row = next(row_iter)
