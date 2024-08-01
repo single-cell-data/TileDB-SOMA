@@ -672,6 +672,10 @@ class ExperimentDataPipe(pipes.IterDataPipe[Dataset[ObsAndXDatum]]):  # type: ig
         assert self._var_joinids is not None
 
         if self.soma_chunk_size is None:
+            # TODO: given that soma_chunk_size defaults to 64, this code will only run if the user explicitly
+            # provides None as a value. Which is a bit unorthodox. Consider using some other sentinel, e.g.,
+            # define an 'memory_budget' param.
+
             # set soma_chunk_size to utilize ~1 GiB of RAM per SOMA chunk; assumes 95% X data sparsity, 8 bytes for the
             # X value and 8 bytes for the sparse matrix indices, and a 100% working memory overhead (2x).
             X_row_memory_size = 0.05 * len(self._var_joinids) * 8 * 3 * 2
@@ -695,7 +699,7 @@ class ExperimentDataPipe(pipes.IterDataPipe[Dataset[ObsAndXDatum]]):  # type: ig
         if self._shuffle_rng:
             self._shuffle_rng.shuffle(obs_joinids_chunked)
 
-        # subset to a single partition, as needed for distributed training and multi-processing datat loading
+        # subset to a single partition, as needed for distributed training and multi-processing data loading
         worker_info = torch.utils.data.get_worker_info()
         partition, partitions = self._compute_partitions(
             loader_partition=worker_info.id if worker_info else 0,
@@ -745,7 +749,7 @@ class ExperimentDataPipe(pipes.IterDataPipe[Dataset[ObsAndXDatum]]):  # type: ig
     ) -> List[npt.NDArray[np.int64]]:
         num_chunks = max(1, ceil(len(ids) / chunk_size))
         pytorch_logger.debug(
-            f"Shuffling {len(ids)} obs joinids into {num_chunks} chunks of {chunk_size}"
+            f"Splitting {len(ids)} obs joinids into {num_chunks} chunks of {chunk_size}"
         )
         return np.array_split(ids, num_chunks)
 
