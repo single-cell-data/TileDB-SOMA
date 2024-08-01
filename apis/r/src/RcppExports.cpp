@@ -121,16 +121,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // set_metadata
-void set_metadata(std::string& uri, std::string& key, std::string& value, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_set_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP valueSEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
+void set_metadata(std::string& uri, std::string& key, SEXP valuesxp, std::string& type, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_set_metadata(SEXP uriSEXP, SEXP keySEXP, SEXP valuesxpSEXP, SEXP typeSEXP, SEXP is_arraySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< std::string& >::type key(keySEXP);
-    Rcpp::traits::input_parameter< std::string& >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type valuesxp(valuesxpSEXP);
+    Rcpp::traits::input_parameter< std::string& >::type type(typeSEXP);
     Rcpp::traits::input_parameter< bool >::type is_array(is_arraySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    set_metadata(uri, key, value, is_array, ctxxp);
+    set_metadata(uri, key, valuesxp, type, is_array, ctxxp);
     return R_NilValue;
 END_RCPP
 }
@@ -432,7 +433,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_get_metadata", (DL_FUNC) &_tiledbsoma_get_metadata, 4},
     {"_tiledbsoma_has_metadata", (DL_FUNC) &_tiledbsoma_has_metadata, 4},
     {"_tiledbsoma_delete_metadata", (DL_FUNC) &_tiledbsoma_delete_metadata, 4},
-    {"_tiledbsoma_set_metadata", (DL_FUNC) &_tiledbsoma_set_metadata, 5},
+    {"_tiledbsoma_set_metadata", (DL_FUNC) &_tiledbsoma_set_metadata, 6},
     {"_tiledbsoma_reindex_create", (DL_FUNC) &_tiledbsoma_reindex_create, 0},
     {"_tiledbsoma_reindex_map", (DL_FUNC) &_tiledbsoma_reindex_map, 2},
     {"_tiledbsoma_reindex_lookup", (DL_FUNC) &_tiledbsoma_reindex_lookup, 2},

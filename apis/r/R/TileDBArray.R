@@ -101,13 +101,33 @@ TileDBArray <- R6::R6Class(
 
       private$check_open_for_write()
 
-      dev_null <- mapply(
-        FUN = tiledb::tiledb_put_metadata,
-        key = names(metadata),
-        val = metadata,
-        MoreArgs = list(arr = self$object),
-        SIMPLIFY = FALSE
-      )
+      ## TODO remove once PR finalises
+      ## dev_null <- mapply(
+      ##   FUN = tiledb::tiledb_put_metadata,
+      ##   key = names(metadata),
+      ##   val = metadata,
+      ##   MoreArgs = list(arr = self$object),
+      ##   SIMPLIFY = FALSE
+      ## )
+      #print(str(metadata))
+      for (nm in names(metadata)) {
+          #spdl::warn("[set_metadata] key {}", nm)
+          #if (!has_metadata(self$uri, nm, TRUE, soma_context())) {
+          val <- metadata[[nm]]
+          spdl::debug("[set_metadata] setting key {} to {} ({})", nm, val, class(val))
+          set_metadata(self$uri, nm, val, class(val), TRUE, soma_context())
+          #}
+      }
+      ## dev_null <- mapply(
+      ##   FUN = set_metadata,
+      ##   key = names(metadata),
+      ##   value = metadata,
+      ##   type = class(metadata),
+      ##   MoreArgs = list(uri = self$uri,
+      ##                   is_array = TRUE,
+      ##                   ctxxp = soma_context()),
+      ##   SIMPLIFY = FALSE
+      ## )
 
       dev_null <- mapply(
         FUN = private$add_cached_metadata,
@@ -358,7 +378,12 @@ TileDBArray <- R6::R6Class(
         array_handle <- tiledb::tiledb_array_open(array_handle, type = "READ")
       }
 
-      private$.metadata_cache <- tiledb::tiledb_get_all_metadata(array_handle)
+      #private$.metadata_cache <- tiledb::tiledb_get_all_metadata(array_handle)
+      #spdl::warn("[TileDBArray::update_metadata_cache] all metadata")
+      #print(str(private$.metadata_cache))
+      #lst <- get_all_metadata(self$uri, TRUE, soma_context())
+      #print(str(lst))
+      private$.metadata_cache <- get_all_metadata(self$uri, TRUE, soma_context())
 
       if (private$.mode == "WRITE") {
         tiledb::tiledb_array_close(array_handle)

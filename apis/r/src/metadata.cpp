@@ -15,9 +15,9 @@ std::unique_ptr<tdbs::SOMAObject> getObjectUniquePointer(bool is_array, OpenMode
                                                          std::string& uri,
                                                          std::shared_ptr<tdbs::SOMAContext> ctx) {
     if (is_array) {
-        return tdbs::SOMAArray::open(OpenMode::read, uri, ctx);
+        return tdbs::SOMAArray::open(mode, uri, ctx);
     } else {
-        return tdbs::SOMAGroup::open(OpenMode::read, uri, ctx);
+        return tdbs::SOMAGroup::open(mode, uri, ctx);
     }
 }
 
@@ -150,17 +150,30 @@ void delete_metadata(std::string& uri, std::string& key, bool is_array,
 //' @param uri The array URI
 //' @param key The array metadata key
 //' @param value The metadata value
+//' @
 //' @param ctxxp An external pointer to the SOMAContext wrapper
 //' @export
 // [[Rcpp::export]]
-void set_metadata(std::string& uri, std::string& key, std::string& value, bool is_array,
-                  Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+void set_metadata(std::string& uri, std::string& key, SEXP valuesxp, std::string& type,
+                  bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // SOMA Object unique pointer (aka soup)
     auto soup = getObjectUniquePointer(is_array, OpenMode::write, uri, sctx);
 
-    const tiledb_datatype_t value_type = TILEDB_STRING_UTF8;
-    soup->set_metadata(key, value_type, value.length(), (void*) value.c_str());
+    if (type == "character") {
+        const tiledb_datatype_t value_type = TILEDB_STRING_UTF8;
+        std::string value = Rcpp::as<std::string>(valuesxp);
+        spdl::debug("[set_metadata] key {} value {} is_array {} type {}", key, value, is_array, type);
+        soup->set_metadata(key, value_type, value.length(), (void*) value.c_str(), true);
+    } else if (type == "integer64") {
+        const tiledb_datatype_t value_type = TILEDB_INT64;
+        double dv = Rcpp::as<double>(valuesxp);
+        int64_t value = Rcpp::fromInteger64(dv);
+        spdl::debug("[set_metadata] key {} value {} is_array {} type {}", key, value, is_array, type);
+        soup->set_metadata(key, value_type, 1, (void*) &value, true);
+    } else {
+        Rcpp::stop("Unsupported type '%s'", type);
+    }
     soup->close();
 }

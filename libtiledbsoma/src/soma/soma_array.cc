@@ -1273,11 +1273,12 @@ void SOMAArray::set_metadata(
     const std::string& key,
     tiledb_datatype_t value_type,
     uint32_t value_num,
-    const void* value) {
-    if (key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
+    const void* value,
+    bool force) {
+    if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
 
-    if (key.compare(ENCODING_VERSION_KEY) == 0)
+    if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
 
     arr_->put_metadata(key, value_type, value_num, value);

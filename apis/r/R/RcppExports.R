@@ -23,8 +23,8 @@ get_metadata_num <- function(uri, is_array, ctxxp) {
 
 #' Read all metadata (as named list)
 #'
-#' This function assumes that all metadata is in fact stored as strings. It will error
-#' if a different datatype is encountered.
+#' This function currently supports metadata as either a string or an 'int64' (or 'int32').
+#' It will error if a different datatype is encountered.
 #' @param uri The array URI
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
@@ -67,10 +67,11 @@ delete_metadata <- function(uri, key, is_array, ctxxp) {
 #' @param uri The array URI
 #' @param key The array metadata key
 #' @param value The metadata value
+#' @
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
-set_metadata <- function(uri, key, value, is_array, ctxxp) {
-    invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, value, is_array, ctxxp))
+set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp) {
+    invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp))
 }
 
 reindex_create <- function() {
