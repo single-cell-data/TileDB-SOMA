@@ -1559,7 +1559,7 @@ def _update_dataframe(
         #
         # Note: this must match what DataFrame.create does:
         # * DataFrame.create sets nullability for obs/var columns on initial ingest
-        # * Here, we set nullabiliity for obs/var columns on update_obs
+        # * Here, we set nullability for obs/var columns on update_obs
         # Users should get the same behavior either way.
         #
         # Note: this is specific to tiledbsoma.io.
@@ -2023,7 +2023,7 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
     #   total_nnz = matrix[:, :].nnz
     # So instead we break it up. Testing over a variety of H5AD sizes
     # shows that the performance is fine here.
-    coords: List[slice] = [slice(None), slice(None)]  # type: ignore [unreachable]
+    coords: List[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
     bsz = 1000
     total_nnz = 0
     for lo in range(0, extent, bsz):
@@ -2644,7 +2644,7 @@ def _ingest_uns_string_array(
     Ingest an uns string array. In the SOMA data model, we have NDArrays _of number only_ ...
     so we need to make this a SOMADataFrame.
 
-    Ideally we don't want to an index column "soma_joinid" -- "index", maybe.
+    Ideally we don't want to add an index column "soma_joinid" -- "index", maybe.
     However, ``SOMADataFrame`` _requires_ that soma_joinid be present, either
     as an index column, or as a data column. The former is less confusing.
     """
