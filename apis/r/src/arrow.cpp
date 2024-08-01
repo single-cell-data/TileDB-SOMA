@@ -60,6 +60,7 @@ Rcpp::XPtr<somactx_wrap_t> createSOMAContext(Rcpp::Nullable<Rcpp::CharacterVecto
 void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp,
                            bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 
+
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
@@ -118,14 +119,26 @@ void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray na
         Rcpp::stop(tfm::format("Error: Array '%s' already exists", uri));
     }
 
-    // create the ArraySchema
-    auto as = tdbs::ArrowAdapter::tiledb_schema_from_arrow_schema(ctx, std::move(schema),
-                                                                  std::pair(std::move(dimarr),
-                                                                            std::move(dimsch)),
-                                                                  datatype, sparse,
-                                                                  pltcfg);
-    // Create the schema at the given URI
-    tiledb::Array::create(uri, as);
+    if (datatype == "SOMADataFrame") {
+        tdbs::SOMADataFrame::create(uri, std::move(schema),
+                                    std::pair(std::move(dimarr), std::move(dimsch)),
+                                    sctx, pltcfg);
+    } else if (datatype == "SOMASparseNDArray") {
+        // for arrays n_children will be three as we have two dims and a data col
+        std::string datacoltype = sp->children[sp->n_children-1]->format;
+        tdbs::SOMASparseNDArray::create(uri, datacoltype,
+                                        std::pair(std::move(dimarr), std::move(dimsch)),
+                                        sctx, pltcfg);
+    } else if (datatype == "SOMADenseNDArray") {
+        // for arrays n_children will be three as we have two dims and a data col
+        std::string datacoltype = sp->children[sp->n_children-1]->format;
+        tdbs::SOMADenseNDArray::create(uri, datacoltype,
+                                       std::pair(std::move(dimarr), std::move(dimsch)),
+                                       sctx, pltcfg);
+    } else {
+        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
+    }
+
 }
 
 
