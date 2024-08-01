@@ -136,7 +136,7 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: Optional[str] = None,
         var_field_name: Optional[str] = None,
     ) -> Self:
-        """Factory method to compute an label-to-SOMA-join-ID mappings for a single input file in
+        """Factory method to compute the label-to-SOMA-join-ID mappings for a single input file in
         isolation. This is used when a user is ingesting a single AnnData/H5AD to a single SOMA
         experiment, not in append mode, but allowing us to still have the bulk of the ingestor code
         to be non-duplicated between non-append mode and append mode.

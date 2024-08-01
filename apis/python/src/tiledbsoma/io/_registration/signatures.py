@@ -56,7 +56,7 @@ def _string_dict_from_pandas_dataframe(
     default_index_name: str,
 ) -> Dict[str, str]:
     """
-    Here we provide compatiblity with the ingestor.
+    Here we provide compatibility with the ingestor.
 
     SOMA experiments are indexed by int64 soma_joinid and this is SOMA-only.
 
