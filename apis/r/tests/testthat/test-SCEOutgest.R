@@ -196,6 +196,63 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_error(query$to_single_cell_experiment(obsm_layers = FALSE, obsp_layers = 'tomato'))
 })
 
+test_that("Load SCE object with dropped levels", {
+  skip_if(!extended_tests() || covr_tests())
+  skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
+  uri <- tempfile(pattern="sce-experiment-query-drop")
+
+  n_obs <- 20L
+  n_var <- 10L
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c('counts', 'logcounts'),
+    factors = TRUE,
+    mode = 'READ'
+  )
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  # Create the query
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(coords = seq.int(to = floor(n_obs / 3))),
+    var_query = SOMAAxisQuery$new(coords = seq.int(to = floor(n_var / 3)))
+  )
+
+  # Expect both levels to be present in `grp`, even though only one value is
+  expect_s4_class(sce <- query$to_single_cell_experiment(), "SingleCellExperiment")
+  expect_in("grp", names(SingleCellExperiment::colData(sce)))
+  expect_s3_class(obs <- SingleCellExperiment::colData(sce)$grp, "factor")
+  expect_identical(levels(obs), c("lvl1", "lvl2"))
+  expect_identical(unique(as.vector(obs)), "lvl1")
+  expect_in("grp", names(SingleCellExperiment::rowData(sce)))
+  expect_s3_class(var <- SingleCellExperiment::rowData(sce)$grp, "factor")
+  expect_identical(levels(var), c("lvl1", "lvl2"))
+  expect_identical(unique(as.vector(var)), "lvl1")
+
+  # Do the same, but drop levels
+  expect_s4_class(
+    dropped <- query$to_single_cell_experiment(drop_levels = TRUE),
+    "SingleCellExperiment"
+  )
+  expect_in("grp", names(SingleCellExperiment::colData(dropped)))
+  expect_s3_class(obsd <- SingleCellExperiment::colData(dropped)$grp, "factor")
+  expect_identical(levels(obsd), "lvl1")
+  expect_identical(unique(as.vector(obsd)), "lvl1")
+  expect_in("grp", names(SingleCellExperiment::rowData(dropped)))
+  expect_s3_class(vard <- SingleCellExperiment::rowData(dropped)$grp, "factor")
+  expect_identical(levels(vard), "lvl1")
+  expect_identical(unique(as.vector(vard)), "lvl1")
+
+  # Test assertions
+  expect_error(query$to_single_cell_experiment(drop_levels = NA))
+  expect_error(query$to_single_cell_experiment(drop_levels = 1L))
+  expect_error(query$to_single_cell_experiment(drop_levels = 'drop'))
+  expect_error(query$to_single_cell_experiment(drop_levels = c(TRUE, TRUE)))
+})
+
 test_that("Load SCE object from sliced ExperimentQuery", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
