@@ -359,7 +359,8 @@ class QueryConditionTree(ast.NodeVisitor):
             val = val_node.value
         else:
             raise SOMAError(
-                f"Incorrect type for comparison value: {ast.dump(val_node)}"
+                f"Incorrect type for comparison value: {ast.dump(val_node)}: right-hand sides must be constant"
+                " expressions, not variables -- did you mean to double-quote the right-hand side?"
             )
 
         return val
