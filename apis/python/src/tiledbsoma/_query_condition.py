@@ -425,7 +425,12 @@ class QueryConditionTree(ast.NodeVisitor):
         result = self.visit(node.left)
         rhs = node.right[1:] if isinstance(node.right, list) else [node.right]
         for value in rhs:
-            result = result.combine(self.visit(value), op)
+            visited = self.visit(value)
+            if not isinstance(result, clib.PyQueryCondition):
+                raise Exception(
+                    f"Unable to parse right-hand side {ast.dump(node)} -- did you mean to double-quote it?"
+                )
+            result = result.combine(visited, op)
 
         return result
 
