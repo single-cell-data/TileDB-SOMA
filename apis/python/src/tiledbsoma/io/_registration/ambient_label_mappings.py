@@ -105,8 +105,6 @@ class ExperimentAmbientLabelMapping:
         adata: ad.AnnData,
         *,
         measurement_name: str = "RNA",
-        obs_field_name: str = "obs_id",
-        var_field_name: str = "var_id",
     ) -> ExperimentIDMapping:
         """
         Given label-to-SOMA-join-ID mappings for all to-be-appended input files, this selects
