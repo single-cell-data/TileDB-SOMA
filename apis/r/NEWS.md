@@ -3,6 +3,7 @@
 ## Changes
 
 * Change `$reopen(mode = )` default to not flip modes; require explicit `mode` parameter to be passed
+* Add `drop_levels` to `SOMAExperimentAxisQuery` -> ecosystem outgestors to drop unused factor levels
 
 # tiledbsoma 1.11.4
 
