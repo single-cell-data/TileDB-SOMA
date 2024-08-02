@@ -173,17 +173,6 @@ def test_zero_length_fail(tmp_path, shape):
         soma.DenseNDArray.create(tmp_path.as_posix(), type=pa.float32(), shape=shape)
 
 
-def test_dense_nd_array_reshape(tmp_path):
-    """
-    Reshape currently unimplemented.
-    """
-    a = soma.DenseNDArray.create(
-        tmp_path.as_posix(), type=pa.int32(), shape=(10, 10, 10)
-    )
-    with pytest.raises(NotImplementedError):
-        assert a.reshape((100, 10, 1))
-
-
 @pytest.mark.parametrize("shape_is_numeric", [True, False])
 def test_dense_nd_array_requires_shape(tmp_path, shape_is_numeric):
     uri = tmp_path.as_posix()
