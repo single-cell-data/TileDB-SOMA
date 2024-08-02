@@ -19,8 +19,8 @@ module = "tiledbsoma._query_condition"
 ignore_errors = true
 
 [tool.ruff]
-lint.ignore = ["E501"]
-lint.extend-select = ["I001"]
+lint.ignore = ["E501"]  # line too long
+lint.extend-select = ["I001"]  # unsorted-imports
 fix = true
 exclude = ["*.cc"]
 target-version = "py38"
