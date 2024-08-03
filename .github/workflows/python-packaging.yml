@@ -47,7 +47,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [ '38', '39', '310', '311' ]
+        python-version: [ '38', '39', '310', '311', '312' ]
         cibw_build: [ manylinux_x86_64, macosx_x86_64, macosx_arm64 ]
         include:
           - cibw_build: manylinux_x86_64
