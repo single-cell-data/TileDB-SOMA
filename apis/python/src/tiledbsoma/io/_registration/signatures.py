@@ -267,7 +267,12 @@ class Signature:
         See ``from_anndata``.
         """
         with read_h5ad(h5ad_file_name, mode="r") as adata:
-            return cls.from_anndata(adata, default_X_layer_name=default_X_layer_name)
+            return cls.from_anndata(
+                adata,
+                default_X_layer_name=default_X_layer_name,
+                default_obs_field_name=default_obs_field_name,
+                default_var_field_name=default_var_field_name,
+            )
 
     @classmethod
     def from_soma_experiment(
