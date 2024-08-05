@@ -286,7 +286,10 @@ test_that("Resume-mode sparse arrays", {
     expected.label = "knex"
   )
   bbox <- tryCatch(
-    as.integer(ssac$used_shape(simplify = TRUE, index1 = TRUE)),
+    as.integer(suppressWarnings(
+      ssac$used_shape(simplify = TRUE, index1 = TRUE),
+      classes = "deprecatedWarning"
+    )),
     error = function(...) NULL
   )
   if (!is.null(bbox)) {
