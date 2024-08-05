@@ -13,9 +13,11 @@ import pandas as pd
 import pytest
 
 import tiledbsoma.io
-import tiledbsoma.io._registration as registration
 from tiledbsoma._util import verify_obs_and_var_eq
+from tiledbsoma.io import ExperimentAmbientLabelMapping
 from tiledbsoma.io._registration import (
+    AxisAmbientLabelMapping,
+    AxisIDMapping,
     signatures,
 )
 
@@ -264,10 +266,10 @@ def test_pandas_indexing(
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_axis_mappings(obs_field_name, var_field_name):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
-    mapping = registration.AxisIDMapping.identity(10)
+    mapping = AxisIDMapping.identity(10)
     assert mapping.data == tuple(range(10))
 
-    dictionary = registration.AxisAmbientLabelMapping(
+    dictionary = AxisAmbientLabelMapping(
         data={"a": 10, "b": 20, "c": 30},
         field_name=obs_field_name,
     )
@@ -275,7 +277,7 @@ def test_axis_mappings(obs_field_name, var_field_name):
     assert dictionary.id_mapping_from_values(["c", "a"]).data == (30, 10)
     assert dictionary.id_mapping_from_values([]).data == ()
 
-    d = registration.AxisAmbientLabelMapping.from_isolated_dataframe(
+    d = AxisAmbientLabelMapping.from_isolated_dataframe(
         anndata1.obs,
         index_field_name=obs_field_name,
     )
@@ -289,7 +291,7 @@ def test_axis_mappings(obs_field_name, var_field_name):
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_isolated_anndata_mappings(obs_field_name, var_field_name):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
-    rd = registration.ExperimentAmbientLabelMapping.from_isolated_anndata(
+    rd = ExperimentAmbientLabelMapping.from_isolated_anndata(
         anndata1, measurement_name="measname"
     )
     assert rd.obs_axis.id_mapping_from_values([]).data == ()
@@ -307,7 +309,7 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
     h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name)
-    rd = registration.ExperimentAmbientLabelMapping.from_isolated_h5ad(
+    rd = ExperimentAmbientLabelMapping.from_isolated_h5ad(
         h5ad1,
         measurement_name="measname",
     )
@@ -326,7 +328,7 @@ def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
-    rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
+    rd = ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
         soma1, obs_field_name=obs_field_name, var_field_name=var_field_name
     )
     assert rd.obs_axis.id_mapping_from_values([]).data == ()
@@ -367,7 +369,7 @@ def test_multiples_without_experiment(
             measurement_name="measname",
             ingest_mode="write",
         )
-        rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+        rd = ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
             experiment_uri=experiment_uri,
             h5ad_file_names=h5ad_file_names,
             measurement_name="measname",
@@ -377,7 +379,7 @@ def test_multiples_without_experiment(
 
     else:
         # "Append" all the H5ADs where no experiment exists yet.
-        rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+        rd = ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
             experiment_uri=None,
             h5ad_file_names=h5ad_file_names,
             measurement_name="measname",
@@ -625,7 +627,7 @@ def test_multiples_with_experiment(obs_field_name, var_field_name):
     h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name)
     h5ad4 = create_h5ad_canned(4, obs_field_name, var_field_name)
 
-    rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+    rd = ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
         experiment_uri=soma1,
         h5ad_file_names=[h5ad2, h5ad3, h5ad4],
         measurement_name="measname",
@@ -685,7 +687,7 @@ def test_multiples_with_experiment(obs_field_name, var_field_name):
 def test_append_items_with_experiment(obs_field_name, var_field_name):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
     h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
-    rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+    rd = ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
         experiment_uri=soma1,
         h5ad_file_names=[h5ad2],
         measurement_name="measname",
@@ -1047,7 +1049,7 @@ def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer
         if use_small_buffer:
             assert nbatch > 1
 
-    rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
+    rd = ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
         soma_larger,
         context=context,
         obs_field_name="cell_id",
@@ -1062,7 +1064,7 @@ def test_ealm_expose():
     # All we want to check is that the import doesn't throw. Job done. Period.
     # However, the pre-commit hook will strip out this import statement as "unused".
     # So, assert something.
-    assert tiledbsoma.io.ExperimentAmbientLabelMapping is not None
+    assert ExperimentAmbientLabelMapping is not None
 
 
 def test_append_registration_with_nonexistent_storage(tmp_path):
