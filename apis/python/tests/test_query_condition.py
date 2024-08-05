@@ -226,18 +226,31 @@ def test_eval_error_conditions(malformed_condition):
 
 
 @pytest.mark.parametrize(
-    "text_and_exception",
+    "expression_and_message",
     [
-        ["louvain == leukocyte", SOMAError],
-        ["louvain == leuko-cyte", SOMAError],  # minus sign looks like an operator
+        ["foo is True", "the `is` operator is not supported"],
+        ["foo is not True", "the `is not` operator is not supported"],
+        [
+            "foo &&& bar",
+            "Could not parse the given QueryCondition statement: foo &&& bar",
+        ],
+        [
+            "louvain == leukocyte",
+            "Incorrect type for comparison value.* right-hand sides must be constant expressions, not variables",
+        ],
+        # Minus sign looks like an operator to the Python parser:
+        [
+            "louvain == leuko-cyte",
+            "Unable to parse expression component.* did you mean to quote it as a string",
+        ],
     ],
 )
-def test_query_condition_syntax_handling(text_and_exception):
+def test_query_condition_syntax_handling(expression_and_message):
     uri = os.path.join(SOMA_URI, "obs")
-    text, exception = text_and_exception
+    expression, message = expression_and_message
     with DataFrame.open(uri) as obs:
-        with pytest.raises(exception):
-            obs.read(value_filter=text).concat()
+        with pytest.raises(SOMAError, match=message):
+            obs.read(value_filter=expression).concat()
 
 
 if __name__ == "__main__":
