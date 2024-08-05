@@ -4,7 +4,7 @@ SOMAExperimentAxisQuery allows easy selection and extraction of data from a
 single SOMAMeasurement in a SOMAExperiment, by obs/var (axis)
 coordinates and/or value filter. The primary use for this class is slicing
 SOMAExperiment X layers by obs or var value and/or coordinates.
-(lifecycle: experimental)
+(lifecycle: maturing)
 X Layer Support
 
 
@@ -26,7 +26,7 @@ SOMAExperimentAxisQuery allows easy selection and extraction of data from a
 single SOMAMeasurement in a SOMAExperiment, by obs/var (axis)
 coordinates and/or value filter. The primary use for this class is slicing
 SOMAExperiment X layers by obs or var value and/or coordinates.
-(lifecycle: experimental)
+(lifecycle: maturing)
 X Layer Support
 
 
@@ -51,7 +51,7 @@ this in the class.
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.12.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.12.99.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,7 @@ this in the class.
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1><code>SOMAExperiment</code> Axis Query</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.12.3/R/SOMAExperimentAxisQuery.R" class="external-link"><code>R/SOMAExperimentAxisQuery.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.13.0rc0/R/SOMAExperimentAxisQuery.R" class="external-link"><code>R/SOMAExperimentAxisQuery.R</code></a></small>
       <div class="d-none name"><code>SOMAExperimentAxisQuery.Rd</code></div>
     </div>
 
@@ -93,7 +93,7 @@ this in the class.
 single <code><a href="SOMAMeasurement.html">SOMAMeasurement</a></code> in a <code><a href="SOMAExperiment.html">SOMAExperiment</a></code>, by <code>obs</code>/<code>var</code> (axis)
 coordinates and/or value filter. The primary use for this class is slicing
 <code><a href="SOMAExperiment.html">SOMAExperiment</a></code> <code>X</code> layers by <code>obs</code> or <code>var</code> value and/or coordinates.
-(lifecycle: experimental)</p><div class="section">
+(lifecycle: maturing)</p><div class="section">
 <h3 id="x-layer-support">X Layer Support<a class="anchor" aria-label="anchor" href="#x-layer-support"></a></h3>
 
 
@@ -429,7 +429,8 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 <span>  var_column_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  obsm_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  varm_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  obsp_layers <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  obsp_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop_levels <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -470,6 +471,10 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 <dd><p>Names of arrays in <code>obsp</code> to load in as <code><a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a>s</code>; by default, loads all graphs</p></dd>
 
 
+<dt><code>drop_levels</code></dt>
+<dd><p>Drop unused levels from <code>obs</code> and <code>var</code> factor columns</p></dd>
+
+
 </dl><p></p></div>
 </div>
 <div class="section">
@@ -485,7 +490,8 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 <span>  X_layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="st">"counts"</span>, data <span class="op">=</span> <span class="st">"logcounts"</span><span class="op">)</span>,</span>
 <span>  obs_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  var_index <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  var_column_names <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  var_column_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop_levels <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -508,6 +514,10 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 
 <dt><code>var_column_names</code></dt>
 <dd><p>Names of columns in <code>var</code> to add as feature-level meta data; by default, loads all columns</p></dd>
+
+
+<dt><code>drop_levels</code></dt>
+<dd><p>Drop unused levels from <code>var</code> factor columns</p></dd>
 
 
 </dl><p></p></div>
@@ -595,7 +605,8 @@ from <code>obsm_layer</code></p></dd>
 <span>  var_column_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  obsm_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  obsp_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  varp_layers <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  varp_layers <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  drop_levels <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -631,6 +642,10 @@ from <code>obsm_layer</code></p></dd>
 
 <dt><code>varp_layers</code></dt>
 <dd><p>Names of arrays in <code>varp</code> to load in as <code>SelfHits</code>; by default, loads all networks</p></dd>
+
+
+<dt><code>drop_levels</code></dt>
+<dd><p>Drop unused levels from <code>obs</code> and <code>var</code> factor columns</p></dd>
 
 
 </dl><p></p></div>

@@ -14,7 +14,7 @@ more dimensions.
 The default "fill" value for SOMADenseNDArray is the zero or null value of
 the array type (e.g., Arrow.float32 defaults to 0.0).
 The write method is currently limited to writing from 2-d matrices.
-(lifecycle: experimental)'><meta property="og:description" content='SOMADenseNDArray is a dense, N-dimensional array of primitive type, with
+(lifecycle: maturing)'><meta property="og:description" content='SOMADenseNDArray is a dense, N-dimensional array of primitive type, with
 offset (zero-based) int64 integer indexing on each dimension with domain
 [0, maxInt64). The SOMADenseNDArray has a user-defined schema, which
 includes:
@@ -29,7 +29,7 @@ more dimensions.
 The default "fill" value for SOMADenseNDArray is the zero or null value of
 the array type (e.g., Arrow.float32 defaults to 0.0).
 The write method is currently limited to writing from 2-d matrices.
-(lifecycle: experimental)'></head><body>
+(lifecycle: maturing)'></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -37,7 +37,7 @@ The write method is currently limited to writing from 2-d matrices.
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.12.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.12.99.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,7 +69,7 @@ The write method is currently limited to writing from 2-d matrices.
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMADenseNDArray</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.12.3/R/SOMADenseNDArray.R" class="external-link"><code>R/SOMADenseNDArray.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.13.0rc0/R/SOMADenseNDArray.R" class="external-link"><code>R/SOMADenseNDArray.R</code></a></small>
       <div class="d-none name"><code>SOMADenseNDArray.Rd</code></div>
     </div>
 
@@ -86,7 +86,7 @@ more dimensions.</p>
 <p>The default "fill" value for <code>SOMADenseNDArray</code> is the zero or null value of
 the array type (e.g., Arrow.float32 defaults to 0.0).</p>
 <p>The <code>write</code> method is currently limited to writing from 2-d matrices.
-(lifecycle: experimental)</p>
+(lifecycle: maturing)</p>
     </div>
 
 
@@ -130,9 +130,10 @@ the array type (e.g., Arrow.float32 defaults to 0.0).</p>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href="TileDBArray.html#method-tiledb_schema"><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="used_shape"><a href="TileDBArray.html#method-used_shape"><code>tiledbsoma::TileDBArray$used_shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="create"><a href="SOMANDArrayBase.html#method-create"><code>tiledbsoma::SOMANDArrayBase$create()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="set_data_type"><a href="SOMANDArrayBase.html#method-set_data_type"><code>tiledbsoma::SOMANDArrayBase$set_data_type()</code></a></span></li>
 </ul></details></p><hr><a id="method-SOMADenseNDArray-read_arrow_table"></a><div class="section">
 <h3 id="method-read-arrow-table-">Method <code>read_arrow_table()</code><a class="anchor" aria-label="anchor" href="#method-read-arrow-table-"></a></h3>
-<p>Read as an 'arrow::Table' (lifecycle: experimental)</p><div class="section">
+<p>Read as an 'arrow::Table' (lifecycle: maturing)</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADenseNDArray</span><span class="op">$</span><span class="fu">read_arrow_table</span><span class="op">(</span></span>
 <span>  coords <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -172,7 +173,7 @@ read. List elements can be named when specifying a subset of dimensions.</p></dd
 
 </div><p></p><hr><a id="method-SOMADenseNDArray-read_dense_matrix"></a><div class="section">
 <h3 id="method-read-dense-matrix-">Method <code>read_dense_matrix()</code><a class="anchor" aria-label="anchor" href="#method-read-dense-matrix-"></a></h3>
-<p>Read as a dense matrix (lifecycle: experimental)</p><div class="section">
+<p>Read as a dense matrix (lifecycle: maturing)</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADenseNDArray</span><span class="op">$</span><span class="fu">read_dense_matrix</span><span class="op">(</span></span>
 <span>  coords <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -212,7 +213,7 @@ read. List elements can be named when specifying a subset of dimensions.</p></dd
 
 </div><p></p><hr><a id="method-SOMADenseNDArray-write"></a><div class="section">
 <h3 id="method-write-">Method <code><a href="https://rdrr.io/r/base/write.html" class="external-link">write()</a></code><a class="anchor" aria-label="anchor" href="#method-write-"></a></h3>
-<p>Write matrix data to the array. (lifecycle: experimental)</p>
+<p>Write matrix data to the array. (lifecycle: maturing)</p>
 <p>More general write methods for higher-dimensional array could be added.</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADenseNDArray</span><span class="op">$</span><span class="fu">write</span><span class="op">(</span><span class="va">values</span>, coords <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
