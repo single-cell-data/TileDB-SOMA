@@ -191,3 +191,7 @@ tiledb_datatype_max_value <- function(datatype) {
     .Call(`_tiledbsoma_tiledb_datatype_max_value`, datatype)
 }
 
+get_soma_object_type <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_get_soma_object_type`, uri, ctxxp)
+}
+
