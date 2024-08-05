@@ -439,6 +439,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         """
         Retrieve the range of indexes for a dimension that were explicitly written.
         Compare this to ``shape`` which returns the available/writable capacity.
+
+        This method is deprecated as of TileDB-SOMA 1.13, and will be removed in TileDB-SOMA 1.14.
         """
         retval = []
         for i in itertools.count():
