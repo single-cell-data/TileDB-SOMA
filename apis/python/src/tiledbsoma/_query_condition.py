@@ -359,7 +359,8 @@ class QueryConditionTree(ast.NodeVisitor):
             val = val_node.value
         else:
             raise SOMAError(
-                f"Incorrect type for comparison value: {ast.dump(val_node)}"
+                f"Incorrect type for comparison value: {ast.dump(val_node)}: right-hand sides must be constant"
+                " expressions, not variables -- did you mean to quote the right-hand side as a string?"
             )
 
         return val
@@ -424,7 +425,12 @@ class QueryConditionTree(ast.NodeVisitor):
         result = self.visit(node.left)
         rhs = node.right[1:] if isinstance(node.right, list) else [node.right]
         for value in rhs:
-            result = result.combine(self.visit(value), op)
+            visited = self.visit(value)
+            if not isinstance(result, clib.PyQueryCondition):
+                raise Exception(
+                    f"Unable to parse expression component {ast.dump(node)} -- did you mean to quote it as a string?"
+                )
+            result = result.combine(visited, op)
 
         return result
 

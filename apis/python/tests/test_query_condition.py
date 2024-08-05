@@ -5,6 +5,7 @@ import os
 import pytest
 
 import tiledbsoma.pytiledbsoma as clib
+from tiledbsoma import DataFrame
 from tiledbsoma._exception import SOMAError
 from tiledbsoma._query_condition import QueryCondition
 
@@ -222,6 +223,21 @@ def test_eval_error_conditions(malformed_condition):
         # test function directly for codecov
         qc.init_query_condition(sr.schema, [])
         qc.init_query_condition(sr.schema, ["bad_query_attr"])
+
+
+@pytest.mark.parametrize(
+    "text_and_exception",
+    [
+        ["louvain == leukocyte", SOMAError],
+        ["louvain == leuko-cyte", SOMAError],  # minus sign looks like an operator
+    ],
+)
+def test_query_condition_syntax_handling(text_and_exception):
+    uri = os.path.join(SOMA_URI, "obs")
+    text, exception = text_and_exception
+    with DataFrame.open(uri) as obs:
+        with pytest.raises(exception):
+            obs.read(value_filter=text).concat()
 
 
 if __name__ == "__main__":
