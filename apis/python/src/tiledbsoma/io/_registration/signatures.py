@@ -309,7 +309,6 @@ class Signature:
                 raw_X_dtype = str(X.schema.field("soma_data").type)
 
             obsm_dtypes: Dict[str, str] = {}
-            obsm_dtypes = {}
             if "obsm" in exp.ms[measurement_name]:
                 for obsm_layer_name in exp.ms[measurement_name].obsm.keys():
                     obsm = exp.ms[measurement_name].obsm[obsm_layer_name]
