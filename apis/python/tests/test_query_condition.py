@@ -228,11 +228,6 @@ def test_eval_error_conditions(malformed_condition):
 @pytest.mark.parametrize(
     "expression_and_message",
     [
-        # ["foo is True", SOMAError],
-        # ["foo is not True", SOMAError],
-        # ["foo &&& bar", SOMAError],
-        # ["louvain == leukocyte", SOMAError],
-        # ["louvain == leuko-cyte", SOMAError],  # minus sign looks like an operator
         ["foo is True", "the `is` operator is not supported"],
         ["foo is not True", "the `is not` operator is not supported"],
         [
