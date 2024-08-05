@@ -231,6 +231,8 @@ def test_eval_error_conditions(malformed_condition):
         ["foo is True", SOMAError],
         ["foo is not True", SOMAError],
         ["foo &&& bar", SOMAError],
+        ["louvain == leukocyte", SOMAError],
+        ["louvain == leuko-cyte", SOMAError],  # minus sign looks like an operator
     ],
 )
 def test_query_condition_syntax_handling(text_and_exception):
