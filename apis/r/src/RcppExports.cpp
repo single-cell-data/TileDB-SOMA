@@ -329,6 +329,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_tiledb_object_type
+std::string get_tiledb_object_type(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_get_tiledb_object_type(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_tiledb_object_type(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_createSOMAContext", (DL_FUNC) &_tiledbsoma_createSOMAContext, 1},
@@ -358,6 +370,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_tiledb_embedded_version", (DL_FUNC) &_tiledbsoma_tiledb_embedded_version, 0},
     {"_tiledbsoma_tiledb_datatype_max_value", (DL_FUNC) &_tiledbsoma_tiledb_datatype_max_value, 1},
     {"_tiledbsoma_get_soma_object_type", (DL_FUNC) &_tiledbsoma_get_soma_object_type, 2},
+    {"_tiledbsoma_get_tiledb_object_type", (DL_FUNC) &_tiledbsoma_get_tiledb_object_type, 2},
     {NULL, NULL, 0}
 };
 

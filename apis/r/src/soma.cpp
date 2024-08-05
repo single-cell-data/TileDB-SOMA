@@ -18,16 +18,35 @@ std::string get_soma_object_type(const std::string& uri, Rcpp::XPtr<somactx_wrap
     // shared pointer to TileDB Context from SOMAContext
     std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
 
-    auto tiledb_type = tdbs::Object::object(*ctx, uri).type();
-    switch (tiledb_type) {
+    auto soup = tdbs::SOMAObject::open(uri, OpenMode::read, sctx);
+    auto tpstr = soup->type();
+    if (!tpstr.has_value()) {
+        Rcpp::stop("No object type value for URI '%s'", uri);
+    }
+    return tpstr.value();
+}
+
+// [[Rcpp::export]]
+std::string get_tiledb_object_type(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    // shared pointer to SOMAContext from external pointer wrapper
+    std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
+    // shared pointer to TileDB Context from SOMAContext
+    std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
+
+    auto objtype = tiledb::Object::object(*ctx, uri).type();
+    switch (objtype) {
         case tdbs::Object::Type::Array:
-            return std::string("SOMAArray");
+            return std::string("ARRAY");
             break;
         case tdbs::Object::Type::Group:
-            return std::string("SOMAGroup");
+            return std::string("GROUP");
+            break;
+        case tdbs::Object::Type::Invalid:
+            return std::string("INVALID");
             break;
         default:
-            Rcpp::stop("Inadmissable object type for URI '%s'", uri);
+            Rcpp::stop("Inadmissable object type ('%d') for URI '%s'", (int)objtype, uri);
             break;
     }
+    Rcpp::stop("No object type value for URI '%s'", uri);
 }

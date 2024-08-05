@@ -381,7 +381,7 @@ test_that("write_soma.character scalar", {
   expect_length(unlist(strsplit(sdf.cars, ",")), nrow(mtcars))
 })
 
-test_that("get_soma_object_type", {
+test_that("get_{some,tiledb}_object_type", {
     suppressMessages({
         library(SeuratObject)
         library(tiledbsoma)
@@ -392,14 +392,28 @@ test_that("get_soma_object_type", {
     uri <- tempfile()
     expect_equal(write_soma(pbmc_small, uri = uri), uri)  # uri return is success
 
+    # SOMA
+    expect_equal(tiledbsoma:::get_soma_object_type(uri, soma_context()), "SOMAExperiment")
+    expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, "ms/RNA"), soma_context()), "SOMAMeasurement")
+    coll <- c("ms", "ms/RNA/obsm", "ms/RNA/obsp/", "ms/RNA/varm")
+    for (co in coll) {
+        expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, co), soma_context()), "SOMACollection")
+    }
+    expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, "ms/RNA/var"), soma_context()), "SOMADataFrame")
+    sparr <- c("ms/RNA/obsm/X_pca", "ms/RNA/obsm/X_tsne", "ms/RNA/obsp/RNA_snn")
+    for (a in sparr) {
+        expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, a), soma_context()), "SOMASparseNDArray")
+    }
+    expect_error(tiledbsoma:::get_some_object_type("doesnotexit", soma_context()))
+
+    ## TileDB
     grps <- c("", "ms", "ms/RNA", "ms/RNA/obsm", "ms/RNA/obsp/", "ms/RNA/varm")
     for (g in grps) {
-        expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, g), soma_context()), "SOMAGroup")
+        expect_equal(tiledbsoma:::get_tiledb_object_type(file.path(uri, g), soma_context()), "GROUP")
     }
     arrs <- c("ms/RNA/obsm/X_pca", "ms/RNA/obsm/X_tsne", "ms/RNA/obsp/RNA_snn", "ms/RNA/var")
     for (a in arrs) {
-        expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, a), soma_context()), "SOMAArray")
+        expect_equal(tiledbsoma:::get_tiledb_object_type(file.path(uri, a), soma_context()), "ARRAY")
     }
-
-    expect_error(tiledbsoma:::get_soma_object_type("doesnotexit", soma_context()))
+    expect_equal(tiledbsoma:::get_tiledb_object_type("doesnotexit", soma_context()), "INVALID")
 })
