@@ -161,7 +161,7 @@ TileDBArray <- R6::R6Class(
         isTRUE(simplify) || isFALSE(simplify),
         isTRUE(index1) || isFALSE(index1)
       )
-      .Deprecated(new="shape", msg="used_shape will be removed in TileDB-SOMA 1.14")
+      .Deprecated(new="shape", msg="The 'used_shape' function will be removed in TileDB-SOMA 1.14.")
       dims <- self$dimnames()
       utilized <- vector(mode = 'list', length = length(dims))
       names(utilized) <- dims
