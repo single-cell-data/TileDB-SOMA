@@ -35,7 +35,7 @@ from PIL import Image
 from .. import (
     Axis,
     Collection,
-    CoordinateSystem,
+    CoordinateSpace,
     DataFrame,
     DenseNDArray,
     Experiment,
@@ -330,12 +330,7 @@ def _write_visium_data_to_experiment_uri(
     pixels_per_spot_radius = 0.5 * scale_factors["spot_diameter_fullres"]
 
     # Create axes and transformations
-    coordinate_system = CoordinateSystem(
-        (
-            Axis(axis_name="y", axis_type="space", axis_unit="micrometer"),
-            Axis(axis_name="x", axis_type="space", axis_unit="micrometer"),
-        )
-    )
+    coordinate_system = CoordinateSpace((Axis(name="y"), Axis(name="x")))
 
     with Experiment.open(uri, mode="r", context=context) as exp:
         obs_df = (

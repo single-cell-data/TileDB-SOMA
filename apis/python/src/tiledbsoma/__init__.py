@@ -146,12 +146,10 @@ import pyarrow_hotfix
 from ._collection import Collection
 from ._constants import SOMA_JOINID
 from ._coordinates import (
+    AffineCoordinateTransform,
     Axis,
-    CompositeTransform,
-    CoordinateSystem,
-    IdentityTransform,
-    ScaleTransform,
-    TranslateTransform,
+    CoordinateSpace,
+    IdentityCoordinateTransform,
 )
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
@@ -187,13 +185,13 @@ from .pytiledbsoma import (
 __version__ = get_implementation_version()
 
 __all__ = [
+    "AffineCoordinateTransform",
     "AlreadyExistsError",
     "Axis",
     "AxisColumnNames",
     "AxisQuery",
     "Collection",
-    "CoordinateSystem",
-    "CompositeTransform",
+    "CoordinateSpace",
     "DataFrame",
     "DenseNDArray",
     "DoesNotExistError",
@@ -204,14 +202,13 @@ __all__ = [
     "get_SOMA_version",
     "get_storage_engine",
     "IntIndexer",
-    "IdentityTransform",
     "Measurement",
     "NotCreateableError",
     "open",
+    "IdentityCoordinateTransform",
     "Image2DCollection",
     "PointCloud",
     "ResultOrder",
-    "ScaleTransform",
     "show_package_versions",
     "SOMA_JOINID",
     "SOMAError",
@@ -226,5 +223,4 @@ __all__ = [
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
     "tiledbsoma_stats_reset",
-    "TranslateTransform",
 ]
