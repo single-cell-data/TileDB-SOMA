@@ -416,7 +416,10 @@ test_that("SOMASparseNDArray bounding box", {
     }
   }
 
-  expect_type(bbox <- ndarray$used_shape(index1 = TRUE), 'list')
+  expect_type(
+    bbox <- suppressWarnings(ndarray$used_shape(index1 = TRUE), classes = "deprecatedWarning"),
+    'list'
+  )
   expect_length(bbox, length(dim(mat)))
   expect_equal(names(bbox), dnames)
   expect_true(all(vapply(bbox, length, integer(1L)) == 2L))
@@ -424,7 +427,10 @@ test_that("SOMASparseNDArray bounding box", {
     expect_equal(bbox[[i]], bit64::as.integer64(c(1L, dim(mat)[i])))
   }
 
-  expect_type(bbox0 <- ndarray$used_shape(index1 = FALSE), 'list')
+  expect_type(
+    bbox0 <- suppressWarnings(ndarray$used_shape(index1 = FALSE), classes = "deprecatedWarning"),
+    'list'
+  )
   expect_length(bbox0, length(dim(mat)))
   expect_equal(names(bbox0), dnames)
   expect_true(all(vapply(bbox0, length, integer(1L)) == 2L))
@@ -432,7 +438,10 @@ test_that("SOMASparseNDArray bounding box", {
     expect_equal(bbox0[[i]], bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
   }
 
-  expect_s3_class(bboxS <- ndarray$used_shape(simplify = TRUE), 'integer64')
+  expect_s3_class(
+    bboxS <- suppressWarnings(ndarray$used_shape(simplify = TRUE), classes = "deprecatedWarning"),
+    'integer64'
+  )
   expect_length(bboxS, length(dim(mat)))
   expect_equal(names(bboxS), dnames)
   for (i in seq_along(bboxS)) {
@@ -459,7 +468,7 @@ test_that("SOMASparseNDArray without bounding box", {
 
   expect_false(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
-  expect_error(ndarray$used_shape())
+  expect_error(suppressWarnings(ndarray$used_shape(), classes = "deprecatedWarning"))
 })
 
 test_that("SOMASparseNDArray with failed bounding box", {
@@ -489,7 +498,7 @@ test_that("SOMASparseNDArray with failed bounding box", {
 
   expect_false(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
-  expect_error(ndarray$used_shape())
+  expect_error(suppressWarnings(ndarray$used_shape(), classes = "deprecatedWarning"))
 })
 
 test_that("SOMASparseNDArray bounding box implicitly-stored values", {
@@ -521,7 +530,10 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
     }
   }
 
-  expect_type(bbox <- ndarray$used_shape(index1 = TRUE), 'list')
+  expect_type(
+    bbox <- suppressWarnings(ndarray$used_shape(index1 = TRUE), classes = "deprecatedWarning"),
+    'list'
+  )
   expect_length(bbox, length(dim(mat)))
   expect_equal(names(bbox), dnames)
   expect_true(all(vapply(bbox, length, integer(1L)) == 2L))
@@ -529,7 +541,10 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
     expect_equal(bbox[[i]], bit64::as.integer64(c(1L, dim(mat)[i])))
   }
 
-  expect_type(bbox0 <- ndarray$used_shape(index1 = FALSE), 'list')
+  expect_type(
+    bbox0 <- suppressWarnings(ndarray$used_shape(index1 = FALSE), classes = "deprecatedWarning"),
+    'list'
+  )
   expect_length(bbox0, length(dim(mat)))
   expect_equal(names(bbox0), dnames)
   expect_true(all(vapply(bbox0, length, integer(1L)) == 2L))
@@ -537,7 +552,10 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
     expect_equal(bbox0[[i]], bit64::as.integer64(c(0L, dim(mat)[i] - 1L)))
   }
 
-  expect_s3_class(bboxS <- ndarray$used_shape(simplify = TRUE), 'integer64')
+  expect_s3_class(
+    bboxS <- suppressWarnings(ndarray$used_shape(simplify = TRUE), classes = "deprecatedWarning"),
+    'integer64'
+  )
   expect_length(bboxS, length(dim(mat)))
   expect_equal(names(bboxS), dnames)
   for (i in seq_along(bboxS)) {
@@ -551,7 +569,12 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
     ranges[i] <- bit64::as.integer64(max(range(slot(mat, s))))
   }
   expect_equal(ndarray$non_empty_domain(), ranges)
-  expect_true(all(ndarray$non_empty_domain() < ndarray$used_shape(simplify = TRUE)))
+  expect_true(all(
+    ndarray$non_empty_domain() < suppressWarnings(
+      ndarray$used_shape(simplify = TRUE),
+      classes = "deprecatedWarning"
+    )
+  ))
 })
 
 test_that("Bounding box assertions", {
