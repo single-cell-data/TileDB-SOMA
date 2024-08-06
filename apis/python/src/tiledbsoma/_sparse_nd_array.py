@@ -9,7 +9,6 @@ Implementation of SOMA SparseNDArray.
 from __future__ import annotations
 
 import itertools
-import warnings
 from typing import (
     Dict,
     Optional,
@@ -34,7 +33,6 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
-from ._general_utilities import get_implementation_version
 from ._read_iters import (
     BlockwiseScipyReadIter,
     BlockwiseTableReadIter,
@@ -276,18 +274,12 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
-            version = get_implementation_version().split(".")
-            assert (int(version[0]), int(version[1])) < (1, 13)
-            warnings.warn(
-                "The write parameter now takes in TileDBWriteOptions "
-                "instead of TileDBCreateOptions. This warning will be removed "
-                "and error out when passing TileDBCreateOptions in 1.13.",
-                DeprecationWarning,
+            raise ValueError(
+                "As of TileDB-SOMA 1.13, the write method takes "
+                "TileDBWriteOptions instead of TileDBCreateOptions"
             )
-            write_options = TileDBCreateOptions.from_platform_config(platform_config)
-        else:
-            write_options = TileDBWriteOptions.from_platform_config(platform_config)
-            sort_coords = write_options.sort_coords
+        write_options = TileDBWriteOptions.from_platform_config(platform_config)
+        sort_coords = write_options.sort_coords
 
         clib_sparse_array = self._handle._handle
 
