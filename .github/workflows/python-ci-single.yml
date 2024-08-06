@@ -46,10 +46,13 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ~/.cache/pre-commit
-        key: pre-commit-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('.github/workflows/python-ci-single.yml') }}
+        key: pre-commit-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('.github/workflows/python-ci-single.yml', '.pre-commit-config.yaml') }}
+
+    - name: Install pre-commit
+      run: python -m pip -v install pre-commit
 
     - name: Run pre-commit hooks on all files
-      run: python -m pip -v install pre-commit && pre-commit run -a -v
+      run: pre-commit run -a -v
 
     # Skip files in apis/r/src which are:
     # * nanoarrow.c/h
