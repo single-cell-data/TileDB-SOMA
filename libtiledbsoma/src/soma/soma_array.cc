@@ -305,7 +305,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     return mq_->results();
 }
 
-Enumeration SOMAArray::_extend_enumeration(
+bool SOMAArray::_extend_enumeration(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
@@ -362,7 +362,7 @@ Enumeration SOMAArray::_extend_enumeration(
     }
 }
 
-Enumeration SOMAArray::_extend_and_evolve_schema_str(
+bool SOMAArray::_extend_and_evolve_schema_str(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
@@ -430,10 +430,9 @@ Enumeration SOMAArray::_extend_and_evolve_schema_str(
 
         index_schema->format = ArrowAdapter::to_arrow_format(disk_index_type)
                                    .data();
-
-        return extended_enmr;
+        return true;
     }
-    return enmr;
+    return false;
 }
 
 uint64_t SOMAArray::_get_max_capacity(tiledb_datatype_t index_type) {
@@ -729,6 +728,7 @@ ArrowTable SOMAArray::_cast_table(
     // Go through all columns in the ArrowTable and cast the values to what is
     // in the ArraySchema on disk
     ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+    bool evolve_schema = false;
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
         auto orig_arrow_sch_ = arrow_schema->children[i];
         auto orig_arrow_arr_ = arrow_array->children[i];
@@ -736,20 +736,23 @@ ArrowTable SOMAArray::_cast_table(
                                   ->children[i] = new ArrowSchema;
         auto new_arrow_arr_ = casted_arrow_array->children[i] = new ArrowArray;
 
-        SOMAArray::_create_and_cast_column(
+        bool enmr_extended = SOMAArray::_create_and_cast_column(
             orig_arrow_sch_,
             orig_arrow_arr_,
             new_arrow_sch_,
             new_arrow_arr_,
             se);
+        evolve_schema = evolve_schema || enmr_extended;
     }
-    se.array_evolve(uri_);
+    if (evolve_schema) {
+        se.array_evolve(uri_);
+    }
 
     return ArrowTable(
         std::move(casted_arrow_array), std::move(casted_arrow_schema));
 }
 
-void SOMAArray::_create_and_cast_column(
+bool SOMAArray::_create_and_cast_column(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
@@ -796,9 +799,10 @@ void SOMAArray::_create_and_cast_column(
                 "[SOMAArray] {} requires dictionary entry", column_name));
         }
 
-        auto extended_enmr = _extend_enumeration(
+        return _extend_enumeration(
             value_schema, value_array, index_schema, index_array, se);
     }
+    return false;
 }
 
 void SOMAArray::_create_column(
