@@ -78,7 +78,7 @@ jobs:
           echo matrix.platform: ${{ matrix.platform }}
           echo matrix.arch: ${{ matrix.arch }}
           # This bit is crucial since it's used to match up to a component of the wheel-file name
-          python -m pip install setuptools
+          pip install setuptools
           python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
           python -c 'import platform; print("platform.platform()", platform.platform())'
       - name: Build wheels

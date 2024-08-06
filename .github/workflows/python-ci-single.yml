@@ -49,10 +49,10 @@ jobs:
         key: pre-commit-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('.github/workflows/python-ci-single.yml', '.pre-commit-config.yaml') }}
 
     - name: Install pre-commit
-      run: python -m pip -v install pre-commit
+      run: pip -v install pre-commit
 
     - name: Log pip dependencies
-      run: python -m pip list
+      run: pip list
 
     - name: Run pre-commit hooks on all files
       run: pre-commit run -a -v
@@ -107,7 +107,7 @@ jobs:
 #        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
     - name: Install tiledbsoma
-      run: python -m pip -v install -e apis/python[dev] -C "--build-option=--no-tiledb-deprecated"
+      run: pip -v install -e apis/python[dev] -C "--build-option=--no-tiledb-deprecated"
       env:
         CC: ${{ inputs.cc }}
         CXX: ${{ inputs.cxx }}

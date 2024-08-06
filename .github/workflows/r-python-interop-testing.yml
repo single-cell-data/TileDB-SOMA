@@ -100,7 +100,7 @@ jobs:
           cache-dependency-path: ./apis/python/setup.py
 
       - name: Install tiledbsoma
-        run: python -m pip -v install -e apis/python[dev] -C "--build-option=--no-tiledb-deprecated"
+        run: pip -v install -e apis/python[dev] -C "--build-option=--no-tiledb-deprecated"
 
       - name: Show Python package versions
         run: |
