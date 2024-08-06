@@ -23,7 +23,7 @@ class AxisIDMapping:
     data: Tuple[int, ...]
 
     def is_identity(self) -> bool:
-        for i,data in enumerate(self.data):
+        for i, data in enumerate(self.data):
             if data != i:
                 return False
         return True
