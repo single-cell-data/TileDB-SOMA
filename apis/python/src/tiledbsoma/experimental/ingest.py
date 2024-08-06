@@ -577,9 +577,9 @@ def _write_visium_images(
         if image_path is None:
             continue
         with Image.open(image_path) as im:
-            im_data = pa.Tensor.from_numpy(np.transpose(np.array(im), (2, 0, 1)))
+            im_data = pa.Tensor.from_numpy(np.array(im))
         im_array = image_pyramid.add_new_level(
-            name, axes="CYX", type=pa.uint8(), shape=im_data.shape
+            name, axes="YXC", type=pa.uint8(), shape=im_data.shape
         )
         im_array.write(
             (slice(None), slice(None), slice(None)),
