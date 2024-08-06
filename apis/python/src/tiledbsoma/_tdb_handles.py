@@ -129,7 +129,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(f"{uri!r} does not exist") from tdbe
+                raise DoesNotExistError(tdbe) from tdbe
             raise
         return handle
 
@@ -150,7 +150,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(f"{handle.uri!r} does not exist") from tdbe
+                raise DoesNotExistError(tdbe) from tdbe
             raise
         return handle
 
