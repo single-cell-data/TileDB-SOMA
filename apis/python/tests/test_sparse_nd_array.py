@@ -1864,11 +1864,10 @@ def test_global_writes(tmp_path):
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
         assert A.read().tables().concat() == data
 
-    with pytest.warns(DeprecationWarning) as warning:
+    with pytest.raises(ValueError):
+        # Takes TileDBWriteOptions as of TileDB-SOMA 1.13
         with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
             A.write(
                 data,
                 platform_config=soma.TileDBCreateOptions(),
             )
-        assert "The write parameter now takes in TileDBWriteOptions instead "
-        "of TileDBCreateOptions" == warning[0].message
