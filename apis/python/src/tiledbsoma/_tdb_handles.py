@@ -23,6 +23,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 import attrs
@@ -295,6 +296,9 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
     @property
     def meta(self) -> "MetadataWrapper":
         return self.metadata
+
+    def members(self) -> Dict[str, Tuple[str, str]]:
+        return cast(Dict[str, Tuple[str, str]], self._handle.members())
 
 
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
