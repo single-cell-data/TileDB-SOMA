@@ -28,6 +28,7 @@ examples/obj/*
 scripts/deps-staging/*
 .idea
 *temp*
+**/tmp/*
 *.DS_Store
 doc/venv
 doc/source/__pycache__

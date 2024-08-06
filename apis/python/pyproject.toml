@@ -33,3 +33,8 @@ no-lines-before = ["tiledb"]
 [tool.ruff.lint.isort.sections]
 "tiledbsoma" = ["tiledbsoma"]
 "tiledb" = ["tiledb"]
+
+[tool.pytest.ini_options]
+markers = [
+    "ml: tests that use ML features and have PyTorch dependencies",
+]
