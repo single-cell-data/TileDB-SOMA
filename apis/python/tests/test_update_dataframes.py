@@ -277,7 +277,7 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
     #
     # One way:
     # * Create columns with non-nulls before from_anndata
-    # * Ingest, having those new column with non-nulls
+    # * Ingest, having those new columns with non-nulls
     # * Call update_obs to set the columns to have nulls
     #
     # Other way:
