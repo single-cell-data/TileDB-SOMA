@@ -137,6 +137,64 @@ test_that("Write Assay mechanics", {
   gc()
 })
 
+test_that("Write v5 in-memory Assay mechanics", {
+  skip_if(!extended_tests())
+  skip_if_not_installed('SeuratObject', minimum_version = '5.0.1')
+
+  uri <- withr::local_tempdir("write-v5-assay")
+  collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
+  rna <- get_data('pbmc_small', package = 'SeuratObject')[['RNA']]
+  rna <- as(rna, 'Assay5')
+  expect_no_condition(ms <- write_soma(rna, soma_parent = collection))
+  expect_s3_class(ms, 'SOMAMeasurement')
+  expect_true(ms$exists())
+  on.exit(ms$close(), add = TRUE, after = FALSE)
+
+  expect_identical(ms$uri, file.path(collection$uri, 'rna'))
+  expect_identical(ms$names(), c('X', 'var'))
+  expect_s3_class(ms$var, 'SOMADataFrame')
+  expect_identical(setdiff(ms$var$attrnames(), 'var_id'), names(rna[[]]))
+  expect_s3_class(ms$X, 'SOMACollection')
+  expect_identical(ms$X$names(), SeuratObject::Layers(rna))
+  fmat <- methods::slot(rna, name = 'features')
+  cmat <- methods::slot(rna, name = 'cells')
+  for (lyr in SeuratObject::Layers(rna)) {
+    idx <- which(cmat[, lyr])
+    jdx <- which(fmat[, lyr])
+    expect_equal(ms$X$get(lyr)$shape(), c(max(idx), max(jdx)), info = lyr)
+  }
+
+  # Test ragged arrays
+  mat <- SeuratObject::LayerData(rna, 'counts')
+  cells2 <- paste0(colnames(rna), '.2')
+  features2 <- paste0(rownames(rna), '.2')
+  layers <- list(
+    mat = mat,
+    cells2 = `colnames<-`(mat, cells2),
+    features2 = `rownames<-`(mat, features2),
+    c2f2 = `dimnames<-`(mat, list(features2, cells2))
+  )
+  expect_s4_class(rna2 <- SeuratObject::.CreateStdAssay(layers), "Assay5")
+  expect_identical(dim(rna2), dim(rna) * 2)
+
+  expect_no_condition(ms2 <- write_soma(rna2, uri = 'ragged-arrays', soma_parent = collection))
+  expect_s3_class(ms2, 'SOMAMeasurement')
+  expect_true(ms2$exists())
+  on.exit(ms2$close(), add = TRUE, after = FALSE)
+
+  expect_identical(ms2$uri, file.path(collection$uri, 'ragged-arrays'))
+  expect_identical(ms2$X$names(), SeuratObject::Layers(rna2))
+  fmat <- methods::slot(rna2, name = 'features')
+  cmat <- methods::slot(rna2, name = 'cells')
+  for (lyr in SeuratObject::Layers(rna2)) {
+    idx <- which(cmat[, lyr])
+    jdx <- which(fmat[, lyr])
+    expect_equal(ms2$X$get(lyr)$shape(), c(max(idx), max(jdx)), info = lyr)
+  }
+})
+
 test_that("Write DimReduc mechanics", {
   skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
