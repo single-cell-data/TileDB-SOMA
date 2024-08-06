@@ -1589,9 +1589,9 @@ def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
         data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
         sdf.write(pa.Table.from_pydict(data))
 
-    # total 4 fragment files
+    # total 3 fragment files
 
     vfs = tiledb.VFS()
     # subtract 1 for the __schema/__enumerations directory;
     # only looking at fragment files
-    assert len(vfs.ls(os.path.join(uri, "__schema"))) == 4
+    assert len(vfs.ls(os.path.join(uri, "__schema"))) - 1 == 3
