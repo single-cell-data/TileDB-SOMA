@@ -92,6 +92,7 @@ from ._common import (
     _UNS_OUTGEST_HINT_KEY,
     Matrix,
     SparseMatrix,
+    UnsMapping,
 )
 from ._registration import (
     AxisIDMapping,
@@ -386,9 +387,19 @@ def from_h5ad(
 
 
 class IngestCtx(TypedDict):
+    """Convenience type-alias for kwargs passed to ingest functions."""
+
     context: Optional[SOMATileDBContext]
     ingestion_params: IngestionParams
     additional_metadata: AdditionalMetadata
+
+
+class IngestPlatformCtx(IngestCtx):
+    """Convenience type-alias for kwargs passed to ingest functions.
+
+    Extends :class:`IngestCtx`, adds ``platform_config``."""
+
+    platform_config: Optional[PlatformConfig]
 
 
 # ----------------------------------------------------------------
@@ -486,6 +497,9 @@ def from_anndata(
         ingestion_params=ingestion_params,
         additional_metadata=additional_metadata,
     )
+    ingest_platform_ctx: IngestPlatformCtx = dict(
+        **ingest_ctx, platform_config=platform_config
+    )
 
     # Must be done first, to create the parent directory.
     experiment = _create_or_open_collection(Experiment, experiment_uri, **ingest_ctx)
@@ -497,9 +511,8 @@ def from_anndata(
         df_uri,
         conversions.decategoricalize_obs_or_var(anndata.obs),
         id_column_name=obs_id_name,
-        platform_config=platform_config,
         axis_mapping=jidmaps.obs_axis,
-        **ingest_ctx,
+        **ingest_platform_ctx,
     ) as obs:
         _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
@@ -537,10 +550,9 @@ def from_anndata(
             _maybe_ingest_uns(
                 measurement,
                 anndata.uns,
-                platform_config=platform_config,
                 use_relative_uri=use_relative_uri,
                 uns_keys=uns_keys,
-                **ingest_ctx,
+                **ingest_platform_ctx,
             )
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -549,10 +561,9 @@ def from_anndata(
                 _util.uri_joinpath(measurement_uri, "var"),
                 conversions.decategoricalize_obs_or_var(anndata.var),
                 id_column_name=var_id_name,
-                platform_config=platform_config,
                 # Layer existence is pre-checked in the registration phase
                 axis_mapping=jidmaps.var_axes[measurement_name],
-                **ingest_ctx,
+                **ingest_platform_ctx,
             ) as var:
                 _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
 
@@ -586,10 +597,9 @@ def from_anndata(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, X_layer_name),
                         anndata.X,
-                        platform_config=platform_config,
                         axis_0_mapping=jidmaps.obs_axis,
                         axis_1_mapping=jidmaps.var_axes[measurement_name],
-                        **ingest_ctx,
+                        **ingest_platform_ctx,
                     ) as data:
                         _maybe_set(
                             x, X_layer_name, data, use_relative_uri=use_relative_uri
@@ -600,10 +610,9 @@ def from_anndata(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, layer_name),
                         layer,
-                        platform_config=platform_config,
                         axis_0_mapping=jidmaps.obs_axis,
                         axis_1_mapping=jidmaps.var_axes[measurement_name],
-                        **ingest_ctx,
+                        **ingest_platform_ctx,
                     ) as layer_data:
                         _maybe_set(
                             x, layer_name, layer_data, use_relative_uri=use_relative_uri
@@ -647,10 +656,9 @@ def from_anndata(
                                     conversions.to_tiledb_supported_array_type(
                                         key, val
                                     ),
-                                    platform_config=platform_config,
                                     axis_0_mapping=axis_0_mapping,
                                     axis_1_mapping=_axis_1_mapping,
-                                    **ingest_ctx,
+                                    **ingest_platform_ctx,
                                 ) as arr:
                                     _maybe_set(
                                         coll,
@@ -688,9 +696,8 @@ def from_anndata(
                             _util.uri_joinpath(raw_uri, "var"),
                             conversions.decategoricalize_obs_or_var(anndata.raw.var),
                             id_column_name=var_id_name,
-                            platform_config=platform_config,
                             axis_mapping=jidmaps.var_axes["raw"],
-                            **ingest_ctx,
+                            **ingest_platform_ctx,
                         ) as var:
                             _maybe_set(
                                 raw_measurement,
@@ -716,10 +723,9 @@ def from_anndata(
                                 SparseNDArray,
                                 _util.uri_joinpath(raw_X_uri, raw_X_layer_name),
                                 anndata.raw.X,
-                                platform_config=platform_config,
                                 axis_0_mapping=jidmaps.obs_axis,
                                 axis_1_mapping=jidmaps.var_axes["raw"],
-                                **ingest_ctx,
+                                **ingest_platform_ctx,
                             ) as rm_x_data:
                                 _maybe_set(
                                     rm_x,
@@ -1058,7 +1064,6 @@ def _create_or_open_coll(
 def _extract_new_values_for_append(
     df_uri: str,
     arrow_table: pa.Table,
-    id_column_name: str,
     context: Optional[SOMATileDBContext] = None,
 ) -> pa.Table:
     """
@@ -1201,9 +1206,7 @@ def _write_dataframe_impl(
             # Nominally, nil id_column_name only happens for uns append and we do not append uns,
             # which is a concern for our caller. This is a second-level check.
             raise ValueError("internal coding error: id_column_name unspecified")
-        arrow_table = _extract_new_values_for_append(
-            df_uri, arrow_table, id_column_name, context
-        )
+        arrow_table = _extract_new_values_for_append(df_uri, arrow_table, context)
 
     try:
         soma_df = DataFrame.create(
@@ -1419,7 +1422,6 @@ def update_obs(
         context=context,
         platform_config=platform_config,
         default_index_name=default_index_name,
-        measurement_name="N/A for obs",
     )
 
 
@@ -1474,7 +1476,6 @@ def update_var(
         exp.ms[measurement_name].var,
         new_data,
         "update_var",
-        measurement_name=measurement_name,
         context=context,
         platform_config=platform_config,
         default_index_name=default_index_name,
@@ -1486,7 +1487,6 @@ def _update_dataframe(
     new_data: pd.DataFrame,
     caller_name: str,
     *,
-    measurement_name: str,
     context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig],
     default_index_name: str,
@@ -1512,10 +1512,26 @@ def _update_dataframe(
             e.as_py()
             for e in sdf_r.read(column_names=["soma_joinid"]).concat()["soma_joinid"]
         )
-        new_jids = list(range(len(new_data)))
-        if old_jids != new_jids:
+        num_old_data = len(old_jids)
+        num_new_data = len(new_data)
+        if num_old_data != num_new_data:
             raise ValueError(
-                f"{caller_name}: old and new data must have the same row count; got {len(old_jids)} != {len(new_jids)}",
+                f"{caller_name}: old and new data must have the same row count; got {num_old_data} != {num_new_data}",
+            )
+        new_jids = list(range(num_new_data))
+        if old_jids != new_jids:
+            max_jid_diffs_to_display = 10
+            jid_diffs = [
+                (old_jid, new_jid)
+                for old_jid, new_jid in zip(old_jids, new_jids)
+                if old_jid != new_jid
+            ]
+            jid_diff_strs = [
+                f"{old_jid} != {new_jid}"
+                for old_jid, new_jid in jid_diffs[:max_jid_diffs_to_display]
+            ] + (["…"] if len(jid_diffs) > max_jid_diffs_to_display else [])
+            raise ValueError(
+                f"{caller_name}: old data soma_joinid must be [0,{num_old_data}), found {len(jid_diffs)} diffs: {', '.join(jid_diff_strs)}"
             )
 
     old_keys = set(old_sig.keys())
@@ -1570,7 +1586,7 @@ def _update_dataframe(
         #
         # Note: this must match what DataFrame.create does:
         # * DataFrame.create sets nullability for obs/var columns on initial ingest
-        # * Here, we set nullabiliity for obs/var columns on update_obs
+        # * Here, we set nullability for obs/var columns on update_obs
         # Users should get the same behavior either way.
         #
         # Note: this is specific to tiledbsoma.io.
@@ -1722,9 +1738,10 @@ def add_X_layer(
     add_matrix_to_collection(
         exp,
         measurement_name,
-        "X",
-        X_layer_name,
-        X_layer_data,
+        collection_name="X",
+        matrix_name=X_layer_name,
+        matrix_data=X_layer_data,
+        ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
     )
 
@@ -2034,7 +2051,7 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
     #   total_nnz = matrix[:, :].nnz
     # So instead we break it up. Testing over a variety of H5AD sizes
     # shows that the performance is fine here.
-    coords: List[slice] = [slice(None), slice(None)]  # type: ignore [unreachable]
+    coords: List[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
     bsz = 1000
     total_nnz = 0
     for lo in range(0, extent, bsz):
@@ -2481,7 +2498,7 @@ def _chunk_is_contained_in_axis(
 
 def _maybe_ingest_uns(
     m: Measurement,
-    uns: Mapping[str, object],
+    uns: UnsMapping,
     *,
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
@@ -2569,16 +2586,19 @@ def _ingest_uns_node(
         coll.metadata[key] = value
         return
 
+    ingest_platform_ctx: IngestPlatformCtx = dict(
+        platform_config=platform_config,
+        context=context,
+        ingestion_params=ingestion_params,
+        additional_metadata=additional_metadata,
+    )
     if isinstance(value, Mapping):
         # Mappings are represented as sub-dictionaries.
         _ingest_uns_dict(
             coll,
             key,
             value,
-            platform_config=platform_config,
-            context=context,
-            ingestion_params=ingestion_params,
-            additional_metadata=additional_metadata,
+            **ingest_platform_ctx,
             use_relative_uri=use_relative_uri,
             level=level + 1,
         )
@@ -2590,11 +2610,8 @@ def _ingest_uns_node(
             _util.uri_joinpath(coll.uri, key),
             value,
             None,
-            platform_config=platform_config,
-            context=context,
-            ingestion_params=ingestion_params,
-            additional_metadata=additional_metadata,
             axis_mapping=AxisIDMapping.identity(num_rows),
+            **ingest_platform_ctx,
         ) as df:
             _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
         return
@@ -2615,22 +2632,16 @@ def _ingest_uns_node(
                 coll,
                 key,
                 value,
-                platform_config,
-                context=context,
                 use_relative_uri=use_relative_uri,
-                ingestion_params=ingestion_params,
-                additional_metadata=additional_metadata,
+                **ingest_platform_ctx,
             )
         else:
             _ingest_uns_ndarray(
                 coll,
                 key,
                 value,
-                platform_config,
-                context=context,
                 use_relative_uri=use_relative_uri,
-                ingestion_params=ingestion_params,
-                additional_metadata=additional_metadata,
+                **ingest_platform_ctx,
             )
         return
 
@@ -2655,7 +2666,7 @@ def _ingest_uns_string_array(
     Ingest an uns string array. In the SOMA data model, we have NDArrays _of number only_ ...
     so we need to make this a SOMADataFrame.
 
-    Ideally we don't want to an index column "soma_joinid" -- "index", maybe.
+    Ideally we don't want to add an index column "soma_joinid" -- "index", maybe.
     However, ``SOMADataFrame`` _requires_ that soma_joinid be present, either
     as an index column, or as a data column. The former is less confusing.
     """
@@ -2761,9 +2772,9 @@ def _ingest_uns_2d_string_array(
         df_uri,
         None,
         ingestion_params=ingestion_params,
+        additional_metadata=additional_metadata,
         platform_config=platform_config,
         context=context,
-        additional_metadata=additional_metadata,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
         # Since ND arrays in the SOMA data model are arrays _of number_,

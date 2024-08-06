@@ -46,6 +46,7 @@ from ._common import (
     _UNS_OUTGEST_HINT_2D,
     _UNS_OUTGEST_HINT_KEY,
     Matrix,
+    UnsMapping,
 )
 
 
@@ -309,17 +310,18 @@ def to_anndata(
             matrix = measurement.varp[key].read().tables().concat().to_pandas()
             varp[key] = conversions.csr_from_tiledb_df(matrix, nvar, nvar)
 
-    uns = {}
+    uns: UnsMapping = {}
     if "uns" in measurement:
         s = _util.get_start_stamp()
-        logging.log_io(None, f'Start  writing uns for {measurement["uns"].uri}')
+        uns_coll = cast(Collection[Any], measurement["uns"])
+        logging.log_io(None, f"Start  writing uns for {uns_coll.uri}")
         uns = _extract_uns(
-            cast(Collection[Any], measurement["uns"]),
+            uns_coll,
             uns_keys=uns_keys,
         )
         logging.log_io(
             None,
-            _util.format_elapsed(s, f'Finish writing uns for {measurement["uns"].uri}'),
+            _util.format_elapsed(s, f"Finish writing uns for {uns_coll.uri}"),
         )
 
     anndata = ad.AnnData(
@@ -417,7 +419,7 @@ def _extract_uns(
     collection: Collection[Any],
     uns_keys: Optional[Sequence[str]] = None,
     level: int = 0,
-) -> Dict[str, Any]:
+) -> UnsMapping:
     """
     This is a helper function for ``to_anndata`` of ``uns`` elements.
     """
