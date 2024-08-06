@@ -2218,9 +2218,12 @@ def _write_matrix_to_sparseNDArray(
         soma_dim_1 = mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col
 
         # Apply registration mappings: e.g. columns 0,1,2,3 in an AnnData file might
-        # have been assigned gene-ID labels 22,197,438,988.
-        soma_dim_0 = [axis_0_mapping.data[e] for e in soma_dim_0]
-        soma_dim_1 = [axis_1_mapping.data[e] for e in soma_dim_1]
+        # have been assigned gene-ID labels 22,197,438,988. Don't do this for
+        # identity mappings, as this is a needless (and expensive) data copy.
+        if not axis_0_mapping.is_identity():
+            soma_dim_0 = [axis_0_mapping.data[e] for e in soma_dim_0]
+        if not axis_1_mapping.is_identity():
+            soma_dim_1 = [axis_1_mapping.data[e] for e in soma_dim_1]
 
         pydict = {
             "soma_data": mat_coo.data,
