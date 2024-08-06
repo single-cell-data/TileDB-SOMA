@@ -56,7 +56,7 @@ def _string_dict_from_pandas_dataframe(
     default_index_name: str,
 ) -> Dict[str, str]:
     """
-    Here we provide compatiblity with the ingestor.
+    Here we provide compatibility with the ingestor.
 
     SOMA experiments are indexed by int64 soma_joinid and this is SOMA-only.
 
@@ -267,7 +267,12 @@ class Signature:
         See ``from_anndata``.
         """
         with read_h5ad(h5ad_file_name, mode="r") as adata:
-            return cls.from_anndata(adata, default_X_layer_name=default_X_layer_name)
+            return cls.from_anndata(
+                adata,
+                default_X_layer_name=default_X_layer_name,
+                default_obs_field_name=default_obs_field_name,
+                default_var_field_name=default_var_field_name,
+            )
 
     @classmethod
     def from_soma_experiment(
@@ -304,7 +309,6 @@ class Signature:
                 raw_X_dtype = str(X.schema.field("soma_data").type)
 
             obsm_dtypes: Dict[str, str] = {}
-            obsm_dtypes = {}
             if "obsm" in exp.ms[measurement_name]:
                 for obsm_layer_name in exp.ms[measurement_name].obsm.keys():
                     obsm = exp.ms[measurement_name].obsm[obsm_layer_name]
