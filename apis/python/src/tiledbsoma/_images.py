@@ -14,6 +14,7 @@ from typing_extensions import Final
 
 from . import _funcs, _tdb_handles
 from ._collection import CollectionBase
+from ._coordinates import CoordinateSpace
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError
 from ._soma_object import AnySOMAObject
@@ -76,7 +77,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         Experimental.
     """
 
-    __slots__ = ("_axis_order", "_levels")
+    __slots__ = ("_axis_order", "_coord_space", "_levels")
     _wrapper_type = _tdb_handles.Image2DCollectionWrapper
 
     _level_prefix: Final = "soma_level_"
@@ -113,6 +114,13 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
     ):
         # Do generic SOMA collection initialization.
         super().__init__(handle, **kwargs)
+
+        # Get the coordiante space
+        coord_space = self.metadata.get("soma_coordinate_space")
+        if coord_space is None:
+            self._coord_space: Optional[CoordinateSpace] = None
+        else:
+            self._coord_space = CoordinateSpace.from_json(coord_space)
 
         # Update the axis order.
         axis_order = self.metadata.get("soma_axis_order")
@@ -227,6 +235,24 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             )
         self.metadata["soma_axis_order"] = value
         self._axis_order = value
+
+    @property
+    def coordinate_space(self) -> Optional[CoordinateSpace]:
+        """Coordinate system for this scene."""
+        return self._coord_space
+
+    @coordinate_space.setter
+    def coordinate_space(self, value: CoordinateSpace) -> None:
+        if not isinstance(value, CoordinateSpace):
+            raise TypeError(f"Invalid type {type(value).__name__}.")
+        # TODO Add additional validators
+        self.metadata["soma_coordinate_space"] = value.to_json()
+        self._coord_space = value
+
+    @coordinate_space.deleter
+    def coordinate_space(self) -> None:
+        del self.metadata["soma_coordinate_space"]
+        self._coord_space = None
 
     @property
     def level_count(self) -> int:
