@@ -21,6 +21,7 @@ SOMADataFrame <- R6::R6Class(
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
     #' @template param-platform-config
+    #' param timestamps Optional timestamp start and end range
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
     create = function(schema, index_column_names = c("soma_joinid"),
