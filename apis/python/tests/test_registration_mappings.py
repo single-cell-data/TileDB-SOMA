@@ -215,19 +215,25 @@ PANDAS_INDEXING_TEST_DF = pd.DataFrame(
     [          "index_col_and_name"      ,  "default_index_name"  ,  "signature_col_names"  ],
     [   # |   Set this   |  If present,  |     signatures.py      |        Expected:        |
         # |  col as idx  | rename index  |  `default_index_name`  |   signature col names   |
+
+        # `default_index_name` matches column that was made index ⇒ both columns present in signature
         [ (   "obs_id"   ,               ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
         [ (   "obs_id"   ,    "index"    ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
         [ (   "obs_id"   ,      None     ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
-        [ (   "alt_id"   ,               ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
-        [ (   "alt_id"   ,    "index"    ),       "obs_id"        , ( "obs_id" ,          ) ],
-        [ (   "alt_id"   ,      None     ),       "obs_id"        , ( "obs_id" ,          ) ],
-        [ (      None    ,               ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
         [ (   "alt_id"   ,               ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
         [ (   "alt_id"   ,    "index"    ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
         [ (   "alt_id"   ,      None     ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
+
+        # `default_index_name` is the column that was not made index ⇒ index dropped when named "index" or None
+        [ (   "alt_id"   ,               ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
+        [ (   "alt_id"   ,    "index"    ),       "obs_id"        , ( "obs_id" ,          ) ],
+        [ (   "alt_id"   ,      None     ),       "obs_id"        , ( "obs_id" ,          ) ],
         [ (   "obs_id"   ,               ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
         [ (   "obs_id"   ,    "index"    ),       "alt_id"        , ( "alt_id" ,          ) ],
         [ (   "obs_id"   ,      None     ),       "alt_id"        , ( "alt_id" ,          ) ],
+
+        # default RangeIndex ⇒ columns are preserved
+        [ (      None    ,               ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
         [ (      None    ,               ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
     ]
 )
