@@ -65,3 +65,6 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
 inline void array_xptr_set_schema(SEXP array_xptr, SEXP schema_xptr) {
     R_SetExternalPtrTag(array_xptr, schema_xptr);
 }
+
+// make a TimestampRange from a DatetimeVector (of size two)
+std::optional<tdbs::TimestampRange> makeTimestampRange(Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
