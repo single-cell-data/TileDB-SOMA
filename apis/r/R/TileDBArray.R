@@ -364,7 +364,7 @@ TileDBArray <- R6::R6Class(
       #}
 
       private$.metadata_cache <- get_all_metadata(self$uri, TRUE, soma_context())
-#print(str(private$.metadata_cache))
+      #print(str(private$.metadata_cache))
       #if (private$.mode == "WRITE") {
       #  tiledb::tiledb_array_close(array_handle)
       #}
