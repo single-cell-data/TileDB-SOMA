@@ -300,7 +300,6 @@ test_that("Resume-mode sparse arrays", {
 })
 
 test_that("Resume-mode dense arrays", {
-  skip_if(TRUE, "dense-resume tests are skipped until metadata writes via C++ are added")
   skip_if(!extended_tests())
   skip_if_not_installed('datasets')
 
