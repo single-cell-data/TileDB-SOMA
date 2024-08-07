@@ -207,9 +207,15 @@ TileDBArray <- R6::R6Class(
     non_empty_domain = function(index1 = FALSE) {
       dims <- self$dimnames()
       ned <- bit64::integer64(length = length(dims))
+      ## added during C++-ification as self$object could close
+      if (isFALSE(tiledb::tiledb_array_is_open(self$object))) {
+          arrhandle <- tiledb::tiledb_array_open(self$object, type = "READ")
+      } else {
+          arrhandle <- self$object
+      }
       for (i in seq_along(along.with = ned)) {
         dom <- max(tiledb::tiledb_array_get_non_empty_domain_from_name(
-          self$object,
+          arrhandle, # instead of:  self$object,
           name = dims[i]
         ))
         if (isTRUE(x = index1)) {

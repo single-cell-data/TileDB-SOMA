@@ -49,6 +49,7 @@ SOMADataFrameCreate <- function(
       schema,
       index_column_names = index_column_names,
       platform_config = platform_config,
+      timestamps = rep(tiledb_timestamp, 2),
       internal_use_only = "allowed_use"
     )
   }
@@ -125,6 +126,7 @@ SOMASparseNDArrayCreate <- function(
       type,
       shape,
       platform_config = platform_config,
+      timestamps = rep(tiledb_timestamp, 2),
       internal_use_only = "allowed_use"
     )
   }
@@ -184,6 +186,7 @@ SOMADenseNDArrayCreate <- function(
     type,
     shape,
     platform_config = platform_config,
+    timestamps = rep(tiledb_timestamp, 2),
     internal_use_only = "allowed_use"
   )
   return(dnda)

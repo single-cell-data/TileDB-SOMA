@@ -20,10 +20,12 @@ SOMANDArrayBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
+    #' param timestamps Optional timestamp start and end range
     #' @param internal_use_only Character value to signal this is a 'permitted'
     #' call, as `create()` is considered internal and should not be called
     #' directly.
-    create = function(type, shape, platform_config = NULL, internal_use_only = NULL) {
+    create = function(type, shape, platform_config = NULL,
+                      timestamps = NULL, internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMASparseNDArrayCreate()'."), call. = FALSE)
@@ -60,9 +62,9 @@ SOMANDArrayBase <- R6::R6Class(
                             private$.is_sparse,
                             if (private$.is_sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
                             tiledb_create_options$to_list(FALSE), soma_context())
+      private$write_object_type_metadata(timestamps)
 
       self$open("WRITE", internal_use_only = "allowed_use")
-      private$write_object_type_metadata()
       self
     },
 
