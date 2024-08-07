@@ -5,12 +5,12 @@ createSOMAContext <- function(config = NULL) {
     .Call(`_tiledbsoma_createSOMAContext`, config)
 }
 
-createSchemaFromArrow <- function(uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp) {
-    invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp))
+createSchemaFromArrow <- function(uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp, tsvec = NULL) {
+    invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp, tsvec))
 }
 
-writeArrayFromArrow <- function(uri, naap, nasp, arraytype = "", config = NULL) {
-    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, arraytype, config))
+writeArrayFromArrow <- function(uri, naap, nasp, arraytype = "", config = NULL, tsvec = NULL) {
+    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, arraytype, config, tsvec))
 }
 
 #' Get nnumber of metadata items
@@ -70,8 +70,8 @@ delete_metadata <- function(uri, key, is_array, ctxxp) {
 #' @
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
-set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp) {
-    invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp))
+set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL) {
+    invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp, tsvec))
 }
 
 reindex_create <- function() {

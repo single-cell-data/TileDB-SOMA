@@ -13,11 +13,17 @@ namespace tdbs = tiledbsoma;
 
 std::unique_ptr<tdbs::SOMAObject> getObjectUniquePointer(bool is_array, OpenMode mode,
                                                          std::string& uri,
-                                                         std::shared_ptr<tdbs::SOMAContext> ctx) {
+                                                         std::shared_ptr<tdbs::SOMAContext> ctx,
+                                                         Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
+
+    // optional timestamp range
+    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
+
     if (is_array) {
-        return tdbs::SOMAArray::open(mode, uri, ctx);
+        return tdbs::SOMAArray::open(mode, uri, ctx, "unnamed", {}, "auto",
+                                     ResultOrder::automatic, tsrng);
     } else {
-        return tdbs::SOMAGroup::open(mode, uri, ctx);
+        return tdbs::SOMAGroup::open(mode, uri, ctx, "unnamed", tsrng);
     }
 }
 
@@ -155,11 +161,12 @@ void delete_metadata(std::string& uri, std::string& key, bool is_array,
 //' @export
 // [[Rcpp::export]]
 void set_metadata(std::string& uri, std::string& key, SEXP valuesxp, std::string& type,
-                  bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+                  bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp,
+                  Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::write, uri, sctx);
+    auto soup = getObjectUniquePointer(is_array, OpenMode::write, uri, sctx, tsvec);
 
     if (type == "character") {
         const tiledb_datatype_t value_type = TILEDB_STRING_UTF8;

@@ -288,3 +288,23 @@ size_t tiledb_datatype_max_value(const std::string& datatype) {
     else if (datatype == "UINT64") return std::numeric_limits<uint64_t>::max();
     else Rcpp::stop("currently unsupported datatype (%s)", datatype);
 }
+
+// Make (optional) TimestampRange from (nullable, two-element) Rcpp::DatetimeVector
+std::optional<tdbs::TimestampRange> makeTimestampRange(Rcpp::Nullable<Rcpp::DatetimeVector> tsvec) {
+
+    // optional timestamp, defaults to 'none' aka std::nullopt
+    std::optional<tdbs::TimestampRange> tsrng = std::nullopt;
+
+    if (tsvec.isNotNull()) {
+        // an Rcpp 'Nullable' is a decent compromise between adhering to SEXP semantics
+        // and having 'optional' behaviour -- but when there is a value we need to be explicit
+        Rcpp::DatetimeVector vec(tsvec); // vector of Rcpp::Datetime ie POSIXct w/ (fract.) secs since epoch
+        if (vec.size() != 2) {
+            Rcpp::stop("TimestampRange must be two-element vector");
+        }
+        tsrng = std::make_pair<uint64_t>( static_cast<uint64_t>(Rcpp::Datetime(vec[0]).getFractionalTimestamp() * 1000),
+                                          static_cast<uint64_t>(Rcpp::Datetime(vec[1]).getFractionalTimestamp() * 1000) );
+    }
+
+    return tsrng;
+}

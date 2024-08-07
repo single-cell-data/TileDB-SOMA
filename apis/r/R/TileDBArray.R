@@ -30,11 +30,11 @@ TileDBArray <- R6::R6Class(
         spdl::debug("[TileDBArray::open] Opening {} '{}' in {} mode", self$class(), self$uri, mode)
         private$.tiledb_array <- tiledb::tiledb_array_open(self$object, type = mode)
       } else {
-        stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
+        if (is.null(internal_use_only)) stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
         spdl::debug("[TileDBArray::open] Opening {} '{}' in {} mode at {}",
                     self$class(), self$uri, mode, private$tiledb_timestamp)
-        private$.tiledb_array <- tiledb::tiledb_array_open_at(self$object, type = mode,
-                                                              timestamp = private$tiledb_timestamp)
+        #private$.tiledb_array <- tiledb::tiledb_array_open_at(self$object, type = mode,
+        #                                                      timestamp = private$tiledb_timestamp)
       }
 
       ## TODO -- cannot do here while needed for array case does not work for data frame case
@@ -92,19 +92,19 @@ TileDBArray <- R6::R6Class(
 
     #' @description Add list of metadata to the specified TileDB array. (lifecycle: maturing)
     #' @param metadata Named list of metadata to add.
+    #' @param timestamp Optional two-element vector of timestamp range starts and end
     #' @return NULL
-    set_metadata = function(metadata) {
+    set_metadata = function(metadata, timestamps = NULL) {
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
       )
 
-      private$check_open_for_write()
+      #private$check_open_for_write()
 
       for (nm in names(metadata)) {
-          #spdl::warn("[set_metadata] key {}", nm)
           val <- metadata[[nm]]
           spdl::debug("[set_metadata] setting key {} to {} ({})", nm, val, class(val))
-          set_metadata(self$uri, nm, val, class(val), TRUE, soma_context())
+          set_metadata(self$uri, nm, val, class(val), TRUE, soma_context(), timestamps)
       }
 
       dev_null <- mapply(
@@ -344,23 +344,23 @@ TileDBArray <- R6::R6Class(
       # while the array is open for read, but at the SOMA application level we must support
       # this. Therefore if the array is opened for write and there is no cache populated then
       # we must open a temporary handle for read, to fill the cache.
-      array_handle <- private$.tiledb_array
-      if (private$.mode == "WRITE") {
-        spdl::debug("[TileDBArray::update_metadata_cache] getting object")
-        array_object <- tiledb::tiledb_array(self$uri, ctx = private$.tiledb_ctx)
-        array_handle <- tiledb::tiledb_array_open(array_object, type = "READ")
-      }
+      #array_handle <- private$.tiledb_array
+      #if (private$.mode == "WRITE") {
+      #  spdl::debug("[TileDBArray::update_metadata_cache] getting object")
+      #  array_object <- tiledb::tiledb_array(self$uri, ctx = private$.tiledb_ctx)
+      #  array_handle <- tiledb::tiledb_array_open(array_object, type = "READ")
+      #}
 
-      if (isFALSE(tiledb::tiledb_array_is_open(array_handle))) {
-        spdl::debug("[TileDBArray::update_metadata_cache] reopening object")
-        array_handle <- tiledb::tiledb_array_open(array_handle, type = "READ")
-      }
+      #if (isFALSE(tiledb::tiledb_array_is_open(array_handle))) {
+      #  spdl::debug("[TileDBArray::update_metadata_cache] reopening object")
+      #  array_handle <- tiledb::tiledb_array_open(array_handle, type = "READ")
+      #}
 
       private$.metadata_cache <- get_all_metadata(self$uri, TRUE, soma_context())
-
-      if (private$.mode == "WRITE") {
-        tiledb::tiledb_array_close(array_handle)
-      }
+#print(str(private$.metadata_cache))
+      #if (private$.mode == "WRITE") {
+      #  tiledb::tiledb_array_close(array_handle)
+      #}
 
       invisible(NULL)
     },
