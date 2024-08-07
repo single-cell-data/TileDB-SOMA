@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+import os
 from typing import Dict, List
 
 import numpy as np
@@ -1543,3 +1544,54 @@ def test_nullable(tmp_path):
     with soma.DataFrame.open(uri, "r") as sdf:
         df = sdf.read().concat().to_pandas()
         assert df.compare(data.to_pandas()).empty
+
+
+def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            pa.field("foo", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("bar", pa.large_string()),
+        ]
+    )
+
+    # +1 creating the schema
+    # +1 evolving the schema
+    with soma.DataFrame.create(uri, schema=schema) as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # +1 evolving the schema
+    with soma.DataFrame.open(uri, "w") as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # +0 no changes to enumeration values
+    with soma.DataFrame.open(uri, "w") as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # +0 no changes enumeration values
+    with soma.DataFrame.open(uri, "w") as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "d"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # total 3 fragment files
+
+    vfs = tiledb.VFS()
+    # subtract 1 for the __schema/__enumerations directory;
+    # only looking at fragment files
+    assert len(vfs.ls(os.path.join(uri, "__schema"))) - 1 == 3
