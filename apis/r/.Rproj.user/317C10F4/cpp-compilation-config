@@ -1,0 +1,32 @@
+{
+    "args": [
+        "-I/usr/lib/llvm-14/lib/clang/14.0.0/include",
+        "-I/usr/include/c++/11",
+        "-I/usr/include/x86_64-linux-gnu/c++/11",
+        "-I/usr/include/c++/11/backward",
+        "-I/usr/lib/gcc/x86_64-linux-gnu/11/include",
+        "-I/usr/local/include",
+        "-I/usr/include/x86_64-linux-gnu",
+        "-I/usr/include",
+        "-I/home/paul/R/x86_64-pc-linux-gnu-library/4.2/Rcpp/include",
+        "-I/home/paul/R/x86_64-pc-linux-gnu-library/4.2/RcppSpdlog/include",
+        "-I/home/paul/R/x86_64-pc-linux-gnu-library/4.2/RcppInt64/include",
+        "-I/home/paul/R/x86_64-pc-linux-gnu-library/4.2/nanoarrow/include",
+        "-std=gnu++17",
+        "-I/usr/share/R/include",
+        "-DNDEBUG",
+        "-I/home/paul/sandbox/TileDB-SOMA/apis/r/src",
+        "-I/home/paul/sandbox/TileDB-SOMA/apis/r/inst/include/",
+        "-I/__w/TileDB/TileDB/dist/include",
+        "-I/usr/local/include",
+        "-I/usr/local/include/tiledbsoma",
+        "-fpic",
+        "-ffile-prefix-map=/build/r-base-LhKvHL/r-base-4.2.3=.",
+        "-fstack-protector-strong",
+        "-D_FORTIFY_SOURCE=2"
+    ],
+    "pch": "Rcpp",
+    "is_cpp": true,
+    "hash": "17247035321724697066",
+    "compiler": "3842177633958818519"
+}
