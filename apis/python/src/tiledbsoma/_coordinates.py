@@ -59,6 +59,8 @@ class CoordinateSpace(coordinates.CoordinateSpace):
     def __init__(self, axes: Sequence[Axis]):
         """TODO: Add docstring"""
         # TODO: Needs good, comprehensive error handling.
+        if len(tuple(axes)) == 0:
+            raise ValueError("Coordinate space must have at least one axis.")
         self._axes = tuple(axes)
 
     def __len__(self) -> int:
@@ -72,12 +74,19 @@ class CoordinateSpace(coordinates.CoordinateSpace):
         """TODO: Add docstring"""
         return self._axes
 
+    @property
+    def axis_names(self) -> Tuple[str, ...]:
+        return tuple(axis.name for axis in self._axes)
+
+    def rank(self) -> int:
+        return len(self)
+
     def to_json(self) -> str:
         """TODO: Add docstring"""
         return json.dumps(tuple(axis.to_dict() for axis in self._axes))
 
 
-class BaseCoordinateTransform(coordinates.CoordinateTransform):
+class CoordinateTransform(coordinates.CoordinateTransform):
     def __init__(
         self,
         input_axes: Union[str, Sequence[str]],
@@ -114,7 +123,7 @@ class BaseCoordinateTransform(coordinates.CoordinateTransform):
         return {"input_axes": self.input_axes, "output_axes": self.output_axes}
 
 
-class IdentityCoordinateTransform(BaseCoordinateTransform):
+class IdentityCoordinateTransform(CoordinateTransform):
     """TODO: Add docstring"""
 
     def __init__(
@@ -134,7 +143,7 @@ class IdentityCoordinateTransform(BaseCoordinateTransform):
         return super().to_dict()
 
 
-class AffineCoordinateTransform(BaseCoordinateTransform):
+class AffineCoordinateTransform(CoordinateTransform):
     """TODO: Add docstring"""
 
     def __init__(
@@ -182,7 +191,7 @@ def transform_from_json(data: str) -> coordinates.CoordinateTransform:
         raise KeyError("Unrecognized transform type key 'transform_type'")
 
 
-def transform_to_json(transform: BaseCoordinateTransform) -> str:
+def transform_to_json(transform: CoordinateTransform) -> str:
     kwargs = transform.to_dict()
     transform_type = type(transform).__name__
     return json.dumps({"transform_type": transform_type, "transform": kwargs})

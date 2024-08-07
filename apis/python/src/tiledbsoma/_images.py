@@ -245,7 +245,10 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
     def coordinate_space(self, value: CoordinateSpace) -> None:
         if not isinstance(value, CoordinateSpace):
             raise TypeError(f"Invalid type {type(value).__name__}.")
-        # TODO Add additional validators
+        if len(value) != 2:
+            raise ValueError("Coordinate space must have exactly 2 axes.")
+        # TODO: Do we need some way to specify YX vs XY and propagate to
+        # sub-images.
         self.metadata["soma_coordinate_space"] = value.to_json()
         self._coord_space = value
 

@@ -39,6 +39,7 @@ from .. import (
     DataFrame,
     DenseNDArray,
     Experiment,
+    IdentityCoordinateTransform,
     Image2DCollection,
     PointCloud,
     Scene,
@@ -331,7 +332,7 @@ def _write_visium_data_to_experiment_uri(
 
     # Create axes and transformations
     coord_space = CoordinateSpace(
-        (Axis(name="y", units="pixels"), Axis(name="x", units="pixels"))
+        (Axis(name="x", units="pixels"), Axis(name="y", units="pixels"))
     )
 
     with Experiment.open(uri, mode="r", context=context) as exp:
@@ -389,6 +390,10 @@ def _write_visium_data_to_experiment_uri(
                                 input_fullres=input_fullres,
                                 use_relative_uri=use_relative_uri,
                                 **ingest_ctx,
+                            )
+                            scene.register_image2d(
+                                "tissue",
+                                IdentityCoordinateTransform(("x", "y"), ("x", "y")),
                             )
 
                 obsl_uri = f"{scene_uri}/obsl"

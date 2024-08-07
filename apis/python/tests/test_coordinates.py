@@ -31,7 +31,6 @@ def test_axis_json_roundtrip(original: soma.Axis):
                 soma.Axis(name="dim2", units="micrometer", scale=np.float64(65.0)),
             ),
         ),
-        soma.CoordinateSpace([]),
     ],
 )
 def test_coordinate_system_json_roundtrip(original: soma.CoordinateSpace):
@@ -53,7 +52,7 @@ def test_coordinate_system_json_roundtrip(original: soma.CoordinateSpace):
         ),
     ],
 )
-def test_transform_json_roundtrip(original: soma._coordinates.BaseCoordinateTransform):
+def test_transform_json_roundtrip(original: soma._coordinates.CoordinateTransform):
     json_blob = soma._coordinates.transform_to_json(original)
     result = soma._coordinates.transform_from_json(json_blob)
     assert original.input_axes == result.input_axes
