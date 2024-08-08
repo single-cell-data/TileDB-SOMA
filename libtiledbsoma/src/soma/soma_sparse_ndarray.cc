@@ -111,6 +111,11 @@ bool SOMASparseNDArray::exists(
     }
 }
 
+std::string_view SOMASparseNDArray::soma_data_type() {
+    return ArrowAdapter::to_arrow_format(
+        tiledb_schema()->attribute("soma_data").type());
+}
+
 //===================================================================
 //= public non-static
 //===================================================================

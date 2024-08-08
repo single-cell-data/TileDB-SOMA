@@ -22,7 +22,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
     """Base class for all SOMAArrays: DataFrame and NDarray.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     __slots__ = ()
@@ -54,7 +54,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         `Arrow Schema <https://arrow.apache.org/docs/python/generated/pyarrow.Schema.html>`_.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._handle.schema
 

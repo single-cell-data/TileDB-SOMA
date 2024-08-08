@@ -25,7 +25,7 @@ matrix access using zero-based indeces.
 \if{html}{\out{<a id="method-matrixZeroBasedView-new"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize (lifecycle: experimental)
+Initialize (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$new(x)}\if{html}{\out{</div>}}
 }

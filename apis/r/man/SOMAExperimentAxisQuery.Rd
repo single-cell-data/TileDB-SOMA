@@ -10,7 +10,7 @@ Perform an axis-based query against a \code{\link{SOMAExperiment}}.
 single \code{\link{SOMAMeasurement}} in a \code{\link{SOMAExperiment}}, by \code{obs}/\code{var} (axis)
 coordinates and/or value filter. The primary use for this class is slicing
 \code{\link{SOMAExperiment}} \code{X} layers by \code{obs} or \code{var} value and/or coordinates.
-(lifecycle: experimental)
+(lifecycle: maturing)
 \subsection{X Layer Support}{
 
 Slicing on \code{\link{SOMASparseNDArray}} \code{X} matrices is supported;
@@ -337,7 +337,8 @@ Loads the query as a \code{\link[SeuratObject]{Seurat}} object
   var_column_names = NULL,
   obsm_layers = NULL,
   varm_layers = NULL,
-  obsp_layers = NULL
+  obsp_layers = NULL,
+  drop_levels = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -359,6 +360,8 @@ Loads the query as a \code{\link[SeuratObject]{Seurat}} object
 \item{\code{varm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers(axis = 'varm')}}
 
 \item{\code{obsp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players()}}
+
+\item{\code{drop_levels}}{Drop unused levels from \code{obs} and \code{var} factor columns}
 }
 \if{html}{\out{</div>}}
 }
@@ -376,7 +379,8 @@ Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
   X_layers = c(counts = "counts", data = "logcounts"),
   obs_index = NULL,
   var_index = NULL,
-  var_column_names = NULL
+  var_column_names = NULL,
+  drop_levels = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -390,6 +394,8 @@ Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
 \item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}}
 
 \item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}}
+
+\item{\code{drop_levels}}{Drop unused levels from \code{var} factor columns}
 }
 \if{html}{\out{</div>}}
 }
@@ -469,7 +475,8 @@ Loads the query as a
   var_column_names = NULL,
   obsm_layers = NULL,
   obsp_layers = NULL,
-  varp_layers = NULL
+  varp_layers = NULL,
+  drop_levels = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -491,6 +498,8 @@ Loads the query as a
 \item{\code{obsp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}}
 
 \item{\code{varp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}}
+
+\item{\code{drop_levels}}{Drop unused levels from \code{obs} and \code{var} factor columns}
 }
 \if{html}{\out{</div>}}
 }

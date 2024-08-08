@@ -6,7 +6,6 @@
 """
 Implementation of a SOMA DataFrame
 """
-import warnings
 from typing import Any, List, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
@@ -19,7 +18,6 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
-from ._general_utilities import assert_version_before
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
@@ -50,7 +48,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     objects, such as :class:`SparseNDArray`.
 
     Lifecycle:
-        Experimental.
+        Maturing.
 
     Examples:
         >>> import pyarrow as pa
@@ -213,7 +211,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             1            1    b
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
@@ -285,7 +283,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             ('soma_joinid', 'col1')
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._tiledb_array_keys()
 
@@ -294,7 +292,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """Returns index (dimension) column names.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._tiledb_dim_names()
 
@@ -304,7 +302,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         on each index column of the dataframe.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._tiledb_domain()
 
@@ -313,7 +311,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """Returns the number of rows in the dataframe. Same as ``len(df)``.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self._check_open_read()
         # if is it in read open mode, then it is a DataFrameWrapper
@@ -384,7 +382,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             * Negative indexing is unsupported.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         del batch_size  # Currently unused.
         _util.check_unpartitioned(partitions)
@@ -448,24 +446,19 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 If the object is not open for writing.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         _util.check_type("values", values, (pa.Table,))
 
         write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
-            assert_version_before(1, 13)
-            warnings.warn(
-                "The write parameter now takes in TileDBWriteOptions "
-                "instead of TileDBCreateOptions. This warning will be removed "
-                "and error out when passing TileDBCreateOptions in 1.13.",
-                DeprecationWarning,
+            raise ValueError(
+                "As of TileDB-SOMA 1.13, the write method takes "
+                "TileDBWriteOptions instead of TileDBCreateOptions"
             )
-            write_options = TileDBCreateOptions.from_platform_config(platform_config)
-        else:
-            write_options = TileDBWriteOptions.from_platform_config(platform_config)
-            sort_coords = write_options.sort_coords
+        write_options = TileDBWriteOptions.from_platform_config(platform_config)
+        sort_coords = write_options.sort_coords
 
         clib_dataframe = self._handle._handle
 

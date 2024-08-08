@@ -9,13 +9,13 @@ ReadIter <- R6::R6Class(
 
   public = list(
 
-    #' @description Create (lifecycle: experimental)
+    #' @description Create (lifecycle: maturing)
     #' @param sr soma read pointer
     initialize = function(sr) {
       private$soma_reader_pointer <- sr
     },
 
-    #' @description Check if iterated read is complete or not. (lifecycle: experimental)
+    #' @description Check if iterated read is complete or not. (lifecycle: maturing)
     #' @return logical
     read_complete = function() {
       if (is.null(private$soma_reader_pointer)) {
@@ -25,7 +25,7 @@ ReadIter <- R6::R6Class(
       }
     },
 
-    #' @description Read the next chunk of an iterated read. (lifecycle: experimental).
+    #' @description Read the next chunk of an iterated read. (lifecycle: maturing).
     #' If read is complete, retunrs `NULL` and raises warning.
     #' @return \code{NULL} or one of arrow::\link[arrow]{Table}, \link{matrixZeroBasedView}
     read_next = function() {

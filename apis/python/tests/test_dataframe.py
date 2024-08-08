@@ -1,4 +1,6 @@
+import contextlib
 import datetime
+import os
 from typing import Dict, List
 
 import numpy as np
@@ -95,21 +97,36 @@ def test_dataframe(tmp_path, arrow_schema):
         table = sdf.read().concat()
         assert table.num_rows == 5
         assert table.num_columns == 5
-        assert [e.as_py() for e in list(table["soma_joinid"])] == pydict["soma_joinid"]
-        assert [e.as_py() for e in list(table["foo"])] == pydict["foo"]
-        assert [e.as_py() for e in list(table["bar"])] == pydict["bar"]
-        assert [e.as_py() for e in list(table["baz"])] == pydict["baz"]
-        assert [e.as_py() for e in list(table["quux"])] == pydict["quux"]
+        assert [e.as_py() for e in table["soma_joinid"]] == pydict["soma_joinid"]
+        assert [e.as_py() for e in table["foo"]] == pydict["foo"]
+        assert [e.as_py() for e in table["bar"]] == pydict["bar"]
+        assert [e.as_py() for e in table["baz"]] == pydict["baz"]
+        assert [e.as_py() for e in table["quux"]] == pydict["quux"]
 
         # Read ids
         table = sdf.read(coords=[[30, 10]]).concat()
         assert table.num_rows == 2
         assert table.num_columns == 5
-        assert sorted([e.as_py() for e in list(table["soma_joinid"])]) == [0, 2]
-        assert sorted([e.as_py() for e in list(table["foo"])]) == [10, 30]
-        assert sorted([e.as_py() for e in list(table["bar"])]) == [4.1, 6.3]
-        assert sorted([e.as_py() for e in list(table["baz"])]) == ["apple", "cat"]
-        assert [e.as_py() for e in list(table["quux"])] == [True, False]
+        assert sorted([e.as_py() for e in table["soma_joinid"]]) == [0, 2]
+        assert sorted([e.as_py() for e in table["foo"]]) == [10, 30]
+        assert sorted([e.as_py() for e in table["bar"]]) == [4.1, 6.3]
+        assert sorted([e.as_py() for e in table["baz"]]) == ["apple", "cat"]
+        assert [e.as_py() for e in table["quux"]] == [True, False]
+
+    # Open and read with bindings
+    with contextlib.closing(
+        soma.pytiledbsoma.SOMADataFrame.open(
+            uri, soma.pytiledbsoma.OpenMode.read, soma.pytiledbsoma.SOMAContext()
+        )
+    ) as sdf:
+        table = sdf.read_next()
+        assert table.num_rows == 5
+        assert table.num_columns == 5
+        assert [e.as_py() for e in table["soma_joinid"]] == pydict["soma_joinid"]
+        assert [e.as_py() for e in table["foo"]] == pydict["foo"]
+        assert [e.as_py() for e in table["bar"]] == pydict["bar"]
+        assert [e.as_py() for e in table["baz"]] == pydict["baz"]
+        assert [e.as_py() for e in table["quux"]] == pydict["quux"]
 
     # Validate TileDB array schema
     with tiledb.open(uri) as A:
@@ -129,6 +146,45 @@ def test_dataframe(tmp_path, arrow_schema):
     # Ensure write mode uses clib object
     with soma.DataFrame.open(tmp_path.as_posix(), "w") as A:
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADataFrame)
+
+
+def test_dataframe_reopen(tmp_path, arrow_schema):
+    soma.DataFrame.create(
+        tmp_path.as_posix(), schema=arrow_schema(), tiledb_timestamp=1
+    )
+
+    with soma.DataFrame.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as sdf1:
+        with raises_no_typeguard(ValueError):
+            sdf1.reopen("invalid")
+
+        with sdf1.reopen("w", tiledb_timestamp=2) as sdf2:
+            with sdf2.reopen("r", tiledb_timestamp=3) as sdf3:
+                assert sdf1.mode == "r"
+                assert sdf2.mode == "w"
+                assert sdf3.mode == "r"
+                assert sdf1.tiledb_timestamp_ms == 1
+                assert sdf2.tiledb_timestamp_ms == 2
+                assert sdf3.tiledb_timestamp_ms == 3
+
+    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    with soma.DataFrame.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as sdf1:
+        with sdf1.reopen("r", tiledb_timestamp=ts2) as sdf2:
+            assert sdf1.mode == "r"
+            assert sdf2.mode == "r"
+            assert sdf1.tiledb_timestamp == ts1
+            assert sdf2.tiledb_timestamp == ts2
+
+    with soma.DataFrame.open(tmp_path.as_posix(), "w") as sdf1:
+        with sdf1.reopen("w", tiledb_timestamp=None) as sdf2:
+            with sdf1.reopen("w") as sdf3:
+                assert sdf1.mode == "w"
+                assert sdf2.mode == "w"
+                assert sdf3.mode == "w"
+                now = datetime.datetime.now(datetime.timezone.utc)
+                assert sdf1.tiledb_timestamp <= now
+                assert sdf2.tiledb_timestamp <= now
+                assert sdf3.tiledb_timestamp <= now
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
@@ -237,9 +293,11 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
         if demote:
             assert tbl.schema == pa.schema(
                 [
-                    pa.field(schema.field(f).name, pa.string())
-                    if schema.field(f).type == pa.large_string()
-                    else schema.field(f)
+                    (
+                        pa.field(schema.field(f).name, pa.string())
+                        if schema.field(f).type == pa.large_string()
+                        else schema.field(f)
+                    )
                     for f in (col_names if col_names is not None else schema.names)
                 ]
             )
@@ -1486,3 +1544,54 @@ def test_nullable(tmp_path):
     with soma.DataFrame.open(uri, "r") as sdf:
         df = sdf.read().concat().to_pandas()
         assert df.compare(data.to_pandas()).empty
+
+
+def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            pa.field("foo", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("bar", pa.large_string()),
+        ]
+    )
+
+    # +1 creating the schema
+    # +1 evolving the schema
+    with soma.DataFrame.create(uri, schema=schema) as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # +1 evolving the schema
+    with soma.DataFrame.open(uri, "w") as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # +0 no changes to enumeration values
+    with soma.DataFrame.open(uri, "w") as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # +0 no changes enumeration values
+    with soma.DataFrame.open(uri, "w") as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "d"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # total 3 fragment files
+
+    vfs = tiledb.VFS()
+    # subtract 1 for the __schema/__enumerations directory;
+    # only looking at fragment files
+    assert len(vfs.ls(os.path.join(uri, "__schema"))) - 1 == 3

@@ -49,7 +49,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     and elements are named ``soma_data``.
 
     Lifecycle:
-        Experimental.
+        Maturing.
 
     Examples:
         >>> import tiledbsoma
@@ -164,7 +164,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 If the object is not open for reading.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         del partitions  # Currently unused.
         self._check_open_read()
@@ -258,7 +258,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 If the object is not open for writing.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         _util.check_type("values", values, (pa.Tensor,))
 

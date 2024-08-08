@@ -1,21 +1,21 @@
 exclude: ^doc/source/
 repos:
   - repo: https://github.com/psf/black
-    rev: "23.9.1"
+    rev: "24.4.2"
     hooks:
     - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.5
+    rev: v0.5.5
     hooks:
     - id: ruff
       args: ["--config=apis/python/pyproject.toml"]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+    rev: v1.11.1
     hooks:
     - id: mypy
       additional_dependencies:
-        - "pandas-stubs==1.5.3.230214"
+        - pandas-stubs
         - "somacore @ git+https://github.com/single-cell-data/SOMA.git@e7b9379"   # DO NOT MERGE TO MAIN
-        - "types-setuptools==67.4.0.3"
+        - types-setuptools
       args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
       pass_filenames: false

@@ -26,5 +26,5 @@ all accessed members inherit the collection opening timestamp, and in READ mode 
 collection timestamp defaults to the time of opening.}
 }
 \description{
-Utility function to open the corresponding SOMA Object given a URI, (lifecycle: experimental)
+Utility function to open the corresponding SOMA Object given a URI, (lifecycle: maturing)
 }

@@ -1,3 +1,41 @@
+# Unreleased
+
+## Changes
+
+# tiledbsoma 1.13.0
+
+## Changes
+
+* Updates the TileDB Core dependency to 2.25.0
+* The `used_shape` function is deprecated; `shape` mods are [upcoming](https://github.com/single-cell-data/TileDB-SOMA/issues/2407) in TileDB-SOMA 1.14
+* Change `$reopen(mode = )` default to not flip modes; require explicit `mode` parameter to be passed
+* Add `drop_levels` to `SOMAExperimentAxisQuery` -> ecosystem outgestors to drop unused factor levels
+
+# tiledbsoma 1.12.3
+
+## Changes
+
+* Updates the TileDB Core dependency to 2.24.2
+
+# tiledbsoma 1.12.2
+
+## Changes
+
+* No R changes; only an update for Python
+
+# tiledbsoma 1.12.1
+
+## Changes
+
+* Updates to TileDB Core 2.24.1
+
+# tiledbsoma 1.12.0
+
+## Changes
+
+* Updates to TileDB Core 2.24 and TileDB-R 0.28
+* Connect re-indexer to blockwise iterator to return re-indexed tables and matrices
+
 # tiledbsoma 1.11.4
 
 ## Changes

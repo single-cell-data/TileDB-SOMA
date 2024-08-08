@@ -106,7 +106,7 @@ void load_soma_sparse_ndarray(py::module& m) {
             "mode"_a,
             "context"_a,
             py::kw_only(),
-            "column_names"_a = py::none(),
+            "column_names"_a = py::tuple(),
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 

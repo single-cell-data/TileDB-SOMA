@@ -139,7 +139,7 @@ class QueryCondition:
         if not isinstance(self.c_obj, clib.PyQueryCondition):
             raise SOMAError(
                 "Malformed query condition statement. A query condition must "
-                "be made up of one or more Boolean expressions."
+                "be made up of one or more boolean expressions."
             )
 
         return query_attrs
@@ -185,6 +185,12 @@ class QueryConditionTree(ast.NodeVisitor):
 
     def visit_NotIn(self, node):
         return node
+
+    def visit_Is(self, node):
+        raise SOMAError("the `is` operator is not supported")
+
+    def visit_IsNot(self, node):
+        raise SOMAError("the `is not` operator is not supported")
 
     def visit_List(self, node):
         return list(node.elts)
@@ -246,6 +252,9 @@ class QueryConditionTree(ast.NodeVisitor):
 
             op = clib.TILEDB_IN if isinstance(operator, ast.In) else clib.TILEDB_NOT_IN
             result = self.create_pyqc(dtype)(node.left.id, values, op)
+
+        else:
+            raise SOMAError(f"unrecognized operator in <<{ast.dump(node)}>>")
 
         return result
 
@@ -359,7 +368,8 @@ class QueryConditionTree(ast.NodeVisitor):
             val = val_node.value
         else:
             raise SOMAError(
-                f"Incorrect type for comparison value: {ast.dump(val_node)}"
+                f"Incorrect type for comparison value: {ast.dump(val_node)}: right-hand sides must be constant"
+                " expressions, not variables -- did you mean to quote the right-hand side as a string?"
             )
 
         return val
@@ -424,7 +434,12 @@ class QueryConditionTree(ast.NodeVisitor):
         result = self.visit(node.left)
         rhs = node.right[1:] if isinstance(node.right, list) else [node.right]
         for value in rhs:
-            result = result.combine(self.visit(value), op)
+            visited = self.visit(value)
+            if not isinstance(result, clib.PyQueryCondition):
+                raise Exception(
+                    f"Unable to parse expression component {ast.dump(node)} -- did you mean to quote it as a string?"
+                )
+            result = result.combine(visited, op)
 
         return result
 

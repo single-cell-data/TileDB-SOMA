@@ -1,3 +1,5 @@
+import contextlib
+import datetime
 import pathlib
 from typing import Tuple
 
@@ -60,6 +62,53 @@ def test_dense_nd_array_create_ok(
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADenseNDArray)
 
 
+def test_dense_nd_array_reopen(tmp_path):
+    soma.DenseNDArray.create(
+        tmp_path.as_posix(), type=pa.float64(), shape=(1,), tiledb_timestamp=1
+    )
+
+    # Ensure that reopen uses the correct mode
+    with soma.DenseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as A1:
+        with raises_no_typeguard(ValueError):
+            A1.reopen("invalid")
+
+        with A1.reopen("w", tiledb_timestamp=2) as A2:
+            with A2.reopen("r", tiledb_timestamp=3) as A3:
+                assert A1.mode == "r"
+                assert A2.mode == "w"
+                assert A3.mode == "r"
+                assert A1.tiledb_timestamp_ms == 1
+                assert A2.tiledb_timestamp_ms == 2
+                assert A3.tiledb_timestamp_ms == 3
+
+    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    with soma.DenseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as A1:
+        with A1.reopen("r", tiledb_timestamp=ts2) as A2:
+            assert A1.mode == "r"
+            assert A2.mode == "r"
+            assert A1.tiledb_timestamp == ts1
+            assert A2.tiledb_timestamp == ts2
+
+    with soma.DenseNDArray.open(tmp_path.as_posix(), "w", tiledb_timestamp=1) as A1:
+        with A1.reopen("w", tiledb_timestamp=2) as A2:
+            assert A1.mode == "w"
+            assert A2.mode == "w"
+            assert A1.tiledb_timestamp.timestamp() == 0.001
+            assert A2.tiledb_timestamp.timestamp() == 0.002
+
+    with soma.DenseNDArray.open(tmp_path.as_posix(), "w") as A1:
+        with A1.reopen("w", tiledb_timestamp=None) as A2:
+            with A2.reopen("w") as A3:
+                assert A1.mode == "w"
+                assert A2.mode == "w"
+                assert A3.mode == "w"
+                now = datetime.datetime.now(datetime.timezone.utc)
+                assert A1.tiledb_timestamp <= now
+                assert A2.tiledb_timestamp <= now
+                assert A3.tiledb_timestamp <= now
+
+
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
 def test_dense_nd_array_create_fail(
@@ -90,6 +139,17 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
         t = b.read((slice(None),) * ndim, result_order="column-major")
         assert t.equals(pa.Tensor.from_numpy(data.transpose()))
 
+    # Open and read with bindings
+    with contextlib.closing(
+        soma.pytiledbsoma.SOMADenseNDArray.open(
+            tmp_path.as_posix(),
+            soma.pytiledbsoma.OpenMode.read,
+            soma.pytiledbsoma.SOMAContext(),
+        )
+    ) as a:
+        table = a.read_next()["soma_data"]
+        assert np.array_equal(data, table.combine_chunks().to_numpy().reshape(shape))
+
     # Validate TileDB array schema
     with tiledb.open(tmp_path.as_posix()) as A:
         assert not A.schema.sparse
@@ -111,17 +171,6 @@ def test_zero_length_fail(tmp_path, shape):
     """Zero length dimensions are expected to fail"""
     with pytest.raises(ValueError):
         soma.DenseNDArray.create(tmp_path.as_posix(), type=pa.float32(), shape=shape)
-
-
-def test_dense_nd_array_reshape(tmp_path):
-    """
-    Reshape currently unimplemented.
-    """
-    a = soma.DenseNDArray.create(
-        tmp_path.as_posix(), type=pa.int32(), shape=(10, 10, 10)
-    )
-    with pytest.raises(NotImplementedError):
-        assert a.reshape((100, 10, 1))
 
 
 @pytest.mark.parametrize("shape_is_numeric", [True, False])

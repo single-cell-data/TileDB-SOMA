@@ -22,6 +22,12 @@ class AxisIDMapping:
     # Tuple not List so this can't be modified by accident when passed into some function somewhere
     data: Tuple[int, ...]
 
+    def is_identity(self) -> bool:
+        for i, data in enumerate(self.data):
+            if data != i:
+                return False
+        return True
+
     @classmethod
     def identity(cls, n: int) -> Self:
         """This maps 0-up input-file offsets to 0-up soma_joinid values. This is

@@ -124,7 +124,7 @@ EphemeralCollectionBase <- R6::R6Class(
       length(private$.data)
     },
 
-    #' @description Retrieve the names of members. (lifecycle: experimental)
+    #' @description Retrieve the names of members. (lifecycle: maturing)
     #' @return A \code{character} vector of member names.
     names = function() {
       names(private$.data) %||% character(length = 0L)

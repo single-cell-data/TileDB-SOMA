@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import datetime
 import itertools
 import operator
 import pathlib
@@ -59,6 +61,16 @@ def test_sparse_nd_array_create_ok(
     assert a.schema.field("soma_data").type == element_type
     assert not a.schema.field("soma_data").nullable
 
+    # Check with open binding
+    with contextlib.closing(
+        soma.pytiledbsoma.SOMASparseNDArray.open(
+            tmp_path.as_posix(),
+            soma.pytiledbsoma.OpenMode.read,
+            soma.pytiledbsoma.SOMAContext(),
+        )
+    ) as b:
+        assert a.schema == b.schema
+
     # Ensure read mode uses clib object
     with soma.SparseNDArray.open(tmp_path.as_posix(), "r") as A:
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMASparseNDArray)
@@ -66,6 +78,45 @@ def test_sparse_nd_array_create_ok(
     # Ensure write mode uses Python object
     with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMASparseNDArray)
+
+
+def test_sparse_nd_array_reopen(tmp_path):
+    soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.float64(), shape=(1,), tiledb_timestamp=1
+    )
+
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as A1:
+        with raises_no_typeguard(ValueError):
+            A1.reopen("invalid")
+
+        with A1.reopen("w", tiledb_timestamp=2) as A2:
+            with A2.reopen("r", tiledb_timestamp=3) as A3:
+                assert A1.mode == "r"
+                assert A2.mode == "w"
+                assert A3.mode == "r"
+                assert A1.tiledb_timestamp_ms == 1
+                assert A2.tiledb_timestamp_ms == 2
+                assert A3.tiledb_timestamp_ms == 3
+
+    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as A1:
+        with A1.reopen("r", tiledb_timestamp=ts2) as A2:
+            assert A1.mode == "r"
+            assert A2.mode == "r"
+            assert A1.tiledb_timestamp == ts1
+            assert A2.tiledb_timestamp == ts2
+
+    with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A1:
+        with A1.reopen("w", tiledb_timestamp=None) as A2:
+            with A2.reopen("w") as A3:
+                assert A1.mode == "w"
+                assert A2.mode == "w"
+                assert A3.mode == "w"
+                now = datetime.datetime.now(datetime.timezone.utc)
+                assert A1.tiledb_timestamp <= now
+                assert A2.tiledb_timestamp <= now
+                assert A3.tiledb_timestamp <= now
 
 
 @pytest.mark.parametrize("shape", [(10,)])
@@ -147,7 +198,7 @@ def tensors_are_same_value(a: AnySparseTensor, b: AnySparseTensor) -> bool:
     Return true if the tenors contain the same values, allowing for
     differences in coordinate ordering
     """
-    if type(a) != type(b):
+    if type(a) is not type(b):
         return False
     if a.shape != b.shape:
         return False
@@ -479,17 +530,6 @@ def test_sparse_nd_array_nnz(tmp_path):
         a.write(t)
     with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
         assert t.non_zero_length == a.nnz
-
-
-def test_sparse_nd_array_reshape(tmp_path):
-    """
-    Reshape currently unimplemented.
-    """
-    with soma.SparseNDArray.create(
-        tmp_path.as_posix(), type=pa.int32(), shape=(10, 10, 10)
-    ) as a:
-        with pytest.raises(NotImplementedError):
-            assert a.reshape((100, 10, 1))
 
 
 @pytest.mark.parametrize(
@@ -1824,11 +1864,10 @@ def test_global_writes(tmp_path):
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
         assert A.read().tables().concat() == data
 
-    with pytest.warns(DeprecationWarning) as warning:
+    with pytest.raises(ValueError):
+        # Takes TileDBWriteOptions as of TileDB-SOMA 1.13
         with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
             A.write(
                 data,
                 platform_config=soma.TileDBCreateOptions(),
             )
-        assert "The write parameter now takes in TileDBWriteOptions instead "
-        "of TileDBCreateOptions" == warning[0].message

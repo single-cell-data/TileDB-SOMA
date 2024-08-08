@@ -46,6 +46,7 @@ from ._common import (
     _UNS_OUTGEST_HINT_2D,
     _UNS_OUTGEST_HINT_KEY,
     Matrix,
+    UnsMapping,
 )
 
 
@@ -67,7 +68,7 @@ def to_h5ad(
     Arguments are as in ``to_anndata``.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  Experiment.to_h5ad -> {h5ad_path}")
@@ -121,6 +122,64 @@ def _extract_X_key(
         raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
 
     return data
+
+
+def _read_dataframe(
+    df: DataFrame, default_index_name: Optional[str], fallback_index_name: str
+) -> pd.DataFrame:
+    """Outgest a SOMA DataFrame to Pandas, including restoring the original index{,.name}.
+
+    An `OriginalIndexMetadata` attached to the DataFrame, if present, contains a string (or `null`), indicating a
+    SOMADataFrame column which should be restored as the pd.DataFrame index.
+
+    `default_index_name`, if provided, overrides the stored `OriginalIndexMetadata`; a column with this name will be
+    verified to exist, and set as index of the returned `pd.DataFrame`.
+
+    If neither `default_index_name` nor `OriginalIndexMetadata` are provided, the `fallback_index_name` will be used.
+    `to_anndata` passes "obs_id" / "var_id" for obs/var, matching `from_anndata`'s default `{obs,var}_id_name` values.
+
+    NOTE: several edge cases result in the outgested DataFrame not matching the original DataFrame; see
+    `test_dataframe_io_roundtrips.py` / https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
+    """
+    # Read and validate the "original index metadata" stored alongside this SOMA DataFrame.
+    original_index_metadata = json.loads(
+        df.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, "null")
+    )
+    if not (
+        original_index_metadata is None or isinstance(original_index_metadata, str)
+    ):
+        raise ValueError(
+            f"{df.uri}: invalid {_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}"
+        )
+
+    pdf: pd.DataFrame = df.read().concat().to_pandas()
+    # SOMA DataFrames always have a `soma_joinid` added, as part of the ingest process, which we remove on outgest.
+    pdf.drop(columns=SOMA_JOINID, inplace=True)
+
+    default_index_name = default_index_name or original_index_metadata
+    if default_index_name is not None:
+        # One or both of the following was true:
+        # - Original DataFrame had an index name (other than "index") ⇒ that name was written as `OriginalIndexMetadata`
+        # - `default_index_name` was provided (e.g. `{obs,var}_id_name` args to `to_anndata`)
+        #
+        # ⇒ Verify a column with that name exists, and set it as index (keeping its name).
+        if default_index_name not in pdf.keys():
+            raise ValueError(
+                f"Requested ID column name {default_index_name} not found in input: {pdf.keys()}"
+            )
+        pdf.set_index(default_index_name, inplace=True)
+    else:
+        # The assumption here is that the original index was unnamed, and was given a "fallback name" (e.g. "obs_id",
+        # "var_id") during ingest that matches the `fallback_index_name` arg here. In this case, we restore that column
+        # as index, and remove the name.
+        #
+        # NOTE: several edge cases result in the outgested DF not matching the original DF; see
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
+        if fallback_index_name in pdf:
+            pdf.set_index(fallback_index_name, inplace=True)
+            pdf.index.name = None
+
+    return pdf
 
 
 # ----------------------------------------------------------------
@@ -179,7 +238,7 @@ def to_anndata(
     to not ingest any ``uns`` keys.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     s = _util.get_start_stamp()
@@ -196,55 +255,8 @@ def to_anndata(
     # * Else if the names used at ingest time are available, use them.
     # * Else use the default/fallback name.
 
-    # Restore the original index name for outgest. We use JSON for elegant indication of index
-    # name being None (in Python anyway). It may be 'null' which maps to Pyhton None.
-    obs_id_name = obs_id_name or json.loads(
-        experiment.obs.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, '"obs_id"')
-    )
-    var_id_name = var_id_name or json.loads(
-        measurement.var.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, '"var_id"')
-    )
-
-    obs_df = experiment.obs.read().concat().to_pandas()
-    obs_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    if obs_id_name is not None:
-        if obs_id_name not in obs_df.keys():
-            raise ValueError(
-                f"requested obs IDs column name {obs_id_name} not found in input: {obs_df.keys()}"
-            )
-        obs_df.set_index(obs_id_name, inplace=True)
-    else:
-        # There are multiple cases to be handled here, all tested in CI.
-        # This else-block handle this one:
-        #
-        #                 orig.ident  nCount_RNA  ...
-        # ATGCCAGAACGACT           0        70.0  ...
-        # CATGGCCTGTGCAT           0        85.0  ...
-        # GAACCTGATGAACC           0        87.0  ...
-        #
-        # Namely:
-        # * The input AnnData dataframe had an index with no name
-        # * In the SOMA experiment we name that column "obs_id" and our index is "soma_joinid"
-        # * On outgest we drop "soma_joinid"
-        # * The thing we named "obs_id" needs to become the index again ...
-        # * ... and it needs to be nameless.
-        if "obs_id" in obs_df:
-            obs_df.set_index("obs_id", inplace=True)
-            obs_df.index.name = None
-
-    var_df = measurement.var.read().concat().to_pandas()
-
-    var_df.drop([SOMA_JOINID], axis=1, inplace=True)
-    if var_id_name is not None:
-        if var_id_name not in var_df.keys():
-            raise ValueError(
-                f"requested var IDs column name {var_id_name} not found in input: {var_df.keys()}"
-            )
-        var_df.set_index(var_id_name, inplace=True)
-    else:
-        if "var_id" in var_df:
-            var_df.set_index("var_id", inplace=True)
-            var_df.index.name = None
+    obs_df = _read_dataframe(experiment.obs, obs_id_name, "obs_id")
+    var_df = _read_dataframe(measurement.var, var_id_name, "var_id")
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
@@ -309,17 +321,18 @@ def to_anndata(
             matrix = measurement.varp[key].read().tables().concat().to_pandas()
             varp[key] = conversions.csr_from_tiledb_df(matrix, nvar, nvar)
 
-    uns = {}
+    uns: UnsMapping = {}
     if "uns" in measurement:
         s = _util.get_start_stamp()
-        logging.log_io(None, f'Start  writing uns for {measurement["uns"].uri}')
+        uns_coll = cast(Collection[Any], measurement["uns"])
+        logging.log_io(None, f"Start  writing uns for {uns_coll.uri}")
         uns = _extract_uns(
-            cast(Collection[Any], measurement["uns"]),
+            uns_coll,
             uns_keys=uns_keys,
         )
         logging.log_io(
             None,
-            _util.format_elapsed(s, f'Finish writing uns for {measurement["uns"].uri}'),
+            _util.format_elapsed(s, f"Finish writing uns for {uns_coll.uri}"),
         )
 
     anndata = ad.AnnData(
@@ -417,7 +430,7 @@ def _extract_uns(
     collection: Collection[Any],
     uns_keys: Optional[Sequence[str]] = None,
     level: int = 0,
-) -> Dict[str, Any]:
+) -> UnsMapping:
     """
     This is a helper function for ``to_anndata`` of ``uns`` elements.
     """

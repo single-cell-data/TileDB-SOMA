@@ -13,15 +13,26 @@ from tiledbsoma import pytiledbsoma as clib
 if TYPE_CHECKING:
     from .options import SOMATileDBContext
 
-IndexerDataType = Union[
-    npt.NDArray[np.int64],
-    pa.Array,
-    pa.IntegerArray,
-    pd.Series,
-    pd.arrays.IntegerArray,
-    pa.ChunkedArray,
-    List[int],
-]
+    IndexerDataType = Union[
+        npt.NDArray[np.int64],
+        pa.Array,
+        pa.IntegerArray,
+        pd.Series[Any],
+        pd.arrays.IntegerArray,
+        pa.ChunkedArray,
+        List[int],
+    ]
+
+else:
+    IndexerDataType = Union[
+        npt.NDArray[np.int64],
+        pa.Array,
+        pa.IntegerArray,
+        pd.Series,
+        pd.arrays.IntegerArray,
+        pa.ChunkedArray,
+        List[int],
+    ]
 
 
 def tiledbsoma_build_index(
@@ -48,7 +59,7 @@ class IntIndexer:
     """A re-indexer for unique integer indices.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     def __init__(
@@ -63,7 +74,7 @@ class IntIndexer:
                ``SOMATileDBContext`` object containing concurrecy level.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self._context = context
         self._reindexer = clib.IntIndexer(

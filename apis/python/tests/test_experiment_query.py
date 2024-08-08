@@ -933,6 +933,19 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
     obs = q.obs().concat()
     assert len(obs) == 44
 
+    adata = q.to_anndata(column_names={"obs": ["groups"]}, X_name="data")
+    cat = adata.obs["groups"].cat.categories
+    assert "g1" in cat
+    assert "g2" in cat
+
+    adata = q.to_anndata(
+        column_names={"obs": ["groups"]}, X_name="data", drop_levels=True
+    )
+    cat = adata.obs["groups"].cat.categories
+    assert "g1" in cat
+    # Unused categories should not appear
+    assert "g2" not in cat
+
     q = conftest_pbmc_small_exp.axis_query(
         measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "foo"')
     )

@@ -3,6 +3,8 @@
 #
 # Licensed under the MIT License.
 
+from __future__ import annotations
+
 import datetime
 import functools
 import threading
@@ -74,7 +76,7 @@ class SOMATileDBContext(ContextBase):
     a new ``SOMATileDBContext`` with new values.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     def __init__(
@@ -265,7 +267,7 @@ class SOMATileDBContext(ContextBase):
                 A threadpool to replace the current threadpool with.
 
         Lifecycle:
-            Experimental.
+            Maturing.
 
         Examples:
             >>> context.replace(timestamp=1_512_658_800_000)  # UNIX millis
@@ -295,6 +297,7 @@ class SOMATileDBContext(ContextBase):
                 # Keep the existing threadpool if not overridden.
                 threadpool = self.threadpool
 
+        assert timestamp is None or isinstance(timestamp, (datetime.datetime, int))
         return type(self)(
             tiledb_config=tiledb_config,
             tiledb_ctx=tiledb_ctx,

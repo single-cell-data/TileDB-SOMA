@@ -23,6 +23,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 import attrs
@@ -131,7 +132,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(f"{uri!r} does not exist") from tdbe
+                raise DoesNotExistError(tdbe) from tdbe
             raise
         return handle
 
@@ -141,7 +142,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     ) -> Self:
         uri = soma_object.uri
         mode = soma_object.mode
-        timestamp = soma_object.timestamp
+        timestamp = context._open_timestamp_ms(soma_object.timestamp)
         try:
             handle = cls(uri, mode, context, timestamp, soma_object)
             if handle.mode == "w":
@@ -152,7 +153,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(f"{handle.uri!r} does not exist") from tdbe
+                raise DoesNotExistError(tdbe) from tdbe
             raise
         return handle
 
@@ -167,6 +168,18 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     ) -> _RawHdl_co:
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
+
+    def reopen(
+        self, mode: options.OpenMode, timestamp: Optional[OpenTimestamp]
+    ) -> clib.SOMAObject:
+        if mode not in ("r", "w"):
+            raise ValueError(
+                f"Invalid mode '{mode}' passed. " "Valid modes are 'r' and 'w'."
+            )
+        ts = self.context._open_timestamp_ms(timestamp)
+        return self._handle.reopen(
+            clib.OpenMode.read if mode == "r" else clib.OpenMode.write, (0, ts)
+        )
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.
@@ -286,6 +299,9 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
     def meta(self) -> "MetadataWrapper":
         return self.metadata
 
+    def members(self) -> Dict[str, Tuple[str, str]]:
+        return cast(Dict[str, Tuple[str, str]], self._handle.members())
+
 
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
     """Wrapper around a Pybind11 CollectionWrapper handle."""
@@ -330,6 +346,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         timestamp: int,
     ) -> clib.SOMAArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+
         return cls._ARRAY_WRAPPED_TYPE.open(
             uri,
             mode=open_mode,

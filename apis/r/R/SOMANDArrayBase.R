@@ -2,7 +2,7 @@
 #'
 #' @description
 #' Adds NDArray-specific functionality to the [`SOMAArrayBase`] class.
-#' (lifecycle: experimental)
+#' (lifecycle: maturing)
 #'
 #' @keywords internal
 #' @export
@@ -57,15 +57,18 @@ SOMANDArrayBase <- R6::R6Class(
       ## create array
       ctxptr <- super$tiledbsoma_ctx$context()
       createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp,
-                            private$.is_sparse, "SOMADenseNDArray",
-                            tiledb_create_options$to_list(FALSE), ctxptr@ptr)
+                            private$.is_sparse,
+                            if (private$.is_sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
+                            tiledb_create_options$to_list(FALSE), soma_context())
 
       self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()
       self
     },
 
-    ## needed eg after open() to set (Arrow) tyoe
+    ## needed eg after open() to set (Arrow) type
+    #' @description Sets a cache value for the datatype (lifecycle: experimental)
+    #' @param type A character value describing the TileDB data type
     set_data_type = function(type) {
       spdl::debug("[SOMANDArrayBase::set_data_type] caching type {}", type$ToString())
       private$.type <- type

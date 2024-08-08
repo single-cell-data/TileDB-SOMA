@@ -126,6 +126,16 @@ class SOMAGroup : public SOMAObject {
         OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
+     * Return a new SOMAGroup with the given mode at the current Unix timestamp.
+     *
+     * @param mode if the OpenMode is not given, If the SOMAObject was opened in
+     * READ mode, reopen it in WRITE mode and vice versa
+     * @param timestamp Timestamp
+     */
+    std::unique_ptr<SOMAGroup> reopen(
+        OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
+
+    /**
      * Close the SOMAGroup object.
      */
     void close();
@@ -231,6 +241,8 @@ class SOMAGroup : public SOMAObject {
      *     same datatype. This argument indicates the number of items in the
      *     value component of the metadata.
      * @param value The metadata value in binary form.
+     * @param force A boolean toggle to suppress internal checks, defaults to
+     *     false.
      *
      * @note The writes will take effect only upon closing the array.
      */
@@ -238,7 +250,8 @@ class SOMAGroup : public SOMAObject {
         const std::string& key,
         tiledb_datatype_t value_type,
         uint32_t value_num,
-        const void* value);
+        const void* value,
+        bool force = false);
 
     /**
      * Delete a metadata key-value item from an open group. The group must

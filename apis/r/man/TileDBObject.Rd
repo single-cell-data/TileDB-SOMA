@@ -5,7 +5,7 @@
 \title{TileDB Object Base Class}
 \description{
 Base class to implement shared functionality across the TileDBArray and
-TileDBGroup classes. (lifecycle: experimental)
+TileDBGroup classes. (lifecycle: maturing)
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -35,7 +35,7 @@ TileDBGroup classes. (lifecycle: experimental)
 \if{html}{\out{<a id="method-TileDBObject-new"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-new}{}}}
 \subsection{Method \code{new()}}{
-Create a new TileDB object. (lifecycle: experimental)
+Create a new TileDB object. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$new(
   uri,
@@ -106,7 +106,7 @@ otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object
 \subsection{Method \code{reopen()}}{
 Close and reopen the TileDB object in a new mode
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$reopen(mode = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$reopen(mode)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -116,13 +116,12 @@ Close and reopen the TileDB object in a new mode
 \itemize{
 \item \dQuote{\code{READ}}
 \item \dQuote{\code{WRITE}}
-}
-By default, reopens in the opposite mode of the current mode}
+}}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Invisibly returns \code{self}
+Invisibly returns \code{self} opened in \code{mode}
 }
 }
 \if{html}{\out{<hr>}}
@@ -139,7 +138,7 @@ Print-friendly representation of the object.
 \if{html}{\out{<a id="method-TileDBObject-exists"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-exists}{}}}
 \subsection{Method \code{exists()}}{
-Check if the object exists. (lifecycle: experimental)
+Check if the object exists. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$exists()}\if{html}{\out{</div>}}
 }

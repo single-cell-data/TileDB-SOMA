@@ -22,6 +22,7 @@ const tiledb_xptr_object tiledb_xptr_vfs_fh_t                    { 160 };
 const tiledb_xptr_object tiledb_xptr_vlc_buf_t                   { 170 };
 const tiledb_xptr_object tiledb_xptr_vlv_buf_t                   { 180 };
 const tiledb_xptr_object tiledb_xptr_query_buf_t                 { 190 };
+const tiledb_xptr_object tiledb_xptr_somactx_wrapper_t           { 200 };
 
 // the definitions above are internal to tiledb-r but we need a new value here if we want tag the external pointer
 const tiledb_xptr_object tiledb_arrow_array_t                    { 300 };
@@ -57,6 +58,9 @@ template <> inline const int32_t XPtrTagType<tiledb::VFS>                  = til
 template <> inline const int32_t XPtrTagType<tdbs::SOMAArray>              = tiledb_soma_reader_t;
 
 template <> inline const int32_t XPtrTagType<tdbs::IntIndexer>  	       = tiledb_soma_rindexer_t;
+
+template <> inline const int32_t XPtrTagType<somactx_wrap_t>			   = tiledb_xptr_somactx_wrapper_t;
+
 
 template <typename T> Rcpp::XPtr<T> make_xptr(T* p, bool finalize=true) {
     return Rcpp::XPtr<T>(p, finalize, Rcpp::wrap(XPtrTagType<T>), R_NilValue);

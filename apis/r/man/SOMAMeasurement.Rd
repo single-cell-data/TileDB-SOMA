@@ -7,7 +7,7 @@
 A \code{SOMAMeasurement} is a sub-element of a \code{\link{SOMAExperiment}},
 and is otherwise a specialized \code{\link{SOMACollection}} with pre-defined fields:
 \code{X}, \code{var}, \code{obsm}/\code{varm}, and \code{obsp}/\code{varp} (see \emph{Active Bindings} below for
-details). (lifecycle: experimental)
+details). (lifecycle: maturing)
 }
 \section{Adding new objects to a collection}{
 

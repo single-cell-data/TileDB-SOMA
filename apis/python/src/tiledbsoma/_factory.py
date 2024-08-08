@@ -57,8 +57,7 @@ def open(
     soma_type: Optional[str] = None,
     context: Optional[SOMATileDBContext] = None,
     tiledb_timestamp: Optional[OpenTimestamp] = None,
-) -> AnySOMAObject:
-    ...
+) -> AnySOMAObject: ...
 
 
 @overload
@@ -69,8 +68,7 @@ def open(
     soma_type: Type[_Obj],
     context: Optional[SOMATileDBContext] = None,
     tiledb_timestamp: Optional[OpenTimestamp] = None,
-) -> _Obj:
-    ...
+) -> _Obj: ...
 
 
 @typeguard_ignore
@@ -120,7 +118,7 @@ def open(
             If the user-provided ``mode`` is invalid.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     context = _validate_soma_tiledb_context(context)
     obj: SOMAObject[_Wrapper] = _open_internal(  # type: ignore[valid-type]

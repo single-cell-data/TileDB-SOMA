@@ -83,7 +83,7 @@ void write_coords(
 }
 
 void load_soma_array(py::module& m) {
-    py::class_<SOMAArray>(m, "SOMAArray", "SOMAObject")
+    py::class_<SOMAArray, SOMAObject>(m, "SOMAArray")
         .def(
             py::init(
                 [](std::string_view uri,
@@ -191,11 +191,7 @@ void load_soma_array(py::module& m) {
             "batch_size"_a = "auto",
             "result_order"_a = ResultOrder::automatic)
 
-        .def(
-            "reopen",
-            py::overload_cast<
-                OpenMode,
-                std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAArray::open))
+        .def("reopen", &SOMAArray::reopen)
         .def("close", &SOMAArray::close)
         .def_property_readonly(
             "closed",

@@ -223,6 +223,16 @@ class SOMAArray : public SOMAObject {
         OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
+     * Return a new SOMAArray with the given mode at the current Unix timestamp.
+     *
+     * @param mode if the OpenMode is not given, If the SOMAObject was opened in
+     * READ mode, reopen it in WRITE mode and vice versa
+     * @param timestamp Timestamp
+     */
+    std::unique_ptr<SOMAArray> reopen(
+        OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
+
+    /**
      * Close the SOMAArray object.
      */
     void close();
@@ -415,12 +425,6 @@ class SOMAArray : public SOMAObject {
      * @return std::optional<std::shared_ptr<ArrayBuffers>>
      */
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
-
-    Enumeration extend_enumeration(
-        ArrowSchema* value_schema,
-        ArrowArray* value_array,
-        ArrowSchema* index_schema,
-        ArrowArray* index_array);
 
     /**
      * @brief Set the write buffers for a single column.
@@ -658,6 +662,8 @@ class SOMAArray : public SOMAObject {
      *     same datatype. This argument indicates the number of items in the
      *     value component of the metadata.
      * @param value The metadata value in binary form.
+     * @param force A boolean toggle to suppress internal checks, defaults to
+     *     false.
      *
      * @note The writes will take effect only upon closing the array.
      */
@@ -665,7 +671,8 @@ class SOMAArray : public SOMAObject {
         const std::string& key,
         tiledb_datatype_t value_type,
         uint32_t value_num,
-        const void* value);
+        const void* value,
+        bool force = false);
 
     /**
      * Delete a metadata key-value item from an open array. The array must
@@ -755,11 +762,19 @@ class SOMAArray : public SOMAObject {
 
     uint64_t _get_max_capacity(tiledb_datatype_t index_type);
 
-    template <typename ValueType>
-    Enumeration _extend_and_evolve_schema(
+    bool _extend_enumeration(
+        ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
-        ArrowArray* index_array) {
+        ArrowArray* index_array,
+        ArraySchemaEvolution se);
+
+    template <typename ValueType>
+    bool _extend_and_evolve_schema(
+        ArrowArray* value_array,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array,
+        ArraySchemaEvolution se) {
         std::string column_name = index_schema->name;
         auto disk_index_type = tiledb_schema()->attribute(column_name).type();
         auto enmr = ArrayExperimental::get_enumeration(
@@ -792,10 +807,8 @@ class SOMAArray : public SOMAObject {
                 throw TileDBSOMAError(
                     "Cannot extend enumeration; reached maximum capacity");
             }
-            ArraySchemaEvolution se(*ctx_->tiledb_ctx());
             auto extended_enmr = enmr.extend(extend_values);
             se.extend_enumeration(extended_enmr);
-            se.array_evolve(uri_);
             SOMAArray::_remap_indexes(
                 column_name,
                 extended_enmr,
@@ -806,24 +819,24 @@ class SOMAArray : public SOMAObject {
             index_schema->format = ArrowAdapter::to_arrow_format(
                                        disk_index_type)
                                        .data();
-
-            return extended_enmr;
+            return true;
         }
-
-        return enmr;
+        return false;
     }
 
-    Enumeration _extend_and_evolve_schema_str(
+    bool _extend_and_evolve_schema_str(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
-        ArrowArray* index_array);
+        ArrowArray* index_array,
+        ArraySchemaEvolution se);
 
-    void _create_and_cast_column(
+    bool _create_and_cast_column(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowSchema* new_column_schema,
-        ArrowArray* new_column_array);
+        ArrowArray* new_column_array,
+        ArraySchemaEvolution se);
 
     void _create_column(
         ArrowSchema* orig_column_schema,
@@ -1022,8 +1035,15 @@ class SOMAArray : public SOMAObject {
             idxbuf, idxbuf + index_array->length);
         std::vector<IndexType> shifted_indexes;
         for (auto i : original_indexes) {
-            auto it = std::find(beg, end, enums_in_write[i]);
-            shifted_indexes.push_back(it - beg);
+            // For nullable columns, when the value is NULL, the associated
+            // index may be a negative integer, so do not index into
+            // enums_in_write or it will segfault
+            if (0 > i) {
+                shifted_indexes.push_back(i);
+            } else {
+                auto it = std::find(beg, end, enums_in_write[i]);
+                shifted_indexes.push_back(it - beg);
+            }
         }
 
         auto attr = tiledb_schema()->attribute(column_name);

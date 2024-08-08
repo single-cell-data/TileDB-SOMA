@@ -26,7 +26,7 @@ Class that allows for read iteration of SOMA reads.
 \if{html}{\out{<a id="method-ReadIter-new"></a>}}
 \if{latex}{\out{\hypertarget{method-ReadIter-new}{}}}
 \subsection{Method \code{new()}}{
-Create (lifecycle: experimental)
+Create (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ReadIter$new(sr)}\if{html}{\out{</div>}}
 }
@@ -43,7 +43,7 @@ Create (lifecycle: experimental)
 \if{html}{\out{<a id="method-ReadIter-read_complete"></a>}}
 \if{latex}{\out{\hypertarget{method-ReadIter-read_complete}{}}}
 \subsection{Method \code{read_complete()}}{
-Check if iterated read is complete or not. (lifecycle: experimental)
+Check if iterated read is complete or not. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ReadIter$read_complete()}\if{html}{\out{</div>}}
 }
@@ -56,7 +56,7 @@ logical
 \if{html}{\out{<a id="method-ReadIter-read_next"></a>}}
 \if{latex}{\out{\hypertarget{method-ReadIter-read_next}{}}}
 \subsection{Method \code{read_next()}}{
-Read the next chunk of an iterated read. (lifecycle: experimental).
+Read the next chunk of an iterated read. (lifecycle: maturing).
 If read is complete, retunrs \code{NULL} and raises warning.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ReadIter$read_next()}\if{html}{\out{</div>}}

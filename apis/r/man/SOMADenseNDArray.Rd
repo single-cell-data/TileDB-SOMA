@@ -22,7 +22,7 @@ The default "fill" value for \code{SOMADenseNDArray} is the zero or null value o
 the array type (e.g., Arrow.float32 defaults to 0.0).
 
 The \code{write} method is currently limited to writing from 2-d matrices.
-(lifecycle: experimental)
+(lifecycle: maturing)
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{\link[tiledbsoma:SOMANDArrayBase]{tiledbsoma::SOMANDArrayBase}} -> \code{SOMADenseNDArray}
@@ -65,6 +65,7 @@ The \code{write} method is currently limited to writing from 2-d matrices.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="used_shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-used_shape'><code>tiledbsoma::TileDBArray$used_shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="create"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-create'><code>tiledbsoma::SOMANDArrayBase$create()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="set_data_type"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-set_data_type'><code>tiledbsoma::SOMANDArrayBase$set_data_type()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -72,7 +73,7 @@ The \code{write} method is currently limited to writing from 2-d matrices.
 \if{html}{\out{<a id="method-SOMADenseNDArray-read_arrow_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_arrow_table}{}}}
 \subsection{Method \code{read_arrow_table()}}{
-Read as an 'arrow::Table' (lifecycle: experimental)
+Read as an 'arrow::Table' (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_arrow_table(
   coords = NULL,
@@ -106,7 +107,7 @@ An \code{\link[arrow:Table-class]{arrow::Table}}.
 \if{html}{\out{<a id="method-SOMADenseNDArray-read_dense_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_dense_matrix}{}}}
 \subsection{Method \code{read_dense_matrix()}}{
-Read as a dense matrix (lifecycle: experimental)
+Read as a dense matrix (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_dense_matrix(
   coords = NULL,
@@ -140,7 +141,7 @@ A \code{matrix} object
 \if{html}{\out{<a id="method-SOMADenseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix data to the array. (lifecycle: experimental)
+Write matrix data to the array. (lifecycle: maturing)
 
 More general write methods for higher-dimensional array could be added.
 \subsection{Usage}{

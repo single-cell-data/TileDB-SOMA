@@ -48,7 +48,6 @@ from .. import (
     _util,
     logging,
 )
-from .._constants import SOMA_JOINID
 from .._exception import (
     AlreadyExistsError,
     NotCreateableError,
@@ -66,7 +65,10 @@ from ..io.ingest import (
     _write_dataframe_impl,
     add_metadata,
 )
-from ..options._tiledb_create_write_options import TileDBCreateOptions
+from ..options._tiledb_create_write_options import (
+    TileDBCreateOptions,
+    TileDBWriteOptions,
+)
 
 if TYPE_CHECKING:
     from somacore.options import PlatformConfig
@@ -145,7 +147,7 @@ def from_cxg_spatial_h5ad(
 
     # store spatial images
     images_source_dict = spatial_dict[library_id]["images"]
-    image_paths: dict[str, Optional[str]] = {
+    image_paths: Dict[str, Optional[str]] = {
         "fullres": None,
         "hires": None,
         "lowres": None,
@@ -469,6 +471,7 @@ def _write_scene_presence_dataframe(
         return soma_df
 
     tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+    tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
 
     if joinids:
         nvalues = len(joinids)
@@ -479,7 +482,9 @@ def _write_scene_presence_dataframe(
                 "data": nvalues * [True],
             }
         )
-        _write_arrow_table(arrow_table, soma_df, tiledb_create_options)
+        _write_arrow_table(
+            arrow_table, soma_df, tiledb_create_options, tiledb_write_options
+        )
 
     logging.log_io(
         f"Wrote   {df_uri}",
@@ -520,7 +525,6 @@ def _write_visium_spot_dataframe(
         id_column_name,
         ingestion_params=ingestion_params,
         additional_metadata=additional_metadata,
-        index_column_names=("y", "x", SOMA_JOINID),
         platform_config=platform_config,
         context=context,
     )

@@ -9,7 +9,6 @@ Implementation of SOMA SparseNDArray.
 from __future__ import annotations
 
 import itertools
-import warnings
 from typing import (
     Dict,
     Optional,
@@ -34,7 +33,6 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
-from ._general_utilities import get_implementation_version
 from ._read_iters import (
     BlockwiseScipyReadIter,
     BlockwiseTableReadIter,
@@ -75,7 +73,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     and elements are named ``soma_data``.
 
     Lifecycle:
-        Experimental.
+        Maturing.
 
     Examples:
         >>> import tiledbsoma
@@ -168,7 +166,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         The number of stored values in the array, including explicitly stored zeros.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self._check_open_read()
         return cast(SparseNDArrayWrapper, self._handle).nnz
@@ -198,7 +196,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 If the object is not open for reading.
 
         Lifecycle:
-            Experimental.
+            Maturing.
 
         Notes:
             Acceptable ways to index:
@@ -270,24 +268,18 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 If the object is not open for writing.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
 
         write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
-            version = get_implementation_version().split(".")
-            assert (int(version[0]), int(version[1])) < (1, 13)
-            warnings.warn(
-                "The write parameter now takes in TileDBWriteOptions "
-                "instead of TileDBCreateOptions. This warning will be removed "
-                "and error out when passing TileDBCreateOptions in 1.13.",
-                DeprecationWarning,
+            raise ValueError(
+                "As of TileDB-SOMA 1.13, the write method takes "
+                "TileDBWriteOptions instead of TileDBCreateOptions"
             )
-            write_options = TileDBCreateOptions.from_platform_config(platform_config)
-        else:
-            write_options = TileDBWriteOptions.from_platform_config(platform_config)
-            sort_coords = write_options.sort_coords
+        write_options = TileDBWriteOptions.from_platform_config(platform_config)
+        sort_coords = write_options.sort_coords
 
         clib_sparse_array = self._handle._handle
 
@@ -439,6 +431,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         """
         Retrieve the range of indexes for a dimension that were explicitly written.
         Compare this to ``shape`` which returns the available/writable capacity.
+
+        This method is deprecated as of TileDB-SOMA 1.13, and will be removed in TileDB-SOMA 1.14.
         """
         retval = []
         for i in itertools.count():
@@ -513,7 +507,7 @@ class _SparseNDArrayReadBase(somacore.SparseRead):
     ):
         """
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self.sr = sr
         self.shape = tuple(sr.shape)
@@ -535,7 +529,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         somacore.data.SparseRead
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     def coos(self, shape: Optional[NTuple] = None) -> SparseCOOTensorReadIter:
@@ -548,7 +542,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
                 Optionally, a tuple that overrides the default capacity.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         if shape is not None and (len(shape) != len(self.shape)):
             raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
@@ -561,7 +555,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self.array._set_reader_coords(self.sr, self.coords)
         return TableReadIter(self.sr)
@@ -632,7 +626,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
             To iterate over COO matrices, on either axis, specify `scipy(compress=False)`.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return SparseNDArrayBlockwiseRead(
             self.sr,
@@ -674,7 +668,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             where the second element is a tuple containing the soma_joinid values for the queried array dimensions.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return BlockwiseTableReadIter(
             self.array,
@@ -719,7 +713,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
             where the first element is a tuple containing the soma_joinid values for the queried array dimensions.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return BlockwiseScipyReadIter(
             self.array,

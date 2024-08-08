@@ -1,6 +1,7 @@
 """
 Test join-id registrations for ingesting multiple AnnData objects into a single SOMA Experiment.
 """
+
 import math
 import tempfile
 from contextlib import nullcontext
@@ -23,7 +24,6 @@ def _create_anndata(
     obs_field_name: str,
     var_field_name: str,
     X_value_base: int,
-    measurement_name: str,
     raw_var_ids: Optional[Sequence[str]] = None,
 ):
     n_obs = len(obs_ids)
@@ -159,7 +159,6 @@ def create_anndata_canned(which: int, obs_field_name: str, var_field_name: str):
         var_ids=var_ids,
         raw_var_ids=raw_var_ids,
         X_value_base=X_value_base,
-        measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
     )
@@ -188,7 +187,6 @@ def anndata_larger():
         obs_ids=["id_%08d" % e for e in range(1000)],
         var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"],
         X_value_base=0,
-        measurement_name="measname",
         obs_field_name="cell_id",
         var_field_name="gene_id",
     )
@@ -1239,7 +1237,6 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
         X_value_base=0,
-        measurement_name=measurement_name,
     )
 
     bdata = _create_anndata(
@@ -1248,7 +1245,6 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
         X_value_base=100,
-        measurement_name=measurement_name,
     )
 
     adata.obs["enum"] = pd.Categorical(obs_ids_a, categories=obs_ids_a)

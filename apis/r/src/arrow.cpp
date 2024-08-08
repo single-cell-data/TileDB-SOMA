@@ -28,15 +28,39 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
     }
 }
 
+// [[Rcpp::export]]
+Rcpp::XPtr<somactx_wrap_t> createSOMAContext(Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+
+    // if we hae a config, use it
+    std::shared_ptr<tdbs::SOMAContext> somactx;
+    if (config.isNotNull()) {
+        std::map<std::string, std::string> smap;
+        auto config_vec = config.as();
+        auto config_names = Rcpp::as<Rcpp::CharacterVector>(config_vec.names());
+        for (auto &name : config_names) {
+            std::string param = Rcpp::as<std::string>(name);
+            std::string value = Rcpp::as<std::string>(config_vec[param]);
+            smap[param] = value;
+        }
+        somactx = std::make_shared<tdbs::SOMAContext>(smap);
+    } else {
+        somactx = std::make_shared<tdbs::SOMAContext>();
+    }
+
+    auto ptr = new somactx_wrap_t(somactx);
+    auto xp = make_xptr<somactx_wrap_t>(ptr);
+    return xp;
+}
+
+
 //  ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
 //  Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);
 
 // [[Rcpp::export]]
-void createSchemaFromArrow(const std::string& uri,
-                           naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp,
-                           bool sparse, std::string datatype,
-                           Rcpp::List pclst,
-                           Rcpp::Nullable<Rcpp::XPtr<ctx_wrap_t>> ctxptr = R_NilValue) {
+void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp,
+                           bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+
+
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
@@ -75,35 +99,46 @@ void createSchemaFromArrow(const std::string& uri,
     pltcfg.attrs                          = Rcpp::as<std::string>(pclst["attrs"]);
     pltcfg.dims                           = Rcpp::as<std::string>(pclst["dims"]);
 
-    std::shared_ptr<tiledb::Context> ctxsp;
-    if (ctxptr.isNotNull()) {   				// if optional context wrapper pointer was present
-        Rcpp::XPtr<ctx_wrap_t> ctxxp(ctxptr); 	// Rcpp::Nullable<> needs instantiation
-        ctxsp = (*ctxxp.get()).ctxptr; 			// access shared pointer to contexct from struct
+    // shared pointer to SOMAContext from external pointer wrapper
+    std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
+    // shared pointer to TileDB Context from SOMAContext
+    std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
+
+    bool exists = false;
+    if (datatype == "SOMADataFrame") {
+        exists = tdbs::SOMADataFrame::exists(uri, sctx);
+    } else if (datatype == "SOMASparseNDArray") {
+        exists = tdbs::SOMASparseNDArray::exists(uri, sctx);
+    } else if (datatype == "SOMADenseNDArray") {
+        exists = tdbs::SOMADenseNDArray::exists(uri, sctx);
     } else {
-        //std::map<std::string, std::string> pltfrmcfgmap = pltcfg.to_list();
-        tiledb::Config cfg; //pltcfg); 			// create plain config
-        										// create shared pointer to context given config
-        ctxsp = std::make_shared<tiledb::Context>(cfg);
-        //ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxsp); 	// create wrapper struct
-        //ctxptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);   // and create and assign extptr
+        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
     }
-    // create the ArraySchema
-    auto as = tdbs::ArrowAdapter::tiledb_schema_from_arrow_schema(ctxsp, std::move(schema),
-                                                                  std::pair(std::move(dimarr),
-                                                                            std::move(dimsch)),
-                                                                  datatype, sparse,
-                                                                  pltcfg);
 
-    // We can inspect the (TileDB) ArraySchema via a simple helper:  as.dump();
-    tiledb::VFS vfs(*ctxsp);
-    //spdl::warn("[createSchemaFromArrow] About to create {}, dir exists ? {}", uri, vfs.is_dir(uri));
-
-    if (vfs.is_dir(uri)) {
+    if (exists) {
         Rcpp::stop(tfm::format("Error: Array '%s' already exists", uri));
-    } else {
-        // Create the schema at the given URI
-        tiledb::Array::create(uri, as);
     }
+
+    if (datatype == "SOMADataFrame") {
+        tdbs::SOMADataFrame::create(uri, std::move(schema),
+                                    std::pair(std::move(dimarr), std::move(dimsch)),
+                                    sctx, pltcfg);
+    } else if (datatype == "SOMASparseNDArray") {
+        // for arrays n_children will be three as we have two dims and a data col
+        std::string datacoltype = sp->children[sp->n_children-1]->format;
+        tdbs::SOMASparseNDArray::create(uri, datacoltype,
+                                        std::pair(std::move(dimarr), std::move(dimsch)),
+                                        sctx, pltcfg);
+    } else if (datatype == "SOMADenseNDArray") {
+        // for arrays n_children will be three as we have two dims and a data col
+        std::string datacoltype = sp->children[sp->n_children-1]->format;
+        tdbs::SOMADenseNDArray::create(uri, datacoltype,
+                                       std::pair(std::move(dimarr), std::move(dimsch)),
+                                       sctx, pltcfg);
+    } else {
+        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
+    }
+
 }
 
 

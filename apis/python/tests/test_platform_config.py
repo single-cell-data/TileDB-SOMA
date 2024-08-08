@@ -41,7 +41,7 @@ def test_platform_config(conftest_pbmc_small):
                             "NoOpFilter",
                         ],
                         "dims": {
-                            "soma_dim_0": {"tile": 6},
+                            "soma_dim_0": {"tile": 6, "filters": ["RleFilter"]},
                             # Empty filters for soma_dim_1 overrides the default
                             # dimension zstd level defined below.
                             "soma_dim_1": {"filters": []},
@@ -70,7 +70,7 @@ def test_platform_config(conftest_pbmc_small):
             ]
             assert x_arr.attr("soma_data").filters == [tiledb.NoOpFilter()]
             assert x_arr.dim("soma_dim_0").tile == 6
-            assert x_arr.dim("soma_dim_0").filters == [tiledb.ZstdFilter(level=2)]
+            assert x_arr.dim("soma_dim_0").filters == [tiledb.RleFilter()]
             # As of 2.17.0 this is the default when empty filter-list, or none at all,
             # is requested. Those who want truly no filtering can request a no-op filter.
             assert list(x_arr.dim("soma_dim_1").filters) == [

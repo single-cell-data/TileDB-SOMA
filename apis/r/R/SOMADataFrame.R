@@ -4,7 +4,7 @@
 #' `SOMADataFrame` is a multi-column table that must contain a column
 #' called `soma_joinid` of type `int64`, which contains a unique value for each
 #' row and is intended to act as a join key for other objects, such as
-#' [`SOMASparseNDArray`].  (lifecycle: experimental)
+#' [`SOMASparseNDArray`].  (lifecycle: maturing)
 
 #' @importFrom stats setNames
 #' @export
@@ -15,7 +15,7 @@ SOMADataFrame <- R6::R6Class(
 
   public = list(
 
-    #' @description Create (lifecycle: experimental)
+    #' @description Create (lifecycle: maturing)
     #' @param schema an [`arrow::schema`].
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
@@ -55,14 +55,14 @@ SOMADataFrame <- R6::R6Class(
 
       ctxptr <- super$tiledbsoma_ctx$context()
       createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp, TRUE, "SOMADataFrame",
-                            tiledb_create_options$to_list(FALSE), ctxptr@ptr)
+                            tiledb_create_options$to_list(FALSE), soma_context())
 
       self$open("WRITE", internal_use_only = "allowed_use")
       private$write_object_type_metadata()
       self
     },
 
-    #' @description Write (lifecycle: experimental)
+    #' @description Write (lifecycle: maturing)
     #'
     #' @param values An [`arrow::Table`] or [`arrow::RecordBatch`]
     #' containing all columns, including any index columns. The
@@ -103,7 +103,7 @@ SOMADataFrame <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Read (lifecycle: experimental)
+    #' @description Read (lifecycle: maturing)
     #' Read a user-defined subset of data, addressed by the dataframe indexing
     #' column, and optionally filtered.
     #' @param coords Optional named list of indices specifying the rows to read; each (named)
@@ -165,7 +165,7 @@ SOMADataFrame <- R6::R6Class(
       TableReadIter$new(rl$sr)
     },
 
-    #' @description Update (lifecycle: experimental)
+    #' @description Update (lifecycle: maturing)
     #' @details
     #' Update the existing `SOMADataFrame` to add or remove columns based on the
     #' input:
@@ -308,7 +308,7 @@ SOMADataFrame <- R6::R6Class(
 
   private = list(
 
-    # @description Validate schema (lifecycle: experimental)
+    # @description Validate schema (lifecycle: maturing)
     # Handle default column additions (eg, soma_joinid) and error checking on
     # required columns
     # @return An [`arrow::Schema`], which may be modified by the addition of

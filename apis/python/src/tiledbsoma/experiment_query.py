@@ -38,7 +38,7 @@ def X_as_series(tbl: pa.Table) -> PDSeries:
         Name: soma_data, dtype: Sparse[float32, 0]
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     data = tbl["soma_data"].to_numpy()

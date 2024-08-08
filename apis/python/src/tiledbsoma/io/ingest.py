@@ -79,7 +79,10 @@ from .._types import (
 )
 from ..options import SOMATileDBContext
 from ..options._soma_tiledb_context import _validate_soma_tiledb_context
-from ..options._tiledb_create_write_options import TileDBCreateOptions
+from ..options._tiledb_create_write_options import (
+    TileDBCreateOptions,
+    TileDBWriteOptions,
+)
 from . import conversions
 from ._common import (
     _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
@@ -90,6 +93,7 @@ from ._common import (
     _UNS_OUTGEST_HINT_KEY,
     Matrix,
     SparseMatrix,
+    UnsMapping,
 )
 from ._registration import (
     AxisIDMapping,
@@ -98,6 +102,7 @@ from ._registration import (
     get_dataframe_values,
     signatures,
 )
+from ._registration.signatures import OriginalIndexMetadata, _prepare_df_for_ingest
 from ._util import read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
@@ -339,7 +344,7 @@ def from_h5ad(
         The URI of the newly created experiment.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -384,9 +389,19 @@ def from_h5ad(
 
 
 class IngestCtx(TypedDict):
+    """Convenience type-alias for kwargs passed to ingest functions."""
+
     context: Optional[SOMATileDBContext]
     ingestion_params: IngestionParams
     additional_metadata: AdditionalMetadata
+
+
+class IngestPlatformCtx(IngestCtx):
+    """Convenience type-alias for kwargs passed to ingest functions.
+
+    Extends :class:`IngestCtx`, adds ``platform_config``."""
+
+    platform_config: Optional[PlatformConfig]
 
 
 # ----------------------------------------------------------------
@@ -414,7 +429,7 @@ def from_anndata(
     is already loaded into memory.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(
@@ -484,6 +499,9 @@ def from_anndata(
         ingestion_params=ingestion_params,
         additional_metadata=additional_metadata,
     )
+    ingest_platform_ctx: IngestPlatformCtx = dict(
+        **ingest_ctx, platform_config=platform_config
+    )
 
     # Must be done first, to create the parent directory.
     experiment = _create_or_open_collection(Experiment, experiment_uri, **ingest_ctx)
@@ -495,9 +513,8 @@ def from_anndata(
         df_uri,
         conversions.decategoricalize_obs_or_var(anndata.obs),
         id_column_name=obs_id_name,
-        platform_config=platform_config,
         axis_mapping=jidmaps.obs_axis,
-        **ingest_ctx,
+        **ingest_platform_ctx,
     ) as obs:
         _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
@@ -535,10 +552,9 @@ def from_anndata(
             _maybe_ingest_uns(
                 measurement,
                 anndata.uns,
-                platform_config=platform_config,
                 use_relative_uri=use_relative_uri,
                 uns_keys=uns_keys,
-                **ingest_ctx,
+                **ingest_platform_ctx,
             )
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -547,10 +563,9 @@ def from_anndata(
                 _util.uri_joinpath(measurement_uri, "var"),
                 conversions.decategoricalize_obs_or_var(anndata.var),
                 id_column_name=var_id_name,
-                platform_config=platform_config,
                 # Layer existence is pre-checked in the registration phase
                 axis_mapping=jidmaps.var_axes[measurement_name],
-                **ingest_ctx,
+                **ingest_platform_ctx,
             ) as var:
                 _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
 
@@ -584,10 +599,9 @@ def from_anndata(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, X_layer_name),
                         anndata.X,
-                        platform_config=platform_config,
                         axis_0_mapping=jidmaps.obs_axis,
                         axis_1_mapping=jidmaps.var_axes[measurement_name],
-                        **ingest_ctx,
+                        **ingest_platform_ctx,
                     ) as data:
                         _maybe_set(
                             x, X_layer_name, data, use_relative_uri=use_relative_uri
@@ -598,10 +612,9 @@ def from_anndata(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, layer_name),
                         layer,
-                        platform_config=platform_config,
                         axis_0_mapping=jidmaps.obs_axis,
                         axis_1_mapping=jidmaps.var_axes[measurement_name],
-                        **ingest_ctx,
+                        **ingest_platform_ctx,
                     ) as layer_data:
                         _maybe_set(
                             x, layer_name, layer_data, use_relative_uri=use_relative_uri
@@ -645,10 +658,9 @@ def from_anndata(
                                     conversions.to_tiledb_supported_array_type(
                                         key, val
                                     ),
-                                    platform_config=platform_config,
                                     axis_0_mapping=axis_0_mapping,
                                     axis_1_mapping=_axis_1_mapping,
-                                    **ingest_ctx,
+                                    **ingest_platform_ctx,
                                 ) as arr:
                                     _maybe_set(
                                         coll,
@@ -686,9 +698,8 @@ def from_anndata(
                             _util.uri_joinpath(raw_uri, "var"),
                             conversions.decategoricalize_obs_or_var(anndata.raw.var),
                             id_column_name=var_id_name,
-                            platform_config=platform_config,
                             axis_mapping=jidmaps.var_axes["raw"],
-                            **ingest_ctx,
+                            **ingest_platform_ctx,
                         ) as var:
                             _maybe_set(
                                 raw_measurement,
@@ -714,10 +725,9 @@ def from_anndata(
                                 SparseNDArray,
                                 _util.uri_joinpath(raw_X_uri, raw_X_layer_name),
                                 anndata.raw.X,
-                                platform_config=platform_config,
                                 axis_0_mapping=jidmaps.obs_axis,
                                 axis_1_mapping=jidmaps.var_axes["raw"],
-                                **ingest_ctx,
+                                **ingest_platform_ctx,
                             ) as rm_x_data:
                                 _maybe_set(
                                     rm_x,
@@ -764,7 +774,7 @@ def append_obs(
             )
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     exp.verify_open_for_writing()
 
@@ -822,7 +832,7 @@ def append_var(
             )
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
@@ -898,7 +908,7 @@ def append_X(
             )
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
@@ -961,8 +971,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
-) -> Experiment:
-    ...
+) -> Experiment: ...
 
 
 @overload
@@ -973,8 +982,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
-) -> Measurement:
-    ...
+) -> Measurement: ...
 
 
 @overload
@@ -985,8 +993,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional[SOMATileDBContext],
     additional_metadata: AdditionalMetadata = None,
-) -> Collection[_TDBO]:
-    ...
+) -> Collection[_TDBO]: ...
 
 
 @overload
@@ -997,8 +1004,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional["SOMATileDBContext"],
     additional_metadata: "AdditionalMetadata" = None,
-) -> Scene:
-    ...
+) -> Scene: ...
 
 
 @no_type_check
@@ -1030,8 +1036,7 @@ def _create_or_open_coll(
     *,
     ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
-) -> Experiment:
-    ...
+) -> Experiment: ...
 
 
 @overload
@@ -1041,8 +1046,7 @@ def _create_or_open_coll(
     *,
     ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
-) -> Measurement:
-    ...
+) -> Measurement: ...
 
 
 @overload
@@ -1052,8 +1056,7 @@ def _create_or_open_coll(
     *,
     ingest_mode: IngestMode,
     context: Optional[SOMATileDBContext],
-) -> Collection[_TDBO]:
-    ...
+) -> Collection[_TDBO]: ...
 
 
 def _create_or_open_coll(
@@ -1074,7 +1077,6 @@ def _create_or_open_coll(
 def _extract_new_values_for_append(
     df_uri: str,
     arrow_table: pa.Table,
-    id_column_name: str,
     context: Optional[SOMATileDBContext] = None,
 ) -> pa.Table:
     """
@@ -1118,10 +1120,11 @@ def _extract_new_values_for_append(
 def _write_arrow_table(
     arrow_table: pa.Table,
     handle: Union[DataFrame, SparseNDArray],
-    tiledb_create_write_options: TileDBCreateOptions,
+    tiledb_create_options: TileDBCreateOptions,
+    tiledb_write_options: TileDBWriteOptions,
 ) -> None:
     """Handles num-bytes capacity for remote object stores."""
-    cap = tiledb_create_write_options.remote_cap_nbytes
+    cap = tiledb_create_options.remote_cap_nbytes
     if arrow_table.nbytes > cap:
         n = len(arrow_table)
         if n < 2:
@@ -1129,14 +1132,18 @@ def _write_arrow_table(
                 "single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}"
             )
         m = n // 2
-        _write_arrow_table(arrow_table[:m], handle, tiledb_create_write_options)
-        _write_arrow_table(arrow_table[m:], handle, tiledb_create_write_options)
+        _write_arrow_table(
+            arrow_table[:m], handle, tiledb_create_options, tiledb_write_options
+        )
+        _write_arrow_table(
+            arrow_table[m:], handle, tiledb_create_options, tiledb_write_options
+        )
     else:
         logging.log_io(
             None,
             f"Write Arrow table num_rows={len(arrow_table)} num_bytes={arrow_table.nbytes} cap={cap}",
         )
-        handle.write(arrow_table)
+        handle.write(arrow_table, platform_config=tiledb_write_options)
 
 
 def _write_dataframe(
@@ -1160,20 +1167,8 @@ def _write_dataframe(
     The caller should have copied anything pointing to a user-provided
     adata.obs, adata.var, etc.
     """
-    original_index_name = None
-    if df.index is not None and df.index.name is not None and df.index.name != "index":
-        original_index_name = df.index.name
-
-    df.reset_index(inplace=True)
-    if id_column_name is not None:
-        if id_column_name in df:
-            if "index" in df:
-                df.drop(columns=["index"], inplace=True)
-        else:
-            df.rename(columns={"index": id_column_name}, inplace=True)
-
+    original_index_metadata = _prepare_df_for_ingest(df, id_column_name)
     df[SOMA_JOINID] = np.asarray(axis_mapping.data, dtype=np.int64)
-
     df.set_index(SOMA_JOINID, inplace=True)
 
     return _write_dataframe_impl(
@@ -1182,7 +1177,7 @@ def _write_dataframe(
         id_column_name,
         ingestion_params=ingestion_params,
         additional_metadata=additional_metadata,
-        original_index_name=original_index_name,
+        original_index_metadata=original_index_metadata,
         platform_config=platform_config,
         context=context,
     )
@@ -1195,8 +1190,7 @@ def _write_dataframe_impl(
     *,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
-    index_column_names: Sequence[str] = (SOMA_JOINID,),
-    original_index_name: Optional[str] = None,
+    original_index_metadata: OriginalIndexMetadata = None,
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
 ) -> DataFrame:
@@ -1213,15 +1207,12 @@ def _write_dataframe_impl(
             # Nominally, nil id_column_name only happens for uns append and we do not append uns,
             # which is a concern for our caller. This is a second-level check.
             raise ValueError("internal coding error: id_column_name unspecified")
-        arrow_table = _extract_new_values_for_append(
-            df_uri, arrow_table, id_column_name, context
-        )
+        arrow_table = _extract_new_values_for_append(df_uri, arrow_table, context)
 
     try:
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
-            index_column_names=index_column_names,
             platform_config=platform_config,
             context=context,
         )
@@ -1249,17 +1240,18 @@ def _write_dataframe_impl(
         add_metadata(soma_df, additional_metadata)
         return soma_df
 
-    tiledb_create_write_options = TileDBCreateOptions.from_platform_config(
-        platform_config
-    )
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+    tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
 
     if arrow_table:
-        _write_arrow_table(arrow_table, soma_df, tiledb_create_write_options)
+        _write_arrow_table(
+            arrow_table, soma_df, tiledb_create_options, tiledb_write_options
+        )
 
     # Save the original index name for outgest. We use JSON for elegant indication of index name
     # being None (in Python anyway).
     soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(
-        original_index_name
+        original_index_metadata
     )
     add_metadata(soma_df, additional_metadata)
 
@@ -1282,7 +1274,7 @@ def create_from_matrix(
     Create and populate the ``soma_matrix`` from the contents of ``matrix``.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     return _create_from_matrix(
         cls,
@@ -1351,7 +1343,10 @@ def _create_from_matrix(
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
-            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,
@@ -1361,7 +1356,10 @@ def _create_from_matrix(
         _write_matrix_to_sparseNDArray(
             soma_ndarray,
             matrix,
-            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,
@@ -1416,7 +1414,7 @@ def update_obs(
         None
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     _update_dataframe(
         exp.obs,
@@ -1425,7 +1423,6 @@ def update_obs(
         context=context,
         platform_config=platform_config,
         default_index_name=default_index_name,
-        measurement_name="N/A for obs",
     )
 
 
@@ -1470,7 +1467,7 @@ def update_var(
         None
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     if measurement_name not in exp.ms:
         raise ValueError(
@@ -1480,7 +1477,6 @@ def update_var(
         exp.ms[measurement_name].var,
         new_data,
         "update_var",
-        measurement_name=measurement_name,
         context=context,
         platform_config=platform_config,
         default_index_name=default_index_name,
@@ -1492,7 +1488,6 @@ def _update_dataframe(
     new_data: pd.DataFrame,
     caller_name: str,
     *,
-    measurement_name: str,
     context: Optional[SOMATileDBContext] = None,
     platform_config: Optional[PlatformConfig],
     default_index_name: str,
@@ -1518,10 +1513,26 @@ def _update_dataframe(
             e.as_py()
             for e in sdf_r.read(column_names=["soma_joinid"]).concat()["soma_joinid"]
         )
-        new_jids = list(range(len(new_data)))
-        if old_jids != new_jids:
+        num_old_data = len(old_jids)
+        num_new_data = len(new_data)
+        if num_old_data != num_new_data:
             raise ValueError(
-                f"{caller_name}: old and new data must have the same row count; got {len(old_jids)} != {len(new_jids)}",
+                f"{caller_name}: old and new data must have the same row count; got {num_old_data} != {num_new_data}",
+            )
+        new_jids = list(range(num_new_data))
+        if old_jids != new_jids:
+            max_jid_diffs_to_display = 10
+            jid_diffs = [
+                (old_jid, new_jid)
+                for old_jid, new_jid in zip(old_jids, new_jids)
+                if old_jid != new_jid
+            ]
+            jid_diff_strs = [
+                f"{old_jid} != {new_jid}"
+                for old_jid, new_jid in jid_diffs[:max_jid_diffs_to_display]
+            ] + (["…"] if len(jid_diffs) > max_jid_diffs_to_display else [])
+            raise ValueError(
+                f"{caller_name}: old data soma_joinid must be [0,{num_old_data}), found {len(jid_diffs)} diffs: {', '.join(jid_diff_strs)}"
             )
 
     old_keys = set(old_sig.keys())
@@ -1530,9 +1541,7 @@ def _update_dataframe(
     add_keys = new_keys.difference(old_keys)
     common_keys = old_keys.intersection(new_keys)
 
-    tiledb_create_write_options = TileDBCreateOptions.from_platform_config(
-        platform_config
-    )
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
 
     msgs = []
     for key in common_keys:
@@ -1569,9 +1578,7 @@ def _update_dataframe(
                 )
             )
 
-        filters = tiledb_create_write_options.attr_filters_tiledb(
-            add_key, ["ZstdFilter"]
-        )
+        filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
 
         # An update can create (or drop) columns, or mutate existing ones.  A
         # brand-new column might have nulls in it -- or it might not.  And a
@@ -1580,7 +1587,7 @@ def _update_dataframe(
         #
         # Note: this must match what DataFrame.create does:
         # * DataFrame.create sets nullability for obs/var columns on initial ingest
-        # * Here, we set nullabiliity for obs/var columns on update_obs
+        # * Here, we set nullability for obs/var columns on update_obs
         # Users should get the same behavior either way.
         #
         # Note: this is specific to tiledbsoma.io.
@@ -1651,7 +1658,7 @@ def update_matrix(
         None
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     # More developer-level information on why we do not -- and cannot -- check
@@ -1677,7 +1684,10 @@ def update_matrix(
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             new_data,
-            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,
@@ -1687,7 +1697,10 @@ def update_matrix(
         _write_matrix_to_sparseNDArray(
             soma_ndarray,
             new_data,
-            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,
@@ -1720,15 +1733,16 @@ def add_X_layer(
     Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
     exp.verify_open_for_writing()
     add_matrix_to_collection(
         exp,
         measurement_name,
-        "X",
-        X_layer_name,
-        X_layer_data,
+        collection_name="X",
+        matrix_name=X_layer_name,
+        matrix_data=X_layer_data,
+        ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
     )
 
@@ -1751,7 +1765,7 @@ def add_matrix_to_collection(
     Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     ingestion_params = IngestionParams(ingest_mode, None)
@@ -1802,7 +1816,8 @@ def add_matrix_to_collection(
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
     matrix: Union[Matrix, h5py.Dataset],
-    tiledb_create_write_options: TileDBCreateOptions,
+    tiledb_create_options: TileDBCreateOptions,
+    tiledb_write_options: TileDBWriteOptions,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
@@ -1836,7 +1851,7 @@ def _write_matrix_to_denseNDArray(
             return
 
     # Write all at once?
-    if not tiledb_create_write_options.write_X_chunked:
+    if not tiledb_create_options.write_X_chunked:
         if not isinstance(matrix, np.ndarray):
             matrix = matrix.toarray()
         soma_ndarray.write((slice(None),), pa.Tensor.from_numpy(matrix))
@@ -1859,9 +1874,7 @@ def _write_matrix_to_denseNDArray(
     #   it controls how much is read into client RAM from the backing store on each chunk.
     # * The remote_cap_nbytes is an older parameter.
     # * Compute chunk sizes for both and take the minimum.
-    chunk_size_using_nnz = int(
-        math.ceil(tiledb_create_write_options.goal_chunk_nnz / ncol)
-    )
+    chunk_size_using_nnz = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
 
     try:
         # not scipy csr/csc
@@ -1872,7 +1885,7 @@ def _write_matrix_to_denseNDArray(
 
     total_nbytes = matrix.size * itemsize
     nbytes_num_chunks = math.ceil(
-        total_nbytes / tiledb_create_write_options.remote_cap_nbytes
+        total_nbytes / tiledb_create_options.remote_cap_nbytes
     )
     nbytes_num_chunks = min(1, nbytes_num_chunks)
     chunk_size_using_nbytes = math.floor(nrow / nbytes_num_chunks)
@@ -2039,7 +2052,7 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
     #   total_nnz = matrix[:, :].nnz
     # So instead we break it up. Testing over a variety of H5AD sizes
     # shows that the performance is fine here.
-    coords: List[slice] = [slice(None), slice(None)]  # type: ignore [unreachable]
+    coords: List[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
     bsz = 1000
     total_nnz = 0
     for lo in range(0, extent, bsz):
@@ -2197,7 +2210,8 @@ def _find_sparse_chunk_size_backed(
 def _write_matrix_to_sparseNDArray(
     soma_ndarray: SparseNDArray,
     matrix: Matrix,
-    tiledb_create_write_options: TileDBCreateOptions,
+    tiledb_create_options: TileDBCreateOptions,
+    tiledb_write_options: TileDBWriteOptions,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata,
     axis_0_mapping: AxisIDMapping,
@@ -2216,9 +2230,12 @@ def _write_matrix_to_sparseNDArray(
         soma_dim_1 = mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col
 
         # Apply registration mappings: e.g. columns 0,1,2,3 in an AnnData file might
-        # have been assigned gene-ID labels 22,197,438,988.
-        soma_dim_0 = [axis_0_mapping.data[e] for e in soma_dim_0]
-        soma_dim_1 = [axis_1_mapping.data[e] for e in soma_dim_1]
+        # have been assigned gene-ID labels 22,197,438,988. Don't do this for
+        # identity mappings, as this is a needless (and expensive) data copy.
+        if not axis_0_mapping.is_identity():
+            soma_dim_0 = [axis_0_mapping.data[e] for e in soma_dim_0]
+        if not axis_1_mapping.is_identity():
+            soma_dim_1 = [axis_1_mapping.data[e] for e in soma_dim_1]
 
         pydict = {
             "soma_data": mat_coo.data,
@@ -2257,7 +2274,7 @@ def _write_matrix_to_sparseNDArray(
     add_metadata(soma_ndarray, additional_metadata)
 
     # Write all at once?
-    if not tiledb_create_write_options.write_X_chunked:
+    if not tiledb_create_options.write_X_chunked:
         soma_ndarray.write(
             _coo_to_table(sp.coo_matrix(matrix), axis_0_mapping, axis_1_mapping)
         )
@@ -2276,7 +2293,7 @@ def _write_matrix_to_sparseNDArray(
     dim_max_size = matrix.shape[stride_axis]
 
     eta_tracker = eta.Tracker()
-    goal_chunk_nnz = tiledb_create_write_options.goal_chunk_nnz
+    goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz
     mean_nnz = _find_mean_nnz(matrix, stride_axis)
 
     coords = [slice(None), slice(None)]
@@ -2344,11 +2361,11 @@ def _write_matrix_to_sparseNDArray(
         # send them off, with simplified logic.
         num_tries = 0
         max_tries = 20
-        while chunk_coo.nnz > tiledb_create_write_options.goal_chunk_nnz:
+        while chunk_coo.nnz > tiledb_create_options.goal_chunk_nnz:
             num_tries += 1
             # The logger we use doesn't have a TRACE level. If it did, we'd use it here.
             # logging.logger.trace(
-            #    f"Adapt: {num_tries}/{max_tries} {chunk_coo.nnz}/{tiledb_create_write_options.goal_chunk_nnz}"
+            #    f"Adapt: {num_tries}/{max_tries} {chunk_coo.nnz}/{tiledb_create_options.goal_chunk_nnz}"
             # )
             if num_tries > max_tries:
                 raise SOMAError(
@@ -2356,7 +2373,7 @@ def _write_matrix_to_sparseNDArray(
                     "This may be reduced in TileDBCreateOptions."
                 )
 
-            ratio = chunk_coo.nnz / tiledb_create_write_options.goal_chunk_nnz
+            ratio = chunk_coo.nnz / tiledb_create_options.goal_chunk_nnz
             chunk_size = int(math.floor(0.9 * (i2 - i) / ratio))
             if chunk_size < 1:
                 raise SOMAError(
@@ -2386,7 +2403,7 @@ def _write_matrix_to_sparseNDArray(
                         dim_max_size,
                         chunk_percent,
                         chunk_coo.nnz,
-                        tiledb_create_write_options.goal_chunk_nnz,
+                        tiledb_create_options.goal_chunk_nnz,
                     ),
                 )
                 i = i2
@@ -2402,14 +2419,16 @@ def _write_matrix_to_sparseNDArray(
                 dim_max_size,
                 chunk_percent,
                 chunk_coo.nnz,
-                tiledb_create_write_options.goal_chunk_nnz,
+                tiledb_create_options.goal_chunk_nnz,
             ),
         )
 
         arrow_table = _coo_to_table(
             chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i
         )
-        _write_arrow_table(arrow_table, soma_ndarray, tiledb_create_write_options)
+        _write_arrow_table(
+            arrow_table, soma_ndarray, tiledb_create_options, tiledb_write_options
+        )
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -2483,7 +2502,7 @@ def _chunk_is_contained_in_axis(
 
 def _maybe_ingest_uns(
     m: Measurement,
-    uns: Mapping[str, object],
+    uns: UnsMapping,
     *,
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
@@ -2571,16 +2590,19 @@ def _ingest_uns_node(
         coll.metadata[key] = value
         return
 
+    ingest_platform_ctx: IngestPlatformCtx = dict(
+        platform_config=platform_config,
+        context=context,
+        ingestion_params=ingestion_params,
+        additional_metadata=additional_metadata,
+    )
     if isinstance(value, Mapping):
         # Mappings are represented as sub-dictionaries.
         _ingest_uns_dict(
             coll,
             key,
             value,
-            platform_config=platform_config,
-            context=context,
-            ingestion_params=ingestion_params,
-            additional_metadata=additional_metadata,
+            **ingest_platform_ctx,
             use_relative_uri=use_relative_uri,
             level=level + 1,
         )
@@ -2592,11 +2614,8 @@ def _ingest_uns_node(
             _util.uri_joinpath(coll.uri, key),
             value,
             None,
-            platform_config=platform_config,
-            context=context,
-            ingestion_params=ingestion_params,
-            additional_metadata=additional_metadata,
             axis_mapping=AxisIDMapping.identity(num_rows),
+            **ingest_platform_ctx,
         ) as df:
             _maybe_set(coll, key, df, use_relative_uri=use_relative_uri)
         return
@@ -2617,22 +2636,16 @@ def _ingest_uns_node(
                 coll,
                 key,
                 value,
-                platform_config,
-                context=context,
                 use_relative_uri=use_relative_uri,
-                ingestion_params=ingestion_params,
-                additional_metadata=additional_metadata,
+                **ingest_platform_ctx,
             )
         else:
             _ingest_uns_ndarray(
                 coll,
                 key,
                 value,
-                platform_config,
-                context=context,
                 use_relative_uri=use_relative_uri,
-                ingestion_params=ingestion_params,
-                additional_metadata=additional_metadata,
+                **ingest_platform_ctx,
             )
         return
 
@@ -2657,17 +2670,17 @@ def _ingest_uns_string_array(
     Ingest an uns string array. In the SOMA data model, we have NDArrays _of number only_ ...
     so we need to make this a SOMADataFrame.
 
-    Ideally we don't want to an index column "soma_joinid" -- "index", maybe.
+    Ideally we don't want to add an index column "soma_joinid" -- "index", maybe.
     However, ``SOMADataFrame`` _requires_ that soma_joinid be present, either
     as an index column, or as a data column. The former is less confusing.
     """
 
     if len(value.shape) == 1:
-        helper = _ingest_uns_1d_string_array
+        helper = _ingest_uns_1d_string_array  # type:ignore[unreachable]
     elif len(value.shape) == 2:
         helper = _ingest_uns_2d_string_array
     else:
-        msg = (
+        msg = (  # type:ignore[unreachable]
             f"Skipped {coll.uri}[{key!r}]"
             f" (uns object): string array is neither one-dimensional nor two-dimensional"
         )
@@ -2763,9 +2776,9 @@ def _ingest_uns_2d_string_array(
         df_uri,
         None,
         ingestion_params=ingestion_params,
+        additional_metadata=additional_metadata,
         platform_config=platform_config,
         context=context,
-        additional_metadata=additional_metadata,
     ) as soma_df:
         _maybe_set(coll, key, soma_df, use_relative_uri=use_relative_uri)
         # Since ND arrays in the SOMA data model are arrays _of number_,
@@ -2831,7 +2844,10 @@ def _ingest_uns_ndarray(
         _write_matrix_to_denseNDArray(
             soma_arr,
             value,
-            tiledb_create_write_options=TileDBCreateOptions.from_platform_config(
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(
                 platform_config
             ),
             ingestion_params=ingestion_params,

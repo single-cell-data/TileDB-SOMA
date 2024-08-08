@@ -1,6 +1,5 @@
 """Testing module for regression tests"""
 
-
 import numpy as np
 import pyarrow as pa
 

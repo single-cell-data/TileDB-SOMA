@@ -8,7 +8,7 @@ SOMA object.
 }
 \description{
 Base class for objects containing persistent collection of SOMA
-objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
+objects, mapping string keys to any SOMA object.  (lifecycle: maturing)
 }
 \keyword{internal}
 \section{Super classes}{
@@ -60,7 +60,7 @@ objects, mapping string keys to any SOMA object.  (lifecycle: experimental)
 \if{html}{\out{<a id="method-SOMACollectionBase-new"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-new}{}}}
 \subsection{Method \code{new()}}{
-Create a new \code{SOMACollection}. (lifecycle: experimental)
+Create a new \code{SOMACollection}. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$new(
   uri,
@@ -92,7 +92,7 @@ as \code{new()} is considered internal and should not be called directly.}
 \if{html}{\out{<a id="method-SOMACollectionBase-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-create}{}}}
 \subsection{Method \code{create()}}{
-Add a new SOMA object to the collection. (lifecycle: experimental)
+Add a new SOMA object to the collection. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$create(internal_use_only = NULL)}\if{html}{\out{</div>}}
 }
@@ -110,7 +110,7 @@ as \code{create()} is considered internal and should not be called directly.}
 \if{html}{\out{<a id="method-SOMACollectionBase-set"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-set}{}}}
 \subsection{Method \code{set()}}{
-Add a new SOMA object to the collection. (lifecycle: experimental)
+Add a new SOMA object to the collection. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$set(object, name = NULL, relative = NULL)}\if{html}{\out{</div>}}
 }
@@ -135,7 +135,7 @@ default), the object's URI is assumed to be relative unless it is a
 \if{html}{\out{<a id="method-SOMACollectionBase-get"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-get}{}}}
 \subsection{Method \code{get()}}{
-Retrieve a SOMA object by name. (lifecycle: experimental)
+Retrieve a SOMA object by name. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$get(name)}\if{html}{\out{</div>}}
 }
@@ -154,7 +154,7 @@ Retrieve a SOMA object by name. (lifecycle: experimental)
 \if{html}{\out{<a id="method-SOMACollectionBase-add_new_collection"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_collection}{}}}
 \subsection{Method \code{add_new_collection()}}{
-Add a new SOMA collection to this collection. (lifecycle: experimental)
+Add a new SOMA collection to this collection. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_collection(object, key)}\if{html}{\out{</div>}}
 }
@@ -173,7 +173,7 @@ Add a new SOMA collection to this collection. (lifecycle: experimental)
 \if{html}{\out{<a id="method-SOMACollectionBase-add_new_dataframe"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_dataframe}{}}}
 \subsection{Method \code{add_new_dataframe()}}{
-Add a new SOMA dataframe to this collection. (lifecycle: experimental)
+Add a new SOMA dataframe to this collection. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dataframe(
   key,
@@ -208,7 +208,7 @@ object}
 \if{html}{\out{<a id="method-SOMACollectionBase-add_new_dense_ndarray"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_dense_ndarray}{}}}
 \subsection{Method \code{add_new_dense_ndarray()}}{
-Add a new SOMA DenseNdArray to this collection. (lifecycle: experimental)
+Add a new SOMA DenseNdArray to this collection. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dense_ndarray(
   key,
@@ -244,7 +244,7 @@ object}
 \if{html}{\out{<a id="method-SOMACollectionBase-add_new_sparse_ndarray"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_sparse_ndarray}{}}}
 \subsection{Method \code{add_new_sparse_ndarray()}}{
-Add a new SOMA SparseNdArray to this collection. (lifecycle: experimental)
+Add a new SOMA SparseNdArray to this collection. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_sparse_ndarray(
   key,

@@ -121,7 +121,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 If unable to create the underlying object.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         context = _validate_soma_tiledb_context(context)
         try:
@@ -204,8 +204,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: Optional[str] = ...,
         platform_config: Optional[options.PlatformConfig] = ...,
-    ) -> "Collection[AnySOMAObject]":
-        ...
+    ) -> "Collection[AnySOMAObject]": ...
 
     @overload
     def add_new_collection(
@@ -215,8 +214,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: Optional[str] = ...,
         platform_config: Optional[options.PlatformConfig] = ...,
-    ) -> _Coll:
-        ...
+    ) -> _Coll: ...
 
     def add_new_collection(
         self,
@@ -264,7 +262,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             file:///tmp/parent/exp
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         child_cls = kind or Collection
         return self._add_new_element(
@@ -310,7 +308,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             1            1     2     4
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._add_new_element(
             key,
@@ -375,7 +373,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 [0, 0, 0, 1]], dtype=int32)
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._add_new_ndarray(DenseNDArray, key, **kwargs)
 
@@ -409,7 +407,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                     with 100 stored elements in COOrdinate format>
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._add_new_ndarray(SparseNDArray, key, **kwargs)
 
@@ -504,7 +502,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 If an existing key is set (replacement is unsupported).
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         uri_to_add = value.uri
         # The SOMA API supports use_relative_uri in [True, False, None].
@@ -530,6 +528,11 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             key, uri=uri_to_add, relative=use_relative_uri, soma_object=value
         )
         return self
+
+    def members(self) -> Dict[str, Tuple[str, str]]:
+        """Get a mapping of {member_name: (uri, soma_object_type)}"""
+        handle = cast(_tdb_handles.SOMAGroupWrapper[Any], self._handle)
+        return handle.members()
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """Default collection __setattr__"""
@@ -572,7 +575,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     def _contents_lines(self, last_indent: str) -> Iterable[str]:
         indent = last_indent + "    "
         if self.closed:
-            return ()
+            return
         for key, entry in self._contents.items():
             obj = entry.soma
             if obj is None:
@@ -631,7 +634,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             self._handle.writer.remove(key)
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
-                raise KeyError(f"{key!r} does not exist in {self}") from tdbe
+                raise KeyError(tdbe) from tdbe
             raise
         self._contents.pop(key, None)
         self._mutated_keys.add(key)
@@ -689,7 +692,7 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     element by absolute URI or relative URI.
 
     Lifecycle:
-        Experimental.
+        Maturing.
 
     Examples:
         >>> import tiledbsoma

@@ -5,7 +5,7 @@
 \title{SOMA NDArray Base Class}
 \description{
 Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
-(lifecycle: experimental)
+(lifecycle: maturing)
 }
 \keyword{internal}
 \section{Super classes}{
@@ -15,6 +15,7 @@ Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-SOMANDArrayBase-create}{\code{SOMANDArrayBase$create()}}
+\item \href{#method-SOMANDArrayBase-set_data_type}{\code{SOMANDArrayBase$set_data_type()}}
 \item \href{#method-SOMANDArrayBase-clone}{\code{SOMANDArrayBase$clone()}}
 }
 }
@@ -78,6 +79,23 @@ object}
 \item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
 call, as \code{create()} is considered internal and should not be called
 directly.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMANDArrayBase-set_data_type"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMANDArrayBase-set_data_type}{}}}
+\subsection{Method \code{set_data_type()}}{
+Sets a cache value for the datatype (lifecycle: experimental)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$set_data_type(type)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{A character value describing the TileDB data type}
 }
 \if{html}{\out{</div>}}
 }

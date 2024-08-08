@@ -31,7 +31,7 @@ Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Ma
 \if{html}{\out{<a id="method-SparseReadIter-new"></a>}}
 \if{latex}{\out{\hypertarget{method-SparseReadIter-new}{}}}
 \subsection{Method \code{new()}}{
-Create (lifecycle: experimental)
+Create (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SparseReadIter$new(sr, shape, zero_based = FALSE)}\if{html}{\out{</div>}}
 }

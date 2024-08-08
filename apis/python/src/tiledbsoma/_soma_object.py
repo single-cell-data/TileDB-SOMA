@@ -35,7 +35,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     across SOMA objects.
 
     Lifecycle:
-        Experimental.
+        Maturing.
     """
 
     _wrapper_type: Union[
@@ -74,8 +74,9 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 - ``w``: Open for writing only (cannot read).
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
-                measured in milliseconds since the Unix epoch.
-                When unset (the default), the current time is used.
+                either an int representing milliseconds since the Unix epoch
+                or a datetime.dateime object.
+                When not provided (the default), the current time is used.
 
         Returns:
             The opened SOMA object.
@@ -90,7 +91,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 If the user-provided ``mode`` is invalid.
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
@@ -142,6 +143,39 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._handle = handle
         self._close_stack.enter_context(self._handle)
 
+    def reopen(
+        self, mode: options.OpenMode, tiledb_timestamp: Optional[OpenTimestamp] = None
+    ) -> Self:
+        """
+        Return a new copy of the SOMAObject with the given mode at the current
+        Unix timestamp.
+
+        Args:
+            mode:
+                The mode to open the object in.
+                - ``r``: Open for reading only (cannot write).
+                - ``w``: Open for writing only (cannot read).
+            tiledb_timestamp:
+                The TileDB timestamp to open this object at,
+                either an int representing milliseconds since the Unix epoch
+                or a datetime.dateime object.
+                When not provided (the default), the current time is used.
+
+        Raises:
+            ValueError:
+                If the user-provided ``mode`` is invalid.
+
+        Lifecycle:
+            Experimental.
+        """
+        handle = self._wrapper_type._from_soma_object(
+            self._handle.reopen(mode, tiledb_timestamp), self.context
+        )
+        return self.__class__(
+            handle,  # type: ignore[arg-type]
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
+
     @property
     def context(self) -> SOMATileDBContext:
         return self._handle.context
@@ -168,7 +202,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             file://tmp/an_object_uri
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._handle.uri
 
@@ -181,7 +215,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             >>> soma_object.close()
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         self._close_stack.close()
 
@@ -199,7 +233,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             True
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._handle.closed
 
@@ -215,7 +249,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             r
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         return self._handle.mode
 
@@ -276,7 +310,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             False
 
         Lifecycle:
-            Experimental.
+            Maturing.
         """
         check_type("uri", uri, (str,))
         context = _validate_soma_tiledb_context(context)

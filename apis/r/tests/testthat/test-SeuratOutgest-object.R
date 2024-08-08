@@ -194,6 +194,57 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_warning(query$to_seurat(obsp_layers = 'tomato'))
 })
 
+test_that("Load Seurat object with dropped levels", {
+  skip_if(!extended_tests() || covr_tests())
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+  so_version <- utils::packageVersion('SeuratObject')
+  skip_if_not(
+    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < '5.0.0') ||
+      so_version >= '5.0.0.9003',
+    message = so_msg(so_version)
+  )
+
+  uri <- tempfile(pattern="seurat-experiment-drop")
+  n_obs <- 20L
+  n_var <- 10L
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts"),
+    factors = TRUE,
+    mode = "READ"
+  )
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  # Create the query
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(coords = seq.int(to = floor(n_obs / 3)))
+  )
+
+  # Expect both levels to be present in `grp`, even though only one value is
+  expect_s4_class(obj <- query$to_seurat(), "Seurat")
+  expect_in("grp", names(obj[[]]))
+  expect_s3_class(obj$grp, "factor")
+  expect_identical(unique(as.vector(obj$grp)), "lvl1")
+  expect_identical(levels(obj$grp), c("lvl1", "lvl2"))
+
+  # Do the same, but drop levels
+  expect_s4_class(dropped <- query$to_seurat(drop_levels = TRUE), "Seurat")
+  expect_in("grp", names(dropped[[]]))
+  expect_s3_class(dropped$grp, "factor")
+  expect_identical(unique(as.vector(dropped$grp)), "lvl1")
+  expect_identical(levels(dropped$grp), "lvl1")
+
+  # Test assertions
+  expect_error(query$to_seurat(drop_levels = NA))
+  expect_error(query$to_seurat(drop_levels = 1L))
+  expect_error(query$to_seurat(drop_levels = 'drop'))
+  expect_error(query$to_seurat(drop_levels = c(TRUE, TRUE)))
+})
+
 test_that("Load Seurat object from sliced ExperimentQuery", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))

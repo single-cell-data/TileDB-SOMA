@@ -2,12 +2,12 @@
 #'
 #' @description
 #' Base class to implement shared functionality across the TileDBArray and
-#' TileDBGroup classes. (lifecycle: experimental)
+#' TileDBGroup classes. (lifecycle: maturing)
 #' @export
 TileDBObject <- R6::R6Class(
   classname = "TileDBObject",
   public = list(
-    #' @description Create a new TileDB object. (lifecycle: experimental)
+    #' @description Create a new TileDB object. (lifecycle: maturing)
     #' @param uri URI for the TileDB object
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional SOMATileDBContext
@@ -82,15 +82,11 @@ TileDBObject <- R6::R6Class(
     #'  \item \dQuote{\code{READ}}
     #'  \item \dQuote{\code{WRITE}}
     #' }
-    #' By default, reopens in the opposite mode of the current mode
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self} opened in \code{mode}
     #'
-    reopen = function(mode = NULL) {
-      modes <- c(READ = 'WRITE', WRITE = 'READ')
-      oldmode <- self$mode()
-      mode <- mode %||% modes[oldmode]
-      mode <- match.arg(mode, choices = modes)
+    reopen = function(mode) {
+      mode <- match.arg(mode, choices = c('READ', 'WRITE'))
       self$close()
       private$tiledb_timestamp <- NULL
       self$open(mode, internal_use_only = 'allowed_use')
@@ -103,7 +99,7 @@ TileDBObject <- R6::R6Class(
       cat("  uri:", self$uri, "\n")
     },
 
-    #' @description Check if the object exists. (lifecycle: experimental)
+    #' @description Check if the object exists. (lifecycle: maturing)
     #' @return `TRUE`` if the object exists, `FALSE` otherwise.
     exists = function() {
       if (self$class() == "TileDBObject") {
@@ -115,7 +111,7 @@ TileDBObject <- R6::R6Class(
       } else {
         stop("Unknown object type", call. = FALSE)
       }
-      tiledb::tiledb_object_type(self$uri, ctx = self$tiledbsoma_ctx$context()) %in% expected_type
+      get_tiledb_object_type(self$uri, ctx = soma_context()) %in% expected_type
     }
   ),
 
