@@ -10,7 +10,7 @@ on:
       - '!.pre-commit-config.yaml'
       - '!apis/python/**'
       - '!docs/**'
-      - '!LICENSE''
+      - '!LICENSE'
   push:
     branches:
       - main
@@ -44,7 +44,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Show matrix OS
         run: echo "matrix.os:" ${{ matrix.os }}
