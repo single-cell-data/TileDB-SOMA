@@ -14,7 +14,10 @@ repos:
     hooks:
     - id: mypy
       additional_dependencies:
-        - pandas-stubs
+        # Pandas types changed between 1.x and 2.x. Our setup.py permits both, but for type-checking purposes we use the
+        # Pandas 2.x types (e.g. `pd.Series[Any]`). See `_types.py` or https://github.com/single-cell-data/TileDB-SOMA/issues/2839
+        # for more info.
+        - "pandas-stubs>=2"
         - "somacore @ git+https://github.com/single-cell-data/SOMA.git@e7b9379"   # DO NOT MERGE TO MAIN
         - types-setuptools
       args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]

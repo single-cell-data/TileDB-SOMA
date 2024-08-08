@@ -5,10 +5,12 @@ on:
     paths:
       - '**'
       - '!**.md'
-      - '!apis/python/**'
-      - '!docs/**'
       - '!.github/**'
       - '.github/workflows/r-ci.yml'
+      - '!.pre-commit-config.yaml'
+      - '!apis/python/**'
+      - '!docs/**'
+      - '!LICENSE''
   push:
     branches:
       - main
