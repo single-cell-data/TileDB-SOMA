@@ -1015,8 +1015,7 @@ def _create_or_open_collection(
     ingestion_params: IngestionParams,
     context: Optional["SOMATileDBContext"],
     additional_metadata: "AdditionalMetadata" = None,
-) -> Image2D:
-    ...
+) -> Image2D: ...
 
 
 @no_type_check

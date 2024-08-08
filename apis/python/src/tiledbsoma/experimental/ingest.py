@@ -381,9 +381,9 @@ def _write_visium_data_to_experiment_uri(
                                 sample_image,
                                 use_relative_uri=use_relative_uri,
                             )
-                            sample_image.metadata[
-                                "soma_coordinates"
-                            ] = coordinate_system.to_json()
+                            sample_image.metadata["soma_coordinates"] = (
+                                coordinate_system.to_json()
+                            )
                             _write_visium_images(
                                 sample_image,
                                 scale_factors,
