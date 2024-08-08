@@ -3,9 +3,8 @@ test_that("SOMADataFrame", {
 
     sch <- arrow::schema(arrow::field("soma_joinid", arrow::int64()),
                          arrow::field("int", arrow::int32()),
-                         #arrow::field("str", arrow::dictionary(index_type = arrow::int8(),
-                         #                                      value_type = arrow::utf8())))
-                         arrow::field("str", arrow::utf8()))
+                         arrow::field("str", arrow::dictionary(index_type = arrow::int8(),
+                                                               value_type = arrow::utf8())))
 
     ## create at t = 1
     ts1 <- rep(as.POSIXct(1, tz="UTC"), 2)
@@ -14,16 +13,14 @@ test_that("SOMADataFrame", {
     ## write part1 at t = 2
     dat2 <- arrow::arrow_table(soma_joinid = bit64::as.integer64(1L:5L),
                                int = 101:105L,
-                               #str = factor(c('a','b','b','a','b')))
-                               str = c('a','b','b','a','b'))
+                               str = factor(c('a','b','b','a','b')))
     ts2 <- rep(as.POSIXct(2, tz="UTC"), 2)
     expect_silent(sdf$write(dat2, ts2))
 
     ## write part2 at t = 3
     dat3 <- arrow::arrow_table(soma_joinid = bit64::as.integer64(6L:10L),
                                int = 106:110L,
-                               #str = factor(c('c','b','c','c','b')))
-                               str = c('c','b','c','c','b'))
+                               str = factor(c('c','b','c','c','b')))
     ts3 <- rep(as.POSIXct(3, tz="UTC"), 2)
     expect_silent(sdf$write(dat3, ts3))
     sdf$close()
