@@ -101,8 +101,8 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/python -m pip install --prefer-binary pybind11-global typeguard sparse wheel
-          ./venv-soma/bin/python -m pip list
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel
+          ./venv-soma/bin/pip list
       - name: Build wheel
         run: |
           echo env vars: $LD_LIBRARY_PATH $PKG_CONFIG_PATH $TILEDB_PATH $TILEDBSOMA_PATH
@@ -133,7 +133,7 @@ jobs:
             exit 1
           fi
       - name: Install wheel
-        run: ./venv-soma/bin/python -m pip install --prefer-binary apis/python/dist/tiledbsoma-*.whl
+        run: ./venv-soma/bin/pip install --prefer-binary apis/python/dist/tiledbsoma-*.whl
       - name: Check linking and RPATH
         run: |
           ldd ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
@@ -201,8 +201,8 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/python -m pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
-          ./venv-soma/bin/python -m pip list
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
+          ./venv-soma/bin/pip list
       - name: Build wheel
         run: |
           echo env vars: $DYLD_LIBRARY_PATH $PKG_CONFIG_PATH $TILEDB_PATH $TILEDBSOMA_PATH
@@ -233,7 +233,7 @@ jobs:
             exit 1
           fi
       - name: Install wheel
-        run: ./venv-soma/bin/python -m pip install --prefer-binary apis/python/dist/tiledbsoma-*.whl
+        run: ./venv-soma/bin/pip install --prefer-binary apis/python/dist/tiledbsoma-*.whl
       - name: Check linking and RPATH
         run: otool -L ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
       - name: Runtime test
@@ -302,8 +302,8 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/python -m pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
-          ./venv-soma/bin/python -m pip list
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
+          ./venv-soma/bin/pip list
       - name: Install TileDB-SOMA-Py with setuptools and --libtiledbsoma
         run: |
           cd apis/python
@@ -365,7 +365,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: python -m pip install --prefer-binary pybind11 wheel
+        run: pip install --prefer-binary pybind11 wheel
       - name: Build source tarball (sdist)
         run: |
           cd TileDB-SOMA/apis/python
@@ -380,5 +380,5 @@ jobs:
           python setup.py bdist_wheel
       - name: Install wheel
         run: |
-          python -m pip install --prefer-binary tiledbsoma-*/dist/tiledbsoma-*.whl
+          pip install --prefer-binary tiledbsoma-*/dist/tiledbsoma-*.whl
           python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
