@@ -95,7 +95,7 @@ jobs:
         cache: pip
         cache-dependency-path: ./apis/python/setup.py
 
-# Experiment for MacOS CI false negatives ...
+# Experiment for macOS CI false negatives ...
 #    - name: Cache native libraries
 #      uses: actions/cache@v4
 #      with:
