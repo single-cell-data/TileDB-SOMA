@@ -61,6 +61,38 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t schema_ptr = (uintptr_t)(&schema);
                 py_schema.attr("_export_to_c")(schema_ptr);
 
+                // In the Arrow C API, there is an ArrowSchema for the table.
+                // Each of its children is also of type ArrowSchema.
+                //
+                // Unfortunately, there are two different ways for attributes
+                // to be marked nullable:
+                //
+                // * Flags on the attribute
+                //    o Example:
+                //      pa.schema(
+                //         [pa.field("a", pa.int32())],
+                //         [pa.field("b", pa.int32(), nullable=False)],
+                //         [pa.field("c", pa.int32(), nullable=True)],
+                //     )
+                //   o `pa.field` defaults to nullable: here, fields a and c
+                //     are both nullable; only b is not.
+                //
+                // * Metadata for the attribute:
+                //     pa.schema(
+                //         [pa.field("d", pa.int32())],
+                //         metadata={"d": "nullable"},
+                //     )
+                //
+                // Concerns for us:
+                //
+                // * Arrow fields are nullable by default. So we must make them
+                //   non-nullable only when this is explicit in the schema
+                //   flags.
+                // * If there is no metadata, we simply respect the user's
+                //   schema including its per-attribute nullability flags.
+                // * If there is set-nullable metadata for an attribute, it
+                //   must override the nullability flags for that attribute.
+
                 auto metadata = py_schema.attr("metadata");
                 if (py::hasattr(metadata, "get")) {
                     for (int64_t i = 0; i < schema.n_children; ++i) {
@@ -71,13 +103,7 @@ void load_soma_dataframe(py::module& m) {
                         if (!val.is(py::none()) &&
                             val.cast<std::string>() == "nullable") {
                             child->flags |= ARROW_FLAG_NULLABLE;
-                        } else {
-                            child->flags &= ~ARROW_FLAG_NULLABLE;
                         }
-                    }
-                } else {
-                    for (int64_t i = 0; i < schema.n_children; ++i) {
-                        schema.children[i]->flags &= ~ARROW_FLAG_NULLABLE;
                     }
                 }
 
