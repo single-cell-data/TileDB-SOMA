@@ -61,37 +61,19 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t schema_ptr = (uintptr_t)(&schema);
                 py_schema.attr("_export_to_c")(schema_ptr);
 
-                // In the Arrow C API, there is an ArrowSchema for the table.
-                // Each of its children is also of type ArrowSchema.
+                // Please see
+                // https://github.com/single-cell-data/TileDB-SOMA/issues/2869
+                // for the reasoning here.
                 //
-                // Unfortunately, there are two different ways for attributes
-                // to be marked nullable:
-                //
-                // * Flags on the attribute
-                //    o Example:
-                //      pa.schema(
-                //         [pa.field("a", pa.int32())],
-                //         [pa.field("b", pa.int32(), nullable=False)],
-                //         [pa.field("c", pa.int32(), nullable=True)],
-                //     )
-                //   o `pa.field` defaults to nullable: here, fields a and c
-                //     are both nullable; only b is not.
-                //
-                // * Metadata for the attribute:
-                //     pa.schema(
-                //         [pa.field("d", pa.int32())],
-                //         metadata={"d": "nullable"},
-                //     )
-                //
-                // Concerns for us:
-                //
-                // * Arrow fields are nullable by default. So we must make them
-                //   non-nullable only when this is explicit in the schema
-                //   flags.
-                // * If there is no metadata, we simply respect the user's
-                //   schema including its per-attribute nullability flags.
-                // * If there is set-nullable metadata for an attribute, it
-                //   must override the nullability flags for that attribute.
+                // TL;DR:
+                // * The table has an `ArrowSchema`; each of its children
+                //   is also an `ArrowSchema`.
+                // * Arrow fields are nullable by default in the user API.
+                // * There is a field-level nullability flag, _and_ users
+                //   can set a "nullable" metadata as well.
+                // * In the absence of metadata, respect the flag we get.
+                // * In the present of metdata with "nullable", let that
+                //   override.
 
                 auto metadata = py_schema.attr("metadata");
                 if (py::hasattr(metadata, "get")) {
