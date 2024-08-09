@@ -47,6 +47,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Type[_tdb_handles.ExperimentWrapper],
         Type[_tdb_handles.MeasurementWrapper],
         Type[_tdb_handles.SceneWrapper],
+        Type[_tdb_handles.Image2DWrapper],
     ]
     """Class variable of the Wrapper class used to open this object type."""
 
