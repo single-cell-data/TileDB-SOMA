@@ -26,16 +26,16 @@ TileDBArray <- R6::R6Class(
       }
 
       private$.mode <- mode
-      if (is.null(private$tiledb_timestamp)) {
+      if (is.null(self$tiledb_timestamp)) {
         spdl::debug("[TileDBArray$open] Opening {} '{}' in {} mode", self$class(), self$uri, mode)
         private$.tiledb_array <- tiledb::tiledb_array_open(self$object, type = mode)
       } else {
         if (is.null(internal_use_only)) stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
         spdl::debug("[TileDBArray$open] Opening {} '{}' in {} mode at ({},{})",
-                    self$class(), self$uri, mode, private$tiledb_timestamp[1],
-                    private$tiledb_timestamp[2])
+                    self$class(), self$uri, mode, self$tiledb_timestamp[1],
+                    self$tiledb_timestamp[2])
         #private$.tiledb_array <- tiledb::tiledb_array_open_at(self$object, type = mode,
-        #                                                      timestamp = private$tiledb_timestamp)
+        #                                                      timestamp = self$tiledb_timestamp)
       }
 
       ## TODO -- cannot do here while needed for array case does not work for data frame case

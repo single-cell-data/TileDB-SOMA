@@ -52,12 +52,12 @@ TileDBGroup <- R6::R6Class(
                    "factory method as e.g. 'SOMACollectionOpen()'."), call. = FALSE)
       }
       private$.mode = mode
-      private$.group_open_timestamp <- if (mode == "READ" && is.null(private$tiledb_timestamp)) {
+      private$.group_open_timestamp <- if (mode == "READ" && is.null(self$tiledb_timestamp)) {
         # In READ mode, if the opener supplied no timestamp then we default to the time of
         # opening, providing a temporal snapshot of all group members.
         Sys.time()
       } else {
-        private$tiledb_timestamp
+        self$tiledb_timestamp
       }
       if (is.null(private$.group_open_timestamp)) {
         spdl::debug("Opening {} '{}' in {} mode", self$class(), self$uri, mode)
@@ -312,7 +312,7 @@ TileDBGroup <- R6::R6Class(
     .tiledb_group = NULL,
 
     # This field stores the timestamp with which we opened the group, whether we used the
-    # opener-supplied private$tiledb_timestamp, or defaulted to the time of opening, or neither
+    # opener-supplied self$tiledb_timestamp, or defaulted to the time of opening, or neither
     # (NULL). This is the timestamp to propagate to accessed members.
     .group_open_timestamp = NULL,
 

@@ -466,7 +466,8 @@ write_soma.TsparseMatrix <- function(
     shape = shape %||% dim(x),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = Sys.time()
   )
   # Write values
   if (ingest_mode %in% c('resume')) {
@@ -606,13 +607,13 @@ write_soma.TsparseMatrix <- function(
   )
   xmode <- x$mode()
   if (xmode == 'CLOSED') {
-    x$reopen('READ')
+    x$reopen('READ', tiledb_timestamp = x$tiledb_timestamp)
     xmode <- x$mode()
   }
   on.exit(x$reopen(mode = xmode), add = TRUE, after = FALSE)
   oldmode <- soma_parent$mode()
   if (oldmode == 'CLOSED') {
-    soma_parent$reopen("READ")
+    soma_parent$reopen("READ", tiledb_timestamp = soma_parent$tiledb_timestamp)
     oldmode <- soma_parent$mode()
   }
   on.exit(soma_parent$reopen(oldmode), add = TRUE, after = FALSE)

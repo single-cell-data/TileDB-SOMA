@@ -51,8 +51,8 @@ SOMASparseNDArray <- R6::R6Class(
                      config = cfg,
                      dim_points = coords,
                      result_order = result_order,
-                     timestamprange = if (is.null(private$tiledb_timestamp)) private$tiledb_timestamp
-                                      else c(0, private$tiledb_timestamp),
+                     timestamprange = if (is.null(self$tiledb_timestamp)) self$tiledb_timestamp
+                                      else c(0, self$tiledb_timestamp),
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
       SOMASparseNDArrayRead$new(rl$sr, self, coords)
@@ -222,8 +222,9 @@ SOMASparseNDArray <- R6::R6Class(
       stopifnot(is.data.frame(values))
       # private$log_array_ingestion()
       arr <- self$object
-      if (!is.null(private$tiledb_timestamp)) {
-          arr@timestamp <- private$tiledb_timestamp
+      if (!is.null(self$tiledb_timestamp)) {
+          # arr@timestamp <- self$tiledb_timestamp
+        arr@timestamp_end <- self$tiledb_timestamp
       }
       nms <- colnames(values)
 
