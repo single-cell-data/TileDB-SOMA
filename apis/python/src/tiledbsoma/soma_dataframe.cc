@@ -61,6 +61,20 @@ void load_soma_dataframe(py::module& m) {
                 uintptr_t schema_ptr = (uintptr_t)(&schema);
                 py_schema.attr("_export_to_c")(schema_ptr);
 
+                // Please see
+                // https://github.com/single-cell-data/TileDB-SOMA/issues/2869
+                // for the reasoning here.
+                //
+                // TL;DR:
+                // * The table has an `ArrowSchema`; each of its children
+                //   is also an `ArrowSchema`.
+                // * Arrow fields are nullable by default in the user API.
+                // * There is a field-level nullability flag, _and_ users
+                //   can set a "nullable" metadata as well.
+                // * In the absence of metadata, respect the flag we get.
+                // * In the present of metdata with "nullable", let that
+                //   override.
+
                 auto metadata = py_schema.attr("metadata");
                 if (py::hasattr(metadata, "get")) {
                     for (int64_t i = 0; i < schema.n_children; ++i) {
@@ -71,13 +85,7 @@ void load_soma_dataframe(py::module& m) {
                         if (!val.is(py::none()) &&
                             val.cast<std::string>() == "nullable") {
                             child->flags |= ARROW_FLAG_NULLABLE;
-                        } else {
-                            child->flags &= ~ARROW_FLAG_NULLABLE;
                         }
-                    }
-                } else {
-                    for (int64_t i = 0; i < schema.n_children; ++i) {
-                        schema.children[i]->flags &= ~ARROW_FLAG_NULLABLE;
                     }
                 }
 
