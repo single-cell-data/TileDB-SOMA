@@ -54,6 +54,7 @@ void load_soma_dataframe(py::module& m) {
             [](std::string_view uri,
                py::object py_schema,
                py::object index_column_info,
+               // XXX py::object domain,
                std::shared_ptr<SOMAContext> context,
                PlatformConfig platform_config,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -134,8 +135,19 @@ void load_soma_dataframe(py::module& m) {
             "timestamp"_a = py::none())
 
         .def_static("exists", &SOMADataFrame::exists)
+
+        // XXX TEMP
+        .def("resize", &SOMADataFrame::resize1)
+
+        // XXX TEMP
+        .def_property_readonly("shape", &SOMADataFrame::shape1)
+
+        // XXX TEMP
+        .def_property_readonly("maxshape", &SOMADataFrame::maxshape1)
+
         .def_property_readonly(
             "index_column_names", &SOMADataFrame::index_column_names)
+
         .def_property_readonly(
             "count",
             &SOMADataFrame::count,

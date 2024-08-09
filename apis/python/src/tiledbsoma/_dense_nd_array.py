@@ -95,6 +95,17 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     ) -> Self:
         context = _validate_soma_tiledb_context(context)
 
+        # XXX comment re mapping:
+        # * core current_domain <-> (0, SOMA shape minus 1)
+        # * core domain         <-> (0, SOMA max_shape minus 1)
+        #   this is also known as capacity
+        #
+        # As far as the user is concerned, the SOMA domain (core current_domain)
+        # is the _only_ thing they see and care about. It's resizeable (up to max_domain
+        # anyway), reads and writes are bounds-checked against it, etc.
+
+        # XXX note: don't set current_domain for dense arrays until core 2.26
+
         index_column_schema = []
         index_column_data = {}
         for dim_idx, dim_shape in enumerate(shape):
@@ -105,6 +116,16 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 dim_shape,
                 TileDBCreateOptions.from_platform_config(platform_config),
             )
+
+            # XXX COMMENT
+            # XXX emphasize:
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+            # [3] core current domain lo
+            # [4] core current domain hi
+            # XXX note: don't set current_domain for dense arrays until core 2.26
+
             index_column_schema.append(pa_field)
             index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
 
@@ -314,3 +335,28 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
 
         return (dim_capacity, dim_extent)
+
+    @property
+    def maxshape(self) -> Tuple[int, ...]:
+        """XXX write me please thank you
+        Lifecycle:
+            Experimental.
+        """
+        # For core 2.26 we'll implement this for sparse and dense.
+        # For core 2.25 we'll implement this only for dense.
+        # This suppression overrides the parent class.
+        raise NotImplementedError(
+            "DenseNDArray maxshape support is scheduled for TileDBSOMA 1.14"
+        )
+
+    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+        """XXX write me please thank you
+        Lifecycle:
+            Experimental.
+        """
+        # For core 2.26 we'll implement this for sparse and dense.
+        # For core 2.25 we'll implement this only for dense.
+        # This suppression overrides the parent class.
+        raise NotImplementedError(
+            "DenseNDArray resize support is scheduled for TileDBSOMA 1.14"
+        )

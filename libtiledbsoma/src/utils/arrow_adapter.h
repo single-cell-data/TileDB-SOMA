@@ -28,7 +28,7 @@ class ColumnBuffer;
  */
 struct ArrowBuffer {
     ArrowBuffer(std::shared_ptr<ColumnBuffer> buffer)
-        : buffer_(buffer){};
+        : buffer_(buffer) {};
 
     std::shared_ptr<ColumnBuffer> buffer_;
 };
@@ -237,6 +237,12 @@ class ArrowAdapter {
         std::string name,
         const void* buff,
         std::shared_ptr<Context> ctx);
+
+    static void _set_current_domain_slot(
+        tiledb_datatype_t type,
+        const void* buff,
+        NDRectangle& ndrect,
+        std::string name);
 
     template <typename T>
     static Dimension _create_dim_aux(

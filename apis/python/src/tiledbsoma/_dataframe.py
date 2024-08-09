@@ -215,10 +215,22 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
-        if domain is None:
-            domain = tuple(None for _ in index_column_names)
+
+        # XXX comment re mapping:
+        # * core current_domain <-> SOMA domain
+        # * core domain         <-> SOMA max_domain
+        #
+        # As far as the user is concerned, the SOMA domain (core current_domain)
+        # is the _only_ thing they see and care about. It's resizeable (up to
+        # max_domain anyway), reads and writes are bounds-checked against it,
+        # etc.
+
+        soma_domain = domain
+
+        if soma_domain is None:
+            soma_domain = tuple(None for _ in index_column_names)
         else:
-            ndom = len(domain)
+            ndom = len(soma_domain)
             nidx = len(index_column_names)
             if ndom != nidx:
                 raise ValueError(
@@ -228,29 +240,51 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         index_column_schema = []
         index_column_data = {}
 
-        for index_column_name, slot_domain in zip(index_column_names, domain):
+        for index_column_name, slot_current_domain in zip(
+            index_column_names, soma_domain
+        ):
             pa_field = schema.field(index_column_name)
             dtype = _arrow_types.tiledb_type_from_arrow_type(
                 pa_field.type, is_indexed_column=True
             )
 
-            slot_domain = _fill_out_slot_domain(
-                slot_domain, index_column_name, pa_field.type, dtype
+            slot_current_domain = _fill_out_slot_domain(
+                slot_current_domain, index_column_name, pa_field.type, dtype
+            )
+            slot_max_domain = _fill_out_slot_domain(
+                None, index_column_name, pa_field.type, dtype
             )
 
             extent = _find_extent_for_domain(
                 index_column_name,
                 TileDBCreateOptions.from_platform_config(platform_config),
                 dtype,
-                slot_domain,
+                slot_max_domain,
             )
 
+            # XXX COMMENT
+            # XXX emphasize:
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+            # [3] core current domain lo
+            # [4] core current domain hi
+
             index_column_schema.append(pa_field)
-            index_column_data[pa_field.name] = [*slot_domain, extent]
+            index_column_data[pa_field.name] = [
+                *slot_max_domain,
+                extent,
+                *slot_current_domain,
+            ]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
         )
+
+        # print()
+        # print("INDEX_COLUMN_INFO")
+        # print(index_column_info.to_pandas())
+        # print()
 
         plt_cfg = _util.build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
@@ -259,6 +293,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 uri,
                 schema=schema,
                 index_column_info=index_column_info,
+                # XXX domain=domain,
                 ctx=context.native_context,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
@@ -316,6 +351,31 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         self._check_open_read()
         # if is it in read open mode, then it is a DataFrameWrapper
         return cast(DataFrameWrapper, self._handle).count
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        """Returns capacity of each dimension, always a list of length ``ndim``.
+        This will not necessarily match the bounds of occupied cells within the array.
+        Rather, it is the bounds outside of which no data may be written.
+
+        Lifecycle:
+            Experimental.
+        """
+        # XXX COMMENT ME
+        return cast(Tuple[int, ...], (self._handle.shape[0],))
+
+    @property
+    def maxshape(self) -> Tuple[int, ...]:
+        """XXX write me please thank you
+        Lifecycle:
+            Experimental.
+        """
+        # XXX COMMENT ME
+        return cast(Tuple[int, ...], (self._handle.maxshape[0],))
+
+    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Comment me please thx"""
+        self._handle.resize(newshape)
 
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""

@@ -124,6 +124,15 @@ void load_soma_dense_ndarray(py::module& m) {
 
         .def_static("exists", &SOMADenseNDArray::exists)
 
+        // XXX TEMP
+        .def("resize", &SOMAArray::resize)
+
+        // XXX TEMP
+        .def_property_readonly("shape", &SOMAArray::shape)
+
+        // XXX TEMP
+        .def_property_readonly("maxshape", &SOMAArray::maxshape)
+
         .def("write", write);
 }
 }  // namespace libtiledbsomacpp

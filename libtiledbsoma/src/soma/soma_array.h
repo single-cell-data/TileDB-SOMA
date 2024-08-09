@@ -577,6 +577,26 @@ class SOMAArray : public SOMAObject {
      * value in the vector is the capcity of each dimension.
      */
     std::vector<int64_t> shape();
+    // XXX TEMP
+    std::vector<int64_t> shape1();
+
+    /**
+     * @brief XXX write me please thx
+     *
+     * @return XXX write me please thx
+     */
+    std::vector<int64_t> maxshape();
+    // XXX TEMP
+    std::vector<int64_t> maxshape1();
+
+    /**
+     * @brief XXX write me please thx
+     *
+     * @return XXX write me please thx
+     */
+    void resize(const std::vector<int64_t>& newshape);
+    // XXX TEMP
+    void resize1(const std::vector<int64_t>& newshape);
 
     /**
      * @brief Get the number of dimensions.

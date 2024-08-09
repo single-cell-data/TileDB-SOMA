@@ -520,7 +520,11 @@ void load_soma_array(py::module& m) {
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
 
-        .def_property_readonly("shape", &SOMAArray::shape)
+        // xxx temp .def("resize", &SOMAArray::resize)
+
+        // xxx temp .def_property_readonly("shape", &SOMAArray::shape)
+
+        // xxx temp .def_property_readonly("maxshape", &SOMAArray::maxshape)
 
         .def_property_readonly("uri", &SOMAArray::uri)
 

@@ -1342,6 +1342,8 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
         var_field_name="var_id",
     )
 
+    # XXX TO DO: NOW NEEDS A RESIZE AS OF 1.13
+
     # Append the second anndata object
     tiledbsoma.io.from_anndata(
         experiment_uri=SOMA_URI,

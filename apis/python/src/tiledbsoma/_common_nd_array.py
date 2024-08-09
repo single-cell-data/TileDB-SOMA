@@ -95,6 +95,26 @@ class NDArray(SOMAArray, somacore.NDArray):
         """
         return cast(Tuple[int, ...], tuple(self._handle.shape))
 
+    @property
+    def maxshape(self) -> Tuple[int, ...]:
+        """XXX write me please thank you
+        Lifecycle:
+            Experimental.
+        """
+        # For core 2.26 we'll implement this for sparse and dense.
+        # For core 2.25 we'll implement this only for dense.
+        # We'll leave this common accessor here, but raise
+        # NotImplementedError in DenseNDArray until 2.26.
+        return cast(Tuple[int, ...], tuple(self._handle.maxshape))
+
+    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Comment me please thx"""
+        # For core 2.26 we'll implement this for sparse and dense.
+        # For core 2.25 we'll implement this only for dense.
+        # We'll leave this common accessor here, but raise
+        # NotImplementedError in DenseNDArray until 2.26.
+        self._handle.resize(newshape)
+
     @classmethod
     def _dim_capacity_and_extent(
         cls,
