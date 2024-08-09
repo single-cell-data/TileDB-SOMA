@@ -1047,24 +1047,6 @@ def test_uns_io(tmp_path, outgest_uns_keys):
 
     expected_adata = deepcopy(adata0)
 
-    # When outgesting `uns` DataFrames, `to_anndata` fails to remove the `soma_joinid` column added
-    # during ingest. It also demotes the original `df.index` to a column named "index". Here we
-    # patch the "expected" adata to reflect this, before comparing to the post-`to_anndata`
-    # `adata`.
-    # TODO: use `_read_dataframe` during `uns` DataFrame outgest (which does a better job restoring
-    #  the original pd.DataFrame, dropping `soma_joinid` and restoring the original `df.index`).
-    for k in ["pd_df_indexed", "pd_df_nonindexed"]:
-        df = expected_adata.uns[k]
-        expected_adata.uns[k] = (
-            df
-            # original index becomes column (with default name "index")
-            .reset_index()
-            # soma_joinid index added during ingest
-            .set_index(pd.Index(list(range(len(df))), name=SOMA_JOINID))
-            # soma_joinid outgested as first column
-            .reset_index()
-        )
-
     # Outgest also fails to restore `obs` and `var` correctly, in this case because the ingested
     # `obs`/`var` had columns named "obs_id"/"var_id", which get mistaken for "default index"
     # columns and set as `df.index` on outgest; their names are also removed. This corresponds to
