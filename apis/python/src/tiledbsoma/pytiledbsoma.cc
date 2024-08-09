@@ -154,20 +154,21 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                 // careful to set nullability for all types.
                 //
                 // Note: this must match what DataFrame.create does:
+                //
                 // * DataFrame.create sets nullability for obs/var columns on
                 //   initial ingest
                 // * Here, we set nullability for obs/var columns on update_obs
+                //
                 // Users should get the same behavior either way.
                 //
                 // Note: this is specific to tiledbsoma.io.
+                //
                 // * In the SOMA API -- e.g. soma.DataFrame.create -- users
-                // bring
-                //   their own Arrow schema (including nullabilities) and we
-                //   must do what they say.
+                //   bring their own Arrow schema (including nullabilities) and
+                //   we must do what they say.
                 // * In the tiledbsoma.io API, users bring their AnnData
-                // objects,
-                //   and we compute Arrow schemas on their behalf, and we must
-                // accommodate reasonable/predictable needs.
+                //   objects, and we compute Arrow schemas on their behalf, and
+                //   we must accommodate reasonable/predictable needs.
                 attr.set_nullable(true);
 
                 auto enmr_it = add_enmrs.find(attr_name);
