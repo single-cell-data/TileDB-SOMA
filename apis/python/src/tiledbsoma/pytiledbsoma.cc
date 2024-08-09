@@ -124,6 +124,50 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite(
             "consolidate_and_vacuum", &PlatformConfig::consolidate_and_vacuum);
 
+    m.def(
+        "_update_dataframe",
+        [](std::string uri,
+           std::shared_ptr<SOMAContext> ctx,
+           std::vector<std::string> drop_attrs,
+           std::map<std::string, std::string> add_attrs,
+           std::map<std::string, std::pair<std::string, bool>> add_enmrs) {
+            ArraySchemaEvolution se(*ctx->tiledb_ctx());
+            for (auto key_name : drop_attrs) {
+                se.drop_attribute(key_name);
+            }
+            for (auto add_attr : add_attrs) {
+                auto [attr_name, attr_type] = add_attr;
+
+                Attribute attr(
+                    *ctx->tiledb_ctx(),
+                    attr_name,
+                    ArrowAdapter::to_tiledb_format(attr_type));
+                attr.set_nullable(true);
+                FilterList filter_list(*ctx->tiledb_ctx());
+                filter_list.add_filter(
+                    Filter(*ctx->tiledb_ctx(), TILEDB_FILTER_ZSTD));
+                attr.set_filter_list(filter_list);
+
+                auto enmr_it = add_enmrs.find(attr_name);
+                bool has_enmr = enmr_it != add_enmrs.end();
+                if (has_enmr) {
+                    auto [enmr_type, ordered] = enmr_it->second;
+                    se.add_enumeration(Enumeration::create_empty(
+                        *ctx->tiledb_ctx(),
+                        attr_name,
+                        ArrowAdapter::to_tiledb_format(enmr_type),
+                        enmr_type == "U" || enmr_type == "Z" ? TILEDB_VAR_NUM :
+                                                               1,
+                        ordered));
+                    AttributeExperimental::set_enumeration_name(
+                        *ctx->tiledb_ctx(), attr, attr_name);
+                }
+
+                se.add_attribute(attr);
+            }
+            se.array_evolve(uri);
+        });
+
     load_soma_context(m);
     load_soma_object(m);
     load_soma_array(m);

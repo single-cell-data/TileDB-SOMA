@@ -40,8 +40,6 @@ from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 from typing_extensions import get_args
 
-import tiledb
-
 from .. import (
     Collection,
     DataFrame,
@@ -54,7 +52,8 @@ from .. import (
     eta,
     logging,
 )
-from .._arrow_types import df_to_arrow, tiledb_type_from_arrow_type
+from .. import pytiledbsoma as clib
+from .._arrow_types import df_to_arrow
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -1529,8 +1528,6 @@ def _update_dataframe(
     add_keys = new_keys.difference(old_keys)
     common_keys = old_keys.intersection(new_keys)
 
-    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
-
     msgs = []
     for key in common_keys:
         old_type = old_sig[key]
@@ -1542,61 +1539,43 @@ def _update_dataframe(
         msg = ", ".join(msgs)
         raise ValueError(f"unsupported type updates: {msg}")
 
-    se = tiledb.ArraySchemaEvolution(sdf.context.tiledb_ctx)
-    for drop_key in drop_keys:
-        se.drop_attribute(drop_key)
-
     arrow_table = df_to_arrow(new_data)
     arrow_schema = arrow_table.schema.remove_metadata()
 
+    _pa_to_str_fmt = {
+        pa.string(): "U",
+        pa.binary(): "Z",
+        pa.large_string(): "U",
+        pa.large_binary(): "Z",
+        pa.int8(): "c",
+        pa.uint8(): "C",
+        pa.int16(): "s",
+        pa.uint16(): "S",
+        pa.int32(): "i",
+        pa.uint32(): "I",
+        pa.int64(): "l",
+        pa.uint64(): "L",
+        pa.float32(): "f",
+        pa.float64(): "g",
+        pa.bool_(): "b",
+    }
+
+    add_attrs = dict()
+    add_enmrs = dict()
     for add_key in add_keys:
         # Don't directly use the new dataframe's dtypes. Go through the
         # to-Arrow-schema logic, and back, as this recapitulates the original
         # schema-creation logic.
         atype = arrow_schema.field(add_key).type
-        dtype = tiledb_type_from_arrow_type(atype)
-
-        enum_label: Optional[str] = None
         if pa.types.is_dictionary(arrow_table.schema.field(add_key).type):
-            enum_label = add_key
-            dt = cast(pd.CategoricalDtype, new_data[add_key].dtype)
-            se.add_enumeration(
-                tiledb.Enumeration(
-                    name=add_key, ordered=atype.ordered, values=list(dt.categories)
-                )
-            )
+            add_attrs[add_key] = _pa_to_str_fmt[atype.index_type]
+            add_enmrs[add_key] = (_pa_to_str_fmt[atype.value_type], atype.ordered)
+        else:
+            add_attrs[add_key] = _pa_to_str_fmt[atype]
 
-        filters = tiledb_create_options.attr_filters_tiledb(add_key, ["ZstdFilter"])
-
-        # An update can create (or drop) columns, or mutate existing ones.  A
-        # brand-new column might have nulls in it -- or it might not.  And a
-        # subsequent mutator-update might set null values to non-null -- or vice
-        # versa. Therefore we must be careful to set nullability for all types.
-        #
-        # Note: this must match what DataFrame.create does:
-        # * DataFrame.create sets nullability for obs/var columns on initial ingest
-        # * Here, we set nullability for obs/var columns on update_obs
-        # Users should get the same behavior either way.
-        #
-        # Note: this is specific to tiledbsoma.io.
-        # * In the SOMA API -- e.g. soma.DataFrame.create -- users bring their
-        #   own Arrow schema (including nullabilities) and we must do what they
-        #   say.
-        # * In the tiledbsoma.io API, users bring their AnnData objects, and
-        #   we compute Arrow schemas on their behalf, and we must accommodate
-        #   reasonable/predictable needs.
-
-        se.add_attribute(
-            tiledb.Attr(
-                name=add_key,
-                dtype=dtype,
-                filters=filters,
-                enum_label=enum_label,
-                nullable=True,
-            )
-        )
-
-    se.array_evolve(uri=sdf.uri)
+    clib._update_dataframe(
+        sdf.uri, sdf.context.native_context, list(drop_keys), add_attrs, add_enmrs
+    )
 
     _write_dataframe(
         df_uri=sdf.uri,
