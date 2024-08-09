@@ -4,16 +4,22 @@
 \alias{set_metadata}
 \title{Set metadata (as a string)}
 \usage{
-set_metadata(uri, key, value, ctxxp)
+set_metadata(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL)
 }
 \arguments{
 \item{uri}{The array URI}
 
 \item{key}{The array metadata key}
 
-\item{value}{The metadata value}
+\item{valuesxp}{The metadata value}
+
+\item{type}{The datatype}
+
+\item{is_array}{A boolean to indicate array or group}
 
 \item{ctxxp}{An external pointer to the SOMAContext wrapper}
+
+\item{tsvec}{An optional two-element datetime vector}
 }
 \description{
 Set metadata (as a string)

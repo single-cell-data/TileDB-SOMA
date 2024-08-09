@@ -165,7 +165,7 @@ uns_hint <- function(type = c('1d', '2d')) {
     uri = x$uri,
     config = as.character(tiledb::config(x$tiledbsoma_ctx$context())),
     colnames = dimname,
-    timestamp_end = x$.__enclos_env__$private$tiledb_timestamp
+    timestamprange = c(0, x$.__enclos_env__$private$tiledb_timestamp)
   )
   return(TableReadIter$new(rl$sr)$concat()$GetColumnByName(dimname)$as_vector())
 }

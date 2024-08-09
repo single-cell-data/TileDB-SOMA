@@ -299,11 +299,14 @@ std::optional<tdbs::TimestampRange> makeTimestampRange(Rcpp::Nullable<Rcpp::Date
         // an Rcpp 'Nullable' is a decent compromise between adhering to SEXP semantics
         // and having 'optional' behaviour -- but when there is a value we need to be explicit
         Rcpp::DatetimeVector vec(tsvec); // vector of Rcpp::Datetime ie POSIXct w/ (fract.) secs since epoch
-        if (vec.size() != 2) {
-            Rcpp::stop("TimestampRange must be two-element vector");
-        }
+        if (vec.size() == 1) {
+            tsrng = std::make_pair<uint64_t>( 0, static_cast<uint64_t>(Rcpp::Datetime(vec[0]).getFractionalTimestamp() * 1000) );
+        } else if (vec.size() == 2) {
         tsrng = std::make_pair<uint64_t>( static_cast<uint64_t>(Rcpp::Datetime(vec[0]).getFractionalTimestamp() * 1000),
                                           static_cast<uint64_t>(Rcpp::Datetime(vec[1]).getFractionalTimestamp() * 1000) );
+        } else {
+            Rcpp::stop("TimestampRange must be a one or two-element vector");
+        }
     }
 
     return tsrng;
