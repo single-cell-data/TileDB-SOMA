@@ -15,7 +15,7 @@ from scipy.sparse import csr_matrix
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma import SOMA_JOINID, Experiment, _constants, _factory
+from tiledbsoma import Experiment, _constants, _factory
 from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma.io._common import _TILEDBSOMA_TYPE
 import tiledb
@@ -1024,19 +1024,7 @@ def test_uns_io(tmp_path, outgest_uns_keys):
     soma_uri = tmp_path.as_posix()
 
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name="RNA")
-
-    # NOTE: `from_anndata` mutates user-provided DataFrames in `uns`, demoting their index to a column named "index",
-    # and installing a `soma_joinid` index. Here we patch the "expected" adata to reflect this, before comparing to
-    # the post-`froM_anndata` `adata`.
-    # TODO: fix `from_anndata` to not modify DataFrames in user-provided `uns`.
-    expected_adata = deepcopy(adata0)
-    for k in ["pd_df_indexed", "pd_df_nonindexed"]:
-        df = expected_adata.uns[k]
-        expected_adata.uns[k] = df.reset_index().set_index(
-            pd.Index(list(range(len(df))), name=SOMA_JOINID)
-        )
-
-    assert_adata_equal(expected_adata, adata)
+    assert_adata_equal(adata0, adata)
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         adata2 = tiledbsoma.io.to_anndata(
