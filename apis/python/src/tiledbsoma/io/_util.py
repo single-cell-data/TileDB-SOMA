@@ -13,11 +13,31 @@ from typing import (
 from unittest import mock
 
 import anndata as ad
+import pyarrow as pa
 from anndata._core import file_backing
 
 import tiledb
 
+from .._exception import SOMAError
 from .._types import Path
+
+_pa_type_to_str_fmt = {
+    pa.string(): "U",
+    pa.binary(): "Z",
+    pa.large_string(): "U",
+    pa.large_binary(): "Z",
+    pa.int8(): "c",
+    pa.uint8(): "C",
+    pa.int16(): "s",
+    pa.uint16(): "S",
+    pa.int32(): "i",
+    pa.uint32(): "I",
+    pa.int64(): "l",
+    pa.uint64(): "L",
+    pa.float32(): "f",
+    pa.float64(): "g",
+    pa.bool_(): "b",
+}
 
 
 @contextmanager
@@ -80,3 +100,10 @@ def _hack_patch_anndata() -> ContextManager[object]:
         self._filename = filename
 
     return mock.patch.object(file_backing.AnnDataFileManager, "filename", filename)
+
+
+def get_arrow_str_format(pa_type: pa.DataType) -> str:
+    try:
+        return _pa_type_to_str_fmt[pa_type]
+    except KeyError:
+        raise SOMAError(f"Could not convert {pa_type} to Arrow string format")

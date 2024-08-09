@@ -142,11 +142,33 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     *ctx->tiledb_ctx(),
                     attr_name,
                     ArrowAdapter::to_tiledb_format(attr_type));
-                attr.set_nullable(true);
                 FilterList filter_list(*ctx->tiledb_ctx());
                 filter_list.add_filter(
                     Filter(*ctx->tiledb_ctx(), TILEDB_FILTER_ZSTD));
                 attr.set_filter_list(filter_list);
+
+                // An update can create (or drop) columns, or mutate existing
+                // ones. A brand-new column might have nulls in it -- or it
+                // might not.  And a subsequent mutator-update might set null
+                // values to non-null -- or vice versa. Therefore we must be
+                // careful to set nullability for all types.
+                //
+                // Note: this must match what DataFrame.create does:
+                // * DataFrame.create sets nullability for obs/var columns on
+                //   initial ingest
+                // * Here, we set nullability for obs/var columns on update_obs
+                // Users should get the same behavior either way.
+                //
+                // Note: this is specific to tiledbsoma.io.
+                // * In the SOMA API -- e.g. soma.DataFrame.create -- users
+                // bring
+                //   their own Arrow schema (including nullabilities) and we
+                //   must do what they say.
+                // * In the tiledbsoma.io API, users bring their AnnData
+                // objects,
+                //   and we compute Arrow schemas on their behalf, and we must
+                // accommodate reasonable/predictable needs.
+                attr.set_nullable(true);
 
                 auto enmr_it = add_enmrs.find(attr_name);
                 bool has_enmr = enmr_it != add_enmrs.end();

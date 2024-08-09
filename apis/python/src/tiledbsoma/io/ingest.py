@@ -101,7 +101,7 @@ from ._registration import (
     signatures,
 )
 from ._registration.signatures import OriginalIndexMetadata, _prepare_df_for_ingest
-from ._util import read_h5ad
+from ._util import get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject[RawHandle])
@@ -1542,24 +1542,6 @@ def _update_dataframe(
     arrow_table = df_to_arrow(new_data)
     arrow_schema = arrow_table.schema.remove_metadata()
 
-    _pa_to_str_fmt = {
-        pa.string(): "U",
-        pa.binary(): "Z",
-        pa.large_string(): "U",
-        pa.large_binary(): "Z",
-        pa.int8(): "c",
-        pa.uint8(): "C",
-        pa.int16(): "s",
-        pa.uint16(): "S",
-        pa.int32(): "i",
-        pa.uint32(): "I",
-        pa.int64(): "l",
-        pa.uint64(): "L",
-        pa.float32(): "f",
-        pa.float64(): "g",
-        pa.bool_(): "b",
-    }
-
     add_attrs = dict()
     add_enmrs = dict()
     for add_key in add_keys:
@@ -1568,10 +1550,13 @@ def _update_dataframe(
         # schema-creation logic.
         atype = arrow_schema.field(add_key).type
         if pa.types.is_dictionary(arrow_table.schema.field(add_key).type):
-            add_attrs[add_key] = _pa_to_str_fmt[atype.index_type]
-            add_enmrs[add_key] = (_pa_to_str_fmt[atype.value_type], atype.ordered)
+            add_attrs[add_key] = get_arrow_str_format(atype.index_type)
+            add_enmrs[add_key] = (
+                get_arrow_str_format(atype.value_type),
+                atype.ordered,
+            )
         else:
-            add_attrs[add_key] = _pa_to_str_fmt[atype]
+            add_attrs[add_key] = get_arrow_str_format(atype)
 
     clib._update_dataframe(
         sdf.uri, sdf.context.native_context, list(drop_keys), add_attrs, add_enmrs
