@@ -371,21 +371,21 @@ def _write_visium_data_to_experiment_uri(
                         x is not None
                         for x in (input_hires, input_lowres, input_fullres)
                     ):
-                        sample_uri = f"{img_uri}/sample"
+                        tissue_uri = f"{img_uri}/tissue"
                         with _create_or_open_collection(
-                            Image2D, sample_uri, **ingest_ctx
-                        ) as sample_image:
+                            Image2D, tissue_uri, **ingest_ctx
+                        ) as tissue:
                             _maybe_set(
                                 img,
-                                "sample",
-                                sample_image,
+                                "tissue",
+                                tissue,
                                 use_relative_uri=use_relative_uri,
                             )
-                            sample_image.metadata["soma_coordinates"] = (
+                            tissue.metadata["soma_coordinates"] = (
                                 coordinate_system.to_json()
                             )
                             _write_visium_images(
-                                sample_image,
+                                tissue,
                                 scale_factors,
                                 input_hires=input_hires,
                                 input_lowres=input_lowres,
