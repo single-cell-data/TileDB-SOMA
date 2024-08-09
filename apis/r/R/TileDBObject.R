@@ -82,13 +82,18 @@ TileDBObject <- R6::R6Class(
     #'  \item \dQuote{\code{READ}}
     #'  \item \dQuote{\code{WRITE}}
     #' }
+    #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
     #'
     #' @return Invisibly returns \code{self} opened in \code{mode}
     #'
-    reopen = function(mode) {
+    reopen = function(mode, tiledb_timestamp = NULL) {
       mode <- match.arg(mode, choices = c('READ', 'WRITE'))
+      stopifnot(
+        "'tiledb_timestamp' must be a POSIXct datetime object" = is.null(tiledb_timestamp) ||
+          inherits(tiledb_timestamp, what = "POSIXct")
+      )
       self$close()
-      private$tiledb_timestamp <- NULL
+      private$tiledb_timestamp <- tiledb_timestamp
       self$open(mode, internal_use_only = 'allowed_use')
       return(invisible(self))
     },
