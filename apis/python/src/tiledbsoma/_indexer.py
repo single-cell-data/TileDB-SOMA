@@ -10,29 +10,20 @@ from somacore.query.types import IndexLike
 
 from tiledbsoma import pytiledbsoma as clib
 
+from ._types import PDSeries
+
 if TYPE_CHECKING:
     from .options import SOMATileDBContext
 
-    IndexerDataType = Union[
-        npt.NDArray[np.int64],
-        pa.Array,
-        pa.IntegerArray,
-        pd.Series[Any],
-        pd.arrays.IntegerArray,
-        pa.ChunkedArray,
-        List[int],
-    ]
-
-else:
-    IndexerDataType = Union[
-        npt.NDArray[np.int64],
-        pa.Array,
-        pa.IntegerArray,
-        pd.Series,
-        pd.arrays.IntegerArray,
-        pa.ChunkedArray,
-        List[int],
-    ]
+IndexerDataType = Union[
+    npt.NDArray[np.int64],
+    pa.Array,
+    pa.IntegerArray,
+    PDSeries,
+    pd.arrays.IntegerArray,
+    pa.ChunkedArray,
+    List[int],
+]
 
 
 def tiledbsoma_build_index(
