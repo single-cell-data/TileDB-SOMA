@@ -1520,13 +1520,30 @@ def test_enum_schema_report(tmp_path):
 def test_nullable(tmp_path):
     uri = tmp_path.as_posix()
 
+    # Arrow fields are nullable by default.  They can be explcitly set nullable
+    # or non-nullable via the nullable kwarg to pa.field.  Also, they can be
+    # explcitly set nullable via metadata. The latter, if present, overrides
+    # the former.
     asch = pa.schema(
         [
             pa.field("int", pa.int32()),
             pa.field("bool", pa.bool_()),
             pa.field("ord", pa.dictionary(pa.int64(), pa.string())),
+            pa.field("no-meta-flag-unspecified", pa.int32()),
+            pa.field("no-meta-flag-true", pa.int32(), nullable=True),
+            pa.field("no-meta-flag-false", pa.int32(), nullable=False),
+            pa.field("yes-meta-flag-unspecified", pa.int32()),
+            pa.field("yes-meta-flag-true", pa.int32(), nullable=True),
+            pa.field("yes-meta-flag-false", pa.int32(), nullable=False),
         ],
-        metadata={"int": "nullable", "bool": "nullable", "ord": "nullable"},
+        metadata={
+            "int": "nullable",
+            "bool": "nullable",
+            "ord": "nullable",
+            "yes-meta-flag-unspecified": "nullable",
+            "yes-meta-flag-true": "nullable",
+            "yes-meta-flag-false": "nullable",
+        },
     )
 
     pydict = {}
@@ -1536,6 +1553,12 @@ def test_nullable(tmp_path):
     pydict["ord"] = pd.Categorical(
         ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
     )
+    pydict["no-meta-flag-unspecified"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["no-meta-flag-true"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["no-meta-flag-false"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    pydict["yes-meta-flag-unspecified"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["yes-meta-flag-true"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["yes-meta-flag-false"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     data = pa.Table.from_pydict(pydict)
 
     with soma.DataFrame.create(uri, schema=asch) as sdf:
