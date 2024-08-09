@@ -148,13 +148,15 @@ A list of metadata values.
 \subsection{Method \code{set_metadata()}}{
 Add list of metadata to the specified TileDB array. (lifecycle: maturing)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$set_metadata(metadata)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$set_metadata(metadata, timestamps = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{metadata}}{Named list of metadata to add.}
+
+\item{\code{timestamps}}{Optional two-element vector of timestamp range starts and end}
 }
 \if{html}{\out{</div>}}
 }

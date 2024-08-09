@@ -20,7 +20,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
-    #' param timestamps Optional timestamp start and end range
+    #' @param timestamps Optional timestamp start and end range
     #' @param internal_use_only Character value to signal this is a 'permitted'
     #' call, as `create()` is considered internal and should not be called
     #' directly.

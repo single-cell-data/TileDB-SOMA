@@ -155,9 +155,11 @@ void delete_metadata(std::string& uri, std::string& key, bool is_array,
 //'
 //' @param uri The array URI
 //' @param key The array metadata key
-//' @param value The metadata value
-//' @
+//' @param valuesxp The metadata value
+//' @param type The datatype
+//' @param is_array A boolean to indicate array or group
 //' @param ctxxp An external pointer to the SOMAContext wrapper
+//' @param tsvec An optional two-element datetime vector
 //' @export
 // [[Rcpp::export]]
 void set_metadata(std::string& uri, std::string& key, SEXP valuesxp, std::string& type,

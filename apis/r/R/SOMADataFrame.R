@@ -21,7 +21,7 @@ SOMADataFrame <- R6::R6Class(
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
     #' @template param-platform-config
-    #' param timestamps Optional timestamp start and end range
+    #' @param timestamps Optional timestamp start and end range
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
     create = function(schema, index_column_names = c("soma_joinid"),
@@ -54,12 +54,12 @@ SOMADataFrame <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       schema$export_to_c(nasp)
 
-      spdl::debug("[SOMADataFrame::create] about to create schema from arrow")
+      spdl::debug("[SOMADataFrame$create] about to create schema from arrow")
       ctxptr <- super$tiledbsoma_ctx$context()
       createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp, TRUE, "SOMADataFrame",
                             tiledb_create_options$to_list(FALSE), soma_context(), timestamps)
 
-      spdl::debug("[SOMADataFrame::create] about to call write_object_type_metadata")
+      spdl::debug("[SOMADataFrame$create] about to call write_object_type_metadata")
       private$write_object_type_metadata(timestamps)
 
       self$open("WRITE", internal_use_only = "allowed_use")
@@ -157,14 +157,15 @@ SOMADataFrame <- R6::R6Class(
                             args = list(expr = str2lang(value_filter), ta = arr))
           value_filter <- parsed@ptr
       }
-
+      spdl::debug("[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
+                  private$tiledb_timestamp[1], private$tiledb_timestamp[2])
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       rl <- sr_setup(uri = self$uri,
                      config = cfg,
                      colnames = column_names,
                      qc = value_filter,
                      dim_points = coords,
-                     timestamp_end = private$tiledb_timestamp,
+                     timestamprange = private$tiledb_timestamp,  # NULL or two-elem vector
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
       TableReadIter$new(rl$sr)
