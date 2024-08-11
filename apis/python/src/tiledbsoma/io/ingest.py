@@ -811,8 +811,8 @@ def append_var(
     platform_config: Optional[PlatformConfig] = None,
 ) -> str:
     """
-    Writes new rows to an existing ``obs`` dataframe. (This is distinct from ``update_obs``
-    which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns.)
+    Writes new rows to an existing ``var`` dataframe. (This is distinct from ``update_var``
+    which mutates the entirety of the ``var`` dataframe, e.g. to add/remove columns.)
 
     Example:
 
