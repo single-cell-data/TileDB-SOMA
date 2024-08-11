@@ -68,10 +68,6 @@ class RoundTrip:
     persisted_metadata: Optional[str] = None
     # Argument passed to `_write_dataframe` on ingest (default here matches `from_anndata`'s "obs" path)
     ingest_id_column_name: Optional[str] = "obs_id"
-    # Argument passed to `_read_dataframe` on outgest (default here matches `to_anndata`'s "obs_id" path)
-    outgest_default_index_name: Optional[str] = None
-    # Argument passed to `_read_dataframe` on outgest (default here matches `to_anndata`'s "obs_id" path)
-    outgest_fallback_index_name: Optional[str] = "obs_id"
 
 
 def parametrize_roundtrips(roundtrips: List[RoundTrip]):
@@ -184,7 +180,6 @@ def test_adata_io_roundtrips(
     persisted_column_names: List[str],
     persisted_metadata: Optional[str],
     ingest_id_column_name: Optional[str],
-    outgest_default_index_name: Optional[str],
     outgested_df: pd.DataFrame,
 ):
     uri = str(tmp_path)
@@ -203,7 +198,7 @@ def test_adata_io_roundtrips(
 
     # Verify outgested pd.DataFrame
     with Experiment.open(ingested_uri) as exp:
-        adata1 = to_anndata(exp, "meas", obs_id_name=outgest_default_index_name)
+        adata1 = to_anndata(exp, "meas")
         outgested_obs = adata1.obs
 
     assert_frame_equal(outgested_obs, outgested_df)
@@ -222,8 +217,6 @@ def test_df_io_roundtrips(
     persisted_column_names: List[str],
     persisted_metadata: Optional[str],
     ingest_id_column_name: Optional[str],
-    outgest_default_index_name: Optional[str],
-    outgest_fallback_index_name: Optional[str],
     outgested_df: pd.DataFrame,
 ):
     uri = str(tmp_path)
@@ -241,7 +234,7 @@ def test_df_io_roundtrips(
     # Verify outgested pd.DataFrame
     actual_outgested_df = _read_dataframe(
         sdf,
-        default_index_name=outgest_default_index_name,
-        fallback_index_name=outgest_fallback_index_name,
+        default_index_name=None,  # corresponds to `to_anndata`'s default `obs_id_name`
+        fallback_index_name="obs_id",  # corresponds to `to_anndata`'s default behavior for "obs"
     )
     assert_frame_equal(actual_outgested_df, outgested_df)
