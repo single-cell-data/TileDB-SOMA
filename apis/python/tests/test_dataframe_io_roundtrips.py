@@ -3,8 +3,7 @@
 
 import json
 from copy import deepcopy
-from dataclasses import asdict, dataclass, fields
-from inspect import getfullargspec
+from dataclasses import dataclass
 from os.path import join
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -12,7 +11,6 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-import pytest
 from anndata import AnnData
 from pandas._testing import assert_frame_equal
 from scipy.sparse import csr_matrix
@@ -24,6 +22,7 @@ from tiledbsoma.io.ingest import IngestionParams, _write_dataframe, from_anndata
 from tiledbsoma.io.outgest import _read_dataframe, to_anndata
 
 from tests._util import assert_adata_equal
+from tests.parametrize_cases import parametrize_cases
 
 
 def parse_col(col_str: str) -> Tuple[Optional[str], List[str]]:
@@ -71,29 +70,6 @@ class RoundTrip:
     persisted_metadata: Optional[str] = None
     # Argument passed to `_write_dataframe` on ingest (default here matches `from_anndata`'s "obs" path)
     ingest_id_column_name: Optional[str] = "obs_id"
-
-
-def parametrize_roundtrips(roundtrips: List[RoundTrip]):
-    def wrapper(fn):
-        # Test-case IDs
-        ids = [rt.name for rt in roundtrips]
-        # Convert `RoundTrip`s to "values" arrays, filtered and reordered to match kwargs expected by the wrapped
-        # function
-        fields_names = [f.name for f in fields(RoundTrip)]
-        spec = getfullargspec(fn)
-        names = [arg for arg in spec.args if arg in fields_names]
-        values = [
-            {name: rt_dict[name] for name in names}.values()
-            for rt_dict in [asdict(rt) for rt in roundtrips]
-        ]
-        # Delegate to PyTest `parametrize`
-        return pytest.mark.parametrize(
-            names,  # arg names
-            values,  # arg value lists
-            ids=ids,  # test-case names
-        )(fn)
-
-    return wrapper
 
 
 # fmt: off
@@ -178,7 +154,7 @@ def verify_metadata(
     assert actual_index_metadata == persisted_metadata
 
 
-@parametrize_roundtrips(ROUND_TRIPS)
+@parametrize_cases(ROUND_TRIPS)
 def test_adata_io_roundtrips(
     tmp_path: Path,
     original_df: pd.DataFrame,
@@ -220,7 +196,7 @@ def test_adata_io_roundtrips(
     assert_adata_equal(expected, adata1)
 
 
-@parametrize_roundtrips(ROUND_TRIPS)
+@parametrize_cases(ROUND_TRIPS)
 def test_df_io_roundtrips(
     tmp_path: Path,
     original_df: pd.DataFrame,
