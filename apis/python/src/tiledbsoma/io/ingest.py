@@ -1145,14 +1145,17 @@ def _write_dataframe(
     axis_mapping: AxisIDMapping,
 ) -> DataFrame:
     """
-    The id_column_name is for disambiguating rows in append mode;
-    it may or may not be an index name in the input AnnData obs/var.
+    Convert and save a pd.DataFrame as a SOMA DataFrame.
 
-    The original_index_name is the index name in the AnnData obs/var.
+    This function adds a ``soma_joinid`` index to the provided ``pd.DataFrame``, as that is
+    required by libtiledbsoma; the original ``pd.DataFrame`` index is "reset" to a column, with its
+    original name stored as metadata on the SOMA ``DataFrame``.
 
-    This helper mutates the input dataframe, for parsimony of memory usage.
-    The caller should have copied anything pointing to a user-provided
-    adata.obs, adata.var, etc.
+    There are several subtleties related to naming the reset index column, and the ``id_column_name``
+     parameter; see ``_prepare_df_for_ingest`` / https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
+
+    NOTE: this function mutates the input dataframe, for parsimony of memory usage. Callers should
+    copy any user-provided ``pd.DataFrame``s (adata obs, var, uns, etc.) before passing them here.
     """
     original_index_metadata = _prepare_df_for_ingest(df, id_column_name)
     df[SOMA_JOINID] = np.asarray(axis_mapping.data, dtype=np.int64)
