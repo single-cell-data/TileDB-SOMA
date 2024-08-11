@@ -8,7 +8,7 @@ import pytest
 def parametrize_cases(cases: List):
     """Parametrize a test with a list of test cases (each an instance of a dataclass).
 
-    The cases are expected to have a ``name`` string, which is used as the test-case "ID".
+    The cases are expected to have an ``id: str`` field, which is used as the test-case "ID".
     """
 
     cls = cases[0].__class__
@@ -19,8 +19,11 @@ def parametrize_cases(cases: List):
             )
 
     def wrapper(fn):
+        """Parameterize a test ``fn``, converting the ``cases`` above to pytest-style "ID"s and
+        kwarg keys/values.
+        """
         # Test-case IDs
-        ids = [case.name for case in cases]
+        ids = [case.id for case in cases]
         # Convert each case to a "values" array; also filter and reorder to match kwargs expected
         # by the wrapped "test_*" function.
         spec = getfullargspec(fn)

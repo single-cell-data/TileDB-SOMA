@@ -28,7 +28,7 @@ from tests.parametrize_cases import parametrize_cases
 @dataclass
 class RoundTrip:
     # Test-case name
-    name: str
+    id: str
     # DataFrame to ingest
     original_df: pd.DataFrame
     # Expected DataFrame after outgest
