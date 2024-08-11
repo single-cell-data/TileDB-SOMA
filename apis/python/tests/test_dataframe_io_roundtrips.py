@@ -6,7 +6,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from os.path import join
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -21,37 +21,8 @@ from tiledbsoma.io._registration import AxisIDMapping
 from tiledbsoma.io.ingest import IngestionParams, _write_dataframe, from_anndata
 from tiledbsoma.io.outgest import _read_dataframe, to_anndata
 
-from tests._util import assert_adata_equal
+from tests._util import assert_adata_equal, make_df
 from tests.parametrize_cases import parametrize_cases
-
-
-def parse_col(col_str: str) -> Tuple[Optional[str], List[str]]:
-    """Parse a "column string" of the form `val1,val2,...` or `name=val1,val2,...`."""
-    pcs = col_str.split("=")
-    if len(pcs) == 1:
-        return None, col_str.split(",")
-    elif len(pcs) == 2:
-        name, vals_str = pcs
-        vals = vals_str.split(",")
-        return name, vals
-    else:
-        raise ValueError(f"Invalid column string: {col_str}")
-
-
-def make_df(index_str: str, **cols) -> pd.DataFrame:
-    """DataFrame construction helper, for tests.
-
-    - index and columns are provided as strings of the form `name=val1,val2,...`.
-    - `name=` is optional for the initial (`index_str`) arg.
-    """
-    cols = dict([(col, parse_col(col_str)[1]) for col, col_str in cols.items()])
-    index = None
-    index_name = None
-    if index_str:
-        index_name, index = parse_col(index_str)
-    df = pd.DataFrame(cols, index=index)
-    df.index.name = index_name
-    return df
 
 
 @dataclass
