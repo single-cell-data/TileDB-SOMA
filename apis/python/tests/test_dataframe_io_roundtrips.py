@@ -1,3 +1,6 @@
+# The tests in this file verify issues where an ingest/outgest "round trip" modifies an AnnData's
+# "obs" or "var" DataFrames. See https://github.com/single-cell-data/TileDB-SOMA/issues/2829 for more info.
+
 import json
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
@@ -94,6 +97,8 @@ def parametrize_roundtrips(roundtrips: List[RoundTrip]):
 
 
 # fmt: off
+# These cases verify issues with ingest/outgest where an AnnData's "obs" or "var" DataFrame is not round-tripped
+# correctly. See https://github.com/single-cell-data/TileDB-SOMA/issues/2829 for more info.
 ROUND_TRIPS = [
     RoundTrip(
         '1. `df.index` named "index"',
@@ -182,6 +187,11 @@ def test_adata_io_roundtrips(
     ingest_id_column_name: Optional[str],
     outgested_df: pd.DataFrame,
 ):
+    """Given an `original_df`, set it as the `obs` DataFrame of an AnnData, ingest it, outgest it back, and compare the
+    original and final DataFrames. Also verify the persisted column names and "original index metadata."
+
+    `ingest_id_column_name` and `outgest_default_index_name`
+    """
     uri = str(tmp_path)
     n_obs = len(original_df)
     var = pd.DataFrame({"var1": [1, 2, 3], "var2": ["a", "b", "c"]})  # unused
