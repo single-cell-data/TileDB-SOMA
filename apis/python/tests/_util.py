@@ -117,20 +117,34 @@ def raises_no_typeguard(exc: Type[Exception], *args: Any, **kwargs: Any):
             yield
 
 
+# Alias for several types that can be used to specify expected exceptions in `maybe_raises`
+Err = Union[str, Type[E], Tuple[Type[E], str]]
+
+
 def maybe_raises(
-    expected_exception: Union[None, Type[E], Tuple[Type[E], ...]],
+    expected_exception: Optional[Err],
     *args: Any,
     **kwargs: Any,
-) -> Union[RaisesContext[E], ExceptionInfo[E]]:
+) -> Union[RaisesContext[E], ExceptionInfo[E], nullcontext]:
     """
-    Wrapper around ``pytest.raises`` that accepts None (signifying no exception should be raised).
-    This is only necessary since ``pytest.raises`` does not itself accept None, so we are
-    decorating.
+    Wrapper around ``pytest.raises`` that additionally accepts ``None`` (signifying no exception
+    should be raised), a string (signifying a message match) or a tuple of (exception, message).
 
     Useful in test cases that are parameterized to test both valid and invalid inputs.
     """
-    return (
-        nullcontext()
-        if expected_exception is None
-        else pytest.raises(expected_exception, *args, **kwargs)
-    )
+    if expected_exception is not None:
+        if isinstance(expected_exception, type):
+            exc = expected_exception
+        else:
+            if isinstance(expected_exception, str):
+                exc, match = Exception, expected_exception
+            else:
+                exc, match = expected_exception
+            if "match" in kwargs:
+                raise ValueError(
+                    "Cannot specify 'match' in both kwargs and `expected_exception`"
+                )
+            kwargs["match"] = match
+        return pytest.raises(exc, *args, **kwargs)
+    else:
+        return nullcontext()
