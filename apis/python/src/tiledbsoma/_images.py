@@ -20,18 +20,18 @@ from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 
 
-class Image2D(  # type: ignore[misc]  # __eq__ false positive
+class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    images.Image2D[DenseNDArray, AnySOMAObject],
+    images.Image2DCollection[DenseNDArray, AnySOMAObject],
 ):
-    """TODO: Add documentation for Image2D
+    """TODO: Add documentation for Image2DCollection
 
     Lifecycle:
         Experimental.
     """
 
     __slots__ = "_levels"
-    _wrapper_type = _tdb_handles.Image2DWrapper
+    _wrapper_type = _tdb_handles.Image2DCollectionWrapper
 
     _level_prefix: Final = "soma_level_"
 
@@ -39,22 +39,22 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
     class LevelProperties:
         """TODO: Add documentaiton for LevelProperties"""
 
-        axes: Tuple[str, ...]
+        axis_order: Tuple[str, ...]
         name: str
         shape: Tuple[int, ...]
 
         def __init__(
-            self, axes: Union[str, Sequence[str]], name: str, shape: Sequence[int]
+            self, axis_order: Union[str, Sequence[str]], name: str, shape: Sequence[int]
         ):
             self.name = name
-            self.axes = tuple(axes)
+            self.axis_order = tuple(axis_order)
             self.shape = tuple(shape)
-            if len(self.axes) != len(self.shape):
+            if len(self.axis_order) != len(self.shape):
                 raise ValueError()  # TODO: Add error message
-            if set(self.axes) not in ({"X", "Y", "C"}, {"X", "Y"}):
+            if set(self.axis_order) not in ({"X", "Y", "C"}, {"X", "Y"}):
                 raise ValueError()  # TODO: Add error message
             self._channel_index = None
-            for index, val in enumerate(self.axes):
+            for index, val in enumerate(self.axis_order):
                 if val == "X":
                     self._x_index = index
                 elif val == "Y":
@@ -68,7 +68,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
 
             Note that the level name is not serialzied with the other properties.
             """
-            return json.dumps({"axes": self.axes, "shape": self.shape})
+            return json.dumps({"axis_order": self.axis_order, "shape": self.shape})
 
         @classmethod
         def from_json(cls, name: str, data: str) -> Self:
@@ -97,12 +97,14 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
         **kwargs: Any,
     ):
         super().__init__(handle, **kwargs)
-        self._levels: List[Image2D.LevelProperties] = []
+        self._levels: List[Image2DCollection.LevelProperties] = []
         self._reset_levels()
 
     def _reset_levels(self) -> None:
         self._levels = [
-            Image2D.LevelProperties.from_json(key[len(self._level_prefix) :], val)
+            Image2DCollection.LevelProperties.from_json(
+                key[len(self._level_prefix) :], val
+            )
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
         ]
@@ -115,7 +117,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
         self,
         key: str,
         *,
-        axes: Union[str, Sequence[str]],
+        axis_order: Union[str, Sequence[str]],
         shape: Sequence[int],
         uri: Optional[str] = None,
         **kwargs: Any,
@@ -134,7 +136,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
             raise KeyError(f"{key!r} already exists in {type(self)} scales")
 
         # Create the level property and store as metadata.
-        props = Image2D.LevelProperties(axes, key, shape)
+        props = Image2DCollection.LevelProperties(axis_order, key, shape)
         props_str = props.to_json()
         self.metadata[meta_key] = props_str
 
@@ -170,7 +172,7 @@ class Image2D(  # type: ignore[misc]  # __eq__ false positive
     def level_count(self) -> int:
         return len(self._levels)
 
-    def level_properties(self, level: int) -> images.Image2D.LevelProperties:
+    def level_properties(self, level: int) -> images.Image2DCollection.LevelProperties:
         return self._levels[level]
 
     @classmethod

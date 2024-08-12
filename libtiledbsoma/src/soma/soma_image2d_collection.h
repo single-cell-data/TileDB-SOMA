@@ -1,5 +1,5 @@
 /**
- * @file   soma_image2d.h
+ * @file   soma_image2d_collection.h
  *
  * @section LICENSE
  *
@@ -27,11 +27,11 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAImage2D class.
+ *   This file defines the SOMAImage2DCollection class.
  */
 
-#ifndef SOMA_IMAGE2D
-#define SOMA_IMAGE2D
+#ifndef SOMA_IMAGE2D_COLLECTION
+#define SOMA_IMAGE2D_COLLECTION
 
 #include <tiledb/tiledb>
 
@@ -40,16 +40,16 @@
 namespace tiledbsoma {
 
 using namespace tiledb;
-class SOMAImage2D : public SOMACollection {
+class SOMAImage2DCollection : public SOMACollection {
    public:
     //===================================================================
     //= public static
     //===================================================================
 
     /**
-     * @brief Create a SOMAImage2D object at the given URI.
+     * @brief Create a SOMAImage2DCollection object at the given URI.
      *
-     * @param uri URI to create the SOMAImage2D
+     * @param uri URI to create the SOMAImage2DCollection
      * @param schema TileDB ArraySchema
      * @param platform_config Optional config parameter dictionary
      */
@@ -59,16 +59,16 @@ class SOMAImage2D : public SOMACollection {
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
-     * @brief Open a group at the specified URI and return SOMAImage2D
+     * @brief Open a group at the specified URI and return SOMAImage2DCollection
      * object.
      *
      * @param uri URI of the array
      * @param mode read or write
      * @param ctx TileDB context
      * @param timestamp Optional pair indicating timestamp start and end
-     * @return std::shared_ptr<SOMAImage2D> SOMAImage2D
+     * @return std::shared_ptr<SOMAImage2DCollection> SOMAImage2DCollection
      */
-    static std::unique_ptr<SOMAImage2D> open(
+    static std::unique_ptr<SOMAImage2DCollection> open(
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
@@ -78,7 +78,7 @@ class SOMAImage2D : public SOMACollection {
     //= public non-static
     //===================================================================
 
-    SOMAImage2D(
+    SOMAImage2DCollection(
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
@@ -86,14 +86,14 @@ class SOMAImage2D : public SOMACollection {
         : SOMACollection(mode, uri, ctx, timestamp) {
     }
 
-    SOMAImage2D(const SOMACollection& other)
+    SOMAImage2DCollection(const SOMACollection& other)
         : SOMACollection(other) {
     }
 
-    SOMAImage2D() = delete;
-    SOMAImage2D(const SOMAImage2D&) = default;
-    SOMAImage2D(SOMAImage2D&&) = default;
-    ~SOMAImage2D() = default;
+    SOMAImage2DCollection() = delete;
+    SOMAImage2DCollection(const SOMAImage2DCollection&) = default;
+    SOMAImage2DCollection(SOMAImage2DCollection&&) = default;
+    ~SOMAImage2DCollection() = default;
 
    private:
     //===================================================================
@@ -102,4 +102,4 @@ class SOMAImage2D : public SOMACollection {
 };
 }  // namespace tiledbsoma
 
-#endif  // SOMA_IMAGE2D
+#endif  // SOMA_IMAGE2D_COLLECTION

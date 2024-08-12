@@ -39,7 +39,7 @@ from .. import (
     DataFrame,
     DenseNDArray,
     Experiment,
-    Image2D,
+    Image2DCollection,
     Scene,
     SparseNDArray,
     _util,
@@ -364,7 +364,7 @@ def _write_visium_data_to_experiment_uri(
                 # Write image data and add to the scene.
                 img_uri = f"{scene_uri}/img"
                 with _create_or_open_collection(
-                    Collection[Image2D], img_uri, **ingest_ctx
+                    Collection[Image2DCollection], img_uri, **ingest_ctx
                 ) as img:
                     _maybe_set(scene, "img", img, use_relative_uri=use_relative_uri)
                     if any(
@@ -373,7 +373,7 @@ def _write_visium_data_to_experiment_uri(
                     ):
                         tissue_uri = f"{img_uri}/tissue"
                         with _create_or_open_collection(
-                            Image2D, tissue_uri, **ingest_ctx
+                            Image2DCollection, tissue_uri, **ingest_ctx
                         ) as tissue:
                             _maybe_set(
                                 img,
@@ -536,7 +536,7 @@ def _write_visium_spot_dataframe(
 
 
 def _write_visium_images(
-    image_pyramid: Image2D,
+    image_pyramid: Image2DCollection,
     scale_factors: Dict[str, Any],
     *,
     input_hires: Union[None, str, Path],
@@ -549,7 +549,7 @@ def _write_visium_images(
     use_relative_uri: Optional[bool] = None,
 ) -> None:
     # Write metadata with fullres dimensions for computing relative scale.
-    # TODO: Replace this with coordinate space and Image2D metadata.
+    # TODO: Replace this with coordinate space and Image2DCollection metadata.
     if input_fullres is not None:
         with Image.open(input_fullres) as im:
             width, height = im.size
@@ -579,7 +579,7 @@ def _write_visium_images(
         with Image.open(image_path) as im:
             im_data = pa.Tensor.from_numpy(np.array(im))
         im_array = image_pyramid.add_new_level(
-            name, axes="YXC", type=pa.uint8(), shape=im_data.shape
+            name, axis_order="YXC", type=pa.uint8(), shape=im_data.shape
         )
         im_array.write(
             (slice(None), slice(None), slice(None)),

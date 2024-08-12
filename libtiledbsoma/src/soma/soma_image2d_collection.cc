@@ -1,5 +1,5 @@
 /**
- * @file   soma_image2d.cc
+ * @file   soma_image2d_collection.cc
  *
  * @section LICENSE
  *
@@ -27,10 +27,10 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAImage2D class.
+ *   This file defines the SOMAImage2DCollection class.
  */
 
-#include "soma_image2d.h"
+#include "soma_image2d_collection.h"
 #include "soma_collection.h"
 
 namespace tiledbsoma {
@@ -40,25 +40,27 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-void SOMAImage2D::create(
+void SOMAImage2DCollection::create(
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     try {
         std::filesystem::path image_uri(uri);
-        SOMAGroup::create(ctx, image_uri.string(), "SOMAImage2D", timestamp);
+        SOMAGroup::create(
+            ctx, image_uri.string(), "SOMAImage2DCollection", timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
 }
 
-std::unique_ptr<SOMAImage2D> SOMAImage2D::open(
+std::unique_ptr<SOMAImage2DCollection> SOMAImage2DCollection::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     try {
-        return std::make_unique<SOMAImage2D>(mode, uri, ctx, timestamp);
+        return std::make_unique<SOMAImage2DCollection>(
+            mode, uri, ctx, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

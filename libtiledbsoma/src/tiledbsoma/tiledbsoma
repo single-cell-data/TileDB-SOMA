@@ -54,7 +54,7 @@
 #include "soma/soma_experiment.h"
 #include "soma/soma_measurement.h"
 #include "soma/soma_scene.h"
-#include "soma/soma_image2d.h"
+#include "soma/soma_image2d_collection.h"
 #include "soma/soma_object.h"
 #include "soma/soma_dataframe.h"
 #include "soma/soma_dense_ndarray.h"

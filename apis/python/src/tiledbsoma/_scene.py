@@ -12,13 +12,13 @@ from . import _tdb_handles
 from ._collection import CollectionBase
 from ._coordinates import CompositeTransform, CoordinateSystem
 from ._dataframe import DataFrame
-from ._images import Image2D
+from ._images import Image2DCollection
 from ._soma_object import AnySOMAObject
 
 
 class Scene(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    scene.Scene[DataFrame, Image2D, AnySOMAObject],
+    scene.Scene[DataFrame, Image2DCollection, AnySOMAObject],
 ):
     """TODO: Add documentation for a Scene
 
