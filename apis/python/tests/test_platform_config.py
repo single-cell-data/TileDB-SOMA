@@ -7,7 +7,8 @@ import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_write_options as tco
 from tiledbsoma._util import verify_obs_and_var_eq
-import tiledb
+
+tiledb = pytest.importorskip("tiledb")
 
 
 def test_platform_config(conftest_pbmc_small):

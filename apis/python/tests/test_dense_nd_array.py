@@ -9,7 +9,14 @@ import pytest
 
 import tiledbsoma as soma
 from tiledbsoma.options import SOMATileDBContext
-import tiledb
+
+try:
+    import tiledb
+
+    hastiledb = True
+except ModuleNotFoundError:
+    hastiledb = False
+
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 from ._util import raises_no_typeguard
@@ -50,8 +57,9 @@ def test_dense_nd_array_create_ok(
     assert not a.schema.field("soma_data").nullable
 
     # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert not A.schema.sparse
+    if hastiledb:
+        with tiledb.open(tmp_path.as_posix()) as A:
+            assert not A.schema.sparse
 
     # Ensure read mode uses clib object
     with soma.DenseNDArray.open(tmp_path.as_posix(), "r") as A:
@@ -151,8 +159,9 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
         assert np.array_equal(data, table.combine_chunks().to_numpy().reshape(shape))
 
     # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert not A.schema.sparse
+    if hastiledb:
+        with tiledb.open(tmp_path.as_posix()) as A:
+            assert not A.schema.sparse
 
     # write a single-value sub-array and recheck
     with soma.DenseNDArray.open(tmp_path.as_posix(), "w") as c:
@@ -281,7 +290,7 @@ def test_dense_nd_array_slicing(tmp_path, io):
     cfg = {}
     if "cfg" in io:
         cfg = io["cfg"]
-    context = SOMATileDBContext(tiledb_ctx=tiledb.Ctx(cfg))
+    context = SOMATileDBContext(cfg)
 
     nr = 4
     nc = 6
@@ -311,13 +320,13 @@ def test_dense_nd_array_slicing(tmp_path, io):
             "name": "negative",
             "shape": (10,),
             "coords": (-1,),
-            "throws": (RuntimeError, tiledb.cc.TileDBError),
+            "throws": RuntimeError,
         },
         {
             "name": "12 in 10 domain",
             "shape": (10,),
             "coords": (12,),
-            "throws": (RuntimeError, tiledb.cc.TileDBError),
+            "throws": RuntimeError,
         },
         {
             "name": "too many dims",
@@ -415,9 +424,10 @@ def test_tile_extents(tmp_path):
         },
     ).close()
 
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.domain.dim(0).tile == 100
-        assert A.schema.domain.dim(1).tile == 2048
+    if hastiledb:
+        with tiledb.open(tmp_path.as_posix()) as A:
+            assert A.schema.domain.dim(0).tile == 100
+            assert A.schema.domain.dim(1).tile == 2048
 
 
 def test_timestamped_ops(tmp_path):

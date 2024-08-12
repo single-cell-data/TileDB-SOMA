@@ -1,4 +1,3 @@
-import warnings
 from typing import (
     Any,
     Dict,
@@ -11,17 +10,12 @@ from typing import (
     TypedDict,
     TypeVar,
     Union,
-    cast,
 )
 
 import attrs as attrs_  # We use the name `attrs` later.
 import attrs.validators as vld  # Short name because we use this a bunch.
 from somacore import options
 from typing_extensions import Self
-
-import tiledb
-
-from .._general_utilities import assert_version_before
 
 # Most defaults are configured directly as default attribute values
 # within TileDBCreateOptions.
@@ -195,44 +189,6 @@ class TileDBCreateOptions:
             return DEFAULT_CELL_ORDER, DEFAULT_TILE_ORDER
         return self.cell_order, self.tile_order
 
-    def offsets_filters_tiledb(self) -> Tuple[tiledb.Filter, ...]:
-        """Constructs the real TileDB Filters to use for offsets."""
-        assert_version_before(1, 14)
-        warnings.warn(
-            "`offsets_filters_tiledb` is now deprecated for removal in 1.14 "
-            "as we no longer support returning tiledb.Filter. "
-            "Use `offsets_filters` instead.",
-            DeprecationWarning,
-        )
-
-        return tuple(_build_filter(f) for f in self.offsets_filters)
-
-    def validity_filters_tiledb(self) -> Optional[Tuple[tiledb.Filter, ...]]:
-        """Constructs the real TileDB Filters to use for the validity map."""
-        assert_version_before(1, 14)
-        warnings.warn(
-            "`validity_filters_tiledb` is now deprecated for removal in 1.14 "
-            "as we no longer support returning tiledb.Filter. "
-            "Use `validity_filters` instead.",
-            DeprecationWarning,
-        )
-        if self.validity_filters is None:
-            return None
-        return tuple(_build_filter(f) for f in self.validity_filters)
-
-    def dim_filters_tiledb(
-        self, dim: str, default: Sequence[_FilterSpec] = ()
-    ) -> Tuple[tiledb.Filter, ...]:
-        """Constructs the real TileDB Filters to use for the named dimension."""
-        assert_version_before(1, 14)
-        warnings.warn(
-            "`dim_filters_tiledb` is now deprecated for removal in 1.14 "
-            "as we no longer support returning tiledb.Filter. "
-            "Use `dims` instead.",
-            DeprecationWarning,
-        )
-        return _filters_from(self.dims, dim, default)
-
     def dim_tile(self, dim_name: str, default: int = DEFAULT_TILE_EXTENT) -> int:
         """Returns the tile extent for the given dimension."""
         try:
@@ -240,19 +196,6 @@ class TileDBCreateOptions:
         except KeyError:
             return default
         return default if dim.tile is None else dim.tile
-
-    def attr_filters_tiledb(
-        self, name: str, default: Sequence[_FilterSpec] = ()
-    ) -> Tuple[tiledb.Filter, ...]:
-        """Constructs the real TileDB Filters to use for the named attribute."""
-        assert_version_before(1, 14)
-        warnings.warn(
-            "`attr_filters_tiledb` is now deprecated for removal in 1.14 "
-            "as we no longer support returning tiledb.Filter. "
-            "Use `attrs` instead.",
-            DeprecationWarning,
-        )
-        return _filters_from(self.attrs, name, default)
 
 
 @attrs_.define(frozen=True, kw_only=True, slots=True)
@@ -332,8 +275,25 @@ def _dig_platform_config(
 # Filter handling and construction.
 #
 
-_FILTERS: Mapping[str, Type[tiledb.Filter]] = {
-    cls.__name__: cls for cls in tiledb.FilterList.filter_type_cc_to_python.values()
+_FILTERS: Mapping[str, str] = {
+    "GzipFilter": "GZIP",
+    "ZstdFilter": "ZSTD",
+    "LZ4Filter": "LZ4",
+    "Bzip2Filter": "BZIP2",
+    "RleFilter": "RLE",
+    "DeltaFilter": "DELTA",
+    "DoubleDeltaFilter": "DOUBLE_DELTA",
+    "BitWidthReductionFilter": "BIT_WIDTH_REDUCTION",
+    "BitShuffleFilter": "BITSHUFFLE",
+    "ByteShuffleFilter": "BYTESHUFFLE",
+    "PositiveDeltaFilter": "POSITIVE_DELTA",
+    "ChecksumMD5Filter": "CHECKSUM_MD5",
+    "ChecksumSHA256Filter": "CHECKSUM_SHA256",
+    "DictionaryFilter": "DICTIONARY",
+    "FloatScaleFilter": "SCALE_FLOAT",
+    "XORFilter": "XOR",
+    "WebpFilter": "WEBP",
+    "NoOpFilter": "NONE",
 }
 
 
@@ -358,30 +318,3 @@ def _normalize_filter(input: _FilterSpec) -> _DictFilterSpec:
     except KeyError as ke:
         raise ValueError(f"filter type {typ_name!r} unknown") from ke
     return dict(input)
-
-
-def _filters_from(
-    col_configs: Mapping[str, _ColumnConfig], name: str, default: Sequence[_FilterSpec]
-) -> Tuple[tiledb.Filter, ...]:
-    """Constructs the filters for the named column in ``col_configs``."""
-    try:
-        cfg = col_configs[name]
-    except KeyError:
-        maybe_filters = None
-    else:
-        maybe_filters = cfg.filters
-    if maybe_filters is None:
-        filters = _normalize_filters(default) or ()
-    else:
-        filters = maybe_filters
-    return tuple(_build_filter(f) for f in filters)
-
-
-def _build_filter(item: _DictFilterSpec) -> tiledb.Filter:
-    """Build a single filter."""
-    # Always make a copy here so we don't mutate the global state.
-    # We have validated this earlier so we don't do extra checking here.
-    kwargs = dict(item)
-    cls_name = cast(str, kwargs.pop("_type"))
-    cls = _FILTERS[cls_name]
-    return cls(**kwargs)

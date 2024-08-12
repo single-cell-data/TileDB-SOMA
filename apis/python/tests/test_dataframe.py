@@ -11,7 +11,14 @@ import somacore
 from pandas.api.types import union_categoricals
 
 import tiledbsoma as soma
-import tiledb
+
+try:
+    import tiledb
+
+    hastiledb = True
+except ModuleNotFoundError:
+    hastiledb = False
+
 
 from tests._util import raises_no_typeguard
 
@@ -129,11 +136,12 @@ def test_dataframe(tmp_path, arrow_schema):
         assert [e.as_py() for e in table["quux"]] == pydict["quux"]
 
     # Validate TileDB array schema
-    with tiledb.open(uri) as A:
-        assert A.schema.sparse
-        assert not A.schema.allows_duplicates
-        assert A.dim("foo").filters == [tiledb.ZstdFilter(level=3)]
-        assert A.attr("bar").filters == [tiledb.ZstdFilter()]
+    if hastiledb:
+        with tiledb.open(uri) as A:
+            assert A.schema.sparse
+            assert not A.schema.allows_duplicates
+            assert A.dim("foo").filters == [tiledb.ZstdFilter(level=3)]
+            assert A.attr("bar").filters == [tiledb.ZstdFilter()]
 
     with soma.DataFrame.open(uri) as sdf:
         assert sdf.count == 5
@@ -729,7 +737,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [[True], slice(None)],
             "A": None,
-            "throws": (RuntimeError, tiledb.cc.TileDBError, TypeError),
+            "throws": (RuntimeError, TypeError),
         },
         {
             "name": "2D index empty",
@@ -1036,27 +1044,34 @@ def test_result_order(tmp_path):
             next(sdf.read(result_order="bogus"))
 
 
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 @pytest.mark.parametrize(
     "create_options,expected_schema_fields",
     (
         (
             {"allows_duplicates": True},
             {
-                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "validity_filters": (
+                    tiledb.FilterList([tiledb.RleFilter()]) if hastiledb else None
+                ),
                 "allows_duplicates": True,
             },
         ),
         (
             {"allows_duplicates": False},
             {
-                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "validity_filters": (
+                    tiledb.FilterList([tiledb.RleFilter()]) if hastiledb else None
+                ),
                 "allows_duplicates": False,
             },
         ),
         (
             {"validity_filters": ["NoOpFilter"], "allows_duplicates": False},
             {
-                "validity_filters": tiledb.FilterList([tiledb.NoOpFilter()]),
+                "validity_filters": (
+                    tiledb.FilterList([tiledb.NoOpFilter()]) if hastiledb else None
+                ),
                 "allows_duplicates": False,
             },
         ),
@@ -1078,6 +1093,7 @@ def test_create_platform_config_overrides(
 
 @pytest.mark.parametrize("allows_duplicates", [False, True])
 @pytest.mark.parametrize("consolidate", [False, True])
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
     uri = tmp_path.as_posix()
 
@@ -1484,23 +1500,24 @@ def test_enum_schema_report(tmp_path):
         sdf.write(arrow_table)
 
     # Double-check against TileDB-Py reporting
-    with tiledb.open(uri) as A:
-        for i in range(A.schema.nattr):
-            attr = A.schema.attr(i)
-            try:
-                index_type = attr.dtype
-                value_type = A.enum(attr.name).dtype
-            except tiledb.cc.TileDBError:
-                pass  # not an enum attr
-            if attr.name == "int_cat":
-                assert index_type.name == "int8"
-                assert value_type.name == "int64"
-            elif attr.name == "str_cat":
-                assert index_type.name == "int8"
-                assert value_type.name == "str32"
-            elif attr.name == "byte_cat":
-                assert index_type.name == "int8"
-                assert value_type.name == "bytes8"
+    if hastiledb:
+        with tiledb.open(uri) as A:
+            for i in range(A.schema.nattr):
+                attr = A.schema.attr(i)
+                try:
+                    index_type = attr.dtype
+                    value_type = A.enum(attr.name).dtype
+                except tiledb.cc.TileDBError:
+                    pass  # not an enum attr
+                if attr.name == "int_cat":
+                    assert index_type.name == "int8"
+                    assert value_type.name == "int64"
+                elif attr.name == "str_cat":
+                    assert index_type.name == "int8"
+                    assert value_type.name == "str32"
+                elif attr.name == "byte_cat":
+                    assert index_type.name == "int8"
+                    assert value_type.name == "bytes8"
 
     # Verify SOMA Arrow schema
     with soma.open(uri) as sdf:

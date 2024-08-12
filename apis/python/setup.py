@@ -304,6 +304,7 @@ setuptools.setup(
                 "src/tiledbsoma/common.cc",
                 "src/tiledbsoma/reindexer.cc",
                 "src/tiledbsoma/query_condition.cc",
+                "src/tiledbsoma/vfs.cc",
                 "src/tiledbsoma/soma_context.cc",
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
@@ -343,7 +344,6 @@ setuptools.setup(
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
         "somacore==1.0.14",
-        "tiledb~=0.31.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
