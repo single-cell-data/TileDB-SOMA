@@ -17,8 +17,15 @@ import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
 from tiledbsoma._soma_object import SOMAObject
-from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict, UnsMapping
-import tiledb
+from tiledbsoma._util import verify_obs_and_var_eq
+
+try:
+    import tiledb
+
+    hastiledb = True
+except ModuleNotFoundError:
+    hastiledb = False
+
 
 from ._util import TESTDATA, assert_adata_equal, make_pd_df
 
@@ -276,6 +283,7 @@ def _get_fragment_count(array_uri):
         TESTDATA / "pbmc-small-x-csc.h5ad",
     ],
 )
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_resume_mode(resume_mode_h5ad_file):
     """
     Makes sure resume-mode ingest after successful ingest of the same input data does not write
@@ -334,6 +342,7 @@ def test_resume_mode(resume_mode_h5ad_file):
 
 
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri):
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
@@ -729,6 +738,7 @@ def test_ingest_additional_metadata(conftest_pbmc_small):
         check(raw.X)
 
 
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_null_obs(conftest_pbmc_small, tmp_path: Path):
     output_path = tmp_path.as_uri()
     seed = 42
@@ -774,6 +784,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
             assert obs.attr(k).isnullable
 
 
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
     adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
     original = adata.copy()
