@@ -191,7 +191,7 @@ def test_adata_io_roundtrips(
     n_obs = len(original_df)
     var = pd.DataFrame({"var1": [1, 2, 3], "var2": ["a", "b", "c"]})  # unused
     n_var = len(var)
-    X = np.array([0] * n_obs * n_var).reshape(n_obs, n_var)  # unused
+    X = csr_matrix(np.array([0] * n_obs * n_var).reshape(n_obs, n_var))  # unused
     adata0 = AnnData(X=X, obs=original_df, var=var)
     ingested_uri = from_anndata(uri, adata0, "meas", obs_id_name=ingest_id_column_name)
     assert ingested_uri == uri
@@ -212,8 +212,6 @@ def test_adata_io_roundtrips(
     # Patch in the expected outgested DataFrame (which in these test cases is known to differ from
     # what was ingested).
     expected.obs = outgested_df
-    # TODO: outgest same format that was ingest
-    expected.X = csr_matrix(expected.X)
     assert_adata_equal(expected, adata1)
 
 
