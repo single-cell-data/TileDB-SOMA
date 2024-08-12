@@ -2,9 +2,16 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-import tiledb
+
+try:
+    import tiledb
+
+    hastiledb = True
+except ModuleNotFoundError:
+    hastiledb = False
 
 
+@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_stats(tmp_path, capsys: pytest.CaptureFixture[str]):
     """Make sure these exist, don't throw, and write correctly."""
     tiledb.stats_enable()
