@@ -1070,11 +1070,11 @@ def test_uns_io(tmp_path, outgest_uns_keys):
             .reset_index()
         )
 
-    # Outgest also fails to restore `obs` and `var` properly, in this case because the ingested
+    # Outgest also fails to restore `obs` and `var` correctly, in this case because the ingested
     # `obs`/`var` had columns named "obs_id"/"var_id", which get mistaken for "default index"
     # columns and set as `df.index` on outgest; their names are also removed. This corresponds to
     # case #2 from https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
-    # TODO: fix `to_anndata` to restore `obs` and `var` properly.
+    # TODO: fix `to_anndata` to restore `obs` and `var` as ingested.
     expected_adata.obs = expected_adata.obs.set_index("obs_id")
     expected_adata.obs.index.name = None
     expected_adata.var = expected_adata.var.set_index("var_id")

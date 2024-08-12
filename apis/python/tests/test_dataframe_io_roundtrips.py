@@ -209,8 +209,8 @@ def test_adata_io_roundtrips(
     assert_frame_equal(outgested_obs, outgested_df)
 
     expected = deepcopy(adata0)
-    # Patch in the expected "outgested" DataFrame (which in these test cases is known to differ
-    # from what was ingested).
+    # Patch in the expected outgested DataFrame (which in these test cases is known to differ from
+    # what was ingested).
     expected.obs = outgested_df
     # TODO: outgest same format that was ingest
     expected.X = csr_matrix(expected.X)
