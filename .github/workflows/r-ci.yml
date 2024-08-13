@@ -10,7 +10,7 @@ on:
       - '!.pre-commit-config.yaml'
       - '!apis/python/**'
       - '!docs/**'
-      - '!LICENSE''
+      - '!LICENSE'
   push:
     branches:
       - main
