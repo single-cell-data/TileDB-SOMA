@@ -24,6 +24,7 @@ def parametrize_cases(cases: List):
         """
         # Test-case IDs
         ids = [case.id for case in cases]
+
         # Convert each case to a "values" array; also filter and reorder to match kwargs expected
         # by the wrapped "test_*" function.
         spec = getfullargspec(fn)
@@ -33,6 +34,7 @@ def parametrize_cases(cases: List):
             {name: rt_dict[name] for name in names}.values()
             for rt_dict in [asdict(case) for case in cases]
         ]
+
         # Delegate to PyTest `parametrize`
         return pytest.mark.parametrize(
             names,  # kwarg names

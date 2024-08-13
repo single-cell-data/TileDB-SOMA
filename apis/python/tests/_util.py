@@ -15,7 +15,9 @@ from typeguard import suppress_type_checks
 
 
 def assert_uns_equal(uns0, uns1):
-    assert uns0.keys() == uns1.keys()
+    assert (
+        uns0.keys() == uns1.keys()
+    ), f"extra keys: {uns0.keys() - uns1.keys()}, missing keys: {uns1.keys() - uns0.keys()}"
     for k, v0 in uns0.items():
         try:
             v1 = uns1[k]
@@ -34,7 +36,7 @@ def assert_uns_equal(uns0, uns1):
             elif isinstance(v0, np.ndarray):
                 assert array_equal(v0, v1)
             elif isinstance(v0, (int, float, str, bool)):
-                assert v0 == v1
+                assert v0 == v1, f"{v0} != {v1}"
             else:
                 raise ValueError(f"Unsupported type: {type(v0)}")
         except AssertionError:
