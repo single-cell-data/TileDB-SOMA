@@ -17,7 +17,7 @@ import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
 from tiledbsoma._soma_object import SOMAObject
-from tiledbsoma.io._common import _TILEDBSOMA_TYPE
+from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict
 import tiledb
 
 from ._util import TESTDATA, assert_adata_equal, make_pd_df
@@ -992,7 +992,7 @@ def test_uns_io(tmp_path, outgest_uns_keys):
     )
     X = csr_matrix(np.zeros([3, 2]))
 
-    uns = {
+    uns: UnsDict = {
         # These are stored in SOMA as metadata
         "int_scalar": 7,
         "float_scalar": 8.5,

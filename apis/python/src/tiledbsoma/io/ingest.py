@@ -92,6 +92,7 @@ from ._common import (
     Matrix,
     SparseMatrix,
     UnsMapping,
+    UnsNode,
 )
 from ._registration import (
     AxisIDMapping,
@@ -2482,7 +2483,7 @@ def _maybe_ingest_uns(
 def _ingest_uns_dict(
     parent: AnyTileDBCollection,
     parent_key: str,
-    dct: Mapping[str, object],
+    dct: UnsMapping,
     *,
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
@@ -2521,9 +2522,9 @@ def _ingest_uns_dict(
 
 
 def _ingest_uns_node(
-    coll: Any,
-    key: Any,
-    value: Any,
+    coll: AnyTileDBCollection,
+    key: str,
+    value: UnsNode,
     *,
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
