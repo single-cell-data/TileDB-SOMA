@@ -237,3 +237,23 @@ TEST_CASE("SOMAGroup: metadata") {
     REQUIRE(!soma_group->has_metadata("md"));
     REQUIRE(soma_group->metadata_num() == 2);
 }
+
+TEST_CASE("SOMAGroup: dataset_type") {
+    auto ctx = std::make_shared<SOMAContext>();
+    SOMAGroup::create(ctx, "mem://experiment", "SOMAExperiment");
+    SOMAGroup::create(ctx, "mem://collection", "SOMACollection");
+    SOMAGroup::create(ctx, "mem://measurement", "SOMAMeasurement");
+
+    auto experiment = SOMAGroup::open(OpenMode::read, "mem://experiment", ctx);
+    auto collection = SOMAGroup::open(OpenMode::read, "mem://collection", ctx);
+    auto measurement = SOMAGroup::open(
+        OpenMode::read, "mem://measurement", ctx);
+
+    REQUIRE(!collection->has_metadata("dataset_type"));
+    REQUIRE(!measurement->has_metadata("dataset_type"));
+
+    REQUIRE(experiment->has_metadata("dataset_type"));
+    auto dataset_type = experiment->get_metadata("dataset_type");
+    REQUIRE(std::strcmp(
+        ((const char*)std::get<MetadataInfo::value>(*dataset_type)), "soma"));
+}
