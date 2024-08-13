@@ -253,7 +253,16 @@ TEST_CASE("SOMAGroup: dataset_type") {
     REQUIRE(!measurement->has_metadata("dataset_type"));
 
     REQUIRE(experiment->has_metadata("dataset_type"));
+
     auto dataset_type = experiment->get_metadata("dataset_type");
+
+    // debug CI-only fail
+    std::cout << "\n";
+    auto foo = (const char*)std::get<MetadataInfo::value>(*dataset_type);
+    std::cout << "VALUE  <<" << foo << ">>\n";
+    std::cout << "STRCMP <<" << std::strcmp(foo, "soma") << "\n";
+    // debug CI-only fail
+
     REQUIRE(!std::strcmp(
         ((const char*)std::get<MetadataInfo::value>(*dataset_type)), "soma"));
 }
