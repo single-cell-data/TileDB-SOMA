@@ -1520,9 +1520,9 @@ def test_enum_schema_report(tmp_path):
 def test_nullable(tmp_path):
     uri = tmp_path.as_posix()
 
-    # Arrow fields are nullable by default.  They can be explcitly set nullable
+    # Arrow fields are nullable by default.  They can be explicitly set nullable
     # or non-nullable via the nullable kwarg to pa.field.  Also, they can be
-    # explcitly set nullable via metadata. The latter, if present, overrides
+    # explicitly set nullable via metadata. The latter, if present, overrides
     # the former.
     asch = pa.schema(
         [
