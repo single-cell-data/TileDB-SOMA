@@ -70,7 +70,6 @@ from .._types import (
     _INGEST_MODES,
     INGEST_MODES,
     IngestMode,
-    Metadatum,
     NPNDArray,
     Path,
     _IngestMode,
@@ -89,6 +88,7 @@ from ._common import (
     _UNS_OUTGEST_HINT_1D,
     _UNS_OUTGEST_HINT_2D,
     _UNS_OUTGEST_HINT_KEY,
+    AdditionalMetadata,
     Matrix,
     SparseMatrix,
     UnsMapping,
@@ -105,9 +105,6 @@ from ._util import get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject[RawHandle])
-
-
-AdditionalMetadata = Optional[Dict[str, Metadatum]]
 
 
 def add_metadata(obj: SOMAObject[Any], additional_metadata: AdditionalMetadata) -> None:
