@@ -332,7 +332,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     // Read metadata
     soma_experiment = SOMAExperiment::open(
         uri, OpenMode::read, ctx, TimestampRange(0, 2));
-    REQUIRE(soma_experiment->metadata_num() == 3);
+    REQUIRE(soma_experiment->metadata_num() == 4);
+    REQUIRE(soma_experiment->has_metadata("dataset_type"));
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
     REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
     REQUIRE(soma_experiment->has_metadata("md"));
@@ -345,7 +346,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     // md should not be available at (2, 2)
     soma_experiment = SOMAExperiment::open(
         uri, OpenMode::read, ctx, TimestampRange(2, 2));
-    REQUIRE(soma_experiment->metadata_num() == 2);
+    REQUIRE(soma_experiment->metadata_num() == 3);
+    REQUIRE(soma_experiment->has_metadata("dataset_type"));
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
     REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
     REQUIRE(!soma_experiment->has_metadata("md"));
@@ -354,7 +356,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     // Metadata should also be retrievable in write mode
     soma_experiment = SOMAExperiment::open(
         uri, OpenMode::write, ctx, TimestampRange(0, 2));
-    REQUIRE(soma_experiment->metadata_num() == 3);
+    REQUIRE(soma_experiment->metadata_num() == 4);
+    REQUIRE(soma_experiment->has_metadata("dataset_type"));
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
     REQUIRE(soma_experiment->has_metadata("soma_encoding_version"));
     REQUIRE(soma_experiment->has_metadata("md"));
@@ -371,7 +374,7 @@ TEST_CASE("SOMAExperiment: metadata") {
     soma_experiment = SOMAExperiment::open(
         uri, OpenMode::read, ctx, TimestampRange(0, 2));
     REQUIRE(!soma_experiment->has_metadata("md"));
-    REQUIRE(soma_experiment->metadata_num() == 2);
+    REQUIRE(soma_experiment->metadata_num() == 3);
 }
 
 TEST_CASE("SOMAMeasurement: metadata") {

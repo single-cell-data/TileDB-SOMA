@@ -69,9 +69,7 @@ std::unique_ptr<SOMAGroup> SOMAGroup::create(
 
         // Root SOMA objects include a `dataset_type` entry to allow the
         // TileDB Cloud UI to detect that they are SOMA datasets.
-        std::string cloud_scheme = "tiledb://";
-        if (soma_type == "SOMAExperiment" &&
-            uri.compare(0, cloud_scheme.length(), cloud_scheme) == 0) {
+        if (soma_type == "SOMAExperiment") {
             group->put_metadata("dataset_type", TILEDB_STRING_UTF8, 4, "soma");
         }
 
