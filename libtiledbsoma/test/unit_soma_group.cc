@@ -254,6 +254,6 @@ TEST_CASE("SOMAGroup: dataset_type") {
 
     REQUIRE(experiment->has_metadata("dataset_type"));
     auto dataset_type = experiment->get_metadata("dataset_type");
-    REQUIRE(std::strcmp(
+    REQUIRE(!std::strcmp(
         ((const char*)std::get<MetadataInfo::value>(*dataset_type)), "soma"));
 }
