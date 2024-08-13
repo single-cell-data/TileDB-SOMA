@@ -1,6 +1,7 @@
 import json
 import pathlib
 import tempfile
+from copy import deepcopy
 from pathlib import Path
 from typing import Optional
 
@@ -10,15 +11,16 @@ import pandas as pd
 import pytest
 import scipy
 import somacore
+from scipy.sparse import csr_matrix
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma import Experiment, _constants, _factory
+from tiledbsoma import SOMA_JOINID, Experiment, _constants, _factory
 from tiledbsoma._soma_object import SOMAObject
-from tiledbsoma._util import verify_obs_and_var_eq
+from tiledbsoma.io._common import _TILEDBSOMA_TYPE
 import tiledb
 
-from ._util import TESTDATA
+from ._util import TESTDATA, assert_adata_equal
 
 
 @pytest.fixture
@@ -111,7 +113,7 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
         if ingest_mode != "schema_only":
             have_ingested = True
 
-        verify_obs_and_var_eq(original, conftest_pbmc_small)
+        assert_adata_equal(original, conftest_pbmc_small)
 
         exp = tiledbsoma.Experiment.open(uri)
 
@@ -403,12 +405,12 @@ def test_ingest_uns(
         uns_keys=ingest_uns_keys,
     )
 
-    verify_obs_and_var_eq(conftest_pbmc3k_adata, adata_extended2)
+    assert_adata_equal(conftest_pbmc3k_adata, adata_extended2)
 
     with tiledbsoma.Experiment.open(uri) as exp:
         uns = exp.ms["hello"]["uns"]
         assert isinstance(uns, tiledbsoma.Collection)
-        assert uns.metadata["soma_tiledbsoma_type"] == "uns"
+        assert uns.metadata[_TILEDBSOMA_TYPE] == "uns"
         if ingest_uns_keys is None:
             assert set(uns) == {
                 "draw_graph",
@@ -476,7 +478,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small):
         output_path, conftest_pbmc_small, measurement_name="RNA"
     )
 
-    verify_obs_and_var_eq(original, conftest_pbmc_small)
+    assert_adata_equal(original, conftest_pbmc_small)
 
     exp = tiledbsoma.Experiment.open(uri)
     with _factory.open(output_path) as exp_r:
@@ -606,7 +608,7 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small):
         output_path, conftest_pbmc_small, measurement_name="RNA"
     )
 
-    verify_obs_and_var_eq(original, conftest_pbmc_small)
+    assert_adata_equal(original, conftest_pbmc_small)
 
     exp = tiledbsoma.Experiment.open(uri)
     with _factory.open(output_path) as exp_r:
@@ -670,7 +672,7 @@ def test_export_anndata(conftest_pbmc_small):
 
     tiledbsoma.io.from_anndata(output_path, conftest_pbmc_small, measurement_name="RNA")
 
-    verify_obs_and_var_eq(original, conftest_pbmc_small)
+    assert_adata_equal(original, conftest_pbmc_small)
 
     with _factory.open(output_path) as exp:
         with pytest.raises(ValueError):
@@ -766,7 +768,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
         ingest_mode="write",
         X_kind=tiledbsoma.SparseNDArray,
     )
-    verify_obs_and_var_eq(original, conftest_pbmc_small, nan_safe=True)
+    assert_adata_equal(original, conftest_pbmc_small)
 
     exp = tiledbsoma.Experiment.open(uri)
     with tiledb.open(exp.obs.uri, "r") as obs:
@@ -796,7 +798,7 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
     output_path = tmp_path.as_posix()
     tiledbsoma.io.from_anndata(output_path, adata, "RNA")
 
-    verify_obs_and_var_eq(original, adata)
+    assert_adata_equal(original, adata)
 
     exp = tiledbsoma.Experiment.open(output_path)
 
@@ -942,7 +944,7 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         obs_id_name=obs_id_name,
         var_id_name=var_id_name,
     )
-    verify_obs_and_var_eq(original, adata)
+    assert_adata_equal(original, adata)
 
     with tiledbsoma.Experiment.open(uri) as exp:
         assert obs_id_name in exp.obs.keys()
@@ -988,7 +990,7 @@ def test_uns_io(tmp_path, outgest_uns_keys):
         data={"var_id": np.asarray(["x", "y"])},
         index=np.arange(2).astype(str),
     )
-    X = np.zeros([3, 2])
+    X = csr_matrix(np.zeros([3, 2]))
 
     uns = {
         # These are stored in SOMA as metadata
@@ -1022,44 +1024,68 @@ def test_uns_io(tmp_path, outgest_uns_keys):
         uns=uns,
         dtype=X.dtype,
     )
-    original = adata.copy()
+    adata0 = deepcopy(adata)
 
     soma_uri = tmp_path.as_posix()
 
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name="RNA")
-    verify_obs_and_var_eq(original, adata)
+
+    # NOTE: `from_anndata` mutates user-provided DataFrames in `uns`, demoting their index to a column named "index",
+    # and installing a `soma_joinid` index. Here we patch the "expected" adata to reflect this, before comparing to
+    # the post-`froM_anndata` `adata`.
+    # TODO: fix `from_anndata` to not modify DataFrames in user-provided `uns`.
+    expected_adata = deepcopy(adata0)
+    for k in ["pd_df_indexed", "pd_df_nonindexed"]:
+        df = expected_adata.uns[k]
+        expected_adata.uns[k] = df.reset_index().set_index(
+            pd.Index(list(range(len(df))), name=SOMA_JOINID)
+        )
+
+    assert_adata_equal(expected_adata, adata)
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
-        bdata = tiledbsoma.io.to_anndata(
+        adata2 = tiledbsoma.io.to_anndata(
             exp,
             measurement_name="RNA",
             uns_keys=outgest_uns_keys,
         )
 
-    # Keystroke-savers
-    a = adata.uns
-    b = bdata.uns
+    expected_adata = deepcopy(adata0)
 
-    if outgest_uns_keys is None:
-        assert a["int_scalar"] == b["int_scalar"]
-        assert a["float_scalar"] == b["float_scalar"]
-        assert a["string_scalar"] == b["string_scalar"]
-
-        assert all(a["pd_df_indexed"]["column_1"] == b["pd_df_indexed"]["column_1"])
-        assert all(
-            a["pd_df_nonindexed"]["column_1"] == b["pd_df_nonindexed"]["column_1"]
+    # When outgesting `uns` DataFrames, `to_anndata` fails to remove the `soma_joinid` column added
+    # during ingest. It also demotes the original `df.index` to a column named "index". Here we
+    # patch the "expected" adata to reflect this, before comparing to the post-`to_anndata`
+    # `adata`.
+    # TODO: use `_read_dataframe` during `uns` DataFrame outgest (which does a better job restoring
+    #  the original pd.DataFrame, dropping `soma_joinid` and restoring the original `df.index`).
+    for k in ["pd_df_indexed", "pd_df_nonindexed"]:
+        df = expected_adata.uns[k]
+        expected_adata.uns[k] = (
+            df
+            # original index becomes column (with default name "index")
+            .reset_index()
+            # soma_joinid index added during ingest
+            .set_index(pd.Index(list(range(len(df))), name=SOMA_JOINID))
+            # soma_joinid outgested as first column
+            .reset_index()
         )
 
-        assert (a["np_ndarray_1d"] == b["np_ndarray_1d"]).all()
-        assert (a["np_ndarray_2d"] == b["np_ndarray_2d"]).all()
+    # Outgest also fails to restore `obs` and `var` correctly, in this case because the ingested
+    # `obs`/`var` had columns named "obs_id"/"var_id", which get mistaken for "default index"
+    # columns and set as `df.index` on outgest; their names are also removed. This corresponds to
+    # case #2 from https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
+    # TODO: fix `to_anndata` to restore `obs` and `var` as ingested.
+    expected_adata.obs = expected_adata.obs.set_index("obs_id")
+    expected_adata.obs.index.name = None
+    expected_adata.var = expected_adata.var.set_index("var_id")
+    expected_adata.var.index.name = None
 
-        sa = a["strings"]
-        sb = b["strings"]
-        assert (sa["string_np_ndarray_1d"] == sb["string_np_ndarray_1d"]).all()
-        assert (sa["string_np_ndarray_2d"] == sb["string_np_ndarray_2d"]).all()
+    if outgest_uns_keys is not None:
+        expected_adata.uns = {
+            k: v for k, v in expected_adata.uns.items() if k in outgest_uns_keys
+        }
 
-    else:
-        assert set(b.keys()) == set(outgest_uns_keys)
+    assert_adata_equal(expected_adata, adata2)
 
 
 @pytest.mark.parametrize("write_index", [0, 1])
@@ -1078,7 +1104,7 @@ def test_string_nan_columns(tmp_path, conftest_pbmc_small, write_index):
     uri = tmp_path.as_posix()
     original = conftest_pbmc_small.copy()
     tiledbsoma.io.from_anndata(uri, conftest_pbmc_small, measurement_name="RNA")
-    verify_obs_and_var_eq(original, conftest_pbmc_small, nan_safe=True)
+    assert_adata_equal(original, conftest_pbmc_small)
 
     # Step 3
     with tiledbsoma.open(uri, "r") as exp:
@@ -1136,7 +1162,7 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
 
     original = adata.copy()
     tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name)
-    verify_obs_and_var_eq(original, adata)
+    assert_adata_equal(original, adata)
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         bdata = tiledbsoma.io.to_anndata(exp, measurement_name)

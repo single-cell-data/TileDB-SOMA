@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
 from inspect import getfullargspec
 from os.path import join
@@ -11,12 +12,15 @@ import pyarrow as pa
 import pytest
 from anndata import AnnData
 from pandas._testing import assert_frame_equal
+from scipy.sparse import csr_matrix
 
 from tiledbsoma import SOMA_JOINID, DataFrame, Experiment
 from tiledbsoma.io._common import _DATAFRAME_ORIGINAL_INDEX_NAME_JSON
 from tiledbsoma.io._registration import AxisIDMapping
 from tiledbsoma.io.ingest import IngestionParams, _write_dataframe, from_anndata
 from tiledbsoma.io.outgest import _read_dataframe, to_anndata
+
+from tests._util import assert_adata_equal
 
 
 def parse_col(col_str: str) -> Tuple[Optional[str], List[str]]:
@@ -187,7 +191,7 @@ def test_adata_io_roundtrips(
     n_obs = len(original_df)
     var = pd.DataFrame({"var1": [1, 2, 3], "var2": ["a", "b", "c"]})  # unused
     n_var = len(var)
-    X = np.array([0] * n_obs * n_var).reshape(n_obs, n_var)  # unused
+    X = csr_matrix(np.array([0] * n_obs * n_var).reshape(n_obs, n_var))  # unused
     adata0 = AnnData(X=X, obs=original_df, var=var)
     ingested_uri = from_anndata(uri, adata0, "meas", obs_id_name=ingest_id_column_name)
     assert ingested_uri == uri
@@ -201,7 +205,14 @@ def test_adata_io_roundtrips(
     with Experiment.open(ingested_uri) as exp:
         adata1 = to_anndata(exp, "meas", obs_id_name=outgest_default_index_name)
         outgested_obs = adata1.obs
+
     assert_frame_equal(outgested_obs, outgested_df)
+
+    expected = deepcopy(adata0)
+    # Patch in the expected outgested DataFrame (which in these test cases is known to differ from
+    # what was ingested).
+    expected.obs = outgested_df
+    assert_adata_equal(expected, adata1)
 
 
 @parametrize_roundtrips(ROUND_TRIPS)
