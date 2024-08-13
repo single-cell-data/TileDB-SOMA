@@ -243,6 +243,11 @@ def test_eval_error_conditions(malformed_condition):
             "louvain == leuko-cyte",
             "Unable to parse expression component.* did you mean to quote it as a string",
         ],
+        # Test the dot "operator" (valid name in R, not in Python)
+        [
+            'lou.vain == "leukocyte"',
+            "if your attribute name has a dot in it",
+        ],
     ],
 )
 def test_query_condition_syntax_handling(expression_and_message):
