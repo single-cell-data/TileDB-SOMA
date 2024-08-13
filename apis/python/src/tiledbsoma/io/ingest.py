@@ -2576,36 +2576,57 @@ def _ingest_uns_node(
     if isinstance(value, list) or "numpy" in str(type(value)):
         value = np.asarray(value)
     if isinstance(value, np.ndarray):
-        if value.dtype.names is not None:
-            msg = f"Skipped {coll.uri}[{key!r}]" " (uns): unsupported structured array"
-            # This is a structured array, which we do not support.
-            logging.log_io(msg, msg)
-            return
-
-        if value.dtype.char in ("U", "O"):
-            # In the wild it's quite common to see arrays of strings in uns data.
-            # Frequent example: uns["louvain_colors"].
-            _ingest_uns_string_array(
-                coll,
-                key,
-                value,
-                use_relative_uri=use_relative_uri,
-                **ingest_platform_ctx,
-            )
-        else:
-            _ingest_uns_ndarray(
-                coll,
-                key,
-                value,
-                use_relative_uri=use_relative_uri,
-                **ingest_platform_ctx,
-            )
+        _ingest_uns_array(
+            coll,
+            key,
+            value,
+            use_relative_uri=use_relative_uri,
+            ingest_platform_ctx=ingest_platform_ctx,
+        )
         return
 
     msg = (
         f"Skipped {coll.uri}[{key!r}]" f" (uns object): unrecognized type {type(value)}"
     )
     logging.log_io(msg, msg)
+
+
+def _ingest_uns_array(
+    coll: AnyTileDBCollection,
+    key: str,
+    value: NPNDArray,
+    use_relative_uri: Optional[bool],
+    ingest_platform_ctx: IngestPlatformCtx,
+) -> None:
+    """Ingest an uns Numpy array.
+
+    Delegates to :func:`_ingest_uns_string_array` for string arrays, and to
+    :func:`_ingest_uns_ndarray` for numeric arrays.
+    """
+    if value.dtype.names is not None:
+        # This is a structured array, which we do not support.
+        logging.log_io_same(
+            f"Skipped {coll.uri}[{key!r}]" " (uns): unsupported structured array"
+        )
+
+    if value.dtype.char in ("U", "O"):
+        # In the wild it's quite common to see arrays of strings in uns data.
+        # Frequent example: uns["louvain_colors"].
+        _ingest_uns_string_array(
+            coll,
+            key,
+            value,
+            use_relative_uri=use_relative_uri,
+            **ingest_platform_ctx,
+        )
+    else:
+        _ingest_uns_ndarray(
+            coll,
+            key,
+            value,
+            use_relative_uri=use_relative_uri,
+            **ingest_platform_ctx,
+        )
 
 
 def _ingest_uns_string_array(
