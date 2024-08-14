@@ -88,6 +88,13 @@
   return(commands[idx])
 }
 
+.assay_version_hint <- function(type = c('v3', 'v5')) {
+  type <- match.arg(type)
+  return(list(soma_ecosystem_seurat_assay_version = type))
+}
+
+.ragged_array_hint <- function() list(soma_ecosystem_seurat_v5_ragged = 'ragged')
+
 .MINIMUM_SEURAT_VERSION <- function(repr = c('v', 'c')) {
   repr <- repr[1L]
   repr <- match.arg(arg = repr)
