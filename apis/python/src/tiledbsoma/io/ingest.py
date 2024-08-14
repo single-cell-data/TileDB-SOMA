@@ -2567,7 +2567,8 @@ def _ingest_uns_node(
         num_rows = value.shape[0]
         with _write_dataframe(
             _util.uri_joinpath(coll.uri, key),
-            value,
+            # _write_dataframe modifies passed DataFrame in-place (adding a "soma_joinid" index)
+            value.copy(),
             None,
             axis_mapping=AxisIDMapping.identity(num_rows),
             **ingest_platform_ctx,
