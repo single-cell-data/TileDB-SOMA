@@ -259,6 +259,7 @@ write_soma.Assay5 <- function(
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
+  ms$set_metadata(.assay_version_hint('v5'))
   X <- if (!'X' %in% ms$names()) {
     SOMACollectionCreate(
       uri = file_path(ms$uri, 'X'),
@@ -327,6 +328,7 @@ write_soma.Assay5 <- function(
       shape = as.integer(shape)
     )
     arr$.__enclos_env__$private$.write_coo_dataframe(coo)
+    arr$set_metadata(.ragged_array_hint())
   }
 
   # Write feature-level meta data
