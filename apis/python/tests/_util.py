@@ -1,3 +1,4 @@
+import re
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Type, Union
@@ -6,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from _pytest._code import ExceptionInfo
+from _pytest.logging import LogCaptureFixture
 from _pytest.python_api import E, RaisesContext
 from anndata import AnnData
 from numpy import array_equal
@@ -148,3 +150,19 @@ def maybe_raises(
         return pytest.raises(exc, *args, **kwargs)
     else:
         return nullcontext()
+
+
+def verify_logs(caplog: LogCaptureFixture, expected_logs: Optional[List[str]]) -> None:
+    """Verify that expected log messages are present in a pytest "caplog" (captured logs) fixture."""
+    if not expected_logs:
+        return
+
+    for expected_log in expected_logs:
+        found = False
+        for record in caplog.records:
+            log_msg = record.getMessage()
+            if re.search(expected_log, log_msg):
+                found = True
+                break
+        if not found:
+            raise AssertionError(f"Expected log message not found: {expected_log}")
