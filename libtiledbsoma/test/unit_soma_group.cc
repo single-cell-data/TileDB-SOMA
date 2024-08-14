@@ -238,7 +238,11 @@ TEST_CASE("SOMAGroup: metadata") {
     REQUIRE(soma_group->metadata_num() == 2);
 }
 
+static void breakme() {
+}
+
 TEST_CASE("SOMAGroup: dataset_type") {
+    breakme();
     auto ctx = std::make_shared<SOMAContext>();
     SOMAGroup::create(ctx, "mem://experiment", "SOMAExperiment");
     SOMAGroup::create(ctx, "mem://collection", "SOMACollection");
@@ -253,7 +257,14 @@ TEST_CASE("SOMAGroup: dataset_type") {
     REQUIRE(!measurement->has_metadata("dataset_type"));
 
     REQUIRE(experiment->has_metadata("dataset_type"));
+
+    std::string expect = "soma";
+
+    // tuple of dtype, count, void*:
     auto dataset_type = experiment->get_metadata("dataset_type");
-    REQUIRE(std::strcmp(
-        ((const char*)std::get<MetadataInfo::value>(*dataset_type)), "soma"));
+    auto bytes = (const char*)std::get<MetadataInfo::value>(*dataset_type);
+    auto count = std::get<MetadataInfo::num>(*dataset_type);
+    auto actual = std::string(bytes, count);
+
+    REQUIRE(actual == expect);
 }
