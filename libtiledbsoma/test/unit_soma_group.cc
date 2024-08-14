@@ -238,11 +238,7 @@ TEST_CASE("SOMAGroup: metadata") {
     REQUIRE(soma_group->metadata_num() == 2);
 }
 
-static void breakme() {
-}
-
 TEST_CASE("SOMAGroup: dataset_type") {
-    breakme();
     auto ctx = std::make_shared<SOMAContext>();
     SOMAGroup::create(ctx, "mem://experiment", "SOMAExperiment");
     SOMAGroup::create(ctx, "mem://collection", "SOMACollection");
