@@ -1182,6 +1182,10 @@ def _write_dataframe_impl(
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
 ) -> DataFrame:
+    """Save a Pandas DataFrame as a SOMA DataFrame.
+
+    Expects the required ``soma_joinid`` index to have already been added to the ``pd.DataFrame``.
+    """
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
