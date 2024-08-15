@@ -5,13 +5,12 @@
 
 import abc
 import json
-from dataclasses import dataclass
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from dataclasses import dataclass, field
+from typing import Any, Optional, Sequence, Tuple
 
 import pyarrow as pa
-import somacore
-from somacore import coordinates, images, options
-from typing_extensions import Final, Self
+from somacore import ResultOrder, coordinates, images, options
+from typing_extensions import Final
 
 from . import _funcs, _tdb_handles
 from ._collection import CollectionBase
@@ -61,7 +60,7 @@ class ImageCollection(  # type: ignore[misc]  # __eq__ false positive
         coords: options.DenseNDCoords = (),
         *,
         transform: Optional[coordinates.CoordinateTransform] = None,
-        result_order: options.ResultOrderStr = somacore.ResultOrder.ROW_MAJOR,
+        result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> pa.Tensor:
         """TODO: Add read_image_level documentation"""
@@ -86,53 +85,26 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
     class LevelProperties:
         """TODO: Add documentaiton for LevelProperties"""
 
-        axis_order: Tuple[str, ...]
         name: str
+        axis_order: str
         shape: Tuple[int, ...]
+        width: int = field(init=False)
+        height: int = field(init=False)
+        nchannels: Optional[int] = field(init=False)
 
-        def __init__(
-            self, axis_order: Union[str, Sequence[str]], name: str, shape: Sequence[int]
-        ):
-            self.name = name
-            self.axis_order = tuple(axis_order)
-            self.shape = tuple(shape)
-            self._channel_index = None
-            for index, val in enumerate(self.axis_order):
+        def __post_init__(self):  # type: ignore[no-untyped-def]
+            if len(self.axis_order) != len(self.shape):
+                raise SOMAError()  # TODO Add error message
+            self.nchannels = None
+            for val, size in zip(self.axis_order, self.shape):
                 if val == "X":
-                    self._x_index = index
+                    self.width = size
                 elif val == "Y":
-                    self._y_index = index
+                    self.height = size
+                elif val == "C":
+                    self.nchannel = size
                 else:
-                    # Must be channel.
-                    self._channel_index = index
-
-        def to_json(self) -> str:
-            """Serialization of the class to JSON.
-
-            Note that the level name is not serialzied with the other properties.
-            """
-            return json.dumps({"axis_order": self.axis_order, "shape": self.shape})
-
-        @classmethod
-        def from_json(cls, name: str, data: str) -> Self:
-            """Construct class from a JSON string.
-
-            Args:
-                name: Name of the level.
-                data: String storing JSON serialization of the level properties.
-            """
-            kwargs = json.loads(data)
-            return cls(name=name, **kwargs)
-
-        @property
-        def height(self) -> int:
-            """Number of pixels in the height of the image."""
-            return self.shape[self._y_index]
-
-        @property
-        def width(self) -> int:
-            """Number of pixels in the width of the image."""
-            return self.shape[self._x_index]
+                    raise SOMAError(f"Invalid axis order '{self.axis_order}'")
 
     def __init__(
         self,
@@ -165,14 +137,8 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             self._axis_order = axis_order
 
         # Get the image levels.
-        self._levels: List[Image2DCollection.LevelProperties] = []
-        self._reset_levels()
-
-    def _reset_levels(self) -> None:
         self._levels = [
-            Image2DCollection.LevelProperties.from_json(
-                key[len(self._level_prefix) :], val
-            )
+            Image2DCollection.LevelProperties(name=key, **json.loads(val))
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
         ]
@@ -203,8 +169,10 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             raise KeyError(f"{key!r} already exists in {type(self)} scales")
 
         # Create the level property and store as metadata.
-        props = Image2DCollection.LevelProperties(self.axis_order, key, shape)
-        props_str = props.to_json()
+        props = Image2DCollection.LevelProperties(
+            axis_order=self.axis_order, name=key, shape=tuple(shape)
+        )
+        props_str = json.dumps({"axis_order": self.axis_order, "shape": shape})
         self.metadata[meta_key] = props_str
 
         # Add the level properties to level list.
@@ -273,7 +241,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         coords: options.DenseNDCoords = (),
         *,
         transform: Optional[coordinates.CoordinateTransform] = None,
-        result_order: options.ResultOrderStr = somacore.ResultOrder.ROW_MAJOR,
+        result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> pa.Tensor:
         """TODO: Add read_image_level documentation"""
