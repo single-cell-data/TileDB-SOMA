@@ -381,6 +381,7 @@ def _write_visium_data_to_experiment_uri(
                                 tissue,
                                 use_relative_uri=use_relative_uri,
                             )
+                            tissue.axis_order = "YXC"  # TODO Make input arg
                             tissue.metadata["soma_coordinates"] = (
                                 coordinate_system.to_json()
                             )
@@ -579,7 +580,7 @@ def _write_visium_images(
         with Image.open(image_path) as im:
             im_data = pa.Tensor.from_numpy(np.array(im))
         im_array = image_pyramid.add_new_level(
-            name, axis_order="YXC", type=pa.uint8(), shape=im_data.shape
+            name, type=pa.uint8(), shape=im_data.shape
         )
         im_array.write(
             (slice(None), slice(None), slice(None)),

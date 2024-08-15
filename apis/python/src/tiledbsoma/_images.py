@@ -3,6 +3,7 @@
 # Licensed under the MIT License.
 """Implementation of a SOMA image collections."""
 
+import abc
 import json
 from dataclasses import dataclass
 from typing import Any, List, Optional, Sequence, Tuple, Union
@@ -15,14 +16,60 @@ from typing_extensions import Final, Self
 from . import _funcs, _tdb_handles
 from ._collection import CollectionBase
 from ._dense_nd_array import DenseNDArray
+from ._exception import SOMAError
 from ._soma_object import AnySOMAObject
-from ._types import OpenTimestamp
-from .options import SOMATileDBContext
+
+
+class ImageCollection(  # type: ignore[misc]  # __eq__ false positive
+    CollectionBase[AnySOMAObject],
+    images.ImageCollection[DenseNDArray, AnySOMAObject],
+    metaclass=abc.ABCMeta,
+):
+
+    @abc.abstractmethod
+    def add_new_level(
+        self,
+        key: str,
+        *,
+        uri: Optional[str] = None,
+        type: pa.DataType,
+        shape: Sequence[int],
+    ) -> DenseNDArray:
+        """TODO: Add dcoumentation."""
+        raise NotImplementedError()
+
+    @property
+    def axis_order(self) -> str:
+        """The order of the axes in the stored images."""
+        raise NotImplementedError()
+
+    @property
+    @abc.abstractmethod
+    def level_count(self) -> int:
+        """The number of image levels stored in the ImageCollection."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def level_properties(self, level: int) -> images.ImageCollection.LevelProperties:
+        """The properties of an image at the specified level."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def read_level(
+        self,
+        level: int,
+        coords: options.DenseNDCoords = (),
+        *,
+        transform: Optional[coordinates.CoordinateTransform] = None,
+        result_order: options.ResultOrderStr = somacore.ResultOrder.ROW_MAJOR,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> pa.Tensor:
+        """TODO: Add read_image_level documentation"""
+        raise NotImplementedError()
 
 
 class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
-    CollectionBase[AnySOMAObject],
-    images.Image2DCollection[DenseNDArray, AnySOMAObject],
+    ImageCollection, images.Image2DCollection
 ):
     """TODO: Add documentation for Image2DCollection
 
@@ -30,7 +77,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         Experimental.
     """
 
-    __slots__ = "_levels"
+    __slots__ = ("_axis_order", "_levels")
     _wrapper_type = _tdb_handles.Image2DCollectionWrapper
 
     _level_prefix: Final = "soma_level_"
@@ -49,10 +96,6 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             self.name = name
             self.axis_order = tuple(axis_order)
             self.shape = tuple(shape)
-            if len(self.axis_order) != len(self.shape):
-                raise ValueError()  # TODO: Add error message
-            if set(self.axis_order) not in ({"X", "Y", "C"}, {"X", "Y"}):
-                raise ValueError()  # TODO: Add error message
             self._channel_index = None
             for index, val in enumerate(self.axis_order):
                 if val == "X":
@@ -96,7 +139,32 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         handle: _tdb_handles.SOMAGroupWrapper[Any],
         **kwargs: Any,
     ):
+        # Do generic SOMA collection initialization.
         super().__init__(handle, **kwargs)
+
+        # Update the axis order.
+        axis_order = self.metadata.get("soma_axis_order")
+        if axis_order is None:
+            self._axis_order: Optional[str] = None
+        else:
+            if isinstance(axis_order, bytes):
+                axis_order = str(axis_order, "uft-8")
+            if not isinstance(axis_order, str):
+                raise SOMAError(
+                    f"Stored Image2DCollection 'soma_axis_order' is unexpected type "
+                    f"{type(axis_order)}."
+                )
+            if not (
+                (len(axis_order) == 2 and set(axis_order) == {"X", "Y"})
+                or (len(axis_order) == 3 and set(axis_order) == {"X", "Y", "C"})
+            ):
+                raise ValueError(
+                    "Invalid axis order {axis_order}. The axis order must be a "
+                    "permutation of 'CYX'."
+                )
+            self._axis_order = axis_order
+
+        # Get the image levels.
         self._levels: List[Image2DCollection.LevelProperties] = []
         self._reset_levels()
 
@@ -117,7 +185,6 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         self,
         key: str,
         *,
-        axis_order: Union[str, Sequence[str]],
         shape: Sequence[int],
         uri: Optional[str] = None,
         **kwargs: Any,
@@ -136,7 +203,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             raise KeyError(f"{key!r} already exists in {type(self)} scales")
 
         # Create the level property and store as metadata.
-        props = Image2DCollection.LevelProperties(axis_order, key, shape)
+        props = Image2DCollection.LevelProperties(self.axis_order, key, shape)
         props_str = props.to_json()
         self.metadata[meta_key] = props_str
 
@@ -169,32 +236,36 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         )
 
     @property
+    def axis_order(self) -> str:
+        if self._axis_order is None:
+            raise KeyError("The axis order is not set.")
+        return self._axis_order
+
+    @axis_order.setter
+    def axis_order(self, value: str) -> None:
+        if self._axis_order is not None and self._levels:
+            raise ValueError(
+                "The axis order is already set; if cannot be changed after adding "
+                "images."
+            )
+        value = str(value).upper()
+        if not (
+            (len(value) == 2 and set(value) == {"X", "Y"})
+            or (len(value) == 3 and set(value) == {"X", "Y", "C"})
+        ):
+            raise ValueError(
+                "Invalid axis order {value}. The axis order must be a permutation of "
+                "'CYX'."
+            )
+        self.metadata["soma_axis_order"] = value
+        self._axis_order = value
+
+    @property
     def level_count(self) -> int:
         return len(self._levels)
 
-    def level_properties(self, level: int) -> images.Image2DCollection.LevelProperties:
+    def level_properties(self, level: int) -> images.ImageCollection.LevelProperties:
         return self._levels[level]
-
-    @classmethod
-    def open(
-        cls,
-        uri: str,
-        mode: options.OpenMode = "r",
-        *,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-        clib_type: Optional[str] = None,
-    ) -> Self:
-        """Opens this specific type of SOMA object."""
-        return super().open(
-            uri,
-            mode,
-            tiledb_timestamp=tiledb_timestamp,
-            context=context,
-            platform_config=platform_config,
-            clib_type=clib_type,
-        )
 
     def read_level(
         self,
