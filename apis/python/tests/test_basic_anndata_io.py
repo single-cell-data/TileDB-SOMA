@@ -3,7 +3,7 @@ import pathlib
 import tempfile
 from copy import deepcopy
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import anndata
 import numpy as np
@@ -11,13 +11,14 @@ import pandas as pd
 import pytest
 import scipy
 import somacore
+from anndata import AnnData
 from scipy.sparse import csr_matrix
 
 import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
 from tiledbsoma._soma_object import SOMAObject
-from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict
+from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict, UnsMapping
 import tiledb
 
 from ._util import TESTDATA, assert_adata_equal, make_pd_df
@@ -978,10 +979,33 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         assert list(bdata.var.index) == list(soma_var[var_id_name])
 
 
-@pytest.mark.parametrize(
-    "outgest_uns_keys", [["int_scalar", "strings", "np_ndarray_2d"], None]
-)
-def test_uns_io(tmp_path, outgest_uns_keys):
+TEST_UNS: UnsDict = {
+    # Scalars are stored in SOMA as metadata
+    "int_scalar": 7,
+    "float_scalar": 8.5,
+    "string_scalar": "hello",
+    # pd.DataFrames are stored in SOMA as `DataFrame`s
+    "pd_df_indexed": make_pd_df("0,1,2", column_1="d,e,f"),
+    "pd_df_nonindexed": make_pd_df(column_1="g,h,i"),
+    # `np.ndarray`s are stored in SOMA as `DenseArray`s
+    "np_ndarray_1d": np.asarray([1, 2, 3]),
+    "np_ndarray_2d": np.asarray([[1, 2, 3], [4, 5, 6]]),
+    # Nested dicts are stored in SOMA as `SOMACollection`s
+    "strings": {
+        # `np.ndarray`s of strings are stored in SOMA as `DataFrame`s, since SOMA ND arrays are
+        # necessarily arrays *of numbers*. This is okay since the one and only job of SOMA uns is
+        # to faithfully ingest from AnnData and outgest back.
+        "string_np_ndarray_1d": np.asarray(["j", "k", "l"]),
+        "string_np_ndarray_2d": np.asarray([["m", "n", "o"], ["p", "q", "r"]]),
+    },
+}
+
+
+def make_uns_adata(
+    tmp_path: Path,
+    measurement_name: str = "RNA",
+    uns: Optional[UnsMapping] = None,
+) -> Tuple[str, AnnData]:
     obs = pd.DataFrame(
         data={"obs_id": np.asarray(["a", "b", "c"])},
         index=np.arange(3).astype(str),
@@ -992,26 +1016,9 @@ def test_uns_io(tmp_path, outgest_uns_keys):
     )
     X = csr_matrix(np.zeros([3, 2]))
 
-    uns: UnsDict = {
-        # These are stored in SOMA as metadata
-        "int_scalar": 7,
-        "float_scalar": 8.5,
-        "string_scalar": "hello",
-        # These are stored in SOMA as SOMADataFrame
-        "pd_df_indexed": make_pd_df("0,1,2", column_1="d,e,f"),
-        "pd_df_nonindexed": make_pd_df(column_1="g,h,i"),
-        # These are stored in SOMA as SOMA ND arrays
-        "np_ndarray_1d": np.asarray([1, 2, 3]),
-        "np_ndarray_2d": np.asarray([[1, 2, 3], [4, 5, 6]]),
-        # This are stored in SOMA as a SOMACollection
-        "strings": {
-            # This are stored in SOMA as a SOMADataFrame, since SOMA ND arrays are necessarily
-            # arrays *of numbers*. This is okay since the one and only job of SOMA uns is to
-            # faithfully ingest from AnnData and outgest back.
-            "string_np_ndarray_1d": np.asarray(["j", "k", "l"]),
-            "string_np_ndarray_2d": np.asarray([["m", "n", "o"], ["p", "q", "r"]]),
-        },
-    }
+    if uns is None:
+        uns = TEST_UNS
+
     adata = anndata.AnnData(
         obs=obs,
         var=var,
@@ -1023,8 +1030,17 @@ def test_uns_io(tmp_path, outgest_uns_keys):
 
     soma_uri = tmp_path.as_posix()
 
-    tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name="RNA")
+    tiledbsoma.io.from_anndata(soma_uri, adata, measurement_name=measurement_name)
     assert_adata_equal(adata0, adata)
+
+    return soma_uri, adata
+
+
+@pytest.mark.parametrize(
+    "outgest_uns_keys", [["int_scalar", "strings", "np_ndarray_2d"], None]
+)
+def test_uns_io(tmp_path, outgest_uns_keys):
+    soma_uri, adata = make_uns_adata(tmp_path)
 
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         adata2 = tiledbsoma.io.to_anndata(
@@ -1033,7 +1049,7 @@ def test_uns_io(tmp_path, outgest_uns_keys):
             uns_keys=outgest_uns_keys,
         )
 
-    expected_adata = deepcopy(adata0)
+    expected_adata = deepcopy(adata)
 
     # Outgest also fails to restore `obs` and `var` correctly, in this case because the ingested
     # `obs`/`var` had columns named "obs_id"/"var_id", which get mistaken for "default index"
