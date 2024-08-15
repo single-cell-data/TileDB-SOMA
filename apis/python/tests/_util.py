@@ -85,7 +85,7 @@ def parse_col(col_str: str) -> Tuple[Optional[str], List[str]]:
         raise ValueError(f"Invalid column string: {col_str}")
 
 
-def make_df(index_str: Optional[str] = None, **cols) -> pd.DataFrame:
+def make_pd_df(index_str: Optional[str] = None, **cols) -> pd.DataFrame:
     """DataFrame construction helper, for tests.
 
     - index and columns are provided as strings of the form ``name=val1,val2,...``.
