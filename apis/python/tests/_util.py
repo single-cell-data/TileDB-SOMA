@@ -1,3 +1,4 @@
+import re
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Type, Union
@@ -6,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from _pytest._code import ExceptionInfo
+from _pytest.logging import LogCaptureFixture
 from _pytest.python_api import E, RaisesContext
 from anndata import AnnData
 from numpy import array_equal
@@ -15,7 +17,9 @@ from typeguard import suppress_type_checks
 
 
 def assert_uns_equal(uns0, uns1):
-    assert uns0.keys() == uns1.keys()
+    assert (
+        uns0.keys() == uns1.keys()
+    ), f"extra keys: {uns0.keys() - uns1.keys()}, missing keys: {uns1.keys() - uns0.keys()}"
     for k, v0 in uns0.items():
         try:
             v1 = uns1[k]
@@ -34,7 +38,7 @@ def assert_uns_equal(uns0, uns1):
             elif isinstance(v0, np.ndarray):
                 assert array_equal(v0, v1)
             elif isinstance(v0, (int, float, str, bool)):
-                assert v0 == v1
+                assert v0 == v1, f"{v0} != {v1}"
             else:
                 raise ValueError(f"Unsupported type: {type(v0)}")
         except AssertionError:
@@ -115,20 +119,50 @@ def raises_no_typeguard(exc: Type[Exception], *args: Any, **kwargs: Any):
             yield
 
 
+# Alias for several types that can be used to specify expected exceptions in `maybe_raises`
+Err = Union[str, Type[E], Tuple[Type[E], str]]
+
+
 def maybe_raises(
-    expected_exception: Union[None, Type[E], Tuple[Type[E], ...]],
+    expected_exception: Optional[Err],
     *args: Any,
     **kwargs: Any,
-) -> Union[RaisesContext[E], ExceptionInfo[E]]:
+) -> Union[RaisesContext[E], ExceptionInfo[E], nullcontext]:
     """
-    Wrapper around ``pytest.raises`` that accepts None (signifying no exception should be raised).
-    This is only necessary since ``pytest.raises`` does not itself accept None, so we are
-    decorating.
+    Wrapper around ``pytest.raises`` that additionally accepts ``None`` (signifying no exception
+    should be raised), a string (signifying a message match) or a tuple of (exception, message).
 
     Useful in test cases that are parameterized to test both valid and invalid inputs.
     """
-    return (
-        nullcontext()
-        if expected_exception is None
-        else pytest.raises(expected_exception, *args, **kwargs)
-    )
+    if expected_exception is not None:
+        if isinstance(expected_exception, type):
+            exc = expected_exception
+        else:
+            if isinstance(expected_exception, str):
+                exc, match = Exception, expected_exception
+            else:
+                exc, match = expected_exception
+            if "match" in kwargs:
+                raise ValueError(
+                    "Cannot specify 'match' in both kwargs and `expected_exception`"
+                )
+            kwargs["match"] = match
+        return pytest.raises(exc, *args, **kwargs)
+    else:
+        return nullcontext()
+
+
+def verify_logs(caplog: LogCaptureFixture, expected_logs: Optional[List[str]]) -> None:
+    """Verify that expected log messages are present in a pytest "caplog" (captured logs) fixture."""
+    if not expected_logs:
+        return
+
+    for expected_log in expected_logs:
+        found = False
+        for record in caplog.records:
+            log_msg = record.getMessage()
+            if re.search(expected_log, log_msg):
+                found = True
+                break
+        if not found:
+            raise AssertionError(f"Expected log message not found: {expected_log}")

@@ -237,7 +237,7 @@ def to_anndata(
 
     If ``uns_keys`` is provided, only the specified top-level ``uns`` keys
     are extracted.  The default is to extract them all.  Use ``uns_keys=[]``
-    to not ingest any ``uns`` keys.
+    to not outgest any ``uns`` keys.
 
     Lifecycle:
         Maturing.
