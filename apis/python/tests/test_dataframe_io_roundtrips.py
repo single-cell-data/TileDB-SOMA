@@ -21,7 +21,7 @@ from tiledbsoma.io._registration import AxisIDMapping
 from tiledbsoma.io.ingest import IngestionParams, _write_dataframe, from_anndata
 from tiledbsoma.io.outgest import _read_dataframe, to_anndata
 
-from tests._util import assert_adata_equal, make_df
+from tests._util import assert_adata_equal, make_pd_df
 from tests.parametrize_cases import parametrize_cases
 
 
@@ -49,57 +49,57 @@ class RoundTrip:
 ROUND_TRIPS = [
     RoundTrip(
         '1. `df.index` named "index"',
-        make_df("index=xx,yy,zz", col0="aa,bb,cc", col1="AA,BB,CC"),
+        make_pd_df("index=xx,yy,zz", col0="aa,bb,cc", col1="AA,BB,CC"),
         # ⇒ index name is lost
-        make_df(      "xx,yy,zz", col0="aa,bb,cc", col1="AA,BB,CC"),
+        make_pd_df(      "xx,yy,zz", col0="aa,bb,cc", col1="AA,BB,CC"),
         [ "obs_id", "col0", "col1", ],
     ),
     RoundTrip(
         '2. DataFrame has a column named `obs_id`',
-        make_df("xx,yy,zz", col0="AA,BB,CC", obs_id="aa,bb,cc"),
+        make_pd_df("xx,yy,zz", col0="AA,BB,CC", obs_id="aa,bb,cc"),
         # ⇒ `obs_id` column becomes `df.index`, loses name
         # ⇒ Original `df.index` dropped
-        make_df("aa,bb,cc", col0="AA,BB,CC"),
+        make_pd_df("aa,bb,cc", col0="AA,BB,CC"),
         [ "col0", "obs_id", ],
     ),
     RoundTrip(
         '3. DataFrame has a column named "index", and `df.index` is unnamed',
-        make_df("xx,yy,zz", col0="aa,bb,cc", index="AA,BB,CC"),
+        make_pd_df("xx,yy,zz", col0="aa,bb,cc", index="AA,BB,CC"),
         # ⇒ "index" column is promoted to `df.index` (unnamed)
         # ⇒ Original (unnamed) index becomes a column named `level_0`
-        make_df("AA,BB,CC", level_0="xx,yy,zz", col0="aa,bb,cc"),
+        make_pd_df("AA,BB,CC", level_0="xx,yy,zz", col0="aa,bb,cc"),
         [ "level_0", "col0", "obs_id", ],
     ),
     RoundTrip(
         '4. DataFrame has a column named "index", and `df.index` is named `id_column_name` (default `obs_id`)',
-        make_df("obs_id=xx,yy,zz", col0="aa,bb,cc", index="AA,BB,CC"),
+        make_pd_df("obs_id=xx,yy,zz", col0="aa,bb,cc", index="AA,BB,CC"),
         # ⇒ "index" column is dropped
-        make_df("obs_id=xx,yy,zz", col0="aa,bb,cc"),
+        make_pd_df("obs_id=xx,yy,zz", col0="aa,bb,cc"),
         [ "obs_id", "col0", ],
         "obs_id",
     ),
     RoundTrip(
         '5. DataFrame has a column named "index" and df.index has another name',
-        make_df("idx=xx,yy,zz", col0="aa,bb,cc", index="AA,BB,CC"),
+        make_pd_df("idx=xx,yy,zz", col0="aa,bb,cc", index="AA,BB,CC"),
         # ⇒ "index" column renamed to `obs_id`
-        make_df("idx=xx,yy,zz", col0="aa,bb,cc", obs_id="AA,BB,CC"),
+        make_pd_df("idx=xx,yy,zz", col0="aa,bb,cc", obs_id="AA,BB,CC"),
         [ "idx", "col0", "obs_id", ],
         "idx",
     ),
     RoundTrip(
         '6. DataFrame has columns named "index" and `id_column_name` (default: obs_id), and `df.index` is unnamed:',
-        make_df("xx,yy,zz", obs_id="aa,bb,cc", index="AA,BB,CC"),
+        make_pd_df("xx,yy,zz", obs_id="aa,bb,cc", index="AA,BB,CC"),
         # ⇒ unnamed index → column named `level_0`
         # ⇒ `obs_id` column → unnamed index
         # ⇒ "index" column dropped
-        make_df("aa,bb,cc", level_0="xx,yy,zz"),
+        make_pd_df("aa,bb,cc", level_0="xx,yy,zz"),
         [ "level_0", "obs_id", ],
     ),
     RoundTrip(
         '7. DataFrame has columns named "index" and `id_column_name` (default: obs_id), and `df.index` has a name:',
-        make_df("idx=xx,yy,zz", obs_id="aa,bb,cc", index="AA,BB,CC"),
+        make_pd_df("idx=xx,yy,zz", obs_id="aa,bb,cc", index="AA,BB,CC"),
         # ⇒ "index" column is dropped
-        make_df("idx=xx,yy,zz", obs_id="aa,bb,cc"),
+        make_pd_df("idx=xx,yy,zz", obs_id="aa,bb,cc"),
         [ "idx", "obs_id", ],
         "idx",
     ),
