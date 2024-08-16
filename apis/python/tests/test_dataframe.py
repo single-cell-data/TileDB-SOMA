@@ -1642,7 +1642,7 @@ def test_timestamped_schema_evolve(tmp_path):
     atbl = pa.Table.from_pydict(
         {
             "soma_joinid": [3, 4],
-            "myenum": pd.Series(['b', 'b'], dtype='category'),
+            "myenum": pd.Series(["b", "b"], dtype="category"),
         }
     )
     with soma.DataFrame.open(uri, "w", tiledb_timestamp=3) as sdf:
