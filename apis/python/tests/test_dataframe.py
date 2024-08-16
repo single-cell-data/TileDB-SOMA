@@ -1642,10 +1642,7 @@ def test_timestamped_schema_evolve(tmp_path):
     atbl = pa.Table.from_pydict(
         {
             "soma_joinid": [3, 4],
-            "myenum": pd.Series(["b", "c"], dtype="category"),
-            # TODO https://github.com/single-cell-data/TileDB-SOMA/issues/2896
-            # "myenum": pd.Series(['b', 'b'], dtype='category'),
-            # Perhaps leave this t=3 as-is, and add a write of ['c', 'c'] at t=4.
+            "myenum": pd.Series(["b", "b"], dtype="category"),
         }
     )
     with soma.DataFrame.open(uri, "w", tiledb_timestamp=3) as sdf:
@@ -1661,8 +1658,8 @@ def test_timestamped_schema_evolve(tmp_path):
 
     with soma.DataFrame.open(uri, tiledb_timestamp=3) as sdf:
         table = sdf.read().concat()
-        assert table["myenum"].to_pylist() == ["a", "b", "a", "b", "c"]
+        assert table["myenum"].to_pylist() == ["a", "b", "a", "b", "b"]
 
     with soma.DataFrame.open(uri) as sdf:
         table = sdf.read().concat()
-        assert table["myenum"].to_pylist() == ["a", "b", "a", "b", "c"]
+        assert table["myenum"].to_pylist() == ["a", "b", "a", "b", "b"]
