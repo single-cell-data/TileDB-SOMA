@@ -212,6 +212,13 @@ void set_metadata(
     SOMAObject& soma_object, const std::string& key, py::array value) {
     tiledb_datatype_t value_type = np_to_tdb_dtype(value.dtype());
 
+    // For https://github.com/single-cell-data/TileDB-SOMA/pull/2900:
+    // Ensure that all Python and R write paths use UTF-8 for string
+    // metadata values.
+    if (value_type == TILEDB_STRING_ASCII) {
+        value_type = TILEDB_STRING_UTF8;
+    }
+
     if (is_tdb_str(value_type) && value.size() > 1)
         throw py::type_error("array/list of strings not supported");
 
