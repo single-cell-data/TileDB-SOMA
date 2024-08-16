@@ -4,28 +4,21 @@
 
 """Implementation of a SOMA Scene."""
 
-from typing import MutableMapping, Union
+from typing import MutableMapping
 
 from somacore import coordinates, scene
 
 from . import _tdb_handles
-from ._collection import Collection, CollectionBase
+from ._collection import CollectionBase
 from ._coordinates import CompositeTransform, CoordinateSystem
 from ._dataframe import DataFrame
-from ._dense_nd_array import DenseNDArray
+from ._images import Image2DCollection
 from ._soma_object import AnySOMAObject
-from ._sparse_nd_array import SparseNDArray
 
 
 class Scene(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    scene.Scene[  # type: ignore[type-var]
-        DataFrame,
-        Collection[
-            Union[DenseNDArray, SparseNDArray]
-        ],  # not just NDArray since NDArray does not have a common `read`
-        AnySOMAObject,
-    ],
+    scene.Scene[DataFrame, Image2DCollection, AnySOMAObject],
 ):
     """TODO: Add documentation for a Scene
 

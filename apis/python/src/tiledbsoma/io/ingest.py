@@ -45,6 +45,7 @@ from .. import (
     DataFrame,
     DenseNDArray,
     Experiment,
+    Image2DCollection,
     Measurement,
     Scene,
     SparseNDArray,
@@ -1004,6 +1005,17 @@ def _create_or_open_collection(
     context: Optional["SOMATileDBContext"],
     additional_metadata: "AdditionalMetadata" = None,
 ) -> Scene: ...
+
+
+@overload
+def _create_or_open_collection(
+    cls: Type[Image2DCollection],
+    uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    context: Optional["SOMATileDBContext"],
+    additional_metadata: "AdditionalMetadata" = None,
+) -> Image2DCollection: ...
 
 
 @no_type_check

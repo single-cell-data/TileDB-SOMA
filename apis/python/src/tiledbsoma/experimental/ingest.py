@@ -17,10 +17,8 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
-    List,
     Optional,
     Sequence,
-    Tuple,
     Type,
     Union,
 )
@@ -37,12 +35,11 @@ from PIL import Image
 from .. import (
     Axis,
     Collection,
-    CompositeTransform,
     CoordinateSystem,
     DataFrame,
     DenseNDArray,
     Experiment,
-    ScaleTransform,
+    Image2DCollection,
     Scene,
     SparseNDArray,
     _util,
@@ -330,7 +327,6 @@ def _write_visium_data_to_experiment_uri(
     }
 
     pixels_per_spot_radius = 0.5 * scale_factors["spot_diameter_fullres"]
-    fullres_to_coords_scale = 65 / scale_factors["spot_diameter_fullres"]
 
     # Create axes and transformations
     coordinate_system = CoordinateSystem(
@@ -338,10 +334,6 @@ def _write_visium_data_to_experiment_uri(
             Axis(axis_name="y", axis_type="space", axis_unit="micrometer"),
             Axis(axis_name="x", axis_type="space", axis_unit="micrometer"),
         )
-    )
-
-    spots_to_coords = CompositeTransform(
-        (ScaleTransform((fullres_to_coords_scale, fullres_to_coords_scale)),)
     )
 
     # TODO: The `obs_df` should be in dataframe with only soma_joinid and obs_id. Not
@@ -370,21 +362,38 @@ def _write_visium_data_to_experiment_uri(
                 scene.metadata["soma_scene_coordinates"] = coordinate_system.to_json()
 
                 # Write image data and add to the scene.
-                images_uri = f"{scene_uri}/img"
-                with _write_visium_images(
-                    images_uri,
-                    scale_factors,
-                    input_hires=input_hires,
-                    input_lowres=input_lowres,
-                    input_fullres=input_fullres,
-                    use_relative_uri=use_relative_uri,
-                    **ingest_ctx,
-                ) as images:
-                    images.metadata["soma_scene_coords"] = spots_to_coords.to_json()
-                    _maybe_set(scene, "img", images, use_relative_uri=use_relative_uri)
-                scene.metadata.update(
-                    {"soma_asset_transform_images": spots_to_coords.to_json()}
-                )
+                img_uri = f"{scene_uri}/img"
+                with _create_or_open_collection(
+                    Collection[Image2DCollection], img_uri, **ingest_ctx
+                ) as img:
+                    _maybe_set(scene, "img", img, use_relative_uri=use_relative_uri)
+                    if any(
+                        x is not None
+                        for x in (input_hires, input_lowres, input_fullres)
+                    ):
+                        tissue_uri = f"{img_uri}/tissue"
+                        with _create_or_open_collection(
+                            Image2DCollection, tissue_uri, **ingest_ctx
+                        ) as tissue:
+                            _maybe_set(
+                                img,
+                                "tissue",
+                                tissue,
+                                use_relative_uri=use_relative_uri,
+                            )
+                            tissue.axis_order = "YXC"  # TODO Make input arg
+                            tissue.metadata["soma_coordinates"] = (
+                                coordinate_system.to_json()
+                            )
+                            _write_visium_images(
+                                tissue,
+                                scale_factors,
+                                input_hires=input_hires,
+                                input_lowres=input_lowres,
+                                input_fullres=input_fullres,
+                                use_relative_uri=use_relative_uri,
+                                **ingest_ctx,
+                            )
 
                 obsl_uri = f"{scene_uri}/obsl"
                 with _create_or_open_collection(
@@ -403,9 +412,6 @@ def _write_visium_data_to_experiment_uri(
                         **ingest_ctx,
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
-                        loc.metadata.update(
-                            {"soma_asset_transform_loc": spots_to_coords.to_json()}
-                        )
 
                 varl_uri = f"{scene_uri}/varl"
                 with _create_or_open_collection(
@@ -531,7 +537,7 @@ def _write_visium_spot_dataframe(
 
 
 def _write_visium_images(
-    uri: str,
+    image_pyramid: Image2DCollection,
     scale_factors: Dict[str, Any],
     *,
     input_hires: Union[None, str, Path],
@@ -542,80 +548,42 @@ def _write_visium_images(
     platform_config: Optional["PlatformConfig"] = None,
     context: Optional["SOMATileDBContext"] = None,
     use_relative_uri: Optional[bool] = None,
-) -> Collection[DenseNDArray]:
-    input_images: Dict[str, Tuple[Path, List[float]]] = {}
+) -> None:
+    # Write metadata with fullres dimensions for computing relative scale.
+    # TODO: Replace this with coordinate space and Image2DCollection metadata.
     if input_fullres is not None:
-        input_images["fullres"] = (Path(input_fullres), [1.0, 1.0, 1.0])
-    if input_hires is not None:
-        scale = 1.0 / scale_factors["tissue_hires_scalef"]
-        input_images["hires"] = (Path(input_hires), [1.0, scale, scale])
-    if input_lowres is not None:
-        scale = 1.0 / scale_factors["tissue_lowres_scalef"]
-        input_images["lowres"] = (Path(input_lowres), [1.0, scale, scale])
-    axes_metadata = [
-        {"name": "c", "type": "channel"},
-        {"name": "y", "type": "space", "unit": "micrometer"},
-        {"name": "x", "type": "space", "unit": "micrometer"},
-    ]
-    return _write_multiscale_images(
-        uri,
-        input_images,
-        axes_metadata=axes_metadata,
-        ingestion_params=ingestion_params,
-        additional_metadata=additional_metadata,
-        platform_config=platform_config,
-        context=context,
-        use_relative_uri=use_relative_uri,
-    )
+        with Image.open(input_fullres) as im:
+            width, height = im.size
+        image_pyramid.metadata["fullres_width"] = width
+        image_pyramid.metadata["fullres_height"] = height
+    elif input_hires is not None:
+        with Image.open(input_hires) as im:
+            width, height = im.size
+        scale = scale_factors["tissue_hires_scalef"]
+        image_pyramid.metadata["fullres_width"] = int(np.round(width / scale))
+        image_pyramid.metadata["fullres_height"] = int(np.round(height / scale))
+    elif input_lowres is not None:
+        with Image.open(input_lowres) as im:
+            width, height = im.size
+        scale = scale_factors["tissue_lowres_scalef"]
+        image_pyramid.metadata["fullres_width"] = int(np.round(width / scale))
+        image_pyramid.metadata["fullres_height"] = int(np.round(height / scale))
 
-
-def _write_multiscale_images(
-    uri: str,
-    input_images: Dict[str, Tuple[Path, List[float]]],
-    *,
-    axes_metadata: List[Dict[str, str]],
-    ingestion_params: IngestionParams,
-    additional_metadata: "AdditionalMetadata" = None,
-    platform_config: Optional["PlatformConfig"] = None,
-    context: Optional["SOMATileDBContext"] = None,
-    use_relative_uri: Optional[bool] = None,
-) -> Collection[DenseNDArray]:
-    """TODO: Write full docs for this function
-
-    TODO: Need to add in collection level metadata. In this case it will be
-
-    """
-    collection = _create_or_open_collection(
-        Collection[DenseNDArray],
-        uri,
-        ingestion_params=ingestion_params,
-        additional_metadata=additional_metadata,
-        context=context,
-    )
-    dataset_metadata = {}
-    for image_name, (image_path, image_scales) in input_images.items():
-        dataset_metadata[f"soma_asset_transform_{image_name}"] = CompositeTransform(
-            (ScaleTransform(image_scales),)
-        ).to_json()
-        image_uri = f"{uri}/{image_name}"
-
-        # TODO: Need to create new imaging type with dimensions 'c', 'y', 'x'
-        im = np.transpose(np.array(Image.open(image_path)), (2, 0, 1))
-        image_array = DenseNDArray.create(
-            image_uri,
-            type=pa.from_numpy_dtype(im.dtype),
-            shape=im.shape,
-            platform_config=platform_config,
-            context=context,
+    # Add the different levels of zoom to the image pyramid.
+    for name, image_path in (
+        ("fullres", input_fullres),
+        ("hires", input_hires),
+        ("lowres", input_lowres),
+    ):
+        if image_path is None:
+            continue
+        with Image.open(image_path) as im:
+            im_data = pa.Tensor.from_numpy(np.array(im))
+        im_array = image_pyramid.add_new_level(
+            name, type=pa.uint8(), shape=im_data.shape
         )
-        tensor = pa.Tensor.from_numpy(im)
-        image_array.write(
+        im_array.write(
             (slice(None), slice(None), slice(None)),
-            tensor,
+            im_data,
             platform_config=platform_config,
         )
-        _maybe_set(
-            collection, image_name, image_array, use_relative_uri=use_relative_uri
-        )
-    collection.metadata.update(dataset_metadata)
-    return collection
