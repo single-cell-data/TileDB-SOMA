@@ -336,10 +336,10 @@ def _write_visium_data_to_experiment_uri(
         )
     )
 
-    # TODO: The `obs_df` should be in dataframe with only soma_joinid and obs_id. Not
-    # currently bothering to check/enforce this.
     with Experiment.open(uri, mode="r", context=context) as exp:
-        obs_df = exp.obs.read().concat().to_pandas()
+        obs_df = (
+            exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
+        )
         if write_obs_spatial_presence or write_var_spatial_presence:
             x_layer = exp.ms[measurement_name].X[X_layer_name].read().tables().concat()
             if write_obs_spatial_presence:
