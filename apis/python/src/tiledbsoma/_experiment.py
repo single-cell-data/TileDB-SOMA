@@ -6,7 +6,7 @@
 """Implementation of a SOMA Experiment.
 """
 import functools
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 from somacore import experiment, query
 from typing_extensions import Self
@@ -18,7 +18,6 @@ from ._indexer import IntIndexer
 from ._measurement import Measurement
 from ._scene import Scene
 from ._soma_object import AnySOMAObject
-from ._tdb_handles import Wrapper
 
 
 class Experiment(  # type: ignore[misc]  # __eq__ false positive
@@ -77,13 +76,6 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         "spatial": ("SOMACollection",),
         "obs_scene": ("SOMADataFrame",),
     }
-
-    @classmethod
-    def _set_create_metadata(cls, handle: Wrapper[Any]) -> None:
-        # Root SOMA objects include a `dataset_type` entry to allow the
-        # TileDB Cloud UI to detect that they are SOMA datasets.
-        handle.metadata["dataset_type"] = "soma"
-        return super()._set_create_metadata(handle)
 
     def axis_query(  # type: ignore
         self,

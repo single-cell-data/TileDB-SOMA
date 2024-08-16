@@ -1,6 +1,6 @@
 ---
 title: Daily GitHub Actions Build Fail on {{ date | date('ddd, MMMM Do YYYY') }}
-assignees: nguyenv, mlin, johnkerl
+assignees: nguyenv, ryan-williams, johnkerl
 labels: bug
 ---
 

@@ -14,10 +14,9 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io._registration as registration
-from tiledbsoma._util import verify_obs_and_var_eq
-from tiledbsoma.io._registration import (
-    signatures,
-)
+from tiledbsoma.io._registration import signatures
+
+from ._util import assert_adata_equal
 
 
 def _create_anndata(
@@ -720,7 +719,7 @@ def test_append_items_with_experiment(obs_field_name, var_field_name):
             registration_mapping=rd,
         )
 
-    verify_obs_and_var_eq(original, adata2)
+    assert_adata_equal(original, adata2)
 
     expect_obs_soma_joinids = list(range(6))
     expect_var_soma_joinids = list(range(5))
@@ -826,7 +825,7 @@ def test_append_with_disjoint_measurements(
         registration_mapping=rd,
     )
 
-    verify_obs_and_var_eq(original, anndata2)
+    assert_adata_equal(original, anndata2)
 
     # exp/obs, use_same_cells=True:                       exp/obs, use_same_cells=False:
     #    soma_joinid obs_id cell_type  is_primary_data       soma_joinid obs_id cell_type  is_primary_data

@@ -125,7 +125,9 @@ def _extract_X_key(
 
 
 def _read_dataframe(
-    df: DataFrame, default_index_name: Optional[str], fallback_index_name: str
+    df: DataFrame,
+    default_index_name: Optional[str] = None,
+    fallback_index_name: Optional[str] = None,
 ) -> pd.DataFrame:
     """Outgest a SOMA DataFrame to Pandas, including restoring the original index{,.name}.
 
@@ -175,7 +177,7 @@ def _read_dataframe(
         #
         # NOTE: several edge cases result in the outgested DF not matching the original DF; see
         # https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
-        if fallback_index_name in pdf:
+        if fallback_index_name is not None and fallback_index_name in pdf:
             pdf.set_index(fallback_index_name, inplace=True)
             pdf.index.name = None
 
@@ -235,7 +237,7 @@ def to_anndata(
 
     If ``uns_keys`` is provided, only the specified top-level ``uns`` keys
     are extracted.  The default is to extract them all.  Use ``uns_keys=[]``
-    to not ingest any ``uns`` keys.
+    to not outgest any ``uns`` keys.
 
     Lifecycle:
         Maturing.
@@ -444,20 +446,18 @@ def _extract_uns(
             extracted[key] = _extract_uns(element, level=level + 1)
         elif isinstance(element, DataFrame):
             hint = element.metadata.get(_UNS_OUTGEST_HINT_KEY)
-            pdf = element.read().concat().to_pandas()
-            if hint is None:
-                extracted[key] = pdf
-            elif hint == _UNS_OUTGEST_HINT_1D:
+            if hint == _UNS_OUTGEST_HINT_1D:
+                pdf = element.read().concat().to_pandas()
                 extracted[key] = _outgest_uns_1d_string_array(pdf, element.uri)
             elif hint == _UNS_OUTGEST_HINT_2D:
+                pdf = element.read().concat().to_pandas()
                 extracted[key] = _outgest_uns_2d_string_array(pdf, element.uri)
             else:
-                msg = (
-                    f"Warning: uns {collection.uri}[{key!r}] has "
-                    + "{_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame"
-                )
-                logging.log_io_same(msg)
-                extracted[key] = pdf
+                if hint is not None:
+                    logging.log_io_same(
+                        f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame"
+                    )
+                extracted[key] = _read_dataframe(element, fallback_index_name="index")
         elif isinstance(element, SparseNDArray):
             extracted[key] = element.read().tables().concat().to_pandas()
         elif isinstance(element, DenseNDArray):

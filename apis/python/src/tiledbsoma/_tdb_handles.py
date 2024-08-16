@@ -219,13 +219,6 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         self._handle.close()
         self.closed = True
 
-    def _flush_hack(self) -> None:
-        """On write handles, flushes pending writes. Does nothing to reads."""
-        if self.mode == "w":
-            self.metadata._write()
-            self._handle.close()
-            self._handle = self._opener(self.uri, "w", self.context, self.timestamp_ms)
-
     def _check_open(self) -> None:
         if self.closed:
             raise SOMAError(f"{self!r} is closed")

@@ -1520,9 +1520,9 @@ def test_enum_schema_report(tmp_path):
 def test_nullable(tmp_path):
     uri = tmp_path.as_posix()
 
-    # Arrow fields are nullable by default.  They can be explcitly set nullable
+    # Arrow fields are nullable by default.  They can be explicitly set nullable
     # or non-nullable via the nullable kwarg to pa.field.  Also, they can be
-    # explcitly set nullable via metadata. The latter, if present, overrides
+    # explicitly set nullable via metadata. The latter, if present, overrides
     # the former.
     asch = pa.schema(
         [
@@ -1618,3 +1618,51 @@ def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
     # subtract 1 for the __schema/__enumerations directory;
     # only looking at fragment files
     assert len(vfs.ls(os.path.join(uri, "__schema"))) - 1 == 3
+
+
+def test_timestamped_schema_evolve(tmp_path):
+    uri = tmp_path.as_posix()
+
+    asch = pa.schema([("myenum", pa.dictionary(pa.int8(), pa.large_string()))])
+
+    # Create at time 1
+    soma.DataFrame.create(uri, schema=asch, tiledb_timestamp=1).close()
+
+    # Write at time 2
+    atbl = pa.Table.from_pydict(
+        {
+            "soma_joinid": [0, 1, 2],
+            "myenum": pd.Series(["a", "b", "a"], dtype="category"),
+        }
+    )
+    with soma.DataFrame.open(uri, "w", tiledb_timestamp=2) as sdf:
+        sdf.write(atbl)
+
+    # Write at time 3
+    atbl = pa.Table.from_pydict(
+        {
+            "soma_joinid": [3, 4],
+            "myenum": pd.Series(["b", "c"], dtype="category"),
+            # TODO https://github.com/single-cell-data/TileDB-SOMA/issues/2896
+            # "myenum": pd.Series(['b', 'b'], dtype='category'),
+            # Perhaps leave this t=3 as-is, and add a write of ['c', 'c'] at t=4.
+        }
+    )
+    with soma.DataFrame.open(uri, "w", tiledb_timestamp=3) as sdf:
+        sdf.write(atbl)
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=1) as sdf:
+        table = sdf.read().concat()
+        assert table["myenum"].to_pylist() == []
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=2) as sdf:
+        table = sdf.read().concat()
+        assert table["myenum"].to_pylist() == ["a", "b", "a"]
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=3) as sdf:
+        table = sdf.read().concat()
+        assert table["myenum"].to_pylist() == ["a", "b", "a", "b", "c"]
+
+    with soma.DataFrame.open(uri) as sdf:
+        table = sdf.read().concat()
+        assert table["myenum"].to_pylist() == ["a", "b", "a", "b", "c"]

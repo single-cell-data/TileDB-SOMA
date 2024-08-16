@@ -324,22 +324,6 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         except (RuntimeError, SOMAError):
             return False
 
-    @classmethod
-    def _set_create_metadata(cls, handle: _tdb_handles.AnyWrapper) -> None:
-        """Sets the necessary metadata on a newly-created TileDB object."""
-        handle.metadata.update(
-            {
-                _constants.SOMA_OBJECT_TYPE_METADATA_KEY: cls.soma_type,
-                _constants.SOMA_ENCODING_VERSION_METADATA_KEY: _constants.SOMA_ENCODING_VERSION,
-            }
-        )
-        # Semi-hack: flush the metadata immediately upon creation so that the
-        # backing storage isn't half-created (i.e., there is a tiledb object
-        # on disk, but its type is not stored).
-        # TODO: We should probably write this metadata at time 0.
-        # Doing so would eliminate this last _flush_hack call.
-        handle._flush_hack()
-
     def _check_open_read(self) -> None:
         if self.mode != "r":
             raise ValueError(f"{self} is open for writing, not reading")
