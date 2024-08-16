@@ -94,7 +94,7 @@ def from_cxg_spatial_h5ad(
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
     write_obs_spatial_presence: bool = True,
-    write_var_spatial_presence: bool = True,
+    write_var_spatial_presence: bool = False,
 ) -> str:
     """
     This function reads cellxgene schema compliant H5AD file and writes
