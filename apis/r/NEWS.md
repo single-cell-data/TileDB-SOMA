@@ -1,3 +1,9 @@
+# tiledbsoma 1.13.1
+
+## Changes
+
+* Includes a fix for appended enumerations [#2903](https://github.com/single-cell-data/TileDB-SOMA/pull/2903)
+
 # tiledbsoma 1.13.0
 
 ## Changes
