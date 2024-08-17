@@ -368,13 +368,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // libtiledbsoma_version
-std::string libtiledbsoma_version(const bool compact);
-RcppExport SEXP _tiledbsoma_libtiledbsoma_version(SEXP compactSEXP) {
+std::string libtiledbsoma_version(const bool compact, const bool major_minor_only);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_version(SEXP compactSEXP, SEXP major_minor_onlySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const bool >::type compact(compactSEXP);
-    rcpp_result_gen = Rcpp::wrap(libtiledbsoma_version(compact));
+    Rcpp::traits::input_parameter< const bool >::type major_minor_only(major_minor_onlySEXP);
+    rcpp_result_gen = Rcpp::wrap(libtiledbsoma_version(compact, major_minor_only));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -454,7 +455,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_tiledbsoma_stats_disable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_disable, 0},
     {"_tiledbsoma_tiledbsoma_stats_reset", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_reset, 0},
     {"_tiledbsoma_tiledbsoma_stats_dump", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_dump, 0},
-    {"_tiledbsoma_libtiledbsoma_version", (DL_FUNC) &_tiledbsoma_libtiledbsoma_version, 1},
+    {"_tiledbsoma_libtiledbsoma_version", (DL_FUNC) &_tiledbsoma_libtiledbsoma_version, 2},
     {"_tiledbsoma_tiledb_embedded_version", (DL_FUNC) &_tiledbsoma_tiledb_embedded_version, 0},
     {"_tiledbsoma_tiledb_datatype_max_value", (DL_FUNC) &_tiledbsoma_tiledb_datatype_max_value, 1},
     {"_tiledbsoma_get_soma_object_type", (DL_FUNC) &_tiledbsoma_get_soma_object_type, 2},
