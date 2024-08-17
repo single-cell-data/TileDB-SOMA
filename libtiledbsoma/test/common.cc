@@ -97,18 +97,19 @@ std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema() {
     col_info_array->n_children = 2;
     col_info_array->release = &ArrowAdapter::release_array;
     col_info_array->children = new ArrowArray*[1];
+    int n = 3;
     auto d0_info = col_info_array->children[0] = new ArrowArray;
-    d0_info->length = 3;
+    d0_info->length = n;
     d0_info->null_count = 0;
     d0_info->offset = 0;
     d0_info->n_buffers = 2;
     d0_info->release = &ArrowAdapter::release_array;
     d0_info->buffers = new const void*[2];
     d0_info->buffers[0] = nullptr;
-    d0_info->buffers[1] = malloc(sizeof(int64_t) * 3);
+    d0_info->buffers[1] = malloc(sizeof(int64_t) * n);
     d0_info->n_children = 0;
     int64_t dom[] = {0, 1000, 1};
-    std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * 3);
+    std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * n);
 
     return std::pair(
         std::move(arrow_schema),
@@ -140,18 +141,19 @@ ArrowTable create_column_index_info() {
     col_info_array->n_children = 2;
     col_info_array->release = &ArrowAdapter::release_array;
     col_info_array->children = new ArrowArray*[1];
+    int n = 3;
     auto d0_info = col_info_array->children[0] = new ArrowArray;
-    d0_info->length = 3;
+    d0_info->length = n;
     d0_info->null_count = 0;
     d0_info->offset = 0;
     d0_info->n_buffers = 2;
     d0_info->release = &ArrowAdapter::release_array;
     d0_info->buffers = new const void*[2];
     d0_info->buffers[0] = nullptr;
-    d0_info->buffers[1] = malloc(sizeof(int64_t) * 3);
+    d0_info->buffers[1] = malloc(sizeof(int64_t) * n);
     d0_info->n_children = 0;
-    int64_t dom[] = {0, 1000, 1};
-    std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * 3);
+    int64_t dom[] = {0, 1000, 1, 0, 2147483646};
+    std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * n);
 
     return ArrowTable(std::move(col_info_array), std::move(col_info_schema));
 }
