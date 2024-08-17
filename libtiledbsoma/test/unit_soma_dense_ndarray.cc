@@ -55,7 +55,10 @@ TEST_CASE("SOMADenseNDArray: basic") {
     auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
     REQUIRE(soma_dense->uri() == uri);
     REQUIRE(soma_dense->ctx() == ctx);
-    REQUIRE(soma_dense->type() == "SOMADenseNDArray");
+
+    REQUIRE(soma_dense->type().has_value());
+    REQUIRE(soma_dense->type().value() == "SOMADenseNDArray");
+
     REQUIRE(soma_dense->is_sparse() == false);
     REQUIRE(soma_dense->soma_data_type() == "l");
     auto schema = soma_dense->tiledb_schema();
@@ -118,7 +121,7 @@ TEST_CASE("SOMADenseNDArray: metadata") {
     std::string uri = "mem://unit-test-dense-ndarray";
 
     auto index_columns = helper::create_column_index_info();
-    SOMASparseNDArray::create(
+    SOMADenseNDArray::create(
         uri,
         "l",
         ArrowTable(
@@ -128,6 +131,20 @@ TEST_CASE("SOMADenseNDArray: metadata") {
         TimestampRange(0, 2));
 
     auto soma_dense = SOMADenseNDArray::open(
+        uri, OpenMode::write, ctx, {}, ResultOrder::automatic);
+
+    // TODO: task this out separately.
+    // When I open with timestamp range (3,3) I still see the .has_value() is
+    // false. This appears to have to do with the timestamp at which
+    // soma_object_type metadata was set on create, which may not have been
+    // timestamp t=2 as intended ...
+    REQUIRE(soma_dense->is_sparse() == false);
+    REQUIRE(soma_dense->type().has_value());
+    REQUIRE(soma_dense->type().value() == "SOMADenseNDArray");
+
+    soma_dense->close();
+
+    soma_dense = SOMADenseNDArray::open(
         uri,
         OpenMode::write,
         ctx,

@@ -88,8 +88,9 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
 const std::optional<std::string> SOMAObject::type() {
     auto soma_object_type = this->get_metadata("soma_object_type");
 
-    if (!soma_object_type.has_value())
+    if (!soma_object_type.has_value()) {
         return std::nullopt;
+    }
 
     const char* dtype = (const char*)std::get<MetadataInfo::value>(
         *soma_object_type);
