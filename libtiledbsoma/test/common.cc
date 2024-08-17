@@ -33,11 +33,12 @@
 #include "common.h"
 
 namespace helper {
-ArraySchema create_schema(Context& ctx, bool allow_duplicates) {
+ArraySchema create_schema(
+    Context& ctx, int64_t dim_max, bool allow_duplicates) {
     // Create schema
     ArraySchema schema(ctx, TILEDB_SPARSE);
 
-    auto dim = Dimension::create<int64_t>(ctx, "d0", {0, 1000});
+    auto dim = Dimension::create<int64_t>(ctx, "d0", {0, dim_max});
 
     Domain domain(ctx);
     domain.add_dimension(dim);
@@ -51,7 +52,8 @@ ArraySchema create_schema(Context& ctx, bool allow_duplicates) {
     return schema;
 }
 
-std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema() {
+std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema(
+    int64_t dim_max) {
     // Create ArrowSchema for SOMAArray
     auto arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = "+s";
@@ -108,7 +110,7 @@ std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema() {
     d0_info->buffers[0] = nullptr;
     d0_info->buffers[1] = malloc(sizeof(int64_t) * n);
     d0_info->n_children = 0;
-    int64_t dom[] = {0, 1000, 1};
+    int64_t dom[] = {0, dim_max, 1};
     std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * n);
 
     return std::pair(
@@ -116,7 +118,7 @@ std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema() {
         ArrowTable(std::move(col_info_array), std::move(col_info_schema)));
 }
 
-ArrowTable create_column_index_info() {
+ArrowTable create_column_index_info(int64_t dim_max) {
     // Create ArrowSchema for IndexColumnInfo
     auto col_info_schema = std::make_unique<ArrowSchema>();
     col_info_schema->format = "+s";
@@ -152,7 +154,7 @@ ArrowTable create_column_index_info() {
     d0_info->buffers[0] = nullptr;
     d0_info->buffers[1] = malloc(sizeof(int64_t) * n);
     d0_info->n_children = 0;
-    int64_t dom[] = {0, 1000, 1, 0, 2147483646};
+    int64_t dom[] = {0, dim_max, 1, 0, 2147483646};
     std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * n);
 
     return ArrowTable(std::move(col_info_array), std::move(col_info_schema));
