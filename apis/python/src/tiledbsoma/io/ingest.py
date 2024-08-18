@@ -1205,6 +1205,8 @@ def _write_dataframe_impl(
             schema=arrow_table.schema,
             platform_config=platform_config,
             context=context,
+            domain=((0, df.shape[0] - 1),),
+            # XXX DOMAIN
         )
     except (AlreadyExistsError, NotCreateableError):
         if ingestion_params.error_if_already_exists:
@@ -1302,7 +1304,9 @@ def _create_from_matrix(
 
     try:
         # A SparseNDArray must be appendable in soma.io.
-        shape = [None for _ in matrix.shape] if cls.is_sparse else matrix.shape
+        # XXX this can be numpy.int64 -- this is for the type-checker
+        # shape = matrix.shape
+        shape = tuple([int(e) for e in matrix.shape])
         soma_ndarray = cls.create(
             uri,
             type=pa.from_numpy_dtype(matrix.dtype),

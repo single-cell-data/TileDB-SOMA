@@ -61,6 +61,23 @@ class TileDBSOMAError : public std::runtime_error {
     }
 };
 
+// The following allow us to demultiplex/remultiplex various
+// libtiledbsoma errors involved in current-domain AKA "new shape", at the
+// pybind11 boundary.  E.g.  at the pybind11 we can try/catch
+// TileDBSOMAIndexError and re-throw py::value_error, etc.
+class TileDBSOMAIndexError : public TileDBSOMAError {
+   public:
+    explicit TileDBSOMAIndexError(const char* m)
+        : TileDBSOMAError(m){};
+    explicit TileDBSOMAIndexError(std::string m)
+        : TileDBSOMAError(m.c_str()){};
+
+   public:
+    virtual const char* what() const noexcept override {
+        return TileDBSOMAError::what();
+    }
+};
+
 };  // namespace tiledbsoma
 
 #endif  // TILEDBSOMA_COMMON_H

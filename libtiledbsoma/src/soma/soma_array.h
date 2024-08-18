@@ -577,6 +577,48 @@ class SOMAArray : public SOMAObject {
      * value in the vector is the capcity of each dimension.
      */
     std::vector<int64_t> shape();
+    // XXX TEMP
+    std::vector<int64_t> shape1();
+
+    /**
+     * @brief XXX write me please thx
+     *
+     * @return XXX write me please thx
+     */
+    std::vector<int64_t> maxshape();
+    // XXX TEMP
+    std::vector<int64_t> maxshape1();
+
+    /**
+     * @brief Increases the tiledbsoma shape up to at most the maxshape.
+     *
+     * This applies to arrays all of whose dims are of type int64_t: this
+     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
+     * SOMADataFrame.
+     *
+     * TileDB-SOMA shape and maxshape are implemented as core current_domain
+     * domain, respectively.
+     *
+     * @return Throws if the requested shape exceeds the array's create-time
+     * maxshape. Throws if the array does not have current-domain support.
+     */
+    void resize(const std::vector<int64_t>& newshape);
+
+    /**
+     * @brief Increases the tiledbsoma shape up to at most the maxshape,
+     * resizing the soma_joinid dimension if it is a dimension.
+     *
+     * While SOMA SparseNDArray and DenseNDArray, along with default-indexed
+     * DataFrame, have int64_t dims, non-default-indexed DataFrame objects need
+     * not: it is only required that they have a dim _or_ an attr called
+     * soma_joinid. If soma_joinid is one of the dims, it will be resized while
+     * the others will be preserved. If soma_joinid is not one of the dims,
+     * nothing will be changed, as nothing _needs_ to be changed.
+     *
+     * @return Throws if the requested shape exceeds the array's create-time
+     * maxshape. Throws if the array does not have current-domain support.
+     */
+    void resize_soma_joinid_if_dim(const std::vector<int64_t>& newshape);
 
     /**
      * @brief Get the number of dimensions.
@@ -761,6 +803,13 @@ class SOMAArray : public SOMAObject {
     //===================================================================
 
     uint64_t _get_max_capacity(tiledb_datatype_t index_type);
+
+    /**
+     * Convenience function for creating an ArraySchemaEvolution object
+     * referencing this array's context pointer, along with its open-at
+     * timestamp (if any).
+     */
+    ArraySchemaEvolution _make_se();
 
     bool _extend_enumeration(
         ArrowSchema* value_schema,

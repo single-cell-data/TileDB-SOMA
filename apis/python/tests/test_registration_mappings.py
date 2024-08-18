@@ -430,6 +430,8 @@ def test_multiples_without_experiment(
         "ZZZ3": 9,
     }
 
+    # XXX TO DO: RESIZE
+
     # Now do the ingestion per se.  Note that once registration is done sequentially, ingest order
     # mustn't matter, and in fact, can be done in parallel. This is why we test various permutations
     # of the ordering of the h5ad file names.
@@ -818,6 +820,8 @@ def test_append_with_disjoint_measurements(
         var_field_name=var_field_name,
     )
 
+    # XXX TO DO: RESIZE
+
     tiledbsoma.io.from_anndata(
         soma_uri,
         anndata2,
@@ -1166,6 +1170,9 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         tiledbsoma.io.from_anndata(
             soma_uri, adata, measurement_name=measurement_name, registration_mapping=rd
         )
+
+        # XXX TO DO: RESIZE
+
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
         )
@@ -1180,6 +1187,8 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
         )
+
+        # XXX TO DO: RESIZE
 
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
@@ -1255,6 +1264,8 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
         obs_field_name=adata_protein.obs.index.name,
         var_field_name=adata_protein.var.index.name,
     )
+
+    # XXX TO DO: RESIZE
 
     # Ingest the second anndata object into the protein measurement
     tiledbsoma.io.from_anndata(

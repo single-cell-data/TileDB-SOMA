@@ -53,7 +53,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     std::string sub_uri = "mem://unit-test-add-sparse-ndarray/sub";
 
     SOMACollection::create(base_uri, ctx, ts);
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(false);
     auto schema = helper::create_schema(*ctx->tiledb_ctx(), true);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
@@ -94,7 +94,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     std::string sub_uri = "mem://unit-test-add-dense-ndarray/sub";
 
     SOMACollection::create(base_uri, ctx, ts);
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(false);
     auto schema = helper::create_schema(*ctx->tiledb_ctx(), true);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
@@ -134,7 +134,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     std::string sub_uri = "mem://unit-test-add-dataframe/sub";
 
     SOMACollection::create(base_uri, ctx, ts);
-    auto [schema, index_columns] = helper::create_arrow_schema();
+    auto [schema, index_columns] = helper::create_arrow_schema(false);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"dataframe", SOMAGroupEntry(sub_uri, "SOMAArray")}};
@@ -198,7 +198,7 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
     std::string sub_uri = "mem://unit-test-add-experiment/sub";
 
     SOMACollection::create(base_uri, ctx);
-    auto [schema, index_columns] = helper::create_arrow_schema();
+    auto [schema, index_columns] = helper::create_arrow_schema(false);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"experiment", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
@@ -230,7 +230,7 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
     std::string sub_uri = "mem://unit-test-add-measurement/sub";
 
     SOMACollection::create(base_uri, ctx);
-    auto [schema, index_columns] = helper::create_arrow_schema();
+    auto [schema, index_columns] = helper::create_arrow_schema(false);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"measurement", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
@@ -313,7 +313,7 @@ TEST_CASE("SOMAExperiment: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-experiment";
-    auto [schema, index_columns] = helper::create_arrow_schema();
+    auto [schema, index_columns] = helper::create_arrow_schema(false);
     SOMAExperiment::create(
         uri,
         std::move(schema),
@@ -380,7 +380,7 @@ TEST_CASE("SOMAExperiment: metadata") {
 TEST_CASE("SOMAMeasurement: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-measurement";
-    auto [schema, index_columns] = helper::create_arrow_schema();
+    auto [schema, index_columns] = helper::create_arrow_schema(false);
     SOMAMeasurement::create(
         uri,
         std::move(schema),

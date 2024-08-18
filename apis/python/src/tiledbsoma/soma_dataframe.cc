@@ -54,6 +54,7 @@ void load_soma_dataframe(py::module& m) {
             [](std::string_view uri,
                py::object py_schema,
                py::object index_column_info,
+               // XXX py::object domain,
                std::shared_ptr<SOMAContext> context,
                PlatformConfig platform_config,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -142,8 +143,32 @@ void load_soma_dataframe(py::module& m) {
             "timestamp"_a = py::none())
 
         .def_static("exists", &SOMADataFrame::exists)
+
+        // XXX TEMP
+        .def(
+            "resize",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    array.resize_soma_joinid_if_dim(newshape);
+                } catch (const TileDBSOMAIndexError& e) {
+                    // Re-raise as ValueError to preserve index-out-of-bounds
+                    // reporting semantics in the current-domain/new-shape era.
+                    throw py::value_error(e.what());
+                } catch (const std::exception& e) {
+                    throw e;
+                }
+            },
+            "newshape"_a)
+
+        // XXX TEMP
+        .def_property_readonly("shape", &SOMADataFrame::shape1)
+
+        // XXX TEMP
+        .def_property_readonly("maxshape", &SOMADataFrame::maxshape1)
+
         .def_property_readonly(
             "index_column_names", &SOMADataFrame::index_column_names)
+
         .def_property_readonly(
             "count",
             &SOMADataFrame::count,

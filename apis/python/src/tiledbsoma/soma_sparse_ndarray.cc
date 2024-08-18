@@ -110,6 +110,28 @@ void load_soma_sparse_ndarray(py::module& m) {
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 
-        .def_static("exists", &SOMASparseNDArray::exists);
+        .def_static("exists", &SOMASparseNDArray::exists)
+
+        // XXX TEMP
+        .def(
+            "resize",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    array.resize(newshape);
+                } catch (const TileDBSOMAIndexError& e) {
+                    // Re-raise as ValueError to preserve index-out-of-bounds
+                    // reporting semantics in the current-domain/new-shape era.
+                    throw py::value_error(e.what());
+                } catch (const std::exception& e) {
+                    throw e;
+                }
+            },
+            "newshape"_a)
+
+        // XXX TEMP
+        .def_property_readonly("shape", &SOMAArray::shape)
+
+        // XXX TEMP
+        .def_property_readonly("maxshape", &SOMAArray::maxshape);
 }
 }  // namespace libtiledbsomacpp

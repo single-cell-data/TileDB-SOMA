@@ -500,14 +500,23 @@ void load_soma_array(py::module& m) {
                 py::gil_scoped_release release;
 
                 // Try to read more data
-                auto buffers = array.read_next();
+                try {
+                    auto buffers = array.read_next();
 
-                // If more data was read, convert it to an arrow table and
-                // return
-                if (buffers.has_value()) {
-                    // Acquire python GIL before accessing python objects
-                    py::gil_scoped_acquire acquire;
-                    return to_table(*buffers);
+                    // If more data was read, convert it to an arrow table and
+                    // return
+                    if (buffers.has_value()) {
+                        // Acquire python GIL before accessing python objects
+                        py::gil_scoped_acquire acquire;
+                        return to_table(*buffers);
+                    }
+
+                } catch (const TileDBSOMAIndexError& e) {
+                    // Re-raise as ValueError to preserve index-out-of-bounds
+                    // reporting semantics in the current-domain/new-shape era.
+                    throw py::value_error(e.what());
+                } catch (const std::exception& e) {
+                    throw e;
                 }
 
                 // No data was read, the query is complete, return nullopt
@@ -519,8 +528,6 @@ void load_soma_array(py::module& m) {
         .def("write_coords", write_coords)
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
-
-        .def_property_readonly("shape", &SOMAArray::shape)
 
         .def_property_readonly("uri", &SOMAArray::uri)
 

@@ -124,20 +124,64 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         index_column_schema = []
         index_column_data = {}
+
+        # XXX comment re mapping:
+        # * core current_domain <-> (0, SOMA shape minus 1)
+        # * core domain         <-> (0, SOMA max_shape minus 1)
+        #   this is also known as capacity
+        #
+        # As far as the user is concerned, the SOMA domain (core current_domain)
+        # is the _only_ thing they see and care about. It's resizeable (up to max_domain
+        # anyway), reads and writes are bounds-checked against it, etc.
+
+        # XXX COMMENT
         for dim_idx, dim_shape in enumerate(shape):
             dim_name = f"soma_dim_{dim_idx}"
+
             pa_field = pa.field(dim_name, pa.int64())
             dim_capacity, dim_extent = cls._dim_capacity_and_extent(
                 dim_name,
-                dim_shape,
+                None,  # XXX COMMENT
                 TileDBCreateOptions.from_platform_config(platform_config),
             )
+
+            if dim_shape == 0:
+                raise ValueError("Write this message please")
+            # XXX comment
+            if dim_shape is None:
+                dim_shape = dim_capacity
+            # XXX different comment
+            # if dim_shape == 0:
+            #    dim_shape = 1
+
+            # XXX COMMENT
+            # XXX emphasize:
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+            # [3] core current domain lo
+            # [4] core current domain hi
+
             index_column_schema.append(pa_field)
-            index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
+            # XXX COMMENT
+            index_column_data[pa_field.name] = [
+                0,
+                dim_capacity - 1,
+                dim_extent,
+                0,
+                dim_shape - 1,
+            ]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
         )
+
+        # print()
+        # print("INDEX_COLUMN_SCHEMA")
+        # print(index_column_info.schema)
+        # print("INDEX_COLUMN_INFO")
+        # print(index_column_info.to_pandas())
+        # print()
 
         carrow_type = pyarrow_to_carrow_type(type)
         plt_cfg = _util.build_clib_platform_config(platform_config)

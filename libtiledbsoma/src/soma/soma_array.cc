@@ -32,6 +32,7 @@
 
 #include "soma_array.h"
 #include <tiledb/array_experimental.h>
+#include <tiledb/array_schema_evolution.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
 namespace tiledbsoma {
@@ -279,30 +280,37 @@ void SOMAArray::reset(
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
-    // If the query is complete, return `std::nullopt`
-    if (mq_->is_complete(true)) {
-        return std::nullopt;
-    }
+    try {
+        // This can throw with current-domain support
 
-    // Configure query and allocate result buffers
-    mq_->setup_read();
-
-    // Continue to submit the empty query on first read to return empty results
-    if (mq_->is_empty_query()) {
-        if (first_read_next_) {
-            first_read_next_ = false;
-            return mq_->results();
-        } else {
+        // If the query is complete, return `std::nullopt`
+        if (mq_->is_complete(true)) {
             return std::nullopt;
         }
+
+        // Configure query and allocate result buffers
+        mq_->setup_read();
+
+        // Continue to submit the empty query on first read to return empty
+        // results
+        if (mq_->is_empty_query()) {
+            if (first_read_next_) {
+                first_read_next_ = false;
+                return mq_->results();
+            } else {
+                return std::nullopt;
+            }
+        }
+
+        first_read_next_ = false;
+
+        mq_->submit_read();
+
+        // Return the results, possibly incomplete
+        return mq_->results();
+    } catch (const std::exception& e) {
+        throw TileDBSOMAIndexError(e.what());
     }
-
-    first_read_next_ = false;
-
-    mq_->submit_read();
-
-    // Return the results, possibly incomplete
-    return mq_->results();
 }
 
 bool SOMAArray::_extend_enumeration(
@@ -469,6 +477,18 @@ uint64_t SOMAArray::_get_max_capacity(tiledb_datatype_t index_type) {
                 "Saw invalid enumeration index type when trying to extend "
                 "enumeration");
     }
+}
+
+ArraySchemaEvolution SOMAArray::_make_se() {
+    ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+    if (timestamp_.has_value()) {
+        // ArraySchemaEvolution requires us to pair (t2, t2) even if our range
+        // is (t1, t2).
+        auto v = timestamp_.value();
+        TimestampRange tr(v.second, v.second);
+        se.set_timestamp_range(tr);
+    }
+    return se;
 }
 
 void SOMAArray::set_column_data(
@@ -738,14 +758,7 @@ ArrowTable SOMAArray::_cast_table(
 
     // Go through all columns in the ArrowTable and cast the values to what is
     // in the ArraySchema on disk
-    ArraySchemaEvolution se(*ctx_->tiledb_ctx());
-    if (timestamp_.has_value()) {
-        // ArraySchemaEvolution requires us to pair (t2, t2) even if our range
-        // is (t1, t2).
-        auto v = timestamp_.value();
-        TimestampRange tr(v.second, v.second);
-        se.set_timestamp_range(tr);
-    }
+    ArraySchemaEvolution se = _make_se();
     bool evolve_schema = false;
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
         auto orig_arrow_sch_ = arrow_schema->children[i];
@@ -1177,7 +1190,65 @@ uint64_t SOMAArray::nnz_slow() {
     return total_cell_num;
 }
 
+// XXX comment more
 std::vector<int64_t> SOMAArray::shape() {
+    std::vector<int64_t> result;
+
+    auto current_domain = tiledb::ArraySchemaExperimental::current_domain(
+        *ctx_->tiledb_ctx(), arr_->schema());
+    if (current_domain.is_empty()) {
+        // XXX comment
+        return maxshape();
+    }
+
+    auto t = current_domain.type();
+    if (t != TILEDB_NDRECTANGLE) {
+        throw TileDBSOMAError("current_domain type is not NDRECTANGLE");
+    }
+
+    NDRectangle ndrect = current_domain.ndrectangle();
+
+    for (auto dimension_name : dimension_names()) {
+        // TODO: non-int64 types for SOMADataFrame extra dims.
+        // This simply needs to be integrated with switch statements as in the
+        // legacy code below.
+        auto range = ndrect.range<int64_t>(dimension_name);
+        result.push_back(range[1] + 1);
+    }
+    return result;
+}
+
+// XXX comment more
+std::vector<int64_t> SOMAArray::shape1() {
+    std::vector<int64_t> result;
+
+    auto current_domain = tiledb::ArraySchemaExperimental::current_domain(
+        *ctx_->tiledb_ctx(), arr_->schema());
+    if (current_domain.is_empty()) {
+        // XXX comment
+        return maxshape1();
+    }
+
+    auto t = current_domain.type();
+    if (t != TILEDB_NDRECTANGLE) {
+        throw TileDBSOMAError("current_domain type is not NDRECTANGLE");
+    }
+
+    NDRectangle ndrect = current_domain.ndrectangle();
+
+    // XXX temp
+    // XXX assert ndim >= 1
+    // XXX assert dim[0].name is "soma_joinid"
+
+    auto dimension_name = "soma_joinid";
+    auto range = ndrect.range<int64_t>(dimension_name);
+    result.push_back(range[1] + 1);
+
+    return result;
+}
+
+// XXX comment more
+std::vector<int64_t> SOMAArray::maxshape() {
     std::vector<int64_t> result;
     auto dimensions = mq_->schema()->domain().dimensions();
 
@@ -1251,6 +1322,155 @@ std::vector<int64_t> SOMAArray::shape() {
     }
 
     return result;
+}
+
+// XXX comment more
+std::vector<int64_t> SOMAArray::maxshape1() {
+    std::vector<int64_t> result;
+    auto dimensions = mq_->schema()->domain().dimensions();
+
+    // XXX temp
+    // XXX assert ndim >= 1
+    // XXX assert dim[0].name is "soma_joinid"
+
+    const auto& dim = dimensions[0];
+
+    // XXX extract method for code dedupe
+    switch (dim.type()) {
+        case TILEDB_UINT8:
+            result.push_back(
+                dim.domain<uint8_t>().second - dim.domain<uint8_t>().first + 1);
+            break;
+        case TILEDB_INT8:
+            result.push_back(
+                dim.domain<int8_t>().second - dim.domain<int8_t>().first + 1);
+            break;
+        case TILEDB_UINT16:
+            result.push_back(
+                dim.domain<uint16_t>().second - dim.domain<uint16_t>().first +
+                1);
+            break;
+        case TILEDB_INT16:
+            result.push_back(
+                dim.domain<int16_t>().second - dim.domain<int16_t>().first + 1);
+            break;
+        case TILEDB_UINT32:
+            result.push_back(
+                dim.domain<uint32_t>().second - dim.domain<uint32_t>().first +
+                1);
+            break;
+        case TILEDB_INT32:
+            result.push_back(
+                dim.domain<int32_t>().second - dim.domain<int32_t>().first + 1);
+            break;
+        case TILEDB_UINT64:
+            result.push_back(
+                dim.domain<uint64_t>().second - dim.domain<uint64_t>().first +
+                1);
+            break;
+        case TILEDB_INT64:
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
+            result.push_back(
+                dim.domain<int64_t>().second - dim.domain<int64_t>().first + 1);
+            break;
+        default:
+            throw TileDBSOMAError("Dimension must be integer type.");
+    }
+
+    return result;
+}
+
+void SOMAArray::resize(const std::vector<int64_t>& newshape) {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must be opened in write mode");
+    }
+
+    auto tctx = ctx_->tiledb_ctx();
+    ArraySchema schema = arr_->schema();
+    Domain domain = schema.domain();
+    ArraySchemaEvolution schema_evolution(*tctx);
+    CurrentDomain new_current_domain(*tctx);
+
+    NDRectangle ndrect(*tctx, domain);
+
+    // TODO: non-int64 for DataFrame when it has extra index dims -- ?
+
+    unsigned n = domain.ndim();
+    if ((unsigned)newshape.size() != n) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAArray::resize]: newshape has dimension count {}; array has "
+            "{} ",
+            newshape.size(),
+            n));
+    }
+
+    for (unsigned i = 0; i < n; i++) {
+        ndrect.set_range<int64_t>(
+            domain.dimension(i).name(), 0, newshape[i] - 1);
+    }
+
+    new_current_domain.set_ndrectangle(ndrect);
+    schema_evolution.expand_current_domain(new_current_domain);
+    schema_evolution.array_evolve(uri_);
+}
+
+void SOMAArray::resize_soma_joinid_if_dim(
+    const std::vector<int64_t>& newshape) {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must be opened in write mode");
+    }
+
+    ArraySchema schema = arr_->schema();
+    Domain domain = schema.domain();
+    unsigned ndim = domain.ndim();
+    if (newshape.size() != 1) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAArray::resize]: newshape has dimension count {}; needed 1",
+            newshape.size(),
+            ndim));
+    }
+
+    auto tctx = ctx_->tiledb_ctx();
+    CurrentDomain old_current_domain = ArraySchemaExperimental::current_domain(
+        *tctx, schema);
+    NDRectangle ndrect = old_current_domain.ndrectangle();
+
+    CurrentDomain new_current_domain(*tctx);
+    ArraySchemaEvolution schema_evolution(*tctx);
+
+    for (unsigned i = 0; i < ndim; i++) {
+        if (domain.dimension(i).name() == "soma_joinid") {
+            ndrect.set_range<int64_t>(
+                domain.dimension(i).name(), 0, newshape[0] - 1);
+        }
+    }
+
+    new_current_domain.set_ndrectangle(ndrect);
+    schema_evolution.expand_current_domain(new_current_domain);
+    schema_evolution.array_evolve(uri_);
 }
 
 uint64_t SOMAArray::ndim() const {

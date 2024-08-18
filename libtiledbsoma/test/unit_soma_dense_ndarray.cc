@@ -38,7 +38,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
 
     REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(false);
     SOMADenseNDArray::create(
         uri,
         "l",
@@ -91,7 +91,7 @@ TEST_CASE("SOMADenseNDArray: platform_config") {
     PlatformConfig platform_config;
     platform_config.dense_nd_array_dim_zstd_level = 6;
 
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(false);
     SOMADenseNDArray::create(
         uri,
         "l",
@@ -117,7 +117,7 @@ TEST_CASE("SOMADenseNDArray: metadata") {
 
     std::string uri = "mem://unit-test-dense-ndarray";
 
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(false);
     SOMASparseNDArray::create(
         uri,
         "l",

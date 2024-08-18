@@ -61,7 +61,8 @@ static const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 
 namespace helper {
 ArraySchema create_schema(Context& ctx, bool allow_duplicates = false);
-std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema();
-ArrowTable create_column_index_info();
+std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema(
+    bool use_current_domain);
+ArrowTable create_column_index_info(bool use_current_domain);
 }  // namespace helper
 #endif

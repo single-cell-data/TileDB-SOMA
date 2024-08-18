@@ -1333,6 +1333,19 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
         var_field_name="var_id",
     )
 
+    # XXX TO DO: NOW NEEDS A RESIZE AS OF 2.26
+    # XXX TEMP -- needs an all-in-one experiment-level mutator ...
+    with tiledbsoma.Experiment.open(SOMA_URI, "w") as exp:
+        nobs2 = len(rd.obs_axis.data)
+        new_obs_shape = (nobs2,)
+        exp.obs.resize(new_obs_shape)
+
+        new_X_shape = (nobs2, len(adata2.var))
+        exp.ms["RNA"].X["data"].resize(new_X_shape)
+
+        new_X_shape = (nobs2, len(adata2.raw.var))
+        exp.ms["raw"].X["data"].resize(new_X_shape)
+
     # Append the second anndata object
     tiledbsoma.io.from_anndata(
         experiment_uri=SOMA_URI,

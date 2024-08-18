@@ -124,6 +124,27 @@ void load_soma_dense_ndarray(py::module& m) {
 
         .def_static("exists", &SOMADenseNDArray::exists)
 
+        .def(
+            "resize",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    array.resize(newshape);
+                } catch (const TileDBSOMAIndexError& e) {
+                    // Re-raise as ValueError to preserve index-out-of-bounds
+                    // reporting semantics in the current-domain/new-shape era.
+                    throw py::value_error(e.what());
+                } catch (const std::exception& e) {
+                    throw e;
+                }
+            },
+            "newshape"_a)
+
+        // XXX TEMP
+        .def_property_readonly("shape", &SOMAArray::shape)
+
+        // XXX TEMP
+        .def_property_readonly("maxshape", &SOMAArray::maxshape)
+
         .def("write", write);
 }
 }  // namespace libtiledbsomacpp

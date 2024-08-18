@@ -151,11 +151,16 @@ class ManagedQuery {
     template <typename T>
     void select_ranges(
         const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
-        subarray_range_set_ = true;
-        subarray_range_empty_[dim] = true;
-        for (auto& [start, stop] : ranges) {
-            subarray_->add_range(dim, start, stop);
-            subarray_range_empty_[dim] = false;
+        try {
+            // This can throw with current-domain support
+            subarray_range_set_ = true;
+            subarray_range_empty_[dim] = true;
+            for (auto& [start, stop] : ranges) {
+                subarray_->add_range(dim, start, stop);
+                subarray_range_empty_[dim] = false;
+            }
+        } catch (const std::exception& e) {
+            throw TileDBSOMAIndexError(e.what());
         }
     }
 
@@ -168,11 +173,16 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const std::vector<T>& points) {
-        subarray_range_set_ = true;
-        subarray_range_empty_[dim] = true;
-        for (auto& point : points) {
-            subarray_->add_range(dim, point, point);
-            subarray_range_empty_[dim] = false;
+        try {
+            // This can throw with current-domain support
+            subarray_range_set_ = true;
+            subarray_range_empty_[dim] = true;
+            for (auto& point : points) {
+                subarray_->add_range(dim, point, point);
+                subarray_range_empty_[dim] = false;
+            }
+        } catch (const std::exception& e) {
+            throw TileDBSOMAIndexError(e.what());
         }
     }
 
@@ -185,11 +195,16 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const tcb::span<T> points) {
-        subarray_range_set_ = true;
-        subarray_range_empty_[dim] = true;
-        for (auto& point : points) {
-            subarray_->add_range(dim, point, point);
-            subarray_range_empty_[dim] = false;
+        try {
+            // This can throw with current-domain support
+            subarray_range_set_ = true;
+            subarray_range_empty_[dim] = true;
+            for (auto& point : points) {
+                subarray_->add_range(dim, point, point);
+                subarray_range_empty_[dim] = false;
+            }
+        } catch (const std::exception& e) {
+            throw TileDBSOMAIndexError(e.what());
         }
     }
 
@@ -202,9 +217,14 @@ class ManagedQuery {
      */
     template <typename T>
     void select_point(const std::string& dim, const T& point) {
-        subarray_->add_range(dim, point, point);
-        subarray_range_set_ = true;
-        subarray_range_empty_[dim] = false;
+        try {
+            // This can throw with current-domain support
+            subarray_->add_range(dim, point, point);
+            subarray_range_set_ = true;
+            subarray_range_empty_[dim] = false;
+        } catch (const std::exception& e) {
+            throw TileDBSOMAIndexError(e.what());
+        }
     }
 
     /**

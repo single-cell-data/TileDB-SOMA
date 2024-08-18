@@ -238,6 +238,12 @@ class ArrowAdapter {
         const void* buff,
         std::shared_ptr<Context> ctx);
 
+    static void _set_current_domain_slot(
+        tiledb_datatype_t type,
+        const void* buff,
+        NDRectangle& ndrect,
+        std::string name);
+
     template <typename T>
     static Dimension _create_dim_aux(
         std::shared_ptr<Context> ctx, std::string name, T* b) {

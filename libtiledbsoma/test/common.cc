@@ -33,6 +33,14 @@
 #include "common.h"
 
 namespace helper {
+
+// This non-obvious number is:
+// * Something that fits into signed 32-bit integer for R-friendliness;
+// * Is a comfortable tile-extent distance away from 2^31-1 for default
+//   core tile extent. (Using 2^31-1 exactly would result in a core
+//   array-creation error.)
+const int CORE_DOMAIN_MAX = 2147483646;
+
 ArraySchema create_schema(Context& ctx, bool allow_duplicates) {
     // Create schema
     ArraySchema schema(ctx, TILEDB_SPARSE);
@@ -51,7 +59,8 @@ ArraySchema create_schema(Context& ctx, bool allow_duplicates) {
     return schema;
 }
 
-std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema() {
+std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema(
+    bool use_current_domain) {
     // Create ArrowSchema for SOMAArray
     auto arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = "+s";
@@ -97,25 +106,27 @@ std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema() {
     col_info_array->n_children = 2;
     col_info_array->release = &ArrowAdapter::release_array;
     col_info_array->children = new ArrowArray*[1];
+
+    int n = use_current_domain ? 5 : 3;
     auto d0_info = col_info_array->children[0] = new ArrowArray;
-    d0_info->length = 3;
+    d0_info->length = n;
     d0_info->null_count = 0;
     d0_info->offset = 0;
     d0_info->n_buffers = 2;
     d0_info->release = &ArrowAdapter::release_array;
     d0_info->buffers = new const void*[2];
     d0_info->buffers[0] = nullptr;
-    d0_info->buffers[1] = malloc(sizeof(int64_t) * 3);
+    d0_info->buffers[1] = malloc(sizeof(int64_t) * n);
     d0_info->n_children = 0;
-    int64_t dom[] = {0, 1000, 1};
-    std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * 3);
+    int64_t dom[] = {0, 1000, 1, 0, CORE_DOMAIN_MAX};
+    std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * n);
 
     return std::pair(
         std::move(arrow_schema),
         ArrowTable(std::move(col_info_array), std::move(col_info_schema)));
 }
 
-ArrowTable create_column_index_info() {
+ArrowTable create_column_index_info(bool use_current_domain) {
     // Create ArrowSchema for IndexColumnInfo
     auto col_info_schema = std::make_unique<ArrowSchema>();
     col_info_schema->format = "+s";
@@ -140,18 +151,19 @@ ArrowTable create_column_index_info() {
     col_info_array->n_children = 2;
     col_info_array->release = &ArrowAdapter::release_array;
     col_info_array->children = new ArrowArray*[1];
+    int n = use_current_domain ? 5 : 3;
     auto d0_info = col_info_array->children[0] = new ArrowArray;
-    d0_info->length = 3;
+    d0_info->length = n;
     d0_info->null_count = 0;
     d0_info->offset = 0;
     d0_info->n_buffers = 2;
     d0_info->release = &ArrowAdapter::release_array;
     d0_info->buffers = new const void*[2];
     d0_info->buffers[0] = nullptr;
-    d0_info->buffers[1] = malloc(sizeof(int64_t) * 3);
+    d0_info->buffers[1] = malloc(sizeof(int64_t) * n);
     d0_info->n_children = 0;
-    int64_t dom[] = {0, 1000, 1};
-    std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * 3);
+    int64_t dom[] = {0, 1000, 1, 0, CORE_DOMAIN_MAX};
+    std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * n);
 
     return ArrowTable(std::move(col_info_array), std::move(col_info_schema));
 }
