@@ -8,11 +8,10 @@
     ## create a slot for somactx in per-package enviroment, do no fill it yet to allow 'lazy load'
     .pkgenv[["somactx"]] <- NULL
 
-    rpkg_lib_version <- tiledb::tiledb_version(compact=TRUE)
-    soma_lib_version <- libtiledbsoma_version(compact=TRUE)
+    rpkg_lib <- tiledb::tiledb_version(compact = FALSE)
     # Check major and minor but not micro: sc-50464
-    rpkg_lib_version <- paste(strsplit(as.character(rpkg_lib_version), "\\.")[[1]][1:2], collapse = ".")
-    soma_lib_version <- paste(strsplit(soma_lib_version, "\\.")[[1]][1:2], collapse = ".")
+    rpkg_lib_version <- paste(rpkg_lib[["major"]], rpkg_lib[["minor"]], sep = ".")
+    soma_lib_version <- libtiledbsoma_version(compact = TRUE, major_minor_only = TRUE)
     if (rpkg_lib_version != soma_lib_version) {
         msg <- sprintf("TileDB Core version %s used by TileDB-R package, but TileDB-SOMA uses %s",
                        sQuote(rpkg_lib_version), sQuote(soma_lib_version))
