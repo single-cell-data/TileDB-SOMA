@@ -93,8 +93,8 @@ def from_cxg_spatial_h5ad(
     registration_mapping: Optional["ExperimentAmbientLabelMapping"] = None,
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
-    write_obs_scene: bool = True,
-    write_var_scene: bool = True,
+    write_obs_spatial_presence: bool = True,
+    write_var_spatial_presence: bool = False,
 ) -> str:
     """
     This function reads cellxgene schema compliant H5AD file and writes
@@ -180,8 +180,8 @@ def from_cxg_spatial_h5ad(
         input_lowres=image_paths["lowres"],
         input_fullres=image_paths["fullres"],
         input_tissue_positions=Path(tissue_positions_file_path),
-        write_obs_scene=write_obs_scene,
-        write_var_scene=write_var_scene,
+        write_obs_spatial_presence=write_obs_spatial_presence,
+        write_var_spatial_presence=write_var_spatial_presence,
     )
 
 
@@ -204,8 +204,8 @@ def from_visium(
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
     use_raw_counts: bool = True,
-    write_obs_scene: bool = False,
-    write_var_scene: bool = False,
+    write_obs_spatial_presence: bool = False,
+    write_var_spatial_presence: bool = False,
 ) -> str:
     """Reads a 10x Visium dataset and writes it to an :class:`Experiment`.
 
@@ -271,8 +271,8 @@ def from_visium(
         input_lowres=input_lowres,
         input_fullres=input_fullres,
         input_tissue_positions=input_tissue_positions,
-        write_obs_scene=write_obs_scene,
-        write_var_scene=write_var_scene,
+        write_obs_spatial_presence=write_obs_spatial_presence,
+        write_var_spatial_presence=write_var_spatial_presence,
     )
 
 
@@ -299,8 +299,8 @@ def _write_visium_data_to_experiment_uri(
     input_lowres: Union[None, str, Path],
     input_fullres: Union[None, str, Path],
     input_tissue_positions: Path,
-    write_obs_scene: bool = False,
-    write_var_scene: bool = False,
+    write_obs_spatial_presence: bool = False,
+    write_var_spatial_presence: bool = False,
 ) -> str:
     uri = from_anndata(
         experiment_uri,
@@ -336,15 +336,15 @@ def _write_visium_data_to_experiment_uri(
         )
     )
 
-    # TODO: The `obs_df` should be in dataframe with only soma_joinid and obs_id. Not
-    # currently bothering to check/enforce this.
     with Experiment.open(uri, mode="r", context=context) as exp:
-        obs_df = exp.obs.read().concat().to_pandas()
-        if write_obs_scene or write_var_scene:
+        obs_df = (
+            exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
+        )
+        if write_obs_spatial_presence or write_var_spatial_presence:
             x_layer = exp.ms[measurement_name].X[X_layer_name].read().tables().concat()
-            if write_obs_scene:
+            if write_obs_spatial_presence:
                 obs_id = pacomp.unique(x_layer["soma_dim_0"])
-            if write_var_scene:
+            if write_var_spatial_presence:
                 var_id = pacomp.unique(x_layer["soma_dim_1"])
 
     # Add spatial information to the experiment.
@@ -420,19 +420,31 @@ def _write_visium_data_to_experiment_uri(
                     _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
 
         # Create the obs presence matrix.
-        if write_obs_scene:
-            obs_scene_uri = f"{uri}/obs_scene"
-            obs_scene = _write_scene_presence_dataframe(
-                obs_id, scene_name, obs_scene_uri, **ingest_ctx
+        if write_obs_spatial_presence:
+            obs_spatial_presence_uri = f"{uri}/obs_spatial_presence"
+            obs_spatial_presence = _write_scene_presence_dataframe(
+                obs_id, scene_name, obs_spatial_presence_uri, **ingest_ctx
             )
-            _maybe_set(exp, "obs_scene", obs_scene, use_relative_uri=use_relative_uri)
-        if write_var_scene:
-            var_scene_uri = f"{uri}/ms/{measurement_name}/var_scene"
-            var_scene = _write_scene_presence_dataframe(
-                var_id, scene_name, var_scene_uri, **ingest_ctx
+            _maybe_set(
+                exp,
+                "obs_spatial_presence",
+                obs_spatial_presence,
+                use_relative_uri=use_relative_uri,
+            )
+        if write_var_spatial_presence:
+            var_spatial_presence_uri = (
+                f"{uri}/ms/{measurement_name}/var_spatial_presence"
+            )
+            var_spatial_presence = _write_scene_presence_dataframe(
+                var_id, scene_name, var_spatial_presence_uri, **ingest_ctx
             )
             meas = exp.ms[measurement_name]
-            _maybe_set(meas, "var_scene", var_scene, use_relative_uri=use_relative_uri)
+            _maybe_set(
+                meas,
+                "var_spatial_presence",
+                var_spatial_presence,
+                use_relative_uri=use_relative_uri,
+            )
     return uri
 
 
