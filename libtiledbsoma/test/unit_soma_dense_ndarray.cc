@@ -32,13 +32,15 @@
 
 #include "common.h"
 
+#define DIM_MAX 1000
+
 TEST_CASE("SOMADenseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-dense-ndarray-basic";
 
     REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(DIM_MAX);
     SOMADenseNDArray::create(
         uri,
         "l",
@@ -91,7 +93,7 @@ TEST_CASE("SOMADenseNDArray: platform_config") {
     PlatformConfig platform_config;
     platform_config.dense_nd_array_dim_zstd_level = 6;
 
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(DIM_MAX);
     SOMADenseNDArray::create(
         uri,
         "l",
@@ -117,7 +119,7 @@ TEST_CASE("SOMADenseNDArray: metadata") {
 
     std::string uri = "mem://unit-test-dense-ndarray";
 
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(DIM_MAX);
     SOMASparseNDArray::create(
         uri,
         "l",
