@@ -18,7 +18,7 @@ repos:
         # Pandas 2.x types (e.g. `pd.Series[Any]`). See `_types.py` or https://github.com/single-cell-data/TileDB-SOMA/issues/2839
         # for more info.
         - "pandas-stubs>=2"
-        - "somacore @ git+https://github.com/single-cell-data/SOMA.git@6b93e53"   # DO NOT MERGE TO MAIN
+        - "somacore @ git+https://github.com/single-cell-data/SOMA.git@e277581"   # DO NOT MERGE TO MAIN
         - types-setuptools
       args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
       pass_filenames: false
