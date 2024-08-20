@@ -6,11 +6,15 @@
 """An API to facilitate use of PyTorch ML training with data from SOMA data."""
 
 from .encoders import BatchEncoder, Encoder, LabelEncoder
-from .pytorch import ExperimentDataPipe, Stats, experiment_dataloader
+from .pytorch import (
+    ExperimentAxisQueryDataPipe,
+    ExperimentAxisQueryIterableDataset,
+    experiment_dataloader,
+)
 
 __all__ = [
-    "Stats",
-    "ExperimentDataPipe",
+    "ExperimentAxisQueryDataPipe",
+    "ExperimentAxisQueryIterableDataset",
     "experiment_dataloader",
     "Encoder",
     "LabelEncoder",

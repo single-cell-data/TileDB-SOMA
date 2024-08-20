@@ -4,7 +4,6 @@
 # Licensed under the MIT License.
 
 import pathlib
-import sys
 from typing import Callable, List, Optional, Sequence, Union
 from unittest.mock import patch
 
@@ -19,17 +18,16 @@ import tiledbsoma as soma
 from tiledbsoma import Experiment, _factory
 from tiledbsoma._collection import CollectionBase
 
-# conditionally import torch, as it will not be available in all test environments
+# conditionally import torch, as it will not be available in all test environments.
+# This supports the pytest `ml` mark, which can be used to disable all PyTorch-dependent
+# tests.
 try:
     from torch import Tensor, float32
     from torch.utils.data._utils.worker import WorkerInfo
 
     from tiledbsoma.ml.encoders import BatchEncoder, LabelEncoder
-    from tiledbsoma.ml.pytorch import (
-        ExperimentDataPipe,
-        experiment_dataloader,
-        list_split,
-    )
+    from tiledbsoma.ml.pytorch import ExperimentAxisQueryDataPipe as ExperimentDataPipe
+    from tiledbsoma.ml.pytorch import experiment_dataloader
 except ImportError:
     # this should only occur when not running `experimental`-marked tests
     pass
@@ -146,7 +144,6 @@ def soma_experiment(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -172,14 +169,12 @@ def test_non_batched(soma_experiment: Experiment, use_eager_fetch: bool) -> None
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
 )
-@pytest.mark.parametrize("return_sparse_X", [True, False])
 def test_uneven_soma_and_result_batches(
-    soma_experiment: Experiment, use_eager_fetch: bool, return_sparse_X: bool
+    soma_experiment: Experiment, use_eager_fetch: bool
 ) -> None:
     """This is checking that batches are correctly created when they require fetching multiple chunks.
 
@@ -193,19 +188,16 @@ def test_uneven_soma_and_result_batches(
         shuffle=False,
         batch_size=3,
         soma_chunk_size=2,
-        return_sparse_X=return_sparse_X,
         use_eager_fetch=use_eager_fetch,
     )
     row_iter = iter(exp_data_pipe)
 
-    row = next(row_iter)
-    X_batch = row[0].to_dense() if return_sparse_X else row[0]
+    X_batch, obs_batch = next(row_iter)
     assert X_batch.int()[0].tolist() == [0, 1, 0]
-    assert row[1].tolist() == [[0], [1], [2]]
+    assert obs_batch.tolist() == [[0], [1], [2]]
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -237,7 +229,6 @@ def test_batching__all_batches_full_size(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [
@@ -263,7 +254,6 @@ def test_unique_soma_joinids(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(5, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -291,7 +281,6 @@ def test_batching__partial_final_batch_size(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(3, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -319,7 +308,6 @@ def test_batching__exactly_one_batch(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -343,7 +331,6 @@ def test_batching__empty_query_result(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -356,7 +343,6 @@ def test_sparse_output__non_batched(
         measurement_name="RNA",
         X_name="raw",
         obs_column_names=["label"],
-        return_sparse_X=True,
         shuffle=False,
         use_eager_fetch=use_eager_fetch,
     )
@@ -364,11 +350,10 @@ def test_sparse_output__non_batched(
 
     batch = next(batch_iter)
     assert isinstance(batch[1], Tensor)
-    assert batch[0].to_dense().tolist() == [0, 1, 0]
+    assert batch[0].tolist() == [0, 1, 0]
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -382,7 +367,6 @@ def test_sparse_output__batched(
         X_name="raw",
         obs_column_names=["label"],
         batch_size=3,
-        return_sparse_X=True,
         shuffle=False,
         use_eager_fetch=use_eager_fetch,
     )
@@ -390,11 +374,10 @@ def test_sparse_output__batched(
 
     batch = next(batch_iter)
     assert isinstance(batch[1], Tensor)
-    assert batch[0].to_dense().tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
+    assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [
@@ -422,7 +405,6 @@ def test_batching__partial_soma_batches_are_concatenated(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
 )
@@ -443,14 +425,11 @@ def test_default_encoders_implicit(soma_experiment: Experiment) -> None:
 
     labels_encoded = batch[1]
 
-    labels_decoded = exp_data_pipe.obs_encoders["label"].inverse_transform(
-        labels_encoded
-    )
+    labels_decoded = exp_data_pipe.encoders["label"].inverse_transform(labels_encoded)
     assert labels_decoded.tolist() == ["0", "1", "2"]  # type: ignore
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
 )
@@ -470,14 +449,11 @@ def test_default_encoders_explicit(soma_experiment: Experiment) -> None:
 
     labels_encoded = batch[1]
 
-    labels_decoded = exp_data_pipe.obs_encoders["label"].inverse_transform(
-        labels_encoded
-    )
+    labels_decoded = exp_data_pipe.encoders["label"].inverse_transform(labels_encoded)
     assert labels_decoded.tolist() == ["0", "1", "2"]  # type: ignore
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
 )
@@ -497,14 +473,11 @@ def test_batch_encoder(soma_experiment: Experiment) -> None:
 
     labels_encoded = batch[1]
 
-    labels_decoded = exp_data_pipe.obs_encoders["batch"].inverse_transform(
-        labels_encoded
-    )
+    labels_decoded = exp_data_pipe.encoders["batch"].inverse_transform(labels_encoded)
     assert labels_decoded.tolist() == ["0c", "1c", "2c"]  # type: ignore
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
 )
@@ -521,7 +494,6 @@ def test_custom_encoders_fail_if_duplicate(soma_experiment: Experiment) -> None:
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
 )
@@ -541,11 +513,10 @@ def test_custom_encoders_fail_if_columns_defined(soma_experiment: Experiment) ->
 
 
 @pytest.mark.ml
-@pytest.mark.skipif(
-    (sys.version_info.major, sys.version_info.minor) == (3, 9),
-    reason="fails intermittently with OOM error for 3.9",
-)
-# noinspection PyTestParametrized
+# @pytest.mark.skipif(
+#     (sys.version_info.major, sys.version_info.minor) == (3, 9),
+#     reason="fails intermittently with OOM error for 3.9",
+# )
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(6, 3, pytorch_x_value_gen)]
 )
@@ -570,7 +541,6 @@ def test_multiprocessing__returns_full_result(soma_experiment: Experiment) -> No
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(6, 3, pytorch_x_value_gen)]
 )
@@ -580,12 +550,10 @@ def test_distributed__returns_data_partition_for_rank(
     """Tests pytorch._partition_obs_joinids() behavior in a simulated PyTorch distributed processing mode,
     using mocks to avoid having to do real PyTorch distributed setup."""
 
-    with patch(
-        "tiledbsoma.ml.pytorch.dist.is_initialized"
-    ) as mock_dist_is_initialized, patch(
-        "tiledbsoma.ml.pytorch.dist.get_rank"
+    with patch("torch.distributed.is_initialized") as mock_dist_is_initialized, patch(
+        "torch.distributed.get_rank"
     ) as mock_dist_get_rank, patch(
-        "tiledbsoma.ml.pytorch.dist.get_world_size"
+        "torch.distributed.get_world_size"
     ) as mock_dist_get_world_size:
         mock_dist_is_initialized.return_value = True
         mock_dist_get_rank.return_value = 1
@@ -609,7 +577,6 @@ def test_distributed__returns_data_partition_for_rank(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(12, 3, pytorch_x_value_gen)]
 )
@@ -621,11 +588,11 @@ def test_distributed_and_multiprocessing__returns_data_partition_for_rank(
     setup or real DataLoader multiprocessing."""
 
     with patch("torch.utils.data.get_worker_info") as mock_get_worker_info, patch(
-        "tiledbsoma.ml.pytorch.dist.is_initialized"
+        "torch.distributed.is_initialized"
     ) as mock_dist_is_initialized, patch(
-        "tiledbsoma.ml.pytorch.dist.get_rank"
+        "torch.distributed.get_rank"
     ) as mock_dist_get_rank, patch(
-        "tiledbsoma.ml.pytorch.dist.get_world_size"
+        "torch.distributed.get_world_size"
     ) as mock_dist_get_world_size:
         mock_get_worker_info.return_value = WorkerInfo(id=1, num_workers=2, seed=1234)
         mock_dist_is_initialized.return_value = True
@@ -652,7 +619,6 @@ def test_distributed_and_multiprocessing__returns_data_partition_for_rank(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(3, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -677,7 +643,6 @@ def test_experiment_dataloader__non_batched(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -703,7 +668,6 @@ def test_experiment_dataloader__batched(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [
@@ -728,7 +692,6 @@ def test_experiment_dataloader__batched_length(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -750,7 +713,6 @@ def test__X_tensor_dtype_matches_X_matrix(
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(10, 1, pytorch_x_value_gen)]
 )
@@ -769,7 +731,6 @@ def test__pytorch_splitting(soma_experiment: Experiment) -> None:
 
 
 @pytest.mark.ml
-# noinspection PyTestParametrized,DuplicatedCode
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(16, 1, pytorch_seq_x_value_gen)]
 )
@@ -810,7 +771,9 @@ def test_experiment_dataloader__multiprocess_dense_matrix__ok() -> None:
 
 @pytest.mark.ml
 def test_experiment_dataloader__unsupported_params__fails() -> None:
-    with patch("tiledbsoma.ml.pytorch.ExperimentDataPipe") as dummy_exp_data_pipe:
+    with patch(
+        "tiledbsoma.ml.pytorch.ExperimentAxisQueryDataPipe"
+    ) as dummy_exp_data_pipe:
         with pytest.raises(ValueError):
             experiment_dataloader(dummy_exp_data_pipe, shuffle=True)
         with pytest.raises(ValueError):
@@ -821,14 +784,3 @@ def test_experiment_dataloader__unsupported_params__fails() -> None:
             experiment_dataloader(dummy_exp_data_pipe, sampler=[])
         with pytest.raises(ValueError):
             experiment_dataloader(dummy_exp_data_pipe, collate_fn=lambda x: x)
-
-
-@pytest.mark.ml
-def test_list_split() -> None:
-    data = list(range(10))
-    chunks = list_split(data, 3)
-    assert len(chunks) == 4
-    assert len(chunks[0]) == 3
-    assert len(chunks[1]) == 3
-    assert len(chunks[2]) == 3
-    assert len(chunks[3]) == 1
