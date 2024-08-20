@@ -32,13 +32,15 @@
 
 #include "common.h"
 
+#define DIM_MAX 1000
+
 TEST_CASE("SOMADataFrame: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-dataframe-basic";
 
     REQUIRE(!SOMADataFrame::exists(uri, ctx));
 
-    auto [schema, index_columns] = helper::create_arrow_schema();
+    auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX);
     SOMADataFrame::create(
         uri,
         std::move(schema),
@@ -148,7 +150,7 @@ TEST_CASE("SOMADataFrame: platform_config") {
                                     R"(]}})";
         }
 
-        auto [schema, index_columns] = helper::create_arrow_schema();
+        auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX);
         SOMADataFrame::create(
             uri,
             std::move(schema),
@@ -184,7 +186,7 @@ TEST_CASE("SOMADataFrame: platform_config") {
 TEST_CASE("SOMADataFrame: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-collection";
-    auto [schema, index_columns] = helper::create_arrow_schema();
+    auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX);
     SOMADataFrame::create(
         uri,
         std::move(schema),

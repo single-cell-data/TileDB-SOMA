@@ -5,6 +5,7 @@ import os
 import pytest
 
 import tiledbsoma.pytiledbsoma as clib
+from tiledbsoma import DataFrame
 from tiledbsoma._exception import SOMAError
 from tiledbsoma._query_condition import QueryCondition
 
@@ -222,6 +223,39 @@ def test_eval_error_conditions(malformed_condition):
         # test function directly for codecov
         qc.init_query_condition(sr.schema, [])
         qc.init_query_condition(sr.schema, ["bad_query_attr"])
+
+
+@pytest.mark.parametrize(
+    "expression_and_message",
+    [
+        ["foo is True", "the `is` operator is not supported"],
+        ["foo is not True", "the `is not` operator is not supported"],
+        [
+            "foo &&& bar",
+            "Could not parse the given QueryCondition statement: foo &&& bar",
+        ],
+        [
+            "louvain == leukocyte",
+            "Incorrect type for comparison value.* right-hand sides must be constant expressions, not variables",
+        ],
+        # Minus sign looks like an operator to the Python parser:
+        [
+            "louvain == leuko-cyte",
+            "Unable to parse expression component.* did you mean to quote it as a string",
+        ],
+        # Test the dot "operator" (valid name in R, not in Python)
+        [
+            'lou.vain == "leukocyte"',
+            "if your attribute name has a dot in it",
+        ],
+    ],
+)
+def test_query_condition_syntax_handling(expression_and_message):
+    uri = os.path.join(SOMA_URI, "obs")
+    expression, message = expression_and_message
+    with DataFrame.open(uri) as obs:
+        with pytest.raises(SOMAError, match=message):
+            obs.read(value_filter=expression).concat()
 
 
 if __name__ == "__main__":

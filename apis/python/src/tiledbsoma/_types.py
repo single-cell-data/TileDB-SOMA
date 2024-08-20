@@ -17,25 +17,35 @@ from somacore import types
 from typing_extensions import Literal
 
 if TYPE_CHECKING:
+    # `pd.{Series,Index}` require type parameters iff `pandas>=2`. Our pandas dependency (in `setup.py`) is unpinned,
+    # which generally resolves to `pandas>=2`, but may be pandas<2 if something else in the user's environment requires
+    # that. For type-checking purposes, `.pre-commit-config.yaml` specifies `pandas-stubs>=2`, and we type-check against
+    # the `pandas>=2` types here.
+    PDSeries = pd.Series[Any]
+    PDIndex = pd.Index[Any]
+
     NPInteger = np.integer[npt.NBitBase]
     NPFloating = np.floating[npt.NBitBase]
     NPNDArray = npt.NDArray[np.number[npt.NBitBase]]
-    PDSeries = pd.Series[Any]  # type: ignore[misc] # a pd.Series of "any" type will raise mypy error
 else:
+    # When not-type-checking, but running with `pandas>=2`, the "missing" type-params don't affect anything.
+    PDSeries = pd.Series
+    PDIndex = pd.Index
+
+    # Type subscription requires python >= 3.9, and we currently only type-check against 3.11.
+    # TODO: remove these (and unify around subscripted types above) when we drop support for 3.8.
     NPInteger = np.integer
     NPFloating = np.floating
+    # This alias likely needs to remain special-cased, even in Python ≥3.11, as tests pass the `Matrix` type alias
+    # (which includes `NPNDArray` via `DenseMatrix`) to `isinstance`, causing error "argument 2 cannot be a
+    # parameterized generic".
     NPNDArray = np.ndarray
-    PDSeries = pd.Series
-
 
 Path = Union[str, pathlib.Path]
 
 Ids = Union[List[str], List[bytes], List[int]]
 
-if TYPE_CHECKING:
-    Labels = Union[Sequence[str], pd.Index[Any]]
-else:
-    Labels = Union[Sequence[str], pd.Index]
+Labels = Union[Sequence[str], PDIndex]
 
 NTuple = Tuple[int, ...]
 

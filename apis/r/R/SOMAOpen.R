@@ -53,12 +53,6 @@ SOMAOpen <- function(uri, mode = "READ", platform_config = NULL,
         stop("URI '", uri, "' is not a TileDB SOMA object.", call. = FALSE)
     }
 
-    # Alternative: go via tiledb-r but needs to set up platform_config + ctx first
-    # TODO set to ctx from config and/or ctx for initial open too
-    #arr <- tiledb::tiledb_array(uri) # sadly this currently returns it closed
-    #arr <- tiledb::tiledb_array_open(arr, "READ") # TODO: just get it in opened state
-    #obj <- tiledb::tiledb_get_metadata(arr, "soma_object_type")
-
     switch(obj,
            SOMACollection    = SOMACollectionOpen(uri, mode=mode, platform_config=platform_config, tiledbsoma_ctx=tiledbsoma_ctx, tiledb_timestamp=tiledb_timestamp),
            SOMADataFrame     = SOMADataFrameOpen(uri, mode=mode, platform_config=platform_config, tiledbsoma_ctx=tiledbsoma_ctx, tiledb_timestamp=tiledb_timestamp),

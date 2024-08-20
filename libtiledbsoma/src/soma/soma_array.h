@@ -662,6 +662,8 @@ class SOMAArray : public SOMAObject {
      *     same datatype. This argument indicates the number of items in the
      *     value component of the metadata.
      * @param value The metadata value in binary form.
+     * @param force A boolean toggle to suppress internal checks, defaults to
+     *     false.
      *
      * @note The writes will take effect only upon closing the array.
      */
@@ -669,7 +671,8 @@ class SOMAArray : public SOMAObject {
         const std::string& key,
         tiledb_datatype_t value_type,
         uint32_t value_num,
-        const void* value);
+        const void* value,
+        bool force = false);
 
     /**
      * Delete a metadata key-value item from an open array. The array must
@@ -759,7 +762,14 @@ class SOMAArray : public SOMAObject {
 
     uint64_t _get_max_capacity(tiledb_datatype_t index_type);
 
-    Enumeration _extend_enumeration(
+    /**
+     * Convenience function for creating an ArraySchemaEvolution object
+     * referencing this array's context pointer, along with its open-at
+     * timestamp (if any).
+     */
+    ArraySchemaEvolution _make_se();
+
+    bool _extend_enumeration(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
@@ -767,7 +777,7 @@ class SOMAArray : public SOMAObject {
         ArraySchemaEvolution se);
 
     template <typename ValueType>
-    Enumeration _extend_and_evolve_schema(
+    bool _extend_and_evolve_schema(
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
@@ -816,21 +826,19 @@ class SOMAArray : public SOMAObject {
             index_schema->format = ArrowAdapter::to_arrow_format(
                                        disk_index_type)
                                        .data();
-
-            return extended_enmr;
+            return true;
         }
-
-        return enmr;
+        return false;
     }
 
-    Enumeration _extend_and_evolve_schema_str(
+    bool _extend_and_evolve_schema_str(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
         ArraySchemaEvolution se);
 
-    void _create_and_cast_column(
+    bool _create_and_cast_column(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowSchema* new_column_schema,

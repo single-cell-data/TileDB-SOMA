@@ -57,12 +57,24 @@ create_arrow_schema <- function(foo_first = TRUE) {
   }
 }
 
-create_arrow_table <- function(nrows = 10L) {
-  arrow::arrow_table(
+create_arrow_table <- function(nrows = 10L, factors = FALSE) {
+  if (isTRUE(factors)) {
+    return(arrow::arrow_table(
       foo = seq.int(nrows) + 1000L,
       soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
       bar = seq(nrows) + 0.1,
       baz = as.character(seq.int(nrows) + 1000L),
-      schema = create_arrow_schema()
+      grp = factor(c(
+        rep_len("lvl1", length.out = floor(nrows / 2)),
+        rep_len("lvl2", length.out = ceiling(nrows / 2))
+      ))
+    ))
+  }
+  arrow::arrow_table(
+      foo = seq.int(nrows) + 1000L,
+      soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
+      bar = seq(nrows) + 0.1,
+      baz = as.character(seq.int(nrows) + 1000L)
+      # schema = create_arrow_schema()
     )
 }

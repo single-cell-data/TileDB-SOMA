@@ -95,14 +95,6 @@ class NDArray(SOMAArray, somacore.NDArray):
         """
         return cast(Tuple[int, ...], tuple(self._handle.shape))
 
-    def reshape(self, shape: Tuple[int, ...]) -> None:
-        """Unsupported operation for this object type.
-
-        Lifecycle:
-            Maturing.
-        """
-        raise NotImplementedError("reshape operation not implemented.")
-
     @classmethod
     def _dim_capacity_and_extent(
         cls,

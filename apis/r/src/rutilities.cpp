@@ -252,11 +252,15 @@ std::string tiledbsoma_stats_dump() {
 //' version is returned,
 //' @noRd
 // [[Rcpp::export]]
-std::string libtiledbsoma_version(const bool compact = false) {
+std::string libtiledbsoma_version(const bool compact = false, const bool major_minor_only = false) {
     if (compact) {
         auto v = tiledbsoma::version::embedded_version_triple();
         std::ostringstream txt;
-        txt << std::get<0>(v) << "." << std::get<1>(v) << "." << std::get<2>(v);
+        if (major_minor_only) {
+            txt << std::get<0>(v) << "." << std::get<1>(v);
+        } else {
+            txt << std::get<0>(v) << "." << std::get<1>(v) << "." << std::get<2>(v);
+        }
         return txt.str();
     } else {
         return tiledbsoma::version::as_string();

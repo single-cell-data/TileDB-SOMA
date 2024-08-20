@@ -67,6 +67,18 @@ std::unique_ptr<SOMAGroup> SOMAGroup::create(
             static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
             ENCODING_VERSION_VAL.c_str());
 
+        // Root SOMA objects include a `dataset_type` entry to allow the
+        // TileDB Cloud UI to detect that they are SOMA datasets.
+        if (soma_type == "SOMAExperiment") {
+            std::string key = "dataset_type";
+            std::string dataset_type = "soma";
+            group->put_metadata(
+                key,
+                TILEDB_STRING_UTF8,
+                static_cast<uint32_t>(dataset_type.length()),
+                dataset_type.c_str());
+        }
+
         return std::make_unique<SOMAGroup>(ctx, group, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
@@ -234,11 +246,12 @@ void SOMAGroup::set_metadata(
     const std::string& key,
     tiledb_datatype_t value_type,
     uint32_t value_num,
-    const void* value) {
-    if (key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
+    const void* value,
+    bool force) {
+    if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
 
-    if (key.compare(ENCODING_VERSION_KEY) == 0)
+    if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
 
     group_->put_metadata(key, value_type, value_num, value);

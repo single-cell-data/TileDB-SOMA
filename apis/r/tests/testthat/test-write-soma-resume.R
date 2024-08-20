@@ -286,7 +286,10 @@ test_that("Resume-mode sparse arrays", {
     expected.label = "knex"
   )
   bbox <- tryCatch(
-    as.integer(ssac$used_shape(simplify = TRUE, index1 = TRUE)),
+    as.integer(suppressWarnings(
+      ssac$used_shape(simplify = TRUE, index1 = TRUE),
+      classes = "deprecatedWarning"
+    )),
     error = function(...) NULL
   )
   if (!is.null(bbox)) {
@@ -297,7 +300,6 @@ test_that("Resume-mode sparse arrays", {
 })
 
 test_that("Resume-mode dense arrays", {
-  skip_if(TRUE, "dense-resume tests are skipped until metadata writes via C++ are added")
   skip_if(!extended_tests())
   skip_if_not_installed('datasets')
 

@@ -4,14 +4,15 @@ create_and_populate_soma_dataframe <- function(
   nrows = 10L,
   seed = 1,
   index_column_names = "foo",
+  factors = FALSE,
   mode = NULL
 ) {
   set.seed(seed)
 
-  arrow_schema <- create_arrow_schema()
-  tbl <- create_arrow_table(nrows = nrows)
+  # arrow_schema <- create_arrow_schema()
+  tbl <- create_arrow_table(nrows = nrows, factors = factors)
 
-  sdf <- SOMADataFrameCreate(uri, arrow_schema, index_column_names = index_column_names)
+  sdf <- SOMADataFrameCreate(uri, tbl$schema, index_column_names = index_column_names)
   sdf$write(tbl)
 
   if (is.null(mode)) {
@@ -24,17 +25,31 @@ create_and_populate_soma_dataframe <- function(
 }
 
 # Returns the object created, populated, and closed (unless otherwise requested)
-create_and_populate_obs <- function(uri, nrows = 10L, seed = 1, mode = NULL) {
+create_and_populate_obs <- function(
+  uri,
+  nrows = 10L,
+  seed = 1,
+  factors = FALSE,
+  mode = NULL
+) {
   create_and_populate_soma_dataframe(
     uri = uri,
     nrows = nrows,
     seed = seed,
-    index_column_names = "soma_joinid"
+    index_column_names = "soma_joinid",
+    factors = factors,
+    mode = mode
   )
 }
 
 # Returns the object created, populated, and closed (unless otherwise requested)
-create_and_populate_var <- function(uri, nrows = 10L, seed = 1, mode = NULL) {
+create_and_populate_var <- function(
+  uri,
+  nrows = 10L,
+  seed = 1,
+  factors = FALSE,
+  mode = NULL
+) {
 
   tbl <- arrow::arrow_table(
     soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
@@ -46,6 +61,12 @@ create_and_populate_var <- function(uri, nrows = 10L, seed = 1, mode = NULL) {
       arrow::field("xyzzy", arrow::float64(), nullable = FALSE)
     )
   )
+  if (isTRUE(factors)) {
+    tbl$grp <- factor(c(
+      rep_len("lvl1", length.out = floor(nrows / 2)),
+      rep_len("lvl2", length.out = floor(nrows / 2))
+    ))
+  }
 
   dname <- dirname(uri)
   if (!dir.exists(dname)) dir.create(dname)
@@ -117,6 +138,7 @@ create_and_populate_experiment <- function(
   obsp_layer_names = NULL,
   varp_layer_names = NULL,
   config = NULL,
+  factors = FALSE,
   mode = NULL
 ) {
 
@@ -135,7 +157,8 @@ create_and_populate_experiment <- function(
 
   experiment$obs <- create_and_populate_obs(
     uri = file.path(uri, "obs"),
-    nrows = n_obs
+    nrows = n_obs,
+    factors = factors
   )
 
   experiment$ms <- SOMACollectionCreate(file.path(uri, "ms"))
@@ -143,7 +166,8 @@ create_and_populate_experiment <- function(
   ms_rna <- SOMAMeasurementCreate(file.path(uri, "ms", "RNA"))
   ms_rna$var <- create_and_populate_var(
     uri = file.path(ms_rna$uri, "var"),
-    nrows = n_var
+    nrows = n_var,
+    factors = factors
   )
   ms_rna$X <- SOMACollectionCreate(file.path(ms_rna$uri, "X"))
 

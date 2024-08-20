@@ -117,6 +117,51 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_assay(var_column_names = 'tomato'))
 })
 
+test_that("Load assay with dropped levels", {
+  skip_if(!extended_tests())
+  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
+
+  uri <- tempfile(pattern="assay-experiment-drop")
+  n_obs <- 20L
+  n_var <- 10L
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts"),
+    factors = TRUE,
+    mode = "READ"
+  )
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  # Create the query
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    var_query = SOMAAxisQuery$new(coords = seq.int(to = floor(n_var / 3)))
+  )
+
+  # Expect both levels to be present in `grp`, even though only one value is
+  expect_s4_class(assay <- query$to_seurat_assay(), "Assay")
+  expect_in("grp", names(assay[[]]))
+  expect_s3_class(grp <- assay[["grp", drop = TRUE]], "factor")
+  expect_identical(levels(grp), c("lvl1", "lvl2"))
+  expect_identical(unique(as.vector(grp)), "lvl1")
+
+  # Do the same, but drop levels
+  expect_s4_class(dropped <- query$to_seurat_assay(drop_levels = TRUE), "Assay")
+  expect_in("grp", names(dropped[[]]))
+  expect_s3_class(drp <- dropped[["grp", drop = TRUE]], "factor")
+  expect_identical(levels(drp), "lvl1")
+  expect_identical(unique(as.vector(drp)), "lvl1")
+
+  # Test assertions
+  expect_error(query$to_seurat_assay(drop_levels = NA))
+  expect_error(query$to_seurat_assay(drop_levels = 1L))
+  expect_error(query$to_seurat_assay(drop_levels = 'drop'))
+  expect_error(query$to_seurat_assay(drop_levels = c(TRUE, TRUE)))
+})
+
 test_that("Load assay with SeuratObject v5 returns v3 assays", {
   skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', '4.9.9.9094')

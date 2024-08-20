@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+import os
 from typing import Dict, List
 
 import numpy as np
@@ -1519,13 +1520,30 @@ def test_enum_schema_report(tmp_path):
 def test_nullable(tmp_path):
     uri = tmp_path.as_posix()
 
+    # Arrow fields are nullable by default.  They can be explicitly set nullable
+    # or non-nullable via the nullable kwarg to pa.field.  Also, they can be
+    # explicitly set nullable via metadata. The latter, if present, overrides
+    # the former.
     asch = pa.schema(
         [
             pa.field("int", pa.int32()),
             pa.field("bool", pa.bool_()),
             pa.field("ord", pa.dictionary(pa.int64(), pa.string())),
+            pa.field("no-meta-flag-unspecified", pa.int32()),
+            pa.field("no-meta-flag-true", pa.int32(), nullable=True),
+            pa.field("no-meta-flag-false", pa.int32(), nullable=False),
+            pa.field("yes-meta-flag-unspecified", pa.int32()),
+            pa.field("yes-meta-flag-true", pa.int32(), nullable=True),
+            pa.field("yes-meta-flag-false", pa.int32(), nullable=False),
         ],
-        metadata={"int": "nullable", "bool": "nullable", "ord": "nullable"},
+        metadata={
+            "int": "nullable",
+            "bool": "nullable",
+            "ord": "nullable",
+            "yes-meta-flag-unspecified": "nullable",
+            "yes-meta-flag-true": "nullable",
+            "yes-meta-flag-false": "nullable",
+        },
     )
 
     pydict = {}
@@ -1535,6 +1553,12 @@ def test_nullable(tmp_path):
     pydict["ord"] = pd.Categorical(
         ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
     )
+    pydict["no-meta-flag-unspecified"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["no-meta-flag-true"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["no-meta-flag-false"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    pydict["yes-meta-flag-unspecified"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["yes-meta-flag-true"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["yes-meta-flag-false"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     data = pa.Table.from_pydict(pydict)
 
     with soma.DataFrame.create(uri, schema=asch) as sdf:
@@ -1543,3 +1567,99 @@ def test_nullable(tmp_path):
     with soma.DataFrame.open(uri, "r") as sdf:
         df = sdf.read().concat().to_pandas()
         assert df.compare(data.to_pandas()).empty
+
+
+def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            pa.field("foo", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("bar", pa.large_string()),
+        ]
+    )
+
+    # +1 creating the schema
+    # +1 evolving the schema
+    with soma.DataFrame.create(uri, schema=schema) as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # +1 evolving the schema
+    with soma.DataFrame.open(uri, "w") as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # +0 no changes to enumeration values
+    with soma.DataFrame.open(uri, "w") as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # +0 no changes enumeration values
+    with soma.DataFrame.open(uri, "w") as sdf:
+        data = {}
+        data["soma_joinid"] = [0, 1, 2, 3, 4]
+        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "d"])
+        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        sdf.write(pa.Table.from_pydict(data))
+
+    # total 3 fragment files
+
+    vfs = tiledb.VFS()
+    # subtract 1 for the __schema/__enumerations directory;
+    # only looking at fragment files
+    assert len(vfs.ls(os.path.join(uri, "__schema"))) - 1 == 3
+
+
+def test_timestamped_schema_evolve(tmp_path):
+    uri = tmp_path.as_posix()
+
+    asch = pa.schema([("myenum", pa.dictionary(pa.int8(), pa.large_string()))])
+
+    # Create at time 1
+    soma.DataFrame.create(uri, schema=asch, tiledb_timestamp=1).close()
+
+    # Write at time 2
+    atbl = pa.Table.from_pydict(
+        {
+            "soma_joinid": [0, 1, 2],
+            "myenum": pd.Series(["a", "b", "a"], dtype="category"),
+        }
+    )
+    with soma.DataFrame.open(uri, "w", tiledb_timestamp=2) as sdf:
+        sdf.write(atbl)
+
+    # Write at time 3
+    atbl = pa.Table.from_pydict(
+        {
+            "soma_joinid": [3, 4],
+            "myenum": pd.Series(["b", "b"], dtype="category"),
+        }
+    )
+    with soma.DataFrame.open(uri, "w", tiledb_timestamp=3) as sdf:
+        sdf.write(atbl)
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=1) as sdf:
+        table = sdf.read().concat()
+        assert table["myenum"].to_pylist() == []
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=2) as sdf:
+        table = sdf.read().concat()
+        assert table["myenum"].to_pylist() == ["a", "b", "a"]
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=3) as sdf:
+        table = sdf.read().concat()
+        assert table["myenum"].to_pylist() == ["a", "b", "a", "b", "b"]
+
+    with soma.DataFrame.open(uri) as sdf:
+        table = sdf.read().concat()
+        assert table["myenum"].to_pylist() == ["a", "b", "a", "b", "b"]

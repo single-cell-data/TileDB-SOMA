@@ -5,7 +5,7 @@ Test join-id registrations for ingesting multiple AnnData objects into a single 
 import math
 import tempfile
 from contextlib import nullcontext
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence, Tuple, Union
 
 import anndata as ad
 import numpy as np
@@ -14,7 +14,9 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io._registration as registration
-from tiledbsoma._util import verify_obs_and_var_eq
+from tiledbsoma.io._registration import signatures
+
+from ._util import assert_adata_equal
 
 
 def _create_anndata(
@@ -24,7 +26,6 @@ def _create_anndata(
     obs_field_name: str,
     var_field_name: str,
     X_value_base: int,
-    measurement_name: str,
     raw_var_ids: Optional[Sequence[str]] = None,
 ):
     n_obs = len(obs_ids)
@@ -160,7 +161,6 @@ def create_anndata_canned(which: int, obs_field_name: str, var_field_name: str):
         var_ids=var_ids,
         raw_var_ids=raw_var_ids,
         X_value_base=X_value_base,
-        measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
     )
@@ -189,7 +189,6 @@ def anndata_larger():
         obs_ids=["id_%08d" % e for e in range(1000)],
         var_ids=["AKT1", "APOE", "ESR1", "TP53", "VEGFA", "ZZZ3"],
         X_value_base=0,
-        measurement_name="measname",
         obs_field_name="cell_id",
         var_field_name="gene_id",
     )
@@ -203,160 +202,60 @@ def soma_larger(anndata_larger):
     return uri
 
 
-@pytest.mark.parametrize(
-    "args",
-    [
-        # SOMA ID column is to be obs_id, and it is the Pandas index named "obs_id"
-        {
-            "do_set_index": True,
-            "index_name_to_set": "obs_id",
-            "do_rename_axis": False,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "obs_id",
-            "expected_signature": {"obs_id": "string", "alt_id": "string"},
-        },
-        # SOMA ID column is to be obs_id, and it is the Pandas index named "index"
-        {
-            "do_set_index": True,
-            "index_name_to_set": "obs_id",
-            "do_rename_axis": True,
-            "axis_name_to_set": "index",
-            "registration_index_column_name": "obs_id",
-            "expected_signature": {"obs_id": "string", "alt_id": "string"},
-        },
-        # SOMA ID column is to be obs_id, and it is the Pandas unnamed index
-        {
-            "do_set_index": True,
-            "index_name_to_set": "obs_id",
-            "do_rename_axis": True,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "obs_id",
-            "expected_signature": {"obs_id": "string", "alt_id": "string"},
-        },
-        # SOMA ID column is to be obs_id, and the Pandas index is named something else
-        {
-            "do_set_index": True,
-            "index_name_to_set": "alt_id",
-            "do_rename_axis": False,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "obs_id",
-            "expected_signature": {"alt_id": "string", "obs_id": "string"},
-        },
-        # SOMA ID column is to be obs_id, and the Pandas index is unnamed
-        {
-            "do_set_index": True,
-            "index_name_to_set": "alt_id",
-            "do_rename_axis": True,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "obs_id",
-            "expected_signature": {"obs_id": "string"},
-        },
-        # SOMA ID column is to be obs_id, and the Pandas index is named "index"
-        {
-            "do_set_index": True,
-            "index_name_to_set": "alt_id",
-            "do_rename_axis": True,
-            "axis_name_to_set": "index",
-            "registration_index_column_name": "obs_id",
-            "expected_signature": {"obs_id": "string"},
-        },
-        # SOMA ID column is to be obs_id, and the Pandas index is implicitized integers
-        {
-            "do_set_index": False,
-            "index_name_to_set": None,
-            "do_rename_axis": False,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "obs_id",
-            "expected_signature": {"alt_id": "string", "obs_id": "string"},
-        },
-        # SOMA ID column is to be alt_id, and it is the Pandas index named "alt_id"
-        {
-            "do_set_index": True,
-            "index_name_to_set": "alt_id",
-            "do_rename_axis": False,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "alt_id",
-            "expected_signature": {"alt_id": "string", "obs_id": "string"},
-        },
-        # SOMA ID column is to be alt_id, and it is the Pandas index named "index"
-        {
-            "do_set_index": True,
-            "index_name_to_set": "alt_id",
-            "do_rename_axis": True,
-            "axis_name_to_set": "index",
-            "registration_index_column_name": "alt_id",
-            "expected_signature": {"alt_id": "string", "obs_id": "string"},
-        },
-        # SOMA ID column is to be alt_id, and it is the Pandas unnamed index
-        {
-            "do_set_index": True,
-            "index_name_to_set": "alt_id",
-            "do_rename_axis": True,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "alt_id",
-            "expected_signature": {"alt_id": "string", "obs_id": "string"},
-        },
-        # SOMA ID column is to be alt_id, and the Pandas index is named something else
-        {
-            "do_set_index": True,
-            "index_name_to_set": "obs_id",
-            "do_rename_axis": False,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "alt_id",
-            "expected_signature": {"obs_id": "string", "alt_id": "string"},
-        },
-        # SOMA ID column is to be alt_id, and the Pandas index is unnamed
-        {
-            "do_set_index": True,
-            "index_name_to_set": "obs_id",
-            "do_rename_axis": True,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "alt_id",
-            "expected_signature": {"alt_id": "string"},
-        },
-        # SOMA ID column is to be alt_id, and the Pandas index is named "index"
-        {
-            "do_set_index": True,
-            "index_name_to_set": "obs_id",
-            "do_rename_axis": True,
-            "axis_name_to_set": "index",
-            "registration_index_column_name": "alt_id",
-            "expected_signature": {"alt_id": "string"},
-        },
-        # SOMA ID column is to be alt_id, and the Pandas index is implicitized integers
-        {
-            "do_set_index": False,
-            "index_name_to_set": None,
-            "do_rename_axis": False,
-            "axis_name_to_set": None,
-            "registration_index_column_name": "alt_id",
-            "expected_signature": {"alt_id": "string", "obs_id": "string"},
-        },
-    ],
+# fmt: off
+PANDAS_INDEXING_TEST_DF = pd.DataFrame(
+    data={
+        "soma_joinid": np.arange(3, dtype=np.int64),
+        "alt_id": ["A", "C", "G"],
+        "obs_id": ["AT", "CT", "GT"],
+    }
 )
-def test_pandas_indexing(args):
-    """
-    The index-column name for registration can take a variety of forms.
-    This test exercises all of them.
-    """
+@pytest.mark.parametrize(
+    [          "index_col_and_name"      ,  "default_index_name"  ,  "signature_col_names"  ],
+    [   # |   Set this   |  If present,  |     signatures.py      |        Expected:        |
+        # |  col as idx  | rename index  |  `default_index_name`  |   signature col names   |
 
-    df = pd.DataFrame(
-        data={
-            "soma_joinid": np.arange(3, dtype=np.int64),
-            "alt_id": ["A", "C", "G"],
-            "obs_id": ["AT", "CT", "GT"],
-        }
-    )
-    if args["do_set_index"]:
-        df.set_index(args["index_name_to_set"], inplace=True)
-    if args["do_rename_axis"]:
-        df.rename_axis(args["axis_name_to_set"], inplace=True)
+        # `default_index_name` matches column that was made index ⇒ both columns present in signature
+        [ (   "obs_id"   ,               ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
+        [ (   "obs_id"   ,    "index"    ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
+        [ (   "obs_id"   ,      None     ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
+        [ (   "alt_id"   ,               ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
+        [ (   "alt_id"   ,    "index"    ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
+        [ (   "alt_id"   ,      None     ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
 
-    actual_signature = registration.signatures._string_dict_from_pandas_dataframe(
-        df,
-        args["registration_index_column_name"],
-    )
-    assert actual_signature == args["expected_signature"]
+        # `default_index_name` is the column that was not made index ⇒ index dropped when named "index" or None
+        [ (   "alt_id"   ,               ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
+        [ (   "alt_id"   ,    "index"    ),       "obs_id"        , ( "obs_id" ,          ) ],
+        [ (   "alt_id"   ,      None     ),       "obs_id"        , ( "obs_id" ,          ) ],
+        [ (   "obs_id"   ,               ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
+        [ (   "obs_id"   ,    "index"    ),       "alt_id"        , ( "alt_id" ,          ) ],
+        [ (   "obs_id"   ,      None     ),       "alt_id"        , ( "alt_id" ,          ) ],
+
+        # default RangeIndex ⇒ columns are preserved
+        [ (      None    ,               ),       "obs_id"        , ( "obs_id" , "alt_id" ) ],
+        [ (      None    ,               ),       "alt_id"        , ( "alt_id" , "obs_id" ) ],
+    ]
+)
+def test_pandas_indexing(
+    index_col_and_name: Union[Tuple[Optional[str]], Tuple[str, Optional[str]]],
+    default_index_name: str,
+    signature_col_names: List[Union[str, Tuple[str, str]]],
+):
+    """
+    The `default_index_name` for registration can interact with column- and index-names in a variety of ways; this test
+    exercises several of them.
+    """
+    df = PANDAS_INDEXING_TEST_DF.copy()
+    index_col = index_col_and_name[0]
+    if index_col is not None:
+        df.set_index(index_col, inplace=True)
+        if len(index_col_and_name) == 2:
+            df.index.name = index_col_and_name[1]
+
+    actual_signature = signatures._string_dict_from_pandas_dataframe(df, default_index_name)
+    expected_signature = dict((col, "string") for col in signature_col_names)
+    assert actual_signature == expected_signature
+# fmt: on
 
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
@@ -820,7 +719,7 @@ def test_append_items_with_experiment(obs_field_name, var_field_name):
             registration_mapping=rd,
         )
 
-    verify_obs_and_var_eq(original, adata2)
+    assert_adata_equal(original, adata2)
 
     expect_obs_soma_joinids = list(range(6))
     expect_var_soma_joinids = list(range(5))
@@ -926,7 +825,7 @@ def test_append_with_disjoint_measurements(
         registration_mapping=rd,
     )
 
-    verify_obs_and_var_eq(original, anndata2)
+    assert_adata_equal(original, anndata2)
 
     # exp/obs, use_same_cells=True:                       exp/obs, use_same_cells=False:
     #    soma_joinid obs_id cell_type  is_primary_data       soma_joinid obs_id cell_type  is_primary_data
@@ -1240,7 +1139,6 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
         X_value_base=0,
-        measurement_name=measurement_name,
     )
 
     bdata = _create_anndata(
@@ -1249,7 +1147,6 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
         X_value_base=100,
-        measurement_name=measurement_name,
     )
 
     adata.obs["enum"] = pd.Categorical(obs_ids_a, categories=obs_ids_a)

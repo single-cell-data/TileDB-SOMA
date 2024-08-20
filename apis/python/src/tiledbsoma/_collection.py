@@ -529,6 +529,11 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         )
         return self
 
+    def members(self) -> Dict[str, Tuple[str, str]]:
+        """Get a mapping of {member_name: (uri, soma_object_type)}"""
+        handle = cast(_tdb_handles.SOMAGroupWrapper[Any], self._handle)
+        return handle.members()
+
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """Default collection __setattr__"""
         self.set(key, value, use_relative_uri=None)
@@ -629,7 +634,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             self._handle.writer.remove(key)
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
-                raise KeyError(f"{key!r} does not exist in {self}") from tdbe
+                raise KeyError(tdbe) from tdbe
             raise
         self._contents.pop(key, None)
         self._mutated_keys.add(key)

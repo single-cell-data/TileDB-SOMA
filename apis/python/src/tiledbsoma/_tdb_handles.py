@@ -23,6 +23,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 import attrs
@@ -129,7 +130,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(f"{uri!r} does not exist") from tdbe
+                raise DoesNotExistError(tdbe) from tdbe
             raise
         return handle
 
@@ -150,7 +151,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(f"{handle.uri!r} does not exist") from tdbe
+                raise DoesNotExistError(tdbe) from tdbe
             raise
         return handle
 
@@ -213,13 +214,6 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         self.metadata._write()
         self._handle.close()
         self.closed = True
-
-    def _flush_hack(self) -> None:
-        """On write handles, flushes pending writes. Does nothing to reads."""
-        if self.mode == "w":
-            self.metadata._write()
-            self._handle.close()
-            self._handle = self._opener(self.uri, "w", self.context, self.timestamp_ms)
 
     def _check_open(self) -> None:
         if self.closed:
@@ -295,6 +289,9 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
     @property
     def meta(self) -> "MetadataWrapper":
         return self.metadata
+
+    def members(self) -> Dict[str, Tuple[str, str]]:
+        return cast(Dict[str, Tuple[str, str]], self._handle.members())
 
 
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):

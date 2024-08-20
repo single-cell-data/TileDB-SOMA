@@ -4,7 +4,8 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io._registration.signatures as signatures
-from tiledbsoma._util import verify_obs_and_var_eq
+
+from ._util import assert_adata_equal
 
 
 def test_signature_serdes(conftest_pbmc_small_h5ad_path, conftest_pbmc_small):
@@ -16,7 +17,7 @@ def test_signature_serdes(conftest_pbmc_small_h5ad_path, conftest_pbmc_small):
 
     original = conftest_pbmc_small.copy()
     sig = signatures.Signature.from_anndata(conftest_pbmc_small)
-    verify_obs_and_var_eq(original, conftest_pbmc_small)
+    assert_adata_equal(original, conftest_pbmc_small)
 
     text2 = sig.to_json()
     assert sig == signatures.Signature.from_json(text2)
@@ -27,7 +28,7 @@ def test_signature_serdes(conftest_pbmc_small_h5ad_path, conftest_pbmc_small):
     output_path = tempdir.name
 
     uri = tiledbsoma.io.from_anndata(output_path, conftest_pbmc_small, "RNA")
-    verify_obs_and_var_eq(original, conftest_pbmc_small)
+    assert_adata_equal(original, conftest_pbmc_small)
 
     sig = signatures.Signature.from_soma_experiment(uri)
     text3 = sig.to_json()
@@ -43,12 +44,12 @@ def test_compatible(conftest_pbmc_small):
 
     original = conftest_pbmc_small.copy()
     sig1 = signatures.Signature.from_anndata(conftest_pbmc_small)
-    verify_obs_and_var_eq(original, conftest_pbmc_small)
+    assert_adata_equal(original, conftest_pbmc_small)
 
     tempdir = tempfile.TemporaryDirectory()
     output_path = tempdir.name
     uri = tiledbsoma.io.from_anndata(output_path, conftest_pbmc_small, "RNA")
-    verify_obs_and_var_eq(original, conftest_pbmc_small)
+    assert_adata_equal(original, conftest_pbmc_small)
     sig2 = signatures.Signature.from_soma_experiment(uri)
 
     # Check that single inputs result in zero incompatibility
@@ -72,7 +73,7 @@ def test_compatible(conftest_pbmc_small):
 
     original = adata3.copy()
     sig3 = signatures.Signature.from_anndata(adata3)
-    verify_obs_and_var_eq(original, adata3)
+    assert_adata_equal(original, adata3)
 
     with pytest.raises(ValueError):
         signatures.Signature.check_compatible({"orig": sig1, "anndata3": sig3})

@@ -7,17 +7,16 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 from anndata import AnnData
+from pandas._testing import assert_frame_equal
 from pyarrow import Schema
 
 import tiledbsoma
 import tiledbsoma.io
-from tiledbsoma._util import (
-    anndata_dataframe_unmodified,
-    anndata_dataframe_unmodified_nan_safe,
-    verify_obs_and_var_eq,
-)
 
-from tests._util import maybe_raises
+from ._util import (
+    assert_adata_equal,
+    maybe_raises,
+)
 
 
 @dataclass
@@ -54,7 +53,7 @@ def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
 
         # Check that the anndata-to-soma ingestion didn't modify the old_anndata object (which is
         # passed by reference to the ingestor) while it was doing the ingest
-        verify_obs_and_var_eq(old_anndata, conftest_pbmc_small)
+        assert_adata_equal(old_anndata, conftest_pbmc_small)
 
         use_readback = request.param
 
@@ -129,7 +128,6 @@ def verify_updates(
     obs,
     var,
     exc: Optional[Type[ValueError]] = None,
-    nan_safe: bool = False,
 ):
     """
     Calls `update_obs` and `update_var` on the experiment. Also verifies that the
@@ -146,13 +144,8 @@ def verify_updates(
         with maybe_raises(exc):
             tiledbsoma.io.update_var(exp, var, "RNA")
 
-    checker = (
-        anndata_dataframe_unmodified_nan_safe
-        if nan_safe
-        else anndata_dataframe_unmodified
-    )
-    assert checker(obs0, obs)
-    assert checker(var0, var)
+    assert_frame_equal(obs0, obs)
+    assert_frame_equal(var0, var)
 
 
 # `pytest.mark.parametrize` wrapper for running a test twice:
@@ -169,7 +162,7 @@ def test_no_change(
 ):
     verify_updates(experiment_path, new_obs, new_var)
     verify_schemas(experiment_path, obs_schema, var_schema)
-    verify_obs_and_var_eq(old_anndata, new_anndata)
+    assert_adata_equal(old_anndata, new_anndata)
 
 
 @with_and_without_soma_roundtrip
@@ -265,7 +258,7 @@ def test_change_counts(
         verify_updates(experiment_path, new_obs2, new_var2)
     else:
         verify_updates(experiment_path, new_obs2, new_var2, exc=ValueError)
-        verify_obs_and_var_eq(old_anndata, new_anndata)
+        assert_adata_equal(old_anndata, new_anndata)
         verify_schemas(experiment_path, obs_schema, var_schema)
 
 
@@ -277,7 +270,7 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
     #
     # One way:
     # * Create columns with non-nulls before from_anndata
-    # * Ingest, having those new column with non-nulls
+    # * Ingest, having those new columns with non-nulls
     # * Call update_obs to set the columns to have nulls
     #
     # Other way:
@@ -311,6 +304,4 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
     conftest_pbmc3k_adata.obs["batch_id"] = pd.NA
     conftest_pbmc3k_adata.obs["myfloat"] = np.nan
     # We need nan_safe since pd.NA != pd.NA
-    verify_updates(
-        uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var, nan_safe=True
-    )
+    verify_updates(uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var)

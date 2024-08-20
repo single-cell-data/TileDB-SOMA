@@ -111,7 +111,7 @@ TileDBObject <- R6::R6Class(
       } else {
         stop("Unknown object type", call. = FALSE)
       }
-      tiledb::tiledb_object_type(self$uri, ctx = self$tiledbsoma_ctx$context()) %in% expected_type
+      get_tiledb_object_type(self$uri, ctx = soma_context()) %in% expected_type
     }
   ),
 

@@ -13,7 +13,7 @@ from typing_extensions import Literal
 
 import tiledbsoma as soma
 from tiledbsoma import _collection, _factory, _soma_object
-from tiledbsoma._exception import DoesNotExistError
+from tiledbsoma._exception import DoesNotExistError, SOMAError
 from tiledbsoma.options import SOMATileDBContext
 
 from tests._util import raises_no_typeguard
@@ -144,6 +144,7 @@ def test_collection_mapping(soma_object, tmp_path):
     assert list(k for k in c) == list(c.keys())
     assert len(c) == 1
     assert [k for k in c] == ["mumble"]
+    assert c.members() == {"mumble": (soma_object.uri, "SOMACollection")}
 
     # TEMPORARY: This should no longer raise an error once TileDB supports
     # replacing an existing group member.
@@ -278,13 +279,13 @@ def test_collection_update_on_set(tmp_path):
     assert set(sc.keys()) == set([])
 
     sc["A"] = A
-    assert set(sc.keys()) == set(["A"])
+    assert set(sc.keys()) == {"A"}
     assert sc["A"] == A
 
-    pytest.xfail(reason="replacing entries is not supported")
-    sc["A"] = B
-    assert set(sc.keys()) == set(["A"])
-    assert sc["A"] == B
+    with pytest.raises(SOMAError):
+        sc["A"] = B
+    assert set(sc.keys()) == {"A"}
+    assert sc["A"] == A
 
 
 def test_cascading_close(tmp_path: pathlib.Path):

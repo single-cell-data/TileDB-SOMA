@@ -33,23 +33,27 @@ jobs:
     runs-on: ${{ inputs.os }}
     steps:
     - name: Checkout TileDB-SOMA
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python_version }}
-        cache: pip
-        cache-dependency-path: ./.github/workflows/python-ci-single.yml
 
     - name: Restore pre-commit cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pre-commit
-        key: pre-commit-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('.github/workflows/python-ci-single.yml') }}
+        key: pre-commit-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('.github/workflows/python-ci-single.yml', '.pre-commit-config.yaml') }}
+
+    - name: Install pre-commit
+      run: pip -v install pre-commit
+
+    - name: Log pip dependencies
+      run: pip list
 
     - name: Run pre-commit hooks on all files
-      run: python -m pip -v install pre-commit && pre-commit run -a -v
+      run: pre-commit run -a -v
 
     # Skip files in apis/r/src which are:
     # * nanoarrow.c/h
@@ -80,20 +84,20 @@ jobs:
         xcode-version: '13.4'
 
     - name: Checkout TileDB-SOMA
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0  # ensure we get all tags to inform package version determination
 
     - name: Set up Python ${{ inputs.python_version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python_version }}
         cache: pip
         cache-dependency-path: ./apis/python/setup.py
 
-# Experiment for MacOS CI false negatives ...
+# Experiment for macOS CI false negatives ...
 #    - name: Cache native libraries
-#      uses: actions/cache@v3
+#      uses: actions/cache@v4
 #      with:
 #        path: |
 #          build
@@ -101,7 +105,7 @@ jobs:
 #        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
     - name: Install tiledbsoma
-      run: python -m pip -v install -e apis/python[dev,ml] -C "--build-option=--no-tiledb-deprecated"
+      run: pip -v install -e apis/python[dev,ml] -C "--build-option=--no-tiledb-deprecated"
       env:
         CC: ${{ inputs.cc }}
         CXX: ${{ inputs.cxx }}
@@ -134,7 +138,7 @@ jobs:
 
     - name: Report coverage to Codecov
       if: inputs.report_codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         flags: python
         # Although Codecov isn't supposed to require an auth token for public repos like this one,

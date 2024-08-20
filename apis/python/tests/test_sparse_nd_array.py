@@ -532,17 +532,6 @@ def test_sparse_nd_array_nnz(tmp_path):
         assert t.non_zero_length == a.nnz
 
 
-def test_sparse_nd_array_reshape(tmp_path):
-    """
-    Reshape currently unimplemented.
-    """
-    with soma.SparseNDArray.create(
-        tmp_path.as_posix(), type=pa.int32(), shape=(10, 10, 10)
-    ) as a:
-        with pytest.raises(NotImplementedError):
-            assert a.reshape((100, 10, 1))
-
-
 @pytest.mark.parametrize(
     "shape",
     [(4,), (4, 5, 6)],
@@ -1875,11 +1864,10 @@ def test_global_writes(tmp_path):
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
         assert A.read().tables().concat() == data
 
-    with pytest.warns(DeprecationWarning) as warning:
+    with pytest.raises(ValueError):
+        # Takes TileDBWriteOptions as of TileDB-SOMA 1.13
         with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
             A.write(
                 data,
                 platform_config=soma.TileDBCreateOptions(),
             )
-        assert "The write parameter now takes in TileDBWriteOptions instead "
-        "of TileDBCreateOptions" == warning[0].message

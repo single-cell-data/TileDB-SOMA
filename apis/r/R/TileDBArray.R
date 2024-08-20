@@ -38,7 +38,6 @@ TileDBArray <- R6::R6Class(
       }
 
       ## TODO -- cannot do here while needed for array case does not work for data frame case
-      #tdbtype <- tiledb::datatype(tiledb::attrs(tiledb::schema(private$.tiledb_array))[[1]])
       #private$.type <- arrow_type_from_tiledb_type(tdbtype)
 
       private$update_metadata_cache()
@@ -101,13 +100,12 @@ TileDBArray <- R6::R6Class(
 
       private$check_open_for_write()
 
-      dev_null <- mapply(
-        FUN = tiledb::tiledb_put_metadata,
-        key = names(metadata),
-        val = metadata,
-        MoreArgs = list(arr = self$object),
-        SIMPLIFY = FALSE
-      )
+      for (nm in names(metadata)) {
+          #spdl::warn("[set_metadata] key {}", nm)
+          val <- metadata[[nm]]
+          spdl::debug("[set_metadata] setting key {} to {} ({})", nm, val, class(val))
+          set_metadata(self$uri, nm, val, class(val), TRUE, soma_context())
+      }
 
       dev_null <- mapply(
         FUN = private$add_cached_metadata,
@@ -149,7 +147,8 @@ TileDBArray <- R6::R6Class(
     },
 
     #' @description Retrieve the range of indexes for a dimension that were
-    #'  explicitly written.
+    #'  explicitly written.  This method is deprecated as of TileDB-SOMA 1.13, and will be
+    #' removed in TileDB-SOMA 1.14.
     #' @param simplify Return a vector of [`bit64::integer64`]s containing only
     #' the upper bounds.
     #' @param index1 Return the used shape with 1-based indices (0-based indices are returned by default)
@@ -160,6 +159,7 @@ TileDBArray <- R6::R6Class(
         isTRUE(simplify) || isFALSE(simplify),
         isTRUE(index1) || isFALSE(index1)
       )
+      .Deprecated(new="shape", msg="The 'used_shape' function will be removed in TileDB-SOMA 1.14.")
       dims <- self$dimnames()
       utilized <- vector(mode = 'list', length = length(dims))
       names(utilized) <- dims
@@ -356,7 +356,7 @@ TileDBArray <- R6::R6Class(
         array_handle <- tiledb::tiledb_array_open(array_handle, type = "READ")
       }
 
-      private$.metadata_cache <- tiledb::tiledb_get_all_metadata(array_handle)
+      private$.metadata_cache <- get_all_metadata(self$uri, TRUE, soma_context())
 
       if (private$.mode == "WRITE") {
         tiledb::tiledb_array_close(array_handle)

@@ -305,7 +305,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     return mq_->results();
 }
 
-Enumeration SOMAArray::_extend_enumeration(
+bool SOMAArray::_extend_enumeration(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
@@ -362,7 +362,7 @@ Enumeration SOMAArray::_extend_enumeration(
     }
 }
 
-Enumeration SOMAArray::_extend_and_evolve_schema_str(
+bool SOMAArray::_extend_and_evolve_schema_str(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
@@ -430,10 +430,20 @@ Enumeration SOMAArray::_extend_and_evolve_schema_str(
 
         index_schema->format = ArrowAdapter::to_arrow_format(disk_index_type)
                                    .data();
+        return true;
+    } else {
+        // Example:
+        //
+        // * Already on storage/schema there are values a,b,c with indices
+        //   0,1,2.
+        // * User appends values b,c which, within the Arrow data coming in
+        //   from the user, have indices 0,1.
+        // * We need to remap those to 1,2.
 
-        return extended_enmr;
+        SOMAArray::_remap_indexes(
+            column_name, enmr, enums_in_write, index_schema, index_array);
     }
-    return enmr;
+    return false;
 }
 
 uint64_t SOMAArray::_get_max_capacity(tiledb_datatype_t index_type) {
@@ -459,6 +469,18 @@ uint64_t SOMAArray::_get_max_capacity(tiledb_datatype_t index_type) {
                 "Saw invalid enumeration index type when trying to extend "
                 "enumeration");
     }
+}
+
+ArraySchemaEvolution SOMAArray::_make_se() {
+    ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+    if (timestamp_.has_value()) {
+        // ArraySchemaEvolution requires us to pair (t2, t2) even if our range
+        // is (t1, t2).
+        auto v = timestamp_.value();
+        TimestampRange tr(v.second, v.second);
+        se.set_timestamp_range(tr);
+    }
+    return se;
 }
 
 void SOMAArray::set_column_data(
@@ -728,7 +750,8 @@ ArrowTable SOMAArray::_cast_table(
 
     // Go through all columns in the ArrowTable and cast the values to what is
     // in the ArraySchema on disk
-    ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+    ArraySchemaEvolution se = _make_se();
+    bool evolve_schema = false;
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
         auto orig_arrow_sch_ = arrow_schema->children[i];
         auto orig_arrow_arr_ = arrow_array->children[i];
@@ -736,20 +759,23 @@ ArrowTable SOMAArray::_cast_table(
                                   ->children[i] = new ArrowSchema;
         auto new_arrow_arr_ = casted_arrow_array->children[i] = new ArrowArray;
 
-        SOMAArray::_create_and_cast_column(
+        bool enmr_extended = SOMAArray::_create_and_cast_column(
             orig_arrow_sch_,
             orig_arrow_arr_,
             new_arrow_sch_,
             new_arrow_arr_,
             se);
+        evolve_schema = evolve_schema || enmr_extended;
     }
-    se.array_evolve(uri_);
+    if (evolve_schema) {
+        se.array_evolve(uri_);
+    }
 
     return ArrowTable(
         std::move(casted_arrow_array), std::move(casted_arrow_schema));
 }
 
-void SOMAArray::_create_and_cast_column(
+bool SOMAArray::_create_and_cast_column(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
@@ -796,9 +822,10 @@ void SOMAArray::_create_and_cast_column(
                 "[SOMAArray] {} requires dictionary entry", column_name));
         }
 
-        auto extended_enmr = _extend_enumeration(
+        return _extend_enumeration(
             value_schema, value_array, index_schema, index_array, se);
     }
+    return false;
 }
 
 void SOMAArray::_create_column(
@@ -1273,11 +1300,12 @@ void SOMAArray::set_metadata(
     const std::string& key,
     tiledb_datatype_t value_type,
     uint32_t value_num,
-    const void* value) {
-    if (key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
+    const void* value,
+    bool force) {
+    if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
 
-    if (key.compare(ENCODING_VERSION_KEY) == 0)
+    if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
 
     arr_->put_metadata(key, value_type, value_num, value);
