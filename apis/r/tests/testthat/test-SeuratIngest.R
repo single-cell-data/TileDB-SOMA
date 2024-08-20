@@ -166,6 +166,7 @@ test_that("Write v5 in-memory Assay mechanics", {
   fmat <- methods::slot(rna, name = "features")
   cmat <- methods::slot(rna, name = "cells")
   ragged_hint <- .ragged_array_hint()
+  type_hint <- names(.type_hint(NULL))
   for (lyr in SeuratObject::Layers(rna)) {
     idx <- which(cmat[, lyr])
     jdx <- which(fmat[, lyr])
@@ -178,6 +179,13 @@ test_that("Write v5 in-memory Assay mechanics", {
         info = lyr
       ),
       expect_null(ms$X$get(lyr)$get_metadata(names(ragged_hint)), info = lyr)
+    )
+    expect_type(th <- ms$X$get(lyr)$get_metadata(type_hint), 'character')
+    expect_length(th, 1L)
+    switch(
+      EXPR = lyr,
+      scale.data = expect_identical(th, 'matrix', info = lyr),
+      expect_true(grepl('^Matrix', x = th), info = lyr)
     )
   }
 
@@ -210,6 +218,10 @@ test_that("Write v5 in-memory Assay mechanics", {
     expect_equivalent(
       ms2$X$get(lyr)$get_metadata(names(ragged_hint)),
       ragged_hint[[1L]],
+      info = lyr
+    )
+    expect_true(
+      grepl('^Matrix', x = ms2$X$get(lyr)$get_metadata(type_hint)),
       info = lyr
     )
   }
