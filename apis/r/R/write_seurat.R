@@ -22,25 +22,26 @@ NULL
 #'
 NULL
 
-#' @return \code{Assay} method: a \code{\link{SOMAMeasurement}} with the
-#' data from \code{x}, returned opened for write
+#' @return \code{Assay} and \code{Assay5} methods: a
+#' \code{\link{SOMAMeasurement}} with the data from \code{x},
+#' returned opened for write
 #'
 #' @rdname write_soma_seurat_sub
 #'
-#' @section Writing \code{\link[SeuratObject]{Assay}s}:
+#' @section Writing v3 \code{\link[SeuratObject]{Assay}s}:
 #' \pkg{Seurat} \code{\link[SeuratObject]{Assay}} objects are written out as
 #' individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 #' \itemize{
-#'  \item the \dQuote{\code{data}} matrix is written out a
-#'   \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+#'  \item the \dQuote{\code{data}} matrix is written out as a
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 #'   \dQuote{\code{data}} within the \dQuote{\code{X}} group
 #'  \item the \dQuote{\code{counts}} matrix, if not
-#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out a
-#'   \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 #'   \dQuote{\code{counts}} within the \dQuote{\code{X}} group
 #'  \item the \dQuote{\code{scale.data}} matrix, if not
-#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out a
-#'   \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 #'   \dQuote{\code{scale_data}} within the \dQuote{\code{X}} group
 #'  \item feature-level meta data is written out as a
 #'   \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
@@ -207,6 +208,37 @@ write_soma.Assay <- function(
   return(ms)
 }
 
+#' @rdname write_soma_seurat_sub
+#'
+#' @section Writing v5 \code{Assays}:
+#' \pkg{Seurat} v5 \code{\link[SeuratObject:Assay5]{Assays}s} are written
+#' out as individual\link[tiledbsoma:SOMAMeasurement]{measurements}:
+#' \itemize{
+#'  \item the layer matrices are written out as
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse arrays} within the
+#'   \dQuote{\code{X}} group
+#'  \item feature-level meta data is written out as a
+#'   \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
+#' }
+#' Expression matrices are transposed (cells as rows) prior to writing. All
+#' other slots, including results from extended assays (eg. \code{SCTAssay},
+#' \code{ChromatinAssay}) are lost\cr
+#' The following bits of metadata are written in various parts of the measurement
+#' \itemize{
+#'  \item \dQuote{\code{soma_ecosystem_seurat_assay_version}}: written at the
+#'   measurement level; indicates the Seurat assay version.
+#'   Set to \dQuote{\code{v5}}
+#'  \item \dQuote{\code{soma_ecosystem_seurat_v5_default_layers}}: written at
+#'   the \dQuote{\code{X}} group level; indicates the
+#'   \link[SeuratObject:DefaultLayer]{default layers}
+#'  \item \dQuote{\code{soma_ecosystem_seurat_v5_ragged}}: written at the
+#'   \dQuote{\code{X/<layer>}} array level; with a value of
+#'   \dQuote{\code{ragged}}, indicates whether or not the layer is ragged
+#'  \item \dQuote{\code{soma_r_type_hint}}: written at the
+#'   \dQuote{\code{X/<layer>}} array level; indicates the \R class and
+#'   defining package (for S4 classes) of the original layer
+#' }
+#'
 #' @method write_soma Assay5
 #' @export
 #'
@@ -278,6 +310,8 @@ write_soma.Assay5 <- function(
   )
   on.exit(X$close(), add = TRUE, after = FALSE)
 
+  X$set_metadata(.layer_hint(SeuratObject::DefaultLayer(x)))
+
   # Pull presence matrices from the v5 assay
   cmat <- methods::slot(x, name = 'cells')
   fmat <- methods::slot(x, name = 'features')
@@ -286,24 +320,32 @@ write_soma.Assay5 <- function(
   for (lyr in SeuratObject::Layers(x)) {
     ldat <- SeuratObject::LayerData(x, layer = lyr)
     if (!inherits(ldat, what = c("matrix", "Matrix"))) {
-      warning("not a matrix")
+      warning(warningCondition(
+        message = sprintf("%s", lyr),
+        class = "unknownMatrixTypeWarning",
+        call = str2lang("write_soma()")
+      ))
       next
     }
+    type <- .type_hint(ifelse(is.matrix(ldat), yes = 'matrix', no = class(ldat)))
     if (all(fmat[, lyr]) && all(cmat[, lyr])) {
       spdl::info("Adding '{}' matrix as '{}'", lyr, lyr)
       tryCatch(
-        expr = write_soma(
-          x = ldat,
-          uri = lyr,
-          soma_parent = X,
-          sparse = TRUE,
-          transpose = TRUE,
-          ingest_mode = ingest_mode,
-          shape = shape,
-          key = lyr,
-          platform_config = platform_config,
-          tiledbsoma_ctx = tiledbsoma_ctx
-        ),
+        expr = {
+          arr <- write_soma(
+            x = ldat,
+            uri = lyr,
+            soma_parent = X,
+            sparse = TRUE,
+            transpose = TRUE,
+            ingest_mode = ingest_mode,
+            shape = shape,
+            key = lyr,
+            platform_config = platform_config,
+            tiledbsoma_ctx = tiledbsoma_ctx
+          )
+          arr$set_metadata(type)
+        },
         error = function(err) {
           if (lyr %in% SeuratObject::DefaultLayer(x)) {
             stop(err)
@@ -329,6 +371,7 @@ write_soma.Assay5 <- function(
     )
     arr$.__enclos_env__$private$.write_coo_dataframe(coo)
     arr$set_metadata(.ragged_array_hint())
+    arr$set_metadata(type)
   }
 
   # Write feature-level meta data
