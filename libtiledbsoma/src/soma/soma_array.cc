@@ -1176,6 +1176,21 @@ uint64_t SOMAArray::nnz_slow() {
 }
 
 std::vector<int64_t> SOMAArray::shape() {
+    // There are two reasons for this:
+    // * Transitional, non-monolithic, phased, careful development for the
+    //   new-shape feature
+    // * Even after the new-shape feature is fully released, there will be old
+    //   arrays on disk that were created before this feature existed.
+    // So this is long-term code.
+    auto current_domain = _get_current_domain();
+    return current_domain.is_empty() ? _tiledb_domain() : _tiledb_current_domain();
+}
+
+std::vector<int64_t> SOMAArray::maxshape() {
+    return _tiledb_domain();
+}
+
+std::vector<int64_t> SOMAArray::_tiledb_domain() {
     std::vector<int64_t> result;
     auto dimensions = mq_->schema()->domain().dimensions();
 
@@ -1200,6 +1215,71 @@ std::vector<int64_t> SOMAArray::shape() {
     }
 
     return result;
+}
+
+std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
+    std::vector<int64_t> result;
+
+    auto current_domain = tiledb::ArraySchemaExperimental::current_domain(
+        *ctx_->tiledb_ctx(), arr_->schema());
+
+    if (current_domain.is_empty()) {
+        throw TileDBSOMAError(
+            "Internal error: current domain requested for an array which does "
+            "not support it");
+    }
+
+    auto t = current_domain.type();
+    if (t != TILEDB_NDRECTANGLE) {
+        throw TileDBSOMAError("current_domain type is not NDRECTANGLE");
+    }
+
+    NDRectangle ndrect = current_domain.ndrectangle();
+
+    for (auto dimension_name : dimension_names()) {
+        // TODO: non-int64 types for SOMADataFrame extra dims.
+        // This simply needs to be integrated with switch statements as in the
+        // legacy code below.
+        auto range = ndrect.range<int64_t>(dimension_name);
+        result.push_back(range[1] + 1);
+    }
+    return result;
+}
+
+void SOMAArray::resize(const std::vector<int64_t>& newshape) {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must be opened in write mode");
+    }
+
+    auto tctx = ctx_->tiledb_ctx();
+    ArraySchema schema = arr_->schema();
+    Domain domain = schema.domain();
+    ArraySchemaEvolution schema_evolution(*tctx);
+    CurrentDomain new_current_domain(*tctx);
+
+    NDRectangle ndrect(*tctx, domain);
+
+    // TODO: non-int64 for DataFrame when it has extra index dims.
+    // This will be via a resize-helper.
+
+    unsigned n = domain.ndim();
+    if ((unsigned)newshape.size() != n) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAArray::resize]: newshape has dimension count {}; array has "
+            "{} ",
+            newshape.size(),
+            n));
+    }
+
+    for (unsigned i = 0; i < n; i++) {
+        ndrect.set_range<int64_t>(
+            domain.dimension(i).name(), 0, newshape[i] - 1);
+    }
+
+    new_current_domain.set_ndrectangle(ndrect);
+    schema_evolution.expand_current_domain(new_current_domain);
+    schema_evolution.array_evolve(uri_);
 }
 
 uint64_t SOMAArray::ndim() const {
