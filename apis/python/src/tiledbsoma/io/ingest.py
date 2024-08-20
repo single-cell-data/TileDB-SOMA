@@ -47,6 +47,7 @@ from .. import (
     Experiment,
     Image2DCollection,
     Measurement,
+    PointCloud,
     Scene,
     SparseNDArray,
     _factory,
@@ -1130,7 +1131,7 @@ def _extract_new_values_for_append(
 
 def _write_arrow_table(
     arrow_table: pa.Table,
-    handle: Union[DataFrame, SparseNDArray],
+    handle: Union[DataFrame, SparseNDArray, PointCloud],
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,
 ) -> None:

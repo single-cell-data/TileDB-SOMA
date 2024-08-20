@@ -29,6 +29,7 @@ from . import (
     _experiment,
     _images,
     _measurement,
+    _point_cloud,
     _scene,
     _soma_object,
     _sparse_nd_array,
@@ -221,6 +222,7 @@ def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
             _images.Image2DCollection,
             _sparse_nd_array.SparseNDArray,
             _scene.Scene,
+            _point_cloud.PointCloud,
         )
     }
     try:
