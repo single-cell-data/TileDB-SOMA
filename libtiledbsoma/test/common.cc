@@ -33,24 +33,6 @@
 #include "common.h"
 
 namespace helper {
-ArraySchema create_schema(
-    Context& ctx, int64_t dim_max, bool allow_duplicates) {
-    // Create schema
-    ArraySchema schema(ctx, TILEDB_SPARSE);
-
-    auto dim = Dimension::create<int64_t>(ctx, "d0", {0, dim_max});
-
-    Domain domain(ctx);
-    domain.add_dimension(dim);
-    schema.set_domain(domain);
-
-    auto attr = Attribute::create<int>(ctx, "a0");
-    schema.add_attribute(attr);
-    schema.set_allows_dups(allow_duplicates);
-    schema.check();
-
-    return schema;
-}
 
 std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema(
     int64_t dim_max) {

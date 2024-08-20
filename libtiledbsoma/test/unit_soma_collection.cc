@@ -56,7 +56,6 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
 
     SOMACollection::create(base_uri, ctx, ts);
     auto index_columns = helper::create_column_index_info(DIM_MAX);
-    auto schema = helper::create_schema(*ctx->tiledb_ctx(), DIM_MAX, true);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"sparse_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
@@ -97,7 +96,6 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
 
     SOMACollection::create(base_uri, ctx, ts);
     auto index_columns = helper::create_column_index_info(DIM_MAX);
-    auto schema = helper::create_schema(*ctx->tiledb_ctx(), DIM_MAX, true);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"dense_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
@@ -175,7 +173,6 @@ TEST_CASE("SOMACollection: add SOMACollection") {
     std::string sub_uri = "mem://unit-test-add-collection/sub";
 
     SOMACollection::create(base_uri, ctx);
-    auto schema = helper::create_schema(*ctx->tiledb_ctx(), DIM_MAX, false);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"subcollection", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
