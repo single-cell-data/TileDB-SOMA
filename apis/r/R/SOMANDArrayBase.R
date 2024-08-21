@@ -61,8 +61,8 @@ SOMANDArrayBase <- R6::R6Class(
       createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp,
                             private$.is_sparse,
                             if (private$.is_sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
-                            tiledb_create_options$to_list(FALSE), soma_context())
-      private$write_object_type_metadata(timestamps)
+                            tiledb_create_options$to_list(FALSE), soma_context(), timestamps)
+      #private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?
 
       self$open("WRITE", internal_use_only = "allowed_use")
       self

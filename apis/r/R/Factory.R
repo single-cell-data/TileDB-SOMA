@@ -176,6 +176,7 @@ SOMADenseNDArrayCreate <- function(
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
 ) {
+  spdl::debug("[SOMADenseNDArrayCreate] tstamp ({},{})", tiledb_timestamp[1], tiledb_timestamp[2])
   dnda <- SOMADenseNDArray$new(
     uri,
     platform_config,

@@ -44,7 +44,7 @@ TileDBObject <- R6::R6Class(
       }
 
       spdl::debug("[TileDBObject] initialize {} with '{}' at ({},{})", self$class(), self$uri,
-                  private$tiledb_timestamp[1],private$tiledb_timestamp[2])
+                  private$.tiledb_timestamp[1],private$.tiledb_timestamp[2])
     },
 
     #' @description Print the name of the R6 class.

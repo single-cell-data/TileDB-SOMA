@@ -134,7 +134,7 @@ SOMASparseNDArrayRead <- R6::R6Class(
     sparse_matrix = function(zero_based=FALSE) {
       #TODO implement zero_based argument, currently doesn't do anything
 
-        shape <- self$shape
+      shape <- self$shape
       # if (any(private$shape > .Machine$integer.max)) {
       if (any(shape > .Machine$integer.max)) {
         warning(
@@ -147,7 +147,6 @@ SOMASparseNDArrayRead <- R6::R6Class(
         # private$shape <- pmin(private$shape, .Machine$integer.max)
         shape <- pmin(shape, .Machine$integer.max)
       }
-
       SparseReadIter$new(self$sr, shape, zero_based = zero_based)
     },
 

@@ -73,7 +73,7 @@ void SOMADenseNDArray::create(
     attr->format = strdup(std::string(format).c_str());
     attr->name = strdup("soma_data");
     attr->n_children = 0;
-    attr->flags = 0;
+    attr->flags = 0; // or ARROW_FLAG_NULLABLE;
     attr->dictionary = nullptr;
     attr->release = &ArrowAdapter::release_schema;
 
