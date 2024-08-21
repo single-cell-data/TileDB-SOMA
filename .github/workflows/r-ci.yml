@@ -1,20 +1,10 @@
 name: TileDB-SOMA R CI
 
 on:
-  pull_request:
-    paths:
-      - '**'
-      - '!**.md'
-      - '!.github/**'
-      - '.github/workflows/r-ci.yml'
-      - '!.pre-commit-config.yaml'
-      - '!apis/python/**'
-      - '!docs/**'
-      - '!LICENSE'
-  push:
-    branches:
-      - main
-      - 'release-*'
+  schedule:
+    # Daily at 9am UTC; this workflow is failing since 2024-06-18, so we're not running it on PRs
+    # / main. See https://github.com/single-cell-data/TileDB-SOMA/issues/2906 for more info.
+    - cron: '0 9 * * *'
   workflow_dispatch:
 
 env:
