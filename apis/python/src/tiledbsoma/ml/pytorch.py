@@ -303,10 +303,10 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             )
 
             X_tbl_iter = X.read(coords=(obs_coords, self._var_joinids)).tables()
-            if self.use_eager_fetch:
-                X_tbl_iter = _EagerIterator(
-                    X_tbl_iter, pool=X.context.threadpool
-                )  # type:ignore[assignment]
+            # if self.use_eager_fetch:
+            #     X_tbl_iter = _EagerIterator(
+            #         X_tbl_iter, pool=X.context.threadpool
+            #     )  # type:ignore[assignment]
 
             obs_indexer = soma.IntIndexer(obs_shuffled_coords, context=X.context)
             X_tbl = pa.concat_tables(X_tbl_iter)
@@ -396,18 +396,26 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
     ) -> Iterator[XObsDatum]:
         """Apply encoding on top of the mini batches.
 
-        Returns numpy encodings (obs, X).
+        Returns numpy encodings (X, obs).
         """
-        for X_mini_batch, obs_mini_batch in self._mini_batch_iter(
-            obs, X, obs_joinid_iter
-        ):
+        _encoded_mini_batch_iter = self._mini_batch_iter(obs, X, obs_joinid_iter)
+        if self.use_eager_fetch:
+            _encoded_mini_batch_iter = _EagerIterator(
+                _encoded_mini_batch_iter, pool=X.context.threadpool
+            )
+
+        for X_mini_batch, obs_mini_batch in _encoded_mini_batch_iter:
             # TODO - X encoding
             # X_encoded = X_mini_batch.todense()  SLOW
             X_encoded = _csr_to_dense(X_mini_batch)
 
             # Obs encoding
-            obs_encoded = pd.DataFrame(
-                {enc.name: enc.transform(obs_mini_batch) for enc in self._encoders}
+            obs_encoded = (
+                pd.DataFrame(
+                    {enc.name: enc.transform(obs_mini_batch) for enc in self._encoders}
+                )
+                if self._encoders
+                else obs_mini_batch
             )
 
             del obs_mini_batch, X_mini_batch
