@@ -43,8 +43,12 @@ pytorch_logger = logging.getLogger("tiledbsoma.ml.pytorch")
 
 _T_co = TypeVar("_T_co", covariant=True)
 
-XObsDatum = Tuple[npt.NDArray[np.number[Any]], pd.DataFrame]
-XObsNpDatum = Tuple[npt.NDArray[np.number[Any]], npt.NDArray[np.number[Any]]]
+if TYPE_CHECKING:
+    NDArrayNumber = npt.NDArray[np.number[Any]]
+else:
+    NDArrayNumber = "npt.NDArray[np.number[Any]]"
+XObsDatum = Tuple[NDArrayNumber, pd.DataFrame]
+XObsNpDatum = Tuple[NDArrayNumber, NDArrayNumber]
 XObsTensorDatum = Tuple[torch.Tensor, torch.Tensor]
 """Return type of ``ExperimentAxisQueryDataPipe`` that pairs a Tensor of ``obs`` row(s) with a Tensor of ``X`` matrix row(s).
 The Tensors are rank 1 if ``batch_size`` is 1, otherwise the Tensors are rank 2."""
@@ -303,13 +307,8 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             )
 
             X_tbl_iter = X.read(coords=(obs_coords, self._var_joinids)).tables()
-            # if self.use_eager_fetch:
-            #     X_tbl_iter = _EagerIterator(
-            #         X_tbl_iter, pool=X.context.threadpool
-            #     )  # type:ignore[assignment]
-
-            obs_indexer = soma.IntIndexer(obs_shuffled_coords, context=X.context)
             X_tbl = pa.concat_tables(X_tbl_iter)
+            obs_indexer = soma.IntIndexer(obs_shuffled_coords, context=X.context)
             X_tbl = pa.Table.from_pydict(
                 {
                     "soma_dim_0": obs_indexer.get_indexer(
@@ -406,8 +405,9 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
 
         for X_mini_batch, obs_mini_batch in _encoded_mini_batch_iter:
             # TODO - X encoding
-            # X_encoded = X_mini_batch.todense()  SLOW
-            X_encoded = _csr_to_dense(X_mini_batch)
+            X_encoded = _csr_to_dense(
+                X_mini_batch
+            )  # same as X_mini_batch.todense(), which is SLOW
 
             # Obs encoding
             obs_encoded = (
@@ -607,7 +607,7 @@ class ExperimentAxisQueryIterableDataset(
     def __iter__(self) -> Iterator[XObsNpDatum]:
         batch_size = self._exp_iter.batch_size
         for X, obs in self._exp_iter:
-            obs_np: npt.NDArray[np.number[Any]] = obs.to_numpy()
+            obs_np: NDArrayNumber = obs.to_numpy()
             if batch_size == 1:
                 X = X[0]
                 obs_np = obs_np[0]
@@ -627,7 +627,7 @@ class ExperimentAxisQueryIterableDataset(
 
 
 def _collate_ndarray_to_tensor(
-    datum: Sequence[npt.NDArray[np.number[Any]] | torch.Tensor],
+    datum: Sequence[NDArrayNumber | torch.Tensor],
 ) -> Tuple[torch.Tensor, ...]:
     """Default torch.utils.data.DataLoader collate_fn for ``experiment_dataloader`` -- converts ndarray to a Tensor.
 
@@ -727,9 +727,7 @@ def _splits(total_length: int, sections: int) -> npt.NDArray[np.intp]:
 
 def _D_IJ(
     tbl: pa.Table,
-) -> Tuple[
-    npt.NDArray[np.number[Any]], Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]
-]:
+) -> Tuple[NDArrayNumber, Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]]:
     """Given SOMA-style Pyarrow Table of COO sparse array data, return tuple (D, (I, J)) vectors."""
     d = tbl["soma_data"].to_numpy()
     i = tbl["soma_dim_0"].to_numpy()
@@ -830,10 +828,10 @@ def _csr_to_dense_inner(indptr, indices, data, out):  # type:ignore[no-untyped-d
     return out
 
 
-def _csr_to_dense(sp: sparse.csr_array) -> npt.NDArray[np.number[Any]]:
+def _csr_to_dense(sp: sparse.csr_array) -> NDArrayNumber:
     assert isinstance(sp, (sparse.csr_array, sparse.csr_matrix))
     return cast(
-        npt.NDArray[np.number[Any]],
+        NDArrayNumber,
         _csr_to_dense_inner(
             sp.indptr, sp.indices, sp.data, np.zeros(sp.shape, dtype=sp.dtype)
         ),

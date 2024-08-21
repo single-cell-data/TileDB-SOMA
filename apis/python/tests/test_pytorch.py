@@ -3,6 +3,8 @@
 #
 # Licensed under the MIT License.
 
+from __future__ import annotations
+
 import pathlib
 from typing import Callable, List, Optional, Sequence, Union
 from unittest.mock import patch
