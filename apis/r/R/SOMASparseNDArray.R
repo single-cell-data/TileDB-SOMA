@@ -249,8 +249,9 @@ SOMASparseNDArray <- R6::R6Class(
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      writeArrayFromArrow(self$uri, naap, nasp, "SOMASparseNDArray", NULL, c(self$tiledb_timestamp[1],
-                                                                             self$tiledb_timestamp[1]))
+      writeArrayFromArrow(self$uri, naap, nasp, "SOMASparseNDArray", NULL,
+                          if (is.null(self$tiledb_timestamp[1])) NULL
+                          else c(self$tiledb_timestamp[1], self$tiledb_timestamp[1]))
     },
 
     # Internal marking of one or zero based matrices for iterated reads

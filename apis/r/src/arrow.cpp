@@ -196,8 +196,6 @@ void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp
         arrup = tdbs::SOMADenseNDArray::open(OpenMode::write, uri, somactx, "unnamed", {},
                                              "auto", ResultOrder::colmajor, tsrng);
     } else if (arraytype == "SOMASparseNDArray") {
-        Rcpp::DatetimeVector v(tsvec);
-        spdl::debug(tfm::format("[writeArrayFromArrow] tstamps for Sparse Array %f %f", v[0], v[1]));
         arrup = tdbs::SOMASparseNDArray::open(OpenMode::write, uri, somactx, "unnamed", {},
                                               "auto", ResultOrder::automatic, tsrng);
     } else {  // not reached
