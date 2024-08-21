@@ -24,6 +24,7 @@ from typing import (
 )
 
 import attrs
+import numba
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -187,7 +188,9 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         if self._initialized:
             return
 
-        pytorch_logger.debug("Initializing ExperimentAxisQueryIterable")
+        pytorch_logger.debug(
+            f"Initializing ExperimentAxisQueryIterable (shuffle={self._shuffle_rng is not None})"
+        )
 
         with self.experiment_locator.open_experiment() as exp:
             query = exp.axis_query(
@@ -212,7 +215,15 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 )
 
             obs_joinid_iter = self._create_obs_joinid_iter()
-            yield from self._encoded_mini_batch_iter(exp.obs, X, obs_joinid_iter)
+            _mini_batch_iter = self._encoded_mini_batch_iter(
+                exp.obs, X, obs_joinid_iter
+            )
+            if self.use_eager_fetch:
+                _mini_batch_iter = _EagerIterator(
+                    _mini_batch_iter, pool=exp.context.threadpool
+                )
+
+            yield from _mini_batch_iter
 
     def __len__(self) -> int:
         self._init_once()
@@ -281,23 +292,14 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 f"Retrieving next SOMA IO batch of length {len(obs_coords)}..."
             )
 
-            def _get_obs_io_batch(
-                obs: soma.DataFrame,
-                obs_coords: npt.NDArray[np.int64],
-                obs_shuffled_coords: npt.NDArray[np.int64],
-            ) -> pd.DataFrame:
-                return cast(
-                    pd.DataFrame,
-                    obs.read(coords=(obs_coords,), column_names=obs_column_names)
-                    .concat()
-                    .to_pandas()
-                    .set_index("soma_joinid")
-                    .reindex(obs_shuffled_coords, copy=False)
-                    .reset_index(),
-                )
-
-            obs_future = obs.context.threadpool.submit(
-                _get_obs_io_batch, obs, obs_coords, obs_shuffled_coords
+            obs_io_batch = cast(
+                pd.DataFrame,
+                obs.read(coords=(obs_coords,), column_names=obs_column_names)
+                .concat()
+                .to_pandas()
+                .set_index("soma_joinid")
+                .reindex(obs_shuffled_coords, copy=False)
+                .reset_index(),
             )
 
             X_tbl_iter = X.read(coords=(obs_coords, self._var_joinids)).tables()
@@ -307,34 +309,30 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 )  # type:ignore[assignment]
 
             obs_indexer = soma.IntIndexer(obs_shuffled_coords, context=X.context)
-            X_tbl = pa.concat_tables(
-                pa.Table.from_pydict(
-                    {
-                        "soma_dim_0": obs_indexer.get_indexer(
-                            tbl["soma_dim_0"].to_numpy()
-                        ),
-                        "soma_dim_1": var_indexer.get_indexer(
-                            tbl["soma_dim_1"].to_numpy()
-                        ),
-                        "soma_data": tbl["soma_data"].to_numpy(),
-                    }
-                )
-                for tbl in X_tbl_iter
-            ).sort_by([("soma_dim_0", "ascending"), ("soma_dim_1", "ascending")])
-
-            i, j, d = _IJD(X_tbl)
+            X_tbl = pa.concat_tables(X_tbl_iter)
+            X_tbl = pa.Table.from_pydict(
+                {
+                    "soma_dim_0": obs_indexer.get_indexer(
+                        X_tbl["soma_dim_0"].to_numpy()
+                    ),
+                    "soma_dim_1": var_indexer.get_indexer(
+                        X_tbl["soma_dim_1"].to_numpy()
+                    ),
+                    "soma_data": X_tbl["soma_data"].to_numpy(),
+                }
+            )
             X_io_batch = sparse.csr_array(
-                (d, (i, j)), shape=(len(obs_coords), len(self._var_joinids)), copy=False
+                _D_IJ(X_tbl),
+                shape=(len(obs_coords), len(self._var_joinids)),
+                copy=False,
             )
 
-            obs_io_batch = obs_future.result()
-
-            del i, j, d, X_tbl, X_tbl_iter
-            del obs_future, obs_coords, obs_shuffled_coords, obs_indexer
+            del X_tbl, X_tbl_iter
+            del obs_coords, obs_shuffled_coords, obs_indexer
             _run_gc()
             tm = time.perf_counter() - st_time
             pytorch_logger.debug(
-                f"Retrieved SOMA IO batch, took {tm:.2f}sec, {X_io_batch.shape[0]/tm:0.1f}samples/sec"
+                f"Retrieved SOMA IO batch, took {tm:.2f}sec, {X_io_batch.shape[0]/tm:0.1f} samples/sec"
             )
             yield X_io_batch, obs_io_batch
 
@@ -400,12 +398,12 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
 
         Returns numpy encodings (obs, X).
         """
-
         for X_mini_batch, obs_mini_batch in self._mini_batch_iter(
             obs, X, obs_joinid_iter
         ):
             # TODO - X encoding
-            X_encoded = X_mini_batch.todense()
+            # X_encoded = X_mini_batch.todense()  SLOW
+            X_encoded = _csr_to_dense(X_mini_batch)
 
             # Obs encoding
             obs_encoded = pd.DataFrame(
@@ -465,12 +463,17 @@ class ExperimentAxisQueryDataPipe(
         torch.utils.data.dataset.Dataset[XObsTensorDatum]
     ],
 ):
-    r"""An :class:`torchdata.datapipes.iter.IterDataPipe` that reads ``obs`` and ``X`` data from a
-    :class:`tiledbsoma.Experiment`, based upon the specified queries along the ``obs`` and ``var`` axes. Provides an
-    iterator over these data when the object is passed to Python's built-in ``iter`` function.
+    """An :class:`torchdata.datapipes.iter.IterDataPipe` which reads ``obs`` and ``X`` data from a
+    :class:`tiledbsoma.Experiment`, based upon the specified queries along the ``obs`` and ``var`` axes. Provides
+    a standard Python iterable interface.
 
-    >>> for batch in iter(ExperimentDataPipe(...)):
-            X_batch, y_batch = batch
+    >>> for batch in ExperimentAxisQueryDataPipe(...):
+            X_batch, obs_batch = batch
+
+    **WARNING:** :class:`torchdata.datapipes` is deprecated as of version 0.9 (July 2024), and is slated for removal
+    in a future release (late 2024). It is recommended that new code utilize :class:`ExperimentAxisQueryIterableDataset`.
+    Older code should pin the torchdata version to 0.9 or older. For more information, see
+    https://github.com/pytorch/data/issues/1196.
 
     The ``batch_size`` parameter controls the number of rows of ``obs`` and ``X`` data that are returned in each
     iteration. If the ``batch_size`` is 1, then each Tensor will have rank 1:
@@ -488,14 +491,11 @@ class ExperimentAxisQueryDataPipe(
                  [2416,    0,    4],
                  [2417,    0,    3]], dtype=torch.int64))
 
-    The ``return_sparse_X`` parameter controls whether the ``X`` data is returned as a dense or sparse
-    :class:`torch.Tensor`. If the model supports use of sparse :class:`torch.Tensor`\ s, this will reduce memory usage.
+    The ``obs_column_names`` parameter determines the data columns that are returned in the ``obs`` Tensor.
+    User-specified encoders may be provided - when not provided, the ``X`` batch will not be encoded, and the
+    ``obs`` batch will be encoded with a simple label encoder.
 
-    The ``obs_column_names`` parameter determines the data columns that are returned in the ``obs`` Tensor. The first
-    element is always the ``soma_joinid`` of the ``obs`` :class:`pandas.DataFrame` (or, equivalently, the
-    ``soma_dim_0`` of the ``X`` matrix). The remaining elements are the ``obs`` columns specified by
-    ``obs_column_names``, and string-typed columns are encoded as integer values. If needed, these values can be decoded
-    by obtaining the encoder for a given ``obs`` column name and calling its ``inverse_transform`` method:
+    If needed, encoded valeus can be decoded by calling ``inverse_transform`` method on the encoder, e.g.,
 
     >>> exp_data_pipe.encoders["<obs_attr_name>"].inverse_transform(encoded_values)
 
@@ -621,7 +621,7 @@ class ExperimentAxisQueryIterableDataset(
 def _collate_ndarray_to_tensor(
     datum: Sequence[npt.NDArray[np.number[Any]] | torch.Tensor],
 ) -> Tuple[torch.Tensor, ...]:
-    """Default collate_fn for ``experiment_dataloader`` converts ndarray to a Tensor.
+    """Default torch.utils.data.DataLoader collate_fn for ``experiment_dataloader`` -- converts ndarray to a Tensor.
 
     Must be a top-level function to play nice with picking for multiprocessing use cases.
     """
@@ -717,15 +717,16 @@ def _splits(total_length: int, sections: int) -> npt.NDArray[np.intp]:
     return splits
 
 
-def _IJD(
+def _D_IJ(
     tbl: pa.Table,
-) -> Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64], npt.NDArray[np.number[Any]]]:
-    """Given SOMA-style Pyarrow Table of COO sparse array data, return I,J,D vectors."""
-    return (
-        tbl["soma_dim_0"].to_numpy(),
-        tbl["soma_dim_1"].to_numpy(),
-        tbl["soma_data"].to_numpy(),
-    )
+) -> Tuple[
+    npt.NDArray[np.number[Any]], Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]
+]:
+    """Given SOMA-style Pyarrow Table of COO sparse array data, return tuple (D, (I, J)) vectors."""
+    d = tbl["soma_data"].to_numpy()
+    i = tbl["soma_dim_0"].to_numpy()
+    j = tbl["soma_dim_1"].to_numpy()
+    return d, (i, j)
 
 
 if sys.version_info >= (3, 12):
@@ -809,3 +810,23 @@ def _init_multiprocessing() -> None:
                 f'"{torch.multiprocessing.get_start_method()}" to "spawn"'
             )
         torch.multiprocessing.set_start_method("spawn", force=True)
+
+
+@numba.njit(nogil=True, parallel=True)
+def _csr_to_dense_inner(indptr, indices, data, out):  # type:ignore[no-untyped-def]
+    n_rows = out.shape[0]
+    for i in numba.prange(n_rows):
+        for j in range(indptr[i], indptr[i + 1]):
+            out[i, indices[j]] = data[j]
+
+    return out
+
+
+def _csr_to_dense(sp: sparse.csr_array) -> npt.NDArray[np.number[Any]]:
+    assert isinstance(sp, (sparse.csr_array, sparse.csr_matrix))
+    return cast(
+        npt.NDArray[np.number[Any]],
+        _csr_to_dense_inner(
+            sp.indptr, sp.indices, sp.data, np.zeros(sp.shape, dtype=sp.dtype)
+        ),
+    )
