@@ -109,11 +109,11 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         obs_column_names: Sequence[str] = (),
         batch_size: int = 1,
         shuffle: bool = True,
+        io_batch_size: int = 2**17,
+        shuffle_chunk_size: int = 64,
         seed: int | None = None,
-        soma_chunk_size: int = 64,
         use_eager_fetch: bool = True,
         encoders: List[Encoder] | None = None,
-        shuffle_chunk_count: int = 2000,
         partition: bool = True,
     ):
         super().__init__()
@@ -126,16 +126,23 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         self.var_query = var_query
         self.obs_column_names = obs_column_names
         self.batch_size = batch_size
-        self.soma_chunk_size = soma_chunk_size
+        self.io_batch_size = io_batch_size
+        self.shuffle = shuffle
         self.use_eager_fetch = use_eager_fetch
         # XXX - TODO: when/if we add X encoders, how will they be differentiated from obs encoders?  Naming?
         self._encoders = encoders or []
         self._obs_joinids: npt.NDArray[np.int64] | None = None
         self._var_joinids: npt.NDArray[np.int64] | None = None
-        self._shuffle_chunk_count = shuffle_chunk_count if shuffle else None
         self._shuffle_rng = np.random.default_rng(seed) if shuffle else None
         self.partition = partition
         self._initialized = False
+
+        self.shuffle_chunk_size = shuffle_chunk_size
+        if self.shuffle:
+            # round io_batch_size up to a unit of shuffle_chunk_size to simplify code.
+            self.io_batch_size = (
+                ceil(io_batch_size / shuffle_chunk_size) * shuffle_chunk_size
+            )
 
         if obs_column_names and encoders:
             raise ValueError(
@@ -152,22 +159,30 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             )
 
     def _create_obs_joinid_iter(self) -> Iterator[npt.NDArray[np.int64]]:
-        """Private - create iterator over obs id chunks.
+        """Private - create iterator over obs id chunks with split size of (roughly) io_batch_size.
 
         As appropriate, will chunk, shuffle and apply partitioning per worker.
         """
         assert self._obs_joinids is not None
         obs_joinids: npt.NDArray[np.int64] = self._obs_joinids
 
-        # Chunk joinids by soma_chunk_size
-        assert self.soma_chunk_size is not None
-        num_chunks = max(1, ceil(len(obs_joinids) / self.soma_chunk_size))
-        obs_joinids_chunked = np.array_split(obs_joinids, num_chunks)
-
-        # Shuffle chunks. NOTE: this assumes a single global seed for the RNG,
-        # ensuring all workers get the same shuffle.
-        if self._shuffle_rng:
-            self._shuffle_rng.shuffle(obs_joinids_chunked)
+        if self.shuffle:
+            assert self._shuffle_rng is not None
+            assert self.io_batch_size % self.shuffle_chunk_size == 0
+            shuffle_split = np.array_split(
+                obs_joinids, max(1, ceil(len(obs_joinids) / self.shuffle_chunk_size))
+            )
+            self._shuffle_rng.shuffle(shuffle_split)
+            obs_joinids_chunked = list(
+                np.concatenate(b)
+                for b in _batched(
+                    shuffle_split, self.io_batch_size // self.shuffle_chunk_size
+                )
+            )
+        else:
+            obs_joinids_chunked = np.array_split(
+                obs_joinids, max(1, ceil(len(obs_joinids) / self.io_batch_size))
+            )
 
         # Now extract the partition for this worker
         partition, num_partitions = (
@@ -176,7 +191,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         obs_splits = _splits(len(obs_joinids_chunked), num_partitions)
         obs_partition_joinids = obs_joinids_chunked[
             obs_splits[partition] : obs_splits[partition + 1]
-        ]
+        ].copy()
         obs_joinid_iter = iter(obs_partition_joinids)
 
         if pytorch_logger.isEnabledFor(logging.DEBUG) and self.partition:
@@ -193,7 +208,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             return
 
         pytorch_logger.debug(
-            f"Initializing ExperimentAxisQueryIterable (shuffle={self._shuffle_rng is not None})"
+            f"Initializing ExperimentAxisQueryIterable (shuffle={self.shuffle})"
         )
 
         with self.experiment_locator.open_experiment() as exp:
@@ -280,13 +295,9 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         )
         var_indexer = soma.IntIndexer(self._var_joinids, context=X.context)
 
-        batched_obs_joinid_iter = _batched(
-            obs_joinid_iter,
-            self._shuffle_chunk_count if self._shuffle_chunk_count is not None else 1,
-        )
-        for obs_coord_chunks in batched_obs_joinid_iter:
+        for obs_coords in obs_joinid_iter:
             st_time = time.perf_counter()
-            obs_coords = np.concatenate(obs_coord_chunks)
+            # obs_coords = np.concatenate(obs_coord_chunks)
             obs_shuffled_coords = (
                 obs_coords
                 if self._shuffle_rng is None
@@ -527,10 +538,10 @@ class ExperimentAxisQueryDataPipe(
         batch_size: int = 1,
         shuffle: bool = True,
         seed: int | None = None,
-        soma_chunk_size: int = 64,
+        io_batch_size: int = 2**17,
+        shuffle_chunk_size: int = 64,
         use_eager_fetch: bool = True,
         encoders: List[Encoder] | None = None,
-        shuffle_chunk_count: int = 2000,
     ):
         self._exp_iter = ExperimentAxisQueryIterable(
             experiment=experiment,
@@ -542,10 +553,10 @@ class ExperimentAxisQueryDataPipe(
             batch_size=batch_size,
             shuffle=shuffle,
             seed=seed,
-            soma_chunk_size=soma_chunk_size,
+            io_batch_size=io_batch_size,
             use_eager_fetch=use_eager_fetch,
             encoders=encoders,
-            shuffle_chunk_count=shuffle_chunk_count,
+            shuffle_chunk_size=shuffle_chunk_size,
             # ---
             partition=True,
         )
@@ -586,10 +597,10 @@ class ExperimentAxisQueryIterableDataset(
         batch_size: int = 1,  # XXX add docstring noting values >1 will not work with default collator
         shuffle: bool = True,
         seed: int | None = None,
-        soma_chunk_size: int = 64,
+        io_batch_size: int = 2**17,
+        shuffle_chunk_size: int = 64,
         use_eager_fetch: bool = True,
         encoders: List[Encoder] | None = None,
-        shuffle_chunk_count: int = 2000,
     ):
         self._exp_iter = ExperimentAxisQueryIterable(
             experiment=experiment,
@@ -601,10 +612,10 @@ class ExperimentAxisQueryIterableDataset(
             batch_size=batch_size,
             shuffle=shuffle,
             seed=seed,
-            soma_chunk_size=soma_chunk_size,
+            io_batch_size=io_batch_size,
             use_eager_fetch=use_eager_fetch,
             encoders=encoders,
-            shuffle_chunk_count=shuffle_chunk_count,
+            shuffle_chunk_size=shuffle_chunk_size,
             # ---
             partition=True,
         )
@@ -720,7 +731,7 @@ def _splits(total_length: int, sections: int) -> npt.NDArray[np.intp]:
     >>> _splits(4, 2)
     array([0, 2, 4])
     """
-    if not sections > 0:
+    if sections <= 0:
         raise ValueError("number of sections must greater than 0.") from None
     each_section, extras = divmod(total_length, sections)
     per_section_sizes = (
