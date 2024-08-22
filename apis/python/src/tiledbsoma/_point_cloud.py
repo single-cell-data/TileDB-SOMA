@@ -6,7 +6,8 @@
 """
 Implementation of a SOMA Point Cloud
 """
-from typing import Optional, Sequence, Union, cast
+import json
+from typing import Any, Optional, Sequence, Tuple, Union, cast
 
 import pyarrow as pa
 import somacore
@@ -15,7 +16,7 @@ from typing_extensions import Self
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
-from ._constants import SOMA_JOINID
+from ._constants import SOMA_AXES_METADATA_KEY, SOMA_JOINID
 from ._dataframe import (
     Domain,
     _canonicalize_schema,
@@ -40,6 +41,7 @@ _UNBATCHED = options.BatchSize()
 
 class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
+    __slots__ = ("_axis_names",)
     _wrapper_type = PointCloudWrapper
 
     @classmethod
@@ -55,6 +57,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
+        axis_names = tuple(axis_names)
         for column_name in axis_names:
             if column_name not in index_column_names:
                 raise ValueError(f"Spatial column '{column_name}' must an index column")
@@ -121,15 +124,46 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             raise map_exception_for_create(e, uri) from None
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-        # TODO: Add spatial_index info
+        handle.meta[SOMA_AXES_METADATA_KEY] = json.dumps(axis_names)
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
+    def __init__(
+        self,
+        handle: PointCloudWrapper,
+        **kwargs: Any,
+    ):
+        super().__init__(handle, **kwargs)
+
+        # Read point cloud specific metadata
+        try:
+            axis_names = self.metadata[SOMA_AXES_METADATA_KEY]
+        except KeyError as ke:
+            raise SOMAError("Missing axis name metadata") from ke
+        if isinstance(axis_names, bytes):
+            axis_names = str(axis_names, "uft-8")
+        if not isinstance(axis_names, str):
+            raise SOMAError(
+                f"Unexpected type {type(axis_names)!r} for PointCloud axis name "
+                f"metadata"
+            )
+        self._axis_names: Tuple[str, ...] = tuple(json.loads(axis_names))
+        for name in self._axis_names:
+            if name not in self.index_column_names:
+                raise SOMAError(
+                    f"Point cloud axis '{name}' does not match any of the index column"
+                    f" names."
+                )
+
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
         return self.count
+
+    @property
+    def axis_names(self) -> Tuple[str, ...]:
+        return self._axis_names
 
     @property
     def count(self) -> int:

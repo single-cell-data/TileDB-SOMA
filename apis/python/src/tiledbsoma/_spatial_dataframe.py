@@ -54,8 +54,7 @@ class SpatialDataFrame(SOMAArray, somacore.SpatialDataFrame):
 
     @property
     def axis_names(self) -> Tuple[str, ...]:
-        # TODO: Add this.
-        raise NotImplementedError()
+        raise NotImplementedError("Must be implemented by the child class")
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
