@@ -53,7 +53,7 @@ class SpatialDataFrame(SOMAArray, somacore.SpatialDataFrame):
         return self._tiledb_dim_names()
 
     @property
-    def spatial_column_names(self) -> Tuple[str, ...]:
+    def axis_names(self) -> Tuple[str, ...]:
         # TODO: Add this.
         raise NotImplementedError()
 

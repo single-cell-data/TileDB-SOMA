@@ -9,16 +9,18 @@ from typing import MutableMapping
 from somacore import coordinates, scene
 
 from . import _tdb_handles
-from ._collection import CollectionBase
+from ._collection import Collection, CollectionBase
 from ._coordinates import CompositeTransform, CoordinateSystem
-from ._dataframe import DataFrame
 from ._images import Image2DCollection
 from ._soma_object import AnySOMAObject
+from ._spatial_dataframe import SpatialDataFrame
 
 
 class Scene(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    scene.Scene[DataFrame, Image2DCollection, AnySOMAObject],
+    scene.Scene[  # type: ignore[type-var]
+        Collection[SpatialDataFrame], Image2DCollection, AnySOMAObject
+    ],
 ):
     """TODO: Add documentation for a Scene
 

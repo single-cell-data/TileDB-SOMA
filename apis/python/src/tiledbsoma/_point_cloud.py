@@ -49,13 +49,13 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         *,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID, "x", "y"),
-        spatial_column_names: Sequence[str] = ("x", "y"),
+        axis_names: Sequence[str] = ("x", "y"),
         domain: Optional[Domain] = None,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
-        for column_name in spatial_column_names:
+        for column_name in axis_names:
             if column_name not in index_column_names:
                 raise ValueError(f"Spatial column '{column_name}' must an index column")
             column_dtype = schema.field(column_name).type
