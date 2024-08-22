@@ -41,6 +41,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     _wrapper_type: Union[
         Type[_WrapperType_co],
         Type[_tdb_handles.DataFrameWrapper],
+        Type[_tdb_handles.PointCloudWrapper],
         Type[_tdb_handles.DenseNDArrayWrapper],
         Type[_tdb_handles.SparseNDArrayWrapper],
         Type[_tdb_handles.CollectionWrapper],
@@ -111,6 +112,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         handle: Union[
             _WrapperType_co,
             _tdb_handles.DataFrameWrapper,
+            _tdb_handles.PointCloudWrapper,
             _tdb_handles.DenseNDArrayWrapper,
             _tdb_handles.SparseNDArrayWrapper,
         ],

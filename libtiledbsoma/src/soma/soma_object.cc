@@ -9,6 +9,7 @@
 #include "soma_experiment.h"
 #include "soma_image2d_collection.h"
 #include "soma_measurement.h"
+#include "soma_point_cloud.h"
 #include "soma_scene.h"
 #include "soma_sparse_ndarray.h"
 
@@ -57,6 +58,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             return std::make_unique<SOMASparseNDArray>(*array_);
         } else if (array_type == "somadensendarray") {
             return std::make_unique<SOMADenseNDArray>(*array_);
+        } else if (array_type == "somapointcloud") {
+            return std::make_unique<SOMAPointCloud>(*array_);
         } else {
             throw TileDBSOMAError("Saw invalid SOMAArray type");
         }

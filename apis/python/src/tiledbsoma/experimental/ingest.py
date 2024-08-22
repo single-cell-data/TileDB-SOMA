@@ -40,11 +40,13 @@ from .. import (
     DenseNDArray,
     Experiment,
     Image2DCollection,
+    PointCloud,
     Scene,
     SparseNDArray,
     _util,
     logging,
 )
+from .._arrow_types import df_to_arrow
 from .._exception import (
     AlreadyExistsError,
     NotCreateableError,
@@ -59,7 +61,6 @@ from ..io.ingest import (
     _create_or_open_collection,
     _maybe_set,
     _write_arrow_table,
-    _write_dataframe_impl,
     add_metadata,
 )
 from ..options._tiledb_create_write_options import (
@@ -351,7 +352,7 @@ def _write_visium_data_to_experiment_uri(
     with Experiment.open(uri, mode="w", context=context) as exp:
         spatial_uri = f"{uri}/spatial"
         with _create_or_open_collection(
-            Collection[Union[DataFrame, Scene]], spatial_uri, **ingest_ctx
+            Collection[Scene], spatial_uri, **ingest_ctx
         ) as spatial:
             _maybe_set(exp, "spatial", spatial, use_relative_uri=use_relative_uri)
             scene_uri = f"{spatial_uri}/{scene_name}"
@@ -403,7 +404,7 @@ def _write_visium_data_to_experiment_uri(
 
                     loc_uri = f"{obsl_uri}/loc"
                     # Write spot data and add to the scene.
-                    with _write_visium_spot_dataframe(
+                    with _write_visium_spots(
                         loc_uri,
                         input_tissue_positions,
                         pixels_per_spot_radius,
@@ -511,7 +512,7 @@ def _write_scene_presence_dataframe(
     return soma_df
 
 
-def _write_visium_spot_dataframe(
+def _write_visium_spots(
     df_uri: str,
     input_tissue_positions: Path,
     spot_radius: float,
@@ -522,7 +523,7 @@ def _write_visium_spot_dataframe(
     additional_metadata: "AdditionalMetadata" = None,
     platform_config: Optional["PlatformConfig"] = None,
     context: Optional["SOMATileDBContext"] = None,
-) -> DataFrame:
+) -> PointCloud:
     """TODO: Add _write_visium_spot_dataframe docs"""
     df = (
         pd.read_csv(input_tissue_positions)
@@ -537,15 +538,30 @@ def _write_visium_spot_dataframe(
     )
     df = pd.merge(obs_df, df, how="inner", on=id_column_name)
     df.drop(id_column_name, axis=1, inplace=True)
-    return _write_dataframe_impl(
-        df,
+
+    arrow_table = df_to_arrow(df)
+
+    soma_point_cloud = PointCloud.create(
         df_uri,
-        id_column_name,
-        ingestion_params=ingestion_params,
-        additional_metadata=additional_metadata,
+        schema=arrow_table.schema,
         platform_config=platform_config,
         context=context,
     )
+
+    if ingestion_params.write_schema_no_data:
+        add_metadata(soma_point_cloud, additional_metadata)
+        return soma_point_cloud
+
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+    tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
+
+    if arrow_table:
+        _write_arrow_table(
+            arrow_table, soma_point_cloud, tiledb_create_options, tiledb_write_options
+        )
+
+    add_metadata(soma_point_cloud, additional_metadata)
+    return soma_point_cloud
 
 
 def _write_visium_images(
