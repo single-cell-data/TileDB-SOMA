@@ -39,12 +39,16 @@ TileDBObject <- R6::R6Class(
       private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
 
       if (!is.null(tiledb_timestamp)) {
-        stopifnot("'tiledb_timestamp' must be a POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct"))
+        stopifnot(
+            "'tiledb_timestamp' must be a single POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct") &&
+              length(tiledb_timestamp) == 1L &&
+              !is.na(tiledb_timestamp)
+        )
         private$.tiledb_timestamp <- tiledb_timestamp
       }
 
       spdl::debug("[TileDBObject] initialize {} with '{}' at ({},{})", self$class(), self$uri,
-                  private$.tiledb_timestamp[1],private$.tiledb_timestamp[2])
+                  self$tiledb_timestamp, self$tiledb_timestamp)
     },
 
     #' @description Print the name of the R6 class.
@@ -91,7 +95,7 @@ TileDBObject <- R6::R6Class(
       mode <- match.arg(mode, choices = c('READ', 'WRITE'))
       stopifnot(
         "'tiledb_timestamp' must be a POSIXct datetime object" = is.null(tiledb_timestamp) ||
-          inherits(tiledb_timestamp, what = "POSIXct")
+          (inherits(tiledb_timestamp, what = "POSIXct") && length(tiledb_timestamp) == 1L && !is.na(tiledb_timestamp))
       )
       self$close()
       private$.tiledb_timestamp <- tiledb_timestamp
@@ -143,6 +147,17 @@ TileDBObject <- R6::R6Class(
         private$.read_only_error("tiledb_timestamp")
       }
       return(private$.tiledb_timestamp)
+    },
+    #' @field tiledb_timestamp_range Time range for libtiledbsoma
+    #'
+    tiledb_timestamp_range = function(value) {
+      if (!missing(value)) {
+        private$.read_only_error("tiledb_timestamp_range")
+      }
+      if (is.null(self$tiledb_timestamp)) {
+        return(NULL)
+      }
+      return(c(self$tiledb_timestamp, self$tiledb_timestamp))
     },
     #' @field uri
     #' The URI of the TileDB object.

@@ -51,8 +51,7 @@ SOMASparseNDArray <- R6::R6Class(
                      config = cfg,
                      dim_points = coords,
                      result_order = result_order,
-                     timestamprange = if (is.null(self$tiledb_timestamp)) self$tiledb_timestamp
-                                      else c(0, self$tiledb_timestamp[2]),
+                     timestamprange = self$tiledb_timestamp_range,
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
       SOMASparseNDArrayRead$new(rl$sr, self, coords)

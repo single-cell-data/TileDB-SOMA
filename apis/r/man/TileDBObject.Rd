@@ -16,6 +16,8 @@ TileDBGroup classes. (lifecycle: maturing)
 
 \item{\code{tiledb_timestamp}}{Time that object was opened at}
 
+\item{\code{tiledb_timestamp_range}}{Time range for libtiledbsoma}
+
 \item{\code{uri}}{The URI of the TileDB object.}
 }
 \if{html}{\out{</div>}}

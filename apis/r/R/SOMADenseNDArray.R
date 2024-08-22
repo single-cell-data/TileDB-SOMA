@@ -32,8 +32,6 @@ SOMADenseNDArray <- R6::R6Class(
     #' read. List elements can be named when specifying a subset of dimensions.
     #' @template param-result-order
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start and end of
-    #' interval for which data is considered.
     #' @return An [`arrow::Table`].
     read_arrow_table = function(
       coords = NULL,
@@ -60,8 +58,7 @@ SOMADenseNDArray <- R6::R6Class(
       rl <- soma_array_reader(uri = uri,
                               dim_points = coords,
                               result_order = result_order,
-                              timestamprange = if (is.null(self$tiledb_timestamp)) self$tiledb_timestamp
-                                               else c(0, self$tiledb_timestamp[2]),
+                              timestamprange = self$tiledb_timestamp_range,
                               loglevel = log_level,
                               config = cfg)
 
