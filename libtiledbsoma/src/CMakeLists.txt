@@ -9,6 +9,10 @@ set_source_files_properties(
 add_library(TILEDBSOMA_NANOARROW_OBJECT OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/nanoarrow/nanoarrow.c
 )
+target_link_libraries(TILEDBSOMA_NANOARROW_OBJECT
+  PUBLIC
+    ${TILEDBSOMA_LINK_OPTIONS}
+)
 target_compile_options(TILEDBSOMA_NANOARROW_OBJECT
   PRIVATE
     ${TILEDBSOMA_COMPILE_OPTIONS}
@@ -61,6 +65,11 @@ target_compile_options(TILEDB_SOMA_OBJECTS
   ${TILEDBSOMA_WERROR_OPTION}
   ${TILEDBSOMA_SANITIZER_OPTIONS}
 )
+target_link_libraries(TILEDB_SOMA_OBJECTS
+  PUBLIC
+    ${TILEDBSOMA_LINK_OPTIONS}
+)
+
 
 set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(TILEDB_SOMA_OBJECTS
@@ -99,12 +108,10 @@ if(TILEDBSOMA_BUILD_STATIC)
       OUTPUT_NAME "tiledbsoma"
     )
   endif()
-  if(SANITIZER)
-    target_link_libraries(tiledbsoma_static
-      INTERFACE
-      -fsanitize=${SANITIZER}
-    )
-  endif()
+  target_link_libraries(tiledbsoma_static
+    PUBLIC
+      ${TILEDBSOMA_LINK_OPTIONS}
+  )
 else()
   add_library(tiledbsoma SHARED
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
@@ -113,15 +120,10 @@ else()
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma)
   target_link_libraries(tiledbsoma
     PUBLIC
-    TileDB::tiledb_shared
-    spdlog::spdlog
+      TileDB::tiledb_shared
+      spdlog::spdlog
+      ${TILEDBSOMA_LINK_OPTIONS}
   )
-  if(SANITIZER)
-    target_link_libraries(tiledbsoma
-      INTERFACE
-      -fsanitize=${SANITIZER}
-    )
-  endif()
 endif()
 
 # Install header files
@@ -256,15 +258,9 @@ if(TILEDBSOMA_BUILD_CLI)
     # spdlog::spdlog
     tiledbsoma
     TileDB::tiledb_shared
+    ${TILEDBSOMA_LINK_OPTIONS}
   )
 
-  # Sanitizer linker flags
-  if(SANITIZER)
-    target_link_libraries(tiledbsoma-cli
-      INTERFACE
-      -fsanitize=${SANITIZER}
-    )
-  endif()
 
   if(NOT APPLE AND NOT WIN32)
     target_link_libraries(tiledbsoma-cli PRIVATE pthread)

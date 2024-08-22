@@ -251,8 +251,10 @@ if(SANITIZER)
   set(TILEDBSOMA_SANITIZER_OPTIONS
     -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZER}
   )
+  set(TILEDBSOMA_LINK_OPTIONS "-fsanitize=${SANITIZER}")
 else()
- set(TILEDBSOMA_SANITIZER_OPTIONS "")
+  set(TILEDBSOMA_SANITIZER_OPTIONS "")
+  set(TILEDBSOMA_LINK_OPTIONS "")
 endif()
 
 

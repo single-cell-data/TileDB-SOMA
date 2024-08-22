@@ -39,6 +39,7 @@ target_link_libraries(unit_soma
   PRIVATE
     Catch2::Catch2WithMain
     TileDB::tiledb_shared
+    ${TILEDBSOMA_LINK_OPTIONS}
 )
 
 target_include_directories(unit_soma
