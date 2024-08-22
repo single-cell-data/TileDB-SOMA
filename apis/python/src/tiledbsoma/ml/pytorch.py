@@ -46,7 +46,7 @@ _T_co = TypeVar("_T_co", covariant=True)
 if TYPE_CHECKING:
     NDArrayNumber = npt.NDArray[np.number[Any]]
 else:
-    NDArrayNumber = "npt.NDArray[np.number[Any]]"
+    NDArrayNumber = np.ndarray
 XObsDatum = Tuple[NDArrayNumber, pd.DataFrame]
 XObsNpDatum = Tuple[NDArrayNumber, NDArrayNumber]
 XObsTensorDatum = Tuple[torch.Tensor, torch.Tensor]
@@ -340,7 +340,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         obs: soma.DataFrame,
         X: soma.SparseNDArray,
         obs_joinid_iter: Iterator[npt.NDArray[np.int64]],
-    ) -> Iterator[Tuple[sparse.csr_array, pd.DataFrame]]:
+    ) -> Iterator[Tuple[sparse.csr_array | sparse.csr_matrix, pd.DataFrame]]:
         """Break IO batches into shuffled mini-batch-sized chunks, still in internal format (CSR, Pandas).
 
         Private.
@@ -353,7 +353,9 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             io_batch_iter = _EagerIterator(io_batch_iter, pool=X.context.threadpool)
 
         mini_batch_size = self.batch_size
-        result: Tuple[sparse.csr_array, pd.DataFrame] | None = None  # partial result
+        result: Tuple[sparse.csr_array | sparse.csr_matrix, pd.DataFrame] | None = (
+            None  # partial result
+        )
         for X_io_batch, obs_io_batch in io_batch_iter:
             assert X_io_batch.shape[0] == obs_io_batch.shape[0]
             assert X_io_batch.shape[1] == len(self._var_joinids)
@@ -372,6 +374,9 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                     # use remanent from previous IO batch
                     to_take = min(mini_batch_size - len(result[1]), iob_len - iob_idx)
                     result = (
+                        # In older versions of scipy.sparse, vstack will return _matrix when
+                        # called with _array. Various code paths must accomadate this bug (mostly
+                        # in their type declarations)
                         sparse.vstack([result[0], X_io_batch[0:to_take]]),
                         pd.concat([result[1], obs_io_batch.iloc[0:to_take]]),
                     )
@@ -828,7 +833,7 @@ def _csr_to_dense_inner(indptr, indices, data, out):  # type:ignore[no-untyped-d
     return out
 
 
-def _csr_to_dense(sp: sparse.csr_array) -> NDArrayNumber:
+def _csr_to_dense(sp: sparse.csr_array | sparse.csr_matrix) -> NDArrayNumber:
     assert isinstance(sp, (sparse.csr_array, sparse.csr_matrix))
     return cast(
         NDArrayNumber,
