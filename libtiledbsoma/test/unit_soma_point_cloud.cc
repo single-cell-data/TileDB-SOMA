@@ -32,13 +32,15 @@
 
 #include "common.h"
 
+#define DIM_MAX 1000
+
 TEST_CASE("SOMAPointCloud: basic") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-point-cloud-basic";
 
     REQUIRE(!SOMAPointCloud::exists(uri, ctx));
 
-    auto [schema, index_columns] = helper::create_arrow_schema();
+    auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX);
     SOMAPointCloud::create(
         uri,
         std::move(schema),
