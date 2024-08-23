@@ -762,6 +762,13 @@ class SOMAArray : public SOMAObject {
 
     uint64_t _get_max_capacity(tiledb_datatype_t index_type);
 
+    /**
+     * Convenience function for creating an ArraySchemaEvolution object
+     * referencing this array's context pointer, along with its open-at
+     * timestamp (if any).
+     */
+    ArraySchemaEvolution _make_se();
+
     bool _extend_enumeration(
         ArrowSchema* value_schema,
         ArrowArray* value_array,

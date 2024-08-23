@@ -95,7 +95,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
 }
 
 const std::optional<std::string> SOMAObject::type() {
-    auto soma_object_type = this->get_metadata("soma_object_type");
+    auto soma_object_type = this->get_metadata(SOMA_OBJECT_TYPE_KEY);
 
     if (!soma_object_type.has_value())
         return std::nullopt;

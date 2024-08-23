@@ -31,6 +31,7 @@
  */
 
 #include "common.h"
+#define DIM_MAX 1000
 
 TEST_CASE("SOMASparseNDArray: basic") {
     auto ctx = std::make_shared<SOMAContext>();
@@ -38,7 +39,7 @@ TEST_CASE("SOMASparseNDArray: basic") {
 
     REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
 
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(DIM_MAX);
     SOMASparseNDArray::create(
         uri,
         "l",
@@ -95,7 +96,7 @@ TEST_CASE("SOMASparseNDArray: platform_config") {
     PlatformConfig platform_config;
     platform_config.sparse_nd_array_dim_zstd_level = 6;
 
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(DIM_MAX);
     SOMASparseNDArray::create(
         uri,
         "l",
@@ -121,7 +122,7 @@ TEST_CASE("SOMASparseNDArray: metadata") {
 
     std::string uri = "mem://unit-test-sparse-ndarray";
 
-    auto index_columns = helper::create_column_index_info();
+    auto index_columns = helper::create_column_index_info(DIM_MAX);
     SOMASparseNDArray::create(
         uri,
         "l",

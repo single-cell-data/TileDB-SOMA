@@ -471,6 +471,11 @@ uint64_t SOMAArray::_get_max_capacity(tiledb_datatype_t index_type) {
     }
 }
 
+ArraySchemaEvolution SOMAArray::_make_se() {
+    ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+    return se;
+}
+
 void SOMAArray::set_column_data(
     std::string_view name,
     uint64_t num_elems,
@@ -738,14 +743,7 @@ ArrowTable SOMAArray::_cast_table(
 
     // Go through all columns in the ArrowTable and cast the values to what is
     // in the ArraySchema on disk
-    ArraySchemaEvolution se(*ctx_->tiledb_ctx());
-    if (timestamp_.has_value()) {
-        // ArraySchemaEvolution requires us to pair (t2, t2) even if our range
-        // is (t1, t2).
-        auto v = timestamp_.value();
-        TimestampRange tr(v.second, v.second);
-        se.set_timestamp_range(tr);
-    }
+    ArraySchemaEvolution se = _make_se();
     bool evolve_schema = false;
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
         auto orig_arrow_sch_ = arrow_schema->children[i];
