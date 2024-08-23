@@ -68,7 +68,9 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
                     f"Spatial column '{column_name}' must have an integer or "
                     f"floating-point type. Column type is {column_dtype!r}"
                 )
-        coord_space = CoordinateSpace(tuple(Axis(axis_name) for axis_name in axis_names))
+        coord_space = CoordinateSpace(
+            tuple(Axis(axis_name) for axis_name in axis_names)
+        )
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
         if domain is None:
@@ -138,7 +140,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
         # Get and validate coordinate space.
         try:
-            coord_space = self.metadata.get(SOMA_COORDINATE_SPACE_METADATA_KEY)
+            coord_space = self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]
         except KeyError as ke:
             raise SOMAError("Missing axis name metadata") from ke
         self._coord_space = CoordinateSpace.from_json(coord_space)

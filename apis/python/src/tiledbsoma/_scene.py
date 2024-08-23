@@ -10,6 +10,7 @@ from somacore import scene
 
 from . import _tdb_handles
 from ._collection import Collection, CollectionBase
+from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
 from ._coordinates import (
     Axis,
     CoordinateSpace,
@@ -19,6 +20,7 @@ from ._coordinates import (
 )
 from ._exception import SOMAError
 from ._images import Image2DCollection
+from ._point_cloud import PointCloud
 from ._soma_object import AnySOMAObject
 from ._spatial_dataframe import SpatialDataFrame
 
@@ -50,7 +52,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         **kwargs: Any,
     ):
         super().__init__(handle, **kwargs)
-        coord_space = self.metadata.get("soma_coordinate_space")
+        coord_space = self.metadata.get(SOMA_COORDINATE_SPACE_METADATA_KEY)
         if coord_space is None:
             self._coord_space: Optional[CoordinateSpace] = None
         else:
@@ -65,13 +67,67 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
     def coordinate_space(self, value: CoordinateSpace) -> None:
         if not isinstance(value, CoordinateSpace):
             raise TypeError(f"Invalid type {type(value).__name__}.")
-        self.metadata["soma_coordinate_space"] = value.to_json()
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = value.to_json()
         self._coord_space = value
 
     @coordinate_space.deleter
     def coordinate_space(self) -> None:
-        del self.metadata["soma_coordinate_space"]
+        del self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]
         self._coord_space = None
+
+    def register_point_cloud(
+        self,
+        point_cloud_name: str,
+        transform: CoordinateTransform,
+        *,
+        subcollection_name: str = "obsl",
+        coordinate_space: Optional[CoordinateSpace] = None,
+    ) -> PointCloud:
+        if self.coordinate_space is None:
+            raise SOMAError(
+                "The scene coordinate space must be set before registering a point "
+                "cloud."
+            )
+        # Create the coordinate space if it does not exist. Otherwise, check it is
+        # compatible with the provide transform.
+        if coordinate_space is None:
+            if isinstance(transform, IdentityCoordinateTransform):
+                coordinate_space = self.coordinate_space
+            else:
+                coordinate_space = CoordinateSpace(
+                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)
+                )
+        else:
+            if transform.input_axes != coordinate_space.axis_names:
+                raise ValueError(
+                    f"The name of the transform input axes, {transform.input_axes}, do "
+                    f"not match the name of the axes in the provided coordinate space, "
+                    f"{coordinate_space.axis_names}."
+                )
+
+        # Check asset exists in the specified location.
+        try:
+            subcollection: Collection = self[subcollection_name]  # type: ignore
+        except KeyError as ke:
+            raise KeyError(
+                f"No collection '{subcollection_name}' in this scene."
+            ) from ke
+        try:
+            point_cloud: PointCloud = subcollection[point_cloud_name]
+        except KeyError as ke:
+            raise KeyError(
+                f"No PointCloud named '{point_cloud_name}' in '{subcollection_name}'."
+            ) from ke
+        if not isinstance(point_cloud, PointCloud):
+            raise TypeError(
+                f"'{point_cloud_name}' in '{subcollection_name}' is not an PointCloud."
+            )
+
+        point_cloud.coordinate_space = coordinate_space
+        subcollection.metadata[f"soma_scene_registry_{point_cloud}"] = (
+            transform_to_json(transform)
+        )
+        return point_cloud
 
     def register_image2d(
         self,
