@@ -115,7 +115,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         # Do generic SOMA collection initialization.
         super().__init__(handle, **kwargs)
 
-        # Get the coordiante space
+        # Get the coordinatte space
         coord_space = self.metadata.get("soma_coordinate_space")
         if coord_space is None:
             self._coord_space: Optional[CoordinateSpace] = None
