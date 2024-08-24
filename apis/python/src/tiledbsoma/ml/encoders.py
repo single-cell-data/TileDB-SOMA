@@ -7,15 +7,22 @@ from __future__ import annotations
 
 import abc
 import functools
-from typing import List
+from typing import TYPE_CHECKING, Any, List, Tuple
 
+import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder as SklearnLabelEncoder
 
+if TYPE_CHECKING:
+    NDArrayNumber = npt.NDArray[np.number[Any]]
+else:
+    NDArrayNumber = np.ndarray
+XObsDatum = Tuple[NDArrayNumber, pd.DataFrame]
+
 
 class Encoder(abc.ABC):
-    """Base class for ``obs`` encoders.
+    """Base class for ``pytorch`` encoders.
 
     To define a custom encoder, five methods must be implemented:
 
@@ -63,7 +70,9 @@ class Encoder(abc.ABC):
 
 
 class LabelEncoder(Encoder):
-    """Default encoder based on :class:`sklearn.preprocessing.LabelEncoder`.
+    """Default encoder - will encode obs values only (will not encode X values).
+
+    Based on :class:`sklearn.preprocessing.LabelEncoder`.
 
     Lifecycle:
         experimental
