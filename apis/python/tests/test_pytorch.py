@@ -10,12 +10,11 @@ from typing import Callable, List, Optional, Sequence, Union
 from unittest.mock import patch
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
-import torch
 from scipy import sparse
 from scipy.sparse import coo_matrix, spmatrix
-from somacore import AxisQuery
 
 import tiledbsoma as soma
 from tiledbsoma import Experiment, _factory
@@ -25,10 +24,8 @@ from tiledbsoma._collection import CollectionBase
 # This supports the pytest `ml` mark, which can be used to disable all PyTorch-dependent
 # tests.
 try:
-    from torch import Tensor, float32
     from torch.utils.data._utils.worker import WorkerInfo
 
-    from tiledbsoma.ml.encoders import BatchEncoder, LabelEncoder
     from tiledbsoma.ml.pytorch import (
         ExperimentAxisQueryDataPipe,
         ExperimentAxisQueryIterableDataset,
@@ -37,12 +34,6 @@ try:
 except ImportError:
     # this should only occur when not running `ml`-marked tests
     pass
-
-
-def to_tensor_collate_fn(datum):
-    return tuple(
-        [torch.from_numpy(d) if isinstance(d, np.ndarray) else d for d in datum]
-    )
 
 
 def pytorch_x_value_gen(obs_range: range, var_range: range) -> spmatrix:
@@ -168,6 +159,7 @@ def test_non_batched(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
+    # batch_size should default to 1
     exp_data_pipe = PipeClass(
         soma_experiment,
         measurement_name="RNA",
@@ -182,9 +174,14 @@ def test_non_batched(
 
     row_iter = iter(exp_data_pipe)
 
-    row = to_tensor_collate_fn(next(row_iter))
-    assert row[0].int().tolist() == [0, 1, 0]
-    assert row[1].tolist() == [0]
+    row = next(row_iter)
+    assert isinstance(row[0], np.ndarray)
+    assert isinstance(row[1], pd.DataFrame)
+    assert row[0].shape == (3,)
+    assert row[1].shape == (1, 1)
+    assert row[0].tolist() == [0, 1, 0]
+    assert row[1].keys() == ["label"]
+    assert row[1]["label"].tolist() == ["0"]
 
 
 @pytest.mark.ml
@@ -200,10 +197,7 @@ def test_uneven_soma_and_result_batches(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    """This is checking that batches are correctly created when they require fetching multiple chunks.
-
-    This was added due to failures in _ObsAndXIterator.__next__.
-    """
+    """This is checking that batches are correctly created when they require fetching multiple chunks."""
     exp_data_pipe = PipeClass(
         soma_experiment,
         measurement_name="RNA",
@@ -216,9 +210,15 @@ def test_uneven_soma_and_result_batches(
     )
     row_iter = iter(exp_data_pipe)
 
-    X_batch, obs_batch = to_tensor_collate_fn(next(row_iter))
-    assert X_batch.int()[0].tolist() == [0, 1, 0]
-    assert obs_batch.tolist() == [[0], [1], [2]]
+    X_batch, obs_batch = next(row_iter)
+    assert isinstance(X_batch, np.ndarray)
+    assert isinstance(obs_batch, pd.DataFrame)
+    assert X_batch.shape[0] == obs_batch.shape[0]
+    assert X_batch.shape == (3, 3)
+    assert obs_batch.shape == (3, 1)
+    assert X_batch[0].tolist() == [0, 1, 0]
+    assert ["label"] == obs_batch.keys()
+    assert obs_batch["label"].tolist() == ["0", "1", "2"]
 
 
 @pytest.mark.ml
@@ -245,13 +245,15 @@ def test_batching__all_batches_full_size(
     )
     batch_iter = iter(exp_data_pipe)
 
-    batch = to_tensor_collate_fn(next(batch_iter))
-    assert batch[0].int().tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
-    assert batch[1].tolist() == [[0], [1], [2]]
+    batch = next(batch_iter)
+    assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
+    assert batch[1].keys() == ["label"]
+    assert batch[1]["label"].tolist() == ["0", "1", "2"]
 
-    batch = to_tensor_collate_fn(next(batch_iter))
-    assert batch[0].int().tolist() == [[1, 0, 1], [0, 1, 0], [1, 0, 1]]
-    assert batch[1].tolist() == [[3], [4], [5]]
+    batch = next(batch_iter)
+    assert batch[0].tolist() == [[1, 0, 1], [0, 1, 0], [1, 0, 1]]
+    assert batch[1].keys() == ["label"]
+    assert batch[1]["label"].tolist() == ["3", "4", "5"]
 
     with pytest.raises(StopIteration):
         next(batch_iter)
@@ -277,15 +279,14 @@ def test_unique_soma_joinids(
         soma_experiment,
         measurement_name="RNA",
         X_name="raw",
-        obs_column_names=["label"],
+        obs_column_names=["soma_joinid", "label"],
         batch_size=3,
         use_eager_fetch=use_eager_fetch,
     )
 
     soma_joinids = np.concatenate(
-        [to_tensor_collate_fn(batch)[1][:, 0].numpy() for batch in exp_data_pipe]
+        [batch[1]["soma_joinid"].to_numpy() for batch in exp_data_pipe]
     )
-
     assert len(np.unique(soma_joinids)) == len(soma_joinids)
 
 
@@ -314,8 +315,8 @@ def test_batching__partial_final_batch_size(
     batch_iter = iter(exp_data_pipe)
 
     next(batch_iter)
-    batch = to_tensor_collate_fn(next(batch_iter))
-    assert batch[0].int().tolist() == [[1, 0, 1], [0, 1, 0]]
+    batch = next(batch_iter)
+    assert batch[0].tolist() == [[1, 0, 1], [0, 1, 0]]
 
     with pytest.raises(StopIteration):
         next(batch_iter)
@@ -345,9 +346,9 @@ def test_batching__exactly_one_batch(
     )
     batch_iter = iter(exp_data_pipe)
 
-    batch = to_tensor_collate_fn(next(batch_iter))
-    assert batch[0].int().tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
-    assert batch[1].tolist() == [[0], [1], [2]]
+    batch = next(batch_iter)
+    assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
+    assert batch[1]["label"].tolist() == ["0", "1", "2"]
 
     with pytest.raises(StopIteration):
         next(batch_iter)
@@ -370,7 +371,7 @@ def test_batching__empty_query_result(
         soma_experiment,
         measurement_name="RNA",
         X_name="raw",
-        obs_query=AxisQuery(coords=([],)),
+        obs_query=soma.AxisQuery(coords=([],)),
         obs_column_names=["label"],
         batch_size=3,
         use_eager_fetch=use_eager_fetch,
@@ -379,63 +380,6 @@ def test_batching__empty_query_result(
 
     with pytest.raises(StopIteration):
         next(batch_iter)
-
-
-@pytest.mark.ml
-@pytest.mark.parametrize(
-    "obs_range,var_range,X_value_gen,use_eager_fetch",
-    [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
-)
-@pytest.mark.parametrize(
-    "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
-)
-def test_sparse_output__non_batched(
-    PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
-    soma_experiment: Experiment,
-    use_eager_fetch: bool,
-) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        shuffle=False,
-        use_eager_fetch=use_eager_fetch,
-    )
-    batch_iter = iter(exp_data_pipe)
-
-    batch = to_tensor_collate_fn(next(batch_iter))
-    assert isinstance(batch[1], Tensor)
-    assert batch[0].tolist() == [0, 1, 0]
-
-
-@pytest.mark.ml
-@pytest.mark.parametrize(
-    "obs_range,var_range,X_value_gen,use_eager_fetch",
-    [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
-)
-@pytest.mark.parametrize(
-    "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
-)
-def test_sparse_output__batched(
-    PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
-    soma_experiment: Experiment,
-    use_eager_fetch: bool,
-) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        batch_size=3,
-        shuffle=False,
-        use_eager_fetch=use_eager_fetch,
-    )
-    batch_iter = iter(exp_data_pipe)
-
-    batch = to_tensor_collate_fn(next(batch_iter))
-    assert isinstance(batch[1], Tensor)
-    assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
 
 
 @pytest.mark.ml
@@ -472,144 +416,6 @@ def test_batching__partial_soma_batches_are_concatenated(
 
 @pytest.mark.ml
 @pytest.mark.parametrize(
-    "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
-)
-@pytest.mark.parametrize(
-    "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
-)
-def test_default_encoders_implicit(
-    PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
-    soma_experiment: Experiment,
-) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        shuffle=False,
-        batch_size=3,
-    )
-    batch_iter = iter(exp_data_pipe)
-
-    batch = to_tensor_collate_fn(next(batch_iter))
-    assert isinstance(batch[1], Tensor)
-    assert batch[0].to_dense().tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
-
-    labels_encoded = batch[1]
-
-    labels_decoded = exp_data_pipe.encoders["label"].inverse_transform(labels_encoded)
-    assert labels_decoded.tolist() == ["0", "1", "2"]  # type: ignore
-
-
-@pytest.mark.ml
-@pytest.mark.parametrize(
-    "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
-)
-@pytest.mark.parametrize(
-    "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
-)
-def test_default_encoders_explicit(
-    PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
-    soma_experiment: Experiment,
-) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        encoders=[LabelEncoder("label")],
-        shuffle=False,
-        batch_size=3,
-    )
-    batch_iter = iter(exp_data_pipe)
-
-    batch = to_tensor_collate_fn(next(batch_iter))
-    assert isinstance(batch[1], Tensor)
-
-    labels_encoded = batch[1]
-
-    labels_decoded = exp_data_pipe.encoders["label"].inverse_transform(labels_encoded)
-    assert labels_decoded.tolist() == ["0", "1", "2"]  # type: ignore
-
-
-@pytest.mark.ml
-@pytest.mark.parametrize(
-    "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
-)
-@pytest.mark.parametrize(
-    "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
-)
-def test_batch_encoder(
-    PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
-    soma_experiment: Experiment,
-) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        encoders=[BatchEncoder(["label", "label2"])],
-        shuffle=False,
-        batch_size=3,
-    )
-    batch_iter = iter(exp_data_pipe)
-
-    batch = to_tensor_collate_fn(next(batch_iter))
-    assert isinstance(batch[1], Tensor)
-
-    labels_encoded = batch[1]
-
-    labels_decoded = exp_data_pipe.encoders["batch"].inverse_transform(labels_encoded)
-    assert labels_decoded.tolist() == ["0c", "1c", "2c"]  # type: ignore
-
-
-@pytest.mark.ml
-@pytest.mark.parametrize(
-    "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
-)
-@pytest.mark.parametrize(
-    "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
-)
-def test_custom_encoders_fail_if_duplicate(
-    PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
-    soma_experiment: Experiment,
-) -> None:
-    with pytest.raises(ValueError):
-        PipeClass(
-            soma_experiment,
-            measurement_name="RNA",
-            X_name="raw",
-            encoders=[LabelEncoder("label"), LabelEncoder("label")],
-            shuffle=False,
-            batch_size=3,
-        )
-
-
-@pytest.mark.ml
-@pytest.mark.parametrize(
-    "obs_range,var_range,X_value_gen", [(3, 3, pytorch_x_value_gen)]
-)
-@pytest.mark.parametrize(
-    "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
-)
-def test_custom_encoders_fail_if_columns_defined(
-    PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
-    soma_experiment: Experiment,
-) -> None:
-    with pytest.raises(
-        ValueError, match="Cannot specify both `obs_column_names` and `encoders`"
-    ):
-        PipeClass(
-            soma_experiment,
-            measurement_name="RNA",
-            X_name="raw",
-            obs_column_names=["label"],
-            encoders=[LabelEncoder("label")],
-            shuffle=False,
-            batch_size=3,
-        )
-
-
-@pytest.mark.ml
-@pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(6, 3, pytorch_x_value_gen)]
 )
 @pytest.mark.parametrize(
@@ -626,7 +432,7 @@ def test_multiprocessing__returns_full_result(
         soma_experiment,
         measurement_name="RNA",
         X_name="raw",
-        obs_column_names=["label"],
+        obs_column_names=["soma_joinid", "label"],
         io_batch_size=3,  # two chunks, one per worker
     )
     # Note we're testing the ExperimentAxisQueryDataPipe via a DataLoader, since this is what sets up the multiprocessing
@@ -634,7 +440,7 @@ def test_multiprocessing__returns_full_result(
 
     full_result = list(iter(dl))
 
-    soma_joinids = [t[1][0].item() for t in full_result]
+    soma_joinids = np.concatenate([t[1]["soma_joinid"].to_numpy() for t in full_result])
     assert sorted(soma_joinids) == list(range(6))
 
 
@@ -665,13 +471,15 @@ def test_distributed__returns_data_partition_for_rank(
             soma_experiment,
             measurement_name="RNA",
             X_name="raw",
-            encoders=[LabelEncoder("soma_joinid"), LabelEncoder("label")],
+            obs_column_names=["soma_joinid"],
             io_batch_size=2,
             shuffle=False,
         )
         full_result = list(iter(dp))
 
-        soma_joinids = [t[1][0].item() for t in full_result]
+        soma_joinids = np.concatenate(
+            [t[1]["soma_joinid"].to_numpy() for t in full_result]
+        )
 
         # Of the 6 obs rows, the PyTorch process of rank 1 should get [2, 3]
         # (rank 0 gets [0, 1], rank 2 gets [4, 5])
@@ -709,14 +517,16 @@ def test_distributed_and_multiprocessing__returns_data_partition_for_rank(
             soma_experiment,
             measurement_name="RNA",
             X_name="raw",
-            encoders=[LabelEncoder("soma_joinid"), LabelEncoder("label")],
+            obs_column_names=["soma_joinid"],
             io_batch_size=2,
             shuffle=False,
         )
 
         full_result = list(iter(dp))
 
-        soma_joinids = [t[1][0].item() for t in full_result]
+        soma_joinids = np.concatenate(
+            [t[1]["soma_joinid"].to_numpy() for t in full_result]
+        )
 
         # Of the 12 obs rows, the PyTorch process of rank 1 should get [4..7], and then within that partition,
         # the 2nd DataLoader process should get the second half of the rank's partition, which is just [6, 7]
@@ -741,16 +551,18 @@ def test_experiment_dataloader__non_batched(
         soma_experiment,
         measurement_name="RNA",
         X_name="raw",
-        encoders=[LabelEncoder("soma_joinid"), LabelEncoder("label")],
+        obs_column_names=["label"],
         shuffle=False,
         use_eager_fetch=use_eager_fetch,
     )
     dl = experiment_dataloader(dp)
-    torch_data = [row for row in dl]  # noqa: C416
+    data = [row for row in dl]
+    assert all(d[0].shape == (3,) for d in data)
+    assert all(d[1].shape == (1, 1) for d in data)
 
-    row = torch_data[0]
-    assert row[0].to_dense().tolist() == [0, 1, 0]
-    assert row[1].tolist() == [0, 0]
+    row = data[0]
+    assert row[0].tolist() == [0, 1, 0]
+    assert row[1]["label"].tolist() == ["0"]
 
 
 @pytest.mark.ml
@@ -770,17 +582,16 @@ def test_experiment_dataloader__batched(
         soma_experiment,
         measurement_name="RNA",
         X_name="raw",
-        encoders=[LabelEncoder("soma_joinid"), LabelEncoder("label")],
         batch_size=3,
         shuffle=False,
         use_eager_fetch=use_eager_fetch,
     )
     dl = experiment_dataloader(dp)
-    torch_data = [row for row in dl]  # noqa: C416
+    data = [row for row in dl]
 
-    batch = torch_data[0]
-    assert batch[0].to_dense().tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
-    assert batch[1].tolist() == [[0, 0], [1, 1], [2, 2]]
+    batch = data[0]
+    assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
+    assert batch[1].to_numpy().tolist() == [[0], [1], [2]]
 
 
 @pytest.mark.ml
@@ -833,9 +644,9 @@ def test__X_tensor_dtype_matches_X_matrix(
         batch_size=3,
         use_eager_fetch=use_eager_fetch,
     )
-    torch_data = to_tensor_collate_fn(next(iter(dp)))
+    data = next(iter(dp))
 
-    assert torch_data[0].dtype == float32
+    assert data[0].dtype == np.float32
 
 
 @pytest.mark.ml
@@ -851,6 +662,7 @@ def test__pytorch_splitting(
         X_name="raw",
         obs_column_names=["label"],
     )
+    # function not available for IterableDataset, yet....
     dp_train, dp_test = dp.random_split(weights={"train": 0.7, "test": 0.3}, seed=1234)
     dl = experiment_dataloader(dp_train)
 
@@ -873,13 +685,12 @@ def test__shuffle(
         soma_experiment,
         measurement_name="RNA",
         X_name="raw",
-        encoders=[LabelEncoder("soma_joinid"), LabelEncoder("label")],
         shuffle=True,
     )
 
     all_rows = list(iter(dp))
-
-    soma_joinids = [row[1][0].item() for row in all_rows]
+    assert all(r[0].shape == (1,) for r in all_rows)
+    soma_joinids = [row[1]["soma_joinid"].iloc[0] for row in all_rows]
     X_values = [row[0][0].item() for row in all_rows]
 
     # same elements
@@ -889,18 +700,6 @@ def test__shuffle(
     # randomizes X in same order as obs
     # note: X values were explicitly set to match obs_joinids to allow for this simple assertion
     assert X_values == soma_joinids
-
-
-@pytest.mark.ml
-@pytest.mark.skip(reason="Not implemented")
-def test_experiment_dataloader__multiprocess_sparse_matrix__fails() -> None:
-    pass
-
-
-@pytest.mark.ml
-@pytest.mark.skip(reason="Not implemented")
-def test_experiment_dataloader__multiprocess_dense_matrix__ok() -> None:
-    pass
 
 
 @pytest.mark.ml
