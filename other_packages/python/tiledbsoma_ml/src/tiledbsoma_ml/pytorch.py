@@ -15,7 +15,6 @@ from contextlib import contextmanager
 from itertools import islice
 from math import ceil
 from typing import (
-    TYPE_CHECKING,
     Any,
     Dict,
     Iterable,
@@ -46,10 +45,11 @@ logger = logging.getLogger("tiledbsoma_ml.pytorch")
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 
-if TYPE_CHECKING:
-    NDArrayNumber: TypeAlias = npt.NDArray[np.number[Any]]
-else:
-    NDArrayNumber: TypeAlias = np.ndarray
+# if TYPE_CHECKING:
+#     NDArrayNumber: TypeAlias = npt.NDArray[np.number[Any]]
+# else:
+#     NDArrayNumber: TypeAlias = np.ndarray
+NDArrayNumber: TypeAlias = npt.NDArray[np.number[Any]]
 XObsDatum: TypeAlias = Tuple[NDArrayNumber, pd.DataFrame]
 XObsNpDatum: TypeAlias = Tuple[NDArrayNumber, NDArrayNumber]
 XObsTensorDatum: TypeAlias = Tuple[torch.Tensor, torch.Tensor]
