@@ -37,6 +37,7 @@ import scipy.sparse as sparse
 import torch
 import torchdata
 from somacore.query._eager_iter import EagerIterator as _EagerIterator
+from typing_extensions import TypeAlias
 
 import tiledbsoma as soma
 
@@ -46,12 +47,12 @@ _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 
 if TYPE_CHECKING:
-    NDArrayNumber = npt.NDArray[np.number[Any]]
+    NDArrayNumber: TypeAlias = npt.NDArray[np.number[Any]]
 else:
-    NDArrayNumber = np.ndarray
-XObsDatum = Tuple[NDArrayNumber, pd.DataFrame]
-XObsNpDatum = Tuple[NDArrayNumber, NDArrayNumber]
-XObsTensorDatum = Tuple[torch.Tensor, torch.Tensor]
+    NDArrayNumber: TypeAlias = np.ndarray
+XObsDatum: TypeAlias = Tuple[NDArrayNumber, pd.DataFrame]
+XObsNpDatum: TypeAlias = Tuple[NDArrayNumber, NDArrayNumber]
+XObsTensorDatum: TypeAlias = Tuple[torch.Tensor, torch.Tensor]
 """Return type of ``ExperimentAxisQueryDataPipe`` that pairs a Tensor of ``obs`` row(s) with a Tensor of ``X`` matrix row(s).
 The Tensors are rank 1 if ``batch_size`` is 1, otherwise the Tensors are rank 2."""
 

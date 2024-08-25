@@ -51,3 +51,29 @@ version = {attr = "tiledbsoma_ml.__version__"}
 
 [tool.setuptools_scm]
 root = "../../.."
+
+[tool.mypy]
+show_error_codes = true
+ignore_missing_imports = true
+warn_unreachable = true
+strict = true
+python_version = 3.8
+plugins = "numpy.typing.mypy_plugin"
+
+[tool.ruff]
+lint.select = ["E", "F", "B", "I"]
+lint.ignore = ["E501"]  # line too long
+lint.extend-select = ["I001"]  # unsorted-imports
+fix = true
+target-version = "py38"
+line-length = 120
+
+
+[tool.ruff.lint.isort]
+# HACK: tiledb needs to come after tiledbsoma: https://github.com/single-cell-data/TileDB-SOMA/issues/2293
+section-order = ["future", "standard-library", "third-party", "tiledbsoma", "tiledb", "first-party", "local-folder"]
+no-lines-before = ["tiledb"]
+
+[tool.ruff.lint.isort.sections]
+"tiledbsoma" = ["tiledbsoma"]
+"tiledb" = ["tiledb"]
