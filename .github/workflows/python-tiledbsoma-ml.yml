@@ -57,6 +57,7 @@ jobs:
           cache-dependency-path: python-spec/requirements-py${{ matrix.python-version }}.txt
 
       - name: Install prereqs
+        working-directory: ./other_packages/python/tiledbsoma_ml/
         run: |
           pip install --upgrade pip wheel pytest pytest-cov setuptools
           pip install .
