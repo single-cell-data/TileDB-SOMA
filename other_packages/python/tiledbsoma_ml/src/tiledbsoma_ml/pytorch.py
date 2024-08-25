@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from itertools import islice
 from math import ceil
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Iterable,
@@ -45,16 +46,18 @@ logger = logging.getLogger("tiledbsoma_ml.pytorch")
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 
-# if TYPE_CHECKING:
-#     NDArrayNumber: TypeAlias = npt.NDArray[np.number[Any]]
-# else:
-#     NDArrayNumber: TypeAlias = np.ndarray
-NDArrayNumber: TypeAlias = npt.NDArray[np.number[Any]]
+if TYPE_CHECKING:
+    # Python 3.8 does not support subscripting types, so work-around by
+    # restricting this to when we are running a type checker.  TODO: remove
+    # the conditional when Python 3.8 support is dropped.
+    NDArrayNumber: TypeAlias = npt.NDArray[np.number[Any]]
+else:
+    NDArrayNumber: TypeAlias = np.ndarray
+
 XObsDatum: TypeAlias = Tuple[NDArrayNumber, pd.DataFrame]
-XObsNpDatum: TypeAlias = Tuple[NDArrayNumber, NDArrayNumber]
-XObsTensorDatum: TypeAlias = Tuple[torch.Tensor, torch.Tensor]
-"""Return type of ``ExperimentAxisQueryDataPipe`` that pairs a Tensor of ``obs`` row(s) with a Tensor of ``X`` matrix row(s).
-The Tensors are rank 1 if ``batch_size`` is 1, otherwise the Tensors are rank 2."""
+"""Return type of ``ExperimentAxisQueryIterableDataset`` and ``ExperimentAxisQueryIterDataPipe``,
+which pairs a NumPy ndarray of ``X`` row(s) with a Pandas DataFrame of ``obs`` row(s). If the
+``batch_size`` is 1, the objects are of rank 1, else they are of rank 2."""
 
 
 @attrs.define(frozen=True, kw_only=True)
