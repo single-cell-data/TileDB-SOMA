@@ -13,7 +13,6 @@ ignore_missing_imports = true
 warn_unreachable = true
 strict = true
 python_version = 3.8
-plugins = "numpy.typing.mypy_plugin"
 
 [[tool.mypy.overrides]]
 module = "tiledbsoma._query_condition"
@@ -34,8 +33,3 @@ no-lines-before = ["tiledb"]
 [tool.ruff.lint.isort.sections]
 "tiledbsoma" = ["tiledbsoma"]
 "tiledb" = ["tiledb"]
-
-[tool.pytest.ini_options]
-markers = [
-    "ml: tests that use ML features and have PyTorch dependencies",
-]

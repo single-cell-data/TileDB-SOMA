@@ -24,13 +24,12 @@ from tiledbsoma._collection import CollectionBase
 # This supports the pytest `ml` mark, which can be used to disable all PyTorch-dependent
 # tests.
 try:
-    from torch.utils.data._utils.worker import WorkerInfo
-
-    from tiledbsoma.ml.pytorch import (
+    from tiledbsoma_ml.pytorch import (
         ExperimentAxisQueryDataPipe,
         ExperimentAxisQueryIterableDataset,
         experiment_dataloader,
     )
+    from torch.utils.data._utils.worker import WorkerInfo
 except ImportError:
     # this should only occur when not running `ml`-marked tests
     pass
@@ -146,7 +145,6 @@ def soma_experiment(
     return _factory.open((tmp_path / "exp").as_posix())
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -184,7 +182,6 @@ def test_non_batched(
     assert row[1]["label"].tolist() == ["0"]
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -221,7 +218,6 @@ def test_uneven_soma_and_result_batches(
     assert obs_batch["label"].tolist() == ["0", "1", "2"]
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -259,7 +255,6 @@ def test_batching__all_batches_full_size(
         next(batch_iter)
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [
@@ -290,7 +285,6 @@ def test_unique_soma_joinids(
     assert len(np.unique(soma_joinids)) == len(soma_joinids)
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(5, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -322,7 +316,6 @@ def test_batching__partial_final_batch_size(
         next(batch_iter)
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(3, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -354,7 +347,6 @@ def test_batching__exactly_one_batch(
         next(batch_iter)
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -382,7 +374,6 @@ def test_batching__empty_query_result(
         next(batch_iter)
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [
@@ -414,7 +405,6 @@ def test_batching__partial_soma_batches_are_concatenated(
     assert [len(batch[0]) for batch in full_result] == [3, 3, 3, 1]
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(6, 3, pytorch_x_value_gen)]
 )
@@ -444,7 +434,6 @@ def test_multiprocessing__returns_full_result(
     assert sorted(soma_joinids) == list(range(6))
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(6, 3, pytorch_x_value_gen)]
 )
@@ -486,7 +475,6 @@ def test_distributed__returns_data_partition_for_rank(
         assert sorted(soma_joinids) == [2, 3]
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(12, 3, pytorch_x_value_gen)]
 )
@@ -534,7 +522,6 @@ def test_distributed_and_multiprocessing__returns_data_partition_for_rank(
         assert sorted(soma_joinids) == [6, 7]
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(3, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -565,7 +552,6 @@ def test_experiment_dataloader__non_batched(
     assert row[1]["label"].tolist() == ["0"]
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -594,7 +580,6 @@ def test_experiment_dataloader__batched(
     assert batch[1].to_numpy().tolist() == [[0], [1], [2]]
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [
@@ -623,7 +608,6 @@ def test_experiment_dataloader__batched_length(
     assert len(dl) == len(list(dl))
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
@@ -649,7 +633,6 @@ def test__X_tensor_dtype_matches_X_matrix(
     assert data[0].dtype == np.float32
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(10, 1, pytorch_x_value_gen)]
 )
@@ -670,7 +653,6 @@ def test__pytorch_splitting(
     assert len(all_rows) == 7
 
 
-@pytest.mark.ml
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(16, 1, pytorch_seq_x_value_gen)]
 )
@@ -702,10 +684,9 @@ def test__shuffle(
     assert X_values == soma_joinids
 
 
-@pytest.mark.ml
 def test_experiment_dataloader__unsupported_params__fails() -> None:
     with patch(
-        "tiledbsoma.ml.pytorch.ExperimentAxisQueryDataPipe"
+        "tiledbsoma_ml.pytorch.ExperimentAxisQueryDataPipe"
     ) as dummy_exp_data_pipe:
         with pytest.raises(ValueError):
             experiment_dataloader(dummy_exp_data_pipe, shuffle=True)
@@ -719,9 +700,8 @@ def test_experiment_dataloader__unsupported_params__fails() -> None:
             experiment_dataloader(dummy_exp_data_pipe, collate_fn=lambda x: x)
 
 
-@pytest.mark.ml
 def test_batched() -> None:
-    from tiledbsoma.ml.pytorch import _batched
+    from tiledbsoma_ml.pytorch import _batched
 
     assert list(_batched(range(6), 1)) == list((i,) for i in range(6))
     assert list(_batched(range(6), 2)) == [(0, 1), (2, 3), (4, 5)]
@@ -742,9 +722,8 @@ def test_batched() -> None:
         list(_batched([0, 1, 2], 2, strict=True))
 
 
-@pytest.mark.ml
 def test_splits() -> None:
-    from tiledbsoma.ml.pytorch import _splits
+    from tiledbsoma_ml.pytorch import _splits
 
     assert _splits(10, 1).tolist() == [0, 10]
     assert _splits(10, 3).tolist() == [0, 4, 7, 10]
@@ -759,9 +738,8 @@ def test_splits() -> None:
         _splits(10, -1)
 
 
-@pytest.mark.ml
 def test_csr_to_dense() -> None:
-    from tiledbsoma.ml.pytorch import _csr_to_dense
+    from tiledbsoma_ml.pytorch import _csr_to_dense
 
     coo = sparse.eye(1001, 77, format="coo", dtype=np.float32)
 

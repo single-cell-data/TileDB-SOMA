@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tiledbsoma-ml"
+dynamic = ["version"]
+dependencies = [
+    "attrs",
+    "tiledbsoma",
+    "torch",
+    "torchdata<=0.9",
+]
+requires-python = ">= 3.8"
+description = "Machine learning tools for use with tiledbsoma"
+readme = "README.md"
+authors = [
+    {name = "TileDB, Inc.", email = "help@tiledb.io"},
+    {name = "The Chan Zuckerberg Initiative Foundation", email = "soma@chanzuckerberg.com" },
+]
+maintainers = [
+    {name = "TileDB, Inc.", email="help@tiledb.io"},
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Operating System :: Unix",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Repository = "https://github.com/single-cell-data/TileDB-SOMA.git"
+Issues = "https://github.com/single-cell-data/TileDB-SOMA/issues"
+Changelog = "https://github.com/single-cell-data/TileDB-SOMA/blob/main/CHANGELOG.md"
+
+[tool.setuptools.dynamic]
+version = {attr = "tiledbsoma_ml.__version__"}
+
+[tool.setuptools_scm]
+root = "../../.."

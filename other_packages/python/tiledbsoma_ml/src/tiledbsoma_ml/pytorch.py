@@ -1,3 +1,8 @@
+# Copyright (c) 2021-2024 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2024 TileDB, Inc.
+#
+# Licensed under the MIT License.
+
 from __future__ import annotations
 
 import gc
@@ -35,7 +40,7 @@ from somacore.query._eager_iter import EagerIterator as _EagerIterator
 
 import tiledbsoma as soma
 
-logger = logging.getLogger("tiledbsoma.ml.pytorch")
+logger = logging.getLogger("tiledbsoma_ml.pytorch")
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)

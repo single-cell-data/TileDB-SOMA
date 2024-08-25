@@ -3,20 +3,18 @@
 #
 # Licensed under the MIT License.
 
-"""An API to facilitate use of PyTorch ML training with data from SOMA data."""
+"""An API to support machine learning applications built on SOMA."""
 
-from .encoders import BatchEncoder, Encoder, LabelEncoder
 from .pytorch import (
     ExperimentAxisQueryDataPipe,
     ExperimentAxisQueryIterableDataset,
     experiment_dataloader,
 )
 
+__version__ = "0.1.0-dev"
+
 __all__ = [
     "ExperimentAxisQueryDataPipe",
     "ExperimentAxisQueryIterableDataset",
     "experiment_dataloader",
-    "Encoder",
-    "LabelEncoder",
-    "BatchEncoder",
 ]

@@ -348,10 +348,6 @@ setuptools.setup(
     ],
     extras_require={
         "dev": open("requirements_dev.txt").read(),
-        "ml": [
-            "torch",
-            "torchdata<=0.9",
-        ],
     },
     python_requires=">=3.8",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},

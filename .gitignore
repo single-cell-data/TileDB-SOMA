@@ -53,6 +53,7 @@ apis/python/src/tiledbsoma/libtiledb.*
 apis/python/src/tiledbsoma/libtiledbsoma.so
 apis/python/src/tiledbsoma/libtiledbsoma.dylib
 apis/python/src/tiledbsoma/pytiledbsoma.*
+**/dist/
 
 /.quarto/
 
