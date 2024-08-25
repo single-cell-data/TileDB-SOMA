@@ -21,7 +21,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     env:
-      PYTHON_VERSION: "3.8"
+      PYTHON_VERSION: "3.11"
     steps:
       - uses: actions/checkout@v4
 
