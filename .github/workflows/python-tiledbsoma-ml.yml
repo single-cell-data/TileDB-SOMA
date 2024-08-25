@@ -6,12 +6,14 @@ on:
     paths:
       - !'**'
       - 'other_packages/python/tiledbsoma_ml/**'
+      - '.github/workflows/python-tiledbsoma-ml.yml'
 
   push:
     branches: [main]
     paths:
       - !'**'
       - 'other_packages/python/tiledbsoma_ml/**'
+      - '.github/workflows/python-tiledbsoma-ml.yml'
 
   workflow_dispatch:
 
