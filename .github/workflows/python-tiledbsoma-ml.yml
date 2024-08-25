@@ -4,30 +4,28 @@ on:
   pull_request:
     branches: ["*"]
     paths:
-      - '!**'
-      - 'other_packages/python/tiledbsoma_ml/**'
-      - '.github/workflows/python-tiledbsoma-ml.yml'
+      - "!**"
+      - "other_packages/python/tiledbsoma_ml/**"
+      - ".github/workflows/python-tiledbsoma-ml.yml"
 
   push:
     branches: [main]
     paths:
-      - '!**'
-      - 'other_packages/python/tiledbsoma_ml/**'
-      - '.github/workflows/python-tiledbsoma-ml.yml'
+      - "!**"
+      - "other_packages/python/tiledbsoma_ml/**"
+      - ".github/workflows/python-tiledbsoma-ml.yml"
 
   workflow_dispatch:
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-    env:
-      PYTHON_VERSION: "3.11"
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: "3.11"
 
       - name: Restore pre-commit cache
         uses: actions/cache@v4
@@ -66,3 +64,19 @@ jobs:
         working-directory: ./other_packages/python/tiledbsoma_ml/
         run: |
           pytest -s -v tests/
+
+  build:
+    # for now, just do a test build to ensure that it works
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up environment
+        working-directory: ./other_packages/python/tiledbsoma_ml/
+        run: |
+          pip install --upgrade build pip wheel setuptools setuptools-scm
+          python -m build .
