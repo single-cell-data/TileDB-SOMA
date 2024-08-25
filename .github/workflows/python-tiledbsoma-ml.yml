@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: ["*"]
     paths:
-      - !'**'
+      - '!**'
       - 'other_packages/python/tiledbsoma_ml/**'
       - '.github/workflows/python-tiledbsoma-ml.yml'
 
