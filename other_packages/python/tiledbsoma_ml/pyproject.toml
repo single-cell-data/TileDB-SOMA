@@ -10,6 +10,11 @@ dependencies = [
     "tiledbsoma",
     "torch",
     "torchdata<=0.9",
+    "numpy",
+    "numba",
+    "pandas",
+    "pyarrow",
+    "scipy"
 ]
 requires-python = ">= 3.8"
 description = "Machine learning tools for use with tiledbsoma"
