@@ -26,8 +26,8 @@ from tiledbsoma._collection import CollectionBase
 try:
     from tiledbsoma_ml.pytorch import (
         ExperimentAxisQueryDataPipe,
-        ExperimentAxisQueryIterableDataset,
         ExperimentAxisQueryIterable,
+        ExperimentAxisQueryIterableDataset,
         experiment_dataloader,
     )
     from torch.utils.data._utils.worker import WorkerInfo
@@ -688,7 +688,9 @@ def test__shuffle(
 @pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen", [(6, 3, pytorch_x_value_gen)]
 )
-def test_experiment_axis_query_iterable_error_checks(soma_experiment: Experiment) -> None:
+def test_experiment_axis_query_iterable_error_checks(
+    soma_experiment: Experiment,
+) -> None:
     dp = ExperimentAxisQueryIterable(
         soma_experiment,
         measurement_name="RNA",
@@ -706,7 +708,6 @@ def test_experiment_axis_query_iterable_error_checks(soma_experiment: Experiment
             X_name="raw",
             shuffle=True,
         )
-
 
 
 def test_experiment_dataloader__unsupported_params__fails() -> None:
