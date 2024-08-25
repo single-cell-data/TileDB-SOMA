@@ -77,7 +77,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         *,
         obs_query: Optional[query.AxisQuery] = None,
         var_query: Optional[query.AxisQuery] = None,
-    ) -> query.ExperimentAxisQuery[Self]:  # type: ignore[type-var]
+    ) -> query.ExperimentAxisQuery[Self]:  # type: ignore
         """Creates an axis query over this experiment.
         Lifecycle: Maturing.
         """
@@ -85,7 +85,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         # error here.
         # (Actually, more likely the error is due to somacore.Experiment not being
         # subclass of somacore.query.query._Experimentish)
-        return query.ExperimentAxisQuery(  # type: ignore[type-var]
+        return query.ExperimentAxisQuery(  # type: ignore
             self,
             measurement_name,
             obs_query=obs_query or query.AxisQuery(),
