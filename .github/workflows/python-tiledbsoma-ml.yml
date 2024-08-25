@@ -68,6 +68,7 @@ jobs:
             -v
 
       - name: Report coverage to Codecov
+        if: ${{ matrix.python-version == '3.11' }}
         uses: codecov/codecov-action@v4
         with:
           flags: python
@@ -88,7 +89,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Set up environment
+      - name: Do build
         working-directory: ./other_packages/python/tiledbsoma_ml/
         run: |
           pip install --upgrade build pip wheel setuptools setuptools-scm
