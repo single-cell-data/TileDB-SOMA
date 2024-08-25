@@ -27,6 +27,7 @@ try:
     from tiledbsoma_ml.pytorch import (
         ExperimentAxisQueryDataPipe,
         ExperimentAxisQueryIterableDataset,
+        ExperimentAxisQueryIterable,
         experiment_dataloader,
     )
     from torch.utils.data._utils.worker import WorkerInfo
@@ -682,6 +683,30 @@ def test__shuffle(
     # randomizes X in same order as obs
     # note: X values were explicitly set to match obs_joinids to allow for this simple assertion
     assert X_values == soma_joinids
+
+
+@pytest.mark.parametrize(
+    "obs_range,var_range,X_value_gen", [(6, 3, pytorch_x_value_gen)]
+)
+def test_experiment_axis_query_iterable_error_checks(soma_experiment: Experiment) -> None:
+    dp = ExperimentAxisQueryIterable(
+        soma_experiment,
+        measurement_name="RNA",
+        X_name="raw",
+        shuffle=True,
+    )
+    with pytest.raises(NotImplementedError):
+        dp[0]
+
+    with pytest.raises(ValueError):
+        dp = ExperimentAxisQueryIterable(
+            soma_experiment,
+            obs_column_names=(),
+            measurement_name="RNA",
+            X_name="raw",
+            shuffle=True,
+        )
+
 
 
 def test_experiment_dataloader__unsupported_params__fails() -> None:
