@@ -717,10 +717,6 @@ def test_batched() -> None:
     with pytest.raises(ValueError):
         list(_batched([2, 3], -1))
 
-    # strict enforcement
-    with pytest.raises(ValueError):
-        list(_batched([0, 1, 2], 2, strict=True))
-
 
 def test_splits() -> None:
     from tiledbsoma_ml.pytorch import _splits

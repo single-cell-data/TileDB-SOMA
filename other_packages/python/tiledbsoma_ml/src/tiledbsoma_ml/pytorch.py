@@ -557,16 +557,12 @@ if sys.version_info >= (3, 12):
 
 else:
 
-    def _batched(
-        iterable: Iterable[_T_co], n: int, *, strict: bool = False
-    ) -> Iterator[Tuple[_T_co, ...]]:
+    def _batched(iterable: Iterable[_T_co], n: int) -> Iterator[Tuple[_T_co, ...]]:
         """Same as the Python 3.12+ itertools.batched -- polyfill for old Python versions."""
         if n < 1:
             raise ValueError("n must be at least one")
         it = iter(iterable)
         while batch := tuple(islice(it, n)):
-            if strict and len(batch) != n:
-                raise ValueError("batched(): incomplete batch")
             yield batch
 
 
