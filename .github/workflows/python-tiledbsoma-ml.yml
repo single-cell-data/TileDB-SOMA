@@ -39,7 +39,7 @@ jobs:
         run: pip -v install pre-commit
 
       - name: Run pre-commit hooks on all files
-        run: pre-commit run -v --files echo `git ls-files other_packages/python/tiledbsoma_ml`
+        run: pre-commit run -v -a
 
   tests:
     runs-on: ubuntu-latest
