@@ -1,0 +1,65 @@
+name: python-tiledbsoma-ml
+
+on:
+  pull_request:
+    branches: ["*"]
+    paths:
+      - !'**'
+      - 'other_packages/python/tiledbsoma_ml/**'
+
+  push:
+    branches: [main]
+    paths:
+      - !'**'
+      - 'other_packages/python/tiledbsoma_ml/**'
+
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      PYTHON_VERSION: "3.8"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Restore pre-commit cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install pre-commit
+        run: pip -v install pre-commit
+
+      - name: Run pre-commit hooks on all files
+        run: pre-commit run -v --files echo `git ls-files other_packages/python/tiledbsoma_ml`
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: python-spec/requirements-py${{ matrix.python-version }}.txt
+
+      - name: Install prereqs
+        run: |
+          pip install --upgrade pip wheel pytest pytest-cov setuptools
+          pip install .
+
+      - name: Run tests
+        working-directory: ./other_packages/python/tiledbsoma_ml/
+        run: |
+          pytest -s -v tests/
