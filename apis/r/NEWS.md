@@ -3,6 +3,7 @@
 ## Changes
 
 * Make use of timestamp ranges in libtiledbsoma
+* Simplify timestamp ranges; strengthen assumptions about `tiledb_timestamp`
 
 # tiledbsoma 1.13.0
 

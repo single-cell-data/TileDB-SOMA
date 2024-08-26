@@ -165,7 +165,7 @@ SOMADataFrame <- R6::R6Class(
                      colnames = column_names,
                      qc = value_filter,
                      dim_points = coords,
-                     timestamprange = self$tiledb_timestamp,  # NULL or two-elem vector
+                     timestamprange = self$.tiledb_timestamp_range,  # NULL or two-elem vector
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
       TableReadIter$new(rl$sr)

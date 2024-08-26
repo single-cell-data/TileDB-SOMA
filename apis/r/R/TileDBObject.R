@@ -39,12 +39,16 @@ TileDBObject <- R6::R6Class(
       private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
 
       if (!is.null(tiledb_timestamp)) {
-        stopifnot("'tiledb_timestamp' must be a POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct"))
+        stopifnot(
+            "'tiledb_timestamp' must be a single POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct") &&
+              length(tiledb_timestamp) == 1L &&
+              !is.na(tiledb_timestamp)
+        )
         private$.tiledb_timestamp <- tiledb_timestamp
       }
 
-      spdl::debug("[TileDBObject] initialize {} with '{}' at ({},{})", self$class(), self$uri,
-                  private$.tiledb_timestamp[1],private$.tiledb_timestamp[2])
+      spdl::debug("[TileDBObject] initialize {} with '{}' at ({})", self$class(), self$uri,
+                  self$tiledb_timestamp %||% "now")
     },
 
     #' @description Print the name of the R6 class.
@@ -91,7 +95,7 @@ TileDBObject <- R6::R6Class(
       mode <- match.arg(mode, choices = c('READ', 'WRITE'))
       stopifnot(
         "'tiledb_timestamp' must be a POSIXct datetime object" = is.null(tiledb_timestamp) ||
-          inherits(tiledb_timestamp, what = "POSIXct")
+          (inherits(tiledb_timestamp, what = "POSIXct") && length(tiledb_timestamp) == 1L && !is.na(tiledb_timestamp))
       )
       self$close()
       private$.tiledb_timestamp <- tiledb_timestamp
@@ -149,6 +153,20 @@ TileDBObject <- R6::R6Class(
     uri = function(value) {
       if (missing(value)) return(private$tiledb_uri$uri)
       stop(sprintf("'%s' is a read-only field.", "uri"), call. = FALSE)
+    },
+    #' @field .tiledb_timestamp_range Time range for libtiledbsoma
+    #'
+    .tiledb_timestamp_range = function(value) {
+      if (!missing(value)) {
+        private$.read_only_error("tiledb_timestamp_range")
+      }
+      if (is.null(self$tiledb_timestamp)) {
+        return(NULL)
+      }
+      return(c(
+        as.POSIXct(0, tz = 'UTC', origin = '1970-01-01'),
+        self$tiledb_timestamp
+      ))
     }
   ),
 

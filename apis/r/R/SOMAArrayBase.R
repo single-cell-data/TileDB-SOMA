@@ -36,7 +36,7 @@ SOMAArrayBase <- R6::R6Class(
       meta[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
       meta[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
       spdl::debug("[SOMAArrayBase::write_object_metadata] calling set metadata")
-      self$set_metadata(meta, c(self$tiledb_timestamp,self$tiledb_timestamp))
+      self$set_metadata(meta, self$.tiledb_timestamp_range)
     }
   )
 )
