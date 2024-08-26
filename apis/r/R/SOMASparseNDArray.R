@@ -174,9 +174,11 @@ SOMASparseNDArray <- R6::R6Class(
         names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c('_lower', '_upper'))
         index <- index + 2L
       }
-      self$set_metadata(bbox_flat, c(self$tiledb_timestamp[1],self$tiledb_timestamp[1]))
-      spdl::debug("[SOMASparseNDArray$write] Calling .write_coo_df ({},{})",
-                  self$tiledb_timestamp[1],self$tiledb_timestamp[2])
+      self$set_metadata(bbox_flat, self$tiledb_timestamp_range)
+      spdl::debug(
+        "[SOMASparseNDArray$write] Calling .write_coo_df ({})",
+        self$tiledb_timestamp %||% "now"
+      )
 
       private$.write_coo_dataframe(coo)
 
@@ -243,14 +245,22 @@ SOMASparseNDArray <- R6::R6Class(
                               arrow::field(nms[3], private$.type))
 
       tbl <- arrow::arrow_table(values, schema = arrsch)
-      spdl::debug("[SOMASparseNDArray$write] array created, writing to {} at ({},{})", self$uri,
-                  self$tiledb_timestamp[1],self$tiledb_timestamp[2])
+      spdl::debug(
+        "[SOMASparseNDArray$write] array created, writing to {} at ({})",
+        self$uri,
+        self$tiledb_timestamp %||% "now"
+      )
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      writeArrayFromArrow(self$uri, naap, nasp, "SOMASparseNDArray", NULL,
-                          if (is.null(self$tiledb_timestamp[1])) NULL
-                          else c(self$tiledb_timestamp[1], self$tiledb_timestamp[1]))
+      writeArrayFromArrow(
+        uri = self$uri,
+        naap = naap,
+        nasp = nasp,
+        arraytype = "SOMASparseNDArray",
+        config = NULL,
+        tsvec = self$tiledb_timestamp_range
+      )
     },
 
     # Internal marking of one or zero based matrices for iterated reads
