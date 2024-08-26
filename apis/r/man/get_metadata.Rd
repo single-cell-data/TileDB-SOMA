@@ -4,7 +4,7 @@
 \alias{get_metadata}
 \title{Read metadata (as a string)}
 \usage{
-get_metadata(uri, key, ctxxp)
+get_metadata(uri, key, is_array, ctxxp)
 }
 \arguments{
 \item{uri}{The array URI}

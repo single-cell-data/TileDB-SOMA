@@ -21,10 +21,11 @@ SOMADataFrame <- R6::R6Class(
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
     #' @template param-platform-config
+    #' @param timestamps Optional timestamp start and end range
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
     create = function(schema, index_column_names = c("soma_joinid"),
-                      platform_config = NULL, internal_use_only = NULL) {
+                      platform_config = NULL, timestamps = NULL, internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
@@ -53,12 +54,15 @@ SOMADataFrame <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       schema$export_to_c(nasp)
 
+      spdl::debug("[SOMADataFrame$create] about to create schema from arrow")
       ctxptr <- super$tiledbsoma_ctx$context()
       createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp, TRUE, "SOMADataFrame",
-                            tiledb_create_options$to_list(FALSE), soma_context())
+                            tiledb_create_options$to_list(FALSE), soma_context(), timestamps)
+
+      spdl::debug("[SOMADataFrame$create] about to call write_object_type_metadata")
+      private$write_object_type_metadata(timestamps)
 
       self$open("WRITE", internal_use_only = "allowed_use")
-      private$write_object_type_metadata()
       self
     },
 
@@ -67,8 +71,10 @@ SOMADataFrame <- R6::R6Class(
     #' @param values An [`arrow::Table`] or [`arrow::RecordBatch`]
     #' containing all columns, including any index columns. The
     #' schema for `values` must match the schema for the `SOMADataFrame`.
+    #' @param tsrange An optional two-element Datetime vector for the
+    #' start and end of the timestamp range
     #'
-    write = function(values) {
+    write = function(values, tsrange = NULL) {
       private$check_open_for_write()
 
       # Prevent downcasting of int64 to int32 when materializing a column
@@ -97,8 +103,7 @@ SOMADataFrame <- R6::R6Class(
 
       df <- as.data.frame(values)[schema_names]
       arr <- self$object
-
-      writeArrayFromArrow(self$uri, naap, nasp, "SOMADataFrame")
+      writeArrayFromArrow(self$uri, naap, nasp, "SOMADataFrame", NULL, tsrange)
 
       invisible(self)
     },
@@ -152,14 +157,15 @@ SOMADataFrame <- R6::R6Class(
                             args = list(expr = str2lang(value_filter), ta = arr))
           value_filter <- parsed@ptr
       }
-
+      spdl::debug("[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
+                  private$tiledb_timestamp[1], private$tiledb_timestamp[2])
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       rl <- sr_setup(uri = self$uri,
                      config = cfg,
                      colnames = column_names,
                      qc = value_filter,
                      dim_points = coords,
-                     timestamp_end = private$tiledb_timestamp,
+                     timestamprange = self$tiledb_timestamp,  # NULL or two-elem vector
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
       TableReadIter$new(rl$sr)

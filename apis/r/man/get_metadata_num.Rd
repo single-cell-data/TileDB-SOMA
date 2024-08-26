@@ -4,7 +4,7 @@
 \alias{get_metadata_num}
 \title{Get nnumber of metadata items}
 \usage{
-get_metadata_num(uri, ctxxp)
+get_metadata_num(uri, is_array, ctxxp)
 }
 \arguments{
 \item{uri}{The array URI}

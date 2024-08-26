@@ -324,15 +324,14 @@ test_that("SOMASparseNDArray timestamped ops", {
   uri <- tempfile(pattern="soma-sparse-nd-array-timestamps")
 
   # t=10: create 2x2 array and write 1 into top-left entry
-  t10 <- Sys.time()
-  snda <- SOMASparseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2))
+  t10 <- as.POSIXct(10, tz="UTC")
+  snda <- SOMASparseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2), tiledb_timestamp=t10)
   snda$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
   snda$close()
-  Sys.sleep(1.0)
 
   # t=20: write 1 into bottom-right entry
-  t20 <- Sys.time()
-  snda <- SOMASparseNDArrayOpen(uri=uri, mode="WRITE")
+  t20 <- as.POSIXct(20, tz="UTC")
+  snda <- SOMASparseNDArrayOpen(uri=uri, mode="WRITE", tiledb_timestamp=t20)
   snda$write(Matrix::sparseMatrix(i = 2, j = 2, x = 1, dims = c(2, 2)))
   snda$close()
 
@@ -342,7 +341,7 @@ test_that("SOMASparseNDArray timestamped ops", {
   snda$close()
 
   # read @ t=15 and see only the first write
-  snda <- SOMASparseNDArrayOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t10))
+  snda <- SOMASparseNDArrayOpen(uri=uri, tiledb_timestamp = rep(t10 + 0.5*as.numeric(t20 - t10),2))
   expect_equal(sum(snda$read()$sparse_matrix()$concat()), 1)
   snda$close()
 })

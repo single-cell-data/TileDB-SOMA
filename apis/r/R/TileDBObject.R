@@ -40,10 +40,11 @@ TileDBObject <- R6::R6Class(
 
       if (!is.null(tiledb_timestamp)) {
         stopifnot("'tiledb_timestamp' must be a POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct"))
-        private$tiledb_timestamp <- tiledb_timestamp
+        private$.tiledb_timestamp <- tiledb_timestamp
       }
 
-      spdl::debug("[TileDBObject] initialize {} with '{}'", self$class(), self$uri)
+      spdl::debug("[TileDBObject] initialize {} with '{}' at ({},{})", self$class(), self$uri,
+                  private$.tiledb_timestamp[1],private$.tiledb_timestamp[2])
     },
 
     #' @description Print the name of the R6 class.
@@ -82,13 +83,18 @@ TileDBObject <- R6::R6Class(
     #'  \item \dQuote{\code{READ}}
     #'  \item \dQuote{\code{WRITE}}
     #' }
+    #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
     #'
     #' @return Invisibly returns \code{self} opened in \code{mode}
     #'
-    reopen = function(mode) {
+    reopen = function(mode, tiledb_timestamp = NULL) {
       mode <- match.arg(mode, choices = c('READ', 'WRITE'))
+      stopifnot(
+        "'tiledb_timestamp' must be a POSIXct datetime object" = is.null(tiledb_timestamp) ||
+          inherits(tiledb_timestamp, what = "POSIXct")
+      )
       self$close()
-      private$tiledb_timestamp <- NULL
+      private$.tiledb_timestamp <- tiledb_timestamp
       self$open(mode, internal_use_only = 'allowed_use')
       return(invisible(self))
     },
@@ -130,6 +136,14 @@ TileDBObject <- R6::R6Class(
       }
       return(private$.tiledbsoma_ctx)
     },
+    #' @field tiledb_timestamp Time that object was opened at
+    #'
+    tiledb_timestamp = function(value) {
+      if (!missing(value)) {
+        private$.read_only_error("tiledb_timestamp")
+      }
+      return(private$.tiledb_timestamp)
+    },
     #' @field uri
     #' The URI of the TileDB object.
     uri = function(value) {
@@ -162,7 +176,7 @@ TileDBObject <- R6::R6Class(
 
     # Opener-supplied POSIXct timestamp, if any. TileDBArray and TileDBGroup are each responsible
     # for making this effective, since the methods differ slightly.
-    tiledb_timestamp = NULL,
+    .tiledb_timestamp = NULL,
 
     # Internal context
     .tiledbsoma_ctx = NULL,

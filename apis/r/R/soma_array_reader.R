@@ -28,7 +28,7 @@
 #' @noRd
 soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL,
                               batch_size = "auto", result_order = "auto", loglevel = "auto",
-                              config = NULL) {
+                              config = NULL, timestamprange = NULL) {
 
     stopifnot("'uri' must be character" = is.character(uri),
               "'colnames' must be character or NULL" = is_character_or_null(colnames),
@@ -53,6 +53,8 @@ soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL
         }
     }
 
+    spdl::debug("[soma_array_reader] calling soma_array_reader_impl ({},{}",
+                timestamprange[1], timestamprange[2])
     soma_array_reader_impl(uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order,
-                           loglevel, config)
+                           loglevel, config, timestamprange)
 }
