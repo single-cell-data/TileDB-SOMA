@@ -169,7 +169,7 @@ uns_hint <- function(type = c('1d', '2d')) {
     uri = x$uri,
     config = as.character(tiledb::config(x$tiledbsoma_ctx$context())),
     colnames = dimname,
-    timestamprange = x$tiledb_timestamp_range
+    timestamprange = x$.tiledb_timestamp_range
   )
   return(TableReadIter$new(rl$sr)$concat()$GetColumnByName(dimname)$as_vector())
 }

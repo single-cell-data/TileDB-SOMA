@@ -148,9 +148,15 @@ TileDBObject <- R6::R6Class(
       }
       return(private$.tiledb_timestamp)
     },
-    #' @field tiledb_timestamp_range Time range for libtiledbsoma
+    #' @field uri
+    #' The URI of the TileDB object.
+    uri = function(value) {
+      if (missing(value)) return(private$tiledb_uri$uri)
+      stop(sprintf("'%s' is a read-only field.", "uri"), call. = FALSE)
+    },
+    #' @field .tiledb_timestamp_range Time range for libtiledbsoma
     #'
-    tiledb_timestamp_range = function(value) {
+    .tiledb_timestamp_range = function(value) {
       if (!missing(value)) {
         private$.read_only_error("tiledb_timestamp_range")
       }
@@ -161,12 +167,6 @@ TileDBObject <- R6::R6Class(
         as.POSIXct(0, tz = 'UTC', origin = '1970-01-01'),
         self$tiledb_timestamp
       ))
-    },
-    #' @field uri
-    #' The URI of the TileDB object.
-    uri = function(value) {
-      if (missing(value)) return(private$tiledb_uri$uri)
-      stop(sprintf("'%s' is a read-only field.", "uri"), call. = FALSE)
     }
   ),
 

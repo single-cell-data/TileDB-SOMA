@@ -51,7 +51,7 @@ SOMASparseNDArray <- R6::R6Class(
                      config = cfg,
                      dim_points = coords,
                      result_order = result_order,
-                     timestamprange = self$tiledb_timestamp_range,
+                     timestamprange = self$.tiledb_timestamp_range,
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
       SOMASparseNDArrayRead$new(rl$sr, self, coords)
@@ -174,7 +174,7 @@ SOMASparseNDArray <- R6::R6Class(
         names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c('_lower', '_upper'))
         index <- index + 2L
       }
-      self$set_metadata(bbox_flat, self$tiledb_timestamp_range)
+      self$set_metadata(bbox_flat, self$.tiledb_timestamp_range)
       spdl::debug(
         "[SOMASparseNDArray$write] Calling .write_coo_df ({})",
         self$tiledb_timestamp %||% "now"
@@ -259,7 +259,7 @@ SOMASparseNDArray <- R6::R6Class(
         nasp = nasp,
         arraytype = "SOMASparseNDArray",
         config = NULL,
-        tsvec = self$tiledb_timestamp_range
+        tsvec = self$.tiledb_timestamp_range
       )
     },
 

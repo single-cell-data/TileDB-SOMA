@@ -60,7 +60,7 @@ SOMADenseNDArray <- R6::R6Class(
       rl <- soma_array_reader(uri = uri,
                               dim_points = coords,
                               result_order = result_order,
-                              timestamprange = self$tiledb_timestamp_range,
+                              timestamprange = self$.tiledb_timestamp_range,
                               loglevel = log_level,
                               config = cfg)
 
@@ -149,7 +149,7 @@ SOMADenseNDArray <- R6::R6Class(
         nasp = nasp,
         arraytype = "SOMADenseNDArray",
         config = NULL,
-        tsvec = self$tiledb_timestamp_range
+        tsvec = self$.tiledb_timestamp_range
       )
       spdl::debug("[SOMADenseNDArray::write] written")
 
