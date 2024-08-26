@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import pathlib
+from functools import partial
 from typing import Callable, List, Optional, Sequence, Union
 from unittest.mock import patch
 
@@ -24,13 +25,14 @@ from tiledbsoma._collection import CollectionBase
 # This supports the pytest `ml` mark, which can be used to disable all PyTorch-dependent
 # tests.
 try:
+    from torch.utils.data._utils.worker import WorkerInfo
+
     from tiledbsoma_ml.pytorch import (
         ExperimentAxisQueryDataPipe,
         ExperimentAxisQueryIterable,
         ExperimentAxisQueryIterableDataset,
         experiment_dataloader,
     )
-    from torch.utils.data._utils.worker import WorkerInfo
 except ImportError:
     # this should only occur when not running `ml`-marked tests
     pass
@@ -610,6 +612,41 @@ def test_experiment_dataloader__batched_length(
 
 
 @pytest.mark.parametrize(
+    "obs_range,var_range,X_value_gen,batch_size",
+    [(10, 3, pytorch_x_value_gen, batch_size) for batch_size in (1, 3, 10)],
+)
+@pytest.mark.parametrize(
+    "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
+)
+def test_experiment_dataloader__collate_fn(
+    PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
+    soma_experiment: Experiment,
+    batch_size,
+):
+    def collate_fn(batch_size, data):
+        assert isinstance(data, tuple)
+        assert len(data) == 2
+        assert isinstance(data[0], np.ndarray) and isinstance(data[1], pd.DataFrame)
+        if batch_size > 1:
+            assert data[0].shape[0] == data[1].shape[0]
+            assert data[0].shape[0] <= batch_size
+        else:
+            assert data[0].ndim == 1
+        assert data[1].shape[1] <= batch_size
+
+    dp = PipeClass(
+        soma_experiment,
+        measurement_name="RNA",
+        X_name="raw",
+        obs_column_names=["label"],
+        batch_size=batch_size,
+        shuffle=False,
+    )
+    dl = experiment_dataloader(dp, collate_fn=partial(collate_fn, batch_size))
+    assert len(list(dl)) > 0
+
+
+@pytest.mark.parametrize(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
 )
@@ -722,8 +759,6 @@ def test_experiment_dataloader__unsupported_params__fails() -> None:
             experiment_dataloader(dummy_exp_data_pipe, batch_sampler=[])
         with pytest.raises(ValueError):
             experiment_dataloader(dummy_exp_data_pipe, sampler=[])
-        with pytest.raises(ValueError):
-            experiment_dataloader(dummy_exp_data_pipe, collate_fn=lambda x: x)
 
 
 def test_batched() -> None:
