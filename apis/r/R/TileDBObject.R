@@ -47,8 +47,8 @@ TileDBObject <- R6::R6Class(
         private$.tiledb_timestamp <- tiledb_timestamp
       }
 
-      spdl::debug("[TileDBObject] initialize {} with '{}' at ({},{})", self$class(), self$uri,
-                  self$tiledb_timestamp, self$tiledb_timestamp)
+      spdl::debug("[TileDBObject] initialize {} with '{}' at ({})", self$class(), self$uri,
+                  self$tiledb_timestamp %||% "now")
     },
 
     #' @description Print the name of the R6 class.
@@ -157,7 +157,10 @@ TileDBObject <- R6::R6Class(
       if (is.null(self$tiledb_timestamp)) {
         return(NULL)
       }
-      return(c(self$tiledb_timestamp, self$tiledb_timestamp))
+      return(c(
+        as.POSIXct(0, tz = 'UTC', origin = '1970-01-01'),
+        self$tiledb_timestamp
+      ))
     },
     #' @field uri
     #' The URI of the TileDB object.
