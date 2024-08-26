@@ -94,7 +94,7 @@ as \code{create()} is considered internal and should not be called directly.}
 \subsection{Method \code{write()}}{
 Write (lifecycle: maturing)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$write(values, tsrange = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$write(values)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -103,9 +103,6 @@ Write (lifecycle: maturing)
 \item{\code{values}}{An \code{\link[arrow:Table-class]{arrow::Table}} or \code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}
 containing all columns, including any index columns. The
 schema for \code{values} must match the schema for the \code{SOMADataFrame}.}
-
-\item{\code{tsrange}}{An optional two-element Datetime vector for the
-start and end of the timestamp range}
 }
 \if{html}{\out{</div>}}
 }

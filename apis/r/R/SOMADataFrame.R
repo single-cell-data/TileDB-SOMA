@@ -71,10 +71,8 @@ SOMADataFrame <- R6::R6Class(
     #' @param values An [`arrow::Table`] or [`arrow::RecordBatch`]
     #' containing all columns, including any index columns. The
     #' schema for `values` must match the schema for the `SOMADataFrame`.
-    #' @param tsrange An optional two-element Datetime vector for the
-    #' start and end of the timestamp range
     #'
-    write = function(values, tsrange = NULL) {
+    write = function(values) {
       private$check_open_for_write()
 
       # Prevent downcasting of int64 to int32 when materializing a column
@@ -103,7 +101,14 @@ SOMADataFrame <- R6::R6Class(
 
       df <- as.data.frame(values)[schema_names]
       arr <- self$object
-      writeArrayFromArrow(self$uri, naap, nasp, "SOMADataFrame", NULL, tsrange)
+      writeArrayFromArrow(
+        uri = self$uri,
+        naap = naap,
+        nasp = nasp,
+        arraytype = "SOMADataFrame",
+        config = NULL,
+        tsvec = self$.tiledb_timestamp_range
+      )
 
       invisible(self)
     },
