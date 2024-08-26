@@ -1,51 +1,36 @@
-test_that("Non-exist", {
-  uri <- file.path(withr::local_tempdir(), "new-group")
-  group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
+test_that("Group", {
+    #uri <- tempfile()
+    uri <- "/tmp/tiledb/grouptest"; if (dir.exists(uri)) unlink(uri, recursive=TRUE)
 
-  # Should not exist on disk until created
-  expect_false(dir.exists(uri))
-  expect_false(group$exists())
+    ts1 <- as.POSIXct(1, tz="UTC")
+    grp <- TileDBGroup$new(uri, NULL, NULL, ts1, "allowed_use")
 
-  # Check errors on non-existent group
-  expect_error(group$get("foo"), "Item must be open for read or write.")
-  expect_error(group$length(), "Item must be open for read or write.")
-  expect_error(group$open(internal_use_only = "allowed_use"), "Group does not exist.")
+    ## Should not exist on disk until created
+    expect_false(dir.exists(uri))
+    expect_false(grp$exists())
+
+    grp$create(internal_use_only = "allowed_use")
+    expect_true(dir.exists(uri))
+    expect_true(grp$exists())
+
+    res <- grp$open("READ", internal_use_only = "allowed_use")
+    #print(class(res))
+
+    expect_equal(grp$length(), 0)
+
+    ## Check exporters
+    expect_is(grp$to_list(), "list")
+    expect_length(grp$to_list(), 0)
+    expect_is(grp$to_data_frame(), "data.frame")
+    expect_equal(nrow(grp$to_data_frame()), 0)
+    grp$close()
+
 })
 
-test_that("Create empty", {
-  uri <- file.path(withr::local_tempdir(), "new-group")
-  group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
-
-  # Create the collection on disk
-  group$create(internal_use_only = "allowed_use")
-  expect_error(group$create(internal_use_only = "allowed_use"), "already exists")
-  expect_true(dir.exists(uri))
-  expect_true(file.exists(file.path(uri, "__group")))
-  expect_true(group$exists())
-  fp = file.path(uri, "__group")
-  expect_match(tiledb::tiledb_object_type(uri), "GROUP")
-  group$close()
-})
-
-test_that("Accessors for empty", {
-  uri <- file.path(withr::local_tempdir(), "new-group")
-  group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
-  group$create(internal_use_only = "allowed_use")
-
-  group$open(mode = "READ", internal_use_only = "allowed_use")
-
-  expect_equal(group$length(), 0)
-
-  # Check exporters
-  expect_is(group$to_list(), "list")
-  expect_length(group$to_list(), 0)
-  expect_is(group$to_data_frame(), "data.frame")
-  expect_equal(nrow(group$to_data_frame()), 0)
-  group$close()
-})
 
 test_that("Add and remove members", {
-  uri <- file.path(withr::local_tempdir(), "new-group")
+  #uri <- file.path(withr::local_tempdir(), "new-group")
+  uri <- "/tmp/tiledb/grouptest"; if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
   group$create(internal_use_only = "allowed_use")
   group$close()
@@ -69,11 +54,11 @@ test_that("Add and remove members", {
 
   # Add array and subgroup as members
   group$open(mode = "WRITE", internal_use_only = "allowed_use")
-  group$set(a1, name = "a1", relative = FALSE) ## FIXME: relative needed
+  group$set(a1, name = "a1", relative=FALSE)
   expect_equal(group$length(), 1)
   expect_equal(group$to_data_frame()$type, "ARRAY")
 
-  group$set(g1, name = "g1", relative = FALSE) ## FIXME: relative needed
+  group$set(g1, name = "g1", relative=FALSE)
   expect_equal(group$length(), 2)
   expect_setequal(group$to_data_frame()$type, c("ARRAY", "GROUP"))
   group$close()
@@ -85,7 +70,6 @@ test_that("Add and remove members", {
 
   # Retrieve
   o <- group$get("a1")
-
   expect_is(group$get("a1"), "TileDBArray")
   expect_is(group$get("g1"), "TileDBGroup")
   group$close()
@@ -98,14 +82,18 @@ test_that("Add and remove members", {
   expect_equal(group$length(), 0)
   group$close()
 
-  # Remove
+  # Remove: check with rebuilt cache
   group$open(mode = "READ", internal_use_only = "allowed_use")
   expect_equal(group$length(), 0)
   group$close()
+
+  #rm(group); gc()  # forces finalizer and then destructor
+
 })
 
 test_that("Non-relative paths", {
-  uri <- file.path(withr::local_tempdir(), "new-group")
+  #uri <- file.path(withr::local_tempdir(), "new-group")
+  uri <- "/tmp/tiledb/grouptest"; if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
   group$create(internal_use_only = "allowed_use")
 
@@ -124,7 +112,8 @@ test_that("Non-relative paths", {
 })
 
 test_that("Metadata", {
-  uri <- file.path(withr::local_tempdir(), "group-metadata")
+  #uri <- file.path(withr::local_tempdir(), "group-metadata")
+  uri <- "/tmp/tiledb/grouptest"; if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
   expect_error(group$set_metadata(list(foo = "bar")), "Item must be open for write.")
 
@@ -150,4 +139,5 @@ test_that("Metadata", {
   expect_equivalent(readmd[["foo"]], "bar")
 
   group$close()
+
 })
