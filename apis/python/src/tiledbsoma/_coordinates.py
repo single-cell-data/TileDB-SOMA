@@ -215,8 +215,9 @@ class AffineCoordinateTransform(CoordinateTransform):
         # Create and validate the augmented matrix.
         self._matrix: npt.NDArray[np.float64] = np.array(matrix, dtype=np.float64)
         if self._matrix.shape == (rank + 1, rank + 1):
-            if self._matrix[-1, -1] != 1.0 or np.array_equal(
-                self._matrix[:-1, -1], np.zeros((rank,))
+            if not (
+                self._matrix[-1, -1] == 1.0
+                and np.array_equal(self._matrix[:-1, -1], np.zeros((rank,)))
             ):
                 raise ValueError(
                     "Input matrix has augmented matrix shape, but is not a valid "
@@ -297,7 +298,7 @@ class AffineCoordinateTransform(CoordinateTransform):
         return kwargs
 
 
-def transform_from_json(data: str) -> coordinates.CoordinateTransform:
+def transform_from_json(data: str) -> CoordinateTransform:
     """TODO: Add docstring"""
     raw = json.loads(data)
     try:

@@ -4,7 +4,7 @@
 
 """Implementation of a SOMA Scene."""
 
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from somacore import scene
 
@@ -16,6 +16,7 @@ from ._coordinates import (
     CoordinateSpace,
     CoordinateTransform,
     IdentityCoordinateTransform,
+    transform_from_json,
     transform_to_json,
 )
 from ._exception import SOMAError
@@ -119,7 +120,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             )
 
         point_cloud.coordinate_space = coordinate_space
-        subcollection.metadata[f"soma_scene_registry_{point_cloud}"] = (
+        subcollection.metadata[f"soma_scene_registry_{point_cloud_name}"] = (
             transform_to_json(transform)
         )
         return point_cloud
@@ -185,3 +186,71 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             transform
         )
         return image
+
+    def transform_to_point_cloud(
+        self, point_cloud_name: str, *, subcollection_name: str = "obsl"
+    ) -> CoordinateTransform:
+        """Returns the coordinate transform from the scene to a point cloud
+        registered in the scene.
+
+
+        TODO: Finish doc string.
+        """
+        try:
+            subcollection: Collection = self[subcollection_name]  # type: ignore
+        except KeyError as ke:
+            raise KeyError(
+                f"No collection '{subcollection_name}' in this scene."
+            ) from ke
+        try:
+            transform_json = subcollection.metadata[
+                f"soma_scene_registry_{point_cloud_name}"
+            ]
+        except KeyError as ke:
+            raise KeyError(
+                f"No coordinate space registry for '{point_cloud_name}' in collection "
+                f"'{subcollection_name}'."
+            ) from ke
+        return transform_from_json(transform_json)
+
+    def transform_to_image2d(
+        self,
+        image_name: str,
+        *,
+        subcollection_name: str = "img",
+        level: Optional[Union[str, int]] = None,
+    ) -> CoordinateTransform:
+        """Returns the corodinate transform from the scene to an image collection
+        registered in the scene.
+
+        If the name or level of an image is provided, the transformation will be to
+        the requested level instead of the root ImageCollection.
+        """
+        try:
+            subcollection: Collection = self[subcollection_name]  # type: ignore
+        except KeyError as ke:
+            raise KeyError(
+                f"No collection '{subcollection_name}' in this scene."
+            ) from ke
+        try:
+            transform_json = subcollection.metadata[f"soma_scene_registry_{image_name}"]
+        except KeyError:
+            raise KeyError(
+                f"No coordinate space registry for '{image_name}' in collection "
+                f"'{subcollection_name}'"
+            )
+        base_transform = transform_from_json(transform_json)
+        if level is None:
+            return base_transform
+        try:
+            image: Image2DCollection = subcollection[image_name]
+        except KeyError as ke:
+            raise KeyError(
+                f"No Image2DCollection named '{image_name}' in '{subcollection_name}'."
+            ) from ke
+        if isinstance(level, str):
+            raise NotImplementedError(
+                "Support for querying image level by name is not yet implemented."
+            )
+        level_transform = image.transform_to_level(level)
+        return base_transform * level_transform

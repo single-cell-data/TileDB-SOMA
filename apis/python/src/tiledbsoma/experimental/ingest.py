@@ -381,7 +381,6 @@ def _write_visium_data_to_experiment_uri(
                                 use_relative_uri=use_relative_uri,
                             )
                             tissue.axis_order = "YXC"  # TODO Make input arg
-                            tissue.coordinate_space = coord_space
                             _write_visium_images(
                                 tissue,
                                 scale_factors,
@@ -391,6 +390,7 @@ def _write_visium_data_to_experiment_uri(
                                 use_relative_uri=use_relative_uri,
                                 **ingest_ctx,
                             )
+                            tissue.coordinate_space = coord_space
                             scene.register_image2d(
                                 "tissue",
                                 IdentityCoordinateTransform(("x", "y"), ("x", "y")),
@@ -580,25 +580,32 @@ def _write_visium_images(
     context: Optional["SOMATileDBContext"] = None,
     use_relative_uri: Optional[bool] = None,
 ) -> None:
-    # Write metadata with fullres dimensions for computing relative scale.
-    # TODO: Replace this with coordinate space and Image2DCollection metadata.
+    # Write metadata from scale_factors file
+    for key, value in scale_factors.items():
+        image_pyramid.metadata[key] = value
+
+    # Set reference shape
     if input_fullres is not None:
         with Image.open(input_fullres) as im:
             width, height = im.size
-        image_pyramid.metadata["fullres_width"] = width
-        image_pyramid.metadata["fullres_height"] = height
+        ref_shape = (width, height)
     elif input_hires is not None:
         with Image.open(input_hires) as im:
             width, height = im.size
         scale = scale_factors["tissue_hires_scalef"]
-        image_pyramid.metadata["fullres_width"] = int(np.round(width / scale))
-        image_pyramid.metadata["fullres_height"] = int(np.round(height / scale))
+        ref_shape = (
+            int(np.round(width / scale)),
+            int(np.round(height / scale)),
+        )
     elif input_lowres is not None:
         with Image.open(input_lowres) as im:
             width, height = im.size
         scale = scale_factors["tissue_lowres_scalef"]
-        image_pyramid.metadata["fullres_width"] = int(np.round(width / scale))
-        image_pyramid.metadata["fullres_height"] = int(np.round(height / scale))
+        ref_shape = (
+            int(np.round(width / scale)),
+            int(np.round(height / scale)),
+        )
+    image_pyramid.reference_shape = ref_shape
 
     # Add the different levels of zoom to the image pyramid.
     for name, image_path in (

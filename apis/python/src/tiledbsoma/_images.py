@@ -6,8 +6,9 @@
 import abc
 import json
 from dataclasses import dataclass, field
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Optional, Sequence, Tuple, Union
 
+import numpy as np
 import pyarrow as pa
 from somacore import ResultOrder, coordinates, images, options
 from typing_extensions import Final
@@ -15,7 +16,11 @@ from typing_extensions import Final
 from . import _funcs, _tdb_handles
 from ._collection import CollectionBase
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
-from ._coordinates import CoordinateSpace
+from ._coordinates import (
+    AffineCoordinateTransform,
+    CoordinateSpace,
+    CoordinateTransform,
+)
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError
 from ._soma_object import AnySOMAObject
@@ -78,7 +83,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         Experimental.
     """
 
-    __slots__ = ("_axis_order", "_coord_space", "_levels")
+    __slots__ = ("_axis_order", "_coord_space", "_levels", "_reference_shape")
     _wrapper_type = _tdb_handles.Image2DCollectionWrapper
 
     _level_prefix: Final = "soma_level_"
@@ -116,7 +121,24 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         # Do generic SOMA collection initialization.
         super().__init__(handle, **kwargs)
 
-        # Get the coordinatte space
+        # Get the reference shape.
+        ref_width = self.metadata.get("soma_image_reference_width")
+        ref_height = self.metadata.get("soma_image_reference_height")
+        if ref_width is not None and ref_height is not None:
+            self._reference_shape: Optional[Tuple[int, ...]] = (
+                int(ref_width),
+                int(ref_height),
+            )
+            if any(val < 0 for val in self._reference_shape):
+                raise SOMAError(
+                    f"Decode invalid reference shape {self._reference_shape}"
+                )
+        elif not (ref_width is None and ref_height is None):
+            raise SOMAError("Failed to fully decode reference shape.")
+        else:
+            self._reference_shape = None
+
+        # Get the coordinate space.
         coord_space = self.metadata.get(SOMA_COORDINATE_SPACE_METADATA_KEY)
         if coord_space is None:
             self._coord_space: Optional[CoordinateSpace] = None
@@ -239,11 +261,19 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
 
     @property
     def coordinate_space(self) -> Optional[CoordinateSpace]:
-        """Coordinate system for this scene."""
+        """Coordinate system for this image.
+
+        The coordinate space is defined in order [width, height] even if the
+        images are stored in a different order.
+        """
         return self._coord_space
 
     @coordinate_space.setter
     def coordinate_space(self, value: CoordinateSpace) -> None:
+        if self._reference_shape is None:
+            raise SOMAError(
+                "The reference shape must be set before the coordinate space"
+            )
         if not isinstance(value, CoordinateSpace):
             raise TypeError(f"Invalid type {type(value).__name__}.")
         if len(value) != 2:
@@ -271,3 +301,58 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
     ) -> pa.Tensor:
         """TODO: Add read_image_level documentation"""
         raise NotImplementedError()
+
+    @property
+    def reference_shape(self) -> Tuple[int, ...]:
+        """The shape of the reference level the coordinate system is defined on.
+
+        The shape must be provide in order (width, height).
+        """
+        if self._reference_shape is None:
+            raise SOMAError("Reference shape is not set.")
+        return self._reference_shape
+
+    @reference_shape.setter
+    def reference_shape(self, value: Tuple[int, ...]) -> None:
+        if self._reference_shape is not None:
+            raise SOMAError("Cannot set reference shape; it is already set.")
+        if len(value) != 2 or any(
+            (not isinstance(val, int) or val < 0) for val in value
+        ):
+            raise ValueError("Invalid value")
+        # TODO: Implement special handling of multi-value metadata
+        self.metadata["soma_image_reference_width"] = value[0]
+        self.metadata["soma_image_reference_height"] = value[1]
+        self._reference_shape = (value[0], value[1])
+
+    def transform_to_level(self, level: Union[str, int]) -> CoordinateTransform:
+        if self._reference_shape is None or self._coord_space is None:
+            raise SOMAError(
+                "Cannot return transform if the reference shape and coordinate system "
+                "for this image collection are not set."
+            )
+        if isinstance(level, str):
+            for val in self._levels:
+                if val.name == level:
+                    level_props = val
+                else:
+                    raise KeyError("No level with name '{level}'")
+        else:
+            level_props = self._levels[level]
+        width = level_props.width
+        height = level_props.height
+        # TODO: Add in a transformation just for scaling.
+        # NOTE: Ignoring possibility of different axis order for different levels
+        # since that will be removed.
+        return AffineCoordinateTransform(
+            input_axes=self._coord_space.axis_names,
+            output_axes=self._coord_space.axis_names,
+            matrix=np.array(
+                [
+                    [width / self._reference_shape[0], 0.0, 0.0],
+                    [0.0, height / self._reference_shape[1], 0.0],
+                    [0.0, 0.0, 1.0],
+                ],
+                dtype=np.float64,
+            ),
+        )
