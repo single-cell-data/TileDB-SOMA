@@ -69,6 +69,12 @@ class CoordinateSpace(coordinates.CoordinateSpace):
     def __getitem__(self, index: int) -> Axis:
         return self._axes[index]
 
+    def __repr__(self) -> str:
+        output = f"<{type(self).__name__}\n"
+        for axis in self._axes:
+            output += f"  {axis},\n"
+        return output + ">"
+
     @property
     def axes(self) -> Tuple[Axis, ...]:
         """TODO: Add docstring"""
