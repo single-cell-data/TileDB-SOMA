@@ -329,7 +329,7 @@ setuptools.setup(
         "anndata>=0.10.1",
         "attrs>=22.2",
         "numba>=0.58.0",
-        "numpy<2.0",
+        "numpy",
         "pandas",
         "pyarrow",
         "scanpy>=1.9.2",
