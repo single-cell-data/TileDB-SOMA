@@ -775,8 +775,9 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     //   nullptr)
                     //
                     // Fortunately, these are ASCII dims and we can range
-                    // these accordingly.
-                    ndrect.set_range(col_name, "\x01", "\x7f");
+                    // these accordingly. These are minimum and maximum
+                    // values, avoiding the extremes 0x00 and 0xff.
+                    ndrect.set_range(col_name, "\x01", "\xfe");
                 } else {
                     const void* buff = index_column_array->children[i]
                                            ->buffers[1];
