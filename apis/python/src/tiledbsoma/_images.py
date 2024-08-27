@@ -253,11 +253,6 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = value.to_json()
         self._coord_space = value
 
-    @coordinate_space.deleter
-    def coordinate_space(self) -> None:
-        del self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]
-        self._coord_space = None
-
     @property
     def level_count(self) -> int:
         return len(self._levels)
