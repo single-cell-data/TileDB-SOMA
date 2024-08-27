@@ -35,9 +35,14 @@
 #define DIM_MAX 1000
 
 TEST_CASE("SOMADataFrame: basic") {
-    bool use_current_domains[] = {false, true};
     int64_t dim_max = 1000;
-    for (bool use_current_domain : use_current_domains) {
+    auto use_current_domain = GENERATE(false, true);
+    // TODO this could be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dataframe-basic";
 
@@ -145,10 +150,14 @@ TEST_CASE("SOMADataFrame: platform_config") {
     section << "- filter=" << filter.first;
 
     SECTION(section.str()) {
-        bool use_current_domains[] = {false, true};
         int64_t dim_max = 1000;
-
-        for (bool use_current_domain : use_current_domains) {
+        auto use_current_domain = GENERATE(false, true);
+        // TODO this could be formatted with fmt::format which is part of
+        // internal header spd/log/fmt/fmt.h and should not be used. In C++20,
+        // this can be replaced with std::format.
+        std::ostringstream section2;
+        section2 << "- use_current_domain=" << use_current_domain;
+        SECTION(section2.str()) {
             auto ctx = std::make_shared<SOMAContext>();
             std::string uri = "mem://unit-test-dataframe-platform-config";
 
@@ -203,10 +212,14 @@ TEST_CASE("SOMADataFrame: platform_config") {
 }
 
 TEST_CASE("SOMADataFrame: metadata") {
-    bool use_current_domains[] = {false, true};
     int64_t dim_max = 1000;
-
-    for (bool use_current_domain : use_current_domains) {
+    auto use_current_domain = GENERATE(false, true);
+    // TODO this could be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-collection";
 

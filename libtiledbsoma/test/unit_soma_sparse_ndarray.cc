@@ -35,8 +35,13 @@
 
 TEST_CASE("SOMASparseNDArray: basic") {
     int64_t dim_max = 1000;
-    bool use_current_domains[] = {false, true};
-    for (bool use_current_domain : use_current_domains) {
+    auto use_current_domain = GENERATE(false, true);
+    // TODO this could be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-sparse-ndarray-basic";
 
@@ -111,8 +116,13 @@ TEST_CASE("SOMASparseNDArray: basic") {
 
 TEST_CASE("SOMASparseNDArray: platform_config") {
     int64_t dim_max = 1000;
-    bool use_current_domains[] = {false, true};
-    for (bool use_current_domain : use_current_domains) {
+    auto use_current_domain = GENERATE(false, true);
+    // TODO this could be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dataframe-platform-config";
 
@@ -145,8 +155,13 @@ TEST_CASE("SOMASparseNDArray: platform_config") {
 
 TEST_CASE("SOMASparseNDArray: metadata") {
     int64_t dim_max = 1000;
-    bool use_current_domains[] = {false, true};
-    for (bool use_current_domain : use_current_domains) {
+    auto use_current_domain = GENERATE(false, true);
+    // TODO this could be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
 
         std::string uri = "mem://unit-test-sparse-ndarray";

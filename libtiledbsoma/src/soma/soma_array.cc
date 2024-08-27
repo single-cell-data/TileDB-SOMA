@@ -1183,7 +1183,8 @@ std::vector<int64_t> SOMAArray::shape() {
     //   arrays on disk that were created before this feature existed.
     // So this is long-term code.
     auto current_domain = _get_current_domain();
-    return current_domain.is_empty() ? _tiledb_domain() : _tiledb_current_domain();
+    return current_domain.is_empty() ? _tiledb_domain() :
+                                       _tiledb_current_domain();
 }
 
 std::vector<int64_t> SOMAArray::maxshape() {

@@ -36,8 +36,13 @@
 
 TEST_CASE("SOMADenseNDArray: basic") {
     int64_t dim_max = 1000;
-    bool use_current_domains[] = {false, true};
-    for (bool use_current_domain : use_current_domains) {
+    auto use_current_domain = GENERATE(false, true);
+    // TODO this could be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray-basic";
 
@@ -57,67 +62,77 @@ TEST_CASE("SOMADenseNDArray: basic") {
                 ctx,
                 PlatformConfig(),
                 TimestampRange(0, 2)));
-            continue;
-        }
-
-        SOMADenseNDArray::create(
-            uri,
-            "l",
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx,
-            PlatformConfig(),
-            TimestampRange(0, 2));
-
-        REQUIRE(SOMADenseNDArray::exists(uri, ctx));
-        REQUIRE(!SOMADataFrame::exists(uri, ctx));
-        REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
-
-        auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
-        REQUIRE(soma_dense->uri() == uri);
-        REQUIRE(soma_dense->ctx() == ctx);
-        REQUIRE(soma_dense->type() == "SOMADenseNDArray");
-        REQUIRE(soma_dense->is_sparse() == false);
-        REQUIRE(soma_dense->soma_data_type() == "l");
-        auto schema = soma_dense->tiledb_schema();
-        REQUIRE(schema->has_attribute("soma_data"));
-        REQUIRE(schema->array_type() == TILEDB_DENSE);
-        REQUIRE(schema->domain().has_dimension("soma_dim_0"));
-        REQUIRE(soma_dense->ndim() == 1);
-
-        if (use_current_domain) {
-            REQUIRE(soma_dense->shape() == std::vector<int64_t>{dim_max + 1});
         } else {
+            SOMADenseNDArray::create(
+                uri,
+                "l",
+                ArrowTable(
+                    std::move(index_columns.first),
+                    std::move(index_columns.second)),
+                ctx,
+                PlatformConfig(),
+                TimestampRange(0, 2));
+
+            REQUIRE(SOMADenseNDArray::exists(uri, ctx));
+            REQUIRE(!SOMADataFrame::exists(uri, ctx));
+            REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
+
+            auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+            REQUIRE(soma_dense->uri() == uri);
+            REQUIRE(soma_dense->ctx() == ctx);
+            REQUIRE(soma_dense->type() == "SOMADenseNDArray");
+            REQUIRE(soma_dense->is_sparse() == false);
+            REQUIRE(soma_dense->soma_data_type() == "l");
+            auto schema = soma_dense->tiledb_schema();
+            REQUIRE(schema->has_attribute("soma_data"));
+            REQUIRE(schema->array_type() == TILEDB_DENSE);
+            REQUIRE(schema->domain().has_dimension("soma_dim_0"));
+            REQUIRE(soma_dense->ndim() == 1);
+
+            // Once we have support for current domain in dense arrays
+            // if (use_current_domain) {
+            //    REQUIRE(soma_dense->shape() == std::vector<int64_t>{dim_max +
+            //    1});
+            //} else {
+            //    REQUIRE(
+            //        soma_dense->maxshape() == std::vector<int64_t>{dim_max +
+            //        1});
+            //}
+
             REQUIRE(
                 soma_dense->maxshape() == std::vector<int64_t>{dim_max + 1});
+
+            soma_dense->close();
+
+            std::vector<int64_t> d0{1, 10};
+            std::vector<int> a0(10, 1);
+
+            soma_dense->open(OpenMode::write);
+            soma_dense->set_column_data("soma_data", a0.size(), a0.data());
+            soma_dense->set_column_data("soma_dim_0", d0.size(), d0.data());
+            soma_dense->write();
+            soma_dense->close();
+
+            soma_dense->open(OpenMode::read);
+            while (auto batch = soma_dense->read_next()) {
+                auto arrbuf = batch.value();
+                auto a0span = arrbuf->at("soma_data")->data<int>();
+                REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
+            }
+            soma_dense->close();
         }
-
-        soma_dense->close();
-
-        std::vector<int64_t> d0{1, 10};
-        std::vector<int> a0(10, 1);
-
-        soma_dense->open(OpenMode::write);
-        soma_dense->set_column_data("soma_data", a0.size(), a0.data());
-        soma_dense->set_column_data("soma_dim_0", d0.size(), d0.data());
-        soma_dense->write();
-        soma_dense->close();
-
-        soma_dense->open(OpenMode::read);
-        while (auto batch = soma_dense->read_next()) {
-            auto arrbuf = batch.value();
-            auto a0span = arrbuf->at("soma_data")->data<int>();
-            REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
-        }
-        soma_dense->close();
     }
 }
 
 TEST_CASE("SOMADenseNDArray: platform_config") {
     int64_t dim_max = 1000;
-    bool use_current_domains[] = {false, true};
-    for (bool use_current_domain : use_current_domains) {
+    auto use_current_domain = GENERATE(false, true);
+    // TODO this could be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray-platform-config";
 
@@ -138,35 +153,40 @@ TEST_CASE("SOMADenseNDArray: platform_config") {
                 ctx,
                 platform_config));
 
-            continue;
+        } else {
+            SOMADenseNDArray::create(
+                uri,
+                "l",
+                ArrowTable(
+                    std::move(index_columns.first),
+                    std::move(index_columns.second)),
+                ctx,
+                platform_config);
+
+            auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+            auto dim_filter = soma_dense->tiledb_schema()
+                                  ->domain()
+                                  .dimension("soma_dim_0")
+                                  .filter_list()
+                                  .filter(0);
+            REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
+            REQUIRE(
+                dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);
+
+            soma_dense->close();
         }
-
-        SOMADenseNDArray::create(
-            uri,
-            "l",
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx,
-            platform_config);
-
-        auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
-        auto dim_filter = soma_dense->tiledb_schema()
-                              ->domain()
-                              .dimension("soma_dim_0")
-                              .filter_list()
-                              .filter(0);
-        REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
-        REQUIRE(dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);
-
-        soma_dense->close();
     }
 }
 
 TEST_CASE("SOMADenseNDArray: metadata") {
     int64_t dim_max = 1000;
-    bool use_current_domains[] = {false, true};
-    for (bool use_current_domain : use_current_domains) {
+    auto use_current_domain = GENERATE(false, true);
+    // TODO this could be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
 
         std::string uri = "mem://unit-test-dense-ndarray";
