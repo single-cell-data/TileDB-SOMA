@@ -491,11 +491,6 @@ class ExperimentAxisQueryIterableDataset(
         return self._exp_iter.shape
 
 
-def _collate_noop(datum: _T) -> _T:
-    """Disable collation in dataloader instance."""
-    return datum
-
-
 def experiment_dataloader(
     ds: torchdata.datapipes.iter.IterDataPipe | torch.utils.data.IterableDataset,
     # num_workers: int = 0,
@@ -558,13 +553,22 @@ def experiment_dataloader(
     )
 
 
+def _collate_noop(datum: _T) -> _T:
+    """Noop collation for use with a dataloader instance.
+
+    Private.
+    """
+    return datum
+
+
 def _splits(total_length: int, sections: int) -> npt.NDArray[np.intp]:
     """For `total_length` points, compute start/stop offsets that split the length into roughly equal sizes.
 
     A total_length of L, split into N sections, will return L%N sections of size L//N+1,
-    and the remainder as size L//N.
+    and the remainder as size L//N. This results in the same split as numpy.array_split,
+    for an array of length L and sections N.
 
-    This results in is the same split as numpy.array_split, for an array of length L.
+    Private.
 
     Examples
     --------
@@ -635,6 +639,7 @@ def _init_multiprocessing() -> None:
     Also, CUDA does not support forked child processes:
       https://pytorch.org/docs/stable/notes/multiprocessing.html#cuda-in-multiprocessing
 
+    Private.
     """
     orig_start_method = torch.multiprocessing.get_start_method()
     if orig_start_method != "spawn":
@@ -660,6 +665,8 @@ def _csr_to_dense(sp: sparse.csr_array | sparse.csr_matrix) -> NDArrayNumber:
     """Fast, parallel, variant of scipy.sparse.csr_array.todense.
 
     Typically 4-8X faster, dending on host and size of array/matrix.
+
+    Private.
     """
     assert isinstance(sp, (sparse.csr_array, sparse.csr_matrix))
     return cast(
