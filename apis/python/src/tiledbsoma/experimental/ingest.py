@@ -413,6 +413,9 @@ def _write_visium_data_to_experiment_uri(
                         **ingest_ctx,
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
+                        scene.register_point_cloud(
+                            "loc", IdentityCoordinateTransform(("x", "y"), ("x", "y"))
+                        )
 
                 varl_uri = f"{scene_uri}/varl"
                 with _create_or_open_collection(

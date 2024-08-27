@@ -100,6 +100,14 @@ class CoordinateTransform(coordinates.CoordinateTransform):
         )
 
     @abc.abstractmethod
+    def __mul__(self, other: Any) -> "CoordinateTransform":
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def __rmul__(self, other: Any) -> "CoordinateTransform":
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def apply(self, data: Union[pa.Tensor, pa.Table]) -> Union[pa.Tensor, pa.Table]:
         raise NotImplementedError()
 
@@ -135,6 +143,42 @@ class IdentityCoordinateTransform(CoordinateTransform):
         if self.input_rank != self.output_rank:
             raise ValueError("Incompatible rank of input and output axes")
 
+    def __mul__(self, other: Any) -> CoordinateTransform:
+        if np.isscalar(other):
+            raise NotImplementedError(
+                "Support for multiplying by scalars is not yet implemented."
+            )
+        if isinstance(other, CoordinateTransform):
+            if isinstance(other, IdentityCoordinateTransform):
+                if self.output_axes != other.input_axes:
+                    raise ValueError("Axis mismatch between transformations.")
+                return IdentityCoordinateTransform(self.input_axes, other.output_axes)
+            return other.__rmul__(self)
+        if isinstance(other, np.ndarray):
+            raise NotImplementedError(
+                "Support for multiplying by numpy arrays is not yet implemented."
+            )
+        raise TypeError(
+            f"Cannot multiply a CoordinateTransform by type {type(other)!r}."
+        )
+
+    def __rmul__(self, other: Any) -> CoordinateTransform:
+        if np.isscalar(other):
+            return self.__mul__(other)
+        if isinstance(other, CoordinateTransform):
+            if isinstance(other, IdentityCoordinateTransform):
+                if other.output_axes != self.input_axes:
+                    raise ValueError("Axis mismatch between transformations.")
+                return IdentityCoordinateTransform(other.input_axes, self.output_axes)
+            return other.__mul__(self)
+        if isinstance(other, np.ndarray):
+            raise NotImplementedError(
+                "Support for multiplying by numpy arrays is not yet implemented."
+            )
+        raise TypeError(
+            f"Cannot multiply a CoordinateTransform by type {type(other)!r}."
+        )
+
     def apply(self, data: Union[pa.Tensor, pa.Table]) -> Union[pa.Tensor, pa.Table]:
         # TODO: Check valid rank
         return data
@@ -150,20 +194,100 @@ class AffineCoordinateTransform(CoordinateTransform):
         self,
         input_axes: Union[str, Sequence[str]],
         output_axes: Union[str, Sequence[str]],
-        affine_matrix: npt.NDArray[np.float64],
+        matrix: npt.ArrayLike,
     ):
         super().__init__(input_axes, output_axes)
-        # TODO: Check the rank of the affine matrix
-        self._affine_matrix = affine_matrix
+
+        # Check the rank of the input/output axes match.
+        if self.input_rank != self.output_rank:
+            raise ValueError(
+                "The input axes and output axes must be the same length for an "
+                "affine transform."
+            )
+        rank = self.input_rank
+
+        # Create and validate the augmented matrix.
+        self._matrix: npt.NDArray[np.float64] = np.array(matrix, dtype=np.float64)
+        if self._matrix.shape == (rank + 1, rank + 1):
+            if self._matrix[-1, -1] != 1.0 or np.array_equal(
+                self._matrix[:-1, -1], np.zeros((rank,))
+            ):
+                raise ValueError(
+                    "Input matrix has augmented matrix shape, but is not a valid "
+                    "augmented matrix."
+                )
+        elif self._matrix.shape == (rank, rank + 1):
+            self._matrix = np.vstack(
+                (
+                    self._matrix,
+                    np.hstack((np.zeros((rank,)), np.array([1]))),
+                )
+            )
+        else:
+            raise ValueError(
+                f"Unexpected shape {self._matrix.shape} for the input affine matrix."
+            )
+
+    def __mul__(self, other: Any) -> CoordinateTransform:
+        if np.isscalar(other):
+            return AffineCoordinateTransform(
+                self.input_axes,
+                self.output_axes,
+                other * self.augmented_matrix,  # type: ignore
+            )
+        if isinstance(other, CoordinateTransform):
+            if self.output_axes != other.input_axes:
+                raise ValueError("Axis mismatch between transformations.")
+            if isinstance(other, IdentityCoordinateTransform):
+                return AffineCoordinateTransform(
+                    self.input_axes, other.output_axes, self._matrix
+                )
+            if isinstance(other, AffineCoordinateTransform):
+                return AffineCoordinateTransform(
+                    self.input_axes, other.output_axes, self._matrix @ other._matrix
+                )
+        if isinstance(other, np.ndarray):
+            raise NotImplementedError(
+                "Support for multiplying by numpy arrays is not yet implemented."
+            )
+        raise TypeError(
+            f"Cannot multiply a CoordinateTransform by type {type(other)!r}."
+        )
+
+    def __rmul__(self, other: Any) -> CoordinateTransform:
+        if np.isscalar(other):
+            return self.__mul__(other)
+        if isinstance(other, CoordinateTransform):
+            if other.output_axes != self.input_axes:
+                raise ValueError("Axis mismatch between transformations.")
+            if isinstance(other, IdentityCoordinateTransform):
+                return AffineCoordinateTransform(
+                    other.input_axes, self.output_axes, self._matrix
+                )
+            if isinstance(other, AffineCoordinateTransform):
+                return AffineCoordinateTransform(
+                    other.input_axes, self.output_axes, other._matrix @ self._matrix
+                )
+        if isinstance(other, np.ndarray):
+            raise NotImplementedError(
+                "Support for multiplying by numpy arrays is not yet implemented."
+            )
+        raise TypeError(
+            f"Cannot multiply a CoordinateTransform by type {type(other)!r}."
+        )
 
     def apply(self, data: Union[pa.Tensor, pa.Table]) -> Union[pa.Tensor, pa.Table]:
         """TODO: Add docstring"""
         raise NotImplementedError()
 
+    @property
+    def augmented_matrix(self) -> npt.NDArray[np.float64]:
+        """Returns the augmented affine matrix for the transformation."""
+        return self._matrix
+
     def to_dict(self) -> Dict[str, Any]:
         kwargs = super().to_dict()
-        kwargs["affine_matrix_data"] = self._affine_matrix.tolist()
-        kwargs["affine_matrix_shape"] = self._affine_matrix.shape
+        kwargs["matrix"] = self._matrix.tolist()
         return kwargs
 
 
@@ -181,12 +305,7 @@ def transform_from_json(data: str) -> coordinates.CoordinateTransform:
     if transform_type == "IdentityCoordinateTransform":
         return IdentityCoordinateTransform(**kwargs)
     elif transform_type == "AffineCoordinateTransform":
-        affine_matrix_data = kwargs.pop("affine_matrix_data")
-        affine_matrix_shape = kwargs.pop("affine_matrix_shape")
-        return AffineCoordinateTransform(
-            affine_matrix=np.array(affine_matrix_data).reshape(affine_matrix_shape),
-            **kwargs,
-        )
+        return AffineCoordinateTransform(**kwargs)
     else:
         raise KeyError("Unrecognized transform type key 'transform_type'")
 

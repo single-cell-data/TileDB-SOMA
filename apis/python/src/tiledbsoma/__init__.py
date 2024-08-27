@@ -149,6 +149,7 @@ from ._coordinates import (
     AffineCoordinateTransform,
     Axis,
     CoordinateSpace,
+    CoordinateTransform,
     IdentityCoordinateTransform,
 )
 from ._dataframe import DataFrame
@@ -192,6 +193,7 @@ __all__ = [
     "AxisQuery",
     "Collection",
     "CoordinateSpace",
+    "CoordinateTransform",
     "DataFrame",
     "DenseNDArray",
     "DoesNotExistError",
