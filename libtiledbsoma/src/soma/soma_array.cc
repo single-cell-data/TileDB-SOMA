@@ -1180,72 +1180,23 @@ std::vector<int64_t> SOMAArray::shape() {
     auto dimensions = mq_->schema()->domain().dimensions();
 
     for (const auto& dim : dimensions) {
-        switch (dim.type()) {
-            case TILEDB_UINT8:
-                result.push_back(
-                    dim.domain<uint8_t>().second - dim.domain<uint8_t>().first +
-                    1);
-                break;
-            case TILEDB_INT8:
-                result.push_back(
-                    dim.domain<int8_t>().second - dim.domain<int8_t>().first +
-                    1);
-                break;
-            case TILEDB_UINT16:
-                result.push_back(
-                    dim.domain<uint16_t>().second -
-                    dim.domain<uint16_t>().first + 1);
-                break;
-            case TILEDB_INT16:
-                result.push_back(
-                    dim.domain<int16_t>().second - dim.domain<int16_t>().first +
-                    1);
-                break;
-            case TILEDB_UINT32:
-                result.push_back(
-                    dim.domain<uint32_t>().second -
-                    dim.domain<uint32_t>().first + 1);
-                break;
-            case TILEDB_INT32:
-                result.push_back(
-                    dim.domain<int32_t>().second - dim.domain<int32_t>().first +
-                    1);
-                break;
-            case TILEDB_UINT64:
-                result.push_back(
-                    dim.domain<uint64_t>().second -
-                    dim.domain<uint64_t>().first + 1);
-                break;
-            case TILEDB_INT64:
-            case TILEDB_DATETIME_YEAR:
-            case TILEDB_DATETIME_MONTH:
-            case TILEDB_DATETIME_WEEK:
-            case TILEDB_DATETIME_DAY:
-            case TILEDB_DATETIME_HR:
-            case TILEDB_DATETIME_MIN:
-            case TILEDB_DATETIME_SEC:
-            case TILEDB_DATETIME_MS:
-            case TILEDB_DATETIME_US:
-            case TILEDB_DATETIME_NS:
-            case TILEDB_DATETIME_PS:
-            case TILEDB_DATETIME_FS:
-            case TILEDB_DATETIME_AS:
-            case TILEDB_TIME_HR:
-            case TILEDB_TIME_MIN:
-            case TILEDB_TIME_SEC:
-            case TILEDB_TIME_MS:
-            case TILEDB_TIME_US:
-            case TILEDB_TIME_NS:
-            case TILEDB_TIME_PS:
-            case TILEDB_TIME_FS:
-            case TILEDB_TIME_AS:
-                result.push_back(
-                    dim.domain<int64_t>().second - dim.domain<int64_t>().first +
-                    1);
-                break;
-            default:
-                throw TileDBSOMAError("Dimension must be integer type.");
+        // Callers inquiring about non-int64 shapes should not be here.
+        //
+        // In the SOMA data model:
+        // * SparseNDArray has dims which are all necessarily int64_t
+        // * DenseNDArray has dims which are all necessarily int64_t
+        // * DataFrame _default_ indexing is one dim named "soma_dim_0" of type
+        //   int64_t, however:
+        //   * Users can (and do) add other additional dims
+        //   * The SOMA data model requires that soma_joinid be present in each
+        //     DataFrame either as a dim or an attr -- and there are DataFrame
+        //     objects for which soma_joinid is not a dim at all
+        //   * These cases are all actively unit-tested within apis/python/tests
+        if (dim.type() != TILEDB_INT64) {
+            throw TileDBSOMAError("Found unexpected non-int64 dimension type.");
         }
+        result.push_back(
+            dim.domain<int64_t>().second - dim.domain<int64_t>().first + 1);
     }
 
     return result;
