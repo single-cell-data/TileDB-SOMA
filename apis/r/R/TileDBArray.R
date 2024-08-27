@@ -97,9 +97,8 @@ TileDBArray <- R6::R6Class(
 
     #' @description Add list of metadata to the specified TileDB array. (lifecycle: maturing)
     #' @param metadata Named list of metadata to add.
-    #' @param timestamps Optional two-element vector of timestamp range starts and end
     #' @return NULL
-    set_metadata = function(metadata, timestamps = NULL) {
+    set_metadata = function(metadata) {
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
       )
@@ -109,7 +108,15 @@ TileDBArray <- R6::R6Class(
       for (nm in names(metadata)) {
           val <- metadata[[nm]]
           spdl::debug("[TileDBArray$set_metadata] setting key {} to {} ({})", nm, val, class(val))
-          set_metadata(self$uri, nm, val, class(val), TRUE, soma_context(), timestamps)
+          set_metadata(
+            uri = self$uri,
+            key = nm,
+            valuesxp = val,
+            type = class(val),
+            is_array = TRUE,
+            ctxxp = soma_context(),
+            tsvec = self$.tiledb_timestamp_range
+          )
       }
 
       dev_null <- mapply(

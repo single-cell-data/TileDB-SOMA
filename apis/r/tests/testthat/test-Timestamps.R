@@ -15,14 +15,16 @@ test_that("SOMADataFrame", {
                                int = 101:105L,
                                str = factor(c('a','b','b','a','b')))
     ts2 <- as.POSIXct(2, tz = "UTC", origin = "1970-01-01")
-    expect_silent(sdf$write(dat2, ts2))
+    expect_no_condition(sdf$reopen(sdf$mode(), tiledb_timestamp = ts2))
+    expect_no_condition(sdf$write(dat2))
 
     ## write part2 at t = 3
     dat3 <- arrow::arrow_table(soma_joinid = bit64::as.integer64(6L:10L),
                                int = 106:110L,
                                str = factor(c('c','b','c','c','b')))
     ts3 <- as.POSIXct(3, tz = "UTC", origin = "1970-01-01")
-    expect_silent(sdf$write(dat3, ts3))
+    expect_no_condition(sdf$reopen(sdf$mode(), tiledb_timestamp = ts3))
+    expect_no_condition(sdf$write(dat3))
     sdf$close()
 
     ## read all
@@ -97,7 +99,7 @@ test_that("SOMANDDenseArray", {
         tiledb_timestamp = ts1
     )
     mat <- create_dense_matrix_with_int_dims(5, 2)
-    expect_silent(dnda$write(mat)) 		# write happens at create time
+    expect_no_condition(dnda$write(mat)) 		# write happens at create time
 
     ## read at t = 3, expect all rows as read is from (0, 3)
     ts2 <- as.POSIXct(3, tz = "UTC", origin = "1970-01-01")

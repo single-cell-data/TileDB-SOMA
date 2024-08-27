@@ -174,7 +174,7 @@ SOMASparseNDArray <- R6::R6Class(
         names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c('_lower', '_upper'))
         index <- index + 2L
       }
-      self$set_metadata(bbox_flat, self$.tiledb_timestamp_range)
+      self$set_metadata(bbox_flat)
       spdl::debug(
         "[SOMASparseNDArray$write] Calling .write_coo_df ({})",
         self$tiledb_timestamp %||% "now"
