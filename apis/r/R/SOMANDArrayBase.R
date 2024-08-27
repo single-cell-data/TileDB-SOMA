@@ -20,12 +20,15 @@ SOMANDArrayBase <- R6::R6Class(
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
-    #' @param timestamps Optional timestamp start and end range
     #' @param internal_use_only Character value to signal this is a 'permitted'
     #' call, as `create()` is considered internal and should not be called
     #' directly.
-    create = function(type, shape, platform_config = NULL,
-                      timestamps = NULL, internal_use_only = NULL) {
+    create = function(
+      type,
+      shape,
+      platform_config = NULL,
+      internal_use_only = NULL
+    ) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMASparseNDArrayCreate()'."), call. = FALSE)
@@ -58,10 +61,17 @@ SOMANDArrayBase <- R6::R6Class(
 
       ## create array
       ctxptr <- super$tiledbsoma_ctx$context()
-      createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp,
-                            private$.is_sparse,
-                            if (private$.is_sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
-                            tiledb_create_options$to_list(FALSE), soma_context(), timestamps)
+      createSchemaFromArrow(
+        uri = self$uri,
+        nasp = nasp,
+        nadimap = dnaap,
+        nadimsp = dnasp,
+        sparse = private$.is_sparse,
+        datatype = if (private$.is_sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
+        pclst = tiledb_create_options$to_list(FALSE),
+        ctxxp = soma_context(),
+        tsvec = self$.tiledb_timestamp_range
+      )
       #private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?
 
       self$open("WRITE", internal_use_only = "allowed_use")

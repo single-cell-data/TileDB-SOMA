@@ -49,7 +49,6 @@ SOMADataFrameCreate <- function(
       schema,
       index_column_names = index_column_names,
       platform_config = platform_config,
-      timestamps = rep(tiledb_timestamp, 2),
       internal_use_only = "allowed_use"
     )
   }
@@ -76,7 +75,7 @@ SOMADataFrameOpen <- function(
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
 ) {
-  spdl::debug("[SOMADataFrameOpen] uri {} ts ({},{})", uri, tiledb_timestamp[1], tiledb_timestamp[2])
+  spdl::debug("[SOMADataFrameOpen] uri {} ts ({})", uri, tiledb_timestamp %||% "now")
   sdf <- SOMADataFrame$new(
     uri,
     platform_config,
@@ -127,7 +126,6 @@ SOMASparseNDArrayCreate <- function(
       type,
       shape,
       platform_config = platform_config,
-      timestamps = rep(tiledb_timestamp, 2),
       internal_use_only = "allowed_use"
     )
   }
@@ -176,7 +174,7 @@ SOMADenseNDArrayCreate <- function(
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
 ) {
-  spdl::debug("[SOMADenseNDArrayCreate] tstamp ({},{})", tiledb_timestamp[1], tiledb_timestamp[2])
+  spdl::debug("[SOMADenseNDArrayCreate] tstamp ({})", tiledb_timestamp %||% "now")
   dnda <- SOMADenseNDArray$new(
     uri,
     platform_config,
@@ -188,7 +186,6 @@ SOMADenseNDArrayCreate <- function(
     type,
     shape,
     platform_config = platform_config,
-    timestamps = rep(tiledb_timestamp, 2),
     internal_use_only = "allowed_use"
   )
   return(dnda)

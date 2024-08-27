@@ -63,7 +63,6 @@ Create (lifecycle: maturing)
   schema,
   index_column_names = c("soma_joinid"),
   platform_config = NULL,
-  timestamps = NULL,
   internal_use_only = NULL
 )}\if{html}{\out{</div>}}
 }
@@ -79,8 +78,6 @@ one index column name is required.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
-
-\item{\code{timestamps}}{Optional timestamp start and end range}
 
 \item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
 as \code{create()} is considered internal and should not be called directly.}

@@ -29,7 +29,7 @@ SOMAArrayBase <- R6::R6Class(
       private$soma_type_cache <- self$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
     },
 
-    write_object_type_metadata = function(timestamps=NULL) {
+    write_object_type_metadata = function() {
       #private$check_open_for_write()
 
       meta <- list()
