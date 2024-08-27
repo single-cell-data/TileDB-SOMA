@@ -571,12 +571,53 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * @brief Get the capacity of each dimension.
+     * @brief Get the current capacity of each dimension.
+     *
+     * This applies to arrays all of whose dims are of type int64_t: this
+     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
+     * SOMADataFrame.
+     *
+     * At the TileDB-SOMA level we call this "shape". At the TileDB Core
+     * storage level this maps to "current domain".
+     *
+     * Further, we map this single n to the pair (0, n-1) since core permits a
+     * doubly inclusive pair (lo, hi) on each dimension slot.
      *
      * @return A vector with length equal to the number of dimensions; each
-     * value in the vector is the capcity of each dimension.
+     * value in the vector is the capacity of each dimension.
      */
     std::vector<int64_t> shape();
+
+    /**
+     * @brief Get the maximum resizable capacity of each dimension.
+     *
+     * This applies to arrays all of whose dims are of type int64_t: this
+     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
+     * SOMADataFrame.
+     *
+     * At the TileDB-SOMA level we call this "maxshape". At the TileDB Core
+     * storage level this maps to "domain".
+     *
+     * Further, we map this single n to the pair (0, n-1) since core permits a
+     * doubly inclusive pair (lo, hi) on each dimension slot.
+     *
+     * @return A vector with length equal to the number of dimensions; each
+     * value in the vector is the maximum capacity of each dimension.
+     */
+    std::vector<int64_t> maxshape();
+
+    /**
+     * @brief Resize the shape (what core calls "current domain") up to the
+     * maxshape (what core calls "domain").
+     *
+     * This applies to arrays all of whose dims are of type int64_t: this
+     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
+     * SOMADataFrame.
+     *
+     * @return Nothing. Raises an exception if the resize would be a downsize,
+     * which is not supported.
+     */
+    void resize(const std::vector<int64_t>& newshape);
 
     /**
      * @brief Get the number of dimensions.
@@ -768,6 +809,30 @@ class SOMAArray : public SOMAObject {
      * timestamp (if any).
      */
     ArraySchemaEvolution _make_se();
+
+    /**
+     * The caller must check the return value for .is_empty() to see if this is
+     * a new-style array with current-domain support (.is_empty() is false) , or
+     * an old-style array without current-domain support (.is_empty() is true).
+     * We could implement this as a std::optional<CurrentDomain> return value
+     * here, but, that would be a redundant indicator.
+     */
+    CurrentDomain _get_current_domain() {
+        return tiledb::ArraySchemaExperimental::current_domain(
+            *ctx_->tiledb_ctx(), arr_->schema());
+    }
+
+    /**
+     * With old shape: core domain mapped to tiledbsoma shape; core current
+     * domain did not exist.
+     *
+     * With new shape: core domain maps to tiledbsoma maxshape;
+     * core current_domain maps to tiledbsoma shape.
+     *
+     * Here we distinguish between user-side API, and core-side implementation.
+     */
+    std::vector<int64_t> _tiledb_domain();
+    std::vector<int64_t> _tiledb_current_domain();
 
     bool _extend_enumeration(
         ArrowSchema* value_schema,
