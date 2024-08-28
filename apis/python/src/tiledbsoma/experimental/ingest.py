@@ -328,7 +328,7 @@ def _write_visium_data_to_experiment_uri(
         "additional_metadata": additional_metadata,
     }
 
-    pixels_per_spot_radius = 0.5 * scale_factors["spot_diameter_fullres"]
+    pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 
     # Create axes and transformations
     coord_space = CoordinateSpace(
@@ -407,7 +407,7 @@ def _write_visium_data_to_experiment_uri(
                     with _write_visium_spots(
                         loc_uri,
                         input_tissue_positions,
-                        pixels_per_spot_radius,
+                        pixels_per_spot_diameter,
                         obs_df,
                         obs_id_name,
                         **ingest_ctx,
@@ -518,7 +518,7 @@ def _write_scene_presence_dataframe(
 def _write_visium_spots(
     df_uri: str,
     input_tissue_positions: Path,
-    spot_radius: float,
+    spot_diameter: float,
     obs_df: pd.DataFrame,
     id_column_name: str,
     *,
@@ -537,7 +537,7 @@ def _write_visium_spots(
                 "pxl_col_in_fullres": "x",
             }
         )
-        .assign(_soma_geometry=np.double(spot_radius))
+        .assign(spot_diameter_fullres=np.double(spot_diameter))
     )
     df = pd.merge(obs_df, df, how="inner", on=id_column_name)
     df.drop(id_column_name, axis=1, inplace=True)
@@ -550,7 +550,15 @@ def _write_visium_spots(
         platform_config=platform_config,
         context=context,
     )
-
+    # TODO: Consider moving the following to properties in the PointCloud class
+    if additional_metadata is None:
+        additional_metadata = {
+            "soma_geometry_type": "radius",
+            "soma_geometry": 0.5 * np.double(spot_diameter),  # type: ignore
+        }
+    else:
+        additional_metadata["soma_geometry_type"] = "radius"
+        additional_metadata["soma_geometry"] = 0.5 * np.double(spot_diameter)  # type: ignore
     if ingestion_params.write_schema_no_data:
         add_metadata(soma_point_cloud, additional_metadata)
         return soma_point_cloud
