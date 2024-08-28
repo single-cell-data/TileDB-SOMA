@@ -217,11 +217,11 @@ class AffineCoordinateTransform(CoordinateTransform):
         if self._matrix.shape == (rank + 1, rank + 1):
             if not (
                 self._matrix[-1, -1] == 1.0
-                and np.array_equal(self._matrix[:-1, -1], np.zeros((rank,)))
+                and np.array_equal(self._matrix[-1, :-1], np.zeros((rank,)))
             ):
                 raise ValueError(
-                    "Input matrix has augmented matrix shape, but is not a valid "
-                    "augmented matrix."
+                    f"Input matrix {self._matrix} has augmented matrix shape, but is not a valid "
+                    f"augmented matrix."
                 )
         elif self._matrix.shape == (rank, rank + 1):
             self._matrix = np.vstack(
