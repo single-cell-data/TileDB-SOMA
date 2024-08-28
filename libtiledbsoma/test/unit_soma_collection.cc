@@ -145,7 +145,8 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     std::string sub_uri = "mem://unit-test-add-dataframe/sub";
 
     SOMACollection::create(base_uri, ctx, ts);
-    auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX, false);
+    auto [schema, index_columns] =
+        helper::create_arrow_schema_and_index_columns(DIM_MAX, false);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"dataframe", SOMAGroupEntry(sub_uri, "SOMAArray")}};
@@ -208,7 +209,8 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
     std::string sub_uri = "mem://unit-test-add-experiment/sub";
 
     SOMACollection::create(base_uri, ctx);
-    auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX, false);
+    auto [schema, index_columns] =
+        helper::create_arrow_schema_and_index_columns(DIM_MAX, false);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"experiment", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
@@ -240,7 +242,8 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
     std::string sub_uri = "mem://unit-test-add-measurement/sub";
 
     SOMACollection::create(base_uri, ctx);
-    auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX, false);
+    auto [schema, index_columns] =
+        helper::create_arrow_schema_and_index_columns(DIM_MAX, false);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"measurement", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
@@ -323,7 +326,8 @@ TEST_CASE("SOMAExperiment: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri = "mem://unit-test-experiment";
-    auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX, false);
+    auto [schema, index_columns] =
+        helper::create_arrow_schema_and_index_columns(DIM_MAX, false);
     SOMAExperiment::create(
         uri,
         std::move(schema),
@@ -390,7 +394,8 @@ TEST_CASE("SOMAExperiment: metadata") {
 TEST_CASE("SOMAMeasurement: metadata") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-measurement";
-    auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX, false);
+    auto [schema, index_columns] =
+        helper::create_arrow_schema_and_index_columns(DIM_MAX, false);
     SOMAMeasurement::create(
         uri,
         std::move(schema),
