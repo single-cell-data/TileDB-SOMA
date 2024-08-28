@@ -48,8 +48,9 @@ TEST_CASE("SOMADataFrame: basic") {
 
         REQUIRE(!SOMADataFrame::exists(uri, ctx));
 
-        auto [schema, index_columns] = helper::create_arrow_schema(
-            dim_max, use_current_domain);
+        auto [schema, index_columns] =
+            helper::create_arrow_schema_and_index_columns(
+                dim_max, use_current_domain);
         SOMADataFrame::create(
             uri,
             std::move(schema),
@@ -170,8 +171,9 @@ TEST_CASE("SOMADataFrame: platform_config") {
                                         filter.first + R"(]}})";
             }
 
-            auto [schema, index_columns] = helper::create_arrow_schema(
-                dim_max, use_current_domain);
+            auto [schema, index_columns] =
+                helper::create_arrow_schema_and_index_columns(
+                    dim_max, use_current_domain);
             SOMADataFrame::create(
                 uri,
                 std::move(schema),
@@ -223,8 +225,9 @@ TEST_CASE("SOMADataFrame: metadata") {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-collection";
 
-        auto [schema, index_columns] = helper::create_arrow_schema(
-            dim_max, use_current_domain);
+        auto [schema, index_columns] =
+            helper::create_arrow_schema_and_index_columns(
+                dim_max, use_current_domain);
         SOMADataFrame::create(
             uri,
             std::move(schema),
@@ -290,4 +293,45 @@ TEST_CASE("SOMADataFrame: metadata") {
         REQUIRE(!soma_dataframe->has_metadata("md"));
         REQUIRE(soma_dataframe->metadata_num() == 2);
     }
+}
+
+TEST_CASE("SOMADataFrame: bounds-checking") {
+    bool use_current_domain = true;
+    int old_max = 100;
+    int new_max = 200;
+
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://unit-test-bounds-checking";
+
+    auto [schema, index_columns] =
+        helper::create_arrow_schema_and_index_columns(100, use_current_domain);
+
+    SOMADataFrame::create(
+        uri,
+        std::move(schema),
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx);
+
+    auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
+
+    std::vector<int64_t> d0({old_max + 1, old_max + 2});
+    std::vector<double> a0({1.5, 2.5});
+    soma_dataframe->set_column_data("d0", d0.size(), d0.data());
+    soma_dataframe->set_column_data("a0", a0.size(), a0.data());
+    // Writing outside the current domain should fail
+    REQUIRE_THROWS(soma_dataframe->write());
+    soma_dataframe->close();
+
+    soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
+    soma_dataframe->resize(std::vector<int64_t>({new_max}));
+    soma_dataframe->close();
+
+    soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
+    soma_dataframe->set_column_data("d0", d0.size(), d0.data());
+    soma_dataframe->set_column_data("a0", a0.size(), a0.data());
+    // Writing after resize should succeed
+    soma_dataframe->write();
+
+    soma_dataframe->close();
 }
