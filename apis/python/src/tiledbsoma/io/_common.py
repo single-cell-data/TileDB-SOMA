@@ -4,19 +4,31 @@
 # Licensed under the MIT License.
 
 """Common constants and types used during ingestion/outgestion."""
-
-from typing import Any, Mapping, Union
+from typing import Dict, List, Mapping, Optional, Union
 
 import h5py
+import numpy as np
+import pandas as pd
 import scipy.sparse as sp
 from anndata._core.sparse_dataset import SparseDataset
 
-from tiledbsoma._types import NPNDArray
+from tiledbsoma._types import Metadatum, NPNDArray
 
 SparseMatrix = Union[sp.csr_matrix, sp.csc_matrix, SparseDataset]
 DenseMatrix = Union[NPNDArray, h5py.Dataset]
 Matrix = Union[DenseMatrix, SparseMatrix]
-UnsMapping = Mapping[str, Any]
+
+UnsScalar = Union[str, int, float, np.generic]
+# TODO: support sparse matrices in `uns`
+UnsLeaf = Union[UnsScalar, List[UnsScalar], pd.DataFrame, NPNDArray]
+UnsNode = Union[UnsLeaf, Mapping[str, "UnsNode"]]
+UnsMapping = Mapping[str, UnsNode]
+# Specialize `UnsNode` to `Dict` instead of `Mapping`
+# `Mapping` doesn't expose `__set__`, so this is useful for building `uns` dictionaries.
+UnsDictNode = Union[UnsLeaf, Dict[str, "UnsDictNode"]]
+UnsDict = Dict[str, UnsDictNode]
+
+AdditionalMetadata = Optional[Dict[str, Metadatum]]
 
 # Arrays of strings from AnnData's uns are stored in SOMA as SOMADataFrame,
 # since SOMA ND arrays are necessarily arrays *of numbers*. This is okay since

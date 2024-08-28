@@ -51,7 +51,7 @@ SOMASparseNDArray <- R6::R6Class(
                      config = cfg,
                      dim_points = coords,
                      result_order = result_order,
-                     timestamp_end = private$tiledb_timestamp,
+                     timestamprange = self$.tiledb_timestamp_range,
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
       SOMASparseNDArrayRead$new(rl$sr, self, coords)
@@ -175,6 +175,11 @@ SOMASparseNDArray <- R6::R6Class(
         index <- index + 2L
       }
       self$set_metadata(bbox_flat)
+      spdl::debug(
+        "[SOMASparseNDArray$write] Calling .write_coo_df ({})",
+        self$tiledb_timestamp %||% "now"
+      )
+
       private$.write_coo_dataframe(coo)
 
       invisible(self)
@@ -220,10 +225,11 @@ SOMASparseNDArray <- R6::R6Class(
 
       stopifnot(is.data.frame(values))
       # private$log_array_ingestion()
-      arr <- self$object
-      if (!is.null(private$tiledb_timestamp)) {
-          arr@timestamp <- private$tiledb_timestamp
-      }
+      #arr <- self$object
+      #if (!is.null(self$tiledb_timestamp)) {
+      #    # arr@timestamp <- self$tiledb_timestamp
+      #   arr@timestamp_end <- self$tiledb_timestamp
+      #}
       nms <- colnames(values)
 
       ## the 'soma_data' data type may not have been cached, and if so we need to fetch it
@@ -239,11 +245,22 @@ SOMASparseNDArray <- R6::R6Class(
                               arrow::field(nms[3], private$.type))
 
       tbl <- arrow::arrow_table(values, schema = arrsch)
-      spdl::debug("[SOMASparseNDArray::write] array created, writing to {}", self$uri)
+      spdl::debug(
+        "[SOMASparseNDArray$write] array created, writing to {} at ({})",
+        self$uri,
+        self$tiledb_timestamp %||% "now"
+      )
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      writeArrayFromArrow(self$uri, naap, nasp, "SOMASparseNDArray")
+      writeArrayFromArrow(
+        uri = self$uri,
+        naap = naap,
+        nasp = nasp,
+        arraytype = "SOMASparseNDArray",
+        config = NULL,
+        tsvec = self$.tiledb_timestamp_range
+      )
     },
 
     # Internal marking of one or zero based matrices for iterated reads

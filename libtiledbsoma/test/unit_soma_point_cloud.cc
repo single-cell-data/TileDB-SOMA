@@ -40,7 +40,10 @@ TEST_CASE("SOMAPointCloud: basic") {
 
     REQUIRE(!SOMAPointCloud::exists(uri, ctx));
 
-    auto [schema, index_columns] = helper::create_arrow_schema(DIM_MAX);
+    auto use_current_domain = GENERATE(false, true);
+    auto [schema, index_columns] =
+        helper::create_arrow_schema_and_index_columns(
+            DIM_MAX, use_current_domain);
     SOMAPointCloud::create(
         uri,
         std::move(schema),

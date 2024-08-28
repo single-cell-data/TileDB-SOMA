@@ -46,6 +46,7 @@ from ._common import (
     _UNS_OUTGEST_HINT_2D,
     _UNS_OUTGEST_HINT_KEY,
     Matrix,
+    UnsDict,
     UnsMapping,
 )
 
@@ -432,12 +433,12 @@ def _extract_uns(
     collection: Collection[Any],
     uns_keys: Optional[Sequence[str]] = None,
     level: int = 0,
-) -> UnsMapping:
+) -> UnsDict:
     """
     This is a helper function for ``to_anndata`` of ``uns`` elements.
     """
 
-    extracted: Dict[str, Any] = {}
+    extracted: UnsDict = {}
     for key, element in collection.items():
         if level == 0 and uns_keys is not None and key not in uns_keys:
             continue

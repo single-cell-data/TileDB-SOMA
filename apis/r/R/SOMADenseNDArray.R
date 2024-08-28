@@ -52,10 +52,16 @@ SOMADenseNDArray <- R6::R6Class(
       coords <- private$.convert_coords(coords)
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      spdl::debug(
+        "[SOMADenseNDArray$read_arrow_table] timestamp ({})",
+        self$tiledb_timestamp %||% "now"
+      )
+
       rl <- soma_array_reader(uri = uri,
                               dim_points = coords,
                               result_order = result_order,
-                              loglevel = log_level,       # NULL dealt with by soma_array_reader()
+                              timestamprange = self$.tiledb_timestamp_range,
+                              loglevel = log_level,
                               config = cfg)
 
       soma_array_to_arrow_table(rl)
@@ -137,7 +143,14 @@ SOMADenseNDArray <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
       #arr[] <- values
-      writeArrayFromArrow(self$uri, naap, nasp, "SOMADenseNDArray")
+      writeArrayFromArrow(
+        uri = self$uri,
+        naap = naap,
+        nasp = nasp,
+        arraytype = "SOMADenseNDArray",
+        config = NULL,
+        tsvec = self$.tiledb_timestamp_range
+      )
       spdl::debug("[SOMADenseNDArray::write] written")
 
       # tiledb-r always closes the array after a write operation so we need to

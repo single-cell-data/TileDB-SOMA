@@ -2,6 +2,10 @@
 
 ## Changes
 
+* Make use of timestamp ranges in libtiledbsoma
+* Simplify timestamp ranges; strengthen assumptions about `tiledb_timestamp`
+* Use cached timestamps in `$write()` and `$create()`
+
 # tiledbsoma 1.13.0
 
 ## Changes

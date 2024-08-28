@@ -60,8 +60,8 @@ using namespace Catch::Matchers;
 static const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 
 namespace helper {
-std::pair<std::unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema(
-    int64_t dim_max);
-ArrowTable create_column_index_info(int64_t dim_max);
+std::pair<std::unique_ptr<ArrowSchema>, ArrowTable>
+create_arrow_schema_and_index_columns(int64_t dim_max, bool use_current_domain);
+ArrowTable create_column_index_info(int64_t dim_max, bool use_current_domain);
 }  // namespace helper
 #endif

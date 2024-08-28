@@ -1176,79 +1176,111 @@ uint64_t SOMAArray::nnz_slow() {
 }
 
 std::vector<int64_t> SOMAArray::shape() {
+    // There are two reasons for this:
+    // * Transitional, non-monolithic, phased, careful development for the
+    //   new-shape feature
+    // * Even after the new-shape feature is fully released, there will be old
+    //   arrays on disk that were created before this feature existed.
+    // So this is long-term code.
+    auto current_domain = _get_current_domain();
+    return current_domain.is_empty() ? _tiledb_domain() :
+                                       _tiledb_current_domain();
+}
+
+std::vector<int64_t> SOMAArray::maxshape() {
+    return _tiledb_domain();
+}
+
+std::vector<int64_t> SOMAArray::_tiledb_domain() {
     std::vector<int64_t> result;
     auto dimensions = mq_->schema()->domain().dimensions();
 
     for (const auto& dim : dimensions) {
-        switch (dim.type()) {
-            case TILEDB_UINT8:
-                result.push_back(
-                    dim.domain<uint8_t>().second - dim.domain<uint8_t>().first +
-                    1);
-                break;
-            case TILEDB_INT8:
-                result.push_back(
-                    dim.domain<int8_t>().second - dim.domain<int8_t>().first +
-                    1);
-                break;
-            case TILEDB_UINT16:
-                result.push_back(
-                    dim.domain<uint16_t>().second -
-                    dim.domain<uint16_t>().first + 1);
-                break;
-            case TILEDB_INT16:
-                result.push_back(
-                    dim.domain<int16_t>().second - dim.domain<int16_t>().first +
-                    1);
-                break;
-            case TILEDB_UINT32:
-                result.push_back(
-                    dim.domain<uint32_t>().second -
-                    dim.domain<uint32_t>().first + 1);
-                break;
-            case TILEDB_INT32:
-                result.push_back(
-                    dim.domain<int32_t>().second - dim.domain<int32_t>().first +
-                    1);
-                break;
-            case TILEDB_UINT64:
-                result.push_back(
-                    dim.domain<uint64_t>().second -
-                    dim.domain<uint64_t>().first + 1);
-                break;
-            case TILEDB_INT64:
-            case TILEDB_DATETIME_YEAR:
-            case TILEDB_DATETIME_MONTH:
-            case TILEDB_DATETIME_WEEK:
-            case TILEDB_DATETIME_DAY:
-            case TILEDB_DATETIME_HR:
-            case TILEDB_DATETIME_MIN:
-            case TILEDB_DATETIME_SEC:
-            case TILEDB_DATETIME_MS:
-            case TILEDB_DATETIME_US:
-            case TILEDB_DATETIME_NS:
-            case TILEDB_DATETIME_PS:
-            case TILEDB_DATETIME_FS:
-            case TILEDB_DATETIME_AS:
-            case TILEDB_TIME_HR:
-            case TILEDB_TIME_MIN:
-            case TILEDB_TIME_SEC:
-            case TILEDB_TIME_MS:
-            case TILEDB_TIME_US:
-            case TILEDB_TIME_NS:
-            case TILEDB_TIME_PS:
-            case TILEDB_TIME_FS:
-            case TILEDB_TIME_AS:
-                result.push_back(
-                    dim.domain<int64_t>().second - dim.domain<int64_t>().first +
-                    1);
-                break;
-            default:
-                throw TileDBSOMAError("Dimension must be integer type.");
+        // Callers inquiring about non-int64 shapes should not be here.
+        //
+        // In the SOMA data model:
+        // * SparseNDArray has dims which are all necessarily int64_t
+        // * DenseNDArray has dims which are all necessarily int64_t
+        // * DataFrame _default_ indexing is one dim named "soma_dim_0" of type
+        //   int64_t, however:
+        //   * Users can (and do) add other additional dims
+        //   * The SOMA data model requires that soma_joinid be present in each
+        //     DataFrame either as a dim or an attr -- and there are DataFrame
+        //     objects for which soma_joinid is not a dim at all
+        //   * These cases are all actively unit-tested within apis/python/tests
+        if (dim.type() != TILEDB_INT64) {
+            throw TileDBSOMAError("Found unexpected non-int64 dimension type.");
         }
+        result.push_back(
+            dim.domain<int64_t>().second - dim.domain<int64_t>().first + 1);
     }
 
     return result;
+}
+
+std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
+    std::vector<int64_t> result;
+
+    auto current_domain = tiledb::ArraySchemaExperimental::current_domain(
+        *ctx_->tiledb_ctx(), arr_->schema());
+
+    if (current_domain.is_empty()) {
+        throw TileDBSOMAError(
+            "Internal error: current domain requested for an array which does "
+            "not support it");
+    }
+
+    auto t = current_domain.type();
+    if (t != TILEDB_NDRECTANGLE) {
+        throw TileDBSOMAError("current_domain type is not NDRECTANGLE");
+    }
+
+    NDRectangle ndrect = current_domain.ndrectangle();
+
+    for (auto dimension_name : dimension_names()) {
+        // TODO: non-int64 types for SOMADataFrame extra dims.
+        // This simply needs to be integrated with switch statements as in the
+        // legacy code below.
+        auto range = ndrect.range<int64_t>(dimension_name);
+        result.push_back(range[1] + 1);
+    }
+    return result;
+}
+
+void SOMAArray::resize(const std::vector<int64_t>& newshape) {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must be opened in write mode");
+    }
+
+    auto tctx = ctx_->tiledb_ctx();
+    ArraySchema schema = arr_->schema();
+    Domain domain = schema.domain();
+    ArraySchemaEvolution schema_evolution(*tctx);
+    CurrentDomain new_current_domain(*tctx);
+
+    NDRectangle ndrect(*tctx, domain);
+
+    // TODO: non-int64 for DataFrame when it has extra index dims.
+    // This will be via a resize-helper.
+
+    unsigned n = domain.ndim();
+    if ((unsigned)newshape.size() != n) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAArray::resize]: newshape has dimension count {}; array has "
+            "{} ",
+            newshape.size(),
+            n));
+    }
+
+    for (unsigned i = 0; i < n; i++) {
+        ndrect.set_range<int64_t>(
+            domain.dimension(i).name(), 0, newshape[i] - 1);
+    }
+
+    new_current_domain.set_ndrectangle(ndrect);
+    schema_evolution.expand_current_domain(new_current_domain);
+    schema_evolution.array_evolve(uri_);
 }
 
 uint64_t SOMAArray::ndim() const {

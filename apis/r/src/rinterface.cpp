@@ -54,7 +54,8 @@ SEXP soma_array_reader(const std::string& uri,
                        std::string batch_size = "auto",
                        std::string result_order = "auto",
                        const std::string& loglevel = "auto",
-                       Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+                       Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
+                       Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue) {
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -75,6 +76,13 @@ SEXP soma_array_reader(const std::string& uri,
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
+    // optional timestamp range
+    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamprange);
+    if (timestamprange.isNotNull()) {
+        Rcpp::DatetimeVector vec(timestamprange);
+        spdl::debug("[soma_array_reader] timestamprange ({},{})", vec[0], vec[1]);
+    }
+
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
     auto sr = tdbs::SOMAArray::open(OpenMode::read,
                                     uri,
@@ -82,7 +90,8 @@ SEXP soma_array_reader(const std::string& uri,
                                     platform_config,
                                     column_names,
                                     batch_size,
-                                    tdb_result_order);
+                                    tdb_result_order,
+                                    tsrng);
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = sr->tiledb_schema();
@@ -97,7 +106,7 @@ SEXP soma_array_reader(const std::string& uri,
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        spdl::info("[soma_array_reader] Applying query condition");
+        spdl::info("[soma_array_reader_impl] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         sr->set_condition(*qcxp);
     }
@@ -142,9 +151,8 @@ SEXP soma_array_reader(const std::string& uri,
     exitIfError(ArrowArrayAllocateChildren(arr, ncol), "Bad array children alloc");
 
     arr->length = 0;             // initial value
-
     for (size_t i=0; i<ncol; i++) {
-        spdl::info("[soma_array_reader] Accessing {} at {}", names[i], i);
+        spdl::info("[soma_array_reader] Accessing '{}' at pos {}", names[i], i);
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(names[i]);
@@ -179,7 +187,7 @@ SEXP soma_array_reader(const std::string& uri,
 //' @export
 // [[Rcpp::export]]
 void set_log_level(const std::string& level) {
-    spdl::set_level(level);
+    spdl::setup("R", level);
     tdbs::LOG_SET_LEVEL(level);
 }
 
