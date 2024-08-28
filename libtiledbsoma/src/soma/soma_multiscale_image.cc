@@ -1,5 +1,5 @@
 /**
- * @file   soma_image2d_collection.cc
+ * @file   soma_multiscale_image.cc
  *
  * @section LICENSE
  *
@@ -27,10 +27,10 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAImage2DCollection class.
+ *   This file defines the SOMAMultiscaleImage class.
  */
 
-#include "soma_image2d_collection.h"
+#include "soma_multiscale_image.h"
 #include "soma_collection.h"
 
 namespace tiledbsoma {
@@ -40,27 +40,26 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-void SOMAImage2DCollection::create(
+void SOMAMultiscaleImage::create(
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     try {
         std::filesystem::path image_uri(uri);
         SOMAGroup::create(
-            ctx, image_uri.string(), "SOMAImage2DCollection", timestamp);
+            ctx, image_uri.string(), "SOMAMultiscaleImage", timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
 }
 
-std::unique_ptr<SOMAImage2DCollection> SOMAImage2DCollection::open(
+std::unique_ptr<SOMAMultiscaleImage> SOMAMultiscaleImage::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     try {
-        return std::make_unique<SOMAImage2DCollection>(
-            mode, uri, ctx, timestamp);
+        return std::make_unique<SOMAMultiscaleImage>(mode, uri, ctx, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
