@@ -34,9 +34,9 @@
 
 namespace helper {
 
-static std::unique_ptr<ArrowArray> _create_col_info_array(
+static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
     int64_t dim_max, bool use_current_domain);
-static std::unique_ptr<ArrowSchema> _create_col_info_schema(
+static std::unique_ptr<ArrowSchema> _create_index_cols_info_schema(
     std::string dim_name);
 
 // This non-obvious number is:
@@ -46,12 +46,46 @@ static std::unique_ptr<ArrowSchema> _create_col_info_schema(
 //   array-creation error.)
 const int CORE_DOMAIN_MAX = 2147483646;
 
+// Notes:
+//
+// * This is multi-purpose code used for generic SOMASparseNDArray,
+//   SOMADenseNDArray, and SOMADataFrame
+// * The NDArrays always have:
+//   o int64 dims soma_dim_0, soma_dim_1, ..., soma_dim_n
+//   o a single attr of varying numeric type -- float32, float32, int16, etc.
+// * Default-indexed (i.e. what almost everyone uses) SOMADataFrame has
+//   o int64 dims soma_joinid
+//   o arbitrary number of attrs of arbitrary type -- int, float, bool, string,
+//     categorical-of-string, you name it
+// * But SOMADataFrame, in the SOMA spec, just needs to have soma_joinid
+//   present, as a dim or attr.
+//   o soma_joinid can be a dim, along with others
+//   o soma_joinid can be an attr only, with something else being the dim
+//
+// Given this context, create_arrow_schema_and_index_columns is a factory
+// for creating schema information for ND arrays and default-indexed
+// dataframes.
+//
+// * This returns a pair of ArrowSchema and ArrowTable
+// * ArrowTable, in turn, is a pair of ArrowArray and ArrowSchema
+// * So this is
+//    o ArrowSchema -- schema for the array
+//      - ArrowArray  -- information about the tile extent, domain, and
+//        current domain for the index columns
+//      - ArrowSchema -- information about the datatypes for the index columns
+//    o Confusingly, there's even more nesting: for an n-attr dataframe, there
+//      is an ArrowSchema with its n_children being n -- and each of those
+//      n entries in its children[] array are also of type ArrowSchema
+// * The data structures conform to arrow_adapter
+// * The Python and R bindings prepare similar Arrow information when
+//   passing a create-array request to libtiledbsoma.
+
 std::pair<std::unique_ptr<ArrowSchema>, ArrowTable>
 create_arrow_schema_and_index_columns(
     int64_t dim_max, bool use_current_domain) {
-    // Create ArrowSchema for SOMAArray
+    // Create ArrowSchema for the entire SOMAArray: dims and attrs both
     auto arrow_schema = std::make_unique<ArrowSchema>();
-    arrow_schema->format = "+s";
+    arrow_schema->format = "+s";  // non-leaf node
     arrow_schema->n_children = 2;
     arrow_schema->dictionary = nullptr;
     arrow_schema->release = &ArrowAdapter::release_schema;
@@ -60,48 +94,73 @@ create_arrow_schema_and_index_columns(
     ArrowSchema* dim = arrow_schema->children[0] = new ArrowSchema;
     dim->format = "l";
     dim->name = "d0";
-    dim->n_children = 0;
+    dim->n_children = 0;  // leaf node
     dim->dictionary = nullptr;
     dim->release = &ArrowAdapter::release_schema;
 
     ArrowSchema* attr = arrow_schema->children[1] = new ArrowSchema;
     attr->format = "l";
     attr->name = "a0";
-    attr->n_children = 0;
+    attr->n_children = 0;  // leaf node
     attr->flags = 0;
     attr->dictionary = nullptr;
     attr->release = &ArrowAdapter::release_schema;
 
-    auto col_info_schema = _create_col_info_schema("d0");
-    auto col_info_array = _create_col_info_array(dim_max, use_current_domain);
+    auto index_cols_info_schema = _create_index_cols_info_schema("d0");
+    auto index_cols_info_array = _create_index_cols_info_array(
+        dim_max, use_current_domain);
 
     return std::pair(
         std::move(arrow_schema),
-        ArrowTable(std::move(col_info_array), std::move(col_info_schema)));
+        ArrowTable(
+            std::move(index_cols_info_array),
+            std::move(index_cols_info_schema)));
 }
 
 ArrowTable create_column_index_info(int64_t dim_max, bool use_current_domain) {
-    auto col_info_schema = _create_col_info_schema("soma_dim_0");
-    auto col_info_array = _create_col_info_array(dim_max, use_current_domain);
+    auto index_cols_info_schema = _create_index_cols_info_schema("soma_dim_0");
+    auto index_cols_info_array = _create_index_cols_info_array(
+        dim_max, use_current_domain);
 
-    return ArrowTable(std::move(col_info_array), std::move(col_info_schema));
+    return ArrowTable(
+        std::move(index_cols_info_array), std::move(index_cols_info_schema));
 }
 
-static std::unique_ptr<ArrowArray> _create_col_info_array(
+static std::unique_ptr<ArrowSchema> _create_index_cols_info_schema(
+    std::string dim_name) {
+    auto index_cols_info_schema = std::make_unique<ArrowSchema>();
+    index_cols_info_schema->format = "+s";  // non-leaf node
+    index_cols_info_schema->n_children = 1;
+    index_cols_info_schema->dictionary = nullptr;
+    index_cols_info_schema->release = &ArrowAdapter::release_schema;
+    index_cols_info_schema
+        ->children = new ArrowSchema*[index_cols_info_schema->n_children];
+
+    ArrowSchema* dim = index_cols_info_schema->children[0] = new ArrowSchema;
+    dim->format = "l";
+    dim->name = strdup(dim_name.c_str());
+    dim->n_children = 0;  // leaf node
+    dim->dictionary = nullptr;
+    dim->release = &ArrowAdapter::release_schema;
+
+    return index_cols_info_schema;
+}
+
+static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
     int64_t dim_max, bool use_current_domain) {
-    auto col_info_array = std::make_unique<ArrowArray>();
-    col_info_array->length = 0;
-    col_info_array->null_count = 0;
-    col_info_array->offset = 0;
-    col_info_array->n_buffers = 0;
-    col_info_array->buffers = nullptr;
-    col_info_array->n_children = 2;
-    col_info_array->release = &ArrowAdapter::release_array;
-    col_info_array->children = new ArrowArray*[1];
+    auto index_cols_info_array = std::make_unique<ArrowArray>();
+    index_cols_info_array->length = 0;
+    index_cols_info_array->null_count = 0;
+    index_cols_info_array->offset = 0;
+    index_cols_info_array->n_buffers = 0;
+    index_cols_info_array->buffers = nullptr;
+    index_cols_info_array->n_children = 1;
+    index_cols_info_array->release = &ArrowAdapter::release_array;
+    index_cols_info_array->children = new ArrowArray*[1];
 
     int n = use_current_domain ? 5 : 3;
 
-    auto d0_info = col_info_array->children[0] = new ArrowArray;
+    auto d0_info = index_cols_info_array->children[0] = new ArrowArray;
     d0_info->length = n;
     d0_info->null_count = 0;
     d0_info->offset = 0;
@@ -122,26 +181,7 @@ static std::unique_ptr<ArrowArray> _create_col_info_array(
         std::memcpy((void*)d0_info->buffers[1], &dom, sizeof(int64_t) * n);
     }
 
-    return col_info_array;
-}
-
-static std::unique_ptr<ArrowSchema> _create_col_info_schema(
-    std::string dim_name) {
-    auto col_info_schema = std::make_unique<ArrowSchema>();
-    col_info_schema->format = "+s";
-    col_info_schema->n_children = 1;
-    col_info_schema->dictionary = nullptr;
-    col_info_schema->release = &ArrowAdapter::release_schema;
-    col_info_schema->children = new ArrowSchema*[col_info_schema->n_children];
-
-    ArrowSchema* dim = col_info_schema->children[0] = new ArrowSchema;
-    dim->format = "l";
-    dim->name = strdup(dim_name.c_str());
-    dim->n_children = 0;
-    dim->dictionary = nullptr;
-    dim->release = &ArrowAdapter::release_schema;
-
-    return col_info_schema;
+    return index_cols_info_array;
 }
 
 }  // namespace helper
