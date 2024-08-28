@@ -199,7 +199,8 @@ class ArrowAdapter {
         ArrowTable index_column_info,
         std::string soma_type,
         bool is_sparse = true,
-        PlatformConfig platform_config = PlatformConfig());
+        PlatformConfig platform_config = PlatformConfig(),
+        std::optional<std::pair<int64_t, int64_t>> timestamp_range = std::nullopt);
 
     /**
      * @brief Get Arrow format string from TileDB datatype.

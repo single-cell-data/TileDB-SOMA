@@ -85,7 +85,8 @@ void SOMASparseNDArray::create(
             std::move(index_column_array), std::move(index_column_schema)),
         "SOMASparseNDArray",
         true,
-        platform_config);
+        platform_config,
+        timestamp);
 
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMASparseNDArray", timestamp);
 }

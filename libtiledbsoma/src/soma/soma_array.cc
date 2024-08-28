@@ -473,6 +473,14 @@ uint64_t SOMAArray::_get_max_capacity(tiledb_datatype_t index_type) {
 
 ArraySchemaEvolution SOMAArray::_make_se() {
     ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+    if (timestamp_.has_value()) {
+        // ArraySchemaEvolution requires us to pair (t2, t2) even if our range
+        // is (t1, t2).
+        auto v = timestamp_.value();
+        TimestampRange tr(v.second, v.second);
+        se.set_timestamp_range(tr);
+    }
+
     return se;
 }
 

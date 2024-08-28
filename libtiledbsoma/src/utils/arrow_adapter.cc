@@ -479,11 +479,12 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     ArrowTable index_column_info,
     std::string soma_type,
     bool is_sparse,
-    PlatformConfig platform_config) {
+    PlatformConfig platform_config,
+    std::optional<std::pair<int64_t, int64_t>> timestamp_range) {
     auto index_column_array = std::move(index_column_info.first);
     auto index_column_schema = std::move(index_column_info.second);
 
-    ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
+    ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE, timestamp_range);
     Domain domain(*ctx);
 
     schema.set_capacity(platform_config.capacity);
