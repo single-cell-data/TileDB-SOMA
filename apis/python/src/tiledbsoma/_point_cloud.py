@@ -6,7 +6,6 @@
 """
 Implementation of a SOMA Point Cloud
 """
-import json
 from typing import Any, Optional, Sequence, Tuple, Union, cast
 
 import pyarrow as pa
@@ -16,7 +15,8 @@ from typing_extensions import Self
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
-from ._constants import SOMA_AXES_METADATA_KEY, SOMA_JOINID
+from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY, SOMA_JOINID
+from ._coordinates import Axis, CoordinateSpace
 from ._dataframe import (
     Domain,
     _canonicalize_schema,
@@ -41,7 +41,7 @@ _UNBATCHED = options.BatchSize()
 
 class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
-    __slots__ = ("_axis_names",)
+    __slots__ = ("_axis_names", "_coord_space")
     _wrapper_type = PointCloudWrapper
 
     @classmethod
@@ -57,7 +57,6 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
-        axis_names = tuple(axis_names)
         for column_name in axis_names:
             if column_name not in index_column_names:
                 raise ValueError(f"Spatial column '{column_name}' must an index column")
@@ -69,7 +68,9 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
                     f"Spatial column '{column_name}' must have an integer or "
                     f"floating-point type. Column type is {column_dtype!r}"
                 )
-
+        coord_space = CoordinateSpace(
+            tuple(Axis(axis_name) for axis_name in axis_names)
+        )
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
         if domain is None:
@@ -124,7 +125,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             raise map_exception_for_create(e, uri) from None
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-        handle.meta[SOMA_AXES_METADATA_KEY] = json.dumps(axis_names)
+        handle.meta[SOMA_COORDINATE_SPACE_METADATA_KEY] = coord_space.to_json()
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -137,20 +138,13 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
     ):
         super().__init__(handle, **kwargs)
 
-        # Read point cloud specific metadata
+        # Get and validate coordinate space.
         try:
-            axis_names = self.metadata[SOMA_AXES_METADATA_KEY]
+            coord_space = self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]
         except KeyError as ke:
             raise SOMAError("Missing axis name metadata") from ke
-        if isinstance(axis_names, bytes):
-            axis_names = str(axis_names, "uft-8")
-        if not isinstance(axis_names, str):
-            raise SOMAError(
-                f"Unexpected type {type(axis_names)!r} for PointCloud axis name "
-                f"metadata"
-            )
-        self._axis_names: Tuple[str, ...] = tuple(json.loads(axis_names))
-        for name in self._axis_names:
+        self._coord_space = CoordinateSpace.from_json(coord_space)
+        for name in self._coord_space.axis_names:
             if name not in self.index_column_names:
                 raise SOMAError(
                     f"Point cloud axis '{name}' does not match any of the index column"
@@ -163,7 +157,24 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
     @property
     def axis_names(self) -> Tuple[str, ...]:
-        return self._axis_names
+        return self._coord_space.axis_names
+
+    @property
+    def coordinate_space(self) -> CoordinateSpace:
+        """Coordinate system for this scene."""
+        return self._coord_space
+
+    @coordinate_space.setter
+    def coordinate_space(self, value: CoordinateSpace) -> None:
+        if self._coord_space is not None:
+            if value.axis_names != self._coord_space.axis_names:
+                raise ValueError(
+                    f"Cannot change axis names of a point cloud. Existing axis names "
+                    f"are {self._coord_space.axis_names}. New coordinate space has "
+                    f"axis names {self._coord_space.axis_names}."
+                )
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = value.to_json()
+        self._coord_space = value
 
     @property
     def count(self) -> int:
