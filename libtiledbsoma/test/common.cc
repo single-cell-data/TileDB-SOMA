@@ -85,8 +85,8 @@ create_arrow_schema_and_index_columns(
     int64_t dim_max, bool use_current_domain) {
     // Create ArrowSchema for the entire SOMAArray: dims and attrs both
     auto arrow_schema = std::make_unique<ArrowSchema>();
-    arrow_schema->format = "+s";  // non-leaf node
-    arrow_schema->n_children = 2;
+    arrow_schema->format = "+s";
+    arrow_schema->n_children = 2;  // non-leaf node
     arrow_schema->dictionary = nullptr;
     arrow_schema->release = &ArrowAdapter::release_schema;
     arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
@@ -129,8 +129,8 @@ ArrowTable create_column_index_info(int64_t dim_max, bool use_current_domain) {
 static std::unique_ptr<ArrowSchema> _create_index_cols_info_schema(
     std::string dim_name) {
     auto index_cols_info_schema = std::make_unique<ArrowSchema>();
-    index_cols_info_schema->format = "+s";  // non-leaf node
-    index_cols_info_schema->n_children = 1;
+    index_cols_info_schema->format = "+s";
+    index_cols_info_schema->n_children = 1;  // non-leaf node
     index_cols_info_schema->dictionary = nullptr;
     index_cols_info_schema->release = &ArrowAdapter::release_schema;
     index_cols_info_schema
