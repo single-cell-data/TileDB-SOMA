@@ -73,7 +73,7 @@ if TYPE_CHECKING:
     from somacore.options import PlatformConfig
 
     from ..io._registration import ExperimentAmbientLabelMapping
-    from ..io.ingest import AdditionalMetadata
+    from ..io._common import AdditionalMetadata
     from ..options import SOMATileDBContext
 
 
