@@ -8,13 +8,12 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Tuple, Union
 
-import numpy as np
 import pyarrow as pa
 from somacore import (
-    AffineTransform,
     CoordinateSpace,
     CoordinateTransform,
     ResultOrder,
+    ScaleTransform,
     images,
     options,
 )
@@ -349,18 +348,13 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             level_props = self._levels[level]
         width = level_props.width
         height = level_props.height
-        # TODO: Add in a transformation just for scaling.
         # NOTE: Ignoring possibility of different axis order for different levels
         # since that will be removed.
-        return AffineTransform(
+        return ScaleTransform(
             input_axes=self._coord_space.axis_names,
             output_axes=self._coord_space.axis_names,
-            matrix=np.array(
-                [
-                    [width / self._reference_shape[0], 0.0, 0.0],
-                    [0.0, height / self._reference_shape[1], 0.0],
-                    [0.0, 0.0, 1.0],
-                ],
-                dtype=np.float64,
-            ),
+            scale_factors=[
+                width / self._reference_shape[0],
+                height / self._reference_shape[1],
+            ],
         )
