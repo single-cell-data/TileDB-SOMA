@@ -96,6 +96,23 @@ mkdir -p build
 
 if [ -z ${TILEDBSOMA_COVERAGE+x} ]; then TILEDBSOMA_COVERAGE=""; fi
 
+echo
+echo
+echo
+echo "EXTRA_OPTS <<$extra_opts>>"
+echo
+echo
+echo
+
+echo TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
+echo TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build -j ${nproc}
+echo TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build --target install-libtiledbsoma
+echo TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build/libtiledbsoma --target build_tests -j ${nproc}
+
+echo
+echo
+echo
+
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build -j ${nproc}
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build --target install-libtiledbsoma
