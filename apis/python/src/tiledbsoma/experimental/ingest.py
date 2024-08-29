@@ -31,11 +31,10 @@ import pyarrow.compute as pacomp
 import scanpy
 from anndata import AnnData
 from PIL import Image
+from somacore import Axis, CoordinateSpace
 
 from .. import (
-    Axis,
     Collection,
-    CoordinateSpace,
     DataFrame,
     DenseNDArray,
     Experiment,
@@ -72,8 +71,8 @@ from ..options._tiledb_create_write_options import (
 if TYPE_CHECKING:
     from somacore.options import PlatformConfig
 
-    from ..io._registration import ExperimentAmbientLabelMapping
     from ..io._common import AdditionalMetadata
+    from ..io._registration import ExperimentAmbientLabelMapping
     from ..options import SOMATileDBContext
 
 

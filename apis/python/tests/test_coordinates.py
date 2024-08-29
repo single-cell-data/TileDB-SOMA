@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from somacore import Axis, CoordinateSpace
 
 import tiledbsoma as soma
 
@@ -21,35 +22,19 @@ def check_transform_is_equal(
 @pytest.mark.parametrize(
     "original",
     [
-        soma.Axis(name="dim0"),
-        soma.Axis(name="dim0", units="micrometer"),
-        soma.Axis(name="dim0", units="nanometer", scale=np.float64(65.0)),
-    ],
-)
-def test_axis_json_roundtrip(original: soma.Axis):
-    json_blob = original.to_json()
-    result = soma.Axis.from_json(json_blob)
-    assert result.name == original.name
-    assert result.units == original.units
-    assert result.scale == original.scale
-
-
-@pytest.mark.parametrize(
-    "original",
-    [
-        soma.CoordinateSpace((soma.Axis(name="dim0", units="meter"),)),
-        soma.CoordinateSpace(
+        CoordinateSpace((Axis(name="dim0", units="meter"),)),
+        CoordinateSpace(
             (
-                soma.Axis(name="dim0", units="micrometer"),
-                soma.Axis(name="dim1"),
-                soma.Axis(name="dim2", units="micrometer", scale=np.float64(65.0)),
+                Axis(name="dim0", units="micrometer"),
+                Axis(name="dim1"),
+                Axis(name="dim2", units="micrometer", scale=np.float64(65.0)),
             ),
         ),
     ],
 )
-def test_coordinate_system_json_roundtrip(original: soma.CoordinateSpace):
-    json_blob = original.to_json()
-    result = soma.CoordinateSpace.from_json(json_blob)
+def test_coordinate_system_json_roundtrip(original: CoordinateSpace):
+    json_blob = soma._coordinates.coordinate_space_to_json(original)
+    result = soma._coordinates.coordinate_space_from_json(json_blob)
     assert len(result) == len(original)
     for index in range(len(result)):
         assert result[index] == original[index]

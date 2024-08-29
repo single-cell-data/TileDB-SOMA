@@ -147,8 +147,6 @@ from ._collection import Collection
 from ._constants import SOMA_JOINID
 from ._coordinates import (
     AffineCoordinateTransform,
-    Axis,
-    CoordinateSpace,
     CoordinateTransform,
     IdentityCoordinateTransform,
 )
@@ -188,11 +186,9 @@ __version__ = get_implementation_version()
 __all__ = [
     "AffineCoordinateTransform",
     "AlreadyExistsError",
-    "Axis",
     "AxisColumnNames",
     "AxisQuery",
     "Collection",
-    "CoordinateSpace",
     "CoordinateTransform",
     "DataFrame",
     "DenseNDArray",

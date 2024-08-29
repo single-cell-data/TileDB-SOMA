@@ -6,16 +6,16 @@
 
 from typing import Any, Optional, Union
 
-from somacore import scene
+from somacore import Axis, CoordinateSpace, scene
 
 from . import _tdb_handles
 from ._collection import Collection, CollectionBase
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
 from ._coordinates import (
-    Axis,
-    CoordinateSpace,
     CoordinateTransform,
     IdentityCoordinateTransform,
+    coordinate_space_from_json,
+    coordinate_space_to_json,
     transform_from_json,
     transform_to_json,
 )
@@ -57,7 +57,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         if coord_space is None:
             self._coord_space: Optional[CoordinateSpace] = None
         else:
-            self._coord_space = CoordinateSpace.from_json(coord_space)
+            self._coord_space = coordinate_space_from_json(coord_space)
 
     @property
     def coordinate_space(self) -> Optional[CoordinateSpace]:
@@ -68,7 +68,9 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
     def coordinate_space(self, value: CoordinateSpace) -> None:
         if not isinstance(value, CoordinateSpace):
             raise TypeError(f"Invalid type {type(value).__name__}.")
-        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = value.to_json()
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
+            value
+        )
         self._coord_space = value
 
     def register_point_cloud(

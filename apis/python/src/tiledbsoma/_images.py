@@ -10,7 +10,7 @@ from typing import Any, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
-from somacore import ResultOrder, coordinates, images, options
+from somacore import CoordinateSpace, ResultOrder, coordinates, images, options
 from typing_extensions import Final
 
 from . import _funcs, _tdb_handles
@@ -18,8 +18,9 @@ from ._collection import CollectionBase
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
 from ._coordinates import (
     AffineCoordinateTransform,
-    CoordinateSpace,
     CoordinateTransform,
+    coordinate_space_from_json,
+    coordinate_space_to_json,
 )
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError
@@ -143,7 +144,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         if coord_space is None:
             self._coord_space: Optional[CoordinateSpace] = None
         else:
-            self._coord_space = CoordinateSpace.from_json(coord_space)
+            self._coord_space = coordinate_space_from_json(coord_space)
 
         # Update the axis order.
         axis_order = self.metadata.get("soma_axis_order")
@@ -280,7 +281,9 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             raise ValueError("Coordinate space must have exactly 2 axes.")
         # TODO: Do we need some way to specify YX vs XY and propagate to
         # sub-images.
-        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = value.to_json()
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
+            value
+        )
         self._coord_space = value
 
     @property

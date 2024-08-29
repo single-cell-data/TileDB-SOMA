@@ -10,13 +10,13 @@ from typing import Any, Optional, Sequence, Tuple, Union, cast
 
 import pyarrow as pa
 import somacore
-from somacore import options
+from somacore import Axis, CoordinateSpace, options
 from typing_extensions import Self
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY, SOMA_JOINID
-from ._coordinates import Axis, CoordinateSpace
+from ._coordinates import coordinate_space_from_json, coordinate_space_to_json
 from ._dataframe import (
     Domain,
     _canonicalize_schema,
@@ -125,7 +125,9 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             raise map_exception_for_create(e, uri) from None
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-        handle.meta[SOMA_COORDINATE_SPACE_METADATA_KEY] = coord_space.to_json()
+        handle.meta[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
+            coord_space
+        )
         return cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -143,7 +145,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             coord_space = self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]
         except KeyError as ke:
             raise SOMAError("Missing axis name metadata") from ke
-        self._coord_space = CoordinateSpace.from_json(coord_space)
+        self._coord_space = coordinate_space_from_json(coord_space)
         for name in self._coord_space.axis_names:
             if name not in self.index_column_names:
                 raise SOMAError(
@@ -173,7 +175,9 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
                     f"are {self._coord_space.axis_names}. New coordinate space has "
                     f"axis names {self._coord_space.axis_names}."
                 )
-        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = value.to_json()
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
+            value
+        )
         self._coord_space = value
 
     @property
