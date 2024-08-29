@@ -4,8 +4,6 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
-#include "utils/logger.h"
-
 // https://arrow.apache.org/docs/format/CDataInterface.html
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
 // https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
@@ -258,12 +256,6 @@ class ArrowAdapter {
     template <typename T>
     static Dimension _create_dim_aux(
         std::shared_ptr<Context> ctx, std::string name, T* b) {
-        LOG_DEBUG(fmt::format(
-            "_create_dim_aux name={} b0={} b1={} b2={}",
-            name,
-            b[0],
-            b[1],
-            b[2]));
         return Dimension::create<T>(*ctx, name, {b[0], b[1]}, b[2]);
     }
 
