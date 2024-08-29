@@ -31,14 +31,13 @@ import pyarrow.compute as pacomp
 import scanpy
 from anndata import AnnData
 from PIL import Image
-from somacore import Axis, CoordinateSpace
+from somacore import Axis, CoordinateSpace, IdentityTransform
 
 from .. import (
     Collection,
     DataFrame,
     DenseNDArray,
     Experiment,
-    IdentityCoordinateTransform,
     Image2DCollection,
     PointCloud,
     Scene,
@@ -392,7 +391,7 @@ def _write_visium_data_to_experiment_uri(
                             tissue.coordinate_space = coord_space
                             scene.register_image2d(
                                 "tissue",
-                                IdentityCoordinateTransform(("x", "y"), ("x", "y")),
+                                IdentityTransform(("x", "y"), ("x", "y")),
                             )
 
                 obsl_uri = f"{scene_uri}/obsl"
@@ -413,7 +412,7 @@ def _write_visium_data_to_experiment_uri(
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
                         scene.register_point_cloud(
-                            "loc", IdentityCoordinateTransform(("x", "y"), ("x", "y"))
+                            "loc", IdentityTransform(("x", "y"), ("x", "y"))
                         )
 
                 varl_uri = f"{scene_uri}/varl"

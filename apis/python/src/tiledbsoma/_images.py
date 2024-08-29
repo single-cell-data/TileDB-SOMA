@@ -10,15 +10,20 @@ from typing import Any, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
-from somacore import CoordinateSpace, ResultOrder, coordinates, images, options
+from somacore import (
+    AffineTransform,
+    CoordinateSpace,
+    CoordinateTransform,
+    ResultOrder,
+    images,
+    options,
+)
 from typing_extensions import Final
 
 from . import _funcs, _tdb_handles
 from ._collection import CollectionBase
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
 from ._coordinates import (
-    AffineCoordinateTransform,
-    CoordinateTransform,
     coordinate_space_from_json,
     coordinate_space_to_json,
 )
@@ -67,7 +72,7 @@ class ImageCollection(  # type: ignore[misc]  # __eq__ false positive
         level: int,
         coords: options.DenseNDCoords = (),
         *,
-        transform: Optional[coordinates.CoordinateTransform] = None,
+        transform: Optional[CoordinateTransform] = None,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> pa.Tensor:
@@ -298,7 +303,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         level: int,
         coords: options.DenseNDCoords = (),
         *,
-        transform: Optional[coordinates.CoordinateTransform] = None,
+        transform: Optional[CoordinateTransform] = None,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> pa.Tensor:
@@ -347,7 +352,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         # TODO: Add in a transformation just for scaling.
         # NOTE: Ignoring possibility of different axis order for different levels
         # since that will be removed.
-        return AffineCoordinateTransform(
+        return AffineTransform(
             input_axes=self._coord_space.axis_names,
             output_axes=self._coord_space.axis_names,
             matrix=np.array(
