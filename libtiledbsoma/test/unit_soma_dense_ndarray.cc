@@ -45,11 +45,18 @@ TEST_CASE("SOMADenseNDArray: basic") {
     SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray-basic";
+        std::string dim_name = "soma_dim_0";
 
         REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
-        auto index_columns = helper::create_column_index_info(
-            dim_max, use_current_domain);
+        std::vector<helper::DimInfo> dim_infos(
+            {{.name = dim_name,
+              .tiledb_datatype = TILEDB_INT64,
+              .dim_max = dim_max,
+              .use_current_domain = use_current_domain}});
+
+        auto index_columns = helper::create_column_index_info(dim_infos);
+
         if (use_current_domain) {
             // Setting a current domain on a TileDB dense array is not (yet)
             // supported
@@ -86,7 +93,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
             auto schema = soma_dense->tiledb_schema();
             REQUIRE(schema->has_attribute("soma_data"));
             REQUIRE(schema->array_type() == TILEDB_DENSE);
-            REQUIRE(schema->domain().has_dimension("soma_dim_0"));
+            REQUIRE(schema->domain().has_dimension(dim_name));
             REQUIRE(soma_dense->ndim() == 1);
 
             // Once we have support for current domain in dense arrays
@@ -109,7 +116,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
 
             soma_dense->open(OpenMode::write);
             soma_dense->set_column_data("soma_data", a0.size(), a0.data());
-            soma_dense->set_column_data("soma_dim_0", d0.size(), d0.data());
+            soma_dense->set_column_data(dim_name, d0.size(), d0.data());
             soma_dense->write();
             soma_dense->close();
 
@@ -135,12 +142,19 @@ TEST_CASE("SOMADenseNDArray: platform_config") {
     SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray-platform-config";
+        std::string dim_name = "soma_dim_0";
 
         PlatformConfig platform_config;
         platform_config.dense_nd_array_dim_zstd_level = 6;
 
-        auto index_columns = helper::create_column_index_info(
-            dim_max, use_current_domain);
+        std::vector<helper::DimInfo> dim_infos(
+            {{.name = dim_name,
+              .tiledb_datatype = TILEDB_INT64,
+              .dim_max = dim_max,
+              .use_current_domain = use_current_domain}});
+
+        auto index_columns = helper::create_column_index_info(dim_infos);
+
         if (use_current_domain) {
             // Setting a current domain on a TileDB dense array is not (yet)
             // supported
@@ -166,7 +180,7 @@ TEST_CASE("SOMADenseNDArray: platform_config") {
             auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
             auto dim_filter = soma_dense->tiledb_schema()
                                   ->domain()
-                                  .dimension("soma_dim_0")
+                                  .dimension(dim_name)
                                   .filter_list()
                                   .filter(0);
             REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
@@ -188,14 +202,20 @@ TEST_CASE("SOMADenseNDArray: metadata") {
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
-
         std::string uri = "mem://unit-test-dense-ndarray";
+        std::string dim_name = "soma_dim_0";
 
-        auto index_columns = helper::create_column_index_info(
-            dim_max, use_current_domain);
+        std::vector<helper::DimInfo> dim_infos(
+            {{.name = dim_name,
+              .tiledb_datatype = TILEDB_INT64,
+              .dim_max = dim_max,
+              .use_current_domain = use_current_domain}});
+
+        auto index_columns = helper::create_column_index_info(dim_infos);
+
         SOMASparseNDArray::create(
             uri,
-            "l",
+            "l",  // XXX TEMP
             ArrowTable(
                 std::move(index_columns.first),
                 std::move(index_columns.second)),

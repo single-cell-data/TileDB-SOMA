@@ -32,7 +32,6 @@
 
 #include "arrow_adapter.h"
 #include "../soma/column_buffer.h"
-#include "../utils/logger.h"
 
 namespace tiledbsoma {
 
