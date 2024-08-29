@@ -11,8 +11,11 @@ arg() { echo "$1" | sed "s/^${2-[^=]*=}//" | sed "s/:/;/g"; }
 build="Release"
 prefix=""
 tiledb=""
-cmake_verbose="false"
-no_tiledb_deprecated="false"
+# XXX TEMP DO NOT MERGE
+#cmake_verbose="false"
+cmake_verbose="true"
+#no_tiledb_deprecated="false"
+no_tiledb_deprecated="true"
 
 while test $# != 0; do
   case "$1" in
