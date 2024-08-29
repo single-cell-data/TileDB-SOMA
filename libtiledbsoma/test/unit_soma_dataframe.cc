@@ -47,17 +47,19 @@ TEST_CASE("SOMADataFrame: basic") {
         std::string uri = "mem://unit-test-dataframe-basic";
         std::string dim_name = "d0";
         std::string attr_name = "a0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         REQUIRE(!SOMADataFrame::exists(uri, ctx));
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = dim_max,
               .use_current_domain = use_current_domain}});
 
         std::vector<helper::AttrInfo> attr_infos(
-            {{.name = attr_name, .tiledb_datatype = TILEDB_INT64}});
+            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
 
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
@@ -175,6 +177,7 @@ TEST_CASE("SOMADataFrame: platform_config") {
             std::string uri = "mem://unit-test-dataframe-platform-config";
             std::string dim_name = "d0";
             std::string attr_name = "a0";
+            tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
 
             PlatformConfig platform_config;
             platform_config.dataframe_dim_zstd_level = 6;
@@ -187,12 +190,12 @@ TEST_CASE("SOMADataFrame: platform_config") {
 
             std::vector<helper::DimInfo> dim_infos(
                 {{.name = dim_name,
-                  .tiledb_datatype = TILEDB_INT64,
+                  .tiledb_datatype = tiledb_datatype,
                   .dim_max = dim_max,
                   .use_current_domain = use_current_domain}});
 
             std::vector<helper::AttrInfo> attr_infos(
-                {{.name = attr_name, .tiledb_datatype = TILEDB_INT64}});
+                {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
 
             auto [schema, index_columns] =
                 helper::create_arrow_schema_and_index_columns(
@@ -250,15 +253,17 @@ TEST_CASE("SOMADataFrame: metadata") {
         std::string uri = "mem://unit-test-collection";
         std::string dim_name = "d0";
         std::string attr_name = "a0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = dim_max,
               .use_current_domain = use_current_domain}});
 
         std::vector<helper::AttrInfo> attr_infos(
-            {{.name = attr_name, .tiledb_datatype = TILEDB_INT64}});
+            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
 
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
@@ -340,15 +345,17 @@ TEST_CASE("SOMADataFrame: bounds-checking") {
     std::string uri = "mem://unit-test-bounds-checking";
     std::string dim_name = "d0";
     std::string attr_name = "a0";
+    tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+    std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
     std::vector<helper::DimInfo> dim_infos(
         {{.name = dim_name,
-          .tiledb_datatype = TILEDB_INT64,
+          .tiledb_datatype = tiledb_datatype,
           .dim_max = old_max,
           .use_current_domain = use_current_domain}});
 
     std::vector<helper::AttrInfo> attr_infos(
-        {{.name = attr_name, .tiledb_datatype = TILEDB_INT64}});
+        {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
 
     auto [schema, index_columns] =
         helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);

@@ -61,12 +61,14 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
         std::string base_uri = "mem://unit-test-add-sparse-ndarray";
         std::string sub_uri = "mem://unit-test-add-sparse-ndarray/sub";
         std::string dim_name = "soma_dim_0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx, ts);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
               .use_current_domain = use_current_domain}});
 
@@ -84,7 +86,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
             sub_uri,
             URIType::absolute,
             ctx,
-            "l",
+            arrow_format,
             ArrowTable(
                 std::move(index_columns.first),
                 std::move(index_columns.second)));
@@ -111,13 +113,15 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     std::string base_uri = "mem://unit-test-add-dense-ndarray";
     std::string sub_uri = "mem://unit-test-add-dense-ndarray/sub";
     std::string dim_name = "soma_dim_0";
+    tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+    std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
     SOMACollection::create(base_uri, ctx, ts);
     // TODO: add support for current domain in dense arrays once we have that
     // support from core
     std::vector<helper::DimInfo> dim_infos(
         {{.name = dim_name,
-          .tiledb_datatype = TILEDB_INT64,
+          .tiledb_datatype = tiledb_datatype,
           .dim_max = DIM_MAX,
           .use_current_domain = false}});
     auto index_columns = helper::create_column_index_info(dim_infos);
@@ -134,7 +138,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
         sub_uri,
         URIType::absolute,
         ctx,
-        "l",
+        arrow_format,
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)));
     REQUIRE(soma_collection->members_map() == expected_map);
@@ -163,16 +167,18 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
         std::string sub_uri = "mem://unit-test-add-dataframe/sub";
         std::string dim_name = "d0";
         std::string attr_name = "a0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx, ts);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
-            {{.name = attr_name, .tiledb_datatype = TILEDB_INT64}});
+            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
                 dim_infos, attr_infos);
@@ -219,6 +225,8 @@ TEST_CASE("SOMACollection: add SOMACollection") {
         auto ctx = std::make_shared<SOMAContext>();
         std::string base_uri = "mem://unit-test-add-collection";
         std::string sub_uri = "mem://unit-test-add-collection/sub";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx);
 
@@ -251,16 +259,18 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
         std::string sub_uri = "mem://unit-test-add-experiment/sub";
         std::string dim_name = "d0";
         std::string attr_name = "a0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
-            {{.name = attr_name, .tiledb_datatype = TILEDB_INT64}});
+            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
                 dim_infos, attr_infos);
@@ -302,16 +312,18 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
         std::string sub_uri = "mem://unit-test-add-measurement/sub";
         std::string dim_name = "d0";
         std::string attr_name = "a0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
-            {{.name = attr_name, .tiledb_datatype = TILEDB_INT64}});
+            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
                 dim_infos, attr_infos);
@@ -414,14 +426,16 @@ TEST_CASE("SOMAExperiment: metadata") {
         std::string uri = "mem://unit-test-experiment";
         std::string dim_name = "soma_dim_0";
         std::string attr_name = "soma_data";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
-            {{.name = attr_name, .tiledb_datatype = TILEDB_INT64}});
+            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
                 dim_infos, attr_infos);
@@ -503,14 +517,16 @@ TEST_CASE("SOMAMeasurement: metadata") {
         std::string uri = "mem://unit-test-measurement";
         std::string dim_name = "soma_dim_0";
         std::string attr_name = "soma_data";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
-            {{.name = attr_name, .tiledb_datatype = TILEDB_INT64}});
+            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
                 dim_infos, attr_infos);

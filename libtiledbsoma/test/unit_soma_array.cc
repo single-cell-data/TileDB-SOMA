@@ -44,6 +44,7 @@
 
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
+#include "common.h"
 #include "utils/util.h"
 
 using namespace tiledb;
@@ -53,8 +54,6 @@ using namespace Catch::Matchers;
 #ifndef TILEDBSOMA_SOURCE_ROOT
 #define TILEDBSOMA_SOURCE_ROOT "not_defined"
 #endif
-
-const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 
 namespace {
 
@@ -530,7 +529,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     arrow_schema->release = &ArrowAdapter::release_schema;
     arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
     ArrowSchema* arrow_dim = arrow_schema->children[0] = new ArrowSchema;
-    arrow_dim->format = "l";
+    arrow_dim->format = strdup(helper::to_arrow_format(TILEDB_INT64).c_str());
     arrow_dim->name = dim_name;
     arrow_dim->n_children = 0;
     arrow_dim->dictionary = nullptr;

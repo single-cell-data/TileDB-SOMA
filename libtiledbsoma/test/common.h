@@ -66,7 +66,7 @@ namespace helper {
 struct DimInfo {
     std::string name;
     tiledb_datatype_t tiledb_datatype;
-    int64_t dim_max;  // XXX TEMP INT64 DIM_MAX
+    int64_t dim_max;
     bool use_current_domain;
 };
 
@@ -82,6 +82,8 @@ create_arrow_schema_and_index_columns(
     const std::vector<AttrInfo>& attr_infos);
 
 ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos);
+
+std::string to_arrow_format(tiledb_datatype_t tiledb_datatype);
 
 }  // namespace helper
 #endif

@@ -263,4 +263,8 @@ static std::string tdb_to_arrow_type(tiledb_datatype_t tiledb_datatype) {
     return std::string(ArrowAdapter::to_arrow_format(tiledb_datatype));
 }
 
+std::string to_arrow_format(tiledb_datatype_t tiledb_datatype) {
+    return std::string(ArrowAdapter::to_arrow_format(tiledb_datatype));
+}
+
 }  // namespace helper

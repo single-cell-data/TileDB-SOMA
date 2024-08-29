@@ -46,12 +46,14 @@ TEST_CASE("SOMADenseNDArray: basic") {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray-basic";
         std::string dim_name = "soma_dim_0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = dim_max,
               .use_current_domain = use_current_domain}});
 
@@ -62,7 +64,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
             // supported
             REQUIRE_THROWS(SOMADenseNDArray::create(
                 uri,
-                "l",
+                arrow_format,
                 ArrowTable(
                     std::move(index_columns.first),
                     std::move(index_columns.second)),
@@ -72,7 +74,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
         } else {
             SOMADenseNDArray::create(
                 uri,
-                "l",
+                arrow_format,
                 ArrowTable(
                     std::move(index_columns.first),
                     std::move(index_columns.second)),
@@ -89,7 +91,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
             REQUIRE(soma_dense->ctx() == ctx);
             REQUIRE(soma_dense->type() == "SOMADenseNDArray");
             REQUIRE(soma_dense->is_sparse() == false);
-            REQUIRE(soma_dense->soma_data_type() == "l");
+            REQUIRE(soma_dense->soma_data_type() == arrow_format);
             auto schema = soma_dense->tiledb_schema();
             REQUIRE(schema->has_attribute("soma_data"));
             REQUIRE(schema->array_type() == TILEDB_DENSE);
@@ -143,13 +145,15 @@ TEST_CASE("SOMADenseNDArray: platform_config") {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray-platform-config";
         std::string dim_name = "soma_dim_0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         PlatformConfig platform_config;
         platform_config.dense_nd_array_dim_zstd_level = 6;
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = dim_max,
               .use_current_domain = use_current_domain}});
 
@@ -160,7 +164,7 @@ TEST_CASE("SOMADenseNDArray: platform_config") {
             // supported
             REQUIRE_THROWS(SOMADenseNDArray::create(
                 uri,
-                "l",
+                arrow_format,
                 ArrowTable(
                     std::move(index_columns.first),
                     std::move(index_columns.second)),
@@ -170,7 +174,7 @@ TEST_CASE("SOMADenseNDArray: platform_config") {
         } else {
             SOMADenseNDArray::create(
                 uri,
-                "l",
+                arrow_format,
                 ArrowTable(
                     std::move(index_columns.first),
                     std::move(index_columns.second)),
@@ -204,10 +208,12 @@ TEST_CASE("SOMADenseNDArray: metadata") {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray";
         std::string dim_name = "soma_dim_0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = TILEDB_INT64,
+              .tiledb_datatype = tiledb_datatype,
               .dim_max = dim_max,
               .use_current_domain = use_current_domain}});
 
@@ -215,7 +221,7 @@ TEST_CASE("SOMADenseNDArray: metadata") {
 
         SOMASparseNDArray::create(
             uri,
-            "l",  // XXX TEMP
+            arrow_format,
             ArrowTable(
                 std::move(index_columns.first),
                 std::move(index_columns.second)),
