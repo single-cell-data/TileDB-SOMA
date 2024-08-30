@@ -24,7 +24,7 @@ from ._coordinates import (
     transform_to_json,
 )
 from ._exception import SOMAError
-from ._images import Image2DCollection
+from ._images import MultiscaleImage
 from ._point_cloud import PointCloud
 from ._soma_object import AnySOMAObject
 from ._spatial_dataframe import SpatialDataFrame
@@ -33,7 +33,7 @@ from ._spatial_dataframe import SpatialDataFrame
 class Scene(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
     scene.Scene[  # type: ignore[type-var]
-        Collection[SpatialDataFrame], Image2DCollection, AnySOMAObject
+        Collection[SpatialDataFrame], MultiscaleImage, AnySOMAObject
     ],
 ):
     """TODO: Add documentation for a Scene
@@ -131,14 +131,14 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         )
         return point_cloud
 
-    def register_image2d(
+    def register_multiscale_image(
         self,
         image_name: str,
         transform: CoordinateTransform,
         *,
         subcollection_name: str = "img",
         coordinate_space: Optional[CoordinateSpace] = None,
-    ) -> Image2DCollection:
+    ) -> MultiscaleImage:
         """TODO Add docstring"""
         # Check the transform matches this
         if self.coordinate_space is None:
@@ -177,14 +177,14 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
                 f"No collection '{subcollection_name}' in this scene."
             ) from ke
         try:
-            image: Image2DCollection = subcollection[image_name]
+            image: MultiscaleImage = subcollection[image_name]
         except KeyError as ke:
             raise KeyError(
-                f"No Image2DCollection named '{image_name}' in '{subcollection_name}'."
+                f"No multiscale image named '{image_name}' in '{subcollection_name}'."
             ) from ke
-        if not isinstance(image, Image2DCollection):
+        if not isinstance(image, MultiscaleImage):
             raise TypeError(
-                f"'{image_name}' in '{subcollection_name}' is not an Image2DCollection."
+                f"'{image_name}' in '{subcollection_name}' is not an MultiscaleImage."
             )
 
         image.coordinate_space = coordinate_space
@@ -219,7 +219,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             ) from ke
         return transform_from_json(transform_json)
 
-    def transform_to_image2d(
+    def transform_to_multiscale_image(
         self,
         image_name: str,
         *,
@@ -230,7 +230,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         registered in the scene.
 
         If the name or level of an image is provided, the transformation will be to
-        the requested level instead of the root ImageCollection.
+        the requested level instead of the reference level of the multiscale image.
         """
         try:
             subcollection: Collection = self[subcollection_name]  # type: ignore
@@ -249,10 +249,10 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         if level is None:
             return base_transform
         try:
-            image: Image2DCollection = subcollection[image_name]
+            image: MultiscaleImage = subcollection[image_name]
         except KeyError as ke:
             raise KeyError(
-                f"No Image2DCollection named '{image_name}' in '{subcollection_name}'."
+                f"No MultiscaleImage named '{image_name}' in '{subcollection_name}'."
             ) from ke
         if isinstance(level, str):
             raise NotImplementedError(

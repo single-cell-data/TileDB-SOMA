@@ -45,8 +45,8 @@ from .. import (
     DataFrame,
     DenseNDArray,
     Experiment,
-    Image2DCollection,
     Measurement,
+    MultiscaleImage,
     PointCloud,
     Scene,
     SparseNDArray,
@@ -1008,13 +1008,13 @@ def _create_or_open_collection(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Image2DCollection],
+    cls: Type[MultiscaleImage],
     uri: str,
     *,
     ingestion_params: IngestionParams,
     context: Optional["SOMATileDBContext"],
     additional_metadata: "AdditionalMetadata" = None,
-) -> Image2DCollection: ...
+) -> MultiscaleImage: ...
 
 
 @no_type_check

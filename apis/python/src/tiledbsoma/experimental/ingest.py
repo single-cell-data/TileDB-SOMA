@@ -38,7 +38,7 @@ from .. import (
     DataFrame,
     DenseNDArray,
     Experiment,
-    Image2DCollection,
+    MultiscaleImage,
     PointCloud,
     Scene,
     SparseNDArray,
@@ -361,7 +361,7 @@ def _write_visium_data_to_experiment_uri(
                 # Write image data and add to the scene.
                 img_uri = f"{scene_uri}/img"
                 with _create_or_open_collection(
-                    Collection[Image2DCollection], img_uri, **ingest_ctx
+                    Collection[MultiscaleImage], img_uri, **ingest_ctx
                 ) as img:
                     _maybe_set(scene, "img", img, use_relative_uri=use_relative_uri)
                     if any(
@@ -370,7 +370,7 @@ def _write_visium_data_to_experiment_uri(
                     ):
                         tissue_uri = f"{img_uri}/tissue"
                         with _create_or_open_collection(
-                            Image2DCollection, tissue_uri, **ingest_ctx
+                            MultiscaleImage, tissue_uri, **ingest_ctx
                         ) as tissue:
                             _maybe_set(
                                 img,
@@ -389,7 +389,7 @@ def _write_visium_data_to_experiment_uri(
                                 **ingest_ctx,
                             )
                             tissue.coordinate_space = coord_space
-                            scene.register_image2d(
+                            scene.register_multiscale_image(
                                 "tissue",
                                 IdentityTransform(("x", "y"), ("x", "y")),
                             )
@@ -574,7 +574,7 @@ def _write_visium_spots(
 
 
 def _write_visium_images(
-    image_pyramid: Image2DCollection,
+    image_pyramid: MultiscaleImage,
     scale_factors: Dict[str, Any],
     *,
     input_hires: Union[None, str, Path],

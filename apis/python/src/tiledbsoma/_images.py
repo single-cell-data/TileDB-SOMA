@@ -3,7 +3,6 @@
 # Licensed under the MIT License.
 """Implementation of a SOMA image collections."""
 
-import abc
 import json
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Tuple, Union
@@ -31,65 +30,18 @@ from ._exception import SOMAError
 from ._soma_object import AnySOMAObject
 
 
-class ImageCollection(  # type: ignore[misc]  # __eq__ false positive
+class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    images.ImageCollection[DenseNDArray, AnySOMAObject],
-    metaclass=abc.ABCMeta,
+    images.MultiscaleImage[DenseNDArray, AnySOMAObject],
 ):
-
-    @abc.abstractmethod
-    def add_new_level(
-        self,
-        key: str,
-        *,
-        uri: Optional[str] = None,
-        type: pa.DataType,
-        shape: Sequence[int],
-    ) -> DenseNDArray:
-        """TODO: Add dcoumentation."""
-        raise NotImplementedError()
-
-    @property
-    def axis_order(self) -> str:
-        """The order of the axes in the stored images."""
-        raise NotImplementedError()
-
-    @property
-    @abc.abstractmethod
-    def level_count(self) -> int:
-        """The number of image levels stored in the ImageCollection."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def level_properties(self, level: int) -> images.ImageCollection.LevelProperties:
-        """The properties of an image at the specified level."""
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def read_level(
-        self,
-        level: int,
-        coords: options.DenseNDCoords = (),
-        *,
-        transform: Optional[CoordinateTransform] = None,
-        result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
-        platform_config: Optional[options.PlatformConfig] = None,
-    ) -> pa.Tensor:
-        """TODO: Add read_image_level documentation"""
-        raise NotImplementedError()
-
-
-class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
-    ImageCollection, images.Image2DCollection
-):
-    """TODO: Add documentation for Image2DCollection
+    """TODO: Add documentation for MultiscaleImage
 
     Lifecycle:
         Experimental.
     """
 
     __slots__ = ("_axis_order", "_coord_space", "_levels", "_reference_shape")
-    _wrapper_type = _tdb_handles.Image2DCollectionWrapper
+    _wrapper_type = _tdb_handles.MultiscaleImageWrapper
 
     _level_prefix: Final = "soma_level_"
 
@@ -159,7 +111,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
                 axis_order = str(axis_order, "uft-8")
             if not isinstance(axis_order, str):
                 raise SOMAError(
-                    f"Stored Image2DCollection 'soma_axis_order' is unexpected type "
+                    f"Stored 'soma_axis_order' is unexpected type "
                     f"{type(axis_order)}."
                 )
             if not (
@@ -174,7 +126,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
 
         # Get the image levels.
         self._levels = [
-            Image2DCollection.LevelProperties(name=key, **json.loads(val))
+            MultiscaleImage.LevelProperties(name=key, **json.loads(val))
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
         ]
@@ -205,7 +157,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             raise KeyError(f"{key!r} already exists in {type(self)} scales")
 
         # Create the level property and store as metadata.
-        props = Image2DCollection.LevelProperties(
+        props = MultiscaleImage.LevelProperties(
             axis_order=self.axis_order, name=key, shape=tuple(shape)
         )
         props_str = json.dumps({"axis_order": self.axis_order, "shape": shape})
@@ -294,7 +246,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
     def level_count(self) -> int:
         return len(self._levels)
 
-    def level_properties(self, level: int) -> images.ImageCollection.LevelProperties:
+    def level_properties(self, level: int) -> images.MultiscaleImage.LevelProperties:
         return self._levels[level]
 
     def read_level(
