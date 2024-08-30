@@ -32,7 +32,11 @@
 
 #include "common.h"
 
-// This is a keystroke-reduction fixture for some similar unit-test cases
+// This is a keystroke-reduction fixture for some similar unit-test cases For
+// convenience there are dims/attrs of type int64, uint32, and string. (Feel
+// free to add more types.) The main value-adds of this fixture are (a) simple
+// keystroke-reduction; (b) you get to pick which ones are the dim(s) and which
+// are the attr(s).
 struct VariouslyIndexedDataFrameFixture {
     std::shared_ptr<SOMAContext> ctx_;
     std::string uri_;
@@ -48,13 +52,13 @@ struct VariouslyIndexedDataFrameFixture {
 
     //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Helpers for setting up dim/attr configs and data
-    int64_t i64_dim_max = 100;
-    int64_t u32_dim_max = 10000;
-    int64_t str_dim_max = 0;  // not used for string dims
+    static const inline int64_t i64_dim_max = 100;
+    static const inline int64_t u32_dim_max = 10000;
+    static const inline int64_t str_dim_max = 0;  // not used for string dims
 
-    std::string i64_name = "soma_joinid";
-    std::string u32_name = "myuint32";
-    std::string str_name = "mystring";
+    static const inline std::string i64_name = "soma_joinid";
+    static const inline std::string u32_name = "myuint32";
+    static const inline std::string str_name = "mystring";
 
     tiledb_datatype_t i64_datatype = TILEDB_INT64;
     tiledb_datatype_t u32_datatype = TILEDB_UINT32;
@@ -86,9 +90,9 @@ struct VariouslyIndexedDataFrameFixture {
              .use_current_domain = use_current_domain});
     }
 
-    helper::AttrInfo i64_attr_info() {
+    helper::AttrInfo i64_attr_info(std::string name = i64_name) {
         return helper::AttrInfo(
-            {.name = i64_name, .tiledb_datatype = i64_datatype});
+            {.name = name, .tiledb_datatype = i64_datatype});
     }
     helper::AttrInfo u32_attr_info() {
         return helper::AttrInfo(
@@ -314,7 +318,7 @@ TEST_CASE_METHOD(
 
             std::vector<helper::DimInfo> dim_infos(
                 {i64_dim_info(use_current_domain)});
-            std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
+            std::vector<helper::AttrInfo> attr_infos({i64_attr_info("a0")});
 
             REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
 
