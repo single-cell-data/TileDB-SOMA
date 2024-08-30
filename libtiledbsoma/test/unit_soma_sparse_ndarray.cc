@@ -85,11 +85,10 @@ TEST_CASE("SOMASparseNDArray: basic") {
         REQUIRE(soma_sparse->ndim() == 1);
         REQUIRE(soma_sparse->nnz() == 0);
 
-        if (use_current_domain) {
-            REQUIRE(soma_sparse->shape() == std::vector<int64_t>{dim_max + 1});
-        } else {
-            REQUIRE(
-                soma_sparse->maxshape() == std::vector<int64_t>{dim_max + 1});
+        auto expect = std::vector<int64_t>({dim_max + 1});
+        REQUIRE(soma_sparse->shape() == expect);
+        if (!use_current_domain) {
+            REQUIRE(soma_sparse->maxshape() == expect);
         }
 
         soma_sparse->close();

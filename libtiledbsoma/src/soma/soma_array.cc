@@ -1191,6 +1191,30 @@ std::vector<int64_t> SOMAArray::maxshape() {
     return _tiledb_domain();
 }
 
+std::optional<int64_t> SOMAArray::_shape_slot_if_soma_joinid_dim() {
+    const std::string dim_name = "soma_joinid";
+
+    if (!arr_->schema().domain().has_dimension(dim_name)) {
+        return std::nullopt;
+    }
+
+    auto current_domain = _get_current_domain();
+    if (current_domain.is_empty()) {
+        return std::nullopt;
+    }
+
+    auto t = current_domain.type();
+    if (t != TILEDB_NDRECTANGLE) {
+        throw TileDBSOMAError("current_domain type is not NDRECTANGLE");
+    }
+
+    NDRectangle ndrect = current_domain.ndrectangle();
+
+    auto range = ndrect.range<int64_t>(dim_name);
+    auto max = range[1] + 1;
+    return std::optional<int64_t>(max);
+}
+
 std::vector<int64_t> SOMAArray::_tiledb_domain() {
     std::vector<int64_t> result;
     auto dimensions = mq_->schema()->domain().dimensions();

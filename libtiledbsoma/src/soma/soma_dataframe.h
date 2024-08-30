@@ -163,7 +163,24 @@ class SOMADataFrame : public SOMAArray {
      * @return int64_t
      */
     uint64_t count();
+
+    /**
+     * For DataFrame with default indexing, namely, a single int64_t
+     * soma_joinid, returns the same as SOMAArray. For DataFrame with
+     * soma_joinid being a dim along with other dims (optional behavior), return
+     * the slot along that dim. For DataFrame with soma_joinid being an attr,
+     * not a dim at all, returns nnz().
+     *
+     * Note that the SOMA spec for SOMADataFrame mandates a .domain() accessor,
+     * which is distinct, and type-polymorphic. This shape accessor exists
+     * because people can and do call .shape() on SOMA DataFrames, and we have
+     * to keep letting them do that.
+     *
+     * @return int64_t
+     */
+    std::vector<int64_t> shape();
 };
+
 }  // namespace tiledbsoma
 
 #endif  // SOMA_DATAFRAME

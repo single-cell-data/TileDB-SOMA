@@ -184,7 +184,10 @@ struct VariouslyIndexedDataFrameFixture {
     }
 };
 
-TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: basic") {
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: basic",
+    "[SOMADataFrame]") {
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
@@ -250,7 +253,9 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: basic") {
 }
 
 TEST_CASE_METHOD(
-    VariouslyIndexedDataFrameFixture, "SOMADataFrame: platform_config") {
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: platform_config",
+    "[SOMADataFrame]") {
     std::pair<std::string, tiledb_filter_type_t> filter = GENERATE(
         std::make_pair(
             R"({"name": "GZIP", "COMPRESSION_LEVEL": 3})", TILEDB_FILTER_GZIP),
@@ -354,7 +359,10 @@ TEST_CASE_METHOD(
     }
 }
 
-TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: metadata") {
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: metadata",
+    "[SOMADataFrame]") {
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
@@ -425,7 +433,9 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: metadata") {
 }
 
 TEST_CASE_METHOD(
-    VariouslyIndexedDataFrameFixture, "SOMADataFrame: bounds-checking") {
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: bounds-checking",
+    "[SOMADataFrame]") {
     bool use_current_domain = true;
     int old_max = 100;
     int new_max = 200;
@@ -464,7 +474,8 @@ TEST_CASE_METHOD(
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim:sjid attr:str,u32") {
+    "SOMADataFrame: variant-indexed dataframe dim:sjid attr:str,u32",
+    "[SOMADataFrame]") {
     // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
@@ -499,15 +510,26 @@ TEST_CASE_METHOD(
             REQUIRE(i64_range[1] == (int64_t)dim_infos[0].dim_max);
         }
 
+        // Check shape before write
+        int64_t expect = use_current_domain ? dim_infos[0].dim_max + 1 : 0;
+        REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+
         soma_dataframe->close();
 
         write_generic_data();
+
+        // Check shape after write
+        soma_dataframe = open(OpenMode::read);
+        expect = use_current_domain ? dim_infos[0].dim_max + 1 : 2;
+        REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+        soma_dataframe->close();
     }
 }
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim:sjid,u32 attr:str") {
+    "SOMADataFrame: variant-indexed dataframe dim:sjid,u32 attr:str",
+    "[SOMADataFrame]") {
     // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
@@ -547,16 +569,27 @@ TEST_CASE_METHOD(
             REQUIRE(u32_range[1] == (uint32_t)dim_infos[0].dim_max);
         }
 
+        // Check shape before write
+        int64_t expect = use_current_domain ? dim_infos[0].dim_max + 1 : 0;
+        REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+
         soma_dataframe->close();
 
         // Write
         write_generic_data();
+
+        // Check shape after write
+        soma_dataframe = open(OpenMode::read);
+        expect = use_current_domain ? dim_infos[0].dim_max + 1 : 2;
+        REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+        soma_dataframe->close();
     }
 }
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim:sjid,str attr:u32") {
+    "SOMADataFrame: variant-indexed dataframe dim:sjid,str attr:u32",
+    "[SOMADataFrame]") {
     // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
@@ -600,16 +633,27 @@ TEST_CASE_METHOD(
             REQUIRE(str_range[1] > "~");
         }
 
+        // Check shape before write
+        int64_t expect = use_current_domain ? dim_infos[0].dim_max + 1 : 0;
+        REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+
         soma_dataframe->close();
 
         // Write
         write_generic_data();
+
+        // Check shape after write
+        soma_dataframe = open(OpenMode::read);
+        expect = use_current_domain ? dim_infos[0].dim_max + 1 : 2;
+        REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+        soma_dataframe->close();
     }
 }
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim:str,u32 attr:sjid") {
+    "SOMADataFrame: variant-indexed dataframe dim:str,u32 attr:sjid",
+    "[SOMADataFrame]") {
     // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
@@ -653,9 +697,19 @@ TEST_CASE_METHOD(
             REQUIRE(u32_range[1] == (uint32_t)dim_infos[1].dim_max);
         }
 
+        // Check shape before write
+        int64_t expect = 0;
+        REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+
         soma_dataframe->close();
 
         // Write
         write_generic_data();
+
+        // Check shape after write
+        soma_dataframe = open(OpenMode::read);
+        expect = 2;
+        REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+        soma_dataframe->close();
     }
 }
