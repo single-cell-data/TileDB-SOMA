@@ -1053,7 +1053,7 @@ def _count_rows(n_rows: int, Ai: NDArrayNumber, Bp: NDArrayNumber) -> NDArrayNum
     """Private: parallel row count."""
     nnz = len(Ai)
 
-    partition_size = 10 * 1024**2
+    partition_size = 32 * 1024**2
     n_partitions = math.ceil(nnz / partition_size)
     if n_partitions > 1:
         counts = np.zeros((n_partitions, n_rows), dtype=Bp.dtype)
