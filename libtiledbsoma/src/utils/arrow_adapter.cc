@@ -891,7 +891,6 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     LOG_DEBUG(fmt::format("[ArrowAdapter] check"));
     schema.check();
-    // debug: schema.dump();;
 
     LOG_DEBUG(fmt::format("[ArrowAdapter] returning"));
     return schema;
