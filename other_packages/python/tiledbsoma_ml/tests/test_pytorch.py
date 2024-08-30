@@ -819,3 +819,97 @@ def test_splits() -> None:
 #     assert np.array_equal(csr[1:, :].todense(), _csr_to_dense(csr[1:, :]))
 #     assert np.array_equal(csr[:, 1:].todense(), _csr_to_dense(csr[:, 1:]))
 #     assert np.array_equal(csr[3:501, 1:22].todense(), _csr_to_dense(csr[3:501, 1:22]))
+
+
+@pytest.mark.parametrize(  # keep these small as we materialize as a dense ndarray
+    "shape",
+    [(100, 10), (10, 100), (1, 1), (1, 100), (100, 1), (0, 0), (10, 0), (0, 10)],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32])
+def test_csr__construct_from_ijd(shape: Tuple[int, int], dtype: npt.DTypeLike) -> None:
+    from tiledbsoma_ml.pytorch import _CSR
+
+    sp_coo = sparse.random(shape[0], shape[1], dtype=dtype, format="coo", density=0.05)
+    sp_csr = sp_coo.tocsr()
+
+    _ncsr = _CSR.from_ijd(sp_coo.row, sp_coo.col, sp_coo.data, shape=sp_coo.shape)
+    assert _ncsr.nnz == sp_coo.nnz == sp_csr.nnz
+    assert _ncsr.dtype == sp_coo.dtype == sp_csr.dtype
+    assert _ncsr.nbytes == (
+        _ncsr.data.nbytes + _ncsr.indices.nbytes + _ncsr.indptr.nbytes
+    )
+
+    # _CSR makes no guarantees about minor axis ordering (ie.., "canonical" form), so
+    # use the SciPy sparse csr package to validate by round-tripping.
+    assert (
+        sparse.csr_matrix((_ncsr.data, _ncsr.indices, _ncsr.indptr), shape=_ncsr.shape)
+        != sp_csr
+    ).nnz == 0
+
+    assert np.array_equal(_ncsr.densified_slice(slice(0, shape[0])), sp_coo.toarray())
+    assert np.array_equal(_ncsr.densified_slice(slice(0, shape[0])), sp_csr.toarray())
+    assert np.array_equal(_ncsr.densified_slice(slice(1, -1)), sp_csr[1:-1].toarray())
+    assert np.array_equal(_ncsr.densified_slice(slice(None, -2)), sp_csr[:-2].toarray())
+    assert np.array_equal(_ncsr.densified_slice(slice(None)), sp_csr[:].toarray())
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [(100, 10), (10, 100), (1, 1), (1, 100), (100, 1), (0, 0), (10, 0), (0, 10)],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32])
+def test_csr__construct_from_pjd(shape: Tuple[int, int], dtype: npt.DTypeLike) -> None:
+    from tiledbsoma_ml.pytorch import _CSR
+
+    sp_csr = sparse.random(shape[0], shape[1], dtype=dtype, format="csr", density=0.05)
+
+    _ncsr = _CSR.from_pjd(
+        sp_csr.indptr.copy(),
+        sp_csr.indices.copy(),
+        sp_csr.data.copy(),
+        shape=sp_csr.shape,
+    )
+
+    # _CSR makes no guarantees about minor axis ordering (ie.., "canonical" form), so
+    # use the SciPy sparse csr package to validate by round-tripping.
+    assert (
+        sparse.csr_matrix((_ncsr.data, _ncsr.indices, _ncsr.indptr), shape=_ncsr.shape)
+        != sp_csr
+    ).nnz == 0
+
+    assert np.array_equal(_ncsr.densified_slice(slice(0, shape[0])), sp_csr.toarray())
+    assert np.array_equal(_ncsr.densified_slice(slice(1, -1)), sp_csr[1:-1].toarray())
+    assert np.array_equal(_ncsr.densified_slice(slice(None, -2)), sp_csr[:-2].toarray())
+    assert np.array_equal(_ncsr.densified_slice(slice(None)), sp_csr[:].toarray())
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [(100, 10), (10, 100)],
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32])
+@pytest.mark.parametrize("n_splits", [2, 3, 4])
+def test_csr__merge(
+    shape: Tuple[int, int], dtype: npt.DTypeLike, n_splits: int
+) -> None:
+    from tiledbsoma_ml.pytorch import _CSR
+
+    sp_coo = sparse.random(shape[0], shape[1], dtype=dtype, format="coo", density=0.5)
+    splits = [
+        t
+        for t in zip(
+            np.array_split(sp_coo.row, n_splits),
+            np.array_split(sp_coo.col, n_splits),
+            np.array_split(sp_coo.data, n_splits),
+        )
+    ]
+    _ncsr = _CSR.merge(
+        [_CSR.from_ijd(i, j, d, shape=sp_coo.shape) for i, j, d in splits]
+    )
+
+    assert (
+        sp_coo.tocsr()
+        != sparse.csr_matrix(
+            (_ncsr.data, _ncsr.indices, _ncsr.indptr), shape=_ncsr.shape
+        )
+    ).nnz == 0
