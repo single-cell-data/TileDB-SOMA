@@ -914,16 +914,15 @@ def _init_multiprocessing() -> None:
 
 
 class _CSR:
-    """Implement fast slice and converion to numpy.ndarray, which is used to materialize
-    X mini-batches.
+    """Implement a minimal CSR matrix with specific optimizations for use in this package.
 
-    This is faster and users less memory than the equivalent scipy.sparse.csr_array operations,
-    e.g., `mtrx[n:n+m].todense()`, and also produces fewer memory copies as views are materialized.
+    Operations supported are:
+    * Incrementally build a CSR from COO, allowing overlapped I/O and CSR conversion for I/O batches,
+      and a final "merge" step which combines the result.
+    * Zero intermediate copy conversion of an arbitrary row slice to dense (ie., mini-batch extraction).
+    * Parallel ops where it makes sense (construction, merge, etc)
 
-    Primary optimizations:
-    * zero copy / parallel conversion to dense ndarray
-    * faster construction: stores in classic P,J,V format, but does not sort/de-dup minor axis
-    * incremental construction from COO via merging allows overlapping construction and I/O
+    Overall is significantly faster, and uses less memory, than the equivalent scipy.sparse operations.
     """
 
     __slots__ = ("indptr", "indices", "data", "shape")
@@ -935,6 +934,11 @@ class _CSR:
         data: NDArrayNumber,
         shape: Tuple[int, int],
     ) -> None:
+        """Construct from PJV format."""
+        assert len(data) == len(indices)
+        assert len(data) < np.iinfo(indptr.dtype).max
+        assert indptr[-1] == len(data) and indptr[0] == 0
+
         self.shape = shape
         self.indptr = indptr
         self.indices = indices
@@ -968,7 +972,7 @@ class _CSR:
         return len(self.indices)
 
     @property
-    def nybtes(self) -> int:
+    def nbytes(self) -> int:
         return int(self.indptr.nbytes + self.indices.nbytes + self.data.nbytes)
 
     @property
@@ -979,19 +983,17 @@ class _CSR:
         assert isinstance(row_index, slice)
         assert row_index.step in (1, None)
         row_idx_start, row_idx_end, _ = row_index.indices(self.indptr.shape[0] - 1)
+        if row_idx_end - row_idx_start <= 0:
+            return np.zeros((0, self.shape[1]), dtype=self.data.dtype)
+
         indptr = self.indptr
         indices = self.indices
         data = self.data
-        return _csr_to_dense_inner(
-            row_idx_start,
-            row_idx_end,
-            indptr,
-            indices,
-            data,
-            np.zeros(
-                (row_idx_end - row_idx_start, self.shape[1]), dtype=self.data.dtype
-            ),
+        out = np.zeros(
+            (row_idx_end - row_idx_start, self.shape[1]), dtype=self.data.dtype
         )
+        _csr_to_dense_inner(row_idx_start, row_idx_end, indptr, indices, data, out)
+        return out
 
     @staticmethod
     def merge(mtxs: Sequence[_CSR]) -> _CSR:
@@ -1040,12 +1042,10 @@ def _csr_to_dense_inner(
     indices: NDArrayNumber,
     data: NDArrayNumber,
     out: NDArrayNumber,
-) -> NDArrayNumber:
+) -> None:
     for i in numba.prange(row_idx_start, row_idx_end):
         for j in range(indptr[i], indptr[i + 1]):
             out[i - row_idx_start, indices[j]] = data[j]
-
-    return out
 
 
 @numba.njit(nogil=True, parallel=True, inline="always")  # type:ignore[misc]
