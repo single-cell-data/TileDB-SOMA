@@ -258,5 +258,5 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             raise NotImplementedError(
                 "Support for querying image level by name is not yet implemented."
             )
-        level_transform = image.transform_to_level(level)
+        level_transform = image.get_transformation_to_level(level)
         return base_transform * level_transform

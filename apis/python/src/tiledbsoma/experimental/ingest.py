@@ -369,9 +369,12 @@ def _write_visium_data_to_experiment_uri(
                         for x in (input_hires, input_lowres, input_fullres)
                     ):
                         tissue_uri = f"{img_uri}/tissue"
-                        with _create_or_open_collection(
-                            MultiscaleImage, tissue_uri, **ingest_ctx
+                        with MultiscaleImage.create(
+                            tissue_uri,
+                            axis_order="YXC",
+                            context=ingest_ctx.get("context"),
                         ) as tissue:
+                            add_metadata(tissue, ingest_ctx.get("additional_metadata"))
                             _maybe_set(
                                 img,
                                 "tissue",

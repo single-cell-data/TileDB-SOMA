@@ -16,22 +16,26 @@ from somacore import (
     images,
     options,
 )
-from typing_extensions import Final
+from typing_extensions import Final, Self
 
 from . import _funcs, _tdb_handles
-from ._collection import CollectionBase
+from . import pytiledbsoma as clib
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
 from ._coordinates import (
     coordinate_space_from_json,
     coordinate_space_to_json,
 )
 from ._dense_nd_array import DenseNDArray
-from ._exception import SOMAError
+from ._exception import SOMAError, map_exception_for_create
+from ._soma_group import SOMAGroup
 from ._soma_object import AnySOMAObject
+from ._types import OpenTimestamp
+from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 
 class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
-    CollectionBase[AnySOMAObject],
+    SOMAGroup[DenseNDArray],
     images.MultiscaleImage[DenseNDArray, AnySOMAObject],
 ):
     """TODO: Add documentation for MultiscaleImage
@@ -69,6 +73,42 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                     self.nchannel = size
                 else:
                     raise SOMAError(f"Invalid axis order '{self.axis_order}'")
+
+    @classmethod
+    def create(
+        cls,
+        uri: str,
+        *,
+        axis_order: str,
+        full_resolution_shape: Optional[Tuple[int, ...]] = None,
+        coordinate_space: Optional[CoordinateSpace] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+    ) -> Self:
+        """TODO Add docstring
+
+        Lifecycle:
+            Experimental.
+        """
+        context = _validate_soma_tiledb_context(context)
+        try:
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            clib.SOMAGroup.create(
+                uri=uri,
+                soma_type=images.MultiscaleImage.soma_type,
+                ctx=context.native_context,
+                timestamp=(0, timestamp_ms),
+            )
+            handle = _tdb_handles.MultiscaleImageWrapper.open(
+                uri, "w", context, tiledb_timestamp
+            )
+            return cls(
+                handle,
+                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            )
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
 
     def __init__(
         self,
@@ -133,14 +173,15 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         self._levels.sort(key=lambda level: (-level.width, -level.height, level.name))
 
     @_funcs.forwards_kwargs_to(
-        DenseNDArray.create, exclude=("context", "shape", "tiledb_timestamp")
+        DenseNDArray.create, exclude=("context", "shape", "tiledb_timestamp", "type")
     )
     def add_new_level(
         self,
         key: str,
         *,
-        shape: Sequence[int],
         uri: Optional[str] = None,
+        type: pa.DataType,
+        shape: Sequence[int],
         **kwargs: Any,
     ) -> DenseNDArray:
         """Adds a new DenseNDArray to store the imagery for a new level
@@ -186,6 +227,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 context=self.context,
                 tiledb_timestamp=self.tiledb_timestamp_ms,
                 shape=props.shape,
+                type=type,
                 **kwargs,
             ),
             uri,
@@ -246,7 +288,11 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     def level_count(self) -> int:
         return len(self._levels)
 
-    def level_properties(self, level: int) -> images.MultiscaleImage.LevelProperties:
+    def level_properties(
+        self, level: Union[int, str]
+    ) -> images.MultiscaleImage.LevelProperties:
+        if isinstance(level, str):
+            raise NotImplementedError()  # TODO
         return self._levels[level]
 
     def read_level(
@@ -284,7 +330,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         self.metadata["soma_image_reference_height"] = value[1]
         self._reference_shape = (value[0], value[1])
 
-    def transform_to_level(self, level: Union[str, int]) -> CoordinateTransform:
+    def get_transformation_to_level(self, level: Union[str, int]) -> ScaleTransform:
         if self._reference_shape is None or self._coord_space is None:
             raise SOMAError(
                 "Cannot return transform if the reference shape and coordinate system "
