@@ -71,7 +71,7 @@ elif [ "$werror" = "true" ]; then
 fi
 
 if [ "$no_tiledb_deprecated" = "true" ]; then
-    extra_opts+=" -DTILEDB_REMOVE_DEPRECATIONS=ON"
+    extra_opts+=" -DTILEDB_REMOVE_DEPRECATIONS=OFF"
 fi
 
 
