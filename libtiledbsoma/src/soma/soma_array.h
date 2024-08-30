@@ -796,6 +796,13 @@ class SOMAArray : public SOMAObject {
      */
     std::optional<TimestampRange> timestamp();
 
+    /**
+     * Exposed for testing purposes.
+     */
+    CurrentDomain get_current_domain() {
+        return _get_current_domain();
+    }
+
    private:
     //===================================================================
     //= private non-static

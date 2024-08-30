@@ -450,6 +450,7 @@ TEST_CASE_METHOD(
     soma_dataframe->close();
 
     soma_dataframe = open(OpenMode::write);
+
     soma_dataframe->resize(std::vector<int64_t>({new_max}));
     soma_dataframe->close();
 
@@ -460,4 +461,202 @@ TEST_CASE_METHOD(
     soma_dataframe->write();
 
     soma_dataframe->close();
+}
+
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: variant-indexed dataframe 1") {
+    // LOG_SET_LEVEL("debug");
+    auto use_current_domain = GENERATE(false, true);
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
+        set_up(
+            std::make_shared<SOMAContext>(),
+            "mem://unit-test-variant-indexed-dataframe-1");
+
+        std::vector<helper::DimInfo> dim_infos(
+            {i64_dim_info(use_current_domain)});
+        std::vector<helper::AttrInfo> attr_infos(
+            {str_attr_info(), u32_attr_info()});
+
+        // Create
+        create(dim_infos, attr_infos);
+
+        // Check current domain
+        auto soma_dataframe = open(OpenMode::read);
+
+        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        if (!use_current_domain) {
+            REQUIRE(current_domain.is_empty());
+        } else {
+            REQUIRE(!current_domain.is_empty());
+            REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
+            NDRectangle ndrect = current_domain.ndrectangle();
+
+            std::array<int64_t, 2> i64_range = ndrect.range<int64_t>(
+                dim_infos[0].name);
+            REQUIRE(i64_range[0] == (int64_t)0);
+            REQUIRE(i64_range[1] == (int64_t)dim_infos[0].dim_max);
+        }
+
+        soma_dataframe->close();
+
+        write_generic_data();
+    }
+}
+
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: variant-indexed dataframe 2") {
+    // LOG_SET_LEVEL("debug");
+    auto use_current_domain = GENERATE(false, true);
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
+        set_up(
+            std::make_shared<SOMAContext>(),
+            "mem://unit-test-variant-indexed-dataframe-2");
+
+        std::vector<helper::DimInfo> dim_infos(
+            {i64_dim_info(use_current_domain),
+             u32_dim_info(use_current_domain)});
+        std::vector<helper::AttrInfo> attr_infos({str_attr_info()});
+
+        // Create
+        create(dim_infos, attr_infos);
+
+        // Check current domain
+        auto soma_dataframe = open(OpenMode::read);
+
+        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        if (!use_current_domain) {
+            REQUIRE(current_domain.is_empty());
+        } else {
+            REQUIRE(!current_domain.is_empty());
+            REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
+            NDRectangle ndrect = current_domain.ndrectangle();
+
+            std::array<int64_t, 2> i64_range = ndrect.range<int64_t>(
+                dim_infos[0].name);
+            REQUIRE(i64_range[0] == (int64_t)0);
+            REQUIRE(i64_range[1] == (int64_t)dim_infos[0].dim_max);
+
+            std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
+                dim_infos[0].name);
+            REQUIRE(u32_range[0] == (uint32_t)0);
+            REQUIRE(u32_range[1] == (uint32_t)dim_infos[0].dim_max);
+        }
+
+        soma_dataframe->close();
+
+        // Write
+        write_generic_data();
+    }
+}
+
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: variant-indexed dataframe 3") {
+    // LOG_SET_LEVEL("debug");
+    auto use_current_domain = GENERATE(false, true);
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
+        set_up(
+            std::make_shared<SOMAContext>(),
+            "mem://unit-test-variant-indexed-dataframe-3");
+
+        std::vector<helper::DimInfo> dim_infos(
+            {i64_dim_info(use_current_domain),
+             str_dim_info(use_current_domain)});
+        std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
+
+        // Create
+        create(dim_infos, attr_infos);
+
+        // Check current domain
+        auto soma_dataframe = open(OpenMode::read);
+
+        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        if (!use_current_domain) {
+            REQUIRE(current_domain.is_empty());
+        } else {
+            REQUIRE(!current_domain.is_empty());
+            REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
+            NDRectangle ndrect = current_domain.ndrectangle();
+
+            std::array<int64_t, 2> i64_range = ndrect.range<int64_t>(
+                dim_infos[0].name);
+            REQUIRE(i64_range[0] == (int64_t)0);
+            REQUIRE(i64_range[1] == (int64_t)dim_infos[0].dim_max);
+
+            std::array<std::string, 2> str_range = ndrect.range<std::string>(
+                dim_infos[1].name);
+            // Can we write empty strings in this range?
+            REQUIRE(str_range[0] <= "");
+            REQUIRE(str_range[1] >= "");
+            // Can we write ASCII values in this range?
+            REQUIRE(str_range[0] < " ");
+            REQUIRE(str_range[1] > "~");
+        }
+
+        soma_dataframe->close();
+
+        // Write
+        write_generic_data();
+    }
+}
+
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: variant-indexed dataframe 4") {
+    // LOG_SET_LEVEL("debug");
+    auto use_current_domain = GENERATE(false, true);
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
+        set_up(
+            std::make_shared<SOMAContext>(),
+            "mem://unit-test-variant-indexed-dataframe-4");
+
+        std::vector<helper::DimInfo> dim_infos(
+            {str_dim_info(use_current_domain),
+             u32_dim_info(use_current_domain)});
+        std::vector<helper::AttrInfo> attr_infos({i64_attr_info()});
+
+        // Create
+        create(dim_infos, attr_infos);
+
+        // Check current domain
+        auto soma_dataframe = open(OpenMode::read);
+
+        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        if (!use_current_domain) {
+            REQUIRE(current_domain.is_empty());
+        } else {
+            REQUIRE(!current_domain.is_empty());
+            REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
+            NDRectangle ndrect = current_domain.ndrectangle();
+
+            std::array<std::string, 2> str_range = ndrect.range<std::string>(
+                dim_infos[0].name);
+            // Can we write empty strings in this range?
+            REQUIRE(str_range[0] <= "");
+            REQUIRE(str_range[1] >= "");
+            // Can we write ASCII values in this range?
+            REQUIRE(str_range[0] < " ");
+            REQUIRE(str_range[1] > "~");
+
+            std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
+                dim_infos[1].name);
+            REQUIRE(u32_range[0] == (uint32_t)0);
+            REQUIRE(u32_range[1] == (uint32_t)dim_infos[1].dim_max);
+        }
+
+        soma_dataframe->close();
+
+        // Write
+        write_generic_data();
+    }
 }
