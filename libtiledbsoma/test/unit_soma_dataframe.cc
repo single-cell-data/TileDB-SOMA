@@ -45,12 +45,26 @@ TEST_CASE("SOMADataFrame: basic") {
     SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dataframe-basic";
+        std::string dim_name = "d0";
+        std::string attr_name = "a0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
         REQUIRE(!SOMADataFrame::exists(uri, ctx));
 
+        std::vector<helper::DimInfo> dim_infos(
+            {{.name = dim_name,
+              .tiledb_datatype = tiledb_datatype,
+              .dim_max = dim_max,
+              .use_current_domain = use_current_domain}});
+
+        std::vector<helper::AttrInfo> attr_infos(
+            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
-                dim_max, use_current_domain);
+                dim_infos, attr_infos);
+
         SOMADataFrame::create(
             uri,
             std::move(schema),
@@ -67,7 +81,7 @@ TEST_CASE("SOMADataFrame: basic") {
         REQUIRE(soma_dataframe->uri() == uri);
         REQUIRE(soma_dataframe->ctx() == ctx);
         REQUIRE(soma_dataframe->type() == "SOMADataFrame");
-        std::vector<std::string> expected_index_column_names = {"d0"};
+        std::vector<std::string> expected_index_column_names = {dim_name};
         REQUIRE(
             soma_dataframe->index_column_names() ==
             expected_index_column_names);
@@ -80,16 +94,16 @@ TEST_CASE("SOMADataFrame: basic") {
         std::vector<int> a0(10, 1);
 
         soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
-        soma_dataframe->set_column_data("a0", a0.size(), a0.data());
-        soma_dataframe->set_column_data("d0", d0.size(), d0.data());
+        soma_dataframe->set_column_data(attr_name, a0.size(), a0.data());
+        soma_dataframe->set_column_data(dim_name, d0.size(), d0.data());
         soma_dataframe->write();
         soma_dataframe->close();
 
         soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
         while (auto batch = soma_dataframe->read_next()) {
             auto arrbuf = batch.value();
-            auto d0span = arrbuf->at("d0")->data<int64_t>();
-            auto a0span = arrbuf->at("a0")->data<int>();
+            auto d0span = arrbuf->at(dim_name)->data<int64_t>();
+            auto a0span = arrbuf->at(attr_name)->data<int>();
             REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
             REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
         }
@@ -161,6 +175,9 @@ TEST_CASE("SOMADataFrame: platform_config") {
         SECTION(section2.str()) {
             auto ctx = std::make_shared<SOMAContext>();
             std::string uri = "mem://unit-test-dataframe-platform-config";
+            std::string dim_name = "d0";
+            std::string attr_name = "a0";
+            tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
 
             PlatformConfig platform_config;
             platform_config.dataframe_dim_zstd_level = 6;
@@ -171,9 +188,19 @@ TEST_CASE("SOMADataFrame: platform_config") {
                                         filter.first + R"(]}})";
             }
 
+            std::vector<helper::DimInfo> dim_infos(
+                {{.name = dim_name,
+                  .tiledb_datatype = tiledb_datatype,
+                  .dim_max = dim_max,
+                  .use_current_domain = use_current_domain}});
+
+            std::vector<helper::AttrInfo> attr_infos(
+                {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+
             auto [schema, index_columns] =
                 helper::create_arrow_schema_and_index_columns(
-                    dim_max, use_current_domain);
+                    dim_infos, attr_infos);
+
             SOMADataFrame::create(
                 uri,
                 std::move(schema),
@@ -194,7 +221,7 @@ TEST_CASE("SOMADataFrame: platform_config") {
                 filter.second);
 
             auto dim_filter = sch->domain()
-                                  .dimension("d0")
+                                  .dimension(dim_name)
                                   .filter_list()
                                   .filter(0);
             REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
@@ -203,7 +230,7 @@ TEST_CASE("SOMADataFrame: platform_config") {
 
             if (filter.second != TILEDB_FILTER_WEBP) {
                 REQUIRE(
-                    sch->attribute("a0")
+                    sch->attribute(attr_name)
                         .filter_list()
                         .filter(0)
                         .filter_type() == filter.second);
@@ -224,10 +251,24 @@ TEST_CASE("SOMADataFrame: metadata") {
     SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-collection";
+        std::string dim_name = "d0";
+        std::string attr_name = "a0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+
+        std::vector<helper::DimInfo> dim_infos(
+            {{.name = dim_name,
+              .tiledb_datatype = tiledb_datatype,
+              .dim_max = dim_max,
+              .use_current_domain = use_current_domain}});
+
+        std::vector<helper::AttrInfo> attr_infos(
+            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
 
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
-                dim_max, use_current_domain);
+                dim_infos, attr_infos);
+
         SOMADataFrame::create(
             uri,
             std::move(schema),
@@ -302,9 +343,22 @@ TEST_CASE("SOMADataFrame: bounds-checking") {
 
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-bounds-checking";
+    std::string dim_name = "d0";
+    std::string attr_name = "a0";
+    tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+    std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+
+    std::vector<helper::DimInfo> dim_infos(
+        {{.name = dim_name,
+          .tiledb_datatype = tiledb_datatype,
+          .dim_max = old_max,
+          .use_current_domain = use_current_domain}});
+
+    std::vector<helper::AttrInfo> attr_infos(
+        {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
 
     auto [schema, index_columns] =
-        helper::create_arrow_schema_and_index_columns(100, use_current_domain);
+        helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
 
     SOMADataFrame::create(
         uri,
@@ -317,8 +371,8 @@ TEST_CASE("SOMADataFrame: bounds-checking") {
 
     std::vector<int64_t> d0({old_max + 1, old_max + 2});
     std::vector<double> a0({1.5, 2.5});
-    soma_dataframe->set_column_data("d0", d0.size(), d0.data());
-    soma_dataframe->set_column_data("a0", a0.size(), a0.data());
+    soma_dataframe->set_column_data(dim_name, d0.size(), d0.data());
+    soma_dataframe->set_column_data(attr_name, a0.size(), a0.data());
     // Writing outside the current domain should fail
     REQUIRE_THROWS(soma_dataframe->write());
     soma_dataframe->close();
@@ -328,8 +382,8 @@ TEST_CASE("SOMADataFrame: bounds-checking") {
     soma_dataframe->close();
 
     soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
-    soma_dataframe->set_column_data("d0", d0.size(), d0.data());
-    soma_dataframe->set_column_data("a0", a0.size(), a0.data());
+    soma_dataframe->set_column_data(dim_name, d0.size(), d0.data());
+    soma_dataframe->set_column_data(attr_name, a0.size(), a0.data());
     // Writing after resize should succeed
     soma_dataframe->write();
 

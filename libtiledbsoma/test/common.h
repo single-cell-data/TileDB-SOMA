@@ -60,8 +60,30 @@ using namespace Catch::Matchers;
 static const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 
 namespace helper {
+
+// E.g. "d0" is of type TILEDB_INT64 with dim_max 1000 and current-domain
+// feature enabled
+struct DimInfo {
+    std::string name;
+    tiledb_datatype_t tiledb_datatype;
+    int64_t dim_max;
+    bool use_current_domain;
+};
+
+// E.g. "a0" is of type TILEDB_FLOAT64
+struct AttrInfo {
+    std::string name;
+    tiledb_datatype_t tiledb_datatype;
+};
+
 std::pair<std::unique_ptr<ArrowSchema>, ArrowTable>
-create_arrow_schema_and_index_columns(int64_t dim_max, bool use_current_domain);
-ArrowTable create_column_index_info(int64_t dim_max, bool use_current_domain);
+create_arrow_schema_and_index_columns(
+    const std::vector<DimInfo>& dim_infos,
+    const std::vector<AttrInfo>& attr_infos);
+
+ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos);
+
+std::string to_arrow_format(tiledb_datatype_t tiledb_datatype);
+
 }  // namespace helper
 #endif
