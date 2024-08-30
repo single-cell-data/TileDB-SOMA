@@ -68,6 +68,9 @@ std::tuple<std::string, uint64_t> create_array(
     bool allow_duplicates = false,
     uint64_t timestamp = 1,
     bool reuse_existing = false) {
+    std::string dim_name = "d0";
+    std::string attr_name = "a0";
+
     // Create array, if not reusing the existing array
     if (!reuse_existing) {
         auto vfs = VFS(ctx);
@@ -79,13 +82,13 @@ std::tuple<std::string, uint64_t> create_array(
         ArraySchema schema(ctx, TILEDB_SPARSE);
 
         auto dim = Dimension::create<int64_t>(
-            ctx, "d0", {0, std::numeric_limits<int64_t>::max() - 1});
+            ctx, dim_name, {0, std::numeric_limits<int64_t>::max() - 1});
 
         Domain domain(ctx);
         domain.add_dimension(dim);
         schema.set_domain(domain);
 
-        auto attr = Attribute::create<int>(ctx, "a0");
+        auto attr = Attribute::create<int>(ctx, attr_name);
         schema.add_attribute(attr);
         schema.set_allows_dups(allow_duplicates);
         schema.check();
@@ -120,8 +123,8 @@ std::tuple<std::string, uint64_t> create_array(
         // Write data to array
         Query query(ctx, array);
         query.set_layout(TILEDB_UNORDERED)
-            .set_data_buffer("d0", d0)
-            .set_data_buffer("a0", a0);
+            .set_data_buffer(dim_name, d0)
+            .set_data_buffer(attr_name, a0);
         query.submit();
     }
 

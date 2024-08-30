@@ -14,7 +14,11 @@ TileDBGroup classes. (lifecycle: maturing)
 
 \item{\code{tiledbsoma_ctx}}{SOMATileDBContext}
 
+\item{\code{tiledb_timestamp}}{Time that object was opened at}
+
 \item{\code{uri}}{The URI of the TileDB object.}
+
+\item{\code{.tiledb_timestamp_range}}{Time range for libtiledbsoma}
 }
 \if{html}{\out{</div>}}
 }
@@ -106,7 +110,7 @@ otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object
 \subsection{Method \code{reopen()}}{
 Close and reopen the TileDB object in a new mode
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$reopen(mode)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBObject$reopen(mode, tiledb_timestamp = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -117,6 +121,8 @@ Close and reopen the TileDB object in a new mode
 \item \dQuote{\code{READ}}
 \item \dQuote{\code{WRITE}}
 }}
+
+\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) with TileDB timestamp}
 }
 \if{html}{\out{</div>}}
 }

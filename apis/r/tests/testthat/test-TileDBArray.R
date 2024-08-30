@@ -5,7 +5,7 @@ test_that("TileDBArray helper functions", {
 
   # Check errors on non-existent array
   expect_error(tdba$object, "Array does not exist.")
-  expect_error(tdba$set_metadata(list(foo = "bar")), "Item must be open for write.")
+  ## inactive under new implementation  expect_error(tdba$set_metadata(list(foo = "bar")), "Item must be open for write.")
 
   # Create an array
   index_cols <- c("Dept", "Gender")

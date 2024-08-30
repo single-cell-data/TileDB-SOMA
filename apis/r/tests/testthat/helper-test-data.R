@@ -75,6 +75,6 @@ create_arrow_table <- function(nrows = 10L, factors = FALSE) {
       soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
       bar = seq(nrows) + 0.1,
       baz = as.character(seq.int(nrows) + 1000L)
-      # schema = create_arrow_schema()
+      # schema = create_arrow_schema(false)
     )
 }

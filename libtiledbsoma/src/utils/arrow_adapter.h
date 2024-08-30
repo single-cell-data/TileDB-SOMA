@@ -191,6 +191,15 @@ class ArrowAdapter {
     /**
      * @brief Create a TileDB ArraySchema from ArrowSchema
      *
+     * The number of rows in index_column_info was three without core
+     * current-domain support, and is five with core current-domain support:
+     *
+     * - Slot 0: core domain low value (inclusive)
+     * - Slot 1: core domain high value (inclusive)
+     * - Slot 2: core extent parameter
+     * - Slot 3: core current-domain low value (inclusive)
+     * - Slot 4: core current-domain high value (inclusive)
+     *
      * @return tiledb::ArraySchema
      */
     static ArraySchema tiledb_schema_from_arrow_schema(
@@ -237,6 +246,12 @@ class ArrowAdapter {
         std::string name,
         const void* buff,
         std::shared_ptr<Context> ctx);
+
+    static void _set_current_domain_slot(
+        tiledb_datatype_t type,
+        const void* buff,
+        NDRectangle& ndrect,
+        std::string name);
 
     template <typename T>
     static Dimension _create_dim_aux(

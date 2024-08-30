@@ -70,7 +70,6 @@ from .._types import (
     _INGEST_MODES,
     INGEST_MODES,
     IngestMode,
-    Metadatum,
     NPNDArray,
     Path,
     _IngestMode,
@@ -89,9 +88,11 @@ from ._common import (
     _UNS_OUTGEST_HINT_1D,
     _UNS_OUTGEST_HINT_2D,
     _UNS_OUTGEST_HINT_KEY,
+    AdditionalMetadata,
     Matrix,
     SparseMatrix,
     UnsMapping,
+    UnsNode,
 )
 from ._registration import (
     AxisIDMapping,
@@ -105,9 +106,6 @@ from ._util import get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject[RawHandle])
-
-
-AdditionalMetadata = Optional[Dict[str, Metadatum]]
 
 
 def add_metadata(obj: SOMAObject[Any], additional_metadata: AdditionalMetadata) -> None:
@@ -1184,6 +1182,10 @@ def _write_dataframe_impl(
     platform_config: Optional[PlatformConfig] = None,
     context: Optional[SOMATileDBContext] = None,
 ) -> DataFrame:
+    """Save a Pandas DataFrame as a SOMA DataFrame.
+
+    Expects the required ``soma_joinid`` index to have already been added to the ``pd.DataFrame``.
+    """
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
@@ -2485,7 +2487,7 @@ def _maybe_ingest_uns(
 def _ingest_uns_dict(
     parent: AnyTileDBCollection,
     parent_key: str,
-    dct: Mapping[str, object],
+    dct: UnsMapping,
     *,
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
@@ -2524,9 +2526,9 @@ def _ingest_uns_dict(
 
 
 def _ingest_uns_node(
-    coll: Any,
-    key: Any,
-    value: Any,
+    coll: AnyTileDBCollection,
+    key: str,
+    value: UnsNode,
     *,
     platform_config: Optional[PlatformConfig],
     context: Optional[SOMATileDBContext],
@@ -2579,36 +2581,57 @@ def _ingest_uns_node(
     if isinstance(value, list) or "numpy" in str(type(value)):
         value = np.asarray(value)
     if isinstance(value, np.ndarray):
-        if value.dtype.names is not None:
-            msg = f"Skipped {coll.uri}[{key!r}]" " (uns): unsupported structured array"
-            # This is a structured array, which we do not support.
-            logging.log_io(msg, msg)
-            return
-
-        if value.dtype.char in ("U", "O"):
-            # In the wild it's quite common to see arrays of strings in uns data.
-            # Frequent example: uns["louvain_colors"].
-            _ingest_uns_string_array(
-                coll,
-                key,
-                value,
-                use_relative_uri=use_relative_uri,
-                **ingest_platform_ctx,
-            )
-        else:
-            _ingest_uns_ndarray(
-                coll,
-                key,
-                value,
-                use_relative_uri=use_relative_uri,
-                **ingest_platform_ctx,
-            )
+        _ingest_uns_array(
+            coll,
+            key,
+            value,
+            use_relative_uri=use_relative_uri,
+            ingest_platform_ctx=ingest_platform_ctx,
+        )
         return
 
     msg = (
         f"Skipped {coll.uri}[{key!r}]" f" (uns object): unrecognized type {type(value)}"
     )
     logging.log_io(msg, msg)
+
+
+def _ingest_uns_array(
+    coll: AnyTileDBCollection,
+    key: str,
+    value: NPNDArray,
+    use_relative_uri: Optional[bool],
+    ingest_platform_ctx: IngestPlatformCtx,
+) -> None:
+    """Ingest an uns Numpy array.
+
+    Delegates to :func:`_ingest_uns_string_array` for string arrays, and to
+    :func:`_ingest_uns_ndarray` for numeric arrays.
+    """
+    if value.dtype.names is not None:
+        # This is a structured array, which we do not support.
+        logging.log_io_same(
+            f"Skipped {coll.uri}[{key!r}]" " (uns): unsupported structured array"
+        )
+
+    if value.dtype.char in ("U", "O"):
+        # In the wild it's quite common to see arrays of strings in uns data.
+        # Frequent example: uns["louvain_colors"].
+        _ingest_uns_string_array(
+            coll,
+            key,
+            value,
+            use_relative_uri=use_relative_uri,
+            **ingest_platform_ctx,
+        )
+    else:
+        _ingest_uns_ndarray(
+            coll,
+            key,
+            value,
+            use_relative_uri=use_relative_uri,
+            **ingest_platform_ctx,
+        )
 
 
 def _ingest_uns_string_array(

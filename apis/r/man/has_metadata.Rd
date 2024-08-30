@@ -4,7 +4,7 @@
 \alias{has_metadata}
 \title{Check for metadata given key}
 \usage{
-has_metadata(uri, key, ctxxp)
+has_metadata(uri, key, is_array, ctxxp)
 }
 \arguments{
 \item{uri}{The array URI}

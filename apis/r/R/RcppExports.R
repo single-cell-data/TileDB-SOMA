@@ -5,12 +5,12 @@ createSOMAContext <- function(config = NULL) {
     .Call(`_tiledbsoma_createSOMAContext`, config)
 }
 
-createSchemaFromArrow <- function(uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp) {
-    invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp))
+createSchemaFromArrow <- function(uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp, tsvec = NULL) {
+    invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp, tsvec))
 }
 
-writeArrayFromArrow <- function(uri, naap, nasp, arraytype = "", config = NULL) {
-    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, arraytype, config))
+writeArrayFromArrow <- function(uri, naap, nasp, arraytype = "", config = NULL, tsvec = NULL) {
+    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, arraytype, config, tsvec))
 }
 
 #' Get nnumber of metadata items
@@ -66,12 +66,14 @@ delete_metadata <- function(uri, key, is_array, ctxxp) {
 #'
 #' @param uri The array URI
 #' @param key The array metadata key
-#' @param value The metadata value
-#' @
+#' @param valuesxp The metadata value
+#' @param type The datatype
+#' @param is_array A boolean to indicate array or group
 #' @param ctxxp An external pointer to the SOMAContext wrapper
+#' @param tsvec An optional two-element datetime vector
 #' @export
-set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp) {
-    invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp))
+set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL) {
+    invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp, tsvec))
 }
 
 reindex_create <- function() {
@@ -87,8 +89,8 @@ reindex_lookup <- function(idx, kvec) {
 }
 
 #' @noRd
-soma_array_reader_impl <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", config = NULL) {
-    .Call(`_tiledbsoma_soma_array_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config)
+soma_array_reader_impl <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", config = NULL, timestamprange = NULL) {
+    .Call(`_tiledbsoma_soma_array_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config, timestamprange)
 }
 
 #' Set the logging level for the R package and underlying C++ library
@@ -148,8 +150,8 @@ shape <- function(uri, config = NULL) {
 #' @param result_order Optional argument for query result order, defaults to \sQuote{auto}
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
-#' @param timestamp_end Optional POSIXct (i.e. Datetime) type for end of interval for which
-#' data is considered.
+#' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start and end of
+#' interval for which data is considered.
 #' @param sr An external pointer to a TileDB SOMAArray object
 #'
 #' @return \code{sr_setup} returns an external pointer to a SOMAArray. \code{sr_complete}
@@ -169,8 +171,8 @@ shape <- function(uri, config = NULL) {
 #' summary(rl)
 #' }
 #' @noRd
-sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamp_end = NULL, loglevel = "auto") {
-    .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamp_end, loglevel)
+sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
+    .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
 }
 
 sr_complete <- function(sr) {

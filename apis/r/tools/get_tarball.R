@@ -23,7 +23,8 @@ if (isMac) {
 } else if (isLinux) {
     url <- "https://github.com/TileDB-Inc/TileDB/releases/download/2.25.0/tiledb-linux-x86_64-2.25.0-bbcbd3f.tar.gz"
 } else {
-    stop("Unsupported platform for downloading artifacts. Please have TileDB Core installed locally.")
+    message("Unsupported platform for downloading artifacts. Please have TileDB Core installed locally.")
+    q(save = "no", status = 1)
 }
 
 tarball <- "tiledb.tar.gz"

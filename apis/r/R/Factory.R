@@ -75,6 +75,7 @@ SOMADataFrameOpen <- function(
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
 ) {
+  spdl::debug("[SOMADataFrameOpen] uri {} ts ({})", uri, tiledb_timestamp %||% "now")
   sdf <- SOMADataFrame$new(
     uri,
     platform_config,
@@ -173,6 +174,7 @@ SOMADenseNDArrayCreate <- function(
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
 ) {
+  spdl::debug("[SOMADenseNDArrayCreate] tstamp ({})", tiledb_timestamp %||% "now")
   dnda <- SOMADenseNDArray$new(
     uri,
     platform_config,

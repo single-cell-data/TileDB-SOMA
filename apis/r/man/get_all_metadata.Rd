@@ -2,9 +2,9 @@
 % Please edit documentation in R/RcppExports.R
 \name{get_all_metadata}
 \alias{get_all_metadata}
-\title{Read all metadata (as named character vector)}
+\title{Read all metadata (as named list)}
 \usage{
-get_all_metadata(uri, ctxxp)
+get_all_metadata(uri, is_array, ctxxp)
 }
 \arguments{
 \item{uri}{The array URI}
@@ -12,6 +12,6 @@ get_all_metadata(uri, ctxxp)
 \item{ctxxp}{An external pointer to the SOMAContext wrapper}
 }
 \description{
-This function assumes that all metadata is in fact stored as strings. It will error
-if a different datatype is encountered.
+This function currently supports metadata as either a string or an 'int64' (or 'int32').
+It will error if a different datatype is encountered.
 }

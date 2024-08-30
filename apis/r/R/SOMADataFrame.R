@@ -23,8 +23,12 @@ SOMADataFrame <- R6::R6Class(
     #' @template param-platform-config
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
-    create = function(schema, index_column_names = c("soma_joinid"),
-                      platform_config = NULL, internal_use_only = NULL) {
+    create = function(
+      schema,
+      index_column_names = c("soma_joinid"),
+      platform_config = NULL,
+      internal_use_only = NULL
+    ) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
@@ -42,7 +46,11 @@ SOMADataFrame <- R6::R6Class(
       ## we (currently pass domain and extent values in an arrow table (i.e. data.frame alike)
       ## where each dimension is one column (of the same type as in the schema) followed by three
       ## values for the domain pair and the extent
-      dom_ext_tbl <- get_domain_and_extent_dataframe(schema, index_column_names, tiledb_create_options)
+      dom_ext_tbl <- get_domain_and_extent_dataframe(
+        schema,
+        ind_col_names = index_column_names,
+        tdco = tiledb_create_options
+      )
 
       ## we transfer to the arrow table via a pair of array and schema pointers
       dnaap <- nanoarrow::nanoarrow_allocate_array()
@@ -53,12 +61,24 @@ SOMADataFrame <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       schema$export_to_c(nasp)
 
+      spdl::debug("[SOMADataFrame$create] about to create schema from arrow")
       ctxptr <- super$tiledbsoma_ctx$context()
-      createSchemaFromArrow(uri = self$uri, nasp, dnaap, dnasp, TRUE, "SOMADataFrame",
-                            tiledb_create_options$to_list(FALSE), soma_context())
+      createSchemaFromArrow(
+        uri = self$uri,
+        nasp = nasp,
+        nadimap = dnaap,
+        nadimsp = dnasp,
+        sparse = TRUE,
+        datatype = "SOMADataFrame",
+        pclst = tiledb_create_options$to_list(FALSE),
+        ctxxp = soma_context(),
+        tsvec = self$.tiledb_timestamp_range
+      )
+
+      spdl::debug("[SOMADataFrame$create] about to call write_object_type_metadata")
+      private$write_object_type_metadata()
 
       self$open("WRITE", internal_use_only = "allowed_use")
-      private$write_object_type_metadata()
       self
     },
 
@@ -97,8 +117,14 @@ SOMADataFrame <- R6::R6Class(
 
       df <- as.data.frame(values)[schema_names]
       arr <- self$object
-
-      writeArrayFromArrow(self$uri, naap, nasp, "SOMADataFrame")
+      writeArrayFromArrow(
+        uri = self$uri,
+        naap = naap,
+        nasp = nasp,
+        arraytype = "SOMADataFrame",
+        config = NULL,
+        tsvec = self$.tiledb_timestamp_range
+      )
 
       invisible(self)
     },
@@ -152,14 +178,15 @@ SOMADataFrame <- R6::R6Class(
                             args = list(expr = str2lang(value_filter), ta = arr))
           value_filter <- parsed@ptr
       }
-
+      spdl::debug("[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
+                  private$tiledb_timestamp[1], private$tiledb_timestamp[2])
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       rl <- sr_setup(uri = self$uri,
                      config = cfg,
                      colnames = column_names,
                      qc = value_filter,
                      dim_points = coords,
-                     timestamp_end = private$tiledb_timestamp,
+                     timestamprange = self$.tiledb_timestamp_range,  # NULL or two-elem vector
                      loglevel = log_level)
       private$ctx_ptr <- rl$ctx
       TableReadIter$new(rl$sr)

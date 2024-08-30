@@ -4,7 +4,7 @@
 \alias{delete_metadata}
 \title{Delete metadata for given key}
 \usage{
-delete_metadata(uri, key, ctxxp)
+delete_metadata(uri, key, is_array, ctxxp)
 }
 \arguments{
 \item{uri}{The array URI}

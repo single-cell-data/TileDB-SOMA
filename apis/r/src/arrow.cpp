@@ -58,8 +58,8 @@ Rcpp::XPtr<somactx_wrap_t> createSOMAContext(Rcpp::Nullable<Rcpp::CharacterVecto
 
 // [[Rcpp::export]]
 void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp,
-                           bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-
+                           bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp,
+                           Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
 
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
@@ -104,6 +104,9 @@ void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray na
     // shared pointer to TileDB Context from SOMAContext
     std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
 
+    // optional timestamp range
+    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
+
     bool exists = false;
     if (datatype == "SOMADataFrame") {
         exists = tdbs::SOMADataFrame::exists(uri, sctx);
@@ -122,19 +125,19 @@ void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray na
     if (datatype == "SOMADataFrame") {
         tdbs::SOMADataFrame::create(uri, std::move(schema),
                                     std::pair(std::move(dimarr), std::move(dimsch)),
-                                    sctx, pltcfg);
+                                    sctx, pltcfg, tsrng);
     } else if (datatype == "SOMASparseNDArray") {
         // for arrays n_children will be three as we have two dims and a data col
         std::string datacoltype = sp->children[sp->n_children-1]->format;
         tdbs::SOMASparseNDArray::create(uri, datacoltype,
                                         std::pair(std::move(dimarr), std::move(dimsch)),
-                                        sctx, pltcfg);
+                                        sctx, pltcfg, tsrng);
     } else if (datatype == "SOMADenseNDArray") {
         // for arrays n_children will be three as we have two dims and a data col
         std::string datacoltype = sp->children[sp->n_children-1]->format;
         tdbs::SOMADenseNDArray::create(uri, datacoltype,
                                        std::pair(std::move(dimarr), std::move(dimsch)),
-                                       sctx, pltcfg);
+                                       sctx, pltcfg, tsrng);
     } else {
         Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
     }
@@ -145,7 +148,8 @@ void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray na
 // [[Rcpp::export]]
 void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp,
                          const std::string arraytype = "",
-                         Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+                         Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
+                         Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
 
     //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
     //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
@@ -181,14 +185,19 @@ void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp
         somactx = std::make_shared<tdbs::SOMAContext>();
     }
 
+    // optional timestamp range
+    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
+
     std::shared_ptr<tdbs::SOMAArray> arrup;
     if (arraytype == "SOMADataFrame") {
-        arrup = tdbs::SOMADataFrame::open(OpenMode::write, uri, somactx);
+        arrup = tdbs::SOMADataFrame::open(OpenMode::write, uri, somactx, "unnamed", {},
+                                          "auto", ResultOrder::automatic, tsrng);
     } else if (arraytype == "SOMADenseNDArray") {
-        arrup = tdbs::SOMADenseNDArray::open(OpenMode::write, uri, somactx,
-                                             "unnamed", {}, "auto", ResultOrder::colmajor);
+        arrup = tdbs::SOMADenseNDArray::open(OpenMode::write, uri, somactx, "unnamed", {},
+                                             "auto", ResultOrder::colmajor, tsrng);
     } else if (arraytype == "SOMASparseNDArray") {
-        arrup = tdbs::SOMASparseNDArray::open(OpenMode::write, uri, somactx);
+        arrup = tdbs::SOMASparseNDArray::open(OpenMode::write, uri, somactx, "unnamed", {},
+                                              "auto", ResultOrder::automatic, tsrng);
     } else {  // not reached
         Rcpp::stop(tfm::format("Unexpected array type '%s'", arraytype));
     }

@@ -65,17 +65,20 @@ auto create_array(const std::string& uri, Context& ctx) {
         vfs.remove_dir(uri);
     }
 
+    std::string dim_name = "d0";
+    std::string attr_name = "a0";
+
     // Create schema
     ArraySchema schema(ctx, TILEDB_SPARSE);
     auto dim = Dimension::create(
-        ctx, "d0", TILEDB_STRING_ASCII, nullptr, nullptr);
+        ctx, dim_name, TILEDB_STRING_ASCII, nullptr, nullptr);
     dim.set_cell_val_num(TILEDB_VAR_NUM);
 
     Domain domain(ctx);
     domain.add_dimension(dim);
     schema.set_domain(domain);
 
-    auto attr = Attribute::create<std::string>(ctx, "a0");
+    auto attr = Attribute::create<std::string>(ctx, attr_name);
     attr.set_nullable(true);
     schema.add_attribute(attr);
     schema.check();
@@ -97,11 +100,11 @@ auto create_array(const std::string& uri, Context& ctx) {
     // Write data to array and close the array
     Query query(ctx, array);
     query.set_layout(TILEDB_UNORDERED)
-        .set_data_buffer("d0", d0_data)
-        .set_offsets_buffer("d0", d0_offsets)
-        .set_data_buffer("a0", a0_data)
-        .set_offsets_buffer("a0", a0_offsets)
-        .set_validity_buffer("a0", a0_valids);
+        .set_data_buffer(dim_name, d0_data)
+        .set_offsets_buffer(dim_name, d0_offsets)
+        .set_data_buffer(attr_name, a0_data)
+        .set_offsets_buffer(attr_name, a0_offsets)
+        .set_validity_buffer(attr_name, a0_valids);
     query.submit();
     array.close();
 
@@ -118,6 +121,9 @@ TEST_CASE("ManagedQuery: Basic execution test") {
     }
 
     std::string uri = "mem://unit-test-array";
+    std::string dim_name = "d0";
+    std::string attr_name = "a0";
+
     auto ctx = std::make_shared<Context>();
     auto [array, d0, a0, _] = create_array(uri, *ctx);
 
@@ -131,18 +137,21 @@ TEST_CASE("ManagedQuery: Basic execution test") {
     auto num_cells = mq.total_num_cells();
     REQUIRE(num_cells == d0.size());
 
-    REQUIRE_THAT(d0, Equals(mq.strings("d0")));
-    REQUIRE_THAT(a0, Equals(mq.strings("a0")));
+    REQUIRE_THAT(d0, Equals(mq.strings(dim_name)));
+    REQUIRE_THAT(a0, Equals(mq.strings(attr_name)));
 }
 
 TEST_CASE("ManagedQuery: Select test") {
     std::string uri = "mem://unit-test-array";
+    std::string dim_name = "d0";
+    std::string attr_name = "a0";
+
     auto ctx = std::make_shared<Context>();
     auto [array, d0, a0, _] = create_array(uri, *ctx);
 
     auto mq = ManagedQuery(array, ctx);
-    mq.select_columns({"a0"});
-    mq.select_points<std::string>("d0", {"a"});
+    mq.select_columns({attr_name});
+    mq.select_points<std::string>(dim_name, {"a"});
     mq.setup_read();
 
     mq.submit_read();
@@ -153,15 +162,18 @@ TEST_CASE("ManagedQuery: Select test") {
     REQUIRE(num_cells == 1);
 
     REQUIRE_THROWS(mq.data<int>("a1"));
-    REQUIRE_THROWS(mq.strings("d0"));
+    REQUIRE_THROWS(mq.strings(dim_name));
     REQUIRE_THROWS(mq.string_view("d1", 0));
 
     REQUIRE_THAT(
-        std::string(a0[0]), Equals(std::string(mq.string_view("a0", 0))));
+        std::string(a0[0]), Equals(std::string(mq.string_view(attr_name, 0))));
 }
 
 TEST_CASE("ManagedQuery: Validity test") {
     std::string uri = "mem://unit-test-array";
+    std::string dim_name = "d0";
+    std::string attr_name = "a0";
+
     auto ctx = std::make_shared<Context>();
     auto [array, d0, a0, a0_valids] = create_array(uri, *ctx);
 
@@ -176,11 +188,11 @@ TEST_CASE("ManagedQuery: Validity test") {
     REQUIRE(num_cells == d0.size());
 
     // Convert span to vector
-    auto valids = mq.validity("a0");
+    auto valids = mq.validity(attr_name);
     std::vector<uint8_t> a0_valids_actual;
     a0_valids_actual.assign(valids.begin(), valids.end());
 
-    REQUIRE_THAT(d0, Equals(mq.strings("d0")));
-    REQUIRE_THAT(a0, Equals(mq.strings("a0")));
+    REQUIRE_THAT(d0, Equals(mq.strings(dim_name)));
+    REQUIRE_THAT(a0, Equals(mq.strings(attr_name)));
     REQUIRE_THAT(a0_valids, Equals(a0_valids_actual));
 }

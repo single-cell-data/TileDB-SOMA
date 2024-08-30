@@ -44,8 +44,8 @@ namespace tdbs = tiledbsoma;
 //' @param result_order Optional argument for query result order, defaults to \sQuote{auto}
 //' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 //' which lets prior setting prevail, any other value is set as new logging level.
-//' @param timestamp_end Optional POSIXct (i.e. Datetime) type for end of interval for which
-//' data is considered.
+//' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start and end of
+//' interval for which data is considered.
 //' @param sr An external pointer to a TileDB SOMAArray object
 //'
 //' @return \code{sr_setup} returns an external pointer to a SOMAArray. \code{sr_complete}
@@ -74,7 +74,7 @@ Rcpp::List sr_setup(const std::string& uri,
                     Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
                     std::string batch_size = "auto",
                     std::string result_order = "auto",
-                    Rcpp::Nullable<Rcpp::Datetime> timestamp_end = R_NilValue,
+                    Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue,
                     const std::string& loglevel = "auto") {
 
     if (loglevel != "auto") {
@@ -86,7 +86,6 @@ Rcpp::List sr_setup(const std::string& uri,
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
-
 
     std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
     tiledb::Config cfg(platform_config);
@@ -100,18 +99,14 @@ Rcpp::List sr_setup(const std::string& uri,
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
     }
 
-    std::uint64_t ts_start = 0; 		// beginning of time aka the epoch (force double signature)
-    std::uint64_t ts_end = std::numeric_limits<uint64_t>::max(); 	// max if unset
-    if (!timestamp_end.isNull()) {
-        ts_end = Rcpp::as<Rcpp::Datetime>(timestamp_end).getFractionalTimestamp() * 1e3; // in msec
-        spdl::info(tfm::format("[sr_setup] ts_end set to %ld", ts_end));
-    }
+    // optional timestamp range
+    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamprange);
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
     auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, platform_config,
                                    column_names, batch_size,
-                                   tdb_result_order, std::make_pair(ts_start, ts_end));
+                                   tdb_result_order, tsrng);
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = ptr->tiledb_schema();

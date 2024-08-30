@@ -44,6 +44,11 @@ ${R_HOME}/bin/Rscript tools/check_cmake_and_git.R
 export CC="`${R_HOME}/bin/R CMD config CC`"
 export CXX="`${R_HOME}/bin/R CMD config CXX`"
 export CMAKE_OSX_ARCHITECTURES="`uname -m`"
+
+## The 'build_libtiledbsoma.sh' script is made / finalised by an earlier script.
+if [ ! -f tools/build_libtiledbsoma.sh ]; then
+    exit 1
+fi
 tools/build_libtiledbsoma.sh
 
 pkgincl="-I../inst/tiledb/include -I../inst/tiledbsoma/include -I../inst/tiledbsoma/include/tiledbsoma"
