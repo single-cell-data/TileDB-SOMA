@@ -111,6 +111,12 @@ else()
                 LOG_INSTALL FALSE
                 )
     else() # Build from source
+
+        message(STATUS "XXXXXXXXXXXXXXXXXXXX1")
+        message(STATUS "Found TileDB: ${TILEDB_LIB}")
+        message(STATUS "TILEDB_REMOVE_DEPRECATIONS: ${TILEDB_REMOVE_DEPRECATIONS}")
+        message(STATUS "XXXXXXXXXXXXXXXXXXXX2")
+
         ExternalProject_Add(ep_tiledb
           PREFIX "externals"
           URL "https://github.com/TileDB-Inc/TileDB/archive/2.27.0-rc3.zip"
