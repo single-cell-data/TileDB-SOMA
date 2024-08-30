@@ -8,18 +8,23 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Tuple, Union
 
-import numpy as np
 import pyarrow as pa
-from somacore import ResultOrder, coordinates, images, options
+from somacore import (
+    CoordinateSpace,
+    CoordinateTransform,
+    ResultOrder,
+    ScaleTransform,
+    images,
+    options,
+)
 from typing_extensions import Final
 
 from . import _funcs, _tdb_handles
 from ._collection import CollectionBase
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
 from ._coordinates import (
-    AffineCoordinateTransform,
-    CoordinateSpace,
-    CoordinateTransform,
+    coordinate_space_from_json,
+    coordinate_space_to_json,
 )
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError
@@ -66,7 +71,7 @@ class ImageCollection(  # type: ignore[misc]  # __eq__ false positive
         level: int,
         coords: options.DenseNDCoords = (),
         *,
-        transform: Optional[coordinates.CoordinateTransform] = None,
+        transform: Optional[CoordinateTransform] = None,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> pa.Tensor:
@@ -143,7 +148,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         if coord_space is None:
             self._coord_space: Optional[CoordinateSpace] = None
         else:
-            self._coord_space = CoordinateSpace.from_json(coord_space)
+            self._coord_space = coordinate_space_from_json(coord_space)
 
         # Update the axis order.
         axis_order = self.metadata.get("soma_axis_order")
@@ -280,7 +285,9 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             raise ValueError("Coordinate space must have exactly 2 axes.")
         # TODO: Do we need some way to specify YX vs XY and propagate to
         # sub-images.
-        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = value.to_json()
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
+            value
+        )
         self._coord_space = value
 
     @property
@@ -295,7 +302,7 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
         level: int,
         coords: options.DenseNDCoords = (),
         *,
-        transform: Optional[coordinates.CoordinateTransform] = None,
+        transform: Optional[CoordinateTransform] = None,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> pa.Tensor:
@@ -341,18 +348,13 @@ class Image2DCollection(  # type: ignore[misc]  # __eq__ false positive
             level_props = self._levels[level]
         width = level_props.width
         height = level_props.height
-        # TODO: Add in a transformation just for scaling.
         # NOTE: Ignoring possibility of different axis order for different levels
         # since that will be removed.
-        return AffineCoordinateTransform(
+        return ScaleTransform(
             input_axes=self._coord_space.axis_names,
             output_axes=self._coord_space.axis_names,
-            matrix=np.array(
-                [
-                    [width / self._reference_shape[0], 0.0, 0.0],
-                    [0.0, height / self._reference_shape[1], 0.0],
-                    [0.0, 0.0, 1.0],
-                ],
-                dtype=np.float64,
-            ),
+            scale_factors=[
+                width / self._reference_shape[0],
+                height / self._reference_shape[1],
+            ],
         )
