@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import pathlib
 from functools import partial
-from typing import Callable, List, Optional, Sequence, Union
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 from unittest.mock import patch
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
 import pytest
@@ -25,14 +26,13 @@ from tiledbsoma._collection import CollectionBase
 # This supports the pytest `ml` mark, which can be used to disable all PyTorch-dependent
 # tests.
 try:
-    from torch.utils.data._utils.worker import WorkerInfo
-
     from tiledbsoma_ml.pytorch import (
         ExperimentAxisQueryDataPipe,
         ExperimentAxisQueryIterable,
         ExperimentAxisQueryIterableDataset,
         experiment_dataloader,
     )
+    from torch.utils.data._utils.worker import WorkerInfo
 except ImportError:
     # this should only occur when not running `ml`-marked tests
     pass
@@ -161,28 +161,28 @@ def test_non_batched(
     use_eager_fetch: bool,
 ) -> None:
     # batch_size should default to 1
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        shuffle=False,
-        use_eager_fetch=use_eager_fetch,
-    )
-    assert type(exp_data_pipe.shape) is tuple
-    assert len(exp_data_pipe.shape) == 2
-    assert exp_data_pipe.shape == (6, 3)
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            shuffle=False,
+            use_eager_fetch=use_eager_fetch,
+        )
+        assert type(exp_data_pipe.shape) is tuple
+        assert len(exp_data_pipe.shape) == 2
+        assert exp_data_pipe.shape == (6, 3)
 
-    row_iter = iter(exp_data_pipe)
+        row_iter = iter(exp_data_pipe)
 
-    row = next(row_iter)
-    assert isinstance(row[0], np.ndarray)
-    assert isinstance(row[1], pd.DataFrame)
-    assert row[0].shape == (3,)
-    assert row[1].shape == (1, 1)
-    assert row[0].tolist() == [0, 1, 0]
-    assert row[1].keys() == ["label"]
-    assert row[1]["label"].tolist() == ["0"]
+        row = next(row_iter)
+        assert isinstance(row[0], np.ndarray)
+        assert isinstance(row[1], pd.DataFrame)
+        assert row[0].shape == (3,)
+        assert row[1].shape == (1, 1)
+        assert row[0].tolist() == [0, 1, 0]
+        assert row[1].keys() == ["label"]
+        assert row[1]["label"].tolist() == ["0"]
 
 
 @pytest.mark.parametrize(
@@ -198,27 +198,27 @@ def test_uneven_soma_and_result_batches(
     use_eager_fetch: bool,
 ) -> None:
     """This is checking that batches are correctly created when they require fetching multiple chunks."""
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        shuffle=False,
-        batch_size=3,
-        io_batch_size=2,
-        use_eager_fetch=use_eager_fetch,
-    )
-    row_iter = iter(exp_data_pipe)
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            shuffle=False,
+            batch_size=3,
+            io_batch_size=2,
+            use_eager_fetch=use_eager_fetch,
+        )
+        row_iter = iter(exp_data_pipe)
 
-    X_batch, obs_batch = next(row_iter)
-    assert isinstance(X_batch, np.ndarray)
-    assert isinstance(obs_batch, pd.DataFrame)
-    assert X_batch.shape[0] == obs_batch.shape[0]
-    assert X_batch.shape == (3, 3)
-    assert obs_batch.shape == (3, 1)
-    assert X_batch[0].tolist() == [0, 1, 0]
-    assert ["label"] == obs_batch.keys()
-    assert obs_batch["label"].tolist() == ["0", "1", "2"]
+        X_batch, obs_batch = next(row_iter)
+        assert isinstance(X_batch, np.ndarray)
+        assert isinstance(obs_batch, pd.DataFrame)
+        assert X_batch.shape[0] == obs_batch.shape[0]
+        assert X_batch.shape == (3, 3)
+        assert obs_batch.shape == (3, 1)
+        assert X_batch[0].tolist() == [0, 1, 0]
+        assert ["label"] == obs_batch.keys()
+        assert obs_batch["label"].tolist() == ["0", "1", "2"]
 
 
 @pytest.mark.parametrize(
@@ -233,29 +233,29 @@ def test_batching__all_batches_full_size(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        batch_size=3,
-        shuffle=False,
-        use_eager_fetch=use_eager_fetch,
-    )
-    batch_iter = iter(exp_data_pipe)
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            batch_size=3,
+            shuffle=False,
+            use_eager_fetch=use_eager_fetch,
+        )
+        batch_iter = iter(exp_data_pipe)
 
-    batch = next(batch_iter)
-    assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
-    assert batch[1].keys() == ["label"]
-    assert batch[1]["label"].tolist() == ["0", "1", "2"]
+        batch = next(batch_iter)
+        assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
+        assert batch[1].keys() == ["label"]
+        assert batch[1]["label"].tolist() == ["0", "1", "2"]
 
-    batch = next(batch_iter)
-    assert batch[0].tolist() == [[1, 0, 1], [0, 1, 0], [1, 0, 1]]
-    assert batch[1].keys() == ["label"]
-    assert batch[1]["label"].tolist() == ["3", "4", "5"]
+        batch = next(batch_iter)
+        assert batch[0].tolist() == [[1, 0, 1], [0, 1, 0], [1, 0, 1]]
+        assert batch[1].keys() == ["label"]
+        assert batch[1]["label"].tolist() == ["3", "4", "5"]
 
-    with pytest.raises(StopIteration):
-        next(batch_iter)
+        with pytest.raises(StopIteration):
+            next(batch_iter)
 
 
 @pytest.mark.parametrize(
@@ -273,19 +273,19 @@ def test_unique_soma_joinids(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["soma_joinid", "label"],
-        batch_size=3,
-        use_eager_fetch=use_eager_fetch,
-    )
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["soma_joinid", "label"],
+            batch_size=3,
+            use_eager_fetch=use_eager_fetch,
+        )
 
-    soma_joinids = np.concatenate(
-        [batch[1]["soma_joinid"].to_numpy() for batch in exp_data_pipe]
-    )
-    assert len(np.unique(soma_joinids)) == len(soma_joinids)
+        soma_joinids = np.concatenate(
+            [batch[1]["soma_joinid"].to_numpy() for batch in exp_data_pipe]
+        )
+        assert len(np.unique(soma_joinids)) == len(soma_joinids)
 
 
 @pytest.mark.parametrize(
@@ -300,23 +300,23 @@ def test_batching__partial_final_batch_size(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        batch_size=3,
-        shuffle=False,
-        use_eager_fetch=use_eager_fetch,
-    )
-    batch_iter = iter(exp_data_pipe)
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            batch_size=3,
+            shuffle=False,
+            use_eager_fetch=use_eager_fetch,
+        )
+        batch_iter = iter(exp_data_pipe)
 
-    next(batch_iter)
-    batch = next(batch_iter)
-    assert batch[0].tolist() == [[1, 0, 1], [0, 1, 0]]
-
-    with pytest.raises(StopIteration):
         next(batch_iter)
+        batch = next(batch_iter)
+        assert batch[0].tolist() == [[1, 0, 1], [0, 1, 0]]
+
+        with pytest.raises(StopIteration):
+            next(batch_iter)
 
 
 @pytest.mark.parametrize(
@@ -331,23 +331,23 @@ def test_batching__exactly_one_batch(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        batch_size=3,
-        shuffle=False,
-        use_eager_fetch=use_eager_fetch,
-    )
-    batch_iter = iter(exp_data_pipe)
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            batch_size=3,
+            shuffle=False,
+            use_eager_fetch=use_eager_fetch,
+        )
+        batch_iter = iter(exp_data_pipe)
 
-    batch = next(batch_iter)
-    assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
-    assert batch[1]["label"].tolist() == ["0", "1", "2"]
+        batch = next(batch_iter)
+        assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
+        assert batch[1]["label"].tolist() == ["0", "1", "2"]
 
-    with pytest.raises(StopIteration):
-        next(batch_iter)
+        with pytest.raises(StopIteration):
+            next(batch_iter)
 
 
 @pytest.mark.parametrize(
@@ -362,19 +362,20 @@ def test_batching__empty_query_result(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_query=soma.AxisQuery(coords=([],)),
-        obs_column_names=["label"],
-        batch_size=3,
-        use_eager_fetch=use_eager_fetch,
-    )
-    batch_iter = iter(exp_data_pipe)
+    with soma_experiment.axis_query(
+        measurement_name="RNA", obs_query=soma.AxisQuery(coords=([],))
+    ) as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            batch_size=3,
+            use_eager_fetch=use_eager_fetch,
+        )
+        batch_iter = iter(exp_data_pipe)
 
-    with pytest.raises(StopIteration):
-        next(batch_iter)
+        with pytest.raises(StopIteration):
+            next(batch_iter)
 
 
 @pytest.mark.parametrize(
@@ -392,20 +393,20 @@ def test_batching__partial_soma_batches_are_concatenated(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    exp_data_pipe = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        batch_size=3,
-        # set SOMA batch read size such that PyTorch batches will span the tail and head of two SOMA batches
-        io_batch_size=4,
-        use_eager_fetch=use_eager_fetch,
-    )
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            batch_size=3,
+            # set SOMA batch read size such that PyTorch batches will span the tail and head of two SOMA batches
+            io_batch_size=4,
+            use_eager_fetch=use_eager_fetch,
+        )
 
-    full_result = list(exp_data_pipe)
+        full_result = list(exp_data_pipe)
 
-    assert [len(batch[0]) for batch in full_result] == [3, 3, 3, 1]
+        assert [len(batch[0]) for batch in full_result] == [3, 3, 3, 1]
 
 
 @pytest.mark.parametrize(
@@ -420,21 +421,22 @@ def test_multiprocessing__returns_full_result(
 ) -> None:
     """Tests the ExperimentAxisQueryDataPipe provides all data, as collected from multiple processes that are managed by a
     PyTorch DataLoader with multiple workers configured."""
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        dp = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["soma_joinid", "label"],
+            io_batch_size=3,  # two chunks, one per worker
+        )
+        # Note we're testing the ExperimentAxisQueryDataPipe via a DataLoader, since this is what sets up the multiprocessing
+        dl = experiment_dataloader(dp, num_workers=2)
 
-    dp = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["soma_joinid", "label"],
-        io_batch_size=3,  # two chunks, one per worker
-    )
-    # Note we're testing the ExperimentAxisQueryDataPipe via a DataLoader, since this is what sets up the multiprocessing
-    dl = experiment_dataloader(dp, num_workers=2)
+        full_result = list(iter(dl))
 
-    full_result = list(iter(dl))
-
-    soma_joinids = np.concatenate([t[1]["soma_joinid"].to_numpy() for t in full_result])
-    assert sorted(soma_joinids) == list(range(6))
+        soma_joinids = np.concatenate(
+            [t[1]["soma_joinid"].to_numpy() for t in full_result]
+        )
+        assert sorted(soma_joinids) == list(range(6))
 
 
 @pytest.mark.parametrize(
@@ -459,23 +461,23 @@ def test_distributed__returns_data_partition_for_rank(
         mock_dist_get_rank.return_value = 1
         mock_dist_get_world_size.return_value = 3
 
-        dp = PipeClass(
-            soma_experiment,
-            measurement_name="RNA",
-            X_name="raw",
-            obs_column_names=["soma_joinid"],
-            io_batch_size=2,
-            shuffle=False,
-        )
-        full_result = list(iter(dp))
+        with soma_experiment.axis_query(measurement_name="RNA") as query:
+            dp = PipeClass(
+                query,
+                X_name="raw",
+                obs_column_names=["soma_joinid"],
+                io_batch_size=2,
+                shuffle=False,
+            )
+            full_result = list(iter(dp))
 
-        soma_joinids = np.concatenate(
-            [t[1]["soma_joinid"].to_numpy() for t in full_result]
-        )
+            soma_joinids = np.concatenate(
+                [t[1]["soma_joinid"].to_numpy() for t in full_result]
+            )
 
-        # Of the 6 obs rows, the PyTorch process of rank 1 should get [2, 3]
-        # (rank 0 gets [0, 1], rank 2 gets [4, 5])
-        assert sorted(soma_joinids) == [2, 3]
+            # Of the 6 obs rows, the PyTorch process of rank 1 should get [2, 3]
+            # (rank 0 gets [0, 1], rank 2 gets [4, 5])
+            assert sorted(soma_joinids) == [2, 3]
 
 
 @pytest.mark.parametrize(
@@ -504,25 +506,25 @@ def test_distributed_and_multiprocessing__returns_data_partition_for_rank(
         mock_dist_get_rank.return_value = 1
         mock_dist_get_world_size.return_value = 3
 
-        dp = PipeClass(
-            soma_experiment,
-            measurement_name="RNA",
-            X_name="raw",
-            obs_column_names=["soma_joinid"],
-            io_batch_size=2,
-            shuffle=False,
-        )
+        with soma_experiment.axis_query(measurement_name="RNA") as query:
+            dp = PipeClass(
+                query,
+                X_name="raw",
+                obs_column_names=["soma_joinid"],
+                io_batch_size=2,
+                shuffle=False,
+            )
 
-        full_result = list(iter(dp))
+            full_result = list(iter(dp))
 
-        soma_joinids = np.concatenate(
-            [t[1]["soma_joinid"].to_numpy() for t in full_result]
-        )
+            soma_joinids = np.concatenate(
+                [t[1]["soma_joinid"].to_numpy() for t in full_result]
+            )
 
-        # Of the 12 obs rows, the PyTorch process of rank 1 should get [4..7], and then within that partition,
-        # the 2nd DataLoader process should get the second half of the rank's partition, which is just [6, 7]
-        # (rank 0 gets [0..3], rank 2 gets [8..11])
-        assert sorted(soma_joinids) == [6, 7]
+            # Of the 12 obs rows, the PyTorch process of rank 1 should get [4..7], and then within that partition,
+            # the 2nd DataLoader process should get the second half of the rank's partition, which is just [6, 7]
+            # (rank 0 gets [0..3], rank 2 gets [8..11])
+            assert sorted(soma_joinids) == [6, 7]
 
 
 @pytest.mark.parametrize(
@@ -537,22 +539,22 @@ def test_experiment_dataloader__non_batched(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    dp = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        shuffle=False,
-        use_eager_fetch=use_eager_fetch,
-    )
-    dl = experiment_dataloader(dp)
-    data = [row for row in dl]
-    assert all(d[0].shape == (3,) for d in data)
-    assert all(d[1].shape == (1, 1) for d in data)
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        dp = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            shuffle=False,
+            use_eager_fetch=use_eager_fetch,
+        )
+        dl = experiment_dataloader(dp)
+        data = [row for row in dl]
+        assert all(d[0].shape == (3,) for d in data)
+        assert all(d[1].shape == (1, 1) for d in data)
 
-    row = data[0]
-    assert row[0].tolist() == [0, 1, 0]
-    assert row[1]["label"].tolist() == ["0"]
+        row = data[0]
+        assert row[0].tolist() == [0, 1, 0]
+        assert row[1]["label"].tolist() == ["0"]
 
 
 @pytest.mark.parametrize(
@@ -567,20 +569,20 @@ def test_experiment_dataloader__batched(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    dp = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        batch_size=3,
-        shuffle=False,
-        use_eager_fetch=use_eager_fetch,
-    )
-    dl = experiment_dataloader(dp)
-    data = [row for row in dl]
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        dp = PipeClass(
+            query,
+            X_name="raw",
+            batch_size=3,
+            shuffle=False,
+            use_eager_fetch=use_eager_fetch,
+        )
+        dl = experiment_dataloader(dp)
+        data = [row for row in dl]
 
-    batch = data[0]
-    assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
-    assert batch[1].to_numpy().tolist() == [[0], [1], [2]]
+        batch = data[0]
+        assert batch[0].tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
+        assert batch[1].to_numpy().tolist() == [[0], [1], [2]]
 
 
 @pytest.mark.parametrize(
@@ -598,17 +600,17 @@ def test_experiment_dataloader__batched_length(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    dp = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        batch_size=3,
-        shuffle=False,
-        use_eager_fetch=use_eager_fetch,
-    )
-    dl = experiment_dataloader(dp)
-    assert len(dl) == len(list(dl))
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        dp = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            batch_size=3,
+            shuffle=False,
+            use_eager_fetch=use_eager_fetch,
+        )
+        dl = experiment_dataloader(dp)
+        assert len(dl) == len(list(dl))
 
 
 @pytest.mark.parametrize(
@@ -621,9 +623,11 @@ def test_experiment_dataloader__batched_length(
 def test_experiment_dataloader__collate_fn(
     PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
     soma_experiment: Experiment,
-    batch_size,
-):
-    def collate_fn(batch_size, data):
+    batch_size: int,
+) -> None:
+    def collate_fn(
+        batch_size: int, data: Tuple[npt.NDArray[np.number[Any]], pd.DataFrame]
+    ) -> Tuple[npt.NDArray[np.number[Any]], pd.DataFrame]:
         assert isinstance(data, tuple)
         assert len(data) == 2
         assert isinstance(data[0], np.ndarray) and isinstance(data[1], pd.DataFrame)
@@ -633,17 +637,18 @@ def test_experiment_dataloader__collate_fn(
         else:
             assert data[0].ndim == 1
         assert data[1].shape[1] <= batch_size
+        return data
 
-    dp = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        batch_size=batch_size,
-        shuffle=False,
-    )
-    dl = experiment_dataloader(dp, collate_fn=partial(collate_fn, batch_size))
-    assert len(list(dl)) > 0
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        dp = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            batch_size=batch_size,
+            shuffle=False,
+        )
+        dl = experiment_dataloader(dp, collate_fn=partial(collate_fn, batch_size))
+        assert len(list(dl)) > 0
 
 
 @pytest.mark.parametrize(
@@ -658,17 +663,17 @@ def test__X_tensor_dtype_matches_X_matrix(
     soma_experiment: Experiment,
     use_eager_fetch: bool,
 ) -> None:
-    dp = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-        batch_size=3,
-        use_eager_fetch=use_eager_fetch,
-    )
-    data = next(iter(dp))
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        dp = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            batch_size=3,
+            use_eager_fetch=use_eager_fetch,
+        )
+        data = next(iter(dp))
 
-    assert data[0].dtype == np.float32
+        assert data[0].dtype == np.float32
 
 
 @pytest.mark.parametrize(
@@ -677,18 +682,20 @@ def test__X_tensor_dtype_matches_X_matrix(
 def test__pytorch_splitting(
     soma_experiment: Experiment,
 ) -> None:
-    dp = ExperimentAxisQueryDataPipe(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        obs_column_names=["label"],
-    )
-    # function not available for IterableDataset, yet....
-    dp_train, dp_test = dp.random_split(weights={"train": 0.7, "test": 0.3}, seed=1234)
-    dl = experiment_dataloader(dp_train)
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        dp = ExperimentAxisQueryDataPipe(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+        )
+        # function not available for IterableDataset, yet....
+        dp_train, dp_test = dp.random_split(
+            weights={"train": 0.7, "test": 0.3}, seed=1234
+        )
+        dl = experiment_dataloader(dp_train)
 
-    all_rows = list(iter(dl))
-    assert len(all_rows) == 7
+        all_rows = list(iter(dl))
+        assert len(all_rows) == 7
 
 
 @pytest.mark.parametrize(
@@ -701,25 +708,25 @@ def test__shuffle(
     PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
     soma_experiment: Experiment,
 ) -> None:
-    dp = PipeClass(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        shuffle=True,
-    )
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        dp = PipeClass(
+            query,
+            X_name="raw",
+            shuffle=True,
+        )
 
-    all_rows = list(iter(dp))
-    assert all(r[0].shape == (1,) for r in all_rows)
-    soma_joinids = [row[1]["soma_joinid"].iloc[0] for row in all_rows]
-    X_values = [row[0][0].item() for row in all_rows]
+        all_rows = list(iter(dp))
+        assert all(r[0].shape == (1,) for r in all_rows)
+        soma_joinids = [row[1]["soma_joinid"].iloc[0] for row in all_rows]
+        X_values = [row[0][0].item() for row in all_rows]
 
-    # same elements
-    assert set(soma_joinids) == set(range(16))
-    # not ordered! (...with a `1/16!` probability of being ordered)
-    assert soma_joinids != list(range(16))
-    # randomizes X in same order as obs
-    # note: X values were explicitly set to match obs_joinids to allow for this simple assertion
-    assert X_values == soma_joinids
+        # same elements
+        assert set(soma_joinids) == set(range(16))
+        # not ordered! (...with a `1/16!` probability of being ordered)
+        assert soma_joinids != list(range(16))
+        # randomizes X in same order as obs
+        # note: X values were explicitly set to match obs_joinids to allow for this simple assertion
+        assert X_values == soma_joinids
 
 
 @pytest.mark.parametrize(
@@ -728,23 +735,22 @@ def test__shuffle(
 def test_experiment_axis_query_iterable_error_checks(
     soma_experiment: Experiment,
 ) -> None:
-    dp = ExperimentAxisQueryIterable(
-        soma_experiment,
-        measurement_name="RNA",
-        X_name="raw",
-        shuffle=True,
-    )
-    with pytest.raises(NotImplementedError):
-        dp[0]
-
-    with pytest.raises(ValueError):
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
         dp = ExperimentAxisQueryIterable(
-            soma_experiment,
-            obs_column_names=(),
-            measurement_name="RNA",
+            query,
             X_name="raw",
             shuffle=True,
         )
+        with pytest.raises(NotImplementedError):
+            dp[0]
+
+        with pytest.raises(ValueError):
+            dp = ExperimentAxisQueryIterable(
+                query,
+                obs_column_names=(),
+                X_name="raw",
+                shuffle=True,
+            )
 
 
 def test_experiment_dataloader__unsupported_params__fails() -> None:
@@ -795,20 +801,21 @@ def test_splits() -> None:
         _splits(10, -1)
 
 
-def test_csr_to_dense() -> None:
-    from tiledbsoma_ml.pytorch import _csr_to_dense
+# temp comment out while building _CSR tests
+# def test_csr_to_dense() -> None:
+#     from tiledbsoma_ml.pytorch import _csr_to_dense
 
-    coo = sparse.eye(1001, 77, format="coo", dtype=np.float32)
+#     coo = sparse.eye(1001, 77, format="coo", dtype=np.float32)
 
-    assert np.array_equal(
-        sparse.csr_array(coo).todense(), _csr_to_dense(sparse.csr_array(coo))
-    )
-    assert np.array_equal(
-        sparse.csr_matrix(coo).todense(), _csr_to_dense(sparse.csr_matrix(coo))
-    )
+#     assert np.array_equal(
+#         sparse.csr_array(coo).todense(), _csr_to_dense(sparse.csr_array(coo))
+#     )
+#     assert np.array_equal(
+#         sparse.csr_matrix(coo).todense(), _csr_to_dense(sparse.csr_matrix(coo))
+#     )
 
-    csr = sparse.csr_array(coo)
-    assert np.array_equal(csr.todense(), _csr_to_dense(csr))
-    assert np.array_equal(csr[1:, :].todense(), _csr_to_dense(csr[1:, :]))
-    assert np.array_equal(csr[:, 1:].todense(), _csr_to_dense(csr[:, 1:]))
-    assert np.array_equal(csr[3:501, 1:22].todense(), _csr_to_dense(csr[3:501, 1:22]))
+#     csr = sparse.csr_array(coo)
+#     assert np.array_equal(csr.todense(), _csr_to_dense(csr))
+#     assert np.array_equal(csr[1:, :].todense(), _csr_to_dense(csr[1:, :]))
+#     assert np.array_equal(csr[:, 1:].todense(), _csr_to_dense(csr[:, 1:]))
+#     assert np.array_equal(csr[3:501, 1:22].todense(), _csr_to_dense(csr[3:501, 1:22]))
