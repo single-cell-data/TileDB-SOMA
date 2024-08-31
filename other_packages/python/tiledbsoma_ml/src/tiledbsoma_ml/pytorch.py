@@ -944,7 +944,8 @@ class _CSR:
     ) -> None:
         """Construct from PJV format."""
         assert len(data) == len(indices)
-        assert len(data) < np.iinfo(indptr.dtype).max
+        assert len(data) <= np.iinfo(indptr.dtype).max
+        assert shape[1] <= np.iinfo(indices.dtype).max
         assert indptr[-1] == len(data) and indptr[0] == 0
 
         self.shape = shape
@@ -958,12 +959,8 @@ class _CSR:
     ) -> _CSR:
         """Factory from COO"""
         nnz = len(d)
-        if nnz < np.iinfo(np.int32).max:
-            index_dtype: npt.DTypeLike = np.int32
-        else:
-            index_dtype = np.int64
-        indptr = np.zeros((shape[0] + 1), dtype=index_dtype)
-        indices = np.empty((nnz,), dtype=index_dtype)
+        indptr = np.zeros((shape[0] + 1), dtype=smallest_uint_dtype(nnz))
+        indices = np.empty((nnz,), dtype=smallest_uint_dtype(shape[1]))
         data = np.empty((nnz,), dtype=d.dtype)
         _coo_to_csr_inner(shape[0], i, j, d, indptr, indices, data)
         return _CSR(indptr, indices, data, shape)
@@ -991,16 +988,12 @@ class _CSR:
         assert isinstance(row_index, slice)
         assert row_index.step in (1, None)
         row_idx_start, row_idx_end, _ = row_index.indices(self.indptr.shape[0] - 1)
-        if row_idx_end - row_idx_start <= 0:
-            return np.zeros((0, self.shape[1]), dtype=self.data.dtype)
-
-        indptr = self.indptr
-        indices = self.indices
-        data = self.data
-        out = np.zeros(
-            (row_idx_end - row_idx_start, self.shape[1]), dtype=self.data.dtype
-        )
-        _csr_to_dense_inner(row_idx_start, row_idx_end, indptr, indices, data, out)
+        n_rows = max(row_idx_end - row_idx_start, 0)
+        out = np.zeros((n_rows, self.shape[1]), dtype=self.data.dtype)
+        if n_rows >= 0:
+            _csr_to_dense_inner(
+                row_idx_start, n_rows, self.indptr, self.indices, self.data, out
+            )
         return out
 
     @staticmethod
@@ -1008,21 +1001,32 @@ class _CSR:
         assert len(mtxs) > 0
         nnz = sum(m.nnz for m in mtxs)
         shape = mtxs[0].shape
+        for m in mtxs[1:]:
+            assert m.shape == mtxs[0].shape
+            assert m.indices.dtype == mtxs[0].indices.dtype
         assert all(m.shape == shape for m in mtxs)
 
-        if nnz < np.iinfo(np.int32).max:
-            index_dtype: npt.DTypeLike = np.int32
-        else:
-            index_dtype = np.int64
-
-        indptr = np.sum([m.indptr for m in mtxs], axis=0, dtype=index_dtype)
-        indices = np.empty((nnz,), dtype=index_dtype)
+        indptr = np.sum(
+            [m.indptr for m in mtxs], axis=0, dtype=smallest_uint_dtype(nnz)
+        )
+        indices = np.empty((nnz,), dtype=mtxs[0].indices.dtype)
         data = np.empty((nnz,), mtxs[0].data.dtype)
 
         _csr_merge_inner(
-            tuple((m.indptr, m.indices, m.data) for m in mtxs), indptr, indices, data
+            tuple((m.indptr.astype(indptr.dtype), m.indices, m.data) for m in mtxs),
+            indptr,
+            indices,
+            data,
         )
         return _CSR.from_pjd(indptr, indices, data, shape)
+
+
+def smallest_uint_dtype(max_val: int) -> npt.DTypeLike:
+    for dt in [np.uint16, np.uint32]:
+        if max_val <= np.iinfo(dt).max:
+            return dt
+    else:
+        return np.uint64
 
 
 @numba.njit(nogil=True, parallel=True)  # type:ignore[misc]
@@ -1045,13 +1049,13 @@ def _csr_merge_inner(
 @numba.njit(nogil=True, parallel=True)  # type:ignore[misc]
 def _csr_to_dense_inner(
     row_idx_start: int,
-    row_idx_end: int,
+    n_rows: int,
     indptr: NDArrayNumber,
     indices: NDArrayNumber,
     data: NDArrayNumber,
     out: NDArrayNumber,
 ) -> None:
-    for i in numba.prange(row_idx_start, row_idx_end):
+    for i in numba.prange(row_idx_start, row_idx_start + n_rows):
         for j in range(indptr[i], indptr[i + 1]):
             out[i - row_idx_start, indices[j]] = data[j]
 
