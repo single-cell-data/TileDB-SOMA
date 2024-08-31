@@ -32,6 +32,9 @@
 
 #include "common.h"
 
+const int64_t SOMA_JOINID_DIM_MAX = 100;
+const int64_t SOMA_JOINID_RESIZE_DIM_MAX = 200;
+
 // This is a keystroke-reduction fixture for some similar unit-test cases For
 // convenience there are dims/attrs of type int64, uint32, and string. (Feel
 // free to add more types.) The main value-adds of this fixture are (a) simple
@@ -52,7 +55,7 @@ struct VariouslyIndexedDataFrameFixture {
 
     //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Helpers for setting up dim/attr configs and data
-    static const inline int64_t i64_dim_max = 100;
+    static const inline int64_t i64_dim_max = SOMA_JOINID_DIM_MAX;
     static const inline int64_t u32_dim_max = 10000;
     static const inline int64_t str_dim_max = 0;  // not used for string dims
 
@@ -101,16 +104,6 @@ struct VariouslyIndexedDataFrameFixture {
     helper::AttrInfo str_attr_info() {
         return helper::AttrInfo(
             {.name = str_name, .tiledb_datatype = str_datatype});
-    }
-
-    std::vector<int64_t> make_i64_data() {
-        return std::vector<int64_t>({1, 2});
-    }
-    std::vector<uint32_t> make_u32_data() {
-        return std::vector<uint32_t>({1234, 5678});
-    }
-    std::vector<std::string> make_str_data() {
-        return std::vector<std::string>({"apple", "bat"});
     }
 
     //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -163,14 +156,12 @@ struct VariouslyIndexedDataFrameFixture {
             timestamp_range);
     }
 
-    void write_generic_data() {
-        // No arguments -- for now.
-        // In a subsequent PR we'll vary writing in-bounds vs out of bounds.
+    void write_sjid_u32_str_data_from(int64_t sjid_base) {
         auto soma_dataframe = SOMADataFrame::open(uri_, OpenMode::write, ctx_);
 
-        auto i64_data = make_i64_data();
-        auto u32_data = make_u32_data();
-        auto str_data = make_str_data();
+        auto i64_data = std::vector<int64_t>({sjid_base + 1, sjid_base + 2});
+        auto u32_data = std::vector<uint32_t>({1234, 5678});
+        auto str_data = std::vector<std::string>({"apple", "bat"});
 
         soma_dataframe->set_column_data(
             i64_name, i64_data.size(), i64_data.data());
@@ -437,8 +428,8 @@ TEST_CASE_METHOD(
     "SOMADataFrame: bounds-checking",
     "[SOMADataFrame]") {
     bool use_current_domain = true;
-    int old_max = 100;
-    int new_max = 200;
+    int old_max = SOMA_JOINID_DIM_MAX;
+    int new_max = SOMA_JOINID_RESIZE_DIM_MAX;
 
     set_up(std::make_shared<SOMAContext>(), "mem://unit-test-bounds-checking");
 
@@ -460,7 +451,7 @@ TEST_CASE_METHOD(
     soma_dataframe->close();
 
     soma_dataframe = open(OpenMode::write);
-    soma_dataframe->resize(std::vector<int64_t>({new_max}));
+    soma_dataframe->resize_soma_joinid_if_dim(std::vector<int64_t>({new_max}));
     soma_dataframe->close();
 
     soma_dataframe = open(OpenMode::write);
@@ -474,16 +465,17 @@ TEST_CASE_METHOD(
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim:sjid attr:str,u32",
+    "SOMADataFrame: variant-indexed dataframe dim-sjid attr-str-u32",
     "[SOMADataFrame]") {
     // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
+        std::string suffix = use_current_domain ? "true" : "false";
         set_up(
             std::make_shared<SOMAContext>(),
-            "mem://unit-test-variant-indexed-dataframe-1");
+            "mem://unit-test-variant-indexed-dataframe-1-" + suffix);
 
         std::vector<helper::DimInfo> dim_infos(
             {i64_dim_info(use_current_domain)});
@@ -516,28 +508,68 @@ TEST_CASE_METHOD(
 
         soma_dataframe->close();
 
-        write_generic_data();
+        write_sjid_u32_str_data_from(0);
 
-        // Check shape after write
-        soma_dataframe = open(OpenMode::read);
-        expect = use_current_domain ? dim_infos[0].dim_max + 1 : 2;
-        REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
-        soma_dataframe->close();
+        // Resize
+        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX});
+
+        if (!use_current_domain) {
+            // Domain is already set. The domain (not current domain but domain)
+            // is immutable. All we can do is check for:
+            // * throw on write beyond domain
+            // * throw on an attempt to resize.
+            REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
+
+            soma_dataframe = open(OpenMode::write);
+            // Array not resizeable if it has not already been sized
+            REQUIRE_THROWS(
+                soma_dataframe->resize_soma_joinid_if_dim(new_shape));
+            soma_dataframe->close();
+
+        } else {
+            // Expect throw on write beyond current domain before resize
+            REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
+
+            // Check shape after write
+            soma_dataframe = open(OpenMode::read);
+            expect = dim_infos[0].dim_max + 1;
+            REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+            soma_dataframe->close();
+
+            soma_dataframe = open(OpenMode::read);
+            REQUIRE_THROWS(
+                soma_dataframe->resize_soma_joinid_if_dim(new_shape));
+            soma_dataframe->close();
+
+            soma_dataframe = open(OpenMode::write);
+            soma_dataframe->resize_soma_joinid_if_dim(new_shape);
+            soma_dataframe->close();
+
+            // Check shape after resize
+            soma_dataframe = open(OpenMode::read);
+            expect = SOMA_JOINID_RESIZE_DIM_MAX;
+            REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+            soma_dataframe->close();
+
+            // Implicitly we expect no throw
+            write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
+        }
     }
 }
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim:sjid,u32 attr:str",
+    "SOMADataFrame: variant-indexed dataframe dim-sjid-u32 attr-str",
     "[SOMADataFrame]") {
     // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
+        std::string suffix = use_current_domain ? "true" : "false";
         set_up(
             std::make_shared<SOMAContext>(),
-            "mem://unit-test-variant-indexed-dataframe-2");
+            "mem://unit-test-variant-indexed-dataframe-2-" + suffix);
 
         std::vector<helper::DimInfo> dim_infos(
             {i64_dim_info(use_current_domain),
@@ -576,28 +608,74 @@ TEST_CASE_METHOD(
         soma_dataframe->close();
 
         // Write
-        write_generic_data();
+        write_sjid_u32_str_data_from(0);
 
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
         expect = use_current_domain ? dim_infos[0].dim_max + 1 : 2;
         REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
         soma_dataframe->close();
+
+        // Resize
+        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX});
+
+        if (!use_current_domain) {
+            // Domain is already set. The domain (not current domain but domain)
+            // is immutable. All we can do is check for:
+            // * throw on write beyond domain
+            // * throw on an attempt to resize.
+            REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
+
+            soma_dataframe = open(OpenMode::write);
+            // Array not resizeable if it has not already been sized
+            REQUIRE_THROWS(
+                soma_dataframe->resize_soma_joinid_if_dim(new_shape));
+            soma_dataframe->close();
+
+        } else {
+            // Expect throw on write beyond current domain before resize
+            REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
+
+            // Check shape after write
+            soma_dataframe = open(OpenMode::read);
+            expect = dim_infos[0].dim_max + 1;
+            REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+            soma_dataframe->close();
+
+            soma_dataframe = open(OpenMode::read);
+            REQUIRE_THROWS(
+                soma_dataframe->resize_soma_joinid_if_dim(new_shape));
+            soma_dataframe->close();
+
+            soma_dataframe = open(OpenMode::write);
+            soma_dataframe->resize_soma_joinid_if_dim(new_shape);
+            soma_dataframe->close();
+
+            // Check shape after resize
+            soma_dataframe = open(OpenMode::read);
+            expect = SOMA_JOINID_RESIZE_DIM_MAX;
+            REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+            soma_dataframe->close();
+
+            // Implicitly we expect no throw
+            write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
+        }
     }
 }
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim:sjid,str attr:u32",
+    "SOMADataFrame: variant-indexed dataframe dim-sjid-str attr-u32",
     "[SOMADataFrame]") {
     // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
+        std::string suffix = use_current_domain ? "true" : "false";
         set_up(
             std::make_shared<SOMAContext>(),
-            "mem://unit-test-variant-indexed-dataframe-3");
+            "mem://unit-test-variant-indexed-dataframe-3-" + suffix);
 
         std::vector<helper::DimInfo> dim_infos(
             {i64_dim_info(use_current_domain),
@@ -640,28 +718,74 @@ TEST_CASE_METHOD(
         soma_dataframe->close();
 
         // Write
-        write_generic_data();
+        write_sjid_u32_str_data_from(0);
 
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
         expect = use_current_domain ? dim_infos[0].dim_max + 1 : 2;
         REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
         soma_dataframe->close();
+
+        // Resize
+        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX});
+
+        if (!use_current_domain) {
+            // Domain is already set. The domain (not current domain but domain)
+            // is immutable. All we can do is check for:
+            // * throw on write beyond domain
+            // * throw on an attempt to resize.
+            REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
+
+            soma_dataframe = open(OpenMode::write);
+            // Array not resizeable if it has not already been sized
+            REQUIRE_THROWS(
+                soma_dataframe->resize_soma_joinid_if_dim(new_shape));
+            soma_dataframe->close();
+
+        } else {
+            // Expect throw on write beyond current domain before resize
+            REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
+
+            // Check shape after write
+            soma_dataframe = open(OpenMode::read);
+            expect = dim_infos[0].dim_max + 1;
+            REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+            soma_dataframe->close();
+
+            soma_dataframe = open(OpenMode::read);
+            REQUIRE_THROWS(
+                soma_dataframe->resize_soma_joinid_if_dim(new_shape));
+            soma_dataframe->close();
+
+            soma_dataframe = open(OpenMode::write);
+            soma_dataframe->resize_soma_joinid_if_dim(new_shape);
+            soma_dataframe->close();
+
+            // Check shape after resize
+            soma_dataframe = open(OpenMode::read);
+            expect = SOMA_JOINID_RESIZE_DIM_MAX;
+            REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+            soma_dataframe->close();
+
+            // Implicitly we expect no throw
+            write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
+        }
     }
 }
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim:str,u32 attr:sjid",
+    "SOMADataFrame: variant-indexed dataframe dim-str-u32 attr-sjid",
     "[SOMADataFrame]") {
     // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
+        std::string suffix = use_current_domain ? "true" : "false";
         set_up(
             std::make_shared<SOMAContext>(),
-            "mem://unit-test-variant-indexed-dataframe-4");
+            "mem://unit-test-variant-indexed-dataframe-4-" + suffix);
 
         std::vector<helper::DimInfo> dim_infos(
             {str_dim_info(use_current_domain),
@@ -696,7 +820,6 @@ TEST_CASE_METHOD(
             REQUIRE(u32_range[0] == (uint32_t)0);
             REQUIRE(u32_range[1] == (uint32_t)dim_infos[1].dim_max);
         }
-
         // Check shape before write
         int64_t expect = 0;
         REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
@@ -704,12 +827,54 @@ TEST_CASE_METHOD(
         soma_dataframe->close();
 
         // Write
-        write_generic_data();
+        write_sjid_u32_str_data_from(0);
 
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
         expect = 2;
         REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
         soma_dataframe->close();
+
+        // Resize
+        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX});
+
+        if (!use_current_domain) {
+            // Domain is already set. The domain (not current domain but domain)
+            // is immutable. All we can do is check for:
+            // * throw on write beyond domain -- except here, soma_joinid is not
+            //   a dim, so no throw
+            // * throw on an attempt to resize.
+
+            soma_dataframe = open(OpenMode::write);
+            // Array not resizeable if it has not already been sized
+            REQUIRE_THROWS(
+                soma_dataframe->resize_soma_joinid_if_dim(new_shape));
+            soma_dataframe->close();
+
+        } else {
+            // Check shape after write
+            soma_dataframe = open(OpenMode::read);
+            expect = 2;
+            REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+            soma_dataframe->close();
+
+            soma_dataframe = open(OpenMode::read);
+            REQUIRE_THROWS(
+                soma_dataframe->resize_soma_joinid_if_dim(new_shape));
+            soma_dataframe->close();
+
+            soma_dataframe = open(OpenMode::write);
+            soma_dataframe->resize_soma_joinid_if_dim(new_shape);
+            soma_dataframe->close();
+
+            // Check shape after resize -- noting soma_joinid is not a dim here
+            soma_dataframe = open(OpenMode::read);
+            expect = 2;
+            REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
+            soma_dataframe->close();
+
+            // Implicitly we expect no throw
+            write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
+        }
     }
 }
