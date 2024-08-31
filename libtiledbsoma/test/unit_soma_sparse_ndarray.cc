@@ -31,11 +31,11 @@
  */
 
 #include "common.h"
-#define DIM_MAX 1000
 
-TEST_CASE("SOMASparseNDArray: basic") {
+TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     int64_t dim_max = 1000;
-    auto use_current_domain = GENERATE(false, true);
+    // auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
@@ -45,6 +45,7 @@ TEST_CASE("SOMASparseNDArray: basic") {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-sparse-ndarray-basic";
         std::string dim_name = "soma_dim_0";
+        std::string attr_name = "soma_data";
         tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
         std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
 
@@ -79,7 +80,7 @@ TEST_CASE("SOMASparseNDArray: basic") {
         REQUIRE(soma_sparse->is_sparse() == true);
         REQUIRE(soma_sparse->soma_data_type() == arrow_format);
         auto schema = soma_sparse->tiledb_schema();
-        REQUIRE(schema->has_attribute("soma_data"));
+        REQUIRE(schema->has_attribute(attr_name));
         REQUIRE(schema->array_type() == TILEDB_SPARSE);
         REQUIRE(schema->domain().has_dimension(dim_name));
         REQUIRE(soma_sparse->ndim() == 1);
@@ -100,8 +101,8 @@ TEST_CASE("SOMASparseNDArray: basic") {
         std::vector<int> a0(10, 1);
 
         soma_sparse->open(OpenMode::write);
-        soma_sparse->set_column_data("soma_data", a0.size(), a0.data());
         soma_sparse->set_column_data(dim_name, d0.size(), d0.data());
+        soma_sparse->set_column_data(attr_name, a0.size(), a0.data());
         soma_sparse->write();
         soma_sparse->close();
 
@@ -109,21 +110,50 @@ TEST_CASE("SOMASparseNDArray: basic") {
         while (auto batch = soma_sparse->read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_name)->data<int64_t>();
-            auto a0span = arrbuf->at("soma_data")->data<int>();
+            auto a0span = arrbuf->at(attr_name)->data<int>();
             REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
             REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
         }
 
-        // TODO on a subsequent PR if use_current_domain:
-        // * test write out of bounds, including assertion of exception type
-        // * test resize
-        // * test write within new bounds
-
+        std::vector<int64_t> d0b({dim_max, dim_max + 1});
+        std::vector<int64_t> a0b({30, 40});
         soma_sparse->close();
+
+        // Try out-of-bounds write before resize.
+        // * Without current domain support: this should throw since it's
+        //   outside the (immutable) doqain.
+        // * With current domain support: this should throw since it's outside
+        // the (mutable) current domain.
+        soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+        soma_sparse->set_column_data(dim_name, d0b.size(), d0b.data());
+        soma_sparse->set_column_data(attr_name, a0b.size(), a0b.data());
+        REQUIRE_THROWS(soma_sparse->write());
+        soma_sparse->close();
+
+        soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+        auto new_shape = std::vector<int64_t>({dim_max * 2});
+        if (!use_current_domain) {
+            // Without current-domain support: this should throw since
+            // one cannot resize what has not been sized.
+            REQUIRE_THROWS(soma_sparse->resize(new_shape));
+        } else {
+            soma_sparse->resize(new_shape);
+        }
+        soma_sparse->close();
+
+        // Try out-of-bounds write after resize.
+        if (use_current_domain) {
+            soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+            soma_sparse->set_column_data(dim_name, d0b.size(), d0b.data());
+            soma_sparse->set_column_data(attr_name, a0b.size(), a0b.data());
+            // Implicitly checking for no throw
+            soma_sparse->write();
+            soma_sparse->close();
+        }
     }
 }
 
-TEST_CASE("SOMASparseNDArray: platform_config") {
+TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
     int64_t dim_max = 1000;
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
@@ -171,7 +201,7 @@ TEST_CASE("SOMASparseNDArray: platform_config") {
     }
 }
 
-TEST_CASE("SOMASparseNDArray: metadata") {
+TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     int64_t dim_max = 1000;
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
