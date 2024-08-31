@@ -378,25 +378,19 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 if self._shuffle_rng is None
                 else self._shuffle_rng.permuted(obs_coords)
             )
+            obs_indexer = soma.IntIndexer(obs_shuffled_coords, context=X.context)
             logger.debug(
                 f"Retrieving next SOMA IO batch of length {len(obs_coords)}..."
             )
 
-            obs_io_batch = cast(
-                pd.DataFrame,
-                obs.read(coords=(obs_coords,), column_names=obs_column_names)
-                .concat()
-                .to_pandas()
-                .set_index("soma_joinid")
-                .reindex(obs_shuffled_coords, copy=False)
-                .reset_index(),
-            )
-            obs_io_batch = obs_io_batch[self.obs_column_names]
-
+            # to maximize optty's for concurrency, when in eager_fetch mode,
+            # create the X read iterator first, as the eager iterator will begin
+            # the read-ahead immediately. Then proceed to fetch obs DataFrame.
+            # This matters most on latent backing stores, e.g., S3.
+            #
             X_tbl_iter: Iterator[pa.Table] = X.read(
                 coords=(obs_coords, self._var_joinids)
             ).tables()
-            obs_indexer = soma.IntIndexer(obs_shuffled_coords, context=X.context)
 
             def make_csr(
                 X_tbl: pa.Table,
@@ -420,6 +414,20 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             )
             if self.use_eager_fetch:
                 _csr_iter = _EagerIterator(_csr_iter, pool=X.context.threadpool)
+
+            # Now that X read is potentially in progress (in eager mode), go fetch obs data
+            #
+            obs_io_batch = cast(
+                pd.DataFrame,
+                obs.read(coords=(obs_coords,), column_names=obs_column_names)
+                .concat()
+                .to_pandas()
+                .set_index("soma_joinid")
+                .reindex(obs_shuffled_coords, copy=False)
+                .reset_index(),
+            )
+            obs_io_batch = obs_io_batch[self.obs_column_names]
+
             X_io_batch = _CSR.merge(tuple(_csr_iter))
 
             del obs_indexer, obs_coords, obs_shuffled_coords, _csr_iter
