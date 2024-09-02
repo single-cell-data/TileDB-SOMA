@@ -5,6 +5,7 @@
 
 """General utility functions.
 """
+import importlib.metadata
 import platform
 import sys
 import warnings
@@ -34,20 +35,11 @@ def get_implementation_version() -> str:
 
     Lifecycle: Maturing.
     """
-    if sys.version_info < (3, 8, 0):
-        from pkg_resources import DistributionNotFound, get_distribution
 
-        try:
-            return get_distribution("tiledbsoma").version
-        except DistributionNotFound:
-            return "unknown"
-    else:
-        import importlib.metadata
-
-        try:
-            return importlib.metadata.version("tiledbsoma")
-        except importlib.metadata.PackageNotFoundError:
-            return "unknown"
+    try:
+        return importlib.metadata.version("tiledbsoma")
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
 
 
 def assert_version_before(major: int, minor: int) -> None:

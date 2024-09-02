@@ -15,7 +15,7 @@ Provide a code example and any sample input data (e.g. an H5AD) as an attachment
 
 **Versions (please complete the following information):**
  - TileDB-SOMA version:
- - Language and language version (e.g. Python 3.8, R 4.2.2):
+ - Language and language version (e.g. Python 3.9, R 4.2.2):
  - OS (e.g. MacOS, Ubuntu Linux):
  - Note: you can use `tiledbsoma.show_package_versions()` (Python) or `tiledbsoma::show_package_versions()` (R)
 

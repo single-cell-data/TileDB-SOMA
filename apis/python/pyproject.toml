@@ -12,7 +12,7 @@ show_error_codes = true
 ignore_missing_imports = true
 warn_unreachable = true
 strict = true
-python_version = 3.8
+python_version = 3.9
 
 [[tool.mypy.overrides]]
 module = "tiledbsoma._query_condition"

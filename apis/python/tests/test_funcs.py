@@ -1,5 +1,4 @@
 import inspect
-import sys
 import textwrap
 
 import pytest
@@ -26,13 +25,10 @@ from tiledbsoma import _funcs
             "(__pos_only, *dont_shadow, do_rename: bytes = b'', **kwargs) -> complex",
             "(__pos_only, *dont_shadow_, do_rename: bytes = b'', dont_shadow: int, do_rename_: str, **do_rename__: frozenset) -> complex",
         ),
-        pytest.param(
+        (
             "(pos_only, some_name, /, dst_both_arg, *args, dst_kwarg=1, **dup_dict: complex)",
             "(dst_both_arg, dst_kwarg: int = 10, /, dup_dict: dict = (), **kwargs) -> None",
             "(dst_both_arg_, dst_kwarg_: int = 10, /, dup_dict: dict = (), *, dst_both_arg, dst_kwarg=1, **dup_dict_: complex) -> None",
-            marks=pytest.mark.skipif(
-                sys.version_info < (3, 8), reason="/ is new in 3.8"
-            ),
         ),
     ],
 )
