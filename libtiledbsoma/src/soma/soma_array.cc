@@ -30,10 +30,10 @@
  *   This file defines the SOMAArray class.
  */
 
+#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
-#include "soma_array.h"
 namespace tiledbsoma {
 using namespace tiledb;
 
