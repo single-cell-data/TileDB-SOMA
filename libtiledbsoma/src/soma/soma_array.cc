@@ -30,10 +30,10 @@
  *   This file defines the SOMAArray class.
  */
 
-#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "soma_array.h"
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -1348,174 +1348,167 @@ void SOMAArray::_assert_dims_are_int64() {
         throw TileDBSOMAError(
             "[SOMAArray] internal coding error: expected all dims to be int64");
     }
+}
 
-    void SOMAArray::resize_soma_joinid_if_dim(
-        const std::vector<int64_t>& newshape) {
-        if (mq_->query_type() != TILEDB_WRITE) {
-            throw TileDBSOMAError(
-                "[SOMAArray::resize] array must be opened in write mode");
-        }
-
-        ArraySchema schema = arr_->schema();
-        Domain domain = schema.domain();
-        unsigned ndim = domain.ndim();
-        if (newshape.size() != 1) {
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAArray::resize]: newshape has dimension count {}; needed "
-                "1",
-                newshape.size(),
-                ndim));
-        }
-
-        auto tctx = ctx_->tiledb_ctx();
-        CurrentDomain
-            old_current_domain = ArraySchemaExperimental::current_domain(
-                *tctx, schema);
-        NDRectangle ndrect = old_current_domain.ndrectangle();
-
-        CurrentDomain new_current_domain(*tctx);
-        ArraySchemaEvolution schema_evolution(*tctx);
-
-        for (unsigned i = 0; i < ndim; i++) {
-            if (domain.dimension(i).name() == "soma_joinid") {
-                ndrect.set_range<int64_t>(
-                    domain.dimension(i).name(), 0, newshape[0] - 1);
-            }
-        }
-
-        new_current_domain.set_ndrectangle(ndrect);
-        schema_evolution.expand_current_domain(new_current_domain);
-        schema_evolution.array_evolve(uri_);
+void SOMAArray::resize_soma_joinid_if_dim(
+    const std::vector<int64_t>& newshape) {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must be opened in write mode");
     }
 
-    uint64_t SOMAArray::ndim() const {
-        return tiledb_schema()->domain().ndim();
+    ArraySchema schema = arr_->schema();
+    Domain domain = schema.domain();
+    unsigned ndim = domain.ndim();
+    if (newshape.size() != 1) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAArray::resize]: newshape has dimension count {}; needed "
+            "1",
+            newshape.size(),
+            ndim));
     }
 
-    std::vector<std::string> SOMAArray::dimension_names() const {
-        std::vector<std::string> result;
-        auto dimensions = tiledb_schema()->domain().dimensions();
-        for (const auto& dim : dimensions) {
-            result.push_back(dim.name());
-        }
-        return result;
-    }
+    auto tctx = ctx_->tiledb_ctx();
+    CurrentDomain old_current_domain = ArraySchemaExperimental::current_domain(
+        *tctx, schema);
+    NDRectangle ndrect = old_current_domain.ndrectangle();
 
-    std::map<std::string, Enumeration> SOMAArray::get_attr_to_enum_mapping() {
-        std::map<std::string, Enumeration> result;
-        for (uint32_t i = 0; i < arr_->schema().attribute_num(); ++i) {
-            auto attr = arr_->schema().attribute(i);
-            if (attr_has_enum(attr.name())) {
-                auto enmr_label = *get_enum_label_on_attr(attr.name());
-                auto enmr = ArrayExperimental::get_enumeration(
-                    *ctx_->tiledb_ctx(), *arr_, enmr_label);
-                result.insert({attr.name(), enmr});
-            }
-        }
-        return result;
-    }
+    CurrentDomain new_current_domain(*tctx);
+    ArraySchemaEvolution schema_evolution(*tctx);
 
-    std::optional<std::string> SOMAArray::get_enum_label_on_attr(
-        std::string attr_name) {
-        auto attr = arr_->schema().attribute(attr_name);
-        return AttributeExperimental::get_enumeration_name(
-            *ctx_->tiledb_ctx(), attr);
-    }
-
-    bool SOMAArray::attr_has_enum(std::string attr_name) {
-        return get_enum_label_on_attr(attr_name).has_value();
-    }
-
-    void SOMAArray::set_metadata(
-        const std::string& key,
-        tiledb_datatype_t value_type,
-        uint32_t value_num,
-        const void* value,
-        bool force) {
-        if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
-            throw TileDBSOMAError(
-                SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
-
-        if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
-            throw TileDBSOMAError(
-                ENCODING_VERSION_KEY + " cannot be modified.");
-
-        arr_->put_metadata(key, value_type, value_num, value);
-
-        MetadataValue mdval(value_type, value_num, value);
-        std::pair<std::string, const MetadataValue> mdpair(key, mdval);
-        metadata_.insert(mdpair);
-    }
-
-    void SOMAArray::delete_metadata(const std::string& key) {
-        if (key.compare(SOMA_OBJECT_TYPE_KEY) == 0) {
-            throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be deleted.");
-        }
-
-        if (key.compare(ENCODING_VERSION_KEY) == 0) {
-            throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be deleted.");
-        }
-
-        arr_->delete_metadata(key);
-        metadata_.erase(key);
-    }
-
-    std::optional<MetadataValue> SOMAArray::get_metadata(
-        const std::string& key) {
-        if (metadata_.count(key) == 0) {
-            return std::nullopt;
-        }
-
-        return metadata_[key];
-    }
-
-    std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
-        return metadata_;
-    }
-
-    bool SOMAArray::has_metadata(const std::string& key) {
-        return metadata_.count(key) != 0;
-    }
-
-    uint64_t SOMAArray::metadata_num() const {
-        return metadata_.size();
-    }
-
-    void SOMAArray::validate(
-        OpenMode mode,
-        std::string_view name,
-        std::optional<TimestampRange> timestamp) {
-        // Validate parameters
-        auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
-
-        try {
-            LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));
-            if (timestamp) {
-                arr_ = std::make_shared<Array>(
-                    *ctx_->tiledb_ctx(),
-                    uri_,
-                    tdb_mode,
-                    TemporalPolicy(
-                        TimestampStartEnd,
-                        timestamp->first,
-                        timestamp->second));
-            } else {
-                arr_ = std::make_shared<Array>(
-                    *ctx_->tiledb_ctx(), uri_, tdb_mode);
-            }
-            LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
-            ArrayExperimental::load_all_enumerations(
-                *ctx_->tiledb_ctx(), *(arr_.get()));
-            mq_ = std::make_unique<ManagedQuery>(
-                arr_, ctx_->tiledb_ctx(), name);
-        } catch (const std::exception& e) {
-            throw TileDBSOMAError(
-                fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));
+    for (unsigned i = 0; i < ndim; i++) {
+        if (domain.dimension(i).name() == "soma_joinid") {
+            ndrect.set_range<int64_t>(
+                domain.dimension(i).name(), 0, newshape[0] - 1);
         }
     }
 
-    std::optional<TimestampRange> SOMAArray::timestamp() {
-        return timestamp_;
+    new_current_domain.set_ndrectangle(ndrect);
+    schema_evolution.expand_current_domain(new_current_domain);
+    schema_evolution.array_evolve(uri_);
+}
+
+uint64_t SOMAArray::ndim() const {
+    return tiledb_schema()->domain().ndim();
+}
+
+std::vector<std::string> SOMAArray::dimension_names() const {
+    std::vector<std::string> result;
+    auto dimensions = tiledb_schema()->domain().dimensions();
+    for (const auto& dim : dimensions) {
+        result.push_back(dim.name());
     }
+    return result;
+}
+
+std::map<std::string, Enumeration> SOMAArray::get_attr_to_enum_mapping() {
+    std::map<std::string, Enumeration> result;
+    for (uint32_t i = 0; i < arr_->schema().attribute_num(); ++i) {
+        auto attr = arr_->schema().attribute(i);
+        if (attr_has_enum(attr.name())) {
+            auto enmr_label = *get_enum_label_on_attr(attr.name());
+            auto enmr = ArrayExperimental::get_enumeration(
+                *ctx_->tiledb_ctx(), *arr_, enmr_label);
+            result.insert({attr.name(), enmr});
+        }
+    }
+    return result;
+}
+
+std::optional<std::string> SOMAArray::get_enum_label_on_attr(
+    std::string attr_name) {
+    auto attr = arr_->schema().attribute(attr_name);
+    return AttributeExperimental::get_enumeration_name(
+        *ctx_->tiledb_ctx(), attr);
+}
+
+bool SOMAArray::attr_has_enum(std::string attr_name) {
+    return get_enum_label_on_attr(attr_name).has_value();
+}
+
+void SOMAArray::set_metadata(
+    const std::string& key,
+    tiledb_datatype_t value_type,
+    uint32_t value_num,
+    const void* value,
+    bool force) {
+    if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
+        throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be modified.");
+
+    if (!force && key.compare(ENCODING_VERSION_KEY) == 0)
+        throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be modified.");
+
+    arr_->put_metadata(key, value_type, value_num, value);
+
+    MetadataValue mdval(value_type, value_num, value);
+    std::pair<std::string, const MetadataValue> mdpair(key, mdval);
+    metadata_.insert(mdpair);
+}
+
+void SOMAArray::delete_metadata(const std::string& key) {
+    if (key.compare(SOMA_OBJECT_TYPE_KEY) == 0) {
+        throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be deleted.");
+    }
+
+    if (key.compare(ENCODING_VERSION_KEY) == 0) {
+        throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be deleted.");
+    }
+
+    arr_->delete_metadata(key);
+    metadata_.erase(key);
+}
+
+std::optional<MetadataValue> SOMAArray::get_metadata(const std::string& key) {
+    if (metadata_.count(key) == 0) {
+        return std::nullopt;
+    }
+
+    return metadata_[key];
+}
+
+std::map<std::string, MetadataValue> SOMAArray::get_metadata() {
+    return metadata_;
+}
+
+bool SOMAArray::has_metadata(const std::string& key) {
+    return metadata_.count(key) != 0;
+}
+
+uint64_t SOMAArray::metadata_num() const {
+    return metadata_.size();
+}
+
+void SOMAArray::validate(
+    OpenMode mode,
+    std::string_view name,
+    std::optional<TimestampRange> timestamp) {
+    // Validate parameters
+    auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
+
+    try {
+        LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));
+        if (timestamp) {
+            arr_ = std::make_shared<Array>(
+                *ctx_->tiledb_ctx(),
+                uri_,
+                tdb_mode,
+                TemporalPolicy(
+                    TimestampStartEnd, timestamp->first, timestamp->second));
+        } else {
+            arr_ = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, tdb_mode);
+        }
+        LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
+        ArrayExperimental::load_all_enumerations(
+            *ctx_->tiledb_ctx(), *(arr_.get()));
+        mq_ = std::make_unique<ManagedQuery>(arr_, ctx_->tiledb_ctx(), name);
+    } catch (const std::exception& e) {
+        throw TileDBSOMAError(
+            fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));
+    }
+}
+
+std::optional<TimestampRange> SOMAArray::timestamp() {
+    return timestamp_;
+}
 
 }  // namespace tiledbsoma
