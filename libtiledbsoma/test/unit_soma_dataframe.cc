@@ -106,6 +106,16 @@ struct VariouslyIndexedDataFrameFixture {
             {.name = str_name, .tiledb_datatype = str_datatype});
     }
 
+    std::vector<int64_t> make_i64_data() {
+        return std::vector<int64_t>({1, 2});
+    }
+    std::vector<uint32_t> make_u32_data() {
+        return std::vector<uint32_t>({1234, 5678});
+    }
+    std::vector<std::string> make_str_data() {
+        return std::vector<std::string>({"apple", "bat"});
+    }
+
     //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Helper methods for create/open/write/etc.
 
@@ -467,7 +477,6 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim-sjid attr-str-u32",
     "[SOMADataFrame]") {
-    // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
@@ -561,7 +570,6 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim-sjid-u32 attr-str",
     "[SOMADataFrame]") {
-    // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
@@ -667,7 +675,6 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim-sjid-str attr-u32",
     "[SOMADataFrame]") {
-    // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
@@ -777,7 +784,6 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim-str-u32 attr-sjid",
     "[SOMADataFrame]") {
-    // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
@@ -820,6 +826,7 @@ TEST_CASE_METHOD(
             REQUIRE(u32_range[0] == (uint32_t)0);
             REQUIRE(u32_range[1] == (uint32_t)dim_infos[1].dim_max);
         }
+
         // Check shape before write
         int64_t expect = 0;
         REQUIRE(soma_dataframe->shape() == std::vector<int64_t>({expect}));
