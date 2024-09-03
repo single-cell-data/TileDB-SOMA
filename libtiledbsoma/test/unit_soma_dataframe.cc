@@ -32,10 +32,159 @@
 
 #include "common.h"
 
-#define DIM_MAX 1000
+// This is a keystroke-reduction fixture for some similar unit-test cases For
+// convenience there are dims/attrs of type int64, uint32, and string. (Feel
+// free to add more types.) The main value-adds of this fixture are (a) simple
+// keystroke-reduction; (b) you get to pick which ones are the dim(s) and which
+// are the attr(s).
+struct VariouslyIndexedDataFrameFixture {
+    std::shared_ptr<SOMAContext> ctx_;
+    std::string uri_;
+    bool use_current_domain_;
 
-TEST_CASE("SOMADataFrame: basic") {
-    int64_t dim_max = 1000;
+    //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Using Catch2's TEST_CASE_METHOD we can't pass constructor args.
+    // This is a call-after-construction method.
+    void set_up(std::shared_ptr<SOMAContext> ctx, std::string uri) {
+        ctx_ = ctx;
+        uri_ = uri;
+    }
+
+    //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Helpers for setting up dim/attr configs and data
+    static const inline int64_t i64_dim_max = 100;
+    static const inline int64_t u32_dim_max = 10000;
+    static const inline int64_t str_dim_max = 0;  // not used for string dims
+
+    static const inline std::string i64_name = "soma_joinid";
+    static const inline std::string u32_name = "myuint32";
+    static const inline std::string str_name = "mystring";
+
+    tiledb_datatype_t i64_datatype = TILEDB_INT64;
+    tiledb_datatype_t u32_datatype = TILEDB_UINT32;
+    tiledb_datatype_t str_datatype = TILEDB_STRING_ASCII;
+
+    std::string i64_arrow_format = helper::to_arrow_format(i64_datatype);
+    std::string u32_arrow_format = helper::to_arrow_format(u32_datatype);
+    std::string attr_1_arrow_format = helper::to_arrow_format(str_datatype);
+
+    helper::DimInfo i64_dim_info(bool use_current_domain) {
+        return helper::DimInfo(
+            {.name = i64_name,
+             .tiledb_datatype = i64_datatype,
+             .dim_max = i64_dim_max,
+             .use_current_domain = use_current_domain});
+    }
+    helper::DimInfo u32_dim_info(bool use_current_domain) {
+        return helper::DimInfo(
+            {.name = u32_name,
+             .tiledb_datatype = u32_datatype,
+             .dim_max = u32_dim_max,
+             .use_current_domain = use_current_domain});
+    }
+    helper::DimInfo str_dim_info(bool use_current_domain) {
+        return helper::DimInfo(
+            {.name = str_name,
+             .tiledb_datatype = str_datatype,
+             .dim_max = str_dim_max,
+             .use_current_domain = use_current_domain});
+    }
+
+    helper::AttrInfo i64_attr_info(std::string name = i64_name) {
+        return helper::AttrInfo(
+            {.name = name, .tiledb_datatype = i64_datatype});
+    }
+    helper::AttrInfo u32_attr_info() {
+        return helper::AttrInfo(
+            {.name = u32_name, .tiledb_datatype = u32_datatype});
+    }
+    helper::AttrInfo str_attr_info() {
+        return helper::AttrInfo(
+            {.name = str_name, .tiledb_datatype = str_datatype});
+    }
+
+    std::vector<int64_t> make_i64_data() {
+        return std::vector<int64_t>({1, 2});
+    }
+    std::vector<uint32_t> make_u32_data() {
+        return std::vector<uint32_t>({1234, 5678});
+    }
+    std::vector<std::string> make_str_data() {
+        return std::vector<std::string>({"apple", "bat"});
+    }
+
+    //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Helper methods for create/open/write/etc.
+
+    void create(
+        const std::vector<helper::DimInfo>& dim_infos,
+        const std::vector<helper::AttrInfo>& attr_infos) {
+        auto [schema, index_columns] =
+            helper::create_arrow_schema_and_index_columns(
+                dim_infos, attr_infos);
+        SOMADataFrame::create(
+            uri_,
+            std::move(schema),
+            ArrowTable(
+                std::move(index_columns.first),
+                std::move(index_columns.second)),
+            ctx_);
+    }
+
+    void create(
+        const std::vector<helper::DimInfo>& dim_infos,
+        const std::vector<helper::AttrInfo>& attr_infos,
+        const PlatformConfig& platform_config,
+        std::optional<TimestampRange> timestamp_range = std::nullopt) {
+        auto [schema, index_columns] =
+            helper::create_arrow_schema_and_index_columns(
+                dim_infos, attr_infos);
+        SOMADataFrame::create(
+            uri_,
+            std::move(schema),
+            ArrowTable(
+                std::move(index_columns.first),
+                std::move(index_columns.second)),
+            ctx_,
+            platform_config,
+            timestamp_range);
+    }
+
+    std::unique_ptr<SOMADataFrame> open(
+        OpenMode mode,
+        ResultOrder result_order = ResultOrder::automatic,
+        std::optional<TimestampRange> timestamp_range = std::nullopt) {
+        return SOMADataFrame::open(
+            uri_,
+            mode,
+            ctx_,
+            {},  // column_names
+            result_order,
+            timestamp_range);
+    }
+
+    void write_generic_data() {
+        // No arguments -- for now.
+        // In a subsequent PR we'll vary writing in-bounds vs out of bounds.
+        auto soma_dataframe = SOMADataFrame::open(uri_, OpenMode::write, ctx_);
+
+        auto i64_data = make_i64_data();
+        auto u32_data = make_u32_data();
+        auto str_data = make_str_data();
+
+        soma_dataframe->set_column_data(
+            i64_name, i64_data.size(), i64_data.data());
+        soma_dataframe->set_column_data(
+            str_name, str_data.size(), str_data.data());
+        soma_dataframe->set_column_data(
+            u32_name, u32_data.size(), u32_data.data());
+        soma_dataframe->write();
+
+        soma_dataframe->close();
+    }
+};
+
+TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: basic") {
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
@@ -43,45 +192,27 @@ TEST_CASE("SOMADataFrame: basic") {
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
-        auto ctx = std::make_shared<SOMAContext>();
-        std::string uri = "mem://unit-test-dataframe-basic";
-        std::string dim_name = "d0";
-        std::string attr_name = "a0";
-        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
-
-        REQUIRE(!SOMADataFrame::exists(uri, ctx));
+        set_up(
+            std::make_shared<SOMAContext>(), "mem://unit-test-dataframe-basic");
 
         std::vector<helper::DimInfo> dim_infos(
-            {{.name = dim_name,
-              .tiledb_datatype = tiledb_datatype,
-              .dim_max = dim_max,
-              .use_current_domain = use_current_domain}});
+            {i64_dim_info(use_current_domain)});
+        std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
 
-        std::vector<helper::AttrInfo> attr_infos(
-            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+        REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
 
-        auto [schema, index_columns] =
-            helper::create_arrow_schema_and_index_columns(
-                dim_infos, attr_infos);
+        create(dim_infos, attr_infos);
 
-        SOMADataFrame::create(
-            uri,
-            std::move(schema),
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx);
+        REQUIRE(SOMADataFrame::exists(uri_, ctx_));
+        REQUIRE(!SOMASparseNDArray::exists(uri_, ctx_));
+        REQUIRE(!SOMADenseNDArray::exists(uri_, ctx_));
 
-        REQUIRE(SOMADataFrame::exists(uri, ctx));
-        REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
-        REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
-
-        auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
-        REQUIRE(soma_dataframe->uri() == uri);
-        REQUIRE(soma_dataframe->ctx() == ctx);
+        auto soma_dataframe = open(OpenMode::read);
+        REQUIRE(soma_dataframe->uri() == uri_);
+        REQUIRE(soma_dataframe->ctx() == ctx_);
         REQUIRE(soma_dataframe->type() == "SOMADataFrame");
-        std::vector<std::string> expected_index_column_names = {dim_name};
+        std::vector<std::string> expected_index_column_names = {
+            dim_infos[0].name};
         REQUIRE(
             soma_dataframe->index_column_names() ==
             expected_index_column_names);
@@ -93,30 +224,33 @@ TEST_CASE("SOMADataFrame: basic") {
             d0[j] = j;
         std::vector<int> a0(10, 1);
 
-        soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
-        soma_dataframe->set_column_data(attr_name, a0.size(), a0.data());
-        soma_dataframe->set_column_data(dim_name, d0.size(), d0.data());
+        soma_dataframe = open(OpenMode::write);
+        soma_dataframe->set_column_data(
+            dim_infos[0].name, d0.size(), d0.data());
+        soma_dataframe->set_column_data(
+            attr_infos[0].name, a0.size(), a0.data());
         soma_dataframe->write();
         soma_dataframe->close();
 
-        soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
+        soma_dataframe = open(OpenMode::read);
         while (auto batch = soma_dataframe->read_next()) {
             auto arrbuf = batch.value();
-            auto d0span = arrbuf->at(dim_name)->data<int64_t>();
-            auto a0span = arrbuf->at(attr_name)->data<int>();
+            auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
+            auto a0span = arrbuf->at(attr_infos[0].name)->data<int>();
             REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
             REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
         }
         soma_dataframe->close();
 
-        auto soma_object = SOMAObject::open(uri, OpenMode::read, ctx);
-        REQUIRE(soma_object->uri() == uri);
+        auto soma_object = SOMAObject::open(uri_, OpenMode::read, ctx_);
+        REQUIRE(soma_object->uri() == uri_);
         REQUIRE(soma_object->type() == "SOMADataFrame");
         soma_object->close();
     }
 }
 
-TEST_CASE("SOMADataFrame: platform_config") {
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture, "SOMADataFrame: platform_config") {
     std::pair<std::string, tiledb_filter_type_t> filter = GENERATE(
         std::make_pair(
             R"({"name": "GZIP", "COMPRESSION_LEVEL": 3})", TILEDB_FILTER_GZIP),
@@ -158,26 +292,20 @@ TEST_CASE("SOMADataFrame: platform_config") {
         std::make_pair(R"("BYTESHUFFLE")", TILEDB_FILTER_BYTESHUFFLE),
         std::make_pair(R"("NOOP")", TILEDB_FILTER_NONE));
 
-    // TODO this use to be formatted with fmt::format which is part of internal
+    // TODO this used to be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
     std::ostringstream section;
     section << "- filter=" << filter.first;
 
     SECTION(section.str()) {
-        int64_t dim_max = 1000;
         auto use_current_domain = GENERATE(false, true);
-        // TODO this could be formatted with fmt::format which is part of
-        // internal header spd/log/fmt/fmt.h and should not be used. In C++20,
-        // this can be replaced with std::format.
         std::ostringstream section2;
         section2 << "- use_current_domain=" << use_current_domain;
         SECTION(section2.str()) {
-            auto ctx = std::make_shared<SOMAContext>();
-            std::string uri = "mem://unit-test-dataframe-platform-config";
-            std::string dim_name = "d0";
-            std::string attr_name = "a0";
-            tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+            set_up(
+                std::make_shared<SOMAContext>(),
+                "mem://unit-test-dataframe-platform-config");
 
             PlatformConfig platform_config;
             platform_config.dataframe_dim_zstd_level = 6;
@@ -189,28 +317,14 @@ TEST_CASE("SOMADataFrame: platform_config") {
             }
 
             std::vector<helper::DimInfo> dim_infos(
-                {{.name = dim_name,
-                  .tiledb_datatype = tiledb_datatype,
-                  .dim_max = dim_max,
-                  .use_current_domain = use_current_domain}});
+                {i64_dim_info(use_current_domain)});
+            std::vector<helper::AttrInfo> attr_infos({i64_attr_info("a0")});
 
-            std::vector<helper::AttrInfo> attr_infos(
-                {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+            REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
 
-            auto [schema, index_columns] =
-                helper::create_arrow_schema_and_index_columns(
-                    dim_infos, attr_infos);
+            create(dim_infos, attr_infos, platform_config);
 
-            SOMADataFrame::create(
-                uri,
-                std::move(schema),
-                ArrowTable(
-                    std::move(index_columns.first),
-                    std::move(index_columns.second)),
-                ctx,
-                platform_config);
-
-            auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::read, ctx);
+            auto soma_dataframe = open(OpenMode::read);
             auto sch = soma_dataframe->tiledb_schema();
             REQUIRE(
                 sch->offsets_filter_list().filter(0).filter_type() ==
@@ -221,7 +335,7 @@ TEST_CASE("SOMADataFrame: platform_config") {
                 filter.second);
 
             auto dim_filter = sch->domain()
-                                  .dimension(dim_name)
+                                  .dimension(dim_infos[0].name)
                                   .filter_list()
                                   .filter(0);
             REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
@@ -230,7 +344,7 @@ TEST_CASE("SOMADataFrame: platform_config") {
 
             if (filter.second != TILEDB_FILTER_WEBP) {
                 REQUIRE(
-                    sch->attribute(attr_name)
+                    sch->attribute(attr_infos[0].name)
                         .filter_list()
                         .filter(0)
                         .filter_type() == filter.second);
@@ -240,8 +354,7 @@ TEST_CASE("SOMADataFrame: platform_config") {
     }
 }
 
-TEST_CASE("SOMADataFrame: metadata") {
-    int64_t dim_max = 1000;
+TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: metadata") {
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
@@ -249,43 +362,18 @@ TEST_CASE("SOMADataFrame: metadata") {
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
-        auto ctx = std::make_shared<SOMAContext>();
-        std::string uri = "mem://unit-test-collection";
-        std::string dim_name = "d0";
-        std::string attr_name = "a0";
-        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+        set_up(std::make_shared<SOMAContext>(), "mem://unit-test-collection");
 
         std::vector<helper::DimInfo> dim_infos(
-            {{.name = dim_name,
-              .tiledb_datatype = tiledb_datatype,
-              .dim_max = dim_max,
-              .use_current_domain = use_current_domain}});
+            {i64_dim_info(use_current_domain)});
+        std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
 
-        std::vector<helper::AttrInfo> attr_infos(
-            {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+        REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
 
-        auto [schema, index_columns] =
-            helper::create_arrow_schema_and_index_columns(
-                dim_infos, attr_infos);
+        create(dim_infos, attr_infos, PlatformConfig(), TimestampRange(0, 2));
 
-        SOMADataFrame::create(
-            uri,
-            std::move(schema),
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx,
-            PlatformConfig(),
-            TimestampRange(0, 2));
-
-        auto soma_dataframe = SOMADataFrame::open(
-            uri,
-            OpenMode::write,
-            ctx,
-            {},
-            ResultOrder::automatic,
-            TimestampRange(1, 1));
+        auto soma_dataframe = open(
+            OpenMode::write, ResultOrder::automatic, TimestampRange(1, 1));
 
         int32_t val = 100;
         soma_dataframe->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -336,54 +424,38 @@ TEST_CASE("SOMADataFrame: metadata") {
     }
 }
 
-TEST_CASE("SOMADataFrame: bounds-checking") {
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture, "SOMADataFrame: bounds-checking") {
     bool use_current_domain = true;
     int old_max = 100;
     int new_max = 200;
 
-    auto ctx = std::make_shared<SOMAContext>();
-    std::string uri = "mem://unit-test-bounds-checking";
-    std::string dim_name = "d0";
-    std::string attr_name = "a0";
-    tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-    std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+    set_up(std::make_shared<SOMAContext>(), "mem://unit-test-bounds-checking");
 
-    std::vector<helper::DimInfo> dim_infos(
-        {{.name = dim_name,
-          .tiledb_datatype = tiledb_datatype,
-          .dim_max = old_max,
-          .use_current_domain = use_current_domain}});
+    std::vector<helper::DimInfo> dim_infos({i64_dim_info(use_current_domain)});
+    std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
 
-    std::vector<helper::AttrInfo> attr_infos(
-        {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+    REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
 
-    auto [schema, index_columns] =
-        helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
+    create(dim_infos, attr_infos);
 
-    SOMADataFrame::create(
-        uri,
-        std::move(schema),
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
-        ctx);
-
-    auto soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
+    auto soma_dataframe = open(OpenMode::write);
 
     std::vector<int64_t> d0({old_max + 1, old_max + 2});
     std::vector<double> a0({1.5, 2.5});
-    soma_dataframe->set_column_data(dim_name, d0.size(), d0.data());
-    soma_dataframe->set_column_data(attr_name, a0.size(), a0.data());
+    soma_dataframe->set_column_data(dim_infos[0].name, d0.size(), d0.data());
+    soma_dataframe->set_column_data(attr_infos[0].name, a0.size(), a0.data());
     // Writing outside the current domain should fail
     REQUIRE_THROWS(soma_dataframe->write());
     soma_dataframe->close();
 
-    soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
+    soma_dataframe = open(OpenMode::write);
     soma_dataframe->resize(std::vector<int64_t>({new_max}));
     soma_dataframe->close();
 
-    soma_dataframe = SOMADataFrame::open(uri, OpenMode::write, ctx);
-    soma_dataframe->set_column_data(dim_name, d0.size(), d0.data());
-    soma_dataframe->set_column_data(attr_name, a0.size(), a0.data());
+    soma_dataframe = open(OpenMode::write);
+    soma_dataframe->set_column_data(dim_infos[0].name, d0.size(), d0.data());
+    soma_dataframe->set_column_data(attr_infos[0].name, a0.size(), a0.data());
     // Writing after resize should succeed
     soma_dataframe->write();
 
