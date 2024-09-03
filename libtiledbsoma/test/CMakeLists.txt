@@ -23,7 +23,6 @@ add_executable(unit_soma
     unit_soma_array.cc
     unit_soma_group.cc
     unit_soma_dataframe.cc
-    unit_soma_point_cloud.cc
     unit_soma_dense_ndarray.cc
     unit_soma_sparse_ndarray.cc
     unit_soma_collection.cc
