@@ -1191,6 +1191,30 @@ std::vector<int64_t> SOMAArray::maxshape() {
     return _tiledb_domain();
 }
 
+std::optional<int64_t> SOMAArray::_shape_slot_if_soma_joinid_dim() {
+    const std::string dim_name = "soma_joinid";
+
+    if (!arr_->schema().domain().has_dimension(dim_name)) {
+        return std::nullopt;
+    }
+
+    auto current_domain = _get_current_domain();
+    if (current_domain.is_empty()) {
+        return std::nullopt;
+    }
+
+    auto t = current_domain.type();
+    if (t != TILEDB_NDRECTANGLE) {
+        throw TileDBSOMAError("current_domain type is not NDRECTANGLE");
+    }
+
+    NDRectangle ndrect = current_domain.ndrectangle();
+
+    auto range = ndrect.range<int64_t>(dim_name);
+    auto max = range[1] + 1;
+    return std::optional<int64_t>(max);
+}
+
 std::vector<int64_t> SOMAArray::_tiledb_domain() {
     // Variant-indexed dataframes must use a separate path
     _assert_dims_are_int64();
@@ -1276,6 +1300,11 @@ void SOMAArray::_set_current_domain_from_shape(
     // Variant-indexed dataframes must use a separate path
     _assert_dims_are_int64();
 
+  if (_get_current_domain().is_empty()) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must already be sized");
+    }
+
     auto tctx = ctx_->tiledb_ctx();
     ArraySchema schema = arr_->schema();
     Domain domain = schema.domain();
@@ -1319,6 +1348,42 @@ void SOMAArray::_assert_dims_are_int64() {
         throw TileDBSOMAError(
             "[SOMAArray] internal coding error: expected all dims to be int64");
     }
+
+void SOMAArray::resize_soma_joinid_if_dim(
+    const std::vector<int64_t>& newshape) {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must be opened in write mode");
+    }
+
+    ArraySchema schema = arr_->schema();
+    Domain domain = schema.domain();
+    unsigned ndim = domain.ndim();
+    if (newshape.size() != 1) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAArray::resize]: newshape has dimension count {}; needed 1",
+            newshape.size(),
+            ndim));
+    }
+
+    auto tctx = ctx_->tiledb_ctx();
+    CurrentDomain old_current_domain = ArraySchemaExperimental::current_domain(
+        *tctx, schema);
+    NDRectangle ndrect = old_current_domain.ndrectangle();
+
+    CurrentDomain new_current_domain(*tctx);
+    ArraySchemaEvolution schema_evolution(*tctx);
+
+    for (unsigned i = 0; i < ndim; i++) {
+        if (domain.dimension(i).name() == "soma_joinid") {
+            ndrect.set_range<int64_t>(
+                domain.dimension(i).name(), 0, newshape[0] - 1);
+        }
+    }
+
+    new_current_domain.set_ndrectangle(ndrect);
+    schema_evolution.expand_current_domain(new_current_domain);
+    schema_evolution.array_evolve(uri_);
 }
 
 uint64_t SOMAArray::ndim() const {
