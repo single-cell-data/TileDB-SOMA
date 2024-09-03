@@ -627,7 +627,7 @@ class SOMAArray : public SOMAObject {
      */
     void upgrade_shape(const std::vector<int64_t>& newshape);
 
-   /**
+    /**
      * @brief Increases the tiledbsoma shape up to at most the maxshape,
      * resizing the soma_joinid dimension if it is a dimension.
      *
