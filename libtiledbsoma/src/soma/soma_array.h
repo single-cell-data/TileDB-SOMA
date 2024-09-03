@@ -804,8 +804,8 @@ class SOMAArray : public SOMAObject {
     }
 
    protected:
-    // For use nominally by SOMADataFrame. This could be moved in its entirety to
-    // SOMADataFrame, but it would entail moving several SOMAArray attributes
+    // For use nominally by SOMADataFrame. This could be moved in its entirety
+    // to SOMADataFrame, but it would entail moving several SOMAArray attributes
     // from private to protected, which has knock-on effects on the order of
     // constructor initializers, etc.: in total it's simplest to place this
     // here and have SOMADataFrame invoke it.

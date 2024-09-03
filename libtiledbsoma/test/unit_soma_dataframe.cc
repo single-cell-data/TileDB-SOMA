@@ -476,7 +476,6 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim:sjid attr:str,u32",
     "[SOMADataFrame]") {
-    // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
@@ -530,7 +529,6 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim:sjid,u32 attr:str",
     "[SOMADataFrame]") {
-    // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
@@ -590,7 +588,6 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim:sjid,str attr:u32",
     "[SOMADataFrame]") {
-    // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
@@ -654,7 +651,6 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim:str,u32 attr:sjid",
     "[SOMADataFrame]") {
-    // LOG_SET_LEVEL("debug");
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
