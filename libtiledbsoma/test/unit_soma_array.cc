@@ -44,6 +44,7 @@
 
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
+#include "common.h"
 #include "utils/util.h"
 
 using namespace tiledb;
@@ -53,8 +54,6 @@ using namespace Catch::Matchers;
 #ifndef TILEDBSOMA_SOURCE_ROOT
 #define TILEDBSOMA_SOURCE_ROOT "not_defined"
 #endif
-
-const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 
 namespace {
 
@@ -70,17 +69,22 @@ std::tuple<std::string, uint64_t> create_array(
         vfs.remove_dir(uri);
     }
 
+    const char* dim_name = "d0";
+    const char* attr_name = "a0";
+
     // Create schema
     ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
 
     auto dim = Dimension::create<int64_t>(
-        *ctx->tiledb_ctx(), "d0", {0, std::numeric_limits<int64_t>::max() - 1});
+        *ctx->tiledb_ctx(),
+        dim_name,
+        {0, std::numeric_limits<int64_t>::max() - 1});
 
     Domain domain(*ctx->tiledb_ctx());
     domain.add_dimension(dim);
     schema.set_domain(domain);
 
-    auto attr = Attribute::create<int>(*ctx->tiledb_ctx(), "a0");
+    auto attr = Attribute::create<int>(*ctx->tiledb_ctx(), attr_name);
     schema.add_attribute(attr);
     schema.set_allows_dups(allow_duplicates);
     schema.check();
@@ -115,6 +119,9 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
     std::iota(frags.begin(), frags.end(), 0);
     std::shuffle(frags.begin(), frags.end(), std::random_device{});
 
+    const char* dim_name = "d0";
+    const char* attr_name = "a0";
+
     // Write to SOMAArray
     for (auto i = 0; i < num_fragments; ++i) {
         auto frag_num = frags[i];
@@ -140,8 +147,8 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
         std::vector<int> a0(num_cells_per_fragment, frag_num);
 
         // Write data to array
-        soma_array->set_column_data("a0", a0.size(), a0.data());
-        soma_array->set_column_data("d0", d0.size(), d0.data());
+        soma_array->set_column_data(attr_name, a0.size(), a0.data());
+        soma_array->set_column_data(dim_name, d0.size(), d0.data());
         soma_array->write();
         soma_array->close();
     }
@@ -159,14 +166,14 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
 
     Query query(*ctx->tiledb_ctx(), tiledb_array);
     query.set_layout(TILEDB_UNORDERED)
-        .set_data_buffer("d0", expected_d0)
-        .set_data_buffer("a0", expected_a0);
+        .set_data_buffer(dim_name, expected_d0)
+        .set_data_buffer(attr_name, expected_a0);
     query.submit();
 
     tiledb_array.close();
 
-    expected_d0.resize(query.result_buffer_elements()["d0"].second);
-    expected_a0.resize(query.result_buffer_elements()["a0"].second);
+    expected_d0.resize(query.result_buffer_elements()[dim_name].second);
+    expected_a0.resize(query.result_buffer_elements()[attr_name].second);
 
     return {expected_d0, expected_a0};
 }
@@ -179,6 +186,9 @@ TEST_CASE("SOMAArray: nnz") {
     auto allow_duplicates = true;
     int num_cells_per_fragment = 128;
     auto timestamp = 10;
+
+    const char* dim_name = "d0";
+    const char* attr_name = "a0";
 
     // TODO this use to be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
@@ -230,11 +240,13 @@ TEST_CASE("SOMAArray: nnz") {
         // Check that data from SOMAArray::read_next matches expected data
         while (auto batch = soma_array->read_next()) {
             auto arrbuf = batch.value();
-            REQUIRE(arrbuf->names() == std::vector<std::string>({"d0", "a0"}));
+            REQUIRE(
+                arrbuf->names() ==
+                std::vector<std::string>({dim_name, attr_name}));
             REQUIRE(arrbuf->num_rows() == nnz);
 
-            auto d0span = arrbuf->at("d0")->data<int64_t>();
-            auto a0span = arrbuf->at("a0")->data<int>();
+            auto d0span = arrbuf->at(dim_name)->data<int64_t>();
+            auto a0span = arrbuf->at(attr_name)->data<int>();
 
             std::vector<int64_t> d0col(d0span.begin(), d0span.end());
             std::vector<int> a0col(a0span.begin(), a0span.end());
@@ -495,12 +507,15 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
 
     auto ctx = std::make_shared<SOMAContext>();
 
+    const char* dim_name = "d0";
+    const char* attr_name = "a0";
+
     ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
-    auto dim = Dimension::create<int64_t>(*ctx->tiledb_ctx(), "d0", {0, 7});
+    auto dim = Dimension::create<int64_t>(*ctx->tiledb_ctx(), dim_name, {0, 7});
     Domain domain(*ctx->tiledb_ctx());
     domain.add_dimension(dim);
     schema.set_domain(domain);
-    auto attr = Attribute::create<bool>(*ctx->tiledb_ctx(), "a0");
+    auto attr = Attribute::create<bool>(*ctx->tiledb_ctx(), attr_name);
     schema.add_attribute(attr);
     schema.set_allows_dups(true);
 
@@ -514,14 +529,14 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     arrow_schema->release = &ArrowAdapter::release_schema;
     arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
     ArrowSchema* arrow_dim = arrow_schema->children[0] = new ArrowSchema;
-    arrow_dim->format = "l";
-    arrow_dim->name = "d0";
+    arrow_dim->format = strdup(helper::to_arrow_format(TILEDB_INT64).c_str());
+    arrow_dim->name = dim_name;
     arrow_dim->n_children = 0;
     arrow_dim->dictionary = nullptr;
     arrow_dim->release = &ArrowAdapter::release_schema;
     ArrowSchema* arrow_att = arrow_schema->children[1] = new ArrowSchema;
     arrow_att->format = "b";
-    arrow_att->name = "a0";
+    arrow_att->name = attr_name;
     arrow_att->n_children = 0;
     arrow_att->dictionary = nullptr;
     arrow_att->release = &ArrowAdapter::release_schema;
@@ -569,12 +584,12 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
     auto arrbuf = soma_array->read_next().value();
 
-    auto d0_span = arrbuf->at("d0")->data<int64_t>();
+    auto d0_span = arrbuf->at(dim_name)->data<int64_t>();
     REQUIRE(
         std::vector<int64_t>(d0_span.begin(), d0_span.end()) ==
         std::vector<int64_t>(d0_data, d0_data + 8));
 
-    auto a0_span = arrbuf->at("a0")->data<bool>();
+    auto a0_span = arrbuf->at(attr_name)->data<bool>();
     REQUIRE(
         std::vector<bool>(a0_span.begin(), a0_span.end()) ==
         std::vector<bool>(
