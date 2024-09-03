@@ -19,6 +19,7 @@ from typing import (
     Dict,
     Optional,
     Sequence,
+    Tuple,
     Type,
     Union,
 )
@@ -328,6 +329,30 @@ def _write_visium_data_to_experiment_uri(
 
     pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 
+    # Get the size of the fullres image.
+    # TODO: This is a hack.
+    if input_fullres is not None:
+        with Image.open(input_fullres) as im:
+            ref_shape: Tuple[int, ...] = np.array(im).shape
+    elif input_hires is not None:
+        with Image.open(input_hires) as im:
+            width, height, nchannel = np.array(im).shape  # type: ignore
+        scale = scale_factors["tissue_hires_scalef"]
+        ref_shape = (
+            int(np.round(width / scale)),
+            int(np.round(height / scale)),
+            nchannel,
+        )
+    elif input_lowres is not None:
+        with Image.open(input_lowres) as im:
+            width, height, nchannel = np.array(im).shape  # type: ignore
+        scale = scale_factors["tissue_lowres_scalef"]
+        ref_shape = (
+            int(np.round(width / scale)),
+            int(np.round(height / scale)),
+            nchannel,
+        )
+
     # Create axes and transformations
     coord_space = CoordinateSpace(
         (Axis(name="x", units="pixels"), Axis(name="y", units="pixels"))
@@ -371,7 +396,10 @@ def _write_visium_data_to_experiment_uri(
                         tissue_uri = f"{img_uri}/tissue"
                         with MultiscaleImage.create(
                             tissue_uri,
-                            axis_order="YXC",
+                            image_type="YXC",
+                            type=pa.uint8(),
+                            reference_level_shape=ref_shape,
+                            axis_names=("x", "y", "c"),
                             context=ingest_ctx.get("context"),
                         ) as tissue:
                             add_metadata(tissue, ingest_ctx.get("additional_metadata"))
@@ -381,7 +409,6 @@ def _write_visium_data_to_experiment_uri(
                                 tissue,
                                 use_relative_uri=use_relative_uri,
                             )
-                            tissue.axis_order = "YXC"  # TODO Make input arg
                             _write_visium_images(
                                 tissue,
                                 scale_factors,
@@ -592,29 +619,6 @@ def _write_visium_images(
     # Write metadata from scale_factors file
     for key, value in scale_factors.items():
         image_pyramid.metadata[key] = value
-
-    # Set reference shape
-    if input_fullres is not None:
-        with Image.open(input_fullres) as im:
-            width, height = im.size
-        ref_shape = (width, height)
-    elif input_hires is not None:
-        with Image.open(input_hires) as im:
-            width, height = im.size
-        scale = scale_factors["tissue_hires_scalef"]
-        ref_shape = (
-            int(np.round(width / scale)),
-            int(np.round(height / scale)),
-        )
-    elif input_lowres is not None:
-        with Image.open(input_lowres) as im:
-            width, height = im.size
-        scale = scale_factors["tissue_lowres_scalef"]
-        ref_shape = (
-            int(np.round(width / scale)),
-            int(np.round(height / scale)),
-        )
-    image_pyramid.reference_shape = ref_shape
 
     # Add the different levels of zoom to the image pyramid.
     for name, image_path in (

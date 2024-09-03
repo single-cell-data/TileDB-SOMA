@@ -5,10 +5,11 @@
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import pyarrow as pa
 from somacore import (
+    Axis,
     CoordinateSpace,
     CoordinateTransform,
     ResultOrder,
@@ -20,7 +21,7 @@ from typing_extensions import Final, Self
 
 from . import _funcs, _tdb_handles
 from . import pytiledbsoma as clib
-from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
+from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY, SOMA_MULTISCALE_IMAGE_SCHEMA
 from ._coordinates import (
     coordinate_space_from_json,
     coordinate_space_to_json,
@@ -44,7 +45,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Experimental.
     """
 
-    __slots__ = ("_axis_order", "_coord_space", "_levels", "_reference_shape")
+    __slots__ = ("_schema", "_coord_space", "_levels")
     _wrapper_type = _tdb_handles.MultiscaleImageWrapper
 
     _level_prefix: Final = "soma_level_"
@@ -58,17 +59,21 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         shape: Tuple[int, ...]
         width: int = field(init=False)
         height: int = field(init=False)
+        depth: Optional[int] = field(init=False)
         nchannels: Optional[int] = field(init=False)
 
         def __post_init__(self):  # type: ignore[no-untyped-def]
             if len(self.axis_order) != len(self.shape):
                 raise SOMAError()  # TODO Add error message
             self.nchannels = None
+            self.depth = None
             for val, size in zip(self.axis_order, self.shape):
                 if val == "X":
                     self.width = size
                 elif val == "Y":
                     self.height = size
+                elif val == "Z":
+                    self.depth = size
                 elif val == "C":
                     self.nchannel = size
                 else:
@@ -79,9 +84,10 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         cls,
         uri: str,
         *,
-        axis_order: str,
-        full_resolution_shape: Optional[Tuple[int, ...]] = None,
-        coordinate_space: Optional[CoordinateSpace] = None,
+        type: pa.DataType,
+        reference_level_shape: Sequence[int],
+        image_type: str = "CYX",
+        axis_names: Sequence[str] = ("c", "x", "y"),
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
@@ -92,6 +98,17 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             Experimental.
         """
         context = _validate_soma_tiledb_context(context)
+        # TODO: Push down type to schema
+        schema = MultiscaleImageSchema(
+            image_type=image_type.upper(),
+            axis_names=tuple(axis_names),
+            reference_level_shape=tuple(reference_level_shape),
+        )
+        coord_space = CoordinateSpace(
+            tuple(Axis(name) for name in schema.get_coordinate_space_axis_names())
+        )
+        schema_str = schema.to_json()
+        coord_space_str = coordinate_space_to_json(coord_space)
         try:
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
@@ -103,6 +120,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             handle = _tdb_handles.MultiscaleImageWrapper.open(
                 uri, "w", context, tiledb_timestamp
             )
+            handle.metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = schema_str
+            handle.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coord_space_str
             return cls(
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -118,53 +137,38 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         # Do generic SOMA collection initialization.
         super().__init__(handle, **kwargs)
 
-        # Get the reference shape.
-        ref_width = self.metadata.get("soma_image_reference_width")
-        ref_height = self.metadata.get("soma_image_reference_height")
-        if ref_width is not None and ref_height is not None:
-            self._reference_shape: Optional[Tuple[int, ...]] = (
-                int(ref_width),
-                int(ref_height),
+        # Get schema for the multiscale image.
+        try:
+            schema_json = self.metadata[SOMA_MULTISCALE_IMAGE_SCHEMA]
+        except KeyError as ke:
+            raise SOMAError("Missing multiscale image schema metadata") from ke
+        if isinstance(schema_json, bytes):
+            schema_json = str(schema_json, "utf-8")
+        if not isinstance(schema_json, str):
+            raise SOMAError(
+                f"Stored '{SOMA_MULTISCALE_IMAGE_SCHEMA}' metadata is unexpected "
+                f"type {type(schema_json)!r}."
             )
-            if any(val < 0 for val in self._reference_shape):
-                raise SOMAError(
-                    f"Decode invalid reference shape {self._reference_shape}"
-                )
-        elif not (ref_width is None and ref_height is None):
-            raise SOMAError("Failed to fully decode reference shape.")
-        else:
-            self._reference_shape = None
+        self._schema = MultiscaleImageSchema.from_json(schema_json)
 
         # Get the coordinate space.
-        coord_space = self.metadata.get(SOMA_COORDINATE_SPACE_METADATA_KEY)
-        if coord_space is None:
-            self._coord_space: Optional[CoordinateSpace] = None
-        else:
-            self._coord_space = coordinate_space_from_json(coord_space)
+        try:
+            coord_space = self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]
+        except KeyError as ke:
+            raise SOMAError("Missing coordinate space metadata") from ke
+        self._coord_space = coordinate_space_from_json(coord_space)
 
-        # Update the axis order.
-        axis_order = self.metadata.get("soma_axis_order")
-        if axis_order is None:
-            self._axis_order: Optional[str] = None
-        else:
-            if isinstance(axis_order, bytes):
-                axis_order = str(axis_order, "uft-8")
-            if not isinstance(axis_order, str):
-                raise SOMAError(
-                    f"Stored 'soma_axis_order' is unexpected type "
-                    f"{type(axis_order)}."
-                )
-            if not (
-                (len(axis_order) == 2 and set(axis_order) == {"X", "Y"})
-                or (len(axis_order) == 3 and set(axis_order) == {"X", "Y", "C"})
-            ):
-                raise ValueError(
-                    "Invalid axis order {axis_order}. The axis order must be a "
-                    "permutation of 'CYX'."
-                )
-            self._axis_order = axis_order
+        # Check schema and coordinate space have the same axis order
+        schema_axes = self._schema.get_coordinate_space_axis_names()
+        if schema_axes != self._coord_space.axis_names:
+            raise SOMAError(
+                f"Inconsistent axis names stored in metadata. Multiscale schema metadata"
+                f" has coordinate axes '{schema_axes}', but the coordinate space "
+                f"metadata has coordinate axes '{self._coord_space.axis_names}'"
+            )
 
         # Get the image levels.
+        # TODO: Optimize and push down to C++ level
         self._levels = [
             MultiscaleImage.LevelProperties(name=key, **json.loads(val))
             for key, val in self.metadata.items()
@@ -199,9 +203,9 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         # Create the level property and store as metadata.
         props = MultiscaleImage.LevelProperties(
-            axis_order=self.axis_order, name=key, shape=tuple(shape)
+            axis_order=self._schema.image_type, name=key, shape=tuple(shape)
         )
-        props_str = json.dumps({"axis_order": self.axis_order, "shape": shape})
+        props_str = json.dumps({"axis_order": self._schema.image_type, "shape": shape})
         self.metadata[meta_key] = props_str
 
         # Add the level properties to level list.
@@ -219,6 +223,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             self._levels.append(props)
 
         # Create and return new level array.
+
         return self._add_new_element(
             key,
             DenseNDArray,
@@ -234,32 +239,11 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         )
 
     @property
-    def axis_order(self) -> str:
-        if self._axis_order is None:
-            raise KeyError("The axis order is not set.")
-        return self._axis_order
-
-    @axis_order.setter
-    def axis_order(self, value: str) -> None:
-        if self._axis_order is not None and self._levels:
-            raise ValueError(
-                "The axis order is already set; if cannot be changed after adding "
-                "images."
-            )
-        value = str(value).upper()
-        if not (
-            (len(value) == 2 and set(value) == {"X", "Y"})
-            or (len(value) == 3 and set(value) == {"X", "Y", "C"})
-        ):
-            raise ValueError(
-                "Invalid axis order {value}. The axis order must be a permutation of "
-                "'CYX'."
-            )
-        self.metadata["soma_axis_order"] = value
-        self._axis_order = value
+    def axis_names(self) -> Tuple[str, ...]:
+        return self._schema.axis_names
 
     @property
-    def coordinate_space(self) -> Optional[CoordinateSpace]:
+    def coordinate_space(self) -> CoordinateSpace:
         """Coordinate system for this image.
 
         The coordinate space is defined in order [width, height] even if the
@@ -269,20 +253,46 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
     @coordinate_space.setter
     def coordinate_space(self, value: CoordinateSpace) -> None:
-        if self._reference_shape is None:
-            raise SOMAError(
-                "The reference shape must be set before the coordinate space"
-            )
-        if not isinstance(value, CoordinateSpace):
-            raise TypeError(f"Invalid type {type(value).__name__}.")
-        if len(value) != 2:
-            raise ValueError("Coordinate space must have exactly 2 axes.")
-        # TODO: Do we need some way to specify YX vs XY and propagate to
-        # sub-images.
+        if self._coord_space is not None:
+            if value.axis_names != self._coord_space.axis_names:
+                raise ValueError(
+                    f"Cannot change axis names of a multiscale image. Existing axis "
+                    f"names are {self._coord_space.axis_names}. New coordinate space "
+                    f"has axis names {value.axis_names}."
+                )
         self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
             value
         )
         self._coord_space = value
+
+    def get_transformation_to_level(self, level: Union[str, int]) -> ScaleTransform:
+        if isinstance(level, str):
+            for val in self._levels:
+                if val.name == level:
+                    level_props = val
+                else:
+                    raise KeyError("No level with name '{level}'")
+        else:
+            level_props = self._levels[level]
+        width = level_props.width
+        height = level_props.height
+        # NOTE: Ignoring possibility of different axis order for different levels
+        # since that will be removed.
+        return ScaleTransform(
+            input_axes=self._coord_space.axis_names,
+            output_axes=self._coord_space.axis_names,
+            scale_factors=[
+                width / self._schema.reference_level_shape[0],
+                height / self._schema.reference_level_shape[1],
+            ],
+        )
+
+    def get_transformation_from_level(self, level: Union[str, int]) -> ScaleTransform:
+        raise NotImplementedError()
+
+    @property
+    def image_type(self) -> str:
+        return self._schema.image_type
 
     @property
     def level_count(self) -> int:
@@ -308,51 +318,76 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         raise NotImplementedError()
 
     @property
-    def reference_shape(self) -> Tuple[int, ...]:
+    def reference_level(self) -> Optional[int]:
+        """Returns the level of the image the coordinate system is defined with
+        respect to."""
+        raise NotImplementedError()
+
+    @property
+    def reference_level_shape(self) -> Tuple[int, ...]:
         """The shape of the reference level the coordinate system is defined on.
 
         The shape must be provide in order (width, height).
         """
-        if self._reference_shape is None:
+        if self._schema.reference_level_shape is None:
             raise SOMAError("Reference shape is not set.")
-        return self._reference_shape
+        return self._schema.reference_level_shape
 
-    @reference_shape.setter
-    def reference_shape(self, value: Tuple[int, ...]) -> None:
-        if self._reference_shape is not None:
-            raise SOMAError("Cannot set reference shape; it is already set.")
-        if len(value) != 2 or any(
-            (not isinstance(val, int) or val < 0) for val in value
+
+# TODO: Push down to C++ layer
+@dataclass
+class MultiscaleImageSchema:
+
+    image_type: str
+    axis_names: Tuple[str, ...]
+    reference_level_shape: Tuple[int, ...]
+    nchannels: Optional[int] = field(init=False)
+
+    def __post_init__(self):  # type: ignore[no-untyped-def]
+        if not (
+            (len(self.image_type) == 2 and set(self.image_type) == {"X", "Y"})
+            or (len(self.image_type) == 3 and set(self.image_type) == {"C", "X", "Y"})
         ):
-            raise ValueError("Invalid value")
-        # TODO: Implement special handling of multi-value metadata
-        self.metadata["soma_image_reference_width"] = value[0]
-        self.metadata["soma_image_reference_height"] = value[1]
-        self._reference_shape = (value[0], value[1])
-
-    def get_transformation_to_level(self, level: Union[str, int]) -> ScaleTransform:
-        if self._reference_shape is None or self._coord_space is None:
-            raise SOMAError(
-                "Cannot return transform if the reference shape and coordinate system "
-                "for this image collection are not set."
+            raise NotImplementedError(
+                f"{self.image_type} is not a supported image type."
             )
-        if isinstance(level, str):
-            for val in self._levels:
-                if val.name == level:
-                    level_props = val
-                else:
-                    raise KeyError("No level with name '{level}'")
+        self.ndim = len(self.image_type)
+        if len(self.axis_names) != self.ndim:
+            raise ValueError(
+                f"{self.ndim} axis names must be provided for a multiscale image "
+                f"with image type {self.image_type}."
+            )
+        if len(set(self.axis_names)) != self.ndim:
+            raise ValueError("Cannot have repeated axis names.")
+
+        channel_index = self.image_type.find("C")
+        if channel_index == -1:
+            self.nchannels = None
         else:
-            level_props = self._levels[level]
-        width = level_props.width
-        height = level_props.height
-        # NOTE: Ignoring possibility of different axis order for different levels
-        # since that will be removed.
-        return ScaleTransform(
-            input_axes=self._coord_space.axis_names,
-            output_axes=self._coord_space.axis_names,
-            scale_factors=[
-                width / self._reference_shape[0],
-                height / self._reference_shape[1],
-            ],
+            self.nchannels = self.reference_level_shape[channel_index]
+
+    @classmethod
+    def from_json(cls, data: str) -> Self:
+        kwargs = json.loads(data)
+        return cls(**kwargs)
+
+    def create_coordinate_space(self) -> CoordinateSpace:
+        return CoordinateSpace(
+            tuple(Axis(name) for name in self.get_coordinate_space_axis_names())
         )
+
+    def get_coordinate_space_axis_names(self) -> Tuple[str, ...]:
+        if self.nchannels is None:
+            return self.axis_names
+        channel_index = self.image_type.find("C")
+        return tuple(
+            self.axis_names[:channel_index] + self.axis_names[channel_index + 1 :]
+        )
+
+    def to_json(self) -> str:
+        kwargs: Dict[str, Any] = {
+            "image_type": self.image_type,
+            "axis_names": self.axis_names,
+            "reference_level_shape": self.reference_level_shape,
+        }
+        return json.dumps(kwargs)
