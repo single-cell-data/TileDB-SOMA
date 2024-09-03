@@ -1277,6 +1277,11 @@ void SOMAArray::resize(const std::vector<int64_t>& newshape) {
             "[SOMAArray::resize] array must be opened in write mode");
     }
 
+    if (_get_current_domain().is_empty()) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must already be sized");
+    }
+
     auto tctx = ctx_->tiledb_ctx();
     ArraySchema schema = arr_->schema();
     Domain domain = schema.domain();
@@ -1300,6 +1305,43 @@ void SOMAArray::resize(const std::vector<int64_t>& newshape) {
     for (unsigned i = 0; i < n; i++) {
         ndrect.set_range<int64_t>(
             domain.dimension(i).name(), 0, newshape[i] - 1);
+    }
+
+    new_current_domain.set_ndrectangle(ndrect);
+    schema_evolution.expand_current_domain(new_current_domain);
+    schema_evolution.array_evolve(uri_);
+}
+
+void SOMAArray::resize_soma_joinid_if_dim(
+    const std::vector<int64_t>& newshape) {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must be opened in write mode");
+    }
+
+    ArraySchema schema = arr_->schema();
+    Domain domain = schema.domain();
+    unsigned ndim = domain.ndim();
+    if (newshape.size() != 1) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAArray::resize]: newshape has dimension count {}; needed 1",
+            newshape.size(),
+            ndim));
+    }
+
+    auto tctx = ctx_->tiledb_ctx();
+    CurrentDomain old_current_domain = ArraySchemaExperimental::current_domain(
+        *tctx, schema);
+    NDRectangle ndrect = old_current_domain.ndrectangle();
+
+    CurrentDomain new_current_domain(*tctx);
+    ArraySchemaEvolution schema_evolution(*tctx);
+
+    for (unsigned i = 0; i < ndim; i++) {
+        if (domain.dimension(i).name() == "soma_joinid") {
+            ndrect.set_range<int64_t>(
+                domain.dimension(i).name(), 0, newshape[0] - 1);
+        }
     }
 
     new_current_domain.set_ndrectangle(ndrect);

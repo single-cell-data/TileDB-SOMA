@@ -620,6 +620,22 @@ class SOMAArray : public SOMAObject {
     void resize(const std::vector<int64_t>& newshape);
 
     /**
+     * @brief Increases the tiledbsoma shape up to at most the maxshape,
+     * resizing the soma_joinid dimension if it is a dimension.
+     *
+     * While SOMA SparseNDArray and DenseNDArray, along with default-indexed
+     * DataFrame, have int64_t dims, non-default-indexed DataFrame objects need
+     * not: it is only required that they have a dim _or_ an attr called
+     * soma_joinid. If soma_joinid is one of the dims, it will be resized while
+     * the others will be preserved. If soma_joinid is not one of the dims,
+     * nothing will be changed, as nothing _needs_ to be changed.
+     *
+     * @return Throws if the requested shape exceeds the array's create-time
+     * maxshape. Throws if the array does not have current-domain support.
+     */
+    void resize_soma_joinid_if_dim(const std::vector<int64_t>& newshape);
+
+    /**
      * @brief Get the number of dimensions.
      *
      * @return uint64_t Number of dimensions.
