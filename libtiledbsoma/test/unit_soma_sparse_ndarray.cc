@@ -129,19 +129,34 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         REQUIRE_THROWS(soma_sparse->write());
         soma_sparse->close();
 
-        soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-        auto new_shape = std::vector<int64_t>({dim_max * 2});
         if (!use_current_domain) {
+            auto new_shape = std::vector<int64_t>({dim_max});
+
+            soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
             // Without current-domain support: this should throw since
             // one cannot resize what has not been sized.
             REQUIRE_THROWS(soma_sparse->resize(new_shape));
-        } else {
+            // Now set the shape
+            soma_sparse->upgrade_shape(new_shape);
+            // Should not fail since we're setting it to what it already is.
             soma_sparse->resize(new_shape);
-        }
-        soma_sparse->close();
+            soma_sparse->close();
 
-        // Try out-of-bounds write after resize.
-        if (use_current_domain) {
+            soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
+            REQUIRE(soma_sparse->shape() == new_shape);
+            soma_sparse->close();
+
+        } else {
+            auto new_shape = std::vector<int64_t>({dim_max * 2});
+
+            soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+            // Should throw since this already has a shape (core current
+            // domain).
+            REQUIRE_THROWS(soma_sparse->upgrade_shape(new_shape));
+            soma_sparse->resize(new_shape);
+            soma_sparse->close();
+
+            // Try out-of-bounds write after resize.
             soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
             soma_sparse->set_column_data(dim_name, d0b.size(), d0b.data());
             soma_sparse->set_column_data(attr_name, a0b.size(), a0b.data());

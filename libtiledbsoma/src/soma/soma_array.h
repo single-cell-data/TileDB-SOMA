@@ -794,6 +794,14 @@ class SOMAArray : public SOMAObject {
     void resize(const std::vector<int64_t>& newshape);
 
     /**
+     * @brief Given an old-style array without current domain, sets its
+     * current domain. This is applicable only to arrays having all dims
+     * of int64 type. Namely, all SparseNDArray/DenseNDArray, and
+     * default-indexed DataFrame.
+     */
+    void upgrade_shape(const std::vector<int64_t>& newshape);
+
+    /**
      * @brief Increases the tiledbsoma shape up to at most the maxshape,
      * resizing the soma_joinid dimension if it is a dimension.
      *
@@ -855,6 +863,11 @@ class SOMAArray : public SOMAObject {
         return tiledb::ArraySchemaExperimental::current_domain(
             *ctx_->tiledb_ctx(), arr_->schema());
     }
+
+    /**
+     * Helper method for resize and upgrade_shape.
+     */
+    void _set_current_domain_from_shape(const std::vector<int64_t>& newshape);
 
     /**
      * While SparseNDArray, DenseNDArray, and default-indexed DataFrame

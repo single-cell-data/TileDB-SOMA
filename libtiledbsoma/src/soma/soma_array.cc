@@ -1314,17 +1314,35 @@ std::vector<int64_t> SOMAArray::maxshape() {
 }
 
 void SOMAArray::resize(const std::vector<int64_t>& newshape) {
+    if (_get_current_domain().is_empty()) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must already have a shape");
+    }
+    _set_current_domain_from_shape(newshape);
+}
+
+void SOMAArray::upgrade_shape(const std::vector<int64_t>& newshape) {
+    if (!_get_current_domain().is_empty()) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must not already have a shape");
+    }
+    _set_current_domain_from_shape(newshape);
+}
+
+void SOMAArray::_set_current_domain_from_shape(
+    const std::vector<int64_t>& newshape) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(
             "[SOMAArray::resize] array must be opened in write mode");
     }
 
+    // Variant-indexed dataframes must use a separate path
+    _check_dims_are_int64();
+
     if (_get_current_domain().is_empty()) {
         throw TileDBSOMAError(
             "[SOMAArray::resize] array must already be sized");
     }
-
-    _check_dims_are_int64();
 
     auto tctx = ctx_->tiledb_ctx();
     ArraySchema schema = arr_->schema();
