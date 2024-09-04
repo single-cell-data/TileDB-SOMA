@@ -1216,6 +1216,9 @@ std::optional<int64_t> SOMAArray::_shape_slot_if_soma_joinid_dim() {
 }
 
 std::vector<int64_t> SOMAArray::_tiledb_domain() {
+    // Variant-indexed dataframes must use a separate path
+    _assert_dims_are_int64();
+
     std::vector<int64_t> result;
     auto dimensions = mq_->schema()->domain().dimensions();
 
@@ -1243,6 +1246,9 @@ std::vector<int64_t> SOMAArray::_tiledb_domain() {
 }
 
 std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
+    // Variant-indexed dataframes must use a separate path
+    _assert_dims_are_int64();
+
     std::vector<int64_t> result;
 
     auto current_domain = tiledb::ArraySchemaExperimental::current_domain(
@@ -1262,9 +1268,6 @@ std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
     NDRectangle ndrect = current_domain.ndrectangle();
 
     for (auto dimension_name : dimension_names()) {
-        // TODO: non-int64 types for SOMADataFrame extra dims.
-        // This simply needs to be integrated with switch statements as in the
-        // legacy code below.
         auto range = ndrect.range<int64_t>(dimension_name);
         result.push_back(range[1] + 1);
     }
@@ -1272,10 +1275,30 @@ std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
 }
 
 void SOMAArray::resize(const std::vector<int64_t>& newshape) {
+    if (_get_current_domain().is_empty()) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must already have a shape");
+    }
+    _set_current_domain_from_shape(newshape);
+}
+
+void SOMAArray::upgrade_shape(const std::vector<int64_t>& newshape) {
+    if (!_get_current_domain().is_empty()) {
+        throw TileDBSOMAError(
+            "[SOMAArray::resize] array must not already have a shape");
+    }
+    _set_current_domain_from_shape(newshape);
+}
+
+void SOMAArray::_set_current_domain_from_shape(
+    const std::vector<int64_t>& newshape) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(
             "[SOMAArray::resize] array must be opened in write mode");
     }
+
+    // Variant-indexed dataframes must use a separate path
+    _assert_dims_are_int64();
 
     if (_get_current_domain().is_empty()) {
         throw TileDBSOMAError(
@@ -1289,9 +1312,6 @@ void SOMAArray::resize(const std::vector<int64_t>& newshape) {
     CurrentDomain new_current_domain(*tctx);
 
     NDRectangle ndrect(*tctx, domain);
-
-    // TODO: non-int64 for DataFrame when it has extra index dims.
-    // This will be via a resize-helper.
 
     unsigned n = domain.ndim();
     if ((unsigned)newshape.size() != n) {
@@ -1312,6 +1332,24 @@ void SOMAArray::resize(const std::vector<int64_t>& newshape) {
     schema_evolution.array_evolve(uri_);
 }
 
+bool SOMAArray::_dims_are_int64() {
+    ArraySchema schema = arr_->schema();
+    Domain domain = schema.domain();
+    for (auto dimension : domain.dimensions()) {
+        if (dimension.type() != TILEDB_INT64) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void SOMAArray::_assert_dims_are_int64() {
+    if (!_dims_are_int64()) {
+        throw TileDBSOMAError(
+            "[SOMAArray] internal coding error: expected all dims to be int64");
+    }
+}
+
 void SOMAArray::resize_soma_joinid_if_dim(
     const std::vector<int64_t>& newshape) {
     if (mq_->query_type() != TILEDB_WRITE) {
@@ -1324,7 +1362,8 @@ void SOMAArray::resize_soma_joinid_if_dim(
     unsigned ndim = domain.ndim();
     if (newshape.size() != 1) {
         throw TileDBSOMAError(fmt::format(
-            "[SOMAArray::resize]: newshape has dimension count {}; needed 1",
+            "[SOMAArray::resize]: newshape has dimension count {}; needed "
+            "1",
             newshape.size(),
             ndim));
     }
