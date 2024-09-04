@@ -165,20 +165,23 @@ class SOMADataFrame : public SOMAArray {
     uint64_t count();
 
     /**
-     * For DataFrame with default indexing, namely, a single int64_t
-     * soma_joinid, returns the same as SOMAArray. For DataFrame with
-     * soma_joinid being a dim along with other dims (optional behavior), return
-     * the slot along that dim. For DataFrame with soma_joinid being an attr,
-     * not a dim at all, returns nnz().
+     * While application-level SOMA DataFrame doesn't have shape
+     * and maxshape, these are important test-point accessors,
+     * as well as crucial for experiment-level resize within tiledbsoma.io.
      *
      * Note that the SOMA spec for SOMADataFrame mandates a .domain() accessor,
-     * which is distinct, and type-polymorphic. This shape accessor exists
-     * because people can and do call .shape() on SOMA DataFrames, and we have
-     * to keep letting them do that.
+     * which is distinct, and type-polymorphic.
      *
-     * @return int64_t
+     * @return std::optional<int64_t>
      */
-    std::vector<int64_t> shape();
+    std::optional<int64_t> maybe_soma_joinid_shape();
+
+    /**
+     * See comments for maybe_soma_joinid_shape.
+     *
+     * @return std::optional<int64_t>
+     */
+    std::optional<int64_t> maybe_soma_joinid_maxshape();
 };
 
 }  // namespace tiledbsoma

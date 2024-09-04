@@ -270,6 +270,20 @@ class SOMAArray : public SOMAObject {
         ResultOrder result_order = ResultOrder::automatic);
 
     /**
+     * @brief Get the number of dimensions.
+     *
+     * @return uint64_t Number of dimensions.
+     */
+    uint64_t ndim() const;
+
+    /**
+     * @brief Get the name of each dimensions.
+     *
+     * @return std::vector<std::string> Name of each dimensions.
+     */
+    std::vector<std::string> dimension_names() const;
+
+    /**
      * @brief Set the dimension slice using one point
      *
      * @note Partitioning is not supported
@@ -544,13 +558,6 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * @brief Get the total number of unique cells in the array.
-     *
-     * @return uint64_t Total number of unique cells
-     */
-    uint64_t nnz();
-
-    /**
      * @brief Get the TileDB ArraySchema. This should eventually
      * be removed in lieu of arrow_schema below.
      *
@@ -569,6 +576,173 @@ class SOMAArray : public SOMAObject {
         return ArrowAdapter::arrow_schema_from_tiledb_array(
             ctx_->tiledb_ctx(), arr_);
     }
+
+    /**
+     * @brief Get the mapping of attributes to Enumerations.
+     *
+     * @return std::map<std::string, Enumeration>
+     */
+    std::map<std::string, Enumeration> get_attr_to_enum_mapping();
+
+    /**
+     * @brief Get the Enumeration name associated with the given Attr.
+     *
+     * @return std::optional<std::string> The enumeration name if one exists.
+     */
+    std::optional<std::string> get_enum_label_on_attr(std::string attr_name);
+
+    /**
+     * @brief Check if the given attribute has an associated enumeration.
+     *
+     * @return bool
+     */
+    bool attr_has_enum(std::string attr_name);
+
+    /**
+     * Set metadata key-value items to an open array. The array must
+     * opened in WRITE mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be added. UTF-8 encodings
+     *     are acceptable.
+     * @param value_type The datatype of the value.
+     * @param value_num The value may consist of more than one items of the
+     *     same datatype. This argument indicates the number of items in the
+     *     value component of the metadata.
+     * @param value The metadata value in binary form.
+     * @param force A boolean toggle to suppress internal checks, defaults to
+     *     false.
+     *
+     * @note The writes will take effect only upon closing the array.
+     */
+    void set_metadata(
+        const std::string& key,
+        tiledb_datatype_t value_type,
+        uint32_t value_num,
+        const void* value,
+        bool force = false);
+
+    /**
+     * Delete a metadata key-value item from an open array. The array must
+     * be opened in WRITE mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be deleted.
+     *
+     * @note The writes will take effect only upon closing the array.
+     *
+     * @note If the key does not exist, this will take no effect
+     *     (i.e., the function will not error out).
+     */
+    void delete_metadata(const std::string& key);
+
+    /**
+     * @brief Given a key, get the associated value datatype, number of
+     * values, and value in binary form. The array must be opened in READ
+     * mode, otherwise the function will error out.
+     *
+     * The value may consist of more than one items of the same datatype.
+     * Keys that do not exist in the metadata will be return NULL for the value.
+     *
+     * **Example:**
+     * @code{.cpp}
+     * // Open the array for reading
+     * tiledbsoma::SOMAArray soma_array = SOMAArray::open(TILEDB_READ,
+     "s3://bucket-name/group-name");
+     * tiledbsoma::MetadataValue meta_val = soma_array->get_metadata("key");
+     * std::string key = std::get<MetadataInfo::key>(meta_val);
+     * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
+     * uint32_t num = std::get<MetadataInfo::num>(meta_val);
+     * const void* value = *((const
+     int32_t*)std::get<MetadataInfo::value>(meta_val));
+     * @endcode
+     *
+     * @param key The key of the metadata item to be retrieved. UTF-8
+     * encodings are acceptable.
+     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
+     * uint32_t, const void*>)
+     */
+    std::optional<MetadataValue> get_metadata(const std::string& key);
+
+    /**
+     * Get a mapping of all metadata keys with its associated value datatype,
+     * number of values, and value in binary form.
+     *
+     * @return std::map<std::string, MetadataValue>
+     */
+    std::map<std::string, MetadataValue> get_metadata();
+
+    /**
+     * Check if the key exists in metadata from an open array. The array
+     * must be opened in READ mode, otherwise the function will error out.
+     *
+     * @param key The key of the metadata item to be checked. UTF-8
+     * encodings are acceptable.
+     * @return true if the key exists, else false.
+     */
+    bool has_metadata(const std::string& key);
+
+    /**
+     * Return then number of metadata items in an open array. The array must
+     * be opened in READ mode, otherwise the function will error out.
+     */
+    uint64_t metadata_num() const;
+
+    /**
+     * Validates input parameters before opening array.
+     */
+    void validate(
+        OpenMode mode,
+        std::string_view name,
+        std::optional<TimestampRange> timestamp);
+
+    /**
+     * Return optional timestamp pair SOMAArray was opened with.
+     */
+    std::optional<TimestampRange> timestamp();
+
+    /**
+     * Retrieves the non-empty domain from the array. This is the union of the
+     * non-empty domains of the array fragments.
+     */
+    template <typename T>
+    std::pair<T, T> non_empty_domain(const std::string& name) {
+        try {
+            return arr_->non_empty_domain<T>(name);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
+    }
+
+    /**
+     * Retrieves the non-empty domain from the array on the given dimension.
+     * This is the union of the non-empty domains of the array fragments.
+     * Applicable only to var-sized dimensions.
+     */
+    std::pair<std::string, std::string> non_empty_domain_var(
+        const std::string& name) {
+        try {
+            return arr_->non_empty_domain_var(name);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
+    }
+
+    /**
+     * Returns the domain of the given dimension.
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> domain(const std::string& name) const {
+        return arr_->schema().domain().dimension(name).domain<T>();
+    }
+
+    /**
+     * @brief Get the total number of unique cells in the array.
+     *
+     * @return uint64_t Total number of unique cells
+     */
+    uint64_t nnz();
 
     /**
      * @brief Get the current capacity of each dimension.
@@ -641,184 +815,7 @@ class SOMAArray : public SOMAObject {
      * @return Throws if the requested shape exceeds the array's create-time
      * maxshape. Throws if the array does not have current-domain support.
      */
-    void resize_soma_joinid_if_dim(const std::vector<int64_t>& newshape);
-
-    /**
-     * @brief Get the number of dimensions.
-     *
-     * @return uint64_t Number of dimensions.
-     */
-    uint64_t ndim() const;
-
-    /**
-     * Retrieves the non-empty domain from the array. This is the union of the
-     * non-empty domains of the array fragments.
-     */
-    template <typename T>
-    std::pair<T, T> non_empty_domain(const std::string& name) {
-        try {
-            return arr_->non_empty_domain<T>(name);
-        } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
-        }
-    }
-
-    /**
-     * Retrieves the non-empty domain from the array on the given dimension.
-     * This is the union of the non-empty domains of the array fragments.
-     * Applicable only to var-sized dimensions.
-     */
-    std::pair<std::string, std::string> non_empty_domain_var(
-        const std::string& name) {
-        try {
-            return arr_->non_empty_domain_var(name);
-        } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
-        }
-    }
-
-    /**
-     * Returns the domain of the given dimension.
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
-     */
-    template <typename T>
-    std::pair<T, T> domain(const std::string& name) const {
-        return arr_->schema().domain().dimension(name).domain<T>();
-    }
-
-    /**
-     * @brief Get the name of each dimensions.
-     *
-     * @return std::vector<std::string> Name of each dimensions.
-     */
-    std::vector<std::string> dimension_names() const;
-
-    /**
-     * @brief Get the mapping of attributes to Enumerations.
-     *
-     * @return std::map<std::string, Enumeration>
-     */
-    std::map<std::string, Enumeration> get_attr_to_enum_mapping();
-
-    /**
-     * @brief Get the Enumeration name associated with the given Attr.
-     *
-     * @return std::optional<std::string> The enumeration name if one exists.
-     */
-    std::optional<std::string> get_enum_label_on_attr(std::string attr_name);
-
-    /**
-     * @brief Check if the given attribute has an associated enumeration.
-     *
-     * @return bool
-     */
-    bool attr_has_enum(std::string attr_name);
-
-    /**
-     * Set metadata key-value items to an open array. The array must
-     * opened in WRITE mode, otherwise the function will error out.
-     *
-     * @param key The key of the metadata item to be added. UTF-8 encodings
-     *     are acceptable.
-     * @param value_type The datatype of the value.
-     * @param value_num The value may consist of more than one items of the
-     *     same datatype. This argument indicates the number of items in the
-     *     value component of the metadata.
-     * @param value The metadata value in binary form.
-     * @param force A boolean toggle to suppress internal checks, defaults to
-     *     false.
-     *
-     * @note The writes will take effect only upon closing the array.
-     */
-    void set_metadata(
-        const std::string& key,
-        tiledb_datatype_t value_type,
-        uint32_t value_num,
-        const void* value,
-        bool force = false);
-
-    /**
-     * Delete a metadata key-value item from an open array. The array must
-     * be opened in WRITE mode, otherwise the function will error out.
-     *
-     * @param key The key of the metadata item to be deleted.
-     *
-     * @note The writes will take effect only upon closing the array.
-     *
-     * @note If the key does not exist, this will take no effect
-     *     (i.e., the function will not error out).
-     */
-    void delete_metadata(const std::string& key);
-
-    /**
-     * @brief Given a key, get the associated value datatype, number of
-     * values, and value in binary form. The array must be opened in READ
-     mode,
-     * otherwise the function will error out.
-     *
-     * The value may consist of more than one items of the same datatype.
-     Keys
-     * that do not exist in the metadata will be return NULL for the value.
-     *
-     * **Example:**
-     * @code{.cpp}
-     * // Open the array for reading
-     * tiledbsoma::SOMAArray soma_array = SOMAArray::open(TILEDB_READ,
-     "s3://bucket-name/group-name");
-     * tiledbsoma::MetadataValue meta_val = soma_array->get_metadata("key");
-     * std::string key = std::get<MetadataInfo::key>(meta_val);
-     * tiledb_datatype_t dtype = std::get<MetadataInfo::dtype>(meta_val);
-     * uint32_t num = std::get<MetadataInfo::num>(meta_val);
-     * const void* value = *((const
-     int32_t*)std::get<MetadataInfo::value>(meta_val));
-     * @endcode
-     *
-     * @param key The key of the metadata item to be retrieved. UTF-8
-     encodings
-     *     are acceptable.
-     * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
-     * uint32_t, const void*>)
-     */
-    std::optional<MetadataValue> get_metadata(const std::string& key);
-
-    /**
-     * Get a mapping of all metadata keys with its associated value datatype,
-     * number of values, and value in binary form.
-     *
-     * @return std::map<std::string, MetadataValue>
-     */
-    std::map<std::string, MetadataValue> get_metadata();
-
-    /**
-     * Check if the key exists in metadata from an open array. The array
-     * must be opened in READ mode, otherwise the function will error out.
-     *
-     * @param key The key of the metadata item to be checked. UTF-8
-     * encodings are acceptable.
-     * @return true if the key exists, else false.
-     */
-    bool has_metadata(const std::string& key);
-
-    /**
-     * Return then number of metadata items in an open array. The array must
-     * be opened in READ mode, otherwise the function will error out.
-     */
-    uint64_t metadata_num() const;
-
-    /**
-     * Validates input parameters before opening array.
-     */
-    void validate(
-        OpenMode mode,
-        std::string_view name,
-        std::optional<TimestampRange> timestamp);
-
-    /**
-     * Return optional timestamp pair SOMAArray was opened with.
-     */
-    std::optional<TimestampRange> timestamp();
+    void maybe_resize_soma_joinid(const std::vector<int64_t>& newshape);
 
     /**
      * Exposed for testing purposes.
@@ -828,12 +825,18 @@ class SOMAArray : public SOMAObject {
     }
 
    protected:
-    // For use nominally by SOMADataFrame. This could be moved in its entirety
-    // to SOMADataFrame, but it would entail moving several SOMAArray attributes
-    // from private to protected, which has knock-on effects on the order of
-    // constructor initializers, etc.: in total it's simplest to place this
-    // here and have SOMADataFrame invoke it.
-    std::optional<int64_t> _shape_slot_if_soma_joinid_dim();
+    // These two are for use nominally by SOMADataFrame. This could be moved in
+    // its entirety to SOMADataFrame, but it would entail moving several
+    // SOMAArray attributes from private to protected, which has knock-on
+    // effects on the order of constructor initializers, etc.: in total it's
+    // simplest to place this here and have SOMADataFrame invoke it.
+    //
+    // They return the shape and maxshape slots for the soma_joinid dim, if
+    // the array has one. These are important test-points and dev-internal
+    // access-points, in particular, for the tiledbsoma-io experiment-level
+    // resizer.
+    std::optional<int64_t> _maybe_soma_joinid_shape();
+    std::optional<int64_t> _maybe_soma_joinid_maxshape();
 
    private:
     //===================================================================
@@ -876,7 +879,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Same, but throws.
      */
-    void _assert_dims_are_int64();
+    void _check_dims_are_int64();
 
     /**
      * With old shape: core domain mapped to tiledbsoma shape; core current
@@ -889,6 +892,8 @@ class SOMAArray : public SOMAObject {
      */
     std::vector<int64_t> _tiledb_domain();
     std::vector<int64_t> _tiledb_current_domain();
+    std::optional<int64_t> _maybe_soma_joinid_tiledb_current_domain();
+    std::optional<int64_t> _maybe_soma_joinid_tiledb_domain();
 
     bool _extend_enumeration(
         ArrowSchema* value_schema,
@@ -1379,7 +1384,7 @@ class SOMAArray : public SOMAObject {
     bool submitted_ = false;
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
-    uint64_t nnz_slow();
+    uint64_t _nnz_slow();
 
     // ArrayBuffers to hold ColumnBuffers alive when submitting to write
     // query
