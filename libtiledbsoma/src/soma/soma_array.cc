@@ -1186,7 +1186,7 @@ bool SOMAArray::_dims_are_int64() {
     return true;
 }
 
-void SOMAArray::_assert_dims_are_int64() {
+void SOMAArray::_check_dims_are_int64() {
     if (!_dims_are_int64()) {
         throw TileDBSOMAError(
             "[SOMAArray] internal coding error: expected all dims to be int64");
@@ -1220,7 +1220,7 @@ std::optional<int64_t> SOMAArray::_maybe_sjid_maxshape() {
 
 std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
     // Variant-indexed dataframes must use a separate path
-    _assert_dims_are_int64();
+    _check_dims_are_int64();
 
     std::vector<int64_t> result;
 
@@ -1249,7 +1249,7 @@ std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
 
 std::vector<int64_t> SOMAArray::_tiledb_domain() {
     // Variant-indexed dataframes must use a separate path
-    _assert_dims_are_int64();
+    _check_dims_are_int64();
 
     std::vector<int64_t> result;
     auto dimensions = mq_->schema()->domain().dimensions();

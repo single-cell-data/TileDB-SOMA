@@ -869,7 +869,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Same, but throws.
      */
-    void _assert_dims_are_int64();
+    void _check_dims_are_int64();
 
     /**
      * With old shape: core domain mapped to tiledbsoma shape; core current
