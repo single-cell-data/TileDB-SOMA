@@ -287,6 +287,7 @@ def _write_visium_data_to_experiment_uri(
     var_id_name: str = "var_id",
     X_layer_name: str = "data",
     raw_X_layer_name: str = "data",
+    image_name: str = "tissue",
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
@@ -393,7 +394,7 @@ def _write_visium_data_to_experiment_uri(
                         x is not None
                         for x in (input_hires, input_lowres, input_fullres)
                     ):
-                        tissue_uri = f"{img_uri}/tissue"
+                        tissue_uri = f"{img_uri}/{image_name}"
                         with MultiscaleImage.create(
                             tissue_uri,
                             image_type="YXC",
@@ -405,7 +406,7 @@ def _write_visium_data_to_experiment_uri(
                             add_metadata(tissue, ingest_ctx.get("additional_metadata"))
                             _maybe_set(
                                 img,
-                                "tissue",
+                                image_name,
                                 tissue,
                                 use_relative_uri=use_relative_uri,
                             )
@@ -420,7 +421,7 @@ def _write_visium_data_to_experiment_uri(
                             )
                             tissue.coordinate_space = coord_space
                             scene.register_multiscale_image(
-                                "tissue",
+                                image_name,
                                 IdentityTransform(("x", "y"), ("x", "y")),
                             )
 
@@ -630,9 +631,7 @@ def _write_visium_images(
             continue
         with Image.open(image_path) as im:
             im_data = pa.Tensor.from_numpy(np.array(im))
-        im_array = image_pyramid.add_new_level(
-            name, type=pa.uint8(), shape=im_data.shape
-        )
+        im_array = image_pyramid.add_new_level(name, shape=im_data.shape)
         im_array.write(
             (slice(None), slice(None), slice(None)),
             im_data,

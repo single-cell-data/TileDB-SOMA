@@ -21,6 +21,7 @@ from typing_extensions import Final, Self
 
 from . import _funcs, _tdb_handles
 from . import pytiledbsoma as clib
+from ._arrow_types import pyarrow_to_carrow_type
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY, SOMA_MULTISCALE_IMAGE_SCHEMA
 from ._coordinates import (
     coordinate_space_from_json,
@@ -101,8 +102,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         uri: str,
         *,
         type: pa.DataType,
-        reference_level_shape: Sequence[int],
         image_type: str = "CYX",
+        reference_level_shape: Sequence[int],
         axis_names: Sequence[str] = ("c", "x", "y"),
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
@@ -122,6 +123,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 shape=tuple(reference_level_shape),
             ),
             axis_names=tuple(axis_names),
+            datatype=type,
         )
 
         coord_space = CoordinateSpace(
@@ -197,14 +199,13 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         self._levels.sort(key=lambda level: (-level.width, -level.height, level.name))
 
     @_funcs.forwards_kwargs_to(
-        DenseNDArray.create, exclude=("context", "shape", "tiledb_timestamp", "type")
+        DenseNDArray.create, exclude=("context", "shape", "tiledb_timestamp")
     )
     def add_new_level(
         self,
         key: str,
         *,
         uri: Optional[str] = None,
-        type: pa.DataType,
         shape: Sequence[int],
         **kwargs: Any,
     ) -> DenseNDArray:
@@ -259,7 +260,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 context=self.context,
                 tiledb_timestamp=self.tiledb_timestamp_ms,
                 shape=props.shape,
-                type=type,
+                type=self._schema.datatype,
                 **kwargs,
             ),
             uri,
@@ -371,6 +372,7 @@ class MultiscaleImageSchema:
 
     reference_level_properties: ImageProperties
     axis_names: Tuple[str, ...]
+    datatype: pa.DataType
 
     def __post_init__(self):  # type: ignore[no-untyped-def]
         ndim = len(self.reference_level_properties.shape)
@@ -395,12 +397,14 @@ class MultiscaleImageSchema:
         )
 
     def to_json(self) -> str:
+        type_str = pyarrow_to_carrow_type(self.datatype)
         return json.dumps(
             {
                 "name": self.reference_level_properties.name,
                 "image_type": self.reference_level_properties.image_type,
                 "shape": self.reference_level_properties.shape,
                 "axis_names": self.axis_names,
+                "datatype": type_str,
             }
         )
 
@@ -408,4 +412,18 @@ class MultiscaleImageSchema:
     def from_json(cls, data: str) -> Self:
         kwargs = json.loads(data)
         axis_names = kwargs.pop("axis_names")
-        return cls(ImageProperties(**kwargs), axis_names)
+        type_str = kwargs.pop("datatype")
+        _carrow_to_pyarrow = {
+            "c": pa.int8(),
+            "s": pa.int16(),
+            "i": pa.int32(),
+            "l": pa.int64(),
+            "C": pa.uint8(),
+            "S": pa.uint16(),
+            "I": pa.uint32(),
+            "L": pa.uint64(),
+            "f": pa.float32(),
+            "g": pa.float64(),
+        }
+        type = _carrow_to_pyarrow[type_str]
+        return cls(ImageProperties(**kwargs), axis_names, type)
