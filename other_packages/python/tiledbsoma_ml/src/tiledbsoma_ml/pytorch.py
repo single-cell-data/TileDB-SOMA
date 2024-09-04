@@ -207,16 +207,39 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
 
         As appropriate, will chunk, shuffle and apply partitioning per worker.
 
+        IMPORTANT: in any scenario using torch.distributed, where WORLD_SIZE > 1, this will
+        always partition such that each process has the same number of samples. Where
+        the number of obs_joinids is not evenly divisible by the number of processes,
+        the number of joinids will be dropped (dropped ids can never exceed WORLD_SIZE-1).
+
+        Abstractly, the steps taken:
+        1. Split the joinids into WORLD_SIZE sections (aka number of GPUS in DDP)
+        2. Trim the splits to be of equal length
+        3. Chunk and optionally shuffle the chunks
+        4. Partition by number of data loader workers (to not generate redundant batches
+           in cases where the DataLoader is running with `n_workers>1`).
+
         Private method.
         """
         assert self._obs_joinids is not None
         obs_joinids: npt.NDArray[np.int64] = self._obs_joinids
 
+        # 1. Get the split for the model replica/GPU
+        world_size, rank = _get_distributed_world_rank()
+        _gpu_splits = _splits(len(obs_joinids), world_size)
+        _gpu_split = obs_joinids[_gpu_splits[rank] : _gpu_splits[rank + 1]]
+
+        # 2. Trip to be all of equal length
+        min_len = np.diff(_gpu_splits).min()
+        assert 0 <= (np.diff(_gpu_splits).min() - min_len) <= 1
+        _gpu_split = _gpu_split[:min_len]
+
+        # 3. Chunk and optionally shuffle chunks
         if self.shuffle:
             assert self._shuffle_rng is not None
             assert self.io_batch_size % self.shuffle_chunk_size == 0
             shuffle_split = np.array_split(
-                obs_joinids, max(1, ceil(len(obs_joinids) / self.shuffle_chunk_size))
+                _gpu_split, max(1, ceil(len(_gpu_split) / self.shuffle_chunk_size))
             )
             self._shuffle_rng.shuffle(shuffle_split)
             obs_joinids_chunked = list(
@@ -227,21 +250,20 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             )
         else:
             obs_joinids_chunked = np.array_split(
-                obs_joinids, max(1, ceil(len(obs_joinids) / self.io_batch_size))
+                _gpu_split, max(1, ceil(len(_gpu_split) / self.io_batch_size))
             )
 
-        # Now extract the partition for this worker
-        partition, num_partitions = _get_torch_partition_info()
-
-        obs_splits = _splits(len(obs_joinids_chunked), num_partitions)
+        # 4. Partition by DataLoader worker
+        n_workers, worker_id = _get_worker_world_rank()
+        obs_splits = _splits(len(obs_joinids_chunked), n_workers)
         obs_partition_joinids = obs_joinids_chunked[
-            obs_splits[partition] : obs_splits[partition + 1]
+            obs_splits[worker_id] : obs_splits[worker_id + 1]
         ].copy()
         obs_joinid_iter = iter(obs_partition_joinids)
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
-                f"Process {os.getpid()} handling partition {partition + 1} of {num_partitions}, "
+                f"Process {os.getpid()} rank={rank}, world_size={world_size}, worker_id={worker_id}, n_workers={n_workers}, "
                 f"partition_size={sum([len(chunk) for chunk in obs_partition_joinids])}"
             )
 
@@ -308,7 +330,9 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             yield from _mini_batch_iter
 
     def __len__(self) -> int:
-        """Return approximate number of batches this iterable will product.
+        """Return approximate number of batches this iterable will produce. If run in the context of :class:`torch.distributed` or
+        as a multi-process loader (i.e., :class:`torch.utils.data.DataLoader` instantiated with num_workers > 0), the obs (cell)
+        count will reflect the size of the partition of the data assigned to the active process.
 
         See import caveats in the PyTorch
         [:class:`torch.utils.data.DataLoader`](https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader)
@@ -320,14 +344,17 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         Lifecycle:
             experimental
         """
-        self._init_once()
-        assert self._obs_joinids is not None
-        div, rem = divmod(len(self._obs_joinids), self.batch_size)
-        return div + bool(rem)
+        # self._init_once()
+        # assert self._obs_joinids is not None
+        # world_size, _ = _get_distributed_world_rank()
+        # n_workers, _ = _get_worker_world_rank()
+        # div, rem = divmod(len(self._obs_joinids) // world_size, self.batch_size)
+        # return div + bool(rem)
+        return self.shape[0]
 
     @property
     def shape(self) -> Tuple[int, int]:
-        """Get the shape of the data that will be returned by this :class:`tiledbsoma_ml.ExperimentAxisQueryIterable`.
+        """Get the approximate shape of the data that will be returned by this :class:`tiledbsoma_ml.ExperimentAxisQueryIterable`.
         This is the number of obs (cell) and var (feature) counts in the returned data. If used in multiprocessing mode
         (i.e. :class:`torch.utils.data.DataLoader` instantiated with num_workers > 0), the obs (cell) count will reflect
         the size of the partition of the data assigned to the active process.
@@ -341,7 +368,12 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         self._init_once()
         assert self._obs_joinids is not None
         assert self._var_joinids is not None
-        return len(self._obs_joinids), len(self._var_joinids)
+        world_size, _ = _get_distributed_world_rank()
+        n_workers, _ = _get_worker_world_rank()
+        div, rem = divmod(
+            len(self._obs_joinids) // world_size // n_workers, self.batch_size
+        )
+        return div + bool(rem), len(self._var_joinids)
 
     def __getitem__(self, index: int) -> XObsDatum:
         raise NotImplementedError(
@@ -353,7 +385,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         obs: soma.DataFrame,
         X: soma.SparseNDArray,
         obs_joinid_iter: Iterator[npt.NDArray[np.int64]],
-    ) -> Iterator[Tuple[_CSR, pd.DataFrame]]:
+    ) -> Iterator[Tuple[_CSR_IO_Buffer, pd.DataFrame]]:
         """Iterate over IO batches, i.e., SOMA query/read, producing a tuple of
         (X: csr_array, obs: DataFrame).
 
@@ -397,9 +429,9 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 obs_coords: npt.NDArray[np.int64],
                 var_coords: npt.NDArray[np.int64],
                 obs_indexer: soma.IntIndexer,
-            ) -> _CSR:
+            ) -> _CSR_IO_Buffer:
                 """This function provides a GC after we throw off (large) garbage."""
-                m = _CSR.from_ijd(
+                m = _CSR_IO_Buffer.from_ijd(
                     obs_indexer.get_indexer(X_tbl["soma_dim_0"]),
                     var_indexer.get_indexer(X_tbl["soma_dim_1"]),
                     X_tbl["soma_data"].to_numpy(),
@@ -428,7 +460,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             )
             obs_io_batch = obs_io_batch[self.obs_column_names]
 
-            X_io_batch = _CSR.merge(tuple(_csr_iter))
+            X_io_batch = _CSR_IO_Buffer.merge(tuple(_csr_iter))
 
             del obs_indexer, obs_coords, obs_shuffled_coords, _csr_iter
             gc.collect()
@@ -871,34 +903,25 @@ else:
             yield batch
 
 
-def _get_torch_partition_info() -> Tuple[int, int]:
-    """Return this workers partition and total partition count as a tuple.
+def _get_distributed_world_rank() -> Tuple[int, int]:
+    """Return tuple containing equivalent of torch.distributed world size and rank."""
+    if torch.distributed.is_initialized():
+        world_size = torch.distributed.get_world_size()
+        rank = torch.distributed.get_rank()
+    else:
+        # sometimes these are set even before torch.distributed is initialized, e.g., by torchrun
+        world_size = int(os.environ.get("WORLD_SIZE", 1))
+        rank = int(os.environ.get("RANK", 0))
 
-    Private. Used to partition the iterator in some cases.
+    return world_size, rank
 
-    Examples
-    --------
-    >>> _get_torch_partition_info()
-    (0, 1)
 
-    """
+def _get_worker_world_rank() -> Tuple[int, int]:
+    """Return number of dataloader workers and our worker rank/id"""
     worker_info = torch.utils.data.get_worker_info()
     if worker_info is None:
-        loader_partition, loader_partitions = 0, 1
-    else:
-        loader_partition = worker_info.id
-        loader_partitions = worker_info.num_workers
-
-    if not torch.distributed.is_initialized():
-        dist_partition, num_dist_partitions = 0, 1
-    else:
-        dist_partition = torch.distributed.get_rank()
-        num_dist_partitions = torch.distributed.get_world_size()
-
-    total_partitions = num_dist_partitions * loader_partitions
-    partition = dist_partition * loader_partitions + loader_partition
-
-    return partition, total_partitions
+        return 1, 0
+    return worker_info.num_workers, worker_info.id
 
 
 def _init_multiprocessing() -> None:
@@ -921,7 +944,7 @@ def _init_multiprocessing() -> None:
         torch.multiprocessing.set_start_method("spawn", force=True)
 
 
-class _CSR:
+class _CSR_IO_Buffer:
     """Implement a minimal CSR matrix with specific optimizations for use in this package.
 
     Operations supported are:
@@ -956,21 +979,21 @@ class _CSR:
     @staticmethod
     def from_ijd(
         i: NDArrayNumber, j: NDArrayNumber, d: NDArrayNumber, shape: Tuple[int, int]
-    ) -> _CSR:
+    ) -> _CSR_IO_Buffer:
         """Factory from COO"""
         nnz = len(d)
         indptr = np.zeros((shape[0] + 1), dtype=smallest_uint_dtype(nnz))
         indices = np.empty((nnz,), dtype=smallest_uint_dtype(shape[1]))
         data = np.empty((nnz,), dtype=d.dtype)
         _coo_to_csr_inner(shape[0], i, j, d, indptr, indices, data)
-        return _CSR(indptr, indices, data, shape)
+        return _CSR_IO_Buffer(indptr, indices, data, shape)
 
     @staticmethod
     def from_pjd(
         p: NDArrayNumber, j: NDArrayNumber, d: NDArrayNumber, shape: Tuple[int, int]
-    ) -> _CSR:
+    ) -> _CSR_IO_Buffer:
         """Factory from CSR"""
-        return _CSR(p, j, d, shape)
+        return _CSR_IO_Buffer(p, j, d, shape)
 
     @property
     def nnz(self) -> int:
@@ -997,7 +1020,7 @@ class _CSR:
         return out
 
     @staticmethod
-    def merge(mtxs: Sequence[_CSR]) -> _CSR:
+    def merge(mtxs: Sequence[_CSR_IO_Buffer]) -> _CSR_IO_Buffer:
         assert len(mtxs) > 0
         nnz = sum(m.nnz for m in mtxs)
         shape = mtxs[0].shape
@@ -1018,7 +1041,7 @@ class _CSR:
             indices,
             data,
         )
-        return _CSR.from_pjd(indptr, indices, data, shape)
+        return _CSR_IO_Buffer.from_pjd(indptr, indices, data, shape)
 
 
 def smallest_uint_dtype(max_val: int) -> npt.DTypeLike:

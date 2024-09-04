@@ -440,7 +440,12 @@ def test_multiprocessing__returns_full_result(
 
 
 @pytest.mark.parametrize(
-    "obs_range,var_range,X_value_gen", [(6, 3, pytorch_x_value_gen)]
+    "obs_range,var_range,X_value_gen",
+    [(6, 3, pytorch_x_value_gen), (7, 3, pytorch_x_value_gen)],
+)
+@pytest.mark.parametrize(
+    "world_size,rank",
+    [(3, 0), (3, 1), (3, 2), (2, 0), (2, 1)],
 )
 @pytest.mark.parametrize(
     "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
@@ -448,6 +453,9 @@ def test_multiprocessing__returns_full_result(
 def test_distributed__returns_data_partition_for_rank(
     PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
     soma_experiment: Experiment,
+    obs_range: int,
+    world_size: int,
+    rank: int,
 ) -> None:
     """Tests pytorch._partition_obs_joinids() behavior in a simulated PyTorch distributed processing mode,
     using mocks to avoid having to do real PyTorch distributed setup."""
@@ -458,8 +466,8 @@ def test_distributed__returns_data_partition_for_rank(
         "torch.distributed.get_world_size"
     ) as mock_dist_get_world_size:
         mock_dist_is_initialized.return_value = True
-        mock_dist_get_rank.return_value = 1
-        mock_dist_get_world_size.return_value = 3
+        mock_dist_get_rank.return_value = rank
+        mock_dist_get_world_size.return_value = world_size
 
         with soma_experiment.axis_query(measurement_name="RNA") as query:
             dp = PipeClass(
@@ -470,18 +478,26 @@ def test_distributed__returns_data_partition_for_rank(
                 shuffle=False,
             )
             full_result = list(iter(dp))
-
             soma_joinids = np.concatenate(
                 [t[1]["soma_joinid"].to_numpy() for t in full_result]
             )
 
-            # Of the 6 obs rows, the PyTorch process of rank 1 should get [2, 3]
-            # (rank 0 gets [0, 1], rank 2 gets [4, 5])
-            assert sorted(soma_joinids) == [2, 3]
+            expected_joinids = np.array_split(np.arange(obs_range), world_size)[rank][
+                0 : obs_range // world_size
+            ].tolist()
+            assert sorted(soma_joinids) == expected_joinids
 
 
 @pytest.mark.parametrize(
-    "obs_range,var_range,X_value_gen", [(12, 3, pytorch_x_value_gen)]
+    "obs_range,var_range,X_value_gen",
+    [(12, 3, pytorch_x_value_gen), (13, 3, pytorch_x_value_gen)],
+)
+@pytest.mark.parametrize(
+    "world_size,rank,num_workers,worker_id",
+    [
+        (3, 1, 2, 0),
+        (3, 1, 2, 1),
+    ],
 )
 @pytest.mark.parametrize(
     "PipeClass", (ExperimentAxisQueryDataPipe, ExperimentAxisQueryIterableDataset)
@@ -489,6 +505,11 @@ def test_distributed__returns_data_partition_for_rank(
 def test_distributed_and_multiprocessing__returns_data_partition_for_rank(
     PipeClass: ExperimentAxisQueryDataPipe | ExperimentAxisQueryIterableDataset,
     soma_experiment: Experiment,
+    obs_range: int,
+    world_size: int,
+    rank: int,
+    num_workers: int,
+    worker_id: int,
 ) -> None:
     """Tests pytorch._partition_obs_joinids() behavior in a simulated PyTorch distributed processing mode and
     DataLoader multiprocessing mode, using mocks to avoid having to do distributed pytorch
@@ -501,10 +522,12 @@ def test_distributed_and_multiprocessing__returns_data_partition_for_rank(
     ) as mock_dist_get_rank, patch(
         "torch.distributed.get_world_size"
     ) as mock_dist_get_world_size:
-        mock_get_worker_info.return_value = WorkerInfo(id=1, num_workers=2, seed=1234)
+        mock_get_worker_info.return_value = WorkerInfo(
+            id=worker_id, num_workers=num_workers, seed=1234
+        )
         mock_dist_is_initialized.return_value = True
-        mock_dist_get_rank.return_value = 1
-        mock_dist_get_world_size.return_value = 3
+        mock_dist_get_rank.return_value = rank
+        mock_dist_get_world_size.return_value = world_size
 
         with soma_experiment.axis_query(measurement_name="RNA") as query:
             dp = PipeClass(
@@ -521,10 +544,11 @@ def test_distributed_and_multiprocessing__returns_data_partition_for_rank(
                 [t[1]["soma_joinid"].to_numpy() for t in full_result]
             )
 
-            # Of the 12 obs rows, the PyTorch process of rank 1 should get [4..7], and then within that partition,
-            # the 2nd DataLoader process should get the second half of the rank's partition, which is just [6, 7]
-            # (rank 0 gets [0..3], rank 2 gets [8..11])
-            assert sorted(soma_joinids) == [6, 7]
+            expected_joinids = np.array_split(np.arange(obs_range), world_size)[rank][
+                0 : obs_range // world_size
+            ]
+            expected_joinids = np.array_split(expected_joinids, num_workers)[worker_id]
+            assert sorted(soma_joinids) == expected_joinids.tolist()
 
 
 @pytest.mark.parametrize(
@@ -827,19 +851,21 @@ def test_splits() -> None:
 )
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32])
 def test_csr__construct_from_ijd(shape: Tuple[int, int], dtype: npt.DTypeLike) -> None:
-    from tiledbsoma_ml.pytorch import _CSR
+    from tiledbsoma_ml.pytorch import _CSR_IO_Buffer
 
     sp_coo = sparse.random(shape[0], shape[1], dtype=dtype, format="coo", density=0.05)
     sp_csr = sp_coo.tocsr()
 
-    _ncsr = _CSR.from_ijd(sp_coo.row, sp_coo.col, sp_coo.data, shape=sp_coo.shape)
+    _ncsr = _CSR_IO_Buffer.from_ijd(
+        sp_coo.row, sp_coo.col, sp_coo.data, shape=sp_coo.shape
+    )
     assert _ncsr.nnz == sp_coo.nnz == sp_csr.nnz
     assert _ncsr.dtype == sp_coo.dtype == sp_csr.dtype
     assert _ncsr.nbytes == (
         _ncsr.data.nbytes + _ncsr.indices.nbytes + _ncsr.indptr.nbytes
     )
 
-    # _CSR makes no guarantees about minor axis ordering (ie.., "canonical" form), so
+    # _CSR_IO_Buffer makes no guarantees about minor axis ordering (ie.., "canonical" form), so
     # use the SciPy sparse csr package to validate by round-tripping.
     assert (
         sparse.csr_matrix((_ncsr.data, _ncsr.indices, _ncsr.indptr), shape=_ncsr.shape)
@@ -859,11 +885,11 @@ def test_csr__construct_from_ijd(shape: Tuple[int, int], dtype: npt.DTypeLike) -
 )
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32])
 def test_csr__construct_from_pjd(shape: Tuple[int, int], dtype: npt.DTypeLike) -> None:
-    from tiledbsoma_ml.pytorch import _CSR
+    from tiledbsoma_ml.pytorch import _CSR_IO_Buffer
 
     sp_csr = sparse.random(shape[0], shape[1], dtype=dtype, format="csr", density=0.05)
 
-    _ncsr = _CSR.from_pjd(
+    _ncsr = _CSR_IO_Buffer.from_pjd(
         sp_csr.indptr.copy(),
         sp_csr.indices.copy(),
         sp_csr.data.copy(),
@@ -892,7 +918,7 @@ def test_csr__construct_from_pjd(shape: Tuple[int, int], dtype: npt.DTypeLike) -
 def test_csr__merge(
     shape: Tuple[int, int], dtype: npt.DTypeLike, n_splits: int
 ) -> None:
-    from tiledbsoma_ml.pytorch import _CSR
+    from tiledbsoma_ml.pytorch import _CSR_IO_Buffer
 
     sp_coo = sparse.random(shape[0], shape[1], dtype=dtype, format="coo", density=0.5)
     splits = [
@@ -903,8 +929,8 @@ def test_csr__merge(
             np.array_split(sp_coo.data, n_splits),
         )
     ]
-    _ncsr = _CSR.merge(
-        [_CSR.from_ijd(i, j, d, shape=sp_coo.shape) for i, j, d in splits]
+    _ncsr = _CSR_IO_Buffer.merge(
+        [_CSR_IO_Buffer.from_ijd(i, j, d, shape=sp_coo.shape) for i, j, d in splits]
     )
 
     assert (
