@@ -66,7 +66,7 @@ class ImageProperties:
             elif val == "Z":
                 self.depth = size
             elif val == "C":
-                self.nchannel = size
+                self.nchannels = size
             else:
                 raise SOMAError(f"Invalid image type '{self.image_type}'")
         if self.width is None or self.height is None:
@@ -222,15 +222,29 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         if meta_key in self.metadata:
             raise KeyError(f"{key!r} already exists in {type(self)} scales")
 
-        # Create the level property and store as metadata.
+        # Check if the shape is valid.
+        ref_props = self._schema.reference_level_properties
+        if len(shape) != len(tuple(shape)):
+            raise ValueError(
+                f"New level must have {len(shape)} dimensions, but shape {shape} has "
+                f"{len(shape)} dimensions."
+            )
+
+        # Check, create, and store as metadata the new level image properties.
         props = ImageProperties(
-            image_type=self._schema.reference_level_properties.image_type,
+            image_type=ref_props.image_type,
             name=key,
             shape=tuple(shape),
         )
+        if ref_props.nchannels is not None and ref_props.nchannels != props.nchannels:
+            raise ValueError(
+                f"New level must have {ref_props.nchannels}, but provided shape has "
+                f"{props.nchannels} channels."
+            )
+
         props_str = json.dumps(
             {
-                "image_type": self._schema.reference_level_properties.image_type,
+                "image_type": ref_props.image_type,
                 "shape": shape,
             }
         )

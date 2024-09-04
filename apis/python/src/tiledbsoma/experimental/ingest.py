@@ -168,6 +168,7 @@ def from_cxg_spatial_h5ad(
         var_id_name=var_id_name,
         X_layer_name=X_layer_name,
         raw_X_layer_name=raw_X_layer_name,
+        image_name=scene_name,
         X_kind=X_kind,
         uns_keys=uns_keys,
         additional_metadata=additional_metadata,
