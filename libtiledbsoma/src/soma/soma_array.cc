@@ -30,10 +30,10 @@
  *   This file defines the SOMAArray class.
  */
 
+#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
-#include "soma_array.h"
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -1353,7 +1353,7 @@ void SOMAArray::resize(const std::vector<int64_t>& newshape) {
     schema_evolution.array_evolve(uri_);
 }
 
-void SOMAArray::maybe_resize_sjid(const std::vector<int64_t>& newshape) {
+void SOMAArray::maybe_resize_soma_joinid(const std::vector<int64_t>& newshape) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(
             "[SOMAArray::resize] array must be opened in write mode");
