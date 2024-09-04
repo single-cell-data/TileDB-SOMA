@@ -1175,6 +1175,24 @@ uint64_t SOMAArray::nnz_slow() {
     return total_cell_num;
 }
 
+bool SOMAArray::_dims_are_int64() {
+    ArraySchema schema = arr_->schema();
+    Domain domain = schema.domain();
+    for (auto dimension : domain.dimensions()) {
+        if (dimension.type() != TILEDB_INT64) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void SOMAArray::_assert_dims_are_int64() {
+    if (!_dims_are_int64()) {
+        throw TileDBSOMAError(
+            "[SOMAArray] internal coding error: expected all dims to be int64");
+    }
+}
+
 std::vector<int64_t> SOMAArray::shape() {
     // There are two reasons for this:
     // * Transitional, non-monolithic, phased, careful development for the
@@ -1182,67 +1200,28 @@ std::vector<int64_t> SOMAArray::shape() {
     // * Even after the new-shape feature is fully released, there will be old
     //   arrays on disk that were created before this feature existed.
     // So this is long-term code.
-    auto current_domain = _get_current_domain();
-    return current_domain.is_empty() ? _tiledb_domain() :
-                                       _tiledb_current_domain();
+    return _get_current_domain().is_empty() ? _tiledb_domain() :
+                                              _tiledb_current_domain();
 }
 
 std::vector<int64_t> SOMAArray::maxshape() {
     return _tiledb_domain();
 }
 
-std::optional<int64_t> SOMAArray::_shape_slot_if_soma_joinid_dim() {
-    const std::string dim_name = "soma_joinid";
-
-    if (!arr_->schema().domain().has_dimension(dim_name)) {
-        return std::nullopt;
-    }
-
-    auto current_domain = _get_current_domain();
-    if (current_domain.is_empty()) {
-        return std::nullopt;
-    }
-
-    auto t = current_domain.type();
-    if (t != TILEDB_NDRECTANGLE) {
-        throw TileDBSOMAError("current_domain type is not NDRECTANGLE");
-    }
-
-    NDRectangle ndrect = current_domain.ndrectangle();
-
-    auto range = ndrect.range<int64_t>(dim_name);
-    auto max = range[1] + 1;
-    return std::optional<int64_t>(max);
+std::optional<int64_t> SOMAArray::_maybe_sjid_shape() {
+    return _get_current_domain().is_empty() ?
+               _maybe_sjid_tiledb_domain() :
+               _maybe_sjid_tiledb_current_domain();
 }
 
-std::vector<int64_t> SOMAArray::_tiledb_domain() {
-    std::vector<int64_t> result;
-    auto dimensions = mq_->schema()->domain().dimensions();
-
-    for (const auto& dim : dimensions) {
-        // Callers inquiring about non-int64 shapes should not be here.
-        //
-        // In the SOMA data model:
-        // * SparseNDArray has dims which are all necessarily int64_t
-        // * DenseNDArray has dims which are all necessarily int64_t
-        // * DataFrame _default_ indexing is one dim named "soma_dim_0" of type
-        //   int64_t, however:
-        //   * Users can (and do) add other additional dims
-        //   * The SOMA data model requires that soma_joinid be present in each
-        //     DataFrame either as a dim or an attr -- and there are DataFrame
-        //     objects for which soma_joinid is not a dim at all
-        //   * These cases are all actively unit-tested within apis/python/tests
-        if (dim.type() != TILEDB_INT64) {
-            throw TileDBSOMAError("Found unexpected non-int64 dimension type.");
-        }
-        result.push_back(
-            dim.domain<int64_t>().second - dim.domain<int64_t>().first + 1);
-    }
-
-    return result;
+std::optional<int64_t> SOMAArray::_maybe_sjid_maxshape() {
+    return _maybe_sjid_tiledb_domain();
 }
 
 std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
+    // Variant-indexed dataframes must use a separate path
+    _assert_dims_are_int64();
+
     std::vector<int64_t> result;
 
     auto current_domain = tiledb::ArraySchemaExperimental::current_domain(
@@ -1262,13 +1241,81 @@ std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
     NDRectangle ndrect = current_domain.ndrectangle();
 
     for (auto dimension_name : dimension_names()) {
-        // TODO: non-int64 types for SOMADataFrame extra dims.
-        // This simply needs to be integrated with switch statements as in the
-        // legacy code below.
         auto range = ndrect.range<int64_t>(dimension_name);
         result.push_back(range[1] + 1);
     }
     return result;
+}
+
+std::vector<int64_t> SOMAArray::_tiledb_domain() {
+    // Variant-indexed dataframes must use a separate path
+    _assert_dims_are_int64();
+
+    std::vector<int64_t> result;
+    auto dimensions = mq_->schema()->domain().dimensions();
+
+    for (const auto& dim : dimensions) {
+        result.push_back(
+            dim.domain<int64_t>().second - dim.domain<int64_t>().first + 1);
+    }
+
+    return result;
+}
+
+std::optional<int64_t> SOMAArray::_maybe_sjid_tiledb_current_domain() {
+    const std::string dim_name = "soma_joinid";
+
+    auto dom = arr_->schema().domain();
+    if (!dom.has_dimension(dim_name)) {
+        return std::nullopt;
+    }
+
+    auto current_domain = _get_current_domain();
+    if (current_domain.is_empty()) {
+        throw TileDBSOMAError("internal coding error");
+    }
+
+    auto t = current_domain.type();
+    if (t != TILEDB_NDRECTANGLE) {
+        throw TileDBSOMAError("current_domain type is not NDRECTANGLE");
+    }
+
+    NDRectangle ndrect = current_domain.ndrectangle();
+
+    auto dim = dom.dimension(dim_name);
+    if (dim.type() != TILEDB_INT64) {
+        throw TileDBSOMAError(fmt::format(
+            "expected {} dim to be {}; got {}",
+            dim_name,
+            tiledb::impl::type_to_str(TILEDB_INT64),
+            tiledb::impl::type_to_str(dim.type())));
+    }
+
+    auto range = ndrect.range<int64_t>(dim_name);
+    auto max = range[1] + 1;
+    return std::optional<int64_t>(max);
+}
+
+std::optional<int64_t> SOMAArray::_maybe_sjid_tiledb_domain() {
+    const std::string dim_name = "soma_joinid";
+
+    auto dom = arr_->schema().domain();
+    if (!dom.has_dimension(dim_name)) {
+        return std::nullopt;
+    }
+
+    auto dim = dom.dimension(dim_name);
+    if (dim.type() != TILEDB_INT64) {
+        throw TileDBSOMAError(fmt::format(
+            "expected {} dim to be {}; got {}",
+            dim_name,
+            tiledb::impl::type_to_str(TILEDB_INT64),
+            tiledb::impl::type_to_str(dim.type())));
+    }
+
+    auto max = dim.domain<int64_t>().second + 1;
+
+    return std::optional<int64_t>(max);
 }
 
 void SOMAArray::resize(const std::vector<int64_t>& newshape) {
@@ -1312,8 +1359,7 @@ void SOMAArray::resize(const std::vector<int64_t>& newshape) {
     schema_evolution.array_evolve(uri_);
 }
 
-void SOMAArray::resize_soma_joinid_if_dim(
-    const std::vector<int64_t>& newshape) {
+void SOMAArray::maybe_resize_sjid(const std::vector<int64_t>& newshape) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(
             "[SOMAArray::resize] array must be opened in write mode");

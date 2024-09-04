@@ -633,7 +633,7 @@ class SOMAArray : public SOMAObject {
      * @return Throws if the requested shape exceeds the array's create-time
      * maxshape. Throws if the array does not have current-domain support.
      */
-    void resize_soma_joinid_if_dim(const std::vector<int64_t>& newshape);
+    void maybe_resize_sjid(const std::vector<int64_t>& newshape);
 
     /**
      * @brief Get the number of dimensions.
@@ -820,12 +820,18 @@ class SOMAArray : public SOMAObject {
     }
 
    protected:
-    // For use nominally by SOMADataFrame. This could be moved in its entirety
-    // to SOMADataFrame, but it would entail moving several SOMAArray attributes
-    // from private to protected, which has knock-on effects on the order of
-    // constructor initializers, etc.: in total it's simplest to place this
-    // here and have SOMADataFrame invoke it.
-    std::optional<int64_t> _shape_slot_if_soma_joinid_dim();
+    // These two are for use nominally by SOMADataFrame. This could be moved in
+    // its entirety to SOMADataFrame, but it would entail moving several
+    // SOMAArray attributes from private to protected, which has knock-on
+    // effects on the order of constructor initializers, etc.: in total it's
+    // simplest to place this here and have SOMADataFrame invoke it.
+    //
+    // They return the shape and maxshape slots for the soma_joinid dim, if
+    // the array has one. These are important test-points and dev-internal
+    // access-points, in particular, for the tiledbsoma-io experiment-level
+    // resizer.
+    std::optional<int64_t> _maybe_sjid_shape();
+    std::optional<int64_t> _maybe_sjid_maxshape();
 
    private:
     //===================================================================
@@ -854,6 +860,18 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
+     * While SparseNDArray, DenseNDArray, and default-indexed DataFrame
+     * have int64 dims, variant-indexed DataFrames do not. This helper
+     * lets us pre-check any attempts to treat dims as if they were int64.
+     */
+    bool _dims_are_int64();
+
+    /**
+     * Same, but throws.
+     */
+    void _assert_dims_are_int64();
+
+    /**
      * With old shape: core domain mapped to tiledbsoma shape; core current
      * domain did not exist.
      *
@@ -864,6 +882,8 @@ class SOMAArray : public SOMAObject {
      */
     std::vector<int64_t> _tiledb_domain();
     std::vector<int64_t> _tiledb_current_domain();
+    std::optional<int64_t> _maybe_sjid_tiledb_current_domain();
+    std::optional<int64_t> _maybe_sjid_tiledb_domain();
 
     bool _extend_enumeration(
         ArrowSchema* value_schema,
