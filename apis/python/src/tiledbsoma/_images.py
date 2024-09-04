@@ -5,7 +5,7 @@
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import pyarrow as pa
 from somacore import (
@@ -35,6 +35,51 @@ from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 
+@dataclass
+class ImageProperties:
+    """TODO: Add docstring"""
+
+    name: str
+    image_type: str
+    shape: Tuple[int, ...]
+    width: int = field(init=False)
+    height: int = field(init=False)
+    depth: Optional[int] = field(init=False)
+    nchannels: Optional[int] = field(init=False)
+
+    def __post_init__(self):  # type: ignore[no-untyped-def]
+        if len(self.image_type) != len(set(self.image_type)):
+            raise ValueError(
+                f"Invalid image type '{self.image_type}'. Image type cannot contain "
+                f"repeated values."
+            )
+        self.nchannels = None
+        self.width = None  # type: ignore[assignment]
+        self.height = None  # type: ignore[assignment]
+        self.depth = None
+        for val, size in zip(self.image_type, self.shape):
+            if val == "X":
+                self.width = size
+            elif val == "Y":
+                self.height = size
+            elif val == "Z":
+                self.depth = size
+            elif val == "C":
+                self.nchannel = size
+            else:
+                raise SOMAError(f"Invalid image type '{self.image_type}'")
+        if self.width is None or self.height is None:
+            raise ValueError(
+                f"Invalid image type '{self.image_type}'. Image type must include "
+                f"'X' and 'Y'."
+            )
+        if len(self.image_type) != len(self.shape):
+            raise ValueError(
+                f"{len(self.image_type)} axis names must be provided for a multiscale "
+                f"image with image type {self.image_type}."
+            )
+
+
 class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     SOMAGroup[DenseNDArray],
     images.MultiscaleImage[DenseNDArray, AnySOMAObject],
@@ -49,35 +94,6 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     _wrapper_type = _tdb_handles.MultiscaleImageWrapper
 
     _level_prefix: Final = "soma_level_"
-
-    @dataclass
-    class LevelProperties:
-        """TODO: Add documentaiton for LevelProperties"""
-
-        name: str
-        axis_order: str
-        shape: Tuple[int, ...]
-        width: int = field(init=False)
-        height: int = field(init=False)
-        depth: Optional[int] = field(init=False)
-        nchannels: Optional[int] = field(init=False)
-
-        def __post_init__(self):  # type: ignore[no-untyped-def]
-            if len(self.axis_order) != len(self.shape):
-                raise SOMAError()  # TODO Add error message
-            self.nchannels = None
-            self.depth = None
-            for val, size in zip(self.axis_order, self.shape):
-                if val == "X":
-                    self.width = size
-                elif val == "Y":
-                    self.height = size
-                elif val == "Z":
-                    self.depth = size
-                elif val == "C":
-                    self.nchannel = size
-                else:
-                    raise SOMAError(f"Invalid axis order '{self.axis_order}'")
 
     @classmethod
     def create(
@@ -100,10 +116,14 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         context = _validate_soma_tiledb_context(context)
         # TODO: Push down type to schema
         schema = MultiscaleImageSchema(
-            image_type=image_type.upper(),
+            ImageProperties(
+                name="reference_level",
+                image_type=image_type.upper(),
+                shape=tuple(reference_level_shape),
+            ),
             axis_names=tuple(axis_names),
-            reference_level_shape=tuple(reference_level_shape),
         )
+
         coord_space = CoordinateSpace(
             tuple(Axis(name) for name in schema.get_coordinate_space_axis_names())
         )
@@ -170,7 +190,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         # Get the image levels.
         # TODO: Optimize and push down to C++ level
         self._levels = [
-            MultiscaleImage.LevelProperties(name=key, **json.loads(val))
+            ImageProperties(name=key, **json.loads(val))
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
         ]
@@ -202,10 +222,17 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             raise KeyError(f"{key!r} already exists in {type(self)} scales")
 
         # Create the level property and store as metadata.
-        props = MultiscaleImage.LevelProperties(
-            axis_order=self._schema.image_type, name=key, shape=tuple(shape)
+        props = ImageProperties(
+            image_type=self._schema.reference_level_properties.image_type,
+            name=key,
+            shape=tuple(shape),
         )
-        props_str = json.dumps({"axis_order": self._schema.image_type, "shape": shape})
+        props_str = json.dumps(
+            {
+                "image_type": self._schema.reference_level_properties.image_type,
+                "shape": shape,
+            }
+        )
         self.metadata[meta_key] = props_str
 
         # Add the level properties to level list.
@@ -274,16 +301,24 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                     raise KeyError("No level with name '{level}'")
         else:
             level_props = self._levels[level]
-        width = level_props.width
-        height = level_props.height
-        # NOTE: Ignoring possibility of different axis order for different levels
-        # since that will be removed.
+        ref_level_props = self._schema.reference_level_properties
+        if ref_level_props.depth is None:
+            return ScaleTransform(
+                input_axes=self._coord_space.axis_names,
+                output_axes=self._coord_space.axis_names,
+                scale_factors=[
+                    level_props.width / ref_level_props.width,
+                    level_props.height / ref_level_props.height,
+                ],
+            )
+        assert level_props.depth is not None
         return ScaleTransform(
             input_axes=self._coord_space.axis_names,
             output_axes=self._coord_space.axis_names,
             scale_factors=[
-                width / self._schema.reference_level_shape[0],
-                height / self._schema.reference_level_shape[1],
+                level_props.width / ref_level_props.width,
+                level_props.height / ref_level_props.height,
+                level_props.depth / ref_level_props.depth,
             ],
         )
 
@@ -292,15 +327,13 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
     @property
     def image_type(self) -> str:
-        return self._schema.image_type
+        return self._schema.reference_level_properties.image_type
 
     @property
     def level_count(self) -> int:
         return len(self._levels)
 
-    def level_properties(
-        self, level: Union[int, str]
-    ) -> images.MultiscaleImage.LevelProperties:
+    def level_properties(self, level: Union[int, str]) -> images.ImageProperties:
         if isinstance(level, str):
             raise NotImplementedError()  # TODO
         return self._levels[level]
@@ -324,52 +357,29 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         raise NotImplementedError()
 
     @property
-    def reference_level_shape(self) -> Tuple[int, ...]:
+    def reference_level_properties(self) -> images.ImageProperties:
         """The shape of the reference level the coordinate system is defined on.
 
         The shape must be provide in order (width, height).
         """
-        if self._schema.reference_level_shape is None:
-            raise SOMAError("Reference shape is not set.")
-        return self._schema.reference_level_shape
+        return self._schema.reference_level_properties
 
 
 # TODO: Push down to C++ layer
 @dataclass
 class MultiscaleImageSchema:
 
-    image_type: str
+    reference_level_properties: ImageProperties
     axis_names: Tuple[str, ...]
-    reference_level_shape: Tuple[int, ...]
-    nchannels: Optional[int] = field(init=False)
 
     def __post_init__(self):  # type: ignore[no-untyped-def]
-        if not (
-            (len(self.image_type) == 2 and set(self.image_type) == {"X", "Y"})
-            or (len(self.image_type) == 3 and set(self.image_type) == {"C", "X", "Y"})
-        ):
-            raise NotImplementedError(
-                f"{self.image_type} is not a supported image type."
-            )
-        self.ndim = len(self.image_type)
-        if len(self.axis_names) != self.ndim:
+        ndim = len(self.reference_level_properties.shape)
+        if len(self.axis_names) != ndim:
             raise ValueError(
-                f"{self.ndim} axis names must be provided for a multiscale image "
-                f"with image type {self.image_type}."
+                f"Invalid axis names '{self.axis_names}'. {ndim} axis names must be "
+                f"provided for a multiscale image with image type "
+                f"{self.reference_level_properties.image_type}. "
             )
-        if len(set(self.axis_names)) != self.ndim:
-            raise ValueError("Cannot have repeated axis names.")
-
-        channel_index = self.image_type.find("C")
-        if channel_index == -1:
-            self.nchannels = None
-        else:
-            self.nchannels = self.reference_level_shape[channel_index]
-
-    @classmethod
-    def from_json(cls, data: str) -> Self:
-        kwargs = json.loads(data)
-        return cls(**kwargs)
 
     def create_coordinate_space(self) -> CoordinateSpace:
         return CoordinateSpace(
@@ -377,17 +387,25 @@ class MultiscaleImageSchema:
         )
 
     def get_coordinate_space_axis_names(self) -> Tuple[str, ...]:
-        if self.nchannels is None:
+        channel_index = self.reference_level_properties.image_type.find("C")
+        if channel_index == -1:
             return self.axis_names
-        channel_index = self.image_type.find("C")
         return tuple(
             self.axis_names[:channel_index] + self.axis_names[channel_index + 1 :]
         )
 
     def to_json(self) -> str:
-        kwargs: Dict[str, Any] = {
-            "image_type": self.image_type,
-            "axis_names": self.axis_names,
-            "reference_level_shape": self.reference_level_shape,
-        }
-        return json.dumps(kwargs)
+        return json.dumps(
+            {
+                "name": self.reference_level_properties.name,
+                "image_type": self.reference_level_properties.image_type,
+                "shape": self.reference_level_properties.shape,
+                "axis_names": self.axis_names,
+            }
+        )
+
+    @classmethod
+    def from_json(cls, data: str) -> Self:
+        kwargs = json.loads(data)
+        axis_names = kwargs.pop("axis_names")
+        return cls(ImageProperties(**kwargs), axis_names)
