@@ -830,8 +830,8 @@ class SOMAArray : public SOMAObject {
     // the array has one. These are important test-points and dev-internal
     // access-points, in particular, for the tiledbsoma-io experiment-level
     // resizer.
-    std::optional<int64_t> _maybe_sjid_shape();
-    std::optional<int64_t> _maybe_sjid_maxshape();
+    std::optional<int64_t> _maybe_soma_joinid_shape();
+    std::optional<int64_t> _maybe_soma_joinid_maxshape();
 
    private:
     //===================================================================
@@ -882,8 +882,8 @@ class SOMAArray : public SOMAObject {
      */
     std::vector<int64_t> _tiledb_domain();
     std::vector<int64_t> _tiledb_current_domain();
-    std::optional<int64_t> _maybe_sjid_tiledb_current_domain();
-    std::optional<int64_t> _maybe_sjid_tiledb_domain();
+    std::optional<int64_t> _maybe_soma_joinid_tiledb_current_domain();
+    std::optional<int64_t> _maybe_soma_joinid_tiledb_domain();
 
     bool _extend_enumeration(
         ArrowSchema* value_schema,

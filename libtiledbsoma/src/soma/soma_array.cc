@@ -1208,14 +1208,14 @@ std::vector<int64_t> SOMAArray::maxshape() {
     return _tiledb_domain();
 }
 
-std::optional<int64_t> SOMAArray::_maybe_sjid_shape() {
+std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape() {
     return _get_current_domain().is_empty() ?
-               _maybe_sjid_tiledb_domain() :
-               _maybe_sjid_tiledb_current_domain();
+               _maybe_soma_joinid_tiledb_domain() :
+               _maybe_soma_joinid_tiledb_current_domain();
 }
 
-std::optional<int64_t> SOMAArray::_maybe_sjid_maxshape() {
-    return _maybe_sjid_tiledb_domain();
+std::optional<int64_t> SOMAArray::_maybe_soma_joinid_maxshape() {
+    return _maybe_soma_joinid_tiledb_domain();
 }
 
 std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
@@ -1262,7 +1262,7 @@ std::vector<int64_t> SOMAArray::_tiledb_domain() {
     return result;
 }
 
-std::optional<int64_t> SOMAArray::_maybe_sjid_tiledb_current_domain() {
+std::optional<int64_t> SOMAArray::_maybe_soma_joinid_tiledb_current_domain() {
     const std::string dim_name = "soma_joinid";
 
     auto dom = arr_->schema().domain();
@@ -1296,7 +1296,7 @@ std::optional<int64_t> SOMAArray::_maybe_sjid_tiledb_current_domain() {
     return std::optional<int64_t>(max);
 }
 
-std::optional<int64_t> SOMAArray::_maybe_sjid_tiledb_domain() {
+std::optional<int64_t> SOMAArray::_maybe_soma_joinid_tiledb_domain() {
     const std::string dim_name = "soma_joinid";
 
     auto dom = arr_->schema().domain();

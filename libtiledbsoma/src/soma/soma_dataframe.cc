@@ -94,12 +94,12 @@ uint64_t SOMADataFrame::count() {
     return this->nnz();
 }
 
-std::optional<int64_t> SOMADataFrame::maybe_sjid_shape() {
-    return _maybe_sjid_shape();
+std::optional<int64_t> SOMADataFrame::maybe_soma_joinid_shape() {
+    return _maybe_soma_joinid_shape();
 }
 
-std::optional<int64_t> SOMADataFrame::maybe_sjid_maxshape() {
-    return _maybe_sjid_maxshape();
+std::optional<int64_t> SOMADataFrame::maybe_soma_joinid_maxshape() {
+    return _maybe_soma_joinid_maxshape();
 }
 
 }  // namespace tiledbsoma

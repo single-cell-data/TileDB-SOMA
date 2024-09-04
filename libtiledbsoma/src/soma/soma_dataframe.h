@@ -174,14 +174,14 @@ class SOMADataFrame : public SOMAArray {
      *
      * @return std::optional<int64_t>
      */
-    std::optional<int64_t> maybe_sjid_shape();
+    std::optional<int64_t> maybe_soma_joinid_shape();
 
     /**
-     * See comments for maybe_sjid_shape.
+     * See comments for maybe_soma_joinid_shape.
      *
      * @return std::optional<int64_t>
      */
-    std::optional<int64_t> maybe_sjid_maxshape();
+    std::optional<int64_t> maybe_soma_joinid_maxshape();
 };
 
 }  // namespace tiledbsoma

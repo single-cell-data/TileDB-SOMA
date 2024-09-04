@@ -513,7 +513,7 @@ TEST_CASE_METHOD(
 
         // Check shape before write
         int64_t expect = dim_infos[0].dim_max + 1;
-        std::optional<int64_t> actual = soma_dataframe->maybe_sjid_shape();
+        std::optional<int64_t> actual = soma_dataframe->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
 
@@ -544,7 +544,7 @@ TEST_CASE_METHOD(
             soma_dataframe = open(OpenMode::read);
             expect = dim_infos[0].dim_max + 1;
 
-            std::optional<int64_t> actual = soma_dataframe->maybe_sjid_shape();
+            std::optional<int64_t> actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
             soma_dataframe->close();
@@ -560,7 +560,7 @@ TEST_CASE_METHOD(
             // Check shape after resize
             soma_dataframe = open(OpenMode::read);
             expect = SOMA_JOINID_RESIZE_DIM_MAX;  // XXX MISSING A + 1 SOMEWHERE
-            actual = soma_dataframe->maybe_sjid_shape();
+            actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
 
@@ -617,7 +617,7 @@ TEST_CASE_METHOD(
 
         // Check shape before write
         int64_t expect = dim_infos[0].dim_max + 1;
-        std::optional<int64_t> actual = soma_dataframe->maybe_sjid_shape();
+        std::optional<int64_t> actual = soma_dataframe->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
         soma_dataframe->close();
@@ -628,7 +628,7 @@ TEST_CASE_METHOD(
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
         expect = dim_infos[0].dim_max + 1;
-        actual = soma_dataframe->maybe_sjid_shape();
+        actual = soma_dataframe->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
         soma_dataframe->close();
@@ -655,7 +655,7 @@ TEST_CASE_METHOD(
             // Check shape after write
             soma_dataframe = open(OpenMode::read);
             expect = dim_infos[0].dim_max + 1;
-            std::optional<int64_t> actual = soma_dataframe->maybe_sjid_shape();
+            std::optional<int64_t> actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
             soma_dataframe->close();
@@ -671,7 +671,7 @@ TEST_CASE_METHOD(
             // Check shape after resize
             soma_dataframe = open(OpenMode::read);
             expect = SOMA_JOINID_RESIZE_DIM_MAX;
-            actual = soma_dataframe->maybe_sjid_shape();
+            actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
             soma_dataframe->close();
@@ -732,7 +732,7 @@ TEST_CASE_METHOD(
 
         // Check shape before write
         int64_t expect = dim_infos[0].dim_max + 1;
-        std::optional<int64_t> actual = soma_dataframe->maybe_sjid_shape();
+        std::optional<int64_t> actual = soma_dataframe->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
         soma_dataframe->close();
@@ -743,7 +743,7 @@ TEST_CASE_METHOD(
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
         expect = dim_infos[0].dim_max + 1;
-        actual = soma_dataframe->maybe_sjid_shape();
+        actual = soma_dataframe->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
         soma_dataframe->close();
@@ -770,7 +770,7 @@ TEST_CASE_METHOD(
             // Check shape after write
             soma_dataframe = open(OpenMode::read);
             expect = dim_infos[0].dim_max + 1;
-            std::optional<int64_t> actual = soma_dataframe->maybe_sjid_shape();
+            std::optional<int64_t> actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
             soma_dataframe->close();
@@ -786,7 +786,7 @@ TEST_CASE_METHOD(
             // Check shape after resize
             soma_dataframe = open(OpenMode::read);
             expect = SOMA_JOINID_RESIZE_DIM_MAX;
-            actual = soma_dataframe->maybe_sjid_shape();
+            actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
             soma_dataframe->close();
@@ -845,7 +845,7 @@ TEST_CASE_METHOD(
         }
 
         // Check shape before write
-        std::optional<int64_t> actual = soma_dataframe->maybe_sjid_shape();
+        std::optional<int64_t> actual = soma_dataframe->maybe_soma_joinid_shape();
         REQUIRE(!actual.has_value());
         soma_dataframe->close();
 
@@ -854,7 +854,7 @@ TEST_CASE_METHOD(
 
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
-        actual = soma_dataframe->maybe_sjid_shape();
+        actual = soma_dataframe->maybe_soma_joinid_shape();
         REQUIRE(!actual.has_value());
         soma_dataframe->close();
 
@@ -876,7 +876,7 @@ TEST_CASE_METHOD(
         } else {
             // Check shape after write
             soma_dataframe = open(OpenMode::read);
-            std::optional<int64_t> actual = soma_dataframe->maybe_sjid_shape();
+            std::optional<int64_t> actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(!actual.has_value());
             soma_dataframe->close();
 
@@ -890,7 +890,7 @@ TEST_CASE_METHOD(
 
             // Check shape after resize -- noting soma_joinid is not a dim here
             soma_dataframe = open(OpenMode::read);
-            actual = soma_dataframe->maybe_sjid_shape();
+            actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(!actual.has_value());
             soma_dataframe->close();
 
