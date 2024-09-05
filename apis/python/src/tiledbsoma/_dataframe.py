@@ -317,6 +317,40 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         # if is it in read open mode, then it is a DataFrameWrapper
         return cast(DataFrameWrapper, self._handle).count
 
+    @property
+    def _maybe_soma_joinid_shape(self) -> Optional[int]:
+        """An internal helper method that returns the shape
+        value along the ``soma_joinid`` index column, if the ``DataFrame
+        has one, else ``None``.
+
+
+        Lifecycle:
+            Experimental.
+        """
+        return self._handle.maybe_soma_joinid_shape
+
+    @property
+    def _maybe_soma_joinid_maxshape(self) -> Optional[int]:
+        """An internal helper method that returns the maxshape
+        value along the ``soma_joinid`` index column, if the ``DataFrame
+        has one, else ``None``.
+
+        Lifecycle:
+            Experimental.
+        """
+        return self._handle.maybe_soma_joinid_maxshape
+
+    @property
+    def has_upgraded_domain(self) -> bool:
+        """Returns true if the array has the upgraded resizeable domain feature
+        from TileDB-SOMA 1.14: the array was created with this support, or it has
+        had ``.upgrade_domain`` applied to it.
+
+        Lifecycle:
+            Maturing.
+        """
+        return self._handle.has_upgraded_domain
+
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
         return self.count

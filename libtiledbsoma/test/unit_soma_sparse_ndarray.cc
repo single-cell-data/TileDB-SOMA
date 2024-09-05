@@ -135,9 +135,11 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
             // Without current-domain support: this should throw since
             // one cannot resize what has not been sized.
+            REQUIRE(!soma_sparse->has_current_domain());
             REQUIRE_THROWS(soma_sparse->resize(new_shape));
             // Now set the shape
             soma_sparse->upgrade_shape(new_shape);
+            REQUIRE(soma_sparse->has_current_domain());
             // Should not fail since we're setting it to what it already is.
             soma_sparse->resize(new_shape);
             soma_sparse->close();

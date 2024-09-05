@@ -824,6 +824,18 @@ class SOMAArray : public SOMAObject {
         return _get_current_domain();
     }
 
+    /**
+     * @brief Returns true if the array has a non-empty current domain, else
+     * false.  Note that at the core level it's "current domain" for all arrays;
+     * at the SOMA-API level it's "upgraded_shape" for SOMASparseNDArray and
+     * SOMADenseNDArray, and "upgraded_domain" for SOMADataFrame; here
+     * we use the core language and defer to Python/R to conform to
+     * SOMA-API syntax.
+     */
+    bool has_current_domain() {
+        return !_get_current_domain().is_empty();
+    }
+
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in
     // its entirety to SOMADataFrame, but it would entail moving several

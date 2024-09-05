@@ -95,6 +95,28 @@ class NDArray(SOMAArray, somacore.NDArray):
         """
         return cast(Tuple[int, ...], tuple(self._handle.shape))
 
+    @property
+    def maxshape(self) -> Tuple[int, ...]:
+        """Returns the maximum resizable capacity of each dimension, always a list of length
+        ``ndim``.  This will not necessarily match the bounds of occupied cells within the array.
+        It is the upper limit for ``resize`` on the array.
+
+        Lifecycle:
+            Maturing.
+        """
+        return cast(Tuple[int, ...], tuple(self._handle.maxshape))
+
+    @property
+    def has_upgraded_shape(self) -> bool:
+        """Returns true if the array has the upgraded resizeable shape feature
+        from TileDB-SOMA 1.14: the array was created with this support, or it has
+        had ``.upgrade_shape`` applied to it.
+
+        Lifecycle:
+            Maturing.
+        """
+        return self._handle.has_upgraded_shape
+
     @classmethod
     def _dim_capacity_and_extent(
         cls,

@@ -90,8 +90,15 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sdf.count == 5
         assert len(sdf) == 5
 
+        # More to come on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+        assert not sdf.has_upgraded_domain
+
         with pytest.raises(AttributeError):
             assert sdf.shape is None
+
+        # soma_joinid is not a dim here
+        assert sdf._maybe_soma_joinid_shape is None
+        assert sdf._maybe_soma_joinid_maxshape is None
 
         # Read all
         table = sdf.read().concat()

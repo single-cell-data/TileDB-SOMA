@@ -84,7 +84,20 @@ SOMANDArrayBase <- R6::R6Class(
     set_data_type = function(type) {
       spdl::debug("[SOMANDArrayBase::set_data_type] caching type {}", type$ToString())
       private$.type <- type
+    },
+
+    #' @description Returns TRUE if the array has the upgraded resizeable shape
+    #' feature from TileDB-SOMA 1.14: the array was created with this support,
+    #' or it has had ``upgrade_domain`` applied to it.
+    #' (lifecycle: maturing)
+    #' @return Logical
+    has_upgraded_shape = function() {
+      has_current_domain(
+        self$uri,
+        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      )
     }
+
   ),
 
   private = list(
