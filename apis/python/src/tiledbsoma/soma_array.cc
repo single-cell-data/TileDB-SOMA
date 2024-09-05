@@ -541,7 +541,8 @@ void load_soma_array(py::module& m) {
             [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
-                        return py::cast(array.non_empty_domain<uint64_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<uint64_t>(name));
                     case TILEDB_DATETIME_YEAR:
                     case TILEDB_DATETIME_MONTH:
                     case TILEDB_DATETIME_WEEK:
@@ -556,26 +557,35 @@ void load_soma_array(py::module& m) {
                     case TILEDB_DATETIME_FS:
                     case TILEDB_DATETIME_AS:
                     case TILEDB_INT64:
-                        return py::cast(array.non_empty_domain<int64_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<int64_t>(name));
                     case TILEDB_UINT32:
-                        return py::cast(array.non_empty_domain<uint32_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<uint32_t>(name));
                     case TILEDB_INT32:
-                        return py::cast(array.non_empty_domain<int32_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<int32_t>(name));
                     case TILEDB_UINT16:
-                        return py::cast(array.non_empty_domain<uint16_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<uint16_t>(name));
                     case TILEDB_INT16:
-                        return py::cast(array.non_empty_domain<int16_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<int16_t>(name));
                     case TILEDB_UINT8:
-                        return py::cast(array.non_empty_domain<uint8_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<uint8_t>(name));
                     case TILEDB_INT8:
-                        return py::cast(array.non_empty_domain<int8_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<int8_t>(name));
                     case TILEDB_FLOAT64:
-                        return py::cast(array.non_empty_domain<double>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<double>(name));
                     case TILEDB_FLOAT32:
-                        return py::cast(array.non_empty_domain<float>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<float>(name));
                     case TILEDB_STRING_UTF8:
                     case TILEDB_STRING_ASCII:
-                        return py::cast(array.non_empty_domain_var(name));
+                        return py::cast(array.non_empty_domain_slot_var(name));
                     default:
                         throw TileDBSOMAError(
                             "Unsupported dtype for nonempty domain.");
@@ -587,7 +597,7 @@ void load_soma_array(py::module& m) {
             [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
-                        return py::cast(array.domain<uint64_t>(name));
+                        return py::cast(array.soma_domain_slot<uint64_t>(name));
                     case TILEDB_DATETIME_YEAR:
                     case TILEDB_DATETIME_MONTH:
                     case TILEDB_DATETIME_WEEK:
@@ -602,23 +612,80 @@ void load_soma_array(py::module& m) {
                     case TILEDB_DATETIME_FS:
                     case TILEDB_DATETIME_AS:
                     case TILEDB_INT64:
-                        return py::cast(array.domain<int64_t>(name));
+                        return py::cast(array.soma_domain_slot<int64_t>(name));
                     case TILEDB_UINT32:
-                        return py::cast(array.domain<uint32_t>(name));
+                        return py::cast(array.soma_domain_slot<uint32_t>(name));
                     case TILEDB_INT32:
-                        return py::cast(array.domain<int32_t>(name));
+                        return py::cast(array.soma_domain_slot<int32_t>(name));
                     case TILEDB_UINT16:
-                        return py::cast(array.domain<uint16_t>(name));
+                        return py::cast(array.soma_domain_slot<uint16_t>(name));
                     case TILEDB_INT16:
-                        return py::cast(array.domain<int16_t>(name));
+                        return py::cast(array.soma_domain_slot<int16_t>(name));
                     case TILEDB_UINT8:
-                        return py::cast(array.domain<uint8_t>(name));
+                        return py::cast(array.soma_domain_slot<uint8_t>(name));
                     case TILEDB_INT8:
-                        return py::cast(array.domain<int8_t>(name));
+                        return py::cast(array.soma_domain_slot<int8_t>(name));
                     case TILEDB_FLOAT64:
-                        return py::cast(array.domain<double>(name));
+                        return py::cast(array.soma_domain_slot<double>(name));
                     case TILEDB_FLOAT32:
-                        return py::cast(array.domain<float>(name));
+                        return py::cast(array.soma_domain_slot<float>(name));
+                    case TILEDB_STRING_UTF8:
+                    case TILEDB_STRING_ASCII: {
+                        std::pair<std::string, std::string> str_domain;
+                        return py::cast(std::make_pair("", ""));
+                    }
+                    default:
+                        throw TileDBSOMAError(
+                            "Unsupported dtype for Dimension's domain");
+                }
+            })
+
+        .def(
+            "maxdomain",
+            [](SOMAArray& array, std::string name, py::dtype dtype) {
+                switch (np_to_tdb_dtype(dtype)) {
+                    case TILEDB_UINT64:
+                        return py::cast(
+                            array.soma_maxdomain_slot<uint64_t>(name));
+                    case TILEDB_DATETIME_YEAR:
+                    case TILEDB_DATETIME_MONTH:
+                    case TILEDB_DATETIME_WEEK:
+                    case TILEDB_DATETIME_DAY:
+                    case TILEDB_DATETIME_HR:
+                    case TILEDB_DATETIME_MIN:
+                    case TILEDB_DATETIME_SEC:
+                    case TILEDB_DATETIME_MS:
+                    case TILEDB_DATETIME_US:
+                    case TILEDB_DATETIME_NS:
+                    case TILEDB_DATETIME_PS:
+                    case TILEDB_DATETIME_FS:
+                    case TILEDB_DATETIME_AS:
+                    case TILEDB_INT64:
+                        return py::cast(
+                            array.soma_maxdomain_slot<int64_t>(name));
+                    case TILEDB_UINT32:
+                        return py::cast(
+                            array.soma_maxdomain_slot<uint32_t>(name));
+                    case TILEDB_INT32:
+                        return py::cast(
+                            array.soma_maxdomain_slot<int32_t>(name));
+                    case TILEDB_UINT16:
+                        return py::cast(
+                            array.soma_maxdomain_slot<uint16_t>(name));
+                    case TILEDB_INT16:
+                        return py::cast(
+                            array.soma_maxdomain_slot<int16_t>(name));
+                    case TILEDB_UINT8:
+                        return py::cast(
+                            array.soma_maxdomain_slot<uint8_t>(name));
+                    case TILEDB_INT8:
+                        return py::cast(
+                            array.soma_maxdomain_slot<int8_t>(name));
+                    case TILEDB_FLOAT64:
+                        return py::cast(
+                            array.soma_maxdomain_slot<double>(name));
+                    case TILEDB_FLOAT32:
+                        return py::cast(array.soma_maxdomain_slot<float>(name));
                     case TILEDB_STRING_UTF8:
                     case TILEDB_STRING_ASCII: {
                         std::pair<std::string, std::string> str_domain;
