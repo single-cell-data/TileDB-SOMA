@@ -144,7 +144,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         try:
             coord_space = self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]
         except KeyError as ke:
-            raise SOMAError("Missing axis name metadata") from ke
+            raise SOMAError("Missing coordinate space metadata") from ke
         self._coord_space = coordinate_space_from_json(coord_space)
         for name in self._coord_space.axis_names:
             if name not in self.index_column_names:

@@ -19,6 +19,7 @@ from typing import (
     Dict,
     Optional,
     Sequence,
+    Tuple,
     Type,
     Union,
 )
@@ -38,7 +39,7 @@ from .. import (
     DataFrame,
     DenseNDArray,
     Experiment,
-    Image2DCollection,
+    MultiscaleImage,
     PointCloud,
     Scene,
     SparseNDArray,
@@ -167,6 +168,7 @@ def from_cxg_spatial_h5ad(
         var_id_name=var_id_name,
         X_layer_name=X_layer_name,
         raw_X_layer_name=raw_X_layer_name,
+        image_name=scene_name,
         X_kind=X_kind,
         uns_keys=uns_keys,
         additional_metadata=additional_metadata,
@@ -286,6 +288,7 @@ def _write_visium_data_to_experiment_uri(
     var_id_name: str = "var_id",
     X_layer_name: str = "data",
     raw_X_layer_name: str = "data",
+    image_name: str = "tissue",
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
@@ -328,6 +331,30 @@ def _write_visium_data_to_experiment_uri(
 
     pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 
+    # Get the size of the fullres image.
+    # TODO: This is a hack.
+    if input_fullres is not None:
+        with Image.open(input_fullres) as im:
+            ref_shape: Tuple[int, ...] = np.array(im).shape
+    elif input_hires is not None:
+        with Image.open(input_hires) as im:
+            width, height, nchannel = np.array(im).shape  # type: ignore
+        scale = scale_factors["tissue_hires_scalef"]
+        ref_shape = (
+            int(np.round(width / scale)),
+            int(np.round(height / scale)),
+            nchannel,
+        )
+    elif input_lowres is not None:
+        with Image.open(input_lowres) as im:
+            width, height, nchannel = np.array(im).shape  # type: ignore
+        scale = scale_factors["tissue_lowres_scalef"]
+        ref_shape = (
+            int(np.round(width / scale)),
+            int(np.round(height / scale)),
+            nchannel,
+        )
+
     # Create axes and transformations
     coord_space = CoordinateSpace(
         (Axis(name="x", units="pixels"), Axis(name="y", units="pixels"))
@@ -361,24 +388,29 @@ def _write_visium_data_to_experiment_uri(
                 # Write image data and add to the scene.
                 img_uri = f"{scene_uri}/img"
                 with _create_or_open_collection(
-                    Collection[Image2DCollection], img_uri, **ingest_ctx
+                    Collection[MultiscaleImage], img_uri, **ingest_ctx
                 ) as img:
                     _maybe_set(scene, "img", img, use_relative_uri=use_relative_uri)
                     if any(
                         x is not None
                         for x in (input_hires, input_lowres, input_fullres)
                     ):
-                        tissue_uri = f"{img_uri}/tissue"
-                        with _create_or_open_collection(
-                            Image2DCollection, tissue_uri, **ingest_ctx
+                        tissue_uri = f"{img_uri}/{image_name}"
+                        with MultiscaleImage.create(
+                            tissue_uri,
+                            image_type="YXC",
+                            type=pa.uint8(),
+                            reference_level_shape=ref_shape,
+                            axis_names=("x", "y", "c"),
+                            context=ingest_ctx.get("context"),
                         ) as tissue:
+                            add_metadata(tissue, ingest_ctx.get("additional_metadata"))
                             _maybe_set(
                                 img,
-                                "tissue",
+                                image_name,
                                 tissue,
                                 use_relative_uri=use_relative_uri,
                             )
-                            tissue.axis_order = "YXC"  # TODO Make input arg
                             _write_visium_images(
                                 tissue,
                                 scale_factors,
@@ -389,8 +421,8 @@ def _write_visium_data_to_experiment_uri(
                                 **ingest_ctx,
                             )
                             tissue.coordinate_space = coord_space
-                            scene.register_image2d(
-                                "tissue",
+                            scene.register_multiscale_image(
+                                image_name,
                                 IdentityTransform(("x", "y"), ("x", "y")),
                             )
 
@@ -574,7 +606,7 @@ def _write_visium_spots(
 
 
 def _write_visium_images(
-    image_pyramid: Image2DCollection,
+    image_pyramid: MultiscaleImage,
     scale_factors: Dict[str, Any],
     *,
     input_hires: Union[None, str, Path],
@@ -590,29 +622,6 @@ def _write_visium_images(
     for key, value in scale_factors.items():
         image_pyramid.metadata[key] = value
 
-    # Set reference shape
-    if input_fullres is not None:
-        with Image.open(input_fullres) as im:
-            width, height = im.size
-        ref_shape = (width, height)
-    elif input_hires is not None:
-        with Image.open(input_hires) as im:
-            width, height = im.size
-        scale = scale_factors["tissue_hires_scalef"]
-        ref_shape = (
-            int(np.round(width / scale)),
-            int(np.round(height / scale)),
-        )
-    elif input_lowres is not None:
-        with Image.open(input_lowres) as im:
-            width, height = im.size
-        scale = scale_factors["tissue_lowres_scalef"]
-        ref_shape = (
-            int(np.round(width / scale)),
-            int(np.round(height / scale)),
-        )
-    image_pyramid.reference_shape = ref_shape
-
     # Add the different levels of zoom to the image pyramid.
     for name, image_path in (
         ("fullres", input_fullres),
@@ -623,9 +632,7 @@ def _write_visium_images(
             continue
         with Image.open(image_path) as im:
             im_data = pa.Tensor.from_numpy(np.array(im))
-        im_array = image_pyramid.add_new_level(
-            name, type=pa.uint8(), shape=im_data.shape
-        )
+        im_array = image_pyramid.add_new_level(name, shape=im_data.shape)
         im_array.write(
             (slice(None), slice(None), slice(None)),
             im_data,

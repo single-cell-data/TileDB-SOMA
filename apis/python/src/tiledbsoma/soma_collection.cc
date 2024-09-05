@@ -78,7 +78,7 @@ void load_soma_collection(py::module& m) {
     py::class_<SOMAScene, SOMACollection, SOMAGroup, SOMAObject>(
         m, "SOMAScene");
 
-    py::class_<SOMAImage2DCollection, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAImage2DCollection");
+    py::class_<SOMAMultiscaleImage, SOMACollection, SOMAGroup, SOMAObject>(
+        m, "SOMAMultiscaleImage");
 }
 }  // namespace libtiledbsomacpp

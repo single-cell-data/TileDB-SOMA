@@ -49,7 +49,7 @@ RawHandle = Union[
     clib.SOMAMeasurement,
     clib.SOMAExperiment,
     clib.SOMAScene,
-    clib.SOMAImage2DCollection,
+    clib.SOMAMultiscaleImage,
 ]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
@@ -87,7 +87,7 @@ def open(
         "somaexperiment": ExperimentWrapper,
         "somameasurement": MeasurementWrapper,
         "somascene": SceneWrapper,
-        "somaimage2dcollection": Image2DCollectionWrapper,
+        "somamultiscaleimage": MultiscaleImageWrapper,
     }
 
     try:
@@ -324,10 +324,10 @@ class SceneWrapper(SOMAGroupWrapper[clib.SOMAScene]):
     _GROUP_WRAPPED_TYPE = clib.SOMAScene
 
 
-class Image2DCollectionWrapper(SOMAGroupWrapper[clib.SOMAImage2DCollection]):
+class MultiscaleImageWrapper(SOMAGroupWrapper[clib.SOMAMultiscaleImage]):
     """Wrapper around a Pybind11 SceneWrapper handle."""
 
-    _GROUP_WRAPPED_TYPE = clib.SOMAImage2DCollection
+    _GROUP_WRAPPED_TYPE = clib.SOMAMultiscaleImage
 
 
 _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)

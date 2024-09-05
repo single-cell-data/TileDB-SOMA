@@ -219,7 +219,7 @@ def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
             _dense_nd_array.DenseNDArray,
             _experiment.Experiment,
             _measurement.Measurement,
-            _images.Image2DCollection,
+            _images.MultiscaleImage,
             _sparse_nd_array.SparseNDArray,
             _scene.Scene,
             _point_cloud.PointCloud,
