@@ -5,7 +5,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2023 TileDB, Inc.
+ * @copyright Copyright (c) 2023-2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -220,7 +220,8 @@ void SOMAGroup::set(
     const std::string& soma_type) {
     bool relative = uri_type == URIType::relative;
     if (uri_type == URIType::automatic) {
-        relative = uri.find("://") != std::string::npos;
+        relative = !(
+            (uri.find("://") != std::string::npos) || (uri.find("/") == 0));
     }
     group_->add_member(uri, relative, name);
     members_map_[name] = SOMAGroupEntry(uri, soma_type);
