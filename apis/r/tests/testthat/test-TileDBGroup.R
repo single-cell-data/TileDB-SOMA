@@ -69,11 +69,11 @@ test_that("Add and remove members", {
 
   # Add array and subgroup as members
   group$open(mode = "WRITE", internal_use_only = "allowed_use")
-  group$set(a1, name = "a1", relative = FALSE) ## FIXME: relative needed
+  group$set(a1, name = "a1")
   expect_equal(group$length(), 1)
   expect_equal(group$to_data_frame()$type, "ARRAY")
 
-  group$set(g1, name = "g1", relative = FALSE) ## FIXME: relative needed
+  group$set(g1, name = "g1")
   expect_equal(group$length(), 2)
   expect_setequal(group$to_data_frame()$type, c("ARRAY", "GROUP"))
   group$close()
