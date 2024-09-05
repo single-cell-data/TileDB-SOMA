@@ -234,3 +234,47 @@ Rcpp::NumericVector shape(const std::string& uri,
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
     return Rcpp::toInteger64(sr->shape());
 }
+
+// [[Rcpp::export]]
+Rcpp::NumericVector maxshape(const std::string& uri,
+                          Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
+    return Rcpp::toInteger64(sr->maxshape());
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector maybe_soma_joinid_shape(const std::string& uri,
+                          Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+    // Pro-tip:
+    // * Open with mode and uri gives a SOMAArray.
+    // * Open with uri and mode gives a SOMADataFrame.
+    // This was done intentionally to resolve an ambiguous-overload compiler error.
+    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::read, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
+    auto retval = sr->maybe_soma_joinid_shape();
+    if (retval.has_value()) {
+      return Rcpp::toInteger64(retval.value());
+    } else {
+      // We use this sentinel to facilitate a pure-R return value of NA.
+      return Rcpp::toInteger64(-1);
+    }
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector maybe_soma_joinid_maxshape(const std::string& uri,
+                          Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::read, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
+    auto retval = sr->maybe_soma_joinid_maxshape();
+    if (retval.has_value()) {
+      return Rcpp::toInteger64(retval.value());
+    } else {
+      // We use this sentinel to facilitate a pure-R return value of NA.
+      return Rcpp::toInteger64(-1);
+    }
+}
+
+// [[Rcpp::export]]
+Rcpp::LogicalVector has_current_domain(const std::string& uri,
+                          Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
+    return Rcpp::LogicalVector(sr->has_current_domain());
+}

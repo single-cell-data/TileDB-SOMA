@@ -406,7 +406,33 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        return tuple(self._handle.shape)
+        """Not implemented for DataFrame."""
+        return cast(Tuple[int, ...], tuple(self._handle.shape))
+
+    @property
+    def maxshape(self) -> Tuple[int, ...]:
+        """Not implemented for DataFrame."""
+        return cast(Tuple[int, ...], tuple(self._handle.maxshape))
+
+    @property
+    def maybe_soma_joinid_shape(self) -> Optional[int]:
+        """Only implemented for DataFrame."""
+        raise NotImplementedError
+
+    @property
+    def maybe_soma_joinid_maxshape(self) -> Optional[int]:
+        """Only implemented for DataFrame."""
+        raise NotImplementedError
+
+    @property
+    def has_upgraded_shape(self) -> bool:
+        """Not implemented for DataFrame."""
+        raise NotImplementedError
+
+    @property
+    def has_upgraded_domain(self) -> bool:
+        """Only implemented for DataFrame."""
+        raise NotImplementedError
 
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
@@ -422,15 +448,54 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         self._handle.write(values)
 
     @property
-    def shape(self) -> Tuple[int, ...]:
-        # Shape is not implemented for DataFrames
-        raise NotImplementedError
+    def maybe_soma_joinid_shape(self) -> Optional[int]:
+        """Return the shape slot for the soma_joinid dim, if the array has one.
+        This is an important test-point and dev-internal access-point,
+        in particular, for the tiledbsoma-io experiment-level resizer.
+
+        Lifecycle:
+            Maturing.
+        """
+        return cast(Optional[int], self._handle.maybe_soma_joinid_shape)
+
+    @property
+    def maybe_soma_joinid_maxshape(self) -> Optional[int]:
+        """Return the maxshape slot for the soma_joinid dim, if the array has one.
+        This is an important test-point and dev-internal access-point,
+        in particular, for the tiledbsoma-io experiment-level resizer.
+
+        Lifecycle:
+            Maturing.
+        """
+        return cast(Optional[int], self._handle.maybe_soma_joinid_maxshape)
+
+    @property
+    def has_upgraded_domain(self) -> bool:
+        """Returns true if the array has the upgraded resizeable domain feature
+        from TileDB-SOMA 1.14: the array was created with this support, or it has
+        had ``.upgrade_domain`` applied to it.
+
+        Lifecycle:
+            Maturing.
+        """
+        return cast(bool, self._handle.has_upgraded_domain)
 
 
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
 
     _ARRAY_WRAPPED_TYPE = clib.SOMADenseNDArray
+
+    @property
+    def has_upgraded_shape(self) -> bool:
+        """Returns true if the array has the upgraded resizeable shape feature
+        from TileDB-SOMA 1.14: the array was created with this support, or it has
+        had ``.upgrade_shape`` applied to it.
+
+        Lifecycle:
+            Maturing.
+        """
+        return cast(bool, self._handle.has_upgraded_shape)
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
@@ -441,6 +506,17 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     @property
     def nnz(self) -> int:
         return int(self._handle.nnz())
+
+    @property
+    def has_upgraded_shape(self) -> bool:
+        """Returns true if the array has the upgraded resizeable shape feature
+        from TileDB-SOMA 1.14: the array was created with this support, or it has
+        had ``.upgrade_shape`` applied to it.
+
+        Lifecycle:
+            Maturing.
+        """
+        return cast(bool, self._handle.has_upgraded_shape)
 
 
 class _DictMod(enum.Enum):

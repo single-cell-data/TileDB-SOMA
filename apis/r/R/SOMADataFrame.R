@@ -327,9 +327,65 @@ SOMADataFrame <- R6::R6Class(
     #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
     #'
     shape = function() stop(errorCondition(
-      "'SOMADataFrame$shape()' is not implemented yet",
+      "'SOMADataFrame$shape()' is not implemented",
       class = 'notYetImplementedError'
-    ))
+    )),
+
+    #' @description Retrieve the maxshape; as \code{SOMADataFrames} are shapeless,
+    #' simply raises an error
+    #'
+    #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
+    #'
+    maxshape = function() stop(errorCondition(
+      "'SOMADataFrame$maxshape()' is not implemented",
+      class = 'notYetImplementedError'
+    )),
+
+    #' @description Returns the shape slot for the soma_joinid dim, if the array
+    #' has one.  This is an important test-point and dev-internal access-point.
+    #' (lifecycle: maturing)
+    #' @return An integer64 for the soma_joinid dim's shape, if soma_joinid is
+    #' a dim, else NA.
+    .maybe_soma_joinid_shape = function() {
+      retval <- as.integer64(maybe_soma_joinid_shape(
+        self$uri,
+        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      ))
+      if (retval == as.integer64(-1)) {
+        NA
+      } else {
+        retval
+      }
+    },
+
+    #' @description Returns the maxshape slot for the soma_joinid dim, if the array
+    #' has one.  This is an important test-point and dev-internal access-point.
+    #' (lifecycle: maturing)
+    #' @return An integer64 for the soma_joinid dim's shape, if soma_joinid is
+    #' a dim, else NA.
+    .maybe_soma_joinid_maxshape = function() {
+      retval <- as.integer64(maybe_soma_joinid_maxshape(
+        self$uri,
+        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      ))
+      if (retval == as.integer64(-1)) {
+        NA
+      } else {
+        retval
+      }
+    },
+
+    #' @description Returns TRUE if the array has the upgraded resizeable domain
+    #' feature from TileDB-SOMA 1.14: the array was created with this support,
+    #' or it has had ``upgrade_domain`` applied to it.
+    #' (lifecycle: maturing)
+    #' @return Logical
+    has_upgraded_domain = function() {
+      has_current_domain(
+        self$uri,
+        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      )
+    }
 
   ),
 

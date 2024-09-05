@@ -158,6 +158,17 @@ TileDBArray <- R6::R6Class(
       ))
     },
 
+    #' @description Retrieve the maxshape, i.e. maximum possible that the
+    # shape can be resized up to.
+    #' (lifecycle: maturing)
+    #' @return A named vector of dimension length (and the same type as the dimension)
+    maxshape = function() {
+      as.integer64(maxshape(
+        self$uri,
+        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      ))
+    },
+
     #' @description Retrieve the range of indexes for a dimension that were
     #'  explicitly written.  This method is deprecated as of TileDB-SOMA 1.13, and will be
     #' removed in TileDB-SOMA 1.14.

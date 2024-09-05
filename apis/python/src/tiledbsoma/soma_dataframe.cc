@@ -144,9 +144,17 @@ void load_soma_dataframe(py::module& m) {
         .def_static("exists", &SOMADataFrame::exists)
         .def_property_readonly(
             "index_column_names", &SOMADataFrame::index_column_names)
+
         .def_property_readonly(
             "count",
             &SOMADataFrame::count,
-            py::call_guard<py::gil_scoped_release>());
+            py::call_guard<py::gil_scoped_release>())
+        .def_property_readonly(
+            "maybe_soma_joinid_shape", &SOMADataFrame::maybe_soma_joinid_shape)
+        .def_property_readonly(
+            "maybe_soma_joinid_maxshape",
+            &SOMADataFrame::maybe_soma_joinid_maxshape)
+        .def_property_readonly(
+            "has_upgraded_domain", &SOMAArray::has_current_domain);
 }
 }  // namespace libtiledbsomacpp
