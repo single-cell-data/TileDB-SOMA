@@ -341,40 +341,6 @@ SOMADataFrame <- R6::R6Class(
       class = 'notYetImplementedError'
     )),
 
-    #' @description Returns the shape slot for the soma_joinid dim, if the array
-    #' has one.  This is an important test-point and dev-internal access-point.
-    #' (lifecycle: maturing)
-    #' @return An integer64 for the soma_joinid dim's shape, if soma_joinid is
-    #' a dim, else NA.
-    .maybe_soma_joinid_shape = function() {
-      retval <- as.integer64(maybe_soma_joinid_shape(
-        self$uri,
-        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      ))
-      if (retval == as.integer64(-1)) {
-        NA
-      } else {
-        retval
-      }
-    },
-
-    #' @description Returns the maxshape slot for the soma_joinid dim, if the array
-    #' has one.  This is an important test-point and dev-internal access-point.
-    #' (lifecycle: maturing)
-    #' @return An integer64 for the soma_joinid dim's shape, if soma_joinid is
-    #' a dim, else NA.
-    .maybe_soma_joinid_maxshape = function() {
-      retval <- as.integer64(maybe_soma_joinid_maxshape(
-        self$uri,
-        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      ))
-      if (retval == as.integer64(-1)) {
-        NA
-      } else {
-        retval
-      }
-    },
-
     #' @description Returns TRUE if the array has the upgraded resizeable domain
     #' feature from TileDB-SOMA 1.14: the array was created with this support,
     #' or it has had ``upgrade_domain`` applied to it.
