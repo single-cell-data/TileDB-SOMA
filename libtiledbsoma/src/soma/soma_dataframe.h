@@ -163,7 +163,27 @@ class SOMADataFrame : public SOMAArray {
      * @return int64_t
      */
     uint64_t count();
+
+    /**
+     * While application-level SOMA DataFrame doesn't have shape
+     * and maxshape, these are important test-point accessors,
+     * as well as crucial for experiment-level resize within tiledbsoma.io.
+     *
+     * Note that the SOMA spec for SOMADataFrame mandates a .domain() accessor,
+     * which is distinct, and type-polymorphic.
+     *
+     * @return std::optional<int64_t>
+     */
+    std::optional<int64_t> maybe_soma_joinid_shape();
+
+    /**
+     * See comments for maybe_soma_joinid_shape.
+     *
+     * @return std::optional<int64_t>
+     */
+    std::optional<int64_t> maybe_soma_joinid_maxshape();
 };
+
 }  // namespace tiledbsoma
 
 #endif  // SOMA_DATAFRAME

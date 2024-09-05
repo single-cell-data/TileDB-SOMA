@@ -270,6 +270,20 @@ class SOMAArray : public SOMAObject {
         ResultOrder result_order = ResultOrder::automatic);
 
     /**
+     * @brief Get the number of dimensions.
+     *
+     * @return uint64_t Number of dimensions.
+     */
+    uint64_t ndim() const;
+
+    /**
+     * @brief Get the name of each dimensions.
+     *
+     * @return std::vector<std::string> Name of each dimensions.
+     */
+    std::vector<std::string> dimension_names() const;
+
+    /**
      * @brief Set the dimension slice using one point
      *
      * @note Partitioning is not supported
@@ -544,13 +558,6 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * @brief Get the total number of unique cells in the array.
-     *
-     * @return uint64_t Total number of unique cells
-     */
-    uint64_t nnz();
-
-    /**
      * @brief Get the TileDB ArraySchema. This should eventually
      * be removed in lieu of arrow_schema below.
      *
@@ -569,107 +576,6 @@ class SOMAArray : public SOMAObject {
         return ArrowAdapter::arrow_schema_from_tiledb_array(
             ctx_->tiledb_ctx(), arr_);
     }
-
-    /**
-     * @brief Get the current capacity of each dimension.
-     *
-     * This applies to arrays all of whose dims are of type int64_t: this
-     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
-     * SOMADataFrame.
-     *
-     * At the TileDB-SOMA level we call this "shape". At the TileDB Core
-     * storage level this maps to "current domain".
-     *
-     * Further, we map this single n to the pair (0, n-1) since core permits a
-     * doubly inclusive pair (lo, hi) on each dimension slot.
-     *
-     * @return A vector with length equal to the number of dimensions; each
-     * value in the vector is the capacity of each dimension.
-     */
-    std::vector<int64_t> shape();
-
-    /**
-     * @brief Get the maximum resizable capacity of each dimension.
-     *
-     * This applies to arrays all of whose dims are of type int64_t: this
-     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
-     * SOMADataFrame.
-     *
-     * At the TileDB-SOMA level we call this "maxshape". At the TileDB Core
-     * storage level this maps to "domain".
-     *
-     * Further, we map this single n to the pair (0, n-1) since core permits a
-     * doubly inclusive pair (lo, hi) on each dimension slot.
-     *
-     * @return A vector with length equal to the number of dimensions; each
-     * value in the vector is the maximum capacity of each dimension.
-     */
-    std::vector<int64_t> maxshape();
-
-    /**
-     * @brief Resize the shape (what core calls "current domain") up to the
-     * maxshape (what core calls "domain").
-     *
-     * This applies to arrays all of whose dims are of type int64_t: this
-     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
-     * SOMADataFrame.
-     *
-     * @return Nothing. Raises an exception if the resize would be a downsize,
-     * which is not supported.
-     */
-    void resize(const std::vector<int64_t>& newshape);
-
-    /**
-     * @brief Get the number of dimensions.
-     *
-     * @return uint64_t Number of dimensions.
-     */
-    uint64_t ndim() const;
-
-    /**
-     * Retrieves the non-empty domain from the array. This is the union of the
-     * non-empty domains of the array fragments.
-     */
-    template <typename T>
-    std::pair<T, T> non_empty_domain(const std::string& name) {
-        try {
-            return arr_->non_empty_domain<T>(name);
-        } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
-        }
-    }
-
-    /**
-     * Retrieves the non-empty domain from the array on the given dimension.
-     * This is the union of the non-empty domains of the array fragments.
-     * Applicable only to var-sized dimensions.
-     */
-    std::pair<std::string, std::string> non_empty_domain_var(
-        const std::string& name) {
-        try {
-            return arr_->non_empty_domain_var(name);
-        } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
-        }
-    }
-
-    /**
-     * Returns the domain of the given dimension.
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
-     */
-    template <typename T>
-    std::pair<T, T> domain(const std::string& name) const {
-        return arr_->schema().domain().dimension(name).domain<T>();
-    }
-
-    /**
-     * @brief Get the name of each dimensions.
-     *
-     * @return std::vector<std::string> Name of each dimensions.
-     */
-    std::vector<std::string> dimension_names() const;
 
     /**
      * @brief Get the mapping of attributes to Enumerations.
@@ -731,12 +637,10 @@ class SOMAArray : public SOMAObject {
     /**
      * @brief Given a key, get the associated value datatype, number of
      * values, and value in binary form. The array must be opened in READ
-     mode,
-     * otherwise the function will error out.
+     * mode, otherwise the function will error out.
      *
      * The value may consist of more than one items of the same datatype.
-     Keys
-     * that do not exist in the metadata will be return NULL for the value.
+     * Keys that do not exist in the metadata will be return NULL for the value.
      *
      * **Example:**
      * @code{.cpp}
@@ -752,8 +656,7 @@ class SOMAArray : public SOMAObject {
      * @endcode
      *
      * @param key The key of the metadata item to be retrieved. UTF-8
-     encodings
-     *     are acceptable.
+     * encodings are acceptable.
      * @return MetadataValue (std::tuple<std::string, tiledb_datatype_t,
      * uint32_t, const void*>)
      */
@@ -796,6 +699,145 @@ class SOMAArray : public SOMAObject {
      */
     std::optional<TimestampRange> timestamp();
 
+    /**
+     * Retrieves the non-empty domain from the array. This is the union of the
+     * non-empty domains of the array fragments.
+     */
+    template <typename T>
+    std::pair<T, T> non_empty_domain(const std::string& name) {
+        try {
+            return arr_->non_empty_domain<T>(name);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
+    }
+
+    /**
+     * Retrieves the non-empty domain from the array on the given dimension.
+     * This is the union of the non-empty domains of the array fragments.
+     * Applicable only to var-sized dimensions.
+     */
+    std::pair<std::string, std::string> non_empty_domain_var(
+        const std::string& name) {
+        try {
+            return arr_->non_empty_domain_var(name);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
+    }
+
+    /**
+     * Returns the domain of the given dimension.
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> domain(const std::string& name) const {
+        return arr_->schema().domain().dimension(name).domain<T>();
+    }
+
+    /**
+     * @brief Get the total number of unique cells in the array.
+     *
+     * @return uint64_t Total number of unique cells
+     */
+    uint64_t nnz();
+
+    /**
+     * @brief Get the current capacity of each dimension.
+     *
+     * This applies to arrays all of whose dims are of type int64_t: this
+     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
+     * SOMADataFrame.
+     *
+     * At the TileDB-SOMA level we call this "shape". At the TileDB Core
+     * storage level this maps to "current domain".
+     *
+     * Further, we map this single n to the pair (0, n-1) since core permits a
+     * doubly inclusive pair (lo, hi) on each dimension slot.
+     *
+     * @return A vector with length equal to the number of dimensions; each
+     * value in the vector is the capacity of each dimension.
+     */
+    std::vector<int64_t> shape();
+
+    /**
+     * @brief Get the maximum resizable capacity of each dimension.
+     *
+     * This applies to arrays all of whose dims are of type int64_t: this
+     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
+     * SOMADataFrame.
+     *
+     * At the TileDB-SOMA level we call this "maxshape". At the TileDB Core
+     * storage level this maps to "domain".
+     *
+     * Further, we map this single n to the pair (0, n-1) since core permits a
+     * doubly inclusive pair (lo, hi) on each dimension slot.
+     *
+     * @return A vector with length equal to the number of dimensions; each
+     * value in the vector is the maximum capacity of each dimension.
+     */
+    std::vector<int64_t> maxshape();
+
+    /**
+     * @brief Resize the shape (what core calls "current domain") up to the
+     * maxshape (what core calls "domain").
+     *
+     * This applies to arrays all of whose dims are of type int64_t: this
+     * includes SOMASparseNDArray and SOMADenseNDArray, and default-indexed
+     * SOMADataFrame.
+     *
+     * @return Nothing. Raises an exception if the resize would be a downsize,
+     * which is not supported.
+     */
+    void resize(const std::vector<int64_t>& newshape);
+
+    /**
+     * @brief Given an old-style array without current domain, sets its
+     * current domain. This is applicable only to arrays having all dims
+     * of int64 type. Namely, all SparseNDArray/DenseNDArray, and
+     * default-indexed DataFrame.
+     */
+    void upgrade_shape(const std::vector<int64_t>& newshape);
+
+    /**
+     * @brief Increases the tiledbsoma shape up to at most the maxshape,
+     * resizing the soma_joinid dimension if it is a dimension.
+     *
+     * While SOMA SparseNDArray and DenseNDArray, along with default-indexed
+     * DataFrame, have int64_t dims, non-default-indexed DataFrame objects need
+     * not: it is only required that they have a dim _or_ an attr called
+     * soma_joinid. If soma_joinid is one of the dims, it will be resized while
+     * the others will be preserved. If soma_joinid is not one of the dims,
+     * nothing will be changed, as nothing _needs_ to be changed.
+     *
+     * @return Throws if the requested shape exceeds the array's create-time
+     * maxshape. Throws if the array does not have current-domain support.
+     */
+    void maybe_resize_soma_joinid(const std::vector<int64_t>& newshape);
+
+    /**
+     * Exposed for testing purposes.
+     */
+    CurrentDomain get_current_domain() {
+        return _get_current_domain();
+    }
+
+   protected:
+    // These two are for use nominally by SOMADataFrame. This could be moved in
+    // its entirety to SOMADataFrame, but it would entail moving several
+    // SOMAArray attributes from private to protected, which has knock-on
+    // effects on the order of constructor initializers, etc.: in total it's
+    // simplest to place this here and have SOMADataFrame invoke it.
+    //
+    // They return the shape and maxshape slots for the soma_joinid dim, if
+    // the array has one. These are important test-points and dev-internal
+    // access-points, in particular, for the tiledbsoma-io experiment-level
+    // resizer.
+    std::optional<int64_t> _maybe_soma_joinid_shape();
+    std::optional<int64_t> _maybe_soma_joinid_maxshape();
+
    private:
     //===================================================================
     //= private non-static
@@ -823,6 +865,23 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
+     * Helper method for resize and upgrade_shape.
+     */
+    void _set_current_domain_from_shape(const std::vector<int64_t>& newshape);
+
+    /**
+     * While SparseNDArray, DenseNDArray, and default-indexed DataFrame
+     * have int64 dims, variant-indexed DataFrames do not. This helper
+     * lets us pre-check any attempts to treat dims as if they were int64.
+     */
+    bool _dims_are_int64();
+
+    /**
+     * Same, but throws.
+     */
+    void _check_dims_are_int64();
+
+    /**
      * With old shape: core domain mapped to tiledbsoma shape; core current
      * domain did not exist.
      *
@@ -833,6 +892,8 @@ class SOMAArray : public SOMAObject {
      */
     std::vector<int64_t> _tiledb_domain();
     std::vector<int64_t> _tiledb_current_domain();
+    std::optional<int64_t> _maybe_soma_joinid_tiledb_current_domain();
+    std::optional<int64_t> _maybe_soma_joinid_tiledb_domain();
 
     bool _extend_enumeration(
         ArrowSchema* value_schema,
@@ -1323,7 +1384,7 @@ class SOMAArray : public SOMAObject {
     bool submitted_ = false;
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
-    uint64_t nnz_slow();
+    uint64_t _nnz_slow();
 
     // ArrayBuffers to hold ColumnBuffers alive when submitting to write
     // query
