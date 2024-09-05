@@ -220,7 +220,8 @@ void SOMAGroup::set(
     const std::string& soma_type) {
     bool relative = uri_type == URIType::relative;
     if (uri_type == URIType::automatic) {
-        relative = ! ((uri.find("://") != std::string::npos)|| (uri.find("/") == 0));
+        relative = !(
+            (uri.find("://") != std::string::npos) || (uri.find("/") == 0));
     }
     group_->add_member(uri, relative, name);
     members_map_[name] = SOMAGroupEntry(uri, soma_type);
