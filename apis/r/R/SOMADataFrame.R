@@ -327,7 +327,7 @@ SOMADataFrame <- R6::R6Class(
     #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
     #'
     shape = function() stop(errorCondition(
-      "'SOMADataFrame$shape()' is not implemented",
+      "'SOMADataFrame$shape()' is not implemented yet",
       class = 'notYetImplementedError'
     )),
 
