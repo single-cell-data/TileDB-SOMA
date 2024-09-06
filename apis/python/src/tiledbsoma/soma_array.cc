@@ -247,62 +247,67 @@ void load_soma_array(py::module& m) {
 
                     auto coords = array_handle.attr("tolist")();
 
-                    if (!strcmp(arrow_schema.format, "l")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int64_t>>());
-                    } else if (!strcmp(arrow_schema.format, "i")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int32_t>>());
-                    } else if (!strcmp(arrow_schema.format, "s")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int16_t>>());
-                    } else if (!strcmp(arrow_schema.format, "c")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int8_t>>());
-                    } else if (!strcmp(arrow_schema.format, "L")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<uint64_t>>());
-                    } else if (!strcmp(arrow_schema.format, "I")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<uint32_t>>());
-                    } else if (!strcmp(arrow_schema.format, "S")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<uint16_t>>());
-                    } else if (!strcmp(arrow_schema.format, "C")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<uint8_t>>());
-                    } else if (!strcmp(arrow_schema.format, "f")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<float>>());
-                    } else if (!strcmp(arrow_schema.format, "g")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<double>>());
-                    } else if (
-                        !strcmp(arrow_schema.format, "u") ||
-                        !strcmp(arrow_schema.format, "z")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<std::string>>());
-                    } else if (
-                        !strcmp(arrow_schema.format, "tss:") ||
-                        !strcmp(arrow_schema.format, "tsm:") ||
-                        !strcmp(arrow_schema.format, "tsu:") ||
-                        !strcmp(arrow_schema.format, "tsn:")) {
-                        // convert the Arrow Array to int64
-                        auto pa = py::module::import("pyarrow");
-                        coords = array_handle.attr("cast")(pa.attr("int64")())
-                                     .attr("tolist")();
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int64_t>>());
-                    } else if (
-                        !strcmp(arrow_schema.format, "U") ||
-                        !strcmp(arrow_schema.format, "Z")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<std::string>>());
-                    } else {
-                        TPY_ERROR_LOC(
-                            "[pytiledbsoma] set_dim_points: type={} not "
-                            "supported" +
-                            std::string(arrow_schema.format));
+                    try {
+                        if (!strcmp(arrow_schema.format, "l")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int64_t>>());
+                        } else if (!strcmp(arrow_schema.format, "i")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int32_t>>());
+                        } else if (!strcmp(arrow_schema.format, "s")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int16_t>>());
+                        } else if (!strcmp(arrow_schema.format, "c")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int8_t>>());
+                        } else if (!strcmp(arrow_schema.format, "L")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<uint64_t>>());
+                        } else if (!strcmp(arrow_schema.format, "I")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<uint32_t>>());
+                        } else if (!strcmp(arrow_schema.format, "S")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<uint16_t>>());
+                        } else if (!strcmp(arrow_schema.format, "C")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<uint8_t>>());
+                        } else if (!strcmp(arrow_schema.format, "f")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<float>>());
+                        } else if (!strcmp(arrow_schema.format, "g")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<double>>());
+                        } else if (
+                            !strcmp(arrow_schema.format, "u") ||
+                            !strcmp(arrow_schema.format, "z")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<std::string>>());
+                        } else if (
+                            !strcmp(arrow_schema.format, "tss:") ||
+                            !strcmp(arrow_schema.format, "tsm:") ||
+                            !strcmp(arrow_schema.format, "tsu:") ||
+                            !strcmp(arrow_schema.format, "tsn:")) {
+                            // convert the Arrow Array to int64
+                            auto pa = py::module::import("pyarrow");
+                            coords = array_handle
+                                         .attr("cast")(pa.attr("int64")())
+                                         .attr("tolist")();
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int64_t>>());
+                        } else if (
+                            !strcmp(arrow_schema.format, "U") ||
+                            !strcmp(arrow_schema.format, "Z")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<std::string>>());
+                        } else {
+                            TPY_ERROR_LOC(
+                                "[pytiledbsoma] set_dim_points: type={} not "
+                                "supported" +
+                                std::string(arrow_schema.format));
+                        }
+                    } catch (const std::exception& e) {
+                        throw TileDBSOMAError(e.what());
                     }
 
                     // Release arrow schema

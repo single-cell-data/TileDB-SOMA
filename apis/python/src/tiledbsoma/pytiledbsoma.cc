@@ -32,6 +32,13 @@ PYBIND11_MODULE(pytiledbsoma, m) {
 
     /* We need to make sure C++ TileDBSOMAError is translated to a
      * correctly-typed Python error
+     *
+     * We're aware of
+     * https://pybind11.readthedocs.io/en/stable/advanced/exceptions.html
+     * -- we find empirically that despite this translator, we still
+     * find it necessary to do explicit catch-and-rethrow within our
+     * pybind11 functions. See also
+     * https://github.com/single-cell-data/TileDB-SOMA/pull/2963
      */
     py::register_exception_translator([](std::exception_ptr p) {
         auto tiledb_soma_error = (py::object)py::module::import("tiledbsoma")
