@@ -803,8 +803,7 @@ class SOMAArray : public SOMAObject {
         NDRectangle ndrect = current_domain.ndrectangle();
 
         // Convert from two-element array (core API) to pair (tiledbsoma API)
-        std::array<T, 2> arr = ndrect.range<T>(name);
-        return std::pair<T, T>(arr[0], arr[1]);
+        return std::make_pair(arr[0], arr[1]);
     }
 
     /**
