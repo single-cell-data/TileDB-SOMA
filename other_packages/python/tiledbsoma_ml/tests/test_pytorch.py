@@ -825,26 +825,6 @@ def test_splits() -> None:
         _splits(10, -1)
 
 
-# temp comment out while building _CSR tests
-# def test_csr_to_dense() -> None:
-#     from tiledbsoma_ml.pytorch import _csr_to_dense
-
-#     coo = sparse.eye(1001, 77, format="coo", dtype=np.float32)
-
-#     assert np.array_equal(
-#         sparse.csr_array(coo).todense(), _csr_to_dense(sparse.csr_array(coo))
-#     )
-#     assert np.array_equal(
-#         sparse.csr_matrix(coo).todense(), _csr_to_dense(sparse.csr_matrix(coo))
-#     )
-
-#     csr = sparse.csr_array(coo)
-#     assert np.array_equal(csr.todense(), _csr_to_dense(csr))
-#     assert np.array_equal(csr[1:, :].todense(), _csr_to_dense(csr[1:, :]))
-#     assert np.array_equal(csr[:, 1:].todense(), _csr_to_dense(csr[:, 1:]))
-#     assert np.array_equal(csr[3:501, 1:22].todense(), _csr_to_dense(csr[3:501, 1:22]))
-
-
 @pytest.mark.parametrize(  # keep these small as we materialize as a dense ndarray
     "shape",
     [(100, 10), (10, 100), (1, 1), (1, 100), (100, 1), (0, 0), (10, 0), (0, 10)],
@@ -865,8 +845,8 @@ def test_csr__construct_from_ijd(shape: Tuple[int, int], dtype: npt.DTypeLike) -
         _ncsr.data.nbytes + _ncsr.indices.nbytes + _ncsr.indptr.nbytes
     )
 
-    # _CSR_IO_Buffer makes no guarantees about minor axis ordering (ie.., "canonical" form), so
-    # use the SciPy sparse csr package to validate by round-tripping.
+    # _CSR_IO_Buffer makes no guarantees about minor axis ordering (ie, "canonical" form) until
+    # sort_indices is called, so use the SciPy sparse csr package to validate by round-tripping.
     assert (
         sparse.csr_matrix((_ncsr.data, _ncsr.indices, _ncsr.indptr), shape=_ncsr.shape)
         != sp_csr
@@ -896,8 +876,8 @@ def test_csr__construct_from_pjd(shape: Tuple[int, int], dtype: npt.DTypeLike) -
         shape=sp_csr.shape,
     )
 
-    # _CSR makes no guarantees about minor axis ordering (ie.., "canonical" form), so
-    # use the SciPy sparse csr package to validate by round-tripping.
+    # _CSR_IO_Buffer makes no guarantees about minor axis ordering (ie, "canonical" form) until
+    # sort_indices is called, so use the SciPy sparse csr package to validate by round-tripping.
     assert (
         sparse.csr_matrix((_ncsr.data, _ncsr.indices, _ncsr.indptr), shape=_ncsr.shape)
         != sp_csr
@@ -939,3 +919,24 @@ def test_csr__merge(
             (_ncsr.data, _ncsr.indices, _ncsr.indptr), shape=_ncsr.shape
         )
     ).nnz == 0
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [(100, 10), (10, 100), (1, 1), (1, 100), (100, 1), (0, 0), (10, 0), (0, 10)],
+)
+def test_csr__sort_indices(shape: Tuple[int, int]) -> None:
+    from tiledbsoma_ml.pytorch import _CSR_IO_Buffer
+
+    sp_coo = sparse.random(
+        shape[0], shape[1], dtype=np.float32, format="coo", density=0.05
+    )
+    sp_csr = sp_coo.tocsr()
+
+    _ncsr = _CSR_IO_Buffer.from_ijd(
+        sp_coo.row, sp_coo.col, sp_coo.data, shape=sp_coo.shape
+    ).sort_indices()
+
+    assert np.array_equal(sp_csr.indptr, _ncsr.indptr)
+    assert np.array_equal(sp_csr.indices, _ncsr.indices)
+    assert np.array_equal(sp_csr.data, _ncsr.data)

@@ -39,7 +39,7 @@ import pyarrow as pa
 import torch
 import torchdata
 from somacore.query._eager_iter import EagerIterator as _EagerIterator
-from typing_extensions import TypeAlias
+from typing_extensions import Self, TypeAlias
 
 import tiledbsoma as soma
 
@@ -1043,6 +1043,11 @@ class _CSR_IO_Buffer:
         )
         return _CSR_IO_Buffer.from_pjd(indptr, indices, data, shape)
 
+    def sort_indices(self) -> Self:
+        """Sort indices, IN PLACE."""
+        _csr_sort_indices(self.indptr, self.indices, self.data)
+        return self
+
 
 def smallest_uint_dtype(max_val: int) -> npt.DTypeLike:
     for dt in [np.uint16, np.uint32]:
@@ -1128,19 +1133,48 @@ def _coo_to_csr_inner(
         cumsum += tmp
     Bp[n_rows] = nnz
 
-    # reorganize all of the data. side-effect: pointers shifted.
-    for n in range(nnz):
-        row = Ai[n]
-        dst_row = Bp[row]
+    # Reorganize all of the data. Side-effect: pointers shifted (reversed in the
+    # subsequent section).
+    #
+    # Method is concurrent (partioned by rows) if number of rows is greater
+    # than 2**partition_bits. This partitioning scheme leverages the fact
+    # that reads are much cheaper than writes.
+    #
+    # The code is equivalent to:
+    #   for n in range(nnz):
+    #       row = Ai[n]
+    #       dst_row = Bp[row]
+    #       Bj[dst_row] = Aj[n]
+    #       Bd[dst_row] = Ad[n]
+    #       Bp[row] += 1
 
-        Bj[dst_row] = Aj[n]
-        Bd[dst_row] = Ad[n]
+    partition_bits = 13
+    n_partitions = (n_rows + 2**partition_bits - 1) >> partition_bits
+    for p in numba.prange(n_partitions):
+        for n in range(nnz):
+            row = Ai[n]
+            if (row >> partition_bits) != p:
+                continue
+            dst_row = Bp[row]
+            Bj[dst_row] = Aj[n]
+            Bd[dst_row] = Ad[n]
+            Bp[row] += 1
 
-        Bp[row] += 1
-
-    # and shift the pointers by one (ie., start at zero)
+    # Shift the pointers by one slot (ie., start at zero)
     prev_ptr = 0
     for n in range(n_rows + 1):
         tmp = Bp[n]
         Bp[n] = prev_ptr
         prev_ptr = tmp
+
+
+@numba.njit(nogil=True, parallel=True)  # type:ignore[misc]
+def _csr_sort_indices(Bp: NDArrayNumber, Bj: NDArrayNumber, Bd: NDArrayNumber) -> None:
+    """In-place sort of minor axis indices"""
+    n_rows = len(Bp) - 1
+    for r in numba.prange(n_rows):
+        row_start = Bp[r]
+        row_end = Bp[r + 1]
+        order = np.argsort(Bj[row_start:row_end])
+        Bj[row_start:row_end] = Bj[row_start:row_end][order]
+        Bd[row_start:row_end] = Bd[row_start:row_end][order]
