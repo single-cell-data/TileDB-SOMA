@@ -101,6 +101,7 @@ SOMACollectionBase <- R6::R6Class(
         uri = file_path(self$uri, key),
         platform_config = platform_config %||% private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
+        tiledb_timestamp = self$tiledb_timestamp, # Cached value from $new()/SOMACollectionOpen
         internal_use_only = "allowed_use"
       )
 
@@ -120,6 +121,7 @@ SOMACollectionBase <- R6::R6Class(
         uri = file_path(self$uri, key),
         platform_config = platform_config %||% private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
+        tiledb_timestamp = self$tiledb_timestamp, # Cached value from $new()/SOMACollectionOpen
         internal_use_only = "allowed_use"
       )
 
@@ -139,6 +141,7 @@ SOMACollectionBase <- R6::R6Class(
         uri = file_path(self$uri, key),
         platform_config = platform_config %||% private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
+        tiledb_timestamp = self$tiledb_timestamp, # Cached value from $new()/SOMACollectionOpen
         internal_use_only = "allowed_use"
       )
 

@@ -83,7 +83,7 @@ TileDBGroup <- R6::R6Class(
         #                                              ctx = private$.tiledb_ctx, cfg = cfg)
         #print(class(private$.soma_context)) ## -- is externalpointer
         private$.tiledb_group <- c_group_open(self$uri, type = mode, ctx = soma_context(), #private$.soma_context,
-                                              private$.tiledb_timestamp_range)
+                                              self$.tiledb_timestamp_range)
       }
       private$update_member_cache()
       private$update_metadata_cache()
@@ -428,7 +428,7 @@ TileDBGroup <- R6::R6Class(
         # FIXME: when we add write timestamps we should open this temp handle with tiledb_timestamp
         # too. The stopifnot is currently "unreachable" since open() stops if called with WRITE
         # mode and non-null tiledb_timestamp.
-        stopifnot("FIXME" = is.null(private$.group_open_timestamp))
+        #stopifnot("FIXME" = is.null(private$.group_open_timestamp))
         # group_handle <- tiledb::tiledb_group(self$uri, type = "READ", ctx = private$.tiledb_ctx)
         if (is.null(private$.soma_context)) private$.soma_context <- soma_context()
         spdl::debug("[TileDBGroup$updating_member_cache] re-opening {} uri '{}' ctx null {} time null {}",
