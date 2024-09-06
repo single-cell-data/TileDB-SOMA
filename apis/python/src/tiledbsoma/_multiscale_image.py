@@ -13,6 +13,7 @@ from somacore import (
     Axis,
     CoordinateSpace,
     CoordinateTransform,
+    IdentityTransform,
     ResultOrder,
     ScaleTransform,
     options,
@@ -338,6 +339,35 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         )
 
     def get_transformation_from_level(self, level: Union[str, int]) -> ScaleTransform:
+        if isinstance(level, str):
+            for val in self._levels:
+                if val.name == level:
+                    level_props = val
+                else:
+                    raise KeyError("No level with name '{level}'")
+        else:
+            level_props = self._levels[level]
+        ref_level_props = self._schema.reference_level_properties
+        if ref_level_props.depth is None:
+            return ScaleTransform(
+                input_axes=self._coord_space.axis_names,
+                output_axes=self._coord_space.axis_names,
+                scale_factors=[
+                    ref_level_props.width / level_props.width,
+                    ref_level_props.height / level_props.height,
+                ],
+            )
+        assert level_props.depth is not None
+        return ScaleTransform(
+            input_axes=self._coord_space.axis_names,
+            output_axes=self._coord_space.axis_names,
+            scale_factors=[
+                ref_level_props.width / level_props.width,
+                ref_level_props.height / level_props.height,
+                ref_level_props.depth / level_props.depth,
+            ],
+        )
+
         raise NotImplementedError()
 
     @property
@@ -359,11 +389,98 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         region: options.ImageCoords = (),
         *,
         transform: Optional[CoordinateTransform] = None,
+        output_coords: Optional[CoordinateSpace] = None,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> somacore.SpatialRead[pa.Tensor]:
-        """Reads a user-defined dense slice of the array"""
-        raise NotImplementedError()  # TODO: Finish this.
+        """Reads a user-defined dense slice of the array.
+
+        If provided, the transform is interpreted as the coordinate transformation
+        from the reference multiscale level to the requested region.
+        """
+        # Not handling 3D images yet.
+        ref_level_props = self._schema.reference_level_properties
+        if ref_level_props.depth is not None:
+            raise NotImplementedError(
+                "Support for reading the levels of 3D images it not yet implemented."
+            )
+
+        # Get the level properties for scaling.
+        if isinstance(level, str):
+            raise NotImplementedError()  # TODO
+        level_props = self._levels[level]
+
+        # Get the data coordinate space
+        # TODO: clean this up and maybe make it a method
+        x_axis = self.coordinate_space.axes[0]
+        y_axis = self.coordinate_space.axes[1]
+        data_coords = CoordinateSpace(
+            (
+                Axis(
+                    x_axis.name,
+                    x_axis.units,
+                    (
+                        None
+                        if x_axis.scale is None
+                        else (x_axis.scale * level_props.width) / ref_level_props.width
+                    ),
+                ),
+                Axis(
+                    y_axis.name,
+                    y_axis.units,
+                    (
+                        None
+                        if y_axis.scale is None
+                        else (y_axis.scale * level_props.width) / ref_level_props.width
+                    ),
+                ),
+            )
+        )
+        # TODO: Add ability to transform coordinates
+        # TODO: If the coordinate space has scales, this is currently returning
+        # the wrong coordinates.
+        # Check the transform.
+        if transform is None:
+            if output_coords is not None:
+                raise ValueError(
+                    "Cannot specify the output coordinate space when transform is "
+                    "``None``."
+                )
+            transform = IdentityTransform(
+                data_coords.axis_names, data_coords.axis_names
+            )
+            output_coords = data_coords
+        else:
+            if not isinstance(transform, ScaleTransform):
+                raise NotImplementedError(
+                    f"Support for reading levels with a tranform of type "
+                    f"{type(transform)!r} is not yet supported."
+                )
+            # TODO Check input/output axis names
+            # TODO: Construct scale transform from data to reference.
+            if output_coords is None:
+                output_coords = data_coords  # TODO: Fix this
+
+        # transform = (data_to_reference + offset) * transform
+        # TODO: Apply inverse transform on requested region.
+        # Maybe use shapely?
+        coords: options.DenseNDCoords = tuple()  # TODO this is a placeholder
+
+        # Get the array.
+        try:
+            array = self[level_props.name]
+        except KeyError as ke:
+            raise SOMAError(f"Unable to open the dense array at level {level}.") from ke
+        return somacore.SpatialRead(
+            array.read(
+                coords,
+                result_order=result_order,
+                platform_config=platform_config,
+            ),
+            data_coords,
+            output_coords,
+            transform,
+        )
 
     @property
     def reference_level(self) -> Optional[int]:
