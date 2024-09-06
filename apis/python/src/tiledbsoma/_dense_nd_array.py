@@ -106,6 +106,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 TileDBCreateOptions.from_platform_config(platform_config),
             )
             index_column_schema.append(pa_field)
+            # TODO: support current domain for dense arrays once we have core support.
+            # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
             index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
 
         index_column_info = pa.RecordBatch.from_pydict(
