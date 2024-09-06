@@ -39,7 +39,7 @@ SOMANDArrayBase <- R6::R6Class(
 
       #spdl::warn("[SOMANDArrayBase::create] type cached as {}", private$.type)
 
-      dom_ext_tbl <- get_domain_and_extent_array(shape)
+      dom_ext_tbl <- get_domain_and_extent_array(shape, private$.is_sparse)
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
@@ -133,6 +133,21 @@ SOMANDArrayBase <- R6::R6Class(
       coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
 
       coords
+    },
+
+    #  @description Converts a vector of ints into a vector of int64 in a format
+    #  acceptable for libtiledbsoma
+
+    .convert_shape_argument = function(newshape) {
+
+      ## ensure newshape is a vector of int64
+      stopifnot("'newshape' must be a vector of integers" = is.vector(newshape));
+                # XXX "'newshape' must be a vector of integers" = all(vapply_lgl(newshape, is.integer)),
+
+      ## convert integer to integer64 to match dimension type
+      newshape <- lapply(newshape, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+
+      as.vector(newshape)
     },
 
     # Internal marking of one or zero based matrices for iterated reads

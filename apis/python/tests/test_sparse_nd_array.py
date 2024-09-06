@@ -1070,8 +1070,9 @@ def test_bad_coords(tmp_path, bad_coords):
 
 
 def test_tile_extents(tmp_path):
+    uri = tmp_path.as_posix()
     soma.SparseNDArray.create(
-        tmp_path.as_posix(),
+        uri,
         type=pa.float32(),
         shape=(100, 10000),
         platform_config={
@@ -1086,9 +1087,13 @@ def test_tile_extents(tmp_path):
         },
     ).close()
 
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.domain.dim(0).tile == 100
-        assert A.schema.domain.dim(1).tile == 2048
+    with tiledb.open(uri) as A:
+        if soma._new_shape_feature_flag_enabled():
+            assert A.schema.domain.dim(0).tile == 2048
+            assert A.schema.domain.dim(1).tile == 2048
+        else:
+            assert A.schema.domain.dim(0).tile == 100
+            assert A.schema.domain.dim(1).tile == 2048
 
 
 @pytest.mark.parametrize(

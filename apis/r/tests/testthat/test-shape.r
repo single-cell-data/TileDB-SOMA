@@ -30,7 +30,11 @@ test_that("SOMADataFrame shape", {
 
     sdf <- SOMADataFrameOpen(uri)
 
-    expect_false(sdf$has_upgraded_domain())
+    if (.new_shape_feature_flag_is_enabled()) {
+      expect_true(sdf$has_upgraded_domain())
+    } else {
+      expect_false(sdf$has_upgraded_domain())
+    }
     expect_error(sdf$shape(), class = "notYetImplementedError")
     expect_error(sdf$maxshape(), class = "notYetImplementedError")
 
@@ -83,11 +87,9 @@ test_that("SOMASparseNDArray shape", {
       readback_shape <- ndarray$shape()
       readback_maxshape <- ndarray$maxshape()
       expect_equal(length(readback_shape), length(readback_maxshape))
-      for (i in 1:length(shape)) {
-        s <- as.integer(readback_shape[[i]])
-        ms <- as.integer(readback_maxshape[[i]])
-        expect_true(s <= ms)
-      }
+      # We can't as.integer things that don't fit in a 32-bit int -- they come
+      # back as NA. :(
+      expect_true(all(readback_shape <= readback_maxshape))
 
       # Resize tests upcoming on
       # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
