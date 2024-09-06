@@ -25,7 +25,7 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
         for (i in seq_along(private$.coords)) {
           private$.coords[[i]] <- CoordsStrider$new(
             start = 0L,
-            end = shape[i],
+            end = shape[i] - 1L,
             stride = .Machine$integer.max
           )
         }
