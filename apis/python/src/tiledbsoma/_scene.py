@@ -25,7 +25,7 @@ from ._coordinates import (
 )
 from ._exception import SOMAError
 from ._geometry_dataframe import GeometryDataFrame
-from ._muliscale_image import MultiscaleImage
+from ._multiscale_image import MultiscaleImage
 from ._point_cloud import PointCloud
 from ._soma_object import AnySOMAObject
 
