@@ -14,8 +14,8 @@ from somacore import (
     CoordinateTransform,
     ResultOrder,
     ScaleTransform,
-    images,
     options,
+    spatialdata,
 )
 from typing_extensions import Final, Self
 
@@ -83,7 +83,7 @@ class ImageProperties:
 
 class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     SOMAGroup[DenseNDArray],
-    images.MultiscaleImage[DenseNDArray, AnySOMAObject],
+    spatialdata.MultiscaleImage[DenseNDArray, AnySOMAObject],
 ):
     """TODO: Add documentation for MultiscaleImage
 
@@ -135,7 +135,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
                 uri=uri,
-                soma_type=images.MultiscaleImage.soma_type,
+                soma_type=spatialdata.MultiscaleImage.soma_type,
                 ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
@@ -348,7 +348,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     def level_count(self) -> int:
         return len(self._levels)
 
-    def level_properties(self, level: Union[int, str]) -> images.ImageProperties:
+    def level_properties(self, level: Union[int, str]) -> spatialdata.ImageProperties:
         if isinstance(level, str):
             raise NotImplementedError()  # TODO
         return self._levels[level]
@@ -372,7 +372,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         raise NotImplementedError()
 
     @property
-    def reference_level_properties(self) -> images.ImageProperties:
+    def reference_level_properties(self) -> spatialdata.ImageProperties:
         """The shape of the reference level the coordinate system is defined on.
 
         The shape must be provide in order (width, height).

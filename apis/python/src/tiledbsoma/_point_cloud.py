@@ -191,7 +191,6 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         # if is it in read open mode, then it is a DataFrameWrapper
         return cast(PointCloudWrapper, self._handle).count
 
-    # Note: This will be updated to support spatial reads.
     def read(
         self,
         coords: options.SparseDFCoords = (),
