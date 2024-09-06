@@ -126,6 +126,22 @@ shape <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_shape`, uri, config)
 }
 
+maxshape <- function(uri, config = NULL) {
+    .Call(`_tiledbsoma_maxshape`, uri, config)
+}
+
+maybe_soma_joinid_shape <- function(uri, config = NULL) {
+    .Call(`_tiledbsoma_maybe_soma_joinid_shape`, uri, config)
+}
+
+maybe_soma_joinid_maxshape <- function(uri, config = NULL) {
+    .Call(`_tiledbsoma_maybe_soma_joinid_maxshape`, uri, config)
+}
+
+has_current_domain <- function(uri, config = NULL) {
+    .Call(`_tiledbsoma_has_current_domain`, uri, config)
+}
+
 #' Iterator-Style Access to SOMA Array via SOMAArray
 #'
 #' The `sr_*` functions provide low-level access to an instance of the SOMAArray

@@ -51,6 +51,14 @@ def test_sparse_nd_array_create_ok(
     assert a.uri == tmp_path.as_posix()
     assert a.ndim == len(shape)
     assert a.shape == tuple(shape)
+
+    # TODO: more testing with current-domain feature integrated
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+    assert isinstance(a.maxshape, tuple)
+    assert len(a.maxshape) == len(a.shape)
+    for ms, s in zip(a.maxshape, a.shape):
+        assert ms >= s
+
     assert a.is_sparse is True
 
     assert a.schema is not None

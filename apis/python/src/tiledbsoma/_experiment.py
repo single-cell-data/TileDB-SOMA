@@ -51,7 +51,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         ...     obs_df = exp.obs
         ...
         ...     # the primary use case is to run queries on the experiment data.
-        ...     q = exp.query(
+        ...     q = exp.axis_query(
         ...         "mtdna",
         ...         obs_query=tiledbsoma.AxisQuery(value_filter="tissue == 'lung'"),
         ...         var_query=tiledbsoma.AxisQuery(coords=(slice(50, 100),)),

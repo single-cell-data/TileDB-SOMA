@@ -34,7 +34,7 @@
 
 #define DIM_MAX 1000
 
-TEST_CASE("SOMADenseNDArray: basic") {
+TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
     int64_t dim_max = 1000;
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
@@ -98,7 +98,7 @@ TEST_CASE("SOMADenseNDArray: basic") {
             REQUIRE(schema->domain().has_dimension(dim_name));
             REQUIRE(soma_dense->ndim() == 1);
 
-            // Once we have support for current domain in dense arrays
+            // TODO: Once we have support for current domain in dense arrays
             // if (use_current_domain) {
             //    REQUIRE(soma_dense->shape() == std::vector<int64_t>{dim_max +
             //    1});
@@ -129,11 +129,20 @@ TEST_CASE("SOMADenseNDArray: basic") {
                 REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
             }
             soma_dense->close();
+
+            soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+            auto new_shape = std::vector<int64_t>({DIM_MAX * 2});
+            // * When use_current_domain is false: can't resize what has not
+            //   been sized.
+            // * When use_current_domain is true: TODO: current domain not
+            //   supported for dense arrays yet (see above).
+            REQUIRE_THROWS(soma_dense->resize(new_shape));
+            soma_dense->close();
         }
     }
 }
 
-TEST_CASE("SOMADenseNDArray: platform_config") {
+TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
     int64_t dim_max = 1000;
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
@@ -196,7 +205,7 @@ TEST_CASE("SOMADenseNDArray: platform_config") {
     }
 }
 
-TEST_CASE("SOMADenseNDArray: metadata") {
+TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     int64_t dim_max = 1000;
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal

@@ -119,6 +119,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     SOMACollection::create(base_uri, ctx, ts);
     // TODO: add support for current domain in dense arrays once we have that
     // support from core
+    // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
     std::vector<helper::DimInfo> dim_infos(
         {{.name = dim_name,
           .tiledb_datatype = tiledb_datatype,

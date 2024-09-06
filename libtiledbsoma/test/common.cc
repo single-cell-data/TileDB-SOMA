@@ -237,7 +237,7 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
                 std::memcpy((void*)dim_array->buffers[1], vsrc, nbytes);
             } else {
                 // domain small; current_domain feature not being used
-                int64_t dom[] = {0, info.dim_max, 1};
+                uint32_t dom[] = {0, (uint32_t)info.dim_max, 1};
                 void* vsrc = (void*)&dom[0];
                 std::memcpy((void*)dim_array->buffers[1], vsrc, nbytes);
             }

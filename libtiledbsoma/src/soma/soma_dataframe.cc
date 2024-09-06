@@ -68,6 +68,14 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 
+std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
+    std::string_view uri,
+    OpenMode mode,
+    std::string_view name,
+    std::map<std::string, std::string> platform_config) {
+    return std::make_unique<SOMADataFrame>(mode, uri, name, platform_config);
+}
+
 bool SOMADataFrame::exists(
     std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
     try {
@@ -92,6 +100,14 @@ const std::vector<std::string> SOMADataFrame::index_column_names() const {
 
 uint64_t SOMADataFrame::count() {
     return this->nnz();
+}
+
+std::optional<int64_t> SOMADataFrame::maybe_soma_joinid_shape() {
+    return _maybe_soma_joinid_shape();
+}
+
+std::optional<int64_t> SOMADataFrame::maybe_soma_joinid_maxshape() {
+    return _maybe_soma_joinid_maxshape();
 }
 
 }  // namespace tiledbsoma

@@ -71,6 +71,13 @@ class SOMADataFrame : public SOMAArray {
     /**
      * @brief Open and return a SOMADataFrame object at the given URI.
      *
+     * Note: the first two arguments uri and mode are reversed from
+     * the SOMAArrayConstructor. This is an intentional decision to
+     * avoid ambiguous-overload compiler errors. Even though
+     * SOMADataFrame extends SOMAArray, callers using open
+     * and wishing to obtain a SOMADataFrame rather than a SOMAArray
+     * are advised to place the uri argument before the mode argument.
+     *
      * @param uri URI to create the SOMADataFrame
      * @param mode read or write
      * @param ctx SOMAContext
@@ -90,6 +97,26 @@ class SOMADataFrame : public SOMAArray {
         std::vector<std::string> column_names = {},
         ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
+
+    /**
+     * @brief Open and return a SOMADataFrame object at the given URI.
+     *
+     * This is nominally for TileDB-SOMA R use, since while we have
+     * TileDB-SOMA-R and TileDB-R co-existing, it's less desirable
+     * to pass ctx from one copy of core to another, and more
+     * desirable to pass a config map.
+     *
+     * @param uri URI to create the SOMADataFrame
+     * @param mode read or write
+     * @param name Name of the array
+     * @param platform_config Config parameter dictionary
+     * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
+     */
+    static std::unique_ptr<SOMADataFrame> open(
+        std::string_view uri,
+        OpenMode mode,
+        std::string_view name,
+        std::map<std::string, std::string> platform_config);
 
     /**
      * @brief Check if the SOMADataFrame exists at the URI.
@@ -132,6 +159,35 @@ class SOMADataFrame : public SOMAArray {
               timestamp) {
     }
 
+    /**
+     * @brief Construct a new SOMADataFrame object.
+     *
+     * This is nominally for TileDB-SOMA R use, since while we have
+     * TileDB-SOMA-R and TileDB-R co-existing, it's less desirable
+     * to pass ctx from one copy of core to another, and more
+     * desirable to pass a config map.
+     *
+     * @param uri URI to create the SOMADataFrame
+     * @param mode read or write
+     * @param name Name of the array
+     * @param platform_config Config parameter dictionary
+     * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
+     */
+    SOMADataFrame(
+        OpenMode mode,
+        std::string_view uri,
+        std::string_view name,
+        std::map<std::string, std::string> platform_config)
+        : SOMAArray(
+              mode,
+              uri,
+              std::make_shared<SOMAContext>(platform_config),
+              name,
+              {},
+              "auto",
+              ResultOrder::automatic) {
+    }
+
     SOMADataFrame(const SOMAArray& other)
         : SOMAArray(other) {
     }
@@ -163,7 +219,27 @@ class SOMADataFrame : public SOMAArray {
      * @return int64_t
      */
     uint64_t count();
+
+    /**
+     * While application-level SOMA DataFrame doesn't have shape
+     * and maxshape, these are important test-point accessors,
+     * as well as crucial for experiment-level resize within tiledbsoma.io.
+     *
+     * Note that the SOMA spec for SOMADataFrame mandates a .domain() accessor,
+     * which is distinct, and type-polymorphic.
+     *
+     * @return std::optional<int64_t>
+     */
+    std::optional<int64_t> maybe_soma_joinid_shape();
+
+    /**
+     * See comments for maybe_soma_joinid_shape.
+     *
+     * @return std::optional<int64_t>
+     */
+    std::optional<int64_t> maybe_soma_joinid_maxshape();
 };
+
 }  // namespace tiledbsoma
 
 #endif  // SOMA_DATAFRAME
