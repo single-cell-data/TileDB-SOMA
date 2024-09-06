@@ -174,7 +174,7 @@ from .pytiledbsoma import (
 )
 from .stats import (
     tiledbsoma_stats_json,
-    tiledbsoma_stats_parsed,
+    tiledbsoma_stats_as_py,
 )
 
 __version__ = get_implementation_version()

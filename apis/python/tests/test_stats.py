@@ -9,6 +9,6 @@ def test_stats_json():
     assert out[-1] == "\n"
 
 
-def test_stats_parsed():
-    out = tiledbsoma.tiledbsoma_stats_parsed()
+def test_stats_as_py():
+    out = tiledbsoma.tiledbsoma_stats_as_py()
     assert isinstance(out, list)
