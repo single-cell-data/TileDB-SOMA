@@ -84,6 +84,47 @@ class SpatialDataFrame(SOMAArray, somacore.SpatialDataFrame):
         """
         raise NotImplementedError("must be implemented by child class")
 
+    def spatial_read(
+        self,
+        region: options.SpatialDFCoords = (),
+        column_names: Optional[Sequence[str]] = None,
+        *,
+        transform: Optional[somacore.CoordinateTransform] = None,
+        batch_size: options.BatchSize = options.BatchSize(),
+        partitions: Optional[options.ReadPartitions] = None,
+        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        value_filter: Optional[str] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
+        """Reads a user-defined slice of data into Arrow tables.
+
+        TODO: Add details about the requested input region.
+        TODO: Add details about the output SpatialReadIter.
+
+        Args:
+            region: for each index dimension, which rows to read or a single shape.
+                Defaults to ``()``, meaning no constraint -- all IDs.
+            column_names: the named columns to read and return.
+                Defaults to ``None``, meaning no constraint -- all column names.
+            transform: coordinate transform to apply to results.
+                Defaults to ``None``, meaning an identity transform.
+            batch_size: The size of batched reads.
+                Defaults to `unbatched`.
+            partitions: If present, specifies that this is part of
+                a partitioned read, and which part of the data to include.
+            result_order: the order to return results, specified as a
+                :class:`~options.ResultOrder` or its string value.
+            value_filter: an optional value filter to apply to the results.
+                The default of ``None`` represents no filter. Value filter
+                syntax is implementation-defined; see the documentation
+                for the particular SOMA implementation for details.
+        Returns:
+            A :class:`ReadIter` of :class:`pa.Table`s.
+
+        Lifecycle: experimental
+        """
+        raise NotImplementedError("must be implemented by child class")
+
     def write(
         self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None
     ) -> Self:

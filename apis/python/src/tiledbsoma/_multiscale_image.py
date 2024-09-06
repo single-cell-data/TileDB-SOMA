@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Tuple, Union
 
 import pyarrow as pa
+import somacore
 from somacore import (
     Axis,
     CoordinateSpace,
@@ -15,7 +16,6 @@ from somacore import (
     ResultOrder,
     ScaleTransform,
     options,
-    spatialdata,
 )
 from typing_extensions import Final, Self
 
@@ -83,7 +83,7 @@ class ImageProperties:
 
 class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     SOMAGroup[DenseNDArray],
-    spatialdata.MultiscaleImage[DenseNDArray, AnySOMAObject],
+    somacore.MultiscaleImage[DenseNDArray, AnySOMAObject],
 ):
     """TODO: Add documentation for MultiscaleImage
 
@@ -135,7 +135,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
                 uri=uri,
-                soma_type=spatialdata.MultiscaleImage.soma_type,
+                soma_type=somacore.MultiscaleImage.soma_type,
                 ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
@@ -348,22 +348,22 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     def level_count(self) -> int:
         return len(self._levels)
 
-    def level_properties(self, level: Union[int, str]) -> spatialdata.ImageProperties:
+    def level_properties(self, level: Union[int, str]) -> somacore.ImageProperties:
         if isinstance(level, str):
             raise NotImplementedError()  # TODO
         return self._levels[level]
 
     def read_level(
         self,
-        level: int,
-        coords: options.DenseNDCoords = (),
+        level: Union[int, str],
+        region: options.ImageCoords = (),
         *,
         transform: Optional[CoordinateTransform] = None,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
-    ) -> pa.Tensor:
-        """TODO: Add read_image_level documentation"""
-        raise NotImplementedError()
+    ) -> somacore.SpatialRead[pa.Tensor]:
+        """Reads a user-defined dense slice of the array"""
+        raise NotImplementedError()  # TODO: Finish this.
 
     @property
     def reference_level(self) -> Optional[int]:
@@ -372,7 +372,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         raise NotImplementedError()
 
     @property
-    def reference_level_properties(self) -> spatialdata.ImageProperties:
+    def reference_level_properties(self) -> somacore.ImageProperties:
         """The shape of the reference level the coordinate system is defined on.
 
         The shape must be provide in order (width, height).
