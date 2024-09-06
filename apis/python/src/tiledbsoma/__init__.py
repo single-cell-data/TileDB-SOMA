@@ -172,6 +172,10 @@ from .pytiledbsoma import (
     tiledbsoma_stats_enable,
     tiledbsoma_stats_reset,
 )
+from .stats import (
+    tiledbsoma_stats_json,
+    tiledbsoma_stats_parsed,
+)
 
 __version__ = get_implementation_version()
 

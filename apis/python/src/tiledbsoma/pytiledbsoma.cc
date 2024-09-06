@@ -98,6 +98,13 @@ PYBIND11_MODULE(pytiledbsoma, m) {
             py::print(stats);
         },
         "Print TileDB internal statistics. Lifecycle: experimental.");
+    m.def(
+        "tiledbsoma_stats_string",
+        []() {
+            std::string stats = tiledbsoma::stats::dump();
+            return stats;
+        },
+        "Print TileDB internal statistics. Lifecycle: experimental.");
 
     py::class_<PlatformConfig>(m, "PlatformConfig")
         .def(py::init<>())
