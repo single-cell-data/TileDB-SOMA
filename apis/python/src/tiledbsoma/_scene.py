@@ -24,16 +24,19 @@ from ._coordinates import (
     transform_to_json,
 )
 from ._exception import SOMAError
+from ._geometry_dataframe import GeometryDataFrame
 from ._images import MultiscaleImage
 from ._point_cloud import PointCloud
 from ._soma_object import AnySOMAObject
-from ._spatial_dataframe import SpatialDataFrame
 
 
 class Scene(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
     scene.Scene[  # type: ignore[type-var]
-        Collection[SpatialDataFrame], MultiscaleImage, AnySOMAObject
+        MultiscaleImage,
+        Collection[Union[PointCloud, GeometryDataFrame]],
+        Collection[Collection[Union[PointCloud, GeometryDataFrame]]],
+        AnySOMAObject,
     ],
 ):
     """TODO: Add documentation for a Scene
