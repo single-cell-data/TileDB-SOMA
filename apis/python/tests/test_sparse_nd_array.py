@@ -624,10 +624,7 @@ def test_csr_csc_2d_read(tmp_path, shape):
             "dims": {
                 "soma_dim_0": [2, 4],
             },
-            "throws": (
-                RuntimeError,
-                tiledb.cc.TileDBError,
-            ),
+            "throws": (soma.SOMAError),
         },
         {
             "name": "coords=[0,0]",

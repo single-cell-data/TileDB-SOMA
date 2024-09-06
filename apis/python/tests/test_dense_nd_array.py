@@ -311,13 +311,13 @@ def test_dense_nd_array_slicing(tmp_path, io):
             "name": "negative",
             "shape": (10,),
             "coords": (-1,),
-            "throws": (RuntimeError, tiledb.cc.TileDBError),
+            "throws": (soma.SOMAError),
         },
         {
             "name": "12 in 10 domain",
             "shape": (10,),
             "coords": (12,),
-            "throws": (RuntimeError, tiledb.cc.TileDBError),
+            "throws": (soma.SOMAError),
         },
         {
             "name": "too many dims",

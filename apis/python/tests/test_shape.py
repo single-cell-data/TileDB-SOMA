@@ -98,9 +98,8 @@ def test_sparse_nd_array_basics(
 
     # Test reads out of bounds
     with tiledbsoma.SparseNDArray.open(uri) as snda:
-        # TODO: make sure this doesn't come through as RuntimeError
         # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        with pytest.raises((RuntimeError, ValueError)):
+        with pytest.raises(tiledbsoma.SOMAError):
             coords = tuple(arg_shape[i] + 10 for i in range(ndim))
             snda.read(coords).tables().concat()
 
