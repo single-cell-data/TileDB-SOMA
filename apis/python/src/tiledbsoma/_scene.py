@@ -25,7 +25,7 @@ from ._coordinates import (
 )
 from ._exception import SOMAError
 from ._geometry_dataframe import GeometryDataFrame
-from ._images import MultiscaleImage
+from ._muliscale_image import MultiscaleImage
 from ._point_cloud import PointCloud
 from ._soma_object import AnySOMAObject
 
@@ -262,4 +262,4 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
                 "Support for querying image level by name is not yet implemented."
             )
         level_transform = image.get_transformation_to_level(level)
-        return base_transform * level_transform
+        return base_transform * level_transform  # type: ignore[no-any-return]
