@@ -98,6 +98,18 @@ import os
 import sys
 
 
+_new_shape_feature_flag = os.getenv("SOMA_PY_NEW_SHAPE") is not None
+
+
+def _new_shape_feature_flag_enabled() -> bool:
+    """
+    This is temporary only. Please see:
+    * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+    * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
+    """
+    return _new_shape_feature_flag
+
+
 # Load native libraries. On wheel builds, we may have a shared library
 # already linked. In this case, we can import directly
 try:

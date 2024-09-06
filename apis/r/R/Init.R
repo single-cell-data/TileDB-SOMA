@@ -8,13 +8,26 @@
     ## create a slot for somactx in per-package enviroment, do no fill it yet to allow 'lazy load'
     .pkgenv[["somactx"]] <- NULL
 
+    cdmsg <- ""
+
+    # This is temporary only. Please see:
+    # * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+    # * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
+    if (Sys.getenv("SOMA_R_NEW_SHAPE") != "") {
+      .pkgenv[["use_current_domain_transitional_internal_only"]] <- TRUE
+      cdmsg <- " SOMA_R_NEW_SHAPE ON"
+    } else {
+      .pkgenv[["use_current_domain_transitional_internal_only"]] <- FALSE
+      cdmsg <- " SOMA_R_NEW_SHAPE OFF"
+    }
+
     rpkg_lib <- tiledb::tiledb_version(compact = FALSE)
     # Check major and minor but not micro: sc-50464
     rpkg_lib_version <- paste(rpkg_lib[["major"]], rpkg_lib[["minor"]], sep = ".")
     soma_lib_version <- libtiledbsoma_version(compact = TRUE, major_minor_only = TRUE)
     if (rpkg_lib_version != soma_lib_version) {
-        msg <- sprintf("TileDB Core version %s used by TileDB-R package, but TileDB-SOMA uses %s",
-                       sQuote(rpkg_lib_version), sQuote(soma_lib_version))
+        msg <- sprintf("TileDB Core version %s used by TileDB-R package, but TileDB-SOMA uses %s [%s]",
+                       sQuote(rpkg_lib_version), sQuote(soma_lib_version), sQuote(cdmsg))
         stop(msg, call. = FALSE)
     }
 }
@@ -29,6 +42,20 @@
                               ".\nSee https://github.com/single-cell-data for more information ",
                               "about the SOMA project.")
     }
+}
+
+# This is temporary only. Please see:
+# * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+# * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
+.new_shape_feature_flag_enable <- function() {
+    .pkgenv[["use_current_domain_transitional_internal_only"]] <- TRUE
+}
+
+# This is temporary only. Please see:
+# * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+# * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
+.new_shape_feature_flag_disable <- function() {
+    .pkgenv[["use_current_domain_transitional_internal_only"]] <- FALSE
 }
 
 #' Create and cache a SOMA Context Object

@@ -139,6 +139,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
+        # Temporary only: https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+        _use_new_shape: bool = False,
     ) -> "DataFrame":
         """Creates the data structure on disk/S3/cloud.
 

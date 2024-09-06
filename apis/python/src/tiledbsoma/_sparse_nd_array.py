@@ -119,6 +119,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
+        # Temporary only: https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+        _use_new_shape: bool = False,
     ) -> Self:
         context = _validate_soma_tiledb_context(context)
 

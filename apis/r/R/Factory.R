@@ -27,7 +27,8 @@ SOMADataFrameCreate <- function(
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  use_new_shape_internal_only = FALSE
 ) {
   ingest_mode <- match.arg(ingest_mode)
   sdf <- SOMADataFrame$new(
@@ -49,7 +50,8 @@ SOMADataFrameCreate <- function(
       schema,
       index_column_names = index_column_names,
       platform_config = platform_config,
-      internal_use_only = "allowed_use"
+      internal_use_only = "allowed_use",
+      use_new_shape_internal_only = use_new_shape_internal_only
     )
   }
   return(sdf)
@@ -104,7 +106,8 @@ SOMASparseNDArrayCreate <- function(
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  use_new_shape_internal_only = FALSE
 ) {
   ingest_mode <- match.arg(ingest_mode)
   snda <- SOMASparseNDArray$new(
@@ -126,7 +129,8 @@ SOMASparseNDArrayCreate <- function(
       type,
       shape,
       platform_config = platform_config,
-      internal_use_only = "allowed_use"
+      internal_use_only = "allowed_use",
+      use_new_shape_internal_only = use_new_shape_internal_only
     )
   }
   return(snda)

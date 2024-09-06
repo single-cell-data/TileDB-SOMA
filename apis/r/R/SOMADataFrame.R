@@ -27,7 +27,8 @@ SOMADataFrame <- R6::R6Class(
       schema,
       index_column_names = c("soma_joinid"),
       platform_config = NULL,
-      internal_use_only = NULL
+      internal_use_only = NULL,
+      use_new_shape_internal_only = FALSE
     ) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the create() method is for internal use only. Consider using a",
