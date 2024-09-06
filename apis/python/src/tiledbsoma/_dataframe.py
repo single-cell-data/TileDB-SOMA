@@ -304,7 +304,17 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        return self._tiledb_domain()
+        return self._domain()
+
+    @property
+    def maxdomain(self) -> Tuple[Tuple[Any, Any], ...]:
+        """Returns a tuple of minimum and maximum values, inclusive, storable
+        on each index column of the dataframe.
+
+        Lifecycle:
+            Maturing.
+        """
+        return self._maxdomain()
 
     @property
     def count(self) -> int:

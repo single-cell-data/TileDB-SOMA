@@ -391,6 +391,10 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
     def domain(self) -> Tuple[Tuple[object, object], ...]:
         return self._cast_domain(self._handle.domain)
 
+    @property
+    def maxdomain(self) -> Tuple[Tuple[object, object], ...]:
+        return self._cast_domain(self._handle.maxdomain)
+
     def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
         return self._cast_domain(self._handle.non_empty_domain) or ()
 
