@@ -719,7 +719,7 @@ void load_soma_array(py::module& m) {
             })
 
         .def(
-            "domain",
+            "soma_domain_slot",
             [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
@@ -767,7 +767,7 @@ void load_soma_array(py::module& m) {
             })
 
         .def(
-            "maxdomain",
+            "soma_maxdomain_slot",
             [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
