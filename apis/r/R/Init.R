@@ -50,6 +50,27 @@
     }
 }
 
+# This is temporary only. Please see:
+# * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+# * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
+.new_shape_feature_flag_enable <- function() {
+    .pkgenv[["use_current_domain_transitional_internal_only"]] <- TRUE
+}
+
+# This is temporary only. Please see:
+# * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+# * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
+.new_shape_feature_flag_disable <- function() {
+    .pkgenv[["use_current_domain_transitional_internal_only"]] <- FALSE
+}
+
+# This is temporary only. Please see:
+# * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+# * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
+.new_shape_feature_flag_is_enabled <- function() {
+    .pkgenv[["use_current_domain_transitional_internal_only"]]
+}
+
 #' Create and cache a SOMA Context Object
 #'
 #' @param config A named character vector with \sQuote{key} and \sQuote{value} pairs defining the

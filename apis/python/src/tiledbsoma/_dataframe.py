@@ -407,15 +407,15 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         return self._handle.maybe_soma_joinid_maxshape
 
     @property
-    def has_upgraded_domain(self) -> bool:
+    def tiledbsoma_has_upgraded_domain(self) -> bool:
         """Returns true if the array has the upgraded resizeable domain feature
         from TileDB-SOMA 1.14: the array was created with this support, or it has
-        had ``.upgrade_domain`` applied to it.
+        had ``.tiledbsoma_upgrade_domain`` applied to it.
 
         Lifecycle:
             Maturing.
         """
-        return self._handle.has_upgraded_domain
+        return self._handle.tiledbsoma_has_upgraded_domain
 
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""

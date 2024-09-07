@@ -296,6 +296,22 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         return SparseNDArrayRead(sr, self, coords)
 
+    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Increases the shape of the array as specfied. Raises an error if the new
+        shape is less than the current shape in any dimension. Raises an error if
+        the new shape exceeds maxshape in any dimension. Raises an error if the
+        array doesn't already have a shape: in that case please call
+        tiledbsoma_upgrade_shape.
+        """
+        self._handle.resize(newshape)
+
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
+        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
+        any dimension. Raises an error if the array already has a shape.
+        """
+        self._handle.tiledbsoma_upgrade_shape(newshape)
+
     def write(
         self,
         values: Union[

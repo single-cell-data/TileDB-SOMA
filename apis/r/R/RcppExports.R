@@ -187,6 +187,14 @@ has_current_domain <- function(uri, config = NULL) {
     .Call(`_tiledbsoma_has_current_domain`, uri, config)
 }
 
+resize <- function(uri, new_shape, config = NULL) {
+    invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, config))
+}
+
+tiledbsoma_upgrade_shape <- function(uri, new_shape, config = NULL) {
+    invisible(.Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, uri, new_shape, config))
+}
+
 #' Iterator-Style Access to SOMA Array via SOMAArray
 #'
 #' The `sr_*` functions provide low-level access to an instance of the SOMAArray
