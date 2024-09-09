@@ -189,7 +189,7 @@ SOMACollectionBase <- R6::R6Class(
         is_scalar_character(uri),
         is_scalar_character(type)
       )
-      spdl::warn("[SOMACollectionBase$construct_member] entered, uri {} type {}", uri, type)
+      spdl::debug("[SOMACollectionBase$construct_member] entered, uri {} type {}", uri, type)
 
       # We have to use the appropriate TileDB base class to read the soma_type
       # from the object's metadata so we know which SOMA class to instantiate
@@ -210,7 +210,7 @@ SOMACollectionBase <- R6::R6Class(
       )
 
       tiledb_object$open(mode = "READ", internal_use_only = "allowed_use")
-      soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
+      soma_type <- unlist(tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY))
       tiledb_object$close()
 
       spdl::debug(
