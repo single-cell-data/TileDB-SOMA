@@ -8,7 +8,9 @@ Implementation of a SOMA Point Cloud
 """
 from typing import Any, Optional, Sequence, Tuple, Union, cast
 
+import numpy as np
 import pyarrow as pa
+import shapely
 import somacore
 from somacore import Axis, CoordinateSpace, options
 from typing_extensions import Self
@@ -28,7 +30,7 @@ from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
 from ._tdb_handles import PointCloudWrapper
-from ._types import OpenTimestamp
+from ._types import OpenTimestamp, is_nonstringy_sequence
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import (
@@ -235,6 +237,120 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
         # # TODO: batch_size
         return TableReadIter(sr)
+
+    def spatial_read(
+        self,
+        region: options.SpatialDFCoords = (),
+        column_names: Optional[Sequence[str]] = None,
+        *,
+        transform: Optional[somacore.CoordinateTransform] = None,
+        region_coord_space: Optional[somacore.CoordinateSpace] = None,
+        batch_size: options.BatchSize = options.BatchSize(),
+        partitions: Optional[options.ReadPartitions] = None,
+        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        value_filter: Optional[str] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
+        if isinstance(region, shapely.GeometryType):
+            raise NotImplementedError(
+                "Support for querying by geometry is not yet implemented."
+            )
+        if not is_nonstringy_sequence(region):
+            raise TypeError(
+                f"coords type {type(region)} must be a regular sequence, "
+                f"not str or bytes"
+            )
+
+        if transform is None:
+            if region_coord_space is not None:
+                raise ValueError(
+                    "Cannot specify the output coordinate space when transform is "
+                    "``None``."
+                )
+            return somacore.SpatialRead(
+                self.read(
+                    region,
+                    column_names,
+                    result_order=result_order,
+                    value_filter=value_filter,
+                    batch_size=batch_size,
+                    partitions=partitions,
+                    platform_config=platform_config,
+                ),
+                self.coordinate_space,
+                self.coordinate_space,
+                somacore.IdentityTransform(self.axis_names, self.axis_names),
+            )
+
+        if not isinstance(transform, somacore.ScaleTransform):
+            raise NotImplementedError(
+                f"Support for querying ponit clouds with a transform of type "
+                f"{type(transform)!r} is not yet supported."
+            )
+
+        if transform.output_axes != self.axis_names:
+            raise ValueError(
+                f"Input transformation had unexpected output axes "
+                f"'{transform.output_axes}' that do not match the axes "
+                f"'{self.axis_names}' of this point cloud."
+            )
+        if region_coord_space is None:
+            region_coord_space = CoordinateSpace(
+                tuple(Axis(axis_name) for axis_name in transform.input_axes)
+            )
+        elif transform.input_axes != region_coord_space.axis_names:
+            raise ValueError(
+                f"The input axes '{transform.input_axes}' of the transform must match "
+                f"the axes '{region_coord_space.axis_names}' of the coordinate space "
+                f"the requested region is defined in."
+            )
+
+        def scale_coords(
+            coord: options.SparseDFCoord, scale: np.float64, name: str
+        ) -> options.SparseDFCoord:
+            # TODO: Hard-coded here for input type. Should really be branching on
+            # dimension type.
+            if coord is None or name not in self.axis_names:
+                return coord
+            if isinstance(coord, slice):
+                if coord.step is not None:
+                    raise ValueError("slice steps are not supported")
+                return slice(scale * coord.start, scale * coord.stop)
+            if isinstance(coord, Sequence):
+                return tuple(scale * val for val in coord)  # type: ignore
+            return scale * coord  # type: ignore
+
+        if transform.isotropic:
+            coords = tuple(
+                scale_coords(coord, transform.scale_factors, name)  # type: ignore
+                for coord, name in zip(region, self.index_column_names)
+            )
+        else:
+            coords = tuple(
+                scale_coords(coord, scale, name)
+                for coord, scale, name in zip(
+                    region, transform.scale_factors, self.index_column_names  # type: ignore
+                )
+            )
+
+        return somacore.SpatialRead(
+            self.read(
+                coords,
+                column_names,
+                result_order=result_order,
+                value_filter=value_filter,
+                batch_size=batch_size,
+                partitions=partitions,
+                platform_config=platform_config,
+            ),
+            self.coordinate_space,
+            region_coord_space,
+            somacore.ScaleTransform(
+                self.axis_names,
+                region_coord_space.axis_names,
+                1.0 / transform.scale_factors,
+            ),
+        )
 
     def write(
         self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None

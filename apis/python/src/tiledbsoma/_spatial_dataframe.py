@@ -90,6 +90,7 @@ class SpatialDataFrame(SOMAArray, somacore.SpatialDataFrame):
         column_names: Optional[Sequence[str]] = None,
         *,
         transform: Optional[somacore.CoordinateTransform] = None,
+        region_coord_space: Optional[somacore.CoordinateSpace] = None,
         batch_size: options.BatchSize = options.BatchSize(),
         partitions: Optional[options.ReadPartitions] = None,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
