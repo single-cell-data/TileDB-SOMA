@@ -71,7 +71,12 @@ Logger::Logger() {
             spdlog::level::critical, console_sink->red_bold);
 #endif
     }
-    set_level("INFO");
+    char* env_level = std::getenv("LIBTILEDBSOMA_LOGGING_LEVEL");
+    if (env_level != nullptr && strcmp(env_level, "") != 0) {
+        set_level(env_level);
+    } else {
+        set_level("INFO");
+    }
 }
 
 Logger::~Logger() {
