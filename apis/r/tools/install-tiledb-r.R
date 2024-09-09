@@ -31,10 +31,20 @@ valid <- vapply(
 if (!any(valid)) {
   stop("No valid versions of tiledb-r found")
 }
-db <- db[-idx[!valid], , drop = FALSE]
+if (!all(valid)) {
+  db <- db[-idx[!valid], , drop = FALSE]
+}
 
 # Install upstream deps
-(ups <- tools::package_dependencies("tiledb", db = db, recursive = TRUE)$tiledb)
+(ups <- Reduce(
+  f = union,
+  x = apply(
+    X = db[db[, 'Package'] == 'tiledb', , drop = FALSE],
+    MARGIN = 1L,
+    FUN = \(x) tools::package_dependencies("tiledb", db = t(as.matrix(x)), recursive = TRUE)$tiledb,
+    simplify = FALSE
+  )
+))
 utils::install.packages(intersect(ups, rownames(db)))
 
 # Install correct version of tiledb-r
@@ -48,7 +58,7 @@ dbr <- db[idx[valid], 'Repository']
 # If not, turn of BSPM
 cran <- getOption("repos")['CRAN']
 cran[is.na(cran)] <- ""
-if (requireNamespace("bspm", quietly = TRUE) && !any(dbr %in% cran)) {
+if (requireNamespace("bspm", quietly = TRUE) && !cran %in% repos) {
   bspm::disable()
 }
 utils::install.packages("tiledb", repos = repos)
