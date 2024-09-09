@@ -7,7 +7,9 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Tuple, Union
 
+import numpy as np
 import pyarrow as pa
+import shapely
 import somacore
 from somacore import (
     Axis,
@@ -32,7 +34,7 @@ from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, map_exception_for_create
 from ._soma_group import SOMAGroup
 from ._soma_object import AnySOMAObject
-from ._types import OpenTimestamp
+from ._types import OpenTimestamp, is_nonstringy_sequence
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
@@ -368,8 +370,6 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             ],
         )
 
-        raise NotImplementedError()
-
     @property
     def image_type(self) -> str:
         return self._schema.reference_level_properties.image_type
@@ -380,7 +380,9 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
     def level_properties(self, level: Union[int, str]) -> somacore.ImageProperties:
         if isinstance(level, str):
-            raise NotImplementedError()  # TODO
+            raise NotImplementedError(
+                "Support for getting level properties by name is not yet implemented."
+            )  # TODO
         return self._levels[level]
 
     def read_level(
@@ -389,7 +391,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         region: options.ImageCoords = (),
         *,
         transform: Optional[CoordinateTransform] = None,
-        output_coords: Optional[CoordinateSpace] = None,
+        region_coord_space: Optional[CoordinateSpace] = None,
+        apply_mask: bool = False,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> somacore.SpatialRead[pa.Tensor]:
@@ -398,7 +401,24 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         If provided, the transform is interpreted as the coordinate transformation
         from the reference multiscale level to the requested region.
         """
-        # Not handling 3D images yet.
+        # Applying a mask in not yet supported.
+        if apply_mask:
+            raise NotImplementedError(
+                "Support for applying a mask to the image is not yet implemented."
+            )
+
+        # Check input query region type is supported.
+        if isinstance(region, shapely.GeometryType):
+            raise NotImplementedError(
+                "Support for querying by geometry is not yet implemented."
+            )
+        if not is_nonstringy_sequence(region):
+            raise TypeError(
+                f"non-geometry region type {type(region)} must be a regular sequence,"
+                " not str or bytes"
+            )
+
+        # Get reference level. Check image is 2D.
         ref_level_props = self._schema.reference_level_properties
         if ref_level_props.depth is not None:
             raise NotImplementedError(
@@ -407,64 +427,96 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         # Get the level properties for scaling.
         if isinstance(level, str):
-            raise NotImplementedError()  # TODO
+            raise NotImplementedError("Accessing level by name is not yet supported.")
         level_props = self._levels[level]
 
         # Get the data coordinate space
-        # TODO: clean this up and maybe make it a method
+        def scaled_axis(
+            axis: Axis, a: Union[int, np.float64], b: Union[int, np.float64]
+        ) -> Axis:
+            return Axis(
+                axis.name,
+                axis.units,
+                None if axis.scale is None else a * axis.scale / b,
+            )
+
         x_axis = self.coordinate_space.axes[0]
         y_axis = self.coordinate_space.axes[1]
-        data_coords = CoordinateSpace(
+        data_coord_space = CoordinateSpace(
             (
-                Axis(
-                    x_axis.name,
-                    x_axis.units,
-                    (
-                        None
-                        if x_axis.scale is None
-                        else (x_axis.scale * level_props.width) / ref_level_props.width
-                    ),
-                ),
-                Axis(
-                    y_axis.name,
-                    y_axis.units,
-                    (
-                        None
-                        if y_axis.scale is None
-                        else (y_axis.scale * level_props.width) / ref_level_props.width
-                    ),
-                ),
+                scaled_axis(x_axis, level_props.width, ref_level_props.width),
+                scaled_axis(y_axis, level_props.height, ref_level_props.height),
             )
         )
-        # TODO: Add ability to transform coordinates
-        # TODO: If the coordinate space has scales, this is currently returning
-        # the wrong coordinates.
-        # Check the transform.
+
+        # Get the transform from data coord to multiscale image reference level
         if transform is None:
-            if output_coords is not None:
+            if region_coord_space is not None:
                 raise ValueError(
                     "Cannot specify the output coordinate space when transform is "
                     "``None``."
                 )
             transform = IdentityTransform(
-                data_coords.axis_names, data_coords.axis_names
+                data_coord_space.axis_names, data_coord_space.axis_names
             )
-            output_coords = data_coords
+            region_coord_space = data_coord_space
         else:
             if not isinstance(transform, ScaleTransform):
                 raise NotImplementedError(
                     f"Support for reading levels with a tranform of type "
                     f"{type(transform)!r} is not yet supported."
                 )
-            # TODO Check input/output axis names
-            # TODO: Construct scale transform from data to reference.
-            if output_coords is None:
-                output_coords = data_coords  # TODO: Fix this
+            # Create or check output coordinates.
+            if region_coord_space is None:
+                region_coord_space = data_coord_space  # TODO: Fix this
+            elif len(region_coord_space) != len(data_coord_space):
+                raise ValueError(
+                    "The number of output coordinates must match the number of "
+                    "input coordinates."
+                )
+
+        # TODO: Quick and dirty implementation - clean this up later.
+        def transform_coord(
+            axis_type: str, coord: options.DenseCoord
+        ) -> options.DenseCoord:
+            if coord is None or axis_type == "C":
+                return coord
+            if axis_type == "X":
+                axis_index = 0
+                scale = level_props.width / ref_level_props.width
+            elif axis_type == "Y":
+                axis_index = 1
+                scale = level_props.height / ref_level_props.width
+            else:
+                raise ValueError(f"unexpected axis type '{axis_type}'")
+            scale *= (
+                transform.scale_factors
+                if transform.isotropic
+                else transform.scale_factors[axis_index]  # type: ignore[index]
+            )
+
+            if isinstance(coord, int):
+                return int(np.round(scale * coord))
+            if isinstance(coord, slice):
+                if coord.step is not None:
+                    raise NotImplementedError(
+                        "Support for steps in image read is not supported."
+                    )
+                return slice(
+                    None if coord.start is None else int(np.floor(scale * coord.start)),
+                    None if coord.stop is None else int(np.ceil(scale * coord.stop)),
+                )
+            raise TypeError(f"Unexpected type coordinate {type(coord)!r} in region")
 
         # transform = (data_to_reference + offset) * transform
         # TODO: Apply inverse transform on requested region.
         # Maybe use shapely?
-        coords: options.DenseNDCoords = tuple()  # TODO this is a placeholder
+        # Note: hard-coded assuming transform only supports ScaleTransfrom
+        if not isinstance(transform, IdentityTransform):
+            coords: options.DenseNDCoords = tuple(
+                transform_coord(axis_type, coord)
+                for axis_type, coord in zip(level_props.image_type, region)
+            )
 
         # Get the array.
         try:
@@ -477,8 +529,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 result_order=result_order,
                 platform_config=platform_config,
             ),
-            data_coords,
-            output_coords,
+            data_coord_space,
+            region_coord_space,
             transform,
         )
 
