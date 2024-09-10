@@ -135,12 +135,6 @@ TileDBGroup <- R6::R6Class(
 
       private$check_open_for_write()
 
-      #tiledb::tiledb_group_add_member(
-      #  grp = private$.tiledb_group,
-      #  uri = uri,
-      #  relative = relative,
-      #  name = name
-      #)
       c_group_set(private$.tiledb_group, uri,
                   0, # -> use 'automatic' as opposed to 'relative' or 'absolute'
                   name,
@@ -199,7 +193,6 @@ TileDBGroup <- R6::R6Class(
       stopifnot(is_scalar_character(name))
       private$check_open_for_write()
 
-      #tiledb::tiledb_group_remove_member(grp = private$.tiledb_group, uri = name)
       c_group_remove_member(private$.tiledb_group, name)
 
       # Drop member if cache has been initialized
@@ -375,27 +368,16 @@ TileDBGroup <- R6::R6Class(
     # list with names: name, uri, and type.
     get_all_members_uncached_read = function(group_handle) {
 
-      #count <- tiledb::tiledb_group_member_count(group_handle)
       count <- c_group_member_count(group_handle)
       if (count == 0) return(list())
 
       members <- vector(mode = "list", length = count)
       if (count == 0) return(members)
 
-      #for (i in seq_len(count)) {
-      #  members[[i]] <- setNames(
-      #    # returns character vector with <type, uri, name>
-      #    object = as.list(tiledb::tiledb_group_member(group_handle, i - 1L)),
-      #    nm = c("type", "uri", "name")
-      #  )
-      #}
 
       # Key the list by group member name
-      #names(members) <- vapply_char(members, FUN = getElement, name = "name")
-
       ## names list of lists
       members <- c_group_members(group_handle)
-
       members
     },
 
