@@ -510,7 +510,6 @@ TileDBGroup <- R6::R6Class(
 
       }
 
-      #private$.metadata_cache <- tiledb::tiledb_group_get_all_metadata(group_handle)
       private$.metadata_cache <- c_group_get_metadata(group_handle)
       if (private$.mode == "WRITE") {
           #tiledb::tiledb_group_close(group_handle)
