@@ -67,7 +67,7 @@ test_that("SOMASparseNDArray creation", {
   maxshape <- ndarray$maxshape()
   expect_equal(length(shape), length(maxshape))
   for (i in 1:length(shape)) {
-    expect(maxshape[[i]] >= shape[[i]])
+    expect_true(maxshape[i] >= shape[i])
   }
 
   ## ndim
