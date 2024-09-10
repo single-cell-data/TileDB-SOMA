@@ -38,11 +38,20 @@ typedef struct ContextWrapper ctx_wrap_t;
 
 struct SOMAContextWrapper {
     SOMAContextWrapper(std::shared_ptr<tdbs::SOMAContext> ctx_ptr_) : ctxptr(ctx_ptr_) {}
-
     std::shared_ptr<tdbs::SOMAContext> ctxptr;
 };
 typedef struct SOMAContextWrapper somactx_wrap_t;
 
+struct SOMAGroupWrapper {
+    SOMAGroupWrapper(std::unique_ptr<tdbs::SOMAGroup> grpptr_) : grpptr(std::move(grpptr_)) {
+        //spdl::trace("[SOMAGroupWrapper] ctor");
+    }
+    ~SOMAGroupWrapper() {
+        //spdl::trace("[SOMAGroupWrapper] dtor");
+    }
+    std::unique_ptr<tdbs::SOMAGroup> grpptr;
+};
+typedef struct SOMAGroupWrapper somagrp_wrap_t;
 
 
 // make the function signature nicer as using an uppercase SEXP 'screams'

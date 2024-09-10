@@ -13,6 +13,51 @@ writeArrayFromArrow <- function(uri, naap, nasp, arraytype = "", config = NULL, 
     invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, arraytype, config, tsvec))
 }
 
+#' @noRd
+c_group_create <- function(uri, type, ctxxp, timestamp = NULL) {
+    invisible(.Call(`_tiledbsoma_c_group_create`, uri, type, ctxxp, timestamp))
+}
+
+#' @noRd
+c_group_open <- function(uri, type, ctxxp, timestamp = NULL) {
+    .Call(`_tiledbsoma_c_group_open`, uri, type, ctxxp, timestamp)
+}
+
+#' @noRd
+c_group_member_count <- function(xp) {
+    .Call(`_tiledbsoma_c_group_member_count`, xp)
+}
+
+#' @noRd
+c_group_members <- function(xp) {
+    .Call(`_tiledbsoma_c_group_members`, xp)
+}
+
+#' @noRd
+c_group_get_metadata <- function(xp) {
+    .Call(`_tiledbsoma_c_group_get_metadata`, xp)
+}
+
+#' @noRd
+c_group_close <- function(xp) {
+    invisible(.Call(`_tiledbsoma_c_group_close`, xp))
+}
+
+#' @noRd
+c_group_set <- function(xp, uri, uri_type_int, name, soma_type) {
+    invisible(.Call(`_tiledbsoma_c_group_set`, xp, uri, uri_type_int, name, soma_type))
+}
+
+#' @noRd
+c_group_remove_member <- function(xp, name) {
+    invisible(.Call(`_tiledbsoma_c_group_remove_member`, xp, name))
+}
+
+#' @noRd
+c_group_put_metadata <- function(xp, key, obj) {
+    invisible(.Call(`_tiledbsoma_c_group_put_metadata`, xp, key, obj))
+}
+
 #' Get nnumber of metadata items
 #' @param uri The array URI
 #' @param ctxxp An external pointer to the SOMAContext wrapper

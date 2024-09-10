@@ -32,6 +32,7 @@ Base class for representing an individual TileDB array.
 \item \href{#method-TileDBArray-tiledb_schema}{\code{TileDBArray$tiledb_schema()}}
 \item \href{#method-TileDBArray-dimensions}{\code{TileDBArray$dimensions()}}
 \item \href{#method-TileDBArray-shape}{\code{TileDBArray$shape()}}
+\item \href{#method-TileDBArray-maxshape}{\code{TileDBArray$maxshape()}}
 \item \href{#method-TileDBArray-used_shape}{\code{TileDBArray$used_shape()}}
 \item \href{#method-TileDBArray-non_empty_domain}{\code{TileDBArray$non_empty_domain()}}
 \item \href{#method-TileDBArray-ndim}{\code{TileDBArray$ndim()}}
@@ -211,6 +212,20 @@ array.  Rather, it is the bounds outside of which no data may be written.
 (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$shape()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named vector of dimension length (and the same type as the dimension)
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-maxshape"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-maxshape}{}}}
+\subsection{Method \code{maxshape()}}{
+Retrieve the maxshape, i.e. maximum possible that the
+(lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$maxshape()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
