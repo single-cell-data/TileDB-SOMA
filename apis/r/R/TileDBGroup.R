@@ -66,10 +66,7 @@ TileDBGroup <- R6::R6Class(
       }
       if (is.null(private$.group_open_timestamp)) {
         spdl::debug("[TileDBGroup$open] Opening {} '{}' in {} mode", self$class(), self$uri, mode)
-        #private$.tiledb_group <- tiledb::tiledb_group(self$uri, type = mode, ctx = private$.tiledb_ctx)
-        #print(str(private$.soma_context))
         private$.tiledb_group <- c_group_open(self$uri, type = mode, ctx = soma_context())#private$.some_context)
-        #group_open()
       } else {
         if (internal_use_only != "allowed_use") stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
         spdl::debug("[TileDBGroup$open] Opening {} '{}' in {} mode at {} ptr null {}",
