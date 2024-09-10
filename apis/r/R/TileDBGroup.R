@@ -505,7 +505,6 @@ TileDBGroup <- R6::R6Class(
       # we must open a temporary handle for read, to fill the cache.
       group_handle <- private$.tiledb_group
       if (private$.mode == "WRITE") {
-        # group_handle <- tiledb::tiledb_group(self$uri, type = "READ", ctx = private$.tiledb_ctx)
         group_handle <- c_group_open(self$uri, type ="READ", ctx = private$.soma_context,
                                      private$.tiledb_timestamp_range)
 
