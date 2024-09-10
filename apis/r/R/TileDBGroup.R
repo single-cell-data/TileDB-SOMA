@@ -94,7 +94,6 @@ TileDBGroup <- R6::R6Class(
         }
 
         spdl::debug("Closing {} '{}'", self$class(), self$uri)
-        ##tiledb::tiledb_group_close(private$.tiledb_group)
         c_group_close(private$.tiledb_group)
         private$.mode <- NULL
         private$.tiledb_group <- NULL
