@@ -436,7 +436,6 @@ TileDBGroup <- R6::R6Class(
       }
 
       if (private$.mode == "WRITE") {
-        #tiledb::tiledb_group_close(group_handle)
         c_group_close(group_handle)
       }
     },
