@@ -16,6 +16,7 @@ Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 \itemize{
 \item \href{#method-SOMANDArrayBase-create}{\code{SOMANDArrayBase$create()}}
 \item \href{#method-SOMANDArrayBase-set_data_type}{\code{SOMANDArrayBase$set_data_type()}}
+\item \href{#method-SOMANDArrayBase-has_upgraded_shape}{\code{SOMANDArrayBase$has_upgraded_shape()}}
 \item \href{#method-SOMANDArrayBase-clone}{\code{SOMANDArrayBase$clone()}}
 }
 }
@@ -37,6 +38,7 @@ Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="fragment_count"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-fragment_count'><code>tiledbsoma::TileDBArray$fragment_count()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-index_column_names'><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="maxshape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-maxshape'><code>tiledbsoma::TileDBArray$maxshape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain'><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-open'><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
@@ -98,6 +100,22 @@ Sets a cache value for the datatype (lifecycle: experimental)
 \item{\code{type}}{A character value describing the TileDB data type}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMANDArrayBase-has_upgraded_shape"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMANDArrayBase-has_upgraded_shape}{}}}
+\subsection{Method \code{has_upgraded_shape()}}{
+Returns TRUE if the array has the upgraded resizeable shape
+feature from TileDB-SOMA 1.14: the array was created with this support,
+or it has had \code{upgrade_domain} applied to it.
+(lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$has_upgraded_shape()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Logical
 }
 }
 \if{html}{\out{<hr>}}
