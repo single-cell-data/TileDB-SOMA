@@ -70,12 +70,6 @@ TileDBGroup <- R6::R6Class(
                     self$class(), self$uri, mode, private$.group_open_timestamp,
                     is.null(private$.soma_context))
         ## The Group API does not expose a timestamp setter so we have to go via the config
-        #cfg <- tiledb::config(private$.tiledb_ctx)
-        #cfg["sm.group.timestamp_end"] <- format(round(as.numeric(private$.group_open_timestamp) * 1000),
-        #                                        scientific = FALSE, big.mark = "")
-        #private$.tiledb_group <- tiledb::tiledb_group(self$uri, type = mode,
-        #                                              ctx = private$.tiledb_ctx, cfg = cfg)
-        #print(class(private$.soma_context)) ## -- is externalpointer
         private$.tiledb_group <- c_group_open(self$uri, type = mode, ctx = soma_context(), #private$.soma_context,
                                               self$.tiledb_timestamp_range)
       }
