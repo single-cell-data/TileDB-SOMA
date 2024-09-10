@@ -344,12 +344,6 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         Lifecycle:
             experimental
         """
-        # self._init_once()
-        # assert self._obs_joinids is not None
-        # world_size, _ = _get_distributed_world_rank()
-        # n_workers, _ = _get_worker_world_rank()
-        # div, rem = divmod(len(self._obs_joinids) // world_size, self.batch_size)
-        # return div + bool(rem)
         return self.shape[0]
 
     @property
@@ -795,7 +789,6 @@ class ExperimentAxisQueryIterableDataset(
 
 def experiment_dataloader(
     ds: torchdata.datapipes.iter.IterDataPipe | torch.utils.data.IterableDataset,
-    # num_workers: int = 0,
     **dataloader_kwargs: Any,
 ) -> torch.utils.data.DataLoader:
     """Factory method for :class:`torch.utils.data.DataLoader`. This method can be used to safely instantiate a
@@ -813,8 +806,6 @@ def experiment_dataloader(
         ds:
             A :class:`torch.utils.data.IterableDataset` or a :class:`torchdata.datapipes.iter.IterDataPipe`. May
             include chained data pipes.
-        num_workers:
-            How many subprocesses to use for data loading. 0 means that the data will be loaded in the main process. (default: 0)
         **dataloader_kwargs:
             Additional keyword arguments to pass to the :class:`torch.utils.data.DataLoader` constructor,
             except for ``shuffle``, ``batch_size``, ``sampler``, and ``batch_sampler``, which are not
