@@ -35,12 +35,9 @@ TileDBGroup <- R6::R6Class(
       spdl::debug("[TileDBGroup$create] Creating new {} at '{}' at {}",
                   self$class(), self$uri, self$tiledb_timestamp)
 
-      #tiledb::tiledb_group_create(uri = self$uri, ctx = private$.tiledb_ctx)
       private$.soma_context <- soma_context()  # FIXME via factory and paramater_config
       c_group_create(self$uri, self$class(), private$.soma_context,
                      self$.tiledb_timestamp_range)  ## FIXME: use to be added accessor
-
-      #self$open("WRITE", internal_use_only = "allowed_use") # FIXME
 
       invisible(private$.tiledb_group)
     },
