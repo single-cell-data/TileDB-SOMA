@@ -9,7 +9,7 @@ from somacore import options
 def transform_region(
     region: options.SpatialRegion,
     transform: somacore.CoordinateTransform,
-) -> options.SpatialRegion:
+) -> shapely.GeometryType:
     if transform.input_rank != 2:
         raise NotImplementedError(
             "Spatial queries are currently only supported for 2D coordinates."
@@ -17,32 +17,24 @@ def transform_region(
     if isinstance(region, shapely.GeometryType):
         if region.has_z:
             raise ValueError("Only 2d shapely geometries are supported.")
+        # Following check is currently unneeded, but leaving it for reference if
+        # 3D support is added.
         ndim = 3 if region.has_z else 2
         if ndim != transform.input_rank:
             raise ValueError(
                 "Input region must have {len(transform.input_rank)} dimension, but "
                 "region with {ndim} dimensions provided."
             )
-        if not isinstance(transform, somacore.AffineTransform):
-            raise NotImplementedError("Only affine transforms are supported.")
-        aug = transform.augmented_matrix
-        affine = aug[:-1, :-1].flatten("C").tolist() + aug[-1, :-1].tolist()
-        return shapely.affine_transform(affine)
-    region = np.array(region)
-    ndim, ncoords = region.shape
-    if region.ndim != 2:
-        raise ValueError(f"Provided region has unexpected shape={region.shape}.")
-    if ncoords != 4:
-        raise NotImplementedError("Numpy array describe a box with shape {(2, 4)}.")
-    if len(region) != transform.input_rank:
-        raise ValueError(
-            "Input region must have {len(transform.input_rank)} dimension, but "
-            "{len(region) dimensions provided."
-        )
-    # TODO: Update to work for any affine transforms.
-    if not isinstance(transform, somacore.ScaleTransform):
-        raise NotImplementedError("Numpy region only supported for scale transforms.")
-    return transform.augmented_matrix[:-1, :-1] @ region
+    else:
+        if len(region) != 4:
+            raise ValueError("Unexpected region with size {len(region)}")
+        region = shapely.box(region[0], region[1], region[2], region[3])
+
+    if not isinstance(transform, somacore.AffineTransform):
+        raise NotImplementedError("Only affine transforms are supported.")
+    aug = transform.augmented_matrix
+    affine = aug[:-1, :-1].flatten("C").tolist() + aug[-1, :-1].tolist()
+    return shapely.affinity.affine_transform(region, affine)
 
 
 def process_image_region(
@@ -58,12 +50,7 @@ def process_image_region(
 
     # Convert the region to a bounding box. Round values of bounding box to integer
     # values. Include any partially intersected pixels.
-    if isinstance(region, shapely.GeometryType):
-        (x_min, y_min, x_max, y_max) = region
-    else:
-        (x_min, y_min, x_max, y_max) = np.min(
-            region[0, :], np.min(region[1, :]), np.max(region[0, :]), np.max(region[1,])
-        )
+    (x_min, y_min, x_max, y_max) = shapely.bounds(data_region)
     x_min = max(0, int(np.floor(x_min)))
     y_min = max(0, int(np.floor(y_min)))
     x_max = int(np.ceil(x_max))

@@ -9,7 +9,6 @@ from typing import Any, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
-import shapely
 import somacore
 from somacore import (
     Axis,
@@ -34,7 +33,7 @@ from ._exception import SOMAError, map_exception_for_create
 from ._soma_group import SOMAGroup
 from ._soma_object import AnySOMAObject
 from ._spatial_util import process_image_region
-from ._types import OpenTimestamp, is_nonstringy_sequence
+from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
@@ -402,6 +401,12 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         If provided, the transform is interpreted as the coordinate transformation
         from the reference multiscale level to the requested region.
         """
+        # Get reference level. Check image is 2D.
+        if self._schema.reference_level_properties.depth is not None:
+            raise NotImplementedError(
+                "Support for reading the levels of 3D images it not yet implemented."
+            )
+
         # Applying a mask in not yet supported.
         if apply_mask:
             raise NotImplementedError(
@@ -409,32 +414,14 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             )
 
         # Check input query region type is supported.
-        ref_level_props = self._schema.reference_level_properties
-        if isinstance(region, shapely.GeometryType):
-            raise NotImplementedError(
-                "Support for querying by geometry is not yet implemented."
-            )
-        if not is_nonstringy_sequence(region):
-            raise TypeError(
-                f"non-geometry region type {type(region)} must be a regular sequence,"
-                " not str or bytes"
-            )
-        if channel_coords is not None and ref_level_props.nchannels is None:
+        if (
+            channel_coords is not None
+            and self._schema.reference_level_properties.nchannels is None
+        ):
             raise ValueError(
                 "Invalide channel coordinate provided. This image has no channel "
                 "dimension."
             )
-
-        # Get reference level. Check image is 2D.
-        if ref_level_props.depth is not None:
-            raise NotImplementedError(
-                "Support for reading the levels of 3D images it not yet implemented."
-            )
-
-        # Get the level properties for scaling.
-        if isinstance(level, str):
-            raise NotImplementedError("Accessing level by name is not yet supported.")
-        level_props = self._levels[level]
 
         # Get the data coordinate space
         def scaled_axis(axis: Axis, scale: np.float64) -> Axis:
@@ -493,12 +480,12 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         )
 
         # Get the array.
+        array_name = level if isinstance(level, str) else self._levels[level].name
         try:
-            array = self[level_props.name]
+            array = self[array_name]
         except KeyError as ke:
             raise SOMAError(
-                f"Unable to open the dense array at level {level} with name "
-                f"'{level_props.name}'."
+                f"Unable to open the dense array with name '{array_name}'."
             ) from ke
         return somacore.SpatialRead(
             array.read(
