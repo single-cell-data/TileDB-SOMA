@@ -195,7 +195,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         # Get the image levels.
         # TODO: Optimize and push down to C++ level
         self._levels = [
-            ImageProperties(name=key, **json.loads(val))
+            ImageProperties(name=key[len(self._level_prefix) :], **json.loads(val))
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
         ]
@@ -522,7 +522,9 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         try:
             array = self[level_props.name]
         except KeyError as ke:
-            raise SOMAError(f"Unable to open the dense array at level {level}.") from ke
+            raise SOMAError(
+                f"Unable to open the dense array at level {level} with name '{level_props.name}'."
+            ) from ke
         return somacore.SpatialRead(
             array.read(
                 coords,
