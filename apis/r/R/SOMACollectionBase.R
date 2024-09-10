@@ -210,7 +210,7 @@ SOMACollectionBase <- R6::R6Class(
       )
 
       tiledb_object$open(mode = "READ", internal_use_only = "allowed_use")
-      soma_type <- unlist(tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY))
+      soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
       tiledb_object$close()
 
       spdl::debug(

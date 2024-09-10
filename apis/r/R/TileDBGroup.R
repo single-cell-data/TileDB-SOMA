@@ -273,7 +273,9 @@ TileDBGroup <- R6::R6Class(
 
       spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
       if (!is.null(key)) {
-        private$.metadata_cache[[key]]
+        val <- private$.metadata_cache[[key]]
+        if (is.list(val)) val <- unlist(val)
+        val
       } else {
         private$.metadata_cache
       }
