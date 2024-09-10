@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA Point Cloud
 """
-from typing import Any, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Mapping, Optional, Sequence, Tuple, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -240,9 +240,10 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
     def spatial_read(
         self,
-        region: options.SpatialDFCoords = (),
+        region: Optional[options.SpatialRegion] = None,
         column_names: Optional[Sequence[str]] = None,
         *,
+        extra_coords: Optional[Mapping[str, options.SparseDFCoord]] = None,
         transform: Optional[somacore.CoordinateTransform] = None,
         region_coord_space: Optional[somacore.CoordinateSpace] = None,
         batch_size: options.BatchSize = options.BatchSize(),
@@ -315,7 +316,10 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             if isinstance(coord, slice):
                 if coord.step is not None:
                     raise ValueError("slice steps are not supported")
-                return slice(scale * coord.start, scale * coord.stop)
+                return slice(
+                    None if coord.start is None else scale * coord.start,
+                    None if coord.stop is None else scale * coord.stop,
+                )
             if isinstance(coord, Sequence):
                 return tuple(scale * val for val in coord)  # type: ignore
             return scale * coord  # type: ignore
@@ -329,7 +333,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             coords = tuple(
                 scale_coords(coord, scale, name)
                 for coord, scale, name in zip(
-                    region, transform.scale_factors, self.index_column_names  # type: ignore
+                    region, transform.scale_factors, self.index_column_names
                 )
             )
 

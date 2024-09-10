@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 import pyarrow as pa
@@ -86,9 +86,10 @@ class SpatialDataFrame(SOMAArray, somacore.SpatialDataFrame):
 
     def spatial_read(
         self,
-        region: options.SpatialDFCoords = (),
+        region: Optional[options.SpatialRegion] = None,
         column_names: Optional[Sequence[str]] = None,
         *,
+        extra_coords: Optional[Mapping[str, options.SparseDFCoord]] = None,
         transform: Optional[somacore.CoordinateTransform] = None,
         region_coord_space: Optional[somacore.CoordinateSpace] = None,
         batch_size: options.BatchSize = options.BatchSize(),
@@ -104,7 +105,7 @@ class SpatialDataFrame(SOMAArray, somacore.SpatialDataFrame):
 
         Args:
             region: for each index dimension, which rows to read or a single shape.
-                Defaults to ``()``, meaning no constraint -- all IDs.
+                Defaults to ``None``, meaning no constraint -- all regions.
             column_names: the named columns to read and return.
                 Defaults to ``None``, meaning no constraint -- all column names.
             transform: coordinate transform to apply to results.
