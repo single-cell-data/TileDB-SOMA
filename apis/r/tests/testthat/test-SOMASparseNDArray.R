@@ -62,7 +62,11 @@ test_that("SOMASparseNDArray creation", {
   ## maxshape
   # TODO: more testing with current-domain feature integrated
   # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-  expect_false(ndarray$has_upgraded_shape())
+  if (.new_shape_feature_flag_is_enabled()) {
+    expect_true(ndarray$has_upgraded_shape())
+  } else {
+    expect_false(ndarray$has_upgraded_shape())
+  }
   shape <- ndarray$shape()
   maxshape <- ndarray$maxshape()
   expect_equal(length(shape), length(maxshape))

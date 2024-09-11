@@ -360,18 +360,42 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
         ind_col <- tbl_schema$GetFieldByName(ind_col_name)
         ind_col_type <- ind_col$type
         ind_col_type_name <- ind_col$type$name
-        ind_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,1) ## FIXME
+
+        # TODO: tiledbsoma-r does not accept the domain argument to SOMADataFrame::create, but should
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2967
         ind_ext <- tdco$dim_tile(ind_col_name)
-        if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
+
         # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
         if (ind_col$type$bit_width %||% 0L == 8L) {
             ind_ext <- 64L
         }
-        if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
-            aa <- arrow::arrow_array(c("", "", ""), ind_col_type)
+
+        # We need to do this because if we don't:
+        #
+        # Error: [TileDB::Dimension] Error: Tile extent check failed; domain max
+        # expanded to multiple of tile extent exceeds max value representable by
+        # domain type. Reduce domain max by 1 tile extent to allow for
+        # expansion.
+        ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,ind_ext)
+
+        ind_cur_dom <- ind_max_dom
+        if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
+
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+        if (.new_shape_feature_flag_is_enabled()) {
+            if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
+                aa <- arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
+            } else {
+                aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
+            }
         } else {
-            aa <- arrow::arrow_array(c(ind_dom, ind_ext), ind_col_type)
+            if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
+                aa <- arrow::arrow_array(c("", "", ""), ind_col_type)
+            } else {
+                aa <- arrow::arrow_array(c(ind_max_dom, ind_ext), ind_col_type)
+            }
         }
+
         aa
     })
     names(rl) <- ind_col_names
@@ -382,15 +406,39 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
 #' Domain and extent table creation helper for array writes returning a Table with
 #' a column per dimension for the given (incoming) arrow schema of a Table
 #' @noRd
-get_domain_and_extent_array <- function(shape) {
+get_domain_and_extent_array <- function(shape, is_sparse) {
     stopifnot("First argument must be vector of positive values" = is.vector(shape) && all(shape > 0))
     indvec <- seq_len(length(shape)) - 1   # sequence 0, ..., length()-1
     rl <- sapply(indvec, \(ind) {
         ind_col <- sprintf("soma_dim_%d", ind)
         ind_col_type <- arrow::int64()
-        ind_dom <- c(0L, shape[ind+1] - 1L)
+
+        # TODO:  this function needs to take a
+        # TileDBCreateOptions$new(PlatformConfig option as
+        # get_domain_and_extent_dataframe does.
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2966
+        # For now, the core extent is not taken from the platform_config.
         ind_ext <- shape[ind+1]
-        aa <- arrow::arrow_array(c(ind_dom, ind_ext), ind_col_type)
+
+        ind_cur_dom <- c(0L, shape[ind+1] - 1L)
+
+        # We need to do this because if we don't:
+        #
+        # Error: [TileDB::Dimension] Error: Tile extent check failed; domain max
+        # expanded to multiple of tile extent exceeds max value representable by
+        # domain type. Reduce domain max by 1 tile extent to allow for
+        # expansion.
+        ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,ind_ext)
+
+        # TODO: support current domain for dense arrays once we have that support
+        # from core.
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
+        if (.new_shape_feature_flag_is_enabled() && is_sparse) {
+            aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
+        } else {
+            aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)
+        }
+
         aa
     })
     names(rl) <- sprintf("soma_dim_%d", indvec)

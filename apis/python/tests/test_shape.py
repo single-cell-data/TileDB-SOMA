@@ -53,7 +53,7 @@ def test_sparse_nd_array_basics(
         assert snda.shape == arg_shape
 
         # More to come on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        assert not snda.has_upgraded_shape
+        assert snda.has_upgraded_shape == tiledbsoma._new_shape_feature_flag_enabled()
 
         # Before current-domain support: shape is maxshape.
         #
@@ -62,9 +62,11 @@ def test_sparse_nd_array_basics(
         # involving R compatibility, and leaving room for a single tile
         # capacity, etc ...  we could check for some magic value but it suffices
         # to check that it's over 2 billion.)
-        assert snda.shape == snda.maxshape
-        # for e in snda.maxshape:
-        #    assert e > 2_000_000_000
+        if tiledbsoma._new_shape_feature_flag_enabled():
+            for e in snda.maxshape:
+                assert e > 2_000_000_000
+        else:
+            assert snda.shape == snda.maxshape
 
         # No data have been written for this test case
         assert snda.non_empty_domain() == tuple([(0, 0)] * ndim)
@@ -91,9 +93,11 @@ def test_sparse_nd_array_basics(
     with tiledbsoma.SparseNDArray.open(uri) as snda:
         assert snda.shape == arg_shape
         # This will change with current-domain support
-        assert snda.shape == snda.maxshape
-        # for e in snda.maxshape:
-        #    assert e > 2_000_000_000
+        if tiledbsoma._new_shape_feature_flag_enabled():
+            for e in snda.maxshape:
+                assert e > 2_000_000_000
+        else:
+            assert snda.shape == snda.maxshape
         assert snda.non_empty_domain() == coords
 
     # Test reads out of bounds
@@ -113,11 +117,12 @@ def test_sparse_nd_array_basics(
 
     with tiledbsoma.SparseNDArray.open(uri) as snda:
         assert snda.shape == arg_shape
-        assert snda.shape == snda.maxshape
+        if not tiledbsoma._new_shape_feature_flag_enabled():
+            assert snda.shape == snda.maxshape
 
 
 ## Pending 2.27 timeframe for dense support for current domain, including resize
-## TODO: mark these with a linked GitHub tracking issue
+## https://github.com/single-cell-data/TileDB-SOMA/issues/2955
 def test_dense_nd_array_basics(tmp_path):
     uri = tmp_path.as_posix()
     shape = (100, 200)
@@ -202,9 +207,11 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         has_sjid_dim = "soma_joinid" in index_column_names
         if has_sjid_dim:
             assert sdf._maybe_soma_joinid_shape == 1 + soma_joinid_domain[1]
-            assert sdf._maybe_soma_joinid_maxshape == 1 + soma_joinid_domain[1]
+            if not tiledbsoma._new_shape_feature_flag_enabled():
+                assert sdf._maybe_soma_joinid_maxshape == 1 + soma_joinid_domain[1]
         else:
             assert sdf._maybe_soma_joinid_shape is None
-            assert sdf._maybe_soma_joinid_maxshape is None
+            if not tiledbsoma._new_shape_feature_flag_enabled():
+                assert sdf._maybe_soma_joinid_maxshape is None
 
         assert len(sdf.non_empty_domain()) == len(index_column_names)
