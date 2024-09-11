@@ -29,8 +29,12 @@
  *
  *   This file defines the SOMAContext class.
  */
-#include "soma_context.h"
+#include <thread>
+
 #include <thread_pool/thread_pool.h>
+#include "../utils/common.h"
+#include "../utils/logger.h"  // for fmt::
+#include "soma_context.h"
 
 namespace tiledbsoma {
 
@@ -39,14 +43,22 @@ std::shared_ptr<ThreadPool>& SOMAContext::thread_pool() {
     // The first thread that gets here will create the context thread pool
     if (thread_pool_ == nullptr) {
         auto cfg = tiledb_config();
-        int concurrency = 10;
-        if (cfg.find("sm.compute_concurrency_level") != cfg.end()) {
-            concurrency = std::stoi(cfg["sm.compute_concurrency_level"]);
+        auto concurrency = std::thread::hardware_concurrency();
+        if (cfg.find(CONFIG_KEY_COMPUTE_CONCURRENCY_LEVEL) != cfg.end()) {
+            auto value_str = cfg[CONFIG_KEY_COMPUTE_CONCURRENCY_LEVEL];
+            try {
+                concurrency = std::stoull(value_str);
+            } catch (const std::exception& e) {
+                throw TileDBSOMAError(fmt::format(
+                    "[SOMAContext] Error parsing {}: '{}' ({}) - must be a postive integer.",
+                    CONFIG_KEY_COMPUTE_CONCURRENCY_LEVEL,
+                    value_str,
+                    e.what()));
+            }
         }
-        int thread_count = std::max(1, concurrency / 2);
-        if (thread_count > 1) {
-            thread_pool_ = std::make_shared<ThreadPool>(thread_count);
-        }
+
+        int thread_count = std::max(1u, concurrency);
+        thread_pool_ = std::make_shared<ThreadPool>(thread_count);
     }
     return thread_pool_;
 }
