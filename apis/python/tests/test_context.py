@@ -4,6 +4,7 @@ from unittest import mock
 
 import pytest
 
+import tiledbsoma
 import tiledbsoma.options._soma_tiledb_context as stc
 import tiledb
 
@@ -131,3 +132,15 @@ def test_replace_config_after_construction():
             new_tdb_ctx = new_soma_ctx.tiledb_ctx
         mock_ctx.assert_called_once()
         assert new_tdb_ctx.config()["vfs.s3.region"] == "us-west-2"
+
+
+def test_malformed_concurrency_config_value():
+    import numpy as np
+
+    with pytest.raises(tiledbsoma.SOMAError):
+        ctx = tiledbsoma.SOMATileDBContext(
+            tiledb_config={"soma.compute_concurrency_level": "not-a-number"}
+        )
+        tiledbsoma.IntIndexer(np.arange(100, dtype=np.int64), context=ctx).get_indexer(
+            np.array([0, 1])
+        )
