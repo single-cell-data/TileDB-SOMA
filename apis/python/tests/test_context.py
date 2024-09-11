@@ -135,21 +135,15 @@ def test_replace_config_after_construction():
 
 
 def test_malformed_concurrency_config_value():
-    import sys
-
     import numpy as np
 
-    with pytest.raises(tiledbsoma.SOMAError):
+    # should always raise a SOMAError.  On MacOS there is a bug which causes a RuntimeError
+    # [sc-54978]
+    with pytest.raises((tiledbsoma.SOMAError, RuntimeError)):
         ctx = tiledbsoma.SOMATileDBContext(
             tiledb_config={"soma.compute_concurrency_level": "not-a-number"}
         )
 
-        try:  # DEBUGGING the test ONLY (TEMP REMOVE ME)
-            tiledbsoma.IntIndexer(
-                np.arange(100, dtype=np.int64), context=ctx
-            ).get_indexer(np.array([0, 1]))
-        except Exception as e:
-            print(
-                "soma.compute_concurrency_level ERROR TYPE", type(e), e, file=sys.stderr
-            )
-            raise
+        tiledbsoma.IntIndexer(np.arange(100, dtype=np.int64), context=ctx).get_indexer(
+            np.array([0, 1])
+        )
