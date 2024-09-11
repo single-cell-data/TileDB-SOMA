@@ -215,6 +215,30 @@ void ManagedQuery::set_column_data(
     }
 }
 
+std::shared_ptr<ColumnBuffer> ManagedQuery::setup_column_data(
+    std::string_view name) {
+    if (this->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
+    }
+
+    // Create the array_buffer_ as necessary
+    if (buffers_ == nullptr) {
+        buffers_ = std::make_shared<ArrayBuffers>();
+    }
+
+    // Create a ColumnBuffer object instead of passing it in as an argument to
+    // `set_column_data` because ColumnBuffer::create requires a TileDB Array
+    // argument which should remain a private member of SOMAArray
+    auto column = ColumnBuffer::create(array_, name);
+
+    // Keep the ColumnBuffer alive by attaching it to the ArrayBuffers class
+    // member. Otherwise, the data held by the ColumnBuffer will be garbage
+    // collected before it is submitted to the write query
+    buffers_->emplace(std::string(name), column);
+
+    return column;
+};
+
 void ManagedQuery::setup_read() {
     // If the query is complete, return so we do not submit it again
     auto status = query_->query_status();

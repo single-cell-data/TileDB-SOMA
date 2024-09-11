@@ -180,8 +180,7 @@ class SOMAArray : public SOMAObject {
         , arr_(other.arr_)
         , meta_cache_arr_(other.meta_cache_arr_)
         , first_read_next_(other.first_read_next_)
-        , submitted_(other.submitted_)
-        , array_buffer_(other.array_buffer_) {
+        , submitted_(other.submitted_) {
         fill_metadata_cache();
     }
 
@@ -1415,9 +1414,6 @@ class SOMAArray : public SOMAObject {
     // Helper function to cast Boolean of bits (Arrow) to uint8 (TileDB)
     void _cast_bit_to_uint8(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
 
-    // Helper function for set_column_data
-    std::shared_ptr<ColumnBuffer> _setup_column_data(std::string_view name);
-
     // Fills the metadata cache upon opening the array.
     void fill_metadata_cache();
 
@@ -1467,10 +1463,6 @@ class SOMAArray : public SOMAObject {
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow();
-
-    // ArrayBuffers to hold ColumnBuffers alive when submitting to write
-    // query
-    std::shared_ptr<ArrayBuffers> array_buffer_ = nullptr;
 };
 
 }  // namespace tiledbsoma

@@ -482,7 +482,7 @@ void SOMAArray::set_column_data(
     const void* data,
     uint64_t* offsets,
     uint8_t* validity) {
-    auto column = SOMAArray::_setup_column_data(name);
+    auto column = mq_->setup_column_data(name);
     column->set_data(num_elems, data, offsets, validity);
     mq_->set_column_data(column);
 };
@@ -493,33 +493,9 @@ void SOMAArray::set_column_data(
     const void* data,
     uint32_t* offsets,
     uint8_t* validity) {
-    auto column = SOMAArray::_setup_column_data(name);
+    auto column = mq_->setup_column_data(name);
     column->set_data(num_elems, data, offsets, validity);
     mq_->set_column_data(column);
-};
-
-std::shared_ptr<ColumnBuffer> SOMAArray::_setup_column_data(
-    std::string_view name) {
-    if (mq_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
-    }
-
-    // Create the array_buffer_ as necessary
-    if (array_buffer_ == nullptr) {
-        array_buffer_ = std::make_shared<ArrayBuffers>();
-    }
-
-    // Create a ColumnBuffer object instead of passing it in as an argument to
-    // `set_column_data` because ColumnBuffer::create requires a TileDB Array
-    // argument which should remain a private member of SOMAArray
-    auto column = ColumnBuffer::create(arr_, name);
-
-    // Keep the ColumnBuffer alive by attaching it to the ArrayBuffers class
-    // member. Otherwise, the data held by the ColumnBuffer will be garbage
-    // collected before it is submitted to the write query
-    array_buffer_->emplace(std::string(name), column);
-
-    return column;
 };
 
 void SOMAArray::set_array_data(
@@ -527,11 +503,6 @@ void SOMAArray::set_array_data(
     std::unique_ptr<ArrowArray> arrow_array) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
-    }
-
-    // Create the array_buffer_ as necessary
-    if (array_buffer_ == nullptr) {
-        array_buffer_ = std::make_shared<ArrayBuffers>();
     }
 
     auto [casted_array, casted_schema] = SOMAArray::_cast_table(
@@ -544,7 +515,7 @@ void SOMAArray::set_array_data(
         // Create a ColumnBuffer object instead of passing it in as an argument
         // to `set_column_data` because ColumnBuffer::create requires a TileDB
         // Array argument which should remain a private member of SOMAArray
-        auto column = ColumnBuffer::create(arr_, arrow_sch_->name);
+        auto column = mq_->setup_column_data(arrow_sch_->name);
 
         const void* data;
         uint8_t* validities = nullptr;
@@ -573,11 +544,6 @@ void SOMAArray::set_array_data(
                 static_cast<uint64_t*>(nullptr),
                 validities);
         }
-        // Keep the ColumnBuffer alive by attaching it to the ArrayBuffers class
-        // member. Otherwise, the data held by the ColumnBuffer will be garbage
-        // collected before it is submitted to the write query
-        array_buffer_->emplace(std::string(arrow_sch_->name), column);
-
         mq_->set_column_data(column);
     }
 };
@@ -1050,7 +1016,6 @@ void SOMAArray::write(bool sort_coords) {
     mq_->submit_write(sort_coords);
 
     mq_->reset();
-    array_buffer_ = nullptr;
 }
 
 void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {

@@ -234,6 +234,9 @@ class ManagedQuery {
      */
     void set_column_data(std::shared_ptr<ColumnBuffer> buffer);
 
+    // Helper function for set_column_data
+    std::shared_ptr<ColumnBuffer> setup_column_data(std::string_view name);
+
     /**
      * @brief Configure query and allocate result buffers for reads.
      *
