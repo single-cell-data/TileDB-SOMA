@@ -47,7 +47,7 @@ using namespace tiledbsoma;
  * @param lookups input values to be looked up
  * @return looked up values
  */
-py::array_t<int64_t> get_indexer_general(
+py::array_t<int64_t> get_indexer_general_aux(
     IntIndexer& indexer, py::array_t<int64_t> lookups) {
     auto input_buffer = lookups.request();
     int64_t* input_ptr = static_cast<int64_t*>(input_buffer.ptr);
@@ -57,6 +57,14 @@ py::array_t<int64_t> get_indexer_general(
     int64_t* results_ptr = static_cast<int64_t*>(results_buffer.ptr);
     indexer.lookup(input_ptr, results_ptr, size);
     return results;
+}
+py::array_t<int64_t> get_indexer_general(
+    IntIndexer& indexer, py::array_t<int64_t> lookups) {
+    try {
+        return get_indexer_general_aux(indexer, lookups);
+    } catch (const std::exception& e) {
+        throw TileDBSOMAError(e.what());
+    }
 }
 
 /***
@@ -83,7 +91,7 @@ void extract_py_array_schema(
  * @py_arrow_array pyarrow inputs to be looked up
  * @return looked up values
  */
-py::array_t<int64_t> get_indexer_py_arrow(
+py::array_t<int64_t> get_indexer_py_arrow_aux(
     IntIndexer& indexer, py::object py_arrow_array) {
     // Check if it is not a pyarrow array or pyarrow chunked array
     if (!py::hasattr(py_arrow_array, "_export_to_c") &&
@@ -134,6 +142,15 @@ py::array_t<int64_t> get_indexer_py_arrow(
     return results;
 }
 
+py::array_t<int64_t> get_indexer_py_arrow(
+    IntIndexer& indexer, py::object py_arrow_array) {
+    try {
+        return get_indexer_py_arrow_aux(indexer, py_arrow_array);
+    } catch (const std::exception& e) {
+        throw TileDBSOMAError(e.what());
+    }
+}
+
 void load_reindexer(py::module& m) {
     // Efficient C++ re-indexing (aka hashing unique key values to an index
     // between 0 and number of keys - 1) based on khash
@@ -143,7 +160,11 @@ void load_reindexer(py::module& m) {
         .def(
             "map_locations",
             [](IntIndexer& indexer, py::array_t<int64_t> keys) {
-                indexer.map_locations(keys.data(), keys.size());
+                try {
+                    indexer.map_locations(keys.data(), keys.size());
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
             })
         // Perform lookup for a large input array of keys and writes the
         // looked up values into previously allocated array (works for the

@@ -214,7 +214,7 @@ def test_dataframe_with_enumeration(tmp_path):
         data["soma_joinid"] = [0, 1, 2, 3, 4]
         data["foo"] = ["a", "bb", "ccc", "bb", "a"]
         data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
-        with pytest.raises(ValueError):
+        with pytest.raises(soma.SOMAError):
             sdf.write(pa.Table.from_pydict(data))
 
         data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
@@ -1458,7 +1458,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
 
     # cannot add additional categories as already maxed out earlier
     tbl = pa.Table.from_pandas(df2, preserve_index=False)
-    with pytest.raises((RuntimeError, soma.SOMAError)):
+    with pytest.raises(soma.SOMAError):
         with soma.open(uri, mode="w") as A:
             A.write(tbl)
 
