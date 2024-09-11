@@ -46,9 +46,13 @@ void write(SOMAArray& array, py::handle py_batch, bool sort_coords = true) {
     uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
     py_batch.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
 
-    array.set_array_data(
-        std::make_unique<ArrowSchema>(arrow_schema),
-        std::make_unique<ArrowArray>(arrow_array));
+    try {
+        array.set_array_data(
+            std::make_unique<ArrowSchema>(arrow_schema),
+            std::make_unique<ArrowArray>(arrow_array));
+    } catch (const std::exception& e) {
+        TPY_ERROR_LOC(e.what());
+    }
 
     try {
         array.write(sort_coords);

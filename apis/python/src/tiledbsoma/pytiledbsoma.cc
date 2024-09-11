@@ -49,8 +49,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                 std::rethrow_exception(p);
         } catch (const TileDBSOMAError& e) {
             PyErr_SetString(tiledb_soma_error.ptr(), e.what());
-        } catch (const TileDBSOMAPyError& e) {
-            PyErr_SetString(tiledb_soma_error.ptr(), e.what());
         } catch (py::builtin_exception& e) {
             throw;
         };

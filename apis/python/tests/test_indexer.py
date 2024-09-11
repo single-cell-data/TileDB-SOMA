@@ -6,6 +6,7 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 
+from tiledbsoma import SOMAError
 from tiledbsoma._indexer import IntIndexer
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -22,7 +23,7 @@ def test_duplicate_key_indexer_error(
     keys: Union[np.array, List[int]], lookups: np.array
 ):
     context = _validate_soma_tiledb_context(SOMATileDBContext())
-    with pytest.raises(RuntimeError, match="There are duplicate keys."):
+    with pytest.raises(SOMAError, match="There are duplicate keys."):
         IntIndexer(keys, context=context)
 
     pd_index = pd.Index(keys)
