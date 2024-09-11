@@ -343,7 +343,9 @@ setuptools.setup(
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
         "somacore==1.0.14",
-        "tiledb~=0.31.0",
+        # TEMP WHILE WE AWAIT WHEELS
+        # "tiledb~=0.32.0",
+        "tiledb",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
