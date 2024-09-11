@@ -196,6 +196,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' an error if the new shape exceeds maxshape in any dimension. Raises an
     #' error if the array doesn't already have a shape: in that case please call
     #' tiledbsoma_upgrade_shape.
+    #' @param new_shape A vector of integerish, of the same length as the array's `ndim`.
     #' @return No return value
     resize = function(new_shape) {
       # TODO: move this to SOMANDArrayBase.R once core offers current-domain support for dense arrays.
@@ -210,19 +211,20 @@ SOMASparseNDArray <- R6::R6Class(
     },
 
     #' @description Allows the array to have a resizeable shape as described in the
-    #' TileDB-SOMA 1.15 release notes.  Raises an error if the new shape exceeds maxshape in any
+    #' TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
     #' dimension. Raises an error if the array already has a shape.
+    #' @param shape A vector of integerish, of the same length as the array's `ndim`.
     #' @return No return value
-    tiledbsoma_upgrade_shape = function(new_shape) {
+    tiledbsoma_upgrade_shape = function(shape) {
       # TODO: move this to SOMANDArrayBase.R once core offers current-domain support for dense arrays.
       # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
 
-      stopifnot("'new_shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(new_shape, n = self$ndim()) ||
-        (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
+      stopifnot("'shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(shape, n = self$ndim()) ||
+        (bit64::is.integer64(shape) && length(shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
-      tiledbsoma_upgrade_shape(self$uri, new_shape, config=as.character(tiledb::config(self$tiledbsoma_ctx$context())))
+      tiledbsoma_upgrade_shape(self$uri, shape, config=as.character(tiledb::config(self$tiledbsoma_ctx$context())))
     }
 
   ),
