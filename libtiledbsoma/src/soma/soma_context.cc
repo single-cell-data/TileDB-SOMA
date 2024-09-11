@@ -50,7 +50,8 @@ std::shared_ptr<ThreadPool>& SOMAContext::thread_pool() {
                 concurrency = std::stoull(value_str);
             } catch (const std::exception& e) {
                 throw TileDBSOMAError(fmt::format(
-                    "[SOMAContext] Error parsing {}: '{}' ({}) - must be a postive integer.",
+                    "[SOMAContext] Error parsing {}: '{}' ({}) - must be a "
+                    "postive integer.",
                     CONFIG_KEY_COMPUTE_CONCURRENCY_LEVEL,
                     value_str,
                     e.what()));
