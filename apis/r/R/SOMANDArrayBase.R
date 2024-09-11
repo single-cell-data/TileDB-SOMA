@@ -39,7 +39,7 @@ SOMANDArrayBase <- R6::R6Class(
 
       #spdl::warn("[SOMANDArrayBase::create] type cached as {}", private$.type)
 
-      dom_ext_tbl <- get_domain_and_extent_array(shape)
+      dom_ext_tbl <- get_domain_and_extent_array(shape, private$.is_sparse)
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
@@ -133,6 +133,20 @@ SOMANDArrayBase <- R6::R6Class(
       coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
 
       coords
+    },
+
+    #  @description Converts a vector of ints into a vector of int64 in a format
+    #  acceptable for libtiledbsoma
+
+    .convert_shape_argument = function(new_shape) {
+      # ensure new_shape is an integerish vector
+      stopifnot(
+        "'new_shape' must be an integerish vector with the same length as the array's maxshape" = rlang::is_integerish(new_shape, n = self$ndim(), finite = TRUE) ||
+          (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim() && all(is.finite(new_shape)))
+      )
+
+      # convert integer to integer64 to match dimension type
+      return(bit64::as.integer64(new_shape))
     },
 
     # Internal marking of one or zero based matrices for iterated reads

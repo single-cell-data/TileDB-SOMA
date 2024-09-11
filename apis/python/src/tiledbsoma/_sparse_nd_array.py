@@ -26,6 +26,8 @@ from somacore import options
 from somacore.options import PlatformConfig
 from typing_extensions import Self
 
+from tiledbsoma import _new_shape_feature_flag_enabled
+
 from . import _util
 
 # This package's pybind11 code
@@ -122,18 +124,75 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     ) -> Self:
         context = _validate_soma_tiledb_context(context)
 
+        # SOMA-to-core mappings:
+        #
+        # Before the current-domain feature was enabled (possible after core 2.25):
+        #
+        # * SOMA shape <-> core domain, AKA "max domain" which is a name we'll use for clarity
+        #   o Specifically, (0, SOMA shape minus 1) = core domain
+        # * core current domain did not exist
+        #
+        # After the current-domain feature was enabled:
+        #
+        # * SOMA maxshape <-> core domain, AKA "max domain" which is a name we'll use for clarity
+        #   o Specifically, (0, SOMA maxshape minus 1) = core max domain
+        # * SOMA shape <-> core current domain
+        #   o Specifically, (0, SOMA shape minus 1) = core current domain
+
+        # As far as the user is concerned, the SOMA shape is the _only_ thing they see and care
+        # about. It's resizeable (up to max_domain anyway), reads and writes are bounds-checked
+        # against it, etc.
+
         index_column_schema = []
         index_column_data = {}
+
         for dim_idx, dim_shape in enumerate(shape):
             dim_name = f"soma_dim_{dim_idx}"
+
             pa_field = pa.field(dim_name, pa.int64())
-            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                dim_name,
-                dim_shape,
-                TileDBCreateOptions.from_platform_config(platform_config),
-            )
+
             index_column_schema.append(pa_field)
-            index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
+
+            # Here is our Arrow data API for communicating schema info between
+            # Python/R and C++ libtiledbsoma:
+            #
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+            # If present, these next two signal to use the current-domain feature:
+            # [3] core current domain lo
+            # [4] core current domain hi
+
+            if _new_shape_feature_flag_enabled():
+                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                    dim_name,
+                    # The user specifies current domain -- this is the max domain
+                    # which is taken from the max ranges for the dim datatype.
+                    # We pass None here to detect those.
+                    None,
+                    TileDBCreateOptions.from_platform_config(platform_config),
+                )
+
+                if dim_shape == 0:
+                    raise ValueError("SparseNDArray shape slots must be at least 1")
+                if dim_shape is None:
+                    dim_shape = dim_capacity
+
+                index_column_data[pa_field.name] = [
+                    0,
+                    dim_capacity - 1,
+                    dim_extent,
+                    0,
+                    dim_shape - 1,
+                ]
+
+            else:
+                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                    dim_name,
+                    dim_shape,
+                    TileDBCreateOptions.from_platform_config(platform_config),
+                )
+                index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)

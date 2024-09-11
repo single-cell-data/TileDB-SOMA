@@ -46,9 +46,13 @@ void write(SOMAArray& array, py::handle py_batch, bool sort_coords = true) {
     uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
     py_batch.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
 
-    array.set_array_data(
-        std::make_unique<ArrowSchema>(arrow_schema),
-        std::make_unique<ArrowArray>(arrow_array));
+    try {
+        array.set_array_data(
+            std::make_unique<ArrowSchema>(arrow_schema),
+            std::make_unique<ArrowArray>(arrow_array));
+    } catch (const std::exception& e) {
+        TPY_ERROR_LOC(e.what());
+    }
 
     try {
         array.write(sort_coords);
@@ -626,14 +630,18 @@ void load_soma_array(py::module& m) {
                 py::gil_scoped_release release;
 
                 // Try to read more data
-                auto buffers = array.read_next();
+                try {
+                    auto buffers = array.read_next();
 
-                // If more data was read, convert it to an arrow table and
-                // return
-                if (buffers.has_value()) {
-                    // Acquire python GIL before accessing python objects
-                    py::gil_scoped_acquire acquire;
-                    return to_table(*buffers);
+                    // If more data was read, convert it to an arrow table and
+                    // return
+                    if (buffers.has_value()) {
+                        // Acquire python GIL before accessing python objects
+                        py::gil_scoped_acquire acquire;
+                        return to_table(*buffers);
+                    }
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
                 }
 
                 // No data was read, the query is complete, return nullopt
