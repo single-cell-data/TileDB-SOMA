@@ -201,12 +201,10 @@ SOMASparseNDArray <- R6::R6Class(
       # TODO: move this to SOMANDArrayBase.R once core offers current-domain support for dense arrays.
       # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
 
-      maxshape <- self$maxshape()
-      ndims <- length(maxshape)
-      stopifnot("'new_shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(new_shape, n = ndims) ||
-        (bit64::is.integer64(new_shape) && length(new_shape) == ndims)
+      stopifnot("'new_shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(new_shape, n = self$ndim()) ||
+        (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
       )
-      # Checking new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
       resize(self$uri, new_shape, config=as.character(tiledb::config(self$tiledbsoma_ctx$context())))
     },
@@ -219,12 +217,10 @@ SOMASparseNDArray <- R6::R6Class(
       # TODO: move this to SOMANDArrayBase.R once core offers current-domain support for dense arrays.
       # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
 
-      maxshape <- self$maxshape()
-      ndims <- length(maxshape)
-      stopifnot("'new_shape' must be a vector of integerish values" = rlang::is_integerish(new_shape, n = ndims) ||
-        (bit64::is.integer64(new_shape) && length(new_shape) == ndims)
+      stopifnot("'new_shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(new_shape, n = self$ndim()) ||
+        (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
       )
-      # Checking new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
       tiledbsoma_upgrade_shape(self$uri, new_shape, config=as.character(tiledb::config(self$tiledbsoma_ctx$context())))
     }
