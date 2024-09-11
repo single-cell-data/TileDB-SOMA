@@ -245,7 +245,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         # # TODO: batch_size
         return TableReadIter(sr)
 
-    def spatial_read(
+    def read_region(
         self,
         region: Optional[options.SpatialRegion] = None,
         column_names: Optional[Sequence[str]] = None,

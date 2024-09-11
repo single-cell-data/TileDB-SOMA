@@ -84,7 +84,7 @@ class SpatialDataFrame(SOMAArray, somacore.SpatialDataFrame):
         """
         raise NotImplementedError("must be implemented by child class")
 
-    def spatial_read(
+    def read_region(
         self,
         region: Optional[options.SpatialRegion] = None,
         column_names: Optional[Sequence[str]] = None,
