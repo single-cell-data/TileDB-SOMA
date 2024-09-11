@@ -382,7 +382,7 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
         if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
 
         # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        if (.pkgenv[["use_current_domain_transitional_internal_only"]]) {
+        if (.new_shape_feature_flag_is_enabled()) {
             if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
                 aa <- arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
             } else {
@@ -433,7 +433,7 @@ get_domain_and_extent_array <- function(shape, is_sparse) {
         # TODO: support current domain for dense arrays once we have that support
         # from core.
         # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-        if (.pkgenv[["use_current_domain_transitional_internal_only"]] && is_sparse) {
+        if (.new_shape_feature_flag_is_enabled() && is_sparse) {
             aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
         } else {
             aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)

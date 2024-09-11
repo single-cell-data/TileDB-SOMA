@@ -138,16 +138,15 @@ SOMANDArrayBase <- R6::R6Class(
     #  @description Converts a vector of ints into a vector of int64 in a format
     #  acceptable for libtiledbsoma
 
-    .convert_shape_argument = function(newshape) {
+    .convert_shape_argument = function(new_shape) {
+      # ensure new_shape is an integerish vector
+      stopifnot(
+        "'new_shape' must be an integerish vector with the same length as the array's maxshape" = rlang::is_integerish(new_shape, n = self$ndim(), finite = TRUE) ||
+          (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim() && all(is.finite(new_shape)))
+      )
 
-      ## ensure newshape is a vector of int64
-      stopifnot("'newshape' must be a vector of integers" = is.vector(newshape));
-                # XXX "'newshape' must be a vector of integers" = all(vapply_lgl(newshape, is.integer)),
-
-      ## convert integer to integer64 to match dimension type
-      newshape <- lapply(newshape, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
-
-      as.vector(newshape)
+      # convert integer to integer64 to match dimension type
+      return(bit64::as.integer64(new_shape))
     },
 
     # Internal marking of one or zero based matrices for iterated reads

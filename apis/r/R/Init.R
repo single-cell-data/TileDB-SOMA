@@ -22,27 +22,13 @@
     # It will be removed once 2407 is complete.
     if (Sys.getenv("SOMA_R_NEW_SHAPE") != "") {
       .pkgenv[["use_current_domain_transitional_internal_only"]] <- TRUE
-      cdmsg <- " SOMA_R_NEW_SHAPE enabled"
     } else {
       .pkgenv[["use_current_domain_transitional_internal_only"]] <- FALSE
-      cdmsg <- ""
     }
-     msg <- sprintf("TileDB Core version %s used by TileDB-R package, but TileDB-SOMA uses %s [%s]",
-                    sQuote(rpkg_lib_version), sQuote(soma_lib_version), sQuote(cdmsg))
-}
-
-# This is temporary only. Please see:
-# * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-# * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
-.new_shape_feature_flag_enable <- function() {
-    .pkgenv[["use_current_domain_transitional_internal_only"]] <- TRUE
-}
-
-# This is temporary only. Please see:
-# * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-# * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
-.new_shape_feature_flag_disable <- function() {
-    .pkgenv[["use_current_domain_transitional_internal_only"]] <- FALSE
+    if (rpkg_lib_version != soma_lib_version) {
+      msg <- sprintf("TileDB Core version %s used by TileDB-R package, but TileDB-SOMA uses %s [%s]",
+                     sQuote(rpkg_lib_version), sQuote(soma_lib_version), sQuote(cdmsg))
+    }
 }
 
 # This is temporary only. Please see:
