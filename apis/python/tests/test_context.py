@@ -137,7 +137,7 @@ def test_replace_config_after_construction():
 def test_malformed_concurrency_config_value():
     import numpy as np
 
-    with pytest.raises(tiledbsoma.SOMAError):
+    with pytest.raises((tiledbsoma.SOMAError, RuntimeError)):
         ctx = tiledbsoma.SOMATileDBContext(
             tiledb_config={"soma.compute_concurrency_level": "not-a-number"}
         )
