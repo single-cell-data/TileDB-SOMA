@@ -57,7 +57,7 @@ std::shared_ptr<ThreadPool>& SOMAContext::thread_pool() {
             }
         }
 
-        int thread_count = std::max(1u, concurrency);
+        int thread_count = std::min(std::max(1u, concurrency), 1024u);
         thread_pool_ = std::make_shared<ThreadPool>(thread_count);
     }
     return thread_pool_;
