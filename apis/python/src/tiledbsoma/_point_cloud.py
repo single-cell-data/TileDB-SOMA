@@ -8,9 +8,7 @@ Implementation of a SOMA Point Cloud
 """
 from typing import Any, Mapping, Optional, Sequence, Tuple, Union, cast
 
-import numpy as np
 import pyarrow as pa
-import shapely
 import somacore
 from somacore import Axis, CoordinateSpace, options
 from typing_extensions import Self
@@ -29,8 +27,9 @@ from ._exception import SOMAError, map_exception_for_create
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
+from ._spatial_util import process_spatial_df_region
 from ._tdb_handles import PointCloudWrapper
-from ._types import OpenTimestamp, is_nonstringy_sequence
+from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import (
@@ -43,7 +42,7 @@ _UNBATCHED = options.BatchSize()
 
 class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
-    __slots__ = ("_axis_names", "_coord_space")
+    __slots__ = "_coord_space"
     _wrapper_type = PointCloudWrapper
 
     @classmethod
@@ -59,17 +58,25 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
+        axis_dtype: Optional[pa.DataType] = None
         for column_name in axis_names:
             if column_name not in index_column_names:
                 raise ValueError(f"Spatial column '{column_name}' must an index column")
-            column_dtype = schema.field(column_name).type
-            if not (
-                pa.types.is_integer(column_dtype) or pa.types.is_floating(column_dtype)
-            ):
-                raise ValueError(
-                    f"Spatial column '{column_name}' must have an integer or "
-                    f"floating-point type. Column type is {column_dtype!r}"
-                )
+            # Check axis column type is valid and all axis columns have the same type.
+            if axis_dtype is None:
+                axis_dtype = schema.field(column_name).type
+                if not (
+                    pa.types.is_integer(axis_dtype) or pa.types.is_floating(axis_dtype)
+                ):
+                    raise ValueError(
+                        f"Spatial column '{column_name}' must have an integer or "
+                        f"floating-point type. Column type is {axis_dtype!r}"
+                    )
+            else:
+                column_dtype = schema.field(column_name).type
+                if column_dtype != axis_dtype:
+                    raise ValueError("All spatial axes must have the same datatype.")
+
         coord_space = CoordinateSpace(
             tuple(Axis(axis_name) for axis_name in axis_names)
         )
@@ -252,90 +259,36 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         value_filter: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
-        if isinstance(region, shapely.GeometryType):
-            raise NotImplementedError(
-                "Support for querying by geometry is not yet implemented."
-            )
-        if not is_nonstringy_sequence(region):
-            raise TypeError(
-                f"coords type {type(region)} must be a regular sequence, "
-                f"not str or bytes"
-            )
-
+        # Set/check transform and region coordinate space.
         if transform is None:
+            transform = somacore.IdentityTransform(self.axis_names, self.axis_names)
             if region_coord_space is not None:
                 raise ValueError(
                     "Cannot specify the output coordinate space when transform is "
                     "``None``."
                 )
-            return somacore.SpatialRead(
-                self.read(
-                    region,
-                    column_names,
-                    result_order=result_order,
-                    value_filter=value_filter,
-                    batch_size=batch_size,
-                    partitions=partitions,
-                    platform_config=platform_config,
-                ),
-                self.coordinate_space,
-                self.coordinate_space,
-                somacore.IdentityTransform(self.axis_names, self.axis_names),
-            )
-
-        if not isinstance(transform, somacore.ScaleTransform):
-            raise NotImplementedError(
-                f"Support for querying ponit clouds with a transform of type "
-                f"{type(transform)!r} is not yet supported."
-            )
-
-        if transform.output_axes != self.axis_names:
-            raise ValueError(
-                f"Input transformation had unexpected output axes "
-                f"'{transform.output_axes}' that do not match the axes "
-                f"'{self.axis_names}' of this point cloud."
-            )
-        if region_coord_space is None:
-            region_coord_space = CoordinateSpace(
-                tuple(Axis(axis_name) for axis_name in transform.input_axes)
-            )
-        elif transform.input_axes != region_coord_space.axis_names:
-            raise ValueError(
-                f"The input axes '{transform.input_axes}' of the transform must match "
-                f"the axes '{region_coord_space.axis_names}' of the coordinate space "
-                f"the requested region is defined in."
-            )
-
-        def scale_coords(
-            coord: options.SparseDFCoord, scale: np.float64, name: str
-        ) -> options.SparseDFCoord:
-            # TODO: Hard-coded here for input type. Should really be branching on
-            # dimension type.
-            if coord is None or name not in self.axis_names:
-                return coord
-            if isinstance(coord, slice):
-                if coord.step is not None:
-                    raise ValueError("slice steps are not supported")
-                return slice(
-                    None if coord.start is None else scale * coord.start,
-                    None if coord.stop is None else scale * coord.stop,
-                )
-            if isinstance(coord, Sequence):
-                return tuple(scale * val for val in coord)  # type: ignore
-            return scale * coord  # type: ignore
-
-        if transform.isotropic:
-            coords = tuple(
-                scale_coords(coord, transform.scale_factors, name)  # type: ignore
-                for coord, name in zip(region, self.index_column_names)
-            )
+            region_coord_space = self._coord_space
         else:
-            coords = tuple(
-                scale_coords(coord, scale, name)
-                for coord, scale, name in zip(
-                    region, transform.scale_factors, self.index_column_names
+            if region_coord_space is None:
+                region_coord_space = CoordinateSpace(
+                    tuple(Axis(axis_name) for axis_name in transform.input_axes)
                 )
-            )
+            elif transform.input_axes != region_coord_space.axis_names:
+                raise ValueError(
+                    f"The input axes '{transform.input_axes}' of the transform must "
+                    f"match the axes '{region_coord_space.axis_names}' of the "
+                    f"coordinate space the requested region is defined in."
+                )
+
+        # Process the user provided region.
+        coords, data_region, inv_transform = process_spatial_df_region(
+            region,
+            transform,
+            dict() if extra_coords is None else dict(extra_coords),
+            self._tiledb_dim_names(),
+            self._coord_space.axis_names,
+            self._handle.schema,
+        )
 
         return somacore.SpatialRead(
             self.read(
@@ -349,11 +302,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             ),
             self.coordinate_space,
             region_coord_space,
-            somacore.ScaleTransform(
-                self.axis_names,
-                region_coord_space.axis_names,
-                1.0 / transform.scale_factors,
-            ),
+            inv_transform,
         )
 
     def write(

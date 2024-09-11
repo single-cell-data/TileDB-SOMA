@@ -1,9 +1,12 @@
-from typing import Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
+import pyarrow as pa
 import shapely
 import somacore
 from somacore import options
+
+from ._exception import SOMAError
 
 
 def transform_region(
@@ -61,9 +64,9 @@ def process_image_region(
         translate = somacore.AffineTransform(
             transform.output_axes,
             transform.output_axes,
-            np.array([[1, 0, x_min], [0, 1, y_min], [0, 0, 1]]),
+            np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]]),
         )
-        transform = transform * translate
+        transform = translate * transform
     inv_transform = transform.inverse_transform()
 
     coords: options.DenseNDCoords = []
@@ -76,4 +79,65 @@ def process_image_region(
             coords.append(slice(y_min, y_max))  # type: ignore[attr-defined]
         if axis == "Z":
             raise NotImplementedError()
+    return (coords, data_region, inv_transform)
+
+
+def process_spatial_df_region(
+    region: Optional[options.SpatialRegion],
+    transform: somacore.CoordinateTransform,
+    coords_by_name: Dict[str, options.SparseDFCoord],
+    index_columns: Tuple[str, ...],
+    axis_names: Tuple[str, ...],
+    schema: pa.Schema,
+) -> Tuple[
+    options.SparseDFCoords,
+    Optional[options.SpatialRegion],
+    somacore.CoordinateTransform,
+]:
+    # Check provided coords are valid.
+    if not set(axis_names).isdisjoint(coords_by_name):
+        raise KeyError("Extra coords cannot contain a spatial index column.")
+    if not set(index_columns).issuperset(coords_by_name):
+        raise KeyError("Extra coords must be index columns.")
+
+    # Transform the region into the data region and add the spatial coordinates
+    # to the coords_by_name map.
+    if region is None:
+        # Leave spatial coords as None - this will select the entire region.
+        data_region: Optional[options.SpatialRegion] = None
+    else:
+        # Restricted to guarantee data region is a box.
+        if isinstance(region, shapely.GeometryType):
+            raise NotImplementedError(
+                "Support for querying point clouds by geometries is not yet implemented."
+            )
+        if not isinstance(transform, somacore.ScaleTransform):
+            raise NotImplementedError(
+                f"Support for querying point clouds with a transform of type "
+                f"{type(transform)!r} our a bounding box region is not yet supported."
+            )
+        # Note: transform_region currently only supports 2D regions. This code block
+        # operates under the same assumption.
+        data_region = transform_region(region, transform)
+
+        def axis_slice(a: float, b: float, dtype: pa.DataType) -> slice:
+            if pa.types.is_floating(dtype):
+                return slice(a, b)
+            if pa.types.is_integer(dtype):
+                # Round so only points within the requested region are returned.
+                return slice(int(np.ceil(a)), int(np.floor(b)))
+            raise SOMAError(f"Unexpected spatial axis datatype {dtype}")
+
+        # Add the transform region to coords. This gets the bounding box for the
+        # requested region.
+        (x_min, y_min, x_max, y_max) = shapely.bounds(data_region)
+        coords_by_name[axis_names[0]] = axis_slice(
+            x_min, x_max, schema.field(axis_names[0]).type
+        )
+        coords_by_name[axis_names[1]] = axis_slice(
+            y_min, y_max, schema.field(axis_names[1]).type
+        )
+
+    coords = tuple(coords_by_name.get(index_name) for index_name in index_columns)
+    inv_transform = transform.inverse_transform()
     return (coords, data_region, inv_transform)
