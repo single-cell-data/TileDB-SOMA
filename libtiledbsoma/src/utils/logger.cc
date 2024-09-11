@@ -33,6 +33,7 @@
 
 #include "logger.h"
 
+#include <spdlog/cfg/env.h>
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -71,12 +72,11 @@ Logger::Logger() {
             spdlog::level::critical, console_sink->red_bold);
 #endif
     }
-    char* env_level = std::getenv("LIBTILEDBSOMA_LOGGING_LEVEL");
-    if (env_level != nullptr && strcmp(env_level, "") != 0) {
-        set_level(env_level);
-    } else {
-        set_level("INFO");
-    }
+    set_level("INFO");
+    // Examples:
+    // SPDLOG_LEVEL=trace name-of-program
+    // SPDLOG_LEVEL=tiledbsoma=trace name-of-program
+    spdlog::cfg::load_env_levels();
 }
 
 Logger::~Logger() {
