@@ -149,5 +149,7 @@ def test_malformed_concurrency_config_value():
                 np.arange(100, dtype=np.int64), context=ctx
             ).get_indexer(np.array([0, 1]))
         except Exception as e:
-            print("soma.compute_concurrency_level ERROR TYPE", type(e), e, file=sys.stderr)
+            print(
+                "soma.compute_concurrency_level ERROR TYPE", type(e), e, file=sys.stderr
+            )
             raise
