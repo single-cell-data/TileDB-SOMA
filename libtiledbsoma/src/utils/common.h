@@ -51,9 +51,9 @@ using TimestampRange = std::pair<uint64_t, uint64_t>;
 class TileDBSOMAError : public std::runtime_error {
    public:
     explicit TileDBSOMAError(const char* m)
-        : std::runtime_error(m){};
+        : std::runtime_error(m) {};
     explicit TileDBSOMAError(std::string m)
-        : std::runtime_error(m.c_str()){};
+        : std::runtime_error(m.c_str()) {};
 
    public:
     virtual const char* what() const noexcept override {
