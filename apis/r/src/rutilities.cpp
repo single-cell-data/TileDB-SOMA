@@ -202,6 +202,17 @@ Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64
     return schxp;
 }
 
+std::vector<int64_t> i64_from_rcpp_numeric(const Rcpp::NumericVector& input) {
+
+  auto ndim = input.size();
+  std::vector<int64_t> output(ndim);
+  for (auto i = 0; i < ndim; i++) {
+    output[i] = input[i];
+  }
+
+  return output;
+}
+
 
 // formerly stats.cpp
 

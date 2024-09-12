@@ -115,6 +115,28 @@ void load_soma_sparse_ndarray(py::module& m) {
         .def_property_readonly("shape", &SOMASparseNDArray::shape)
         .def_property_readonly("maxshape", &SOMASparseNDArray::maxshape)
         .def_property_readonly(
-            "has_upgraded_shape", &SOMAArray::has_current_domain);
+            "tiledbsoma_has_upgraded_shape", &SOMAArray::has_current_domain)
+
+        .def(
+            "resize",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    array.resize(newshape);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a)
+
+        .def(
+            "tiledbsoma_upgrade_shape",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    array.upgrade_shape(newshape);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a);
 }
 }  // namespace libtiledbsomacpp

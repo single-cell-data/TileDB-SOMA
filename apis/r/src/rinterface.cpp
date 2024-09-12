@@ -176,6 +176,7 @@ SEXP soma_array_reader(const std::string& uri,
 
    // Nanoarrow special: stick schema into xptr tag to return single SEXP
    array_xptr_set_schema(arrayxp, schemaxp); 			// embed schema in array
+   sr->close();
    return arrayxp;
 }
 
@@ -205,13 +206,16 @@ Rcpp::CharacterVector get_column_types(const std::string& uri,
         vs[i] = std::string(tiledb::impl::to_str(datatype));
     }
     vs.attr("names") = colnames;
+    sr->close();
     return vs;
 }
 
 // [[Rcpp::export]]
 double nnz(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, "unnamed", config_vector_to_map(config));
-    return static_cast<double>(sr->nnz());
+    auto retval = static_cast<double>(sr->nnz());
+    sr->close();
+    return retval;
 }
 
 //' @noRd
@@ -232,14 +236,18 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
 Rcpp::NumericVector shape(const std::string& uri,
                           Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
-    return Rcpp::toInteger64(sr->shape());
+    auto retval = Rcpp::toInteger64(sr->shape());
+    sr->close();
+    return retval;
 }
 
 // [[Rcpp::export]]
 Rcpp::NumericVector maxshape(const std::string& uri,
                           Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
-    return Rcpp::toInteger64(sr->maxshape());
+    auto retval = Rcpp::toInteger64(sr->maxshape());
+    sr->close();
+    return retval;
 }
 
 // [[Rcpp::export]]
@@ -251,6 +259,7 @@ Rcpp::NumericVector maybe_soma_joinid_shape(const std::string& uri,
     // This was done intentionally to resolve an ambiguous-overload compiler error.
     auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::read, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
     auto retval = sr->maybe_soma_joinid_shape();
+    sr->close();
     if (retval.has_value()) {
       return Rcpp::toInteger64(retval.value());
     } else {
@@ -264,6 +273,7 @@ Rcpp::NumericVector maybe_soma_joinid_maxshape(const std::string& uri,
                           Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::read, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
     auto retval = sr->maybe_soma_joinid_maxshape();
+    sr->close();
     if (retval.has_value()) {
       return Rcpp::toInteger64(retval.value());
     } else {
@@ -276,5 +286,35 @@ Rcpp::NumericVector maybe_soma_joinid_maxshape(const std::string& uri,
 Rcpp::LogicalVector has_current_domain(const std::string& uri,
                           Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
-    return Rcpp::LogicalVector(sr->has_current_domain());
+    auto retval = Rcpp::LogicalVector(sr->has_current_domain());
+    sr->close();
+    return retval;
+}
+
+// [[Rcpp::export]]
+void resize(const std::string& uri,
+            Rcpp::NumericVector new_shape,
+            Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+    // This function is solely for SparseNDArray and DenseNDArray for which the
+    // dims are required by the SOMA spec to be of type int64. Domain-resize for
+    // variant-indexed dataframes will be separate work as tracked on
+    // https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
+    auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
+    std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
+    sr->resize(new_shape_i64);
+    sr->close();
+}
+
+// [[Rcpp::export]]
+void tiledbsoma_upgrade_shape(const std::string& uri,
+            Rcpp::NumericVector new_shape,
+            Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+    // This function is solely for SparseNDArray and DenseNDArray for which the
+    // dims are required by the SOMA spec to be of type int64. Domain-resize for
+    // variant-indexed dataframes will be separate work as tracked on
+    // https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
+    auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, "unnamed", config_vector_to_map(Rcpp::wrap(config)));
+    std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
+    sr->upgrade_shape(new_shape_i64);
+    sr->close();
 }

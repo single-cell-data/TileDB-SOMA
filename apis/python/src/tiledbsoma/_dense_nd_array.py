@@ -296,6 +296,14 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             clib_dense_array.consolidate_and_vacuum()
         return self
 
+    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Supported for ``SparseNDArray``; scheduled for implementation for
+        ``DenseNDArray`` in TileDB-SOMA 1.15
+        """
+        # TODO: support current domain for dense arrays once we have core support.
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
+        raise NotImplementedError()
+
     @classmethod
     def _dim_capacity_and_extent(
         cls,

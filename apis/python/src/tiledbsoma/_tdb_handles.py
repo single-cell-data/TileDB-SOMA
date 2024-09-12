@@ -19,6 +19,7 @@ from typing import (
     Mapping,
     MutableMapping,
     Optional,
+    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -429,13 +430,21 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         raise NotImplementedError
 
     @property
-    def has_upgraded_shape(self) -> bool:
+    def tiledbsoma_has_upgraded_shape(self) -> bool:
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
     @property
-    def has_upgraded_domain(self) -> bool:
+    def tiledbsoma_has_upgraded_domain(self) -> bool:
         """Only implemented for DataFrame."""
+        raise NotImplementedError
+
+    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Not implemented for DataFrame."""
+        raise NotImplementedError
+
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Not implemented for DataFrame."""
         raise NotImplementedError
 
 
@@ -474,15 +483,15 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         return cast(Optional[int], self._handle.maybe_soma_joinid_maxshape)
 
     @property
-    def has_upgraded_domain(self) -> bool:
+    def tiledbsoma_has_upgraded_domain(self) -> bool:
         """Returns true if the array has the upgraded resizeable domain feature
         from TileDB-SOMA 1.14: the array was created with this support, or it has
-        had ``.upgrade_domain`` applied to it.
+        had ``.tiledbsoma_upgrade_domain`` applied to it.
 
         Lifecycle:
             Maturing.
         """
-        return cast(bool, self._handle.has_upgraded_domain)
+        return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
 
 
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
@@ -491,15 +500,23 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     _ARRAY_WRAPPED_TYPE = clib.SOMADenseNDArray
 
     @property
-    def has_upgraded_shape(self) -> bool:
+    def tiledbsoma_has_upgraded_shape(self) -> bool:
         """Returns true if the array has the upgraded resizeable shape feature
         from TileDB-SOMA 1.14: the array was created with this support, or it has
-        had ``.upgrade_shape`` applied to it.
+        had ``.tiledbsoma_upgrade_shape`` applied to it.
 
         Lifecycle:
             Maturing.
         """
-        return cast(bool, self._handle.has_upgraded_shape)
+        return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
+
+    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Supported for ``SparseNDArray``; scheduled for implementation for
+        ``DenseNDArray`` in TileDB-SOMA 1.15
+        """
+        # TODO: support current domain for dense arrays once we have core support.
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
+        raise NotImplementedError()
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
@@ -512,15 +529,31 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
         return int(self._handle.nnz())
 
     @property
-    def has_upgraded_shape(self) -> bool:
+    def tiledbsoma_has_upgraded_shape(self) -> bool:
         """Returns true if the array has the upgraded resizeable shape feature
         from TileDB-SOMA 1.14: the array was created with this support, or it has
-        had ``.upgrade_shape`` applied to it.
+        had ``.tiledbsoma_upgrade_shape`` applied to it.
 
         Lifecycle:
             Maturing.
         """
-        return cast(bool, self._handle.has_upgraded_shape)
+        return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
+
+    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Increases the shape of the array as specfied. Raises an error if the new
+        shape is less than the current shape in any dimension. Raises an error if
+        the new shape exceeds maxshape in any dimension. Raises an error if the
+        array doesn't already have a shape: in that case please call
+        tiledbsoma_upgrade_shape.
+        """
+        self._handle.resize(newshape)
+
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
+        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
+        any dimension. Raises an error if the array already has a shape.
+        """
+        self._handle.tiledbsoma_upgrade_shape(newshape)
 
 
 class _DictMod(enum.Enum):

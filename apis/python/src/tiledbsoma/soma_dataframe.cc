@@ -155,6 +155,6 @@ void load_soma_dataframe(py::module& m) {
             "maybe_soma_joinid_maxshape",
             &SOMADataFrame::maybe_soma_joinid_maxshape)
         .def_property_readonly(
-            "has_upgraded_domain", &SOMAArray::has_current_domain);
+            "tiledbsoma_has_upgraded_domain", &SOMAArray::has_current_domain);
 }
 }  // namespace libtiledbsomacpp

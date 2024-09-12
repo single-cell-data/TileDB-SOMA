@@ -91,7 +91,9 @@ def test_dataframe(tmp_path, arrow_schema):
         assert len(sdf) == 5
 
         # More to come on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        assert sdf.has_upgraded_domain == soma._new_shape_feature_flag_enabled()
+        assert (
+            sdf.tiledbsoma_has_upgraded_domain == soma._new_shape_feature_flag_enabled()
+        )
 
         with pytest.raises(AttributeError):
             assert sdf.shape is None

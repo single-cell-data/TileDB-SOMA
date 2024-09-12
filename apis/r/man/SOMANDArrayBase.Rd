@@ -16,7 +16,7 @@ Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 \itemize{
 \item \href{#method-SOMANDArrayBase-create}{\code{SOMANDArrayBase$create()}}
 \item \href{#method-SOMANDArrayBase-set_data_type}{\code{SOMANDArrayBase$set_data_type()}}
-\item \href{#method-SOMANDArrayBase-has_upgraded_shape}{\code{SOMANDArrayBase$has_upgraded_shape()}}
+\item \href{#method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape}{\code{SOMANDArrayBase$tiledbsoma_has_upgraded_shape()}}
 \item \href{#method-SOMANDArrayBase-clone}{\code{SOMANDArrayBase$clone()}}
 }
 }
@@ -103,15 +103,15 @@ Sets a cache value for the datatype (lifecycle: experimental)
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMANDArrayBase-has_upgraded_shape"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMANDArrayBase-has_upgraded_shape}{}}}
-\subsection{Method \code{has_upgraded_shape()}}{
+\if{html}{\out{<a id="method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape}{}}}
+\subsection{Method \code{tiledbsoma_has_upgraded_shape()}}{
 Returns TRUE if the array has the upgraded resizeable shape
 feature from TileDB-SOMA 1.14: the array was created with this support,
 or it has had \code{upgrade_domain} applied to it.
 (lifecycle: maturing)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$has_upgraded_shape()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$tiledbsoma_has_upgraded_shape()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{

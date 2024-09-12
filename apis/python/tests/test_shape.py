@@ -5,8 +5,6 @@ import pytest
 
 import tiledbsoma
 
-from tests._util import maybe_raises
-
 
 @pytest.mark.parametrize(
     "element_dtype",
@@ -18,32 +16,27 @@ from tests._util import maybe_raises
     ],
 )
 @pytest.mark.parametrize(
-    "shape_exc",
+    "arg_shape",
     [
-        # Note: non-None exceptions are coming on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        [(100,), None],
-        [(100, 200), None],
-        [(100, 200, 300), None],
+        (100,),
+        (100, 200),
+        (100, 200, 300),
     ],
 )
 def test_sparse_nd_array_basics(
     tmp_path,
     element_dtype,
-    shape_exc,
+    arg_shape,
 ):
     uri = tmp_path.as_posix()
-    arg_shape, arg_create_exc = shape_exc
     ndim = len(arg_shape)
 
     # Create the array
-    with maybe_raises(arg_create_exc):
-        snda = tiledbsoma.SparseNDArray.create(
-            uri,
-            type=element_dtype,
-            shape=arg_shape,
-        )
-    if arg_create_exc is not None:
-        return
+    tiledbsoma.SparseNDArray.create(
+        uri,
+        type=element_dtype,
+        shape=arg_shape,
+    )
 
     assert tiledbsoma.SparseNDArray.exists(uri)
 
@@ -53,7 +46,10 @@ def test_sparse_nd_array_basics(
         assert snda.shape == arg_shape
 
         # More to come on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        assert snda.has_upgraded_shape == tiledbsoma._new_shape_feature_flag_enabled()
+        assert (
+            snda.tiledbsoma_has_upgraded_shape
+            == tiledbsoma._new_shape_feature_flag_enabled()
+        )
 
         # Before current-domain support: shape is maxshape.
         #
@@ -102,23 +98,79 @@ def test_sparse_nd_array_basics(
 
     # Test reads out of bounds
     with tiledbsoma.SparseNDArray.open(uri) as snda:
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+        coords = tuple(arg_shape[i] + 10 for i in range(ndim))
         with pytest.raises(tiledbsoma.SOMAError):
-            coords = tuple(arg_shape[i] + 10 for i in range(ndim))
             snda.read(coords).tables().concat()
 
     # Test writes out of bounds
     with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
         with pytest.raises(tiledbsoma.SOMAError):
-            dikt = {"soma_data": [30]}
             dikt = {name: [shape + 20] for name, shape in zip(dim_names, arg_shape)}
+            dikt["soma_data"] = [30]
             table = pa.Table.from_pydict(dikt)
             snda.write(table)
 
     with tiledbsoma.SparseNDArray.open(uri) as snda:
         assert snda.shape == arg_shape
-        if not tiledbsoma._new_shape_feature_flag_enabled():
-            assert snda.shape == snda.maxshape
+
+    if tiledbsoma._new_shape_feature_flag_enabled():
+
+        # Test resize down
+        new_shape = tuple([arg_shape[i] - 50 for i in range(ndim)])
+        with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
+            # TODO: check draft spec
+            # with pytest.raises(ValueError):
+            with pytest.raises(tiledbsoma.SOMAError):
+                snda.resize(new_shape)
+
+        with tiledbsoma.SparseNDArray.open(uri) as snda:
+            assert snda.shape == arg_shape
+
+        # Test resize too big
+        new_shape = tuple([4_000_000_000 for i in range(ndim)])
+        # TODO: check draft spec
+        # with pytest.raises(ValueError):
+        with pytest.raises(tiledbsoma.SOMAError):
+            with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
+                snda.resize(new_shape)
+        with tiledbsoma.SparseNDArray.open(uri) as snda:
+            assert snda.shape == arg_shape
+
+        # Test writes out of bounds
+        with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
+            with pytest.raises(tiledbsoma.SOMAError):
+                dikt = {name: [shape + 20] for name, shape in zip(dim_names, arg_shape)}
+                dikt["soma_data"] = [30]
+                table = pa.Table.from_pydict(dikt)
+                snda.write(table)
+
+        # Test reasonable resize
+        new_shape = tuple([arg_shape[i] + 50 for i in range(ndim)])
+        with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
+            snda.resize(new_shape)
+
+            dikt = {}
+            for i in range(ndim):
+                dikt[dim_names[i]] = [arg_shape[i] + 20]
+            dikt["soma_data"] = pa.array([34.5], type=element_dtype)
+            table = pa.Table.from_pydict(dikt)
+
+            # Re-test writes out of old bounds, within new bounds
+            with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
+                # Implicitly checking there's no raise
+                snda.write(table)
+
+            # Re-test reads out of old bounds, within new bounds
+            with tiledbsoma.SparseNDArray.open(uri) as snda:
+                assert snda.shape == new_shape
+
+                coords = tuple([(arg_shape[i] + 20,) for i in range(ndim)])
+                # Implicitly checking there's no raise
+                readback = snda.read(coords).tables().concat()
+                assert readback == table
+
+        with tiledbsoma.SparseNDArray.open(uri) as snda:
+            assert snda.shape == new_shape
 
 
 ## Pending 2.27 timeframe for dense support for current domain, including resize
@@ -133,6 +185,14 @@ def test_dense_nd_array_basics(tmp_path):
         assert dnda.maxshape == (100, 200)
 
         assert dnda.non_empty_domain() == ((0, 0), (0, 0))
+
+    with tiledbsoma.DenseNDArray.open(uri, "w") as dnda:
+        with pytest.raises(NotImplementedError):
+            dnda.resize((300, 400))
+
+    with tiledbsoma.DenseNDArray.open(uri) as dnda:
+        assert dnda.non_empty_domain() == ((0, 0), (0, 0))
+        assert dnda.shape == (100, 200)
 
 
 @pytest.mark.parametrize(

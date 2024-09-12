@@ -68,3 +68,5 @@ inline void array_xptr_set_schema(SEXP array_xptr, SEXP schema_xptr) {
 
 // make a TimestampRange from a DatetimeVector (of size two)
 std::optional<tdbs::TimestampRange> makeTimestampRange(Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
+
+std::vector<int64_t> i64_from_rcpp_numeric(const Rcpp::NumericVector& input);
