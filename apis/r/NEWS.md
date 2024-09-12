@@ -7,6 +7,7 @@
 * Simplify timestamp ranges; strengthen assumptions about `tiledb_timestamp`
 * Use cached timestamps in `$write()` and `$create()`
 * Fix bug in blockwise iteration
+* Lay groundwork for cached SOMA contexts within objects rather than re-creating contexts
 
 # tiledbsoma 1.13.0
 
