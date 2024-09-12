@@ -38,6 +38,13 @@ TileDBObject <- R6::R6Class(
       private$.tiledbsoma_ctx <- tiledbsoma_ctx
       private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
 
+      # TODO: re-enable once new UX is worked out
+      # soma_context <- soma_context %||% soma_context()
+      # stopifnot(
+      #   "'soma_context' must be a pointer" = inherits(x = soma_context, what = 'externalptr')
+      # )
+      private$.soma_context <- soma_context()  # FIXME via factory and paramater_config
+
       if (!is.null(tiledb_timestamp)) {
         stopifnot(
             "'tiledb_timestamp' must be a single POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct") &&
@@ -185,6 +192,9 @@ TileDBObject <- R6::R6Class(
     # * In particular, an is-open predicate can be reliably implemented by
     #   checking if .mode is non-null.
     .mode = NULL,
+
+    ## soma_context
+    .soma_context = NULL,
 
     # @description Contains TileDBURI object
     tiledb_uri = NULL,
