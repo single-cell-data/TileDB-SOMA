@@ -119,89 +119,42 @@ class ColumnBuffer {
      *
      * @param query TileDB query
      */
-    void attach(Query& query);
+    void attach(Query& query, std::optional<Subarray> subarray = std::nullopt);
 
-    /**
-     * @brief Set the ColumnBuffer's data.
-     *
-     * @param data pointer to the beginning of the data to write
-     * @param num_elems the number of elements in the column
-     */
+    template <typename T>
     void set_data(
         uint64_t num_elems,
         const void* data,
-        uint64_t* offsets = nullptr,
+        T* offsets,
         uint8_t* validity = nullptr) {
         num_cells_ = num_elems;
 
-        if (offsets != nullptr) {
-            auto num_offsets = num_elems + 1;
-            offsets_.resize(num_offsets);
-            offsets_.assign(
-                (uint64_t*)offsets, (uint64_t*)offsets + num_offsets);
+        // Ensure the offset type is either uint32_t* or uint64_t*
+        static_assert(
+            std::is_same_v<T, uint32_t> || std::is_same_v<T, uint64_t>,
+            "offsets must be either uint32_t* or uint64_t*");
 
-            data_size_ = offsets_[num_offsets - 1];
-            data_.resize(data_size_);
+        if (offsets != nullptr) {
+            offsets_ = std::vector<uint64_t>(
+                (T*)offsets, (T*)offsets + num_elems + 1);
+
+            data_size_ = offsets_[num_elems];
             data_.assign((std::byte*)data, (std::byte*)data + data_size_);
         } else {
             data_size_ = num_elems;
-            data_.resize(num_elems);
             data_.assign(
                 (std::byte*)data, (std::byte*)data + num_elems * type_size_);
         }
 
         if (is_nullable_) {
             if (validity != nullptr) {
-                for (uint64_t i = 0; i * 8 < num_elems; ++i) {
-                    uint8_t byte = ((uint8_t*)validity)[i];
-                    for (int64_t j = 0; j < 8 && i * 8 + j < num_elems; ++j) {
-                        validity_.push_back((uint8_t)((byte >> j) & 0x01));
-                    }
+                for (uint64_t i = 0; i < num_elems; ++i) {
+                    uint8_t byte = validity[i / 8];
+                    uint8_t bit = (byte >> (i % 8)) & 0x01;
+                    validity_.push_back(bit);
                 }
             } else {
-                validity_.resize(num_elems);
-                std::fill(validity_.begin(), validity_.end(), 1);
-            }
-        }
-    }
-
-    /**
-     * @brief Set the ColumnBuffer's data for string and binary (as opposed to
-     * large string or large binary)
-     *
-     * @param data pointer to the beginning of the data to write
-     * @param num_elems the number of elements in the column
-     */
-    void set_data(
-        uint64_t num_elems,
-        const void* data,
-        uint32_t* offsets,
-        uint8_t* validity = nullptr) {
-        num_cells_ = num_elems;
-
-        auto num_offsets = num_elems + 1;
-        std::vector<uint32_t> offset_holder;
-        offset_holder.resize(num_offsets);
-        offset_holder.assign(
-            (uint32_t*)offsets, (uint32_t*)offsets + num_offsets);
-        offsets_ = std::vector<uint64_t>(
-            offset_holder.begin(), offset_holder.end());
-
-        data_size_ = offsets_[num_offsets - 1];
-        data_.resize(data_size_);
-        data_.assign((std::byte*)data, (std::byte*)data + data_size_);
-
-        if (is_nullable_) {
-            validity_.resize(num_elems);
-            if (validity != nullptr) {
-                for (uint64_t i = 0; i * 8 < num_elems; ++i) {
-                    uint8_t byte = ((uint8_t*)validity)[i];
-                    for (int64_t j = 0; j < 8; ++j) {
-                        validity_.push_back((uint8_t)((byte >> j) & 0x01));
-                    }
-                }
-            } else {
-                std::fill(validity_.begin(), validity_.end(), 1);
+                validity_.assign(num_elems, 1);  // Default all to valid (1)
             }
         }
     }
@@ -438,6 +391,15 @@ class ColumnBuffer {
         bool is_nullable,
         std::optional<Enumeration> enumeration,
         bool is_ordered);
+
+    void attach_buffer(Query& query);
+
+    void attach_subarray(Subarray& subarray);
+
+    template <typename T>
+    void attach_range(Subarray& subarray) {
+        subarray.add_range(name_, data<T>()[0], data<T>()[1]);
+    }
 
     //===================================================================
     //= private non-static
