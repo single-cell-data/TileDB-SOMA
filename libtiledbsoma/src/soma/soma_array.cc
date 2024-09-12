@@ -305,7 +305,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
     return mq_->results();
 }
 
-bool SOMAArray::_extend_enumeration(
+bool SOMAArray::_extend_enumeration_legacy(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
@@ -319,41 +319,41 @@ bool SOMAArray::_extend_enumeration(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
-            return SOMAArray::_extend_and_evolve_schema<std::string>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<std::string>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_BOOL:
-            _cast_bit_to_uint8(value_schema, value_array);
-            return SOMAArray::_extend_and_evolve_schema<uint8_t>(
+            _cast_bit_to_uint8_legacy(value_schema, value_array);
+            return SOMAArray::_extend_and_evolve_schema_legacy<uint8_t>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_INT8:
-            return SOMAArray::_extend_and_evolve_schema<uint8_t>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<uint8_t>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_UINT8:
-            return SOMAArray::_extend_and_evolve_schema<uint8_t>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<uint8_t>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_INT16:
-            return SOMAArray::_extend_and_evolve_schema<int16_t>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<int16_t>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_UINT16:
-            return SOMAArray::_extend_and_evolve_schema<uint16_t>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<uint16_t>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_INT32:
-            return SOMAArray::_extend_and_evolve_schema<int32_t>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<int32_t>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_UINT32:
-            return SOMAArray::_extend_and_evolve_schema<uint32_t>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<uint32_t>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_INT64:
-            return SOMAArray::_extend_and_evolve_schema<int64_t>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<int64_t>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_UINT64:
-            return SOMAArray::_extend_and_evolve_schema<uint64_t>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<uint64_t>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_FLOAT32:
-            return SOMAArray::_extend_and_evolve_schema<float>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<float>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_FLOAT64:
-            return SOMAArray::_extend_and_evolve_schema<double>(
+            return SOMAArray::_extend_and_evolve_schema_legacy<double>(
                 value_schema, value_array, index_schema, index_array, se);
         default:
             throw TileDBSOMAError(fmt::format(
@@ -363,7 +363,7 @@ bool SOMAArray::_extend_enumeration(
 }
 
 template <typename ValueType>
-bool SOMAArray::_extend_and_evolve_schema(
+bool SOMAArray::_extend_and_evolve_schema_legacy(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
@@ -404,7 +404,7 @@ bool SOMAArray::_extend_and_evolve_schema(
         }
         auto extended_enmr = enmr.extend(extend_values);
         se.extend_enumeration(extended_enmr);
-        SOMAArray::_remap_indexes(
+        SOMAArray::_remap_indexes_legacy(
             column_name,
             extended_enmr,
             enums_in_write,
@@ -419,7 +419,7 @@ bool SOMAArray::_extend_and_evolve_schema(
 }
 
 template <>
-bool SOMAArray::_extend_and_evolve_schema<std::string>(
+bool SOMAArray::_extend_and_evolve_schema_legacy<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
@@ -478,7 +478,7 @@ bool SOMAArray::_extend_and_evolve_schema<std::string>(
         auto extended_enmr = enmr.extend(extend_values);
         se.extend_enumeration(extended_enmr);
 
-        SOMAArray::_remap_indexes(
+        SOMAArray::_remap_indexes_legacy(
             column_name,
             extended_enmr,
             enums_in_write,
@@ -497,7 +497,7 @@ bool SOMAArray::_extend_and_evolve_schema<std::string>(
         //   from the user, have indices 0,1.
         // * We need to remap those to 1,2.
 
-        SOMAArray::_remap_indexes(
+        SOMAArray::_remap_indexes_legacy(
             column_name, enmr, enums_in_write, index_schema, index_array);
     }
     return false;
@@ -562,7 +562,7 @@ void SOMAArray::set_array_data(
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
 
-    auto [casted_array, casted_schema] = SOMAArray::_cast_table(
+    auto [casted_array, casted_schema] = SOMAArray::_cast_table_legacy(
         std::move(arrow_schema), std::move(arrow_array));
 
     for (auto i = 0; i < casted_schema->n_children; ++i) {
@@ -606,7 +606,7 @@ void SOMAArray::set_array_data(
 };
 
 template <>
-void SOMAArray::_cast_dictionary_values<std::string>(
+void SOMAArray::_cast_dictionary_values_legacy<std::string>(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowArray* new_column_array) {
@@ -643,7 +643,7 @@ void SOMAArray::_cast_dictionary_values<std::string>(
         values.push_back(data_v.substr(beg, sz));
     }
 
-    std::vector<int64_t> indexes = SOMAArray::_get_index_vector(
+    std::vector<int64_t> indexes = SOMAArray::_get_index_vector_legacy(
         orig_column_schema, orig_column_array);
 
     uint64_t offset_sum = 0;
@@ -667,7 +667,7 @@ void SOMAArray::_cast_dictionary_values<std::string>(
     new_column_array->buffers[2] = strdup(index_to_value.c_str());
 }
 
-void SOMAArray::_promote_indexes_to_values(
+void SOMAArray::_promote_indexes_to_values_legacy(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowArray* new_column_array) {
@@ -677,29 +677,29 @@ void SOMAArray::_promote_indexes_to_values(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
-            return SOMAArray::_cast_dictionary_values<std::string>(
+            return SOMAArray::_cast_dictionary_values_legacy<std::string>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_BOOL:
         case TILEDB_INT8:
-            return SOMAArray::_cast_dictionary_values<int8_t>(
+            return SOMAArray::_cast_dictionary_values_legacy<int8_t>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_UINT8:
-            return SOMAArray::_cast_dictionary_values<uint8_t>(
+            return SOMAArray::_cast_dictionary_values_legacy<uint8_t>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_INT16:
-            return SOMAArray::_cast_dictionary_values<int16_t>(
+            return SOMAArray::_cast_dictionary_values_legacy<int16_t>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_UINT16:
-            return SOMAArray::_cast_dictionary_values<uint16_t>(
+            return SOMAArray::_cast_dictionary_values_legacy<uint16_t>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_INT32:
-            return SOMAArray::_cast_dictionary_values<int32_t>(
+            return SOMAArray::_cast_dictionary_values_legacy<int32_t>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_UINT32:
-            return SOMAArray::_cast_dictionary_values<uint32_t>(
+            return SOMAArray::_cast_dictionary_values_legacy<uint32_t>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_INT64:
-            return SOMAArray::_cast_dictionary_values<int64_t>(
+            return SOMAArray::_cast_dictionary_values_legacy<int64_t>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_DATETIME_YEAR:
         case TILEDB_DATETIME_MONTH:
@@ -724,13 +724,13 @@ void SOMAArray::_promote_indexes_to_values(
         case TILEDB_TIME_FS:
         case TILEDB_TIME_AS:
         case TILEDB_UINT64:
-            return SOMAArray::_cast_dictionary_values<uint64_t>(
+            return SOMAArray::_cast_dictionary_values_legacy<uint64_t>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_FLOAT32:
-            return SOMAArray::_cast_dictionary_values<float>(
+            return SOMAArray::_cast_dictionary_values_legacy<float>(
                 orig_column_schema, orig_column_array, new_column_array);
         case TILEDB_FLOAT64:
-            return SOMAArray::_cast_dictionary_values<double>(
+            return SOMAArray::_cast_dictionary_values_legacy<double>(
                 orig_column_schema, orig_column_array, new_column_array);
         default:
             throw TileDBSOMAError(fmt::format(
@@ -740,7 +740,7 @@ void SOMAArray::_promote_indexes_to_values(
     }
 }
 
-ArrowTable SOMAArray::_cast_table(
+ArrowTable SOMAArray::_cast_table_legacy(
     std::unique_ptr<ArrowSchema> arrow_schema,
     std::unique_ptr<ArrowArray> arrow_array) {
     // Create the new ArrowSchema and ArrowArray for the ArrowTable that we
@@ -775,7 +775,7 @@ ArrowTable SOMAArray::_cast_table(
                                   ->children[i] = new ArrowSchema;
         auto new_arrow_arr_ = casted_arrow_array->children[i] = new ArrowArray;
 
-        bool enmr_extended = SOMAArray::_create_and_cast_column(
+        bool enmr_extended = SOMAArray::_create_and_cast_column_legacy(
             orig_arrow_sch_,
             orig_arrow_arr_,
             new_arrow_sch_,
@@ -791,7 +791,7 @@ ArrowTable SOMAArray::_cast_table(
         std::move(casted_arrow_array), std::move(casted_arrow_schema));
 }
 
-bool SOMAArray::_create_and_cast_column(
+bool SOMAArray::_create_and_cast_column_legacy(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
@@ -806,7 +806,7 @@ bool SOMAArray::_create_and_cast_column(
             *ctx_->tiledb_ctx(), attr);
     }
 
-    SOMAArray::_create_column(
+    SOMAArray::_create_column_legacy(
         orig_column_schema,
         orig_column_array,
         new_column_schema,
@@ -815,10 +815,10 @@ bool SOMAArray::_create_and_cast_column(
     // if the attribute is not enumerated, but the provided column is, then we
     // need to map the indexes to the correct value
     if (!enmr_name.has_value() && orig_column_schema->dictionary != nullptr) {
-        SOMAArray::_promote_indexes_to_values(
+        SOMAArray::_promote_indexes_to_values_legacy(
             orig_column_schema, orig_column_array, new_column_array);
     } else {
-        SOMAArray::_cast_column(
+        SOMAArray::_cast_column_legacy(
             orig_column_schema,
             orig_column_array,
             new_column_schema,
@@ -838,13 +838,13 @@ bool SOMAArray::_create_and_cast_column(
                 "[SOMAArray] {} requires dictionary entry", column_name));
         }
 
-        return _extend_enumeration(
+        return _extend_enumeration_legacy(
             value_schema, value_array, index_schema, index_array, se);
     }
     return false;
 }
 
-void SOMAArray::_create_column(
+void SOMAArray::_create_column_legacy(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
@@ -879,7 +879,7 @@ void SOMAArray::_create_column(
     new_column_array->dictionary = orig_column_array->dictionary;
 }
 
-void SOMAArray::_cast_column(
+void SOMAArray::_cast_column_legacy(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
@@ -892,49 +892,49 @@ void SOMAArray::_cast_column(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
-            return SOMAArray::_cast_column_aux<std::string>(
+            return SOMAArray::_cast_column_aux_legacy<std::string>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_BOOL:
-            return SOMAArray::_cast_column_aux<bool>(
+            return SOMAArray::_cast_column_aux_legacy<bool>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_INT8:
-            return SOMAArray::_cast_column_aux<int8_t>(
+            return SOMAArray::_cast_column_aux_legacy<int8_t>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_UINT8:
-            return SOMAArray::_cast_column_aux<uint8_t>(
+            return SOMAArray::_cast_column_aux_legacy<uint8_t>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_INT16:
-            return SOMAArray::_cast_column_aux<int16_t>(
+            return SOMAArray::_cast_column_aux_legacy<int16_t>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_UINT16:
-            return SOMAArray::_cast_column_aux<uint16_t>(
+            return SOMAArray::_cast_column_aux_legacy<uint16_t>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_INT32:
-            return SOMAArray::_cast_column_aux<int32_t>(
+            return SOMAArray::_cast_column_aux_legacy<int32_t>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_UINT32:
-            return SOMAArray::_cast_column_aux<uint32_t>(
+            return SOMAArray::_cast_column_aux_legacy<uint32_t>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
@@ -962,25 +962,25 @@ void SOMAArray::_cast_column(
         case TILEDB_TIME_PS:
         case TILEDB_TIME_FS:
         case TILEDB_TIME_AS:
-            return SOMAArray::_cast_column_aux<int64_t>(
+            return SOMAArray::_cast_column_aux_legacy<int64_t>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_UINT64:
-            return SOMAArray::_cast_column_aux<uint64_t>(
+            return SOMAArray::_cast_column_aux_legacy<uint64_t>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_FLOAT32:
-            return SOMAArray::_cast_column_aux<float>(
+            return SOMAArray::_cast_column_aux_legacy<float>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
                 new_column_array);
         case TILEDB_FLOAT64:
-            return SOMAArray::_cast_column_aux<double>(
+            return SOMAArray::_cast_column_aux_legacy<double>(
                 orig_column_schema,
                 orig_column_array,
                 new_column_schema,
@@ -994,7 +994,7 @@ void SOMAArray::_cast_column(
 }
 
 template <typename UserType>
-void SOMAArray::_cast_column_aux(
+void SOMAArray::_cast_column_aux_legacy(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
@@ -1016,22 +1016,22 @@ void SOMAArray::_cast_column_aux(
             break;
         case TILEDB_BOOL:
         case TILEDB_INT8:
-            return SOMAArray::_copy_column<UserType, int8_t>(
+            return SOMAArray::_copy_column_legacy<UserType, int8_t>(
                 orig_column_array, new_column_array);
         case TILEDB_UINT8:
-            return SOMAArray::_copy_column<UserType, uint8_t>(
+            return SOMAArray::_copy_column_legacy<UserType, uint8_t>(
                 orig_column_array, new_column_array);
         case TILEDB_INT16:
-            return SOMAArray::_copy_column<UserType, int16_t>(
+            return SOMAArray::_copy_column_legacy<UserType, int16_t>(
                 orig_column_array, new_column_array);
         case TILEDB_UINT16:
-            return SOMAArray::_copy_column<UserType, uint16_t>(
+            return SOMAArray::_copy_column_legacy<UserType, uint16_t>(
                 orig_column_array, new_column_array);
         case TILEDB_INT32:
-            return SOMAArray::_copy_column<UserType, int32_t>(
+            return SOMAArray::_copy_column_legacy<UserType, int32_t>(
                 orig_column_array, new_column_array);
         case TILEDB_UINT32:
-            return SOMAArray::_copy_column<UserType, uint32_t>(
+            return SOMAArray::_copy_column_legacy<UserType, uint32_t>(
                 orig_column_array, new_column_array);
         case TILEDB_INT64:
         case TILEDB_DATETIME_YEAR:
@@ -1056,16 +1056,16 @@ void SOMAArray::_cast_column_aux(
         case TILEDB_TIME_PS:
         case TILEDB_TIME_FS:
         case TILEDB_TIME_AS:
-            return SOMAArray::_copy_column<UserType, int64_t>(
+            return SOMAArray::_copy_column_legacy<UserType, int64_t>(
                 orig_column_array, new_column_array);
         case TILEDB_UINT64:
-            return SOMAArray::_copy_column<UserType, uint64_t>(
+            return SOMAArray::_copy_column_legacy<UserType, uint64_t>(
                 orig_column_array, new_column_array);
         case TILEDB_FLOAT32:
-            return SOMAArray::_copy_column<UserType, float>(
+            return SOMAArray::_copy_column_legacy<UserType, float>(
                 orig_column_array, new_column_array);
         case TILEDB_FLOAT64:
-            return SOMAArray::_copy_column<UserType, double>(
+            return SOMAArray::_copy_column_legacy<UserType, double>(
                 orig_column_array, new_column_array);
         default:
             throw TileDBSOMAError(
@@ -1076,7 +1076,7 @@ void SOMAArray::_cast_column_aux(
 }
 
 template <>
-void SOMAArray::_cast_column_aux<std::string>(
+void SOMAArray::_cast_column_aux_legacy<std::string>(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
@@ -1115,7 +1115,7 @@ void SOMAArray::_cast_column_aux<std::string>(
 }
 
 template <>
-void SOMAArray::_cast_column_aux<bool>(
+void SOMAArray::_cast_column_aux_legacy<bool>(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
@@ -1140,11 +1140,11 @@ void SOMAArray::_cast_column_aux<bool>(
             sz);
     }
 
-    _cast_bit_to_uint8(new_column_schema, new_column_array);
+    _cast_bit_to_uint8_legacy(new_column_schema, new_column_array);
 }
 
 template <typename T>
-void SOMAArray::_cast_dictionary_values(
+void SOMAArray::_cast_dictionary_values_legacy(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowArray* new_column_array) {
@@ -1158,7 +1158,7 @@ void SOMAArray::_cast_dictionary_values(
     }
     std::vector<T> values(valbuf, valbuf + value_array->length);
 
-    std::vector<int64_t> indexes = SOMAArray::_get_index_vector(
+    std::vector<int64_t> indexes = SOMAArray::_get_index_vector_legacy(
         orig_column_schema, orig_column_array);
 
     std::vector<T> index_to_value;
@@ -1185,7 +1185,7 @@ void SOMAArray::_cast_dictionary_values(
     }
 }
 
-void SOMAArray::_cast_bit_to_uint8(
+void SOMAArray::_cast_bit_to_uint8_legacy(
     ArrowSchema* arrow_schema, ArrowArray* arrow_array) {
     const void* data;
     if (arrow_array->n_buffers == 3) {

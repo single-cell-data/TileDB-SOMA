@@ -976,7 +976,7 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_tiledb_domain();
 
-    bool _extend_enumeration(
+    bool _extend_enumeration_legacy(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
@@ -984,41 +984,41 @@ class SOMAArray : public SOMAObject {
         ArraySchemaEvolution se);
 
     template <typename ValueType>
-    bool _extend_and_evolve_schema(
+    bool _extend_and_evolve_schema_legacy(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
         ArraySchemaEvolution se);
 
-    bool _create_and_cast_column(
+    bool _create_and_cast_column_legacy(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowSchema* new_column_schema,
         ArrowArray* new_column_array,
         ArraySchemaEvolution se);
 
-    void _create_column(
+    void _create_column_legacy(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowSchema* new_column_schema,
         ArrowArray* new_column_array);
 
-    void _cast_column(
+    void _cast_column_legacy(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowSchema* new_column_schema,
         ArrowArray* new_column_array);
 
     template <typename UserType>
-    void _cast_column_aux(
+    void _cast_column_aux_legacy(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowSchema* new_column_schema,
         ArrowArray* new_column_array);
 
     template <typename UserType, typename DiskType>
-    void _copy_column(
+    void _copy_column_legacy(
         ArrowArray* orig_column_array, ArrowArray* new_column_array) {
         UserType* buf;
         if (orig_column_array->n_buffers == 3) {
@@ -1055,7 +1055,7 @@ class SOMAArray : public SOMAObject {
     }
 
     template <typename ValueType>
-    void _remap_indexes(
+    void _remap_indexes_legacy(
         std::string column_name,
         Enumeration extended_enmr,
         std::vector<ValueType> enums_in_write,
@@ -1065,35 +1065,35 @@ class SOMAArray : public SOMAObject {
             index_schema->format);
         switch (user_index_type) {
             case TILEDB_INT8:
-                SOMAArray::_remap_indexes_aux<ValueType, int8_t>(
+                SOMAArray::_remap_indexes_aux_legacy<ValueType, int8_t>(
                     column_name, extended_enmr, enums_in_write, index_array);
                 break;
             case TILEDB_UINT8:
-                SOMAArray::_remap_indexes_aux<ValueType, uint8_t>(
+                SOMAArray::_remap_indexes_aux_legacy<ValueType, uint8_t>(
                     column_name, extended_enmr, enums_in_write, index_array);
                 break;
             case TILEDB_INT16:
-                SOMAArray::_remap_indexes_aux<ValueType, int16_t>(
+                SOMAArray::_remap_indexes_aux_legacy<ValueType, int16_t>(
                     column_name, extended_enmr, enums_in_write, index_array);
                 break;
             case TILEDB_UINT16:
-                SOMAArray::_remap_indexes_aux<ValueType, uint16_t>(
+                SOMAArray::_remap_indexes_aux_legacy<ValueType, uint16_t>(
                     column_name, extended_enmr, enums_in_write, index_array);
                 break;
             case TILEDB_INT32:
-                SOMAArray::_remap_indexes_aux<ValueType, int32_t>(
+                SOMAArray::_remap_indexes_aux_legacy<ValueType, int32_t>(
                     column_name, extended_enmr, enums_in_write, index_array);
                 break;
             case TILEDB_UINT32:
-                SOMAArray::_remap_indexes_aux<ValueType, uint32_t>(
+                SOMAArray::_remap_indexes_aux_legacy<ValueType, uint32_t>(
                     column_name, extended_enmr, enums_in_write, index_array);
                 break;
             case TILEDB_INT64:
-                SOMAArray::_remap_indexes_aux<ValueType, int64_t>(
+                SOMAArray::_remap_indexes_aux_legacy<ValueType, int64_t>(
                     column_name, extended_enmr, enums_in_write, index_array);
                 break;
             case TILEDB_UINT64:
-                SOMAArray::_remap_indexes_aux<ValueType, uint64_t>(
+                SOMAArray::_remap_indexes_aux_legacy<ValueType, uint64_t>(
                     column_name, extended_enmr, enums_in_write, index_array);
                 break;
             default:
@@ -1104,7 +1104,7 @@ class SOMAArray : public SOMAObject {
     }
 
     template <typename ValueType, typename IndexType>
-    void _remap_indexes_aux(
+    void _remap_indexes_aux_legacy(
         std::string column_name,
         Enumeration extended_enmr,
         std::vector<ValueType> enums_in_write,
@@ -1137,29 +1137,37 @@ class SOMAArray : public SOMAObject {
         auto attr = tiledb_schema()->attribute(column_name);
         switch (attr.type()) {
             case TILEDB_INT8:
-                return SOMAArray::_cast_shifted_indexes<IndexType, int8_t>(
-                    shifted_indexes, index_array);
+                return SOMAArray::
+                    _cast_shifted_indexes_legacy<IndexType, int8_t>(
+                        shifted_indexes, index_array);
             case TILEDB_UINT8:
-                return SOMAArray::_cast_shifted_indexes<IndexType, uint8_t>(
-                    shifted_indexes, index_array);
+                return SOMAArray::
+                    _cast_shifted_indexes_legacy<IndexType, uint8_t>(
+                        shifted_indexes, index_array);
             case TILEDB_INT16:
-                return SOMAArray::_cast_shifted_indexes<IndexType, int16_t>(
-                    shifted_indexes, index_array);
+                return SOMAArray::
+                    _cast_shifted_indexes_legacy<IndexType, int16_t>(
+                        shifted_indexes, index_array);
             case TILEDB_UINT16:
-                return SOMAArray::_cast_shifted_indexes<IndexType, uint16_t>(
-                    shifted_indexes, index_array);
+                return SOMAArray::
+                    _cast_shifted_indexes_legacy<IndexType, uint16_t>(
+                        shifted_indexes, index_array);
             case TILEDB_INT32:
-                return SOMAArray::_cast_shifted_indexes<IndexType, int32_t>(
-                    shifted_indexes, index_array);
+                return SOMAArray::
+                    _cast_shifted_indexes_legacy<IndexType, int32_t>(
+                        shifted_indexes, index_array);
             case TILEDB_UINT32:
-                return SOMAArray::_cast_shifted_indexes<IndexType, uint32_t>(
-                    shifted_indexes, index_array);
+                return SOMAArray::
+                    _cast_shifted_indexes_legacy<IndexType, uint32_t>(
+                        shifted_indexes, index_array);
             case TILEDB_INT64:
-                return SOMAArray::_cast_shifted_indexes<IndexType, int64_t>(
-                    shifted_indexes, index_array);
+                return SOMAArray::
+                    _cast_shifted_indexes_legacy<IndexType, int64_t>(
+                        shifted_indexes, index_array);
             case TILEDB_UINT64:
-                return SOMAArray::_cast_shifted_indexes<IndexType, uint64_t>(
-                    shifted_indexes, index_array);
+                return SOMAArray::
+                    _cast_shifted_indexes_legacy<IndexType, uint64_t>(
+                        shifted_indexes, index_array);
             default:
                 throw TileDBSOMAError(
                     "Saw invalid enumeration index type when trying to extend"
@@ -1168,7 +1176,7 @@ class SOMAArray : public SOMAObject {
     }
 
     template <typename UserIndexType, typename DiskIndexType>
-    void _cast_shifted_indexes(
+    void _cast_shifted_indexes_legacy(
         std::vector<UserIndexType> shifted_indexes, ArrowArray* index_array) {
         std::vector<DiskIndexType> casted_indexes;
         for (auto i : shifted_indexes) {
@@ -1192,18 +1200,18 @@ class SOMAArray : public SOMAObject {
         }
     }
 
-    void _promote_indexes_to_values(
+    void _promote_indexes_to_values_legacy(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowArray* new_column_array);
 
     template <typename T>
-    void _cast_dictionary_values(
+    void _cast_dictionary_values_legacy(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
         ArrowArray* new_column_array);
 
-    std::vector<int64_t> _get_index_vector(
+    std::vector<int64_t> _get_index_vector_legacy(
         ArrowSchema* orig_column_schema, ArrowArray* orig_column_array) {
         auto index_type = ArrowAdapter::to_tiledb_format(
             orig_column_schema->format);
@@ -1250,13 +1258,13 @@ class SOMAArray : public SOMAObject {
     }
 
     // Helper function to cast Boolean of bits (Arrow) to uint8 (TileDB)
-    void _cast_bit_to_uint8(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
+    void _cast_bit_to_uint8_legacy(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
 
     // Fills the metadata cache upon opening the array.
     void fill_metadata_cache();
 
     // Helper function for set_array_data
-    ArrowTable _cast_table(
+    ArrowTable _cast_table_legacy(
         std::unique_ptr<ArrowSchema> arrow_schema,
         std::unique_ptr<ArrowArray> arrow_array);
 
@@ -1304,7 +1312,7 @@ class SOMAArray : public SOMAObject {
 };
 
 template <>
-bool SOMAArray::_extend_and_evolve_schema<std::string>(
+bool SOMAArray::_extend_and_evolve_schema_legacy<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
@@ -1312,26 +1320,26 @@ bool SOMAArray::_extend_and_evolve_schema<std::string>(
     ArraySchemaEvolution se);
 
 template <>
-void SOMAArray::_cast_dictionary_values<std::string>(
+void SOMAArray::_cast_dictionary_values_legacy<std::string>(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowArray* new_column_array);
 
 template <>
-void SOMAArray::_cast_dictionary_values<bool>(
+void SOMAArray::_cast_dictionary_values_legacy<bool>(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowArray* new_column_array);
 
 template <>
-void SOMAArray::_cast_column_aux<std::string>(
+void SOMAArray::_cast_column_aux_legacy<std::string>(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
     ArrowArray* new_column_array);
 
 template <>
-void SOMAArray::_cast_column_aux<bool>(
+void SOMAArray::_cast_column_aux_legacy<bool>(
     ArrowSchema* orig_column_schema,
     ArrowArray* orig_column_array,
     ArrowSchema* new_column_schema,
