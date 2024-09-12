@@ -2,6 +2,7 @@
 
 ## Changes
 
+* New `resize` and `tiledbsoma_upgrade_shape` accessors as part of the [new-shape project](https://github.com/single-cell-data/TileDB-SOMA/issues/2407)
 * Make use of timestamp ranges in libtiledbsoma
 * Simplify timestamp ranges; strengthen assumptions about `tiledb_timestamp`
 * Use cached timestamps in `$write()` and `$create()`
