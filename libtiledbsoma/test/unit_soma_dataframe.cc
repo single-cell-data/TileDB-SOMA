@@ -172,11 +172,12 @@ struct VariouslyIndexedDataFrameFixture {
         auto i64_data = std::vector<int64_t>({sjid_base + 1, sjid_base + 2});
         auto u32_data = std::vector<uint32_t>({1234, 5678});
         auto str_data = std::vector<std::string>({"apple", "bat"});
+        auto str_offsets = std::vector<uint64_t>({0, 5, 8});
 
         soma_dataframe->set_column_data(
             i64_name, i64_data.size(), i64_data.data());
         soma_dataframe->set_column_data(
-            str_name, str_data.size(), str_data.data());
+            str_name, str_data.size(), str_data.data(), str_offsets.data());
         soma_dataframe->set_column_data(
             u32_name, u32_data.size(), u32_data.data());
         soma_dataframe->write();
