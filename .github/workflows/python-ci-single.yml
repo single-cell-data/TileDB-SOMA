@@ -129,12 +129,19 @@ jobs:
       env:
         TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
 
-    - name: Run pytests for Python
+    - name: Run pytests for Python without new shape
       shell: bash
       # Setting PYTHONPATH ensures the tests load the in-tree source code under apis/python/src
       # instead of the copy we `pip install`ed to site-packages above. That's needed for the code
       # coverage analysis to work.
       run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests -v --durations=20
+
+    - name: Run pytests for Python with new shape
+      shell: bash
+      # Setting PYTHONPATH ensures the tests load the in-tree source code under apis/python/src
+      # instead of the copy we `pip install`ed to site-packages above. That's needed for the code
+      # coverage analysis to work.
+      run: export SOMA_PY_NEW_SHAPE=true; PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests -v --durations=20
 
     - name: Report coverage to Codecov
       if: inputs.report_codecov

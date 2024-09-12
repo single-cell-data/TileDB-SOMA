@@ -62,6 +62,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
         if (use_current_domain) {
             // Setting a current domain on a TileDB dense array is not (yet)
             // supported
+            // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
             REQUIRE_THROWS(SOMADenseNDArray::create(
                 uri,
                 arrow_format,
@@ -99,6 +100,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             REQUIRE(soma_dense->ndim() == 1);
 
             // TODO: Once we have support for current domain in dense arrays
+            // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
             // if (use_current_domain) {
             //    REQUIRE(soma_dense->shape() == std::vector<int64_t>{dim_max +
             //    1});
@@ -171,6 +173,7 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
         if (use_current_domain) {
             // Setting a current domain on a TileDB dense array is not (yet)
             // supported
+            // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
             REQUIRE_THROWS(SOMADenseNDArray::create(
                 uri,
                 arrow_format,

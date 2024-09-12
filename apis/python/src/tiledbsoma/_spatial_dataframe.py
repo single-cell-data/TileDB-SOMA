@@ -64,7 +64,7 @@ class SpatialDataFrame(SOMAArray, somacore.SpatialDataFrame):
         Lifecycle:
             Experimental.
         """
-        return self._tiledb_domain()
+        return self._domain()
 
     def read(
         self,

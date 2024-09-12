@@ -329,7 +329,29 @@ SOMADataFrame <- R6::R6Class(
     shape = function() stop(errorCondition(
       "'SOMADataFrame$shape()' is not implemented yet",
       class = 'notYetImplementedError'
-    ))
+    )),
+
+    #' @description Retrieve the maxshape; as \code{SOMADataFrames} are shapeless,
+    #' simply raises an error
+    #'
+    #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
+    #'
+    maxshape = function() stop(errorCondition(
+      "'SOMADataFrame$maxshape()' is not implemented",
+      class = 'notYetImplementedError'
+    )),
+
+    #' @description Returns TRUE if the array has the upgraded resizeable domain
+    #' feature from TileDB-SOMA 1.14: the array was created with this support,
+    #' or it has had ``upgrade_domain`` applied to it.
+    #' (lifecycle: maturing)
+    #' @return Logical
+    has_upgraded_domain = function() {
+      has_current_domain(
+        self$uri,
+        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      )
+    }
 
   ),
 

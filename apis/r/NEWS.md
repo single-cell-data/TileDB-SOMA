@@ -5,6 +5,7 @@
 * Make use of timestamp ranges in libtiledbsoma
 * Simplify timestamp ranges; strengthen assumptions about `tiledb_timestamp`
 * Use cached timestamps in `$write()` and `$create()`
+* Fix bug in blockwise iteration
 
 # tiledbsoma 1.13.0
 

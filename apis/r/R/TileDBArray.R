@@ -89,7 +89,9 @@ TileDBArray <- R6::R6Class(
       spdl::debug("[TileDBArray$get_metadata] Retrieving metadata for {} '{}'", self$class(), self$uri)
       private$fill_metadata_cache_if_null()
       if (!is.null(key)) {
-        private$.metadata_cache[[key]]
+        val <- private$.metadata_cache[[key]]
+        if (is.list(val)) val <- unlist(val)
+        val
       } else {
         private$.metadata_cache
       }
@@ -153,6 +155,17 @@ TileDBArray <- R6::R6Class(
     #' @return A named vector of dimension length (and the same type as the dimension)
     shape = function() {
       as.integer64(shape(
+        self$uri,
+        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      ))
+    },
+
+    #' @description Retrieve the maxshape, i.e. maximum possible that the
+    # shape can be resized up to.
+    #' (lifecycle: maturing)
+    #' @return A named vector of dimension length (and the same type as the dimension)
+    maxshape = function() {
+      as.integer64(maxshape(
         self$uri,
         config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       ))

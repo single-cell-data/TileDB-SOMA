@@ -248,3 +248,54 @@ test_that("Sparse matrix blockwise iterator: re-indexed", {
     expect_true(max(mat@i) <= sz)
   }
 })
+
+test_that("Blockwise iterate through full array", {
+  skip_if(!extended_tests() || covr_tests())
+
+  uri <- tempfile("blockwise-complete")
+  n_obs <- 500L
+  n_var <- 210L
+  X_layer <- "counts"
+  exp <- create_and_populate_experiment(
+    uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = X_layer,
+    mode = "READ"
+  )
+
+  on.exit(exp$close(), add = TRUE, after = FALSE)
+
+  n_chunks <- 8L
+  # Stride across `obs`
+  obs_stride <- n_obs %/% n_chunks
+  it <- exp$ms$get("RNA")$X$get(X_layer)$read()$blockwise(axis = 0L, size = obs_stride)$sparse_matrix()
+  expect_false(it$read_complete())
+  while (!it$read_complete()) {
+    mat <- it$read_next()
+    expect_s4_class(mat, "dgTMatrix")
+    expect_identical(ncol(mat), n_var)
+    expect_identical(nrow(mat), n_obs)
+    expect_identical(
+      length(attr(mat, "coords")$soma_dim_0),
+      ifelse(it$read_complete(), yes = n_obs %% n_chunks, no = obs_stride)
+    )
+  }
+  expect_true(it$read_complete())
+
+  # Stride across `var`
+  var_stride <- n_var %/% n_chunks
+  it <- exp$ms$get("RNA")$X$get(X_layer)$read()$blockwise(axis = 1L, size = var_stride)$sparse_matrix()
+  expect_false(it$read_complete())
+  while (!it$read_complete()) {
+    mat <- it$read_next()
+    expect_s4_class(mat, "dgTMatrix")
+    expect_identical(ncol(mat), n_var)
+    expect_identical(nrow(mat), n_obs)
+    expect_identical(
+      length(attr(mat, "coords")$soma_dim_1),
+      ifelse(it$read_complete(), yes = n_var %% n_chunks, no = var_stride)
+    )
+  }
+  expect_true(it$read_complete())
+})

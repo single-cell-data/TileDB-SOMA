@@ -475,7 +475,7 @@ TEST_CASE_METHOD(
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim-sjid attr-str-u32",
+    "SOMADataFrame: standard-indexed dataframe dim-sjid attr-str-u32",
     "[SOMADataFrame]") {
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;

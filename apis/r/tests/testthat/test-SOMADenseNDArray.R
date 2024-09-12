@@ -4,6 +4,11 @@ test_that("SOMADenseNDArray creation", {
 
   ndarray <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(10, 5))
 
+  # The array is open for write on create. Nonetheless, close and
+  # reopen to ensure that state needed for a write is available.
+  ndarray$close()
+  ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
+
   expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
   expect_equal(ndarray$attrnames(), "soma_data")

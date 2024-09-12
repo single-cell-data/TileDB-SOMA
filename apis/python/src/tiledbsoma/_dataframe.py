@@ -14,6 +14,8 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
+from tiledbsoma import _new_shape_feature_flag_enabled
+
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
@@ -215,10 +217,33 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
-        if domain is None:
-            domain = tuple(None for _ in index_column_names)
+
+        # SOMA-to-core mappings:
+        #
+        # Before the current-domain feature was enabled (possible after core 2.25):
+        #
+        # * SOMA domain <-> core domain, AKA "max domain" which is a name we'll use for clarity
+        # * core current domain did not exist
+        #
+        # After the current-domain feature was enabled:
+        #
+        # * SOMA max_domain <-> core domain
+        # * SOMA domain <-> core current domain
+        #
+        # As far as the user is concerned, the SOMA-level domain is the only
+        # thing they see and care about. Before 2.25 support, it was immutable
+        # (since it was implemented by core domain). After 2.25 support, it is
+        # mutable/up-resizeable (since it is implemented by core current domain).
+
+        # At this point shift from API terminology "domain" to specifying a soma_ or core_
+        # prefix for these variables. This is crucial to avoid developer confusion.
+        soma_domain = domain
+        domain = None
+
+        if soma_domain is None:
+            soma_domain = tuple(None for _ in index_column_names)
         else:
-            ndom = len(domain)
+            ndom = len(soma_domain)
             nidx = len(index_column_names)
             if ndom != nidx:
                 raise ValueError(
@@ -228,25 +253,56 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         index_column_schema = []
         index_column_data = {}
 
-        for index_column_name, slot_domain in zip(index_column_names, domain):
+        for index_column_name, slot_soma_domain in zip(index_column_names, soma_domain):
             pa_field = schema.field(index_column_name)
             dtype = _arrow_types.tiledb_type_from_arrow_type(
                 pa_field.type, is_indexed_column=True
             )
 
-            slot_domain = _fill_out_slot_domain(
-                slot_domain, index_column_name, pa_field.type, dtype
+            (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
+                slot_soma_domain, index_column_name, pa_field.type, dtype
+            )
+            (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
+                None, index_column_name, pa_field.type, dtype
             )
 
             extent = _find_extent_for_domain(
                 index_column_name,
                 TileDBCreateOptions.from_platform_config(platform_config),
                 dtype,
-                slot_domain,
+                slot_core_current_domain,
             )
 
+            # Necessary to avoid core array-creation error "Reduce domain max by
+            # 1 tile extent to allow for expansion."
+            slot_core_current_domain = _revise_domain_for_extent(
+                slot_core_current_domain, extent, saturated_cd
+            )
+            slot_core_max_domain = _revise_domain_for_extent(
+                slot_core_max_domain, extent, saturated_md
+            )
+
+            # Here is our Arrow data API for communicating schema info between
+            # Python/R and C++ libtiledbsoma:
+            #
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+            # If present, these next two signal to use the current-domain feature:
+            # [3] core current domain lo
+            # [4] core current domain hi
+
             index_column_schema.append(pa_field)
-            index_column_data[pa_field.name] = [*slot_domain, extent]
+            if _new_shape_feature_flag_enabled():
+
+                index_column_data[pa_field.name] = [
+                    *slot_core_max_domain,
+                    extent,
+                    *slot_core_current_domain,
+                ]
+
+            else:
+                index_column_data[pa_field.name] = [*slot_core_current_domain, extent]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
@@ -304,7 +360,17 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        return self._tiledb_domain()
+        return self._domain()
+
+    @property
+    def maxdomain(self) -> Tuple[Tuple[Any, Any], ...]:
+        """Returns a tuple of minimum and maximum values, inclusive, storable
+        on each index column of the dataframe.
+
+        Lifecycle:
+            Maturing.
+        """
+        return self._maxdomain()
 
     @property
     def count(self) -> int:
@@ -316,6 +382,40 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         self._check_open_read()
         # if is it in read open mode, then it is a DataFrameWrapper
         return cast(DataFrameWrapper, self._handle).count
+
+    @property
+    def _maybe_soma_joinid_shape(self) -> Optional[int]:
+        """An internal helper method that returns the shape
+        value along the ``soma_joinid`` index column, if the ``DataFrame
+        has one, else ``None``.
+
+
+        Lifecycle:
+            Experimental.
+        """
+        return self._handle.maybe_soma_joinid_shape
+
+    @property
+    def _maybe_soma_joinid_maxshape(self) -> Optional[int]:
+        """An internal helper method that returns the maxshape
+        value along the ``soma_joinid`` index column, if the ``DataFrame
+        has one, else ``None``.
+
+        Lifecycle:
+            Experimental.
+        """
+        return self._handle.maybe_soma_joinid_maxshape
+
+    @property
+    def has_upgraded_domain(self) -> bool:
+        """Returns true if the array has the upgraded resizeable domain feature
+        from TileDB-SOMA 1.14: the array was created with this support, or it has
+        had ``.upgrade_domain`` applied to it.
+
+        Lifecycle:
+            Maturing.
+        """
+        return self._handle.has_upgraded_domain
 
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
@@ -674,17 +774,20 @@ def _canonicalize_schema(
     return schema
 
 
-def _fill_out_slot_domain(
+def _fill_out_slot_soma_domain(
     slot_domain: AxisDomain,
     index_column_name: str,
     pa_type: pa.DataType,
     dtype: Any,
-) -> Tuple[Any, Any]:
+) -> Tuple[Tuple[Any, Any], bool]:
     """Helper function for _build_tiledb_schema. Given a user-specified domain for a
     dimension slot -- which may be ``None``, or a two-tuple of which either element
     may be ``None`` -- return either what the user specified (if adequate) or
     sensible type-inferred values appropriate to the datatype.
+
+    Returns a boolean for whether the underlying datatype's max range was used.
     """
+    saturated_range = False
     if slot_domain is not None:
         # User-specified; go with it when possible
         if (
@@ -725,9 +828,12 @@ def _fill_out_slot_domain(
         # The SOMA spec disallows negative soma_joinid.
         if index_column_name == SOMA_JOINID:
             slot_domain = (0, 2**31 - 2)  # R-friendly, which 2**63-1 is not
+        else:
+            saturated_range = True
     elif np.issubdtype(dtype, NPFloating):
         finfo = np.finfo(cast(NPFloating, dtype))
         slot_domain = finfo.min, finfo.max
+        saturated_range = True
 
     # The `iinfo.min+1` is necessary as of tiledb core 2.15 / tiledb-py 0.21.1 since
     # `iinfo.min` maps to `NaT` (not a time), resulting in
@@ -762,7 +868,7 @@ def _fill_out_slot_domain(
     else:
         raise TypeError(f"Unsupported dtype {dtype}")
 
-    return slot_domain
+    return (slot_domain, saturated_range)
 
 
 def _find_extent_for_domain(
@@ -779,7 +885,7 @@ def _find_extent_for_domain(
     # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
     extent = tiledb_create_write_options.dim_tile(index_column_name)
     if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
-        extent = 64
+        extent = 1
 
     if isinstance(dtype, str):
         return ""
@@ -816,3 +922,17 @@ def _find_extent_for_domain(
         return np.datetime64(iextent, "ns")
 
     return extent
+
+
+# We need to do this to avoid this error at array-creation time:
+#
+# Error: Tile extent check failed; domain max expanded to multiple of tile
+# extent exceeds max value representable by domain type. Reduce domain max
+# by 1 tile extent to allow for expansion.
+def _revise_domain_for_extent(
+    domain: Tuple[Any, Any], extent: Any, saturated_range: bool
+) -> Tuple[Any, Any]:
+    if saturated_range:
+        return (domain[0], domain[1] - extent)
+    else:
+        return domain

@@ -90,8 +90,15 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sdf.count == 5
         assert len(sdf) == 5
 
+        # More to come on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+        assert sdf.has_upgraded_domain == soma._new_shape_feature_flag_enabled()
+
         with pytest.raises(AttributeError):
             assert sdf.shape is None
+
+        # soma_joinid is not a dim here
+        assert sdf._maybe_soma_joinid_shape is None
+        assert sdf._maybe_soma_joinid_maxshape is None
 
         # Read all
         table = sdf.read().concat()
@@ -207,7 +214,7 @@ def test_dataframe_with_enumeration(tmp_path):
         data["soma_joinid"] = [0, 1, 2, 3, 4]
         data["foo"] = ["a", "bb", "ccc", "bb", "a"]
         data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
-        with pytest.raises(ValueError):
+        with pytest.raises(soma.SOMAError):
             sdf.write(pa.Table.from_pydict(data))
 
         data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
@@ -729,7 +736,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
             "index_column_names": ["strings_aaa", "zero_one"],
             "coords": [[True], slice(None)],
             "A": None,
-            "throws": (RuntimeError, tiledb.cc.TileDBError, TypeError),
+            "throws": TypeError,
         },
         {
             "name": "2D index empty",
@@ -1451,7 +1458,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
 
     # cannot add additional categories as already maxed out earlier
     tbl = pa.Table.from_pandas(df2, preserve_index=False)
-    with pytest.raises((RuntimeError, soma.SOMAError)):
+    with pytest.raises(soma.SOMAError):
         with soma.open(uri, mode="w") as A:
             A.write(tbl)
 

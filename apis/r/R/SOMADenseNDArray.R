@@ -132,6 +132,14 @@ SOMADenseNDArray <- R6::R6Class(
           length(coords) == length(self$dimensions())
       )
 
+      ## the 'soma_data' data type may not have been cached, and if so we need to fetch it
+      if (is.null(private$.type)) {
+          ## TODO: replace with a libtiledbsoma accessor as discussed
+          tpstr <- tiledb::datatype(tiledb::attrs(tiledb::schema(self$uri))[["soma_data"]])
+          arstr <- arrow_type_from_tiledb_type(tpstr)
+          private$.type <- arstr
+      }
+
       arr <- self$object
       tiledb::query_layout(arr) <- "COL_MAJOR"
       spdl::debug("[SOMADenseNDArray::write] about to call write")

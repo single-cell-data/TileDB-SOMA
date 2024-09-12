@@ -344,7 +344,9 @@ setuptools.setup(
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
         "somacore @ git+https://github.com/single-cell-data/SOMA.git@86b72a0",  # DO NOT MERGE TO MAIN
-        "tiledb~=0.31.0",
+        # TEMP WHILE WE AWAIT WHEELS
+        # "tiledb~=0.32.0",
+        "tiledb",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={

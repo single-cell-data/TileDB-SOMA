@@ -12,6 +12,7 @@ import pyarrow as pa
 import somacore
 from somacore import Axis, CoordinateSpace, options
 from typing_extensions import Self
+from tiledbsoma import _new_shape_feature_flag_enabled
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
@@ -20,8 +21,9 @@ from ._coordinates import coordinate_space_from_json, coordinate_space_to_json
 from ._dataframe import (
     Domain,
     _canonicalize_schema,
-    _fill_out_slot_domain,
+    _fill_out_slot_soma_domain,
     _find_extent_for_domain,
+    _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
 from ._query_condition import QueryCondition
@@ -82,10 +84,33 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         )
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
-        if domain is None:
-            domain = tuple(None for _ in index_column_names)
+
+        # SOMA-to-core mappings:
+        #
+        # Before the current-domain feature was enabled (possible after core 2.25):
+        #
+        # * SOMA domain <-> core domain, AKA "max domain" which is a name we'll use for clarity
+        # * core current domain did not exist
+        #
+        # After the current-domain feature was enabled:
+        #
+        # * SOMA max_domain <-> core domain
+        # * SOMA domain <-> core current domain
+        #
+        # As far as the user is concerned, the SOMA-level domain is the only
+        # thing they see and care about. Before 2.25 support, it was immutable
+        # (since it was implemented by core domain). After 2.25 support, it is
+        # mutable/up-resizeable (since it is implemented by core current domain).
+
+        # At this point shift from API terminology "domain" to specifying a soma_ or core_
+        # prefix for these variables. This is crucial to avoid developer confusion.
+        soma_domain = domain
+        domain = None
+
+        if soma_domain is None:
+            soma_domain = tuple(None for _ in index_column_names)
         else:
-            ndom = len(domain)
+            ndom = len(soma_domain)
             nidx = len(index_column_names)
             if ndom != nidx:
                 raise ValueError(
@@ -95,25 +120,56 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         index_column_schema = []
         index_column_data = {}
 
-        for index_column_name, slot_domain in zip(index_column_names, domain):
+        for index_column_name, slot_soma_domain in zip(index_column_names, soma_domain):
             pa_field = schema.field(index_column_name)
             dtype = _arrow_types.tiledb_type_from_arrow_type(
                 pa_field.type, is_indexed_column=True
             )
 
-            slot_domain = _fill_out_slot_domain(
-                slot_domain, index_column_name, pa_field.type, dtype
+            (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
+                slot_soma_domain, index_column_name, pa_field.type, dtype
+            )
+            (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
+                None, index_column_name, pa_field.type, dtype
             )
 
             extent = _find_extent_for_domain(
                 index_column_name,
                 TileDBCreateOptions.from_platform_config(platform_config),
                 dtype,
-                slot_domain,
+                slot_core_current_domain,
             )
 
+            # Necessary to avoid core array-creation error "Reduce domain max by
+            # 1 tile extent to allow for expansion."
+            slot_core_current_domain = _revise_domain_for_extent(
+                slot_core_current_domain, extent, saturated_cd
+            )
+            slot_core_max_domain = _revise_domain_for_extent(
+                slot_core_max_domain, extent, saturated_md
+            )
+
+            # Here is our Arrow data API for communicating schema info between
+            # Python/R and C++ libtiledbsoma:
+            #
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+            # If present, these next two signal to use the current-domain feature:
+            # [3] core current domain lo
+            # [4] core current domain hi
+
             index_column_schema.append(pa_field)
-            index_column_data[pa_field.name] = [*slot_domain, extent]
+            if _new_shape_feature_flag_enabled():
+
+                index_column_data[pa_field.name] = [
+                    *slot_core_max_domain,
+                    extent,
+                    *slot_core_current_domain,
+                ]
+
+            else:
+                index_column_data[pa_field.name] = [*slot_core_current_domain, extent]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)

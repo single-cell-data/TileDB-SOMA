@@ -20,6 +20,8 @@ row and is intended to act as a join key for other objects, such as
 \item \href{#method-SOMADataFrame-read}{\code{SOMADataFrame$read()}}
 \item \href{#method-SOMADataFrame-update}{\code{SOMADataFrame$update()}}
 \item \href{#method-SOMADataFrame-shape}{\code{SOMADataFrame$shape()}}
+\item \href{#method-SOMADataFrame-maxshape}{\code{SOMADataFrame$maxshape()}}
+\item \href{#method-SOMADataFrame-has_upgraded_domain}{\code{SOMADataFrame$has_upgraded_domain()}}
 \item \href{#method-SOMADataFrame-clone}{\code{SOMADataFrame$clone()}}
 }
 }
@@ -201,6 +203,36 @@ simply raises an error
 
 \subsection{Returns}{
 None, instead a \code{\link{.NotYetImplemented}()} error is raised
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-maxshape"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-maxshape}{}}}
+\subsection{Method \code{maxshape()}}{
+Retrieve the maxshape; as \code{SOMADataFrames} are shapeless,
+simply raises an error
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$maxshape()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+None, instead a \code{\link{.NotYetImplemented}()} error is raised
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-has_upgraded_domain"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-has_upgraded_domain}{}}}
+\subsection{Method \code{has_upgraded_domain()}}{
+Returns TRUE if the array has the upgraded resizeable domain
+feature from TileDB-SOMA 1.14: the array was created with this support,
+or it has had \code{upgrade_domain} applied to it.
+(lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$has_upgraded_domain()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Logical
 }
 }
 \if{html}{\out{<hr>}}

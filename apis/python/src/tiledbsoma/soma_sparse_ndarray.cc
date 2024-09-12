@@ -110,6 +110,11 @@ void load_soma_sparse_ndarray(py::module& m) {
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 
-        .def_static("exists", &SOMASparseNDArray::exists);
+        .def_static("exists", &SOMASparseNDArray::exists)
+
+        .def_property_readonly("shape", &SOMASparseNDArray::shape)
+        .def_property_readonly("maxshape", &SOMASparseNDArray::maxshape)
+        .def_property_readonly(
+            "has_upgraded_shape", &SOMAArray::has_current_domain);
 }
 }  // namespace libtiledbsomacpp
