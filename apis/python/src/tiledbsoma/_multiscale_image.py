@@ -7,7 +7,9 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Tuple, Union
 
+import numpy as np
 import pyarrow as pa
+import somacore
 from somacore import (
     Axis,
     CoordinateSpace,
@@ -15,7 +17,6 @@ from somacore import (
     ResultOrder,
     ScaleTransform,
     options,
-    spatialdata,
 )
 from typing_extensions import Final, Self
 
@@ -31,6 +32,7 @@ from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, map_exception_for_create
 from ._soma_group import SOMAGroup
 from ._soma_object import AnySOMAObject
+from ._spatial_util import process_image_region
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -83,7 +85,7 @@ class ImageProperties:
 
 class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     SOMAGroup[DenseNDArray],
-    spatialdata.MultiscaleImage[DenseNDArray, AnySOMAObject],
+    somacore.MultiscaleImage[DenseNDArray, AnySOMAObject],
 ):
     """TODO: Add documentation for MultiscaleImage
 
@@ -135,7 +137,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
                 uri=uri,
-                soma_type=spatialdata.MultiscaleImage.soma_type,
+                soma_type=somacore.MultiscaleImage.soma_type,
                 ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
@@ -192,7 +194,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         # Get the image levels.
         # TODO: Optimize and push down to C++ level
         self._levels = [
-            ImageProperties(name=key, **json.loads(val))
+            ImageProperties(name=key[len(self._level_prefix) :], **json.loads(val))
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
         ]
@@ -338,7 +340,34 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         )
 
     def get_transformation_from_level(self, level: Union[str, int]) -> ScaleTransform:
-        raise NotImplementedError()
+        if isinstance(level, str):
+            for val in self._levels:
+                if val.name == level:
+                    level_props = val
+                else:
+                    raise KeyError("No level with name '{level}'")
+        else:
+            level_props = self._levels[level]
+        ref_level_props = self._schema.reference_level_properties
+        if ref_level_props.depth is None:
+            return ScaleTransform(
+                input_axes=self._coord_space.axis_names,
+                output_axes=self._coord_space.axis_names,
+                scale_factors=[
+                    ref_level_props.width / level_props.width,
+                    ref_level_props.height / level_props.height,
+                ],
+            )
+        assert level_props.depth is not None
+        return ScaleTransform(
+            input_axes=self._coord_space.axis_names,
+            output_axes=self._coord_space.axis_names,
+            scale_factors=[
+                ref_level_props.width / level_props.width,
+                ref_level_props.height / level_props.height,
+                ref_level_props.depth / level_props.depth,
+            ],
+        )
 
     @property
     def image_type(self) -> str:
@@ -348,22 +377,126 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     def level_count(self) -> int:
         return len(self._levels)
 
-    def level_properties(self, level: Union[int, str]) -> spatialdata.ImageProperties:
+    def level_properties(self, level: Union[int, str]) -> somacore.ImageProperties:
         if isinstance(level, str):
-            raise NotImplementedError()  # TODO
+            raise NotImplementedError(
+                "Support for getting level properties by name is not yet implemented."
+            )  # TODO
         return self._levels[level]
 
     def read_level(
         self,
-        level: int,
-        coords: options.DenseNDCoords = (),
+        level: Union[int, str],
+        region: Optional[options.SpatialRegion] = None,
         *,
+        channel_coords: options.DenseCoord = None,
         transform: Optional[CoordinateTransform] = None,
+        region_coord_space: Optional[CoordinateSpace] = None,
+        apply_mask: bool = False,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
-    ) -> pa.Tensor:
-        """TODO: Add read_image_level documentation"""
-        raise NotImplementedError()
+    ) -> somacore.SpatialRead[pa.Tensor]:
+        """Reads a user-defined dense slice of the array.
+
+        If provided, the transform is interpreted as the coordinate transformation
+        from the reference multiscale level to the requested region.
+        """
+        # Get reference level. Check image is 2D.
+        if self._schema.reference_level_properties.depth is not None:
+            raise NotImplementedError(
+                "Support for reading the levels of 3D images it not yet implemented."
+            )
+
+        # Applying a mask in not yet supported.
+        if apply_mask:
+            raise NotImplementedError(
+                "Support for applying a mask to the image is not yet implemented."
+            )
+
+        # Check input query region type is supported.
+        if (
+            channel_coords is not None
+            and self._schema.reference_level_properties.nchannels is None
+        ):
+            raise ValueError(
+                "Invalide channel coordinate provided. This image has no channel "
+                "dimension."
+            )
+
+        # Get the data coordinate space
+        def scaled_axis(axis: Axis, scale: np.float64) -> Axis:
+            return Axis(
+                axis.name,
+                axis.units,
+                None if axis.scale is None else scale * axis.scale,
+            )
+
+        group_to_level = self.get_transformation_to_level(level)
+        x_axis = self.coordinate_space.axes[0]
+        y_axis = self.coordinate_space.axes[1]
+        data_coord_space = CoordinateSpace(
+            (
+                scaled_axis(x_axis, group_to_level.scale_factors[0]),
+                scaled_axis(y_axis, group_to_level.scale_factors[1]),
+            )
+        )
+
+        # Update transform and set region coordinate space.
+        # - Add transformation from reference coord system to requested image level.
+        # - Create or check the coordinate space for the input data region.
+        if transform is None:
+            if region_coord_space is not None:
+                raise ValueError(
+                    "Cannot specify the output coordinate space when transform is "
+                    "``None``."
+                )
+            transform = group_to_level
+            region_coord_space = data_coord_space
+        else:
+            if not isinstance(transform, ScaleTransform):
+                raise NotImplementedError(
+                    f"Support for reading levels with a tranform of type "
+                    f"{type(transform)!r} is not yet supported."
+                )
+            # Create or check output coordinates.
+            if region_coord_space is None:
+                region_coord_space = CoordinateSpace(
+                    tuple(Axis(axis_name) for axis_name in transform.input_axes)
+                )
+            elif len(region_coord_space) != len(data_coord_space):
+                raise ValueError(
+                    "The number of output coordinates must match the number of "
+                    "input coordinates."
+                )
+            transform = group_to_level * transform
+            assert isinstance(transform, ScaleTransform)
+
+        # Convert coordinates to new coordinate system.
+        coords, data_region, inv_transform = process_image_region(
+            region,
+            transform,
+            channel_coords,
+            self._schema.reference_level_properties.image_type,
+        )
+
+        # Get the array.
+        array_name = level if isinstance(level, str) else self._levels[level].name
+        try:
+            array = self[array_name]
+        except KeyError as ke:
+            raise SOMAError(
+                f"Unable to open the dense array with name '{array_name}'."
+            ) from ke
+        return somacore.SpatialRead(
+            array.read(
+                coords,
+                result_order=result_order,
+                platform_config=platform_config,
+            ),
+            data_coord_space,
+            region_coord_space,
+            inv_transform,
+        )
 
     @property
     def reference_level(self) -> Optional[int]:
@@ -372,7 +505,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         raise NotImplementedError()
 
     @property
-    def reference_level_properties(self) -> spatialdata.ImageProperties:
+    def reference_level_properties(self) -> somacore.ImageProperties:
         """The shape of the reference level the coordinate system is defined on.
 
         The shape must be provide in order (width, height).

@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA Point Cloud
 """
-from typing import Any, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Mapping, Optional, Sequence, Tuple, Union, cast
 
 import pyarrow as pa
 import somacore
@@ -27,6 +27,7 @@ from ._exception import SOMAError, map_exception_for_create
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
+from ._spatial_util import process_spatial_df_region
 from ._tdb_handles import PointCloudWrapper
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
@@ -41,7 +42,7 @@ _UNBATCHED = options.BatchSize()
 
 class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
-    __slots__ = ("_axis_names", "_coord_space")
+    __slots__ = "_coord_space"
     _wrapper_type = PointCloudWrapper
 
     @classmethod
@@ -57,17 +58,25 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
+        axis_dtype: Optional[pa.DataType] = None
         for column_name in axis_names:
             if column_name not in index_column_names:
                 raise ValueError(f"Spatial column '{column_name}' must an index column")
-            column_dtype = schema.field(column_name).type
-            if not (
-                pa.types.is_integer(column_dtype) or pa.types.is_floating(column_dtype)
-            ):
-                raise ValueError(
-                    f"Spatial column '{column_name}' must have an integer or "
-                    f"floating-point type. Column type is {column_dtype!r}"
-                )
+            # Check axis column type is valid and all axis columns have the same type.
+            if axis_dtype is None:
+                axis_dtype = schema.field(column_name).type
+                if not (
+                    pa.types.is_integer(axis_dtype) or pa.types.is_floating(axis_dtype)
+                ):
+                    raise ValueError(
+                        f"Spatial column '{column_name}' must have an integer or "
+                        f"floating-point type. Column type is {axis_dtype!r}"
+                    )
+            else:
+                column_dtype = schema.field(column_name).type
+                if column_dtype != axis_dtype:
+                    raise ValueError("All spatial axes must have the same datatype.")
+
         coord_space = CoordinateSpace(
             tuple(Axis(axis_name) for axis_name in axis_names)
         )
@@ -235,6 +244,66 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
         # # TODO: batch_size
         return TableReadIter(sr)
+
+    def read_region(
+        self,
+        region: Optional[options.SpatialRegion] = None,
+        column_names: Optional[Sequence[str]] = None,
+        *,
+        extra_coords: Optional[Mapping[str, options.SparseDFCoord]] = None,
+        transform: Optional[somacore.CoordinateTransform] = None,
+        region_coord_space: Optional[somacore.CoordinateSpace] = None,
+        batch_size: options.BatchSize = options.BatchSize(),
+        partitions: Optional[options.ReadPartitions] = None,
+        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        value_filter: Optional[str] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
+        # Set/check transform and region coordinate space.
+        if transform is None:
+            transform = somacore.IdentityTransform(self.axis_names, self.axis_names)
+            if region_coord_space is not None:
+                raise ValueError(
+                    "Cannot specify the output coordinate space when transform is "
+                    "``None``."
+                )
+            region_coord_space = self._coord_space
+        else:
+            if region_coord_space is None:
+                region_coord_space = CoordinateSpace(
+                    tuple(Axis(axis_name) for axis_name in transform.input_axes)
+                )
+            elif transform.input_axes != region_coord_space.axis_names:
+                raise ValueError(
+                    f"The input axes '{transform.input_axes}' of the transform must "
+                    f"match the axes '{region_coord_space.axis_names}' of the "
+                    f"coordinate space the requested region is defined in."
+                )
+
+        # Process the user provided region.
+        coords, data_region, inv_transform = process_spatial_df_region(
+            region,
+            transform,
+            dict() if extra_coords is None else dict(extra_coords),
+            self._tiledb_dim_names(),
+            self._coord_space.axis_names,
+            self._handle.schema,
+        )
+
+        return somacore.SpatialRead(
+            self.read(
+                coords,
+                column_names,
+                result_order=result_order,
+                value_filter=value_filter,
+                batch_size=batch_size,
+                partitions=partitions,
+                platform_config=platform_config,
+            ),
+            self.coordinate_space,
+            region_coord_space,
+            inv_transform,
+        )
 
     def write(
         self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None
