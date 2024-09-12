@@ -468,7 +468,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                     "The number of output coordinates must match the number of "
                     "input coordinates."
                 )
-            transform = group_to_level * transform
+            transform = group_to_level @ transform
             assert isinstance(transform, ScaleTransform)
 
         # Convert coordinates to new coordinate system.

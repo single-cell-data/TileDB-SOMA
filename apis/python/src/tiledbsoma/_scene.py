@@ -253,7 +253,7 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
                 "Support for querying image level by name is not yet implemented."
             )
         level_transform = image.get_transformation_to_level(level)
-        return base_transform * level_transform
+        return level_transform @ base_transform
 
     def get_transformation_to_point_cloud(
         self, key: str, *, subcollection: Union[str, Sequence[str]] = "obsl"
