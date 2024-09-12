@@ -985,60 +985,6 @@ class SOMAArray : public SOMAObject {
 
     template <typename ValueType>
     bool _extend_and_evolve_schema(
-        ArrowArray* value_array,
-        ArrowSchema* index_schema,
-        ArrowArray* index_array,
-        ArraySchemaEvolution se) {
-        std::string column_name = index_schema->name;
-        auto disk_index_type = tiledb_schema()->attribute(column_name).type();
-        auto enmr = ArrayExperimental::get_enumeration(
-            *ctx_->tiledb_ctx(), *arr_, column_name);
-        uint64_t max_capacity = SOMAArray::_get_max_capacity(disk_index_type);
-
-        const void* data;
-        uint64_t num_elems = value_array->length;
-        if (value_array->n_buffers == 3) {
-            data = value_array->buffers[2];
-        } else {
-            data = value_array->buffers[1];
-        }
-
-        std::vector<ValueType> enums_in_write(
-            (ValueType*)data, (ValueType*)data + num_elems);
-        auto enums_existing = enmr.as_vector<ValueType>();
-        std::vector<ValueType> extend_values;
-        for (auto enum_val : enums_in_write) {
-            if (std::find(
-                    enums_existing.begin(), enums_existing.end(), enum_val) ==
-                enums_existing.end()) {
-                extend_values.push_back(enum_val);
-            }
-        }
-
-        if (extend_values.size() != 0) {
-            auto free_capacity = max_capacity - enums_existing.size();
-            if (free_capacity < extend_values.size()) {
-                throw TileDBSOMAError(
-                    "Cannot extend enumeration; reached maximum capacity");
-            }
-            auto extended_enmr = enmr.extend(extend_values);
-            se.extend_enumeration(extended_enmr);
-            SOMAArray::_remap_indexes(
-                column_name,
-                extended_enmr,
-                enums_in_write,
-                index_schema,
-                index_array);
-
-            index_schema->format = ArrowAdapter::to_arrow_format(
-                                       disk_index_type)
-                                       .data();
-            return true;
-        }
-        return false;
-    }
-
-    bool _extend_and_evolve_schema_str(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
@@ -1068,80 +1014,8 @@ class SOMAArray : public SOMAObject {
     void _cast_column_aux(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
-        ArrowArray* new_column_array) {
-        tiledb_datatype_t disk_type;
-        std::string name(orig_column_schema->name);
-        if (tiledb_schema()->has_attribute(name)) {
-            disk_type = tiledb_schema()->attribute(name).type();
-        } else {
-            disk_type = tiledb_schema()->domain().dimension(name).type();
-        }
-
-        switch (disk_type) {
-            case TILEDB_STRING_ASCII:
-            case TILEDB_STRING_UTF8:
-            case TILEDB_CHAR:
-                break;
-            case TILEDB_BOOL:
-            case TILEDB_INT8:
-                return SOMAArray::_copy_column<UserType, int8_t>(
-                    orig_column_array, new_column_array);
-            case TILEDB_UINT8:
-                return SOMAArray::_copy_column<UserType, uint8_t>(
-                    orig_column_array, new_column_array);
-            case TILEDB_INT16:
-                return SOMAArray::_copy_column<UserType, int16_t>(
-                    orig_column_array, new_column_array);
-            case TILEDB_UINT16:
-                return SOMAArray::_copy_column<UserType, uint16_t>(
-                    orig_column_array, new_column_array);
-            case TILEDB_INT32:
-                return SOMAArray::_copy_column<UserType, int32_t>(
-                    orig_column_array, new_column_array);
-            case TILEDB_UINT32:
-                return SOMAArray::_copy_column<UserType, uint32_t>(
-                    orig_column_array, new_column_array);
-            case TILEDB_INT64:
-            case TILEDB_DATETIME_YEAR:
-            case TILEDB_DATETIME_MONTH:
-            case TILEDB_DATETIME_WEEK:
-            case TILEDB_DATETIME_DAY:
-            case TILEDB_DATETIME_HR:
-            case TILEDB_DATETIME_MIN:
-            case TILEDB_DATETIME_SEC:
-            case TILEDB_DATETIME_MS:
-            case TILEDB_DATETIME_US:
-            case TILEDB_DATETIME_NS:
-            case TILEDB_DATETIME_PS:
-            case TILEDB_DATETIME_FS:
-            case TILEDB_DATETIME_AS:
-            case TILEDB_TIME_HR:
-            case TILEDB_TIME_MIN:
-            case TILEDB_TIME_SEC:
-            case TILEDB_TIME_MS:
-            case TILEDB_TIME_US:
-            case TILEDB_TIME_NS:
-            case TILEDB_TIME_PS:
-            case TILEDB_TIME_FS:
-            case TILEDB_TIME_AS:
-                return SOMAArray::_copy_column<UserType, int64_t>(
-                    orig_column_array, new_column_array);
-            case TILEDB_UINT64:
-                return SOMAArray::_copy_column<UserType, uint64_t>(
-                    orig_column_array, new_column_array);
-            case TILEDB_FLOAT32:
-                return SOMAArray::_copy_column<UserType, float>(
-                    orig_column_array, new_column_array);
-            case TILEDB_FLOAT64:
-                return SOMAArray::_copy_column<UserType, double>(
-                    orig_column_array, new_column_array);
-            default:
-                throw TileDBSOMAError(
-                    "Saw invalid TileDB disk type when attempting to cast "
-                    "table: " +
-                    tiledb::impl::type_to_str(disk_type));
-        }
-    }
+        ArrowSchema* new_column_schema,
+        ArrowArray* new_column_array);
 
     template <typename UserType, typename DiskType>
     void _copy_column(
@@ -1327,43 +1201,7 @@ class SOMAArray : public SOMAObject {
     void _cast_dictionary_values(
         ArrowSchema* orig_column_schema,
         ArrowArray* orig_column_array,
-        ArrowArray* new_column_array) {
-        auto value_array = orig_column_array->dictionary;
-
-        T* valbuf;
-        if (value_array->n_buffers == 3) {
-            valbuf = (T*)value_array->buffers[2];
-        } else {
-            valbuf = (T*)value_array->buffers[1];
-        }
-        std::vector<T> values(valbuf, valbuf + value_array->length);
-
-        std::vector<int64_t> indexes = SOMAArray::_get_index_vector(
-            orig_column_schema, orig_column_array);
-
-        std::vector<T> index_to_value;
-        for (auto i : indexes) {
-            index_to_value.push_back(values[i]);
-        }
-
-        new_column_array->buffers[0] = orig_column_array->buffers[0];
-
-        if (value_array->n_buffers == 3) {
-            new_column_array->buffers[2] = malloc(
-                sizeof(T) * index_to_value.size());
-            std::memcpy(
-                (void*)new_column_array->buffers[2],
-                index_to_value.data(),
-                sizeof(T) * index_to_value.size());
-        } else {
-            new_column_array->buffers[1] = malloc(
-                sizeof(T) * index_to_value.size());
-            std::memcpy(
-                (void*)new_column_array->buffers[1],
-                index_to_value.data(),
-                sizeof(T) * index_to_value.size());
-        }
-    }
+        ArrowArray* new_column_array);
 
     std::vector<int64_t> _get_index_vector(
         ArrowSchema* orig_column_schema, ArrowArray* orig_column_array) {
@@ -1464,6 +1302,40 @@ class SOMAArray : public SOMAObject {
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow();
 };
+
+template <>
+bool SOMAArray::_extend_and_evolve_schema<std::string>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se);
+
+template <>
+void SOMAArray::_cast_dictionary_values<std::string>(
+    ArrowSchema* orig_column_schema,
+    ArrowArray* orig_column_array,
+    ArrowArray* new_column_array);
+
+template <>
+void SOMAArray::_cast_dictionary_values<bool>(
+    ArrowSchema* orig_column_schema,
+    ArrowArray* orig_column_array,
+    ArrowArray* new_column_array);
+
+template <>
+void SOMAArray::_cast_column_aux<std::string>(
+    ArrowSchema* orig_column_schema,
+    ArrowArray* orig_column_array,
+    ArrowSchema* new_column_schema,
+    ArrowArray* new_column_array);
+
+template <>
+void SOMAArray::_cast_column_aux<bool>(
+    ArrowSchema* orig_column_schema,
+    ArrowArray* orig_column_array,
+    ArrowSchema* new_column_schema,
+    ArrowArray* new_column_array);
 
 }  // namespace tiledbsoma
 
