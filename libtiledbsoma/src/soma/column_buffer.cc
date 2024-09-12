@@ -186,8 +186,8 @@ void ColumnBuffer::attach_buffer(Query& query) {
     auto data_sz = is_write ? data_size() : data_.capacity() / type_size_;
     query.set_data_buffer(name_, (void*)data_.data(), data_sz);
     if (is_var_) {
-        // Remove one offset for TileDB read buffers, which checks that the
-        // offsets and validity buffers are the same size
+        // Remove one offset for TileDB, which checks that the offsets and 
+        // validity buffers are the same size
         auto offsets_sz = is_write ? offsets_.size() - 1 :
                                      offsets_.capacity() - 1;
         query.set_offsets_buffer(name_, offsets_.data(), offsets_sz);
