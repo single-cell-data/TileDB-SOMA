@@ -83,8 +83,35 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         """
         return self._handle.attr_names
 
-    def _tiledb_domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def _domain(self) -> Tuple[Tuple[Any, Any], ...]:
+        """This is the SOMA domain, not the core domain.
+        * For arrays with core current-domain support:
+          o soma domain is core current domain
+          o soma maxdomain is core domain
+        * For arrays without core current-domain support:
+          o soma domain is core domain
+          o soma maxdomain is core domain
+          o core current domain is not accessed at the soma level
+        * Core domain has been around forever and is immutable.
+        * Core current domain is new as of core 2.25 and can be
+          resized up to core (max) domain.
+        """
         return self._handle.domain
+
+    def _maxdomain(self) -> Tuple[Tuple[Any, Any], ...]:
+        """This is the SOMA maxdomain, not the core domain.
+        * For arrays with core current-domain support:
+          o soma domain is core current domain
+          o soma maxdomain is core domain
+        * For arrays without core current-domain support:
+          o soma domain is core domain
+          o soma maxdomain is core domain
+          o core current domain is not accessed at the soma level
+        * Core domain has been around forever and is immutable.
+        * Core current domain is new as of core 2.25 and can be
+          resized up to core (max) domain.
+        """
+        return self._handle.maxdomain
 
     def _set_reader_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
         """Parses the given coords and sets them on the SOMA Reader."""

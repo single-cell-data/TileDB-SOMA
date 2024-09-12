@@ -180,8 +180,7 @@ class SOMAArray : public SOMAObject {
         , arr_(other.arr_)
         , meta_cache_arr_(other.meta_cache_arr_)
         , first_read_next_(other.first_read_next_)
-        , submitted_(other.submitted_)
-        , array_buffer_(other.array_buffer_) {
+        , submitted_(other.submitted_) {
         fill_metadata_cache();
     }
 
@@ -704,7 +703,7 @@ class SOMAArray : public SOMAObject {
      * non-empty domains of the array fragments.
      */
     template <typename T>
-    std::pair<T, T> non_empty_domain(const std::string& name) {
+    std::pair<T, T> non_empty_domain_slot(const std::string& name) {
         try {
             return arr_->non_empty_domain<T>(name);
         } catch (const std::exception& e) {
@@ -717,7 +716,7 @@ class SOMAArray : public SOMAObject {
      * This is the union of the non-empty domains of the array fragments.
      * Applicable only to var-sized dimensions.
      */
-    std::pair<std::string, std::string> non_empty_domain_var(
+    std::pair<std::string, std::string> non_empty_domain_slot_var(
         const std::string& name) {
         try {
             return arr_->non_empty_domain_var(name);
@@ -727,13 +726,102 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * Returns the domain of the given dimension.
+     * Exposed for testing purposes.
+     */
+    CurrentDomain get_current_domain() const {
+        return _get_current_domain();
+    }
+
+    /**
+     * @brief Returns true if the array has a non-empty current domain, else
+     * false.  Note that at the core level it's "current domain" for all arrays;
+     * at the SOMA-API level it's "upgraded_shape" for SOMASparseNDArray and
+     * SOMADenseNDArray, and "upgraded_domain" for SOMADataFrame; here
+     * we use the core language and defer to Python/R to conform to
+     * SOMA-API syntax.
+     */
+    bool has_current_domain() const {
+        return !_get_current_domain().is_empty();
+    }
+
+    /**
+     * Returns the SOMA domain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     */
+    template <typename T>
+    std::pair<T, T> soma_domain_slot(const std::string& name) const {
+        if (has_current_domain()) {
+            return core_current_domain_slot<T>(name);
+        } else {
+            return core_domain_slot<T>(name);
+        }
+    }
+
+    /**
+     * Returns the SOMA maxdomain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma maxdomain is core domain
+     */
+    template <typename T>
+    std::pair<T, T> soma_maxdomain_slot(const std::string& name) const {
+        return core_domain_slot<T>(name);
+    }
+
+    /**
+     * Returns the core current domain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
      *
      * @tparam T Domain datatype
      * @return Pair of [lower, upper] inclusive bounds.
      */
     template <typename T>
-    std::pair<T, T> domain(const std::string& name) const {
+    std::pair<T, T> core_current_domain_slot(const std::string& name) const {
+        CurrentDomain current_domain = _get_current_domain();
+        if (current_domain.is_empty()) {
+            throw TileDBSOMAError(
+                "core_current_domain_slot: internal coding error");
+        }
+        if (current_domain.type() != TILEDB_NDRECTANGLE) {
+            throw TileDBSOMAError(
+                "core_current_domain_slot: found non-rectangle type");
+        }
+        NDRectangle ndrect = current_domain.ndrectangle();
+
+        // Convert from two-element array (core API) to pair (tiledbsoma API)
+        std::array<T, 2> arr = ndrect.range<T>(name);
+        return std::pair<T, T>(arr[0], arr[1]);
+    }
+
+    /**
+     * Returns the core current domain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> core_domain_slot(const std::string& name) const {
         return arr_->schema().domain().dimension(name).domain<T>();
     }
 
@@ -817,25 +905,6 @@ class SOMAArray : public SOMAObject {
      */
     void maybe_resize_soma_joinid(const std::vector<int64_t>& newshape);
 
-    /**
-     * Exposed for testing purposes.
-     */
-    CurrentDomain get_current_domain() {
-        return _get_current_domain();
-    }
-
-    /**
-     * @brief Returns true if the array has a non-empty current domain, else
-     * false.  Note that at the core level it's "current domain" for all arrays;
-     * at the SOMA-API level it's "upgraded_shape" for SOMASparseNDArray and
-     * SOMADenseNDArray, and "upgraded_domain" for SOMADataFrame; here
-     * we use the core language and defer to Python/R to conform to
-     * SOMA-API syntax.
-     */
-    bool has_current_domain() {
-        return !_get_current_domain().is_empty();
-    }
-
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in
     // its entirety to SOMADataFrame, but it would entail moving several
@@ -871,7 +940,7 @@ class SOMAArray : public SOMAObject {
      * We could implement this as a std::optional<CurrentDomain> return value
      * here, but, that would be a redundant indicator.
      */
-    CurrentDomain _get_current_domain() {
+    CurrentDomain _get_current_domain() const {
         return tiledb::ArraySchemaExperimental::current_domain(
             *ctx_->tiledb_ctx(), arr_->schema());
     }
@@ -1345,9 +1414,6 @@ class SOMAArray : public SOMAObject {
     // Helper function to cast Boolean of bits (Arrow) to uint8 (TileDB)
     void _cast_bit_to_uint8(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
 
-    // Helper function for set_column_data
-    std::shared_ptr<ColumnBuffer> _setup_column_data(std::string_view name);
-
     // Fills the metadata cache upon opening the array.
     void fill_metadata_cache();
 
@@ -1397,10 +1463,6 @@ class SOMAArray : public SOMAObject {
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow();
-
-    // ArrayBuffers to hold ColumnBuffers alive when submitting to write
-    // query
-    std::shared_ptr<ArrayBuffers> array_buffer_ = nullptr;
 };
 
 }  // namespace tiledbsoma

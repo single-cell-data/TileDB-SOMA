@@ -33,6 +33,7 @@
 
 #include "logger.h"
 
+#include <spdlog/cfg/env.h>
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -72,6 +73,10 @@ Logger::Logger() {
 #endif
     }
     set_level("INFO");
+    // Examples:
+    // SPDLOG_LEVEL=trace name-of-program
+    // SPDLOG_LEVEL=tiledbsoma=trace name-of-program
+    spdlog::cfg::load_env_levels();
 }
 
 Logger::~Logger() {

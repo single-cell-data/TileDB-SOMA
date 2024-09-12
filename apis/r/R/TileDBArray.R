@@ -89,7 +89,9 @@ TileDBArray <- R6::R6Class(
       spdl::debug("[TileDBArray$get_metadata] Retrieving metadata for {} '{}'", self$class(), self$uri)
       private$fill_metadata_cache_if_null()
       if (!is.null(key)) {
-        private$.metadata_cache[[key]]
+        val <- private$.metadata_cache[[key]]
+        if (is.list(val)) val <- unlist(val)
+        val
       } else {
         private$.metadata_cache
       }

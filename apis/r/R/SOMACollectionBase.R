@@ -101,6 +101,7 @@ SOMACollectionBase <- R6::R6Class(
         uri = file_path(self$uri, key),
         platform_config = platform_config %||% private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
+        tiledb_timestamp = self$tiledb_timestamp, # Cached value from $new()/SOMACollectionOpen
         internal_use_only = "allowed_use"
       )
 
@@ -120,6 +121,7 @@ SOMACollectionBase <- R6::R6Class(
         uri = file_path(self$uri, key),
         platform_config = platform_config %||% private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
+        tiledb_timestamp = self$tiledb_timestamp, # Cached value from $new()/SOMACollectionOpen
         internal_use_only = "allowed_use"
       )
 
@@ -139,6 +141,7 @@ SOMACollectionBase <- R6::R6Class(
         uri = file_path(self$uri, key),
         platform_config = platform_config %||% private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
+        tiledb_timestamp = self$tiledb_timestamp, # Cached value from $new()/SOMACollectionOpen
         internal_use_only = "allowed_use"
       )
 
@@ -173,9 +176,10 @@ SOMACollectionBase <- R6::R6Class(
     # additional metadata.
     write_object_type_metadata = function(metadata = list()) {
       stopifnot(is.list(metadata))
-      metadata[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
-      metadata[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
-      self$set_metadata(metadata)
+      ## these entriess are now written by libtiledbsoma
+      ##   metadata[[SOMA_OBJECT_TYPE_METADATA_KEY]] <- self$class()
+      ##   metadata[[SOMA_ENCODING_VERSION_METADATA_KEY]] <- SOMA_ENCODING_VERSION
+      if (length(metadata) > 0) self$set_metadata(metadata)
     },
 
     # Instantiate a soma member object.
@@ -185,12 +189,15 @@ SOMACollectionBase <- R6::R6Class(
         is_scalar_character(uri),
         is_scalar_character(type)
       )
+      spdl::debug("[SOMACollectionBase$construct_member] entered, uri {} type {}", uri, type)
 
       # We have to use the appropriate TileDB base class to read the soma_type
       # from the object's metadata so we know which SOMA class to instantiate
       tiledbsoma_constructor <- switch(type,
-        ARRAY = TileDBArray$new,
-        GROUP = TileDBGroup$new,
+        ARRAY     = TileDBArray$new,
+        SOMAArray = TileDBArray$new,
+        GROUP     = TileDBGroup$new,
+        SOMAGroup = TileDBGroup$new,
         stop(sprintf("Unknown member TileDB type: %s", type), call. = FALSE)
       )
 
@@ -213,6 +220,7 @@ SOMACollectionBase <- R6::R6Class(
       )
 
       stopifnot("Discovered metadata object type is missing; cannot construct" = !is.null(soma_type))
+      spdl::debug("[SOMACollectionBase$construct_member] soma_type {}", soma_type)
       soma_constructor <- switch(soma_type,
         SOMADataFrame = SOMADataFrame$new,
         SOMADenseNDArray = SOMADenseNDArray$new,

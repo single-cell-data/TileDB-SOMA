@@ -86,7 +86,11 @@ CoordsStrider <- R6::R6Class(
     #'
     length = function() {
       if (is.null(self$coords)) {
-        return(as.numeric(abs(self$end - self$start)))
+        len <- as.numeric(abs(self$end - self$start))
+        if (!self$start) {
+          len <- len + 1L
+        }
+        return(len)
       }
       return(length(self$coords))
     },

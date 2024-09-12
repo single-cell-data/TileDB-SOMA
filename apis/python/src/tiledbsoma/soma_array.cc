@@ -46,9 +46,13 @@ void write(SOMAArray& array, py::handle py_batch, bool sort_coords = true) {
     uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
     py_batch.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
 
-    array.set_array_data(
-        std::make_unique<ArrowSchema>(arrow_schema),
-        std::make_unique<ArrowArray>(arrow_array));
+    try {
+        array.set_array_data(
+            std::make_unique<ArrowSchema>(arrow_schema),
+            std::make_unique<ArrowArray>(arrow_array));
+    } catch (const std::exception& e) {
+        TPY_ERROR_LOC(e.what());
+    }
 
     try {
         array.write(sort_coords);
@@ -247,62 +251,67 @@ void load_soma_array(py::module& m) {
 
                     auto coords = array_handle.attr("tolist")();
 
-                    if (!strcmp(arrow_schema.format, "l")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int64_t>>());
-                    } else if (!strcmp(arrow_schema.format, "i")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int32_t>>());
-                    } else if (!strcmp(arrow_schema.format, "s")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int16_t>>());
-                    } else if (!strcmp(arrow_schema.format, "c")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int8_t>>());
-                    } else if (!strcmp(arrow_schema.format, "L")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<uint64_t>>());
-                    } else if (!strcmp(arrow_schema.format, "I")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<uint32_t>>());
-                    } else if (!strcmp(arrow_schema.format, "S")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<uint16_t>>());
-                    } else if (!strcmp(arrow_schema.format, "C")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<uint8_t>>());
-                    } else if (!strcmp(arrow_schema.format, "f")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<float>>());
-                    } else if (!strcmp(arrow_schema.format, "g")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<double>>());
-                    } else if (
-                        !strcmp(arrow_schema.format, "u") ||
-                        !strcmp(arrow_schema.format, "z")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<std::string>>());
-                    } else if (
-                        !strcmp(arrow_schema.format, "tss:") ||
-                        !strcmp(arrow_schema.format, "tsm:") ||
-                        !strcmp(arrow_schema.format, "tsu:") ||
-                        !strcmp(arrow_schema.format, "tsn:")) {
-                        // convert the Arrow Array to int64
-                        auto pa = py::module::import("pyarrow");
-                        coords = array_handle.attr("cast")(pa.attr("int64")())
-                                     .attr("tolist")();
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<int64_t>>());
-                    } else if (
-                        !strcmp(arrow_schema.format, "U") ||
-                        !strcmp(arrow_schema.format, "Z")) {
-                        array.set_dim_points(
-                            dim, coords.cast<std::vector<std::string>>());
-                    } else {
-                        TPY_ERROR_LOC(
-                            "[pytiledbsoma] set_dim_points: type={} not "
-                            "supported" +
-                            std::string(arrow_schema.format));
+                    try {
+                        if (!strcmp(arrow_schema.format, "l")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int64_t>>());
+                        } else if (!strcmp(arrow_schema.format, "i")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int32_t>>());
+                        } else if (!strcmp(arrow_schema.format, "s")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int16_t>>());
+                        } else if (!strcmp(arrow_schema.format, "c")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int8_t>>());
+                        } else if (!strcmp(arrow_schema.format, "L")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<uint64_t>>());
+                        } else if (!strcmp(arrow_schema.format, "I")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<uint32_t>>());
+                        } else if (!strcmp(arrow_schema.format, "S")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<uint16_t>>());
+                        } else if (!strcmp(arrow_schema.format, "C")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<uint8_t>>());
+                        } else if (!strcmp(arrow_schema.format, "f")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<float>>());
+                        } else if (!strcmp(arrow_schema.format, "g")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<double>>());
+                        } else if (
+                            !strcmp(arrow_schema.format, "u") ||
+                            !strcmp(arrow_schema.format, "z")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<std::string>>());
+                        } else if (
+                            !strcmp(arrow_schema.format, "tss:") ||
+                            !strcmp(arrow_schema.format, "tsm:") ||
+                            !strcmp(arrow_schema.format, "tsu:") ||
+                            !strcmp(arrow_schema.format, "tsn:")) {
+                            // convert the Arrow Array to int64
+                            auto pa = py::module::import("pyarrow");
+                            coords = array_handle
+                                         .attr("cast")(pa.attr("int64")())
+                                         .attr("tolist")();
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<int64_t>>());
+                        } else if (
+                            !strcmp(arrow_schema.format, "U") ||
+                            !strcmp(arrow_schema.format, "Z")) {
+                            array.set_dim_points(
+                                dim, coords.cast<std::vector<std::string>>());
+                        } else {
+                            TPY_ERROR_LOC(
+                                "[pytiledbsoma] set_dim_points: type={} not "
+                                "supported" +
+                                std::string(arrow_schema.format));
+                        }
+                    } catch (const std::exception& e) {
+                        throw TileDBSOMAError(e.what());
                     }
 
                     // Release arrow schema
@@ -337,69 +346,135 @@ void load_soma_array(py::module& m) {
 
         .def(
             "set_dim_points_string_or_bytes",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<std::string>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::string>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_double",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<double>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<double>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_float",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<float>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<float>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_int64",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<int64_t>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<int64_t>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_int32",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<int32_t>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<int32_t>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_int16",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<int16_t>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<int16_t>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_int8",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<int8_t>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<int8_t>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_uint64",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<uint64_t>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<uint64_t>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_uint32",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<uint32_t>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<uint32_t>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_uint16",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<uint16_t>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<uint16_t>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_points_uint8",
-            static_cast<void (SOMAArray::*)(
-                const std::string&, const std::vector<uint8_t>&)>(
-                &SOMAArray::set_dim_points))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<uint8_t>& points) {
+                try {
+                    array.set_dim_points(dim, points);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         // In an initial version of this file we had `set_dim_ranges` relying
         // solely on type-overloading. This worked since we supported only int
@@ -416,80 +491,135 @@ void load_soma_array(py::module& m) {
 
         .def(
             "set_dim_ranges_string_or_bytes",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<std::string, std::string>>&)>(
-                &SOMAArray::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges_int64",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<int64_t, int64_t>>&)>(
-                &SOMAArray::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges_int32",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<int32_t, int32_t>>&)>(
-                &SOMAArray::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges_int16",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<int16_t, int16_t>>&)>(
-                &SOMAArray::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges_int8",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<int8_t, int8_t>>&)>(
-                &SOMAArray::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges_uint64",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<uint64_t, uint64_t>>&)>(
-                &SOMAArray::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges_uint32",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<uint32_t, uint32_t>>&)>(
-                &SOMAArray::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges_uint16",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<uint16_t, uint16_t>>&)>(
-                &SOMAArray::set_dim_ranges))
-
-        .def(
-            "set_dim_ranges_uint8",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<uint8_t, uint8_t>>&)>(
-                &SOMAArray::set_dim_ranges))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<std::string, std::string>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_ranges_double",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<double, double>>&)>(
-                &SOMAArray::set_dim_ranges))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<double, double>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def(
             "set_dim_ranges_float",
-            static_cast<void (SOMAArray::*)(
-                const std::string&,
-                const std::vector<std::pair<float, float>>&)>(
-                &SOMAArray::set_dim_ranges))
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<float, float>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
+
+        .def(
+            "set_dim_ranges_int64",
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<int64_t, int64_t>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
+
+        .def(
+            "set_dim_ranges_int32",
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<int32_t, int32_t>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
+
+        .def(
+            "set_dim_ranges_int16",
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<int16_t, int16_t>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
+
+        .def(
+            "set_dim_ranges_int8",
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<int8_t, int8_t>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
+
+        .def(
+            "set_dim_ranges_uint64",
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<uint64_t, uint64_t>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
+
+        .def(
+            "set_dim_ranges_uint32",
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<uint32_t, uint32_t>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
+
+        .def(
+            "set_dim_ranges_uint16",
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<uint16_t, uint16_t>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
+
+        .def(
+            "set_dim_ranges_uint8",
+            [](SOMAArray& array,
+               const std::string& dim,
+               const std::vector<std::pair<uint8_t, uint8_t>>& ranges) {
+                try {
+                    array.set_dim_ranges(dim, ranges);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            })
 
         .def("results_complete", &SOMAArray::results_complete)
 
@@ -500,14 +630,18 @@ void load_soma_array(py::module& m) {
                 py::gil_scoped_release release;
 
                 // Try to read more data
-                auto buffers = array.read_next();
+                try {
+                    auto buffers = array.read_next();
 
-                // If more data was read, convert it to an arrow table and
-                // return
-                if (buffers.has_value()) {
-                    // Acquire python GIL before accessing python objects
-                    py::gil_scoped_acquire acquire;
-                    return to_table(*buffers);
+                    // If more data was read, convert it to an arrow table and
+                    // return
+                    if (buffers.has_value()) {
+                        // Acquire python GIL before accessing python objects
+                        py::gil_scoped_acquire acquire;
+                        return to_table(*buffers);
+                    }
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
                 }
 
                 // No data was read, the query is complete, return nullopt
@@ -519,8 +653,6 @@ void load_soma_array(py::module& m) {
         .def("write_coords", write_coords)
 
         .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
-
-        .def_property_readonly("shape", &SOMAArray::shape)
 
         .def_property_readonly("uri", &SOMAArray::uri)
 
@@ -541,7 +673,8 @@ void load_soma_array(py::module& m) {
             [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
-                        return py::cast(array.non_empty_domain<uint64_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<uint64_t>(name));
                     case TILEDB_DATETIME_YEAR:
                     case TILEDB_DATETIME_MONTH:
                     case TILEDB_DATETIME_WEEK:
@@ -556,26 +689,35 @@ void load_soma_array(py::module& m) {
                     case TILEDB_DATETIME_FS:
                     case TILEDB_DATETIME_AS:
                     case TILEDB_INT64:
-                        return py::cast(array.non_empty_domain<int64_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<int64_t>(name));
                     case TILEDB_UINT32:
-                        return py::cast(array.non_empty_domain<uint32_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<uint32_t>(name));
                     case TILEDB_INT32:
-                        return py::cast(array.non_empty_domain<int32_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<int32_t>(name));
                     case TILEDB_UINT16:
-                        return py::cast(array.non_empty_domain<uint16_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<uint16_t>(name));
                     case TILEDB_INT16:
-                        return py::cast(array.non_empty_domain<int16_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<int16_t>(name));
                     case TILEDB_UINT8:
-                        return py::cast(array.non_empty_domain<uint8_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<uint8_t>(name));
                     case TILEDB_INT8:
-                        return py::cast(array.non_empty_domain<int8_t>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<int8_t>(name));
                     case TILEDB_FLOAT64:
-                        return py::cast(array.non_empty_domain<double>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<double>(name));
                     case TILEDB_FLOAT32:
-                        return py::cast(array.non_empty_domain<float>(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<float>(name));
                     case TILEDB_STRING_UTF8:
                     case TILEDB_STRING_ASCII:
-                        return py::cast(array.non_empty_domain_var(name));
+                        return py::cast(array.non_empty_domain_slot_var(name));
                     default:
                         throw TileDBSOMAError(
                             "Unsupported dtype for nonempty domain.");
@@ -583,11 +725,11 @@ void load_soma_array(py::module& m) {
             })
 
         .def(
-            "domain",
+            "soma_domain_slot",
             [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
-                        return py::cast(array.domain<uint64_t>(name));
+                        return py::cast(array.soma_domain_slot<uint64_t>(name));
                     case TILEDB_DATETIME_YEAR:
                     case TILEDB_DATETIME_MONTH:
                     case TILEDB_DATETIME_WEEK:
@@ -602,23 +744,80 @@ void load_soma_array(py::module& m) {
                     case TILEDB_DATETIME_FS:
                     case TILEDB_DATETIME_AS:
                     case TILEDB_INT64:
-                        return py::cast(array.domain<int64_t>(name));
+                        return py::cast(array.soma_domain_slot<int64_t>(name));
                     case TILEDB_UINT32:
-                        return py::cast(array.domain<uint32_t>(name));
+                        return py::cast(array.soma_domain_slot<uint32_t>(name));
                     case TILEDB_INT32:
-                        return py::cast(array.domain<int32_t>(name));
+                        return py::cast(array.soma_domain_slot<int32_t>(name));
                     case TILEDB_UINT16:
-                        return py::cast(array.domain<uint16_t>(name));
+                        return py::cast(array.soma_domain_slot<uint16_t>(name));
                     case TILEDB_INT16:
-                        return py::cast(array.domain<int16_t>(name));
+                        return py::cast(array.soma_domain_slot<int16_t>(name));
                     case TILEDB_UINT8:
-                        return py::cast(array.domain<uint8_t>(name));
+                        return py::cast(array.soma_domain_slot<uint8_t>(name));
                     case TILEDB_INT8:
-                        return py::cast(array.domain<int8_t>(name));
+                        return py::cast(array.soma_domain_slot<int8_t>(name));
                     case TILEDB_FLOAT64:
-                        return py::cast(array.domain<double>(name));
+                        return py::cast(array.soma_domain_slot<double>(name));
                     case TILEDB_FLOAT32:
-                        return py::cast(array.domain<float>(name));
+                        return py::cast(array.soma_domain_slot<float>(name));
+                    case TILEDB_STRING_UTF8:
+                    case TILEDB_STRING_ASCII: {
+                        std::pair<std::string, std::string> str_domain;
+                        return py::cast(std::make_pair("", ""));
+                    }
+                    default:
+                        throw TileDBSOMAError(
+                            "Unsupported dtype for Dimension's domain");
+                }
+            })
+
+        .def(
+            "soma_maxdomain_slot",
+            [](SOMAArray& array, std::string name, py::dtype dtype) {
+                switch (np_to_tdb_dtype(dtype)) {
+                    case TILEDB_UINT64:
+                        return py::cast(
+                            array.soma_maxdomain_slot<uint64_t>(name));
+                    case TILEDB_DATETIME_YEAR:
+                    case TILEDB_DATETIME_MONTH:
+                    case TILEDB_DATETIME_WEEK:
+                    case TILEDB_DATETIME_DAY:
+                    case TILEDB_DATETIME_HR:
+                    case TILEDB_DATETIME_MIN:
+                    case TILEDB_DATETIME_SEC:
+                    case TILEDB_DATETIME_MS:
+                    case TILEDB_DATETIME_US:
+                    case TILEDB_DATETIME_NS:
+                    case TILEDB_DATETIME_PS:
+                    case TILEDB_DATETIME_FS:
+                    case TILEDB_DATETIME_AS:
+                    case TILEDB_INT64:
+                        return py::cast(
+                            array.soma_maxdomain_slot<int64_t>(name));
+                    case TILEDB_UINT32:
+                        return py::cast(
+                            array.soma_maxdomain_slot<uint32_t>(name));
+                    case TILEDB_INT32:
+                        return py::cast(
+                            array.soma_maxdomain_slot<int32_t>(name));
+                    case TILEDB_UINT16:
+                        return py::cast(
+                            array.soma_maxdomain_slot<uint16_t>(name));
+                    case TILEDB_INT16:
+                        return py::cast(
+                            array.soma_maxdomain_slot<int16_t>(name));
+                    case TILEDB_UINT8:
+                        return py::cast(
+                            array.soma_maxdomain_slot<uint8_t>(name));
+                    case TILEDB_INT8:
+                        return py::cast(
+                            array.soma_maxdomain_slot<int8_t>(name));
+                    case TILEDB_FLOAT64:
+                        return py::cast(
+                            array.soma_maxdomain_slot<double>(name));
+                    case TILEDB_FLOAT32:
+                        return py::cast(array.soma_maxdomain_slot<float>(name));
                     case TILEDB_STRING_UTF8:
                     case TILEDB_STRING_ASCII: {
                         std::pair<std::string, std::string> str_domain;

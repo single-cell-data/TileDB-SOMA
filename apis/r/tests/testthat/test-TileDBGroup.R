@@ -131,6 +131,7 @@ test_that("Metadata", {
   group$create(internal_use_only = "allowed_use")
 
   md <- list(baz = "qux", foo = "bar")
+  group$open("WRITE", internal_use_only = "allowed_use") # but be open for write
   group$set_metadata(md)
 
   # Read all metadata while the group is still open for write
