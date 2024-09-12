@@ -11,8 +11,9 @@ arg() { echo "$1" | sed "s/^${2-[^=]*=}//" | sed "s/:/;/g"; }
 build="Release"
 prefix=""
 tiledb=""
-cmake_verbose="false"
-no_tiledb_deprecated="false"
+#cmake_verbose="false"
+cmake_verbose="true"
+no_tiledb_deprecated="true"
 
 while test $# != 0; do
   case "$1" in
@@ -20,7 +21,6 @@ while test $# != 0; do
   --prefix=*) prefix=$(arg "$1");;
   --tiledb=*) tiledb=$(arg "$1");;
   --cmake-verbose=*) cmake_verbose=$(arg "$1");;
-  --no-tiledb-deprecated=*) no_tiledb_deprecated=$(arg "$1");;
   esac
   shift
 done
@@ -63,10 +63,6 @@ if [ "$cmake_verbose" = "true" ]; then
   nproc=1
 fi
 
-if [ "$no_tiledb_deprecated" = "true" ]; then
-    extra_opts+=" -DTILEDB_REMOVE_DEPRECATIONS=ON"
-fi
-
 # set installation path
 if [ -n "${prefix}"  ]; then
   extra_opts+=" -DCMAKE_INSTALL_PREFIX=${prefix} -DOVERRIDE_INSTALL_PREFIX=OFF"
@@ -92,6 +88,23 @@ rm -rf build
 mkdir -p build
 
 if [ -z ${TILEDBSOMA_COVERAGE+x} ]; then TILEDBSOMA_COVERAGE=""; fi
+
+echo
+echo
+echo
+echo "EXTRA_OPTS <<$extra_opts>>"
+echo
+echo
+echo
+
+echo TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
+echo TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build -j ${nproc}
+echo TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build --target install-libtiledbsoma
+echo TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build/libtiledbsoma --target build_tests -j ${nproc}
+
+echo
+echo
+echo
 
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake -B build -S libtiledbsoma -DCMAKE_BUILD_TYPE=${build} ${extra_opts}
 TILEDBSOMA_COVERAGE="${TILEDBSOMA_COVERAGE}" cmake --build build -j ${nproc}

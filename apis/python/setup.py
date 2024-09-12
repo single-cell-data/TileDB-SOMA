@@ -44,7 +44,6 @@ import version  # noqa E402
 
 tiledb_dir: Optional[pathlib.Path] = None
 tiledbsoma_dir: Optional[pathlib.Path] = None
-no_tiledb_dep: bool = False
 
 args = sys.argv[:]
 for arg in args:
@@ -54,9 +53,6 @@ for arg in args:
         sys.argv.remove(arg)
     if (start, eq) == ("--libtiledbsoma", "="):
         tiledbsoma_dir = pathlib.Path(last)
-        sys.argv.remove(arg)
-    if (start, eq) == ("--no-tiledb-deprecated", "="):
-        no_tiledb_dep = True
         sys.argv.remove(arg)
 
 
@@ -173,15 +169,11 @@ def find_or_build_package_data(setuptools_cmd):
             bld_command = ["pwsh.exe", "./bld.ps1"]
             if tiledb_dir is not None:
                 bld_command.append(f"TileDBLocation={tiledb_dir}")
-            if no_tiledb_dep:
-                bld_command.append("RemoveTileDBDeprecated=ON")
 
         else:
             bld_command = ["./bld"]
             if tiledb_dir is not None:
                 bld_command.append(f"--tiledb={tiledb_dir}")
-            if no_tiledb_dep:
-                bld_command.append("--no-tiledb-deprecated=true")
 
         subprocess.run(bld_command, cwd=scripts_dir, check=True)
 
