@@ -37,6 +37,8 @@ SOMANDArrayBase <- R6::R6Class(
       ## .is_sparse field is being set by dense and sparse private initialisers, respectively
       private$.type <- type                 # Arrow schema type of data
 
+      private$.soma_context <- soma_context() # package-level cache access
+
       #spdl::warn("[SOMANDArrayBase::create] type cached as {}", private$.type)
 
       dom_ext_tbl <- get_domain_and_extent_array(shape, private$.is_sparse)
@@ -69,7 +71,7 @@ SOMANDArrayBase <- R6::R6Class(
         sparse = private$.is_sparse,
         datatype = if (private$.is_sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
         pclst = tiledb_create_options$to_list(FALSE),
-        ctxxp = soma_context(),
+        ctxxp = private$.soma_context,
         tsvec = self$.tiledb_timestamp_range
       )
       #private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?

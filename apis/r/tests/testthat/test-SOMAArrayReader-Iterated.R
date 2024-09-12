@@ -14,7 +14,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
 
     ctx <- tiledb::tiledb_ctx()
     config <- tiledb::config(ctx)
-    srret <- sr_setup(uri, config = as.character(config), loglevel = "warn")
+    somactx <- soma_context()
+    srret <- sr_setup(uri, config = as.character(config), ctxxp = somactx, loglevel = "warn")
     sr <- srret$sr
     expect_true(inherits(sr, "externalptr"))
 
@@ -32,7 +33,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
     rm(sr)
     gc()
 
-    srret <- sr_setup(uri, config=as.character(config), dim_points=list(soma_dim_0=as.integer64(1)))
+    srret <- sr_setup(uri, config = as.character(config), ctxxp = somactx,
+                      dim_points = list(soma_dim_0=as.integer64(1)))
     sr <- srret$sr
     expect_true(inherits(sr, "externalptr"))
 
@@ -51,7 +53,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
     rm(sr)
     gc()
 
-    srret <- sr_setup(uri, config=as.character(config), dim_range=list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
+    srret <- sr_setup(uri, config = as.character(config), ctxxp = somactx,
+                      dim_range = list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
     sr <- srret$sr
     expect_true(inherits(sr, "externalptr"))
 
@@ -69,7 +72,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
 
     ## test completeness predicate on shorter data
     uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-    srret <- sr_setup(uri, config=as.character(config))
+    srret <- sr_setup(uri, config=as.character(config), somactx)
     sr <- srret$sr
 
     expect_false(tiledbsoma:::sr_complete(sr))
@@ -96,12 +99,14 @@ test_that("Iterated Interface from SOMA Classes", {
 
     # The read_complete et al. in this test case are designed to be verified
     # against 16MB buffer size, and the particular provided input dataset.
-    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes=as.character(16777216)))
+    # The soma_context() is cached at the package level and passed that way
+    # to the SOMADataFrame and SOMASparseNDArray classes
+    somactx <- soma_context(c(soma.init_buffer_bytes=as.character(16777216)))
 
     for (tc in test_cases) {
         sdf <- switch(tc,
-                      data.frame = SOMADataFrameOpen(uri, tiledbsoma_ctx = ctx),
-                      sparse = SOMASparseNDArrayOpen(uri, tiledbsoma_ctx = ctx))
+                      data.frame = SOMADataFrameOpen(uri),
+                      sparse = SOMASparseNDArrayOpen(uri))
         expect_true(inherits(sdf, "SOMAArrayBase"))
 
         iterator <- switch(tc,
@@ -166,8 +171,10 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
 
     # The read_complete et al. in this test case are designed to be verified
     # against 16MB buffer size, and the particular provided input dataset.
-    ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes=as.character(16777216)))
-    snda <- SOMASparseNDArrayOpen(uri, tiledbsoma_ctx = ctx)
+    # The soma_context() is cached at the package level and passed that way
+    # to the SOMADataFrame and SOMASparseNDArray classes
+    somactx <- soma_context(c(soma.init_buffer_bytes=as.character(16777216)))
+    snda <- SOMASparseNDArrayOpen(uri)
 
     expect_true(inherits(snda, "SOMAArrayBase"))
 
@@ -208,10 +215,12 @@ test_that("Dimension Point and Ranges Bounds", {
     X <- human_experiment$ms$get("RNA")$X$get("data")
     expect_equal(X$shape(), c(80, 230))
 
+    somactx = soma_context()
+
     ## 'good case' with suitable dim points
     coords <- list(soma_dim_0=bit64::as.integer64(0:5),
                    soma_dim_1=bit64::as.integer64(0:5))
-    srret <- sr_setup(uri = X$uri, config = config, dim_points = coords)
+    srret <- sr_setup(uri = X$uri, config = config, ctxxp = somactx, dim_points = coords)
     sr <- srret$sr
 
     chunk <- sr_next(sr)
@@ -224,7 +233,7 @@ test_that("Dimension Point and Ranges Bounds", {
     ## 'good case' with suitable dim ranges
     ranges <- list(soma_dim_0=matrix(bit64::as.integer64(c(1,4)),1),
                    soma_dim_1=matrix(bit64::as.integer64(c(1,4)),1))
-    srret <- sr_setup(uri = X$uri, config = config, dim_ranges = ranges)
+    srret <- sr_setup(uri = X$uri, config = config, somactx, dim_ranges = ranges)
     sr <- srret$sr
 
     chunk <- sr_next(sr)

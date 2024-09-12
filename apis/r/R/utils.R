@@ -168,6 +168,7 @@ uns_hint <- function(type = c('1d', '2d')) {
   rl <- sr_setup(
     uri = x$uri,
     config = as.character(tiledb::config(x$tiledbsoma_ctx$context())),
+    soma_context(),
     colnames = dimname,
     timestamprange = x$.tiledb_timestamp_range
   )

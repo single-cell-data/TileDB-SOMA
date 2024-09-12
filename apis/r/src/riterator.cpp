@@ -68,6 +68,7 @@ namespace tdbs = tiledbsoma;
 // [[Rcpp::export]]
 Rcpp::List sr_setup(const std::string& uri,
                     Rcpp::CharacterVector config,
+                    Rcpp::XPtr<somactx_wrap_t> ctxxp,
                     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
@@ -88,9 +89,13 @@ Rcpp::List sr_setup(const std::string& uri,
     std::vector<std::string> column_names = {};
 
     std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
-    tiledb::Config cfg(platform_config);
-    spdl::debug("[sr_setup] creating ctx object with supplied config");
-    std::shared_ptr<tiledb::Context> ctxptr = std::make_shared<tiledb::Context>(cfg);
+    tiledb::Config cfg(platform_config); // no longer needed ?
+    // std::shared_ptr<tiledb::Context> ctxptr = std::make_shared<tiledb::Context>(cfg);
+
+    // shared pointer to SOMAContext from external pointer wrapper
+    std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
+    // shared pointer to TileDB Context from SOMAContext -- not needed here
+    std::shared_ptr<tiledb::Context> ctxptr = somactx->tiledb_ctx();
 
     ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
     Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);
@@ -104,8 +109,12 @@ Rcpp::List sr_setup(const std::string& uri,
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
-    auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, platform_config,
-                                   column_names, batch_size,
+    // old interface
+    // auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, platform_config,
+    //                                column_names, batch_size,
+    //                                tdb_result_order, tsrng);
+    auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, somactx,
+                                   name, column_names, batch_size,
                                    tdb_result_order, tsrng);
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;

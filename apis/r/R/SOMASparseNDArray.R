@@ -48,12 +48,13 @@ SOMASparseNDArray <- R6::R6Class(
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       rl <- sr_setup(uri = self$uri,
-                     config = cfg,
+                     config = cfg, # needed ?
+                     private$.soma_context,
                      dim_points = coords,
                      result_order = result_order,
                      timestamprange = self$.tiledb_timestamp_range,
                      loglevel = log_level)
-      private$ctx_ptr <- rl$ctx
+      private$ctx_ptr <- rl$ctx # needed ?
       SOMASparseNDArrayRead$new(rl$sr, self, coords)
     },
 
@@ -293,6 +294,7 @@ SOMASparseNDArray <- R6::R6Class(
         uri = self$uri,
         naap = naap,
         nasp = nasp,
+        ctxxp = private$.soma_context,
         arraytype = "SOMASparseNDArray",
         config = NULL,
         tsvec = self$.tiledb_timestamp_range

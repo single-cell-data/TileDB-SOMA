@@ -9,8 +9,8 @@ createSchemaFromArrow <- function(uri, nasp, nadimap, nadimsp, sparse, datatype,
     invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp, tsvec))
 }
 
-writeArrayFromArrow <- function(uri, naap, nasp, arraytype = "", config = NULL, tsvec = NULL) {
-    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, arraytype, config, tsvec))
+writeArrayFromArrow <- function(uri, naap, nasp, ctxxp, arraytype = "", config = NULL, tsvec = NULL) {
+    invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, ctxxp, arraytype, config, tsvec))
 }
 
 #' @noRd
@@ -245,8 +245,8 @@ tiledbsoma_upgrade_shape <- function(uri, new_shape, config = NULL) {
 #' summary(rl)
 #' }
 #' @noRd
-sr_setup <- function(uri, config, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
-    .Call(`_tiledbsoma_sr_setup`, uri, config, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
+sr_setup <- function(uri, config, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
+    .Call(`_tiledbsoma_sr_setup`, uri, config, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
 }
 
 sr_complete <- function(sr) {
