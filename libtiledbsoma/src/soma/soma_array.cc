@@ -966,6 +966,235 @@ bool SOMAArray::_cast_column_aux<bool>(
     return false;
 }
 
+bool SOMAArray::_extend_enumeration(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se) {
+    // For columns with dictionaries, we need to identify whether the
+
+    auto enmr = ArrayExperimental::get_enumeration(
+        *ctx_->tiledb_ctx(), *arr_, index_schema->name);
+    auto value_type = enmr.type();
+
+    switch (value_type) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return _extend_and_evolve_schema<std::string>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_INT8:
+            return _extend_and_evolve_schema<int8_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_BOOL:
+        case TILEDB_UINT8:
+            return _extend_and_evolve_schema<uint8_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_INT16:
+            return _extend_and_evolve_schema<int16_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_UINT16:
+            return _extend_and_evolve_schema<uint16_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_INT32:
+            return _extend_and_evolve_schema<int32_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_UINT32:
+            return _extend_and_evolve_schema<uint32_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_INT64:
+            return _extend_and_evolve_schema<int64_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_UINT64:
+            return _extend_and_evolve_schema<uint64_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_FLOAT32:
+            return _extend_and_evolve_schema<float>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_FLOAT64:
+            return _extend_and_evolve_schema<double>(
+                value_schema, value_array, index_schema, index_array, se);
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                tiledb::impl::type_to_str(value_type)));
+    }
+}
+
+template <typename ValueType>
+bool SOMAArray::_extend_and_evolve_schema(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se) {
+    // We need to check if we are writing any new enumeration values. If so,
+    // extend and evolve the schema. If not, just set the write buffers to the
+    // dictionary's indexes as-is
+
+    // Get all the enumeration values in the passed-in column
+    std::vector<ValueType> enums_in_write;
+    uint64_t num_elems = value_array->length;
+    if (strcmp(value_schema->format, "b") == 0) {
+        // Specially handle Boolean types as their representation in Arrow (bit)
+        // is different from what is in TileDB (uint8_t)
+        auto casted = _cast_bit_to_uint8(value_schema, value_array);
+        enums_in_write.assign(
+            (ValueType*)casted.data(), (ValueType*)casted.data() + num_elems);
+    } else {
+        // General case
+        const void* data;
+        if (value_array->n_buffers == 3) {
+            data = value_array->buffers[2];
+        } else {
+            data = value_array->buffers[1];
+        }
+        enums_in_write.assign((ValueType*)data, (ValueType*)data + num_elems);
+    }
+
+    // Get all the enumeration values in the on-disk TileDB attribute
+    std::string column_name = index_schema->name;
+    auto enmr = ArrayExperimental::get_enumeration(
+        *ctx_->tiledb_ctx(), *arr_, column_name);
+    std::vector<ValueType> enums_existing = enmr.as_vector<ValueType>();
+
+    // Find any new enumeration values
+    std::vector<ValueType> extend_values;
+    for (auto enum_val : enums_in_write) {
+        if (std::find(enums_existing.begin(), enums_existing.end(), enum_val) ==
+            enums_existing.end()) {
+            extend_values.push_back(enum_val);
+        }
+    }
+
+    // extend_values = {true, false};
+    if (extend_values.size() != 0) {
+        // We have new enumeration values; additional processing needed
+
+        // Check if the number of new enumeration will cause an overflow if
+        // extended
+        auto disk_index_type = tiledb_schema()->attribute(column_name).type();
+        uint64_t max_capacity = _get_max_capacity(disk_index_type);
+        auto free_capacity = max_capacity - enums_existing.size();
+        if (free_capacity < extend_values.size()) {
+            throw TileDBSOMAError(
+                "Cannot extend enumeration; reached maximum capacity");
+        }
+
+        // Take the existing enumeration values on disk and extend with the new
+        // enumeration values
+        auto extended_enmr = enmr.extend(extend_values);
+        se.extend_enumeration(extended_enmr);
+
+        // If the passed-in enumerations are only a subset of the new extended
+        // enumerations, then we will need to remap the indexes. ie. the user
+        // passes in values [B, C] which maps to indexes [0, 1]. However, the
+        // full set of extended enumerations is [A, B, C] which means we need to
+        // remap [B, C] to be indexes [1, 2]
+        _remap_indexes(
+            column_name,
+            extended_enmr,
+            enums_in_write,
+            index_schema,
+            index_array);
+
+        return true;
+    } else {
+        // We do not need to extend the enumeration; write as-is
+        mq_->setup_write_column(
+            column_name,
+            index_array->length,
+            (const void*)index_array->buffers[1],
+            (uint64_t*)nullptr,
+            (uint8_t*)index_array->buffers[0]);
+
+        return false;
+    }
+}
+
+template <>
+bool SOMAArray::_extend_and_evolve_schema<std::string>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se) {
+    uint64_t num_elems = value_array->length;
+
+    std::vector<uint64_t> offsets_v;
+    if ((strcmp(value_schema->format, "U") == 0) ||
+        (strcmp(value_schema->format, "Z") == 0)) {
+        uint64_t* offsets = (uint64_t*)value_array->buffers[1];
+        offsets_v.assign(offsets, offsets + num_elems + 1);
+    } else {
+        uint32_t* offsets = (uint32_t*)value_array->buffers[1];
+        for (size_t i = 0; i < num_elems + 1; ++i) {
+            offsets_v.push_back((uint64_t)offsets[i]);
+        }
+    }
+
+    char* data = (char*)value_array->buffers[2];
+    std::string data_v(data, data + offsets_v[num_elems]);
+
+    std::vector<std::string> enums_in_write;
+    for (size_t i = 0; i < num_elems; ++i) {
+        auto beg = offsets_v[i];
+        auto sz = offsets_v[i + 1] - beg;
+        enums_in_write.push_back(data_v.substr(beg, sz));
+    }
+
+    std::string column_name = index_schema->name;
+    auto enmr = ArrayExperimental::get_enumeration(
+        *ctx_->tiledb_ctx(), *arr_, column_name);
+    std::vector<std::string> extend_values;
+    auto enums_existing = enmr.as_vector<std::string>();
+    for (auto enum_val : enums_in_write) {
+        if (std::find(enums_existing.begin(), enums_existing.end(), enum_val) ==
+            enums_existing.end()) {
+            extend_values.push_back(enum_val);
+        }
+    }
+
+    if (extend_values.size() != 0) {
+        // Check that we extend the enumeration values without
+        // overflowing
+        auto disk_index_type = tiledb_schema()->attribute(column_name).type();
+        uint64_t max_capacity = SOMAArray::_get_max_capacity(disk_index_type);
+        auto free_capacity = max_capacity - enums_existing.size();
+        if (free_capacity < extend_values.size()) {
+            throw TileDBSOMAError(
+                "Cannot extend enumeration; reached maximum capacity");
+        }
+
+        auto extended_enmr = enmr.extend(extend_values);
+        se.extend_enumeration(extended_enmr);
+
+        SOMAArray::_remap_indexes(
+            column_name,
+            extended_enmr,
+            enums_in_write,
+            index_schema,
+            index_array);
+
+        index_schema->format = ArrowAdapter::to_arrow_format(disk_index_type)
+                                   .data();
+        return true;
+    } else {
+        // Example:
+        //
+        // * Already on storage/schema there are values a,b,c with indices
+        //   0,1,2.
+        // * User appends values b,c which, within the Arrow data coming in
+        //   from the user, have indices 0,1.
+        // * We need to remap those to 1,2.
+
+        SOMAArray::_remap_indexes(
+            column_name, enmr, enums_in_write, index_schema, index_array);
+    }
+    return false;
+}
+
 template <>
 void SOMAArray::_cast_dictionary_values_legacy<std::string>(
     ArrowSchema* orig_column_schema,
