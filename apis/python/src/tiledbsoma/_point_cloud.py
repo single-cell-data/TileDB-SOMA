@@ -12,6 +12,7 @@ import pyarrow as pa
 import somacore
 from somacore import Axis, CoordinateSpace, options
 from typing_extensions import Self
+
 from tiledbsoma import _new_shape_feature_flag_enabled
 
 from . import _arrow_types, _util

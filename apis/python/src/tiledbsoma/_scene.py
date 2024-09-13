@@ -4,7 +4,7 @@
 
 """Implementation of a SOMA Scene."""
 
-from typing import Any, Optional, Union
+from typing import Any, Optional, Sequence, Union
 
 from somacore import (
     Axis,
@@ -32,12 +32,7 @@ from ._soma_object import AnySOMAObject
 
 class Scene(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    scene.Scene[  # type: ignore[type-var]
-        MultiscaleImage,
-        Collection[Union[PointCloud, GeometryDataFrame]],
-        Collection[Collection[Union[PointCloud, GeometryDataFrame]]],
-        AnySOMAObject,
-    ],
+    scene.Scene[MultiscaleImage, PointCloud, GeometryDataFrame, AnySOMAObject],
 ):
     """TODO: Add documentation for a Scene
 
@@ -80,69 +75,30 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         )
         self._coord_space = value
 
-    def register_point_cloud(
+    def register_geometry_dataframe(
         self,
-        point_cloud_name: str,
+        key: str,
         transform: CoordinateTransform,
         *,
-        subcollection_name: str = "obsl",
+        subcollection: Union[str, Sequence[str]] = "obsl",
         coordinate_space: Optional[CoordinateSpace] = None,
-    ) -> PointCloud:
-        if self.coordinate_space is None:
-            raise SOMAError(
-                "The scene coordinate space must be set before registering a point "
-                "cloud."
-            )
-        # Create the coordinate space if it does not exist. Otherwise, check it is
-        # compatible with the provide transform.
-        if coordinate_space is None:
-            if isinstance(transform, IdentityTransform):
-                coordinate_space = self.coordinate_space
-            else:
-                coordinate_space = CoordinateSpace(
-                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)
-                )
-        else:
-            if transform.input_axes != coordinate_space.axis_names:
-                raise ValueError(
-                    f"The name of the transform input axes, {transform.input_axes}, do "
-                    f"not match the name of the axes in the provided coordinate space, "
-                    f"{coordinate_space.axis_names}."
-                )
-
-        # Check asset exists in the specified location.
-        try:
-            subcollection: Collection = self[subcollection_name]  # type: ignore
-        except KeyError as ke:
-            raise KeyError(
-                f"No collection '{subcollection_name}' in this scene."
-            ) from ke
-        try:
-            point_cloud: PointCloud = subcollection[point_cloud_name]
-        except KeyError as ke:
-            raise KeyError(
-                f"No PointCloud named '{point_cloud_name}' in '{subcollection_name}'."
-            ) from ke
-        if not isinstance(point_cloud, PointCloud):
-            raise TypeError(
-                f"'{point_cloud_name}' in '{subcollection_name}' is not an PointCloud."
-            )
-
-        point_cloud.coordinate_space = coordinate_space
-        subcollection.metadata[f"soma_scene_registry_{point_cloud_name}"] = (
-            transform_to_json(transform)
+    ) -> GeometryDataFrame:
+        raise NotImplementedError(
+            "Support for registering geometry data frames is not yet implemented."
         )
-        return point_cloud
 
     def register_multiscale_image(
         self,
-        image_name: str,
+        key: str,
         transform: CoordinateTransform,
         *,
-        subcollection_name: str = "img",
+        subcollection: Union[str, Sequence[str]] = "img",
         coordinate_space: Optional[CoordinateSpace] = None,
     ) -> MultiscaleImage:
         """TODO Add docstring"""
+        if not isinstance(subcollection, str):
+            raise NotImplementedError()
+
         # Check the transform matches this
         if self.coordinate_space is None:
             raise SOMAError(
@@ -174,59 +130,94 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
 
         # Check asset exists in the specified location.
         try:
-            subcollection: Collection = self[subcollection_name]  # type: ignore
+            coll: Collection = self[subcollection]  # type: ignore
         except KeyError as ke:
-            raise KeyError(
-                f"No collection '{subcollection_name}' in this scene."
-            ) from ke
+            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
         try:
-            image: MultiscaleImage = subcollection[image_name]
+            image: MultiscaleImage = coll[key]
         except KeyError as ke:
             raise KeyError(
-                f"No multiscale image named '{image_name}' in '{subcollection_name}'."
+                f"No multiscale image named '{key}' in '{subcollection}'."
             ) from ke
         if not isinstance(image, MultiscaleImage):
-            raise TypeError(
-                f"'{image_name}' in '{subcollection_name}' is not an MultiscaleImage."
-            )
+            raise TypeError(f"'{key}' in '{subcollection}' is not an MultiscaleImage.")
 
         image.coordinate_space = coordinate_space
-        subcollection.metadata[f"soma_scene_registry_{image_name}"] = transform_to_json(
-            transform
-        )
+        coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
         return image
 
-    def transform_to_point_cloud(
-        self, point_cloud_name: str, *, subcollection_name: str = "obsl"
+    def register_point_cloud(
+        self,
+        key: str,
+        transform: CoordinateTransform,
+        *,
+        subcollection: Union[str, Sequence[str]] = "obsl",
+        coordinate_space: Optional[CoordinateSpace] = None,
+    ) -> PointCloud:
+        if not isinstance(subcollection, str):
+            raise NotImplementedError()
+        if self.coordinate_space is None:
+            raise SOMAError(
+                "The scene coordinate space must be set before registering a point "
+                "cloud."
+            )
+        # Create the coordinate space if it does not exist. Otherwise, check it is
+        # compatible with the provide transform.
+        if coordinate_space is None:
+            if isinstance(transform, IdentityTransform):
+                coordinate_space = self.coordinate_space
+            else:
+                coordinate_space = CoordinateSpace(
+                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)
+                )
+        else:
+            if transform.input_axes != coordinate_space.axis_names:
+                raise ValueError(
+                    f"The name of the transform input axes, {transform.input_axes}, do "
+                    f"not match the name of the axes in the provided coordinate space, "
+                    f"{coordinate_space.axis_names}."
+                )
+
+        # Check asset exists in the specified location.
+        try:
+            coll: Collection = self[subcollection]  # type: ignore
+        except KeyError as ke:
+            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
+        try:
+            point_cloud: PointCloud = coll[key]
+        except KeyError as ke:
+            raise KeyError(f"No PointCloud named '{key}' in '{coll}'.") from ke
+        if not isinstance(point_cloud, PointCloud):
+            raise TypeError(f"'{key}' in '{subcollection}' is not an PointCloud.")
+
+        point_cloud.coordinate_space = coordinate_space
+        coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
+        return point_cloud
+
+    def get_transformation_to_geometry_dataframe(
+        self, key: str, *, subcollection: Union[str, Sequence[str]] = "obsl"
     ) -> CoordinateTransform:
-        """Returns the coordinate transform from the scene to a point cloud
-        registered in the scene.
-
-
-        TODO: Finish doc string.
-        """
+        """TODO: Add doc string."""
+        if not isinstance(subcollection, str):
+            raise NotImplementedError()
         try:
-            subcollection: Collection = self[subcollection_name]  # type: ignore
+            coll: Collection = self[subcollection]  # type: ignore
+        except KeyError as ke:
+            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
+        try:
+            transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError as ke:
             raise KeyError(
-                f"No collection '{subcollection_name}' in this scene."
-            ) from ke
-        try:
-            transform_json = subcollection.metadata[
-                f"soma_scene_registry_{point_cloud_name}"
-            ]
-        except KeyError as ke:
-            raise KeyError(
-                f"No coordinate space registry for '{point_cloud_name}' in collection "
-                f"'{subcollection_name}'."
+                f"No coordinate space registry for '{key}' in collection "
+                f"'{subcollection}'."
             ) from ke
         return transform_from_json(transform_json)
 
-    def transform_to_multiscale_image(
+    def get_transformation_to_multiscale_image(
         self,
-        image_name: str,
+        key: str,
         *,
-        subcollection_name: str = "img",
+        subcollection: Union[str, Sequence[str]] = "img",
         level: Optional[Union[str, int]] = None,
     ) -> CoordinateTransform:
         """Returns the corodinate transform from the scene to an image collection
@@ -235,31 +226,55 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         If the name or level of an image is provided, the transformation will be to
         the requested level instead of the reference level of the multiscale image.
         """
+        if not isinstance(subcollection, str):
+            raise NotImplementedError()
         try:
-            subcollection: Collection = self[subcollection_name]  # type: ignore
+            coll: Collection = self[subcollection]  # type: ignore
         except KeyError as ke:
-            raise KeyError(
-                f"No collection '{subcollection_name}' in this scene."
-            ) from ke
+            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
         try:
-            transform_json = subcollection.metadata[f"soma_scene_registry_{image_name}"]
+            transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError:
             raise KeyError(
-                f"No coordinate space registry for '{image_name}' in collection "
-                f"'{subcollection_name}'"
+                f"No coordinate space registry for '{key}' in collection "
+                f"'{subcollection}'"
             )
         base_transform = transform_from_json(transform_json)
         if level is None:
             return base_transform
         try:
-            image: MultiscaleImage = subcollection[image_name]
+            image: MultiscaleImage = coll[key]
         except KeyError as ke:
             raise KeyError(
-                f"No MultiscaleImage named '{image_name}' in '{subcollection_name}'."
+                f"No MultiscaleImage named '{key}' in '{subcollection}'."
             ) from ke
         if isinstance(level, str):
             raise NotImplementedError(
                 "Support for querying image level by name is not yet implemented."
             )
         level_transform = image.get_transformation_to_level(level)
-        return base_transform * level_transform
+        return level_transform @ base_transform
+
+    def get_transformation_to_point_cloud(
+        self, key: str, *, subcollection: Union[str, Sequence[str]] = "obsl"
+    ) -> CoordinateTransform:
+        """Returns the coordinate transform from the scene to a point cloud
+        registered in the scene.
+
+
+        TODO: Finish doc string.
+        """
+        if not isinstance(subcollection, str):
+            raise NotImplementedError()
+        try:
+            coll: Collection = self[subcollection]  # type: ignore
+        except KeyError as ke:
+            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
+        try:
+            transform_json = coll.metadata[f"soma_scene_registry_{key}"]
+        except KeyError as ke:
+            raise KeyError(
+                f"No coordinate space registry for '{key}' in collection "
+                f"'{subcollection}'."
+            ) from ke
+        return transform_from_json(transform_json)

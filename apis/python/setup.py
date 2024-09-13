@@ -343,7 +343,7 @@ setuptools.setup(
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
-        "somacore @ git+https://github.com/single-cell-data/SOMA.git@86b72a0",  # DO NOT MERGE TO MAIN
+        "somacore @ git+https://github.com/single-cell-data/SOMA.git@224076b",  # DO NOT MERGE TO MAIN
         # TEMP WHILE WE AWAIT WHEELS
         # "tiledb~=0.32.0",
         "tiledb",

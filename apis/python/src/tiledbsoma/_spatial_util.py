@@ -66,7 +66,7 @@ def process_image_region(
             transform.output_axes,
             np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]]),
         )
-        transform = translate * transform
+        transform = translate @ transform
     inv_transform = transform.inverse_transform()
 
     coords: options.DenseNDCoords = []
