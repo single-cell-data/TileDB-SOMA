@@ -558,46 +558,20 @@ void SOMAArray::set_array_data(
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
 
-    auto [casted_array, casted_schema] = SOMAArray::_cast_table_legacy(
-        std::move(arrow_schema), std::move(arrow_array));
+    // Clear any existing columns set in the ArrayBuffers
+    reset(column_names(), batch_size_, result_order_);
 
-    for (auto i = 0; i < casted_schema->n_children; ++i) {
-        auto arrow_sch_ = casted_schema->children[i];
-        auto arrow_arr_ = casted_array->children[i];
-
-        // Create a ColumnBuffer object instead of passing it in as an argument
-        // to `set_column_data` because ColumnBuffer::create requires a TileDB
-        // Array argument which should remain a private member of SOMAArray
-        auto column = mq_->setup_column_data(arrow_sch_->name);
-
-        const void* data;
-        uint8_t* validities = nullptr;
-        auto table_offset = arrow_arr_->offset;
-        auto data_size = tiledb::impl::type_size(
-            ArrowAdapter::to_tiledb_format(arrow_sch_->format));
-
-        if (arrow_arr_->null_count != 0) {
-            validities = (uint8_t*)arrow_arr_->buffers[0] + table_offset;
-        }
-
-        if (arrow_arr_->n_buffers == 3) {
-            data = arrow_arr_->buffers[2];
-            uint64_t* offsets = (uint64_t*)arrow_arr_->buffers[1] +
-                                table_offset;
-            column->set_data(
-                arrow_arr_->length,
-                (char*)data + table_offset * data_size,
-                offsets,
-                validities);
-        } else {
-            data = arrow_arr_->buffers[1];
-            column->set_data(
-                arrow_arr_->length,
-                (char*)data + table_offset * data_size,
-                static_cast<uint64_t*>(nullptr),
-                validities);
-        }
-        mq_->set_column_data(column);
+    // Go through all columns in the ArrowTable and cast the values to what is
+    // in the ArraySchema on disk
+    ArraySchemaEvolution se = _make_se();
+    bool evolve_schema = false;
+    for (auto i = 0; i < arrow_schema->n_children; ++i) {
+        bool enmr_extended = _cast_column(
+            arrow_schema->children[i], arrow_array->children[i], se);
+        evolve_schema = evolve_schema || enmr_extended;
+    }
+    if (evolve_schema) {
+        se.array_evolve(uri_);
     }
 };
 
