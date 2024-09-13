@@ -192,6 +192,8 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         self._shuffle_rng = np.random.default_rng(seed) if shuffle else None
         self.shuffle_chunk_size = shuffle_chunk_size
         self._initialized = False
+        self._obs_joinids_partition: npt.NDArray[np.int64] | None = None
+        self._obs_partition_length: int = -1
 
         if self.shuffle:
             # round io_batch_size up to a unit of shuffle_chunk_size to simplify code.
@@ -202,7 +204,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         if not self.obs_column_names:
             raise ValueError("Must specify at least one value in `obs_column_names`")
 
-    def _create_obs_joinid_iter(self) -> Iterator[npt.NDArray[np.int64]]:
+    def _create_obs_joinids_partition(self) -> None:
         """Create iterator over obs id chunks with split size of (roughly) io_batch_size.
 
         As appropriate, will chunk, shuffle and apply partitioning per worker.
@@ -229,7 +231,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         _gpu_splits = _splits(len(obs_joinids), world_size)
         _gpu_split = obs_joinids[_gpu_splits[rank] : _gpu_splits[rank + 1]]
 
-        # 2. Trip to be all of equal length
+        # 2. Trim to be all of equal length
         min_len = np.diff(_gpu_splits).min()
         assert 0 <= (np.diff(_gpu_splits).min() - min_len) <= 1
         _gpu_split = _gpu_split[:min_len]
@@ -259,15 +261,16 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         obs_partition_joinids = obs_joinids_chunked[
             obs_splits[worker_id] : obs_splits[worker_id + 1]
         ].copy()
-        obs_joinid_iter = iter(obs_partition_joinids)
+        self._obs_joinids_partition = obs_partition_joinids
+        self._obs_partition_length = sum(
+            len(partition) for partition in obs_partition_joinids
+        )
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
                 f"Process {os.getpid()} rank={rank}, world_size={world_size}, worker_id={worker_id}, n_workers={n_workers}, "
                 f"partition_size={sum([len(chunk) for chunk in obs_partition_joinids])}"
             )
-
-        return obs_joinid_iter
 
     def _init_once(self, exp: soma.Experiment | None = None) -> None:
         """One-time per worker initialization.
@@ -301,6 +304,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 self._obs_joinids = query.obs_joinids().to_numpy()
                 self._var_joinids = query.var_joinids().to_numpy()
 
+        self._create_obs_joinids_partition()
         self._initialized = True
 
     def __iter__(self) -> Iterator[XObsDatum]:
@@ -320,7 +324,8 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                     "ExperimentAxisQueryIterDataPipe only supported on X layers which are of type SparseNDArray"
                 )
 
-            obs_joinid_iter = self._create_obs_joinid_iter()
+            assert self._obs_joinids_partition is not None
+            obs_joinid_iter = iter(self._obs_joinids_partition)
             _mini_batch_iter = self._mini_batch_iter(exp.obs, X, obs_joinid_iter)
             if self.use_eager_fetch:
                 _mini_batch_iter = _EagerIterator(
@@ -360,13 +365,10 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             experimental
         """
         self._init_once()
-        assert self._obs_joinids is not None
         assert self._var_joinids is not None
-        world_size, _ = _get_distributed_world_rank()
-        n_workers, _ = _get_worker_world_rank()
-        div, rem = divmod(
-            len(self._obs_joinids) // world_size // n_workers, self.batch_size
-        )
+        assert self._obs_joinids_partition is not None
+        assert self._obs_partition_length >= 0
+        div, rem = divmod(self._obs_partition_length, self.batch_size)
         return div + bool(rem), len(self._var_joinids)
 
     def __getitem__(self, index: int) -> XObsDatum:
