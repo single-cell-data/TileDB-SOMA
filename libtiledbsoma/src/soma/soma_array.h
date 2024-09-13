@@ -1258,7 +1258,8 @@ class SOMAArray : public SOMAObject {
     }
 
     // Helper function to cast Boolean of bits (Arrow) to uint8 (TileDB)
-    void _cast_bit_to_uint8_legacy(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
+    void _cast_bit_to_uint8_legacy(
+        ArrowSchema* arrow_schema, ArrowArray* arrow_array);
 
     // Fills the metadata cache upon opening the array.
     void fill_metadata_cache();

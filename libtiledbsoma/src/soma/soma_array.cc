@@ -539,9 +539,7 @@ void SOMAArray::set_column_data(
     const void* data,
     uint64_t* offsets,
     uint8_t* validity) {
-    auto column = mq_->setup_column_data(name);
-    column->set_data(num_elems, data, offsets, validity);
-    mq_->set_column_data(column);
+    mq_->setup_write_column(name, num_elems, data, offsets, validity);
 };
 
 void SOMAArray::set_column_data(
@@ -550,9 +548,7 @@ void SOMAArray::set_column_data(
     const void* data,
     uint32_t* offsets,
     uint8_t* validity) {
-    auto column = mq_->setup_column_data(name);
-    column->set_data(num_elems, data, offsets, validity);
-    mq_->set_column_data(column);
+    mq_->setup_write_column(name, num_elems, data, offsets, validity);
 };
 
 void SOMAArray::set_array_data(
