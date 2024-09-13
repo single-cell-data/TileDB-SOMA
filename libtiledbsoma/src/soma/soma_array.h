@@ -1225,9 +1225,6 @@ class SOMAArray : public SOMAObject {
         ArrowArray* index_array,
         ArraySchemaEvolution se);
 
-    std::vector<uint8_t> _cast_bit_to_uint8(
-        ArrowSchema* schema, ArrowArray* array);
-
     void fill_metadata_cache();
 
     // SOMAArray URI
