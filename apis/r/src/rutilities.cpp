@@ -43,7 +43,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
             for (size_t i=0; i<iv.size(); i++) {
                 if (iv[i] >= pr.first && iv[i] <= pr.second) {
                     sr->set_dim_point<int64_t>(nm, iv[i]);
-                    spdl::info("[apply_dim_points] Applying dim point {} on {}", iv[i], nm);
+                    spdl::debug("[apply_dim_points] Applying dim point {} on {}", iv[i], nm);
                     suitable = true;
                 }
             }
@@ -54,7 +54,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
                 float v = static_cast<float>(payload[i]);
                 if (v >= pr.first && v <= pr.second) {
                     sr->set_dim_point<float>(nm, v);
-                    spdl::info("[apply_dim_points] Applying dim point {} on {}", v, nm);
+                    spdl::debug("[apply_dim_points] Applying dim point {} on {}", v, nm);
                     suitable = true;
                 }
             }
@@ -64,7 +64,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
             for (R_xlen_t i=0; i<payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     sr->set_dim_point<double>(nm,payload[i]);
-                    spdl::info("[apply_dim_points] Applying dim point {} on {}", payload[i], nm);
+                    spdl::debug("[apply_dim_points] Applying dim point {} on {}", payload[i], nm);
                     suitable = true;
                 }
             }
@@ -74,7 +74,7 @@ void apply_dim_points(tdbs::SOMAArray *sr,
             for (R_xlen_t i=0; i<payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     sr->set_dim_point<int32_t>(nm,payload[i]);
-                    spdl::info("[apply_dim_points] Applying dim point {} on {}", payload[i], nm);
+                    spdl::debug("[apply_dim_points] Applying dim point {} on {}", payload[i], nm);
                     suitable = true;
                 }
             }
@@ -105,7 +105,7 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
                 uint64_t l = static_cast<uint64_t>(Rcpp::fromInteger64(lo[i]));
                 uint64_t h = static_cast<uint64_t>(Rcpp::fromInteger64(hi[i]));
                 vp[i] = std::make_pair(std::max(l,pr.first), std::min(h, pr.second));
-                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, l, h) ;
+                spdl::debug("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, l, h) ;
                 suitable = l < pr.second && h > pr.first; // lower must be less than max, higher more than min
             }
             if (suitable) sr->set_dim_ranges<uint64_t>(nm, vp);
@@ -117,7 +117,7 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
             const std::pair<int64_t,int64_t> pr = dm->domain<int64_t>();
             for (int i=0; i<mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i],pr.first), std::min(hi[i], pr.second));
-                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]) ;
+                spdl::debug("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]) ;
                 suitable = lo[i] < pr.second && hi[i] > pr.first; // lower must be less than max, higher more than min
             }
             if (suitable) sr->set_dim_ranges<int64_t>(nm, vp);
@@ -131,7 +131,7 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
                 float l = static_cast<float>(lo[i]);
                 float h = static_cast<float>(hi[i]);
                 vp[i] = std::make_pair(std::max(l,pr.first), std::min(h, pr.second));
-                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, l, h) ;
+                spdl::debug("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, l, h) ;
                 suitable = l < pr.second && h > pr.first; // lower must be less than max, higher more than min
             }
             if (suitable) sr->set_dim_ranges<float>(nm, vp);
@@ -143,7 +143,7 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
             const std::pair<double,double> pr = dm->domain<double>();
             for (int i=0; i<mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i],pr.first), std::min(hi[i], pr.second));
-                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]) ;
+                spdl::debug("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm, lo[i], hi[i]) ;
                 suitable = lo[i] < pr.second && hi[i] > pr.first; // lower must be less than max, higher more than min
             }
             if (suitable) sr->set_dim_ranges<double>(nm, vp);
@@ -155,7 +155,7 @@ void apply_dim_ranges(tdbs::SOMAArray* sr,
             const std::pair<int32_t,int32_t> pr = dm->domain<int32_t>();
             for (int i=0; i<mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i],pr.first), std::min(hi[i], pr.second));
-                spdl::info("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm[i], lo[i], hi[i]) ;
+                spdl::debug("[apply_dim_ranges] Applying dim point {} on {} with {} - {}", i, nm[i], lo[i], hi[i]) ;
                 suitable = lo[i] < pr.second && hi[i] > pr.first; // lower must be less than max, higher more than min
             }
             if (suitable) sr->set_dim_ranges<int32_t>(nm, vp);
