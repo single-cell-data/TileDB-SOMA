@@ -631,7 +631,8 @@ void SOMAArray::_cast_dictionary_values<bool>(
     auto value_array = array->dictionary;
 
     std::vector<int64_t> indexes = _get_index_vector(schema, array);
-    std::vector<uint8_t> values = _cast_bit_to_uint8(value_schema, value_array);
+    std::vector<uint8_t> values = util::cast_bit_to_uint8(
+        value_schema, value_array);
     std::vector<uint8_t> index_to_value;
 
     for (auto i : indexes) {
@@ -758,7 +759,7 @@ bool SOMAArray::_cast_column_aux<bool>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
     (void)se;  // se is unused in bool specialization
 
-    auto casted = _cast_bit_to_uint8(schema, array);
+    auto casted = util::cast_bit_to_uint8(schema, array);
     mq_->setup_write_column(
         schema->name,
         array->length,
@@ -841,7 +842,7 @@ bool SOMAArray::_extend_and_evolve_schema(
     if (strcmp(value_schema->format, "b") == 0) {
         // Specially handle Boolean types as their representation in Arrow (bit)
         // is different from what is in TileDB (uint8_t)
-        auto casted = _cast_bit_to_uint8(value_schema, value_array);
+        auto casted = util::cast_bit_to_uint8(value_schema, value_array);
         enums_in_write.assign(
             (ValueType*)casted.data(), (ValueType*)casted.data() + num_elems);
     } else {
@@ -995,31 +996,6 @@ bool SOMAArray::_extend_and_evolve_schema<std::string>(
             column_name, enmr, enums_in_write, index_schema, index_array);
     }
     return false;
-}
-
-std::vector<uint8_t> SOMAArray::_cast_bit_to_uint8(
-    ArrowSchema* schema, ArrowArray* array) {
-    if (strcmp(schema->format, "b") != 0) {
-        throw TileDBSOMAError(fmt::format(
-            "_cast_bit_to_uint8 expected column format to be 'b' but saw {}",
-            schema->format));
-    }
-
-    const void* data;
-    if (array->n_buffers == 3) {
-        data = array->buffers[2];
-    } else {
-        data = array->buffers[1];
-    }
-
-    std::vector<uint8_t> casted;
-    for (int64_t i = 0; i * 8 < array->length; ++i) {
-        uint8_t byte = ((uint8_t*)data)[i];
-        for (int64_t j = 0; j < 8; ++j) {
-            casted.push_back((uint8_t)((byte >> j) & 0x01));
-        }
-    }
-    return casted;
 }
 
 uint64_t SOMAArray::ndim() const {
