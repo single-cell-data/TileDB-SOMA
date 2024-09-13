@@ -976,12 +976,108 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_tiledb_domain();
 
-    bool _extend_enumeration(
-        ArrowSchema* value_schema,
-        ArrowArray* value_array,
-        ArrowSchema* index_schema,
-        ArrowArray* index_array,
-        ArraySchemaEvolution se);
+    bool _cast_column(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+    void _promote_indexes_to_values(ArrowSchema* schema, ArrowArray* array);
+
+    template <typename T>
+    void _cast_dictionary_values(ArrowSchema* schema, ArrowArray* array);
+
+    std::vector<int64_t> _get_index_vector(
+        ArrowSchema* schema, ArrowArray* array) {
+        auto index_type = ArrowAdapter::to_tiledb_format(schema->format);
+
+        switch (index_type) {
+            case TILEDB_INT8: {
+                int8_t* idxbuf = (int8_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT8: {
+                uint8_t* idxbuf = (uint8_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_INT16: {
+                int16_t* idxbuf = (int16_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT16: {
+                uint16_t* idxbuf = (uint16_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_INT32: {
+                int32_t* idxbuf = (int32_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT32: {
+                uint32_t* idxbuf = (uint32_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_INT64: {
+                int64_t* idxbuf = (int64_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT64: {
+                uint64_t* idxbuf = (uint64_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid index type when trying to promote indexes to "
+                    "values");
+        }
+    }
+
+    template <typename UserType>
+    bool _cast_column_aux(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+    template <typename UserType, typename DiskType>
+    bool _set_column(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+        // Here we cast the passed-in column to be what is the type in the
+        // schema on disk. For columns with dictionaries, we will need
+        // additional processing steps
+
+        UserType* buf;
+        if (array->n_buffers == 3) {
+            buf = (UserType*)array->buffers[2] + array->offset;
+        } else {
+            buf = (UserType*)array->buffers[1] + array->offset;
+        }
+
+        bool has_attr = tiledb_schema()->has_attribute(schema->name);
+        if (has_attr && attr_has_enum(schema->name)) {
+            // For columns with dictionaries, we need to set the data buffers to
+            // the dictionary's indexes. If there were any new enumeration
+            // values added, we need to extend and and evolve the TileDB
+            // ArraySchema
+
+            // Return whether we extended the enumeration for this attribute
+            return _extend_enumeration(
+                schema->dictionary,  // value schema
+                array->dictionary,   // value array
+                schema,              // index schema
+                array,               // index array
+                se);
+        } else {
+            // In the general case, we can just cast the values and set the
+            // write buffers
+            std::vector<UserType> orig_vals(buf, buf + array->length);
+            std::vector<DiskType> casted_values(
+                orig_vals.begin(), orig_vals.end());
+
+            mq_->setup_write_column(
+                schema->name,
+                casted_values.size(),
+                (const void*)casted_values.data(),
+                (uint64_t*)nullptr,
+                (uint8_t*)array->buffers[0]);
+
+            // Return false because we do not extend the enumeration
+            return false;
+        }
+    }
 
     template <typename ValueType>
     bool _extend_and_evolve_schema(
@@ -991,111 +1087,44 @@ class SOMAArray : public SOMAObject {
         ArrowArray* index_array,
         ArraySchemaEvolution se);
 
-    bool _create_and_cast_column(
-        ArrowSchema* orig_column_schema,
-        ArrowArray* orig_column_array,
-        ArrowSchema* new_column_schema,
-        ArrowArray* new_column_array,
-        ArraySchemaEvolution se);
-
-    void _create_column(
-        ArrowSchema* orig_column_schema,
-        ArrowArray* orig_column_array,
-        ArrowSchema* new_column_schema,
-        ArrowArray* new_column_array);
-
-    void _cast_column(
-        ArrowSchema* orig_column_schema,
-        ArrowArray* orig_column_array,
-        ArrowSchema* new_column_schema,
-        ArrowArray* new_column_array);
-
-    template <typename UserType>
-    void _cast_column_aux(
-        ArrowSchema* orig_column_schema,
-        ArrowArray* orig_column_array,
-        ArrowSchema* new_column_schema,
-        ArrowArray* new_column_array);
-
-    template <typename UserType, typename DiskType>
-    void _copy_column(
-        ArrowArray* orig_column_array, ArrowArray* new_column_array) {
-        UserType* buf;
-        if (orig_column_array->n_buffers == 3) {
-            buf = (UserType*)orig_column_array->buffers[2] +
-                  orig_column_array->offset;
-        } else {
-            buf = (UserType*)orig_column_array->buffers[1] +
-                  orig_column_array->offset;
-        }
-        std::vector<UserType> original_values(
-            buf, buf + orig_column_array->length);
-        std::vector<DiskType> casted_values;
-        for (auto val : original_values) {
-            casted_values.push_back(val);
-        }
-
-        new_column_array->buffers[0] = orig_column_array->buffers[0];
-
-        if (orig_column_array->n_buffers == 3) {
-            new_column_array->buffers[2] = malloc(
-                sizeof(DiskType) * casted_values.size());
-            std::memcpy(
-                (void*)new_column_array->buffers[2],
-                casted_values.data(),
-                sizeof(DiskType) * casted_values.size());
-        } else {
-            new_column_array->buffers[1] = malloc(
-                sizeof(DiskType) * casted_values.size());
-            std::memcpy(
-                (void*)new_column_array->buffers[1],
-                casted_values.data(),
-                sizeof(DiskType) * casted_values.size());
-        }
-    }
-
     template <typename ValueType>
     void _remap_indexes(
-        std::string column_name,
+        std::string name,
         Enumeration extended_enmr,
         std::vector<ValueType> enums_in_write,
         ArrowSchema* index_schema,
         ArrowArray* index_array) {
+        // If the passed-in enumerations are only a subset of the new extended
+        // enumerations, then we will need to remap the indexes. Here identify
+        // the dictionary values' type
+
         auto user_index_type = ArrowAdapter::to_tiledb_format(
             index_schema->format);
         switch (user_index_type) {
             case TILEDB_INT8:
-                SOMAArray::_remap_indexes_aux<ValueType, int8_t>(
-                    column_name, extended_enmr, enums_in_write, index_array);
-                break;
+                return _remap_indexes_aux<ValueType, int8_t>(
+                    name, extended_enmr, enums_in_write, index_array);
             case TILEDB_UINT8:
-                SOMAArray::_remap_indexes_aux<ValueType, uint8_t>(
-                    column_name, extended_enmr, enums_in_write, index_array);
-                break;
+                return _remap_indexes_aux<ValueType, uint8_t>(
+                    name, extended_enmr, enums_in_write, index_array);
             case TILEDB_INT16:
-                SOMAArray::_remap_indexes_aux<ValueType, int16_t>(
-                    column_name, extended_enmr, enums_in_write, index_array);
-                break;
+                return _remap_indexes_aux<ValueType, int16_t>(
+                    name, extended_enmr, enums_in_write, index_array);
             case TILEDB_UINT16:
-                SOMAArray::_remap_indexes_aux<ValueType, uint16_t>(
-                    column_name, extended_enmr, enums_in_write, index_array);
-                break;
+                return _remap_indexes_aux<ValueType, uint16_t>(
+                    name, extended_enmr, enums_in_write, index_array);
             case TILEDB_INT32:
-                SOMAArray::_remap_indexes_aux<ValueType, int32_t>(
-                    column_name, extended_enmr, enums_in_write, index_array);
-                break;
+                return _remap_indexes_aux<ValueType, int32_t>(
+                    name, extended_enmr, enums_in_write, index_array);
             case TILEDB_UINT32:
-                SOMAArray::_remap_indexes_aux<ValueType, uint32_t>(
-                    column_name, extended_enmr, enums_in_write, index_array);
-                break;
+                return _remap_indexes_aux<ValueType, uint32_t>(
+                    name, extended_enmr, enums_in_write, index_array);
             case TILEDB_INT64:
-                SOMAArray::_remap_indexes_aux<ValueType, int64_t>(
-                    column_name, extended_enmr, enums_in_write, index_array);
-                break;
+                return _remap_indexes_aux<ValueType, int64_t>(
+                    name, extended_enmr, enums_in_write, index_array);
             case TILEDB_UINT64:
-                SOMAArray::_remap_indexes_aux<ValueType, uint64_t>(
-                    column_name, extended_enmr, enums_in_write, index_array);
-                break;
+                return _remap_indexes_aux<ValueType, uint64_t>(
+                    name, extended_enmr, enums_in_write, index_array);
             default:
                 throw TileDBSOMAError(
                     "Saw invalid enumeration index type when trying to extend"
@@ -1109,19 +1138,20 @@ class SOMAArray : public SOMAObject {
         Enumeration extended_enmr,
         std::vector<ValueType> enums_in_write,
         ArrowArray* index_array) {
+        // Get the user passed-in dictionary indexes
         IndexType* idxbuf;
         if (index_array->n_buffers == 3) {
             idxbuf = (IndexType*)index_array->buffers[2];
         } else {
             idxbuf = (IndexType*)index_array->buffers[1];
         }
-
-        auto enmr_vec = extended_enmr.as_vector<ValueType>();
-        auto beg = enmr_vec.begin();
-        auto end = enmr_vec.end();
         std::vector<IndexType> original_indexes(
             idxbuf, idxbuf + index_array->length);
+
+        // Shift the dictionary indexes to match the on-disk extended
+        // enumerations
         std::vector<IndexType> shifted_indexes;
+        auto enmr_vec = extended_enmr.as_vector<ValueType>();
         for (auto i : original_indexes) {
             // For nullable columns, when the value is NULL, the associated
             // index may be a negative integer, so do not index into
@@ -1129,37 +1159,40 @@ class SOMAArray : public SOMAObject {
             if (0 > i) {
                 shifted_indexes.push_back(i);
             } else {
-                auto it = std::find(beg, end, enums_in_write[i]);
-                shifted_indexes.push_back(it - beg);
+                auto it = std::find(
+                    enmr_vec.begin(), enmr_vec.end(), enums_in_write[i]);
+                shifted_indexes.push_back(it - enmr_vec.begin());
             }
         }
 
+        // Cast the user passed-in index type to be what is on-disk before we
+        // set the write buffers. Here we identify the on-disk type
         auto attr = tiledb_schema()->attribute(column_name);
         switch (attr.type()) {
             case TILEDB_INT8:
-                return SOMAArray::_cast_shifted_indexes<IndexType, int8_t>(
-                    shifted_indexes, index_array);
+                return _cast_shifted_indexes<IndexType, int8_t>(
+                    column_name, shifted_indexes, index_array);
             case TILEDB_UINT8:
-                return SOMAArray::_cast_shifted_indexes<IndexType, uint8_t>(
-                    shifted_indexes, index_array);
+                return _cast_shifted_indexes<IndexType, uint8_t>(
+                    column_name, shifted_indexes, index_array);
             case TILEDB_INT16:
-                return SOMAArray::_cast_shifted_indexes<IndexType, int16_t>(
-                    shifted_indexes, index_array);
+                return _cast_shifted_indexes<IndexType, int16_t>(
+                    column_name, shifted_indexes, index_array);
             case TILEDB_UINT16:
-                return SOMAArray::_cast_shifted_indexes<IndexType, uint16_t>(
-                    shifted_indexes, index_array);
+                return _cast_shifted_indexes<IndexType, uint16_t>(
+                    column_name, shifted_indexes, index_array);
             case TILEDB_INT32:
-                return SOMAArray::_cast_shifted_indexes<IndexType, int32_t>(
-                    shifted_indexes, index_array);
+                return _cast_shifted_indexes<IndexType, int32_t>(
+                    column_name, shifted_indexes, index_array);
             case TILEDB_UINT32:
-                return SOMAArray::_cast_shifted_indexes<IndexType, uint32_t>(
-                    shifted_indexes, index_array);
+                return _cast_shifted_indexes<IndexType, uint32_t>(
+                    column_name, shifted_indexes, index_array);
             case TILEDB_INT64:
-                return SOMAArray::_cast_shifted_indexes<IndexType, int64_t>(
-                    shifted_indexes, index_array);
+                return _cast_shifted_indexes<IndexType, int64_t>(
+                    column_name, shifted_indexes, index_array);
             case TILEDB_UINT64:
-                return SOMAArray::_cast_shifted_indexes<IndexType, uint64_t>(
-                    shifted_indexes, index_array);
+                return _cast_shifted_indexes<IndexType, uint64_t>(
+                    column_name, shifted_indexes, index_array);
             default:
                 throw TileDBSOMAError(
                     "Saw invalid enumeration index type when trying to extend"
@@ -1169,96 +1202,33 @@ class SOMAArray : public SOMAObject {
 
     template <typename UserIndexType, typename DiskIndexType>
     void _cast_shifted_indexes(
-        std::vector<UserIndexType> shifted_indexes, ArrowArray* index_array) {
-        std::vector<DiskIndexType> casted_indexes;
-        for (auto i : shifted_indexes) {
-            casted_indexes.push_back(i);
-        }
+        std::string column_name,
+        std::vector<UserIndexType> shifted_indexes,
+        ArrowArray* index_array) {
+        // Cast the user passed-in index type to be what is on-disk and
+        // set the write buffers
+        std::vector<DiskIndexType> casted_indexes(
+            shifted_indexes.begin(), shifted_indexes.end());
 
-        if (index_array->n_buffers == 3) {
-            index_array->buffers[2] = malloc(
-                sizeof(DiskIndexType) * casted_indexes.size());
-            std::memcpy(
-                (void*)index_array->buffers[2],
-                casted_indexes.data(),
-                sizeof(DiskIndexType) * casted_indexes.size());
-        } else {
-            index_array->buffers[1] = malloc(
-                sizeof(DiskIndexType) * casted_indexes.size());
-            std::memcpy(
-                (void*)index_array->buffers[1],
-                casted_indexes.data(),
-                sizeof(DiskIndexType) * casted_indexes.size());
-        }
+        mq_->setup_write_column(
+            column_name,
+            casted_indexes.size(),
+            (const void*)casted_indexes.data(),
+            (uint64_t*)nullptr,
+            (uint8_t*)index_array->buffers[0]);
     }
 
-    void _promote_indexes_to_values(
-        ArrowSchema* orig_column_schema,
-        ArrowArray* orig_column_array,
-        ArrowArray* new_column_array);
+    bool _extend_enumeration(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array,
+        ArraySchemaEvolution se);
 
-    template <typename T>
-    void _cast_dictionary_values(
-        ArrowSchema* orig_column_schema,
-        ArrowArray* orig_column_array,
-        ArrowArray* new_column_array);
+    std::vector<uint8_t> _cast_bit_to_uint8(
+        ArrowSchema* schema, ArrowArray* array);
 
-    std::vector<int64_t> _get_index_vector(
-        ArrowSchema* orig_column_schema, ArrowArray* orig_column_array) {
-        auto index_type = ArrowAdapter::to_tiledb_format(
-            orig_column_schema->format);
-        auto len = orig_column_array->length;
-
-        switch (index_type) {
-            case TILEDB_INT8: {
-                int8_t* idxbuf = (int8_t*)orig_column_array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + len);
-            }
-            case TILEDB_UINT8: {
-                uint8_t* idxbuf = (uint8_t*)orig_column_array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + len);
-            }
-            case TILEDB_INT16: {
-                int16_t* idxbuf = (int16_t*)orig_column_array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + len);
-            }
-            case TILEDB_UINT16: {
-                uint16_t* idxbuf = (uint16_t*)orig_column_array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + len);
-            }
-            case TILEDB_INT32: {
-                int32_t* idxbuf = (int32_t*)orig_column_array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + len);
-            }
-            case TILEDB_UINT32: {
-                uint32_t* idxbuf = (uint32_t*)orig_column_array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + len);
-            }
-            case TILEDB_INT64: {
-                int64_t* idxbuf = (int64_t*)orig_column_array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + len);
-            }
-            case TILEDB_UINT64: {
-                uint64_t* idxbuf = (uint64_t*)orig_column_array->buffers[1];
-                return std::vector<int64_t>(idxbuf, idxbuf + len);
-            }
-            default:
-                throw TileDBSOMAError(
-                    "Saw invalid index type when trying to promote indexes to "
-                    "values");
-        }
-    }
-
-    // Helper function to cast Boolean of bits (Arrow) to uint8 (TileDB)
-    void _cast_bit_to_uint8(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
-
-    // Fills the metadata cache upon opening the array.
     void fill_metadata_cache();
-
-    // Helper function for set_array_data
-    ArrowTable _cast_table(
-        std::unique_ptr<ArrowSchema> arrow_schema,
-        std::unique_ptr<ArrowArray> arrow_array);
 
     // SOMAArray URI
     std::string uri_;
@@ -1304,38 +1274,28 @@ class SOMAArray : public SOMAObject {
 };
 
 template <>
+void SOMAArray::_cast_dictionary_values<std::string>(
+    ArrowSchema* schema, ArrowArray* array);
+
+template <>
+void SOMAArray::_cast_dictionary_values<bool>(
+    ArrowSchema* schema, ArrowArray* array);
+
+template <>
+bool SOMAArray::_cast_column_aux<std::string>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+template <>
+bool SOMAArray::_cast_column_aux<bool>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+template <>
 bool SOMAArray::_extend_and_evolve_schema<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
     ArraySchemaEvolution se);
-
-template <>
-void SOMAArray::_cast_dictionary_values<std::string>(
-    ArrowSchema* orig_column_schema,
-    ArrowArray* orig_column_array,
-    ArrowArray* new_column_array);
-
-template <>
-void SOMAArray::_cast_dictionary_values<bool>(
-    ArrowSchema* orig_column_schema,
-    ArrowArray* orig_column_array,
-    ArrowArray* new_column_array);
-
-template <>
-void SOMAArray::_cast_column_aux<std::string>(
-    ArrowSchema* orig_column_schema,
-    ArrowArray* orig_column_array,
-    ArrowSchema* new_column_schema,
-    ArrowArray* new_column_array);
-
-template <>
-void SOMAArray::_cast_column_aux<bool>(
-    ArrowSchema* orig_column_schema,
-    ArrowArray* orig_column_array,
-    ArrowSchema* new_column_schema,
-    ArrowArray* new_column_array);
 
 }  // namespace tiledbsoma
 
