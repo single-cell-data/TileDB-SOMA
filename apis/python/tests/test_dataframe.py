@@ -1263,7 +1263,7 @@ def test_extend_enumerations(tmp_path):
             assert (readback_df[c] == written_df[c]).all()
 
 
-def test_multiple_writes_with_enums(tmp_path):
+def test_multiple_writes_with_str_enums(tmp_path):
     uri = tmp_path.as_posix()
 
     schema = pa.schema(
@@ -1307,6 +1307,100 @@ def test_multiple_writes_with_enums(tmp_path):
     df1.obs = pd.Categorical(df1.obs, categories=uc.categories)
     df2.obs = pd.Categorical(df2.obs, categories=uc.categories)
     expected_df = pd.concat((df1, df2), ignore_index=True)
+
+    assert df.equals(expected_df)
+
+    # No new enumerations introduced but we still need to remap
+    # the indexes
+    df3 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([6, 7], dtype=np.int64),
+            "obs": pd.Series(["C", "C"], dtype="category"),
+        }
+    )
+    tbl = pa.Table.from_pandas(df3, preserve_index=False)
+    with soma.open(uri, mode="w") as A:
+        A.write(tbl)
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    uc = union_categoricals([df1.obs, df2.obs, df3.obs])
+    df1.obs = pd.Categorical(df1.obs, categories=uc.categories)
+    df2.obs = pd.Categorical(df2.obs, categories=uc.categories)
+    df3.obs = pd.Categorical(df3.obs, categories=uc.categories)
+    expected_df = pd.concat((df1, df2, df3), ignore_index=True)
+
+    assert df.equals(expected_df)
+
+
+def test_multiple_writes_with_int_enums(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            (
+                "obs",
+                pa.dictionary(
+                    index_type=pa.int8(), value_type=pa.int64(), ordered=False
+                ),
+            ),
+        ]
+    )
+    soma.DataFrame.create(uri, schema=schema).close()
+
+    df1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2], dtype=np.int64),
+            "obs": pd.Series([1, 2, 1], dtype="category"),
+        }
+    )
+    tbl = pa.Table.from_pandas(df1, preserve_index=False)
+    with soma.open(uri, mode="w") as A:
+        A.write(tbl)
+
+    df2 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([3, 4, 5], dtype=np.int64),
+            "obs": pd.Series([2, 3, 2], dtype="category"),
+        }
+    )
+    tbl = pa.Table.from_pandas(df2, preserve_index=False)
+    with soma.open(uri, mode="w") as A:
+        A.write(tbl)
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    # https://stackoverflow.com/questions/45639350/retaining-categorical-dtype-upon-dataframe-concatenation
+    uc = union_categoricals([df1.obs, df2.obs])
+    df1.obs = pd.Categorical(df1.obs, categories=uc.categories)
+    df2.obs = pd.Categorical(df2.obs, categories=uc.categories)
+    expected_df = pd.concat((df1, df2), ignore_index=True)
+
+    assert df.equals(expected_df)
+
+    # No new enumerations introduced but we still need to remap
+    # the indexes
+    df3 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([6, 7], dtype=np.int64),
+            "obs": pd.Series([3, 3], dtype="category"),
+        }
+    )
+    tbl = pa.Table.from_pandas(df3, preserve_index=False)
+    with soma.open(uri, mode="w") as A:
+        A.write(tbl)
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    uc = union_categoricals([df1.obs, df2.obs, df3.obs])
+    df1.obs = pd.Categorical(df1.obs, categories=uc.categories)
+    df2.obs = pd.Categorical(df2.obs, categories=uc.categories)
+    df3.obs = pd.Categorical(df3.obs, categories=uc.categories)
+    expected_df = pd.concat((df1, df2, df3), ignore_index=True)
 
     assert df.equals(expected_df)
 

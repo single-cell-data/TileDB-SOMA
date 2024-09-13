@@ -895,23 +895,27 @@ bool SOMAArray::_extend_and_evolve_schema(
         // passes in values [B, C] which maps to indexes [0, 1]. However, the
         // full set of extended enumerations is [A, B, C] which means we need to
         // remap [B, C] to be indexes [1, 2]
-        _remap_indexes(
+        SOMAArray::_remap_indexes(
             column_name,
             extended_enmr,
             enums_in_write,
             index_schema,
             index_array);
 
+        // The enumeration was extended
         return true;
     } else {
-        // We do not need to extend the enumeration; write as-is
-        mq_->setup_write_column(
-            column_name,
-            index_array->length,
-            (const void*)index_array->buffers[1],
-            (uint64_t*)nullptr,
-            (uint8_t*)index_array->buffers[0]);
+        // Example:
+        //
+        // * Already on storage/schema there are values a,b,c with indices
+        //   0,1,2.
+        // * User appends values b,c which, within the Arrow data coming in
+        //   from the user, have indices 0,1.
+        // * We need to remap those to 1,2.
+        SOMAArray::_remap_indexes(
+            column_name, enmr, enums_in_write, index_schema, index_array);
 
+        // The enumeration was not extended
         return false;
     }
 }
@@ -980,8 +984,6 @@ bool SOMAArray::_extend_and_evolve_schema<std::string>(
             index_schema,
             index_array);
 
-        index_schema->format = ArrowAdapter::to_arrow_format(disk_index_type)
-                                   .data();
         return true;
     } else {
         // Example:
