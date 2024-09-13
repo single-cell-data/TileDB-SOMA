@@ -1027,7 +1027,7 @@ class SOMAArray : public SOMAObject {
                     "values");
         }
     }
-    
+
     template <typename UserType>
     bool _cast_column_aux(
         ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
@@ -1224,6 +1224,9 @@ class SOMAArray : public SOMAObject {
         ArrowSchema* index_schema,
         ArrowArray* index_array,
         ArraySchemaEvolution se);
+
+    std::vector<uint8_t> _cast_bit_to_uint8(
+        ArrowSchema* schema, ArrowArray* array);
 
     bool _extend_enumeration_legacy(
         ArrowSchema* value_schema,
