@@ -663,6 +663,187 @@ bool SOMAArray::_cast_column(
     }
 }
 
+void SOMAArray::_promote_indexes_to_values(
+    ArrowSchema* schema, ArrowArray* array) {
+    // This is a column with a dictionary. However, the associated TileDB
+    // attribute on disk is not enumerated. We will need to map the dictionary
+    // indexes to the associated dictionary values and write the values to disk.
+    // Here, we identify the passed-in column type
+
+    auto value_type = ArrowAdapter::to_tiledb_format(
+        schema->dictionary->format);
+    switch (value_type) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return _cast_dictionary_values<std::string>(schema, array);
+        case TILEDB_BOOL:
+            return _cast_dictionary_values<bool>(schema, array);
+        case TILEDB_INT8:
+            return _cast_dictionary_values<int8_t>(schema, array);
+        case TILEDB_UINT8:
+            return _cast_dictionary_values<uint8_t>(schema, array);
+        case TILEDB_INT16:
+            return _cast_dictionary_values<int16_t>(schema, array);
+        case TILEDB_UINT16:
+            return _cast_dictionary_values<uint16_t>(schema, array);
+        case TILEDB_INT32:
+            return _cast_dictionary_values<int32_t>(schema, array);
+        case TILEDB_UINT32:
+            return _cast_dictionary_values<uint32_t>(schema, array);
+        case TILEDB_INT64:
+            return _cast_dictionary_values<int64_t>(schema, array);
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
+        case TILEDB_UINT64:
+            return _cast_dictionary_values<uint64_t>(schema, array);
+        case TILEDB_FLOAT32:
+            return _cast_dictionary_values<float>(schema, array);
+        case TILEDB_FLOAT64:
+            return _cast_dictionary_values<double>(schema, array);
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "Saw invalid TileDB value type when attempting to "
+                "promote indexes to values: {}",
+                tiledb::impl::type_to_str(value_type)));
+    }
+}
+
+template <typename T>
+void SOMAArray::_cast_dictionary_values(
+    ArrowSchema* schema, ArrowArray* array) {
+    // This is a column with a dictionary. However, the associated TileDB
+    // attribute on disk is not enumerated. Here, we map the dictionary indexes
+    // to the associated dictionary values and set the buffers to use the
+    // dictionary values to write to disk. Note the specialized templates for
+    // string and Boolean types below
+
+    auto value_array = array->dictionary;
+
+    T* valbuf;
+    if (value_array->n_buffers == 3) {
+        valbuf = (T*)value_array->buffers[2];
+    } else {
+        valbuf = (T*)value_array->buffers[1];
+    }
+    std::vector<T> values(valbuf, valbuf + value_array->length);
+
+    std::vector<int64_t> indexes = _get_index_vector(schema, array);
+
+    std::vector<T> index_to_value;
+    for (auto i : indexes) {
+        index_to_value.push_back(values[i]);
+    }
+
+    mq_->setup_write_column(
+        schema->name,
+        array->length,
+        (const void*)index_to_value.data(),
+        (uint64_t*)nullptr,
+        (uint8_t*)value_array->buffers[0]);
+}
+
+template <>
+void SOMAArray::_cast_dictionary_values<std::string>(
+    ArrowSchema* schema, ArrowArray* array) {
+    // String types require special handling due to large vs regular
+    // string/binary
+
+    auto value_schema = schema->dictionary;
+    auto value_array = array->dictionary;
+
+    uint64_t num_elems = value_array->length;
+
+    std::vector<uint64_t> offsets_v;
+    if ((strcmp(value_schema->format, "U") == 0) ||
+        (strcmp(value_schema->format, "Z") == 0)) {
+        uint64_t* offsets = (uint64_t*)value_array->buffers[1];
+        offsets_v.resize(num_elems + 1);
+        offsets_v.assign(offsets, offsets + num_elems + 1);
+    } else {
+        uint32_t* offsets = (uint32_t*)value_array->buffers[1];
+        std::vector<uint32_t> offset_holder(offsets, offsets + num_elems + 1);
+        for (auto offset : offset_holder) {
+            offsets_v.push_back((uint64_t)offset);
+        }
+    }
+
+    char* data = (char*)value_array->buffers[2];
+    std::string data_v(data, data + offsets_v[offsets_v.size() - 1]);
+
+    std::vector<std::string> values;
+    for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
+         ++offset_idx) {
+        auto beg = offsets_v[offset_idx];
+        auto sz = offsets_v[offset_idx + 1] - beg;
+        values.push_back(data_v.substr(beg, sz));
+    }
+
+    std::vector<int64_t> indexes = SOMAArray::_get_index_vector(schema, array);
+
+    uint64_t offset_sum = 0;
+    std::vector<uint64_t> value_offsets = {0};
+    std::string index_to_value;
+    for (auto i : indexes) {
+        auto value = values[i];
+        offset_sum += value.size();
+        value_offsets.push_back(offset_sum);
+        index_to_value.insert(index_to_value.end(), value.begin(), value.end());
+    }
+
+    mq_->setup_write_column(
+        schema->name,
+        value_offsets.size() - 1,
+        (const void*)index_to_value.data(),
+        (uint64_t*)value_offsets.data(),
+        (uint8_t*)value_array->buffers[0]);
+}
+
+template <>
+void SOMAArray::_cast_dictionary_values<bool>(
+    ArrowSchema* schema, ArrowArray* array) {
+    // Boolean types require special handling due to bit vs uint8_t
+    // representation in Arrow vs TileDB respectively
+
+    auto value_schema = schema->dictionary;
+    auto value_array = array->dictionary;
+
+    std::vector<int64_t> indexes = _get_index_vector(schema, array);
+    std::vector<uint8_t> values = _cast_bit_to_uint8(value_schema, value_array);
+    std::vector<uint8_t> index_to_value;
+
+    for (auto i : indexes) {
+        index_to_value.push_back(values[i]);
+    }
+
+    mq_->setup_write_column(
+        schema->name,
+        array->length,
+        (const void*)index_to_value.data(),
+        (uint64_t*)nullptr,
+        (uint8_t*)value_array->buffers[0]);
+}
+
 template <>
 void SOMAArray::_cast_dictionary_values_legacy<std::string>(
     ArrowSchema* orig_column_schema,

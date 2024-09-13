@@ -979,6 +979,55 @@ class SOMAArray : public SOMAObject {
     bool _cast_column(
         ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
+    void _promote_indexes_to_values(ArrowSchema* schema, ArrowArray* array);
+
+    template <typename T>
+    void _cast_dictionary_values(ArrowSchema* schema, ArrowArray* array);
+
+    std::vector<int64_t> _get_index_vector(
+        ArrowSchema* schema, ArrowArray* array) {
+        auto index_type = ArrowAdapter::to_tiledb_format(schema->format);
+
+        switch (index_type) {
+            case TILEDB_INT8: {
+                int8_t* idxbuf = (int8_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT8: {
+                uint8_t* idxbuf = (uint8_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_INT16: {
+                int16_t* idxbuf = (int16_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT16: {
+                uint16_t* idxbuf = (uint16_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_INT32: {
+                int32_t* idxbuf = (int32_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT32: {
+                uint32_t* idxbuf = (uint32_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_INT64: {
+                int64_t* idxbuf = (int64_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT64: {
+                uint64_t* idxbuf = (uint64_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid index type when trying to promote indexes to "
+                    "values");
+        }
+    }
+
     bool _extend_enumeration_legacy(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
@@ -1314,6 +1363,14 @@ class SOMAArray : public SOMAObject {
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow();
 };
+
+template <>
+void SOMAArray::_cast_dictionary_values<std::string>(
+    ArrowSchema* schema, ArrowArray* array);
+
+template <>
+void SOMAArray::_cast_dictionary_values<bool>(
+    ArrowSchema* schema, ArrowArray* array);
 
 template <>
 bool SOMAArray::_extend_and_evolve_schema_legacy<std::string>(
