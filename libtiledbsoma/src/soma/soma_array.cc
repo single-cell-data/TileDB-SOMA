@@ -1205,13 +1205,32 @@ uint64_t SOMAArray::nnz() {
     // compute total_cell_num while going through the loop
     uint64_t total_cell_num = 0;
     std::vector<std::array<uint64_t, 2>> non_empty_domains(fragment_count);
+
+    // The loop after this only works if dim 0 is int64 soma_joinid.
+    // That's the case for _almost_ all SOMADataFrame objects, but
+    // not the "variant-indexed" ones: the SOMA spec only requires
+    // that soma_joinid be present as a dim or an attr.
+    auto dim = tiledb_schema()->domain().dimension(0);
+    auto dim_name = dim.name();
+    auto type_code = dim.type();
+    if (dim_name != "soma_joinid" || type_code != TILEDB_INT64) {
+        LOG_DEBUG(fmt::format(
+            "[SOMAArray::nnz] dim 0 (type={} name={}) isn't int64 "
+            "soma_joind: using _nnz_slow",
+            tiledb::impl::type_to_str(type_code),
+            dim_name));
+        return _nnz_slow();
+    }
+
     for (uint32_t i = 0; i < fragment_count; i++) {
         // TODO[perf]: Reading fragment info is not supported on TileDB Cloud
         // yet, but reading one fragment at a time will be slow. Is there
         // another way?
         total_cell_num += fragment_info.cell_num(relevant_fragments[i]);
+
         fragment_info.get_non_empty_domain(
             relevant_fragments[i], 0, &non_empty_domains[i]);
+
         LOG_DEBUG(fmt::format(
             "[SOMAArray] fragment {} non-empty domain = [{}, {}]",
             i,

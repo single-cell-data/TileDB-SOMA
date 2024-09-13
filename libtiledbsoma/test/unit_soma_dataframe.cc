@@ -230,7 +230,7 @@ TEST_CASE_METHOD(
         REQUIRE(
             soma_dataframe->index_column_names() ==
             expected_index_column_names);
-        REQUIRE(soma_dataframe->count() == 0);
+        REQUIRE(soma_dataframe->nnz() == 0);
         soma_dataframe->close();
 
         std::vector<int64_t> d0(10);
@@ -531,7 +531,13 @@ TEST_CASE_METHOD(
 
         soma_dataframe->close();
 
+        REQUIRE(soma_dataframe->nnz() == 0);
+
         write_sjid_u32_str_data_from(0);
+
+        REQUIRE(soma_dataframe->nnz() == 2);
+        write_sjid_u32_str_data_from(8);
+        REQUIRE(soma_dataframe->nnz() == 4);
 
         // Resize
         auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX});
@@ -637,8 +643,14 @@ TEST_CASE_METHOD(
         REQUIRE(actual.value() == expect);
         soma_dataframe->close();
 
+        REQUIRE(soma_dataframe->nnz() == 0);
+
         // Write
         write_sjid_u32_str_data_from(0);
+
+        REQUIRE(soma_dataframe->nnz() == 2);
+        write_sjid_u32_str_data_from(8);
+        REQUIRE(soma_dataframe->nnz() == 4);
 
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
@@ -755,8 +767,14 @@ TEST_CASE_METHOD(
         REQUIRE(actual.value() == expect);
         soma_dataframe->close();
 
+        REQUIRE(soma_dataframe->nnz() == 0);
+
         // Write
         write_sjid_u32_str_data_from(0);
+
+        REQUIRE(soma_dataframe->nnz() == 2);
+        write_sjid_u32_str_data_from(8);
+        REQUIRE(soma_dataframe->nnz() == 4);
 
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
@@ -870,8 +888,16 @@ TEST_CASE_METHOD(
         REQUIRE(!actual.has_value());
         soma_dataframe->close();
 
+        REQUIRE(soma_dataframe->nnz() == 0);
+
         // Write
         write_sjid_u32_str_data_from(0);
+
+        REQUIRE(soma_dataframe->nnz() == 2);
+        write_sjid_u32_str_data_from(8);
+        // soma_joinid is not a dim here and so the second write is an overwrite
+        // of the first here
+        REQUIRE(soma_dataframe->nnz() == 2);
 
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
