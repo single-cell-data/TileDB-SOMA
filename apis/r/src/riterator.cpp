@@ -66,17 +66,17 @@ namespace tdbs = tiledbsoma;
 //' }
 //' @noRd
 // [[Rcpp::export]]
-Rcpp::List sr_setup(const std::string& uri,
-                    Rcpp::CharacterVector config,
-                    Rcpp::XPtr<somactx_wrap_t> ctxxp,
-                    Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                    Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                    Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                    Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                    std::string batch_size = "auto",
-                    std::string result_order = "auto",
-                    Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue,
-                    const std::string& loglevel = "auto") {
+Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
+                                     Rcpp::CharacterVector config,
+                                     Rcpp::XPtr<somactx_wrap_t> ctxxp,
+                                     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                                     std::string batch_size = "auto",
+                                     std::string result_order = "auto",
+                                     Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue,
+                                     const std::string& loglevel = "auto") {
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -150,8 +150,7 @@ Rcpp::List sr_setup(const std::string& uri,
     }
 
     Rcpp::XPtr<tdbs::SOMAArray> xptr = make_xptr<tdbs::SOMAArray>(ptr);
-    return Rcpp::List::create(Rcpp::Named("sr") = xptr,
-                              Rcpp::Named("ctx") = ctx_wrap_xptr);
+    return xptr;
 }
 
 // [[Rcpp::export]]

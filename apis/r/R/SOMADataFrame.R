@@ -192,7 +192,7 @@ SOMADataFrame <- R6::R6Class(
       spdl::debug("[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
                   private$tiledb_timestamp[1], private$tiledb_timestamp[2])
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      rl <- sr_setup(uri = self$uri,
+      sr <- sr_setup(uri = self$uri,
                      config = cfg, # needed ?
                      private$.soma_context,
                      colnames = column_names,
@@ -200,8 +200,7 @@ SOMADataFrame <- R6::R6Class(
                      dim_points = coords,
                      timestamprange = self$.tiledb_timestamp_range,  # NULL or two-elem vector
                      loglevel = log_level)
-      private$ctx_ptr <- rl$ctx # is this still needed?
-      TableReadIter$new(rl$sr)
+      TableReadIter$new(sr)
     },
 
     #' @description Update (lifecycle: maturing)
@@ -400,9 +399,6 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
-    },
-
-    # Internal variable to hold onto context returned by sr_setup
-    ctx_ptr = NULL
+    }
   )
 )

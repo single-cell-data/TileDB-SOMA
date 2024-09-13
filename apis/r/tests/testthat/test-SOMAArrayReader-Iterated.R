@@ -15,8 +15,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
     ctx <- tiledb::tiledb_ctx()
     config <- tiledb::config(ctx)
     somactx <- soma_context()
-    srret <- sr_setup(uri, config = as.character(config), ctxxp = somactx, loglevel = "warn")
-    sr <- srret$sr
+    sr <- sr_setup(uri, config = as.character(config), ctxxp = somactx, loglevel = "warn")
     expect_true(inherits(sr, "externalptr"))
 
     rl <- data.frame()
@@ -33,9 +32,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
     rm(sr)
     gc()
 
-    srret <- sr_setup(uri, config = as.character(config), ctxxp = somactx,
-                      dim_points = list(soma_dim_0=as.integer64(1)))
-    sr <- srret$sr
+    sr <- sr_setup(uri, config = as.character(config), ctxxp = somactx,
+                   dim_points = list(soma_dim_0=as.integer64(1)))
     expect_true(inherits(sr, "externalptr"))
 
     rl <- data.frame()
@@ -53,9 +51,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
     rm(sr)
     gc()
 
-    srret <- sr_setup(uri, config = as.character(config), ctxxp = somactx,
-                      dim_range = list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
-    sr <- srret$sr
+    sr <- sr_setup(uri, config = as.character(config), ctxxp = somactx,
+                   dim_range = list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
     expect_true(inherits(sr, "externalptr"))
 
     rl <- data.frame()
@@ -72,8 +69,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
 
     ## test completeness predicate on shorter data
     uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-    srret <- sr_setup(uri, config=as.character(config), somactx)
-    sr <- srret$sr
+    sr <- sr_setup(uri, config=as.character(config), somactx)
 
     expect_false(tiledbsoma:::sr_complete(sr))
     dat <- sr_next(sr)
@@ -220,8 +216,7 @@ test_that("Dimension Point and Ranges Bounds", {
     ## 'good case' with suitable dim points
     coords <- list(soma_dim_0=bit64::as.integer64(0:5),
                    soma_dim_1=bit64::as.integer64(0:5))
-    srret <- sr_setup(uri = X$uri, config = config, ctxxp = somactx, dim_points = coords)
-    sr <- srret$sr
+    sr <- sr_setup(uri = X$uri, config = config, ctxxp = somactx, dim_points = coords)
 
     chunk <- sr_next(sr)
     at <- arrow::as_arrow_table(chunk)
@@ -233,8 +228,7 @@ test_that("Dimension Point and Ranges Bounds", {
     ## 'good case' with suitable dim ranges
     ranges <- list(soma_dim_0=matrix(bit64::as.integer64(c(1,4)),1),
                    soma_dim_1=matrix(bit64::as.integer64(c(1,4)),1))
-    srret <- sr_setup(uri = X$uri, config = config, somactx, dim_ranges = ranges)
-    sr <- srret$sr
+    sr <- sr_setup(uri = X$uri, config = config, somactx, dim_ranges = ranges)
 
     chunk <- sr_next(sr)
     at <- arrow::as_arrow_table(chunk)

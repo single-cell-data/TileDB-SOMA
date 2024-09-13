@@ -47,15 +47,14 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      rl <- sr_setup(uri = self$uri,
+      sr <- sr_setup(uri = self$uri,
                      config = cfg, # needed ?
                      private$.soma_context,
                      dim_points = coords,
                      result_order = result_order,
                      timestamprange = self$.tiledb_timestamp_range,
                      loglevel = log_level)
-      private$ctx_ptr <- rl$ctx # needed ?
-      SOMASparseNDArrayRead$new(rl$sr, self, coords)
+      SOMASparseNDArrayRead$new(sr, self, coords)
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: maturing)
@@ -302,10 +301,7 @@ SOMASparseNDArray <- R6::R6Class(
     },
 
     # Internal marking of one or zero based matrices for iterated reads
-    zero_based = NA,
-
-    # Internal variable to hold onto context returned by sr_setup
-    ctx_ptr = NULL
+    zero_based = NA
 
   )
 )
