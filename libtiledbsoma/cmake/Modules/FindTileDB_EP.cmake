@@ -111,6 +111,12 @@ else()
                 LOG_INSTALL FALSE
                 )
     else() # Build from source
+
+        message(STATUS "XXXXXXXXXXXXXXXXXXXX1")
+        message(STATUS "Found TileDB: ${TILEDB_LIB}")
+        message(STATUS "TILEDB_REMOVE_DEPRECATIONS: ${TILEDB_REMOVE_DEPRECATIONS}")
+        message(STATUS "XXXXXXXXXXXXXXXXXXXX2")
+
         ExternalProject_Add(ep_tiledb
           PREFIX "externals"
           URL "https://github.com/TileDB-Inc/TileDB/archive/2.26.0.zip"
@@ -125,7 +131,7 @@ else()
             -DTILEDB_HDFS=${TILEDB_HDFS}
             -DTILEDB_SERIALIZATION=${TILEDB_SERIALIZATION}
             -DTILEDB_WERROR=${TILEDB_WERROR}
-            -DTILEDB_REMOVE_DEPRECATIONS=${TILEDB_REMOVE_DEPRECATIONS}
+            -DTILEDB_REMOVE_DEPRECATIONS=ON
             -DTILEDB_VERBOSE=${TILEDB_VERBOSE}
             -DTILEDB_TESTS=OFF
             -DCMAKE_BUILD_TYPE=$<CONFIG>
