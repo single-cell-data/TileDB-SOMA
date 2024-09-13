@@ -976,6 +976,9 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_tiledb_domain();
 
+    bool _cast_column(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
     bool _extend_enumeration_legacy(
         ArrowSchema* value_schema,
         ArrowArray* value_array,

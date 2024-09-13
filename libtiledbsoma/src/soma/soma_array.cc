@@ -575,6 +575,94 @@ void SOMAArray::set_array_data(
     }
 };
 
+bool SOMAArray::_cast_column(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+    auto user_type = ArrowAdapter::to_tiledb_format(schema->format);
+    bool has_attr = tiledb_schema()->has_attribute(schema->name);
+
+    // If the attribute is enumerated, but the provided column is not, error out
+    if (has_attr && attr_has_enum(schema->name)) {
+        if (schema->dictionary == nullptr || array->dictionary == nullptr) {
+            throw std::invalid_argument(
+                "[SOMAArray] " + std::string(schema->name) +
+                " requires dictionary entry");
+        }
+    }
+
+    // If the attribute is not enumerated, but the provided column is, then we
+    // need to use the dictionary values when writing to the array
+    if (has_attr && !attr_has_enum(schema->name)) {
+        if (schema->dictionary != nullptr && array->dictionary != nullptr) {
+            _promote_indexes_to_values(schema, array);
+
+            // Return false because we do not extend the enumeration
+            return false;
+        }
+    }
+
+    // In the general cases that do not apply to the two cases above, we need to
+    // cast the passed-in column to be what is the type in the schema on disk.
+    // Here we identify the passed-in column type (UserType).
+    //
+    // If _cast_column_aux extended the enumeration then return true. Otherwise,
+    // false
+    switch (user_type) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return _cast_column_aux<std::string>(schema, array, se);
+        case TILEDB_BOOL:
+            return _cast_column_aux<bool>(schema, array, se);
+        case TILEDB_INT8:
+            return _cast_column_aux<int8_t>(schema, array, se);
+        case TILEDB_UINT8:
+            return _cast_column_aux<uint8_t>(schema, array, se);
+        case TILEDB_INT16:
+            return _cast_column_aux<int16_t>(schema, array, se);
+        case TILEDB_UINT16:
+            return _cast_column_aux<uint16_t>(schema, array, se);
+        case TILEDB_INT32:
+            return _cast_column_aux<int32_t>(schema, array, se);
+        case TILEDB_UINT32:
+            return _cast_column_aux<uint32_t>(schema, array, se);
+        case TILEDB_INT64:
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
+            return _cast_column_aux<int64_t>(schema, array, se);
+        case TILEDB_UINT64:
+            return _cast_column_aux<uint64_t>(schema, array, se);
+        case TILEDB_FLOAT32:
+            return _cast_column_aux<float>(schema, array, se);
+        case TILEDB_FLOAT64:
+            return _cast_column_aux<double>(schema, array, se);
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "Saw invalid TileDB user type when attempting to cast table: "
+                "{}",
+                tiledb::impl::type_to_str(user_type)));
+    }
+}
+
 template <>
 void SOMAArray::_cast_dictionary_values_legacy<std::string>(
     ArrowSchema* orig_column_schema,
