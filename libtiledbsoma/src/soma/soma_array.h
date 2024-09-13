@@ -1027,6 +1027,57 @@ class SOMAArray : public SOMAObject {
                     "values");
         }
     }
+    
+    template <typename UserType>
+    bool _cast_column_aux(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+    template <typename UserType, typename DiskType>
+    bool _set_column(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+        // Here we cast the passed-in column to be what is the type in the
+        // schema on disk. For columns with dictionaries, we will need
+        // additional processing steps
+
+        UserType* buf;
+        if (array->n_buffers == 3) {
+            buf = (UserType*)array->buffers[2] + array->offset;
+        } else {
+            buf = (UserType*)array->buffers[1] + array->offset;
+        }
+
+        bool has_attr = tiledb_schema()->has_attribute(schema->name);
+        if (has_attr && attr_has_enum(schema->name)) {
+            // For columns with dictionaries, we need to set the data buffers to
+            // the dictionary's indexes. If there were any new enumeration
+            // values added, we need to extend and and evolve the TileDB
+            // ArraySchema
+
+            // Return whether we extended the enumeration for this attribute
+            return _extend_enumeration(
+                schema->dictionary,  // value schema
+                array->dictionary,   // value array
+                schema,              // index schema
+                array,               // index array
+                se);
+        } else {
+            // In the general case, we can just cast the values and set the
+            // write buffers
+            std::vector<UserType> orig_vals(buf, buf + array->length);
+            std::vector<DiskType> casted_values(
+                orig_vals.begin(), orig_vals.end());
+
+            mq_->setup_write_column(
+                schema->name,
+                casted_values.size(),
+                (const void*)casted_values.data(),
+                (uint64_t*)nullptr,
+                (uint8_t*)array->buffers[0]);
+
+            // Return false because we do not extend the enumeration
+            return false;
+        }
+    }
 
     bool _extend_enumeration_legacy(
         ArrowSchema* value_schema,
@@ -1371,6 +1422,14 @@ void SOMAArray::_cast_dictionary_values<std::string>(
 template <>
 void SOMAArray::_cast_dictionary_values<bool>(
     ArrowSchema* schema, ArrowArray* array);
+
+template <>
+bool SOMAArray::_cast_column_aux<std::string>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+template <>
+bool SOMAArray::_cast_column_aux<bool>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
 template <>
 bool SOMAArray::_extend_and_evolve_schema_legacy<std::string>(
