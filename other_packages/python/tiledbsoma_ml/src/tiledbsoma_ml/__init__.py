@@ -6,15 +6,15 @@
 """An API to support machine learning applications built on SOMA."""
 
 from .pytorch import (
-    ExperimentAxisQueryDataPipe,
     ExperimentAxisQueryIterableDataset,
+    ExperimentAxisQueryIterDataPipe,
     experiment_dataloader,
 )
 
 __version__ = "0.1.0-dev"
 
 __all__ = [
-    "ExperimentAxisQueryDataPipe",
+    "ExperimentAxisQueryIterDataPipe",
     "ExperimentAxisQueryIterableDataset",
     "experiment_dataloader",
 ]

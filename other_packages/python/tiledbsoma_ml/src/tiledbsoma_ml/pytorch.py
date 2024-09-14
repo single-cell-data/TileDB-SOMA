@@ -95,12 +95,12 @@ class _ExperimentLocator:
 class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
     """An :class:`Iterator` which reads ``X`` and ``obs`` data from a :class:`tiledbsoma.Experiment`, as
     selected by a user-specified :class:`tiledbsoma.ExperimentAxisQuery`. Each step of the iterator
-    produces equal sized ``X`` and ``obs`` data, in the form of a :class:``numpy.ndarray`` and
-    :class:`pandas.DataFrame`.
+    produces equal sized ``X`` and ``obs`` data, in the form of a :class:`numpy.ndarray` and
+    :class:`pandas.DataFrame`, respectively.
 
     Private base class for subclasses of :class:`torch.utils.data.IterableDataset` and
     :class:`torchdata.datapipes.iter.IterDataPipe`. Refer to :class:`ExperimentAxisQueryIterableDataset`
-    and `ExperimentAxisQueryDataPipe` for more details on usage.
+    and `ExperimentAxisQueryIterDataPipe` for more details on usage.
 
     Lifecycle:
         experimental
@@ -122,11 +122,11 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         Construct a new ``ExperimentAxisQueryIterable``, suitable for use with :class:`torch.utils.data.DataLoader`.
 
         The resulting iterator will produce a 2-tuple containing associated slices of ``X`` and ``obs`` data, as
-        a NumPy ``ndarray`` and a Pandas ``DataFrame`` respectively.
+        a NumPy :class:`numpy.ndarray` and a Pandas :class:`pandas.DataFrame`, respectively.
 
         Args:
             query:
-                A :class:`tiledbsoma.ExperimentAxisQuery`, defining the data which will be iterated over.
+                A :class:`tiledbsoma.ExperimentAxisQuery`, defining the data to iterate over.
             X_name:
                 The name of the X layer to read.
             obs_column_names:
@@ -134,27 +134,25 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 Default is ``('soma_joinid',)``.
             batch_size:
                 The number of rows of ``X`` and ``obs`` data to return in each iteration. Defaults to ``1``. A value of
-                ``1`` will result in :class:`torch.Tensor` of rank 1 being returns (a single row); larger values will
-                result in :class:`torch.Tensor`\ s of rank 2 (multiple rows).
-
-                Note that a ``batch_size`` of 1 allows this ``IterableDataset`` to be used with :class:`torch.utils.data.DataLoader`
-                batching, but you will achieve higher performance by performing batching in this class, and setting the ``DataLoader``
-                batch_size parameter to ``None``.
+                ``1`` will result in :class:`torch.Tensor` of rank 1 being returned (a single row); larger values will
+                result in :class:`torch.Tensor`\ s of rank 2 (multiple rows). Note that a ``batch_size`` of 1 allows 
+                this ``IterableDataset`` to be used with :class:`torch.utils.data.DataLoader`
+                batching, but higher performance can be achieved by performing batching in this class, and setting the ``DataLoader``'s
+                ``batch_size`` parameter to ``None``.
             shuffle:
                 Whether to shuffle the ``obs`` and ``X`` data being returned. Defaults to ``True``.
             io_batch_size:
-                The number of ``obs``/``X`` rows to retrieve when reading data from SOMA. This impacts two aspects of
-                this class's behavior: 1) The maximum memory utilization, with larger values providing
-                better read performance, but also requiring more memory; 2) The number of rows read prior to shuffling
-                (see ``shuffle`` parameter for details). The default value of 131,072 provides high performance, but
-                may need to be reduced in memory limited hosts (or where a large number of :class:`DataLoader` workers
-                are employed).
+                The number of ``obs``/``X`` rows to retrieve when reading data from SOMA. This impacts:
+                1. Maximum memory utilization, larger values provide better read performance, but require more memory.
+                2. The number of rows read prior to shuffling (see the ``shuffle`` parameter for details).
+                The default value of 65,536 provides high performance but may need to be reduced in memory-limited hosts
+                or when using a large number of :class:`DataLoader` workers.
             shuffle_chunk_size:
-                The number of contiguous rows sampled, prior to concatenation and shuffling.
-                Larger numbers correspond to more randomness per training batch.
+                The number of contiguous rows sampled prior to concatenation and shuffling.
+                Larger numbers correspond to less randomness, but greater read performance.
                 If ``shuffle == False``, this parameter is ignored.
             seed:
-                The random seed used for shuffling. Defaults to ``None`` (no seed). This arguiment *must* be specified when using
+                The random seed used for shuffling. Defaults to ``None`` (no seed). This argument *must* be specified when using
                 :class:`torch.nn.parallel.DistributedDataParallel` to ensure data partitions are disjoint across worker
                 processes.
             use_eager_fetch:
@@ -165,7 +163,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
 
         Returns:
             An ``iterable``, which can be iterated over using the Python ``iter()`` statement, or passed directly to
-            a :class:`torch.data.utils.DataLoader` instance.
+            a :class:`torch.utils.data.DataLoader` instance.
 
         Raises:
             ``ValueError`` on various unsupported or malformed parameter values.
@@ -316,7 +314,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             X = exp.ms[self.measurement_name].X[self.layer_name]
             if not isinstance(X, soma.SparseNDArray):
                 raise NotImplementedError(
-                    "ExperimentAxisQueryIterDataPipe only supported on X layers which are of type SparseNDArray"
+                    "ExperimentAxisQueryIterable only supports X layers which are of type SparseNDArray"
                 )
 
             obs_joinid_iter = self._create_obs_joinids_partition()
@@ -329,13 +327,13 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             yield from _mini_batch_iter
 
     def __len__(self) -> int:
-        """Return approximate number of batches this iterable will produce. If run in the context of :class:`torch.distributed` or
+        """Return the approximate number of batches this iterable will produce. If run in the context of :class:`torch.distributed` or
         as a multi-process loader (i.e., :class:`torch.utils.data.DataLoader` instantiated with num_workers > 0), the obs (cell)
-        count will reflect the size of the partition of the data assigned to the active process.
+        count will reflect the size of the data partition assigned to the active process.
 
-        See import caveats in the PyTorch
+        See important caveats in the PyTorch
         [:class:`torch.utils.data.DataLoader`](https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader)
-        domentation regarding ``len(dataloader)``, which also apply to this class.
+        documentation regarding ``len(dataloader)``, which also apply to this class.
 
         Returns:
             An ``int``.
@@ -350,10 +348,10 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         """Get the approximate shape of the data that will be returned by this :class:`tiledbsoma_ml.ExperimentAxisQueryIterable`.
         This is the number of obs (cell) and var (feature) counts in the returned data. If used in multiprocessing mode
         (i.e. :class:`torch.utils.data.DataLoader` instantiated with num_workers > 0), the obs (cell) count will reflect
-        the size of the partition of the data assigned to the active process.
+        the size of the data partition assigned to the active process.
 
         Returns:
-            A 2-tuple of ``int``s, for obs and var counts, respectively.
+            A tuple of two ``int`` values: number of obs, number of vars.
 
         Lifecycle:
             experimental
@@ -520,7 +518,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 yield result
 
 
-class ExperimentAxisQueryDataPipe(
+class ExperimentAxisQueryIterDataPipe(
     torchdata.datapipes.iter.IterDataPipe[  # type:ignore[misc]
         torch.utils.data.dataset.Dataset[XObsDatum]
     ],
@@ -608,7 +606,8 @@ class ExperimentAxisQueryIterableDataset(
 
     This class works seamlessly with :class:`torch.utils.data.DataLoader` to load ``obs`` and ``X`` data as
     specified by a SOMA :class:`tiledbsoma.ExperimentAxisQuery`, providing an iterator over batches of
-    ``obs`` and ``X`` data. Each iteration will yield a tuple containing an NumPy ndarray and a Pandas DataFrame.
+    ``obs`` and ``X`` data. Each iteration will yield a tuple containing an :class:`numpy.ndarray`
+    and a :class:`pandas.DataFrame`.
 
     For example:
 
@@ -617,7 +616,7 @@ class ExperimentAxisQueryIterableDataset(
     >>> import tiledbsoma_ml
     >>> with tiledbsoma.Experiment.open("my_experiment_path") as exp:
             with exp.axis_query(measurement_name="RNA", obs_query=tiledbsoma.AxisQuery(value_filter="tissue_type=='lung'")) as query:
-                ds = tiledbsoma_ml.ExperimentAxisQueryIterableDataset(ds)
+                ds = tiledbsoma_ml.ExperimentAxisQueryIterableDataset(query)
                 dataloader = torch.utils.data.DataLoader(ds)
     >>> data = next(iter(dataloader))
     >>> data
@@ -638,20 +637,21 @@ class ExperimentAxisQueryIterableDataset(
     The ``obs_column_names`` parameter determines the data columns that are returned in the ``obs`` DataFrame (the
     default is a single column, containing the ``soma_joinid`` for the ``obs`` dimension).
 
-    The `io_batch_size` parameter determines the number of rows read, from which mini-batches are yielded. A
-    larger value will increase total memory usage, and may reduce average read time per row.
+    The ``io_batch_size`` parameter determines the number of rows read, from which mini-batches are yielded. A
+    larger value will increase total memory usage and may reduce average read time per row.
 
     Shuffling support is enabled with the ``shuffle`` parameter, and will normally be more performant than using
     :class:`DataLoader` shuffling. The shuffling algorithm works as follows:
 
       1. Rows selected by the query are subdivided into groups of size ``shuffle_chunk_size``, aka a "shuffle chunk".
-      2. A random selection of shuffle `chunks` is drawn and read as a single I/O buffer (of size ``io_buffer_size``).
+      2. A random selection of shuffle chunks is drawn and read as a single I/O buffer (of size ``io_buffer_size``).
       3. The entire I/O buffer is shuffled.
 
     Put another way, we read randomly selected groups of observations from across all query results, concatenate
     those into an I/O buffer, and shuffle the buffer before returning mini-batches. The randomness of the shuffle
-    is therefore determiend by the ``io_buffer_size`` (number of rows read), and the ``shuffle_chunk_size``
-    (number of rows in each draw).
+    is therefore determined by the ``io_buffer_size`` (number of rows read), and the ``shuffle_chunk_size``
+    (number of rows in each draw). Decreasing ``shuffle_chunk_size`` will increase shuffling randomness, and decrease I/O 
+    performance.
 
     Lifecycle:
         experimental
@@ -679,13 +679,13 @@ class ExperimentAxisQueryIterableDataset(
             query:
                 A :class:`tiledbsoma.ExperimentAxisQuery`, defining the data which will be iterated over.
             X_name:
-                The name of the X layer to read.
+                The name of the ``X`` layer to read.
             obs_column_names:
                 The names of the ``obs`` columns to return. At least one column name must be specified.
                 Default is ``('soma_joinid',)``.
             batch_size:
                 The number of rows of ``X`` and ``obs`` data to return in each iteration. Defaults to ``1``. A value of
-                ``1`` will result in :class:`torch.Tensor` of rank 1 being returns (a single row); larger values will
+                ``1`` will result in :class:`torch.Tensor` of rank 1 being returned (a single row); larger values will
                 result in :class:`torch.Tensor`\ s of rank 2 (multiple rows).
 
                 Note that a ``batch_size`` of 1 allows this ``IterableDataset`` to be used with :class:`torch.utils.data.DataLoader`
@@ -702,7 +702,7 @@ class ExperimentAxisQueryIterableDataset(
                 are employed).
             shuffle_chunk_size:
                 The number of contiguous rows sampled, prior to concatenation and shuffling.
-                Larger numbers correspond to more randomness per training batch.
+                Larger numbers correspond to less randomness, but greater read performance.
                 If ``shuffle == False``, this parameter is ignored.
             seed:
                 The random seed used for shuffling. Defaults to ``None`` (no seed). This arguiment *must* be specified when using
@@ -756,9 +756,9 @@ class ExperimentAxisQueryIterableDataset(
     def __len__(self) -> int:
         """Return approximate number of batches this iterable will produce.
 
-        See import caveats in the PyTorch
+        See important caveats in the PyTorch
         [:class:`torch.utils.data.DataLoader`](https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader)
-        domentation regarding ``len(dataloader)``, which also apply to this class.
+        documentation regarding ``len(dataloader)``, which also apply to this class.
 
         Returns:
             An ``int``.
@@ -794,7 +794,7 @@ def experiment_dataloader(
     or :class:`tiledbsoma_ml.ExperimentAxisQueryIterDataPipe`.
 
     Several :class:`torch.utils.data.DataLoader` constructor parameters are not applicable, or are non-performant,
-    when using loaders form this module, including ``shuffle``, ``batch_size``, ``sampler``, and ``batch_sampler``.
+    when using loaders from this module, including ``shuffle``, ``batch_size``, ``sampler``, and ``batch_sampler``.
     Specifying any of these parameters will result in an error.
 
     Refer to ``https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader`` for more information on
@@ -807,7 +807,7 @@ def experiment_dataloader(
         **dataloader_kwargs:
             Additional keyword arguments to pass to the :class:`torch.utils.data.DataLoader` constructor,
             except for ``shuffle``, ``batch_size``, ``sampler``, and ``batch_sampler``, which are not
-            supported when data loaders in this module.
+            supported when using data loaders in this module.
 
     Returns:
         A :class:`torch.utils.data.DataLoader`.
