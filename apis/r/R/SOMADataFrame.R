@@ -356,10 +356,7 @@ SOMADataFrame <- R6::R6Class(
     #' (lifecycle: maturing)
     #' @return Logical
     tiledbsoma_has_upgraded_domain = function() {
-      has_current_domain(
-        self$uri,
-        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      )
+      has_current_domain(self$uri, private$.soma_context)
     }
 
   ),

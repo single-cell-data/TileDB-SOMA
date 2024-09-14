@@ -158,8 +158,8 @@ get_column_types <- function(uri, colnames) {
     .Call(`_tiledbsoma_get_column_types`, uri, colnames)
 }
 
-nnz <- function(uri, config = NULL) {
-    .Call(`_tiledbsoma_nnz`, uri, config)
+nnz <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_nnz`, uri, ctxxp)
 }
 
 #' @noRd
@@ -172,32 +172,32 @@ check_arrow_array_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }
 
-shape <- function(uri, config = NULL) {
-    .Call(`_tiledbsoma_shape`, uri, config)
+shape <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_shape`, uri, ctxxp)
 }
 
-maxshape <- function(uri, config = NULL) {
-    .Call(`_tiledbsoma_maxshape`, uri, config)
+maxshape <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_maxshape`, uri, ctxxp)
 }
 
-maybe_soma_joinid_shape <- function(uri, config = NULL) {
-    .Call(`_tiledbsoma_maybe_soma_joinid_shape`, uri, config)
+maybe_soma_joinid_shape <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_maybe_soma_joinid_shape`, uri, ctxxp)
 }
 
-maybe_soma_joinid_maxshape <- function(uri, config = NULL) {
-    .Call(`_tiledbsoma_maybe_soma_joinid_maxshape`, uri, config)
+maybe_soma_joinid_maxshape <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_maybe_soma_joinid_maxshape`, uri, ctxxp)
 }
 
-has_current_domain <- function(uri, config = NULL) {
-    .Call(`_tiledbsoma_has_current_domain`, uri, config)
+has_current_domain <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_has_current_domain`, uri, ctxxp)
 }
 
-resize <- function(uri, new_shape, config = NULL) {
-    invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, config))
+resize <- function(uri, new_shape, ctxxp) {
+    invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, ctxxp))
 }
 
-tiledbsoma_upgrade_shape <- function(uri, new_shape, config = NULL) {
-    invisible(.Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, uri, new_shape, config))
+tiledbsoma_upgrade_shape <- function(uri, new_shape, ctxxp) {
+    invisible(.Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, uri, new_shape, ctxxp))
 }
 
 #' Iterator-Style Access to SOMA Array via SOMAArray

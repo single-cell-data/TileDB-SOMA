@@ -323,14 +323,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // nnz
-double nnz(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config);
-RcppExport SEXP _tiledbsoma_nnz(SEXP uriSEXP, SEXP configSEXP) {
+double nnz(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_nnz(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    rcpp_result_gen = Rcpp::wrap(nnz(uri, config));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(nnz(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -357,86 +357,86 @@ BEGIN_RCPP
 END_RCPP
 }
 // shape
-Rcpp::NumericVector shape(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config);
-RcppExport SEXP _tiledbsoma_shape(SEXP uriSEXP, SEXP configSEXP) {
+Rcpp::NumericVector shape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_shape(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    rcpp_result_gen = Rcpp::wrap(shape(uri, config));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(shape(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
 // maxshape
-Rcpp::NumericVector maxshape(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config);
-RcppExport SEXP _tiledbsoma_maxshape(SEXP uriSEXP, SEXP configSEXP) {
+Rcpp::NumericVector maxshape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_maxshape(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    rcpp_result_gen = Rcpp::wrap(maxshape(uri, config));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(maxshape(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
 // maybe_soma_joinid_shape
-Rcpp::NumericVector maybe_soma_joinid_shape(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config);
-RcppExport SEXP _tiledbsoma_maybe_soma_joinid_shape(SEXP uriSEXP, SEXP configSEXP) {
+Rcpp::NumericVector maybe_soma_joinid_shape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_maybe_soma_joinid_shape(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    rcpp_result_gen = Rcpp::wrap(maybe_soma_joinid_shape(uri, config));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(maybe_soma_joinid_shape(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
 // maybe_soma_joinid_maxshape
-Rcpp::NumericVector maybe_soma_joinid_maxshape(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config);
-RcppExport SEXP _tiledbsoma_maybe_soma_joinid_maxshape(SEXP uriSEXP, SEXP configSEXP) {
+Rcpp::NumericVector maybe_soma_joinid_maxshape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_maybe_soma_joinid_maxshape(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    rcpp_result_gen = Rcpp::wrap(maybe_soma_joinid_maxshape(uri, config));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(maybe_soma_joinid_maxshape(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
 // has_current_domain
-Rcpp::LogicalVector has_current_domain(const std::string& uri, Rcpp::Nullable<Rcpp::CharacterVector> config);
-RcppExport SEXP _tiledbsoma_has_current_domain(SEXP uriSEXP, SEXP configSEXP) {
+Rcpp::LogicalVector has_current_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_has_current_domain(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    rcpp_result_gen = Rcpp::wrap(has_current_domain(uri, config));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(has_current_domain(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
 // resize
-void resize(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::Nullable<Rcpp::CharacterVector> config);
-RcppExport SEXP _tiledbsoma_resize(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP configSEXP) {
+void resize(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_resize(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    resize(uri, new_shape, config);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    resize(uri, new_shape, ctxxp);
     return R_NilValue;
 END_RCPP
 }
 // tiledbsoma_upgrade_shape
-void tiledbsoma_upgrade_shape(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::Nullable<Rcpp::CharacterVector> config);
-RcppExport SEXP _tiledbsoma_tiledbsoma_upgrade_shape(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP configSEXP) {
+void tiledbsoma_upgrade_shape(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_tiledbsoma_upgrade_shape(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type config(configSEXP);
-    tiledbsoma_upgrade_shape(uri, new_shape, config);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    tiledbsoma_upgrade_shape(uri, new_shape, ctxxp);
     return R_NilValue;
 END_RCPP
 }

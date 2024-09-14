@@ -42,17 +42,18 @@ test_that("SOMADataFrame shape", {
     # https://github.com/single-cell-data/TileDB-SOMA/pull/2953#discussion_r1746125089
     # sjid_shape <- sdf$.maybe_soma_joinid_shape()
     # sjid_maxshape <- sdf$.maybe_soma_joinid_maxshape()
-    sjid_shape <- maybe_soma_joinid_shape(sdf$uri, config = as.character(tiledb::config(sdf$tiledbsoma_ctx$context())))
-    sjid_maxshape <- maybe_soma_joinid_maxshape(sdf$uri, config = as.character(tiledb::config(sdf$tiledbsoma_ctx$context())))
+    soma_context <- soma_context()
+    sjid_shape <- maybe_soma_joinid_shape(sdf$uri, soma_context)
+    sjid_maxshape <- maybe_soma_joinid_maxshape(sdf$uri, soma_context)
 
     if (has_soma_joinid_dim) {
       # More testing to come on
       # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-      expect_false(sjid_shape == -1)
-      expect_false(sjid_maxshape == -1)
+      expect_false(is.na(sjid_shape))
+      expect_false(is.na(sjid_maxshape))
     } else {
-      expect_true(sjid_shape == -1)
-      expect_true(sjid_maxshape == -1)
+      expect_true(is.na(sjid_shape))
+      expect_true(is.na(sjid_maxshape))
     }
 
     sdf$close()
