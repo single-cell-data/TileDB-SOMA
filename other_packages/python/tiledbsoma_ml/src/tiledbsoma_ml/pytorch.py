@@ -135,7 +135,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             batch_size:
                 The number of rows of ``X`` and ``obs`` data to return in each iteration. Defaults to ``1``. A value of
                 ``1`` will result in :class:`torch.Tensor` of rank 1 being returned (a single row); larger values will
-                result in :class:`torch.Tensor`\ s of rank 2 (multiple rows). Note that a ``batch_size`` of 1 allows 
+                result in :class:`torch.Tensor`\ s of rank 2 (multiple rows). Note that a ``batch_size`` of 1 allows
                 this ``IterableDataset`` to be used with :class:`torch.utils.data.DataLoader`
                 batching, but higher performance can be achieved by performing batching in this class, and setting the ``DataLoader``'s
                 ``batch_size`` parameter to ``None``.
@@ -650,7 +650,7 @@ class ExperimentAxisQueryIterableDataset(
     Put another way, we read randomly selected groups of observations from across all query results, concatenate
     those into an I/O buffer, and shuffle the buffer before returning mini-batches. The randomness of the shuffle
     is therefore determined by the ``io_buffer_size`` (number of rows read), and the ``shuffle_chunk_size``
-    (number of rows in each draw). Decreasing ``shuffle_chunk_size`` will increase shuffling randomness, and decrease I/O 
+    (number of rows in each draw). Decreasing ``shuffle_chunk_size`` will increase shuffling randomness, and decrease I/O
     performance.
 
     Lifecycle:

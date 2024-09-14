@@ -22,26 +22,26 @@ repos:
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.11.1
     hooks:
-    - id: mypy
-      additional_dependencies:
-        # Pandas types changed between 1.x and 2.x. Our setup.py permits both, but for type-checking purposes we use the
-        # Pandas 2.x types (e.g. `pd.Series[Any]`). See `_types.py` or https://github.com/single-cell-data/TileDB-SOMA/issues/2839
-        # for more info.
-        - "pandas-stubs>=2"
-        - "somacore==1.0.15"
-        - types-setuptools
-      args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
-      pass_filenames: false
+      - id: mypy
+        additional_dependencies:
+          # Pandas types changed between 1.x and 2.x. Our setup.py permits both, but for type-checking purposes we use the
+          # Pandas 2.x types (e.g. `pd.Series[Any]`). See `_types.py` or https://github.com/single-cell-data/TileDB-SOMA/issues/2839
+          # for more info.
+          - "pandas-stubs>=2"
+          - "somacore==1.0.15"
+          - types-setuptools
+        args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
+        pass_filenames: false
 
-    - id: mypy
-      name: "mypy for tiledbsoma_ml"
-      files: "^other_packages/python/tiledbsoma_ml/"
-      args: ["--config=other_packages/python/tiledbsoma_ml/pyproject.toml"]
-      additional_dependencies:
-        - attrs
-        - types-requests
-        - pytest
-        - "pandas-stubs>=2"
-        - numpy
-        - typing_extensions
-        - types-setuptools
+      - id: mypy
+        name: "mypy for tiledbsoma_ml"
+        files: "^other_packages/python/tiledbsoma_ml/"
+        args: ["--config=other_packages/python/tiledbsoma_ml/pyproject.toml"]
+        additional_dependencies:
+          - attrs
+          - types-requests
+          - pytest
+          - "pandas-stubs>=2"
+          - numpy
+          - typing_extensions
+          - types-setuptools
