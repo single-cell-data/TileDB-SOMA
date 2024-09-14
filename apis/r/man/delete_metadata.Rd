@@ -11,6 +11,8 @@ delete_metadata(uri, key, is_array, ctxxp)
 
 \item{key}{The array metadata key}
 
+\item{is_array}{A boolean to indicate array or group}
+
 \item{ctxxp}{An external pointer to the SOMAContext wrapper}
 }
 \description{

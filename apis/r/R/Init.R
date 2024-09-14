@@ -25,10 +25,6 @@
     } else {
       .pkgenv[["use_current_domain_transitional_internal_only"]] <- FALSE
     }
-    if (rpkg_lib_version != soma_lib_version) {
-      msg <- sprintf("TileDB Core version %s used by TileDB-R package, but TileDB-SOMA uses %s [%s]",
-                     sQuote(rpkg_lib_version), sQuote(soma_lib_version), sQuote(cdmsg))
-    }
 }
 
 # This is temporary only. Please see:
