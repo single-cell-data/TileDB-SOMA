@@ -91,7 +91,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' or it has had ``upgrade_domain`` applied to it.
     #' (lifecycle: maturing)
     #' @return Logical
-    has_upgraded_shape = function() {
+    tiledbsoma_has_upgraded_shape = function() {
       has_current_domain(
         self$uri,
         config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))

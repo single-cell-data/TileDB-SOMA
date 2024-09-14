@@ -36,6 +36,8 @@
 #include <regex>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
+#include "arrow_adapter.h"
+#include "common.h"
 #include "span/span.hpp"
 
 namespace tiledbsoma::util {
@@ -66,6 +68,17 @@ bool is_tiledb_uri(std::string_view uri);
  * @return std::string URI without trailing '/'
  */
 std::string rstrip_uri(std::string_view uri);
+
+/**
+ * @brief Take an arrow schema and array containing bool
+ * data in bits and return a vector containing the uint8_t
+ * representation
+ *
+ * @param schema the ArrowSchema which must be format 'b'
+ * @param array the ArrowArray holding Boolean data
+ * @return std::vector<uint8_t>
+ */
+std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array);
 
 }  // namespace tiledbsoma::util
 

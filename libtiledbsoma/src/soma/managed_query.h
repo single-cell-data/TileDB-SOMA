@@ -228,14 +228,34 @@ class ManagedQuery {
     /**
      * @brief Set column data for write query.
      *
-     * @param column_name Column name
-     * @param buff Buffer array pointer with elements of the column type.
-     * @param nelements Number of array elements in buffer
+     * @param name Column name
+     * @param num_elems Number of array elements in buffer
+     * @param data Pointer to the data buffer
+     * @param offsets Pointer to the offsets buffer
+     * @param validity Pointer to the validity buffer
      */
-    void set_column_data(std::shared_ptr<ColumnBuffer> buffer);
+    template <typename T>
+    void setup_write_column(
+        std::string_view name,
+        uint64_t num_elems,
+        const void* data,
+        T* offsets,
+        uint8_t* validity) {
+        // Ensure the offset type is either uint32_t* or uint64_t*
+        static_assert(
+            std::is_same_v<T, uint32_t> || std::is_same_v<T, uint64_t>,
+            "offsets must be either uint32_t* or uint64_t*");
 
-    // Helper function for set_column_data
-    std::shared_ptr<ColumnBuffer> setup_column_data(std::string_view name);
+        // Create the ArrayBuffers as necessary
+        if (buffers_ == nullptr) {
+            buffers_ = std::make_shared<ArrayBuffers>();
+        }
+
+        auto column = ColumnBuffer::create(array_, name);
+        column->set_data(num_elems, data, offsets, validity);
+        buffers_->emplace(std::string(name), column);
+        buffers_->at(std::string(name))->attach(*query_, *subarray_);
+    }
 
     /**
      * @brief Configure query and allocate result buffers for reads.

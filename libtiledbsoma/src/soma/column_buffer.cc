@@ -163,22 +163,78 @@ ColumnBuffer::~ColumnBuffer() {
     LOG_TRACE(fmt::format("[ColumnBuffer] release '{}'", name_));
 }
 
-void ColumnBuffer::attach(Query& query) {
+void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
+    auto is_write = query.query_type() == TILEDB_WRITE;
+    bool is_dense = query.array().schema().array_type() == TILEDB_DENSE;
+    auto is_dim = query.array().schema().domain().has_dimension(name_);
+    auto use_subarray = is_write && is_dense && is_dim;
+
+    if (use_subarray && !subarray.has_value()) {
+        throw TileDBSOMAError(
+            "Subarray must be provided to ColumnBuffer to attach to Query");
+    }
+    return use_subarray ? attach_subarray(*subarray) : attach_buffer(query);
+}
+
+void ColumnBuffer::attach_buffer(Query& query) {
     // We cannot use:
     // `set_data_buffer(const std::string& name, std::vector<T>& buf)`
     // because data_ is allocated with reserve() and data_.size()
     // does not represent the actual size of the buffer.
-    query.set_data_buffer(
-        name_, (void*)data_.data(), data_.capacity() / type_size_);
+    auto is_write = query.query_type() == TILEDB_WRITE;
+
+    auto data_sz = is_write ? data_size() : data_.capacity() / type_size_;
+    query.set_data_buffer(name_, (void*)data_.data(), data_sz);
     if (is_var_) {
-        // Remove one offset for TileDB, which checks that the
-        // offsets and validity buffers are the same size
-        query.set_offsets_buffer(
-            name_, offsets_.data(), offsets_.capacity() - 1);
+        // Remove one offset for TileDB, which checks that the offsets and
+        // validity buffers are the same size
+        auto offsets_sz = is_write ? offsets_.size() - 1 :
+                                     offsets_.capacity() - 1;
+        query.set_offsets_buffer(name_, offsets_.data(), offsets_sz);
     }
     if (is_nullable_) {
-        query.set_validity_buffer(
-            name_, validity_.data(), validity_.capacity());
+        auto validity_sz = is_write ? validity_.size() : validity_.capacity();
+        query.set_validity_buffer(name_, validity_.data(), validity_sz);
+    }
+}
+
+void ColumnBuffer::attach_subarray(Subarray& subarray) {
+    switch (type_) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+        case TILEDB_BLOB:
+            return attach_range<std::string>(subarray);
+        case TILEDB_FLOAT32:
+            return attach_range<float>(subarray);
+        case TILEDB_FLOAT64:
+            return attach_range<double>(subarray);
+        case TILEDB_UINT8:
+            return attach_range<uint8_t>(subarray);
+        case TILEDB_INT8:
+            return attach_range<int8_t>(subarray);
+        case TILEDB_UINT16:
+            return attach_range<uint16_t>(subarray);
+        case TILEDB_INT16:
+            return attach_range<int16_t>(subarray);
+        case TILEDB_UINT32:
+            return attach_range<uint32_t>(subarray);
+        case TILEDB_INT32:
+            return attach_range<int32_t>(subarray);
+        case TILEDB_UINT64:
+            return attach_range<uint64_t>(subarray);
+        case TILEDB_INT64:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+            return attach_range<int64_t>(subarray);
+        default:
+            return;
     }
 }
 

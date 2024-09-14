@@ -129,6 +129,6 @@ void load_soma_dense_ndarray(py::module& m) {
         .def_property_readonly("shape", &SOMADenseNDArray::shape)
         .def_property_readonly("maxshape", &SOMADenseNDArray::maxshape)
         .def_property_readonly(
-            "has_upgraded_shape", &SOMAArray::has_current_domain);
+            "tiledbsoma_has_upgraded_shape", &SOMAArray::has_current_domain);
 }
 }  // namespace libtiledbsomacpp
