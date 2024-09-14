@@ -192,8 +192,6 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         self._shuffle_rng = np.random.default_rng(seed) if shuffle else None
         self.shuffle_chunk_size = shuffle_chunk_size
         self._initialized = False
-        self._obs_joinids_partition: npt.NDArray[np.int64] | None = None
-        self._obs_partition_length: int = -1
 
         if self.shuffle:
             # round io_batch_size up to a unit of shuffle_chunk_size to simplify code.
@@ -204,7 +202,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         if not self.obs_column_names:
             raise ValueError("Must specify at least one value in `obs_column_names`")
 
-    def _create_obs_joinids_partition(self) -> None:
+    def _create_obs_joinids_partition(self) -> Iterator[npt.NDArray[np.int64]]:
         """Create iterator over obs id chunks with split size of (roughly) io_batch_size.
 
         As appropriate, will chunk, shuffle and apply partitioning per worker.
@@ -261,16 +259,14 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         obs_partition_joinids = obs_joinids_chunked[
             obs_splits[worker_id] : obs_splits[worker_id + 1]
         ].copy()
-        self._obs_joinids_partition = obs_partition_joinids
-        self._obs_partition_length = sum(
-            len(partition) for partition in obs_partition_joinids
-        )
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
                 f"Process {os.getpid()} rank={rank}, world_size={world_size}, worker_id={worker_id}, n_workers={n_workers}, "
                 f"partition_size={sum([len(chunk) for chunk in obs_partition_joinids])}"
             )
+
+        return iter(obs_partition_joinids)
 
     def _init_once(self, exp: soma.Experiment | None = None) -> None:
         """One-time per worker initialization.
@@ -304,7 +300,6 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 self._obs_joinids = query.obs_joinids().to_numpy()
                 self._var_joinids = query.var_joinids().to_numpy()
 
-        self._create_obs_joinids_partition()
         self._initialized = True
 
     def __iter__(self) -> Iterator[XObsDatum]:
@@ -324,8 +319,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                     "ExperimentAxisQueryIterDataPipe only supported on X layers which are of type SparseNDArray"
                 )
 
-            assert self._obs_joinids_partition is not None
-            obs_joinid_iter = iter(self._obs_joinids_partition)
+            obs_joinid_iter = self._create_obs_joinids_partition()
             _mini_batch_iter = self._mini_batch_iter(exp.obs, X, obs_joinid_iter)
             if self.use_eager_fetch:
                 _mini_batch_iter = _EagerIterator(
@@ -365,10 +359,12 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             experimental
         """
         self._init_once()
+        assert self._obs_joinids is not None
         assert self._var_joinids is not None
-        assert self._obs_joinids_partition is not None
-        assert self._obs_partition_length >= 0
-        div, rem = divmod(self._obs_partition_length, self.batch_size)
+        world_size, _ = _get_distributed_world_rank()
+        n_workers, _ = _get_worker_world_rank()
+        partition_len = len(self._obs_joinids) // world_size // n_workers
+        div, rem = divmod(partition_len, self.batch_size)
         return div + bool(rem), len(self._var_joinids)
 
     def __getitem__(self, index: int) -> XObsDatum:
@@ -898,23 +894,37 @@ else:
 
 def _get_distributed_world_rank() -> Tuple[int, int]:
     """Return tuple containing equivalent of torch.distributed world size and rank."""
-    if torch.distributed.is_initialized():
+    world_size, rank = 1, 0
+    if "RANK" in os.environ and "WORLD_SIZE" in os.environ:
+        world_size = int(os.environ["WORLD_SIZE"])
+        rank = int(os.environ["RANK"])
+    elif "LOCAL_RANK" in os.environ and "WORLD_SIZE" in os.environ:
+        # Lightning doesn't use RANK!  LOCAL_RANK is only for the local node. There
+        # is a NODE_RANK for the node's rank, but no way to tell the local node's
+        # world. So computing a global rank is impossible(?).  Using LOCAL_RANK as a
+        # proxy, which works fine on a single-CPU box. TODO: could throw/error
+        # if NODE_RANK != 0.
+        world_size = int(os.environ["WORLD_SIZE"])
+        rank = int(os.environ["LOCAL_RANK"])
+    elif torch.distributed.is_initialized():
         world_size = torch.distributed.get_world_size()
         rank = torch.distributed.get_rank()
-    else:
-        # sometimes these are set even before torch.distributed is initialized, e.g., by torchrun
-        world_size = int(os.environ.get("WORLD_SIZE", 1))
-        rank = int(os.environ.get("RANK", 0))
 
     return world_size, rank
 
 
 def _get_worker_world_rank() -> Tuple[int, int]:
-    """Return number of dataloader workers and our worker rank/id"""
-    worker_info = torch.utils.data.get_worker_info()
-    if worker_info is None:
-        return 1, 0
-    return worker_info.num_workers, worker_info.id
+    """Return number of DataLoader workers and our worker rank/id"""
+    num_workers, worker = 1, 0
+    if "WORKER" in os.environ and "NUM_WORKERS" in os.environ:
+        num_workers = int(os.environ["NUM_WORKERS"])
+        worker = int(os.environ["WORKER"])
+    else:
+        worker_info = torch.utils.data.get_worker_info()
+        if worker_info is not None:
+            num_workers = worker_info.num_workers
+            worker = worker_info.id
+    return num_workers, worker
 
 
 def _init_multiprocessing() -> None:
