@@ -1302,6 +1302,9 @@ std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
     arrow_array->n_children = num_columns;
     arrow_array->release = &ArrowAdapter::release_array;
     arrow_array->children = new ArrowArray*[num_columns];
+    for (int i = 0; i < num_columns; i++) {
+        arrow_array->children[i] = nullptr;
+    }
 
     return arrow_array;
 }

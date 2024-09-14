@@ -283,17 +283,23 @@ class ArrowAdapter {
         return make_arrow_array_child<T>(v);
     };
 
-    static ArrowArray* make_arrow_array_child(const std::vector<std::string>&) {
-        // We can't throw TileDBSOMAError since that's in a header
-        // file in a certain path, and this is a header file
-        // at a particular fixed path but which is _included_ in
-        // .cc files at varying paths -- so if "a/foo.cc" and "a/b/c/bar.cc"
-        // both include us, there is no one #include syntax we
-        // could put here that would let both of them find
+    static ArrowArray* make_arrow_array_child(
+        const std::vector<std::string>& v) {
+        // For core domain, these are always nullptr.
         // the definition of TileDBSOMAError.
-        throw std::runtime_error(
-            "ArrowAdapter::make_arrow_array_child is not yet implemented for "
-            "string types.");
+        auto arrow_array = new ArrowArray;
+
+        arrow_array->length = v.size();
+        arrow_array->null_count = 0;
+        arrow_array->offset = 0;
+        arrow_array->n_buffers = 2;
+        arrow_array->release = &ArrowAdapter::release_array;
+        arrow_array->buffers = new const void*[2];
+        arrow_array->buffers[0] = nullptr;
+        arrow_array->buffers[1] = nullptr;
+        arrow_array->n_children = 0;  // leaf/child node
+
+        return arrow_array;
     };
 
     template <typename T>

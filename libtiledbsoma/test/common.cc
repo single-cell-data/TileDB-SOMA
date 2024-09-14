@@ -154,78 +154,66 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
     const std::vector<DimInfo>& dim_infos) {
     int ndim = dim_infos.size();
 
-    auto index_cols_info_array = std::make_unique<ArrowArray>();
-    index_cols_info_array->length = 0;
-    index_cols_info_array->null_count = 0;
-    index_cols_info_array->offset = 0;
-    index_cols_info_array->n_buffers = 0;
-    index_cols_info_array->buffers = nullptr;
-    index_cols_info_array->n_children = ndim;
-    index_cols_info_array->release = &ArrowAdapter::release_array;
-    index_cols_info_array->children = new ArrowArray*[ndim];
+    auto index_cols_info_array = ArrowAdapter::make_arrow_array_parent(ndim);
 
     for (int i = 0; i < ndim; i++) {
         const DimInfo& info = dim_infos[i];
-
-        int n = info.use_current_domain ? 5 : 3;
-
-        auto dim_array = new ArrowArray;
-        dim_array->length = n;
-        dim_array->null_count = 0;
-        dim_array->offset = 0;
-        dim_array->n_buffers = 2;
-        dim_array->release = &ArrowAdapter::release_array;
-        dim_array->buffers = new const void*[2];
-        dim_array->buffers[0] = nullptr;
-        dim_array->n_children = 0;  // leaf node
-        index_cols_info_array->children[i] = dim_array;
+        ArrowArray* dim_array = nullptr;
 
         // The full user-level SOMA API supports many more index types.
         // Here we support enough types to verify we've got variant-indexed
         // SOMADataFrame objects baseline-tested in C++, then defer exhaustive
         // loop-over-all-datatypes handling to Python and R.
         if (info.tiledb_datatype == TILEDB_INT64) {
-            size_t nbytes = n * sizeof(int64_t);
-            dim_array->buffers[1] = malloc(nbytes);
             if (info.use_current_domain) {
                 // domain big; current_domain small
-                int64_t dom[] = {0, CORE_DOMAIN_MAX, 1, 0, info.dim_max};
-                void* vsrc = (void*)&dom[0];
-                std::memcpy((void*)dim_array->buffers[1], vsrc, nbytes);
+                std::vector<int64_t> dom(
+                    {0, CORE_DOMAIN_MAX, 1, 0, info.dim_max});
+                dim_array = ArrowAdapter::make_arrow_array_child<int64_t>(dom);
             } else {
                 // domain small; current_domain feature not being used
-                int64_t dom[] = {0, info.dim_max, 1};
-                void* vsrc = (void*)&dom[0];
-                std::memcpy((void*)dim_array->buffers[1], vsrc, nbytes);
+                std::vector<int64_t> dom({0, info.dim_max, 1});
+                dim_array = ArrowAdapter::make_arrow_array_child<int64_t>(dom);
             }
 
         } else if (info.tiledb_datatype == TILEDB_UINT32) {
-            size_t nbytes = n * sizeof(uint32_t);
-            dim_array->buffers[1] = malloc(nbytes);
             if (info.use_current_domain) {
                 // domain big; current_domain small
-                uint32_t dom[] = {
-                    0, (uint32_t)CORE_DOMAIN_MAX, 1, 0, (uint32_t)info.dim_max};
-                void* vsrc = (void*)&dom[0];
-                std::memcpy((void*)dim_array->buffers[1], vsrc, nbytes);
+                std::vector<uint32_t> dom(
+                    {0,
+                     (uint32_t)CORE_DOMAIN_MAX,
+                     1,
+                     0,
+                     (uint32_t)info.dim_max});
+                dim_array = ArrowAdapter::make_arrow_array_child<uint32_t>(dom);
             } else {
                 // domain small; current_domain feature not being used
-                uint32_t dom[] = {0, (uint32_t)info.dim_max, 1};
-                void* vsrc = (void*)&dom[0];
-                std::memcpy((void*)dim_array->buffers[1], vsrc, nbytes);
+                std::vector<uint32_t> dom({0, (uint32_t)info.dim_max, 1});
+                dim_array = ArrowAdapter::make_arrow_array_child<uint32_t>(dom);
             }
 
         } else if (info.tiledb_datatype == TILEDB_STRING_ASCII) {
             // Domain specification for strings is not supported in core. See
             // arrow_adapter for more info. We rely on arrow_adapter to also
             // handle this case.
-            dim_array->buffers[1] = nullptr;
+            if (info.use_current_domain) {
+                std::vector<std::string> dom({"", "", "", "", ""});
+                dim_array = ArrowAdapter::make_arrow_array_child<std::string>(
+                    dom);
+            } else {
+                std::vector<std::string> dom({"", "", ""});
+                dim_array = ArrowAdapter::make_arrow_array_child<std::string>(
+                    dom);
+            }
+        }
 
-        } else {
+        if (dim_array == nullptr) {
             throw TileDBSOMAError(
                 "Unsupported datatype encountered in unit test. You can add a "
                 "new type if you like!");
         }
+
+        index_cols_info_array->children[i] = dim_array;
     }
 
     return index_cols_info_array;
