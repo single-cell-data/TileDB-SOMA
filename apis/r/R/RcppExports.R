@@ -139,8 +139,8 @@ reindex_lookup <- function(idx, kvec) {
 }
 
 #' @noRd
-soma_array_reader_impl <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", config = NULL, timestamprange = NULL) {
-    .Call(`_tiledbsoma_soma_array_reader`, uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, config, timestamprange)
+soma_array_reader_impl <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", timestamprange = NULL) {
+    .Call(`_tiledbsoma_soma_array_reader`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, timestamprange)
 }
 
 #' Set the logging level for the R package and underlying C++ library

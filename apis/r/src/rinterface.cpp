@@ -47,6 +47,7 @@ namespace tdbs = tiledbsoma;
 //' @noRd
 // [[Rcpp::export(soma_array_reader_impl)]]
 SEXP soma_array_reader(const std::string& uri,
+                       Rcpp::XPtr<somactx_wrap_t> ctxxp,
                        Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                        Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
                        Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
@@ -54,7 +55,6 @@ SEXP soma_array_reader(const std::string& uri,
                        std::string batch_size = "auto",
                        std::string result_order = "auto",
                        const std::string& loglevel = "auto",
-                       Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
                        Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue) {
 
     if (loglevel != "auto") {
@@ -62,11 +62,10 @@ SEXP soma_array_reader(const std::string& uri,
         tdbs::LOG_SET_LEVEL(loglevel);
     }
 
-    spdl::info("[soma_array_reader] Reading from {}", uri);
+    // shared pointer to SOMAContext from external pointer wrapper
+    std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
 
-    std::map<std::string, std::string> platform_config = config_vector_to_map(config);
-    // to create a Context object:
-    //    std::make_shared<Context>(Config(platform_config)),
+    spdl::info("[soma_array_reader] Reading from {}", uri);
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {    // If we have column names, select them
@@ -86,8 +85,8 @@ SEXP soma_array_reader(const std::string& uri,
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
     auto sr = tdbs::SOMAArray::open(OpenMode::read,
                                     uri,
+                                    somactx,
                                     "unnamed",         // name parameter could be added
-                                    platform_config,
                                     column_names,
                                     batch_size,
                                     tdb_result_order,
