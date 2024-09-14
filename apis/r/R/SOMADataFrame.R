@@ -191,9 +191,7 @@ SOMADataFrame <- R6::R6Class(
       }
       spdl::debug("[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
                   private$tiledb_timestamp[1], private$tiledb_timestamp[2])
-      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       sr <- sr_setup(uri = self$uri,
-                     config = cfg, # needed ?
                      private$.soma_context,
                      colnames = column_names,
                      qc = value_filter,

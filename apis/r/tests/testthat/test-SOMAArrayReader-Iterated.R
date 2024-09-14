@@ -12,10 +12,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
     uri <- file.path(tdir, "soco", "pbmc3k_processed", "ms", "RNA", "X", "data")
     expect_true(dir.exists(uri))
 
-    ctx <- tiledb::tiledb_ctx()
-    config <- tiledb::config(ctx)
     somactx <- soma_context()
-    sr <- sr_setup(uri, config = as.character(config), ctxxp = somactx, loglevel = "warn")
+    sr <- sr_setup(uri, ctxxp = somactx, loglevel = "warn")
     expect_true(inherits(sr, "externalptr"))
 
     rl <- data.frame()
@@ -32,8 +30,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
     rm(sr)
     gc()
 
-    sr <- sr_setup(uri, config = as.character(config), ctxxp = somactx,
-                   dim_points = list(soma_dim_0=as.integer64(1)))
+    sr <- sr_setup(uri, ctxxp = somactx, dim_points = list(soma_dim_0=as.integer64(1)))
     expect_true(inherits(sr, "externalptr"))
 
     rl <- data.frame()
@@ -51,7 +48,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
     rm(sr)
     gc()
 
-    sr <- sr_setup(uri, config = as.character(config), ctxxp = somactx,
+    sr <- sr_setup(uri, ctxxp = somactx,
                    dim_range = list(soma_dim_1=cbind(as.integer64(1),as.integer64(2))))
     expect_true(inherits(sr, "externalptr"))
 
@@ -69,7 +66,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
 
     ## test completeness predicate on shorter data
     uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-    sr <- sr_setup(uri, config=as.character(config), somactx)
+    sr <- sr_setup(uri, somactx)
 
     expect_false(tiledbsoma:::sr_complete(sr))
     dat <- sr_next(sr)
@@ -205,8 +202,6 @@ test_that("Iterated Interface from SOMA Sparse Matrix", {
 test_that("Dimension Point and Ranges Bounds", {
     skip_if(!extended_tests() || covr_tests())
     ctx <- tiledbsoma::SOMATileDBContext$new()
-
-    config <- as.character(tiledb::config(ctx$context()))
     human_experiment <- load_dataset("soma-exp-pbmc-small", tiledbsoma_ctx = ctx)
     X <- human_experiment$ms$get("RNA")$X$get("data")
     expect_equal(X$shape(), c(80, 230))
@@ -216,7 +211,7 @@ test_that("Dimension Point and Ranges Bounds", {
     ## 'good case' with suitable dim points
     coords <- list(soma_dim_0=bit64::as.integer64(0:5),
                    soma_dim_1=bit64::as.integer64(0:5))
-    sr <- sr_setup(uri = X$uri, config = config, ctxxp = somactx, dim_points = coords)
+    sr <- sr_setup(uri = X$uri, ctxxp = somactx, dim_points = coords)
 
     chunk <- sr_next(sr)
     at <- arrow::as_arrow_table(chunk)
@@ -228,7 +223,7 @@ test_that("Dimension Point and Ranges Bounds", {
     ## 'good case' with suitable dim ranges
     ranges <- list(soma_dim_0=matrix(bit64::as.integer64(c(1,4)),1),
                    soma_dim_1=matrix(bit64::as.integer64(c(1,4)),1))
-    sr <- sr_setup(uri = X$uri, config = config, somactx, dim_ranges = ranges)
+    sr <- sr_setup(uri = X$uri, somactx, dim_ranges = ranges)
 
     chunk <- sr_next(sr)
     at <- arrow::as_arrow_table(chunk)
@@ -238,12 +233,12 @@ test_that("Dimension Point and Ranges Bounds", {
     ## 'bad case' with unsuitable dim points
     coords <- list(soma_dim_0=bit64::as.integer64(81:86),
                    soma_dim_1=bit64::as.integer64(0:5))
-    expect_error(sr_setup(uri = X$uri, config = config, dim_points = coords))
+    expect_error(sr_setup(uri = X$uri, dim_points = coords))
 
     ## 'bad case' with unsuitable dim range
     ranges <- list(soma_dim_0=matrix(bit64::as.integer64(c(91,94)),1),
                    soma_dim_1=matrix(bit64::as.integer64(c(1,4)),1))
-    expect_error(sr_setup(uri = X$uri, config = config, dim_ranges = ranges))
+    expect_error(sr_setup(uri = X$uri, dim_ranges = ranges))
     rm(sr)
     gc()
 

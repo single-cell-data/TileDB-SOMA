@@ -54,8 +54,8 @@ namespace tdbs = tiledbsoma;
 //' @examples
 //' \dontrun{
 //' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-//' ctx <- tiledb::tiledb_ctx()
-//' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)))
+//' ctxcp <- soma_context()
+//' sr <- sr_setup(uri, ctxxp)
 //' rl <- data.frame()
 //' while (!sr_complete(sr)) {
 //'   dat <- sr_next(sr)
@@ -67,7 +67,6 @@ namespace tdbs = tiledbsoma;
 //' @noRd
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
-                                     Rcpp::CharacterVector config,
                                      Rcpp::XPtr<somactx_wrap_t> ctxxp,
                                      Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
                                      Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
@@ -87,10 +86,6 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
-
-    std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
-    tiledb::Config cfg(platform_config); // no longer needed ?
-    // std::shared_ptr<tiledb::Context> ctxptr = std::make_shared<tiledb::Context>(cfg);
 
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;

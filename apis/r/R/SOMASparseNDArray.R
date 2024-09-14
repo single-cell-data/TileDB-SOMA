@@ -46,9 +46,8 @@ SOMASparseNDArray <- R6::R6Class(
         coords <- private$.convert_coords(coords)
       }
 
-      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
+      ## not needed anymore  cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       sr <- sr_setup(uri = self$uri,
-                     config = cfg, # needed ?
                      private$.soma_context,
                      dim_points = coords,
                      result_order = result_order,

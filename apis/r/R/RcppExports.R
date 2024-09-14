@@ -234,8 +234,8 @@ tiledbsoma_upgrade_shape <- function(uri, new_shape, config = NULL) {
 #' @examples
 #' \dontrun{
 #' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-#' ctx <- tiledb::tiledb_ctx()
-#' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)))
+#' ctxcp <- soma_context()
+#' sr <- sr_setup(uri, ctxxp)
 #' rl <- data.frame()
 #' while (!sr_complete(sr)) {
 #'   dat <- sr_next(sr)
@@ -245,8 +245,8 @@ tiledbsoma_upgrade_shape <- function(uri, new_shape, config = NULL) {
 #' summary(rl)
 #' }
 #' @noRd
-sr_setup <- function(uri, config, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
-    .Call(`_tiledbsoma_sr_setup`, uri, config, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
+sr_setup <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
+    .Call(`_tiledbsoma_sr_setup`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
 }
 
 sr_complete <- function(sr) {
