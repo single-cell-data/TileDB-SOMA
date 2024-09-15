@@ -330,8 +330,8 @@ EphemeralCollectionBase <- R6::R6Class(
       names(members) <- names(private$.data)
       for (i in seq_along(members)) {
         members[[i]] <- list(
-          type = tiledb::tiledb_object_type(private$.data[[i]]$uri),
-          uri = private$.data[[i]]$uri,
+          type = get_tiledb_object_type(private$.data[[i]]$uri, private$.soma_context),
+            uri = private$.data[[i]]$uri,
           name = names(private$.data)[i]
         )
       }
