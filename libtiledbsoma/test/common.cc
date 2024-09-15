@@ -169,11 +169,11 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
                 // domain big; current_domain small
                 std::vector<int64_t> dom(
                     {0, CORE_DOMAIN_MAX, 1, 0, info.dim_max});
-                dim_array = ArrowAdapter::make_arrow_array_child<int64_t>(dom);
+                dim_array = ArrowAdapter::make_arrow_array_child(dom);
             } else {
                 // domain small; current_domain feature not being used
                 std::vector<int64_t> dom({0, info.dim_max, 1});
-                dim_array = ArrowAdapter::make_arrow_array_child<int64_t>(dom);
+                dim_array = ArrowAdapter::make_arrow_array_child(dom);
             }
 
         } else if (info.tiledb_datatype == TILEDB_UINT32) {
@@ -185,11 +185,11 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
                      1,
                      0,
                      (uint32_t)info.dim_max});
-                dim_array = ArrowAdapter::make_arrow_array_child<uint32_t>(dom);
+                dim_array = ArrowAdapter::make_arrow_array_child(dom);
             } else {
                 // domain small; current_domain feature not being used
                 std::vector<uint32_t> dom({0, (uint32_t)info.dim_max, 1});
-                dim_array = ArrowAdapter::make_arrow_array_child<uint32_t>(dom);
+                dim_array = ArrowAdapter::make_arrow_array_child(dom);
             }
 
         } else if (info.tiledb_datatype == TILEDB_STRING_ASCII) {
@@ -198,12 +198,10 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
             // handle this case.
             if (info.use_current_domain) {
                 std::vector<std::string> dom({"", "", "", "", ""});
-                dim_array = ArrowAdapter::make_arrow_array_child<std::string>(
-                    dom);
+                dim_array = ArrowAdapter::make_arrow_array_child(dom);
             } else {
                 std::vector<std::string> dom({"", "", ""});
-                dim_array = ArrowAdapter::make_arrow_array_child<std::string>(
-                    dom);
+                dim_array = ArrowAdapter::make_arrow_array_child(dom);
             }
         }
 

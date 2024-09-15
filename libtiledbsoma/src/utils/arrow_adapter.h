@@ -283,25 +283,6 @@ class ArrowAdapter {
         return make_arrow_array_child<T>(v);
     };
 
-    static ArrowArray* make_arrow_array_child(
-        const std::vector<std::string>& v) {
-        // For core domain, these are always nullptr.
-        // the definition of TileDBSOMAError.
-        auto arrow_array = new ArrowArray;
-
-        arrow_array->length = v.size();
-        arrow_array->null_count = 0;
-        arrow_array->offset = 0;
-        arrow_array->n_buffers = 2;
-        arrow_array->release = &ArrowAdapter::release_array;
-        arrow_array->buffers = new const void*[2];
-        arrow_array->buffers[0] = nullptr;
-        arrow_array->buffers[1] = nullptr;
-        arrow_array->n_children = 0;  // leaf/child node
-
-        return arrow_array;
-    };
-
     template <typename T>
     static ArrowArray* make_arrow_array_child(const std::vector<T>& v) {
         // Use new here, not malloc, to match ArrowAdapter::release_array
@@ -315,16 +296,39 @@ class ArrowAdapter {
         arrow_array->n_buffers = 2;
         arrow_array->release = &ArrowAdapter::release_array;
         arrow_array->buffers = new const void*[2];
-        arrow_array->buffers[0] = nullptr;
-        arrow_array->buffers[1] = nullptr;
         arrow_array->n_children = 0;  // leaf/child node
 
+        arrow_array->buffers[0] = nullptr;
         // Use malloc here, not new, to match ArrowAdapter::release_array
         T* dest = (T*)malloc(n * sizeof(T));
         for (size_t i = 0; i < n; i++) {
             dest[i] = v[i];
         }
         arrow_array->buffers[1] = (void*)dest;
+
+        return arrow_array;
+    };
+
+    static ArrowArray* make_arrow_array_child(
+        const std::vector<std::string>& v) {
+        // Use new here, not malloc, to match ArrowAdapter::release_array
+        auto arrow_array = new ArrowArray;
+
+        size_t n = v.size();
+
+        arrow_array->length = n;
+        arrow_array->null_count = 0;
+        arrow_array->offset = 0;
+        arrow_array->n_buffers = 2;
+        arrow_array->release = &ArrowAdapter::release_array;
+        arrow_array->buffers = new const void*[2];
+        arrow_array->n_children = 0;  // leaf/child node
+
+        // For core domain, these are always nullptr for strings and cannot be
+        // anything else. More general use of this class is WIP on
+        // https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+        arrow_array->buffers[0] = nullptr;
+        arrow_array->buffers[1] = nullptr;
 
         return arrow_array;
     };
