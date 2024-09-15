@@ -221,7 +221,7 @@ SOMASparseNDArray <- R6::R6Class(
         (bit64::is.integer64(shape) && length(shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      tiledbsoma_upgrade_shape(self$uri, shape, , private$.soma_context)
+      tiledbsoma_upgrade_shape(self$uri, shape, private$.soma_context)
     }
 
   ),
