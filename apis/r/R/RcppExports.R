@@ -60,6 +60,7 @@ c_group_put_metadata <- function(xp, key, obj) {
 
 #' Get nnumber of metadata items
 #' @param uri The array URI
+#' @param is_array A boolean to indicate array or group
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
 get_metadata_num <- function(uri, is_array, ctxxp) {
@@ -71,6 +72,7 @@ get_metadata_num <- function(uri, is_array, ctxxp) {
 #' This function currently supports metadata as either a string or an 'int64' (or 'int32').
 #' It will error if a different datatype is encountered.
 #' @param uri The array URI
+#' @param is_array A boolean to indicate array or group
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
 get_all_metadata <- function(uri, is_array, ctxxp) {
@@ -81,6 +83,7 @@ get_all_metadata <- function(uri, is_array, ctxxp) {
 #'
 #' @param uri The array URI
 #' @param key The array metadata key
+#' @param is_array A boolean to indicate array or group
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
 get_metadata <- function(uri, key, is_array, ctxxp) {
@@ -91,6 +94,7 @@ get_metadata <- function(uri, key, is_array, ctxxp) {
 #'
 #' @param uri The array URI
 #' @param key The array metadata key
+#' @param is_array A boolean to indicate array or group
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
 has_metadata <- function(uri, key, is_array, ctxxp) {
@@ -101,6 +105,7 @@ has_metadata <- function(uri, key, is_array, ctxxp) {
 #'
 #' @param uri The array URI
 #' @param key The array metadata key
+#' @param is_array A boolean to indicate array or group
 #' @param ctxxp An external pointer to the SOMAContext wrapper
 #' @export
 delete_metadata <- function(uri, key, is_array, ctxxp) {
