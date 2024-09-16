@@ -37,14 +37,11 @@ SOMANDArrayBase <- R6::R6Class(
       ## .is_sparse field is being set by dense and sparse private initialisers, respectively
       private$.type <- type                 # Arrow schema type of data
 
-      #spdl::warn("[SOMANDArrayBase::create] type cached as {}", private$.type)
-
       dom_ext_tbl <- get_domain_and_extent_array(shape, private$.is_sparse)
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
-      ##print(str(tiledb_create_options$to_list(FALSE)))
 
       ## we transfer to the arrow table via a pair of array and schema pointers
       dnaap <- nanoarrow::nanoarrow_allocate_array()
@@ -69,7 +66,7 @@ SOMANDArrayBase <- R6::R6Class(
         sparse = private$.is_sparse,
         datatype = if (private$.is_sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
         pclst = tiledb_create_options$to_list(FALSE),
-        ctxxp = soma_context(),
+        ctxxp = private$.soma_context,
         tsvec = self$.tiledb_timestamp_range
       )
       #private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?
@@ -87,15 +84,12 @@ SOMANDArrayBase <- R6::R6Class(
     },
 
     #' @description Returns TRUE if the array has the upgraded resizeable shape
-    #' feature from TileDB-SOMA 1.14: the array was created with this support,
+    #' feature from TileDB-SOMA 1.15: the array was created with this support,
     #' or it has had ``upgrade_domain`` applied to it.
     #' (lifecycle: maturing)
     #' @return Logical
     tiledbsoma_has_upgraded_shape = function() {
-      has_current_domain(
-        self$uri,
-        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      )
+      has_current_domain(self$uri, private$.soma_context)
     }
 
   ),

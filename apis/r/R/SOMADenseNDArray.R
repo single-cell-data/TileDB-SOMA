@@ -51,7 +51,6 @@ SOMADenseNDArray <- R6::R6Class(
       }
       coords <- private$.convert_coords(coords)
 
-      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
       spdl::debug(
         "[SOMADenseNDArray$read_arrow_table] timestamp ({})",
         self$tiledb_timestamp %||% "now"
@@ -61,8 +60,8 @@ SOMADenseNDArray <- R6::R6Class(
                               dim_points = coords,
                               result_order = result_order,
                               timestamprange = self$.tiledb_timestamp_range,
-                              loglevel = log_level,
-                              config = cfg)
+                              soma_context = private$.soma_context,
+                              loglevel = log_level)
 
       soma_array_to_arrow_table(rl)
     },
@@ -155,6 +154,7 @@ SOMADenseNDArray <- R6::R6Class(
         uri = self$uri,
         naap = naap,
         nasp = nasp,
+        ctxxp = private$.soma_context,
         arraytype = "SOMADenseNDArray",
         config = NULL,
         tsvec = self$.tiledb_timestamp_range

@@ -1252,4 +1252,61 @@ enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
             fmt::format("ArrowAdapter: Unsupported Arrow format: {} ", sv));
 }
 
+std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
+    const std::vector<std::string>& names,
+    const std::vector<tiledb_datatype_t>& tiledb_datatypes) {
+    auto num_names = names.size();
+    auto num_types = tiledb_datatypes.size();
+
+    if (num_names != num_types) {
+        throw TileDBSOMAError(fmt::format(
+            "ArrowAdapter::make_arrow_schema: internal coding error {} != {}",
+            num_names,
+            num_types));
+    }
+
+    auto arrow_schema = std::make_unique<ArrowSchema>();
+    arrow_schema->format = "+s";           // structure, i.e. non-leaf node
+    arrow_schema->n_children = num_names;  // non-leaf node
+    arrow_schema->dictionary = nullptr;
+    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
+
+    for (int i = 0; i < (int)num_names; i++) {
+        ArrowSchema* dim_schema = new ArrowSchema;
+        dim_schema->name = strdup(names[i].c_str());
+        auto arrow_type_name = ArrowAdapter::tdb_to_arrow_type(
+            tiledb_datatypes[i]);
+        dim_schema->format = strdup(arrow_type_name.c_str());
+        dim_schema->n_children = 0;  // leaf node
+        dim_schema->dictionary = nullptr;
+        dim_schema->release = &ArrowAdapter::release_schema;
+        arrow_schema->children[i] = dim_schema;
+    }
+
+    return arrow_schema;
+}
+
+std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
+    int num_columns) {
+    auto arrow_array = std::make_unique<ArrowArray>();
+
+    // All zero/null since this is a parent ArrowArray, and each
+    // column/child is also of type ArrowArray.
+    arrow_array->length = 0;
+    arrow_array->null_count = 0;
+    arrow_array->offset = 0;
+    arrow_array->n_buffers = 0;
+    arrow_array->buffers = nullptr;
+
+    arrow_array->n_children = num_columns;
+    arrow_array->release = &ArrowAdapter::release_array;
+    arrow_array->children = new ArrowArray*[num_columns];
+    for (int i = 0; i < num_columns; i++) {
+        arrow_array->children[i] = nullptr;
+    }
+
+    return arrow_array;
+}
+
 }  // namespace tiledbsoma

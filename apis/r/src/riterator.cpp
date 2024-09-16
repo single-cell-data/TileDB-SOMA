@@ -54,8 +54,8 @@ namespace tdbs = tiledbsoma;
 //' @examples
 //' \dontrun{
 //' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-//' ctx <- tiledb::tiledb_ctx()
-//' sr <- sr_setup(uri, config=as.character(tiledb::config(ctx)))
+//' ctxcp <- soma_context()
+//' sr <- sr_setup(uri, ctxxp)
 //' rl <- data.frame()
 //' while (!sr_complete(sr)) {
 //'   dat <- sr_next(sr)
@@ -66,16 +66,16 @@ namespace tdbs = tiledbsoma;
 //' }
 //' @noRd
 // [[Rcpp::export]]
-Rcpp::List sr_setup(const std::string& uri,
-                    Rcpp::CharacterVector config,
-                    Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
-                    Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
-                    Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
-                    Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
-                    std::string batch_size = "auto",
-                    std::string result_order = "auto",
-                    Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue,
-                    const std::string& loglevel = "auto") {
+Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
+                                     Rcpp::XPtr<somactx_wrap_t> ctxxp,
+                                     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::List> dim_points = R_NilValue,
+                                     Rcpp::Nullable<Rcpp::List> dim_ranges = R_NilValue,
+                                     std::string batch_size = "auto",
+                                     std::string result_order = "auto",
+                                     Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange = R_NilValue,
+                                     const std::string& loglevel = "auto") {
 
     if (loglevel != "auto") {
         spdl::set_level(loglevel);
@@ -87,10 +87,10 @@ Rcpp::List sr_setup(const std::string& uri,
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
 
-    std::map<std::string, std::string> platform_config = config_vector_to_map(Rcpp::wrap(config));
-    tiledb::Config cfg(platform_config);
-    spdl::debug("[sr_setup] creating ctx object with supplied config");
-    std::shared_ptr<tiledb::Context> ctxptr = std::make_shared<tiledb::Context>(cfg);
+    // shared pointer to SOMAContext from external pointer wrapper
+    std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
+    // shared pointer to TileDB Context from SOMAContext
+    std::shared_ptr<tiledb::Context> ctxptr = somactx->tiledb_ctx();
 
     ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
     Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);
@@ -104,8 +104,8 @@ Rcpp::List sr_setup(const std::string& uri,
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
-    auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, platform_config,
-                                   column_names, batch_size,
+    auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, somactx,
+                                   name, column_names, batch_size,
                                    tdb_result_order, tsrng);
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
@@ -141,8 +141,7 @@ Rcpp::List sr_setup(const std::string& uri,
     }
 
     Rcpp::XPtr<tdbs::SOMAArray> xptr = make_xptr<tdbs::SOMAArray>(ptr);
-    return Rcpp::List::create(Rcpp::Named("sr") = xptr,
-                              Rcpp::Named("ctx") = ctx_wrap_xptr);
+    return xptr;
 }
 
 // [[Rcpp::export]]

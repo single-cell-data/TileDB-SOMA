@@ -147,6 +147,7 @@ void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray na
 
 // [[Rcpp::export]]
 void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp,
+                         Rcpp::XPtr<somactx_wrap_t> ctxxp,
                          const std::string arraytype = "",
                          Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
                          Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
@@ -169,21 +170,26 @@ void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp
     auto array = std::make_unique<ArrowArray>();
     ap.move(array.get());
 
-    // if we hae a coonfig, use it
-    std::shared_ptr<tdbs::SOMAContext> somactx;
-    if (config.isNotNull()) {
-        std::map<std::string, std::string> smap;
-        auto config_vec = config.as();
-        auto config_names = Rcpp::as<Rcpp::CharacterVector>(config_vec.names());
-        for (auto &name : config_names) {
-            std::string param = Rcpp::as<std::string>(name);
-            std::string value = Rcpp::as<std::string>(config_vec[param]);
-            smap[param] = value;
-        }
-        somactx = std::make_shared<tdbs::SOMAContext>(smap);
-    } else {
-        somactx = std::make_shared<tdbs::SOMAContext>();
-    }
+    // shared pointer to SOMAContext from external pointer wrapper
+    std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
+    // shared pointer to TileDB Context from SOMAContext -- not needed here
+    // std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
+
+    // // if we hae a coonfig, use it
+    // std::shared_ptr<tdbs::SOMAContext> somactx;
+    // if (config.isNotNull()) {
+    //     std::map<std::string, std::string> smap;
+    //     auto config_vec = config.as();
+    //     auto config_names = Rcpp::as<Rcpp::CharacterVector>(config_vec.names());
+    //     for (auto &name : config_names) {
+    //         std::string param = Rcpp::as<std::string>(name);
+    //         std::string value = Rcpp::as<std::string>(config_vec[param]);
+    //         smap[param] = value;
+    //     }
+    //     somactx = std::make_shared<tdbs::SOMAContext>(smap);
+    // } else {
+    //     somactx = std::make_shared<tdbs::SOMAContext>();
+    // }
 
     // optional timestamp range
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);

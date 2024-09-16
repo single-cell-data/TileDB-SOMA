@@ -67,7 +67,7 @@ load_dataset <- function(name, dir = tempdir(), tiledbsoma_ctx = NULL) {
 
   # Inspect the object's metadata
   object <- switch(
-    tiledb::tiledb_object_type(dataset_uri),
+    get_tiledb_object_type(dataset_uri, soma_context()),
     "ARRAY" = TileDBArray$new(dataset_uri, internal_use_only = "allowed_use"),
     "GROUP" = TileDBGroup$new(dataset_uri, internal_use_only = "allowed_use"),
     stop("The dataset is not a TileDB Array or Group", call. = FALSE)

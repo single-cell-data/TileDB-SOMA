@@ -8,13 +8,14 @@
 * Use cached timestamps in `$write()` and `$create()`
 * Fix bug in blockwise iteration
 * Lay groundwork for cached SOMA contexts within objects rather than re-creating contexts
+* SOMA context objects are used throughout SOMA object creation
 
 # tiledbsoma 1.13.0
 
 ## Changes
 
 * Updates the TileDB Core dependency to 2.25.0
-* The `used_shape` function is deprecated; `shape` mods are [upcoming](https://github.com/single-cell-data/TileDB-SOMA/issues/2407) in TileDB-SOMA 1.14
+* The `used_shape` function is deprecated; `shape` mods are [upcoming](https://github.com/single-cell-data/TileDB-SOMA/issues/2407) scheduled for TileDB-SOMA 1.15
 * Change `$reopen(mode = )` default to not flip modes; require explicit `mode` parameter to be passed
 * Add `drop_levels` to `SOMAExperimentAxisQuery` -> ecosystem outgestors to drop unused factor levels
 

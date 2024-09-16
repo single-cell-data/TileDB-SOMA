@@ -27,7 +27,7 @@ from .._util import ms_to_datetime, to_timestamp_ms
 def _warn_ctx_deprecation() -> None:
     assert_version_before(1, 14)
     warnings.warn(
-        "tiledb_ctx is now deprecated for removal in 1.14. "
+        "tiledb_ctx is now deprecated for removal in 1.15. "
         "Use tiledb_config instead by passing "
         "SOMATileDBContext(tiledb_config=ctx.config().dict()).",
         DeprecationWarning,
@@ -229,7 +229,7 @@ class SOMATileDBContext(ContextBase):
             return dict(self._native_context.config())
 
         # We have TileDB Context. Return its actual config.
-        # TODO This block will be deleted once tiledb_ctx is removed in 1.14
+        # TODO This block will be deleted once tiledb_ctx is removed in 1.15
         if self._tiledb_ctx is not None:
             return dict(self._tiledb_ctx.config())
 

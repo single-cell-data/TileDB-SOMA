@@ -27,7 +27,8 @@ SOMADataFrameCreate <- function(
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  soma_context = NULL
 ) {
   ingest_mode <- match.arg(ingest_mode)
   sdf <- SOMADataFrame$new(
@@ -35,6 +36,7 @@ SOMADataFrameCreate <- function(
     platform_config,
     tiledbsoma_ctx,
     tiledb_timestamp,
+    soma_context = soma_context,
     internal_use_only = "allowed_use"
   )
   ingest_mode <- switch(
@@ -73,7 +75,8 @@ SOMADataFrameOpen <- function(
   mode = "READ",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  soma_context = NULL
 ) {
   spdl::debug("[SOMADataFrameOpen] uri {} ts ({})", uri, tiledb_timestamp %||% "now")
   sdf <- SOMADataFrame$new(
@@ -81,6 +84,7 @@ SOMADataFrameOpen <- function(
     platform_config,
     tiledbsoma_ctx,
     tiledb_timestamp,
+    soma_context = soma_context,
     internal_use_only = "allowed_use"
   )
   sdf$open(mode, internal_use_only = "allowed_use")

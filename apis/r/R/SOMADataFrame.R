@@ -62,7 +62,6 @@ SOMADataFrame <- R6::R6Class(
       schema$export_to_c(nasp)
 
       spdl::debug("[SOMADataFrame$create] about to create schema from arrow")
-      ctxptr <- super$tiledbsoma_ctx$context()
       createSchemaFromArrow(
         uri = self$uri,
         nasp = nasp,
@@ -71,7 +70,7 @@ SOMADataFrame <- R6::R6Class(
         sparse = TRUE,
         datatype = "SOMADataFrame",
         pclst = tiledb_create_options$to_list(FALSE),
-        ctxxp = soma_context(),
+        ctxxp = private$.soma_context,
         tsvec = self$.tiledb_timestamp_range
       )
 
@@ -121,6 +120,7 @@ SOMADataFrame <- R6::R6Class(
         uri = self$uri,
         naap = naap,
         nasp = nasp,
+        ctxxp = private$.soma_context,
         arraytype = "SOMADataFrame",
         config = NULL,
         tsvec = self$.tiledb_timestamp_range
@@ -180,16 +180,14 @@ SOMADataFrame <- R6::R6Class(
       }
       spdl::debug("[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
                   private$tiledb_timestamp[1], private$tiledb_timestamp[2])
-      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      rl <- sr_setup(uri = self$uri,
-                     config = cfg,
+      sr <- sr_setup(uri = self$uri,
+                     private$.soma_context,
                      colnames = column_names,
                      qc = value_filter,
                      dim_points = coords,
                      timestamprange = self$.tiledb_timestamp_range,  # NULL or two-elem vector
                      loglevel = log_level)
-      private$ctx_ptr <- rl$ctx
-      TableReadIter$new(rl$sr)
+      TableReadIter$new(sr)
     },
 
     #' @description Update (lifecycle: maturing)
@@ -342,15 +340,12 @@ SOMADataFrame <- R6::R6Class(
     )),
 
     #' @description Returns TRUE if the array has the upgraded resizeable domain
-    #' feature from TileDB-SOMA 1.14: the array was created with this support,
+    #' feature from TileDB-SOMA 1.15: the array was created with this support,
     #' or it has had ``upgrade_domain`` applied to it.
     #' (lifecycle: maturing)
     #' @return Logical
     tiledbsoma_has_upgraded_domain = function() {
-      has_current_domain(
-        self$uri,
-        config=as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      )
+      has_current_domain(self$uri, private$.soma_context)
     }
 
   ),
@@ -388,9 +383,6 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
-    },
-
-    # Internal variable to hold onto context returned by sr_setup
-    ctx_ptr = NULL
+    }
   )
 )
