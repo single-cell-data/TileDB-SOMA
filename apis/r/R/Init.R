@@ -58,6 +58,9 @@
 #' @param config A named character vector with \sQuote{key} and \sQuote{value} pairs defining the
 #' configuration setting
 #' @return An external pointer object containing a shared pointer instance of \code{SOMAContext}
+#' @examples
+#' cfgvec <- as.vector(tiledb::tiledb_config())   # TileDB Config in vector form
+#' sctx <- soma_context(cfgvec)
 #' @export
 soma_context <- function(config) {
 

@@ -165,13 +165,13 @@ uns_hint <- function(type = c('1d', '2d')) {
   }
   x$reopen("READ", tiledb_timestamp = x$tiledb_timestamp)
   dimname <- x$dimnames()[axis + 1L]
-  rl <- sr_setup(
+  sr <- sr_setup(
     uri = x$uri,
-    config = as.character(tiledb::config(x$tiledbsoma_ctx$context())),
+    soma_context(),
     colnames = dimname,
     timestamprange = x$.tiledb_timestamp_range
   )
-  return(TableReadIter$new(rl$sr)$concat()$GetColumnByName(dimname)$as_vector())
+  return(TableReadIter$new(sr)$concat()$GetColumnByName(dimname)$as_vector())
 }
 
 #' Pad Names of a Character Vector

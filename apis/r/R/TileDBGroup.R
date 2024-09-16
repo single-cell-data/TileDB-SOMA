@@ -439,7 +439,7 @@ TileDBGroup <- R6::R6Class(
         # TODO: do we really need the type here?
         # Calling tiledb::tiledb_object_type on remote storage has a cost;
         # perhaps unnecessary to incur.
-        type = tiledb::tiledb_object_type(object$uri),
+        type = get_tiledb_object_type(object$uri, private$.soma_context),
         uri = object$uri,
         name = name,
         object = object

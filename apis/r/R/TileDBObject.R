@@ -15,7 +15,8 @@ TileDBObject <- R6::R6Class(
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `new()` is considered internal and should not be called directly.
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
-                          tiledb_timestamp = NULL, internal_use_only = NULL) {
+                          tiledb_timestamp = NULL, internal_use_only = NULL,
+                          soma_context = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste("Use of the new() method is for internal use only. Consider using a",
                    "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
@@ -43,7 +44,11 @@ TileDBObject <- R6::R6Class(
       # stopifnot(
       #   "'soma_context' must be a pointer" = inherits(x = soma_context, what = 'externalptr')
       # )
-      private$.soma_context <- soma_context()  # FIXME via factory and paramater_config
+      if (is.null(soma_context)) {
+          private$.soma_context <- soma_context()  # FIXME via factory and paramater_config
+      } else {
+          private$.soma_context <- soma_context
+      }
 
       if (!is.null(tiledb_timestamp)) {
         stopifnot(
