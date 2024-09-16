@@ -164,6 +164,21 @@ class PlatformConfig {
     bool consolidate_and_vacuum = false;
 };
 
+/**
+ * This is our application-specific wrapper around nanoarrow.
+ *
+ * Nominal use-cases include full dataframe-wide schemas from Python/R for
+ * DataFrame::create, domain/extent/etc information from Python/R for
+ * setting core dimensions, and readback to Python/R of core domain, current
+ * domain, and non-empty domain.
+ *
+ * nanoarrow is crucial to our code-centralization efforts in libtiledbsoma.
+ * Python and R can trivially do heterogenous lists like ["abc", 123, true]
+ * or list("abc", 123, TRUE); C++ cannot -- at least not so compactly. The
+ * combination of ArrowSchema (for the types) and ArrowArray (for the data) is
+ * key for Python/R interop with C++ libtiledbsoma.
+ */
+
 class ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema);
@@ -229,6 +244,95 @@ class ArrowAdapter {
 
     static enum ArrowType to_nanoarrow_type(std::string_view sv);
 
+    /**
+     * @brief This is a keystroke-saver.
+     */
+    static std::string tdb_to_arrow_type(tiledb_datatype_t tiledb_datatype) {
+        return std::string(to_arrow_format(tiledb_datatype));
+    }
+
+    /**
+     * @brief Creates a nanoarrow ArrowSchema given the names and TileDB
+     * datatypes.
+     *
+     * Note that the parents and children in nanoarrow are both of type
+     * ArrowSchema. This constructs the parent and the children.
+     */
+    static std::unique_ptr<ArrowSchema> make_arrow_schema(
+        const std::vector<std::string>& names,
+        const std::vector<tiledb_datatype_t>& tiledb_datatypes);
+
+    /**
+     * @brief Creates a nanoarrow ArrowArray which accommodates
+     * a varying number of columns.
+     *
+     * Note that the parents and children in nanoarrow are both of type
+     * ArrowArray. This constructs the parent and not the children.
+     */
+    static std::unique_ptr<ArrowArray> make_arrow_array_parent(int num_columns);
+
+    /**
+     * @brief Creates a nanoarrow ArrowArray for a single column.
+     *
+     * Note that the parents and children in nanoarrow are both of type
+     * ArrowArray. This constructs not the parent but rather a child.
+     */
+    template <typename T>
+    static ArrowArray* make_arrow_array_child(const std::pair<T, T>& pair) {
+        std::vector<T> v({pair.first, pair.second});
+        return make_arrow_array_child<T>(v);
+    };
+
+    template <typename T>
+    static ArrowArray* make_arrow_array_child(const std::vector<T>& v) {
+        // Use new here, not malloc, to match ArrowAdapter::release_array
+        auto arrow_array = new ArrowArray;
+
+        size_t n = v.size();
+
+        arrow_array->length = n;
+        arrow_array->null_count = 0;
+        arrow_array->offset = 0;
+        arrow_array->n_buffers = 2;
+        arrow_array->release = &ArrowAdapter::release_array;
+        arrow_array->buffers = new const void*[2];
+        arrow_array->n_children = 0;  // leaf/child node
+
+        arrow_array->buffers[0] = nullptr;
+        // Use malloc here, not new, to match ArrowAdapter::release_array
+        T* dest = (T*)malloc(n * sizeof(T));
+        for (size_t i = 0; i < n; i++) {
+            dest[i] = v[i];
+        }
+        arrow_array->buffers[1] = (void*)dest;
+
+        return arrow_array;
+    };
+
+    static ArrowArray* make_arrow_array_child(
+        const std::vector<std::string>& v) {
+        // Use new here, not malloc, to match ArrowAdapter::release_array
+        auto arrow_array = new ArrowArray;
+
+        size_t n = v.size();
+
+        arrow_array->length = n;
+        arrow_array->null_count = 0;
+        arrow_array->offset = 0;
+        arrow_array->n_buffers = 2;
+        arrow_array->release = &ArrowAdapter::release_array;
+        arrow_array->buffers = new const void*[2];
+        arrow_array->n_children = 0;  // leaf/child node
+
+        // For core domain, these are always nullptr for strings and cannot be
+        // anything else. More general use of this class is WIP on
+        // https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+        arrow_array->buffers[0] = nullptr;
+        arrow_array->buffers[1] = nullptr;
+
+        return arrow_array;
+    };
+
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(
         Enumeration& enmr, const void* dst);
@@ -290,7 +394,8 @@ class ArrowAdapter {
         Filter filter, std::string option_name, json value);
 
     static tiledb_layout_t _get_order(std::string order);
-};
-};  // namespace tiledbsoma
 
+};  // class ArrowAdapter
+
+};  // namespace tiledbsoma
 #endif

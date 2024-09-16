@@ -67,9 +67,12 @@ struct VariouslyIndexedDataFrameFixture {
     tiledb_datatype_t u32_datatype = TILEDB_UINT32;
     tiledb_datatype_t str_datatype = TILEDB_STRING_ASCII;
 
-    std::string i64_arrow_format = helper::to_arrow_format(i64_datatype);
-    std::string u32_arrow_format = helper::to_arrow_format(u32_datatype);
-    std::string attr_1_arrow_format = helper::to_arrow_format(str_datatype);
+    std::string i64_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        i64_datatype);
+    std::string u32_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        u32_datatype);
+    std::string attr_1_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        str_datatype);
 
     helper::DimInfo i64_dim_info(bool use_current_domain) {
         return helper::DimInfo(
