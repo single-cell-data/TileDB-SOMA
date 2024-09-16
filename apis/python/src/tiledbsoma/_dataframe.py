@@ -6,7 +6,8 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, List, Optional, Sequence, Tuple, Type, Union, cast
+from abc import abstractmethod
+from typing import Any, List, Mapping, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pyarrow as pa
@@ -16,13 +17,13 @@ from typing_extensions import Self
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
-from ._constants import SOMA_JOINID
+from ._constants import SOMA_GEOMETRY, SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
-from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
+from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_nonstringy_sequence, is_slice_of
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import (
@@ -604,6 +605,278 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         except AttributeError:
             return False
 
+class SpatialDataFrame(SOMAArray):
+    _wrapper_type = DataFrameWrapper
+
+    @abstractmethod
+    def read_region(
+        self,
+        region: Optional[options.SpatialRegion] = None,
+        column_names: Optional[Sequence[str]] = None,
+        *,
+        extra_coords: Optional[Mapping[str, options.SparseDFCoord]] = None,
+        transform: Optional[coordinates.CoordinateTransform] = None,
+        region_coord_space: Optional[coordinates.CoordinateSpace] = None,
+        batch_size: options.BatchSize = options.BatchSize(),
+        partitions: Optional[options.ReadPartitions] = None,
+        result_order: options.ResultOrderStr = _RO_AUTO,
+        value_filter: Optional[str] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> "SpatialRead[data.ReadIter[pa.Table]]":
+        """Reads a user-defined slice of data into Arrow tables.
+
+        TODO: Add details about the requested input region.
+        TODO: Add details about the output SpatialReadIter.
+
+        Args:
+            region: for each index dimension, which rows to read or a single shape.
+                Defaults to ``()``, meaning no constraint -- all IDs.
+            column_names: the named columns to read and return.
+                Defaults to ``None``, meaning no constraint -- all column names.
+            extra_coords: a name to coordinate mapping non-spatial index columns.
+                Defaults to selecting entire region for non-spatial coordinates.
+            transform: coordinate transform to apply to results.
+                Defaults to ``None``, meaning an identity transform.
+            region_coord_space: the coordinate space of the region being read.
+                Defaults to ``None``, coordinate space will be infer from transform.
+            batch_size: The size of batched reads.
+                Defaults to `unbatched`.
+            partitions: If present, specifies that this is part of
+                a partitioned read, and which part of the data to include.
+            result_order: the order to return results, specified as a
+                :class:`~options.ResultOrder` or its string value.
+            value_filter: an optional value filter to apply to the results.
+                The default of ``None`` represents no filter. Value filter
+                syntax is implementation-defined; see the documentation
+                for the particular SOMA implementation for details.
+        Returns:
+            A :class:`ReadIter` of :class:`pa.Table`s.
+
+        Lifecycle: experimental
+        """
+
+    @abstractmethod
+    def read(
+        self,
+        coords: options.SparseDFCoords = (),
+        column_names: Optional[Sequence[str]] = None,
+        *,
+        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        value_filter: Optional[str] = None,
+        batch_size: options.BatchSize = _UNBATCHED,
+        partitions: Optional[options.ReadPartitions] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> TableReadIter:
+        pass
+
+    @abstractmethod
+    def write(
+        self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None
+    ) -> Self:
+        pass
+
+    @property
+    def index_column_names(self) -> Tuple[str, ...]:
+        return self._tiledb_dim_names()
+
+    @property
+    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+        self._tiledb_domain()
+
+    @property
+    def axis_names(self) -> Tuple[str, ...]:
+        """The names of the axes of the coordinate space the data is defined on.
+
+        Lifecycle: experimental
+        """
+        raise NotImplementedError()
+    
+class GeometryDataFrame(SpatialDataFrame):
+    @classmethod
+    def create(
+        cls,
+        uri: str,
+        *,
+        schema: pa.Schema,
+        index_column_names: Sequence[str] = (SOMA_JOINID, SOMA_GEOMETRY),
+        axis_names: Sequence[str] = ("x", "y"),
+        domain: Optional[Domain] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+    ) -> Self:
+        context = _validate_soma_tiledb_context(context)
+        schema = _canonicalize_spatial_schema(schema, index_column_names, axis_names)
+        if domain is None:
+            domain = tuple(None for _ in index_column_names)
+        else:
+            ndom = len(domain)
+            nidx = len(index_column_names)
+            if ndom != nidx:
+                raise ValueError(
+                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
+                )
+            
+            geometry_dom_idx = index_column_names.index(SOMA_GEOMETRY)
+            geometry_dom = domain[geometry_dom_idx]
+            if not (isinstance(geometry_dom, tuple) and len(geometry_dom) == len(axis_names)) or not all(isinstance(entry, tuple) and len(entry) == 2 for entry in geometry_dom):
+                raise ValueError(
+                    f"Invalid domain specified for ``soma_geometry``. Two tuples must be provided for the ``soma_geometry`` column which store the width followed by the height. Each tuple should be a pair consisting of the minimum and maximum values storable in the index column.")
+
+        # Replace `SOMA_GEOMETRY` from index columns with spatial axes
+        geometry_idx = index_column_names.index(SOMA_GEOMETRY)
+        domain = domain[:geometry_idx] + tuple(None for _ in axis_names) if domain[geometry_idx] is None else domain[geometry_idx] + domain[geometry_idx + 1:]
+        index_column_names = index_column_names[:geometry_idx] + axis_names + index_column_names[geometry_idx + 1:]
+
+        index_column_schema = []
+        index_column_data = {}
+
+        for index_column_name, slot_domain in zip(index_column_names, domain):
+            pa_field = schema.field(index_column_name)
+            dtype = _arrow_types.tiledb_type_from_arrow_type(
+                pa_field.type, is_indexed_column=True
+            )
+
+            slot_domain = _fill_out_slot_domain(
+                slot_domain, index_column_name, pa_field.type, dtype
+            )
+
+            extent = _find_extent_for_domain(
+                index_column_name,
+                TileDBCreateOptions.from_platform_config(platform_config),
+                dtype,
+                slot_domain,
+            )
+
+            index_column_schema.append(pa_field)
+            index_column_data[pa_field.name] = [*slot_domain, extent]
+
+        index_column_info = pa.RecordBatch.from_pydict(
+            index_column_data, schema=pa.schema(index_column_schema)
+        )
+
+        plt_cfg = _util.build_clib_platform_config(platform_config)
+        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        try:
+            clib.SOMAGeometryDataFrame.create(
+                uri,
+                schema=schema,
+                index_column_info=index_column_info,
+                axis_names=list(axis_names),
+                ctx=context.native_context,
+                platform_config=plt_cfg,
+                timestamp=(0, timestamp_ms),
+            )
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
+
+        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+        return cls(
+            handle,
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
+
+    def read(
+        self,
+        coords: options.SparseDFCoords = (),
+        column_names: Optional[Sequence[str]] = None,
+        *,
+        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
+        value_filter: Optional[str] = None,
+        batch_size: options.BatchSize = _UNBATCHED,
+        partitions: Optional[options.ReadPartitions] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+    ) -> TableReadIter:
+        del batch_size  # Currently unused.
+        _util.check_unpartitioned(partitions)
+        self._check_open_read()
+
+        handle = self._handle._handle
+
+        context = handle.context()
+        if platform_config is not None:
+            config = context.tiledb_config.copy()
+            config.update(platform_config)
+            context = clib.SOMAContext(config)
+
+        sr = clib.SOMAGeometryDataFrame.open(
+            uri=handle.uri,
+            mode=clib.OpenMode.read,
+            context=context,
+            column_names=column_names or [],
+            result_order=_util.to_clib_result_order(result_order),
+            timestamp=handle.timestamp and (0, handle.timestamp),
+        )
+
+        if value_filter is not None:
+            sr.set_condition(QueryCondition(value_filter), handle.schema)
+
+        self._set_reader_coords(sr, coords)
+
+        # # TODO: batch_size
+        return TableReadIter(sr)
+
+    def write(self, values: pa.Table, platform_config: options.Dict[str, Mapping[str, Any]] | object | None = None) -> Self:
+        pass
+
+    def _set_reader_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
+        """Parses the given coords and sets them on the SOMA Reader."""
+        if not is_nonstringy_sequence(coords):
+            raise TypeError(
+                f"coords type {type(coords)} must be a regular sequence,"
+                " not str or bytes"
+            )
+
+        if len(coords) > self._handle.ndim:
+            raise ValueError(
+                f"coords ({len(coords)} elements) must be shorter than ndim"
+                f" ({self._handle.ndim})"
+            )
+        for i, coord in enumerate(coords):
+            dim = self.schema.field(i)
+            if dim.name in self.axis_names:
+                if not self._set_reader_spatial_coord(sr, i, dim, coord):
+                    raise TypeError(
+                        f"coord type {type(coord)} for dimension {dim.name}"
+                        f" (slot {i}) unsupported"
+                    )
+            else:
+                if not self._set_reader_coord(sr, i, dim, coord):
+                    raise TypeError(
+                        f"coord type {type(coord)} for dimension {dim.name}"
+                        f" (slot {i}) unsupported"
+                    )
+                
+    def _set_reader_spatial_coord(
+        self, sr: clib.SOMASpatialDataFrame, dim_idx: int, dim: pa.Field, coord: object
+    ) -> bool:
+        """Parses a single coordinate entry.
+
+        The base implementation parses the most fundamental types shared by all
+        TileDB Array types; subclasses can implement their own readers that
+        handle types not recognized here.
+
+        Returns:
+            True if successful, False if unrecognized.
+        """
+        if coord is None:
+            return True  # No constraint; select all in this dimension
+
+        if isinstance(coord, int):
+            sr.set_spatial_dim_ranges(dim.name, [coord])
+            return True
+        if isinstance(coord, slice):
+            _util.validate_slice(coord)
+            try:
+                dom = self._handle.domain[dim_idx]
+                lo_hi = _util.slice_to_numeric_range(coord, dom)
+            except _util.NonNumericDimensionError:
+                return False  # We only handle numeric dimensions here.
+            if lo_hi:
+                sr.set_spatial_dim_ranges(dim.name, [lo_hi])
+            # If `None`, coord was `slice(None)` and there is no constraint.
+            return True
+        return False
 
 def _canonicalize_schema(
     schema: pa.Schema, index_column_names: Sequence[str]
@@ -673,6 +946,88 @@ def _canonicalize_schema(
 
     return schema
 
+def _canonicalize_spatial_schema(
+        schema: pa.Schema, index_column_names: Sequence[str], axis_names: Sequence[str]) -> pa.Schema:
+    """Turns an Arrow schema into the canonical version and checks for errors.
+
+    Returns a schema, which may be modified by the addition of required columns
+    (e.g. ``soma_joinid``).
+    """
+    _util.check_type("schema", schema, (pa.Schema,))
+    if not index_column_names:
+        raise ValueError("GeometryDataFrame requires one or more index columns")
+    
+    if not axis_names:
+        raise ValueError("GeometryDataFrame requires one or more axis columns")
+
+    if SOMA_JOINID in schema.names:
+        joinid_type = schema.field(SOMA_JOINID).type
+        if joinid_type != pa.int64():
+            raise ValueError(
+                f"{SOMA_JOINID} field must be of type Arrow int64 but is {joinid_type}"
+            )
+    else:
+        # add SOMA_JOINID
+        schema = schema.append(pa.field(SOMA_JOINID, pa.int64()))
+
+    if SOMA_GEOMETRY in schema.names:
+        geometry_type = schema.field(SOMA_GEOMETRY).type
+        if geometry_type != pa.binary() and geometry_type != pa.large_binary():
+            raise ValueError(
+                f"{SOMA_GEOMETRY} field must be of type Arrow binary or Arrow large binary but is {geometry_type}"
+            )
+    else:
+        # add SOMA_JOINID
+        schema = schema.append(pa.field(SOMA_GEOMETRY, pa.binary()))
+
+    for axis in axis_names:
+        schema = schema.append(pa.field(axis, pa.float64()))
+
+    # verify no illegal use of soma_ prefix
+    for field_name in schema.names:
+        if field_name.startswith("soma_") and (field_name != SOMA_JOINID and field_name != SOMA_GEOMETRY):
+            raise ValueError(
+                f"DataFrame schema may not contain fields with name prefix ``soma_``: got ``{field_name}``"
+            )
+
+    # verify that all index_column_names are present in the schema
+    schema_names_set = set(schema.names)
+    for index_column_name in index_column_names:
+        if index_column_name.startswith("soma_") and (index_column_name != SOMA_JOINID and index_column_name != SOMA_GEOMETRY):
+            raise ValueError(
+                f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"'
+            )
+        if index_column_name not in schema_names_set:
+            schema_names_string = "{}".format(list(schema_names_set))
+            raise ValueError(
+                f"All index names must be defined in the dataframe schema: '{index_column_name}' not in {schema_names_string}"
+            )
+        dtype = schema.field(index_column_name).type
+        if not pa.types.is_dictionary(dtype) and dtype not in [
+            pa.int8(),
+            pa.uint8(),
+            pa.int16(),
+            pa.uint16(),
+            pa.int32(),
+            pa.uint32(),
+            pa.int64(),
+            pa.uint64(),
+            pa.float32(),
+            pa.float64(),
+            pa.binary(),
+            pa.large_binary(),
+            pa.string(),
+            pa.large_string(),
+            pa.timestamp("s"),
+            pa.timestamp("ms"),
+            pa.timestamp("us"),
+            pa.timestamp("ns"),
+        ]:
+            raise TypeError(
+                f"Unsupported index type {schema.field(index_column_name).type}"
+            )
+
+    return schema
 
 def _fill_out_slot_domain(
     slot_domain: AxisDomain,

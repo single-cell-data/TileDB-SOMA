@@ -43,6 +43,7 @@ RawHandle = Union[
     clib.SOMADataFrame,
     clib.SOMASparseNDArray,
     clib.SOMADenseNDArray,
+    clib.SOMAGeometryDataFrame,
     clib.SOMAGroup,
     clib.SOMACollection,
     clib.SOMAMeasurement,
@@ -77,6 +78,7 @@ def open(
 
     _type_to_class = {
         "somadataframe": DataFrameWrapper,
+        "somageometrydataframe": GeometryDataFrameWrapper,
         "somadensendarray": DenseNDArrayWrapper,
         "somasparsendarray": SparseNDArrayWrapper,
         "somacollection": CollectionWrapper,
@@ -413,6 +415,24 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
 
     _ARRAY_WRAPPED_TYPE = clib.SOMADataFrame
+
+    @property
+    def count(self) -> int:
+        return int(self._handle.count)
+
+    def write(self, values: pa.RecordBatch) -> None:
+        self._handle.write(values)
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        # Shape is not implemented for DataFrames
+        raise NotImplementedError
+    
+
+class GeometryDataFrameWrapper(SOMAArrayWrapper[clib.SOMAGeometryDataFrame]):
+    """Wrapper around a Pybind11 SOMADataFrame handle."""
+
+    _ARRAY_WRAPPED_TYPE = clib.SOMAGeometryDataFrame
 
     @property
     def count(self) -> int:

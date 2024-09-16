@@ -310,6 +310,7 @@ setuptools.setup(
                 "src/tiledbsoma/soma_dataframe.cc",
                 "src/tiledbsoma/soma_dense_ndarray.cc",
                 "src/tiledbsoma/soma_sparse_ndarray.cc",
+                "src/tiledbsoma/soma_geometry_dataframe.cc",
                 "src/tiledbsoma/soma_group.cc",
                 "src/tiledbsoma/soma_collection.cc",
                 "src/tiledbsoma/pytiledbsoma.cc",
@@ -318,7 +319,7 @@ setuptools.setup(
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"] + (["tiledb"] if os.name == "nt" else []),
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17"]
+            extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17", '-g']
             + CXX_FLAGS,
             language="c++",
         )

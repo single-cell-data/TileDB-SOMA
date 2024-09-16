@@ -5,6 +5,7 @@
 #include "soma_array.h"
 #include "soma_collection.h"
 #include "soma_dataframe.h"
+#include "soma_geometry_dataframe.h"
 #include "soma_dense_ndarray.h"
 #include "soma_experiment.h"
 #include "soma_measurement.h"
@@ -55,6 +56,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             return std::make_unique<SOMASparseNDArray>(*array_);
         } else if (array_type == "somadensendarray") {
             return std::make_unique<SOMADenseNDArray>(*array_);
+        } else if (array_type == "somageometrydataframe") {
+            return std::make_unique<SOMAGeometryDataFrame>(*array_);
         } else {
             throw TileDBSOMAError("Saw invalid SOMAArray type");
         }

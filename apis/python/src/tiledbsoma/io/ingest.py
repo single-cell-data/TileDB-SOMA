@@ -36,6 +36,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
+import pyarrow.parquet as pq
 from anndata._core.sparse_dataset import SparseDataset
 from somacore.options import PlatformConfig
 from typing_extensions import get_args
@@ -398,6 +399,42 @@ class IngestPlatformCtx(IngestCtx):
     Extends :class:`IngestCtx`, adds ``platform_config``."""
 
     platform_config: Optional[PlatformConfig]
+# ----------------------------------------------------------------
+
+
+def from_parquet(scene_uri: str,
+    geometry_data: pa.Table,
+    geometry_shapes: pa.Table,
+    *,
+    context: Optional[SOMATileDBContext] = None,
+    platform_config: Optional[PlatformConfig] = None,
+    geometry_id_name: str = 'cell_id',
+    geometry_vertex_names: Sequence[str] = ['vertex_x', 'vertex_y'],
+    ingest_mode: IngestMode = "write",
+    use_relative_uri: Optional[bool] = None,
+    additional_metadata: AdditionalMetadata = None,
+) -> str:
+    if ingest_mode not in INGEST_MODES:
+        raise SOMAError(
+            f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
+        )
+    
+    if not isinstance(geometry_data, pa.Table):
+        raise TypeError(
+            "Second argument is not an Arrow Table object."
+        )
+    
+    if not isinstance(geometry_shapes, pa.Table):
+        raise TypeError(
+            "Third argument is not an Arrow Table object."
+        )
+    
+    context = _validate_soma_tiledb_context(context)
+
+    s = _util.get_start_stamp()
+    logging.log_io(None, "START POLYGON BUILDING")
+
+    pass
 
 
 # ----------------------------------------------------------------
@@ -411,7 +448,7 @@ def from_anndata(
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     X_layer_name: str = "data",
-    raw_X_layer_name: str = "data",
+    raw_X_layer_name: str = "data", 
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,

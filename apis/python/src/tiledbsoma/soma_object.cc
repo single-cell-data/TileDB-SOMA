@@ -79,6 +79,9 @@ void load_soma_object(py::module& m) {
                     else if (soma_obj_type == "somadensendarray")
                         return py::cast(
                             dynamic_cast<SOMADenseNDArray&>(*soma_obj));
+                    else if (soma_obj_type == "somageometrydataframe")
+                        return py::cast(
+                            dynamic_cast<SOMAGeometryDataFrame&>(*soma_obj));
                     else if (soma_obj_type == "somacollection")
                         return py::cast(
                             dynamic_cast<SOMACollection&>(*soma_obj));

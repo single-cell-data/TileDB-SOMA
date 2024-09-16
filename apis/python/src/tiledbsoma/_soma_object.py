@@ -111,6 +111,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             _tdb_handles.DataFrameWrapper,
             _tdb_handles.DenseNDArrayWrapper,
             _tdb_handles.SparseNDArrayWrapper,
+            _tdb_handles.GeometryDataFrameWrapper
         ],
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",

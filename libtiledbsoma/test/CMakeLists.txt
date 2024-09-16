@@ -94,3 +94,37 @@ add_custom_target(
   DEPENDS
     build_tests
 )
+
+#----------------------------------------------------------------
+add_executable(unit_dev
+    $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
+    $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
+    common.cc
+    common.h
+    dev.cc
+)
+
+target_link_libraries(unit_dev
+  PRIVATE
+    Catch2::Catch2WithMain
+    TileDB::tiledb_shared
+)
+
+target_include_directories(unit_dev
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/external/include
+    ${pybind11_INCLUDE_DIRS}
+    ${TILEDB_SOMA_EXPORT_HEADER_DIR}
+    $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
+)
+
+target_compile_definitions(unit_dev
+  PRIVATE
+  CATCH_CONFIG_MAIN
+)
+target_compile_options(unit_dev
+  PRIVATE
+    ${TILEDBSOMA_COMPILE_OPTIONS}
+    ${TILEDBSOMA_WERROR_OPTION}
+)

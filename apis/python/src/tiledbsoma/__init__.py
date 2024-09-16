@@ -145,7 +145,7 @@ import pyarrow_hotfix
 
 from ._collection import Collection
 from ._constants import SOMA_JOINID
-from ._dataframe import DataFrame
+from ._dataframe import DataFrame, GeometryDataFrame
 from ._dense_nd_array import DenseNDArray
 from ._exception import (
     AlreadyExistsError,
@@ -182,6 +182,7 @@ __all__ = [
     "Collection",
     "DataFrame",
     "DenseNDArray",
+    "GeometryDataFrame",
     "DoesNotExistError",
     "Experiment",
     "ExperimentAxisQuery",
