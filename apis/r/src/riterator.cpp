@@ -104,10 +104,6 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri,
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
-    // old interface
-    // auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, name, platform_config,
-    //                                column_names, batch_size,
-    //                                tdb_result_order, tsrng);
     auto ptr = new tdbs::SOMAArray(OpenMode::read, uri, somactx,
                                    name, column_names, batch_size,
                                    tdb_result_order, tsrng);

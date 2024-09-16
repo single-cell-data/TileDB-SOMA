@@ -27,7 +27,6 @@ SOMADataFrame <- R6::R6Class(
       schema,
       index_column_names = c("soma_joinid"),
       platform_config = NULL,
-      soma_context = NULL,
       internal_use_only = NULL
     ) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
@@ -43,16 +42,6 @@ SOMADataFrame <- R6::R6Class(
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
-      #print(str(tiledb_create_options$to_list()))
-
-      ## TODO: the private$.soma_context object contains an xptr to a struct containtaining
-      ## a shared point SOMAContext which contains a TileDB Context. The cached variable
-      ## is created in TileDBObject$initialize() so the argument on this signature is not
-      ## strictly needed
-      if (!is.null(soma_context)) {
-          spdl::debug("[SOMADataFrame$create] New soma context")
-          private$.soma_context <- soma_context
-      }
 
       ## we (currently pass domain and extent values in an arrow table (i.e. data.frame alike)
       ## where each dimension is one column (of the same type as in the schema) followed by three
