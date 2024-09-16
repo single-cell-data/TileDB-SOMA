@@ -34,8 +34,6 @@ TileDBGroup <- R6::R6Class(
 
       spdl::debug("[TileDBGroup$create] Creating new {} at '{}' at {}",
                   self$class(), self$uri, self$tiledb_timestamp)
-
-      private$.soma_context <- soma_context()  # FIXME via factory and paramater_config
       c_group_create(self$uri, self$class(), private$.soma_context,
                      self$.tiledb_timestamp_range)  ## FIXME: use to be added accessor
 
@@ -63,15 +61,23 @@ TileDBGroup <- R6::R6Class(
       }
       if (is.null(private$.group_open_timestamp)) {
         spdl::debug("[TileDBGroup$open] Opening {} '{}' in {} mode", self$class(), self$uri, mode)
-        private$.tiledb_group <- c_group_open(self$uri, type = mode, ctx = soma_context())#private$.some_context)
+        private$.tiledb_group <- c_group_open(
+          uri = self$uri,
+          type = mode,
+          ctxxp = private$.soma_context
+        )
       } else {
         if (internal_use_only != "allowed_use") stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
         spdl::debug("[TileDBGroup$open] Opening {} '{}' in {} mode at {} ptr null {}",
                     self$class(), self$uri, mode, private$.group_open_timestamp,
                     is.null(private$.soma_context))
         ## The Group API does not expose a timestamp setter so we have to go via the config
-        private$.tiledb_group <- c_group_open(self$uri, type = mode, ctx = soma_context(), #private$.soma_context,
-                                              self$.tiledb_timestamp_range)
+        private$.tiledb_group <- c_group_open(
+          uri = self$uri,
+          type = mode,
+          ctxxp = private$.soma_context,
+          timestamp = self$.tiledb_timestamp_range
+        )
       }
       private$update_member_cache()
       private$update_metadata_cache()
@@ -322,9 +328,6 @@ TileDBGroup <- R6::R6Class(
     # with a list that's empty or contains the group metadata.
     .metadata_cache = NULL,
 
-    ## soma_context
-    .soma_context = NULL,
-
     # Instantiate a group member object.
     # Responsible for calling the appropriate R6 class constructor.
     construct_member = function(uri, type) {
@@ -436,7 +439,7 @@ TileDBGroup <- R6::R6Class(
         # TODO: do we really need the type here?
         # Calling tiledb::tiledb_object_type on remote storage has a cost;
         # perhaps unnecessary to incur.
-        type = tiledb::tiledb_object_type(object$uri),
+        type = get_tiledb_object_type(object$uri, private$.soma_context),
         uri = object$uri,
         name = name,
         object = object

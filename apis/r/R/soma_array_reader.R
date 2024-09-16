@@ -17,7 +17,7 @@
 #' @param result_order Character value with the desired result order, defaults to \sQuote{auto}
 #' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
 #' which lets prior setting prevail, any other value is set as new logging level.
-#' @param config Optional character vector containing TileDB config.
+#' @param soma_context Optional instance of a SOMA Context object
 #' @return A List object with two pointers to Arrow array data and schema is returned
 #' @examples
 #' \dontrun{
@@ -28,7 +28,7 @@
 #' @noRd
 soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL,
                               batch_size = "auto", result_order = "auto", loglevel = "auto",
-                              config = NULL, timestamprange = NULL) {
+                              soma_context = NULL, timestamprange = NULL) {
 
     stopifnot("'uri' must be character" = is.character(uri),
               "'colnames' must be character or NULL" = is_character_or_null(colnames),
@@ -42,7 +42,8 @@ soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL
               "'batch_size' must be character" = is.character(batch_size),
               "'result_order' must be character" = is.character(result_order),
               "'loglevel' must be character" = is.character(loglevel),
-              "'config' must be character or NULL" = is_character_or_null(config))
+              "'soma_context' must be external pointer or NULL" =
+                  is.null(soma_context) || inherits(soma_context, "externalptr"))
 
     if (!is.null(dim_points)) {
         for (i in seq_along(dim_points)) {
@@ -53,8 +54,9 @@ soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL
         }
     }
 
+    if (is.null(soma_context)) soma_context <- soma_context()  # package-level cached instance
     spdl::debug("[soma_array_reader] calling soma_array_reader_impl ({},{}",
                 timestamprange[1], timestamprange[2])
-    soma_array_reader_impl(uri, colnames, qc, dim_points, dim_ranges, batch_size, result_order,
-                           loglevel, config, timestamprange)
+    soma_array_reader_impl(uri, soma_context, colnames, qc, dim_points, dim_ranges, batch_size,
+                           result_order, loglevel, timestamprange)
 }

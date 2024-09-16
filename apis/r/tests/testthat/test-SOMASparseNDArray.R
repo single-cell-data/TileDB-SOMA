@@ -62,10 +62,11 @@ test_that("SOMASparseNDArray creation", {
   ## maxshape
   # TODO: more testing with current-domain feature integrated
   # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+
   if (.new_shape_feature_flag_is_enabled()) {
-    expect_true(ndarray$has_upgraded_shape())
+    expect_true(ndarray$tiledbsoma_has_upgraded_shape())
   } else {
-    expect_false(ndarray$has_upgraded_shape())
+    expect_false(ndarray$tiledbsoma_has_upgraded_shape())
   }
   shape <- ndarray$shape()
   maxshape <- ndarray$maxshape()
@@ -81,13 +82,15 @@ test_that("SOMASparseNDArray creation", {
   expect_equal(ndarray$nnz(), 60L)
 
   ## nnz as free function
-  expect_equal(nnz(uri), 60L)
-  ## nzz with config, expected breakge as 'bad key' used
-  expect_error(nnz(uri, c(sm.encryption_key="Nope", sm.encryption_type="AES_256_GCM")))
+  expect_equal(nnz(uri, soma_context()), 60L)
+  ## nnz with config, expected breakge as 'bad key' used
+  ## uses 'internal' create function to not cache globally as soma_context() would
+  badconfig <- createSOMAContext(c(sm.encryption_key="Nope", sm.encryption_type="AES_256_GCM"))
+  expect_error(nnz(uri, badconfig))
   ## shape as free function
-  expect_equal(shape(uri), c(10,10))
+  expect_equal(shape(uri, soma_context()), c(10,10))
   ## shape with config, expected breakge as 'bad key' used
-  expect_error(shape(uri, c(sm.encryption_key="Nope", sm.encryption_type="AES_256_GCM")))
+  expect_error(shape(uri, badconfig))
 
   ndarray$close()
 

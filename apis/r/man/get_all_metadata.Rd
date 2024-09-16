@@ -9,6 +9,8 @@ get_all_metadata(uri, is_array, ctxxp)
 \arguments{
 \item{uri}{The array URI}
 
+\item{is_array}{A boolean to indicate array or group}
+
 \item{ctxxp}{An external pointer to the SOMAContext wrapper}
 }
 \description{

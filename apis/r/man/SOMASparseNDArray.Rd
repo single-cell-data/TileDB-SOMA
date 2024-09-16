@@ -31,6 +31,8 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
 \item \href{#method-SOMASparseNDArray-read}{\code{SOMASparseNDArray$read()}}
 \item \href{#method-SOMASparseNDArray-write}{\code{SOMASparseNDArray$write()}}
 \item \href{#method-SOMASparseNDArray-nnz}{\code{SOMASparseNDArray$nnz()}}
+\item \href{#method-SOMASparseNDArray-resize}{\code{SOMASparseNDArray$resize()}}
+\item \href{#method-SOMASparseNDArray-tiledbsoma_upgrade_shape}{\code{SOMASparseNDArray$tiledbsoma_upgrade_shape()}}
 \item \href{#method-SOMASparseNDArray-clone}{\code{SOMASparseNDArray$clone()}}
 }
 }
@@ -64,8 +66,8 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="used_shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-used_shape'><code>tiledbsoma::TileDBArray$used_shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="create"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-create'><code>tiledbsoma::SOMANDArrayBase$create()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="has_upgraded_shape"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-has_upgraded_shape'><code>tiledbsoma::SOMANDArrayBase$has_upgraded_shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="set_data_type"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-set_data_type'><code>tiledbsoma::SOMANDArrayBase$set_data_type()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="tiledbsoma_has_upgraded_shape"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape'><code>tiledbsoma::SOMANDArrayBase$tiledbsoma_has_upgraded_shape()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -136,6 +138,52 @@ Retrieve number of non-zero elements (lifecycle: maturing)
 
 \subsection{Returns}{
 A scalar with the number of non-zero elements
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMASparseNDArray-resize"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMASparseNDArray-resize}{}}}
+\subsection{Method \code{resize()}}{
+Increases the shape of the array as specfied. Raises an error
+if the new shape is less than the current shape in any dimension. Raises
+an error if the new shape exceeds maxshape in any dimension. Raises an
+error if the array doesn't already have a shape: in that case please call
+tiledbsoma_upgrade_shape.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$resize(new_shape)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{new_shape}}{A vector of integerish, of the same length as the array's \code{ndim}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+No return value
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMASparseNDArray-tiledbsoma_upgrade_shape"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMASparseNDArray-tiledbsoma_upgrade_shape}{}}}
+\subsection{Method \code{tiledbsoma_upgrade_shape()}}{
+Allows the array to have a resizeable shape as described in the
+TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
+dimension. Raises an error if the array already has a shape.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$tiledbsoma_upgrade_shape(shape)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{shape}}{A vector of integerish, of the same length as the array's \code{ndim}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+No return value
 }
 }
 \if{html}{\out{<hr>}}

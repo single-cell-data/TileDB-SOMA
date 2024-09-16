@@ -46,15 +46,13 @@ SOMASparseNDArray <- R6::R6Class(
         coords <- private$.convert_coords(coords)
       }
 
-      cfg <- as.character(tiledb::config(self$tiledbsoma_ctx$context()))
-      rl <- sr_setup(uri = self$uri,
-                     config = cfg,
+      sr <- sr_setup(uri = self$uri,
+                     private$.soma_context,
                      dim_points = coords,
                      result_order = result_order,
                      timestamprange = self$.tiledb_timestamp_range,
                      loglevel = log_level)
-      private$ctx_ptr <- rl$ctx
-      SOMASparseNDArrayRead$new(rl$sr, self, coords)
+      SOMASparseNDArrayRead$new(sr, self, coords)
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: maturing)
@@ -188,7 +186,41 @@ SOMASparseNDArray <- R6::R6Class(
     #' @description Retrieve number of non-zero elements (lifecycle: maturing)
     #' @return A scalar with the number of non-zero elements
     nnz = function() {
-      nnz(self$uri, config=as.character(tiledb::config(self$tiledbsoma_ctx$context())))
+      nnz(self$uri, private$.soma_context)
+    },
+
+    #' @description Increases the shape of the array as specfied. Raises an error
+    #' if the new shape is less than the current shape in any dimension. Raises
+    #' an error if the new shape exceeds maxshape in any dimension. Raises an
+    #' error if the array doesn't already have a shape: in that case please call
+    #' tiledbsoma_upgrade_shape.
+    #' @param new_shape A vector of integerish, of the same length as the array's `ndim`.
+    #' @return No return value
+    resize = function(new_shape) {
+      # TODO: move this to SOMANDArrayBase.R once core offers current-domain support for dense arrays.
+      # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
+
+      stopifnot("'new_shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(new_shape, n = self$ndim()) ||
+        (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
+      )
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
+      resize(self$uri, new_shape, private$.soma_context)
+    },
+
+    #' @description Allows the array to have a resizeable shape as described in the
+    #' TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
+    #' dimension. Raises an error if the array already has a shape.
+    #' @param shape A vector of integerish, of the same length as the array's `ndim`.
+    #' @return No return value
+    tiledbsoma_upgrade_shape = function(shape) {
+      # TODO: move this to SOMANDArrayBase.R once core offers current-domain support for dense arrays.
+      # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
+
+      stopifnot("'shape' must be a vector of integerish values, of the same length as maxshape" = rlang::is_integerish(shape, n = self$ndim()) ||
+        (bit64::is.integer64(shape) && length(shape) == self$ndim())
+      )
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
+      tiledbsoma_upgrade_shape(self$uri, shape, private$.soma_context)
     }
 
   ),
@@ -257,6 +289,7 @@ SOMASparseNDArray <- R6::R6Class(
         uri = self$uri,
         naap = naap,
         nasp = nasp,
+        ctxxp = private$.soma_context,
         arraytype = "SOMASparseNDArray",
         config = NULL,
         tsvec = self$.tiledb_timestamp_range
@@ -264,10 +297,7 @@ SOMASparseNDArray <- R6::R6Class(
     },
 
     # Internal marking of one or zero based matrices for iterated reads
-    zero_based = NA,
-
-    # Internal variable to hold onto context returned by sr_setup
-    ctx_ptr = NULL
+    zero_based = NA
 
   )
 )
