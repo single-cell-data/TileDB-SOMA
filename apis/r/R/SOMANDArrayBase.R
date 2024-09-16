@@ -37,16 +37,11 @@ SOMANDArrayBase <- R6::R6Class(
       ## .is_sparse field is being set by dense and sparse private initialisers, respectively
       private$.type <- type                 # Arrow schema type of data
 
-      private$.soma_context <- soma_context() # package-level cache access
-
-      #spdl::warn("[SOMANDArrayBase::create] type cached as {}", private$.type)
-
       dom_ext_tbl <- get_domain_and_extent_array(shape, private$.is_sparse)
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
-      ##print(str(tiledb_create_options$to_list(FALSE)))
 
       ## we transfer to the arrow table via a pair of array and schema pointers
       dnaap <- nanoarrow::nanoarrow_allocate_array()
