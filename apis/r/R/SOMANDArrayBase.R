@@ -84,7 +84,7 @@ SOMANDArrayBase <- R6::R6Class(
     },
 
     #' @description Returns TRUE if the array has the upgraded resizeable shape
-    #' feature from TileDB-SOMA 1.14: the array was created with this support,
+    #' feature from TileDB-SOMA 1.15: the array was created with this support,
     #' or it has had ``upgrade_domain`` applied to it.
     #' (lifecycle: maturing)
     #' @return Logical

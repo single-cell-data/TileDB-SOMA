@@ -167,7 +167,7 @@ TileDBArray <- R6::R6Class(
 
     #' @description Retrieve the range of indexes for a dimension that were
     #'  explicitly written.  This method is deprecated as of TileDB-SOMA 1.13, and will be
-    #' removed in TileDB-SOMA 1.14.
+    #' removed in TileDB-SOMA 1.15.
     #' @param simplify Return a vector of [`bit64::integer64`]s containing only
     #' the upper bounds.
     #' @param index1 Return the used shape with 1-based indices (0-based indices are returned by default)
@@ -178,7 +178,7 @@ TileDBArray <- R6::R6Class(
         isTRUE(simplify) || isFALSE(simplify),
         isTRUE(index1) || isFALSE(index1)
       )
-      .Deprecated(new="shape", msg="The 'used_shape' function will be removed in TileDB-SOMA 1.14.")
+      .Deprecated(new="shape", msg="The 'used_shape' function will be removed in TileDB-SOMA 1.15.")
       dims <- self$dimnames()
       utilized <- vector(mode = 'list', length = length(dims))
       names(utilized) <- dims
