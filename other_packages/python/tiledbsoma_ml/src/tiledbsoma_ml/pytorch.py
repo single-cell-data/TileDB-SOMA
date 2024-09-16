@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     XDatum: TypeAlias = Union[NDArrayNumber, sparse.csr_matrix]
 else:
     NDArrayNumber: TypeAlias = np.ndarray
-    XDatum: TypeAlias = np.ndarray | sparse.csr_matrix
+    XDatum: TypeAlias = Union[np.ndarray, sparse.csr_matrix]
 
 XObsDatum: TypeAlias = Tuple[XDatum, pd.DataFrame]
 """Return type of ``ExperimentAxisQueryIterableDataset`` and ``ExperimentAxisQueryIterDataPipe``,
