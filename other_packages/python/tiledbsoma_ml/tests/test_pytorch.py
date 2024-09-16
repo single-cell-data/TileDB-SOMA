@@ -152,6 +152,7 @@ def soma_experiment(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
 )
+@pytest.mark.parametrize("return_sparse_X", [True, False])
 @pytest.mark.parametrize(
     "PipeClass", (ExperimentAxisQueryIterDataPipe, ExperimentAxisQueryIterableDataset)
 )
@@ -159,6 +160,7 @@ def test_non_batched(
     PipeClass: ExperimentAxisQueryIterDataPipe | ExperimentAxisQueryIterableDataset,
     soma_experiment: Experiment,
     use_eager_fetch: bool,
+    return_sparse_X: bool,
 ) -> None:
     # batch_size should default to 1
     with soma_experiment.axis_query(measurement_name="RNA") as query:
@@ -168,6 +170,7 @@ def test_non_batched(
             obs_column_names=["label"],
             shuffle=False,
             use_eager_fetch=use_eager_fetch,
+            return_sparse_X=return_sparse_X,
         )
         assert type(exp_data_pipe.shape) is tuple
         assert len(exp_data_pipe.shape) == 2
@@ -176,11 +179,20 @@ def test_non_batched(
         row_iter = iter(exp_data_pipe)
 
         row = next(row_iter)
-        assert isinstance(row[0], np.ndarray)
+
+        if return_sparse_X:
+            # sparse slices remain 2D, always
+            assert isinstance(row[0], sparse.csr_matrix)
+            assert row[0].shape == (1, 3)
+            assert row[0].todense().tolist() == [[0, 1, 0]]
+
+        else:
+            assert isinstance(row[0], np.ndarray)
+            assert row[0].shape == (3,)
+            assert row[0].tolist() == [0, 1, 0]
+
         assert isinstance(row[1], pd.DataFrame)
-        assert row[0].shape == (3,)
         assert row[1].shape == (1, 1)
-        assert row[0].tolist() == [0, 1, 0]
         assert row[1].keys() == ["label"]
         assert row[1]["label"].tolist() == ["0"]
 
@@ -189,6 +201,7 @@ def test_non_batched(
     "obs_range,var_range,X_value_gen,use_eager_fetch",
     [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
 )
+@pytest.mark.parametrize("return_sparse_X", [True, False])
 @pytest.mark.parametrize(
     "PipeClass", (ExperimentAxisQueryIterDataPipe, ExperimentAxisQueryIterableDataset)
 )
@@ -196,6 +209,7 @@ def test_uneven_soma_and_result_batches(
     PipeClass: ExperimentAxisQueryIterDataPipe | ExperimentAxisQueryIterableDataset,
     soma_experiment: Experiment,
     use_eager_fetch: bool,
+    return_sparse_X: bool,
 ) -> None:
     """This is checking that batches are correctly created when they require fetching multiple chunks."""
     with soma_experiment.axis_query(measurement_name="RNA") as query:
@@ -207,16 +221,23 @@ def test_uneven_soma_and_result_batches(
             batch_size=3,
             io_batch_size=2,
             use_eager_fetch=use_eager_fetch,
+            return_sparse_X=return_sparse_X,
         )
         row_iter = iter(exp_data_pipe)
 
         X_batch, obs_batch = next(row_iter)
-        assert isinstance(X_batch, np.ndarray)
+
+        if return_sparse_X:
+            assert isinstance(X_batch, sparse.csr_matrix)
+            assert X_batch.todense()[0].tolist() == [[0, 1, 0]]
+        else:
+            assert isinstance(X_batch, np.ndarray)
+            assert X_batch[0].tolist() == [0, 1, 0]
+
         assert isinstance(obs_batch, pd.DataFrame)
         assert X_batch.shape[0] == obs_batch.shape[0]
         assert X_batch.shape == (3, 3)
         assert obs_batch.shape == (3, 1)
-        assert X_batch[0].tolist() == [0, 1, 0]
         assert ["label"] == obs_batch.keys()
         assert obs_batch["label"].tolist() == ["0", "1", "2"]
 
@@ -376,6 +397,63 @@ def test_batching__empty_query_result(
 
         with pytest.raises(StopIteration):
             next(batch_iter)
+
+
+@pytest.mark.parametrize(
+    "obs_range,var_range,X_value_gen,use_eager_fetch",
+    [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
+)
+@pytest.mark.parametrize(
+    "PipeClass", (ExperimentAxisQueryIterDataPipe, ExperimentAxisQueryIterableDataset)
+)
+def test_sparse_output__non_batched(
+    PipeClass: ExperimentAxisQueryIterDataPipe | ExperimentAxisQueryIterableDataset,
+    soma_experiment: Experiment,
+    use_eager_fetch: bool,
+) -> None:
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            return_sparse_X=True,
+            shuffle=False,
+            use_eager_fetch=use_eager_fetch,
+        )
+        batch_iter = iter(exp_data_pipe)
+
+        batch = next(batch_iter)
+        assert isinstance(batch[0], sparse.csr_matrix)
+        assert batch[0].todense().A.squeeze().tolist() == [0, 1, 0]
+
+
+@pytest.mark.parametrize(
+    "obs_range,var_range,X_value_gen,use_eager_fetch",
+    [(6, 3, pytorch_x_value_gen, use_eager_fetch) for use_eager_fetch in (True, False)],
+)
+@pytest.mark.parametrize(
+    "PipeClass", (ExperimentAxisQueryIterDataPipe, ExperimentAxisQueryIterableDataset)
+)
+def test_sparse_output__batched(
+    PipeClass: ExperimentAxisQueryIterDataPipe | ExperimentAxisQueryIterableDataset,
+    soma_experiment: Experiment,
+    use_eager_fetch: bool,
+) -> None:
+    with soma_experiment.axis_query(measurement_name="RNA") as query:
+        exp_data_pipe = PipeClass(
+            query,
+            X_name="raw",
+            obs_column_names=["label"],
+            batch_size=3,
+            return_sparse_X=True,
+            shuffle=False,
+            use_eager_fetch=use_eager_fetch,
+        )
+        batch_iter = iter(exp_data_pipe)
+
+        batch = next(batch_iter)
+        assert isinstance(batch[0], sparse.csr_matrix)
+        assert batch[0].todense().tolist() == [[0, 1, 0], [1, 0, 1], [0, 1, 0]]
 
 
 @pytest.mark.parametrize(
@@ -852,11 +930,18 @@ def test_csr__construct_from_ijd(shape: Tuple[int, int], dtype: npt.DTypeLike) -
         != sp_csr
     ).nnz == 0
 
-    assert np.array_equal(_ncsr.densified_slice(slice(0, shape[0])), sp_coo.toarray())
-    assert np.array_equal(_ncsr.densified_slice(slice(0, shape[0])), sp_csr.toarray())
-    assert np.array_equal(_ncsr.densified_slice(slice(1, -1)), sp_csr[1:-1].toarray())
-    assert np.array_equal(_ncsr.densified_slice(slice(None, -2)), sp_csr[:-2].toarray())
-    assert np.array_equal(_ncsr.densified_slice(slice(None)), sp_csr[:].toarray())
+    # Check dense slicing
+    assert np.array_equal(_ncsr.slice_tonumpy(slice(0, shape[0])), sp_coo.toarray())
+    assert np.array_equal(_ncsr.slice_tonumpy(slice(0, shape[0])), sp_csr.toarray())
+    assert np.array_equal(_ncsr.slice_tonumpy(slice(1, -1)), sp_csr[1:-1].toarray())
+    assert np.array_equal(_ncsr.slice_tonumpy(slice(None, -2)), sp_csr[:-2].toarray())
+    assert np.array_equal(_ncsr.slice_tonumpy(slice(None)), sp_csr[:].toarray())
+
+    # Check sparse slicing
+    assert (_ncsr.slice_toscipy(slice(0, shape[0])) != sp_csr).nnz == 0
+    assert (_ncsr.slice_toscipy(slice(1, -1)) != sp_csr[1:-1]).nnz == 0
+    assert (_ncsr.slice_toscipy(slice(None, -2)) != sp_csr[:-2]).nnz == 0
+    assert (_ncsr.slice_toscipy(slice(None)) != sp_csr[:]).nnz == 0
 
 
 @pytest.mark.parametrize(
@@ -883,10 +968,17 @@ def test_csr__construct_from_pjd(shape: Tuple[int, int], dtype: npt.DTypeLike) -
         != sp_csr
     ).nnz == 0
 
-    assert np.array_equal(_ncsr.densified_slice(slice(0, shape[0])), sp_csr.toarray())
-    assert np.array_equal(_ncsr.densified_slice(slice(1, -1)), sp_csr[1:-1].toarray())
-    assert np.array_equal(_ncsr.densified_slice(slice(None, -2)), sp_csr[:-2].toarray())
-    assert np.array_equal(_ncsr.densified_slice(slice(None)), sp_csr[:].toarray())
+    # Check dense slicing
+    assert np.array_equal(_ncsr.slice_tonumpy(slice(0, shape[0])), sp_csr.toarray())
+    assert np.array_equal(_ncsr.slice_tonumpy(slice(1, -1)), sp_csr[1:-1].toarray())
+    assert np.array_equal(_ncsr.slice_tonumpy(slice(None, -2)), sp_csr[:-2].toarray())
+    assert np.array_equal(_ncsr.slice_tonumpy(slice(None)), sp_csr[:].toarray())
+
+    # Check sparse slicing
+    assert (_ncsr.slice_toscipy(slice(0, shape[0])) != sp_csr).nnz == 0
+    assert (_ncsr.slice_toscipy(slice(1, -1)) != sp_csr[1:-1]).nnz == 0
+    assert (_ncsr.slice_toscipy(slice(None, -2)) != sp_csr[:-2]).nnz == 0
+    assert (_ncsr.slice_toscipy(slice(None)) != sp_csr[:]).nnz == 0
 
 
 @pytest.mark.parametrize(

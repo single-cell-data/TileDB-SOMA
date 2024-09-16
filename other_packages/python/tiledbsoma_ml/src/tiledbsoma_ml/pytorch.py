@@ -36,6 +36,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+import scipy.sparse as sparse
 import torch
 import torchdata
 from somacore.query._eager_iter import EagerIterator as _EagerIterator
@@ -53,13 +54,18 @@ if TYPE_CHECKING:
     # restricting this to when we are running a type checker.  TODO: remove
     # the conditional when Python 3.8 support is dropped.
     NDArrayNumber: TypeAlias = npt.NDArray[np.number[Any]]
+    XDatum: TypeAlias = Union[NDArrayNumber, sparse.csr_matrix]
 else:
     NDArrayNumber: TypeAlias = np.ndarray
+    XDatum: TypeAlias = np.ndarray | sparse.csr_matrix
 
-XObsDatum: TypeAlias = Tuple[NDArrayNumber, pd.DataFrame]
+XObsDatum: TypeAlias = Tuple[XDatum, pd.DataFrame]
 """Return type of ``ExperimentAxisQueryIterableDataset`` and ``ExperimentAxisQueryIterDataPipe``,
-which pairs a :class:`numpy.ndarray` of ``X`` row(s) with a :class:`pandas.DataFrame` of ``obs`` row(s). If the
-``batch_size`` is 1, the objects are of rank 1, else they are of rank 2."""
+which pairs a slice of ``X`` rows with a cooresponding slice of ``obs``. In the default case,
+the datum is a tuple of :class:`numpy.ndarray` and :class:`pandas.DataFrame` (for ``X`` and ``obs``
+respectively). If the object is created with ``return_sparse_X`` as True, the ``X`` slice is
+returned as a :class:`scipy.sparse.csr_matrix`. If the ``batch_size`` is 1, the :class:`numpy.ndarray`
+will be returned with rank 1; in all other cases, objects are returned with rank 2."""
 
 
 @attrs.define(frozen=True, kw_only=True)
@@ -115,14 +121,16 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         shuffle: bool = True,
         io_batch_size: int = 2**16,
         shuffle_chunk_size: int = 64,
+        return_sparse_X: bool = False,
         seed: int | None = None,
         use_eager_fetch: bool = True,
     ):
         """
         Construct a new ``ExperimentAxisQueryIterable``, suitable for use with :class:`torch.utils.data.DataLoader`.
 
-        The resulting iterator will produce a 2-tuple containing associated slices of ``X`` and ``obs`` data, as
-        a NumPy :class:`numpy.ndarray` and a Pandas :class:`pandas.DataFrame`, respectively.
+        The resulting iterator will produce a tuple containing associated slices of ``X`` and ``obs`` data, as
+        a NumPy :class:`numpy.ndarray` (or optionally, :class:`scipy.sparse.csr_matrix`) and a
+        Pandas :class:`pandas.DataFrame`, respectively.
 
         Args:
             query:
@@ -151,6 +159,9 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 The number of contiguous rows sampled prior to concatenation and shuffling.
                 Larger numbers correspond to less randomness, but greater read performance.
                 If ``shuffle == False``, this parameter is ignored.
+            return_sparse_X:
+                If ``True``, will return the ``X`` data as a :class:`scipy.sparse.csr_matrix`. If ``False`` (the default), will
+                return ``X`` data as a :class:`numpy.ndarray`.
             seed:
                 The random seed used for shuffling. Defaults to ``None`` (no seed). This argument *must* be specified when using
                 :class:`torch.nn.parallel.DistributedDataParallel` to ensure data partitions are disjoint across worker
@@ -184,6 +195,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         self.batch_size = batch_size
         self.io_batch_size = io_batch_size
         self.shuffle = shuffle
+        self.return_sparse_X = return_sparse_X
         self.use_eager_fetch = use_eager_fetch
         self._obs_joinids: npt.NDArray[np.int64] | None = None
         self._var_joinids: npt.NDArray[np.int64] | None = None
@@ -309,6 +321,17 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         Lifecycle:
             experimental
         """
+
+        if (
+            self.return_sparse_X
+            and torch.utils.data.get_worker_info()
+            and torch.utils.data.get_worker_info().num_workers > 0
+        ):
+            raise NotImplementedError(
+                "torch does not work with sparse tensors in multi-processing mode "
+                "(see https://github.com/pytorch/pytorch/issues/20248)"
+            )
+
         with self.experiment_locator.open_experiment() as exp:
             self._init_once(exp)
             X = exp.ms[self.measurement_name].X[self.layer_name]
@@ -414,7 +437,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 coords=(obs_coords, self._var_joinids)
             ).tables()
 
-            def make_csr(
+            def make_io_buffer(
                 X_tbl: pa.Table,
                 obs_coords: npt.NDArray[np.int64],
                 var_coords: npt.NDArray[np.int64],
@@ -430,12 +453,12 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 gc.collect(generation=0)
                 return m
 
-            _csr_iter = (
-                make_csr(X_tbl, obs_coords, self._var_joinids, obs_indexer)
+            _io_buf_iter = (
+                make_io_buffer(X_tbl, obs_coords, self._var_joinids, obs_indexer)
                 for X_tbl in X_tbl_iter
             )
             if self.use_eager_fetch:
-                _csr_iter = _EagerIterator(_csr_iter, pool=X.context.threadpool)
+                _io_buf_iter = _EagerIterator(_io_buf_iter, pool=X.context.threadpool)
 
             # Now that X read is potentially in progress (in eager mode), go fetch obs data
             #
@@ -450,9 +473,9 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             )
             obs_io_batch = obs_io_batch[self.obs_column_names]
 
-            X_io_batch = _CSR_IO_Buffer.merge(tuple(_csr_iter))
+            X_io_batch = _CSR_IO_Buffer.merge(tuple(_io_buf_iter))
 
-            del obs_indexer, obs_coords, obs_shuffled_coords, _csr_iter
+            del obs_indexer, obs_coords, obs_shuffled_coords, _io_buf_iter
             gc.collect()
 
             tm = time.perf_counter() - st_time
@@ -489,20 +512,34 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
             while iob_idx < iob_len:
                 if result is None:
                     # perform zero copy slice where possible
-                    result = (
-                        X_io_batch.densified_slice(
+                    X_datum = (
+                        X_io_batch.slice_toscipy(
                             slice(iob_idx, iob_idx + mini_batch_size)
-                        ),
+                        )
+                        if self.return_sparse_X
+                        else X_io_batch.slice_tonumpy(
+                            slice(iob_idx, iob_idx + mini_batch_size)
+                        )
+                    )
+                    result = (
+                        X_datum,
                         obs_io_batch.iloc[iob_idx : iob_idx + mini_batch_size],
                     )
                     iob_idx += len(result[1])
                 else:
-                    # use remanent from previous IO batch
+                    # use any remnant from previous IO batch
                     to_take = min(mini_batch_size - len(result[1]), iob_len - iob_idx)
+                    X_datum = (
+                        sparse.vstack(
+                            [result[0], X_io_batch.slice_toscipy(slice(0, to_take))]
+                        )
+                        if self.return_sparse_X
+                        else np.concatenate(
+                            [result[0], X_io_batch.slice_tonumpy(slice(0, to_take))]
+                        )
+                    )
                     result = (
-                        np.concatenate(
-                            [result[0], X_io_batch.densified_slice(slice(0, to_take))]
-                        ),
+                        X_datum,
                         pd.concat([result[1], obs_io_batch.iloc[0:to_take]]),
                     )
                     iob_idx += to_take
@@ -513,7 +550,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                     result = None
 
         else:
-            # yield a remnant, if any
+            # yield the remnant, if any
             if result is not None:
                 yield result
 
@@ -545,6 +582,7 @@ class ExperimentAxisQueryIterDataPipe(
         seed: int | None = None,
         io_batch_size: int = 2**16,
         shuffle_chunk_size: int = 64,
+        return_sparse_X: bool = False,
         use_eager_fetch: bool = True,
     ):
         """
@@ -562,6 +600,7 @@ class ExperimentAxisQueryIterDataPipe(
             shuffle=shuffle,
             seed=seed,
             io_batch_size=io_batch_size,
+            return_sparse_X=return_sparse_X,
             use_eager_fetch=use_eager_fetch,
             shuffle_chunk_size=shuffle_chunk_size,
         )
@@ -667,13 +706,14 @@ class ExperimentAxisQueryIterableDataset(
         seed: int | None = None,
         io_batch_size: int = 2**16,
         shuffle_chunk_size: int = 64,
+        return_sparse_X: bool = False,
         use_eager_fetch: bool = True,
     ):
         """
         Construct a new ``ExperimentAxisQueryIterable``, suitable for use with :class:`torch.utils.data.DataLoader`.
 
-        The resulting iterator will produce a 2-tuple containing associated slices of ``X`` and ``obs`` data, as
-        a NumPy ``ndarray`` and a Pandas ``DataFrame`` respectively.
+        The resulting iterator will produce a tuple containing associated slices of ``X`` and ``obs`` data, as
+        a NumPy ``ndarray`` (or optionally, :class:`scipy.sparse.csr_matrix`) and a Pandas ``DataFrame`` respectively.
 
         Args:
             query:
@@ -704,6 +744,9 @@ class ExperimentAxisQueryIterableDataset(
                 The number of contiguous rows sampled, prior to concatenation and shuffling.
                 Larger numbers correspond to less randomness, but greater read performance.
                 If ``shuffle == False``, this parameter is ignored.
+            return_sparse_X:
+                If ``True``, will return the ``X`` data as a :class:`scipy.sparse.csr_matrix`. If ``False`` (the default), will
+                return ``X`` data as a :class:`numpy.ndarray`.
             seed:
                 The random seed used for shuffling. Defaults to ``None`` (no seed). This arguiment *must* be specified when using
                 :class:`torch.nn.parallel.DistributedDataParallel` to ensure data partitions are disjoint across worker
@@ -734,6 +777,7 @@ class ExperimentAxisQueryIterableDataset(
             shuffle=shuffle,
             seed=seed,
             io_batch_size=io_batch_size,
+            return_sparse_X=return_sparse_X,
             use_eager_fetch=use_eager_fetch,
             shuffle_chunk_size=shuffle_chunk_size,
         )
@@ -777,7 +821,7 @@ class ExperimentAxisQueryIterableDataset(
         the size of the partition of the data assigned to the active process.
 
         Returns:
-            A 2-tuple of ``int``s, for obs and var counts, respectively.
+            A tuple of ``int``s, for obs and var counts, respectively.
 
         Lifecycle:
             experimental
@@ -955,6 +999,7 @@ class _CSR_IO_Buffer:
       and a final "merge" step which combines the result.
     * Zero intermediate copy conversion of an arbitrary row slice to dense (ie., mini-batch extraction).
     * Parallel ops where it makes sense (construction, merge, etc)
+    * Minimize memory use for index arrays
 
     Overall is significantly faster, and uses less memory, than the equivalent scipy.sparse operations.
     """
@@ -1010,7 +1055,8 @@ class _CSR_IO_Buffer:
     def dtype(self) -> npt.DTypeLike:
         return self.data.dtype
 
-    def densified_slice(self, row_index: slice) -> NDArrayNumber:
+    def slice_tonumpy(self, row_index: slice) -> NDArrayNumber:
+        """Extract slice as a dense ndarray. Does not assume any particular ordering of minor axis."""
         assert isinstance(row_index, slice)
         assert row_index.step in (1, None)
         row_idx_start, row_idx_end, _ = row_index.indices(self.indptr.shape[0] - 1)
@@ -1021,6 +1067,22 @@ class _CSR_IO_Buffer:
                 row_idx_start, n_rows, self.indptr, self.indices, self.data, out
             )
         return out
+
+    def slice_toscipy(self, row_index: slice) -> sparse.csr_matrix:
+        """Extract slice as a sparse.csr_matrix. Does not assume any paritcular ordering of minor axis, but
+        will return a canonically ordered scipy sparse object."""
+        assert isinstance(row_index, slice)
+        assert row_index.step in (1, None)
+        row_idx_start, row_idx_end, _ = row_index.indices(self.indptr.shape[0] - 1)
+        n_rows = max(row_idx_end - row_idx_start, 0)
+        if n_rows == 0:
+            return sparse.csr_matrix((0, self.shape[1]), dtype=self.dtype)
+
+        indptr = self.indptr[row_idx_start : row_idx_end + 1].copy()
+        indices = self.indices[indptr[0] : indptr[-1]].copy()
+        data = self.data[indptr[0] : indptr[-1]].copy()
+        indptr -= indptr[0]
+        return sparse.csr_matrix((data, indices, indptr), shape=(n_rows, self.shape[1]))
 
     @staticmethod
     def merge(mtxs: Sequence[_CSR_IO_Buffer]) -> _CSR_IO_Buffer:
