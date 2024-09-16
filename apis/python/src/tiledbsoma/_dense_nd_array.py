@@ -27,7 +27,10 @@ from .options._soma_tiledb_context import (
     SOMATileDBContext,
     _validate_soma_tiledb_context,
 )
-from .options._tiledb_create_write_options import TileDBCreateOptions
+from .options._tiledb_create_write_options import (
+    TileDBCreateOptions,
+    TileDBWriteOptions,
+)
 
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):
@@ -289,10 +292,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         self._set_reader_coords(clib_dense_array, new_coords)
         clib_dense_array.write(input)
 
-        tiledb_create_write_options = TileDBCreateOptions.from_platform_config(
-            platform_config
-        )
-        if tiledb_create_write_options.consolidate_and_vacuum:
+        tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
+        if tiledb_write_options.consolidate_and_vacuum:
             clib_dense_array.consolidate_and_vacuum()
         return self
 
