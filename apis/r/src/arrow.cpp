@@ -54,6 +54,28 @@ Rcpp::XPtr<somactx_wrap_t> createSOMAContext(
     return xp;
 }
 
+//' @export
+// [[Rcpp::export]]
+Rcpp::CharacterVector mapFromSOMAContext(Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    // shared pointer to SOMAContext from external pointer wrapper
+    std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
+
+    auto kvmap = sctx->tiledb_config(); // accessor returning map of <key,value> pairs
+    auto n = kvmap.size();      		// as R vectors prefer to be pre-allocated
+    Rcpp::CharacterVector keys(n);
+    Rcpp::CharacterVector values(n);
+    int i = 0;
+    for (const auto& [k, v] : kvmap) {
+        keys[i] = k;
+        values[i] = v;
+        i++;
+    }
+    values.attr("names") = keys;
+    return values;
+}
+
+
+
 //  ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
 //  Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p,
 //  false);
@@ -226,7 +248,7 @@ void writeArrayFromArrow(
         OpenMode::write, uri, somactx, tsrng);
 
     auto mq = tdbs::ManagedQuery(*arrup, somactx->tiledb_ctx(), "unnamed");
-    mq.set_layout(arraytype == "SOMADenseNDArray" ? 
+    mq.set_layout(arraytype == "SOMADenseNDArray" ?
                   ResultOrder::colmajor : ResultOrder::automatic);
     mq.set_array_data(schema.get(), array.get());
     mq.submit_write();
