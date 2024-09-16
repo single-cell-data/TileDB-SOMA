@@ -8,6 +8,7 @@
 * Use cached timestamps in `$write()` and `$create()`
 * Fix bug in blockwise iteration
 * Lay groundwork for cached SOMA contexts within objects rather than re-creating contexts
+* SOMA context objects are used throughout SOMA object creation
 
 # tiledbsoma 1.13.0
 
