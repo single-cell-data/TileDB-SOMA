@@ -281,7 +281,7 @@ class ArrowAdapter {
     static ArrowArray* make_arrow_array_child(const std::pair<T, T>& pair) {
         std::vector<T> v({pair.first, pair.second});
         return make_arrow_array_child<T>(v);
-    };
+    }
 
     template <typename T>
     static ArrowArray* make_arrow_array_child(const std::vector<T>& v) {
@@ -307,7 +307,7 @@ class ArrowAdapter {
         arrow_array->buffers[1] = (void*)dest;
 
         return arrow_array;
-    };
+    }
 
     static ArrowArray* make_arrow_array_child(
         const std::vector<std::string>& v) {
@@ -331,7 +331,7 @@ class ArrowAdapter {
         arrow_array->buffers[1] = nullptr;
 
         return arrow_array;
-    };
+    }
 
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(
