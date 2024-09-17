@@ -213,6 +213,7 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
     ) {
       super$initialize(sr, array, coords)
       stopifnot(
+        "'axis' must be a single integer value" = rlang::is_integerish(axis, n = 1L, finite = TRUE),
         "'size' must be a single integer value" = is.null(size) ||
           rlang::is_integerish(size, 1L, finite = TRUE) ||
           (inherits(size, 'integer64') && length(size) == 1L && is.finite(size)),
@@ -221,9 +222,18 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
           rlang::is_integerish(reindex_disable_on_axis, finite = TRUE) ||
           (inherits(reindex_disable_on_axis, 'integer64') && all(is.finite(reindex_disable_on_axis)))
       )
+      if (axis < 0L || axis >= self$array$ndim()) {
+        stop(
+          "'axis' must be between 0 and ",
+          self$array$ndim() - 1L,
+          call. = FALSE
+        )
+      }
       private$.axis <- axis
-      for (i in seq_along(self$coords)) {
-        self$coords[[i]]$stride <- size
+      if (!is.null(size)) {
+        for (i in seq_along(self$coords)) {
+          self$coords[[i]]$stride <- size
+        }
       }
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
     },
