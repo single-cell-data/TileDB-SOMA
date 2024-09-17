@@ -26,7 +26,7 @@ from somacore import options
 from somacore.options import PlatformConfig
 from typing_extensions import Self
 
-from tiledbsoma import _new_shape_feature_flag_enabled
+from tiledbsoma._flags import _new_shape_feature_flag_enabled
 
 from . import _util
 

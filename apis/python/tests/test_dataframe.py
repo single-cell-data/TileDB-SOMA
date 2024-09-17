@@ -92,7 +92,8 @@ def test_dataframe(tmp_path, arrow_schema):
 
         # More to come on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
         assert (
-            sdf.tiledbsoma_has_upgraded_domain == soma._new_shape_feature_flag_enabled()
+            sdf.tiledbsoma_has_upgraded_domain
+            == soma._flags._new_shape_feature_flag_enabled()
         )
 
         with pytest.raises(AttributeError):

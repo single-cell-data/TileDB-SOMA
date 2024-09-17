@@ -48,7 +48,7 @@ def test_sparse_nd_array_basics(
         # More to come on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
         assert (
             snda.tiledbsoma_has_upgraded_shape
-            == tiledbsoma._new_shape_feature_flag_enabled()
+            == tiledbsoma._flags._new_shape_feature_flag_enabled()
         )
 
         # Before current-domain support: shape is maxshape.
@@ -58,7 +58,7 @@ def test_sparse_nd_array_basics(
         # involving R compatibility, and leaving room for a single tile
         # capacity, etc ...  we could check for some magic value but it suffices
         # to check that it's over 2 billion.)
-        if tiledbsoma._new_shape_feature_flag_enabled():
+        if tiledbsoma._flags._new_shape_feature_flag_enabled():
             for e in snda.maxshape:
                 assert e > 2_000_000_000
         else:
@@ -89,7 +89,7 @@ def test_sparse_nd_array_basics(
     with tiledbsoma.SparseNDArray.open(uri) as snda:
         assert snda.shape == arg_shape
         # This will change with current-domain support
-        if tiledbsoma._new_shape_feature_flag_enabled():
+        if tiledbsoma._flags._new_shape_feature_flag_enabled():
             for e in snda.maxshape:
                 assert e > 2_000_000_000
         else:
@@ -113,7 +113,7 @@ def test_sparse_nd_array_basics(
     with tiledbsoma.SparseNDArray.open(uri) as snda:
         assert snda.shape == arg_shape
 
-    if tiledbsoma._new_shape_feature_flag_enabled():
+    if tiledbsoma._flags._new_shape_feature_flag_enabled():
 
         # Test resize down
         new_shape = tuple([arg_shape[i] - 50 for i in range(ndim)])
@@ -267,11 +267,11 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         has_sjid_dim = "soma_joinid" in index_column_names
         if has_sjid_dim:
             assert sdf._maybe_soma_joinid_shape == 1 + soma_joinid_domain[1]
-            if not tiledbsoma._new_shape_feature_flag_enabled():
+            if not tiledbsoma._flags._new_shape_feature_flag_enabled():
                 assert sdf._maybe_soma_joinid_maxshape == 1 + soma_joinid_domain[1]
         else:
             assert sdf._maybe_soma_joinid_shape is None
-            if not tiledbsoma._new_shape_feature_flag_enabled():
+            if not tiledbsoma._flags._new_shape_feature_flag_enabled():
                 assert sdf._maybe_soma_joinid_maxshape is None
 
         assert len(sdf.non_empty_domain()) == len(index_column_names)
