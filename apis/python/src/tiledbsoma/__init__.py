@@ -138,10 +138,11 @@ except ImportError:
 from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
 from somacore.options import ResultOrder
 
-# TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
-# https://github.com/single-cell-data/TileDB-SOMA/issues/1926
+# This is important since we need to do the above dll/dylib/so business
+# _before_ imports, but, ruff will tell us that imports need to be
+# at the top of the file:
+#
 # ruff: noqa
-import pyarrow_hotfix
 
 from ._collection import Collection
 from ._constants import SOMA_JOINID
@@ -173,8 +174,8 @@ from .pytiledbsoma import (
     tiledbsoma_stats_reset,
 )
 from .stats import (
-    tiledbsoma_stats_json,
     tiledbsoma_stats_as_py,
+    tiledbsoma_stats_json,
 )
 
 __version__ = get_implementation_version()
@@ -211,4 +212,6 @@ __all__ = [
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
     "tiledbsoma_stats_reset",
+    "tiledbsoma_stats_as_py",
+    "tiledbsoma_stats_json",
 ]
