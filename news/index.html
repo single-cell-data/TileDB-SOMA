@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.13.99.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +39,33 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/kerl/fix-pkgdown-build/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.14/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.14.0" id="tiledbsoma-1140">tiledbsoma 1.14.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1140"></a></h2>
+<div class="section level3">
+<h3 id="changes-1-14-0">Changes<a class="anchor" aria-label="anchor" href="#changes-1-14-0"></a></h3>
+<ul><li>New <code>resize</code> and <code>tiledbsoma_upgrade_shape</code> accessors as part of the <a href="https://github.com/single-cell-data/TileDB-SOMA/issues/2407" class="external-link">new-shape project</a>
+</li>
+<li>Make use of timestamp ranges in libtiledbsoma</li>
+<li>Simplify timestamp ranges; strengthen assumptions about <code>tiledb_timestamp</code>
+</li>
+<li>Use cached timestamps in <code>$write()</code> and <code>$create()</code>
+</li>
+<li>Fix bug in blockwise iteration</li>
+<li>Lay groundwork for cached SOMA contexts within objects rather than re-creating contexts</li>
+<li>SOMA context objects are used throughout SOMA object creation</li>
+<li>Add value-checking for <code>axis</code> parameter when initializing blockwise reads</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.13.1" id="tiledbsoma-1131">tiledbsoma 1.13.1<a class="anchor" aria-label="anchor" href="#tiledbsoma-1131"></a></h2>
+<div class="section level3">
+<h3 id="changes-1-13-1">Changes<a class="anchor" aria-label="anchor" href="#changes-1-13-1"></a></h3>
+<ul><li>Includes a fix for appended enumerations <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/2903" class="external-link">#2903</a>
+</li></ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.13.0" id="tiledbsoma-1130">tiledbsoma 1.13.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1130"></a></h2>
 <div class="section level3">
