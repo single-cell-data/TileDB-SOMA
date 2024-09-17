@@ -332,13 +332,7 @@ setuptools.setup(
         "numba>=0.58.0",
         "numpy<2.0",
         "pandas",
-        # TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/1926
-        "pyarrow_hotfix",
-        # MacOS issue with import pyarrow before import tiledb at >= 13.0:
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/1926#issuecomment-1834695149
-        "pyarrow>=9.0.0,<13.0.0; platform_system=='Darwin'",
-        "pyarrow>=9.0.0; platform_system!='Darwin'",
+        "pyarrow",
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
