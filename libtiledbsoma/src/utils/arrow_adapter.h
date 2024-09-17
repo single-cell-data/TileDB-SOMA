@@ -293,10 +293,23 @@ class ArrowAdapter {
         arrow_array->length = n;
         arrow_array->null_count = 0;
         arrow_array->offset = 0;
+
+        // Two-buffer model for non-string data:
+        // * Slot 0 is the Arrow validity buffer which we leave null
+        // * Slot 1 is data, void* but will be derefrenced as T*
+        // * There is no offset information
         arrow_array->n_buffers = 2;
-        arrow_array->release = &ArrowAdapter::release_array;
         arrow_array->buffers = new const void*[2];
         arrow_array->n_children = 0;  // leaf/child node
+
+        // The nominal use of these methods as of this writing is for
+        // low-volume data such as schema information -- less than a
+        // kilobyte total. It's simplest and safest to do data copies,
+        // for-loop-wise. If we were to extend usage of these methods
+        // to bulk data in the megabyte/gigabyte range, we'd want to
+        // look at zero-copy for buffers, with variable approaches
+        // to memory management.
+        arrow_array->release = &ArrowAdapter::release_array;
 
         arrow_array->buffers[0] = nullptr;
         // Use malloc here, not new, to match ArrowAdapter::release_array
@@ -309,6 +322,18 @@ class ArrowAdapter {
         return arrow_array;
     }
 
+    // XXX TEMP
+    // if (array->n_buffers == 2) {
+    //     validity = array->buffers[0]; // u8*
+    //     data     = array->buffers[1]; // void*
+    //     offset   = nullptr;           // null
+    // } else (array->n_buffers == 3) {
+    //     validity = array->buffers[0]; // u8*
+    //     offset   = array->buffers[1]; // u32*/u64* for string/large_string
+    //     data     = array->buffers[2]; // void*
+    // }
+
+    // XXX need nullable option for core dom -- or encode as "", ""?
     static ArrowArray* make_arrow_array_child(
         const std::vector<std::string>& v) {
         // Use new here, not malloc, to match ArrowAdapter::release_array
@@ -316,19 +341,45 @@ class ArrowAdapter {
 
         size_t n = v.size();
 
-        arrow_array->length = n;
+        arrow_array->length = n;  // Number of string not number of bytes
         arrow_array->null_count = 0;
         arrow_array->offset = 0;
-        arrow_array->n_buffers = 2;
-        arrow_array->release = &ArrowAdapter::release_array;
-        arrow_array->buffers = new const void*[2];
+
+        // Three-buffer model for string data:
+        // * Slot 0 is the Arrow uint8_t* validity buffer
+        // * Slot 1 is the Arrow offsets buffer: uint32_t* for Arrow string
+        //   or uint64_t* for Arrow large_string
+        // * Slot 2 is data, void* but will be derefrenced as T*
+        arrow_array->n_buffers = 3;
+        arrow_array->buffers = new const void*[3];
         arrow_array->n_children = 0;  // leaf/child node
 
-        // For core domain, these are always nullptr for strings and cannot be
-        // anything else. More general use of this class is WIP on
-        // https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        arrow_array->buffers[0] = nullptr;
-        arrow_array->buffers[1] = nullptr;
+        arrow_array->release = &ArrowAdapter::release_array;
+
+        size_t nbytes = 0;
+        for (auto e : v) {
+            nbytes += e.length();
+        }
+
+        // Offsets
+        // XXX how to match arrow s32/s64 to here ...
+        // XXX maybe take schema arg here?
+        uint64_t* offsets = (uint64_t*)malloc((n + 1) * sizeof(uint64_t));
+
+        // Data
+        char* data = (char*)malloc(nbytes * sizeof(char));
+
+        size_t k = 0;
+        for (size_t i = 0; i < n; i++) {
+            size_t len = v.size();
+            for (size_t j = 0; j < len; j++) {
+                data[k++] = v[i][j];
+            }
+        }
+
+        arrow_array->buffers[0] = nullptr;  // validity
+        arrow_array->buffers[1] = offsets;
+        arrow_array->buffers[2] = data;
 
         return arrow_array;
     }

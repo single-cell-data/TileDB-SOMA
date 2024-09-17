@@ -48,6 +48,13 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
+// This enables some code deduplication
+enum class Domainish {
+    kind_core_domain = 0,
+    kind_core_current_domain = 1,
+    kind_non_empty_domain = 2
+};
+
 class SOMAArray : public SOMAObject {
    public:
     //===================================================================
@@ -703,7 +710,7 @@ class SOMAArray : public SOMAObject {
      * non-empty domains of the array fragments.
      */
     template <typename T>
-    std::pair<T, T> non_empty_domain_slot(const std::string& name) {
+    std::pair<T, T> non_empty_domain_slot(const std::string& name) const {
         try {
             return arr_->non_empty_domain<T>(name);
         } catch (const std::exception& e) {
@@ -717,7 +724,7 @@ class SOMAArray : public SOMAObject {
      * Applicable only to var-sized dimensions.
      */
     std::pair<std::string, std::string> non_empty_domain_slot_var(
-        const std::string& name) {
+        const std::string& name) const {
         try {
             return arr_->non_empty_domain_var(name);
         } catch (const std::exception& e) {
@@ -726,9 +733,10 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * Exposed for testing purposes.
+     * Exposed for testing purposes within this library.
+     * Not for use by Python/R.
      */
-    CurrentDomain get_current_domain() const {
+    CurrentDomain get_current_domain_for_test() const {
         return _get_current_domain();
     }
 
@@ -789,22 +797,7 @@ class SOMAArray : public SOMAObject {
      * @return Pair of [lower, upper] inclusive bounds.
      */
     template <typename T>
-    std::pair<T, T> core_current_domain_slot(const std::string& name) const {
-        CurrentDomain current_domain = _get_current_domain();
-        if (current_domain.is_empty()) {
-            throw TileDBSOMAError(
-                "core_current_domain_slot: internal coding error");
-        }
-        if (current_domain.type() != TILEDB_NDRECTANGLE) {
-            throw TileDBSOMAError(
-                "core_current_domain_slot: found non-rectangle type");
-        }
-        NDRectangle ndrect = current_domain.ndrectangle();
-
-        // Convert from two-element array (core API) to pair (tiledbsoma API)
-        std::array<T, 2> arr = ndrect.range<T>(name);
-        return std::pair<T, T>(arr[0], arr[1]);
-    }
+    std::pair<T, T> core_current_domain_slot(const std::string& name) const;
 
     /**
      * Returns the core current domain at the given dimension.
@@ -821,8 +814,40 @@ class SOMAArray : public SOMAObject {
      * @return Pair of [lower, upper] inclusive bounds.
      */
     template <typename T>
-    std::pair<T, T> core_domain_slot(const std::string& name) const {
-        return arr_->schema().domain().dimension(name).domain<T>();
+    std::pair<T, T> core_domain_slot(const std::string& name) const;
+
+    /**
+     * XXX WRITE ME PLZ
+     */
+    template <typename T>
+    std::pair<T, T> core_domainish_slot(
+        const std::string& name, enum Domainish which_kind) const;
+
+    /**
+     * @brief WRITE ME PLZ THX
+     */
+    ArrowTable get_soma_domain() {
+        if (has_current_domain()) {
+            return get_core_current_domain();
+        } else {
+            return get_core_domain();
+        }
+    }
+    ArrowTable get_soma_maxdomain() {
+        return get_core_domain();
+    }
+
+    /**
+     * @brief WRITE ME PLZ THX
+     */
+    ArrowTable get_core_domain() {
+        return _get_core_domainish(Domainish::kind_core_domain);
+    }
+    ArrowTable get_core_current_domain() {
+        return _get_core_domainish(Domainish::kind_core_current_domain);
+    }
+    ArrowTable get_non_empty_domain() {
+        return _get_core_domainish(Domainish::kind_non_empty_domain);
     }
 
     /**
@@ -945,6 +970,8 @@ class SOMAArray : public SOMAObject {
             *ctx_->tiledb_ctx(), arr_->schema());
     }
 
+    ArrowTable _get_core_domainish(enum Domainish which_kind);
+
     /**
      * Helper method for resize and upgrade_shape.
      */
@@ -963,7 +990,7 @@ class SOMAArray : public SOMAObject {
     void _check_dims_are_int64();
 
     /**
-     * With old shape: core domain mapped to tiledbsoma shape; core current
+     * With old shape: core domain used to map to tiledbsoma shape; core current
      * domain did not exist.
      *
      * With new shape: core domain maps to tiledbsoma maxshape;
@@ -1270,6 +1297,16 @@ class SOMAArray : public SOMAObject {
     uint64_t _nnz_slow();
 };
 
+// These are all specializations to string/bool of various methods
+// which require special handling for that type.
+//
+// Declaring them down here is a bit weird -- they're easy to miss
+// on a read-through. However, we're in a bit of a bind regarding
+// various compilers: if we do these specializations within the
+// `class SOMAArray { ... }`, then one compiler errors if we do
+// include `template <>`, while another errors if we don't.
+// Doing it down here, no compiler complains.
+
 template <>
 void SOMAArray::_cast_dictionary_values<std::string>(
     ArrowSchema* schema, ArrowArray* array);
@@ -1293,6 +1330,14 @@ bool SOMAArray::_extend_and_evolve_schema<std::string>(
     ArrowSchema* index_schema,
     ArrowArray* index_array,
     ArraySchemaEvolution se);
+
+template <>
+std::pair<std::string, std::string> SOMAArray::core_domain_slot(
+    const std::string& name) const;
+
+template <>
+std::pair<std::string, std::string> SOMAArray::core_domainish_slot(
+    const std::string& name, enum Domainish which_kind) const;
 
 }  // namespace tiledbsoma
 

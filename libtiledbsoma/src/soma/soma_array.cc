@@ -1141,6 +1141,181 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
     return timestamp_;
 }
 
+// Note that ArrowTable is simply our libtiledbsoma pairing of ArrowArray and
+// ArrowSchema from nanoarrow.
+//
+// The domainish enum simply lets us re-use code which is common across
+// core domain, core current domain, and core non-empty domain.
+ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
+    int array_ndim = this->ndim();
+    auto dimensions = tiledb_schema()->domain().dimensions();
+
+    // Create the schema for the info we return
+    std::vector<std::string> names(array_ndim);
+    std::vector<tiledb_datatype_t> tiledb_datatypes(array_ndim);
+
+    for (int i = 0; i < (int)array_ndim; i++) {
+        const Dimension& core_dim = dimensions[i];
+        names[i] = core_dim.name();
+        tiledb_datatypes[i] = core_dim.type();
+    }
+
+    auto arrow_schema = ArrowAdapter::make_arrow_schema(
+        names, tiledb_datatypes);
+
+    // Create the data for the info we return
+    auto arrow_array = ArrowAdapter::make_arrow_array_parent(array_ndim);
+
+    for (int i = 0; i < array_ndim; i++) {
+        auto core_dim = dimensions[i];
+        auto core_type_code = core_dim.type();
+
+        ArrowArray* child = nullptr;
+
+        switch (core_type_code) {
+            case TILEDB_INT64:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<int64_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_UINT64:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<uint64_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_INT32:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<int32_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_UINT32:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<uint32_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_INT16:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<int16_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_UINT16:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<uint16_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_INT8:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<int8_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_UINT8:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<uint8_t>(core_dim.name(), which_kind));
+                break;
+
+            case TILEDB_FLOAT64:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<double>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_FLOAT32:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<float>(core_dim.name(), which_kind));
+                break;
+
+            case TILEDB_STRING_ASCII:
+            case TILEDB_CHAR:
+                child = ArrowAdapter::make_arrow_array_child(
+                    core_domainish_slot<std::string>(
+                        core_dim.name(), which_kind));
+                break;
+
+            default:
+                break;
+        }
+
+        if (child == nullptr) {
+            // throw TileDBSOMAError(fmt::format(
+            //   "WIP {} {}",
+            //   core_dim.name(),
+            //   tiledb::impl::type_to_str(core_type_code)));
+        }
+        arrow_array->children[i] = child;
+    }
+
+    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+}
+
+template <typename T>
+std::pair<T, T> SOMAArray::core_current_domain_slot(
+    const std::string& name) const {
+    CurrentDomain current_domain = _get_current_domain();
+    if (current_domain.is_empty()) {
+        throw TileDBSOMAError(
+            "core_current_domain_slot: internal coding error");
+    }
+    if (current_domain.type() != TILEDB_NDRECTANGLE) {
+        throw TileDBSOMAError(
+            "core_current_domain_slot: found non-rectangle type");
+    }
+    NDRectangle ndrect = current_domain.ndrectangle();
+
+    // Convert from two-element array (core API) to pair (tiledbsoma API)
+    std::array<T, 2> arr = ndrect.range<T>(name);
+    return std::pair<T, T>(arr[0], arr[1]);
+}
+
+template <typename T>
+std::pair<T, T> SOMAArray::core_domain_slot(const std::string& name) const {
+    if (std::is_same_v<T, std::string>) {
+        throw std::runtime_error(
+            "SOMAArray::core_domain_slot: template-specialization "
+            "failure.");
+    }
+    return arr_->schema().domain().dimension(name).domain<T>();
+}
+
+template <>
+std::pair<std::string, std::string> SOMAArray::core_domain_slot(
+    const std::string&) const {
+    return std::pair("", "");
+}
+
+template <typename T>
+std::pair<T, T> SOMAArray::core_domainish_slot(
+    const std::string& name, enum Domainish which_kind) const {
+    if (std::is_same_v<T, std::string>) {
+        throw std::runtime_error(
+            "SOMAArray::core_domain_slot: template-specialization "
+            "failure.");
+    }
+    switch (which_kind) {
+        case Domainish::kind_core_domain:
+            return core_domain_slot<T>(name);
+            break;
+        case Domainish::kind_core_current_domain:
+            return core_current_domain_slot<T>(name);
+            break;
+        case Domainish::kind_non_empty_domain:
+            return non_empty_domain_slot<T>(name);
+            break;
+        default:
+            throw std::runtime_error(
+                "internal coding error in SOMAArray::core_domainish_slot");
+    }
+}
+
+template <>
+std::pair<std::string, std::string> SOMAArray::core_domainish_slot(
+    const std::string& name, enum Domainish which_kind) const {
+    switch (which_kind) {
+        case Domainish::kind_core_domain:
+            return core_domain_slot<std::string>(name);
+            break;
+        case Domainish::kind_core_current_domain:
+            return core_current_domain_slot<std::string>(name);
+            break;
+        case Domainish::kind_non_empty_domain:
+            return non_empty_domain_slot_var(name);
+            break;
+        default:
+            throw std::runtime_error(
+                "internal coding error in SOMAArray::core_domainish_slot");
+    }
+}
+
 uint64_t SOMAArray::nnz() {
     // Verify array is sparse
     if (mq_->schema()->array_type() != TILEDB_SPARSE) {
@@ -1157,8 +1332,8 @@ uint64_t SOMAArray::nnz() {
         fragment_info.dump();
     }
 
-    // Find the subset of fragments contained within the read timestamp range
-    // [if any]
+    // Find the subset of fragments contained within the read timestamp
+    // range [if any]
     std::vector<uint32_t> relevant_fragments;
     for (uint32_t fid = 0; fid < fragment_info.fragment_num(); fid++) {
         auto frag_ts = fragment_info.timestamp_range(fid);
@@ -1166,17 +1341,19 @@ uint64_t SOMAArray::nnz() {
         if (timestamp_) {
             if (frag_ts.first > timestamp_->second ||
                 frag_ts.second < timestamp_->first) {
-                // fragment is fully outside the read timestamp range: skip it
+                // fragment is fully outside the read timestamp range: skip
+                // it
                 continue;
             } else if (!(frag_ts.first >= timestamp_->first &&
                          frag_ts.second <= timestamp_->second)) {
                 // fragment overlaps read timestamp range, but isn't fully
-                // contained within: fall back to count_cells to sort that out.
+                // contained within: fall back to count_cells to sort that
+                // out.
                 return _nnz_slow();
             }
         }
-        // fall through: fragment is fully contained within the read timestamp
-        // range
+        // fall through: fragment is fully contained within the read
+        // timestamp range
         relevant_fragments.push_back(fid);
 
         // If any relevant fragment is a consolidated fragment, fall back to
@@ -1206,9 +1383,9 @@ uint64_t SOMAArray::nnz() {
     uint64_t total_cell_num = 0;
     std::vector<std::array<uint64_t, 2>> non_empty_domains(fragment_count);
     for (uint32_t i = 0; i < fragment_count; i++) {
-        // TODO[perf]: Reading fragment info is not supported on TileDB Cloud
-        // yet, but reading one fragment at a time will be slow. Is there
-        // another way?
+        // TODO[perf]: Reading fragment info is not supported on TileDB
+        // Cloud yet, but reading one fragment at a time will be slow. Is
+        // there another way?
         total_cell_num += fragment_info.cell_num(relevant_fragments[i]);
         fragment_info.get_non_empty_domain(
             relevant_fragments[i], 0, &non_empty_domains[i]);
@@ -1222,8 +1399,8 @@ uint64_t SOMAArray::nnz() {
     // Sort non-empty domains by the start of their ranges
     std::sort(non_empty_domains.begin(), non_empty_domains.end());
 
-    // After sorting, if the end of a non-empty domain is >= the beginning of
-    // the next non-empty domain, there is an overlap
+    // After sorting, if the end of a non-empty domain is >= the beginning
+    // of the next non-empty domain, there is an overlap
     bool overlap = false;
     for (uint32_t i = 0; i < fragment_count - 1; i++) {
         LOG_DEBUG(fmt::format(
@@ -1271,7 +1448,8 @@ std::vector<int64_t> SOMAArray::shape() {
     // There are two reasons for this:
     // * Transitional, non-monolithic, phased, careful development for the
     //   new-shape feature
-    // * Even after the new-shape feature is fully released, there will be old
+    // * Even after the new-shape feature is fully released, there will be
+    // old
     //   arrays on disk that were created before this feature existed.
     // So this is long-term code.
     return _get_current_domain().is_empty() ? _tiledb_domain() :
@@ -1324,7 +1502,8 @@ void SOMAArray::_set_current_domain_from_shape(
     unsigned n = domain.ndim();
     if ((unsigned)newshape.size() != n) {
         throw TileDBSOMAError(fmt::format(
-            "[SOMAArray::resize]: newshape has dimension count {}; array has "
+            "[SOMAArray::resize]: newshape has dimension count {}; array "
+            "has "
             "{} ",
             newshape.size(),
             n));
@@ -1351,7 +1530,8 @@ void SOMAArray::maybe_resize_soma_joinid(const std::vector<int64_t>& newshape) {
     unsigned ndim = domain.ndim();
     if (newshape.size() != 1) {
         throw TileDBSOMAError(fmt::format(
-            "[SOMAArray::resize]: newshape has dimension count {}; needed 1",
+            "[SOMAArray::resize]: newshape has dimension count {}; needed "
+            "1",
             newshape.size(),
             ndim));
     }
@@ -1387,7 +1567,8 @@ std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
 
     if (current_domain.is_empty()) {
         throw TileDBSOMAError(
-            "Internal error: current domain requested for an array which does "
+            "Internal error: current domain requested for an array which "
+            "does "
             "not support it");
     }
 
@@ -1440,7 +1621,9 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_tiledb_current_domain() {
 
     auto current_domain = _get_current_domain();
     if (current_domain.is_empty()) {
-        throw TileDBSOMAError("internal coding error");
+        throw TileDBSOMAError(
+            "internal coding error in "
+            "SOMAArray::_maybe_soma_joinid_tiledb_current_domain");
     }
 
     auto t = current_domain.type();
@@ -1500,7 +1683,8 @@ bool SOMAArray::_dims_are_int64() {
 void SOMAArray::_check_dims_are_int64() {
     if (!_dims_are_int64()) {
         throw TileDBSOMAError(
-            "[SOMAArray] internal coding error: expected all dims to be int64");
+            "[SOMAArray] internal coding error: expected all dims to be "
+            "int64");
     }
 }
 
