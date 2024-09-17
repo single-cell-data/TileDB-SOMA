@@ -726,7 +726,8 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * Exposed for testing purposes.
+     * Exposed for testing purposes within this library.
+     * Not for use by Python/R.
      */
     CurrentDomain get_current_domain_for_test() const {
         return _get_current_domain();
@@ -963,7 +964,7 @@ class SOMAArray : public SOMAObject {
     void _check_dims_are_int64();
 
     /**
-     * With old shape: core domain mapped to tiledbsoma shape; core current
+     * With old shape: core domain used to map to tiledbsoma shape; core current
      * domain did not exist.
      *
      * With new shape: core domain maps to tiledbsoma maxshape;
@@ -1269,6 +1270,16 @@ class SOMAArray : public SOMAObject {
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow();
 };
+
+// These are all specializations to string/bool of various methods
+// which require special handling for that type.
+//
+// Declaring them down here is a bit weird -- they're easy to miss
+// on a read-through. However, we're in a bit of a bind regarding
+// various compilers: if we do these specializations within the
+// `class SOMAArray { ... }`, then one compiler errors if we do
+// include `template <>`, while another errors if we don't.
+// Doing it down here, no compiler complains.
 
 template <>
 void SOMAArray::_cast_dictionary_values<std::string>(
