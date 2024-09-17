@@ -401,7 +401,7 @@ test_that("Write Seurat mechanics", {
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
-  uri <- tempfile(pattern=SeuratObject::Project(pbmc_small))
+  uri <- tempfile(pattern = SeuratObject::Project(pbmc_small))
 
   expect_no_condition(uri <- write_soma(pbmc_small, uri))
   expect_type(uri, 'character')
@@ -481,4 +481,12 @@ test_that("Write Seurat with v3 and v5 assays", {
       )
     }
   }
+
+  obs_hints <- vapply(
+    X = SeuratObject::.FilterObjects(pbmc_small, "Assay5"),
+    FUN = .assay_obs_hint,
+    FUN.VALUE = character(1L),
+    USE.NAMES = FALSE
+  )
+  expect_true(all(obs_hints %in% experiment$obs$colnames()))
 })
