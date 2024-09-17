@@ -756,9 +756,9 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     std::pair<T, T> soma_domain_slot(const std::string& name) const {
         if (has_current_domain()) {
-            return core_current_domain_slot<T>(name);
+            return _core_current_domain_slot<T>(name);
         } else {
-            return core_domain_slot<T>(name);
+            return _core_domain_slot<T>(name);
         }
     }
 
@@ -772,58 +772,7 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     std::pair<T, T> soma_maxdomain_slot(const std::string& name) const {
-        return core_domain_slot<T>(name);
-    }
-
-    /**
-     * Returns the core current domain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma domain is core current domain
-     *   - soma maxdomain is core domain
-     * o For arrays without core current-domain support:
-     *   - soma domain is core domain
-     *   - soma maxdomain is core domain
-     *   - core current domain is not accessed at the soma level
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
-     */
-    template <typename T>
-    std::pair<T, T> core_current_domain_slot(const std::string& name) const {
-        CurrentDomain current_domain = _get_current_domain();
-        if (current_domain.is_empty()) {
-            throw TileDBSOMAError(
-                "core_current_domain_slot: internal coding error");
-        }
-        if (current_domain.type() != TILEDB_NDRECTANGLE) {
-            throw TileDBSOMAError(
-                "core_current_domain_slot: found non-rectangle type");
-        }
-        NDRectangle ndrect = current_domain.ndrectangle();
-
-        // Convert from two-element array (core API) to pair (tiledbsoma API)
-        std::array<T, 2> arr = ndrect.range<T>(name);
-        return std::pair<T, T>(arr[0], arr[1]);
-    }
-
-    /**
-     * Returns the core current domain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma domain is core current domain
-     *   - soma maxdomain is core domain
-     * o For arrays without core current-domain support:
-     *   - soma domain is core domain
-     *   - soma maxdomain is core domain
-     *   - core current domain is not accessed at the soma level
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
-     */
-    template <typename T>
-    std::pair<T, T> core_domain_slot(const std::string& name) const {
-        return arr_->schema().domain().dimension(name).domain<T>();
+        return _core_domain_slot<T>(name);
     }
 
     /**
@@ -944,6 +893,57 @@ class SOMAArray : public SOMAObject {
     CurrentDomain _get_current_domain() const {
         return tiledb::ArraySchemaExperimental::current_domain(
             *ctx_->tiledb_ctx(), arr_->schema());
+    }
+
+    /**
+     * Returns the core current domain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> _core_current_domain_slot(const std::string& name) const {
+        CurrentDomain current_domain = _get_current_domain();
+        if (current_domain.is_empty()) {
+            throw TileDBSOMAError(
+                "_core_current_domain_slot: internal coding error");
+        }
+        if (current_domain.type() != TILEDB_NDRECTANGLE) {
+            throw TileDBSOMAError(
+                "_core_current_domain_slot: found non-rectangle type");
+        }
+        NDRectangle ndrect = current_domain.ndrectangle();
+
+        // Convert from two-element array (core API) to pair (tiledbsoma API)
+        std::array<T, 2> arr = ndrect.range<T>(name);
+        return std::pair<T, T>(arr[0], arr[1]);
+    }
+
+    /**
+     * Returns the core current domain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> _core_domain_slot(const std::string& name) const {
+        return arr_->schema().domain().dimension(name).domain<T>();
     }
 
     /**
