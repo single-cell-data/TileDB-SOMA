@@ -12,6 +12,7 @@ Do NOT merge into main.
 
 import json
 import os
+import tempfile
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -124,10 +125,10 @@ def from_cxg_spatial_h5ad(
             "Only spatial datasets with uns['spatial']['is_single'] == True are supported"
         )
 
-    # create a directory to store some intermediate files
-    filename, _ = os.path.splitext(os.path.basename(input_h5ad_path))
-    spatial_assets_dir = f"{filename}/spatial"
-    os.makedirs(spatial_assets_dir, exist_ok=True)
+    # create a temp directory to store some intermediate files
+    spatial_assets_dir = tempfile.mkdtemp(
+        prefix=os.path.basename(input_h5ad_path).split(".")[0]
+    )
 
     # get scale_factors dictionary
     library_id = (spatial_dict.keys() - {"is_single"}).pop()
