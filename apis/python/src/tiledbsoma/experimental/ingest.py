@@ -118,7 +118,7 @@ def from_cxg_spatial_h5ad(
 
     adata = ad.read_h5ad(input_h5ad_path)
 
-    spatial_dict = adata.uns["spatial"]
+    spatial_dict = adata.uns.pop("spatial")
     if not spatial_dict["is_single"]:
         raise NotImplementedError(
             "Only spatial datasets with uns['spatial']['is_single'] == True are supported"
@@ -134,7 +134,7 @@ def from_cxg_spatial_h5ad(
     scale_factors = spatial_dict[library_id]["scalefactors"]
 
     # store tissue_postions.csv
-    tissue_pos_df = pd.DataFrame(adata.obsm["spatial"])
+    tissue_pos_df = pd.DataFrame(adata.obsm.pop("spatial"))
     tissue_pos_df.index = adata.obs.index
     tissue_positions_file_path = f"{spatial_assets_dir}/tissue_positions.csv"
     tissue_pos_df.to_csv(
@@ -144,7 +144,7 @@ def from_cxg_spatial_h5ad(
     )
 
     # store spatial images
-    images_source_dict = spatial_dict[library_id]["images"]
+    images_source_dict = spatial_dict[library_id].pop("images")
     image_paths: Dict[str, Optional[str]] = {
         "fullres": None,
         "hires": None,
