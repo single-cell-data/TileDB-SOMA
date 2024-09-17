@@ -9,6 +9,7 @@
 * Fix bug in blockwise iteration
 * Lay groundwork for cached SOMA contexts within objects rather than re-creating contexts
 * SOMA context objects are used throughout SOMA object creation
+* Add value-checking for `axis` parameter when initializing blockwise reads
 
 # tiledbsoma 1.13.0
 
