@@ -60,10 +60,16 @@
 <url><loc>/reference/TileDBCreateOptions.html</loc></url>
 <url><loc>/reference/TileDBGroup.html</loc></url>
 <url><loc>/reference/TileDBObject.html</loc></url>
+<url><loc>/reference/delete_metadata.html</loc></url>
 <url><loc>/reference/example-datasets.html</loc></url>
+<url><loc>/reference/get_all_metadata.html</loc></url>
+<url><loc>/reference/get_metadata.html</loc></url>
+<url><loc>/reference/get_metadata_num.html</loc></url>
+<url><loc>/reference/has_metadata.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/matrixZeroBasedView.html</loc></url>
 <url><loc>/reference/set_log_level.html</loc></url>
+<url><loc>/reference/set_metadata.html</loc></url>
 <url><loc>/reference/show_package_versions.html</loc></url>
 <url><loc>/reference/soma_context.html</loc></url>
 <url><loc>/reference/tiledbsoma_stats.html</loc></url>

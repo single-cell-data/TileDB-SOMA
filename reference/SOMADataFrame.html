@@ -13,7 +13,7 @@ SOMASparseNDArray.  (lifecycle: maturing)"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.13.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.13.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ SOMASparseNDArray.  (lifecycle: maturing)"></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMADataFrame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.13.1/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/kerl/fix-pkgdown-build/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
       <div class="d-none name"><code>SOMADataFrame.Rd</code></div>
     </div>
 
@@ -72,6 +72,8 @@ row and is intended to act as a join key for other objects, such as
 <li><p><a href="#method-SOMADataFrame-read"><code>SOMADataFrame$read()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-update"><code>SOMADataFrame$update()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-shape"><code>SOMADataFrame$shape()</code></a></p></li>
+<li><p><a href="#method-SOMADataFrame-maxshape"><code>SOMADataFrame$maxshape()</code></a></p></li>
+<li><p><a href="#method-SOMADataFrame-tiledbsoma_has_upgraded_domain"><code>SOMADataFrame$tiledbsoma_has_upgraded_domain()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-clone"><code>SOMADataFrame$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
@@ -258,10 +260,38 @@ simply raises an error</p><div class="section">
 <p>None, instead a <code><a href="https://rdrr.io/r/base/notyet.html" class="external-link">.NotYetImplemented</a>()</code> error is raised</p>
 </div>
 
+</div><p></p><hr><a id="method-SOMADataFrame-maxshape"></a><div class="section">
+<h3 id="method-maxshape-">Method <code>maxshape()</code><a class="anchor" aria-label="anchor" href="#method-maxshape-"></a></h3>
+<p>Retrieve the maxshape; as <code>SOMADataFrames</code> are shapeless,
+simply raises an error</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">maxshape</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p>None, instead a <code><a href="https://rdrr.io/r/base/notyet.html" class="external-link">.NotYetImplemented</a>()</code> error is raised</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMADataFrame-tiledbsoma_has_upgraded_domain"></a><div class="section">
+<h3 id="method-tiledbsoma-has-upgraded-domain-">Method <code>tiledbsoma_has_upgraded_domain()</code><a class="anchor" aria-label="anchor" href="#method-tiledbsoma-has-upgraded-domain-"></a></h3>
+<p>Returns TRUE if the array has the upgraded resizeable domain
+feature from TileDB-SOMA 1.15: the array was created with this support,
+or it has had <code>upgrade_domain</code> applied to it.
+(lifecycle: maturing)</p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">tiledbsoma_has_upgraded_domain</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<p>Logical</p>
+</div>
+
 </div><p></p><hr><a id="method-SOMADataFrame-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 

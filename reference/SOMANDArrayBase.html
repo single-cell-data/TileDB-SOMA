@@ -9,7 +9,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.13.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.13.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMA NDArray Base Class</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.13.1/R/SOMANDArrayBase.R" class="external-link"><code>R/SOMANDArrayBase.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/kerl/fix-pkgdown-build/R/SOMANDArrayBase.R" class="external-link"><code>R/SOMANDArrayBase.R</code></a></small>
       <div class="d-none name"><code>SOMANDArrayBase.Rd</code></div>
     </div>
 
@@ -63,6 +63,7 @@
 
 <ul><li><p><a href="#method-SOMANDArrayBase-create"><code>SOMANDArrayBase$create()</code></a></p></li>
 <li><p><a href="#method-SOMANDArrayBase-set_data_type"><code>SOMANDArrayBase$set_data_type()</code></a></p></li>
+<li><p><a href="#method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape"><code>SOMANDArrayBase$tiledbsoma_has_upgraded_shape()</code></a></p></li>
 <li><p><a href="#method-SOMANDArrayBase-clone"><code>SOMANDArrayBase$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
@@ -79,6 +80,7 @@
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="fragment_count"><a href="TileDBArray.html#method-fragment_count"><code>tiledbsoma::TileDBArray$fragment_count()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href="TileDBArray.html#method-get_metadata"><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href="TileDBArray.html#method-index_column_names"><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="maxshape"><a href="TileDBArray.html#method-maxshape"><code>tiledbsoma::TileDBArray$maxshape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href="TileDBArray.html#method-ndim"><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href="TileDBArray.html#method-non_empty_domain"><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href="TileDBArray.html#method-open"><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
@@ -143,10 +145,25 @@ directly.</p></dd>
 </dl><p></p></div>
 </div>
 
+</div><p></p><hr><a id="method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape"></a><div class="section">
+<h3 id="method-tiledbsoma-has-upgraded-shape-">Method <code>tiledbsoma_has_upgraded_shape()</code><a class="anchor" aria-label="anchor" href="#method-tiledbsoma-has-upgraded-shape-"></a></h3>
+<p>Returns TRUE if the array has the upgraded resizeable shape
+feature from TileDB-SOMA 1.15: the array was created with this support,
+or it has had <code>upgrade_domain</code> applied to it.
+(lifecycle: maturing)</p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMANDArrayBase</span><span class="op">$</span><span class="fu">tiledbsoma_has_upgraded_shape</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
+<p>Logical</p>
+</div>
+
 </div><p></p><hr><a id="method-SOMANDArrayBase-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMANDArrayBase</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 

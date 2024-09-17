@@ -39,7 +39,7 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.13.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.13.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,7 +71,7 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMASparseNDArray</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.13.1/R/SOMASparseNDArray.R" class="external-link"><code>R/SOMASparseNDArray.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/kerl/fix-pkgdown-build/R/SOMASparseNDArray.R" class="external-link"><code>R/SOMASparseNDArray.R</code></a></small>
       <div class="d-none name"><code>SOMASparseNDArray.Rd</code></div>
     </div>
 
@@ -106,6 +106,8 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
 <ul><li><p><a href="#method-SOMASparseNDArray-read"><code>SOMASparseNDArray$read()</code></a></p></li>
 <li><p><a href="#method-SOMASparseNDArray-write"><code>SOMASparseNDArray$write()</code></a></p></li>
 <li><p><a href="#method-SOMASparseNDArray-nnz"><code>SOMASparseNDArray$nnz()</code></a></p></li>
+<li><p><a href="#method-SOMASparseNDArray-resize"><code>SOMASparseNDArray$resize()</code></a></p></li>
+<li><p><a href="#method-SOMASparseNDArray-tiledbsoma_upgrade_shape"><code>SOMASparseNDArray$tiledbsoma_upgrade_shape()</code></a></p></li>
 <li><p><a href="#method-SOMASparseNDArray-clone"><code>SOMASparseNDArray$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
@@ -122,6 +124,7 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="fragment_count"><a href="TileDBArray.html#method-fragment_count"><code>tiledbsoma::TileDBArray$fragment_count()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href="TileDBArray.html#method-get_metadata"><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href="TileDBArray.html#method-index_column_names"><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="maxshape"><a href="TileDBArray.html#method-maxshape"><code>tiledbsoma::TileDBArray$maxshape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href="TileDBArray.html#method-ndim"><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href="TileDBArray.html#method-non_empty_domain"><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href="TileDBArray.html#method-open"><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
@@ -134,6 +137,7 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="used_shape"><a href="TileDBArray.html#method-used_shape"><code>tiledbsoma::TileDBArray$used_shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="create"><a href="SOMANDArrayBase.html#method-create"><code>tiledbsoma::SOMANDArrayBase$create()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="set_data_type"><a href="SOMANDArrayBase.html#method-set_data_type"><code>tiledbsoma::SOMANDArrayBase$set_data_type()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="tiledbsoma_has_upgraded_shape"><a href="SOMANDArrayBase.html#method-tiledbsoma_has_upgraded_shape"><code>tiledbsoma::SOMANDArrayBase$tiledbsoma_has_upgraded_shape()</code></a></span></li>
 </ul></details></p><hr><a id="method-SOMASparseNDArray-read"></a><div class="section">
 <h3 id="method-read-">Method <code>read()</code><a class="anchor" aria-label="anchor" href="#method-read-"></a></h3>
 <p>Reads a user-defined slice of the <code>SOMASparseNDArray</code></p><div class="section">
@@ -209,15 +213,61 @@ dimension of <code>values</code>. Generally should be <code>NULL</code>.</p></dd
 <p>A scalar with the number of non-zero elements</p>
 </div>
 
-</div><p></p><hr><a id="method-SOMASparseNDArray-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
-<p>The objects of this class are cloneable with this method.</p><div class="section">
+</div><p></p><hr><a id="method-SOMASparseNDArray-resize"></a><div class="section">
+<h3 id="method-resize-">Method <code>resize()</code><a class="anchor" aria-label="anchor" href="#method-resize-"></a></h3>
+<p>Increases the shape of the array as specfied. Raises an error
+if the new shape is less than the current shape in any dimension. Raises
+an error if the new shape exceeds maxshape in any dimension. Raises an
+error if the array doesn't already have a shape: in that case please call
+tiledbsoma_upgrade_shape.</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArray</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArray</span><span class="op">$</span><span class="fu">resize</span><span class="op">(</span><span class="va">new_shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>new_shape</code></dt>
+<dd><p>A vector of integerish, of the same length as the array's <code>ndim</code>.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p>No return value</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMASparseNDArray-tiledbsoma_upgrade_shape"></a><div class="section">
+<h3 id="method-tiledbsoma-upgrade-shape-">Method <code>tiledbsoma_upgrade_shape()</code><a class="anchor" aria-label="anchor" href="#method-tiledbsoma-upgrade-shape-"></a></h3>
+<p>Allows the array to have a resizeable shape as described in the
+TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
+dimension. Raises an error if the array already has a shape.</p><div class="section">
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArray</span><span class="op">$</span><span class="fu">tiledbsoma_upgrade_shape</span><span class="op">(</span><span class="va">shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>shape</code></dt>
+<dd><p>A vector of integerish, of the same length as the array's <code>ndim</code>.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<p>No return value</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMASparseNDArray-clone"></a><div class="section">
+<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
+<p>The objects of this class are cloneable with this method.</p><div class="section">
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMASparseNDArray</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
