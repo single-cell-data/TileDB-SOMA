@@ -11,7 +11,7 @@ arg() { echo "$1" | sed "s/^${2-[^=]*=}//" | sed "s/:/;/g"; }
 build="Release"
 prefix=""
 tiledb=""
-cmake_verbose="true"
+cmake_verbose="false"
 no_tiledb_deprecated="false"
 
 while test $# != 0; do
