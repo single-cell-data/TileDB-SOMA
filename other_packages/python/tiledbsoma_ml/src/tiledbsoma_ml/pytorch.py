@@ -163,7 +163,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 If ``True``, will return the ``X`` data as a :class:`scipy.sparse.csr_matrix`. If ``False`` (the default), will
                 return ``X`` data as a :class:`numpy.ndarray`.
             seed:
-                The random seed used for shuffling. Defaults to ``None`` (no seed). This argument *must* be specified when using
+                The random seed used for shuffling. Defaults to ``None`` (no seed). This argument *MUST* be specified when using
                 :class:`torch.nn.parallel.DistributedDataParallel` to ensure data partitions are disjoint across worker
                 processes.
             use_eager_fetch:
