@@ -5,14 +5,9 @@
 
 import os
 
-# Temporary for https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-_new_shape_feature_flag = os.getenv("SOMA_PY_NEW_SHAPE") is not None
+# This is temporary for
+# https://github.com/single-cell-data/TileDB-SOMA/issues/2407.  It will be
+# removed once https://github.com/single-cell-data/TileDB-SOMA/issues/2407 is
+# complete.
 
-
-def _new_shape_feature_flag_enabled() -> bool:
-    """
-    This is temporary only and will be removed once
-    https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-    is complete.
-    """
-    return _new_shape_feature_flag
+NEW_SHAPE_FEATURE_FLAG_ENABLED = os.getenv("SOMA_PY_NEW_SHAPE") is not None
