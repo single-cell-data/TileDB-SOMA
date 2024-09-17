@@ -308,6 +308,206 @@ create_and_populate_experiment <- function(
   experiment
 }
 
+create_and_populate_ragged_experiment <- function(
+  uri,
+  n_obs,
+  n_var,
+  X_layer_names,
+  obsm_layers = NULL,
+  varm_layers = NULL,
+  obsp_layer_names = NULL,
+  varp_layer_names = NULL,
+  config = NULL,
+  factors = FALSE,
+  mode = NULL,
+  seed = NA_integer_
+) {
+
+  stopifnot(
+    "'obsm_layers' must be a named integer vector" = is.null(obsm_layers) ||
+      (rlang::is_integerish(obsm_layers) && rlang::is_named(obsm_layers) && all(obsm_layers > 0L)),
+    "'varm_layers' must be a named integer vector" = is.null(varm_layers) ||
+      (rlang::is_integerish(varm_layers) && rlang::is_named(varm_layers) && all(varm_layers > 0L)),
+    "'obsp_layer_names' must be a character vector" = is.null(obsp_layer_names) ||
+      (is.character(obsp_layer_names) && all(nzchar(obsp_layer_names))),
+    "'varp_layer_names' must be a character vector" = is.null(varp_layer_names) ||
+      (is.character(varp_layer_names) && all(nzchar(varp_layer_names))),
+    "'mode' must be 'READ' or 'WRITE'" = is.null(mode) ||
+      (is.character(mode) && length(mode == 1L) && mode %in% c('READ', 'WRITE')),
+    "'seed' must be a single integer value" = is.null(seed) ||
+      (is.integer(seed) && length(seed) == 1L)
+  )
+
+  experiment <- SOMAExperimentCreate(uri, platform_config = config)
+
+  experiment$obs <- create_and_populate_obs(
+    uri = file.path(uri, "obs"),
+    nrows = n_obs,
+    factors = factors
+  )
+
+  experiment$ms <- SOMACollectionCreate(file.path(uri, "ms"))
+
+  ms_rna <- SOMAMeasurementCreate(file.path(uri, "ms", "RNA"))
+  # ms_rna$set_metadata(.assay_version_hint('v5'))
+  ms_rna$set_metadata(list(soma_ecosystem_seurat_assay_version = 'v5'))
+
+  ms_rna$var <- create_and_populate_var(
+    uri = file.path(ms_rna$uri, "var"),
+    nrows = n_var,
+    factors = factors
+  )
+  ms_rna$X <- SOMACollectionCreate(file.path(ms_rna$uri, "X"))
+
+  obsv <- seq.int(to = n_obs)
+  varv <- seq.int(to = n_var)
+  nd <- seq(from = 0L, to = 1L, by = 0.1)
+  nd <- rev(nd[nd > 0L])
+  nd <- rep_len(nd, length.out = length(X_layer_names))
+
+  if (!is.na(seed)) {
+    set.seed(seed)
+  }
+
+  for (i in seq_along(X_layer_names)) {
+    layer_name <- X_layer_names[i]
+
+    mat <- Matrix::rsparsematrix(
+      nrow = ceiling(n_obs * nd[i]),
+      ncol = ceiling(n_var * nd[i]),
+      density = 0.6,
+      rand.x = function(n) as.integer(runif(n, min = 1, max = 100)),
+      repr = 'T'
+    )
+
+    ndarray <- SOMASparseNDArrayCreate(
+      file.path(ms_rna$X$uri, layer_name),
+      arrow::int32(),
+      shape = dim(mat)
+    )
+    ndarray$write(mat)
+    if (nd[i] != 1L) {
+      # ndarray$set_metadata(.ragged_array_hint())
+      ndarray$set_metadata(list(soma_ecosystem_seurat_v5_ragged = 'ragged'))
+    }
+
+    ms_rna$X$set(ndarray, name = layer_name)
+  }
+  ms_rna$X$close()
+
+  # Add obsm layers
+  if (rlang::is_integerish(obsm_layers)) {
+    obsm <- SOMACollectionCreate(file.path(ms_rna$uri, "obsm"))
+    for (layer in names(obsm_layers)) {
+      key <- gsub(pattern = '^dense:', replacement = '', x = layer)
+      shape <- c(n_obs, obsm_layers[layer])
+      if (grepl(pattern = '^dense:', x = layer)) {
+        obsm$add_new_dense_ndarray(
+          key = key,
+          type = arrow::int32(),
+          shape = shape
+        )
+        obsm$get(key)$write(create_dense_matrix_with_int_dims(
+          nrows = shape[1L],
+          ncols = shape[2L]
+        ))
+      } else {
+        obsm$add_new_sparse_ndarray(
+          key = key,
+          type = arrow::int32(),
+          shape = shape
+        )
+        obsm$get(key)$write(create_sparse_matrix_with_int_dims(
+          nrows = shape[1L],
+          ncols = shape[2L]
+        ))
+      }
+    }
+    obsm$close()
+    ms_rna$add_new_collection(obsm, "obsm")
+  }
+
+  # Add varm layers
+  if (rlang::is_integerish(varm_layers)) {
+    varm <- SOMACollectionCreate(file.path(ms_rna$uri, "varm"))
+    for (layer in names(varm_layers)) {
+      key <- gsub(pattern = '^dense:', replacement = '', x = layer)
+      shape <- c(n_var, varm_layers[layer])
+      if (grepl(pattern = '^dense:', x = layer)) {
+        varm$add_new_dense_ndarray(
+          key = key,
+          type = arrow::int32(),
+          shape = shape
+        )
+        varm$get(key)$write(create_dense_matrix_with_int_dims(
+          nrows = shape[1L],
+          ncols = shape[2L]
+        ))
+      } else {
+        varm$add_new_sparse_ndarray(
+          key = key,
+          type = arrow::int32(),
+          shape = shape
+        )
+        varm$get(key)$write(create_sparse_matrix_with_int_dims(
+          nrows = shape[1L],
+          ncols = shape[2L]
+        ))
+      }
+    }
+    varm$close()
+    ms_rna$add_new_collection(varm, "varm")
+  }
+
+  # Add obsp layers
+  if (is.character(obsp_layer_names)) {
+    obsp <- SOMACollectionCreate(file.path(ms_rna$uri, "obsp"))
+    for (layer in obsp_layer_names) {
+      obsp$add_new_sparse_ndarray(
+        key = layer,
+        type = arrow::int32(),
+        shape = c(n_obs, n_obs)
+      )
+      obsp$get(layer)$write(create_sparse_matrix_with_int_dims(
+        nrows = n_obs,
+        ncols = n_obs
+      ))
+    }
+    obsp$close()
+    ms_rna$add_new_collection(obsp, "obsp")
+  }
+
+  # Add varp layers
+  if (is.character(varp_layer_names)) {
+    varp <- SOMACollectionCreate(file.path(ms_rna$uri, "varp"))
+    for (layer in varp_layer_names) {
+      varp$add_new_sparse_ndarray(
+        key = layer,
+        type = arrow::int32(),
+        shape = c(n_var, n_var)
+      )
+      varp$get(layer)$write(create_sparse_matrix_with_int_dims(
+        nrows = n_var,
+        ncols = n_var
+      ))
+    }
+    varp$close()
+    ms_rna$add_new_collection(varp, "varp")
+  }
+
+  ms_rna$close()
+
+  experiment$ms$set(ms_rna, name = "RNA")
+  experiment$ms$close()
+
+  if (is.null(mode)) {
+    experiment$close()
+  } else {
+    experiment$reopen(mode)
+  }
+  return(experiment)
+}
+
 # Creates a SOMASparseNDArray with domains of `[0, 2^31 - 1]` and non-zero
 # values at `(0,0)`, `(2^31 - 2, 2^31 - 2)` and `(2^31 - 1, 2^31 - 1)`. This is
 # intended to test R's ability to read from arrays created with tiledbsoma-py
