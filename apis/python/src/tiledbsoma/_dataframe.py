@@ -14,7 +14,7 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
-from tiledbsoma import _new_shape_feature_flag_enabled
+from tiledbsoma._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
@@ -293,7 +293,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             # [4] core current domain hi
 
             index_column_schema.append(pa_field)
-            if _new_shape_feature_flag_enabled():
+            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
 
                 index_column_data[pa_field.name] = [
                     *slot_core_max_domain,

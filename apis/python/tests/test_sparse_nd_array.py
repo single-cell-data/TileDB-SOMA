@@ -1088,7 +1088,7 @@ def test_tile_extents(tmp_path):
     ).close()
 
     with tiledb.open(uri) as A:
-        if soma._new_shape_feature_flag_enabled():
+        if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
             assert A.schema.domain.dim(0).tile == 2048
             assert A.schema.domain.dim(1).tile == 2048
         else:
