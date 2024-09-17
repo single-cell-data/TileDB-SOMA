@@ -501,7 +501,7 @@ TEST_CASE_METHOD(
         // Check current domain
         auto soma_dataframe = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        CurrentDomain current_domain = soma_dataframe->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -602,7 +602,7 @@ TEST_CASE_METHOD(
         // Check current domain
         auto soma_dataframe = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        CurrentDomain current_domain = soma_dataframe->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -715,7 +715,7 @@ TEST_CASE_METHOD(
         // Check current domain
         auto soma_dataframe = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        CurrentDomain current_domain = soma_dataframe->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -831,7 +831,7 @@ TEST_CASE_METHOD(
         // Check current domain
         auto soma_dataframe = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        CurrentDomain current_domain = soma_dataframe->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {

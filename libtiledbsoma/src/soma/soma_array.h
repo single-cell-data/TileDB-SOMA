@@ -728,7 +728,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Exposed for testing purposes.
      */
-    CurrentDomain get_current_domain() const {
+    CurrentDomain get_current_domain_for_test() const {
         return _get_current_domain();
     }
 
