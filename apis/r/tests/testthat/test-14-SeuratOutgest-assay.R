@@ -202,6 +202,114 @@ test_that("Load assay with SeuratObject v5 returns v3 assays", {
   expect_equal(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
 })
 
+test_that("Load v5 assay", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+
+  uri <- tempfile(pattern = "assay-experiment-query-v5-whole")
+  n_obs <- 20L
+  n_var <- 10L
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = c("counts", "logcounts"),
+    mode = "READ"
+  )
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA"
+  )
+
+  # Cannot wrap in `expect_no_condition()` because testthat f*cks with
+  # S4 method dispatch
+  assay <- query$to_seurat_assay(
+    X_layers = c("counts", "logcounts"),
+    version = "v5"
+  )
+  expect_s4_class(assay, "Assay5")
+  expect_equal(dim(assay), c(n_var, n_obs))
+  expect_s4_class(SeuratObject::LayerData(assay, "counts"), "dgTMatrix")
+  expect_s4_class(SeuratObject::LayerData(assay, "logcounts"), "dgTMatrix")
+  expect_equal(SeuratObject::Key(assay), "rna_")
+  expect_equal(names(assay[[]]), query$var_df$attrnames())
+  expect_equal(rownames(assay), paste0("feature", seq_len(n_var) - 1L))
+  expect_equal(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
+  expect_equal(colnames(assay), paste0("cell", seq_len(n_obs) - 1L))
+  expect_equal(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
+
+  # Test no counts
+  expect_no_condition(nocounts <- query$to_seurat_assay("logcounts", version = "v5"))
+  expect_false("counts" %in% SeuratObject::Layers(nocounts))
+
+  # Test modifying feature-level meta data
+  expect_no_condition(nomf <- query$to_seurat_assay(
+    "counts",
+    var_column_names = FALSE,
+    version = "v5"
+  ))
+  expect_equal(dim(nomf[[]]), c(n_var, 0L))
+  expect_no_condition(nomf2 <- query$to_seurat_assay(
+    "counts",
+    var_column_names = NA,
+    version = "v5"
+  ))
+  expect_equal(dim(nomf2[[]]), c(n_var, 0L))
+
+  # Test using cell and feature names
+  expect_no_condition(named <- query$to_seurat_assay(
+    obs_index = "baz",
+    var_index = "quux",
+    version = "v5"
+  ))
+  expect_identical(
+    colnames(named),
+    query$obs("baz")$concat()$GetColumnByName("baz")$as_vector()
+  )
+  expect_identical(
+    rownames(named),
+    query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
+  )
+
+  # Test `X_layers` assertions
+  expect_error(query$to_seurat_assay("tomato", version = "v5"))
+})
+
+test_that("Load v5 ragged assay", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+
+  uri <- tempfile(pattern = "assay-experiment-query-v5-whole")
+  n_obs <- 20L
+  n_var <- 10L
+  layers <- c("mat", "matA", "matB", "matC")
+  experiment <- create_and_populate_ragged_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = layers,
+    mode = "READ"
+  )
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA"
+  )
+
+  assay <- query$to_seurat_assay(layers, version = "v5")
+  expect_s4_class(assay, "Assay5")
+  expect_equal(dim(assay), c(n_var, n_obs))
+
+  nd <- seq(from = 0L, to = 1L, by = 0.1)
+  nd <- rev(nd[nd > 0L])
+  nd <- rep_len(nd, length.out = length(layers))
+  for (i in seq_along(layers)) {
+    expect_s4_class(mat <- SeuratObject::LayerData(assay, layers[i]), "dgTMatrix")
+    expect_equal(dim(mat), ceiling(c(n_var, n_obs) * nd[i]), info = layers[i])
+  }
+})
+
 test_that("Load assay from sliced ExperimentQuery", {
   skip_if(!extended_tests())
   skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
@@ -244,6 +352,99 @@ test_that("Load assay from sliced ExperimentQuery", {
   expect_identical(
     colnames(named),
     query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
+  )
+})
+
+test_that("Load v5 assay from sliced ExperimentQuery", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+
+  uri <- tempfile(pattern = "assay-experiment-query-v5-sliced")
+  n_obs <- 1001L
+  n_var <- 99L
+  obs_slice <- bit64::as.integer64(seq(3, 72))
+  var_slice <- bit64::as.integer64(seq(7, 21))
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = "counts",
+    mode = "READ"
+  )
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(coords = list(soma_joinid = obs_slice)),
+    var_query = SOMAAxisQuery$new(coords = list(soma_joinid = var_slice))
+  )
+
+  assay <- query$to_seurat_assay("counts", version = "v5")
+  expect_s4_class(assay, "Assay5")
+  expect_equal(dim(assay), c(length(var_slice), length(obs_slice)))
+  expect_identical(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
+  expect_identical(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
+
+  # Test named
+  expect_no_condition(named <- query$to_seurat_assay(
+    "counts",
+    obs_index = "baz",
+    var_index = "quux",
+    version = "v5"
+  ))
+  expect_identical(
+    rownames(named),
+    query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
+  )
+  expect_identical(
+    colnames(named),
+    query$obs("baz")$concat()$GetColumnByName("baz")$as_vector()
+  )
+})
+
+test_that("Load v5 ragged assay from sliced ExperimentQuery", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+
+  uri <- tempfile(pattern = "assay-experiment-query-ragged-sliced")
+  n_obs <- 1001L
+  n_var <- 99L
+  obs_slice <- bit64::as.integer64(seq.int(799L, 999L))
+  var_slice <- bit64::as.integer64(seq.int(75L, 95L))
+  layers <- c("mat", "matA", "matB", "matC")
+  experiment <- create_and_populate_ragged_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = layers,
+    mode = "READ"
+  )
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(coords = list(soma_joinid = obs_slice)),
+    var_query = SOMAAxisQuery$new(coords = list(soma_joinid = var_slice))
+  )
+  expect_warning(
+    assay <- query$to_seurat_assay(layers, version = "v5"),
+    class = "unqueryableLayerWarning"
+  )
+  expect_s4_class(assay, "Assay5")
+  expect_setequal(
+    setdiff(layers, "matC"),
+    SeuratObject::Layers(assay)
+  )
+  expect_equal(dim(assay), sapply(list(var_slice, obs_slice), FUN = length))
+  expect_identical(
+    rownames(assay),
+    paste0("feature", as.integer(var_slice))
+  )
+  expect_identical(
+    colnames(assay),
+    paste0("cell", as.integer(obs_slice))
   )
 })
 
@@ -302,4 +503,103 @@ test_that("Load assay from indexed ExperimentQuery", {
     query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
   )
   expect_identical(colnames(named), obs_label_values)
+})
+
+test_that("Load v5 assay from indexed ExperimentQuery", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+
+  uri <- tempfile(pattern = "soma-experiment-query-v5-filters")
+  n_obs <- 1001L
+  n_var <- 99L
+  obs_label_values <- c("1003", "1007", "1038", "1099")
+  var_label_values <- c("1018", "1034", "1067")
+  experiment <- create_and_populate_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = "counts",
+    mode = "READ"
+  )
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  obs_value_filter <- paste0(
+    sprintf("baz == '%s'", obs_label_values),
+    collapse = "||"
+  )
+  var_value_filter <- paste0(
+    sprintf("quux == '%s'", var_label_values),
+    collapse = "||"
+  )
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(value_filter = obs_value_filter),
+    var_query = SOMAAxisQuery$new(value_filter = var_value_filter)
+  )
+  assay <- query$to_seurat_assay("counts", version = "v5")
+  expect_s4_class(assay, "Assay5")
+  expect_equal(
+    dim(assay),
+    c(length(var_label_values), length(obs_label_values))
+  )
+  expect_identical(rownames(assay), paste0("feature", query$var_joinids()$as_vector()))
+  expect_identical(colnames(assay), paste0("cell", query$obs_joinids()$as_vector()))
+
+  # Test named
+  expect_no_condition(named <- query$to_seurat_assay(
+    "counts",
+    obs_index = "baz",
+    var_index = "quux",
+    version = "v5"
+  ))
+  expect_identical(
+    rownames(named),
+    query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
+  )
+  expect_identical(rownames(named), var_label_values)
+  expect_identical(
+    colnames(named),
+    query$obs("baz")$concat()$GetColumnByName("baz")$as_vector()
+  )
+  expect_identical(colnames(named), obs_label_values)
+})
+
+test_that("Load v5 ragged assay from indexed ExperimentQuery", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+
+  uri <- tempfile(pattern = "soma-experiment-query-ragged-filters")
+  n_obs <- 1001L
+  n_var <- 99L
+  obs_label_values <- c("1003", "1007", "1038", "1099")
+  var_label_values <- c("1018", "1034", "1067")
+  layers <- c("mat", "matA", "matB", "matC")
+  experiment <- create_and_populate_ragged_experiment(
+    uri = uri,
+    n_obs = n_obs,
+    n_var = n_var,
+    X_layer_names = layers,
+    mode = "READ"
+  )
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  obs_value_filter <- paste0(
+    sprintf("baz == '%s'", obs_label_values),
+    collapse = "||"
+  )
+  var_value_filter <- paste0(
+    sprintf("quux == '%s'", var_label_values),
+    collapse = "||"
+  )
+  query <- SOMAExperimentAxisQuery$new(
+    experiment = experiment,
+    measurement_name = "RNA",
+    obs_query = SOMAAxisQuery$new(value_filter = obs_value_filter),
+    var_query = SOMAAxisQuery$new(value_filter = var_value_filter)
+  )
+
+  assay <- query$to_seurat_assay(layers, version = "v5")
+  expect_s4_class(assay, "Assay5")
+  expect_setequal(layers, SeuratObject::Layers(assay))
 })
