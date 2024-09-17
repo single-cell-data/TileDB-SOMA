@@ -15,7 +15,7 @@
     if (rpkg_lib_version != soma_lib_version) {
         msg <- sprintf("TileDB Core version %s used by TileDB-R package, but TileDB-SOMA uses %s",
                        sQuote(rpkg_lib_version), sQuote(soma_lib_version))
-        stop(msg, call. = FALSE)
+        packageStartupMessage(msg)
     }
 
     # This is temporary for https://github.com/single-cell-data/TileDB-SOMA/issues/2407
