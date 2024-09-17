@@ -109,6 +109,19 @@ jobs:
         CC: ${{ inputs.cc }}
         CXX: ${{ inputs.cxx }}
 
+    # Temporary for
+    # https://github.com/single-cell-data/SOMA/pull/222
+    # https://github.com/single-cell-data/TileDB-SOMA/pull/3001
+    - name: Install somacore branch
+      if: ${{contains(github.event.head_commit.message, 'overwrite classes to make queries use C++ re-indexer') }}
+      run: |
+          pip uninstall somacore
+          git clone git@github.com:single-cell-data/SOMA.git soma
+          cd ./SOMA
+          git checkout kerl/python-3.12
+          pip install ./
+          python -c 'import somacore; print(somacore.__version__)'
+
     - name: Show package versions
       run: python scripts/show-versions.py
 
