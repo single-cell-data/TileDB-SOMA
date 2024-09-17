@@ -481,4 +481,12 @@ test_that("Write Seurat with v3 and v5 assays", {
       )
     }
   }
+
+  obs_hints <- vapply(
+    X = SeuratObject::.FilterObjects(pbmc_small, "Assay5"),
+    FUN = .assay_obs_hint,
+    FUN.VALUE = character(1L),
+    USE.NAMES = FALSE
+  )
+  expect_true(all(obs_hints %in% experiment$obs$colnames()))
 })

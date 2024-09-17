@@ -92,6 +92,16 @@
   return(list(soma_ecosystem_seurat_assay_version = type))
 }
 
+.assay_obs_hint <- function(assay) {
+  stopifnot(
+    "'assay' must be a single, non-empty character value" = is.character(assay) &&
+      length(assay) == 1L &&
+      nzchar(assay) &&
+      !is.na(assay)
+  )
+  return(sprintf("soma_ecosystem_seurat_assay_cells_%s", assay))
+}
+
 .layer_hint <- function(lyr) {
   stopifnot(
     "'lyr' must be a non-empty character vector" = is.character(lyr) &&

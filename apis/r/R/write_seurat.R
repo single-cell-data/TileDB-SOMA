@@ -719,6 +719,8 @@ write_soma.Seurat <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
+  op <- options(tiledbsoma.write_soma.internal = TRUE)
+  on.exit(options(op), add = TRUE, after = FALSE)
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
@@ -754,24 +756,14 @@ write_soma.Seurat <- function(
   )
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
-  # Write cell-level meta data (obs)
-  spdl::info("Adding cell-level meta data")
+  # Prepare cell-level meta daa (obs)
   obs_df <- .df_index(
     x = x[[]],
     alt = "cells",
     axis = "obs",
     prefix = "seurat"
   )
-  obs_df[[attr(obs_df, "index")]] <- colnames(x)
-  write_soma(
-    x = obs_df,
-    uri = "obs",
-    soma_parent = experiment,
-    key = "obs",
-    ingest_mode = ingest_mode,
-    platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
-  )
+  obs_df[[attr(obs_df, 'index')]] <- colnames(x)
 
   # Write assays
   expms <- SOMACollectionCreate(
@@ -811,9 +803,26 @@ write_soma.Seurat <- function(
         err_to_warn(err)
       }
     )
+    if (inherits(x[[measurement]], what = 'StdAssay')) {
+      key <- .assay_obs_hint(measurement)
+      obs_df[[key]] <- colnames(x) %in% colnames(x[[measurement]])
+    }
   }
 
+  # Write cell-level meta data (obs)
+  spdl::info("Adding cell-level meta data")
+  write_soma(
+    x = obs_df,
+    uri = 'obs',
+    soma_parent = experiment,
+    key = 'obs',
+    ingest_mode = ingest_mode,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+
   # Write dimensional reductions (obsm/varm)
+  expms$reopen("WRITE")
   for (reduc in SeuratObject::Reductions(x)) {
     measurement <- SeuratObject::DefaultAssay(x[[reduc]])
     ms <- if (measurement %in% expms$names()) {
