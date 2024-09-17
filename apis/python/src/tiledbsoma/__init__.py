@@ -185,8 +185,8 @@ from .pytiledbsoma import (
     tiledbsoma_stats_reset,
 )
 from .stats import (
-    tiledbsoma_stats_json,
     tiledbsoma_stats_as_py,
+    tiledbsoma_stats_json,
 )
 
 __version__ = get_implementation_version()
@@ -223,4 +223,6 @@ __all__ = [
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
     "tiledbsoma_stats_reset",
+    "tiledbsoma_stats_as_py",
+    "tiledbsoma_stats_json",
 ]
