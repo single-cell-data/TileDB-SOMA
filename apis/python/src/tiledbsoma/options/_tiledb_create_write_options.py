@@ -194,7 +194,7 @@ class TileDBCreateOptions:
 
     def offsets_filters_tiledb(self) -> Tuple[tiledb.Filter, ...]:
         """Constructs the real TileDB Filters to use for offsets."""
-        assert_version_before(1, 14)
+        assert_version_before(1, 15)
         warnings.warn(
             "`offsets_filters_tiledb` is now deprecated for removal in 1.15 "
             "as we no longer support returning tiledb.Filter. "
@@ -206,7 +206,7 @@ class TileDBCreateOptions:
 
     def validity_filters_tiledb(self) -> Optional[Tuple[tiledb.Filter, ...]]:
         """Constructs the real TileDB Filters to use for the validity map."""
-        assert_version_before(1, 14)
+        assert_version_before(1, 15)
         warnings.warn(
             "`validity_filters_tiledb` is now deprecated for removal in 1.15 "
             "as we no longer support returning tiledb.Filter. "
@@ -221,7 +221,7 @@ class TileDBCreateOptions:
         self, dim: str, default: Sequence[_FilterSpec] = ()
     ) -> Tuple[tiledb.Filter, ...]:
         """Constructs the real TileDB Filters to use for the named dimension."""
-        assert_version_before(1, 14)
+        assert_version_before(1, 15)
         warnings.warn(
             "`dim_filters_tiledb` is now deprecated for removal in 1.15 "
             "as we no longer support returning tiledb.Filter. "
@@ -242,7 +242,7 @@ class TileDBCreateOptions:
         self, name: str, default: Sequence[_FilterSpec] = ()
     ) -> Tuple[tiledb.Filter, ...]:
         """Constructs the real TileDB Filters to use for the named attribute."""
-        assert_version_before(1, 14)
+        assert_version_before(1, 15)
         warnings.warn(
             "`attr_filters_tiledb` is now deprecated for removal in 1.15 "
             "as we no longer support returning tiledb.Filter. "
