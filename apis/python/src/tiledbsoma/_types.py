@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import datetime
 import pathlib
-from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union, get_args
+from typing import Any, List, Sequence, Tuple, Union, get_args
 
 import numpy as np
 import numpy.typing as npt
