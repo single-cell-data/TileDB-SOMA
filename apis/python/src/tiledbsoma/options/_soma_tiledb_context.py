@@ -25,7 +25,7 @@ from .._util import ms_to_datetime, to_timestamp_ms
 
 
 def _warn_ctx_deprecation() -> None:
-    assert_version_before(1, 14)
+    assert_version_before(1, 15)
     warnings.warn(
         "tiledb_ctx is now deprecated for removal in 1.15. "
         "Use tiledb_config instead by passing "
