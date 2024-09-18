@@ -820,6 +820,9 @@ def _fill_out_slot_soma_domain(
             )
         slot_domain = slot_domain[0], slot_domain[1]
     elif isinstance(dtype, str):
+        # Core string dims have no extent and no (core) domain.  We return "" here
+        # simply so we can pass libtiledbsoma "" for domain and extent, while it
+        # will (and must) ignore these when creating the TileDB schema.
         slot_domain = "", ""
     elif np.issubdtype(dtype, NPInteger):
         iinfo = np.iinfo(cast(NPInteger, dtype))
@@ -887,6 +890,9 @@ def _find_extent_for_domain(
     if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
         extent = 1
 
+    # Core string dims have no extent and no (core) domain.  We return "" here
+    # simply so we can pass libtiledbsoma "" for domain and extent, while it
+    # will (and must) ignore these when creating the TileDB schema.
     if isinstance(dtype, str):
         return ""
 
