@@ -1,3 +1,9 @@
+# tiledbsoma 1.14.1
+
+## Changes
+
+* Fixes a Python-only bug [#3013](https://github.com/single-cell-data/TileDB-SOMA/pull/3013)
+
 # tiledbsoma 1.14.0
 
 ## Changes
