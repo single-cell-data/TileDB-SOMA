@@ -1,5 +1,11 @@
 # Unreleased
 
+# tiledbsoma 1.13.1
+
+## Changes
+
+* Includes a fix for appended enumerations [#2903](https://github.com/single-cell-data/TileDB-SOMA/pull/2903)
+
 ## Changes
 
 * New `resize` and `tiledbsoma_upgrade_shape` accessors as part of the [new-shape project](https://github.com/single-cell-data/TileDB-SOMA/issues/2407)
@@ -9,6 +15,7 @@
 * Fix bug in blockwise iteration
 * Lay groundwork for cached SOMA contexts within objects rather than re-creating contexts
 * SOMA context objects are used throughout SOMA object creation
+* Add value-checking for `axis` parameter when initializing blockwise reads
 
 # tiledbsoma 1.13.0
 

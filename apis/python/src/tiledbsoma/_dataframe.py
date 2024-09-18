@@ -14,7 +14,7 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
-from tiledbsoma import _new_shape_feature_flag_enabled
+from tiledbsoma._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
@@ -293,7 +293,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             # [4] core current domain hi
 
             index_column_schema.append(pa_field)
-            if _new_shape_feature_flag_enabled():
+            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
 
                 index_column_data[pa_field.name] = [
                     *slot_core_max_domain,
@@ -820,6 +820,9 @@ def _fill_out_slot_soma_domain(
             )
         slot_domain = slot_domain[0], slot_domain[1]
     elif isinstance(dtype, str):
+        # Core string dims have no extent and no (core) domain.  We return "" here
+        # simply so we can pass libtiledbsoma "" for domain and extent, while it
+        # will (and must) ignore these when creating the TileDB schema.
         slot_domain = "", ""
     elif np.issubdtype(dtype, NPInteger):
         iinfo = np.iinfo(cast(NPInteger, dtype))
@@ -887,6 +890,9 @@ def _find_extent_for_domain(
     if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
         extent = 1
 
+    # Core string dims have no extent and no (core) domain.  We return "" here
+    # simply so we can pass libtiledbsoma "" for domain and extent, while it
+    # will (and must) ignore these when creating the TileDB schema.
     if isinstance(dtype, str):
         return ""
 

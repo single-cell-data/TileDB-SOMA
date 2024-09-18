@@ -97,18 +97,6 @@ import ctypes
 import os
 import sys
 
-# Temporary for https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-_new_shape_feature_flag = os.getenv("SOMA_PY_NEW_SHAPE") is not None
-
-
-def _new_shape_feature_flag_enabled() -> bool:
-    """
-    This is temporary only and will be removed once
-    https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-    is complete.
-    """
-    return _new_shape_feature_flag
-
 
 # Load native libraries. On wheel builds, we may have a shared library
 # already linked. In this case, we can import directly
@@ -150,10 +138,11 @@ except ImportError:
 from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
 from somacore.options import ResultOrder
 
-# TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
-# https://github.com/single-cell-data/TileDB-SOMA/issues/1926
+# This is important since we need to do the above dll/dylib/so business
+# _before_ imports, but, ruff will tell us that imports need to be
+# at the top of the file:
+#
 # ruff: noqa
-import pyarrow_hotfix
 
 from ._collection import Collection
 from ._constants import SOMA_JOINID
@@ -185,8 +174,8 @@ from .pytiledbsoma import (
     tiledbsoma_stats_reset,
 )
 from .stats import (
-    tiledbsoma_stats_json,
     tiledbsoma_stats_as_py,
+    tiledbsoma_stats_json,
 )
 
 __version__ = get_implementation_version()
@@ -223,4 +212,6 @@ __all__ = [
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
     "tiledbsoma_stats_reset",
+    "tiledbsoma_stats_as_py",
+    "tiledbsoma_stats_json",
 ]

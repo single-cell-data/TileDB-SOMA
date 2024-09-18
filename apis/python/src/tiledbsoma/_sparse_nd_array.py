@@ -26,7 +26,7 @@ from somacore import options
 from somacore.options import PlatformConfig
 from typing_extensions import Self
 
-from tiledbsoma import _new_shape_feature_flag_enabled
+from tiledbsoma._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 
 from . import _util
 
@@ -163,7 +163,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # [3] core current domain lo
             # [4] core current domain hi
 
-            if _new_shape_feature_flag_enabled():
+            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
                 dim_capacity, dim_extent = cls._dim_capacity_and_extent(
                     dim_name,
                     # The user specifies current domain -- this is the max domain

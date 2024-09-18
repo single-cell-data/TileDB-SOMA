@@ -38,7 +38,10 @@ test: ctest
 	pytest apis/python/tests
 
 .PHONY: ctest
-ctest: data
+ctest: data ctest_update
+
+.PHONY: ctest_update
+ctest_update:
 	ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
 
 .PHONY: data
