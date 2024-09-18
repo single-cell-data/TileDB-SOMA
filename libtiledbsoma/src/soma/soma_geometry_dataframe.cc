@@ -43,6 +43,7 @@ void SOMAGeometryDataFrame::create(
     std::string_view uri,
     std::unique_ptr<ArrowSchema> schema,
     ArrowTable index_columns,
+    ArrowTable spatial_columns,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
@@ -51,6 +52,8 @@ void SOMAGeometryDataFrame::create(
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
+        ArrowTable(
+            std::move(spatial_columns.first), std::move(spatial_columns.second)),
         "SOMAGeometryDataFrame",
         true,
         platform_config);

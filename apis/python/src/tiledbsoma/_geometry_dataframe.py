@@ -7,6 +7,7 @@
 Implementation of a SOMA Geometry DataFrame
 """
 
+from itertools import zip_longest
 from typing import Any, Final, Mapping, Optional, Self, Sequence, Tuple, Union
 
 import pyarrow as pa
@@ -142,6 +143,10 @@ class GeometryDataFrame(SOMAArray, somacore.GeometryDataFrame):
         index_column_data = {}
 
         for index_column_name, slot_soma_domain in zip(index_column_names, domain):
+            # Skip geometry axis to handle it later separately
+            if index_column_name == options.SOMA_GEOMETRY:
+                continue
+
             pa_field = schema.field(index_column_name)
             dtype = _arrow_types.tiledb_type_from_arrow_type(
                 pa_field.type, is_indexed_column=True
@@ -185,6 +190,56 @@ class GeometryDataFrame(SOMAArray, somacore.GeometryDataFrame):
             index_column_data, schema=pa.schema(index_column_schema)
         )
 
+        spatial_column_schema = []
+        spatial_column_data = {}
+        spatial_domain = domain[index_column_names.index(options.SOMA_GEOMETRY)]
+        for axis, slot_soma_domain in zip_longest(
+            axis_names,
+            spatial_domain if isinstance(spatial_domain, tuple) else [spatial_domain],
+        ):
+            pa_field = pa.field(axis, pa.float64())
+            dtype = _arrow_types.tiledb_type_from_arrow_type(
+                pa_field.type, is_indexed_column=True
+            )
+
+            (slot_core_current_domain, saturated_cd) = _util.fill_out_slot_soma_domain(
+                slot_soma_domain, axis, pa_field.type, dtype
+            )
+            (slot_core_max_domain, saturated_md) = _util.fill_out_slot_soma_domain(
+                None, axis, pa_field.type, dtype
+            )
+
+            extent = _util.find_extent_for_domain(
+                axis,
+                TileDBCreateOptions.from_platform_config(platform_config),
+                dtype,
+                slot_core_current_domain,
+            )
+
+            # Necessary to avoid core array-creation error "Reduce domain max by
+            # 1 tile extent to allow for expansion."
+            slot_core_current_domain = _util.revise_domain_for_extent(
+                slot_core_current_domain, extent, saturated_cd
+            )
+            slot_core_max_domain = _util.revise_domain_for_extent(
+                slot_core_max_domain, extent, saturated_md
+            )
+
+            # Here is our Arrow data API for communicating schema info between
+            # Python/R and C++ libtiledbsoma:
+            #
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+
+            spatial_column_schema.append(pa_field)
+
+            spatial_column_data[pa_field.name] = [*slot_core_current_domain, extent]
+
+        spatial_column_info = pa.RecordBatch.from_pydict(
+            spatial_column_data, schema=pa.schema(spatial_column_schema)
+        )
+
         plt_cfg = _util.build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
@@ -192,6 +247,7 @@ class GeometryDataFrame(SOMAArray, somacore.GeometryDataFrame):
                 uri,
                 schema=schema,
                 index_column_info=index_column_info,
+                spatial_column_info=spatial_column_info,
                 ctx=context.native_context,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),

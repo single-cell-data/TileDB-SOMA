@@ -34,6 +34,9 @@
 #include "../soma/column_buffer.h"
 #include "logger.h"
 
+#include <utility>
+#include <string>
+
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -712,6 +715,255 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     std::unique_ptr<ArrowSchema> arrow_schema,
     ArrowTable index_column_info,
+    ArrowTable spatial_column_info,
+    std::string soma_type,
+    bool is_sparse,
+    PlatformConfig platform_config) {
+    auto index_column_array = std::move(index_column_info.first);
+    auto index_column_schema = std::move(index_column_info.second);
+
+    ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
+    Domain domain(*ctx);
+
+    schema.set_capacity(platform_config.capacity);
+
+    if (!platform_config.offsets_filters.empty()) {
+        schema.set_offsets_filter_list(ArrowAdapter::_create_filter_list(
+            platform_config.offsets_filters, ctx));
+    }
+
+    if (!platform_config.validity_filters.empty()) {
+        schema.set_validity_filter_list(ArrowAdapter::_create_filter_list(
+            platform_config.validity_filters, ctx));
+    }
+
+    schema.set_allows_dups(platform_config.allows_duplicates);
+
+    if (platform_config.tile_order) {
+        schema.set_tile_order(
+            ArrowAdapter::_get_order(*platform_config.tile_order));
+    }
+
+    if (platform_config.cell_order) {
+        schema.set_cell_order(
+            ArrowAdapter::_get_order(*platform_config.cell_order));
+    }
+
+    std::map<std::string, Dimension> dims;
+
+    bool use_current_domain = true;
+
+    for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children; ++sch_idx) {
+        auto child = arrow_schema->children[sch_idx];
+        auto type = ArrowAdapter::to_tiledb_format(child->format);
+
+        LOG_DEBUG(fmt::format(
+            "[ArrowAdapter] schema pass for {}", std::string(child->name)));
+
+        bool isattr = true;
+
+        for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+            auto achild = index_column_array->children[i];
+            auto schild = index_column_schema->children[i];
+            auto col_name = schild->name;
+            if (strcmp(child->name, col_name) == 0) {
+                if (ArrowAdapter::_isvar(child->format)) {
+                    type = TILEDB_STRING_ASCII;
+                }
+
+                FilterList filter_list = ArrowAdapter::_create_dim_filter_list(
+                    child->name, platform_config, soma_type, ctx);
+
+                if (achild->length == 3) {
+                    use_current_domain = false;
+                } else if (achild->length == 5) {
+                    // This is fine
+                } else {
+                    throw TileDBSOMAError(fmt::format(
+                        "ArrowAdapter: unexpected length {} for name {}",
+                        achild->length,
+                        col_name));
+                }
+
+                const void* buff = achild->buffers[1];
+                auto dim = ArrowAdapter::_create_dim(
+                    type, child->name, buff, ctx);
+                dim.set_filter_list(filter_list);
+                dims.insert({child->name, dim});
+                isattr = false;
+                break;
+            }
+        }
+
+        if (isattr) {
+            Attribute attr(*ctx, child->name, type);
+
+            FilterList filter_list = ArrowAdapter::_create_attr_filter_list(
+                child->name, platform_config, ctx);
+            attr.set_filter_list(filter_list);
+
+            if (child->flags & ARROW_FLAG_NULLABLE) {
+                attr.set_nullable(true);
+            }
+
+            if (ArrowAdapter::_isvar(child->format)) {
+                attr.set_cell_val_num(TILEDB_VAR_NUM);
+            }
+
+            if (child->dictionary != nullptr) {
+                auto enmr_format = child->dictionary->format;
+                auto enmr_type = ArrowAdapter::to_tiledb_format(enmr_format);
+                auto enmr = Enumeration::create_empty(
+                    *ctx,
+                    child->name,
+                    enmr_type,
+                    ArrowAdapter::_isvar(enmr_format) ? TILEDB_VAR_NUM : 1,
+                    child->flags & ARROW_FLAG_DICTIONARY_ORDERED);
+                ArraySchemaExperimental::add_enumeration(*ctx, schema, enmr);
+                AttributeExperimental::set_enumeration_name(
+                    *ctx, attr, child->name);
+                LOG_DEBUG(fmt::format(
+                    "[ArrowAdapter] dictionary for {} as {} {}",
+                    std::string(child->name),
+                    tiledb::impl::type_to_str(enmr_type),
+                    std::string(enmr_format)));
+            }
+
+            LOG_DEBUG(
+                fmt::format("[ArrowAdapter] adding attribute {}", child->name));
+            schema.add_attribute(attr);
+        }
+    }
+
+    auto spatial_column_array = std::move(spatial_column_info.first);
+    auto spatial_column_schema = std::move(spatial_column_info.second);
+
+    for (int64_t i = 0; i < spatial_column_schema->n_children; ++i) {
+        auto achild = spatial_column_array->children[i];
+        auto schild = spatial_column_schema->children[i];
+        auto type = ArrowAdapter::to_tiledb_format(schild->format);
+        auto col_name = std::string(schild->name);
+
+        FilterList filter_list = ArrowAdapter::_create_dim_filter_list(
+            col_name, platform_config, soma_type, ctx);
+
+        if (achild->length == 3) {
+            use_current_domain = false;
+        } else if (achild->length == 5) {
+            // This is fine
+        } else {
+            throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter: unexpected length {} for name {}",
+                achild->length,
+                col_name));
+        }
+
+        const void* buff = achild->buffers[1];
+        auto dim_min = ArrowAdapter::_create_dim(type, col_name + "_min", buff, ctx);
+        auto dim_max = ArrowAdapter::_create_dim(type, col_name + "_max", buff, ctx);
+        
+        dim_min.set_filter_list(filter_list);
+        dim_max.set_filter_list(filter_list);
+        
+        dims.insert({ col_name + "_min", dim_min});
+        dims.insert({ col_name + "_max", dim_max});
+    }
+
+    for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+        LOG_DEBUG(fmt::format("[ArrowAdapter] child {}", i));
+        auto col_name = index_column_schema->children[i]->name;
+        domain.add_dimension(dims.at(col_name));
+    }
+
+    for (int64_t i = 0; i < spatial_column_schema->n_children; ++i) {
+        LOG_DEBUG(fmt::format("[ArrowAdapter] child {}", i));
+        auto col_name = std::string(spatial_column_schema->children[i]->name);
+        domain.add_dimension(dims.at(col_name + "_min"));
+    }
+
+    for (int64_t i = 0; i < spatial_column_schema->n_children; ++i) {
+        LOG_DEBUG(fmt::format("[ArrowAdapter] child {}", i));
+        auto col_name = std::string(spatial_column_schema->children[i]->name);
+        domain.add_dimension(dims.at(col_name + "_max"));
+    }
+
+    LOG_DEBUG(fmt::format("[ArrowAdapter] set_domain"));
+    schema.set_domain(domain);
+
+    LOG_DEBUG(fmt::format(
+        "[ArrowAdapter] index_column_info length {}",
+        index_column_array->length));
+
+    LOG_DEBUG(fmt::format(
+        "[ArrowAdapter] spatial_column_info length {}",
+        spatial_column_array->length));
+
+    // Note: this must be done after we've got the core domain, since the
+    // NDRectangle constructor requires access to the core domain.
+    if (use_current_domain) {
+        CurrentDomain current_domain(*ctx);
+        NDRectangle ndrect(*ctx, domain);
+
+        for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children;
+             ++sch_idx) {
+            auto child = arrow_schema->children[sch_idx];
+            auto type = ArrowAdapter::to_tiledb_format(child->format);
+
+            for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+                auto col_name = index_column_schema->children[i]->name;
+                if (strcmp(child->name, col_name) != 0) {
+                    continue;
+                }
+
+                if (ArrowAdapter::_isvar(child->format)) {
+                    // In the core API:
+                    //
+                    // * domain for strings must be set as (nullptr, nullptr)
+                    // * current_domain for strings cannot be set as (nullptr,
+                    //   nullptr)
+                    //
+                    // Fortunately, these are ASCII dims and we can range
+                    // these accordingly.
+                    ndrect.set_range(col_name, "", "\xff");
+                } else {
+                    const void* buff = index_column_array->children[i]
+                                           ->buffers[1];
+                    _set_current_domain_slot(type, buff, ndrect, col_name);
+                }
+                break;
+            }
+        }
+
+        for (int64_t i = 0; i < spatial_column_schema->n_children; ++i) {
+            auto col_name = std::string(spatial_column_schema->children[i]->name);
+
+            const void* buff = spatial_column_array->children[i]->buffers[1];
+            _set_current_domain_slot(TILEDB_FLOAT64, buff, ndrect, col_name + "_min");
+            _set_current_domain_slot(TILEDB_FLOAT64, buff, ndrect, col_name + "_max");
+            
+        }
+        
+        current_domain.set_ndrectangle(ndrect);
+
+        LOG_DEBUG(fmt::format(
+            "[ArrowAdapter] before setting current_domain from ndrect"));
+        ArraySchemaExperimental::set_current_domain(
+            *ctx, schema, current_domain);
+        LOG_DEBUG(fmt::format(
+            "[ArrowAdapter] after setting current_domain from ndrect"));
+    }
+
+    LOG_DEBUG(fmt::format("[ArrowAdapter] check"));
+    schema.check();
+
+    LOG_DEBUG(fmt::format("[ArrowAdapter] returning"));
+    return schema;
+}
+
+ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
+    std::shared_ptr<Context> ctx,
+    std::unique_ptr<ArrowSchema> arrow_schema,
+    ArrowTable index_column_info,
     std::string soma_type,
     bool is_sparse,
     PlatformConfig platform_config) {
@@ -1186,7 +1438,7 @@ std::string_view ArrowAdapter::to_arrow_format(
 tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
     std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
         {"u", TILEDB_STRING_UTF8},    {"U", TILEDB_STRING_UTF8},
-        {"z", TILEDB_CHAR},           {"Z", TILEDB_CHAR},
+        {"z", TILEDB_GEOM_WKB},       {"Z", TILEDB_GEOM_WKB},
         {"c", TILEDB_INT8},           {"C", TILEDB_UINT8},
         {"s", TILEDB_INT16},          {"S", TILEDB_UINT16},
         {"i", TILEDB_INT32},          {"I", TILEDB_UINT32},

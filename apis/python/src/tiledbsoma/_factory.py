@@ -27,6 +27,7 @@ from . import (
     _dataframe,
     _dense_nd_array,
     _experiment,
+    _geometry_dataframe,
     _measurement,
     _scene,
     _soma_object,
@@ -214,6 +215,7 @@ def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
         for t in (
             _collection.Collection,
             _dataframe.DataFrame,
+            _geometry_dataframe.GeometryDataFrame,
             _dense_nd_array.DenseNDArray,
             _experiment.Experiment,
             _measurement.Measurement,

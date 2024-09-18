@@ -64,6 +64,7 @@ class SOMAGeometryDataFrame : public SOMASpatialDataFrame {
         std::string_view uri,
         std::unique_ptr<ArrowSchema> schema,
         ArrowTable index_columns,
+        ArrowTable spatial_columns,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);

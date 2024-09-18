@@ -158,6 +158,7 @@ void load_soma_spatial_dataframe(py::module& m) {
             [](std::string_view uri,
                py::object py_schema,
                py::object index_column_info,
+               py::object spatial_column_info,
                std::shared_ptr<SOMAContext> context,
                PlatformConfig platform_config,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -202,6 +203,15 @@ void load_soma_spatial_dataframe(py::module& m) {
                 index_column_info.attr("_export_to_c")(
                     index_column_array_ptr, index_column_schema_ptr);
 
+                ArrowSchema spatial_column_schema;
+                ArrowArray spatial_column_array;
+                uintptr_t
+                    spatial_column_schema_ptr = (uintptr_t)(&spatial_column_schema);
+                uintptr_t
+                    spatial_column_array_ptr = (uintptr_t)(&spatial_column_array);
+                spatial_column_info.attr("_export_to_c")(
+                    spatial_column_array_ptr, spatial_column_schema_ptr);
+
                 try {
                     SOMAGeometryDataFrame::create(
                         uri,
@@ -209,6 +219,9 @@ void load_soma_spatial_dataframe(py::module& m) {
                         ArrowTable(
                             std::make_unique<ArrowArray>(index_column_array),
                             std::make_unique<ArrowSchema>(index_column_schema)),
+                        ArrowTable(
+                            std::make_unique<ArrowArray>(spatial_column_array),
+                            std::make_unique<ArrowSchema>(spatial_column_schema)),
                         context,
                         platform_config,
                         timestamp);
@@ -223,6 +236,7 @@ void load_soma_spatial_dataframe(py::module& m) {
             py::kw_only(),
             "schema"_a,
             "index_column_info"_a,
+            "spatial_column_info"_a,
             "ctx"_a,
             "platform_config"_a,
             "timestamp"_a = py::none())
