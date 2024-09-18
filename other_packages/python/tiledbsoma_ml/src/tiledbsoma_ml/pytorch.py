@@ -181,6 +181,15 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
 
         Lifecycle:
             experimental
+
+        .. warning::
+            When using this class in any distributed mode, calling the :meth:`set_epoch` method at
+            the beginning of each epoch **before** creating the :class:`DataLoader` iterator
+            is necessary to make shuffling work properly across multiple epochs. Otherwise,
+            the same ordering will be always used.
+
+            In addition, when using shuffling in a distributed configuration (e.g., ``DDP``), you
+            must provide a seed, ensuring that the same shuffle is used across all replicas.
         """
 
         super().__init__()
@@ -199,9 +208,13 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         self.use_eager_fetch = use_eager_fetch
         self._obs_joinids: npt.NDArray[np.int64] | None = None
         self._var_joinids: npt.NDArray[np.int64] | None = None
-        self._shuffle_rng = np.random.default_rng(seed) if shuffle else None
+        self.seed = (
+            seed if seed is not None else np.random.default_rng().integers(0, 2**32 - 1)
+        )
+        self._user_specified_seed = seed is not None
         self.shuffle_chunk_size = shuffle_chunk_size
         self._initialized = False
+        self.epoch = 0
 
         if self.shuffle:
             # round io_batch_size up to a unit of shuffle_chunk_size to simplify code.
@@ -239,19 +252,23 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         _gpu_splits = _splits(len(obs_joinids), world_size)
         _gpu_split = obs_joinids[_gpu_splits[rank] : _gpu_splits[rank + 1]]
 
-        # 2. Trim to be all of equal length
+        # 2. Trim to be all of equal length - equivalent to a "drop_last"
+        # TODO: may need to add an option to do padding as well.
         min_len = np.diff(_gpu_splits).min()
         assert 0 <= (np.diff(_gpu_splits).min() - min_len) <= 1
         _gpu_split = _gpu_split[:min_len]
 
         # 3. Chunk and optionally shuffle chunks
         if self.shuffle:
-            assert self._shuffle_rng is not None
             assert self.io_batch_size % self.shuffle_chunk_size == 0
             shuffle_split = np.array_split(
                 _gpu_split, max(1, ceil(len(_gpu_split) / self.shuffle_chunk_size))
             )
-            self._shuffle_rng.shuffle(shuffle_split)
+
+            # Deterministically create RNG - state must be same across all processes, ensuring
+            # that the joinid partitions are identical across all processes.
+            rng = np.random.default_rng(self.seed + self.epoch + 99)
+            rng.shuffle(shuffle_split)
             obs_joinids_chunked = list(
                 np.concatenate(b)
                 for b in _batched(
@@ -272,7 +289,8 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
-                f"Process {os.getpid()} rank={rank}, world_size={world_size}, worker_id={worker_id}, n_workers={n_workers}, "
+                f"Process {os.getpid()} rank={rank}, world_size={world_size}, worker_id={worker_id}, "
+                f"n_workers={n_workers}, epoch={self.epoch}, "
                 f"partition_size={sum([len(chunk) for chunk in obs_partition_joinids])}"
             )
 
@@ -332,6 +350,16 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 "(see https://github.com/pytorch/pytorch/issues/20248)"
             )
 
+        world_size, rank = _get_distributed_world_rank()
+        n_workers, worker_id = _get_worker_world_rank()
+        logger.debug(
+            f"Iterator created rank={rank}, world_size={world_size}, worker_id={worker_id}, n_workers={n_workers}, seed={self.seed}, epoch={self.epoch}"
+        )
+        if world_size > 1 and self.shuffle and self._user_specified_seed is None:
+            raise ValueError(
+                "ExperimentAxisQueryIterable requires an explicit `seed` when shuffle is used in a multi-process configuration."
+            )
+
         with self.experiment_locator.open_experiment() as exp:
             self._init_once(exp)
             X = exp.ms[self.measurement_name].X[self.layer_name]
@@ -348,6 +376,8 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
                 )
 
             yield from _mini_batch_iter
+
+        self.epoch += 1
 
     def __len__(self) -> int:
         """Return the approximate number of batches this iterable will produce. If run in the context of :class:`torch.distributed` or
@@ -388,6 +418,18 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         div, rem = divmod(partition_len, self.batch_size)
         return div + bool(rem), len(self._var_joinids)
 
+    def set_epoch(self, epoch: int) -> None:
+        """
+        Set the epoch for this Data iterator.
+
+        When :attr:`shuffle=True`, this will ensure that all replicas use a different
+        random ordering for each epoch. Failure to call this method before each epoch
+        will result in the same data ordering.
+
+        This call must be made before the per-epoch iterator is created.
+        """
+        self.epoch = epoch
+
     def __getitem__(self, index: int) -> XObsDatum:
         raise NotImplementedError(
             "``ExperimentAxisQueryIterable can only be iterated - does not support mapping"
@@ -409,6 +451,10 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         """
         assert self._var_joinids is not None
 
+        # Create RNG - does not need to be identical across processes, but use the seed anyway
+        # for reproducibility.
+        shuffle_rng = np.random.default_rng(self.seed + self.epoch)
+
         obs_column_names = (
             list(self.obs_column_names)
             if "soma_joinid" in self.obs_column_names
@@ -419,9 +465,7 @@ class ExperimentAxisQueryIterable(Iterable[XObsDatum]):
         for obs_coords in obs_joinid_iter:
             st_time = time.perf_counter()
             obs_shuffled_coords = (
-                obs_coords
-                if self._shuffle_rng is None
-                else self._shuffle_rng.permuted(obs_coords)
+                obs_coords if not self.shuffle else shuffle_rng.permuted(obs_coords)
             )
             obs_indexer = soma.IntIndexer(obs_shuffled_coords, context=X.context)
             logger.debug(
@@ -637,6 +681,25 @@ class ExperimentAxisQueryIterDataPipe(
         """
         return self._exp_iter.shape
 
+    def set_epoch(self, epoch: int) -> None:
+        """
+        Set the epoch for this Data iterator.
+
+        When :attr:`shuffle=True`, this will ensure that all replicas use a different
+        random ordering for each epoch. Failure to call this method before each epoch
+        will result in the same data ordering.
+
+        This call must be made before the per-epoch iterator is created.
+
+        Lifecycle:
+            experimental
+        """
+        self._exp_iter.set_epoch(epoch)
+
+    @property
+    def epoch(self) -> int:
+        return self._exp_iter.epoch
+
 
 class ExperimentAxisQueryIterableDataset(
     torch.utils.data.IterableDataset[XObsDatum]  # type:ignore[misc]
@@ -691,6 +754,11 @@ class ExperimentAxisQueryIterableDataset(
     is therefore determined by the ``io_buffer_size`` (number of rows read), and the ``shuffle_chunk_size``
     (number of rows in each draw). Decreasing ``shuffle_chunk_size`` will increase shuffling randomness, and decrease I/O
     performance.
+
+    This class will detect when run in a multiprocessing mode, including multi-worker :class:`torch.utils.data.DataLoader`
+    and multi-process training such as :class:`torch.nn.parallel.DistributedDataParallel`, and will automatically partition
+    data appropriately. In the case of distributed training, sample partitions across all processes must be equal. Any
+    data tail will be dropped.
 
     Lifecycle:
         experimental
@@ -827,6 +895,25 @@ class ExperimentAxisQueryIterableDataset(
             experimental
         """
         return self._exp_iter.shape
+
+    def set_epoch(self, epoch: int) -> None:
+        """
+        Set the epoch for this Data iterator.
+
+        When :attr:`shuffle=True`, this will ensure that all replicas use a different
+        random ordering for each epoch. Failure to call this method before each epoch
+        will result in the same data ordering.
+
+        This call must be made before the per-epoch iterator is created.
+
+        Lifecycle:
+            experimental
+        """
+        self._exp_iter.set_epoch(epoch)
+
+    @property
+    def epoch(self) -> int:
+        return self._exp_iter.epoch
 
 
 def experiment_dataloader(
