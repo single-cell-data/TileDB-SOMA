@@ -26,6 +26,7 @@ from typing import (
 )
 
 import anndata as ad
+import debugpy
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -68,6 +69,9 @@ from ..options._tiledb_create_write_options import (
     TileDBCreateOptions,
     TileDBWriteOptions,
 )
+
+# Disable the PIL image size limit
+Image.MAX_IMAGE_PIXELS = None
 
 if TYPE_CHECKING:
     from somacore.options import PlatformConfig
