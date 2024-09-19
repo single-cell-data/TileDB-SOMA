@@ -13,7 +13,6 @@ import somacore
 from somacore import Axis, CoordinateSpace, options
 from typing_extensions import Self
 
-from tiledbsoma import _new_shape_feature_flag_enabled
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
@@ -27,6 +26,7 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
+from ._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
@@ -161,7 +161,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             # [4] core current domain hi
 
             index_column_schema.append(pa_field)
-            if _new_shape_feature_flag_enabled():
+            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
 
                 index_column_data[pa_field.name] = [
                     *slot_core_max_domain,
