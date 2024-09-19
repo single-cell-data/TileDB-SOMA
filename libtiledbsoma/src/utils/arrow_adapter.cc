@@ -1309,4 +1309,91 @@ std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
     return arrow_array;
 }
 
+void ArrowAdapter::_check_shapes(
+    ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
+    if (arrow_array->n_children != arrow_schema->n_children) {
+        throw std::runtime_error(
+            "ArrowAdapter::_check_shapes: internal coding error: data/schema "
+            "mismatch");
+    }
+    for (int64_t i = 0; i < arrow_array->n_children; i++) {
+        _check_shapes(arrow_array->children[i], arrow_schema->children[i]);
+    }
+}
+
+int64_t ArrowAdapter::_get_column_index_from_name(
+    const ArrowTable& arrow_table, std::string column_name) {
+    ArrowArray* arrow_array = arrow_table.first.get();
+    ArrowSchema* arrow_schema = arrow_table.second.get();
+    // Make sure the child-count is the same
+    _check_shapes(arrow_array, arrow_schema);
+
+    if (arrow_schema->n_children == 0) {
+        throw std::runtime_error(
+            "ArrowAdapter::_check_shapes: internal coding error: childless "
+            "table");
+    }
+
+    for (int64_t i = 0; i < arrow_schema->n_children; i++) {
+        if (strcmp(arrow_schema->children[i]->name, column_name.c_str()) == 0) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error(fmt::format(
+        "ArrowAdapter::_check_shapes: column {} not found", column_name));
+}
+
+ArrowArray* ArrowAdapter::_get_and_check_column(
+    const ArrowTable& arrow_table,
+    int64_t column_index,
+    int64_t expected_n_buffers) {
+    ArrowArray* arrow_array = arrow_table.first.get();
+    if (column_index < 0 || column_index >= arrow_array->n_children) {
+        throw std::runtime_error(fmt::format(
+            "ArrowAdapter::_get_and_check_column: column index {} out of "
+            "bounds {}..{}",
+            column_index,
+            0,
+            arrow_array->n_children - 1));
+    }
+
+    ArrowArray* child = arrow_array->children[column_index];
+
+    if (child->n_children != 0) {
+        throw std::runtime_error(fmt::format(
+            "ArrowAdapter::_get_and_check_column: column index {} is "
+            "non-terminal",
+            column_index));
+    }
+
+    if (expected_n_buffers == 2) {
+        if (child->n_buffers != 2) {
+            throw std::runtime_error(fmt::format(
+                "ArrowAdapter::_get_and_check_column: column index {} "
+                "has buffer count {}; expected 2 for non-string data",
+                column_index,
+                child->n_buffers));
+        }
+
+    } else if (expected_n_buffers == 3) {
+        if (child->n_buffers != 3) {
+            throw std::runtime_error(fmt::format(
+                "ArrowAdapter::_get_and_check_column: column index {} is "
+                "has buffer count {}; expected 3 for string data",
+                column_index,
+                child->n_buffers));
+        }
+
+    } else {
+        throw std::runtime_error(fmt::format(
+            "ArrowAdapter::_get_and_check_column: internal coding error: "
+            "expected_n_buffers {} is "
+            "neither 2 nor 3.",
+            expected_n_buffers));
+    }
+
+    return child;
+}
+
 }  // namespace tiledbsoma
