@@ -283,8 +283,20 @@ class ArrowAdapter {
         return make_arrow_array_child<T>(v);
     }
 
+    static ArrowArray* make_arrow_array_child_string(
+        const std::pair<std::string, std::string>& pair) {
+        std::vector<std::string> v({pair.first, pair.second});
+        return make_arrow_array_child_string(v);
+    }
+
     template <typename T>
     static ArrowArray* make_arrow_array_child(const std::vector<T>& v) {
+        if (std::is_same_v<T, std::string>) {
+            throw std::runtime_error(
+                "ArrowAdapter::make_arrow_array_child: template-specialization "
+                "failure.");
+        }
+
         // Use new here, not malloc, to match ArrowAdapter::release_array
         auto arrow_array = new ArrowArray;
 
@@ -293,10 +305,23 @@ class ArrowAdapter {
         arrow_array->length = n;
         arrow_array->null_count = 0;
         arrow_array->offset = 0;
+
+        // Two-buffer model for non-string data:
+        // * Slot 0 is the Arrow validity buffer which we leave null
+        // * Slot 1 is data, void* but will be derefrenced as T*
+        // * There is no offset information
         arrow_array->n_buffers = 2;
-        arrow_array->release = &ArrowAdapter::release_array;
         arrow_array->buffers = new const void*[2];
         arrow_array->n_children = 0;  // leaf/child node
+
+        // The nominal use of these methods as of this writing is for
+        // low-volume data such as schema information -- less than a
+        // kilobyte total. It's simplest and safest to do data copies,
+        // for-loop-wise. If we were to extend usage of these methods
+        // to bulk data in the megabyte/gigabyte range, we'd want to
+        // look at zero-copy for buffers, with variable approaches
+        // to memory management.
+        arrow_array->release = &ArrowAdapter::release_array;
 
         arrow_array->buffers[0] = nullptr;
         // Use malloc here, not new, to match ArrowAdapter::release_array
@@ -309,28 +334,160 @@ class ArrowAdapter {
         return arrow_array;
     }
 
-    static ArrowArray* make_arrow_array_child(
+    // A nominal use of this method is for reporting core domain, current
+    // domain, and non-empty domain back to Python/R.  Meanwhile core string
+    // dims must always have domain of (nullptr, nullptr); and they have current
+    // domain which must _not_ be nullptr pairs.
+    //
+    // For the former do we give back a column of length 2 with nulls in it,
+    // using Arrow's validity buffers?  Or do we use ("", "") as TileDB-Py does?
+    //
+    // We choose the latter.
+    static ArrowArray* make_arrow_array_child_string(
         const std::vector<std::string>& v) {
         // Use new here, not malloc, to match ArrowAdapter::release_array
         auto arrow_array = new ArrowArray;
 
         size_t n = v.size();
 
-        arrow_array->length = n;
+        arrow_array->length = n;  // Number of strings, not number of bytes
         arrow_array->null_count = 0;
         arrow_array->offset = 0;
-        arrow_array->n_buffers = 2;
-        arrow_array->release = &ArrowAdapter::release_array;
-        arrow_array->buffers = new const void*[2];
+
+        // Three-buffer model for string data:
+        // * Slot 0 is the Arrow uint8_t* validity buffer
+        // * Slot 1 is the Arrow offsets buffer: uint32_t* for Arrow string
+        //   or uint64_t* for Arrow large_string
+        // * Slot 2 is data, void* but will be derefrenced as T*
+        arrow_array->n_buffers = 3;
+        arrow_array->buffers = new const void*[3];
         arrow_array->n_children = 0;  // leaf/child node
 
-        // For core domain, these are always nullptr for strings and cannot be
-        // anything else. More general use of this class is WIP on
-        // https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        arrow_array->buffers[0] = nullptr;
-        arrow_array->buffers[1] = nullptr;
+        arrow_array->release = &ArrowAdapter::release_array;
+
+        size_t nbytes = 0;
+        for (auto e : v) {
+            nbytes += e.length();
+        }
+
+        // This function produces arrow large_string, which has 64-bit offsets.
+        uint64_t* offsets = (uint64_t*)malloc((n + 1) * sizeof(uint64_t));
+
+        // Data
+        char* data = (char*)malloc(nbytes * sizeof(char));
+        uint64_t dest_start = 0;
+
+        offsets[0] = dest_start;
+        for (size_t i = 0; i < n; i++) {
+            const std::string& elem = v[i];
+            size_t elem_len = elem.size();
+
+            memcpy(&data[dest_start], elem.c_str(), elem_len);
+            dest_start += elem_len;
+            offsets[i + 1] = dest_start;
+        }
+
+        arrow_array->buffers[0] = nullptr;  // validity
+        arrow_array->buffers[1] = offsets;
+        arrow_array->buffers[2] = data;
 
         return arrow_array;
+    }
+
+    // These table-column getters are, as of this writing, intended primarily
+    // for keystroke-reduction in unit-test cases.
+
+    template <typename T>
+    static std::vector<T> get_table_column_by_name(
+        const ArrowTable& arrow_table, std::string column_name) {
+        int64_t index = _get_column_index_from_name(arrow_table, column_name);
+        return get_table_column_by_index<T>(arrow_table, index);
+    }
+
+    static std::vector<std::string> get_table_string_column_by_name(
+        const ArrowTable& arrow_table, std::string column_name) {
+        int64_t index = _get_column_index_from_name(arrow_table, column_name);
+        return get_table_string_column_by_index(arrow_table, index);
+    }
+
+    template <typename T>
+    static std::vector<T> get_table_column_by_index(
+        const ArrowTable& arrow_table, int64_t column_index) {
+        ArrowArray* arrow_array = arrow_table.first.get();
+        ArrowSchema* arrow_schema = arrow_table.second.get();
+        _check_shapes(arrow_array, arrow_schema);
+
+        if (std::is_same_v<T, std::string>) {
+            throw std::runtime_error(
+                "SOMAArray::_core_domain_slot: template-specialization "
+                "failure.");
+        }
+
+        ArrowArray* child = _get_and_check_column(arrow_table, column_index, 2);
+
+        // For our purposes -- reporting domains, etc. -- we don't use the Arrow
+        // validity buffers. If this class needs to be extended someday to
+        // support arrow-nulls, we can work on that.
+        if (child->buffers[0] != nullptr) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_column_by_index: validity buffer "
+                "unsupported here");
+        }
+
+        const void* vdata = child->buffers[1];
+        if (vdata == nullptr) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_column_by_index: null data buffer");
+        }
+
+        const T* data = (T*)vdata;
+
+        std::vector<T> retval(child->length);
+        for (auto i = 0; i < child->length; i++) {
+            retval[i] = data[i];
+        }
+        return retval;
+    }
+
+    static std::vector<std::string> get_table_string_column_by_index(
+        const ArrowTable& arrow_table, int64_t column_index) {
+        ArrowArray* arrow_array = arrow_table.first.get();
+        ArrowSchema* arrow_schema = arrow_table.second.get();
+        _check_shapes(arrow_array, arrow_schema);
+
+        ArrowArray* child = _get_and_check_column(arrow_table, column_index, 3);
+
+        // For our purposes -- reporting domains, etc. -- we don't use the Arrow
+        // validity buffers. If this class needs to be extended someday to
+        // support arrow-nulls, we can work on that.
+        if (child->buffers[0] != nullptr) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_column_by_index: validity buffer "
+                "unsupported here");
+        }
+
+        const char* data = (char*)child->buffers[2];
+
+        if (data == nullptr) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_column_by_index: null data buffer");
+        }
+
+        if (strcmp(arrow_schema->children[column_index]->format, "U") != 0) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_column_by_index: expected Arrow "
+                "large_string");
+        }
+        uint64_t* offsets = (uint64_t*)child->buffers[1];
+
+        int num_cells = (int)child->length;
+        std::vector<std::string> retval(num_cells);
+        for (int j = 0; j < num_cells; j++) {
+            std::string e(&data[offsets[j]], &data[offsets[j + 1]]);
+            retval[j] = e;
+        }
+
+        return retval;
     }
 
    private:
@@ -394,6 +551,20 @@ class ArrowAdapter {
         Filter filter, std::string option_name, json value);
 
     static tiledb_layout_t _get_order(std::string order);
+
+    // Throws if the array and the schema don't have the same
+    // recursive child-counts.
+    static void _check_shapes(
+        ArrowArray* arrow_array, ArrowSchema* arrow_schema);
+
+    // Throws if the table doesn't have the column name.
+    static int64_t _get_column_index_from_name(
+        const ArrowTable& arrow_table, std::string column_name);
+
+    static ArrowArray* _get_and_check_column(
+        const ArrowTable& arrow_table,
+        int64_t column_index,
+        int64_t expected_n_buffers);
 
 };  // class ArrowAdapter
 

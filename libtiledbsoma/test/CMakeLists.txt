@@ -18,6 +18,7 @@ add_executable(unit_soma
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
     common.cc
     common.h
+    unit_arrow_adapter.cc
     unit_column_buffer.cc
     unit_managed_query.cc
     unit_soma_array.cc
