@@ -67,9 +67,12 @@ struct VariouslyIndexedDataFrameFixture {
     tiledb_datatype_t u32_datatype = TILEDB_UINT32;
     tiledb_datatype_t str_datatype = TILEDB_STRING_ASCII;
 
-    std::string i64_arrow_format = helper::to_arrow_format(i64_datatype);
-    std::string u32_arrow_format = helper::to_arrow_format(u32_datatype);
-    std::string attr_1_arrow_format = helper::to_arrow_format(str_datatype);
+    std::string i64_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        i64_datatype);
+    std::string u32_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        u32_datatype);
+    std::string attr_1_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        str_datatype);
 
     helper::DimInfo i64_dim_info(bool use_current_domain) {
         return helper::DimInfo(
@@ -104,16 +107,6 @@ struct VariouslyIndexedDataFrameFixture {
     helper::AttrInfo str_attr_info() {
         return helper::AttrInfo(
             {.name = str_name, .tiledb_datatype = str_datatype});
-    }
-
-    std::vector<int64_t> make_i64_data() {
-        return std::vector<int64_t>({1, 2});
-    }
-    std::vector<uint32_t> make_u32_data() {
-        return std::vector<uint32_t>({1234, 5678});
-    }
-    std::vector<std::string> make_str_data() {
-        return std::vector<std::string>({"apple", "bat"});
     }
 
     //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -170,14 +163,30 @@ struct VariouslyIndexedDataFrameFixture {
         auto soma_dataframe = SOMADataFrame::open(uri_, OpenMode::write, ctx_);
 
         auto i64_data = std::vector<int64_t>({sjid_base + 1, sjid_base + 2});
+
         auto u32_data = std::vector<uint32_t>({1234, 5678});
-        auto str_data = std::vector<std::string>({"apple", "bat"});
-        auto str_offsets = std::vector<uint64_t>({0, 5, 8});
+
+        // We like to think we're writing an array of strings ...
+        auto strings = std::vector<std::string>({"apple", "bat"});
+        // ... but really we're writing an array of characters along
+        // with offsets data.
+        //
+        // It would be possible here to just hard-code a string "applebat" and
+        // an offsets array {0, 5, 8}. The following bits simply automate that.
+        std::string char_data("");
+        std::vector<uint64_t> char_offsets(0);
+        uint64_t offset = 0;
+        for (auto e : strings) {
+            char_data += e;
+            char_offsets.push_back(offset);
+            offset += e.size();
+        }
+        char_offsets.push_back(offset);
 
         soma_dataframe->set_column_data(
             i64_name, i64_data.size(), i64_data.data());
         soma_dataframe->set_column_data(
-            str_name, str_data.size(), str_data.data(), str_offsets.data());
+            str_name, strings.size(), char_data.data(), char_offsets.data());
         soma_dataframe->set_column_data(
             u32_name, u32_data.size(), u32_data.data());
         soma_dataframe->write();
@@ -498,7 +507,8 @@ TEST_CASE_METHOD(
         // Check current domain
         auto soma_dataframe = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        CurrentDomain current_domain = soma_dataframe
+                                           ->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -599,7 +609,8 @@ TEST_CASE_METHOD(
         // Check current domain
         auto soma_dataframe = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        CurrentDomain current_domain = soma_dataframe
+                                           ->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -712,7 +723,8 @@ TEST_CASE_METHOD(
         // Check current domain
         auto soma_dataframe = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        CurrentDomain current_domain = soma_dataframe
+                                           ->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -828,7 +840,8 @@ TEST_CASE_METHOD(
         // Check current domain
         auto soma_dataframe = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe->get_current_domain();
+        CurrentDomain current_domain = soma_dataframe
+                                           ->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {

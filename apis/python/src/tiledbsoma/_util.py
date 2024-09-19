@@ -334,7 +334,6 @@ def build_clib_platform_config(
     plt_cfg.cell_order = ops.cell_order
     plt_cfg.dims = _build_column_config(ops.dims)
     plt_cfg.attrs = _build_column_config(ops.attrs)
-    plt_cfg.consolidate_and_vacuum = ops.consolidate_and_vacuum
     return plt_cfg
 
 

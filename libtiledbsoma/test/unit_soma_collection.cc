@@ -62,7 +62,8 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
         std::string sub_uri = "mem://unit-test-add-sparse-ndarray/sub";
         std::string dim_name = "soma_dim_0";
         tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx, ts);
 
@@ -114,7 +115,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     std::string sub_uri = "mem://unit-test-add-dense-ndarray/sub";
     std::string dim_name = "soma_dim_0";
     tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-    std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+    std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(tiledb_datatype);
 
     SOMACollection::create(base_uri, ctx, ts);
     // TODO: add support for current domain in dense arrays once we have that
@@ -169,7 +170,8 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
         std::string dim_name = "d0";
         std::string attr_name = "a0";
         tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx, ts);
 
@@ -227,7 +229,8 @@ TEST_CASE("SOMACollection: add SOMACollection") {
         std::string base_uri = "mem://unit-test-add-collection";
         std::string sub_uri = "mem://unit-test-add-collection/sub";
         tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx);
 
@@ -261,7 +264,8 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
         std::string dim_name = "d0";
         std::string attr_name = "a0";
         tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx);
 
@@ -314,7 +318,8 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
         std::string dim_name = "d0";
         std::string attr_name = "a0";
         tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            tiledb_datatype);
 
         SOMACollection::create(base_uri, ctx);
 
@@ -428,7 +433,8 @@ TEST_CASE("SOMAExperiment: metadata") {
         std::string dim_name = "soma_dim_0";
         std::string attr_name = "soma_data";
         tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            tiledb_datatype);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
@@ -519,7 +525,8 @@ TEST_CASE("SOMAMeasurement: metadata") {
         std::string dim_name = "soma_dim_0";
         std::string attr_name = "soma_data";
         tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = helper::to_arrow_format(tiledb_datatype);
+        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            tiledb_datatype);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,

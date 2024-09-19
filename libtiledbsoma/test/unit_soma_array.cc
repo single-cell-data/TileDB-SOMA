@@ -529,7 +529,8 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     arrow_schema->release = &ArrowAdapter::release_schema;
     arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
     ArrowSchema* arrow_dim = arrow_schema->children[0] = new ArrowSchema;
-    arrow_dim->format = strdup(helper::to_arrow_format(TILEDB_INT64).c_str());
+    arrow_dim->format = strdup(
+        ArrowAdapter::tdb_to_arrow_type(TILEDB_INT64).c_str());
     arrow_dim->name = dim_name;
     arrow_dim->n_children = 0;
     arrow_dim->dictionary = nullptr;

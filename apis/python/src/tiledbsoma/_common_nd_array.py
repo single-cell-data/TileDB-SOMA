@@ -109,7 +109,7 @@ class NDArray(SOMAArray, somacore.NDArray):
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
         """Returns true if the array has the upgraded resizeable shape feature
-        from TileDB-SOMA 1.14: the array was created with this support, or it has
+        from TileDB-SOMA 1.15: the array was created with this support, or it has
         had ``.tiledbsoma_upgrade_shape`` applied to it.
 
         Lifecycle:

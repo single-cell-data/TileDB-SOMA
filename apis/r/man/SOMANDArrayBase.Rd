@@ -107,7 +107,7 @@ Sets a cache value for the datatype (lifecycle: experimental)
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape}{}}}
 \subsection{Method \code{tiledbsoma_has_upgraded_shape()}}{
 Returns TRUE if the array has the upgraded resizeable shape
-feature from TileDB-SOMA 1.14: the array was created with this support,
+feature from TileDB-SOMA 1.15: the array was created with this support,
 or it has had \code{upgrade_domain} applied to it.
 (lifecycle: maturing)
 \subsection{Usage}{

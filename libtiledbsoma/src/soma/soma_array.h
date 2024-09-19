@@ -726,9 +726,10 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * Exposed for testing purposes.
+     * Exposed for testing purposes within this library.
+     * Not for use by Python/R.
      */
-    CurrentDomain get_current_domain() const {
+    CurrentDomain get_current_domain_for_test() const {
         return _get_current_domain();
     }
 
@@ -755,9 +756,9 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     std::pair<T, T> soma_domain_slot(const std::string& name) const {
         if (has_current_domain()) {
-            return core_current_domain_slot<T>(name);
+            return _core_current_domain_slot<T>(name);
         } else {
-            return core_domain_slot<T>(name);
+            return _core_domain_slot<T>(name);
         }
     }
 
@@ -771,58 +772,7 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     std::pair<T, T> soma_maxdomain_slot(const std::string& name) const {
-        return core_domain_slot<T>(name);
-    }
-
-    /**
-     * Returns the core current domain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma domain is core current domain
-     *   - soma maxdomain is core domain
-     * o For arrays without core current-domain support:
-     *   - soma domain is core domain
-     *   - soma maxdomain is core domain
-     *   - core current domain is not accessed at the soma level
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
-     */
-    template <typename T>
-    std::pair<T, T> core_current_domain_slot(const std::string& name) const {
-        CurrentDomain current_domain = _get_current_domain();
-        if (current_domain.is_empty()) {
-            throw TileDBSOMAError(
-                "core_current_domain_slot: internal coding error");
-        }
-        if (current_domain.type() != TILEDB_NDRECTANGLE) {
-            throw TileDBSOMAError(
-                "core_current_domain_slot: found non-rectangle type");
-        }
-        NDRectangle ndrect = current_domain.ndrectangle();
-
-        // Convert from two-element array (core API) to pair (tiledbsoma API)
-        std::array<T, 2> arr = ndrect.range<T>(name);
-        return std::pair<T, T>(arr[0], arr[1]);
-    }
-
-    /**
-     * Returns the core current domain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma domain is core current domain
-     *   - soma maxdomain is core domain
-     * o For arrays without core current-domain support:
-     *   - soma domain is core domain
-     *   - soma maxdomain is core domain
-     *   - core current domain is not accessed at the soma level
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
-     */
-    template <typename T>
-    std::pair<T, T> core_domain_slot(const std::string& name) const {
-        return arr_->schema().domain().dimension(name).domain<T>();
+        return _core_domain_slot<T>(name);
     }
 
     /**
@@ -946,6 +896,57 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
+     * Returns the core current domain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> _core_current_domain_slot(const std::string& name) const {
+        CurrentDomain current_domain = _get_current_domain();
+        if (current_domain.is_empty()) {
+            throw TileDBSOMAError(
+                "_core_current_domain_slot: internal coding error");
+        }
+        if (current_domain.type() != TILEDB_NDRECTANGLE) {
+            throw TileDBSOMAError(
+                "_core_current_domain_slot: found non-rectangle type");
+        }
+        NDRectangle ndrect = current_domain.ndrectangle();
+
+        // Convert from two-element array (core API) to pair (tiledbsoma API)
+        std::array<T, 2> arr = ndrect.range<T>(name);
+        return std::pair<T, T>(arr[0], arr[1]);
+    }
+
+    /**
+     * Returns the core current domain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> _core_domain_slot(const std::string& name) const {
+        return arr_->schema().domain().dimension(name).domain<T>();
+    }
+
+    /**
      * Helper method for resize and upgrade_shape.
      */
     void _set_current_domain_from_shape(const std::vector<int64_t>& newshape);
@@ -963,7 +964,7 @@ class SOMAArray : public SOMAObject {
     void _check_dims_are_int64();
 
     /**
-     * With old shape: core domain mapped to tiledbsoma shape; core current
+     * With old shape: core domain used to map to tiledbsoma shape; core current
      * domain did not exist.
      *
      * With new shape: core domain maps to tiledbsoma maxshape;
@@ -1269,6 +1270,16 @@ class SOMAArray : public SOMAObject {
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow();
 };
+
+// These are all specializations to string/bool of various methods
+// which require special handling for that type.
+//
+// Declaring them down here is a bit weird -- they're easy to miss
+// on a read-through. However, we're in a bit of a bind regarding
+// various compilers: if we do these specializations within the
+// `class SOMAArray { ... }`, then one compiler errors if we do
+// include `template <>`, while another errors if we don't.
+// Doing it down here, no compiler complains.
 
 template <>
 void SOMAArray::_cast_dictionary_values<std::string>(

@@ -238,7 +238,7 @@ A named vector of dimension length (and the same type as the dimension)
 \subsection{Method \code{used_shape()}}{
 Retrieve the range of indexes for a dimension that were
 explicitly written.  This method is deprecated as of TileDB-SOMA 1.13, and will be
-removed in TileDB-SOMA 1.14.
+removed in TileDB-SOMA 1.15.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$used_shape(simplify = FALSE, index1 = FALSE)}\if{html}{\out{</div>}}
 }
