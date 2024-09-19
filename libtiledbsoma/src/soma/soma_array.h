@@ -48,6 +48,14 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
+// This enables some code deduplication between core domain, core current
+// domain, and core non-empty domain.
+enum class Domainish {
+    kind_core_domain = 0,
+    kind_core_current_domain = 1,
+    kind_non_empty_domain = 2
+};
+
 class SOMAArray : public SOMAObject {
    public:
     //===================================================================
@@ -703,7 +711,7 @@ class SOMAArray : public SOMAObject {
      * non-empty domains of the array fragments.
      */
     template <typename T>
-    std::pair<T, T> non_empty_domain_slot(const std::string& name) {
+    std::pair<T, T> non_empty_domain_slot(const std::string& name) const {
         try {
             return arr_->non_empty_domain<T>(name);
         } catch (const std::exception& e) {
@@ -717,7 +725,7 @@ class SOMAArray : public SOMAObject {
      * Applicable only to var-sized dimensions.
      */
     std::pair<std::string, std::string> non_empty_domain_slot_var(
-        const std::string& name) {
+        const std::string& name) const {
         try {
             return arr_->non_empty_domain_var(name);
         } catch (const std::exception& e) {
@@ -743,6 +751,70 @@ class SOMAArray : public SOMAObject {
      */
     bool has_current_domain() const {
         return !_get_current_domain().is_empty();
+    }
+
+    /**
+     * Returns the core current domain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> _core_current_domain_slot(const std::string& name) const {
+        CurrentDomain current_domain = _get_current_domain();
+        if (current_domain.is_empty()) {
+            throw TileDBSOMAError(
+                "_core_current_domain_slot: internal coding error");
+        }
+        if (current_domain.type() != TILEDB_NDRECTANGLE) {
+            throw TileDBSOMAError(
+                "_core_current_domain_slot: found non-rectangle type");
+        }
+        NDRectangle ndrect = current_domain.ndrectangle();
+
+        // Convert from two-element array (core API) to pair (tiledbsoma API)
+        std::array<T, 2> arr = ndrect.range<T>(name);
+        return std::pair<T, T>(arr[0], arr[1]);
+    }
+
+    /**
+     * Returns the core domain at the given dimension.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> _core_domain_slot(const std::string& name) const {
+        if (std::is_same_v<T, std::string>) {
+            throw std::runtime_error(
+                "SOMAArray::_core_domain_slot: template-specialization "
+                "failure.");
+        }
+        return arr_->schema().domain().dimension(name).domain<T>();
+    }
+
+    std::pair<std::string, std::string> _core_domain_slot_string(
+        const std::string&) const {
+        // Core domain for string dims is always a nullptr pair at the C++
+        // level.  We follow the convention started by TileDB-Py which is to
+        // report these as an empty-string pair.
+        return std::pair<std::string, std::string>("", "");
     }
 
     /**
@@ -773,6 +845,108 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     std::pair<T, T> soma_maxdomain_slot(const std::string& name) const {
         return _core_domain_slot<T>(name);
+    }
+
+    /**
+     * Returns the SOMA domain in its entirety, as an Arrow table for return to
+     * Python/R.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    ArrowTable get_soma_domain() {
+        if (has_current_domain()) {
+            return _get_core_current_domain();
+        } else {
+            return _get_core_domain();
+        }
+    }
+
+    /**
+     * Returns the SOMA maxdomain in its entirety, as an Arrow table for return
+     * to Python/R.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    ArrowTable get_soma_maxdomain() {
+        return _get_core_domain();
+    }
+
+    /**
+     * Returns the core non-empty domain in its entirety, as an Arrow
+     * table for return to Python/R.
+     */
+    ArrowTable get_non_empty_domain() {
+        return _get_core_domainish(Domainish::kind_non_empty_domain);
+    }
+
+    /**
+     * Code-dedupe helper for core domain, core current domain, and core
+     * non-empty domain.
+     */
+    ArrowTable _get_core_domainish(enum Domainish which_kind);
+
+    /**
+     * This enables some code deduplication between core domain, core current
+     * domain, and core non-empty domain.
+     */
+    template <typename T>
+    std::pair<T, T> _core_domainish_slot(
+        const std::string& name, enum Domainish which_kind) const {
+        if (std::is_same_v<T, std::string>) {
+            throw std::runtime_error(
+                "SOMAArray::_core_domainish_slot: template-specialization "
+                "failure.");
+        }
+        switch (which_kind) {
+            case Domainish::kind_core_domain:
+                return _core_domain_slot<T>(name);
+                break;
+            case Domainish::kind_core_current_domain:
+                return _core_current_domain_slot<T>(name);
+                break;
+            case Domainish::kind_non_empty_domain:
+                return non_empty_domain_slot<T>(name);
+                break;
+            default:
+                throw std::runtime_error(
+                    "internal coding error in SOMAArray::_core_domainish_slot");
+        }
+    }
+
+    std::pair<std::string, std::string> _core_domainish_slot_string(
+        const std::string& name, enum Domainish which_kind) const {
+        switch (which_kind) {
+            case Domainish::kind_core_domain:
+                return _core_domain_slot_string(name);
+                break;
+            case Domainish::kind_core_current_domain:
+                return _core_current_domain_slot<std::string>(name);
+                break;
+            case Domainish::kind_non_empty_domain:
+                return non_empty_domain_slot_var(name);
+                break;
+            default:
+                throw std::runtime_error(
+                    "internal coding error in SOMAArray::_core_domainish_slot");
+        }
     }
 
     /**
@@ -896,54 +1070,19 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * Returns the core current domain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma domain is core current domain
-     *   - soma maxdomain is core domain
-     * o For arrays without core current-domain support:
-     *   - soma domain is core domain
-     *   - soma maxdomain is core domain
-     *   - core current domain is not accessed at the soma level
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
+     * Returns the core current domain in its entirety, as an Arrow
+     * table for return to Python/R.
      */
-    template <typename T>
-    std::pair<T, T> _core_current_domain_slot(const std::string& name) const {
-        CurrentDomain current_domain = _get_current_domain();
-        if (current_domain.is_empty()) {
-            throw TileDBSOMAError(
-                "_core_current_domain_slot: internal coding error");
-        }
-        if (current_domain.type() != TILEDB_NDRECTANGLE) {
-            throw TileDBSOMAError(
-                "_core_current_domain_slot: found non-rectangle type");
-        }
-        NDRectangle ndrect = current_domain.ndrectangle();
-
-        // Convert from two-element array (core API) to pair (tiledbsoma API)
-        std::array<T, 2> arr = ndrect.range<T>(name);
-        return std::pair<T, T>(arr[0], arr[1]);
+    ArrowTable _get_core_current_domain() {
+        return _get_core_domainish(Domainish::kind_core_current_domain);
     }
 
     /**
-     * Returns the core current domain at the given dimension.
-     *
-     * o For arrays with core current-domain support:
-     *   - soma domain is core current domain
-     *   - soma maxdomain is core domain
-     * o For arrays without core current-domain support:
-     *   - soma domain is core domain
-     *   - soma maxdomain is core domain
-     *   - core current domain is not accessed at the soma level
-     *
-     * @tparam T Domain datatype
-     * @return Pair of [lower, upper] inclusive bounds.
+     * Returns the core domain in its entirety, as an Arrow
+     * table for return to Python/R.
      */
-    template <typename T>
-    std::pair<T, T> _core_domain_slot(const std::string& name) const {
-        return arr_->schema().domain().dimension(name).domain<T>();
+    ArrowTable _get_core_domain() {
+        return _get_core_domainish(Domainish::kind_core_domain);
     }
 
     /**
