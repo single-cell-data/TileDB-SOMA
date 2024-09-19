@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import datetime
 import pathlib
-from typing import Any, List, Sequence, Tuple, Union, get_args
+from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union, get_args
 
 import numpy as np
 import numpy.typing as npt
@@ -16,16 +16,26 @@ import pyarrow as pa
 from somacore import types
 from typing_extensions import Literal
 
-# `pd.{Series,Index}` require type parameters iff `pandas>=2`. Our pandas dependency (in `setup.py`) is unpinned,
-# which generally resolves to `pandas>=2`, but may be pandas<2 if something else in the user's environment requires
-# that. For type-checking purposes, `.pre-commit-config.yaml` specifies `pandas-stubs>=2`, and we type-check against
-# the `pandas>=2` types here.
-PDSeries = pd.Series[Any]
-PDIndex = pd.Index[Any]
+if TYPE_CHECKING:
+    # `pd.{Series,Index}` require type parameters iff `pandas>=2`. Our pandas dependency (in `setup.py`) is unpinned,
+    # which generally resolves to `pandas>=2`, but may be pandas<2 if something else in the user's environment requires
+    # that. For type-checking purposes, `.pre-commit-config.yaml` specifies `pandas-stubs>=2`, and we type-check against
+    # the `pandas>=2` types here.
+    PDSeries = pd.Series[Any]
+    PDIndex = pd.Index[Any]
+
+    NPNDArray = npt.NDArray[np.number[npt.NBitBase]]
+else:
+    # When not-type-checking, but running with `pandas>=2`, the "missing" type-params don't affect anything.
+    PDSeries = pd.Series
+    PDIndex = pd.Index
+
+    # Tests pass the `Matrix` type alias (which includes `NPNDArray`, via `DenseMatrix`) to `isinstance`,
+    # causing error "argument 2 cannot be a parameterized generic".
+    NPNDArray = np.ndarray
 
 NPInteger = np.integer[npt.NBitBase]
 NPFloating = np.floating[npt.NBitBase]
-NPNDArray = npt.NDArray[np.number[npt.NBitBase]]
 
 Path = Union[str, pathlib.Path]
 
