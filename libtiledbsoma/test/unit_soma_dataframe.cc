@@ -109,16 +109,6 @@ struct VariouslyIndexedDataFrameFixture {
             {.name = str_name, .tiledb_datatype = str_datatype});
     }
 
-    std::vector<int64_t> make_i64_data() {
-        return std::vector<int64_t>({1, 2});
-    }
-    std::vector<uint32_t> make_u32_data() {
-        return std::vector<uint32_t>({1234, 5678});
-    }
-    std::vector<std::string> make_str_data() {
-        return std::vector<std::string>({"apple", "bat"});
-    }
-
     //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Helper methods for create/open/write/etc.
 
