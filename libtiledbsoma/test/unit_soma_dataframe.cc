@@ -56,7 +56,7 @@ struct VariouslyIndexedDataFrameFixture {
     //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Helpers for setting up dim/attr configs and data
     static const inline int64_t i64_dim_max = SOMA_JOINID_DIM_MAX;
-    static const inline int64_t u32_dim_max = 10000;
+    static const inline int64_t u32_dim_max = 9999;
     static const inline int64_t str_dim_max = 0;  // not used for string dims
 
     static const inline std::string i64_name = "soma_joinid";
@@ -564,12 +564,12 @@ TEST_CASE_METHOD(
 
         REQUIRE(ned_sjid == std::vector<int64_t>({1, 2}));
 
-        REQUIRE(dom_sjid == std::vector<int64_t>({0, 100}));
+        REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
 
         REQUIRE(maxdom_sjid.size() == 2);
         REQUIRE(maxdom_sjid[0] == 0);
         if (!use_current_domain) {
-            REQUIRE(maxdom_sjid[1] == 100);
+            REQUIRE(maxdom_sjid[1] == 99);
         } else {
             REQUIRE(maxdom_sjid[1] > 2000000000);
         }
@@ -647,10 +647,10 @@ TEST_CASE_METHOD(
 
         if (!use_current_domain) {
             REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 100}));
-            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 100}));
+            REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
+            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
         } else {
-            REQUIRE(ned_sjid == std::vector<int64_t>({1, 102}));
+            REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
             REQUIRE(dom_sjid == std::vector<int64_t>({0, 199}));
             REQUIRE(maxdom_sjid.size() == 2);
             REQUIRE(maxdom_sjid[0] == 0);
@@ -753,15 +753,15 @@ TEST_CASE_METHOD(
         REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
         REQUIRE(ned_u32 == std::vector<uint32_t>({1234, 5678}));
 
-        REQUIRE(dom_sjid == std::vector<int64_t>({0, 100}));
-        REQUIRE(dom_u32 == std::vector<uint32_t>({0, 10000}));
+        REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
+        REQUIRE(dom_u32 == std::vector<uint32_t>({0, 9999}));
 
         REQUIRE(maxdom_sjid.size() == 2);
         REQUIRE(maxdom_u32.size() == 2);
 
         REQUIRE(maxdom_u32[0] == 0);
         if (!use_current_domain) {
-            REQUIRE(maxdom_u32[1] == 10000);
+            REQUIRE(maxdom_u32[1] == 9999);
         } else {
             REQUIRE(maxdom_u32[1] > 2000000000);
         }
@@ -849,18 +849,18 @@ TEST_CASE_METHOD(
             REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
             REQUIRE(ned_u32 == std::vector<uint32_t>({1234, 5678}));
 
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 100}));
-            REQUIRE(dom_u32 == std::vector<uint32_t>({0, 10000}));
+            REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
+            REQUIRE(dom_u32 == std::vector<uint32_t>({0, 9999}));
 
-            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 100}));
-            REQUIRE(maxdom_u32 == std::vector<uint32_t>({0, 10000}));
+            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+            REQUIRE(maxdom_u32 == std::vector<uint32_t>({0, 9999}));
 
         } else {
-            REQUIRE(ned_sjid == std::vector<int64_t>({1, 102}));
+            REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
             REQUIRE(ned_u32 == std::vector<uint32_t>({1234, 5678}));
 
             REQUIRE(dom_sjid == std::vector<int64_t>({0, 199}));
-            REQUIRE(dom_u32 == std::vector<uint32_t>({0, 10000}));
+            REQUIRE(dom_u32 == std::vector<uint32_t>({0, 9999}));
 
             REQUIRE(maxdom_sjid.size() == 2);
             REQUIRE(maxdom_sjid[0] == 0);
@@ -976,10 +976,10 @@ TEST_CASE_METHOD(
         REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
         REQUIRE(ned_str == std::vector<std::string>({"apple", "bat"}));
 
-        REQUIRE(dom_sjid == std::vector<int64_t>({0, 100}));
+        REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
         REQUIRE(dom_str == std::vector<std::string>({"", ""}));
 
-        REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 100}));
+        REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
         REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
 
         soma_dataframe->close();
@@ -1056,10 +1056,10 @@ TEST_CASE_METHOD(
         REQUIRE(ned_sjid == std::vector<int64_t>({0, 0}));
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
-        REQUIRE(dom_sjid == std::vector<int64_t>({0, 100}));
+        REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
         REQUIRE(dom_str == std::vector<std::string>({"", ""}));
 
-        REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 100}));
+        REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
         REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
 
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
