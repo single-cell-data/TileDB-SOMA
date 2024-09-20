@@ -79,8 +79,9 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
                 if column_dtype != axis_dtype:
                     raise ValueError("All spatial axes must have the same datatype.")
 
+        # mypy false positive https://github.com/python/mypy/issues/5313
         coord_space = CoordinateSpace(
-            tuple(Axis(axis_name) for axis_name in axis_names)
+            tuple(Axis(axis_name) for axis_name in axis_names)  # type: ignore[misc]
         )
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
@@ -326,8 +327,9 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             region_coord_space = self._coord_space
         else:
             if region_coord_space is None:
+                # mypy false positive https://github.com/python/mypy/issues/5313
                 region_coord_space = CoordinateSpace(
-                    tuple(Axis(axis_name) for axis_name in transform.input_axes)
+                    tuple(Axis(axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
                 )
             elif transform.input_axes != region_coord_space.axis_names:
                 raise ValueError(

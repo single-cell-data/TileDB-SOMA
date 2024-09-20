@@ -13,16 +13,14 @@ def coordinate_space_from_json(data: str) -> CoordinateSpace:
     """Returns a coordinate space from a json string."""
     # TODO: Needs good, comprehensive error handling.
     raw = json.loads(data)
-    return CoordinateSpace(tuple(Axis(**axis) for axis in raw))
+    # mypy false positive https://github.com/python/mypy/issues/5313
+    return CoordinateSpace(tuple(Axis(**axis) for axis in raw))  # type: ignore[misc]
 
 
 def coordinate_space_to_json(coord_space: CoordinateSpace) -> str:
     """Returns json string representation of the coordinate space."""
     return json.dumps(
-        tuple(
-            {"name": axis.name, "units": axis.units, "scale": axis.scale}
-            for axis in coord_space.axes
-        )
+        tuple({"name": axis.name, "unit": axis.unit} for axis in coord_space.axes)
     )
 
 

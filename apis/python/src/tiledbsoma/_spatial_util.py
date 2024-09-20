@@ -13,7 +13,7 @@ def transform_region(
     region: options.SpatialRegion,
     transform: somacore.CoordinateTransform,
 ) -> shapely.GeometryType:
-    if transform.input_rank != 2:
+    if len(transform.input_axes) != 2:
         raise NotImplementedError(
             "Spatial queries are currently only supported for 2D coordinates."
         )
@@ -23,9 +23,9 @@ def transform_region(
         # Following check is currently unneeded, but leaving it for reference if
         # 3D support is added.
         ndim = 3 if region.has_z else 2
-        if ndim != transform.input_rank:
+        if ndim != len(transform.input_axes):
             raise ValueError(
-                "Input region must have {len(transform.input_rank)} dimension, but "
+                "Input region must have {len(transform.input_axes)} dimension, but "
                 "region with {ndim} dimensions provided."
             )
     else:

@@ -117,8 +117,9 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             if isinstance(transform, IdentityTransform):
                 coordinate_space = self.coordinate_space
             else:
+                # mypy false positive https://github.com/python/mypy/issues/5313
                 coordinate_space = CoordinateSpace(
-                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)
+                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
                 )
         else:
             if transform.input_axes != coordinate_space.axis_names:
@@ -167,8 +168,9 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             if isinstance(transform, IdentityTransform):
                 coordinate_space = self.coordinate_space
             else:
+                # mypy false positive https://github.com/python/mypy/issues/5313
                 coordinate_space = CoordinateSpace(
-                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)
+                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
                 )
         else:
             if transform.input_axes != coordinate_space.axis_names:

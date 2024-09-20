@@ -28,13 +28,13 @@ def check_transform_is_equal(
 @pytest.mark.parametrize(
     "original",
     [
-        CoordinateSpace((Axis(name="dim0", units="meter"),)),
+        CoordinateSpace((Axis(name="dim0", unit="meter"),)),  # type: ignore[arg-type]
         CoordinateSpace(
             (
-                Axis(name="dim0", units="micrometer"),
+                Axis(name="dim0", unit="micrometer"),
                 Axis(name="dim1"),
-                Axis(name="dim2", units="micrometer", scale=np.float64(65.0)),
-            ),
+                Axis(name="dim2", unit="micrometer"),
+            ),  # type: ignore[arg-type]
         ),
     ],
 )

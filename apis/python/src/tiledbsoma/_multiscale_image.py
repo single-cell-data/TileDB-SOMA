@@ -7,7 +7,6 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Tuple, Union
 
-import numpy as np
 import pyarrow as pa
 import somacore
 from somacore import (
@@ -128,8 +127,9 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             datatype=type,
         )
 
+        # mypy false positive https://github.com/python/mypy/issues/5313
         coord_space = CoordinateSpace(
-            tuple(Axis(name) for name in schema.get_coordinate_space_axis_names())
+            tuple(Axis(name) for name in schema.get_coordinate_space_axis_names())  # type: ignore[misc]
         )
         schema_str = schema.to_json()
         coord_space_str = coordinate_space_to_json(coord_space)
@@ -384,7 +384,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             )  # TODO
         return self._levels[level]
 
-    def read_level(
+    def read_region(
         self,
         level: Union[int, str],
         region: Optional[options.SpatialRegion] = None,
@@ -392,7 +392,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         channel_coords: options.DenseCoord = None,
         transform: Optional[CoordinateTransform] = None,
         region_coord_space: Optional[CoordinateSpace] = None,
-        apply_mask: bool = False,
+        create_mask: bool = False,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> somacore.SpatialRead[pa.Tensor]:
@@ -408,7 +408,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             )
 
         # Applying a mask in not yet supported.
-        if apply_mask:
+        if create_mask:
             raise NotImplementedError(
                 "Support for applying a mask to the image is not yet implemented."
             )
@@ -423,23 +423,10 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 "dimension."
             )
 
-        # Get the data coordinate space
-        def scaled_axis(axis: Axis, scale: np.float64) -> Axis:
-            return Axis(
-                axis.name,
-                axis.units,
-                None if axis.scale is None else scale * axis.scale,
-            )
-
+        # Get the transformation for the group and the data coordinate space.
+        # We may want to revisit copying the units for the data coordinate space.
         group_to_level = self.get_transformation_to_level(level)
-        x_axis = self.coordinate_space.axes[0]
-        y_axis = self.coordinate_space.axes[1]
-        data_coord_space = CoordinateSpace(
-            (
-                scaled_axis(x_axis, group_to_level.scale_factors[0]),
-                scaled_axis(y_axis, group_to_level.scale_factors[1]),
-            )
-        )
+        data_coord_space = self.coordinate_space
 
         # Update transform and set region coordinate space.
         # - Add transformation from reference coord system to requested image level.
@@ -460,8 +447,9 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 )
             # Create or check output coordinates.
             if region_coord_space is None:
+                # mypy false positive https://github.com/python/mypy/issues/5313
                 region_coord_space = CoordinateSpace(
-                    tuple(Axis(axis_name) for axis_name in transform.input_axes)
+                    tuple(Axis(axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
                 )
             elif len(region_coord_space) != len(data_coord_space):
                 raise ValueError(
@@ -530,9 +518,10 @@ class MultiscaleImageSchema:
                 f"{self.reference_level_properties.image_type}. "
             )
 
+    # mypy false positive https://github.com/python/mypy/issues/5313
     def create_coordinate_space(self) -> CoordinateSpace:
         return CoordinateSpace(
-            tuple(Axis(name) for name in self.get_coordinate_space_axis_names())
+            tuple(Axis(name) for name in self.get_coordinate_space_axis_names())  # type: ignore[misc]
         )
 
     def get_coordinate_space_axis_names(self) -> Tuple[str, ...]:
