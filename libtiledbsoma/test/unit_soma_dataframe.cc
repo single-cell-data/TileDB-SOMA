@@ -540,7 +540,7 @@ TEST_CASE_METHOD(
         REQUIRE(soma_dataframe->nnz() == 4);
 
         // Resize
-        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX+1});
+        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX + 1});
 
         if (!use_current_domain) {
             // Domain is already set. The domain (not current domain but domain)
@@ -578,7 +578,7 @@ TEST_CASE_METHOD(
 
             // Check shape after resize
             soma_dataframe = open(OpenMode::read);
-            expect = SOMA_JOINID_RESIZE_DIM_MAX+1;
+            expect = SOMA_JOINID_RESIZE_DIM_MAX + 1;
             actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
@@ -661,7 +661,7 @@ TEST_CASE_METHOD(
         soma_dataframe->close();
 
         // Resize
-        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX+1});
+        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX + 1});
 
         if (!use_current_domain) {
             // Domain is already set. The domain (not current domain but domain)
@@ -698,7 +698,7 @@ TEST_CASE_METHOD(
 
             // Check shape after resize
             soma_dataframe = open(OpenMode::read);
-            expect = SOMA_JOINID_RESIZE_DIM_MAX+1;
+            expect = SOMA_JOINID_RESIZE_DIM_MAX + 1;
             actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
@@ -785,7 +785,7 @@ TEST_CASE_METHOD(
         soma_dataframe->close();
 
         // Resize
-        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX+1});
+        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX + 1});
 
         if (!use_current_domain) {
             // Domain is already set. The domain (not current domain but domain)
@@ -822,7 +822,7 @@ TEST_CASE_METHOD(
 
             // Check shape after resize
             soma_dataframe = open(OpenMode::read);
-            expect = SOMA_JOINID_RESIZE_DIM_MAX+1;
+            expect = SOMA_JOINID_RESIZE_DIM_MAX + 1;
             actual = soma_dataframe->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
@@ -906,7 +906,7 @@ TEST_CASE_METHOD(
         soma_dataframe->close();
 
         // Resize
-        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX+1});
+        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX + 1});
 
         if (!use_current_domain) {
             // Domain is already set. The domain (not current domain but domain)
