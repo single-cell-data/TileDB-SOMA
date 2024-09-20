@@ -33,7 +33,12 @@
 #include "common.h"
 
 TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
-    int64_t dim_max = 1000;
+    // Core uses domain & current domain like (0, 999); SOMA uses shape like
+    // 1000. We want to carefully and explicitly test here that there aren't any
+    // off-by-one errors.
+    int64_t dim_max = 999;
+    int64_t shape = 1000;
+
     // auto use_current_domain = GENERATE(false, true);
     auto use_current_domain = GENERATE(true);
     // TODO this could be formatted with fmt::format which is part of internal
@@ -87,7 +92,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         REQUIRE(soma_sparse->ndim() == 1);
         REQUIRE(soma_sparse->nnz() == 0);
 
-        auto expect = std::vector<int64_t>({dim_max + 1});
+        auto expect = std::vector<int64_t>({shape});
         REQUIRE(soma_sparse->shape() == expect);
         if (!use_current_domain) {
             REQUIRE(soma_sparse->maxshape() == expect);
@@ -114,10 +119,10 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
             REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
         }
+        soma_sparse->close();
 
         std::vector<int64_t> d0b({dim_max, dim_max + 1});
         std::vector<int64_t> a0b({30, 40});
-        soma_sparse->close();
 
         // Try out-of-bounds write before resize.
         // * Without current domain support: this should throw since it's
@@ -131,7 +136,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         soma_sparse->close();
 
         if (!use_current_domain) {
-            auto new_shape = std::vector<int64_t>({dim_max});
+            auto new_shape = std::vector<int64_t>({shape});
 
             soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
             // Without current-domain support: this should throw since
@@ -150,7 +155,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             soma_sparse->close();
 
         } else {
-            auto new_shape = std::vector<int64_t>({dim_max * 2});
+            auto new_shape = std::vector<int64_t>({shape * 2});
 
             soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
             // Should throw since this already has a shape (core current
@@ -166,12 +171,16 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             // Implicitly checking for no throw
             soma_sparse->write();
             soma_sparse->close();
+
+            soma_sparse->open(OpenMode::read);
+            REQUIRE(soma_sparse->shape() == new_shape);
+            soma_sparse->close();
         }
     }
 }
 
 TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
-    int64_t dim_max = 1000;
+    int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
@@ -220,7 +229,7 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
 }
 
 TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
-    int64_t dim_max = 1000;
+    int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be

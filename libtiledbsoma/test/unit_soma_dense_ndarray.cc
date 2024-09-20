@@ -32,10 +32,13 @@
 
 #include "common.h"
 
-#define DIM_MAX 1000
-
 TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
-    int64_t dim_max = 1000;
+    // Core uses domain & current domain like (0, 999); SOMA uses shape like
+    // 1000. We want to carefully and explicitly test here that there aren't any
+    // off-by-one errors.
+    int64_t dim_max = 999;
+    int64_t shape = 1000;
+
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
@@ -111,8 +114,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             //        1});
             //}
 
-            REQUIRE(
-                soma_dense->maxshape() == std::vector<int64_t>{dim_max + 1});
+            REQUIRE(soma_dense->maxshape() == std::vector<int64_t>{shape});
 
             soma_dense->close();
 
@@ -134,7 +136,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             soma_dense->close();
 
             soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
-            auto new_shape = std::vector<int64_t>({DIM_MAX * 2});
+            auto new_shape = std::vector<int64_t>({shape * 2});
             // * When use_current_domain is false: can't resize what has not
             //   been sized.
             // * When use_current_domain is true: TODO: current domain not
@@ -146,7 +148,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
 }
 
 TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
-    int64_t dim_max = 1000;
+    int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
@@ -211,7 +213,7 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
 }
 
 TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
-    int64_t dim_max = 1000;
+    int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
