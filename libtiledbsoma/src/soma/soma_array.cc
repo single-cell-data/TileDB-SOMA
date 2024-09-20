@@ -1228,10 +1228,10 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
         }
 
         if (child == nullptr) {
-            // throw TileDBSOMAError(fmt::format(
-            //   "WIP {} {}",
-            //   core_dim.name(),
-            //   tiledb::impl::type_to_str(core_type_code)));
+            throw TileDBSOMAError(fmt::format(
+                "SOMAArray::_get_core_domainish:dim {} has unhandled type {}",
+                core_dim.name(),
+                tiledb::impl::type_to_str(core_type_code)));
         }
         arrow_array->children[i] = child;
     }
