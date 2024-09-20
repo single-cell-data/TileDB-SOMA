@@ -39,8 +39,8 @@ def check_transform_is_equal(
     ],
 )
 def test_coordinate_system_json_roundtrip(original: CoordinateSpace):
-    json_blob = soma._coordinates.coordinate_space_to_json(original)
-    result = soma._coordinates.coordinate_space_from_json(json_blob)
+    json_blob = soma._spatial_util.coordinate_space_to_json(original)
+    result = soma._spatial_util.coordinate_space_from_json(json_blob)
     assert len(result) == len(original)
     for index in range(len(result)):
         assert result[index] == original[index]
@@ -57,7 +57,7 @@ def test_coordinate_system_json_roundtrip(original: CoordinateSpace):
         ),
     ],
 )
-def test_transform_json_roundtrip(original: soma._coordinates.CoordinateTransform):
-    json_blob = soma._coordinates.transform_to_json(original)
-    result = soma._coordinates.transform_from_json(json_blob)
+def test_transform_json_roundtrip(original: CoordinateTransform):
+    json_blob = soma._spatial_util.transform_to_json(original)
+    result = soma._spatial_util.transform_from_json(json_blob)
     check_transform_is_equal(result, original)
