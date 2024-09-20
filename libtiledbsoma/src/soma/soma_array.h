@@ -939,7 +939,7 @@ class SOMAArray : public SOMAObject {
                 return non_empty_domain_slot_var(name);
             default:
                 throw std::runtime_error(
-                    "internal coding error in SOMAArray::_core_domainish_slot");
+                    "internal coding error in SOMAArray::_core_domainish_slot_string");
         }
     }
 
