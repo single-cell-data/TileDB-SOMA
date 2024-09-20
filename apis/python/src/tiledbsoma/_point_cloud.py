@@ -13,7 +13,6 @@ import somacore
 from somacore import Axis, CoordinateSpace, options
 from typing_extensions import Self
 
-
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY, SOMA_JOINID
