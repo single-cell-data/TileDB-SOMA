@@ -593,7 +593,7 @@ TEST_CASE_METHOD(
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim-sjid-u32 attr-str",
+    "SOMADataFrame: variant-indexed dataframe dim-u32-sjid attr-str",
     "[SOMADataFrame]") {
     auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
@@ -605,8 +605,8 @@ TEST_CASE_METHOD(
             "mem://unit-test-variant-indexed-dataframe-2-" + suffix);
 
         std::vector<helper::DimInfo> dim_infos(
-            {i64_dim_info(use_current_domain),
-             u32_dim_info(use_current_domain)});
+            {u32_dim_info(use_current_domain),
+             i64_dim_info(use_current_domain)});
         std::vector<helper::AttrInfo> attr_infos({str_attr_info()});
 
         // Create
@@ -624,19 +624,19 @@ TEST_CASE_METHOD(
             REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
             NDRectangle ndrect = current_domain.ndrectangle();
 
-            std::array<int64_t, 2> i64_range = ndrect.range<int64_t>(
-                dim_infos[0].name);
-            REQUIRE(i64_range[0] == (int64_t)0);
-            REQUIRE(i64_range[1] == (int64_t)dim_infos[0].dim_max);
-
             std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
                 dim_infos[0].name);
             REQUIRE(u32_range[0] == (uint32_t)0);
             REQUIRE(u32_range[1] == (uint32_t)dim_infos[0].dim_max);
+
+            std::array<int64_t, 2> i64_range = ndrect.range<int64_t>(
+                dim_infos[1].name);
+            REQUIRE(i64_range[0] == (int64_t)0);
+            REQUIRE(i64_range[1] == (int64_t)dim_infos[1].dim_max);
         }
 
         // Check shape before write
-        int64_t expect = dim_infos[0].dim_max + 1;
+        int64_t expect = dim_infos[1].dim_max + 1;
         std::optional<int64_t> actual = soma_dataframe
                                             ->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
@@ -654,7 +654,7 @@ TEST_CASE_METHOD(
 
         // Check shape after write
         soma_dataframe = open(OpenMode::read);
-        expect = dim_infos[0].dim_max + 1;
+        expect = dim_infos[1].dim_max + 1;
         actual = soma_dataframe->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
@@ -681,7 +681,7 @@ TEST_CASE_METHOD(
 
             // Check shape after write
             soma_dataframe = open(OpenMode::read);
-            expect = dim_infos[0].dim_max + 1;
+            expect = dim_infos[1].dim_max + 1;
             std::optional<int64_t> actual = soma_dataframe
                                                 ->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
