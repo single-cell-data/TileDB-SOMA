@@ -12,7 +12,7 @@ from typeguard import suppress_type_checks
 from typing_extensions import Literal
 
 import tiledbsoma as soma
-from tiledbsoma import _collection, _factory, _soma_object
+from tiledbsoma import _collection, _factory, _soma_group, _soma_object
 from tiledbsoma._exception import DoesNotExistError, SOMAError
 from tiledbsoma.options import SOMATileDBContext
 
@@ -413,7 +413,7 @@ def test_real_class_fail(in_type):
     ],
 )
 def test_sanitize_for_path(key, want):
-    assert _collection._sanitize_for_path(key) == want
+    assert _soma_group._sanitize_for_path(key) == want
 
 
 def test_timestamped_ops(tmp_path):
