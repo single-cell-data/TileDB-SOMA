@@ -918,13 +918,10 @@ class SOMAArray : public SOMAObject {
         switch (which_kind) {
             case Domainish::kind_core_domain:
                 return _core_domain_slot<T>(name);
-                break;
             case Domainish::kind_core_current_domain:
                 return _core_current_domain_slot<T>(name);
-                break;
             case Domainish::kind_non_empty_domain:
                 return non_empty_domain_slot<T>(name);
-                break;
             default:
                 throw std::runtime_error(
                     "internal coding error in SOMAArray::_core_domainish_slot");
