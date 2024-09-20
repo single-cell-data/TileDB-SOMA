@@ -23,15 +23,15 @@ from . import _funcs, _tdb_handles
 from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY, SOMA_MULTISCALE_IMAGE_SCHEMA
-from ._coordinates import (
-    coordinate_space_from_json,
-    coordinate_space_to_json,
-)
 from ._dense_nd_array import DenseNDArray
 from ._exception import SOMAError, map_exception_for_create
 from ._soma_group import SOMAGroup
 from ._soma_object import AnySOMAObject
-from ._spatial_util import process_image_region
+from ._spatial_util import (
+    coordinate_space_from_json,
+    coordinate_space_to_json,
+    process_image_region,
+)
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context

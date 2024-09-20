@@ -16,7 +16,6 @@ from typing_extensions import Self
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY, SOMA_JOINID
-from ._coordinates import coordinate_space_from_json, coordinate_space_to_json
 from ._dataframe import (
     Domain,
     _canonicalize_schema,
@@ -29,7 +28,11 @@ from ._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
-from ._spatial_util import process_spatial_df_region
+from ._spatial_util import (
+    coordinate_space_from_json,
+    coordinate_space_to_json,
+    process_spatial_df_region,
+)
 from ._tdb_handles import PointCloudWrapper
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
