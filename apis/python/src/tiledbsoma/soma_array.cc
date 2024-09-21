@@ -669,7 +669,7 @@ void load_soma_array(py::module& m) {
             })
 
         .def(
-            "non_empty_domain",
+            "non_empty_domain_slot",
             [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
                     case TILEDB_UINT64:
