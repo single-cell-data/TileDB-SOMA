@@ -187,6 +187,8 @@ from ._general_utilities import (
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
 from ._multiscale_image import MultiscaleImage
+from ._point_cloud import PointCloud
+from ._geometry_dataframe import GeometryDataFrame
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
 from ._point_cloud import PointCloud
 from ._geometry_dataframe import GeometryDataFrame
