@@ -97,6 +97,18 @@ import ctypes
 import os
 import sys
 
+# Temporary for https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+_new_shape_feature_flag = os.getenv("SOMA_PY_NEW_SHAPE") is not None
+
+
+def _new_shape_feature_flag_enabled() -> bool:
+    """
+    This is temporary only and will be removed once
+    https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+    is complete.
+    """
+    return _new_shape_feature_flag
+
 
 # Load native libraries. On wheel builds, we may have a shared library
 # already linked. In this case, we can import directly
@@ -135,14 +147,23 @@ except ImportError:
         # Otherwise try loading by name only.
         ctypes.CDLL(libtiledbsoma_name)
 
-from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
+from somacore import (
+    Axis,
+    CoordinateSpace,
+    AffineTransform,
+    ScaleTransform,
+    IdentityTransform,
+    UniformScaleTransform,
+    AxisColumnNames,
+    AxisQuery,
+    ExperimentAxisQuery,
+)
 from somacore.options import ResultOrder
 
-# This is important since we need to do the above dll/dylib/so business
-# _before_ imports, but, ruff will tell us that imports need to be
-# at the top of the file:
-#
+# TODO: once we no longer support Python 3.7, remove this and pin to pyarrow >= 14.0.1
+# https://github.com/single-cell-data/TileDB-SOMA/issues/1926
 # ruff: noqa
+import pyarrow_hotfix
 
 from ._collection import Collection
 from ._constants import SOMA_JOINID
@@ -165,10 +186,11 @@ from ._general_utilities import (
 )
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
-from ._scene import Scene
 from ._multiscale_image import MultiscaleImage
-from ._point_cloud import PointCloud
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
+from ._point_cloud import PointCloud
+from ._geometry_dataframe import GeometryDataFrame
+from ._scene import Scene
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBWriteOptions
 from .pytiledbsoma import (
     tiledbsoma_stats_disable,
@@ -177,38 +199,41 @@ from .pytiledbsoma import (
     tiledbsoma_stats_reset,
 )
 from .stats import (
-    tiledbsoma_stats_as_py,
     tiledbsoma_stats_json,
+    tiledbsoma_stats_as_py,
 )
 
 __version__ = get_implementation_version()
 
 __all__ = [
     "AlreadyExistsError",
+    "Axis",
     "AxisColumnNames",
     "AxisQuery",
     "Collection",
+    "CoordinateSpace",
     "DataFrame",
     "DenseNDArray",
     "DoesNotExistError",
     "Experiment",
     "ExperimentAxisQuery",
+    "GeometryDataFrame",
     "get_implementation_version",
     "get_implementation",
     "get_SOMA_version",
     "get_storage_engine",
     "IntIndexer",
     "Measurement",
+    "MultiscaleImage",
     "NotCreateableError",
     "open",
-    "MultiscaleImage",
     "PointCloud",
     "ResultOrder",
+    "Scene",
     "show_package_versions",
     "SOMA_JOINID",
     "SOMAError",
     "SOMATileDBContext",
-    "Scene",
     "SparseNDArray",
     "SparseNDArrayRead",
     "TileDBCreateOptions",
@@ -218,6 +243,4 @@ __all__ = [
     "tiledbsoma_stats_dump",
     "tiledbsoma_stats_enable",
     "tiledbsoma_stats_reset",
-    "tiledbsoma_stats_as_py",
-    "tiledbsoma_stats_json",
 ]
