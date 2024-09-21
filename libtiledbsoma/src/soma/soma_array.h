@@ -769,6 +769,11 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     std::pair<T, T> _core_current_domain_slot(const std::string& name) const {
+        if (std::is_same_v<T, std::string>) {
+            throw std::runtime_error(
+                "SOMAArray::soma_domain_slot: template-specialization "
+                "failure.");
+        }
         CurrentDomain current_domain = _get_current_domain();
         if (current_domain.is_empty()) {
             throw TileDBSOMAError(
@@ -783,6 +788,43 @@ class SOMAArray : public SOMAObject {
         // Convert from two-element array (core API) to pair (tiledbsoma API)
         std::array<T, 2> arr = ndrect.range<T>(name);
         return std::pair<T, T>(arr[0], arr[1]);
+    }
+
+    std::pair<std::string, std::string> _core_current_domain_slot_string(
+        const std::string& name) const {
+        CurrentDomain current_domain = _get_current_domain();
+        if (current_domain.is_empty()) {
+            throw TileDBSOMAError(
+                "_core_current_domain_slot: internal coding error");
+        }
+        if (current_domain.type() != TILEDB_NDRECTANGLE) {
+            throw TileDBSOMAError(
+                "_core_current_domain_slot: found non-rectangle type");
+        }
+        NDRectangle ndrect = current_domain.ndrectangle();
+
+        // Convert from two-element array (core API) to pair (tiledbsoma API)
+        std::array<std::string, 2> arr = ndrect.range<std::string>(name);
+
+        // Here is an intersection of a few oddities:
+        //
+        // * Core domain for string dims must be a nullptr pair; it cannot be
+        //   anything else.
+        // * TileDB-Py shows this by using an empty-string pair, which we
+        //   imitate.
+        // * Core current domain for string dims must _not_ be a nullptr pair.
+        // * In TileDB-SOMA, unless the user specifies otherwise, we use "" for
+        //   min and "\xff" for max.
+        // * However, "\xff" causes display problems in Python. It's also
+        //   flat-out confusing to show to users.
+        //
+        // To work with all these factors, if the current domain is the default
+        // "" to "\xff", return an empty-string pair just as we do for domain.
+        if (arr[0] == "" && arr[1] == "\xff") {
+            return std::pair<std::string, std::string>("", "");
+        } else {
+            return std::pair<std::string, std::string>(arr[0], arr[1]);
+        }
     }
 
     /**
@@ -935,7 +977,7 @@ class SOMAArray : public SOMAObject {
             case Domainish::kind_core_domain:
                 return _core_domain_slot_string(name);
             case Domainish::kind_core_current_domain:
-                return _core_current_domain_slot<std::string>(name);
+                return _core_current_domain_slot_string(name);
             case Domainish::kind_non_empty_domain:
                 return non_empty_domain_slot_var(name);
             default:
