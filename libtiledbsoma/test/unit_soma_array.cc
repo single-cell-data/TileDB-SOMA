@@ -84,7 +84,7 @@ std::tuple<std::string, uint64_t> create_array(
     domain.add_dimension(dim);
     schema.set_domain(domain);
 
-    auto attr = Attribute::create<int>(*ctx->tiledb_ctx(), attr_name);
+    auto attr = Attribute::create<int32_t>(*ctx->tiledb_ctx(), attr_name);
     schema.add_attribute(attr);
     schema.set_allows_dups(allow_duplicates);
     schema.check();
@@ -107,7 +107,7 @@ std::tuple<std::string, uint64_t> create_array(
     return {uri, nnz};
 }
 
-std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
+std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
     const std::string& uri,
     std::shared_ptr<SOMAContext> ctx,
     int num_cells_per_fragment = 10,
@@ -144,7 +144,7 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
                 d0[j] = j + num_cells_per_fragment * frag_num;
             }
         }
-        std::vector<int> a0(num_cells_per_fragment, frag_num);
+        std::vector<int32_t> a0(num_cells_per_fragment, frag_num);
 
         // Write data to array
         soma_array->set_column_data(attr_name, a0.size(), a0.data());
@@ -162,7 +162,7 @@ std::tuple<std::vector<int64_t>, std::vector<int>> write_array(
     tiledb_array.reopen();
 
     std::vector<int64_t> expected_d0(num_cells_per_fragment * num_fragments);
-    std::vector<int> expected_a0(num_cells_per_fragment * num_fragments);
+    std::vector<int32_t> expected_a0(num_cells_per_fragment * num_fragments);
 
     Query query(*ctx->tiledb_ctx(), tiledb_array);
     query.set_layout(TILEDB_UNORDERED)
@@ -246,10 +246,10 @@ TEST_CASE("SOMAArray: nnz") {
             REQUIRE(arrbuf->num_rows() == nnz);
 
             auto d0span = arrbuf->at(dim_name)->data<int64_t>();
-            auto a0span = arrbuf->at(attr_name)->data<int>();
+            auto a0span = arrbuf->at(attr_name)->data<int32_t>();
 
             std::vector<int64_t> d0col(d0span.begin(), d0span.end());
-            std::vector<int> a0col(a0span.begin(), a0span.end());
+            std::vector<int32_t> a0col(a0span.begin(), a0span.end());
 
             REQUIRE(d0col == expected_d0);
             REQUIRE(a0col == expected_a0);
@@ -471,7 +471,7 @@ TEST_CASE("SOMAArray: Enumeration") {
     auto enmr = Enumeration::create(*ctx->tiledb_ctx(), "rbg", vals);
     ArraySchemaExperimental::add_enumeration(*ctx->tiledb_ctx(), schema, enmr);
 
-    auto attr = Attribute::create<int>(*ctx->tiledb_ctx(), "a");
+    auto attr = Attribute::create<int32_t>(*ctx->tiledb_ctx(), "a");
     AttributeExperimental::set_enumeration_name(
         *ctx->tiledb_ctx(), attr, "rbg");
     schema.add_attribute(attr);

@@ -51,15 +51,18 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         std::string uri = "mem://unit-test-sparse-ndarray-basic";
         std::string dim_name = "soma_dim_0";
         std::string attr_name = "soma_data";
-        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
-            tiledb_datatype);
+        tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
+        tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
+        std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            dim_tiledb_datatype);
+        std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            attr_tiledb_datatype);
 
         REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = tiledb_datatype,
+              .tiledb_datatype = dim_tiledb_datatype,
               .dim_max = dim_max,
               .use_current_domain = use_current_domain}});
 
@@ -67,7 +70,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 
         SOMASparseNDArray::create(
             uri,
-            arrow_format,
+            attr_arrow_format,
             ArrowTable(
                 std::move(index_columns.first),
                 std::move(index_columns.second)),
@@ -84,7 +87,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         REQUIRE(soma_sparse->ctx() == ctx);
         REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
         REQUIRE(soma_sparse->is_sparse() == true);
-        REQUIRE(soma_sparse->soma_data_type() == arrow_format);
+        REQUIRE(soma_sparse->soma_data_type() == attr_arrow_format);
         auto schema = soma_sparse->tiledb_schema();
         REQUIRE(schema->has_attribute(attr_name));
         REQUIRE(schema->array_type() == TILEDB_SPARSE);
@@ -103,7 +106,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         std::vector<int64_t> d0(10);
         for (int j = 0; j < 10; j++)
             d0[j] = j;
-        std::vector<int> a0(10, 1);
+        std::vector<int32_t> a0(10, 1);
 
         soma_sparse->open(OpenMode::write);
         soma_sparse->set_column_data(dim_name, d0.size(), d0.data());
@@ -115,9 +118,9 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         while (auto batch = soma_sparse->read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_name)->data<int64_t>();
-            auto a0span = arrbuf->at(attr_name)->data<int>();
+            auto a0span = arrbuf->at(attr_name)->data<int32_t>();
             REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
-            REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
+            REQUIRE(a0 == std::vector<int32_t>(a0span.begin(), a0span.end()));
         }
         soma_sparse->close();
 
@@ -191,16 +194,19 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dataframe-platform-config";
         std::string dim_name = "soma_dim_0";
-        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
-            tiledb_datatype);
+        tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
+        tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
+        std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            dim_tiledb_datatype);
+        std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            attr_tiledb_datatype);
 
         PlatformConfig platform_config;
         platform_config.sparse_nd_array_dim_zstd_level = 6;
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = tiledb_datatype,
+              .tiledb_datatype = dim_tiledb_datatype,
               .dim_max = dim_max,
               .use_current_domain = use_current_domain}});
 
@@ -208,7 +214,7 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
 
         SOMASparseNDArray::create(
             uri,
-            arrow_format,
+            attr_arrow_format,
             ArrowTable(
                 std::move(index_columns.first),
                 std::move(index_columns.second)),
@@ -241,13 +247,16 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
 
         std::string uri = "mem://unit-test-sparse-ndarray";
         std::string dim_name = "soma_dim_0";
-        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
-            tiledb_datatype);
+        tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
+        tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
+        std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            dim_tiledb_datatype);
+        std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            attr_tiledb_datatype);
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = tiledb_datatype,
+              .tiledb_datatype = dim_tiledb_datatype,
               .dim_max = dim_max,
               .use_current_domain = use_current_domain}});
 
@@ -255,7 +264,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
 
         SOMASparseNDArray::create(
             uri,
-            arrow_format,
+            attr_arrow_format,
             ArrowTable(
                 std::move(index_columns.first),
                 std::move(index_columns.second)),

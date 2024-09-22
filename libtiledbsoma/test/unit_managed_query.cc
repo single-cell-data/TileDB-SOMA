@@ -161,7 +161,7 @@ TEST_CASE("ManagedQuery: Select test") {
     auto num_cells = mq.total_num_cells();
     REQUIRE(num_cells == 1);
 
-    REQUIRE_THROWS(mq.data<int>("a1"));
+    REQUIRE_THROWS(mq.data<int32_t>("a1"));
     REQUIRE_THROWS(mq.strings(dim_name));
     REQUIRE_THROWS(mq.string_view("d1", 0));
 
