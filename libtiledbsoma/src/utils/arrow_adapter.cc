@@ -39,58 +39,88 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
+    std::string name_for_log(
+        schema->name == nullptr ? "anonymous" : schema->name);
     if (schema->name != nullptr)
-        LOG_DEBUG(
-            fmt::format("[ArrowAdapter] release_schema for {}", schema->name));
+        LOG_DEBUG(fmt::format(
+            "[ArrowAdapter] release_schema start for {}", schema->name));
 
     if (schema->name != nullptr) {
-        LOG_TRACE("[ArrowAdapter] release_schema schema->name");
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] release_schema schema->name {}", schema->name));
         free((void*)schema->name);
         schema->name = nullptr;
     }
     if (schema->format != nullptr) {
-        LOG_TRACE("[ArrowAdapter] release_schema schema->format");
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] release_schema name {} schema->format {}",
+            name_for_log,
+            schema->format));
         free((void*)schema->format);
         schema->format = nullptr;
     }
     if (schema->metadata != nullptr) {
-        LOG_TRACE("[ArrowAdapter] release_schema schema->metadata");
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] release_schema name {} schema->metadata",
+            name_for_log));
         free((void*)schema->metadata);
         schema->metadata = nullptr;
     }
 
     if (schema->children != nullptr) {
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] release_schema name {} n_children {} begin "
+            "recurse ",
+            name_for_log,
+            schema->n_children));
+
         for (auto i = 0; i < schema->n_children; i++) {
             if (schema->children[i] != nullptr) {
                 if (schema->children[i]->release != nullptr) {
                     LOG_TRACE(fmt::format(
-                        "[ArrowAdapter] release_schema schema->child {} "
+                        "[ArrowAdapter] release_schema name {} schema->child "
+                        "{} "
                         "release",
+                        name_for_log,
                         i));
                     release_schema(schema->children[i]);
                 }
                 LOG_TRACE(fmt::format(
-                    "[ArrowAdapter] release_schema schema->child {} free", i));
+                    "[ArrowAdapter] release_schema name {} schema->child {} "
+                    "free",
+                    name_for_log,
+                    i));
                 free(schema->children[i]);
+                schema->children[i] = nullptr;
             }
         }
-        LOG_TRACE("[ArrowAdapter] release_schema schema->children");
+
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] release_schema name {} n_children {} end recurse ",
+            name_for_log,
+            schema->n_children));
+
         free(schema->children);
         schema->children = nullptr;
     }
 
     if (schema->dictionary != nullptr) {
         if (schema->dictionary->release != nullptr) {
-            LOG_TRACE("[ArrowAdapter] release_schema schema->dict release");
+            LOG_TRACE(fmt::format(
+                "[ArrowAdapter] release_schema name {} schema->dict release",
+                name_for_log));
             release_schema(schema->dictionary);
         }
-        LOG_TRACE("[ArrowAdapter] release_schema schema->dict free");
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] release_schema name {} schema->dict free",
+            name_for_log));
         free(schema->dictionary);
         schema->dictionary = nullptr;
     }
 
     schema->release = nullptr;
-    LOG_TRACE("[ArrowAdapter] release_schema done");
+    LOG_TRACE(fmt::format(
+        "[ArrowAdapter] release_schema name {} done", name_for_log));
 }
 
 void ArrowAdapter::release_array(struct ArrowArray* array) {
@@ -124,6 +154,7 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
                 LOG_TRACE(fmt::format(
                     "[ArrowAdapter] release_schema array->child {} free", i));
                 free(array->children[i]);
+                array->children[i] = nullptr;
             }
         }
         LOG_TRACE("[ArrowAdapter] release_array array->children");
@@ -155,10 +186,19 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
 
     std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");
+    arrow_schema->name = strdup("parent");
+    arrow_schema->metadata = nullptr;
+    arrow_schema->flags = 0;
     arrow_schema->n_children = ndim + nattr;
+    arrow_schema->dictionary = nullptr;
     arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->private_data = nullptr;
+
     arrow_schema->children = (ArrowSchema**)malloc(
         arrow_schema->n_children * sizeof(ArrowSchema*));
+    LOG_DEBUG(fmt::format(
+        "[ArrowAdapter] arrow_schema_from_tiledb_array n_children {}",
+        arrow_schema->n_children));
 
     ArrowSchema* child = nullptr;
 
@@ -172,9 +212,16 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         child->metadata = nullptr;
         child->flags = 0;
         child->n_children = 0;
-        child->dictionary = nullptr;
         child->children = nullptr;
+        child->dictionary = nullptr;
         child->release = &ArrowAdapter::release_schema;
+        child->private_data = nullptr;
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] arrow_schema_from_tiledb_array dim {} name {} "
+            "format {}",
+            i,
+            child->format,
+            child->name));
     }
 
     for (uint32_t i = 0; i < nattr; ++i) {
@@ -185,6 +232,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
             ArrowAdapter::to_arrow_format(attr.type()).data());
         child->name = strdup(attr.name().c_str());
         child->metadata = nullptr;
+        child->flags = 0;
         if (attr.nullable()) {
             child->flags |= ARROW_FLAG_NULLABLE;
         } else {
@@ -193,6 +241,15 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         child->n_children = 0;
         child->children = nullptr;
         child->dictionary = nullptr;
+        child->release = &ArrowAdapter::release_schema;
+        child->private_data = nullptr;
+
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] arrow_schema_from_tiledb_array attr {} name {} "
+            "format {}",
+            i,
+            child->format,
+            child->name));
 
         auto enmr_name = AttributeExperimental::get_enumeration_name(
             *ctx, attr);
@@ -754,7 +811,9 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         auto type = ArrowAdapter::to_tiledb_format(child->format);
 
         LOG_DEBUG(fmt::format(
-            "[ArrowAdapter] schema pass for {}", std::string(child->name)));
+            "[ArrowAdapter] schema pass for child {} name {}",
+            sch_idx,
+            std::string(child->name)));
 
         bool isattr = true;
 
@@ -1260,28 +1319,48 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
 
     if (num_names != num_types) {
         throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter::make_arrow_schema: internal coding error {} != {}",
+            "ArrowAdapter::make_arrow_schema: internal coding error: num_types "
+            "{} != num_names {}",
             num_names,
             num_types));
     }
 
     auto arrow_schema = std::make_unique<ArrowSchema>();
-    arrow_schema->format = "+s";           // structure, i.e. non-leaf node
+    arrow_schema->format = "+s";  // structure, i.e. non-leaf node
+    arrow_schema->name = strdup("parent");
+    arrow_schema->metadata = nullptr;
+    arrow_schema->flags = 0;
     arrow_schema->n_children = num_names;  // non-leaf node
+    arrow_schema->children = (ArrowSchema**)malloc(
+        arrow_schema->n_children * sizeof(ArrowSchema*));
     arrow_schema->dictionary = nullptr;
     arrow_schema->release = &ArrowAdapter::release_schema;
-    arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
+    arrow_schema->private_data = nullptr;
+
+    LOG_DEBUG(fmt::format(
+        "[ArrowAdapter] make_arrow_schema n_children {}",
+        arrow_schema->n_children));
 
     for (int i = 0; i < (int)num_names; i++) {
-        ArrowSchema* dim_schema = new ArrowSchema;
-        dim_schema->name = strdup(names[i].c_str());
+        ArrowSchema* dim_schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         auto arrow_type_name = ArrowAdapter::tdb_to_arrow_type(
             tiledb_datatypes[i]);
+        dim_schema->name = strdup(names[i].c_str());
         dim_schema->format = strdup(arrow_type_name.c_str());
-        dim_schema->n_children = 0;  // leaf node
+        dim_schema->metadata = nullptr;
+        dim_schema->flags = 0;
+        dim_schema->n_children = 0;      // leaf node
+        dim_schema->children = nullptr;  // leaf node
         dim_schema->dictionary = nullptr;
         dim_schema->release = &ArrowAdapter::release_schema;
+        dim_schema->private_data = nullptr;
+
         arrow_schema->children[i] = dim_schema;
+        LOG_TRACE(fmt::format(
+            "[ArrowAdapter] make_arrow_schema child {} format {} name {}",
+            i,
+            dim_schema->format,
+            dim_schema->name));
     }
 
     return arrow_schema;
@@ -1297,16 +1376,30 @@ std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
     arrow_array->null_count = 0;
     arrow_array->offset = 0;
     arrow_array->n_buffers = 0;
-    arrow_array->buffers = nullptr;
-
     arrow_array->n_children = num_columns;
+    arrow_array->buffers = nullptr;
+    arrow_array->dictionary = nullptr;
     arrow_array->release = &ArrowAdapter::release_array;
-    arrow_array->children = new ArrowArray*[num_columns];
+    arrow_array->private_data = nullptr;
+
+    arrow_array->children = (ArrowArray**)malloc(
+        num_columns * sizeof(ArrowArray*));
     for (int i = 0; i < num_columns; i++) {
         arrow_array->children[i] = nullptr;
     }
 
+    LOG_DEBUG(fmt::format(
+        "[ArrowAdapter] make_arrow_array n_children {}",
+        arrow_array->n_children));
+
     return arrow_array;
+}
+
+void ArrowAdapter::log_make_arrow_array_child(ArrowArray* child) {
+    LOG_TRACE(fmt::format(
+        "[ArrowAdapter] make_arrow_array_child length {} n_buffers {}",
+        child->length,
+        child->n_buffers));
 }
 
 void ArrowAdapter::_check_shapes(
