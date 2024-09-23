@@ -280,8 +280,16 @@ class ArrowAdapter {
     template <typename T>
     static ArrowArray* make_arrow_array_child(const std::pair<T, T>& pair) {
         std::vector<T> v({pair.first, pair.second});
-        return make_arrow_array_child<T>(v);
+        ArrowArray* child = make_arrow_array_child<T>(v);
+        return child;
     }
+    /**
+     * Helper for make_arrow_array_child. We need the templating
+     * in the header file so it's instantiated at all callsites.
+     * But fmt::format logging is hard in header files since
+     * #include <logger.h> is relative to the includer, which varies.
+     */
+    static void log_make_arrow_array_child(ArrowArray* child);
 
     static ArrowArray* make_arrow_array_child_string(
         const std::pair<std::string, std::string>& pair) {
@@ -297,8 +305,8 @@ class ArrowAdapter {
                 "failure.");
         }
 
-        // Use new here, not malloc, to match ArrowAdapter::release_array
-        auto arrow_array = new ArrowArray;
+        // Use malloc here, not new, to match ArrowAdapter::release_array
+        auto arrow_array = (ArrowArray*)malloc(sizeof(ArrowArray));
 
         size_t n = v.size();
 
@@ -311,8 +319,10 @@ class ArrowAdapter {
         // * Slot 1 is data, void* but will be derefrenced as T*
         // * There is no offset information
         arrow_array->n_buffers = 2;
-        arrow_array->buffers = new const void*[2];
         arrow_array->n_children = 0;  // leaf/child node
+        arrow_array->buffers = (const void**)malloc(2 * sizeof(void*));
+        arrow_array->children = nullptr;  // leaf/child node
+        arrow_array->dictionary = nullptr;
 
         // The nominal use of these methods as of this writing is for
         // low-volume data such as schema information -- less than a
@@ -322,6 +332,7 @@ class ArrowAdapter {
         // look at zero-copy for buffers, with variable approaches
         // to memory management.
         arrow_array->release = &ArrowAdapter::release_array;
+        arrow_array->private_data = nullptr;
 
         arrow_array->buffers[0] = nullptr;
         // Use malloc here, not new, to match ArrowAdapter::release_array
@@ -330,6 +341,8 @@ class ArrowAdapter {
             dest[i] = v[i];
         }
         arrow_array->buffers[1] = (void*)dest;
+
+        log_make_arrow_array_child(arrow_array);
 
         return arrow_array;
     }
@@ -345,8 +358,8 @@ class ArrowAdapter {
     // We choose the latter.
     static ArrowArray* make_arrow_array_child_string(
         const std::vector<std::string>& v) {
-        // Use new here, not malloc, to match ArrowAdapter::release_array
-        auto arrow_array = new ArrowArray;
+        // Use malloc here, not new, to match ArrowAdapter::release_array
+        auto arrow_array = (ArrowArray*)malloc(sizeof(ArrowArray));
 
         size_t n = v.size();
 
@@ -360,10 +373,13 @@ class ArrowAdapter {
         //   or uint64_t* for Arrow large_string
         // * Slot 2 is data, void* but will be derefrenced as T*
         arrow_array->n_buffers = 3;
-        arrow_array->buffers = new const void*[3];
-        arrow_array->n_children = 0;  // leaf/child node
+        arrow_array->buffers = (const void**)malloc(3 * sizeof(void*));
+        arrow_array->n_children = 0;      // leaf/child node
+        arrow_array->children = nullptr;  // leaf/child node
+        arrow_array->dictionary = nullptr;
 
         arrow_array->release = &ArrowAdapter::release_array;
+        arrow_array->private_data = nullptr;
 
         size_t nbytes = 0;
         for (auto e : v) {
