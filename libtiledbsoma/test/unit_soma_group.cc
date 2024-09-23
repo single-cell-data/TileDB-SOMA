@@ -88,7 +88,7 @@ std::tuple<std::string, uint64_t> create_array(
         domain.add_dimension(dim);
         schema.set_domain(domain);
 
-        auto attr = Attribute::create<int>(ctx, attr_name);
+        auto attr = Attribute::create<int32_t>(ctx, attr_name);
         schema.add_attribute(attr);
         schema.set_allows_dups(allow_duplicates);
         schema.check();

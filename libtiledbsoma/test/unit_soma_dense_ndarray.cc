@@ -49,15 +49,18 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray-basic";
         std::string dim_name = "soma_dim_0";
-        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
-            tiledb_datatype);
+        tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
+        tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
+        std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            dim_tiledb_datatype);
+        std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            attr_tiledb_datatype);
 
         REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
         std::vector<helper::DimInfo> dim_infos(
             {{.name = dim_name,
-              .tiledb_datatype = tiledb_datatype,
+              .tiledb_datatype = dim_tiledb_datatype,
               .dim_max = dim_max,
               .use_current_domain = use_current_domain}});
 
@@ -69,7 +72,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
             REQUIRE_THROWS(SOMADenseNDArray::create(
                 uri,
-                arrow_format,
+                dim_arrow_format,
                 ArrowTable(
                     std::move(index_columns.first),
                     std::move(index_columns.second)),
@@ -79,7 +82,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
         } else {
             SOMADenseNDArray::create(
                 uri,
-                arrow_format,
+                attr_arrow_format,
                 ArrowTable(
                     std::move(index_columns.first),
                     std::move(index_columns.second)),
@@ -96,7 +99,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             REQUIRE(soma_dense->ctx() == ctx);
             REQUIRE(soma_dense->type() == "SOMADenseNDArray");
             REQUIRE(soma_dense->is_sparse() == false);
-            REQUIRE(soma_dense->soma_data_type() == arrow_format);
+            REQUIRE(soma_dense->soma_data_type() == attr_arrow_format);
             auto schema = soma_dense->tiledb_schema();
             REQUIRE(schema->has_attribute("soma_data"));
             REQUIRE(schema->array_type() == TILEDB_DENSE);
@@ -119,7 +122,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             soma_dense->close();
 
             std::vector<int64_t> d0{1, 10};
-            std::vector<int> a0(10, 1);
+            std::vector<int32_t> a0(10, 1);
 
             soma_dense->open(OpenMode::write);
             soma_dense->set_column_data("soma_data", a0.size(), a0.data());
@@ -130,8 +133,9 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             soma_dense->open(OpenMode::read);
             while (auto batch = soma_dense->read_next()) {
                 auto arrbuf = batch.value();
-                auto a0span = arrbuf->at("soma_data")->data<int>();
-                REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
+                auto a0span = arrbuf->at("soma_data")->data<int32_t>();
+                REQUIRE(
+                    a0 == std::vector<int32_t>(a0span.begin(), a0span.end()));
             }
             soma_dense->close();
 

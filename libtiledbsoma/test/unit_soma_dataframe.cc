@@ -236,7 +236,7 @@ TEST_CASE_METHOD(
         std::vector<int64_t> d0(10);
         for (int j = 0; j < 10; j++)
             d0[j] = j;
-        std::vector<int> a0(10, 1);
+        std::vector<uint32_t> a0(10, 1);
 
         soma_dataframe = open(OpenMode::write);
         soma_dataframe->set_column_data(
@@ -250,9 +250,9 @@ TEST_CASE_METHOD(
         while (auto batch = soma_dataframe->read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
-            auto a0span = arrbuf->at(attr_infos[0].name)->data<int>();
+            auto a0span = arrbuf->at(attr_infos[0].name)->data<uint32_t>();
             REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
-            REQUIRE(a0 == std::vector<int>(a0span.begin(), a0span.end()));
+            REQUIRE(a0 == std::vector<uint32_t>(a0span.begin(), a0span.end()));
         }
         soma_dataframe->close();
 
