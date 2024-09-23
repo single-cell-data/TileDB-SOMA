@@ -9,6 +9,7 @@ on:
     paths-ignore:
       - '**.md'
       - 'apis/r/**'
+      - 'docker/**'
       - 'docs/**'
       - '.github/**'
       - '!.github/workflows/python-dependency-variation.yml'

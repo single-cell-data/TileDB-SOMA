@@ -16,6 +16,7 @@ on:
       - '**'
       - '!**.md'
       - '!apis/r/**'
+      - '!docker/**'
       - '!docs/**'
       - '!.github/**'
       - '.github/workflows/python-ci-minimal.yml'
