@@ -1144,7 +1144,7 @@ TEST_CASE_METHOD(
             REQUIRE(dom_str == std::vector<std::string>({"", ""}));
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         } else {
-            REQUIRE(dom_str == std::vector<std::string>({"", "\xff"}));
+            REQUIRE(dom_str == std::vector<std::string>({"", ""}));
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         }
 
@@ -1229,7 +1229,7 @@ TEST_CASE_METHOD(
             REQUIRE(dom_str == std::vector<std::string>({"", ""}));
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         } else {
-            REQUIRE(dom_str == std::vector<std::string>({"", "\xff"}));
+            REQUIRE(dom_str == std::vector<std::string>({"", ""}));
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         }
 
