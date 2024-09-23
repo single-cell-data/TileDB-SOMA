@@ -3,5 +3,5 @@ ruff
 pytest
 pytest-cov
 sparse
-typeguard==4.2.1
+typeguard==4.3.0
 types-setuptools
