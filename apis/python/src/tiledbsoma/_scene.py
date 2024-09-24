@@ -17,17 +17,17 @@ from somacore import (
 from . import _tdb_handles
 from ._collection import Collection, CollectionBase
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
-from ._coordinates import (
-    coordinate_space_from_json,
-    coordinate_space_to_json,
-    transform_from_json,
-    transform_to_json,
-)
 from ._exception import SOMAError
 from ._geometry_dataframe import GeometryDataFrame
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud import PointCloud
 from ._soma_object import AnySOMAObject
+from ._spatial_util import (
+    coordinate_space_from_json,
+    coordinate_space_to_json,
+    transform_from_json,
+    transform_to_json,
+)
 
 
 class Scene(  # type: ignore[misc]  # __eq__ false positive
@@ -117,8 +117,9 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             if isinstance(transform, IdentityTransform):
                 coordinate_space = self.coordinate_space
             else:
+                # mypy false positive https://github.com/python/mypy/issues/5313
                 coordinate_space = CoordinateSpace(
-                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)
+                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
                 )
         else:
             if transform.input_axes != coordinate_space.axis_names:
@@ -167,8 +168,9 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             if isinstance(transform, IdentityTransform):
                 coordinate_space = self.coordinate_space
             else:
+                # mypy false positive https://github.com/python/mypy/issues/5313
                 coordinate_space = CoordinateSpace(
-                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)
+                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
                 )
         else:
             if transform.input_axes != coordinate_space.axis_names:

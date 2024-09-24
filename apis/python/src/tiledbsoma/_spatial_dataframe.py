@@ -23,7 +23,7 @@ from ._types import Slice, is_slice_of
 _UNBATCHED = options.BatchSize()
 
 
-class SpatialDataFrame(SOMAArray, somacore.SpatialDataFrame):
+class SpatialDataFrame(SOMAArray):
     """TODO Add documentation."""
 
     __slots__ = ()

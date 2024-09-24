@@ -356,8 +356,9 @@ def _write_visium_data_to_experiment_uri(
         )
 
     # Create axes and transformations
+    # mypy false positive https://github.com/python/mypy/issues/5313
     coord_space = CoordinateSpace(
-        (Axis(name="x", units="pixels"), Axis(name="y", units="pixels"))
+        (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels"))  # type: ignore[arg-type]
     )
 
     with Experiment.open(uri, mode="r", context=context) as exp:
