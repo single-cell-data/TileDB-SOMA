@@ -340,6 +340,12 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
                     f"match the axes '{region_coord_space.axis_names}' of the "
                     f"coordinate space the requested region is defined in."
                 )
+            if transform.output_axes != self._coord_space.axis_names:
+                raise ValueError(
+                    f"The output axes of '{transform.output_axes}' of the transform "
+                    f"must match the axes '{self._coord_space.axis_names}' of the "
+                    f"coordinate space of this point cloud."
+                )
 
         # Process the user provided region.
         coords, data_region, inv_transform = process_spatial_df_region(
