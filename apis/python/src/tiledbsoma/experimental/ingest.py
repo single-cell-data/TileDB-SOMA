@@ -374,12 +374,12 @@ def _write_visium_data_to_experiment_uri(
 
     # Add spatial information to the experiment.
     with Experiment.open(uri, mode="w", context=context) as exp:
-        spatial_uri = f"{uri}/spatial"
+        spatial_uri = _util.uri_joinpath(uri, "spatial")
         with _create_or_open_collection(
             Collection[Scene], spatial_uri, **ingest_ctx
         ) as spatial:
             _maybe_set(exp, "spatial", spatial, use_relative_uri=use_relative_uri)
-            scene_uri = f"{spatial_uri}/{scene_name}"
+            scene_uri = _util.uri_joinpath(spatial_uri, scene_name)
             with _create_or_open_collection(Scene, scene_uri, **ingest_ctx) as scene:
                 _maybe_set(
                     spatial, scene_name, scene, use_relative_uri=use_relative_uri
@@ -387,7 +387,7 @@ def _write_visium_data_to_experiment_uri(
                 scene.coordinate_space = coord_space
 
                 # Write image data and add to the scene.
-                img_uri = f"{scene_uri}/img"
+                img_uri = _util.uri_joinpath(scene_uri, "img")
                 with _create_or_open_collection(
                     Collection[MultiscaleImage], img_uri, **ingest_ctx
                 ) as img:
@@ -396,7 +396,7 @@ def _write_visium_data_to_experiment_uri(
                         x is not None
                         for x in (input_hires, input_lowres, input_fullres)
                     ):
-                        tissue_uri = f"{img_uri}/{image_name}"
+                        tissue_uri = _util.uri_joinpath(img_uri, image_name)
                         with MultiscaleImage.create(
                             tissue_uri,
                             image_type="YXC",
@@ -427,13 +427,13 @@ def _write_visium_data_to_experiment_uri(
                                 IdentityTransform(("x", "y"), ("x", "y")),
                             )
 
-                obsl_uri = f"{scene_uri}/obsl"
+                obsl_uri = _util.uri_joinpath(scene_uri, "obsl")
                 with _create_or_open_collection(
                     Collection[AnySOMAObject], obsl_uri, **ingest_ctx
                 ) as obsl:
                     _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
 
-                    loc_uri = f"{obsl_uri}/loc"
+                    loc_uri = _util.uri_joinpath(obsl_uri, "loc")
                     # Write spot data and add to the scene.
                     with _write_visium_spots(
                         loc_uri,
@@ -448,7 +448,7 @@ def _write_visium_data_to_experiment_uri(
                             "loc", IdentityTransform(("x", "y"), ("x", "y"))
                         )
 
-                varl_uri = f"{scene_uri}/varl"
+                varl_uri = _util.uri_joinpath(scene_uri, "varl")
                 with _create_or_open_collection(
                     Collection[Collection[AnySOMAObject]], varl_uri, **ingest_ctx
                 ) as varl:
@@ -456,7 +456,7 @@ def _write_visium_data_to_experiment_uri(
 
         # Create the obs presence matrix.
         if write_obs_spatial_presence:
-            obs_spatial_presence_uri = f"{uri}/obs_spatial_presence"
+            obs_spatial_presence_uri = _util.uri_joinpath(uri, "obs_spatial_presence")
             obs_spatial_presence = _write_scene_presence_dataframe(
                 obs_id, scene_name, obs_spatial_presence_uri, **ingest_ctx
             )
@@ -467,8 +467,9 @@ def _write_visium_data_to_experiment_uri(
                 use_relative_uri=use_relative_uri,
             )
         if write_var_spatial_presence:
-            var_spatial_presence_uri = (
-                f"{uri}/ms/{measurement_name}/var_spatial_presence"
+            var_spatial_presence_uri = _util.uri_joinpath(
+                _util.uri_joinpath(_util.uri_joinpath(uri, "ms"), measurement_name),
+                "var_spatial_presence",
             )
             var_spatial_presence = _write_scene_presence_dataframe(
                 var_id, scene_name, var_spatial_presence_uri, **ingest_ctx
