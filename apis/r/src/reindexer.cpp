@@ -1,4 +1,5 @@
 #include <Rcpp/Lightest>  // for R interface to C++
+
 #include <RcppInt64>      // for fromInteger64
 
 #include <tiledbsoma/tiledbsoma>

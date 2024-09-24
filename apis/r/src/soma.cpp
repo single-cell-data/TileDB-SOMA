@@ -1,5 +1,6 @@
-#include <nanoarrow/r.h>  // for C/C++ interface to Arrow (via header exported from the R package)
 #include <Rcpp/Lighter>             // for R interface to C++
+
+#include <nanoarrow/r.h>  // for C/C++ interface to Arrow (via header exported from the R package)
 #include <RcppInt64>                // for fromInteger64
 #include <nanoarrow/nanoarrow.hpp>  // for C/C++ interface to Arrow (vendored)
 

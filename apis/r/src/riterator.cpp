@@ -20,35 +20,43 @@
 
 namespace tdbs = tiledbsoma;
 
+// clang-format off
 //' Iterator-Style Access to SOMA Array via SOMAArray
 //'
-//' The `sr_*` functions provide low-level access to an instance of the
-//SOMAArray ' class so that iterative access over parts of a (large) array is
-//possible. ' \describe{ '   \item{\code{sr_setup}}{instantiates and by default
-//also submits a query} '   \item{\code{sr_complete}}{checks if more data is
-//available} '   \item{\code{sr_next}}{returns the next chunk} ' }
+//' The `sr_*` functions provide low-level access to an instance of the SOMAArray
+//' class so that iterative access over parts of a (large) array is possible.
+//' \describe{
+//'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
+//'   \item{\code{sr_complete}}{checks if more data is available}
+//'   \item{\code{sr_next}}{returns the next chunk}
+//' }
 //'
 //' @param uri Character value with URI path to a SOMA data set
-//' @param config Named chracter vector with \sQuote{key} and \sQuote{value}
-//pairs ' used as TileDB config parameters. ' @param colnames Optional vector of
-//character value with the name of the columns to retrieve ' @param qc Optional
-//external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL}
-//i.e. ' no query condition ' @param dim_points Optional named list with vector
-//of data points to select on the given ' dimension(s). Each dimension can be
-//one entry in the list. ' @param dim_ranges Optional named list with two-column
-//matrix where each row select a range ' for the given dimension. Each dimension
-//can be one entry in the list. ' @param batch_size Optional argument for size
-//of data batches, defaults to \sQuote{auto} ' @param result_order Optional
-//argument for query result order, defaults to \sQuote{auto} ' @param loglevel
-//Character value with the desired logging level, defaults to \sQuote{auto} '
-//which lets prior setting prevail, any other value is set as new logging level.
-//' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start and
-//end of ' interval for which data is considered. ' @param sr An external
-//pointer to a TileDB SOMAArray object
+//' @param config Named chracter vector with \sQuote{key} and \sQuote{value} pairs
+//' used as TileDB config parameters.
+//' @param colnames Optional vector of character value with the name of the
+//' columns to retrieve
+//' @param qc Optional external Pointer object to TileDB Query Condition,
+//' defaults to \sQuote{NULL} i.e. no query condition
+//' @param dim_points Optional named list with vector of data points to select
+//' on the given dimension(s). Each dimension can be one entry in the list.
+//' @param dim_ranges Optional named list with two-column matrix where each row
+//' select a range for the given dimension. Each dimension can be one entry in
+//'the list.
+//' @param batch_size Optional argument for size of data batches, defaults to
+//'\sQuote{auto}
+//' @param result_order Optional argument for query result order, defaults to
+//' \sQuote{auto}
+//' @param loglevel Character value with the desired logging level, defaults to
+//' \sQuote{auto} which lets prior setting prevail, any other value is set as
+//new logging level.
+//' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start
+//' and end of ' interval for which data is considered.
+//' @param sr An external pointer to a TileDB SOMAArray object.
 //'
 //' @return \code{sr_setup} returns an external pointer to a SOMAArray.
-//\code{sr_complete} ' returns a boolean, and \code{sr_next} returns an Arrow
-//array helper object.
+//' \code{sr_complete} ' returns a boolean, and \code{sr_next} returns an Arrow
+//' array helper object.
 //'
 //' @examples
 //' \dontrun{
@@ -64,6 +72,7 @@ namespace tdbs = tiledbsoma;
 //' summary(rl)
 //' }
 //' @noRd
+// clang-format on
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
     const std::string& uri,
