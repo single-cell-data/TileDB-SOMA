@@ -1,20 +1,21 @@
-#include <Rcpp/Lighter>                         // for R interface to C++
-#include <nanoarrow/r.h>                        // for C/C++ interface to Arrow (via header exported from the R package)
-#include <nanoarrow/nanoarrow.hpp>              // for C/C++ interface to Arrow (vendored)
-#include <RcppInt64>                            // for fromInteger64
+#include <nanoarrow/r.h>  // for C/C++ interface to Arrow (via header exported from the R package)
+#include <Rcpp/Lighter>             // for R interface to C++
+#include <RcppInt64>                // for fromInteger64
+#include <nanoarrow/nanoarrow.hpp>  // for C/C++ interface to Arrow (vendored)
 
-#include <tiledbsoma/tiledbsoma>
 #include <tiledbsoma/reindexer/reindexer.h>
+#include <tiledbsoma/tiledbsoma>
 
-#include "rutilities.h"         				// local declarations
-#include "xptr-utils.h"         				// xptr taggging utilities
+#include "rutilities.h"  // local declarations
+#include "xptr-utils.h"  // xptr taggging utilities
 
 namespace tdbs = tiledbsoma;
 
-void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSchema& sp) {
+void _show_content(
+    const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSchema& sp) {
     int n = sp.get()->n_children;
     ArrowError ec;
-    for (auto i=0; i<n; i++) {
+    for (auto i = 0; i < n; i++) {
         Rcpp::Rcout << " " << sp.get()->children[i]->name << " : ";
 
         nanoarrow::UniqueArrayView col;
@@ -22,22 +23,22 @@ void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSche
         ArrowArrayViewSetArray(col.get(), ap.get()->children[i], &ec);
 
         int m = col.get()->length;
-        for (auto j=0; j<m; j++)
+        for (auto j = 0; j < m; j++)
             Rcpp::Rcout << ArrowArrayViewGetDoubleUnsafe(col.get(), j) << " ";
         Rcpp::Rcout << std::endl;
     }
 }
 
 // [[Rcpp::export]]
-Rcpp::XPtr<somactx_wrap_t> createSOMAContext(Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
-
+Rcpp::XPtr<somactx_wrap_t> createSOMAContext(
+    Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     // if we hae a config, use it
     std::shared_ptr<tdbs::SOMAContext> somactx;
     if (config.isNotNull()) {
         std::map<std::string, std::string> smap;
         auto config_vec = config.as();
         auto config_names = Rcpp::as<Rcpp::CharacterVector>(config_vec.names());
-        for (auto &name : config_names) {
+        for (auto& name : config_names) {
             std::string param = Rcpp::as<std::string>(name);
             std::string value = Rcpp::as<std::string>(config_vec[param]);
             smap[param] = value;
@@ -52,24 +53,30 @@ Rcpp::XPtr<somactx_wrap_t> createSOMAContext(Rcpp::Nullable<Rcpp::CharacterVecto
     return xp;
 }
 
-
 //  ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
-//  Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p, false);
+//  Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(ctxwrap_p,
+//  false);
 
 // [[Rcpp::export]]
-void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray nadimap, naxpSchema nadimsp,
-                           bool sparse, std::string datatype, Rcpp::List pclst, Rcpp::XPtr<somactx_wrap_t> ctxxp,
-                           Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
-
-    //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
-    //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
+void createSchemaFromArrow(
+    const std::string& uri,
+    naxpSchema nasp,
+    naxpArray nadimap,
+    naxpSchema nadimsp,
+    bool sparse,
+    std::string datatype,
+    Rcpp::List pclst,
+    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+    Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
+    // struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
+    // struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
-    // or
-    // auto ap = nanoarrow_array_from_xptr(naap);
-    // auto sp = nanoarrow_schema_from_xptr(nasp);
+    //  or
+    //  auto ap = nanoarrow_array_from_xptr(naap);
+    //  auto sp = nanoarrow_schema_from_xptr(nasp);
     //
-    // or:
-    //nanoarrow::UniqueArray ap{nanoarrow_array_from_xptr(naap)};
+    //  or:
+    // nanoarrow::UniqueArray ap{nanoarrow_array_from_xptr(naap)};
     nanoarrow::UniqueSchema sp{nanoarrow_schema_from_xptr(nasp)};
     //_show_content(ap, sp);
     nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
@@ -85,19 +92,22 @@ void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray na
     apdim.move(dimarr.get());
 
     tdbs::PlatformConfig pltcfg;
-    pltcfg.dataframe_dim_zstd_level       = Rcpp::as<int>(pclst["dataframe_dim_zstd_level"]);
-    pltcfg.sparse_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["sparse_nd_array_dim_zstd_level"]);
-    pltcfg.dense_nd_array_dim_zstd_level  = Rcpp::as<int>(pclst["dense_nd_array_dim_zstd_level"]);
-    pltcfg.write_X_chunked                = Rcpp::as<bool>(pclst["write_X_chunked"]);
-    pltcfg.goal_chunk_nnz                 = Rcpp::as<double>(pclst["goal_chunk_nnz"]);
-    pltcfg.capacity                       = Rcpp::as<double>(pclst["capacity"]);
-    pltcfg.offsets_filters                = Rcpp::as<std::string>(pclst["offsets_filters"]);
-    pltcfg.validity_filters               = Rcpp::as<std::string>(pclst["validity_filters"]);
-    pltcfg.allows_duplicates              = Rcpp::as<bool>(pclst["allows_duplicates"]);
-    pltcfg.cell_order                     = Rcpp::as<std::string>(pclst["cell_order"]);
-    pltcfg.tile_order                     = Rcpp::as<std::string>(pclst["tile_order"]);
-    pltcfg.attrs                          = Rcpp::as<std::string>(pclst["attrs"]);
-    pltcfg.dims                           = Rcpp::as<std::string>(pclst["dims"]);
+    pltcfg.dataframe_dim_zstd_level = Rcpp::as<int>(
+        pclst["dataframe_dim_zstd_level"]);
+    pltcfg.sparse_nd_array_dim_zstd_level = Rcpp::as<int>(
+        pclst["sparse_nd_array_dim_zstd_level"]);
+    pltcfg.dense_nd_array_dim_zstd_level = Rcpp::as<int>(
+        pclst["dense_nd_array_dim_zstd_level"]);
+    pltcfg.write_X_chunked = Rcpp::as<bool>(pclst["write_X_chunked"]);
+    pltcfg.goal_chunk_nnz = Rcpp::as<double>(pclst["goal_chunk_nnz"]);
+    pltcfg.capacity = Rcpp::as<double>(pclst["capacity"]);
+    pltcfg.offsets_filters = Rcpp::as<std::string>(pclst["offsets_filters"]);
+    pltcfg.validity_filters = Rcpp::as<std::string>(pclst["validity_filters"]);
+    pltcfg.allows_duplicates = Rcpp::as<bool>(pclst["allows_duplicates"]);
+    pltcfg.cell_order = Rcpp::as<std::string>(pclst["cell_order"]);
+    pltcfg.tile_order = Rcpp::as<std::string>(pclst["tile_order"]);
+    pltcfg.attrs = Rcpp::as<std::string>(pclst["attrs"]);
+    pltcfg.dims = Rcpp::as<std::string>(pclst["dims"]);
 
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
@@ -115,7 +125,8 @@ void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray na
     } else if (datatype == "SOMADenseNDArray") {
         exists = tdbs::SOMADenseNDArray::exists(uri, sctx);
     } else {
-        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
+        Rcpp::stop(
+            tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
     }
 
     if (exists) {
@@ -123,48 +134,63 @@ void createSchemaFromArrow(const std::string& uri, naxpSchema nasp, naxpArray na
     }
 
     if (datatype == "SOMADataFrame") {
-        tdbs::SOMADataFrame::create(uri, std::move(schema),
-                                    std::pair(std::move(dimarr), std::move(dimsch)),
-                                    sctx, pltcfg, tsrng);
+        tdbs::SOMADataFrame::create(
+            uri,
+            std::move(schema),
+            std::pair(std::move(dimarr), std::move(dimsch)),
+            sctx,
+            pltcfg,
+            tsrng);
     } else if (datatype == "SOMASparseNDArray") {
-        // for arrays n_children will be three as we have two dims and a data col
-        std::string datacoltype = sp->children[sp->n_children-1]->format;
-        tdbs::SOMASparseNDArray::create(uri, datacoltype,
-                                        std::pair(std::move(dimarr), std::move(dimsch)),
-                                        sctx, pltcfg, tsrng);
+        // for arrays n_children will be three as we have two dims and a data
+        // col
+        std::string datacoltype = sp->children[sp->n_children - 1]->format;
+        tdbs::SOMASparseNDArray::create(
+            uri,
+            datacoltype,
+            std::pair(std::move(dimarr), std::move(dimsch)),
+            sctx,
+            pltcfg,
+            tsrng);
     } else if (datatype == "SOMADenseNDArray") {
-        // for arrays n_children will be three as we have two dims and a data col
-        std::string datacoltype = sp->children[sp->n_children-1]->format;
-        tdbs::SOMADenseNDArray::create(uri, datacoltype,
-                                       std::pair(std::move(dimarr), std::move(dimsch)),
-                                       sctx, pltcfg, tsrng);
+        // for arrays n_children will be three as we have two dims and a data
+        // col
+        std::string datacoltype = sp->children[sp->n_children - 1]->format;
+        tdbs::SOMADenseNDArray::create(
+            uri,
+            datacoltype,
+            std::pair(std::move(dimarr), std::move(dimsch)),
+            sctx,
+            pltcfg,
+            tsrng);
     } else {
-        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
+        Rcpp::stop(
+            tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
     }
-
 }
 
-
 // [[Rcpp::export]]
-void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp,
-                         Rcpp::XPtr<somactx_wrap_t> ctxxp,
-                         const std::string arraytype = "",
-                         Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
-                         Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
-
-    //struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
-    //struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
+void writeArrayFromArrow(
+    const std::string& uri,
+    naxpArray naap,
+    naxpSchema nasp,
+    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+    const std::string arraytype = "",
+    Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
+    Rcpp::Nullable<Rcpp::DatetimeVector> tsvec = R_NilValue) {
+    // struct ArrowArray* ap = (struct ArrowArray*) R_ExternalPtrAddr(naap);
+    // struct ArrowSchema* sp = (struct ArrowSchema*) R_ExternalPtrAddr(nasp);
     //
-    // or
-    // auto ap = nanoarrow_array_from_xptr(naap);
-    // auto sp = nanoarrow_schema_from_xptr(nasp);
+    //  or
+    //  auto ap = nanoarrow_array_from_xptr(naap);
+    //  auto sp = nanoarrow_schema_from_xptr(nasp);
     //
-    // or:
+    //  or:
     nanoarrow::UniqueArray ap{nanoarrow_array_from_xptr(naap)};
     nanoarrow::UniqueSchema sp{nanoarrow_schema_from_xptr(nasp)};
 
-    // now move nanoarrow unique arrays (created from objects handed from R) into
-    // proper unique pointers to arrow schema and array
+    // now move nanoarrow unique arrays (created from objects handed from R)
+    // into proper unique pointers to arrow schema and array
     auto schema = std::make_unique<ArrowSchema>();
     sp.move(schema.get());
     auto array = std::make_unique<ArrowArray>();
@@ -180,8 +206,9 @@ void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp
     // if (config.isNotNull()) {
     //     std::map<std::string, std::string> smap;
     //     auto config_vec = config.as();
-    //     auto config_names = Rcpp::as<Rcpp::CharacterVector>(config_vec.names());
-    //     for (auto &name : config_names) {
+    //     auto config_names =
+    //     Rcpp::as<Rcpp::CharacterVector>(config_vec.names()); for (auto &name
+    //     : config_names) {
     //         std::string param = Rcpp::as<std::string>(name);
     //         std::string value = Rcpp::as<std::string>(config_vec[param]);
     //         smap[param] = value;
@@ -196,14 +223,35 @@ void writeArrayFromArrow(const std::string& uri, naxpArray naap, naxpSchema nasp
 
     std::shared_ptr<tdbs::SOMAArray> arrup;
     if (arraytype == "SOMADataFrame") {
-        arrup = tdbs::SOMADataFrame::open(OpenMode::write, uri, somactx, "unnamed", {},
-                                          "auto", ResultOrder::automatic, tsrng);
+        arrup = tdbs::SOMADataFrame::open(
+            OpenMode::write,
+            uri,
+            somactx,
+            "unnamed",
+            {},
+            "auto",
+            ResultOrder::automatic,
+            tsrng);
     } else if (arraytype == "SOMADenseNDArray") {
-        arrup = tdbs::SOMADenseNDArray::open(OpenMode::write, uri, somactx, "unnamed", {},
-                                             "auto", ResultOrder::colmajor, tsrng);
+        arrup = tdbs::SOMADenseNDArray::open(
+            OpenMode::write,
+            uri,
+            somactx,
+            "unnamed",
+            {},
+            "auto",
+            ResultOrder::colmajor,
+            tsrng);
     } else if (arraytype == "SOMASparseNDArray") {
-        arrup = tdbs::SOMASparseNDArray::open(OpenMode::write, uri, somactx, "unnamed", {},
-                                              "auto", ResultOrder::automatic, tsrng);
+        arrup = tdbs::SOMASparseNDArray::open(
+            OpenMode::write,
+            uri,
+            somactx,
+            "unnamed",
+            {},
+            "auto",
+            ResultOrder::automatic,
+            tsrng);
     } else {  // not reached
         Rcpp::stop(tfm::format("Unexpected array type '%s'", arraytype));
     }
