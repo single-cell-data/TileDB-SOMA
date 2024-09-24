@@ -456,6 +456,12 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                     "The number of output coordinates must match the number of "
                     "input coordinates."
                 )
+            if transform.output_axes != self._coord_space.axis_names:
+                raise ValueError(
+                    f"The output axes of '{transform.output_axes}' of the transform "
+                    f"must match the axes '{self._coord_space.axis_names}' of the "
+                    f"coordinate space of this multiscale image."
+                )
             transform = group_to_level @ transform
             assert isinstance(transform, ScaleTransform)
 
