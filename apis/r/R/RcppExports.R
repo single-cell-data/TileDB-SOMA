@@ -192,6 +192,10 @@ has_current_domain <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_has_current_domain`, uri, ctxxp)
 }
 
+ndim <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_ndim`, uri, ctxxp)
+}
+
 resize <- function(uri, new_shape, ctxxp) {
     invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, ctxxp))
 }
