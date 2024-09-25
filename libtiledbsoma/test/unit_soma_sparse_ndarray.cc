@@ -150,6 +150,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             soma_sparse->close();
 
             soma_sparse->open(OpenMode::read);
+            REQUIRE(soma_sparse->has_current_domain());
             soma_sparse->close();
 
             soma_sparse->open(OpenMode::write);
