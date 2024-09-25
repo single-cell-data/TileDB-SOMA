@@ -928,7 +928,40 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     //
                     // Fortunately, these are ASCII dims and we can range
                     // these accordingly.
-                    ndrect.set_range(col_name, "", "\xff");
+
+                    ArrowArray* child_array = index_column_array->children[i];
+                    ArrowSchema* child_schema = index_column_schema
+                                                    ->children[i];
+
+                    std::vector<std::string>
+                        strings = ArrowAdapter::get_array_string_column(
+                            child_array, child_schema);
+                    if (strings.size() != 5) {
+                        throw TileDBSOMAError(fmt::format(
+                            "ArrowAdapter::tiledb_schema_from_arrow_schema: "
+                            "internal error: "
+                            "expected 5 strings, got {}",
+                            strings.size()));
+                    }
+
+                    std::string lo = strings[3];
+                    std::string hi = strings[4];
+                    if (lo == "" && hi == "") {
+                        // These mean "I the caller don't care, you
+                        // libtiledbsoma make it as big as possible"
+                        ndrect.set_range(col_name, "", "\xff");
+                    } else {
+                        ndrect.set_range(col_name, lo, hi);
+                        LOG_DEBUG(fmt::format(
+                            "[ArrowAdapter] index_column_info nbuf {}",
+                            index_column_array->children[i]->n_buffers));
+                    }
+
+                    LOG_DEBUG(fmt::format(
+                        "[ArrowAdapter] current domain {} \"{}\"-\"{}\"",
+                        child_schema->name,
+                        lo,
+                        hi));
                 } else {
                     const void* buff = index_column_array->children[i]
                                            ->buffers[1];
