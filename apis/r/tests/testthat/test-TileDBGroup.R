@@ -126,28 +126,28 @@ test_that("Non-relative paths", {
 test_that("Metadata", {
   uri <- file.path(withr::local_tempdir(), "group-metadata")
   group <- TileDBGroup$new(uri, internal_use_only = "allowed_use")
-  expect_error(group$set_metadata(list(int_column = "bar")), "Item must be open for write.")
+  expect_error(group$set_metadata(list(int_column = "float_column")), "Item must be open for write.")
 
   group$create(internal_use_only = "allowed_use")
 
-  md <- list(string_column = "qux", int_column = "bar")
+  md <- list(string_column = "qux", int_column = "float_column")
   group$open("WRITE", internal_use_only = "allowed_use") # but be open for write
   group$set_metadata(md)
 
   # Read all metadata while the group is still open for write
-  expect_equivalent(group$get_metadata("int_column"), "bar")
+  expect_equivalent(group$get_metadata("int_column"), "float_column")
   expect_equivalent(group$get_metadata("string_column"), "qux")
 
   readmd <- group$get_metadata()
   expect_equivalent(readmd[["string_column"]], "qux")
-  expect_equivalent(readmd[["int_column"]], "bar")
+  expect_equivalent(readmd[["int_column"]], "float_column")
   group$close()
 
   # Read all metadata while the group is open for read
   group$open(mode = "READ", internal_use_only = "allowed_use")
   readmd <- group$get_metadata()
   expect_equivalent(readmd[["string_column"]], "qux")
-  expect_equivalent(readmd[["int_column"]], "bar")
+  expect_equivalent(readmd[["int_column"]], "float_column")
 
   group$close()
 })

@@ -21,7 +21,7 @@ test_that("SOMADataFrame shape", {
 
     tbl0 <- arrow::arrow_table(int_column = 1L:4L,
                                soma_joinid = 1L:4L,
-                               bar = 1.1:4.1,
+                               float_column = 1.1:4.1,
                                string_column = c("apple", "ball", "cat", "dog"),
                                schema = asch)
 

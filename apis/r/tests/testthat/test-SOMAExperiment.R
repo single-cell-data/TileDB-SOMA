@@ -78,8 +78,8 @@ test_that("Update obs and var", {
   tbl_var0 <- exp$ms$get("RNA")$var$read()$concat()
 
   # obs: drop an existing column and add a new one
-  tbl_obs0$qux <- tbl_obs0$bar
-  tbl_obs0$bar <- NULL
+  tbl_obs0$qux <- tbl_obs0$float_column
+  tbl_obs0$float_column <- NULL
 
   exp <- SOMAExperimentOpen(uri, "WRITE")
   exp$update_obs(tbl_obs0)

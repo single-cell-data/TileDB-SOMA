@@ -98,8 +98,8 @@ test_that("Validating arrow schema data type compatibility", {
   expect_true(check_arrow_schema_data_types(from, to))
 
   # Add incompatible fields
-  from$bar <- arrow::int16()
-  to$bar <- arrow::float16()
+  from$float_column <- arrow::int16()
+  to$float_column <- arrow::float16()
   expect_error(
     check_arrow_schema_data_types(from, to),
     "Schemas are incompatible"

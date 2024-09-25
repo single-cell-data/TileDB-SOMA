@@ -1,6 +1,6 @@
 # Verify that the TileDBCreateOptions takes a NULL or a PlatformConfig
 test_that("TileDBCreateOptions construction", {
-  expect_error(TileDBCreateOptions$new(c(int_column = "bar")))
+  expect_error(TileDBCreateOptions$new(c(int_column = "float_column")))
 
   tdco <- TileDBCreateOptions$new(NULL)
 
@@ -112,19 +112,19 @@ test_that("TileDBCreateOptions cell_tile_orders", {
   # expect_equal(tdco$cell_tile_orders(), c(cell_order = 'int_column', tile_order = NULL))
 
   cfg <- PlatformConfig$new()
-  cfg$set('tiledb', 'create', 'tile_order', 'bar')
+  cfg$set('tiledb', 'create', 'tile_order', 'float_column')
   tdco <- TileDBCreateOptions$new(cfg)
   expect_equal(
     tdco$cell_tile_orders(),
-    c(cell_order = .CREATE_DEFAULTS$cell_order, tile_order = 'bar')
+    c(cell_order = .CREATE_DEFAULTS$cell_order, tile_order = 'float_column')
   )
-  # expect_equal(tdco$cell_tile_orders(), c(cell_order = NULL, tile_order = 'bar'))
+  # expect_equal(tdco$cell_tile_orders(), c(cell_order = NULL, tile_order = 'float_column'))
 
   cfg <- PlatformConfig$new()
   cfg$set('tiledb', 'create', 'cell_order', 'int_column')
-  cfg$set('tiledb', 'create', 'tile_order', 'bar')
+  cfg$set('tiledb', 'create', 'tile_order', 'float_column')
   tdco <- TileDBCreateOptions$new(cfg)
-  expect_equal(tdco$cell_tile_orders(), c(cell_order = 'int_column', tile_order = 'bar'))
+  expect_equal(tdco$cell_tile_orders(), c(cell_order = 'int_column', tile_order = 'float_column'))
 })
 
 test_that("TileDBCreateOptions dim_tile", {

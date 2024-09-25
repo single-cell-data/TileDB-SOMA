@@ -26,7 +26,7 @@ test_that("Basic mechanics", {
 
   tbl0 <- arrow::arrow_table(int_column = 1L:36L,
                              soma_joinid = 1L:36L,
-                             bar = 1.1:36.1,
+                             float_column = 1.1:36.1,
                              string_column = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
                                      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
                                      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
@@ -61,7 +61,7 @@ test_that("Basic mechanics", {
   sdf <- SOMADataFrameOpen(uri, mode = "WRITE")
   rb0 <- arrow::record_batch(int_column = 1L:36L,
                              soma_joinid = 1L:36L,
-                             bar = 1.1:36.1,
+                             float_column = 1.1:36.1,
                              string_column = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
                                      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
                                      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
@@ -97,12 +97,12 @@ test_that("Basic mechanics", {
     "'column_names' must only contain valid dimension or attribute columns"
   )
 
-  tbl1 <- sdf$read(column_names = "bar")$concat()
+  tbl1 <- sdf$read(column_names = "float_column")$concat()
   expect_true(tbl1$Equals(tbl0$SelectColumns(2L)))
 
   # Attribute filters
-  tbl1 <- sdf$read(value_filter = "bar < 5")$concat()
-  expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
+  tbl1 <- sdf$read(value_filter = "float_column < 5")$concat()
+  expect_true(tbl1$Equals(tbl0$Filter(tbl0$float_column < 5)))
 
   # Validate TileDB array schema
   arr <- tiledb::tiledb_array(uri)
@@ -145,7 +145,7 @@ test_that("Basic mechanics with default index_column_names", {
 
   tbl0 <- arrow::arrow_table( soma_joinid = 1L:36L,
                              int_column = 1L:36L,
-                             bar = 1.1:36.1,
+                             float_column = 1.1:36.1,
                              string_column = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
                                      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
                                      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
@@ -549,23 +549,23 @@ test_that("Metadata", {
   asch <- create_arrow_schema()
   sdf <- SOMADataFrameCreate(uri, asch)
 
-  md <- list(string_column = "qux", int_column = "bar")
+  md <- list(string_column = "qux", int_column = "float_column")
   sdf$set_metadata(md)
 
   # Read all metadata while the sdf is still open for write
-  expect_equivalent(sdf$get_metadata("int_column"), "bar")
+  expect_equivalent(sdf$get_metadata("int_column"), "float_column")
   expect_equivalent(sdf$get_metadata("string_column"), "qux")
 
   readmd <- sdf$get_metadata()
   expect_equivalent(readmd[["string_column"]], "qux")
-  expect_equivalent(readmd[["int_column"]], "bar")
+  expect_equivalent(readmd[["int_column"]], "float_column")
   sdf$close()
 
   # Read all metadata while the sdf is open for read
   sdf <- SOMADataFrameOpen(uri)
   readmd <- sdf$get_metadata()
   expect_equivalent(readmd[["string_column"]], "qux")
-  expect_equivalent(readmd[["int_column"]], "bar")
+  expect_equivalent(readmd[["int_column"]], "float_column")
   sdf$close()
 })
 
@@ -622,7 +622,7 @@ test_that("SOMADataFrame can be updated", {
   tbl0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
 
   # Remove a column and update
-  tbl0$bar <- NULL
+  tbl0$float_column <- NULL
   sdf <- SOMADataFrameOpen(uri, "WRITE")$update(tbl0)
 
   # Verify attribute was removed on disk
@@ -630,7 +630,7 @@ test_that("SOMADataFrame can be updated", {
   expect_true(tbl1$Equals(tbl0))
 
   # # Add a new column and update
-  tbl0$bar <- sample(c(TRUE, FALSE), nrow(tbl0), replace = TRUE)
+  tbl0$float_column <- sample(c(TRUE, FALSE), nrow(tbl0), replace = TRUE)
   sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0)
 
   # Verify attribute was added on disk
@@ -751,9 +751,9 @@ test_that("SOMADataFrame can be updated from a data frame", {
   df0 <- as.data.frame(df0)
   rownames(df0) <- df0$string_column
   df0$string_column <- NULL
-  df0$bar <- NULL
+  df0$float_column <- NULL
 
-  # Update to drop 'bar' from the array and retrieve string_column values from row names
+  # Update to drop 'float_column' from the array and retrieve string_column values from row names
   expect_silent(
     SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "string_column")
   )

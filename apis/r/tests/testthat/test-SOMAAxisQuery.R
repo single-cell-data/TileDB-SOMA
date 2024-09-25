@@ -31,7 +31,7 @@ test_that("SOMAAxisQuery", {
     "'value_filter' must be a scalar character"
   )
   expect_error(
-    SOMAAxisQuery$new(value_filter = c("int_column", "bar")),
+    SOMAAxisQuery$new(value_filter = c("int_column", "float_column")),
     "'value_filter' must be a scalar character"
   )
   expect_error(

@@ -115,11 +115,11 @@ test_that("Platform config and context are respected by add_ methods", {
 
   # Set params in the config and context
   cfg <- PlatformConfig$new()
-  cfg$set("tiledb", "test", "int_column", "bar")
+  cfg$set("tiledb", "test", "int_column", "float_column")
   cfg$get("tiledb", "test", "int_column")
 
   ctx <- SOMATileDBContext$new()
-  ctx$set("int_column", "bar")
+  ctx$set("int_column", "float_column")
   ctx$get("int_column")
 
   # Create an empty collection
@@ -139,11 +139,11 @@ test_that("Platform config and context are respected by add_ methods", {
   collection$open("READ", internal_use_only = "allowed_use")
   expect_equal(
     collection$get("sdf1")$platform_config$get("tiledb", "test", "int_column"),
-    "bar"
+    "float_column"
   )
   expect_equal(
     collection$get("sdf1")$tiledbsoma_ctx$get("int_column"),
-    "bar"
+    "float_column"
   )
   collection$close()
 

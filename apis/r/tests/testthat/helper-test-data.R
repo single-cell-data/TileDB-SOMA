@@ -44,14 +44,14 @@ create_arrow_schema <- function(foo_first = TRUE) {
     arrow::schema(
       arrow::field("int_column", arrow::int32(), nullable = bl),
       arrow::field("soma_joinid", arrow::int64(), nullable = bl),
-      arrow::field("bar", arrow::float64(), nullable = bl),
+      arrow::field("float_column", arrow::float64(), nullable = bl),
       arrow::field("string_column", arrow::large_utf8(), nullable = bl)
     )
   } else {
     arrow::schema(
       arrow::field("soma_joinid", arrow::int64(), nullable = bl),
       arrow::field("int_column", arrow::int32(), nullable = bl),
-      arrow::field("bar", arrow::float64(), nullable = bl),
+      arrow::field("float_column", arrow::float64(), nullable = bl),
       arrow::field("string_column", arrow::large_utf8(), nullable = bl)
     )
   }
@@ -62,7 +62,7 @@ create_arrow_table <- function(nrows = 10L, factors = FALSE) {
     return(arrow::arrow_table(
       int_column = seq.int(nrows) + 1000L,
       soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
-      bar = seq(nrows) + 0.1,
+      float_column = seq(nrows) + 0.1,
       string_column = as.character(seq.int(nrows) + 1000L),
       grp = factor(c(
         rep_len("lvl1", length.out = floor(nrows / 2)),
@@ -73,7 +73,7 @@ create_arrow_table <- function(nrows = 10L, factors = FALSE) {
   arrow::arrow_table(
       int_column = seq.int(nrows) + 1000L,
       soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
-      bar = seq(nrows) + 0.1,
+      float_column = seq(nrows) + 0.1,
       string_column = as.character(seq.int(nrows) + 1000L)
       # schema = create_arrow_schema(false)
     )

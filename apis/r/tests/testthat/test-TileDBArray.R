@@ -5,7 +5,7 @@ test_that("TileDBArray helper functions", {
 
   # Check errors on non-existent array
   expect_error(tdba$object, "Array does not exist.")
-  ## inactive under new implementation  expect_error(tdba$set_metadata(list(int_column = "bar")), "Item must be open for write.")
+  ## inactive under new implementation  expect_error(tdba$set_metadata(list(int_column = "float_column")), "Item must be open for write.")
 
   # Create an array
   index_cols <- c("Dept", "Gender")
@@ -25,13 +25,13 @@ test_that("TileDBArray helper functions", {
   expect_setequal(tdba$colnames(), colnames(df))
 
   # metadata
-  md <- list(string_column = "qux", int_column = "bar")
+  md <- list(string_column = "qux", int_column = "float_column")
   tdba$open(mode = "WRITE", internal_use_only = "allowed_use")
   tdba$set_metadata(md)
   tdba$close()
 
   tdba$open(mode = "READ", internal_use_only = "allowed_use")
-  expect_equal(tdba$get_metadata(key = "int_column"), "bar")
+  expect_equal(tdba$get_metadata(key = "int_column"), "float_column")
   expect_equal(tdba$get_metadata(key = "string_column"), "qux")
   expect_equal(length(tdba$get_metadata()), 2)
   tdba$close()
@@ -39,7 +39,7 @@ test_that("TileDBArray helper functions", {
   # The SOMA spec requires the ability to read back metadata even when the
   # array is opened for write.
   tdba$open(mode = "WRITE", internal_use_only = "allowed_use")
-  expect_equal(tdba$get_metadata(key = "int_column"), "bar")
+  expect_equal(tdba$get_metadata(key = "int_column"), "float_column")
   expect_equal(tdba$get_metadata(key = "string_column"), "qux")
   expect_equal(length(tdba$get_metadata()), 2)
   tdba$close()
