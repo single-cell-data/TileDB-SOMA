@@ -97,14 +97,14 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_assay(obs_index = FALSE))
   expect_error(query$to_seurat_assay(obs_index = NA_character_))
   expect_error(query$to_seurat_assay(obs_index = 1))
-  expect_error(query$to_seurat_assay(obs_index = c('string_column', 'foo')))
+  expect_error(query$to_seurat_assay(obs_index = c('string_column', 'int_column')))
   expect_error(query$to_seurat_assay(obs_index = 'tomato'))
 
   # Test `var_index` assertions
   expect_error(query$to_seurat_assay(var_index = FALSE))
   expect_error(query$to_seurat_assay(var_index = NA_character_))
   expect_error(query$to_seurat_assay(var_index = 1))
-  expect_error(query$to_seurat_assay(var_index = c('string_column', 'foo')))
+  expect_error(query$to_seurat_assay(var_index = c('string_column', 'int_column')))
   expect_error(query$to_seurat_assay(var_index = 'tomato'))
 
   # Test `var_column_names` assertions

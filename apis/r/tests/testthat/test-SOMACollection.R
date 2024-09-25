@@ -43,7 +43,7 @@ test_that("SOMACollection basics", {
   subcollection$close()
 
   # Add another dataframe to the collection, this time using add_new_dataframe
-  collection$add_new_dataframe("new_df", create_arrow_schema(), "foo")$close()
+  collection$add_new_dataframe("new_df", create_arrow_schema(), "int_column")$close()
   df3 <- collection$get("new_df")
   df3 <- SOMADataFrameOpen(df3$uri)
   expect_true(df3$soma_type == "SOMADataFrame")
@@ -115,12 +115,12 @@ test_that("Platform config and context are respected by add_ methods", {
 
   # Set params in the config and context
   cfg <- PlatformConfig$new()
-  cfg$set("tiledb", "test", "foo", "bar")
-  cfg$get("tiledb", "test", "foo")
+  cfg$set("tiledb", "test", "int_column", "bar")
+  cfg$get("tiledb", "test", "int_column")
 
   ctx <- SOMATileDBContext$new()
-  ctx$set("foo", "bar")
-  ctx$get("foo")
+  ctx$set("int_column", "bar")
+  ctx$get("int_column")
 
   # Create an empty collection
   collection <- SOMACollectionCreate(
@@ -138,18 +138,18 @@ test_that("Platform config and context are respected by add_ methods", {
   # Verify the config and context params were inherited
   collection$open("READ", internal_use_only = "allowed_use")
   expect_equal(
-    collection$get("sdf1")$platform_config$get("tiledb", "test", "foo"),
+    collection$get("sdf1")$platform_config$get("tiledb", "test", "int_column"),
     "bar"
   )
   expect_equal(
-    collection$get("sdf1")$tiledbsoma_ctx$get("foo"),
+    collection$get("sdf1")$tiledbsoma_ctx$get("int_column"),
     "bar"
   )
   collection$close()
 
   # Method-level config params override instance params
   collection$open("WRITE", internal_use_only = "allowed_use")
-  cfg$set("tiledb", "test", "foo", "string_column")
+  cfg$set("tiledb", "test", "int_column", "string_column")
   sdf2 <- collection$add_new_dataframe(
     key = "sdf2",
     schema = tbl$schema,
@@ -159,7 +159,7 @@ test_that("Platform config and context are respected by add_ methods", {
   sdf2$write(tbl)
 
   expect_equal(
-    collection$get("sdf2")$platform_config$get("tiledb", "test", "foo"),
+    collection$get("sdf2")$platform_config$get("tiledb", "test", "int_column"),
     "string_column"
   )
   collection$close()

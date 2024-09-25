@@ -161,7 +161,7 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
   expect_error(query$to_single_cell_experiment(obs_index = FALSE))
   expect_error(query$to_single_cell_experiment(obs_index = NA_character_))
   expect_error(query$to_single_cell_experiment(obs_index = 1))
-  expect_error(query$to_single_cell_experiment(obs_index = c('string_column', 'foo')))
+  expect_error(query$to_single_cell_experiment(obs_index = c('string_column', 'int_column')))
   expect_error(query$to_single_cell_experiment(obs_index = 'tomato'))
   # Test `var_index` assertions
   expect_error(query$to_single_cell_experiment(var_index = FALSE))

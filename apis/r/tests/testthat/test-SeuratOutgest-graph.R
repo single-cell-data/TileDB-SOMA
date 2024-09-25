@@ -58,7 +58,7 @@ test_that("Load graph from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_graph('connectivities', obs_index = 1))
   expect_error(query$to_seurat_graph(
     'connectivities',
-    obs_index = c('string_column', 'foo'))
+    obs_index = c('string_column', 'int_column'))
   )
   expect_error(query$to_seurat_graph('connectivities', obs_index = 'tomato'))
 })

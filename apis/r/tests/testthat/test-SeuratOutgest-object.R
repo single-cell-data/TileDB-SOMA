@@ -167,7 +167,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_error(query$to_seurat(obs_index = FALSE))
   expect_error(query$to_seurat(obs_index = NA_character_))
   expect_error(query$to_seurat(obs_index = 1))
-  expect_error(query$to_seurat(obs_index = c('string_column', 'foo')))
+  expect_error(query$to_seurat(obs_index = c('string_column', 'int_column')))
   expect_error(query$to_seurat(obs_index = 'tomato'))
 
   # Test `obs_column_names` assertions

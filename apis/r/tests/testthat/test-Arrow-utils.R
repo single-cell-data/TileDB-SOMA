@@ -93,8 +93,8 @@ test_that("Validating arrow data type compatibility", {
 })
 
 test_that("Validating arrow schema data type compatibility", {
-  from <- arrow::schema(foo = arrow::int32())
-  to <- arrow::schema(foo = arrow::int32())
+  from <- arrow::schema(int_column = arrow::int32())
+  to <- arrow::schema(int_column = arrow::int32())
   expect_true(check_arrow_schema_data_types(from, to))
 
   # Add incompatible fields

@@ -3,7 +3,7 @@ create_and_populate_soma_dataframe <- function(
   uri,
   nrows = 10L,
   seed = 1,
-  index_column_names = "foo",
+  index_column_names = "int_column",
   factors = FALSE,
   mode = NULL
 ) {

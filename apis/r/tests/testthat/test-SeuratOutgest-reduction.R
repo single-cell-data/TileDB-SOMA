@@ -182,7 +182,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_reduction('pca', obs_index = FALSE))
   expect_error(query$to_seurat_reduction('pca', obs_index = NA_character_))
   expect_error(query$to_seurat_reduction('pca', obs_index = 1))
-  expect_error(query$to_seurat_reduction('pca', obs_index = c('string_column', 'foo')))
+  expect_error(query$to_seurat_reduction('pca', obs_index = c('string_column', 'int_column')))
   expect_error(query$to_seurat_reduction('pca', obs_index = 'tomato'))
 
   # Test `var_index` assertions
@@ -191,7 +191,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_reduction('pca', var_index = 1))
   expect_error(query$to_seurat_reduction(
     'pca',
-    var_index = c('string_column', 'foo')
+    var_index = c('string_column', 'int_column')
   ))
   expect_error(query$to_seurat_reduction('pca', var_index = 'tomato'))
 })

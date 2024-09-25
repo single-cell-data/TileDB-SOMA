@@ -43,7 +43,7 @@ test_that("returns all coordinates by default", {
   # X
   expect_error(query$X(), "Must specify an X layer name")
   expect_error(query$X(c("a", "b")), "Must specify a single X layer name")
-  expect_error(query$X("foo"), "The following layer does not exist: foo")
+  expect_error(query$X("int_column"), "The following layer does not exist: int_column")
 
   expect_true(is(query$X("counts"), "SOMASparseNDArrayRead"))
   expect_true(
@@ -443,7 +443,7 @@ test_that("query result value indexer", {
   )
 
   expect_error(
-    indexer$by_obs(c(1, 4, 2, 1000, "foo")),
+    indexer$by_obs(c(1, 4, 2, 1000, "int_column")),
     "'coords' must be a numeric vector or arrow Array"
   )
 
@@ -510,7 +510,7 @@ test_that("query result value indexer upcast", {
   )
 
   expect_error(
-    indexer$by_obs(c(1, 4, 2, 1000, "foo")),
+    indexer$by_obs(c(1, 4, 2, 1000, "int_column")),
     "'coords' must be a numeric vector or arrow Array"
   )
 
