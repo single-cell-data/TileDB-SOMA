@@ -370,13 +370,19 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
             ind_ext <- 64L
         }
 
-        # We need to do this because if we don't:
+        # We need to subtract off extent from the max because if we don't:
         #
         # Error: [TileDB::Dimension] Error: Tile extent check failed; domain max
         # expanded to multiple of tile extent exceeds max value representable by
         # domain type. Reduce domain max by 1 tile extent to allow for
         # expansion.
-        ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,ind_ext)
+        if (ind_col_name == "soma_joinid") {
+          # Must be non-negative
+          ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,ind_ext)
+        } else {
+          # Others can be negative
+          ind_max_dom <- arrow_type_range(ind_col_type) - c(0,ind_ext)
+        }
 
         ind_cur_dom <- ind_max_dom
         if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA

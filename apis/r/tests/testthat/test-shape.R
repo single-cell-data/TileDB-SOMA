@@ -8,13 +8,20 @@ test_that("SOMADataFrame shape", {
     c("soma_joinid", "int_column"),
     c("soma_joinid", "string_column"),
     c("string_column", "int_column")
+    one = "soma_joinid",
+    two = c("soma_joinid", "foo"),
+    three = c("soma_joinid", "baz"),
+    four = c("baz", "foo")
   )
 
-  for (index_column_names in index_column_name_choices) {
+  for (case_name in names(index_column_name_choices)) {
+    index_column_names = index_column_name_choices[[case_name]]
+
     has_soma_joinid_dim <- "soma_joinid" %in% index_column_names
 
     if (dir.exists(uri)) unlink(uri, recursive=TRUE)
 
+    # TODO: test create with specified domain on PR 3032
     sdf <- SOMADataFrameCreate(uri, asch, index_column_names = index_column_names)
     expect_true(sdf$exists())
     expect_true(dir.exists(uri))
@@ -54,6 +61,60 @@ test_that("SOMADataFrame shape", {
     } else {
       expect_true(is.na(sjid_shape))
       expect_true(is.na(sjid_maxshape))
+    }
+
+    dom = sdf$domain()
+    mxd = sdf$maxdomain()
+
+    # First check names
+    if (case_name == "one") {
+      expect_equal(names(dom), c("soma_joinid"))
+      expect_equal(names(mxd), c("soma_joinid"))
+
+    } else if (case_name == "two") {
+      expect_equal(names(dom), c("soma_joinid", "foo"))
+      expect_equal(names(mxd), c("soma_joinid", "foo"))
+
+    } else if (case_name == "three") {
+      expect_equal(names(dom), c("soma_joinid", "baz"))
+      expect_equal(names(mxd), c("soma_joinid", "baz"))
+
+    } else if (case_name == "four") {
+      expect_equal(names(dom), c("baz", "foo"))
+      expect_equal(names(mxd), c("baz", "foo"))
+    }
+
+    # Then check all slots are pairs
+    for (name in names(dom)) {
+      expect_equal(length(dom[[name]]), 2)
+    }
+    for (name in names(mxd)) {
+      expect_equal(length(mxd[[name]]), 2)
+    }
+
+    # Then check contents
+    if ("soma_joinid" %in% index_column_names) {
+      sjid_dom <- dom[["soma_joinid"]]
+      sjid_mxd <- mxd[["soma_joinid"]]
+      expect_equal(sjid_dom[[1]], 0)
+      expect_equal(sjid_mxd[[1]], 0)
+      # Really big number; exact value unimportant
+      # TODO: test create with specified domain on PR 3032
+      # -- then, current and max domain will be different
+      expect_true(sjid_dom[[2]] > bit64::as.integer64(10000000000))
+      expect_true(sjid_mxd[[2]] > bit64::as.integer64(10000000000))
+    }
+
+    if ("foo" %in% index_column_names) {
+      int_dom <- dom[["foo"]]
+      int_mxd <- mxd[["foo"]]
+      expect_true(int_dom[[1]] < -2000000000)
+      expect_true(int_dom[[2]] > 2000000000)
+    }
+
+    if ("baz" %in% index_column_names) {
+      expect_equal(dom[["baz"]], c("", ""))
+      expect_equal(mxd[["baz"]], c("", ""))
     }
 
     sdf$close()

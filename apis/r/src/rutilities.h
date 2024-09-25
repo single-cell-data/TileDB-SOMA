@@ -70,3 +70,9 @@ inline void array_xptr_set_schema(SEXP array_xptr, SEXP schema_xptr) {
 std::optional<tdbs::TimestampRange> makeTimestampRange(Rcpp::Nullable<Rcpp::DatetimeVector> tsvec);
 
 std::vector<int64_t> i64_from_rcpp_numeric(const Rcpp::NumericVector& input);
+
+// Code reuse for non_empty_domain, domain, and maxdomain all of which:
+// * call a libtiledbsoma function
+// * obtain an ArrowTable
+// * need to map that to an R list of lo/hi pairs
+SEXP convert_domainish(const tdbs::ArrowTable& arrow_table);
