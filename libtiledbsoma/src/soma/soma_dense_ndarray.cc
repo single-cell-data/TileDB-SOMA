@@ -84,7 +84,8 @@ void SOMADenseNDArray::create(
             std::move(index_column_array), std::move(index_column_schema)),
         "SOMADenseNDArray",
         false,
-        platform_config);
+        platform_config,
+        timestamp);
 
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMADenseNDArray", timestamp);
 }

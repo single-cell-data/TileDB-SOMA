@@ -53,7 +53,8 @@ void SOMADataFrame::create(
             std::move(index_columns.first), std::move(index_columns.second)),
         "SOMADataFrame",
         true,
-        platform_config);
+        platform_config,
+        timestamp);
     SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame", timestamp);
 }
 
