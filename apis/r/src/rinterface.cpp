@@ -212,7 +212,7 @@ SEXP soma_array_reader(
 //' @param level A character value with logging level understood by
 //\sQuote{spdlog} ' such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
 //\dQuote{warn}. ' @return Nothing is returned as the function is invoked for
-//the side-effect. ' @export
+// the side-effect. ' @export
 // [[Rcpp::export]]
 void set_log_level(const std::string& level) {
     spdl::setup("R", level);
@@ -317,6 +317,16 @@ Rcpp::LogicalVector has_current_domain(
     auto retval = Rcpp::LogicalVector(sr->has_current_domain());
     sr->close();
     return retval;
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector ndim(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto lib_retval = sr->ndim();
+    sr->close();
+
+    return Rcpp::NumericVector::create(lib_retval);
 }
 
 // [[Rcpp::export]]

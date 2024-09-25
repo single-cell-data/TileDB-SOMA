@@ -416,6 +416,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ndim
+Rcpp::NumericVector ndim(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_ndim(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(ndim(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
 // resize
 void resize(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_resize(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP ctxxpSEXP) {
@@ -642,6 +654,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_maybe_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_maybe_soma_joinid_shape, 2},
     {"_tiledbsoma_maybe_soma_joinid_maxshape", (DL_FUNC) &_tiledbsoma_maybe_soma_joinid_maxshape, 2},
     {"_tiledbsoma_has_current_domain", (DL_FUNC) &_tiledbsoma_has_current_domain, 2},
+    {"_tiledbsoma_ndim", (DL_FUNC) &_tiledbsoma_ndim, 2},
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 3},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 3},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},

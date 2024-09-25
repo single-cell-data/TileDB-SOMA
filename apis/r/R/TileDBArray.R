@@ -248,8 +248,7 @@ TileDBArray <- R6::R6Class(
     #' @description Retrieve number of dimensions (lifecycle: maturing)
     #' @return A scalar with the number of dimensions
     ndim = function() {
-      dims <- tiledb::dimensions(self$tiledb_schema())
-      length(dims)
+      ndim(self$uri, private$.soma_context)
     },
 
     #' @description Retrieve the array attributes (lifecycle: maturing)
