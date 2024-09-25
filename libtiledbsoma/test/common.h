@@ -67,6 +67,8 @@ struct DimInfo {
     std::string name;
     tiledb_datatype_t tiledb_datatype;
     int64_t dim_max;
+    std::string string_lo;  // For custom/restricted DataFrame domains
+    std::string string_hi;  // For custom/restricted DataFrame domains
     bool use_current_domain;
 };
 
