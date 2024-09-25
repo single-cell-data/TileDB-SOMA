@@ -329,6 +329,20 @@ Rcpp::NumericVector ndim(
     sr->close();
 
     return Rcpp::NumericVector::create(lib_retval);
+
+// [[Rcpp::export]]
+Rcpp::CharacterVector dimnames(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto lib_retval = sr->dimension_names();
+    sr->close();
+
+    size_t n = lib_retval.size();
+    Rcpp::CharacterVector retval(n);
+    for (size_t i = 0; i < n; i++) {
+        retval[i] = lib_retval[i];
+    }
+    return retval;
 }
 
 // [[Rcpp::export]]
