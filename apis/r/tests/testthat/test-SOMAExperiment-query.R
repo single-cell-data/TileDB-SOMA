@@ -123,7 +123,7 @@ test_that("querying by value filters", {
 
   # TODO: simplify once tiledb-r supports membership expressions
   obs_value_filter <- paste0(
-    sprintf("baz == '%s'", obs_label_values),
+    sprintf("string_column == '%s'", obs_label_values),
     collapse = "||"
   )
   var_value_filter <- paste0(
@@ -141,7 +141,7 @@ test_that("querying by value filters", {
   expect_true(query$n_obs == length(obs_label_values))
   expect_true(query$n_vars == length(var_label_values))
 
-  expect_equal(query$obs()$concat()$baz$as_vector(), obs_label_values)
+  expect_equal(query$obs()$concat()$string_column$as_vector(), obs_label_values)
   expect_equal(query$var()$concat()$quux$as_vector(), var_label_values)
 
   experiment$close()
@@ -245,7 +245,7 @@ test_that("querying by both coordinates and value filters", {
 
 # TODO: simplify once tiledb-r supports membership expressions
   obs_value_filter <- paste0(
-    sprintf("baz == '%s'", obs_label_values),
+    sprintf("string_column == '%s'", obs_label_values),
     collapse = "||"
   )
   var_value_filter <- paste0(
@@ -309,7 +309,7 @@ test_that("querying by both coordinates and value filters", {
   # Determine expected results
   obs_df <- experiment$obs$read()$concat()$to_data_frame()
   obs_hits <- obs_df$soma_joinid %in% as.integer(obs_slice) &
-    obs_df$baz %in% obs_label_values
+    obs_df$string_column %in% obs_label_values
 
   var_df <- experiment$ms$get("RNA")$var$read()$concat()$to_data_frame()
   var_hits <- var_df$soma_joinid %in% as.integer(var_slice) &
@@ -341,7 +341,7 @@ test_that("queries with empty results", {
     experiment = experiment,
     measurement_name = "RNA",
     obs_query = SOMAAxisQuery$new(
-      value_filter = "baz == 'does-not-exist'"
+      value_filter = "string_column == 'does-not-exist'"
     ),
     var_query = SOMAAxisQuery$new(
       value_filter = "quux == 'does-not-exist'"

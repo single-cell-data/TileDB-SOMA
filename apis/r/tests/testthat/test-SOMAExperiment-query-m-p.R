@@ -229,7 +229,7 @@ test_that("Load *m and *p layers from indexed SOMAExperimentAxisQuery", {
 
   # Create the query
   obs_value_filter <- paste0(
-    sprintf("baz == '%s'", obs_label_values),
+    sprintf("string_column == '%s'", obs_label_values),
     collapse = "||"
   )
   var_value_filter <- paste0(

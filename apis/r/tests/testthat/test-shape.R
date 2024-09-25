@@ -6,8 +6,8 @@ test_that("SOMADataFrame shape", {
   index_column_name_choices = list(
     "soma_joinid",
     c("soma_joinid", "foo"),
-    c("soma_joinid", "baz"),
-    c("baz", "foo")
+    c("soma_joinid", "string_column"),
+    c("string_column", "foo")
   )
 
   for (index_column_names in index_column_name_choices) {
@@ -22,7 +22,7 @@ test_that("SOMADataFrame shape", {
     tbl0 <- arrow::arrow_table(foo = 1L:4L,
                                soma_joinid = 1L:4L,
                                bar = 1.1:4.1,
-                               baz = c("apple", "ball", "cat", "dog"),
+                               string_column = c("apple", "ball", "cat", "dog"),
                                schema = asch)
 
     sdf$write(tbl0)

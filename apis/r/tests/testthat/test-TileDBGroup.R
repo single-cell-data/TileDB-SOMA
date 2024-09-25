@@ -130,23 +130,23 @@ test_that("Metadata", {
 
   group$create(internal_use_only = "allowed_use")
 
-  md <- list(baz = "qux", foo = "bar")
+  md <- list(string_column = "qux", foo = "bar")
   group$open("WRITE", internal_use_only = "allowed_use") # but be open for write
   group$set_metadata(md)
 
   # Read all metadata while the group is still open for write
   expect_equivalent(group$get_metadata("foo"), "bar")
-  expect_equivalent(group$get_metadata("baz"), "qux")
+  expect_equivalent(group$get_metadata("string_column"), "qux")
 
   readmd <- group$get_metadata()
-  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["string_column"]], "qux")
   expect_equivalent(readmd[["foo"]], "bar")
   group$close()
 
   # Read all metadata while the group is open for read
   group$open(mode = "READ", internal_use_only = "allowed_use")
   readmd <- group$get_metadata()
-  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["string_column"]], "qux")
   expect_equivalent(readmd[["foo"]], "bar")
 
   group$close()

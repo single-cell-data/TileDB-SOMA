@@ -25,14 +25,14 @@ test_that("TileDBArray helper functions", {
   expect_setequal(tdba$colnames(), colnames(df))
 
   # metadata
-  md <- list(baz = "qux", foo = "bar")
+  md <- list(string_column = "qux", foo = "bar")
   tdba$open(mode = "WRITE", internal_use_only = "allowed_use")
   tdba$set_metadata(md)
   tdba$close()
 
   tdba$open(mode = "READ", internal_use_only = "allowed_use")
   expect_equal(tdba$get_metadata(key = "foo"), "bar")
-  expect_equal(tdba$get_metadata(key = "baz"), "qux")
+  expect_equal(tdba$get_metadata(key = "string_column"), "qux")
   expect_equal(length(tdba$get_metadata()), 2)
   tdba$close()
 
@@ -40,7 +40,7 @@ test_that("TileDBArray helper functions", {
   # array is opened for write.
   tdba$open(mode = "WRITE", internal_use_only = "allowed_use")
   expect_equal(tdba$get_metadata(key = "foo"), "bar")
-  expect_equal(tdba$get_metadata(key = "baz"), "qux")
+  expect_equal(tdba$get_metadata(key = "string_column"), "qux")
   expect_equal(length(tdba$get_metadata()), 2)
   tdba$close()
 

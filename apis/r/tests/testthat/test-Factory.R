@@ -10,7 +10,7 @@ test_that("DataFrame Factory", {
     asch <- create_arrow_schema(foo_first=FALSE)
     expect_silent(d2 <- SOMADataFrameCreate(uri, schema = asch))
     tbl <- arrow::arrow_table(soma_joinid = 1L:10L, foo = 1L:10L, bar = sqrt(1:10),
-                              baz = letters[1:10], schema = asch)
+                              string_column = letters[1:10], schema = asch)
     d2$write(tbl)
 
     # Check opening to read
@@ -28,7 +28,7 @@ test_that("DataFrame Factory with specified index_column_names", {
     expect_error(d2 <- SOMADataFrameCreate(uri, index_column_names = "foo")) # misses schema
     expect_silent(d2 <- SOMADataFrameCreate(uri, schema = asch, index_column_names = "foo"))
     tbl <- arrow::arrow_table(foo = 1L:10L, soma_joinid = 1L:10L, bar = sqrt(1:10),
-                              baz = letters[1:10], schema = asch)
+                              string_column = letters[1:10], schema = asch)
     d2$write(tbl)
 
     # Check opening to read

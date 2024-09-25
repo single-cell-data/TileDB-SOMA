@@ -106,7 +106,7 @@ test_that("Validating arrow schema data type compatibility", {
   )
 
   # Schemas with different fields
-  from$baz <- arrow::string()
+  from$string_column <- arrow::string()
   expect_error(
     check_arrow_schema_data_types(from, to),
     "'from' and 'to' must have the same number of fields"

@@ -27,7 +27,7 @@ test_that("Basic mechanics", {
   tbl0 <- arrow::arrow_table(foo = 1L:36L,
                              soma_joinid = 1L:36L,
                              bar = 1.1:36.1,
-                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                             string_column = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
                                      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
                                      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
                                      "ź", "Ž", "Ż"),
@@ -62,7 +62,7 @@ test_that("Basic mechanics", {
   rb0 <- arrow::record_batch(foo = 1L:36L,
                              soma_joinid = 1L:36L,
                              bar = 1.1:36.1,
-                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                             string_column = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
                                      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
                                      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
                                      "ź", "Ž", "Ż"),
@@ -146,7 +146,7 @@ test_that("Basic mechanics with default index_column_names", {
   tbl0 <- arrow::arrow_table( soma_joinid = 1L:36L,
                              foo = 1L:36L,
                              bar = 1.1:36.1,
-                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                             string_column = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
                                      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
                                      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
                                      "ź", "Ž", "Ż"),
@@ -549,22 +549,22 @@ test_that("Metadata", {
   asch <- create_arrow_schema()
   sdf <- SOMADataFrameCreate(uri, asch)
 
-  md <- list(baz = "qux", foo = "bar")
+  md <- list(string_column = "qux", foo = "bar")
   sdf$set_metadata(md)
 
   # Read all metadata while the sdf is still open for write
   expect_equivalent(sdf$get_metadata("foo"), "bar")
-  expect_equivalent(sdf$get_metadata("baz"), "qux")
+  expect_equivalent(sdf$get_metadata("string_column"), "qux")
 
   readmd <- sdf$get_metadata()
-  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["string_column"]], "qux")
   expect_equivalent(readmd[["foo"]], "bar")
   sdf$close()
 
   # Read all metadata while the sdf is open for read
   sdf <- SOMADataFrameOpen(uri)
   readmd <- sdf$get_metadata()
-  expect_equivalent(readmd[["baz"]], "qux")
+  expect_equivalent(readmd[["string_column"]], "qux")
   expect_equivalent(readmd[["foo"]], "bar")
   sdf$close()
 })
@@ -722,7 +722,7 @@ test_that("SOMADataFrame can be updated", {
   tbl0 <- tbl1
 
   # Error on incompatible schema updates
-  tbl0$baz <- tbl0$baz$cast(target_type = arrow::int32()) # string to int
+  tbl0$string_column <- tbl0$string_column$cast(target_type = arrow::int32()) # string to int
   expect_error(
     SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
     "Schemas are incompatible"
@@ -749,17 +749,17 @@ test_that("SOMADataFrame can be updated from a data frame", {
 
   # Convert a column to row names to test that it can be recovered
   df0 <- as.data.frame(df0)
-  rownames(df0) <- df0$baz
-  df0$baz <- NULL
+  rownames(df0) <- df0$string_column
+  df0$string_column <- NULL
   df0$bar <- NULL
 
-  # Update to drop 'bar' from the array and retrieve baz values from row names
+  # Update to drop 'bar' from the array and retrieve string_column values from row names
   expect_silent(
-    SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "baz")
+    SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "string_column")
   )
 
   df1 <- SOMADataFrameOpen(uri)$read()$concat()$to_data_frame()
-  expect_setequal(colnames(df1), c("foo", "soma_joinid", "baz"))
+  expect_setequal(colnames(df1), c("foo", "soma_joinid", "string_column"))
 
   # Error if row_index_name conflicts with an existing column name
   expect_error(

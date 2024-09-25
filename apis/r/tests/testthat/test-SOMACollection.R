@@ -149,7 +149,7 @@ test_that("Platform config and context are respected by add_ methods", {
 
   # Method-level config params override instance params
   collection$open("WRITE", internal_use_only = "allowed_use")
-  cfg$set("tiledb", "test", "foo", "baz")
+  cfg$set("tiledb", "test", "foo", "string_column")
   sdf2 <- collection$add_new_dataframe(
     key = "sdf2",
     schema = tbl$schema,
@@ -160,7 +160,7 @@ test_that("Platform config and context are respected by add_ methods", {
 
   expect_equal(
     collection$get("sdf2")$platform_config$get("tiledb", "test", "foo"),
-    "baz"
+    "string_column"
   )
   collection$close()
 })

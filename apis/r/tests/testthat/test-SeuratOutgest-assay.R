@@ -63,12 +63,12 @@ test_that("Load assay from ExperimentQuery mechanics", {
 
   # Test using cell and feature names
   expect_no_condition(named <- query$to_seurat_assay(
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
   expect_identical(
     colnames(named),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     rownames(named),
@@ -97,14 +97,14 @@ test_that("Load assay from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_assay(obs_index = FALSE))
   expect_error(query$to_seurat_assay(obs_index = NA_character_))
   expect_error(query$to_seurat_assay(obs_index = 1))
-  expect_error(query$to_seurat_assay(obs_index = c('baz', 'foo')))
+  expect_error(query$to_seurat_assay(obs_index = c('string_column', 'foo')))
   expect_error(query$to_seurat_assay(obs_index = 'tomato'))
 
   # Test `var_index` assertions
   expect_error(query$to_seurat_assay(var_index = FALSE))
   expect_error(query$to_seurat_assay(var_index = NA_character_))
   expect_error(query$to_seurat_assay(var_index = 1))
-  expect_error(query$to_seurat_assay(var_index = c('baz', 'foo')))
+  expect_error(query$to_seurat_assay(var_index = c('string_column', 'foo')))
   expect_error(query$to_seurat_assay(var_index = 'tomato'))
 
   # Test `var_column_names` assertions
@@ -234,7 +234,7 @@ test_that("Load assay from sliced ExperimentQuery", {
 
   # Test named
   expect_no_condition(named <- query$to_seurat_assay(
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
   expect_identical(
@@ -243,7 +243,7 @@ test_that("Load assay from sliced ExperimentQuery", {
   )
   expect_identical(
     colnames(named),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
 })
 
@@ -265,7 +265,7 @@ test_that("Load assay from indexed ExperimentQuery", {
   on.exit(experiment$close())
 
   obs_value_filter <- paste0(
-    sprintf("baz == '%s'", obs_label_values),
+    sprintf("string_column == '%s'", obs_label_values),
     collapse = "||"
   )
   var_value_filter <- paste0(
@@ -289,7 +289,7 @@ test_that("Load assay from indexed ExperimentQuery", {
 
   # Test named
   expect_no_condition(named <- query$to_seurat_assay(
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
   expect_identical(
@@ -299,7 +299,7 @@ test_that("Load assay from indexed ExperimentQuery", {
   expect_identical(rownames(named), var_label_values)
   expect_identical(
     colnames(named),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(colnames(named), obs_label_values)
 })
