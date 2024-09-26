@@ -12,6 +12,7 @@ Do NOT merge into main.
 
 import json
 import os
+import warnings
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -31,7 +32,14 @@ import pyarrow as pa
 import pyarrow.compute as pacomp
 import scanpy
 from anndata import AnnData
-from PIL import Image
+
+try:
+    from PIL import Image
+except ImportError as err:
+    warnings.warn("Experimental spatial ingestor requires the `pillow` package.")
+    raise err
+
+
 from somacore import Axis, CoordinateSpace, IdentityTransform
 
 from .. import (
