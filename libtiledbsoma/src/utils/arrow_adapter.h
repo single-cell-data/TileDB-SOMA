@@ -439,8 +439,8 @@ class ArrowAdapter {
 
         if (std::is_same_v<T, std::string>) {
             throw std::runtime_error(
-                "SOMAArray::_core_domain_slot: template-specialization "
-                "failure.");
+                "SOMAArray::get_table_non_string_column_by_index: "
+                "template-specialization failure.");
         }
 
         ArrowArray* child_array = _get_and_check_column(
@@ -542,7 +542,7 @@ class ArrowAdapter {
         const ArrowArray* arrow_array, const ArrowSchema* arrow_schema) {
         if (arrow_array->n_children != 0 || arrow_schema->n_children != 0) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: expected leaf "
+                "ArrowAdapter::get_array_string_column: expected leaf "
                 "node");
         }
         if (arrow_array->n_buffers != 3) {
@@ -567,18 +567,19 @@ class ArrowAdapter {
         }
         if (arrow_array->buffers[1] == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_non_string_column_by_index: null "
+                "ArrowAdapter::get_array_string_column: null "
                 "offsets buffer");
         }
         if (arrow_array->buffers[2] == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_non_string_column_by_index: null data "
+                "ArrowAdapter::get_array_string_column: null data "
                 "buffer");
         }
 
         const char* data = (char*)arrow_array->buffers[2];
 
-        if (strcmp(arrow_schema->format, "u") == 0) {
+        if (strcmp(arrow_schema->format, "u") == 0 ||
+            strcmp(arrow_schema->format, "z") == 0) {
             uint32_t* offsets = (uint32_t*)arrow_array->buffers[1];
             int num_cells = (int)arrow_array->length;
             std::vector<std::string> retval(num_cells);
@@ -588,7 +589,9 @@ class ArrowAdapter {
             }
             return retval;
 
-        } else if (strcmp(arrow_schema->format, "U") == 0) {
+        } else if (
+            strcmp(arrow_schema->format, "U") == 0 ||
+            strcmp(arrow_schema->format, "Z") == 0) {
             uint64_t* offsets = (uint64_t*)arrow_array->buffers[1];
             int num_cells = (int)arrow_array->length;
             std::vector<std::string> retval(num_cells);
@@ -600,9 +603,8 @@ class ArrowAdapter {
 
         } else {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_non_string_column_by_index: expected "
-                "Arrow "
-                "string or large_string");
+                "ArrowAdapter::get_array_string_column: expected "
+                "Arrow string, large_string, binary, or large_binary");
         }
     }
 
