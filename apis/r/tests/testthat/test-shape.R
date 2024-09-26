@@ -8,14 +8,10 @@ test_that("SOMADataFrame shape", {
     c("soma_joinid", "int_column"),
     c("soma_joinid", "string_column"),
     c("string_column", "int_column")
-    one = "soma_joinid",
-    two = c("soma_joinid", "foo"),
-    three = c("soma_joinid", "baz"),
-    four = c("baz", "foo")
   )
 
-  for (case_name in names(index_column_name_choices)) {
-    index_column_names = index_column_name_choices[[case_name]]
+  for (i in seq_along(index_column_name_choices)) {
+    index_column_names <- index_column_name_choices[[i]]
 
     has_soma_joinid_dim <- "soma_joinid" %in% index_column_names
 
@@ -63,33 +59,17 @@ test_that("SOMADataFrame shape", {
       expect_true(is.na(sjid_maxshape))
     }
 
-    dom = sdf$domain()
-    mxd = sdf$maxdomain()
+    dom <- sdf$domain()
+    mxd <- sdf$maxdomain()
 
     # First check names
-    if (case_name == "one") {
-      expect_equal(names(dom), c("soma_joinid"))
-      expect_equal(names(mxd), c("soma_joinid"))
-
-    } else if (case_name == "two") {
-      expect_equal(names(dom), c("soma_joinid", "foo"))
-      expect_equal(names(mxd), c("soma_joinid", "foo"))
-
-    } else if (case_name == "three") {
-      expect_equal(names(dom), c("soma_joinid", "baz"))
-      expect_equal(names(mxd), c("soma_joinid", "baz"))
-
-    } else if (case_name == "four") {
-      expect_equal(names(dom), c("baz", "foo"))
-      expect_equal(names(mxd), c("baz", "foo"))
-    }
+    expect_equal(names(dom), index_column_names)
+    expect_equal(names(mxd), index_column_names)
 
     # Then check all slots are pairs
     for (name in names(dom)) {
-      expect_equal(length(dom[[name]]), 2)
-    }
-    for (name in names(mxd)) {
-      expect_equal(length(mxd[[name]]), 2)
+      expect_length(dom[[name]], 2L)
+      expect_length(mxd[[name]], 2L)
     }
 
     # Then check contents

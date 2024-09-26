@@ -378,10 +378,10 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
         # expansion.
         if (ind_col_name == "soma_joinid") {
           # Must be non-negative
-          ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,ind_ext)
+          ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0, ind_ext)
         } else {
           # Others can be negative
-          ind_max_dom <- arrow_type_range(ind_col_type) - c(0,ind_ext)
+          ind_max_dom <- arrow_type_range(ind_col_type) - c(0, ind_ext)
         }
 
         ind_cur_dom <- ind_max_dom
