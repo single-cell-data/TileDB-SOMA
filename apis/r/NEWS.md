@@ -1,5 +1,28 @@
 # Unreleased
 
+## Changes
+
+* Remove unused `fragment_count` accessor [#3054](https://github.com/single-cell-data/TileDB-SOMA/pull/3054)
+
+# tiledbsoma 1.14.1
+
+## Changes
+
+* Fixes a Python-only bug [#3013](https://github.com/single-cell-data/TileDB-SOMA/pull/3013)
+
+# tiledbsoma 1.14.0
+
+## Changes
+
+* New `resize` and `tiledbsoma_upgrade_shape` accessors as part of the [new-shape project](https://github.com/single-cell-data/TileDB-SOMA/issues/2407)
+* Make use of timestamp ranges in libtiledbsoma
+* Simplify timestamp ranges; strengthen assumptions about `tiledb_timestamp`
+* Use cached timestamps in `$write()` and `$create()`
+* Fix bug in blockwise iteration
+* Lay groundwork for cached SOMA contexts within objects rather than re-creating contexts
+* SOMA context objects are used throughout SOMA object creation
+* Add value-checking for `axis` parameter when initializing blockwise reads
+
 # tiledbsoma 1.13.1
 
 ## Changes

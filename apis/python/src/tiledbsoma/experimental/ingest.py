@@ -338,7 +338,7 @@ def _write_visium_data_to_experiment_uri(
             ref_shape: Tuple[int, ...] = np.array(im).shape
     elif input_hires is not None:
         with Image.open(input_hires) as im:
-            width, height, nchannel = np.array(im).shape  # type: ignore
+            width, height, nchannel = np.array(im).shape
         scale = scale_factors["tissue_hires_scalef"]
         ref_shape = (
             int(np.round(width / scale)),
@@ -347,7 +347,7 @@ def _write_visium_data_to_experiment_uri(
         )
     elif input_lowres is not None:
         with Image.open(input_lowres) as im:
-            width, height, nchannel = np.array(im).shape  # type: ignore
+            width, height, nchannel = np.array(im).shape
         scale = scale_factors["tissue_lowres_scalef"]
         ref_shape = (
             int(np.round(width / scale)),

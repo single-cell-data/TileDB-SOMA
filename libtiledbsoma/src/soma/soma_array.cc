@@ -1,5 +1,4 @@
-/**
- * @file   soma_array.cc
+/** @file   soma_array.cc
  *
  * @section LICENSE
  *
@@ -1141,6 +1140,102 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
     return timestamp_;
 }
 
+// Note that ArrowTable is simply our libtiledbsoma pairing of ArrowArray and
+// ArrowSchema from nanoarrow.
+//
+// The domainish enum simply lets us re-use code which is common across
+// core domain, core current domain, and core non-empty domain.
+ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
+    int array_ndim = this->ndim();
+    auto dimensions = tiledb_schema()->domain().dimensions();
+
+    // Create the schema for the info we return
+    std::vector<std::string> names(array_ndim);
+    std::vector<tiledb_datatype_t> tiledb_datatypes(array_ndim);
+
+    for (int i = 0; i < (int)array_ndim; i++) {
+        const Dimension& core_dim = dimensions[i];
+        names[i] = core_dim.name();
+        tiledb_datatypes[i] = core_dim.type();
+    }
+
+    auto arrow_schema = ArrowAdapter::make_arrow_schema(
+        names, tiledb_datatypes);
+
+    // Create the data for the info we return
+    auto arrow_array = ArrowAdapter::make_arrow_array_parent(array_ndim);
+
+    for (int i = 0; i < array_ndim; i++) {
+        auto core_dim = dimensions[i];
+        auto core_type_code = core_dim.type();
+
+        ArrowArray* child = nullptr;
+
+        switch (core_type_code) {
+            case TILEDB_INT64:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<int64_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_UINT64:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<uint64_t>(
+                        core_dim.name(), which_kind));
+                break;
+            case TILEDB_INT32:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<int32_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_UINT32:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<uint32_t>(
+                        core_dim.name(), which_kind));
+                break;
+            case TILEDB_INT16:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<int16_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_UINT16:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<uint16_t>(
+                        core_dim.name(), which_kind));
+                break;
+            case TILEDB_INT8:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<int8_t>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_UINT8:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<uint8_t>(core_dim.name(), which_kind));
+                break;
+
+            case TILEDB_FLOAT64:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<double>(core_dim.name(), which_kind));
+                break;
+            case TILEDB_FLOAT32:
+                child = ArrowAdapter::make_arrow_array_child(
+                    _core_domainish_slot<float>(core_dim.name(), which_kind));
+                break;
+
+            case TILEDB_STRING_ASCII:
+            case TILEDB_CHAR:
+                child = ArrowAdapter::make_arrow_array_child_string(
+                    _core_domainish_slot_string(core_dim.name(), which_kind));
+                break;
+
+            default:
+                throw TileDBSOMAError(fmt::format(
+                    "SOMAArray::_get_core_domainish:dim {} has unhandled type "
+                    "{}",
+                    core_dim.name(),
+                    tiledb::impl::type_to_str(core_type_code)));
+        }
+        arrow_array->children[i] = child;
+    }
+
+    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+}
+
 uint64_t SOMAArray::nnz() {
     // Verify array is sparse
     if (mq_->schema()->array_type() != TILEDB_SPARSE) {
@@ -1205,13 +1300,32 @@ uint64_t SOMAArray::nnz() {
     // compute total_cell_num while going through the loop
     uint64_t total_cell_num = 0;
     std::vector<std::array<uint64_t, 2>> non_empty_domains(fragment_count);
+
+    // The loop after this only works if dim 0 is int64 soma_joinid.
+    // That's the case for _almost_ all SOMADataFrame objects, but
+    // not the "variant-indexed" ones: the SOMA spec only requires
+    // that soma_joinid be present as a dim or an attr.
+    auto dim = tiledb_schema()->domain().dimension(0);
+    auto dim_name = dim.name();
+    auto type_code = dim.type();
+    if (dim_name != "soma_joinid" || type_code != TILEDB_INT64) {
+        LOG_DEBUG(fmt::format(
+            "[SOMAArray::nnz] dim 0 (type={} name={}) isn't int64 "
+            "soma_joind: using _nnz_slow",
+            tiledb::impl::type_to_str(type_code),
+            dim_name));
+        return _nnz_slow();
+    }
+
     for (uint32_t i = 0; i < fragment_count; i++) {
         // TODO[perf]: Reading fragment info is not supported on TileDB Cloud
         // yet, but reading one fragment at a time will be slow. Is there
         // another way?
         total_cell_num += fragment_info.cell_num(relevant_fragments[i]);
+
         fragment_info.get_non_empty_domain(
             relevant_fragments[i], 0, &non_empty_domains[i]);
+
         LOG_DEBUG(fmt::format(
             "[SOMAArray] fragment {} non-empty domain = [{}, {}]",
             i,

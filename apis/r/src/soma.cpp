@@ -1,18 +1,20 @@
-#include <Rcpp/Lighter>                         // for R interface to C++
-#include <nanoarrow/r.h>                        // for C/C++ interface to Arrow (via header exported from the R package)
-#include <nanoarrow/nanoarrow.hpp>              // for C/C++ interface to Arrow (vendored)
-#include <RcppInt64>                            // for fromInteger64
+#include <Rcpp/Lighter>             // for R interface to C++
 
-#include <tiledbsoma/tiledbsoma>
+#include <nanoarrow/r.h>  // for C/C++ interface to Arrow (via header exported from the R package)
+#include <RcppInt64>                // for fromInteger64
+#include <nanoarrow/nanoarrow.hpp>  // for C/C++ interface to Arrow (vendored)
+
 #include <tiledbsoma/reindexer/reindexer.h>
+#include <tiledbsoma/tiledbsoma>
 
-#include "rutilities.h"         				// local declarations
-#include "xptr-utils.h"         				// xptr taggging utilities
+#include "rutilities.h"  // local declarations
+#include "xptr-utils.h"  // xptr taggging utilities
 
 namespace tdbs = tiledbsoma;
 
 // [[Rcpp::export]]
-std::string get_soma_object_type(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+std::string get_soma_object_type(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // shared pointer to TileDB Context from SOMAContext
@@ -27,7 +29,8 @@ std::string get_soma_object_type(const std::string& uri, Rcpp::XPtr<somactx_wrap
 }
 
 // [[Rcpp::export]]
-std::string get_tiledb_object_type(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+std::string get_tiledb_object_type(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // shared pointer to TileDB Context from SOMAContext
@@ -45,7 +48,10 @@ std::string get_tiledb_object_type(const std::string& uri, Rcpp::XPtr<somactx_wr
             return std::string("INVALID");
             break;
         default:
-            Rcpp::stop("Inadmissable object type ('%d') for URI '%s'", (int)objtype, uri);
+            Rcpp::stop(
+                "Inadmissable object type ('%d') for URI '%s'",
+                (int)objtype,
+                uri);
             break;
     }
     Rcpp::stop("No object type value for URI '%s'", uri);

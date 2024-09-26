@@ -256,7 +256,9 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     # the bare minimum necessary.
     new_map = {}
     for field in arrow_table.schema:
-        if pa.types.is_dictionary(field.type):
+        if field.name == "__index_level_0__":
+            continue
+        elif pa.types.is_dictionary(field.type):
             old_index_type = field.type.index_type
             new_index_type = (
                 pa.int32()

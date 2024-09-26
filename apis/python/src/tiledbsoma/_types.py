@@ -32,14 +32,13 @@ else:
     PDSeries = pd.Series
     PDIndex = pd.Index
 
-    # Type subscription requires python >= 3.9, and we currently only type-check against 3.11.
-    # TODO: remove these (and unify around subscripted types above) when we drop support for 3.8.
+    # Tests pass `Matrix` (type alias which includes `NPNDArray`, via `DenseMatrix`), as well as other numpy types, to
+    # `isinstance`, which causes error "argument 2 cannot be a parameterized generic" using the typedefs in the
+    # `TYPE_CHECKING` branch above.
     NPInteger = np.integer
     NPFloating = np.floating
-    # This alias likely needs to remain special-cased, even in Python ≥3.11, as tests pass the `Matrix` type alias
-    # (which includes `NPNDArray` via `DenseMatrix`) to `isinstance`, causing error "argument 2 cannot be a
-    # parameterized generic".
     NPNDArray = np.ndarray
+
 
 Path = Union[str, pathlib.Path]
 

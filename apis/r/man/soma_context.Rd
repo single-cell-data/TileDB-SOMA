@@ -16,3 +16,7 @@ An external pointer object containing a shared pointer instance of \code{SOMACon
 \description{
 Create and cache a SOMA Context Object
 }
+\examples{
+cfgvec <- as.vector(tiledb::tiledb_config())   # TileDB Config in vector form
+sctx <- soma_context(cfgvec)
+}

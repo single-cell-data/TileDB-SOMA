@@ -32,7 +32,7 @@
 
 #include "common.h"
 
-static const int64_t DIM_MAX = 1000;
+static const int64_t DIM_MAX = 999;
 
 TEST_CASE("SOMACollection: basic") {
     TimestampRange ts(0, 2);

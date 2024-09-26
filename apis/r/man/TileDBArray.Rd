@@ -9,7 +9,7 @@ Base class for representing an individual TileDB array.
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
+\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -41,7 +41,6 @@ Base class for representing an individual TileDB array.
 \item \href{#method-TileDBArray-attrnames}{\code{TileDBArray$attrnames()}}
 \item \href{#method-TileDBArray-colnames}{\code{TileDBArray$colnames()}}
 \item \href{#method-TileDBArray-index_column_names}{\code{TileDBArray$index_column_names()}}
-\item \href{#method-TileDBArray-fragment_count}{\code{TileDBArray$fragment_count()}}
 \item \href{#method-TileDBArray-clone}{\code{TileDBArray$clone()}}
 }
 }
@@ -359,16 +358,6 @@ Retrieve names of index (dimension) columns (lifecycle: maturing)
 \subsection{Returns}{
 A character vector with the array index (dimension) names
 }
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-fragment_count"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-fragment_count}{}}}
-\subsection{Method \code{fragment_count()}}{
-Get number of fragments in the array (lifecycle: maturing)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$fragment_count()}\if{html}{\out{</div>}}
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBArray-clone"></a>}}

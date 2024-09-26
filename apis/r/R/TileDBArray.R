@@ -248,8 +248,7 @@ TileDBArray <- R6::R6Class(
     #' @description Retrieve number of dimensions (lifecycle: maturing)
     #' @return A scalar with the number of dimensions
     ndim = function() {
-      dims <- tiledb::dimensions(self$tiledb_schema())
-      length(dims)
+      ndim(self$uri, private$.soma_context)
     },
 
     #' @description Retrieve the array attributes (lifecycle: maturing)
@@ -291,13 +290,6 @@ TileDBArray <- R6::R6Class(
     #' @return A character vector with the array index (dimension) names
     index_column_names = function() {
       self$dimnames()
-    },
-
-    #' @description Get number of fragments in the array (lifecycle: maturing)
-    fragment_count = function() {
-      tiledb::tiledb_fragment_info_get_num(
-        tiledb::tiledb_fragment_info(self$uri)
-      )
     }
   ),
 
