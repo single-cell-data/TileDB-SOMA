@@ -10,7 +10,7 @@ optionally be limited further to a specific atomic vector type
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{ScalarMap}
+\code{tiledbsoma::MappingBase} -> \code{ScalarMap}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

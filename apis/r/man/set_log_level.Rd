@@ -7,11 +7,13 @@
 set_log_level(level)
 }
 \arguments{
-\item{level}{A character value with logging level understood by \sQuote{spdlog}
-such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or \dQuote{warn}.}
+\item{level}{A character value with logging level understood by
+\sQuote{spdlog} such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
+\dQuote{warn}.}
 }
 \value{
-Nothing is returned as the function is invoked for the side-effect.
+Nothing is returned as the function is invoked for
+the side-effect.
 }
 \description{
 Set the logging level for the R package and underlying C++ library

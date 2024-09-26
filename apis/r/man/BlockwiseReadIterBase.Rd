@@ -8,7 +8,7 @@ Class that allows for blockwise read iteration of SOMA reads
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{BlockwiseReadIterBase}
+\code{tiledbsoma::ReadIter} -> \code{BlockwiseReadIterBase}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

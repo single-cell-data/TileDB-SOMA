@@ -25,7 +25,7 @@ The \code{write} method is currently limited to writing from 2-d matrices.
 (lifecycle: maturing)
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{\link[tiledbsoma:SOMANDArrayBase]{tiledbsoma::SOMANDArrayBase}} -> \code{SOMADenseNDArray}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{tiledbsoma::SOMAArrayBase} -> \code{tiledbsoma::SOMANDArrayBase} -> \code{SOMADenseNDArray}
 }
 \section{Methods}{
 \subsection{Public methods}{

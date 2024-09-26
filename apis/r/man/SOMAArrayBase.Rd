@@ -9,7 +9,7 @@ experimental)
 }
 \keyword{internal}
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMAArrayBase}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{SOMAArrayBase}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

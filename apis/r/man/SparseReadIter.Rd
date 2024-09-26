@@ -9,7 +9,7 @@ a reads on \link{SOMASparseNDArray}.
 Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}.
 }
 \section{Super class}{
-\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{SparseReadIter}
+\code{tiledbsoma::ReadIter} -> \code{SparseReadIter}
 }
 \section{Methods}{
 \subsection{Public methods}{

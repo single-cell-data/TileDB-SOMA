@@ -14,6 +14,6 @@ get_all_metadata(uri, is_array, ctxxp)
 \item{ctxxp}{An external pointer to the SOMAContext wrapper}
 }
 \description{
-This function currently supports metadata as either a string or an 'int64' (or 'int32').
-It will error if a different datatype is encountered.
+This function currently supports metadata as either a string or an 'int64'
+(or 'int32'). It will error if a different datatype is encountered.
 }

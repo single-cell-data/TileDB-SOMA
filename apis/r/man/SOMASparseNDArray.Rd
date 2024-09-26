@@ -23,7 +23,7 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
 }
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{\link[tiledbsoma:SOMANDArrayBase]{tiledbsoma::SOMANDArrayBase}} -> \code{SOMASparseNDArray}
+\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{tiledbsoma::SOMAArrayBase} -> \code{tiledbsoma::SOMANDArrayBase} -> \code{SOMASparseNDArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
