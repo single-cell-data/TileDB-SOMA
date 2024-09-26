@@ -210,9 +210,11 @@ SEXP soma_array_reader(
 //' Set the logging level for the R package and underlying C++ library
 //'
 //' @param level A character value with logging level understood by
-//\sQuote{spdlog} ' such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
-//\dQuote{warn}. ' @return Nothing is returned as the function is invoked for
-// the side-effect. ' @export
+//' \sQuote{spdlog} such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
+//' \dQuote{warn}.
+//' @return Nothing is returned as the function is invoked for
+//' the side-effect.
+//' @export
 // [[Rcpp::export]]
 void set_log_level(const std::string& level) {
     spdl::setup("R", level);

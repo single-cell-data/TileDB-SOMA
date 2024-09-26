@@ -310,7 +310,7 @@ std::vector<int64_t> i64_from_rcpp_numeric(const Rcpp::NumericVector& input) {
 //'  measurements and statistics.
 //'
 //' - `tiledbsoma_stats_enable()`/`tiledbsoma_stats_disable()`: Enable and
-//' disable TileDB's internal statistics.
+//'    disable TileDB's internal statistics.
 //' - `tiledbsoma_stats_reset()`: Reset all statistics to 0.
 //' - `tiledbsoma_stats_dump()`: Dump all statistics to a JSON string.
 //' - `tiledbsoma_stats_show()`: Print all statistics to the console.
@@ -348,8 +348,8 @@ std::string tiledbsoma_stats_dump() {
 //' libtiledbsoma version
 //'
 //' Returns a string with version information for libtiledbsoma and the linked
-// TileDB Embedded library. If argument `compact` is set to `TRUE`, a shorter
-// version of just the TileDB Embedded library version is returned.
+//' TileDB Embedded library. If argument `compact` is set to `TRUE`, a shorter
+//' version of just the TileDB Embedded library version is returned.
 //' @noRd
 // [[Rcpp::export]]
 std::string libtiledbsoma_version(
