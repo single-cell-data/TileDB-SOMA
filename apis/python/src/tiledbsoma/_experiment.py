@@ -6,7 +6,7 @@
 """Implementation of a SOMA Experiment.
 """
 import functools
-from typing import Optional
+from typing import Optional, Union
 
 from somacore import experiment, query
 from typing_extensions import Self
@@ -16,6 +16,7 @@ from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._indexer import IntIndexer
 from ._measurement import Measurement
+from ._scene import Scene
 from ._soma_object import AnySOMAObject
 
 
@@ -24,6 +25,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
     experiment.Experiment[  # type: ignore[type-var]
         DataFrame,
         Collection[Measurement],
+        Collection[Union[DataFrame, Scene]],
         AnySOMAObject,
     ],
 ):
@@ -43,6 +45,8 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
             defined in this dataframe.
         ms (Collection):
             A collection of named measurements.
+        spatial (Collection):
+            A collection of spatial scenes.
 
     Example:
         >>> import tiledbsoma
@@ -69,6 +73,8 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
     _subclass_constrained_soma_types = {
         "obs": ("SOMADataFrame",),
         "ms": ("SOMACollection",),
+        "spatial": ("SOMACollection",),
+        "obs_spatial_presence": ("SOMADataFrame",),
     }
 
     def axis_query(  # type: ignore
