@@ -2655,11 +2655,11 @@ def _ingest_uns_string_array(
     """
 
     if len(value.shape) == 1:
-        helper = _ingest_uns_1d_string_array  # type:ignore[unreachable]
+        helper = _ingest_uns_1d_string_array
     elif len(value.shape) == 2:
         helper = _ingest_uns_2d_string_array
     else:
-        msg = (  # type:ignore[unreachable]
+        msg = (
             f"Skipped {coll.uri}[{key!r}]"
             f" (uns object): string array is neither one-dimensional nor two-dimensional"
         )
