@@ -1,8 +1,7 @@
 [build-system]
 requires = [
     "pybind11[global]>=2.10.0",
-    "setuptools>=65.5.1",
-    "wheel>=0.37.1",
+    "setuptools>=70.1",  # `setuptools.command.bdist_wheel`
     "cmake>=3.21",
 ]
 build-backend = "setuptools.build_meta"
