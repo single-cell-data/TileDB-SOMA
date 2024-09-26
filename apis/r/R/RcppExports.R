@@ -198,8 +198,8 @@ ndim <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_ndim`, uri, ctxxp)
 }
 
-dimnames <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_dimnames`, uri, ctxxp)
+c_dimnames <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_dimnames`, uri, ctxxp)
 }
 
 resize <- function(uri, new_shape, ctxxp) {
