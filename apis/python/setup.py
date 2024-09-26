@@ -34,6 +34,8 @@ except ImportError:
     # read&install our requirements without loading setup.py.
     from setuptools import Extension as Pybind11Extension
 
+from pybind11.setup_helpers import ParallelCompile
+
 this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
 
@@ -265,6 +267,10 @@ if os.name == "posix" and sys.platform != "darwin":
 # Don't use `if __name__ == "__main__":` as the `python_requires` must
 # be at top level, outside any if-block
 # https://github.com/pypa/cibuildwheel/blob/7c4bbf8cb31d856a0fe547faf8edf165cd48ce74/cibuildwheel/projectfiles.py#L41-L46
+
+# Optional multithreaded build. Otherwise we spend a big chunk of iterative dev time doing
+# sequential compiles of our apis/python/src/tiledbsoma/*.cc.
+ParallelCompile("NPY_NUM_BUILD_JOBS").install()
 
 setuptools.setup(
     name="tiledbsoma",
