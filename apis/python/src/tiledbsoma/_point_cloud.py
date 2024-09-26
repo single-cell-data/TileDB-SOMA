@@ -12,7 +12,7 @@ from typing import Any, Optional, Sequence, Tuple, Union
 import pyarrow as pa
 import somacore
 from somacore import CoordinateSpace, CoordinateTransform, options
-from typing_extension import Self
+from typing_extensions import Self
 
 from ._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
 from ._dataframe import Domain
