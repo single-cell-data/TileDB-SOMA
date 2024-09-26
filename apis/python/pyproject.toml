@@ -23,7 +23,7 @@ lint.ignore = ["E501"]  # line too long
 lint.extend-select = ["I001"]  # unsorted-imports
 fix = true
 exclude = ["*.cc"]
-target-version = "py38"
+target-version = "py39"
 
 [tool.ruff.lint.isort]
 # HACK: tiledb needs to come after tiledbsoma: https://github.com/single-cell-data/TileDB-SOMA/issues/2293
