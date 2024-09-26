@@ -288,7 +288,6 @@ setuptools.setup(
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: Microsoft :: Windows",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -327,7 +326,7 @@ setuptools.setup(
     setup_requires=["pybind11"],
     install_requires=[
         # Tracked in https://github.com/single-cell-data/TileDB-SOMA/issues/1785
-        "anndata != 0.10.0; python_version>='3.8'",
+        "anndata != 0.10.0",
         "attrs>=22.2",
         "numba>=0.58.0",
         "numpy<2.0",
@@ -336,14 +335,14 @@ setuptools.setup(
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
-        "somacore==1.0.15",
+        "somacore==1.0.17",
         "tiledb~=0.32.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
         "dev": open("requirements_dev.txt").read(),
     },
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
     version=version.get_version(),
 )
