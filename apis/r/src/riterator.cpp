@@ -49,7 +49,7 @@ namespace tdbs = tiledbsoma;
 //' \sQuote{auto}
 //' @param loglevel Character value with the desired logging level, defaults to
 //' \sQuote{auto} which lets prior setting prevail, any other value is set as
-//new logging level.
+//' new logging level.
 //' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start
 //' and end of ' interval for which data is considered.
 //' @param sr An external pointer to a TileDB SOMAArray object.

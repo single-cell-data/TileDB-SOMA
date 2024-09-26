@@ -11,7 +11,7 @@ Base class for interacting with TileDB groups (lifecycle: maturing)
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBGroup}
+\code{tiledbsoma::TileDBObject} -> \code{TileDBGroup}
 }
 \section{Methods}{
 \subsection{Public methods}{

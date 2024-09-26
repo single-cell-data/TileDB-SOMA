@@ -69,8 +69,8 @@ get_metadata_num <- function(uri, is_array, ctxxp) {
 
 #' Read all metadata (as named list)
 #'
-#' This function currently supports metadata as either a string or an 'int64' (or 'int32').
-#' It will error if a different datatype is encountered.
+#' This function currently supports metadata as either a string or an 'int64'
+#' (or 'int32'). It will error if a different datatype is encountered.
 #' @param uri The array URI
 #' @param is_array A boolean to indicate array or group
 #' @param ctxxp An external pointer to the SOMAContext wrapper
@@ -145,9 +145,11 @@ soma_array_reader_impl <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_p
 
 #' Set the logging level for the R package and underlying C++ library
 #'
-#' @param level A character value with logging level understood by \sQuote{spdlog}
-#' such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or \dQuote{warn}.
-#' @return Nothing is returned as the function is invoked for the side-effect.
+#' @param level A character value with logging level understood by
+#' \sQuote{spdlog} such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
+#' \dQuote{warn}.
+#' @return Nothing is returned as the function is invoked for
+#' the side-effect.
 #' @export
 set_log_level <- function(level) {
     invisible(.Call(`_tiledbsoma_set_log_level`, level))
@@ -217,23 +219,29 @@ tiledbsoma_upgrade_shape <- function(uri, new_shape, ctxxp) {
 #' @param uri Character value with URI path to a SOMA data set
 #' @param config Named chracter vector with \sQuote{key} and \sQuote{value} pairs
 #' used as TileDB config parameters.
-#' @param colnames Optional vector of character value with the name of the columns to retrieve
-#' @param qc Optional external Pointer object to TileDB Query Condition, defaults to \sQuote{NULL} i.e.
-#' no query condition
-#' @param dim_points Optional named list with vector of data points to select on the given
-#' dimension(s). Each dimension can be one entry in the list.
-#' @param dim_ranges Optional named list with two-column matrix where each row select a range
-#' for the given dimension. Each dimension can be one entry in the list.
-#' @param batch_size Optional argument for size of data batches, defaults to \sQuote{auto}
-#' @param result_order Optional argument for query result order, defaults to \sQuote{auto}
-#' @param loglevel Character value with the desired logging level, defaults to \sQuote{auto}
-#' which lets prior setting prevail, any other value is set as new logging level.
-#' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start and end of
-#' interval for which data is considered.
-#' @param sr An external pointer to a TileDB SOMAArray object
+#' @param colnames Optional vector of character value with the name of the
+#' columns to retrieve
+#' @param qc Optional external Pointer object to TileDB Query Condition,
+#' defaults to \sQuote{NULL} i.e. no query condition
+#' @param dim_points Optional named list with vector of data points to select
+#' on the given dimension(s). Each dimension can be one entry in the list.
+#' @param dim_ranges Optional named list with two-column matrix where each row
+#' select a range for the given dimension. Each dimension can be one entry in
+#'the list.
+#' @param batch_size Optional argument for size of data batches, defaults to
+#'\sQuote{auto}
+#' @param result_order Optional argument for query result order, defaults to
+#' \sQuote{auto}
+#' @param loglevel Character value with the desired logging level, defaults to
+#' \sQuote{auto} which lets prior setting prevail, any other value is set as
+#' new logging level.
+#' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start
+#' and end of ' interval for which data is considered.
+#' @param sr An external pointer to a TileDB SOMAArray object.
 #'
-#' @return \code{sr_setup} returns an external pointer to a SOMAArray. \code{sr_complete}
-#' returns a boolean, and \code{sr_next} returns an Arrow array helper object.
+#' @return \code{sr_setup} returns an external pointer to a SOMAArray.
+#' \code{sr_complete} ' returns a boolean, and \code{sr_next} returns an Arrow
+#' array helper object.
 #'
 #' @examples
 #' \dontrun{
@@ -249,6 +257,8 @@ tiledbsoma_upgrade_shape <- function(uri, new_shape, ctxxp) {
 #' summary(rl)
 #' }
 #' @noRd
+NULL
+
 sr_setup <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
     .Call(`_tiledbsoma_sr_setup`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
 }
@@ -277,10 +287,11 @@ sr_set_dim_points <- function(sr, dim, points) {
 
 #' TileDB SOMA statistics
 #'
-#' These functions expose the TileDB Core functionality for performance measurements
-#' and statistics.
+#' These functions expose the TileDB Core functionality for performance
+#'  measurements and statistics.
 #'
-#' - `tiledbsoma_stats_enable()`/`tiledbsoma_stats_disable()`: Enable and disable TileDB's internal statistics.
+#' - `tiledbsoma_stats_enable()`/`tiledbsoma_stats_disable()`: Enable and
+#'    disable TileDB's internal statistics.
 #' - `tiledbsoma_stats_reset()`: Reset all statistics to 0.
 #' - `tiledbsoma_stats_dump()`: Dump all statistics to a JSON string.
 #' - `tiledbsoma_stats_show()`: Print all statistics to the console.
@@ -311,9 +322,9 @@ tiledbsoma_stats_dump <- function() {
 
 #' libtiledbsoma version
 #'
-#' Returns a string with version information for libtiledbsoma and the linked TileDB Embedded library.
-#' If argument `compact` is set to `TRUE`, a shorter version of just the TileDB Embedded library
-#' version is returned,
+#' Returns a string with version information for libtiledbsoma and the linked
+#' TileDB Embedded library. If argument `compact` is set to `TRUE`, a shorter
+#' version of just the TileDB Embedded library version is returned.
 #' @noRd
 libtiledbsoma_version <- function(compact = FALSE, major_minor_only = FALSE) {
     .Call(`_tiledbsoma_libtiledbsoma_version`, compact, major_minor_only)

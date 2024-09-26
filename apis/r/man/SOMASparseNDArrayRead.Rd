@@ -8,7 +8,7 @@ Intermediate type to choose result format when reading a sparse array
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[tiledbsoma:SOMASparseNDArrayReadBase]{tiledbsoma::SOMASparseNDArrayReadBase}} -> \code{SOMASparseNDArrayRead}
+\code{tiledbsoma::SOMASparseNDArrayReadBase} -> \code{SOMASparseNDArrayRead}
 }
 \section{Methods}{
 \subsection{Public methods}{

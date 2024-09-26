@@ -20,12 +20,13 @@ tiledbsoma_stats_dump()
 tiledbsoma_stats_show()
 }
 \description{
-These functions expose the TileDB Core functionality for performance measurements
-and statistics.
+These functions expose the TileDB Core functionality for performance
+measurements and statistics.
 }
 \details{
 \itemize{
-\item \code{tiledbsoma_stats_enable()}/\code{tiledbsoma_stats_disable()}: Enable and disable TileDB's internal statistics.
+\item \code{tiledbsoma_stats_enable()}/\code{tiledbsoma_stats_disable()}: Enable and
+disable TileDB's internal statistics.
 \item \code{tiledbsoma_stats_reset()}: Reset all statistics to 0.
 \item \code{tiledbsoma_stats_dump()}: Dump all statistics to a JSON string.
 \item \code{tiledbsoma_stats_show()}: Print all statistics to the console.

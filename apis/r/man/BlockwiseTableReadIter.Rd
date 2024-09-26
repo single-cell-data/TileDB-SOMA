@@ -9,7 +9,7 @@ as Arrow \code{\link[Arrow]{Table}s}
 }
 \keyword{internal}
 \section{Super classes}{
-\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{\link[tiledbsoma:BlockwiseReadIterBase]{tiledbsoma::BlockwiseReadIterBase}} -> \code{BlockwiseTableReadIter}
+\code{tiledbsoma::ReadIter} -> \code{tiledbsoma::BlockwiseReadIterBase} -> \code{BlockwiseTableReadIter}
 }
 \section{Methods}{
 \subsection{Public methods}{
