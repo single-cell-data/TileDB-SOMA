@@ -73,20 +73,20 @@ TEST_CASE("name", "[pattern]") {
 
     ArrowTable arrow_table(std::move(arrow_array), std::move(arrow_schema));
 
-    std::vector<int64_t>
-        outputs_int64 = ArrowAdapter::get_table_column_by_name<int64_t>(
+    std::vector<int64_t> outputs_int64 =
+        ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             arrow_table, "int64");
-    std::vector<uint8_t>
-        outputs_uint8 = ArrowAdapter::get_table_column_by_name<uint8_t>(
+    std::vector<uint8_t> outputs_uint8 =
+        ArrowAdapter::get_table_non_string_column_by_name<uint8_t>(
             arrow_table, "uint8");
-    std::vector<double>
-        outputs_float64 = ArrowAdapter::get_table_column_by_name<double>(
+    std::vector<double> outputs_float64 =
+        ArrowAdapter::get_table_non_string_column_by_name<double>(
             arrow_table, "float64");
-    std::vector<float>
-        outputs_float32 = ArrowAdapter::get_table_column_by_name<float>(
+    std::vector<float> outputs_float32 =
+        ArrowAdapter::get_table_non_string_column_by_name<float>(
             arrow_table, "float32");
     std::vector<bool>
-        outputs_bool = ArrowAdapter::get_table_column_by_name<bool>(
+        outputs_bool = ArrowAdapter::get_table_non_string_column_by_name<bool>(
             arrow_table, "bool");
     std::vector<std::string>
         outputs_string = ArrowAdapter::get_table_string_column_by_name(

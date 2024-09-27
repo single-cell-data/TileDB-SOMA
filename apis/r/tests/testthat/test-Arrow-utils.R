@@ -93,20 +93,20 @@ test_that("Validating arrow data type compatibility", {
 })
 
 test_that("Validating arrow schema data type compatibility", {
-  from <- arrow::schema(foo = arrow::int32())
-  to <- arrow::schema(foo = arrow::int32())
+  from <- arrow::schema(int_column = arrow::int32())
+  to <- arrow::schema(int_column = arrow::int32())
   expect_true(check_arrow_schema_data_types(from, to))
 
   # Add incompatible fields
-  from$bar <- arrow::int16()
-  to$bar <- arrow::float16()
+  from$float_column <- arrow::int16()
+  to$float_column <- arrow::float16()
   expect_error(
     check_arrow_schema_data_types(from, to),
     "Schemas are incompatible"
   )
 
   # Schemas with different fields
-  from$baz <- arrow::string()
+  from$string_column <- arrow::string()
   expect_error(
     check_arrow_schema_data_types(from, to),
     "'from' and 'to' must have the same number of fields"

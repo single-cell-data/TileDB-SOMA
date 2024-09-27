@@ -86,6 +86,34 @@ void write_coords(
     }
 }
 
+// This is shared code for non-empty domain, domain, and maxdomain.  Returns a
+// Python list of Arrow arrays. Python code can convert these further.
+py::list domainish_to_list(ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
+    auto pa = py::module::import("pyarrow");
+    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
+
+    py::list array_list;
+    for (int i = 0; i < arrow_array->n_children; i++) {
+        // Note that this runs the release callbacks within the ArrowArray and
+        // the ArrowSchema, freeing memory.
+        auto array = pa_array_import(
+            py::capsule(arrow_array->children[i]),
+            py::capsule(arrow_schema->children[i]));
+        array_list.append(array);
+
+        // Already released: ensure there is no attempt at second free.
+        arrow_array->children[i] = nullptr;
+        arrow_schema->children[i] = nullptr;
+    }
+    // Already released: ensure there is no attempt at second free.
+    arrow_array->n_children = 0;
+    arrow_array->children = nullptr;
+    arrow_schema->n_children = 0;
+    arrow_schema->children = nullptr;
+
+    return array_list;
+}
+
 void load_soma_array(py::module& m) {
     py::class_<SOMAArray, SOMAObject>(m, "SOMAArray")
         .def(
@@ -666,6 +694,34 @@ void load_soma_array(py::module& m) {
                 if (!array.timestamp().has_value())
                     return py::none();
                 return py::cast(array.timestamp()->second);
+            })
+
+        .def("domainish_to_list", domainish_to_list)
+
+        .def(
+            "non_empty_domain",
+            [](SOMAArray& array) {
+                ArrowTable arrow_table = array.get_non_empty_domain();
+                return domainish_to_list(
+                    arrow_table.first.get(), arrow_table.second.get());
+            })
+
+        .def(
+            "domain",
+            [](SOMAArray& array) {
+                auto pa = py::module::import("pyarrow");
+                ArrowTable arrow_table = array.get_soma_domain();
+                return domainish_to_list(
+                    arrow_table.first.get(), arrow_table.second.get());
+            })
+
+        .def(
+            "maxdomain",
+            [](SOMAArray& array) {
+                auto pa = py::module::import("pyarrow");
+                ArrowTable arrow_table = array.get_soma_maxdomain();
+                return domainish_to_list(
+                    arrow_table.first.get(), arrow_table.second.get());
             })
 
         .def(

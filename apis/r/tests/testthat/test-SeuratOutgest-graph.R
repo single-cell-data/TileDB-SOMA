@@ -28,16 +28,16 @@ test_that("Load graph from ExperimentQuery mechanics", {
   expect_identical(SeuratObject::DefaultAssay(graph), 'RNA')
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_graph('connectivities', 'baz'))
+  expect_no_condition(named <- query$to_seurat_graph('connectivities', 'string_column'))
   expect_s4_class(named, 'Graph')
   expect_identical(dim(named), c(n_obs, n_obs))
   expect_identical(
     rownames(named),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     colnames(named),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(SeuratObject::DefaultAssay(named), 'RNA')
 
@@ -58,7 +58,7 @@ test_that("Load graph from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_graph('connectivities', obs_index = 1))
   expect_error(query$to_seurat_graph(
     'connectivities',
-    obs_index = c('baz', 'foo'))
+    obs_index = c('string_column', 'int_column'))
   )
   expect_error(query$to_seurat_graph('connectivities', obs_index = 'tomato'))
 })
@@ -98,16 +98,16 @@ test_that("Load graph from sliced ExperimentQuery", {
   expect_identical(SeuratObject::DefaultAssay(graph), 'RNA')
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_graph('connectivities', 'baz'))
+  expect_no_condition(named <- query$to_seurat_graph('connectivities', 'string_column'))
   expect_s4_class(named, 'Graph')
   expect_identical(dim(named), c(n_obs_slice, n_obs_slice))
   expect_identical(
     rownames(named),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     colnames(named),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(SeuratObject::DefaultAssay(named), 'RNA')
 })
@@ -133,7 +133,7 @@ test_that("Load graph from indexed ExperimentQuery", {
 
   # Create the query
   obs_value_filter <- paste0(
-    sprintf("baz == '%s'", obs_label_values),
+    sprintf("string_column == '%s'", obs_label_values),
     collapse = "||"
   )
   var_value_filter <- paste0(
@@ -155,17 +155,17 @@ test_that("Load graph from indexed ExperimentQuery", {
   expect_identical(SeuratObject::DefaultAssay(graph), 'RNA')
 
   # Test named
-  expect_no_condition(named <- query$to_seurat_graph('connectivities', 'baz'))
+  expect_no_condition(named <- query$to_seurat_graph('connectivities', 'string_column'))
   expect_s4_class(named, 'Graph')
   expect_identical(dim(named), c(n_obs_select, n_obs_select))
   expect_identical(
     rownames(named),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(rownames(named), obs_label_values)
   expect_identical(
     colnames(named),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(colnames(named), obs_label_values)
   expect_identical(SeuratObject::DefaultAssay(named), 'RNA')

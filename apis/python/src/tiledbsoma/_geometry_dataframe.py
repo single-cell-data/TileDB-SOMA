@@ -6,6 +6,7 @@
 Implementation of a SOMA Geometry DataFrame
 """
 
+import warnings
 from typing import Optional, Sequence, Tuple, Union
 
 import pyarrow as pa
@@ -13,7 +14,7 @@ import somacore
 from somacore import CoordinateSpace, CoordinateTransform, options
 from typing_extensions import Self
 
-from ._constants import SOMA_GEOMETRY, SOMA_JOINID
+from ._constants import SOMA_GEOMETRY, SOMA_JOINID, SPATIAL_DISCLAIMER
 from ._dataframe import Domain
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
@@ -90,6 +91,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
+        warnings.warn(SPATIAL_DISCLAIMER)
         raise NotImplementedError()
 
     # Data operations
@@ -220,7 +222,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         raise NotImplementedError()
 
     @property
-    def coordinate_space(self) -> Optional[CoordinateSpace]:
+    def coordinate_space(self) -> CoordinateSpace:
         """Coordinate space for this geometry dataframe.
 
         Lifecycle:

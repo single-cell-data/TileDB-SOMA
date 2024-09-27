@@ -1,8 +1,10 @@
+# Copyright (c) 2024 The Chan Zuckerberg Initiative Foundation
 # Copyright (c) 2024 TileDB, Inc.
 #
 # Licensed under the MIT License.
-
-"""Implementation of a SOMA Scene."""
+"""
+Implementation of a SOMA Scene
+"""
 
 from typing import Any, Optional, Sequence, Union
 
@@ -25,7 +27,7 @@ from ._spatial_util import (
 )
 
 
-class Scene(  # type: ignore[misc]  # __eq__ false positive
+class Scene(  # type: ignore[misc]   # __eq__ false positive
     CollectionBase[AnySOMAObject],
     somacore.Scene[MultiscaleImage, PointCloud, GeometryDataFrame, AnySOMAObject],
 ):
@@ -59,7 +61,11 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
 
     @property
     def coordinate_space(self) -> Optional[CoordinateSpace]:
-        """Coordinate system for this scene."""
+        """Coordinate system for this scene.
+
+        Lifecycle:
+            Experimental.
+        """
         return self._coord_space
 
     @coordinate_space.setter
@@ -285,8 +291,6 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
         return image
 
-        raise NotImplementedError()
-
     def set_transform_to_point_cloud(
         self,
         key: str,
@@ -505,7 +509,6 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             )
         level_transform = image.get_transform_to_level(level)
         return level_transform @ base_transform
-        raise NotImplementedError()
 
     def get_transform_to_point_cloud(
         self, key: str, *, subcollection: str = "obsl"

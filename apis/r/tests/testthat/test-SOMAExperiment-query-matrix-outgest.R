@@ -150,18 +150,18 @@ test_that("matrix outgest assertions", {
   )
 
   expect_error(
-    query$to_sparse_matrix(collection = "foo"),
-    "The following collection does not exist: foo"
+    query$to_sparse_matrix(collection = "int_column"),
+    "The following collection does not exist: int_column"
   )
 
   expect_error(
-    query$to_sparse_matrix(collection = "X", layer_name = "foo"),
-    "The following layer does not exist: foo"
+    query$to_sparse_matrix(collection = "X", layer_name = "int_column"),
+    "The following layer does not exist: int_column"
   )
 
   expect_error(
-    query$to_sparse_matrix(collection = "X", layer_name = "counts", obs_index = "foo"),
-    "The following column does not exist: foo"
+    query$to_sparse_matrix(collection = "X", layer_name = "counts", obs_index = "int_column"),
+    "The following column does not exist: int_column"
   )
 
   # joinds are used as default dimnames if no obs/var_index is provided
@@ -175,12 +175,12 @@ test_that("matrix outgest assertions", {
 
   # error if specified obs/var_index does not exist
   expect_error(
-    query$to_sparse_matrix("X", "counts", obs_index = "foo"),
-    "The following column does not exist: foo"
+    query$to_sparse_matrix("X", "counts", obs_index = "int_column"),
+    "The following column does not exist: int_column"
   )
   expect_error(
-    query$to_sparse_matrix("X", "counts", var_index = "foo"),
-    "The following column does not exist: foo"
+    query$to_sparse_matrix("X", "counts", var_index = "int_column"),
+    "The following column does not exist: int_column"
   )
 
   # only one of obs_index or var_index can be provided

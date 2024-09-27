@@ -109,16 +109,16 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   # Test adding names
   expect_no_condition(named_pca <- query$to_seurat_reduction(
     'pca',
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
   expect_identical(
     SeuratObject::Cells(named_pca),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Embeddings(named_pca)),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_pca)),
@@ -126,16 +126,16 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   )
   expect_warning(named_ica <- query$to_seurat_reduction(
     'ica',
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
   expect_identical(
     SeuratObject::Cells(named_ica),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Embeddings(named_ica)),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_ica)),
@@ -143,19 +143,19 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
-    obs_index = 'baz',
+    obs_index = 'string_column',
   ))
   expect_identical(
     SeuratObject::Cells(named_umap),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Embeddings(named_umap)),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
 
@@ -182,7 +182,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_reduction('pca', obs_index = FALSE))
   expect_error(query$to_seurat_reduction('pca', obs_index = NA_character_))
   expect_error(query$to_seurat_reduction('pca', obs_index = 1))
-  expect_error(query$to_seurat_reduction('pca', obs_index = c('baz', 'foo')))
+  expect_error(query$to_seurat_reduction('pca', obs_index = c('string_column', 'int_column')))
   expect_error(query$to_seurat_reduction('pca', obs_index = 'tomato'))
 
   # Test `var_index` assertions
@@ -191,7 +191,7 @@ test_that("Load reduction from ExperimentQuery mechanics", {
   expect_error(query$to_seurat_reduction('pca', var_index = 1))
   expect_error(query$to_seurat_reduction(
     'pca',
-    var_index = c('baz', 'foo')
+    var_index = c('string_column', 'int_column')
   ))
   expect_error(query$to_seurat_reduction('pca', var_index = 'tomato'))
 })
@@ -284,12 +284,12 @@ test_that("Load reduction from sliced ExperimentQuery", {
   # Test named
   expect_no_condition(named_pca <- query$to_seurat_reduction(
     'pca',
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
   expect_identical(
     SeuratObject::Cells(named_pca),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_pca)),
@@ -297,12 +297,12 @@ test_that("Load reduction from sliced ExperimentQuery", {
   )
   expect_warning(named_ica <- query$to_seurat_reduction(
     'ica',
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
   expect_identical(
     SeuratObject::Cells(named_ica),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(
     rownames(SeuratObject::Loadings(named_ica)),
@@ -310,15 +310,15 @@ test_that("Load reduction from sliced ExperimentQuery", {
   )
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
-    obs_index = 'baz'
+    obs_index = 'string_column'
   ))
   expect_identical(
     SeuratObject::Cells(named_umap),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_no_condition(query$to_seurat_reduction(
     'umap',
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
 })
@@ -347,7 +347,7 @@ test_that("Load reduction from indexed ExperimentQuery", {
 
   # Create the query
   obs_value_filter <- paste0(
-    sprintf("baz == '%s'", obs_label_values),
+    sprintf("string_column == '%s'", obs_label_values),
     collapse = "||"
   )
   var_value_filter <- paste0(
@@ -434,12 +434,12 @@ test_that("Load reduction from indexed ExperimentQuery", {
   # Test named
   expect_no_condition(named_pca <- query$to_seurat_reduction(
     'pca',
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
   expect_identical(
     SeuratObject::Cells(named_pca),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(SeuratObject::Cells(named_pca), obs_label_values)
   expect_identical(
@@ -449,12 +449,12 @@ test_that("Load reduction from indexed ExperimentQuery", {
   expect_identical(rownames(SeuratObject::Loadings(named_pca)), var_label_values)
   expect_warning(named_ica <- query$to_seurat_reduction(
     'ica',
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
   expect_identical(
     SeuratObject::Cells(named_ica),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(SeuratObject::Cells(named_ica), obs_label_values)
   expect_identical(
@@ -464,16 +464,16 @@ test_that("Load reduction from indexed ExperimentQuery", {
   expect_identical(rownames(SeuratObject::Loadings(named_ica)), var_label_values)
   expect_no_condition(named_umap <- query$to_seurat_reduction(
     'umap',
-    obs_index = 'baz'
+    obs_index = 'string_column'
   ))
   expect_identical(
     SeuratObject::Cells(named_umap),
-    query$obs('baz')$concat()$GetColumnByName('baz')$as_vector()
+    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
   )
   expect_identical(SeuratObject::Cells(named_umap), obs_label_values)
   expect_no_condition(query$to_seurat_reduction(
     'umap',
-    obs_index = 'baz',
+    obs_index = 'string_column',
     var_index = 'quux'
   ))
 })

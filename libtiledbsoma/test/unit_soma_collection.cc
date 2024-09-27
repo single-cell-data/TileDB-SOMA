@@ -71,6 +71,8 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
             {{.name = dim_name,
               .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
               .use_current_domain = use_current_domain}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
@@ -125,6 +127,8 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
         {{.name = dim_name,
           .tiledb_datatype = tiledb_datatype,
           .dim_max = DIM_MAX,
+          .string_lo = "N/A",
+          .string_hi = "N/A",
           .use_current_domain = false}});
     auto index_columns = helper::create_column_index_info(dim_infos);
 
@@ -179,6 +183,8 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
             {{.name = dim_name,
               .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
             {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
@@ -273,6 +279,8 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
             {{.name = dim_name,
               .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
             {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
@@ -327,6 +335,8 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
             {{.name = dim_name,
               .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
             {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
@@ -440,6 +450,8 @@ TEST_CASE("SOMAExperiment: metadata") {
             {{.name = dim_name,
               .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
             {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
@@ -532,6 +544,8 @@ TEST_CASE("SOMAMeasurement: metadata") {
             {{.name = dim_name,
               .tiledb_datatype = tiledb_datatype,
               .dim_max = DIM_MAX,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
               .use_current_domain = use_current_domain}});
         std::vector<helper::AttrInfo> attr_infos(
             {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});

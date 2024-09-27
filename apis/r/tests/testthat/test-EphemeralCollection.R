@@ -29,9 +29,9 @@ test_that("Ephemeral Collection mechanics", {
   # expect_equal(readback_dataframe$object[], df2$object[])
 
   # Add new dataframe to the collection
-  expect_error(collection$add_new_dataframe("new_df", create_arrow_schema(), "foo"))
+  expect_error(collection$add_new_dataframe("new_df", create_arrow_schema(), "int_column"))
   expect_no_condition(collection$set(
-    SOMADataFrameCreate(file.path(uri, 'new_df'), create_arrow_schema(), 'foo'),
+    SOMADataFrameCreate(file.path(uri, 'new_df'), create_arrow_schema(), 'int_column'),
     'new_df'
   ))
   expect_s3_class(df3 <- collection$get("new_df"), 'SOMADataFrame')

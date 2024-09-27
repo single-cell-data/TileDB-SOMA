@@ -9,13 +9,13 @@ test_that("Basic mechanics", {
   )
   if (dir.exists(uri)) unlink(uri, recursive=TRUE)
 
-  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
+  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column")
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
 
   # check for missing columns
   expect_error(
-    sdf$write(arrow::arrow_table(foo = 1L:10L)),
+    sdf$write(arrow::arrow_table(int_column = 1L:10L)),
     "All schema fields must be present in 'values'"
   )
   # check for extra columns
@@ -24,10 +24,10 @@ test_that("Basic mechanics", {
     "All columns in 'values' must be defined in the schema"
   )
 
-  tbl0 <- arrow::arrow_table(foo = 1L:36L,
+  tbl0 <- arrow::arrow_table(int_column = 1L:36L,
                              soma_joinid = 1L:36L,
-                             bar = 1.1:36.1,
-                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                             float_column = 1.1:36.1,
+                             string_column = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
                                      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
                                      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
                                      "ź", "Ž", "Ż"),
@@ -59,10 +59,10 @@ test_that("Basic mechanics", {
 
   # Same as above but now for RecordBatch
   sdf <- SOMADataFrameOpen(uri, mode = "WRITE")
-  rb0 <- arrow::record_batch(foo = 1L:36L,
+  rb0 <- arrow::record_batch(int_column = 1L:36L,
                              soma_joinid = 1L:36L,
-                             bar = 1.1:36.1,
-                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                             float_column = 1.1:36.1,
+                             string_column = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
                                      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
                                      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
                                      "ź", "Ž", "Ż"),
@@ -83,8 +83,8 @@ test_that("Basic mechanics", {
   rb1 <- arrow::as_record_batch(sdf$read()$concat())
   expect_equivalent(as.data.frame(rb0), as.data.frame(rb1))
 
-  # Slicing by foo
-  tbl1 <- sdf$read(coords = list(foo = 1L:2L))$concat()
+  # Slicing by int_column
+  tbl1 <- sdf$read(coords = list(int_column = 1L:2L))$concat()
   expect_true(tbl1$Equals(tbl0$Slice(offset = 0, length = 2)))
 
   # Slicing unnamed also work
@@ -97,12 +97,12 @@ test_that("Basic mechanics", {
     "'column_names' must only contain valid dimension or attribute columns"
   )
 
-  tbl1 <- sdf$read(column_names = "bar")$concat()
+  tbl1 <- sdf$read(column_names = "float_column")$concat()
   expect_true(tbl1$Equals(tbl0$SelectColumns(2L)))
 
   # Attribute filters
-  tbl1 <- sdf$read(value_filter = "bar < 5")$concat()
-  expect_true(tbl1$Equals(tbl0$Filter(tbl0$bar < 5)))
+  tbl1 <- sdf$read(value_filter = "float_column < 5")$concat()
+  expect_true(tbl1$Equals(tbl0$Filter(tbl0$float_column < 5)))
 
   # Validate TileDB array schema
   arr <- tiledb::tiledb_array(uri)
@@ -134,7 +134,7 @@ test_that("Basic mechanics with default index_column_names", {
 
   # check for missing columns
   expect_error(
-    sdf$write(arrow::arrow_table(foo = 1L:10L)),
+    sdf$write(arrow::arrow_table(int_column = 1L:10L)),
     "All schema fields must be present in 'values'"
   )
   # check for extra columns
@@ -144,9 +144,9 @@ test_that("Basic mechanics with default index_column_names", {
   )
 
   tbl0 <- arrow::arrow_table( soma_joinid = 1L:36L,
-                             foo = 1L:36L,
-                             bar = 1.1:36.1,
-                             baz = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
+                             int_column = 1L:36L,
+                             float_column = 1.1:36.1,
+                             string_column = c("á", "ą", "ã", "à", "å", "ä", "æ", "ç", "ć", "Ç", "í",
                                      "ë", "é", "è", "ê", "ł", "Ł", "ñ", "ń", "ó", "ô", "ò",
                                      "ö", "ø", "Ø", "ř", "š", "ś", "ş", "Š", "ú", "ü", "ý",
                                      "ź", "Ž", "Ż"),
@@ -206,13 +206,13 @@ test_that("int64 values are stored correctly", {
   skip_if(!extended_tests())
   uri <- withr::local_tempdir("soma-dataframe")
   asch <- arrow::schema(
-    arrow::field("foo", arrow::int32(), nullable = FALSE),
+    arrow::field("int_column", arrow::int32(), nullable = FALSE),
     arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
   )
   if (dir.exists(uri)) unlink(uri, recursive=TRUE)
 
-  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
-  tbl0 <- arrow::arrow_table(foo = 1L:10L, soma_joinid = 1L:10L, schema = asch)
+  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column")
+  tbl0 <- arrow::arrow_table(int_column = 1L:10L, soma_joinid = 1L:10L, schema = asch)
 
   orig_downcast_value <- getOption("arrow.int64_downcast")
 
@@ -327,7 +327,7 @@ test_that("soma_ prefix is reserved", {
   )
 
   expect_error(
-    SOMADataFrameCreate(uri, asch, index_column_names = "foo"),
+    SOMADataFrameCreate(uri, asch, index_column_names = "int_column"),
     "Column names must not start with reserved prefix 'soma_'"
   )
 })
@@ -339,7 +339,7 @@ test_that("soma_joinid is added on creation", {
   asch <- asch$RemoveField(match("soma_joinid", asch$names) - 1)
 
   if (dir.exists(uri)) unlink(uri, recursive=TRUE)
-  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "foo")
+  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column")
 
   expect_true("soma_joinid" %in% sdf$attrnames())
   expect_equal(tiledb::datatype(sdf$attributes()$soma_joinid), "INT64")
@@ -359,7 +359,7 @@ test_that("soma_joinid validations", {
   )
 
   expect_error(
-    SOMADataFrameCreate(uri, asch, index_column_names = "foo"),
+    SOMADataFrameCreate(uri, asch, index_column_names = "int_column"),
     "soma_joinid field must be of type Arrow int64"
   )
 })
@@ -549,23 +549,23 @@ test_that("Metadata", {
   asch <- create_arrow_schema()
   sdf <- SOMADataFrameCreate(uri, asch)
 
-  md <- list(baz = "qux", foo = "bar")
+  md <- list(string_column = "qux", int_column = "float_column")
   sdf$set_metadata(md)
 
   # Read all metadata while the sdf is still open for write
-  expect_equivalent(sdf$get_metadata("foo"), "bar")
-  expect_equivalent(sdf$get_metadata("baz"), "qux")
+  expect_equivalent(sdf$get_metadata("int_column"), "float_column")
+  expect_equivalent(sdf$get_metadata("string_column"), "qux")
 
   readmd <- sdf$get_metadata()
-  expect_equivalent(readmd[["baz"]], "qux")
-  expect_equivalent(readmd[["foo"]], "bar")
+  expect_equivalent(readmd[["string_column"]], "qux")
+  expect_equivalent(readmd[["int_column"]], "float_column")
   sdf$close()
 
   # Read all metadata while the sdf is open for read
   sdf <- SOMADataFrameOpen(uri)
   readmd <- sdf$get_metadata()
-  expect_equivalent(readmd[["baz"]], "qux")
-  expect_equivalent(readmd[["foo"]], "bar")
+  expect_equivalent(readmd[["string_column"]], "qux")
+  expect_equivalent(readmd[["int_column"]], "float_column")
   sdf$close()
 })
 
@@ -622,7 +622,7 @@ test_that("SOMADataFrame can be updated", {
   tbl0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
 
   # Remove a column and update
-  tbl0$bar <- NULL
+  tbl0$float_column <- NULL
   sdf <- SOMADataFrameOpen(uri, "WRITE")$update(tbl0)
 
   # Verify attribute was removed on disk
@@ -630,7 +630,7 @@ test_that("SOMADataFrame can be updated", {
   expect_true(tbl1$Equals(tbl0))
 
   # # Add a new column and update
-  tbl0$bar <- sample(c(TRUE, FALSE), nrow(tbl0), replace = TRUE)
+  tbl0$float_column <- sample(c(TRUE, FALSE), nrow(tbl0), replace = TRUE)
   sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0)
 
   # Verify attribute was added on disk
@@ -714,7 +714,7 @@ test_that("SOMADataFrame can be updated", {
   )
 
   # Error if attempting to drop an array dimension
-  tbl0$foo <- NULL # drop the indexed dimension
+  tbl0$int_column <- NULL # drop the indexed dimension
   expect_error(
     SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
     "The following indexed field does not exist"
@@ -722,7 +722,7 @@ test_that("SOMADataFrame can be updated", {
   tbl0 <- tbl1
 
   # Error on incompatible schema updates
-  tbl0$baz <- tbl0$baz$cast(target_type = arrow::int32()) # string to int
+  tbl0$string_column <- tbl0$string_column$cast(target_type = arrow::int32()) # string to int
   expect_error(
     SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
     "Schemas are incompatible"
@@ -749,21 +749,21 @@ test_that("SOMADataFrame can be updated from a data frame", {
 
   # Convert a column to row names to test that it can be recovered
   df0 <- as.data.frame(df0)
-  rownames(df0) <- df0$baz
-  df0$baz <- NULL
-  df0$bar <- NULL
+  rownames(df0) <- df0$string_column
+  df0$string_column <- NULL
+  df0$float_column <- NULL
 
-  # Update to drop 'bar' from the array and retrieve baz values from row names
+  # Update to drop 'float_column' from the array and retrieve string_column values from row names
   expect_silent(
-    SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "baz")
+    SOMADataFrameOpen(uri, "WRITE")$update(df0, row_index_name = "string_column")
   )
 
   df1 <- SOMADataFrameOpen(uri)$read()$concat()$to_data_frame()
-  expect_setequal(colnames(df1), c("foo", "soma_joinid", "baz"))
+  expect_setequal(colnames(df1), c("int_column", "soma_joinid", "string_column"))
 
   # Error if row_index_name conflicts with an existing column name
   expect_error(
-    SOMADataFrameOpen(uri, mode = "WRITE")$update(df0, row_index_name = "foo"),
+    SOMADataFrameOpen(uri, mode = "WRITE")$update(df0, row_index_name = "int_column"),
     "'row_index_name' conflicts with an existing column name"
   )
 })

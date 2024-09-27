@@ -380,6 +380,42 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// non_empty_domain_new
+SEXP non_empty_domain_new(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_non_empty_domain_new(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(non_empty_domain_new(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// domain
+SEXP domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_domain(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(domain(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// maxdomain
+SEXP maxdomain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_maxdomain(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(maxdomain(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
 // maybe_soma_joinid_shape
 Rcpp::NumericVector maybe_soma_joinid_shape(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_maybe_soma_joinid_shape(SEXP uriSEXP, SEXP ctxxpSEXP) {
@@ -425,6 +461,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
     rcpp_result_gen = Rcpp::wrap(ndim(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_dimnames
+Rcpp::CharacterVector c_dimnames(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_c_dimnames(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_dimnames(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -651,10 +699,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_check_arrow_array_tag", (DL_FUNC) &_tiledbsoma_check_arrow_array_tag, 1},
     {"_tiledbsoma_shape", (DL_FUNC) &_tiledbsoma_shape, 2},
     {"_tiledbsoma_maxshape", (DL_FUNC) &_tiledbsoma_maxshape, 2},
+    {"_tiledbsoma_non_empty_domain_new", (DL_FUNC) &_tiledbsoma_non_empty_domain_new, 2},
+    {"_tiledbsoma_domain", (DL_FUNC) &_tiledbsoma_domain, 2},
+    {"_tiledbsoma_maxdomain", (DL_FUNC) &_tiledbsoma_maxdomain, 2},
     {"_tiledbsoma_maybe_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_maybe_soma_joinid_shape, 2},
     {"_tiledbsoma_maybe_soma_joinid_maxshape", (DL_FUNC) &_tiledbsoma_maybe_soma_joinid_maxshape, 2},
     {"_tiledbsoma_has_current_domain", (DL_FUNC) &_tiledbsoma_has_current_domain, 2},
     {"_tiledbsoma_ndim", (DL_FUNC) &_tiledbsoma_ndim, 2},
+    {"_tiledbsoma_c_dimnames", (DL_FUNC) &_tiledbsoma_c_dimnames, 2},
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 3},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 3},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},

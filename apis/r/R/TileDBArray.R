@@ -245,6 +245,22 @@ TileDBArray <- R6::R6Class(
       return(ned)
     },
 
+    #' @description Returns a named list of minimum/maximum pairs, one per index
+    #' column, which are the smallest and largest values written on that
+    #' index column.
+    #'
+    #' As tracked on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+    #' this will replace the existing `non_empty_domain` method.
+    #'
+    #' (lifecycle: maturing)
+    #' @return Named list of minimum/maximum values.
+    non_empty_domain_new = function() {
+      as.list(
+        arrow::as_record_batch(
+          arrow::as_arrow_table(
+            non_empty_domain_new(self$uri, private$.soma_context))))
+    },
+
     #' @description Retrieve number of dimensions (lifecycle: maturing)
     #' @return A scalar with the number of dimensions
     ndim = function() {
@@ -260,12 +276,7 @@ TileDBArray <- R6::R6Class(
     #' @description Retrieve dimension names (lifecycle: maturing)
     #' @return A character vector with the array's dimension names
     dimnames = function() {
-      vapply(
-        self$dimensions(),
-        FUN = tiledb::name,
-        FUN.VALUE = vector("character", 1L),
-        USE.NAMES = FALSE
-      )
+      c_dimnames(self$uri, private$.soma_context)
     },
 
     #' @description Retrieve attribute names (lifecycle: maturing)
