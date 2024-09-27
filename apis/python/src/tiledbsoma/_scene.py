@@ -6,15 +6,10 @@
 
 from typing import Any, Optional, Sequence, Union
 
-from somacore import (
-    Axis,
-    CoordinateSpace,
-    CoordinateTransform,
-    IdentityTransform,
-    scene,
-)
+import somacore
+from somacore import Axis, CoordinateSpace, CoordinateTransform, IdentityTransform
 
-from . import _tdb_handles
+from . import _funcs, _tdb_handles
 from ._collection import Collection, CollectionBase
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
 from ._exception import SOMAError
@@ -32,9 +27,10 @@ from ._spatial_util import (
 
 class Scene(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    scene.Scene[MultiscaleImage, PointCloud, GeometryDataFrame, AnySOMAObject],
+    somacore.Scene[MultiscaleImage, PointCloud, GeometryDataFrame, AnySOMAObject],
 ):
-    """TODO: Add documentation for a Scene
+    """A collection subtype representing spatial assets that can all be stored
+    on a single coordinate space.
 
     Lifecycle:
         Experimental.
@@ -75,7 +71,106 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         )
         self._coord_space = value
 
-    def register_geometry_dataframe(
+    @_funcs.forwards_kwargs_to(
+        GeometryDataFrame.create, exclude=("context", "tiledb_timestamp")
+    )
+    def add_geometry_dataframe(
+        self,
+        key: str,
+        subcollection: Union[str, Sequence[str]],
+        transform: Optional[CoordinateTransform],
+        *,
+        uri: str,
+        **kwargs: Any,
+    ) -> GeometryDataFrame:
+        """Adds a ``GeometryDataFrame`` to the scene and sets a coordinate transform
+        between the scene and the dataframe.
+
+        If the subcollection the geometry dataframe is inside of is more than one
+        layer deep, the input should be provided as a sequence of names. For example,
+        to set the transformation to a geometry dataframe named  "transcripts" in
+        the "var/RNA" collection::
+
+            scene.add_geometry_dataframe(
+                'cell_boundaries', subcollection=['var', 'RNA'], **kwargs
+            )
+
+        Args:
+            key: The name of the geometry dataframe.
+            transform: The coordinate transformation from the scene to the dataframe.
+            subcollection: The name, or sequence of names, of the subcollection the
+                dataframe is stored in. Defaults to ``'obsl'``.
+
+        Returns:
+            The newly create ``GeometryDataFrame``, opened for writing.
+
+        Lifecycle: experimental
+        """
+        raise NotImplementedError()
+
+    @_funcs.forwards_kwargs_to(
+        MultiscaleImage.create, exclude=("context", "tiledb_timestamp")
+    )
+    def add_multiscale_image(
+        self,
+        key: str,
+        subcollection: Union[str, Sequence[str]],
+        transform: Optional[CoordinateTransform],
+        *,
+        uri: str,
+        **kwargs: Any,
+    ) -> MultiscaleImage:
+        """Adds a ``MultiscaleImage`` to the scene and sets a coordinate transform
+        between the scene and the dataframe.
+
+        Parameters are as in :meth:`spatial.PointCloud.create`.
+        See :meth:`add_new_collection` for details about child URIs.
+
+        Args:
+            key: The name of the geometry dataframe.
+            transform: The coordinate transformation from the scene to the dataframe.
+            subcollection: The name, or sequence of names, of the subcollection the
+                dataframe is stored in. Defaults to ``'obsl'``.
+
+        Returns:
+            The newly create ``MultiscaleImage``, opened for writing.
+
+        Lifecycle: experimental
+        """
+        raise NotImplementedError()
+
+    @_funcs.forwards_kwargs_to(
+        PointCloud.create, exclude=("context", "tiledb_timestamp")
+    )
+    def add_new_point_cloud(
+        self,
+        key: str,
+        subcollection: Union[str, Sequence[str]],
+        transform: Optional[CoordinateTransform],
+        *,
+        uri: Optional[str] = None,
+        **kwargs: Any,
+    ) -> PointCloud:
+        """Adds a point cloud to the scene and sets a coordinate transform
+        between the scene and the dataframe.
+
+        Parameters are as in :meth:`spatial.PointCloud.create`.
+        See :meth:`add_new_collection` for details about child URIs.
+
+        Args:
+            key: The name of the geometry dataframe.
+            transform: The coordinate transformation from the scene to the dataframe.
+            subcollection: The name, or sequence of names, of the subcollection the
+                dataframe is stored in. Defaults to ``'obsl'``.
+
+        Returns:
+            The newly created ``PointCloud``, opened for writing.
+
+        Lifecycle: experimental
+        """
+        raise NotImplementedError()
+
+    def set_transform_to_geometry_dataframe(
         self,
         key: str,
         transform: CoordinateTransform,
@@ -83,11 +178,34 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         subcollection: Union[str, Sequence[str]] = "obsl",
         coordinate_space: Optional[CoordinateSpace] = None,
     ) -> GeometryDataFrame:
-        raise NotImplementedError(
-            "Support for registering geometry data frames is not yet implemented."
-        )
+        """Adds the coordinate transform for the scene coordinate space to
+        a geometry dataframe stored in the scene.
 
-    def register_multiscale_image(
+        If the subcollection the geometry dataframe is inside of is more than one
+        layer deep, the input should be provided as a sequence of names. For example,
+        to set a transformation for geometry dataframe named  "transcripts" in the
+        "var/RNA" collection::
+
+            scene.set_transfrom_for_geometry_dataframe(
+                'transcripts', transform, subcollection=['var', 'RNA'],
+            )
+
+        Args:
+            key: The name of the geometry dataframe.
+            transform: The coordinate transformation from the scene to the dataframe.
+            subcollection: The name, or sequence of names, of the subcollection the
+                dataframe is stored in. Defaults to ``'obsl'``.
+            coordinate_space: Optional coordinate space for the dataframe. This will
+                replace the existing coordinate space of the dataframe.
+
+        Returns:
+            The geometry dataframe, opened for writing.
+
+        Lifecycle: experimental
+        """
+        raise NotImplementedError()
+
+    def set_transform_to_multiscale_image(
         self,
         key: str,
         transform: CoordinateTransform,
@@ -95,7 +213,27 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         subcollection: Union[str, Sequence[str]] = "img",
         coordinate_space: Optional[CoordinateSpace] = None,
     ) -> MultiscaleImage:
-        """TODO Add docstring"""
+        """Adds the coordinate transform for the scene coordinate space to
+        a multiscale image stored in the scene.
+
+        The transform to the multiscale image must be to the coordinate space
+        defined on the reference level for the image. In most cases, this will be
+        the level ``0`` image.
+
+        Args:
+            key: The name of the multiscale image.
+            transform: The coordinate transformation from the scene to the reference
+                level of the multiscale image.
+            subcollection: The name, or sequence of names, of the subcollection the
+                image is stored in. Defaults to ``'img'``.
+            coordinate_space: Optional coordinate space for the image. This will
+                replace the existing coordinate space of the multiscale image.
+
+        Returns:
+            The multiscale image, opened for writing.
+
+        Lifecycle: experimental
+        """
         if not isinstance(subcollection, str):
             raise NotImplementedError()
 
@@ -147,7 +285,9 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
         return image
 
-    def register_point_cloud(
+        raise NotImplementedError()
+
+    def set_transform_to_point_cloud(
         self,
         key: str,
         transform: CoordinateTransform,
@@ -155,6 +295,32 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         subcollection: Union[str, Sequence[str]] = "obsl",
         coordinate_space: Optional[CoordinateSpace] = None,
     ) -> PointCloud:
+        """Adds the coordinate transform for the scene coordinate space to
+        a point cloud stored in the scene.
+
+        If the subcollection the point cloud is inside of is more than one
+        layer deep, the input should be provided as a sequence of names. For example,
+        to set a transform for  a point named `transcripts` in the `var/RNA`
+        collection::
+
+            scene.set_transformation_for_point_cloud(
+                'transcripts', transform, subcollection=['var', 'RNA'],
+            )
+
+        Args:
+            key: The name of the point cloud.
+            transform: The coordinate transformation from the scene to the point cloud.
+            subcollection: The name, or sequence of names, of the subcollection the
+                point cloud is stored in. Defaults to ``'obsl'``.
+            coordinate_space: Optional coordinate space for the point cloud. This will
+                replace the existing coordinate space of the point cloud. Defaults to
+                ``None``.
+
+        Returns:
+            The point cloud, opened for writing.
+
+        Lifecycle: experimental
+        """
         if not isinstance(subcollection, str):
             raise NotImplementedError()
         if self.coordinate_space is None:
@@ -196,10 +362,83 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
         coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
         return point_cloud
 
-    def get_transformation_to_geometry_dataframe(
+    def get_transform_from_geometry_dataframe(
         self, key: str, *, subcollection: Union[str, Sequence[str]] = "obsl"
     ) -> CoordinateTransform:
-        """TODO: Add doc string."""
+        """Returns the coordinate transformation from the requested geometry dataframe
+        to the scene.
+
+        Args:
+            key: The name of the geometry dataframe.
+            subcollection: The name, or sequence of names, of the subcollection the
+                dataframe is stored in. Defaults to ``'obsl'``.
+
+        Returns:
+            Coordinate transform from the dataframe to the scene.
+
+        Lifecycle: experimental
+        """
+        raise NotImplementedError()
+
+    def get_transform_from_multiscale_image(
+        self,
+        key: str,
+        *,
+        subcollection: str = "img",
+        level: Optional[Union[str, int]] = None,
+    ) -> CoordinateTransform:
+        """Returns the coordinate transformation from the requested multiscale image to
+        the scene.
+
+        Args:
+            key: The name of the multiscale image.
+            subcollection: The name, or sequence of names, of the subcollection the
+                dataframe is stored in. Defaults to ``'img'``.
+            level: The level of the image to get the transformation from.
+                Defaults to ``None`` -- the transformation will be to the reference
+                level.
+
+        Returns:
+            Coordinate transform from the multiscale image to the scene.
+
+        Lifecycle: experimental
+        """
+        raise NotImplementedError()
+
+    def get_transform_from_point_cloud(
+        self, key: str, *, subcollection: str = "obsl"
+    ) -> CoordinateTransform:
+        """Returns the coordinate transformation from the requested point cloud to
+        the scene.
+
+        Args:
+            key: The name of the point cloud.
+            subcollection: The name, or sequence of names, of the subcollection the
+                point cloud is stored in. Defaults to ``'obsl'``.
+
+        Returns:
+            Coordinate transform from the scene to the point cloud.
+
+        Lifecycle: experimental
+        """
+        raise NotImplementedError()
+
+    def get_transform_to_geometry_dataframe(
+        self, key: str, *, subcollection: Union[str, Sequence[str]] = "obsl"
+    ) -> CoordinateTransform:
+        """Returns the coordinate transformation from the scene to a requested
+        geometery dataframe.
+
+        Args:
+            key: The name of the geometry dataframe.
+            subcollection: The name, or sequence of names, of the subcollection the
+                dataframe is stored in. Defaults to ``'obsl'``.
+
+        Returns:
+            Coordinate transform from the scene to the requested dataframe.
+
+        Lifecycle: experimental
+        """
         if not isinstance(subcollection, str):
             raise NotImplementedError()
         try:
@@ -215,18 +454,28 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             ) from ke
         return transform_from_json(transform_json)
 
-    def get_transformation_to_multiscale_image(
+    def get_transform_to_multiscale_image(
         self,
         key: str,
         *,
-        subcollection: Union[str, Sequence[str]] = "img",
+        subcollection: str = "img",
         level: Optional[Union[str, int]] = None,
     ) -> CoordinateTransform:
-        """Returns the corodinate transform from the scene to an image collection
-        registered in the scene.
+        """Returns the coordinate transformation from the scene to a requested
+        multiscale image.
 
-        If the name or level of an image is provided, the transformation will be to
-        the requested level instead of the reference level of the multiscale image.
+        Args:
+            key: The name of the multiscale image.
+            subcollection: The name, or sequence of names, of the subcollection the
+                dataframe is stored in. Defaults to ``'img'``.
+            level: The level of the image to get the transformation to.
+                Defaults to ``None`` -- the transformation will be to the reference
+                level.
+
+        Returns:
+            Coordinate transform from the scene to the requested multiscale image.
+
+        Lifecycle: experimental
         """
         if not isinstance(subcollection, str):
             raise NotImplementedError()
@@ -254,17 +503,25 @@ class Scene(  # type: ignore[misc]  # __eq__ false positive
             raise NotImplementedError(
                 "Support for querying image level by name is not yet implemented."
             )
-        level_transform = image.get_transformation_to_level(level)
+        level_transform = image.get_transform_to_level(level)
         return level_transform @ base_transform
+        raise NotImplementedError()
 
-    def get_transformation_to_point_cloud(
-        self, key: str, *, subcollection: Union[str, Sequence[str]] = "obsl"
+    def get_transform_to_point_cloud(
+        self, key: str, *, subcollection: str = "obsl"
     ) -> CoordinateTransform:
-        """Returns the coordinate transform from the scene to a point cloud
-        registered in the scene.
+        """Returns the coordinate transformation from the scene to a requested
+        point cloud.
 
+        Args:
+            key: The name of the point cloud.
+            subcollection: The name, or sequence of names, of the subcollection the
+                point cloud is stored in. Defaults to ``'obsl'``.
 
-        TODO: Finish doc string.
+        Returns:
+            Coordinate transform from the scene to the requested point cloud.
+
+        Lifecycle: experimental
         """
         if not isinstance(subcollection, str):
             raise NotImplementedError()
