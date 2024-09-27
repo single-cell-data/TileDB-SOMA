@@ -6,7 +6,7 @@
 """Implementation of a SOMA Experiment.
 """
 import functools
-from typing import Optional, Union
+from typing import Optional
 
 from somacore import experiment, query
 from typing_extensions import Self
@@ -25,7 +25,7 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
     experiment.Experiment[  # type: ignore[type-var]
         DataFrame,
         Collection[Measurement],
-        Collection[Union[DataFrame, Scene]],
+        Collection[Scene],
         AnySOMAObject,
     ],
 ):
