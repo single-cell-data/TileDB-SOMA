@@ -6,7 +6,7 @@
 """
 Implementation of a SOMA Point Cloud
 """
-from typing import Any, Mapping, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Optional, Sequence, Tuple, Union, cast
 
 import pyarrow as pa
 import somacore
@@ -305,13 +305,12 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         # # TODO: batch_size
         return TableReadIter(sr)
 
-    def read_region(
+    def read_spatial_region(
         self,
         region: Optional[options.SpatialRegion] = None,
         column_names: Optional[Sequence[str]] = None,
         *,
-        extra_coords: Optional[Mapping[str, options.SparseDFCoord]] = None,
-        transform: Optional[somacore.CoordinateTransform] = None,
+        region_transform: Optional[somacore.CoordinateTransform] = None,
         region_coord_space: Optional[somacore.CoordinateSpace] = None,
         batch_size: options.BatchSize = options.BatchSize(),
         partitions: Optional[options.ReadPartitions] = None,
@@ -320,38 +319,40 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
         # Set/check transform and region coordinate space.
-        if transform is None:
-            transform = somacore.IdentityTransform(self.axis_names, self.axis_names)
+        if region_transform is None:
+            region_transform = somacore.IdentityTransform(
+                self.axis_names, self.axis_names
+            )
             if region_coord_space is not None:
                 raise ValueError(
-                    "Cannot specify the output coordinate space when transform is "
-                    "``None``."
+                    "Cannot specify the output coordinate space when region transform i"
+                    "is ``None``."
                 )
             region_coord_space = self._coord_space
         else:
             if region_coord_space is None:
                 # mypy false positive https://github.com/python/mypy/issues/5313
                 region_coord_space = CoordinateSpace(
-                    tuple(Axis(axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
+                    tuple(Axis(axis_name) for axis_name in region_transform.input_axes)  # type: ignore[misc]
                 )
-            elif transform.input_axes != region_coord_space.axis_names:
+            elif region_transform.input_axes != region_coord_space.axis_names:
                 raise ValueError(
-                    f"The input axes '{transform.input_axes}' of the transform must "
-                    f"match the axes '{region_coord_space.axis_names}' of the "
-                    f"coordinate space the requested region is defined in."
+                    f"The input axes '{region_transform.input_axes}' of the region "
+                    f"transform must match the axes '{region_coord_space.axis_names}' "
+                    f"of the coordinate space the requested region is defined in."
                 )
-            if transform.output_axes != self._coord_space.axis_names:
+            if region_transform.output_axes != self._coord_space.axis_names:
                 raise ValueError(
-                    f"The output axes of '{transform.output_axes}' of the transform "
-                    f"must match the axes '{self._coord_space.axis_names}' of the "
-                    f"coordinate space of this point cloud."
+                    f"The output axes of '{region_transform.output_axes}' of the "
+                    f"transform must match the axes '{self._coord_space.axis_names}' "
+                    f"of the coordinate space of this point cloud."
                 )
 
         # Process the user provided region.
         coords, data_region, inv_transform = process_spatial_df_region(
             region,
-            transform,
-            dict() if extra_coords is None else dict(extra_coords),
+            region_transform,
+            dict(),  #  Move index value_filters into this dict to optimize queries
             self._tiledb_dim_names(),
             self._coord_space.axis_names,
             self._handle.schema,

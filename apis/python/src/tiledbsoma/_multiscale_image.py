@@ -103,9 +103,9 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         uri: str,
         *,
         type: pa.DataType,
-        image_type: str = "CYX",
         reference_level_shape: Sequence[int],
-        axis_names: Sequence[str] = ("c", "x", "y"),
+        axis_names: Sequence[str] = ("c", "y", "x"),
+        axis_types: Sequence[str] = ("channel", "height", "width"),
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
@@ -116,11 +116,23 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             Experimental.
         """
         context = _validate_soma_tiledb_context(context)
-        # TODO: Push down type to schema
+        if len(set(axis_types)) != len(axis_types):
+            raise ValueError(
+                "Invalid axis types {axis_types} - cannot have repeated values."
+            )
+        if len(axis_names) != len(axis_types):
+            raise ValueError("Mismatched lengths for axis names and types.")
+        axis_type_map = {"channel": "C", "height": "Y", "width": "X", "depth": "Z"}
+        image_type = ""
+        for val in axis_types:
+            try:
+                image_type += axis_type_map[val]
+            except KeyError as ke:
+                raise ValueError("Invalid axis type name '{val}'.") from ke
         schema = MultiscaleImageSchema(
             ImageProperties(
                 name="reference_level",
-                image_type=image_type.upper(),
+                image_type=image_type,
                 shape=tuple(reference_level_shape),
             ),
             axis_names=tuple(axis_names),
@@ -309,7 +321,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         )
         self._coord_space = value
 
-    def get_transformation_to_level(self, level: Union[str, int]) -> ScaleTransform:
+    def get_transform_to_level(self, level: Union[str, int]) -> ScaleTransform:
         if isinstance(level, str):
             for val in self._levels:
                 if val.name == level:
@@ -339,7 +351,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             ],
         )
 
-    def get_transformation_from_level(self, level: Union[str, int]) -> ScaleTransform:
+    def get_transform_from_level(self, level: Union[str, int]) -> ScaleTransform:
         if isinstance(level, str):
             for val in self._levels:
                 if val.name == level:
@@ -384,15 +396,14 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             )  # TODO
         return self._levels[level]
 
-    def read_region(
+    def read_spatial_region(
         self,
         level: Union[int, str],
         region: Optional[options.SpatialRegion] = None,
         *,
         channel_coords: options.DenseCoord = None,
-        transform: Optional[CoordinateTransform] = None,
+        region_transform: Optional[CoordinateTransform] = None,
         region_coord_space: Optional[CoordinateSpace] = None,
-        create_mask: bool = False,
         result_order: options.ResultOrderStr = ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> somacore.SpatialRead[pa.Tensor]:
@@ -407,12 +418,6 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 "Support for reading the levels of 3D images it not yet implemented."
             )
 
-        # Applying a mask in not yet supported.
-        if create_mask:
-            raise NotImplementedError(
-                "Support for applying a mask to the image is not yet implemented."
-            )
-
         # Check input query region type is supported.
         if (
             channel_coords is not None
@@ -425,50 +430,51 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         # Get the transformation for the group and the data coordinate space.
         # We may want to revisit copying the units for the data coordinate space.
-        group_to_level = self.get_transformation_to_level(level)
+        group_to_level = self.get_transform_to_level(level)
         data_coord_space = self.coordinate_space
 
         # Update transform and set region coordinate space.
         # - Add transformation from reference coord system to requested image level.
         # - Create or check the coordinate space for the input data region.
-        if transform is None:
+        if region_transform is None:
             if region_coord_space is not None:
                 raise ValueError(
-                    "Cannot specify the output coordinate space when transform is "
-                    "``None``."
+                    "Cannot specify the output coordinate space when region transform "
+                    "is ``None``."
                 )
-            transform = group_to_level
+            region_transform = group_to_level
             region_coord_space = data_coord_space
         else:
-            if not isinstance(transform, ScaleTransform):
+            if not isinstance(region_transform, ScaleTransform):
                 raise NotImplementedError(
-                    f"Support for reading levels with a tranform of type "
-                    f"{type(transform)!r} is not yet supported."
+                    f"Support for reading levels with a region tranform of type "
+                    f"{type(region_transform)!r} is not yet supported."
                 )
             # Create or check output coordinates.
             if region_coord_space is None:
                 # mypy false positive https://github.com/python/mypy/issues/5313
                 region_coord_space = CoordinateSpace(
-                    tuple(Axis(axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
+                    tuple(Axis(axis_name) for axis_name in region_transform.input_axes)  # type: ignore[misc]
                 )
             elif len(region_coord_space) != len(data_coord_space):
                 raise ValueError(
                     "The number of output coordinates must match the number of "
                     "input coordinates."
                 )
-            if transform.output_axes != self._coord_space.axis_names:
+            if region_transform.output_axes != self._coord_space.axis_names:
                 raise ValueError(
-                    f"The output axes of '{transform.output_axes}' of the transform "
-                    f"must match the axes '{self._coord_space.axis_names}' of the "
-                    f"coordinate space of this multiscale image."
+                    f"The output axes of '{region_transform.output_axes}' of the "
+                    f"region transform must match the axes "
+                    f"'{self._coord_space.axis_names}' of the coordinate space of "
+                    f"this multiscale image."
                 )
-            transform = group_to_level @ transform
-            assert isinstance(transform, ScaleTransform)
+            region_transform = group_to_level @ region_transform
+            assert isinstance(region_transform, ScaleTransform)
 
         # Convert coordinates to new coordinate system.
         coords, data_region, inv_transform = process_image_region(
             region,
-            transform,
+            region_transform,
             channel_coords,
             self._schema.reference_level_properties.image_type,
         )
@@ -531,12 +537,26 @@ class MultiscaleImageSchema:
         )
 
     def get_coordinate_space_axis_names(self) -> Tuple[str, ...]:
-        channel_index = self.reference_level_properties.image_type.find("C")
-        if channel_index == -1:
-            return self.axis_names
-        return tuple(
-            self.axis_names[:channel_index] + self.axis_names[channel_index + 1 :]
-        )
+        # TODO: Setting axes and the coordinate space is going to be updated
+        # in a future PR.
+        x_name: Optional[str] = None
+        y_name: Optional[str] = None
+        z_name: Optional[str] = None
+        for axis_name, axis_type in zip(
+            self.axis_names, self.reference_level_properties.image_type
+        ):
+            if axis_type == "X":
+                x_name = axis_name
+            elif axis_type == "Y":
+                y_name = axis_name
+            elif axis_type == "Z":
+                z_name = axis_name
+        assert x_name is not None  # For mypy (already validated)
+        assert y_name is not None  # For mypy (already validated)
+        if z_name is None:
+            return (x_name, y_name)
+        else:
+            return (x_name, y_name, z_name)
 
     def to_json(self) -> str:
         type_str = pyarrow_to_carrow_type(self.datatype)

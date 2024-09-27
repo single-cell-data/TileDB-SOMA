@@ -399,10 +399,10 @@ def _write_visium_data_to_experiment_uri(
                         tissue_uri = _util.uri_joinpath(img_uri, image_name)
                         with MultiscaleImage.create(
                             tissue_uri,
-                            image_type="YXC",
                             type=pa.uint8(),
                             reference_level_shape=ref_shape,
-                            axis_names=("x", "y", "c"),
+                            axis_names=("y", "x", "c"),
+                            axis_types=("height", "width", "channel"),
                             context=ingest_ctx.get("context"),
                         ) as tissue:
                             add_metadata(tissue, ingest_ctx.get("additional_metadata"))
@@ -422,7 +422,7 @@ def _write_visium_data_to_experiment_uri(
                                 **ingest_ctx,
                             )
                             tissue.coordinate_space = coord_space
-                            scene.register_multiscale_image(
+                            scene.set_transform_to_multiscale_image(
                                 image_name,
                                 IdentityTransform(("x", "y"), ("x", "y")),
                             )
@@ -444,7 +444,7 @@ def _write_visium_data_to_experiment_uri(
                         **ingest_ctx,
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
-                        scene.register_point_cloud(
+                        scene.set_transform_to_point_cloud(
                             "loc", IdentityTransform(("x", "y"), ("x", "y"))
                         )
 
