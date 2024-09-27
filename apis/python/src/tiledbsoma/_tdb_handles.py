@@ -89,6 +89,15 @@ def open(
             soma_object, context
         )
     except KeyError:
+        if soma_object.type.lower() in {
+            "somascene",
+            "somapointcloud",
+            "somageometrydataframe",
+            "somamultiscaleimage",
+        }:
+            raise NotImplementedError(
+                f"Support for {soma_object.type!r} is not yet implemented."
+            )
         raise SOMAError(f"{uri!r} has unknown storage type {soma_object.type!r}")
 
 

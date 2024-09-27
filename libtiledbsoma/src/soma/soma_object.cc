@@ -55,6 +55,12 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             return std::make_unique<SOMASparseNDArray>(*array_);
         } else if (array_type == "somadensendarray") {
             return std::make_unique<SOMADenseNDArray>(*array_);
+        } else if (array_type == "somapointcloud") {
+            throw TileDBSOMAError(
+                "Support for SOMAPointCloud is not yet implemented");
+        } else if (array_type == "somageometrydataframe") {
+            throw TileDBSOMAError(
+                "Support for SOMAGeometryDataFrame is not yet implemented");
         } else {
             throw TileDBSOMAError("Saw invalid SOMAArray type");
         }
@@ -77,6 +83,12 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             return std::make_unique<SOMAExperiment>(*group_);
         } else if (group_type == "somameasurement") {
             return std::make_unique<SOMAMeasurement>(*group_);
+        } else if (group_type == "somascene") {
+            throw TileDBSOMAError(
+                "Support for SOMAScene is not yet implemented.");
+        } else if (group_type == "somamultiscaleimage") {
+            throw TileDBSOMAError(
+                "Support for SOMAMultiscaleImage is not yet implemented.");
         } else {
             throw TileDBSOMAError("Saw invalid SOMAGroup type");
         }
