@@ -49,11 +49,12 @@ class ImageProperties:
 
 class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
     """A multiscale image with an extendable number of resolution levels.
+    """A multiscale image represented as a collection of images at multiple resolution levels.
 
-    The multiscale image defines the top level properties. Each level must
-    match the expected following properties:
-    * number of channels
-    * axis order
+    Each level of the multiscale image must have the following consistent properties:
+
+    * **Number of Channels**: All levels must have the same number of channels.
+    * **Axis Order**: The order of axes (e.g., channels, height, width) must be consistent across levels.
 
     Lifecycle:
         Experimental.
