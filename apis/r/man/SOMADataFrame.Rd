@@ -10,7 +10,7 @@ row and is intended to act as a join key for other objects, such as
 \code{\link{SOMASparseNDArray}}.  (lifecycle: maturing)
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{tiledbsoma::SOMAArrayBase} -> \code{SOMADataFrame}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADataFrame}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -21,6 +21,8 @@ row and is intended to act as a join key for other objects, such as
 \item \href{#method-SOMADataFrame-update}{\code{SOMADataFrame$update()}}
 \item \href{#method-SOMADataFrame-shape}{\code{SOMADataFrame$shape()}}
 \item \href{#method-SOMADataFrame-maxshape}{\code{SOMADataFrame$maxshape()}}
+\item \href{#method-SOMADataFrame-domain}{\code{SOMADataFrame$domain()}}
+\item \href{#method-SOMADataFrame-maxdomain}{\code{SOMADataFrame$maxdomain()}}
 \item \href{#method-SOMADataFrame-tiledbsoma_has_upgraded_domain}{\code{SOMADataFrame$tiledbsoma_has_upgraded_domain()}}
 \item \href{#method-SOMADataFrame-clone}{\code{SOMADataFrame$clone()}}
 }
@@ -44,6 +46,7 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-index_column_names'><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain'><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain_new"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain_new'><code>tiledbsoma::TileDBArray$non_empty_domain_new()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-open'><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
@@ -216,6 +219,38 @@ simply raises an error
 
 \subsection{Returns}{
 None, instead a \code{\link{.NotYetImplemented}()} error is raised
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-domain"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-domain}{}}}
+\subsection{Method \code{domain()}}{
+Returns a named list of minimum/maximum pairs, one per index
+column, currently storable on each index column of the dataframe. These
+can be resized up to \code{maxdomain}.
+(lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$domain()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Named list of minimum/maximum values.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-maxdomain"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-maxdomain}{}}}
+\subsection{Method \code{maxdomain()}}{
+Returns a named list of minimum/maximum pairs, one per index
+column, which are the limits up to which the dataframe can have its
+domain resized.
+(lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$maxdomain()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Named list of minimum/maximum values.
 }
 }
 \if{html}{\out{<hr>}}
