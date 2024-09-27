@@ -48,7 +48,6 @@ class ImageProperties:
 
 
 class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
-    """A multiscale image with an extendable number of resolution levels.
     """A multiscale image represented as a collection of images at multiple resolution levels.
 
     Each level of the multiscale image must have the following consistent properties:
