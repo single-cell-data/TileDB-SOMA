@@ -18,6 +18,7 @@ from typing_extensions import Self
 from ._constants import SPATIAL_DISCLAIMER
 from ._dense_nd_array import DenseNDArray
 from ._soma_object import AnySOMAObject
+from .options import SOMATileDBContext
 
 
 class ImageProperties:
