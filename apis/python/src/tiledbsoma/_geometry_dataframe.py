@@ -3,7 +3,7 @@
 #
 # Licensed under the MIT License.
 """
-Implementataion of a SOMA Geometry DataFrame
+Implementation of a SOMA Geometry DataFrame
 """
 
 import warnings

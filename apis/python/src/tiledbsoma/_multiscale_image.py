@@ -220,7 +220,7 @@ class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
 
     @property
     def level_count(self) -> int:
-        """The number of image levels stored in the MultiscaleImage.
+        """The number of image levels stored in the ``MultiscaleImage``.
 
         Lifecycle:
             Experimental.

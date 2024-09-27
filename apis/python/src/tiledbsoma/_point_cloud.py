@@ -52,7 +52,7 @@ class PointCloud(somacore.PointCloud):
     ) -> Self:
         """Creates a new ``PointCloud`` at the given URI.
 
-        The schema of the created point cloud will include a column named
+        The schema of the created point cloud dataframe will include a column named
         ``soma_joinid`` of type ``pyarrow.int64``, with negative values disallowed, and
         at least one axis with numeric type.  If a ``soma_joinid`` column is
         present in the provided schema, it must be of the correct type.  If the

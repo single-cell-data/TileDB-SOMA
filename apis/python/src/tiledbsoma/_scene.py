@@ -3,7 +3,7 @@
 #
 # Licensed under the MIT License.
 """
-Implementataion of a SOMA Scene
+Implementation of a SOMA Scene
 """
 
 from typing import Any, Optional, Sequence, Tuple, Union
