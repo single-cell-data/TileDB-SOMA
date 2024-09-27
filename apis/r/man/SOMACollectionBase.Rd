@@ -12,7 +12,7 @@ objects, mapping string keys to any SOMA object.  (lifecycle: maturing)
 }
 \keyword{internal}
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{SOMACollectionBase}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{SOMACollectionBase}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

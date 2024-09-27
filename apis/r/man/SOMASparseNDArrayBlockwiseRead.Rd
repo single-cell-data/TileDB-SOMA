@@ -8,7 +8,7 @@ Blockwise reader for \code{\link{SOMASparseNDArray}}
 }
 \keyword{internal}
 \section{Super class}{
-\code{tiledbsoma::SOMASparseNDArrayReadBase} -> \code{SOMASparseNDArrayBlockwiseRead}
+\code{\link[tiledbsoma:SOMASparseNDArrayReadBase]{tiledbsoma::SOMASparseNDArrayReadBase}} -> \code{SOMASparseNDArrayBlockwiseRead}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
