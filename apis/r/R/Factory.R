@@ -8,6 +8,14 @@
 #' @param index_column_names A vector of column names to use as user-defined
 #' index columns; all named columns must exist in the schema, and at least
 #' one index column name is required
+#' @param domain An optional list of 2-element vectors specifying the domain of each index
+#' column. Each vector should be a pair consisting of the minimum and maximum values storable in
+#' the index column. For example, if there is a single int64-valued index column, then `domain`
+#' might be `c(100, 200)` to indicate that values between 100 and 200, inclusive, can be stored
+#' in that column.  If provided, this list must have the same length as `index_column_names`,
+#' and the index-column domain will be as specified.  If omitted entirely, or if `NA` in a given
+#' dimension, the corresponding index-column domain will use the minimum and maximum possible
+#' values for the column's datatype.  This makes a `DataFrame` growable.
 #' @param ingest_mode Ingestion mode when creating the TileDB object; choose from:
 #' \itemize{
 #'  \item \dQuote{\code{write}}: create a new TileDB object and error if it already exists
@@ -24,6 +32,7 @@ SOMADataFrameCreate <- function(
   uri,
   schema,
   index_column_names = c("soma_joinid"),
+  domain = NULL,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
@@ -50,6 +59,7 @@ SOMADataFrameCreate <- function(
     sdf$create(
       schema,
       index_column_names = index_column_names,
+      domain = domain,
       platform_config = platform_config,
       internal_use_only = "allowed_use"
     )
