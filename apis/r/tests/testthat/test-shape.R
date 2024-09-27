@@ -85,16 +85,16 @@ test_that("SOMADataFrame shape", {
       expect_true(sjid_mxd[[2]] > bit64::as.integer64(10000000000))
     }
 
-    if ("foo" %in% index_column_names) {
-      int_dom <- dom[["foo"]]
-      int_mxd <- mxd[["foo"]]
+    if ("int_column" %in% index_column_names) {
+      int_dom <- dom[["int_column"]]
+      int_mxd <- mxd[["int_column"]]
       expect_true(int_dom[[1]] < -2000000000)
       expect_true(int_dom[[2]] > 2000000000)
     }
 
-    if ("baz" %in% index_column_names) {
-      expect_equal(dom[["baz"]], c("", ""))
-      expect_equal(mxd[["baz"]], c("", ""))
+    if ("string_column" %in% index_column_names) {
+      expect_equal(dom[["string_column"]], c("", ""))
+      expect_equal(mxd[["string_column"]], c("", ""))
     }
 
     sdf$close()
