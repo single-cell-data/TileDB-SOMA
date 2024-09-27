@@ -66,6 +66,7 @@ Create (lifecycle: maturing)
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(
   schema,
   index_column_names = c("soma_joinid"),
+  domain = NULL,
   platform_config = NULL,
   internal_use_only = NULL
 )}\if{html}{\out{</div>}}
@@ -79,6 +80,15 @@ Create (lifecycle: maturing)
 \item{\code{index_column_names}}{A vector of column names to use as user-defined
 index columns.  All named columns must exist in the schema, and at least
 one index column name is required.}
+
+\item{\code{domain}}{An optional list of 2-element vectors specifying the domain of each index
+column. Each vector should be a pair consisting of the minimum and maximum values storable in
+the index column. For example, if there is a single int64-valued index column, then \code{domain}
+might be \code{c(100, 200)} to indicate that values between 100 and 200, inclusive, can be stored
+in that column.  If provided, this list must have the same length as \code{index_column_names},
+and the index-column domain will be as specified.  If omitted entirely, or if \code{NA} in a given
+dimension, the corresponding index-column domain will use the minimum and maximum possible
+values for the column's datatype.  This makes a \code{DataFrame} growable.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
