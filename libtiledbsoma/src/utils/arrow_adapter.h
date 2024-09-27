@@ -299,6 +299,15 @@ class ArrowAdapter {
 
     template <typename T>
     static ArrowArray* make_arrow_array_child(const std::vector<T>& v) {
+        // We're aware of template-specialization wherein we can
+        // make a separate `make_arrow_array_child` with `template <>` (not
+        // `make_arrow_array_child_string`, as we've done). However,
+        // we find it a bit fiddly across different compilers to force
+        // the compiler to find the string variant. It's far more intuitive
+        // for the non-expert developers (and maybe even for the experts),
+        // and far more robust for any future maintainers, to explicitly
+        // (a) have a separate `..._string` variant; (b) throw here
+        // if callsites don't use t.
         if (std::is_same_v<T, std::string>) {
             throw std::runtime_error(
                 "ArrowAdapter::make_arrow_array_child: template-specialization "
