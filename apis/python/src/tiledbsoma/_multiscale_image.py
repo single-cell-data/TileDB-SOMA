@@ -128,12 +128,10 @@ class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
         result_order: options.ResultOrderStr = options.ResultOrder.ROW_MAJOR,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> somacore.SpatialRead[pa.Tensor]:
-        """Reads a user-defined region of space into a :class:`SpatialRead` with data
-        in either an Arrow tensor or table.
+        """Reads a user-defined spatial region from a specific level of the ``MultiscaleImage``.
 
-        Reads the bounding box of the input region from the requested image level. This
-        will return a :class:`SpatialRead` with the image data stored as a
-        :class:`pa.Tensor`.
+        Retrieves the data within the specified region from the requested image level, returning
+        a :class:`SpatialRead`, yielding :class:`pa.Tensor`s.
 
         Args:
             level: The image level to read the data from. May use index of the level
@@ -220,7 +218,7 @@ class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
 
     @property
     def level_count(self) -> int:
-        """The number of image levels stored in the ``MultiscaleImage``.
+        """The number of image resolution levels stored in the ``MultiscaleImage``.
 
         Lifecycle:
             Experimental.
