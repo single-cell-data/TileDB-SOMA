@@ -879,8 +879,7 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim-sjid-str attr-u32",
     "[SOMADataFrame]") {
-    // auto use_current_domain = GENERATE(false, true);
-    auto use_current_domain = GENERATE(false);
+    auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -979,7 +978,12 @@ TEST_CASE_METHOD(
         REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
         REQUIRE(dom_str == std::vector<std::string>({"", ""}));
 
-        REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+        if (!use_current_domain) {
+            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+        } else {
+            REQUIRE(maxdom_sjid[0] == 0);
+            REQUIRE(maxdom_sjid[1] > 2000000000);
+        }
         REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
 
         soma_dataframe->close();
@@ -1059,7 +1063,13 @@ TEST_CASE_METHOD(
         REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
         REQUIRE(dom_str == std::vector<std::string>({"", ""}));
 
-        REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+        if (!use_current_domain) {
+            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+        } else {
+            REQUIRE(maxdom_sjid[0] == 0);
+            REQUIRE(maxdom_sjid[1] > 2000000000);
+        }
+
         REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
 
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));

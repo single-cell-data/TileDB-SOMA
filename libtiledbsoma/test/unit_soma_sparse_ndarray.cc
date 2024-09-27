@@ -39,8 +39,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     int64_t dim_max = 999;
     int64_t shape = 1000;
 
-    // auto use_current_domain = GENERATE(false, true);
-    auto use_current_domain = GENERATE(true);
+    auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
@@ -148,6 +147,13 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             REQUIRE_THROWS(soma_sparse->resize(new_shape));
             // Now set the shape
             soma_sparse->upgrade_shape(new_shape);
+            soma_sparse->close();
+
+            soma_sparse->open(OpenMode::read);
+            REQUIRE(soma_sparse->has_current_domain());
+            soma_sparse->close();
+
+            soma_sparse->open(OpenMode::write);
             REQUIRE(soma_sparse->has_current_domain());
             // Should not fail since we're setting it to what it already is.
             soma_sparse->resize(new_shape);

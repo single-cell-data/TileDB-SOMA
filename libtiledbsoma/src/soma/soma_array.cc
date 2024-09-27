@@ -1422,11 +1422,6 @@ void SOMAArray::_set_current_domain_from_shape(
     // Variant-indexed dataframes must use a separate path
     _check_dims_are_int64();
 
-    if (_get_current_domain().is_empty()) {
-        throw TileDBSOMAError(
-            "[SOMAArray::resize] array must already be sized");
-    }
-
     auto tctx = ctx_->tiledb_ctx();
     ArraySchema schema = arr_->schema();
     Domain domain = schema.domain();
