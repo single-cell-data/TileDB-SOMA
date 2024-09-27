@@ -8,6 +8,32 @@
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
 // https://arrow.apache.org/docs/format/CDataInterface.html#exporting-a-simple-int32-array
 
+// A general developer note: in several places we have
+//
+//     template <typename T>
+//     static sometype foo(T arg) {
+//         if (std::is_same_v<T, std::string>) {
+//             throw std::runtime_error(...);
+//         }
+//         }D...
+//     }
+//
+//     static sometype foo_string(std::string arg) { ... }
+//
+// -- with explicit `_string` suffix -- rather than
+//
+//     template <typename T>
+//     static sometype foo(T arg) ...
+//
+//     template <>
+//     static sometype foo(std::string arg) ...
+//
+// We're aware of the former but we've found it a bit fiddly across systems and
+// compiler versions -- namely, with the latter we find it tricky to always
+// avoid the <typename T> variant being templated with std::string. It's simple,
+// explicit, and robust to go the `_string` suffix route, and it's friendlier to
+// current and future maintainers of this code.
+
 #include "nanoarrow/nanoarrow.hpp"
 #include "nlohmann/json.hpp"
 

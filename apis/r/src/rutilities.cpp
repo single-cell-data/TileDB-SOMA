@@ -4,8 +4,11 @@
 #define TILEDB_NO_API_DEPRECATION_WARNINGS
 #endif
 
-#include <Rcpp.h>                 // for R interface to C++
-#include <nanoarrow/nanoarrow.h>  // for C interface to Arrow
+#include <Rcpp.h>                           // for R interface to C++
+#include <nanoarrow/r.h>                    // for C interface to Arrow (via R package)
+#include <nanoarrow/nanoarrow.h>            // for C interface to Arrow
+#include <RcppInt64>                        // for fromInteger64
+#include <tiledbsoma/tiledbsoma>
 #include <tiledbsoma/reindexer/reindexer.h>
 #include <RcppInt64>  // for fromInteger64
 #include <tiledbsoma/tiledbsoma>
@@ -436,4 +439,48 @@ std::optional<tdbs::TimestampRange> makeTimestampRange(
     }
 
     return tsrng;
+}
+
+SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
+    ArrowArray* arrow_array = arrow_table.first.get();
+    ArrowSchema* arrow_schema = arrow_table.second.get();
+
+    auto schemaxp = nanoarrow_schema_owning_xptr();
+    auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
+    exitIfError(
+        ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
+    exitIfError(ArrowSchemaSetName(sch, ""), "Bad schema name");
+    exitIfError(
+        ArrowSchemaAllocateChildren(sch, arrow_schema->n_children),
+        "Bad schema children alloc");
+
+    if (arrow_array->n_children != arrow_schema->n_children) {
+        Rcpp::stop(
+            "schema/data column mismatch %d != %d\n",
+            (int)arrow_array->n_children,
+            (int)arrow_schema->n_children);
+    }
+    auto ncol = arrow_schema->n_children;
+
+    auto arrayxp = nanoarrow_array_owning_xptr();
+    auto arr = nanoarrow_output_array_from_xptr(arrayxp);
+    exitIfError(
+        ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
+    exitIfError(
+        ArrowArrayAllocateChildren(arr, arrow_array->n_children),
+        "Bad array children alloc");
+
+    for (size_t i = 0; i < ncol; i++) {
+        spdl::info(
+            "[domainish] name {} length {}",
+            std::string(arrow_schema->children[i]->name),
+            arrow_array->children[i]->length);
+        ArrowArrayMove(arrow_array->children[i], arr->children[i]);
+        ArrowSchemaMove(arrow_schema->children[i], sch->children[i]);
+    }
+
+    // Nanoarrow special: stick schema into xptr tag to return single SEXP
+    array_xptr_set_schema(arrayxp, schemaxp);  // embed schema in array
+
+    return arrayxp;
 }

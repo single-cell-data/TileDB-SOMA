@@ -339,6 +339,30 @@ SOMADataFrame <- R6::R6Class(
       class = 'notYetImplementedError'
     )),
 
+    #' @description Returns a named list of minimum/maximum pairs, one per index
+    #' column, currently storable on each index column of the dataframe. These
+    #' can be resized up to `maxdomain`.
+    #' (lifecycle: maturing)
+    #' @return Named list of minimum/maximum values.
+    domain = function() {
+      as.list(
+        arrow::as_record_batch(
+          arrow::as_arrow_table(
+            domain(self$uri, private$.soma_context))))
+    },
+
+    #' @description Returns a named list of minimum/maximum pairs, one per index
+    #' column, which are the limits up to which the dataframe can have its
+    #' domain resized.
+    #' (lifecycle: maturing)
+    #' @return Named list of minimum/maximum values.
+    maxdomain = function() {
+      as.list(
+        arrow::as_record_batch(
+          arrow::as_arrow_table(
+            maxdomain(self$uri, private$.soma_context))))
+    },
+
     #' @description Returns TRUE if the array has the upgraded resizeable domain
     #' feature from TileDB-SOMA 1.15: the array was created with this support,
     #' or it has had ``upgrade_domain`` applied to it.

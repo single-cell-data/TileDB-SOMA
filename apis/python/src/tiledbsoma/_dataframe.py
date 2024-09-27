@@ -354,8 +354,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
-        """Returns a tuple of minimum and maximum values, inclusive, storable
-        on each index column of the dataframe.
+        """Returns tuples of minimum and maximum values, one tuple per index column, currently storable
+        on each index column of the dataframe. These can be resized up to ``maxdomain``.
 
         Lifecycle:
             Maturing.
@@ -364,8 +364,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
     @property
     def maxdomain(self) -> Tuple[Tuple[Any, Any], ...]:
-        """Returns a tuple of minimum and maximum values, inclusive, storable
-        on each index column of the dataframe.
+        """Returns tuples of minimum and maximum values, one tuple per index column, to which the dataframe
+        can have its domain resized.
 
         Lifecycle:
             Maturing.

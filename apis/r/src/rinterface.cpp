@@ -279,6 +279,34 @@ Rcpp::NumericVector maxshape(
 }
 
 // [[Rcpp::export]]
+SEXP non_empty_domain_new(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::read, ctxxp->ctxptr);
+    tdbs::ArrowTable arrow_table = sdf->get_non_empty_domain();
+    SEXP retval = convert_domainish(arrow_table);
+    sdf->close();
+    return retval;
+}
+
+// [[Rcpp::export]]
+SEXP domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::read, ctxxp->ctxptr);
+    tdbs::ArrowTable arrow_table = sdf->get_soma_domain();
+    SEXP retval = convert_domainish(arrow_table);
+    sdf->close();
+    return retval;
+}
+
+// [[Rcpp::export]]
+SEXP maxdomain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::read, ctxxp->ctxptr);
+    tdbs::ArrowTable arrow_table = sdf->get_soma_maxdomain();
+    SEXP retval = convert_domainish(arrow_table);
+    sdf->close();
+    return retval;
+}
+
+// [[Rcpp::export]]
 Rcpp::NumericVector maybe_soma_joinid_shape(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // Pro-tip:
