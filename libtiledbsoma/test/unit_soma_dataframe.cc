@@ -79,6 +79,8 @@ struct VariouslyIndexedDataFrameFixture {
             {.name = i64_name,
              .tiledb_datatype = i64_datatype,
              .dim_max = i64_dim_max,
+             .string_lo = "N/A",
+             .string_hi = "N/A",
              .use_current_domain = use_current_domain});
     }
     helper::DimInfo u32_dim_info(bool use_current_domain) {
@@ -86,13 +88,18 @@ struct VariouslyIndexedDataFrameFixture {
             {.name = u32_name,
              .tiledb_datatype = u32_datatype,
              .dim_max = u32_dim_max,
+             .string_lo = "N/A",
+             .string_hi = "N/A",
              .use_current_domain = use_current_domain});
     }
-    helper::DimInfo str_dim_info(bool use_current_domain) {
+    helper::DimInfo str_dim_info(
+        bool use_current_domain, std::string string_lo, std::string string_hi) {
         return helper::DimInfo(
             {.name = str_name,
              .tiledb_datatype = str_datatype,
              .dim_max = str_dim_max,
+             .string_lo = string_lo,
+             .string_hi = string_hi,
              .use_current_domain = use_current_domain});
     }
 
@@ -548,18 +555,18 @@ TEST_CASE_METHOD(
 
         // Check domainish accessors before resize
         ArrowTable non_empty_domain = soma_dataframe->get_non_empty_domain();
-        std::vector<int64_t>
-            ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        std::vector<int64_t> ned_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 non_empty_domain, "soma_joinid");
 
         ArrowTable soma_domain = soma_dataframe->get_soma_domain();
-        std::vector<int64_t>
-            dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        std::vector<int64_t> dom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_domain, "soma_joinid");
 
         ArrowTable soma_maxdomain = soma_dataframe->get_soma_maxdomain();
-        std::vector<int64_t>
-            maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        std::vector<int64_t> maxdom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_maxdomain, "soma_joinid");
 
         REQUIRE(ned_sjid == std::vector<int64_t>({1, 2}));
@@ -634,16 +641,16 @@ TEST_CASE_METHOD(
         soma_dataframe->open(OpenMode::read);
 
         non_empty_domain = soma_dataframe->get_non_empty_domain();
-        ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             non_empty_domain, "soma_joinid");
 
         soma_domain = soma_dataframe->get_soma_domain();
-        dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_domain, "soma_joinid");
 
         soma_maxdomain = soma_dataframe->get_soma_maxdomain();
-        maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
-            soma_maxdomain, "soma_joinid");
+        maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
+            int64_t>(soma_maxdomain, "soma_joinid");
 
         if (!use_current_domain) {
             REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
@@ -727,27 +734,27 @@ TEST_CASE_METHOD(
         soma_dataframe->open(OpenMode::read);
 
         ArrowTable non_empty_domain = soma_dataframe->get_non_empty_domain();
-        std::vector<int64_t>
-            ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        std::vector<int64_t> ned_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 non_empty_domain, "soma_joinid");
-        std::vector<uint32_t>
-            ned_u32 = ArrowAdapter::get_table_column_by_name<uint32_t>(
+        std::vector<uint32_t> ned_u32 =
+            ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
                 non_empty_domain, "myuint32");
 
         ArrowTable soma_domain = soma_dataframe->get_soma_domain();
-        std::vector<int64_t>
-            dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        std::vector<int64_t> dom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_domain, "soma_joinid");
-        std::vector<uint32_t>
-            dom_u32 = ArrowAdapter::get_table_column_by_name<uint32_t>(
+        std::vector<uint32_t> dom_u32 =
+            ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
                 soma_domain, "myuint32");
 
         ArrowTable soma_maxdomain = soma_dataframe->get_soma_maxdomain();
-        std::vector<int64_t>
-            maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        std::vector<int64_t> maxdom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_maxdomain, "soma_joinid");
-        std::vector<uint32_t>
-            maxdom_u32 = ArrowAdapter::get_table_column_by_name<uint32_t>(
+        std::vector<uint32_t> maxdom_u32 =
+            ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
                 soma_maxdomain, "myuint32");
 
         REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
@@ -828,22 +835,22 @@ TEST_CASE_METHOD(
         soma_dataframe->open(OpenMode::read);
 
         non_empty_domain = soma_dataframe->get_non_empty_domain();
-        ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             non_empty_domain, "soma_joinid");
-        ned_u32 = ArrowAdapter::get_table_column_by_name<uint32_t>(
+        ned_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
             non_empty_domain, "myuint32");
 
         soma_domain = soma_dataframe->get_soma_domain();
-        dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_domain, "soma_joinid");
-        dom_u32 = ArrowAdapter::get_table_column_by_name<uint32_t>(
+        dom_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
             soma_domain, "myuint32");
 
         soma_maxdomain = soma_dataframe->get_soma_maxdomain();
-        maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
-            soma_maxdomain, "soma_joinid");
-        maxdom_u32 = ArrowAdapter::get_table_column_by_name<uint32_t>(
-            soma_maxdomain, "myuint32");
+        maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
+            int64_t>(soma_maxdomain, "soma_joinid");
+        maxdom_u32 = ArrowAdapter::get_table_non_string_column_by_name<
+            uint32_t>(soma_maxdomain, "myuint32");
 
         if (!use_current_domain) {
             REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
@@ -879,19 +886,26 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim-sjid-str attr-u32",
     "[SOMADataFrame]") {
-    // auto use_current_domain = GENERATE(false, true);
-    auto use_current_domain = GENERATE(false);
+    auto use_current_domain = GENERATE(false, true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
-        std::string suffix = use_current_domain ? "true" : "false";
+        auto specify_domain = GENERATE(false, true);
+        std::ostringstream section2;
+        section2 << "- specify_domain=" << specify_domain;
+
+        std::string suffix1 = use_current_domain ? "true" : "false";
+        std::string suffix2 = specify_domain ? "true" : "false";
         set_up(
             std::make_shared<SOMAContext>(),
-            "mem://unit-test-variant-indexed-dataframe-3-" + suffix);
+            "mem://unit-test-variant-indexed-dataframe-3-" + suffix1 + "-" +
+                suffix2);
 
+        std::string string_lo = specify_domain ? "apple" : "";
+        std::string string_hi = specify_domain ? "zebra" : "";
         std::vector<helper::DimInfo> dim_infos(
             {i64_dim_info(use_current_domain),
-             str_dim_info(use_current_domain)});
+             str_dim_info(use_current_domain, string_lo, string_hi)});
         std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
 
         // Create
@@ -916,12 +930,17 @@ TEST_CASE_METHOD(
 
             std::array<std::string, 2> str_range = ndrect.range<std::string>(
                 dim_infos[1].name);
-            // Can we write empty strings in this range?
-            REQUIRE(str_range[0] <= "");
-            REQUIRE(str_range[1] >= "");
-            // Can we write ASCII values in this range?
-            REQUIRE(str_range[0] < " ");
-            REQUIRE(str_range[1] > "~");
+            if (specify_domain) {
+                REQUIRE(str_range[0] == dim_infos[1].string_lo);
+                REQUIRE(str_range[1] == dim_infos[1].string_hi);
+            } else {
+                // Can we write empty strings in this range?
+                REQUIRE(str_range[0] <= "");
+                REQUIRE(str_range[1] >= "");
+                // Can we write ASCII values in this range?
+                REQUIRE(str_range[0] < " ");
+                REQUIRE(str_range[1] > "~");
+            }
         }
 
         // Check shape before write
@@ -950,24 +969,24 @@ TEST_CASE_METHOD(
 
         // Check domainish accessors before resize
         ArrowTable non_empty_domain = soma_dataframe->get_non_empty_domain();
-        std::vector<int64_t>
-            ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        std::vector<int64_t> ned_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 non_empty_domain, "soma_joinid");
         std::vector<std::string>
             ned_str = ArrowAdapter::get_table_string_column_by_name(
                 non_empty_domain, "mystring");
 
         ArrowTable soma_domain = soma_dataframe->get_soma_domain();
-        std::vector<int64_t>
-            dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        std::vector<int64_t> dom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_domain, "soma_joinid");
         std::vector<std::string>
             dom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_domain, "mystring");
 
         ArrowTable soma_maxdomain = soma_dataframe->get_soma_maxdomain();
-        std::vector<int64_t>
-            maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        std::vector<int64_t> maxdom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_maxdomain, "soma_joinid");
         std::vector<std::string>
             maxdom_str = ArrowAdapter::get_table_string_column_by_name(
@@ -977,9 +996,21 @@ TEST_CASE_METHOD(
         REQUIRE(ned_str == std::vector<std::string>({"apple", "bat"}));
 
         REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
-        REQUIRE(dom_str == std::vector<std::string>({"", ""}));
 
-        REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+        if (!use_current_domain) {
+            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+        } else {
+            if (specify_domain) {
+                REQUIRE(dom_str[0] == dim_infos[1].string_lo);
+                REQUIRE(dom_str[1] == dim_infos[1].string_hi);
+            } else {
+                REQUIRE(dom_str[0] == "");
+                REQUIRE(dom_str[1] == "");
+            }
+
+            REQUIRE(maxdom_sjid[0] == 0);
+            REQUIRE(maxdom_sjid[1] > 2000000000);
+        }
         REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
 
         soma_dataframe->close();
@@ -1036,20 +1067,20 @@ TEST_CASE_METHOD(
         soma_dataframe->open(OpenMode::read, TimestampRange(0, 2));
 
         non_empty_domain = soma_dataframe->get_non_empty_domain();
-        ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             non_empty_domain, "soma_joinid");
         ned_str = ArrowAdapter::get_table_string_column_by_name(
             non_empty_domain, "mystring");
 
         soma_domain = soma_dataframe->get_soma_domain();
-        dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
+        dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_domain, "soma_joinid");
         dom_str = ArrowAdapter::get_table_string_column_by_name(
             soma_domain, "mystring");
 
         soma_maxdomain = soma_dataframe->get_soma_maxdomain();
-        maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t>(
-            soma_maxdomain, "soma_joinid");
+        maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
+            int64_t>(soma_maxdomain, "soma_joinid");
         maxdom_str = ArrowAdapter::get_table_string_column_by_name(
             soma_maxdomain, "mystring");
 
@@ -1057,13 +1088,25 @@ TEST_CASE_METHOD(
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
         REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
-        REQUIRE(dom_str == std::vector<std::string>({"", ""}));
 
-        REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+        if (!use_current_domain) {
+            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+            REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+        } else {
+            if (specify_domain) {
+                REQUIRE(dom_str[0] == dim_infos[1].string_lo);
+                REQUIRE(dom_str[1] == dim_infos[1].string_hi);
+            } else {
+                REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+            }
+
+            REQUIRE(maxdom_sjid[0] == 0);
+            REQUIRE(maxdom_sjid[1] > 2000000000);
+        }
+
         REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
 
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
-        REQUIRE(dom_str == std::vector<std::string>({"", ""}));
 
         soma_dataframe->close();
     }
@@ -1077,13 +1120,21 @@ TEST_CASE_METHOD(
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
-        std::string suffix = use_current_domain ? "true" : "false";
+        auto specify_domain = GENERATE(false, true);
+        std::ostringstream section2;
+        section2 << "- specify_domain=" << specify_domain;
+
+        std::string suffix1 = use_current_domain ? "true" : "false";
+        std::string suffix2 = specify_domain ? "true" : "false";
         set_up(
             std::make_shared<SOMAContext>(),
-            "mem://unit-test-variant-indexed-dataframe-4-" + suffix);
+            "mem://unit-test-variant-indexed-dataframe-4-" + suffix1 + "-" +
+                suffix2);
 
+        std::string string_lo = specify_domain ? "apple" : "";
+        std::string string_hi = specify_domain ? "zebra" : "";
         std::vector<helper::DimInfo> dim_infos(
-            {str_dim_info(use_current_domain),
+            {str_dim_info(use_current_domain, string_lo, string_hi),
              u32_dim_info(use_current_domain)});
         std::vector<helper::AttrInfo> attr_infos({i64_attr_info()});
 
@@ -1104,12 +1155,17 @@ TEST_CASE_METHOD(
 
             std::array<std::string, 2> str_range = ndrect.range<std::string>(
                 dim_infos[0].name);
-            // Can we write empty strings in this range?
-            REQUIRE(str_range[0] <= "");
-            REQUIRE(str_range[1] >= "");
-            // Can we write ASCII values in this range?
-            REQUIRE(str_range[0] < " ");
-            REQUIRE(str_range[1] > "~");
+            if (specify_domain) {
+                REQUIRE(str_range[0] == dim_infos[0].string_lo);
+                REQUIRE(str_range[1] == dim_infos[0].string_hi);
+            } else {
+                // Can we write empty strings in this range?
+                REQUIRE(str_range[0] <= "");
+                REQUIRE(str_range[1] >= "");
+                // Can we write ASCII values in this range?
+                REQUIRE(str_range[0] < " ");
+                REQUIRE(str_range[1] > "~");
+            }
 
             std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
                 dim_infos[1].name);
@@ -1144,7 +1200,12 @@ TEST_CASE_METHOD(
             REQUIRE(dom_str == std::vector<std::string>({"", ""}));
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         } else {
-            REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+            if (specify_domain) {
+                REQUIRE(dom_str[0] == dim_infos[0].string_lo);
+                REQUIRE(dom_str[1] == dim_infos[0].string_hi);
+            } else {
+                REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+            }
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         }
 
@@ -1229,7 +1290,12 @@ TEST_CASE_METHOD(
             REQUIRE(dom_str == std::vector<std::string>({"", ""}));
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         } else {
-            REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+            if (specify_domain) {
+                REQUIRE(dom_str[0] == dim_infos[0].string_lo);
+                REQUIRE(dom_str[1] == dim_infos[0].string_hi);
+            } else {
+                REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+            }
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         }
 

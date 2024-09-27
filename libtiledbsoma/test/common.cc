@@ -197,7 +197,8 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
             // arrow_adapter for more info. We rely on arrow_adapter to also
             // handle this case.
             if (info.use_current_domain) {
-                std::vector<std::string> dom({"", "", "", "", ""});
+                std::vector<std::string> dom(
+                    {"", "", "", info.string_lo, info.string_hi});
                 dim_array = ArrowAdapter::make_arrow_array_child_string(dom);
             } else {
                 std::vector<std::string> dom({"", "", ""});

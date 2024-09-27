@@ -182,6 +182,18 @@ maxshape <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_maxshape`, uri, ctxxp)
 }
 
+non_empty_domain_new <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_non_empty_domain_new`, uri, ctxxp)
+}
+
+domain <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_domain`, uri, ctxxp)
+}
+
+maxdomain <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_maxdomain`, uri, ctxxp)
+}
+
 maybe_soma_joinid_shape <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_maybe_soma_joinid_shape`, uri, ctxxp)
 }
@@ -196,6 +208,10 @@ has_current_domain <- function(uri, ctxxp) {
 
 ndim <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_ndim`, uri, ctxxp)
+}
+
+c_dimnames <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_dimnames`, uri, ctxxp)
 }
 
 resize <- function(uri, new_shape, ctxxp) {

@@ -12,10 +12,10 @@ import abc
 import enum
 from typing import (
     Any,
-    Callable,
     Dict,
     Generic,
     Iterator,
+    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -30,7 +30,6 @@ from typing import (
 import attrs
 import numpy as np
 import pyarrow as pa
-from numpy.typing import DTypeLike
 from somacore import options
 from typing_extensions import Literal, Self
 
@@ -381,41 +380,36 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
     def ndim(self) -> int:
         return len(self._handle.dimension_names)
 
-    def _get_and_cast_domain(
-        self, domain_slot_getter: Callable[[str, DTypeLike], Tuple[object, object]]
+    def _cast_domainish(
+        self, domainish: List[Any]
     ) -> Tuple[Tuple[object, object], ...]:
         result = []
-        for name in self._handle.dimension_names:
-            dtype = self._handle.schema.field(name).type
-            if pa.types.is_timestamp(dtype):
-                np_dtype = np.dtype(dtype.to_pandas_dtype())
-                dom = domain_slot_getter(name, np_dtype)
+        for i, slot in enumerate(domainish):
+
+            arrow_type = slot[0].type
+            if pa.types.is_timestamp(arrow_type):
+                pandas_type = np.dtype(arrow_type.to_pandas_dtype())
                 result.append(
-                    (
-                        np_dtype.type(dom[0], dtype.unit),
-                        np_dtype.type(dom[1], dtype.unit),
+                    tuple(
+                        pandas_type.type(e.cast(pa.int64()).as_py(), arrow_type.unit)
+                        for e in slot
                     )
                 )
             else:
-                if pa.types.is_large_string(dtype) or pa.types.is_string(dtype):
-                    dtype = np.dtype("U")
-                elif pa.types.is_large_binary(dtype) or pa.types.is_binary(dtype):
-                    dtype = np.dtype("S")
-                else:
-                    dtype = np.dtype(dtype.to_pandas_dtype())
-                result.append(domain_slot_getter(name, dtype))
+                result.append(tuple(e.as_py() for e in slot))
+
         return tuple(result)
 
     @property
     def domain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._get_and_cast_domain(self._handle.soma_domain_slot)
+        return self._cast_domainish(self._handle.domain())
 
     @property
     def maxdomain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._get_and_cast_domain(self._handle.soma_maxdomain_slot)
+        return self._cast_domainish(self._handle.maxdomain())
 
     def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._get_and_cast_domain(self._handle.non_empty_domain_slot) or ()
+        return self._cast_domainish(self._handle.non_empty_domain())
 
     @property
     def attr_names(self) -> Tuple[str, ...]:
