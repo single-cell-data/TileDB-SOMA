@@ -110,6 +110,65 @@ uns_hint <- function(type = c('1d', '2d')) {
   }
 }
 
+.type_hint <- function(type) {
+  nm <- 'soma_r_type_hint'
+  if (is.null(type)) {
+    hint <- list(NULL)
+    names(hint) <- nm
+    return(hint)
+  }
+  stopifnot(
+    "'type' must be a non-empty character" = is.character(type) && all(nzchar(type))
+  )
+  def <- if (length(type) > 1L) {
+    paste0('[', paste(dQuote(type, FALSE), collapse = ','), ']')
+  } else {
+    tryCatch(
+      expr = methods::getClassDef(type),
+      error = function(e) type
+    )
+  }
+  if (inherits(def, c('classUnionRepresentation', 'refClassRepresentation'))) {
+    def <- sprintf('%s:%s', def@package, def@className)
+  } else if (inherits(def, 'classRepresentation')) {
+    btypes <- vapply_char(
+      X = gsub(
+        pattern = '^is\\.',
+        replacement = '',
+        x = grep(
+          pattern = '<-',
+          x = grep(
+            pattern = '^is\\.',
+            x = lsf.str(envir = baseenv()),
+            value = TRUE
+          ),
+          value = TRUE,
+          invert = TRUE
+        )
+      ),
+      FUN = function(x) ifelse(
+        test = grepl(pattern = '^data\\.frame', x = x),
+        yes = paste(strsplit(x, split = '\\.')[[1L]][1:2], collapse = '.'),
+        no = strsplit(x, split = '\\.')[[1L]][1L]
+      ),
+      USE.NAMES = FALSE
+    )
+    def <- switch(
+      EXPR = def@package,
+      methods = {
+        def <- if ('oldClass' %in% names(def@contains) || def@className %in% btypes) {
+          as.character(def@className)
+        } else {
+          sprintf('%s:%s', def@package, def@className)
+        }
+        def
+      },
+      sprintf(fmt = '%s:%s', def@package, def@className)
+    )
+  }
+  return(list(soma_r_type_hint = def))
+}
+
 #' Read the SOMA Join IDs from an Array
 #'
 #' @param x A \code{\link{SOMASparseNDarray}} or \code{\link{SOMADataFrame}}

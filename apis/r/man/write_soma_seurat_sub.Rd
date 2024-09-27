@@ -3,12 +3,24 @@
 \name{write_soma_seurat_sub_objects}
 \alias{write_soma_seurat_sub_objects}
 \alias{write_soma.Assay}
+\alias{write_soma.Assay5}
 \alias{write_soma.DimReduc}
 \alias{write_soma.Graph}
 \alias{write_soma.SeuratCommand}
 \title{Convert a \pkg{Seurat} Sub-Object to a SOMA Object, returned opened for write}
 \usage{
 \method{write_soma}{Assay}(
+  x,
+  uri = NULL,
+  soma_parent,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+)
+
+\method{write_soma}{Assay5}(
   x,
   uri = NULL,
   soma_parent,
@@ -91,8 +103,9 @@ relative or aboslute}
 (eg. \code{nrow(assay)})}
 }
 \value{
-\code{Assay} method: a \code{\link{SOMAMeasurement}} with the
-data from \code{x}, returned opened for write
+\code{Assay} and \code{Assay5} methods: a
+\code{\link{SOMAMeasurement}} with the data from \code{x},
+returned opened for write
 
 \code{DimReduc} and \code{Graph} methods: invisibly returns
 \code{soma_parent}, opened for write, with the values of \code{x} added to it
@@ -100,21 +113,21 @@ data from \code{x}, returned opened for write
 \description{
 Various helpers to write \pkg{Seurat} sub-objects to SOMA objects.
 }
-\section{Writing \code{\link[SeuratObject]{Assay}s}}{
+\section{Writing v3 \code{\link[SeuratObject]{Assay}s}}{
 
 \pkg{Seurat} \code{\link[SeuratObject]{Assay}} objects are written out as
 individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 \itemize{
-\item the \dQuote{\code{data}} matrix is written out a
-\link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+\item the \dQuote{\code{data}} matrix is written out as a
+\link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 \dQuote{\code{data}} within the \dQuote{\code{X}} group
 \item the \dQuote{\code{counts}} matrix, if not
-\link[SeuratObject:IsMatrixEmpty]{empty}, is written out a
-\link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+\link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
+\link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 \dQuote{\code{counts}} within the \dQuote{\code{X}} group
 \item the \dQuote{\code{scale.data}} matrix, if not
-\link[SeuratObject:IsMatrixEmpty]{empty}, is written out a
-\link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+\link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
+\link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 \dQuote{\code{scale_data}} within the \dQuote{\code{X}} group
 \item feature-level meta data is written out as a
 \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
@@ -122,6 +135,37 @@ individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 Expression matrices are transposed (cells as rows) prior to writing. All
 other slots, including results from extended assays (eg. \code{SCTAssay},
 \code{ChromatinAssay}) are lost
+}
+
+\section{Writing v5 \code{Assays}}{
+
+\pkg{Seurat} v5 \code{\link[SeuratObject:Assay5]{Assays}s} are written
+out as individual\link[tiledbsoma:SOMAMeasurement]{measurements}:
+\itemize{
+\item the layer matrices are written out as
+\link[tiledbsoma:SOMASparseNDArray]{sparse arrays} within the
+\dQuote{\code{X}} group
+\item feature-level meta data is written out as a
+\link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
+}
+Expression matrices are transposed (cells as rows) prior to writing. All
+other slots, including results from extended assays (eg. \code{SCTAssay},
+\code{ChromatinAssay}) are lost\cr
+The following bits of metadata are written in various parts of the measurement
+\itemize{
+\item \dQuote{\code{soma_ecosystem_seurat_assay_version}}: written at the
+measurement level; indicates the Seurat assay version.
+Set to \dQuote{\code{v5}}
+\item \dQuote{\code{soma_ecosystem_seurat_v5_default_layers}}: written at
+the \dQuote{\code{X}} group level; indicates the
+\link[SeuratObject:DefaultLayer]{default layers}
+\item \dQuote{\code{soma_ecosystem_seurat_v5_ragged}}: written at the
+\dQuote{\code{X/<layer>}} array level; with a value of
+\dQuote{\code{ragged}}, indicates whether or not the layer is ragged
+\item \dQuote{\code{soma_r_type_hint}}: written at the
+\dQuote{\code{X/<layer>}} array level; indicates the \R class and
+defining package (for S4 classes) of the original layer
+}
 }
 
 \section{Writing \code{\link[SeuratObject]{DimReduc}s}}{
