@@ -75,7 +75,7 @@ class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
     ) -> Self:
-        """Creates a new collection of this type at the given URI.
+        """Creates a new ``MultiscaleImage`` at the given URI.
 
         Args:
             uri: The URI where the collection will be created.
@@ -88,7 +88,7 @@ class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
                 and ``depth``.
 
         Returns:
-            The newly created collection, opened for writing.
+            The newly created ``MultiscaleImage``, opened for writing.
 
         Lifecycle:
             Experimental.
@@ -104,7 +104,7 @@ class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
         shape: Sequence[int],
         **kwargs: Any,
     ) -> DenseNDArray:
-        """Add a new level in the multi-scale image.
+        """Adds a new resolution level to the ``MultiscaleImage``.
 
         Parameters are as in :meth:`DenseNDArray.create`. The provided shape will
         be used to compute the scale between images and must correspond to the image
