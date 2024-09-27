@@ -390,6 +390,34 @@ Rcpp::CharacterVector c_attrnames(
 }
 
 // [[Rcpp::export]]
+SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema();
+    sr->close();
+
+    auto schemaxp = nanoarrow_schema_owning_xptr();
+    auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
+    exitIfError(
+        ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
+    exitIfError(ArrowSchemaSetName(sch, ""), "Bad schema name");
+    exitIfError(
+        ArrowSchemaAllocateChildren(sch, lib_retval->n_children),
+        "Bad schema children alloc");
+
+    for (size_t i = 0; i < lib_retval->n_children; i++) {
+        spdl::info(
+            "[c_schema] Accessing name '{}' format '{}' at position {}",
+            std::string(lib_retval->children[i]->name),
+            std::string(lib_retval->children[i]->format),
+            i);
+
+        ArrowSchemaMove(lib_retval->children[i], sch->children[i]);
+    }
+
+    return schemaxp;
+}
+
+// [[Rcpp::export]]
 void resize(
     const std::string& uri,
     Rcpp::NumericVector new_shape,
