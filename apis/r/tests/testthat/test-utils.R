@@ -24,8 +24,8 @@ test_that("validate read coords", {
   )
 
   expect_equal(
-    validate_read_coords(list(foo = 1:10, bar = 1:10)),
-    list(foo = 1:10, bar = 1:10)
+    validate_read_coords(list(int_column = 1:10, float_column = 1:10)),
+    list(int_column = 1:10, float_column = 1:10)
   )
 })
 
@@ -34,18 +34,18 @@ test_that("validate read coords with dimension names", {
 
   # assume vector or unnamed list of length 1 corresponds to first dimension
   expect_equal(
-    validate_read_coords(1:10, dimnames = "foo"),
-    list(foo = 1:10)
+    validate_read_coords(1:10, dimnames = "int_column"),
+    list(int_column = 1:10)
   )
 
   # list of named coordinates must match provided dimension names
   expect_error(
-    validate_read_coords(list(foo = 1:10, bar = 1:10), c("foo", "baz")),
+    validate_read_coords(list(int_column = 1:10, float_column = 1:10), c("int_column", "string_column")),
     "names of 'coords' must correspond to dimension names"
   )
 
   expect_error(
-    validate_read_coords(list(foo = 1:10, bar = 1:10), c("foo")),
+    validate_read_coords(list(int_column = 1:10, float_column = 1:10), c("int_column")),
     "names of 'coords' must correspond to dimension names"
   )
 })
@@ -62,8 +62,8 @@ test_that("validate read coords with dimension names and schema", {
 
   # assume vector or unnamed list of length 1 corresponds to first dimension
   expect_equal(
-    validate_read_coords(1:10, dimnames = "foo", schema = asch),
-    list(foo = 1:10)
+    validate_read_coords(1:10, dimnames = "int_column", schema = asch),
+    list(int_column = 1:10)
   )
 
   # integer coordinates corresponding to int64 dimensions are cast to int64
@@ -74,11 +74,11 @@ test_that("validate read coords with dimension names and schema", {
 
   # casting is selective and only applies to int64 dimensions
   test_coords <- validate_read_coords(
-      coords = list(foo = 1:10, soma_joinid = 1:10),
-      dimnames = c("foo", "soma_joinid"),
+      coords = list(int_column = 1:10, soma_joinid = 1:10),
+      dimnames = c("int_column", "soma_joinid"),
       schema = asch
   )
 
-  expect_equal(test_coords$foo, 1:10)
+  expect_equal(test_coords$int_column, 1:10)
   expect_equal(test_coords$soma_joinid, as.integer64(1:10))
 })
