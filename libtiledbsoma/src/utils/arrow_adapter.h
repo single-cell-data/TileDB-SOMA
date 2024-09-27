@@ -299,6 +299,15 @@ class ArrowAdapter {
 
     template <typename T>
     static ArrowArray* make_arrow_array_child(const std::vector<T>& v) {
+        // We're aware of template-specialization wherein we can
+        // make a separate `make_arrow_array_child` with `template <>` (not
+        // `make_arrow_array_child_string`, as we've done). However,
+        // we find it a bit fiddly across different compilers to force
+        // the compiler to find the string variant. It's far more intuitive
+        // for the non-expert developers (and maybe even for the experts),
+        // and far more robust for any future maintainers, to explicitly
+        // (a) have a separate `..._string` variant; (b) throw here
+        // if callsites don't use t.
         if (std::is_same_v<T, std::string>) {
             throw std::runtime_error(
                 "ArrowAdapter::make_arrow_array_child: template-specialization "
@@ -414,10 +423,10 @@ class ArrowAdapter {
     // for keystroke-reduction in unit-test cases.
 
     template <typename T>
-    static std::vector<T> get_table_column_by_name(
+    static std::vector<T> get_table_non_string_column_by_name(
         const ArrowTable& arrow_table, std::string column_name) {
         int64_t index = _get_column_index_from_name(arrow_table, column_name);
-        return get_table_column_by_index<T>(arrow_table, index);
+        return get_table_non_string_column_by_index<T>(arrow_table, index);
     }
 
     static std::vector<std::string> get_table_string_column_by_name(
@@ -426,8 +435,12 @@ class ArrowAdapter {
         return get_table_string_column_by_index(arrow_table, index);
     }
 
+    /**
+     * Returns a copy of the data in a specified non-string column of an
+     * ArrowTable as a standard/non-Arrow C++ object.
+     */
     template <typename T>
-    static std::vector<T> get_table_column_by_index(
+    static std::vector<T> get_table_non_string_column_by_index(
         const ArrowTable& arrow_table, int64_t column_index) {
         ArrowArray* arrow_array = arrow_table.first.get();
         ArrowSchema* arrow_schema = arrow_table.second.get();
@@ -435,75 +448,173 @@ class ArrowAdapter {
 
         if (std::is_same_v<T, std::string>) {
             throw std::runtime_error(
-                "SOMAArray::_core_domain_slot: template-specialization "
-                "failure.");
+                "SOMAArray::get_table_non_string_column_by_index: "
+                "template-specialization failure.");
         }
 
-        ArrowArray* child = _get_and_check_column(arrow_table, column_index, 2);
+        ArrowArray* child_array = _get_and_check_column(
+            arrow_table, column_index, 2);
 
-        // For our purposes -- reporting domains, etc. -- we don't use the Arrow
-        // validity buffers. If this class needs to be extended someday to
-        // support arrow-nulls, we can work on that.
-        if (child->buffers[0] != nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_table_column_by_index: validity buffer "
-                "unsupported here");
-        }
-
-        const void* vdata = child->buffers[1];
-        if (vdata == nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_table_column_by_index: null data buffer");
-        }
-
-        const T* data = (T*)vdata;
-
-        std::vector<T> retval(child->length);
-        for (auto i = 0; i < child->length; i++) {
-            retval[i] = data[i];
-        }
-        return retval;
+        return get_array_non_string_column<T>(child_array);
     }
 
+    /**
+     * Returns a copy of the data in a specified string column of an
+     * ArrowTable as a standard/non-Arrow C++ object.
+     */
     static std::vector<std::string> get_table_string_column_by_index(
         const ArrowTable& arrow_table, int64_t column_index) {
         ArrowArray* arrow_array = arrow_table.first.get();
         ArrowSchema* arrow_schema = arrow_table.second.get();
         _check_shapes(arrow_array, arrow_schema);
 
-        ArrowArray* child = _get_and_check_column(arrow_table, column_index, 3);
+        ArrowArray* child_array = _get_and_check_column(
+            arrow_table, column_index, 3);
+
+        const ArrowSchema* child_schema = arrow_schema->children[column_index];
+
+        return get_array_string_column(child_array, child_schema);
+    }
+
+    /**
+     * Returns a copy of the data in a specified non-string column of an
+     * ArrowArray as a standard/non-Arrow C++ object. There is no ArrowSchema*
+     * argument, as the caller must have determined the Arrow type, inferred
+     * a C++ type, and have invoked this method with the appropriate C++ type.
+     *
+     * This is a helper for get_table_non_string_column_by_index; also exposed
+     * for callsites which have access to child objects which are not top-level
+     * ArrowTables.
+     */
+    template <typename T>
+    static std::vector<T> get_array_non_string_column(
+        const ArrowArray* arrow_array) {
+        if (arrow_array->n_children != 0) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_array_non_string_column: expected leaf "
+                "node");
+        }
+        if (arrow_array->n_buffers != 2) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_array_non_string_column: expected two "
+                "buffers");
+        }
+
+        if (std::is_same_v<T, std::string>) {
+            throw std::runtime_error(
+                "SOMAArray::get_array_non_string_column: "
+                "template-specialization "
+                "failure.");
+        }
+
+        // Two-buffer model for non-string data:
+        // * Slot 0 is the Arrow validity buffer which we leave null
+        // * Slot 1 is data, void* but will be derefrenced as T*
+        // * There is no offset information
 
         // For our purposes -- reporting domains, etc. -- we don't use the Arrow
         // validity buffers. If this class needs to be extended someday to
         // support arrow-nulls, we can work on that.
-        if (child->buffers[0] != nullptr) {
+        if (arrow_array->buffers[0] != nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_column_by_index: validity buffer "
+                "ArrowAdapter::get_array_non_string_column: validity buffer "
                 "unsupported here");
         }
-
-        const char* data = (char*)child->buffers[2];
-
-        if (data == nullptr) {
+        if (arrow_array->buffers[1] == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_column_by_index: null data buffer");
+                "ArrowAdapter::get_array_non_string_column: null data buffer");
         }
 
-        if (strcmp(arrow_schema->children[column_index]->format, "U") != 0) {
+        const void* vdata = arrow_array->buffers[1];
+        if (vdata == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_column_by_index: expected Arrow "
-                "large_string");
-        }
-        uint64_t* offsets = (uint64_t*)child->buffers[1];
-
-        int num_cells = (int)child->length;
-        std::vector<std::string> retval(num_cells);
-        for (int j = 0; j < num_cells; j++) {
-            std::string e(&data[offsets[j]], &data[offsets[j + 1]]);
-            retval[j] = e;
+                "ArrowAdapter::get_array_non_string_column: null data buffer");
         }
 
+        const T* data = (T*)vdata;
+
+        std::vector<T> retval(arrow_array->length);
+        for (auto i = 0; i < arrow_array->length; i++) {
+            retval[i] = data[i];
+        }
         return retval;
+    }
+
+    /**
+     * Returns a copy of the data in a specified non-string column of an
+     * ArrowArray as a standard/non-Arrow C++ object.
+     * Helper for get_table_string_column_by_index. Also exposed for
+     * callsites which have access to child objects which are not top-level
+     * ArrowTables.
+     */
+    static std::vector<std::string> get_array_string_column(
+        const ArrowArray* arrow_array, const ArrowSchema* arrow_schema) {
+        if (arrow_array->n_children != 0 || arrow_schema->n_children != 0) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_array_string_column: expected leaf "
+                "node");
+        }
+        if (arrow_array->n_buffers != 3) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_array_string_column: expected three "
+                "buffers");
+        }
+
+        // Three-buffer model for string data:
+        // * Slot 0 is the Arrow uint8_t* validity buffer
+        // * Slot 1 is the Arrow offsets buffer: uint32_t* for Arrow string
+        //   or uint64_t* for Arrow large_string
+        // * Slot 2 is data, void* but will be derefrenced as T*
+
+        // For our purposes -- reporting domains, etc. -- we don't use the Arrow
+        // validity buffers. If this class needs to be extended someday to
+        // support arrow-nulls, we can work on that.
+        if (arrow_array->buffers[0] != nullptr) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_array_string_column: validity buffer "
+                "unsupported here");
+        }
+        if (arrow_array->buffers[1] == nullptr) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_array_string_column: null "
+                "offsets buffer");
+        }
+        if (arrow_array->buffers[2] == nullptr) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_array_string_column: null data "
+                "buffer");
+        }
+
+        const char* data = (char*)arrow_array->buffers[2];
+
+        if (strcmp(arrow_schema->format, "u") == 0 ||
+            strcmp(arrow_schema->format, "z") == 0) {
+            uint32_t* offsets = (uint32_t*)arrow_array->buffers[1];
+            int num_cells = (int)arrow_array->length;
+            std::vector<std::string> retval(num_cells);
+            for (int j = 0; j < num_cells; j++) {
+                std::string e(&data[offsets[j]], &data[offsets[j + 1]]);
+                retval[j] = e;
+            }
+            return retval;
+
+        } else if (
+            strcmp(arrow_schema->format, "U") == 0 ||
+            strcmp(arrow_schema->format, "Z") == 0) {
+            uint64_t* offsets = (uint64_t*)arrow_array->buffers[1];
+            int num_cells = (int)arrow_array->length;
+            std::vector<std::string> retval(num_cells);
+            for (int j = 0; j < num_cells; j++) {
+                std::string e(&data[offsets[j]], &data[offsets[j + 1]]);
+                retval[j] = e;
+            }
+            return retval;
+
+        } else {
+            throw std::runtime_error(
+                "ArrowAdapter::get_array_string_column: expected "
+                "Arrow string, large_string, binary, or large_binary");
+        }
     }
 
    private:

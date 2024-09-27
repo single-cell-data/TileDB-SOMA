@@ -62,6 +62,8 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             {{.name = dim_name,
               .tiledb_datatype = dim_tiledb_datatype,
               .dim_max = dim_max,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
               .use_current_domain = use_current_domain}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
@@ -174,6 +176,8 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
             {{.name = dim_name,
               .tiledb_datatype = tiledb_datatype,
               .dim_max = dim_max,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
               .use_current_domain = use_current_domain}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
@@ -236,6 +240,8 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
             {{.name = dim_name,
               .tiledb_datatype = tiledb_datatype,
               .dim_max = dim_max,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
               .use_current_domain = use_current_domain}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
