@@ -52,7 +52,7 @@ class PointCloud(somacore.PointCloud):
     ) -> Self:
         """Creates a new ``PointCloud`` at the given URI.
 
-        The schema of the created point cloud  will include a column named
+        The schema of the created point cloud will include a column named
         ``soma_joinid`` of type ``pyarrow.int64``, with negative values disallowed, and
         at least one axis with numeric type.  If a ``soma_joinid`` column is
         present in the provided schema, it must be of the correct type.  If the
@@ -64,13 +64,14 @@ class PointCloud(somacore.PointCloud):
             schema: Arrow schema defining the per-column schema. This schema
                 must define all columns, including columns to be named as index
                 columns.  If the schema includes types unsupported by the SOMA
-                implementation, an error will be raised.
+                implementation, a ValueError will be raised.
             index_column_names: A list of column names to use as user-defined index
                 columns (e.g., ``['x', 'y']``). All named columns must exist in the
                 schema, and at least one index column name is required.
+                Default is ``("soma_joinid", "x", "y")``.
             axis_names: An ordered list of axis column names that correspond to the
                 names of axes of the the coordinate space the points are defined on.
-                Must be the name of index columns.
+                Must be the name of index columns. Default is ``("x", "y")``.
             domain: An optional sequence of tuples specifying the domain of each
                 index column. Each tuple should be a pair consisting of the minimum
                 and maximum values storable in the index column. If omitted entirely,
@@ -79,7 +80,7 @@ class PointCloud(somacore.PointCloud):
                 column's datatype.  This makes a point cloud dataframe growable.
 
         Returns:
-            The newly created geometry dataframe, opened for writing.
+            The newly created point cloud, opened for writing.
 
         Lifecycle:
             Experimental.

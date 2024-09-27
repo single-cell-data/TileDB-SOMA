@@ -13,6 +13,6 @@ SOMA_ENCODING_VERSION_METADATA_KEY = "soma_encoding_version"
 SOMA_ENCODING_VERSION = "1"
 
 SPATIAL_DISCLAIMER = (
-    "The support for spatial types is experimental. Changes to both the API and data "
+    "Support for spatial types is experimental. Changes to both the API and data "
     "storage may not be backwards compatible."
 )

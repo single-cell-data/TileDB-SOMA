@@ -67,7 +67,7 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
             schema: Arrow schema defining the per-column schema. This schema
                 must define all columns, including columns to be named as index
                 columns.  If the schema includes types unsupported by the SOMA
-                implementation, an error will be raised.
+                implementation, a ValueError will be raised.
             index_column_names: A list of column names to use as user-defined
                 index columns (e.g., ``['cell_type', 'tissue_type']``).
                 All named columns must exist in the schema, and at least one

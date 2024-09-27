@@ -72,7 +72,7 @@ class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
         axis_names: Sequence[str] = ("c", "y", "x"),
         axis_types: Sequence[str] = ("channel", "height", "width"),
         platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[Any] = None,
+        context: Optional[SOMATileDBContext] = None,
     ) -> Self:
         """Creates a new collection of this type at the given URI.
 
