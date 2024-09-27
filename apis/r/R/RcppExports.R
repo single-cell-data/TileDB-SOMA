@@ -126,6 +126,30 @@ set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL
     invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp, tsvec))
 }
 
+libtiledbsoma_query_set_condition <- function(query, query_cond) {
+    .Call(`_tiledbsoma_libtiledbsoma_query_set_condition`, query, query_cond)
+}
+
+libtiledbsoma_query_condition <- function(ctx) {
+    .Call(`_tiledbsoma_libtiledbsoma_query_condition`, ctx)
+}
+
+libtiledbsoma_query_condition_init <- function(query_cond, attr_name, condition_value, cond_val_type, cond_op_string) {
+    invisible(.Call(`_tiledbsoma_libtiledbsoma_query_condition_init`, query_cond, attr_name, condition_value, cond_val_type, cond_op_string))
+}
+
+libtiledbsoma_query_condition_combine <- function(lhs, rhs, str) {
+    .Call(`_tiledbsoma_libtiledbsoma_query_condition_combine`, lhs, rhs, str)
+}
+
+libtiledbsoma_query_condition_set_use_enumeration <- function(ctx, cond, use_enumeration) {
+    invisible(.Call(`_tiledbsoma_libtiledbsoma_query_condition_set_use_enumeration`, ctx, cond, use_enumeration))
+}
+
+libtiledbsoma_query_condition_create <- function(ctx, name, vec, cond_op_string) {
+    .Call(`_tiledbsoma_libtiledbsoma_query_condition_create`, ctx, name, vec, cond_op_string)
+}
+
 reindex_create <- function() {
     .Call(`_tiledbsoma_reindex_create`)
 }

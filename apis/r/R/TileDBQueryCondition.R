@@ -134,7 +134,7 @@ tiledb_query_condition_combine <- function(lhs, rhs, op) {
 #'              query_condition=parse_query_condition(Temp > 90))[]
 #' }
 #' @export
-parse_query_condition <- function(expr, ta=NULL, debug=FALSE, strict=TRUE, use_int64=FALSE) {
+parse_query_condition_new <- function(expr, ta=NULL, debug=FALSE, strict=TRUE, use_int64=FALSE) {
     .hasArray <- !is.null(ta) && is(ta, "tiledb_array")
     if (.hasArray && length(ta@sil) == 0) ta@sil <- .fill_schema_info_list(ta@uri)
     `%!in%` <- Negate(`%in%`)

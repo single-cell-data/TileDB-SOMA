@@ -246,6 +246,82 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// libtiledbsoma_query_set_condition
+Rcpp::XPtr<tiledb::Query> libtiledbsoma_query_set_condition(Rcpp::XPtr<tiledb::Query> query, Rcpp::XPtr<tiledb::QueryCondition> query_cond);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_query_set_condition(SEXP querySEXP, SEXP query_condSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::Query> >::type query(querySEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::QueryCondition> >::type query_cond(query_condSEXP);
+    rcpp_result_gen = Rcpp::wrap(libtiledbsoma_query_set_condition(query, query_cond));
+    return rcpp_result_gen;
+END_RCPP
+}
+// libtiledbsoma_query_condition
+Rcpp::XPtr<tiledb::QueryCondition> libtiledbsoma_query_condition(Rcpp::XPtr<tiledb::Context> ctx);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_query_condition(SEXP ctxSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::Context> >::type ctx(ctxSEXP);
+    rcpp_result_gen = Rcpp::wrap(libtiledbsoma_query_condition(ctx));
+    return rcpp_result_gen;
+END_RCPP
+}
+// libtiledbsoma_query_condition_init
+void libtiledbsoma_query_condition_init(Rcpp::XPtr<tiledb::QueryCondition> query_cond, const std::string& attr_name, SEXP condition_value, const std::string& cond_val_type, const std::string& cond_op_string);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_query_condition_init(SEXP query_condSEXP, SEXP attr_nameSEXP, SEXP condition_valueSEXP, SEXP cond_val_typeSEXP, SEXP cond_op_stringSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::QueryCondition> >::type query_cond(query_condSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type attr_name(attr_nameSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type condition_value(condition_valueSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type cond_val_type(cond_val_typeSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type cond_op_string(cond_op_stringSEXP);
+    libtiledbsoma_query_condition_init(query_cond, attr_name, condition_value, cond_val_type, cond_op_string);
+    return R_NilValue;
+END_RCPP
+}
+// libtiledbsoma_query_condition_combine
+Rcpp::XPtr<tiledb::QueryCondition> libtiledbsoma_query_condition_combine(Rcpp::XPtr<tiledb::QueryCondition> lhs, Rcpp::XPtr<tiledb::QueryCondition> rhs, const std::string& str);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_query_condition_combine(SEXP lhsSEXP, SEXP rhsSEXP, SEXP strSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::QueryCondition> >::type lhs(lhsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::QueryCondition> >::type rhs(rhsSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type str(strSEXP);
+    rcpp_result_gen = Rcpp::wrap(libtiledbsoma_query_condition_combine(lhs, rhs, str));
+    return rcpp_result_gen;
+END_RCPP
+}
+// libtiledbsoma_query_condition_set_use_enumeration
+void libtiledbsoma_query_condition_set_use_enumeration(Rcpp::XPtr<tiledb::Context> ctx, Rcpp::XPtr<tiledb::QueryCondition> cond, bool use_enumeration);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_query_condition_set_use_enumeration(SEXP ctxSEXP, SEXP condSEXP, SEXP use_enumerationSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::Context> >::type ctx(ctxSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::QueryCondition> >::type cond(condSEXP);
+    Rcpp::traits::input_parameter< bool >::type use_enumeration(use_enumerationSEXP);
+    libtiledbsoma_query_condition_set_use_enumeration(ctx, cond, use_enumeration);
+    return R_NilValue;
+END_RCPP
+}
+// libtiledbsoma_query_condition_create
+Rcpp::XPtr<tiledb::QueryCondition> libtiledbsoma_query_condition_create(Rcpp::XPtr<tiledb::Context> ctx, const std::string& name, SEXP vec, const std::string& cond_op_string);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_query_condition_create(SEXP ctxSEXP, SEXP nameSEXP, SEXP vecSEXP, SEXP cond_op_stringSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tiledb::Context> >::type ctx(ctxSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type vec(vecSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type cond_op_string(cond_op_stringSEXP);
+    rcpp_result_gen = Rcpp::wrap(libtiledbsoma_query_condition_create(ctx, name, vec, cond_op_string));
+    return rcpp_result_gen;
+END_RCPP
+}
 // reindex_create
 Rcpp::XPtr<tdbs::IntIndexer> reindex_create();
 RcppExport SEXP _tiledbsoma_reindex_create() {
@@ -688,6 +764,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_has_metadata", (DL_FUNC) &_tiledbsoma_has_metadata, 4},
     {"_tiledbsoma_delete_metadata", (DL_FUNC) &_tiledbsoma_delete_metadata, 4},
     {"_tiledbsoma_set_metadata", (DL_FUNC) &_tiledbsoma_set_metadata, 7},
+    {"_tiledbsoma_libtiledbsoma_query_set_condition", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_set_condition, 2},
+    {"_tiledbsoma_libtiledbsoma_query_condition", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition, 1},
+    {"_tiledbsoma_libtiledbsoma_query_condition_init", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_init, 5},
+    {"_tiledbsoma_libtiledbsoma_query_condition_combine", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_combine, 3},
+    {"_tiledbsoma_libtiledbsoma_query_condition_set_use_enumeration", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_set_use_enumeration, 3},
+    {"_tiledbsoma_libtiledbsoma_query_condition_create", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_create, 4},
     {"_tiledbsoma_reindex_create", (DL_FUNC) &_tiledbsoma_reindex_create, 0},
     {"_tiledbsoma_reindex_map", (DL_FUNC) &_tiledbsoma_reindex_map, 2},
     {"_tiledbsoma_reindex_lookup", (DL_FUNC) &_tiledbsoma_reindex_lookup, 2},

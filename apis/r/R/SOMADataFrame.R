@@ -174,7 +174,7 @@ SOMADataFrame <- R6::R6Class(
 
       if (!is.null(value_filter)) {
           value_filter <- validate_read_value_filter(value_filter)
-          parsed <- do.call(what = tiledb::parse_query_condition,
+          parsed <- do.call(what = tiledb::parse_query_condition, # TO UPDATE
                             args = list(expr = str2lang(value_filter), ta = arr))
           value_filter <- parsed@ptr
       }
