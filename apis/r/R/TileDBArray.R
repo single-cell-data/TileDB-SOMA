@@ -260,12 +260,7 @@ TileDBArray <- R6::R6Class(
     #' @description Retrieve dimension names (lifecycle: maturing)
     #' @return A character vector with the array's dimension names
     dimnames = function() {
-      vapply(
-        self$dimensions(),
-        FUN = tiledb::name,
-        FUN.VALUE = vector("character", 1L),
-        USE.NAMES = FALSE
-      )
+      c_dimnames(self$uri, private$.soma_context)
     },
 
     #' @description Retrieve attribute names (lifecycle: maturing)
