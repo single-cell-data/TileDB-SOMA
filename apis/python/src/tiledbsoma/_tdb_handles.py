@@ -450,6 +450,10 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
+    def resize_soma_joinid(self, newshape: int) -> None:
+        """Only implemented for DataFrame."""
+        raise NotImplementedError
+
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
@@ -495,6 +499,18 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
             Maturing.
         """
         return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
+
+    def resize_soma_joinid(self, newshape: int) -> None:
+        """Increases the shape of the dataframe on the ``soma_joinid`` index
+        column, if it indeed is an index column, leaving all other index columns
+        as-is. If the ``soma_joinid`` is not an index column, no change is made.
+        This is a special case of ``upgrade_domain`` (WIP for 1.15), but simpler
+        to keystroke, and handles the most common case for dataframe domain
+        expansion.  Raises an error if the dataframe doesn't already have a
+        domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
+        1.15).
+        """
+        self._handle.resize_soma_joinid(newshape)
 
 
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
