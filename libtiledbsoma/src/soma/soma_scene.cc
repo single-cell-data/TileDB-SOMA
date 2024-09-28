@@ -1,11 +1,11 @@
 /**
- * @file   soma_experiment.cc
+ * @file   soma_scene.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2023 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +27,11 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAExperiment class.
+ *   This file defines the SOMAScene class.
  */
 
-#include "soma_experiment.h"
+#include "soma_scene.h"
 #include "soma_collection.h"
-#include "soma_measurement.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -41,49 +40,35 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-void SOMAExperiment::create(
+void SOMAScene::create(
     std::string_view uri,
-    std::unique_ptr<ArrowSchema> schema,
-    ArrowTable index_columns,
     std::shared_ptr<SOMAContext> ctx,
-    PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     try {
-        std::filesystem::path experiment_uri(uri);
+        std::filesystem::path scene_uri(uri);
 
-        SOMAGroup::create(
-            ctx, experiment_uri.string(), "SOMAExperiment", timestamp);
-        SOMADataFrame::create(
-            (experiment_uri / "obs").string(),
-            std::move(schema),
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx,
-            platform_config,
-            timestamp);
-        SOMACollection::create(
-            (experiment_uri / "ms").string(), ctx, timestamp);
-        SOMACollection::create(
-            (experiment_uri / "spatial").string(), ctx, timestamp);
+        SOMAGroup::create(ctx, scene_uri.string(), "SOMAScene", timestamp);
+        SOMACollection::create((scene_uri / "img").string(), ctx, timestamp);
+        SOMACollection::create((scene_uri / "obsl").string(), ctx, timestamp);
+        SOMACollection::create((scene_uri / "varl").string(), ctx, timestamp);
 
         auto name = std::string(std::filesystem::path(uri).filename());
         auto group = SOMAGroup::open(
-            OpenMode::write, experiment_uri.string(), ctx, name, timestamp);
+            OpenMode::write, scene_uri.string(), ctx, name, timestamp);
         group->set(
-            (experiment_uri / "obs").string(),
+            (scene_uri / "img").string(),
             URIType::absolute,
-            "obs",
-            "SOMADataFrame");
-        group->set(
-            (experiment_uri / "ms").string(),
-            URIType::absolute,
-            "ms",
+            "img",
             "SOMACollection");
         group->set(
-            (experiment_uri / "spatial").string(),
+            (scene_uri / "obsl").string(),
             URIType::absolute,
-            "spatial",
+            "obsl",
+            "SOMACollection");
+        group->set(
+            (scene_uri / "varl").string(),
+            URIType::absolute,
+            "varl",
             "SOMAColelction");
         group->close();
     } catch (TileDBError& e) {
@@ -91,41 +76,49 @@ void SOMAExperiment::create(
     }
 }
 
-std::unique_ptr<SOMAExperiment> SOMAExperiment::open(
+std::unique_ptr<SOMAScene> SOMAScene::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     try {
-        return std::make_unique<SOMAExperiment>(mode, uri, ctx, timestamp);
+        return std::make_unique<SOMAScene>(mode, uri, ctx, timestamp);
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
 }
 
-std::shared_ptr<SOMADataFrame> SOMAExperiment::obs(
-    std::vector<std::string> column_names, ResultOrder result_order) {
-    if (obs_ == nullptr) {
-        obs_ = SOMADataFrame::open(
-            (std::filesystem::path(uri()) / "obs").string(),
+std::shared_ptr<SOMACollection> SOMAScene::img() {
+    if (img_ == nullptr) {
+        img_ = SOMACollection::open(
+            (std::filesystem::path(uri()) / "img").string(),
             OpenMode::read,
             ctx(),
-            column_names,
-            result_order,
             timestamp());
     }
-    return obs_;
+    return img_;
 }
 
-std::shared_ptr<SOMACollection> SOMAExperiment::ms() {
-    if (ms_ == nullptr) {
-        ms_ = SOMACollection::open(
-            (std::filesystem::path(uri()) / "ms").string(),
+std::shared_ptr<SOMACollection> SOMAScene::obsl() {
+    if (obsl_ == nullptr) {
+        obsl_ = SOMACollection::open(
+            (std::filesystem::path(uri()) / "obsl").string(),
             OpenMode::read,
             ctx(),
             timestamp());
     }
-    return ms_;
+    return obsl_;
+}
+
+std::shared_ptr<SOMACollection> SOMAScene::varl() {
+    if (varl_ == nullptr) {
+        varl_ = SOMACollection::open(
+            (std::filesystem::path(uri()) / "varl").string(),
+            OpenMode::read,
+            ctx(),
+            timestamp());
+    }
+    return varl_;
 }
 
 }  // namespace tiledbsoma
