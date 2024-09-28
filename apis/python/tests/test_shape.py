@@ -134,7 +134,7 @@ def test_sparse_nd_array_basics(
                 table = pa.Table.from_pydict(dikt)
                 snda.write(table)
 
-        # Test reasonable resize
+        # Test resize
         new_shape = tuple([arg_shape[i] + 50 for i in range(ndim)])
         with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
             snda.resize(new_shape)
@@ -216,14 +216,14 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         ]
     )
 
-    data = pa.Table.from_pydict(
-        {
-            "soma_joinid": [0, 1, 2, 3],
-            "mystring": ["a", "b", "a", "b"],
-            "myint": [20, 30, 40, 50],
-            "myfloat": [1.0, 2.5, 4.0, 5.5],
-        }
-    )
+    data_dict = {
+        "soma_joinid": [0, 1, 2, 3],
+        "mystring": ["a", "b", "a", "b"],
+        "myint": [20, 30, 40, 50],
+        "myfloat": [1.0, 2.5, 4.0, 5.5],
+    }
+
+    data = pa.Table.from_pydict(data_dict)
 
     domain_slots = {
         "soma_joinid": soma_joinid_domain,
@@ -231,6 +231,8 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         "myint": (-1000, 1000),
         "myfloat": (-999.5, 999.5),
     }
+
+    has_soma_joinid_dim = "soma_joinid" in index_column_names
 
     domain = tuple([domain_slots[name] for name in index_column_names])
 
@@ -265,3 +267,43 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
                 assert sdf._maybe_soma_joinid_maxshape is None
 
         assert len(sdf.non_empty_domain()) == len(index_column_names)
+
+        # This may be None if soma_joinid is not an index column
+        shape_at_create = sdf._maybe_soma_joinid_shape
+
+    if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+
+        # Test resize down
+        new_shape = 0
+        with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+            if has_soma_joinid_dim:
+                # TODO: check draft spec
+                # with pytest.raises(ValueError):
+                with pytest.raises(tiledbsoma.SOMAError):
+                    sdf.resize_soma_joinid(new_shape)
+            else:
+                sdf.resize_soma_joinid(new_shape)
+
+        with tiledbsoma.DataFrame.open(uri) as sdf:
+            assert sdf._maybe_soma_joinid_shape == shape_at_create
+
+        # Test writes out of bounds, before resize
+        offset = shape_at_create if has_soma_joinid_dim else 100
+        data_dict["soma_joinid"] = [e + offset for e in data_dict["soma_joinid"]]
+        data = pa.Table.from_pydict(data_dict)
+
+        with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+            if has_soma_joinid_dim:
+                with pytest.raises(tiledbsoma.SOMAError):
+                    sdf.write(data)
+            else:
+                sdf.write(data)
+
+        # Test resize
+        new_shape = 0 if shape_at_create is None else shape_at_create + 100
+        with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+            sdf.resize_soma_joinid(new_shape)
+
+        # Test writes out of old bounds, within new bounds, after resize
+        with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+            sdf.write(data)
