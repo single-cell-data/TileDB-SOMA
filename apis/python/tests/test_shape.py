@@ -126,16 +126,6 @@ def test_sparse_nd_array_basics(
         with tiledbsoma.SparseNDArray.open(uri) as snda:
             assert snda.shape == arg_shape
 
-        # Test resize too big
-        new_shape = tuple([4_000_000_000 for i in range(ndim)])
-        # TODO: check draft spec
-        # with pytest.raises(ValueError):
-        with pytest.raises(tiledbsoma.SOMAError):
-            with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
-                snda.resize(new_shape)
-        with tiledbsoma.SparseNDArray.open(uri) as snda:
-            assert snda.shape == arg_shape
-
         # Test writes out of bounds
         with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
             with pytest.raises(tiledbsoma.SOMAError):

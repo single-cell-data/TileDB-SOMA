@@ -490,8 +490,12 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         int64 is returned for the capacity.
         """
         if dim_shape is None:
-            dim_capacity = 2**31 - 2  # Make this friendly for reads by tiledbsoma-r
+            dim_capacity = 2**63 - 1
             dim_extent = min(dim_capacity, create_options.dim_tile(dim_name, 2048))
+            # For core: "domain max expanded to multiple of tile extent exceeds max value
+            # representable by domain type. Reduce domain max by 1 tile extent to allow for
+            # expansion."
+            dim_capacity -= dim_extent
         else:
             if dim_shape <= 0:
                 raise ValueError(
