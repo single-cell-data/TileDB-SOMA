@@ -57,9 +57,9 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             return std::make_unique<SOMASparseNDArray>(*array_);
         } else if (array_type == "somadensendarray") {
             return std::make_unique<SOMADenseNDArray>(*array_);
-        } else if (array_type == "somapointcloud") {
+        } else if (array_type == "somapointclouddataframe") {
             throw TileDBSOMAError(
-                "Support for SOMAPointCloud is not yet implemented");
+                "Support for SOMAPointCloudDataFrame is not yet implemented");
         } else if (array_type == "somageometrydataframe") {
             throw TileDBSOMAError(
                 "Support for SOMAGeometryDataFrame is not yet implemented");
