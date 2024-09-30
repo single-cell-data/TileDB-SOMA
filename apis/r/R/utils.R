@@ -219,7 +219,7 @@ read_only_error <- function(field_name) {
 
 SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY <- "soma_encoding_version"
-SOMA_ENCODING_VERSION <- "1"
+SOMA_ENCODING_VERSION <- "1.1.0"
 
 #' @importFrom Matrix as.matrix
 #' @importFrom arrow RecordBatch

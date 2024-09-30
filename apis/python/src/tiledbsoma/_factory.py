@@ -33,7 +33,6 @@ from . import (
     _tdb_handles,
 )
 from ._constants import (
-    SOMA_ENCODING_VERSION,
     SOMA_ENCODING_VERSION_METADATA_KEY,
     SOMA_OBJECT_TYPE_METADATA_KEY,
 )
@@ -200,7 +199,7 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
     if isinstance(encoding_version, bytes):
         encoding_version = str(encoding_version, "utf-8")
 
-    if encoding_version != SOMA_ENCODING_VERSION:
+    if encoding_version not in {"1", "1.1.0"}:
         raise ValueError(f"Unsupported SOMA object encoding version {encoding_version}")
 
     return obj_type
