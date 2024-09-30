@@ -77,11 +77,11 @@ test_that("SOMADataFrame shape", {
       if ("soma_joinid" %in% index_column_names) {
         # More testing to come on
         # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        expect_false(is.na(sjid_shape))
-        expect_false(is.na(sjid_maxshape))
+        expect_false(rlang::is_na(sjid_shape))
+        expect_false(rlang::is_na(sjid_maxshape))
       } else {
-        expect_true(is.na(sjid_shape))
-        expect_true(is.na(sjid_maxshape))
+        expect_true(rlang::is_na(sjid_shape))
+        expect_true(rlang::is_na(sjid_maxshape))
       }
 
       # Check has_upgraded_domain
