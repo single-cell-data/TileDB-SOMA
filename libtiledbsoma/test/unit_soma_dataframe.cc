@@ -478,7 +478,7 @@ TEST_CASE_METHOD(
     soma_dataframe->close();
 
     soma_dataframe = open(OpenMode::write);
-    soma_dataframe->maybe_resize_soma_joinid(std::vector<int64_t>({new_max}));
+    soma_dataframe->resize_soma_joinid(int64_t{new_max});
     soma_dataframe->close();
 
     soma_dataframe = open(OpenMode::write);
@@ -588,7 +588,7 @@ TEST_CASE_METHOD(
         REQUIRE(soma_dataframe->nnz() == 4);
 
         // Resize
-        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX + 1});
+        auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
         if (!use_current_domain) {
             // Domain is already set. The domain (not current domain but domain)
@@ -599,7 +599,7 @@ TEST_CASE_METHOD(
 
             soma_dataframe = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(soma_dataframe->maybe_resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
             soma_dataframe->close();
 
         } else {
@@ -617,11 +617,11 @@ TEST_CASE_METHOD(
             soma_dataframe->close();
 
             soma_dataframe = open(OpenMode::read);
-            REQUIRE_THROWS(soma_dataframe->maybe_resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
             soma_dataframe->close();
 
             soma_dataframe = open(OpenMode::write);
-            soma_dataframe->maybe_resize_soma_joinid(new_shape);
+            soma_dataframe->resize_soma_joinid(new_shape);
             soma_dataframe->close();
 
             // Check shape after resize
@@ -784,7 +784,7 @@ TEST_CASE_METHOD(
         soma_dataframe->close();
 
         // Resize
-        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX + 1});
+        auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
         if (!use_current_domain) {
             // Domain is already set. The domain (not current domain but domain)
@@ -795,7 +795,7 @@ TEST_CASE_METHOD(
 
             soma_dataframe = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(soma_dataframe->maybe_resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
             soma_dataframe->close();
 
         } else {
@@ -812,11 +812,11 @@ TEST_CASE_METHOD(
             soma_dataframe->close();
 
             soma_dataframe = open(OpenMode::read);
-            REQUIRE_THROWS(soma_dataframe->maybe_resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
             soma_dataframe->close();
 
             soma_dataframe = open(OpenMode::write);
-            soma_dataframe->maybe_resize_soma_joinid(new_shape);
+            soma_dataframe->resize_soma_joinid(new_shape);
             soma_dataframe->close();
 
             // Check shape after resize
@@ -1016,7 +1016,7 @@ TEST_CASE_METHOD(
         soma_dataframe->close();
 
         // Resize
-        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX + 1});
+        auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
         if (!use_current_domain) {
             // Domain is already set. The domain (not current domain but domain)
@@ -1027,7 +1027,7 @@ TEST_CASE_METHOD(
 
             soma_dataframe = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(soma_dataframe->maybe_resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
             soma_dataframe->close();
 
         } else {
@@ -1044,11 +1044,11 @@ TEST_CASE_METHOD(
             soma_dataframe->close();
 
             soma_dataframe = open(OpenMode::read);
-            REQUIRE_THROWS(soma_dataframe->maybe_resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
             soma_dataframe->close();
 
             soma_dataframe = open(OpenMode::write);
-            soma_dataframe->maybe_resize_soma_joinid(new_shape);
+            soma_dataframe->resize_soma_joinid(new_shape);
             soma_dataframe->close();
 
             // Check shape after resize
@@ -1229,7 +1229,7 @@ TEST_CASE_METHOD(
         soma_dataframe->close();
 
         // Resize
-        auto new_shape = std::vector<int64_t>({SOMA_JOINID_RESIZE_DIM_MAX + 1});
+        auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
         if (!use_current_domain) {
             // Domain is already set. The domain (not current domain but domain)
@@ -1240,7 +1240,7 @@ TEST_CASE_METHOD(
 
             soma_dataframe = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(soma_dataframe->maybe_resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
             soma_dataframe->close();
 
         } else {
@@ -1252,11 +1252,11 @@ TEST_CASE_METHOD(
             soma_dataframe->close();
 
             soma_dataframe = open(OpenMode::read);
-            REQUIRE_THROWS(soma_dataframe->maybe_resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
             soma_dataframe->close();
 
             soma_dataframe = open(OpenMode::write);
-            soma_dataframe->maybe_resize_soma_joinid(new_shape);
+            soma_dataframe->resize_soma_joinid(new_shape);
             soma_dataframe->close();
 
             // Check shape after resize -- noting soma_joinid is not a dim here

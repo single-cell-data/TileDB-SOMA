@@ -1471,7 +1471,7 @@ void SOMAArray::_set_current_domain_from_shape(
     schema_evolution.array_evolve(uri_);
 }
 
-void SOMAArray::maybe_resize_soma_joinid(const std::vector<int64_t>& newshape) {
+void SOMAArray::resize_soma_joinid(int64_t newshape) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(
             "[SOMAArray::resize] array must be opened in write mode");
@@ -1480,12 +1480,6 @@ void SOMAArray::maybe_resize_soma_joinid(const std::vector<int64_t>& newshape) {
     ArraySchema schema = arr_->schema();
     Domain domain = schema.domain();
     unsigned ndim = domain.ndim();
-    if (newshape.size() != 1) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAArray::resize]: newshape has dimension count {}; needed 1",
-            newshape.size(),
-            ndim));
-    }
 
     auto tctx = ctx_->tiledb_ctx();
     CurrentDomain old_current_domain = ArraySchemaExperimental::current_domain(
@@ -1498,7 +1492,7 @@ void SOMAArray::maybe_resize_soma_joinid(const std::vector<int64_t>& newshape) {
     for (unsigned i = 0; i < ndim; i++) {
         if (domain.dimension(i).name() == "soma_joinid") {
             ndrect.set_range<int64_t>(
-                domain.dimension(i).name(), 0, newshape[0] - 1);
+                domain.dimension(i).name(), 0, newshape - 1);
         }
     }
 
