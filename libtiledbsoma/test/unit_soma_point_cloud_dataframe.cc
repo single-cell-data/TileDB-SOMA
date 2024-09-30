@@ -1,5 +1,5 @@
 /**
- * @file   unit_soma_point_cloud.cc
+ * @file   unit_soma_point_cloud_dataframe.cc
  *
  * @section LICENSE
  *
@@ -27,14 +27,14 @@
  *
  * @section DESCRIPTION
  *
- * This file manages unit tests for the SOMAPointCloud class
+ * This file manages unit tests for the SOMAPointCloudDataFrame class
  */
 
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
 
-TEST_CASE("SOMAPointCloud: basic", "[SOMAPointCloud]") {
+TEST_CASE("SOMAPointCloudDataFrame: basic", "[SOMAPointCloudDataFrame]") {
     auto use_current_domain = GENERATE(false, true);
     // TODO this could be formatted with fmt::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
@@ -74,13 +74,13 @@ TEST_CASE("SOMAPointCloud: basic", "[SOMAPointCloud]") {
             {.name = "radius", .tiledb_datatype = TILEDB_FLOAT64})});
 
         // Check the point cloud doesn't exist yet.
-        REQUIRE(!SOMAPointCloud::exists(uri, ctx));
+        REQUIRE(!SOMAPointCloudDataFrame::exists(uri, ctx));
 
         // Create the point cloud.
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
                 dim_infos, attr_infos);
-        SOMAPointCloud::create(
+        SOMAPointCloudDataFrame::create(
             uri,
             std::move(schema),
             ArrowTable(
@@ -92,12 +92,12 @@ TEST_CASE("SOMAPointCloud: basic", "[SOMAPointCloud]") {
 
         // Check the point cloud exists and it cannot be read as a different
         // object.
-        REQUIRE(SOMAPointCloud::exists(uri, ctx));
+        REQUIRE(SOMAPointCloudDataFrame::exists(uri, ctx));
         REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
         REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
         REQUIRE(!SOMADataFrame::exists(uri, ctx));
 
-        auto soma_point_cloud = SOMAPointCloud::open(
+        auto soma_point_cloud = SOMAPointCloudDataFrame::open(
             uri,
             OpenMode::read,
             ctx,
@@ -106,7 +106,7 @@ TEST_CASE("SOMAPointCloud: basic", "[SOMAPointCloud]") {
             std::nullopt);
         REQUIRE(soma_point_cloud->uri() == uri);
         REQUIRE(soma_point_cloud->ctx() == ctx);
-        REQUIRE(soma_point_cloud->type() == "SOMAPointCloud");
+        REQUIRE(soma_point_cloud->type() == "SOMAPointCloudDataFrame");
         std::vector<std::string> expected_index_column_names = {
             dim_infos[0].name, dim_infos[1].name, dim_infos[2].name};
         REQUIRE(
@@ -125,7 +125,7 @@ TEST_CASE("SOMAPointCloud: basic", "[SOMAPointCloud]") {
         std::vector<double> a0(10, 1.0);
 
         // Write to point cloud.
-        soma_point_cloud = SOMAPointCloud::open(
+        soma_point_cloud = SOMAPointCloudDataFrame::open(
             uri,
             OpenMode::write,
             ctx,
@@ -144,7 +144,7 @@ TEST_CASE("SOMAPointCloud: basic", "[SOMAPointCloud]") {
         soma_point_cloud->close();
 
         // Read back the data.
-        soma_point_cloud = SOMAPointCloud::open(
+        soma_point_cloud = SOMAPointCloudDataFrame::open(
             uri,
             OpenMode::read,
             ctx,
@@ -166,7 +166,7 @@ TEST_CASE("SOMAPointCloud: basic", "[SOMAPointCloud]") {
 
         auto soma_object = SOMAObject::open(uri, OpenMode::read, ctx);
         REQUIRE(soma_object->uri() == uri);
-        REQUIRE(soma_object->type() == "SOMAPointCloud");
+        REQUIRE(soma_object->type() == "SOMAPointCloudDataFrame");
         soma_object->close();
     }
 }

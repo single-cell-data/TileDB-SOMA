@@ -1,5 +1,5 @@
 /**
- * @file   soma_point_cloud.cc
+ * @file   soma_point_cloud_dataframe.cc
  *
  * @section LICENSE
  *
@@ -27,10 +27,10 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAPointCloud class.
+ *   This file defines the SOMAPointCloudDataFrame class.
  */
 
-#include "soma_point_cloud.h"
+#include "soma_point_cloud_dataframe.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -39,7 +39,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-void SOMAPointCloud::create(
+void SOMAPointCloudDataFrame::create(
     std::string_view uri,
     std::unique_ptr<ArrowSchema> schema,
     ArrowTable index_columns,
@@ -51,28 +51,29 @@ void SOMAPointCloud::create(
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
-        "SOMAPointCloud",
+        "SOMAPointCloudDataFrame",
         true,
         platform_config);
-    SOMAArray::create(ctx, uri, tiledb_schema, "SOMAPointCloud", timestamp);
+    SOMAArray::create(
+        ctx, uri, tiledb_schema, "SOMAPointCloudDataFrame", timestamp);
 }
 
-std::unique_ptr<SOMAPointCloud> SOMAPointCloud::open(
+std::unique_ptr<SOMAPointCloudDataFrame> SOMAPointCloudDataFrame::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMAPointCloud>(
+    return std::make_unique<SOMAPointCloudDataFrame>(
         mode, uri, ctx, column_names, result_order, timestamp);
 }
 
-bool SOMAPointCloud::exists(
+bool SOMAPointCloudDataFrame::exists(
     std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
     try {
         auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
-        return "SOMAPointCloud" == obj->type();
+        return "SOMAPointCloudDataFrame" == obj->type();
     } catch (TileDBSOMAError& e) {
         return false;
     }
@@ -82,15 +83,16 @@ bool SOMAPointCloud::exists(
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMAPointCloud::schema() const {
+std::unique_ptr<ArrowSchema> SOMAPointCloudDataFrame::schema() const {
     return this->arrow_schema();
 }
 
-const std::vector<std::string> SOMAPointCloud::index_column_names() const {
+const std::vector<std::string> SOMAPointCloudDataFrame::index_column_names()
+    const {
     return this->dimension_names();
 }
 
-uint64_t SOMAPointCloud::count() {
+uint64_t SOMAPointCloudDataFrame::count() {
     return this->nnz();
 }
 

@@ -28,7 +28,7 @@ add_executable(unit_soma
     unit_soma_sparse_ndarray.cc
     unit_soma_collection.cc
     unit_soma_scene.cc
-    unit_soma_point_cloud.cc
+    unit_soma_point_cloud_dataframe.cc
     unit_soma_multiscale_image.cc
     test_indexer.cc
 # TODO: uncomment when thread_pool is enabled
