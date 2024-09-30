@@ -23,13 +23,14 @@ from .options import SOMATileDBContext
 _UNBATCHED = options.BatchSize()
 
 
-class PointCloud(somacore.PointCloud):
+class PointCloudDataFrame(somacore.PointCloudDataFrame):
     """A specialized SOMA DataFrame for storing collections of points in
     multi-dimensional space.
 
-    The ``PointCloud`` class is designed to efficiently store and query point data,
-    where each point is represented by coordinates in one or more spatial dimensions
-    (e.g., x, y, z) and may have additional columns for associated attributes.
+    The ``PointCloudDataFrame`` class is designed to efficiently store and query point
+    data, where each point is represented by coordinates in one or more spatial
+    dimensions (e.g., x, y, z) and may have additional columns for associated
+    attributes.
 
     Lifecycle:
         Experimental.
@@ -50,7 +51,7 @@ class PointCloud(somacore.PointCloud):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
-        """Creates a new ``PointCloud`` at the given URI.
+        """Creates a new ``PointCloudDataFrame`` at the given URI.
 
         The schema of the created point cloud dataframe will include a column named
         ``soma_joinid`` of type ``pyarrow.int64``, with negative values disallowed, and
@@ -216,7 +217,7 @@ class PointCloud(somacore.PointCloud):
         raise NotImplementedError()
 
     @property
-    def coordinate_space(self) -> Optional[CoordinateSpace]:
+    def coordinate_space(self) -> CoordinateSpace:
         """Coordinate space for this point cloud.
 
         Lifecycle:

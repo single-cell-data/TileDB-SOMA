@@ -91,7 +91,7 @@ def open(
     except KeyError:
         if soma_object.type.lower() in {
             "somascene",
-            "somapointcloud",
+            "somapointclouddataframe",
             "somageometrydataframe",
             "somamultiscaleimage",
         }:
