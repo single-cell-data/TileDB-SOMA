@@ -1,11 +1,11 @@
 /**
- * @file   tiledbsoma
+ * @file   unit_soma_scene.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,37 +27,19 @@
  *
  * @section DESCRIPTION
  *
- * This is the main import header for the C++ API
+ * This file manages unit tests for the SOMAScene class
  */
 
-#ifndef __TILEDBSOMA__
-#define __TILEDBSOMA__
+#include "common.h"
 
-// Auto-generated file by CMake, used to define the TILEDBSOMA_EXPORT macro
-// that allows exporting symbols in a cross-platform fashion.
-#include "tiledbsoma_export.h"
+TEST_CASE("SOMAScene: basic") {
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri{"mem://unit-test-scene-basic"};
 
-#include "utils/arrow_adapter.h"
-#include "utils/common.h"
-#include "utils/stats.h"
-#include "utils/version.h"
-#include "soma/enums.h"
-#include "soma/logger_public.h"
-#include "soma/soma_context.h"
-#include "soma/managed_query.h"
-#include "soma/array_buffers.h"
-#include "soma/column_buffer.h"
-#include "soma/soma_array.h"
-#include "soma/soma_collection.h"
-#include "soma/soma_dataframe.h"
-#include "soma/soma_group.h"
-#include "soma/soma_experiment.h"
-#include "soma/soma_measurement.h"
-#include "soma/soma_scene.h"
-#include "soma/soma_multiscale_image.h"
-#include "soma/soma_object.h"
-#include "soma/soma_dataframe.h"
-#include "soma/soma_dense_ndarray.h"
-#include "soma/soma_sparse_ndarray.h"
-
-#endif
+    SOMAScene::create(uri, ctx, std::nullopt);
+    auto soma_scene = SOMAScene::open(uri, OpenMode::read, ctx, std::nullopt);
+    CHECK(soma_scene->uri() == uri);
+    CHECK(soma_scene->ctx() == ctx);
+    CHECK(soma_scene->type() == "SOMAScene");
+    soma_scene->close();
+}

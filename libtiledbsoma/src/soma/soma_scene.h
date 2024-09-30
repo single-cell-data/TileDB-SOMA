@@ -1,11 +1,11 @@
 /**
- * @file   soma_experiment.h
+ * @file   soma_scene.h
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2023 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,52 +27,48 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAExperiment class.
+ *   This file defines the SOMAScene class.
  */
 
-#ifndef SOMA_EXPERIMENT
-#define SOMA_EXPERIMENT
+#ifndef SOMA_SCENE
+#define SOMA_SCENE
 
 #include <tiledb/tiledb>
 
 #include "soma_collection.h"
-#include "soma_dataframe.h"
 
 namespace tiledbsoma {
 
 using namespace tiledb;
-class SOMAExperiment : public SOMACollection {
+class SOMAScene : public SOMACollection {
    public:
     //===================================================================
     //= public static
     //===================================================================
 
     /**
-     * @brief Create a SOMAExperiment object at the given URI.
+     * @brief Create a SOMAScene object at the given URI.
      *
-     * @param uri URI to create the SOMAExperiment
+     * @param uri URI to create the SOMAScene
      * @param schema TileDB ArraySchema
      * @param platform_config Optional config parameter dictionary
      */
     static void create(
         std::string_view uri,
-        std::unique_ptr<ArrowSchema> schema,
-        ArrowTable index_columns,
         std::shared_ptr<SOMAContext> ctx,
-        PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
-     * @brief Open a group at the specified URI and return SOMAExperiment
+     * @brief Open a group at the specified URI and return SOMAScene
      * object.
      *
      * @param uri URI of the array
      * @param mode read or write
      * @param ctx TileDB context
      * @param timestamp Optional pair indicating timestamp start and end
-     * @return std::shared_ptr<SOMAExperiment> SOMAExperiment
+     * @return std::shared_ptr<SOMAScene> SOMAScene
      */
-    static std::unique_ptr<SOMAExperiment> open(
+    static std::unique_ptr<SOMAScene> open(
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
@@ -82,7 +78,7 @@ class SOMAExperiment : public SOMACollection {
     //= public non-static
     //===================================================================
 
-    SOMAExperiment(
+    SOMAScene(
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
@@ -90,53 +86,51 @@ class SOMAExperiment : public SOMACollection {
         : SOMACollection(mode, uri, ctx, timestamp) {
     }
 
-    SOMAExperiment(const SOMACollection& other)
+    SOMAScene(const SOMACollection& other)
         : SOMACollection(other) {
     }
 
-    SOMAExperiment() = delete;
-    SOMAExperiment(const SOMAExperiment&) = default;
-    SOMAExperiment(SOMAExperiment&&) = default;
-    ~SOMAExperiment() = default;
+    SOMAScene() = delete;
+    SOMAScene(const SOMAScene&) = default;
+    SOMAScene(SOMAScene&&) = default;
+    ~SOMAScene() = default;
 
     /**
-     * @brief Get the primary annotations on the observation axis
-     * @param column_names A list of column names to use as user-defined
-     index
-     * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns
-     must
-     * exist in the schema, and at least one index column name is required.
-     * @param result_order Read result order: automatic (default), rowmajor,
-     or
-     * colmajor
-     *
-     * @return std::shared_ptr<SOMADataFrame>
-     */
-    std::shared_ptr<SOMADataFrame> obs(
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic);
-
-    /**
-     * @brief Get the collection of named measurements
+     * @brief Get the collection of imagery data.
      *
      * @return std::shared_ptr<SOMACollection>
      */
-    std::shared_ptr<SOMACollection> ms();
+    std::shared_ptr<SOMACollection> img();
+
+    /**
+     * @brief Get the collection of observation location data.
+     *
+     * @return std::shared_ptr<SOMACollection>
+     */
+    std::shared_ptr<SOMACollection> obsl();
+
+    /**
+     * @brief Get the collection of collections of variable location data
+     * for different measurements.
+     *
+     * @return std::shared_ptr<SOMACollection>
+     */
+    std::shared_ptr<SOMACollection> varl();
 
    private:
     //===================================================================
     //= private non-static
     //===================================================================
 
-    // Primary annotations on the observation axis
-    std::shared_ptr<SOMADataFrame> obs_ = nullptr;
+    // A collection of imagery data.
+    std::shared_ptr<SOMACollection> img_ = nullptr;
 
-    // A collection of named measurements
-    std::shared_ptr<SOMACollection> ms_ = nullptr;
+    // A collection of observation location data.
+    std::shared_ptr<SOMACollection> obsl_ = nullptr;
 
-    // A collection of spatial scenes
-    std::shared_ptr<SOMACollection> spatial_ = nullptr;
+    // A collection of collections of variable location data for measurements.
+    std::shared_ptr<SOMACollection> varl_ = nullptr;
 };
 }  // namespace tiledbsoma
 
-#endif  // SOMA_EXPERIMENT
+#endif  // SOMA_SCENE
