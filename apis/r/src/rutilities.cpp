@@ -470,6 +470,8 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
 
     for (size_t i = 0; i < ncol; i++) {
         if (arrow_array->children[i]->n_buffers == 3) {
+            // Arrow semantics: variable-length: buffers 0,1,2 are validity,
+            // offsets, data
             std::vector<std::string>
                 lohi = tiledbsoma::ArrowAdapter::get_array_string_column(
                     arrow_array->children[i], arrow_schema->children[i]);
@@ -481,6 +483,8 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
                 lohi[0],
                 lohi[1]);
         } else {
+            // Arrow semantics: non-variable-length: buffers 0,1 are validity &
+            // data
             spdl::info(
                 "[domainish] name {} format {} length {}",
                 std::string(arrow_schema->children[i]->name),
