@@ -29,10 +29,10 @@
  *   This file defines the SOMAArray class.
  */
 
+#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
-#include "soma_array.h"
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -1012,6 +1012,16 @@ std::vector<std::string> SOMAArray::dimension_names() const {
     return result;
 }
 
+bool SOMAArray::has_dimension_name(const std::string& name) const {
+    auto dimensions = tiledb_schema()->domain().dimensions();
+    for (const auto& dim : dimensions) {
+        if (dim.name() == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void SOMAArray::write(bool sort_coords) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
@@ -1549,7 +1559,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
                 return std::pair(
                     false,
                     fmt::format(
-                        "cannot {} for {}: new {} < existing maxshape {}",
+                        "cannot {} for {}: new {} < maxshape {}",
                         method_name_for_messages,
                         dim_name,
                         newshape[i],
@@ -1560,11 +1570,48 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
     return std::pair(true, "");
 }
 
-std::pair<bool, std::string> SOMAArray::can_set_shape_soma_joinid(
-    int64_t /*newshape*/,
-    bool /*is_resize*/,
-    std::string /*method_name_for_messages*/) {
-    return std::pair(false, "TBW");
+std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
+    int64_t newshape) {
+    // Fail if the array doesn't already have a shape yet (they should upgrade
+    // first).
+    if (!has_current_domain()) {
+        return std::pair(
+            false,
+            "can_resize_soma_joinid: dataframe currently has no domain set: "
+            "please use tiledbsoma_upgrade_domain.");
+    }
+
+    // OK if soma_joinid isn't a dim.
+    if (!has_dimension_name("soma_joinid")) {
+        return std::pair(true, "");
+    }
+
+    // Fail if the newshape isn't within the array's core current domain.
+    std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>("soma_joinid");
+    if (newshape < cur_dom_lo_hi.second) {
+        return std::pair(
+            false,
+            fmt::format(
+                "cannot resize_soma_joinid: new soma_joinid shape {} < "
+                "existing shape {}",
+                newshape,
+                cur_dom_lo_hi.second));
+    }
+
+    // Fail if the newshape isn't within the array's core (max) domain.
+    std::pair dom_lo_hi = _core_domain_slot<int64_t>("soma_joinid");
+    if (newshape > dom_lo_hi.second) {
+        return std::pair(
+            false,
+            fmt::format(
+                "cannot resize_soma_joinid: new soma_joinid shape {} > "
+                "maxshape {}",
+                newshape,
+                dom_lo_hi.second));
+    }
+
+    // Sucess otherwise.
+    return std::pair(true, "");
 }
 
 void SOMAArray::resize(const std::vector<int64_t>& newshape) {

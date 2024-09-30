@@ -291,6 +291,13 @@ class SOMAArray : public SOMAObject {
     std::vector<std::string> dimension_names() const;
 
     /**
+     * @brief Sees if the array has a dimension of the given name.
+     *
+     * @return bool
+     */
+    bool has_dimension_name(const std::string& name) const;
+
+    /**
      * @brief Set the dimension slice using one point
      *
      * @note Partitioning is not supported
@@ -1075,12 +1082,10 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * XXX COMMENT
+     * This is similar to can_upgrade_shape, but it's a can-we call
+     * for maybe_resize_soma_joinid.
      */
-    std::pair<bool, std::string> can_set_shape_soma_joinid(
-        int64_t newshape,
-        bool require_has_shape,
-        std::string method_name_for_messages);
+    std::pair<bool, std::string> can_resize_soma_joinid(int64_t newshape);
 
     /**
      * @brief Resize the shape (what core calls "current domain") up to the

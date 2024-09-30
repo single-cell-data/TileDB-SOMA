@@ -405,8 +405,8 @@ TEST_CASE(
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot tiledbsoma_upgrade_shape for soma_dim_0: new 1009 < existing "
-        "maxshape 1000");
+        "cannot tiledbsoma_upgrade_shape for soma_dim_0: new 1009 < maxshape "
+        "1000");
 
     check = soma_sparse->can_upgrade_shape(newshape_good);
     REQUIRE(check.first == true);
@@ -478,36 +478,3 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     REQUIRE(check.first == true);
     REQUIRE(check.second == "");
 }
-
-//
-//// array w shape
-//// o set curdom say 1000 and maxdom huge
-//// o test newshape.size() is wrong
-//// o test doing tiledbsoma_upgrade_shape instead of resize
-//// o test resize:
-////   - test too small in any one slot
-////   - test equal -- do it twice
-////   - test larger
-//
-//// ================================================================
-//// OLD
-//// ACC-SNDA URI data-snda-py   <----------------- SLOTWISE NONE
-//// ACC-SNDA NEW SHAPE  False
-//// ACC-SNDA SHAPE      (2147483646, 2147483646)
-//// ACC-SNDA MAXSHAPE   (2147483646, 2147483646)
-////
-//// ACC-SNDA URI data-snda-shape-py   <----------------- SLOTWISE SPECIFIED
-//// ACC-SNDA NEW SHAPE  False
-//// ACC-SNDA SHAPE      (100, 200)
-//// ACC-SNDA MAXSHAPE   (100, 200)
-////
-//// ================================================================
-//// ACC-SNDA URI data-snda-py   <----------------- SLOTWISE NONE
-//// ACC-SNDA NEW SHAPE  True
-//// ACC-SNDA SHAPE      (2147483646, 2147483646)
-//// ACC-SNDA MAXSHAPE   (2147483646, 2147483646)
-////
-//// ACC-SNDA URI data-snda-shape-py   <----------------- SLOTWISE SPECIFIED
-//// ACC-SNDA NEW SHAPE  True
-//// ACC-SNDA SHAPE      (100, 200)
-//// ACC-SNDA MAXSHAPE   (2147483646, 2147483646)
