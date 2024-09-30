@@ -86,7 +86,7 @@ column. Each vector should be a pair consisting of the minimum and maximum value
 the index column. For example, if there is a single int64-valued index column, then \code{domain}
 might be \code{c(100, 200)} to indicate that values between 100 and 200, inclusive, can be stored
 in that column.  If provided, this list must have the same length as \code{index_column_names},
-and the index-column domain will be as specified.  If omitted entirely, or if \code{NA} in a given
+and the index-column domain will be as specified.  If omitted entirely, or if \code{NULL} in a given
 dimension, the corresponding index-column domain will use the minimum and maximum possible
 values for the column's datatype.  This makes a \code{DataFrame} growable.}
 
