@@ -172,7 +172,7 @@ class MultiscaleImage(somacore.MultiscaleImage[DenseNDArray, AnySOMAObject]):
         raise NotImplementedError()
 
     @property
-    def coordinate_space(self) -> Optional[CoordinateSpace]:
+    def coordinate_space(self) -> CoordinateSpace:
         """Coordinate space for this multiscale image.
 
         Lifecycle:

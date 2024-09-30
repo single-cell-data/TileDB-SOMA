@@ -20,13 +20,15 @@ from ._collection import CollectionBase
 from ._constants import SOMA_GEOMETRY, SOMA_JOINID
 from ._geometry_dataframe import GeometryDataFrame
 from ._multiscale_image import MultiscaleImage
-from ._point_cloud import PointCloud
+from ._point_cloud_dataframe import PointCloudDataFrame
 from ._soma_object import AnySOMAObject
 
 
 class Scene(  # type: ignore[misc]   # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    somacore.Scene[MultiscaleImage, PointCloud, GeometryDataFrame, AnySOMAObject],
+    somacore.Scene[
+        MultiscaleImage, PointCloudDataFrame, GeometryDataFrame, AnySOMAObject
+    ],
 ):
     """A collection subtype representing spatial assets that can all be stored
     on a single coordinate space.
@@ -103,18 +105,18 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         *,
         uri: str,
         type: pa.DataType,
-        image_type: str = "CYX",
         reference_level_shape: Sequence[int],
-        axis_names: Sequence[str] = ("c", "x", "y"),
+        axis_names: Sequence[str] = ("c", "y", "x"),
+        axis_types: Sequence[str] = ("channel", "height", "width"),
     ) -> MultiscaleImage:
         """Adds a ``MultiscaleImage`` to the scene and sets a coordinate transform
         between the scene and the dataframe.
 
-        Parameters are as in :meth:`spatial.PointCloud.create`.
+        Parameters are as in :meth:`spatial.MultiscaleImage.create`.
         See :meth:`add_new_collection` for details about child URIs.
 
         Args:
-            key: The name of the geometry dataframe.
+            key: The name of the multiscale image.
             transform: The coordinate transformation from the scene to the dataframe.
             subcollection: The name, or sequence of names, of the subcollection the
                 dataframe is stored in. Defaults to ``'obsl'``.
@@ -126,7 +128,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         """
         raise NotImplementedError()
 
-    def add_new_point_cloud(
+    def add_new_point_cloud_dataframe(
         self,
         key: str,
         subcollection: Union[str, Sequence[str]],
@@ -138,21 +140,21 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         axis_names: Sequence[str] = ("x", "y"),
         domain: Optional[Sequence[Optional[Tuple[Any, Any]]]] = None,
         platform_config: Optional[options.PlatformConfig] = None,
-    ) -> PointCloud:
+    ) -> PointCloudDataFrame:
         """Adds a point cloud to the scene and sets a coordinate transform
         between the scene and the dataframe.
 
-        Parameters are as in :meth:`spatial.PointCloud.create`.
+        Parameters are as in :meth:`spatial.PointCloudDataFrame.create`.
         See :meth:`add_new_collection` for details about child URIs.
 
         Args:
-            key: The name of the geometry dataframe.
+            key: The name of the point cloud dataframe.
             transform: The coordinate transformation from the scene to the dataframe.
             subcollection: The name, or sequence of names, of the subcollection the
                 dataframe is stored in. Defaults to ``'obsl'``.
 
         Returns:
-            The newly created ``PointCloud``, opened for writing.
+            The newly created ``PointCloudDataFrame``, opened for writing.
 
         Lifecycle: experimental
         """
@@ -231,7 +233,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         *,
         subcollection: Union[str, Sequence[str]] = "obsl",
         coordinate_space: Optional[CoordinateSpace] = None,
-    ) -> PointCloud:
+    ) -> PointCloudDataFrame:
         """Adds the coordinate transform for the scene coordinate space to
         a point cloud stored in the scene.
 
