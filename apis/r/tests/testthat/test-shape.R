@@ -235,6 +235,7 @@ test_that("SOMADataFrame shape", {
         }
         sdf$close()
 
+        # Make sure the failed resize really didn't change the shape
         if (has_soma_joinid_dim) {
           sdf <- SOMADataFrameOpen(uri, "READ")
           expect_equal(sdf$domain()[["soma_joinid"]], sjid_dfc)
@@ -256,7 +257,6 @@ test_that("SOMADataFrame shape", {
           schema = asch)
 
         sdf <- SOMADataFrameOpen(uri, "WRITE")
-        # Current status: debug
         if (has_soma_joinid_dim) {
           expect_error(sdf$write(tbl1))
         } else {
@@ -265,16 +265,16 @@ test_that("SOMADataFrame shape", {
         sdf$close()
 
         # Test resize
-
         sdf <- SOMADataFrameOpen(uri, "WRITE")
         sdf$resize_soma_joinid(new_shape)
         sdf$close();
 
         # Test writes out of old bounds, within new bounds, after resize
         sdf <- SOMADataFrameOpen(uri, "WRITE")
-
         expect_no_condition(sdf$write(tbl1))
         sdf$close();
+
+        # To do: test readback
 
         rm(tbl1)
       }

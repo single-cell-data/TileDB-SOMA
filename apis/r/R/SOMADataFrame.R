@@ -397,23 +397,14 @@ SOMADataFrame <- R6::R6Class(
       has_current_domain(self$uri, private$.soma_context)
     },
 
-    #' @description Increases the shape of the array as specfied. Raises an error
-    #' if the new shape is less than the current shape in any dimension. Raises
-    #' an error if the new shape exceeds maxshape in any dimension. Raises an
-    #' error if the array doesn't already have a shape: in that case please call
-    #' tiledbsoma_upgrade_shape.
-    #' @param new_shape A vector of integerish, of the same length as the array's `ndim`.
-    #' @return No return value
-
-
-    # @description Increases the shape of the dataframe on the ``soma_joinid``
-    # index column, if it indeed is an index column, leaving all other index
-    # columns as-is. If the ``soma_joinid`` is not an index column, no change is
-    # made.  This is a special case of ``upgrade_domain`` (WIP for 1.15), but
-    # simpler to keystroke, and handles the most common case for dataframe
-    # domain expansion.  Raises an error if the dataframe doesn't already have a
-    # domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-    # 1.15).
+    #' @description Increases the shape of the dataframe on the ``soma_joinid``
+    #' index column, if it indeed is an index column, leaving all other index
+    #' columns as-is. If the ``soma_joinid`` is not an index column, no change is
+    #' made.  This is a special case of ``upgrade_domain`` (WIP for 1.15), but
+    #' simpler to keystroke, and handles the most common case for dataframe
+    #' domain expansion.  Raises an error if the dataframe doesn't already have a
+    #' domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
+    #' 1.15).
     #' @param new_shape An integer, greater than or equal to 1 + the
     #' `soma_joinid` domain slot.
     #' @return No return value
@@ -423,7 +414,7 @@ SOMADataFrame <- R6::R6Class(
         (bit64::is.integer64(new_shape) && length(new_shape) == 1)
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      resize_soma_joinid(self$uri, new_shape, private$.soma_context)
+      invisible(resize_soma_joinid(self$uri, new_shape, private$.soma_context))
     }
 
   ),
