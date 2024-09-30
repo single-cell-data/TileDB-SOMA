@@ -533,7 +533,6 @@ def test_point_cloud_read_spatial_region_identity_transform(tmp_path):
         ("Very small", 1e-6, [1e6, 1e6], 1e6),
         ("Scale down", 0.5, [2, 2], 2.0),
         ("Negative scale down", -0.5, [-2, -2], -2.0),
-        ("Zero scale", 0, [float("inf"), float("inf")], float("inf")),
         ("Inversion", -1, [-1, -1], -1.0),
         ("Fractional scale", 0.75, [4 / 3, 4 / 3], 4 / 3),
     ],
@@ -551,6 +550,17 @@ def test_point_cloud_read_spatial_region_uniform_scale_transform(
     assert list(coordinate_transform.scale_factors) == expected_scale_factors
     assert coordinate_transform.scale == expected_scale
     assert coordinate_transform.inverse_transform().scale == scale
+
+
+def test_point_cloud_read_spatial_region_uniform_scale_transform_bad(tmp_path):
+    # Error out for zero scale
+    with pytest.raises(ZeroDivisionError):
+        point_cloud_read_spatial_region_transform_setup(
+            uri=tmp_path.as_uri(),
+            transform=soma.UniformScaleTransform,
+            input_axes=(soma.Axis(name="x"), soma.Axis(name="y")),
+            kwargs={"scale": 0},
+        )
 
 
 @pytest.mark.parametrize(
@@ -630,7 +640,7 @@ def test_point_cloud_read_spatial_region_scale_transform(
         (
             "Scaling and translation",
             np.array([[2, 0, 1], [0, 3, 2], [0, 0, 1]]),
-            np.array([[0.5, 0, -0.5], [0, 1 / 3, -2/3], [0, 0, 1]]),
+            np.array([[0.5, 0, -0.5], [0, 1 / 3, -2 / 3], [0, 0, 1]]),
         ),
         (
             "Rotation and scaling",
