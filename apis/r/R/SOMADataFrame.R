@@ -20,12 +20,21 @@ SOMADataFrame <- R6::R6Class(
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
+    #' @param domain An optional list of 2-element vectors specifying the domain of each index
+    #' column. Each vector should be a pair consisting of the minimum and maximum values storable in
+    #' the index column. For example, if there is a single int64-valued index column, then `domain`
+    #' might be `c(100, 200)` to indicate that values between 100 and 200, inclusive, can be stored
+    #' in that column.  If provided, this list must have the same length as `index_column_names`,
+    #' and the index-column domain will be as specified.  If omitted entirely, or if `NULL` in a given
+    #' dimension, the corresponding index-column domain will use the minimum and maximum possible
+    #' values for the column's datatype.  This makes a `DataFrame` growable.
     #' @template param-platform-config
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
     create = function(
       schema,
       index_column_names = c("soma_joinid"),
+      domain = NULL,
       platform_config = NULL,
       internal_use_only = NULL
     ) {
@@ -35,6 +44,20 @@ SOMADataFrame <- R6::R6Class(
       }
       schema <- private$validate_schema(schema, index_column_names)
 
+      stopifnot(
+        "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(domain) ||
+          ( # Check that `domain` is a list of length `length(index_column_names)`
+            # where all values are named after `index_column_names`
+            # and all values are `NULL` or a two-length atomic non-factor vector
+            rlang::is_list(domain, n = length(index_column_names)) &&
+              identical(sort(names(domain)), sort(index_column_names)) &&
+              all(vapply_lgl(
+                domain,
+                function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+              ))
+          )
+      )
+
       attr_column_names <- setdiff(schema$names, index_column_names)
       stopifnot("At least one non-index column must be defined in the schema" =
                 length(attr_column_names) > 0)
@@ -43,12 +66,14 @@ SOMADataFrame <- R6::R6Class(
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
 
-      ## we (currently pass domain and extent values in an arrow table (i.e. data.frame alike)
-      ## where each dimension is one column (of the same type as in the schema) followed by three
-      ## values for the domain pair and the extent
+      # We currently pass domain and extent values in an arrow table (i.e. data.frame alike)
+      # where each dimension is one column (of the same type as in the schema followed by:
+      # * Before the new shape feature: three values for the domain pair and the extent;
+      # * After the new shape feature: five values for the maxdomain pair, extent, and domain.
       dom_ext_tbl <- get_domain_and_extent_dataframe(
         schema,
         ind_col_names = index_column_names,
+        domain = domain,
         tdco = tiledb_create_options
       )
 
