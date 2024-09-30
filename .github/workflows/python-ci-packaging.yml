@@ -65,7 +65,7 @@ jobs:
           apt-get install --yes cmake git python-is-python3 python3 python3-pip python3-venv unzip wget
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # for setuptools-scm
+          fetch-depth: 0  # for setuptools-scm
       - name: Configure Git
         run: |
           # This is a permissions quirk due to running Git as root inside of a Docker container
@@ -101,7 +101,7 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse 'setuptools>=70.1' wheel
           ./venv-soma/bin/pip list
       - name: Build wheel
         run: |
@@ -164,7 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # for setuptools-scm
+          fetch-depth: 0  # for setuptools-scm
       - name: Check if System Integrity Protection (SIP) is enabled
         run: csrutil status
       - name: Install pre-built libtiledb
@@ -201,7 +201,7 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel 'setuptools>=70.1'
           ./venv-soma/bin/pip list
       - name: Build wheel
         run: |
@@ -257,7 +257,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # for setuptools-scm
+          fetch-depth: 0  # for setuptools-scm
       - name: Install pre-built libtiledb
         run: |
           mkdir -p external
@@ -302,7 +302,7 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel 'setuptools>=70.1'
           ./venv-soma/bin/pip list
       - name: Install TileDB-SOMA-Py with setuptools and --libtiledbsoma
         run: |
@@ -357,13 +357,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: TileDB-SOMA
-          fetch-depth: 0 # for setuptools-scm
+          fetch-depth: 0  # for setuptools-scm
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install --prefer-binary pybind11 wheel
+        run: pip install --prefer-binary pybind11 'setuptools>=70.1' wheel
       - name: Build source tarball (sdist)
         run: |
           cd TileDB-SOMA/apis/python

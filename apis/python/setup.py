@@ -21,8 +21,8 @@ import subprocess
 import sys
 from typing import Optional
 
+import setuptools.command.bdist_wheel
 import setuptools.command.build_ext
-import wheel.bdist_wheel
 
 try:
     from pybind11.setup_helpers import Pybind11Extension
@@ -219,7 +219,7 @@ class build_ext(setuptools.command.build_ext.build_ext):
         super().run()
 
 
-class bdist_wheel(wheel.bdist_wheel.bdist_wheel):
+class bdist_wheel(setuptools.command.bdist_wheel.bdist_wheel):
     def run(self):
         find_or_build_package_data(self)
         super().run()
