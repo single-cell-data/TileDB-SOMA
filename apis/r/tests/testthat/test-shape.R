@@ -147,13 +147,16 @@ test_that("SOMADataFrame shape", {
           expect_true(sjid_dom[[2]] > bit64::as.integer64(10000000000))
           expect_true(sjid_mxd[[2]] > bit64::as.integer64(10000000000))
         } else {
-          # The soma_joinid dim is always of type int64.  Everything coming back
+          # Not: expect_equal(sjid_dom, bit64::as.integer64(sjid_dfc)) The
+          # soma_joinid dim is always of type int64.  Everything coming back
           # from libtiledbsoma, through C nanoarrow, through the R arrow
           # package, to Arrow RecordBatch, holds true to that. But the final
-          # as.list() converts the domain to regular integer for us.  Not ideal
-          # IMO, but, we need to check against what it actually does.
-          #
-          # Not: expect_equal(sjid_dom, bit64::as.integer64(sjid_dfc))
+          # as.list() converts the domain to regular integer. This is a feature
+          # TBH: suppressable with `op <- options(arrow.int64_downcast =
+          # FALSE)`. The maxdomainis likely to be in the 2**63 range
+          # but the domain is likely to be ordinary-sized numbers in the
+          # thousands or millions. Users are likely to prefer these
+          # being downcast to regular R integers.
           expect_equal(sjid_dom, sjid_dfc)
         }
       }
